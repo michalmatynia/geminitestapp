@@ -29,6 +29,7 @@ import { renderProductListingItem } from './ProductListingItem';
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
+import { SUCCESS_STATUSES, normalizeMarketplaceStatus } from '@/features/products/components/list/columns/product-column-utils';
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -117,6 +118,23 @@ export function ProductListingsContent(): React.JSX.Element {
     persistedQuickListFeedback?.status === 'completed'
       ? findTrackedTraderaListing(filteredListings, persistedQuickListFeedback)
       : null;
+  const displayListings =
+    persistedQuickListFeedback?.status === 'completed' && trackedSuccessListing
+      ? filteredListings.map((listing) =>
+          listing.id === trackedSuccessListing.id &&
+          !SUCCESS_STATUSES.has(normalizeMarketplaceStatus(listing.status ?? ''))
+            ? {
+                ...listing,
+                status: 'active',
+              }
+            : listing
+        )
+      : filteredListings;
+  const displayScopedStatus =
+    persistedQuickListFeedback?.status === 'completed' &&
+    isTraderaIntegrationSlug(filterIntegrationSlug)
+      ? 'active'
+      : displayListings[0]?.status ?? 'Unknown';
   const shouldShowQuickListSuccessBanner = Boolean(
     !isTraderaQuickExportRecovery &&
       persistedQuickListFeedback?.status === 'completed' &&
@@ -208,12 +226,12 @@ export function ProductListingsContent(): React.JSX.Element {
       {filterIntegrationSlug && (
         <ProductListingsScopedStatusPanel
           statusTargetLabel={statusTargetLabel}
-          status={filteredListings[0]?.status ?? 'Unknown'}
+          status={displayScopedStatus}
           isBaseFilter={isBaseFilter}
           showSync={showSync}
         />
       )}
-      {filteredListings.map((listing) => (
+      {displayListings.map((listing) => (
         <React.Fragment key={listing.id}>
           {renderProductListingItem({ listing })}
         </React.Fragment>

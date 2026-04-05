@@ -48,8 +48,6 @@ export interface CategoryMapperData {
 
 export interface CategoryMapperActions {
   handleFetchExternalCategories: () => Promise<void>;
-  handleOpenTraderaLoginRecovery: () => Promise<void>;
-  closeTraderaLoginRecoveryModal: () => void;
   handleAutoMatchByName: () => void;
   handleMappingChange: (externalCategoryId: string, internalCategoryId: string | null) => void;
   handleSave: () => Promise<void>;

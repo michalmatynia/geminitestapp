@@ -1,18 +1,19 @@
-export const PART_5 = String.raw`        }
-      : {
-          duplicateFound: false,
-          listingUrl: null,
-          listingId: null,
-        };
-  };
+export const PART_5 = String.raw`
 
   let currentImageUploadSource = null;
 
   try {
     log?.('tradera.quicklist.start', {
+      listingAction,
+      duplicateSearchTitle,
+      allowDuplicateLinking,
       baseProductId,
       sku,
       imageCount: imageUrls.length,
+      imageOrderStrategy,
+      imageManifestCount,
+      localImagePathCount: localImagePaths.length,
+      localImageCoverageCount,
       mappedCategoryPath,
       categoryFallbackAllowed: mappedCategorySegments.length === 0,
       configuredDeliveryOptionLabel,
@@ -25,15 +26,36 @@ export const PART_5 = String.raw`        }
     await ensureLoggedIn();
     emitStage('active_loaded');
 
-    const baseProductDuplicate = await checkDuplicate(baseProductId);
-    if (baseProductDuplicate.duplicateFound) {
-      throw new Error('SKIP_PRODUCT_DUPLICATE_FOUND: Duplicate active Tradera listing for ' + baseProductId + '.');
-    }
-    if (sku) {
-      const skuDuplicate = await checkDuplicate(sku);
-      if (skuDuplicate.duplicateFound) {
-      throw new Error('SKIP_PRODUCT_DUPLICATE_FOUND: Duplicate active Tradera listing for ' + sku + '.');
-      }
+    const duplicateMatch = await checkDuplicate(duplicateSearchTitle);
+    if (duplicateMatch.duplicateFound) {
+      const duplicateResult = {
+        stage: 'duplicate_linked',
+        currentUrl: duplicateMatch.listingUrl || page.url(),
+        externalListingId:
+          duplicateMatch.listingId ||
+          extractListingId(duplicateMatch.listingUrl || '') ||
+          null,
+        listingUrl: duplicateMatch.listingUrl || null,
+        publishVerified: false,
+        duplicateLinked: true,
+        duplicateMatchStrategy: duplicateMatch.matchStrategy || null,
+        duplicateMatchedProductId: duplicateMatch.matchedProductId || null,
+        duplicateCandidateCount: duplicateMatch.candidateCount || null,
+        duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
+        categoryPath: null,
+        categorySource: null,
+        imageUploadSource: null,
+      };
+      log?.('tradera.quicklist.duplicate.linked', duplicateResult);
+      emitStage('duplicate_linked', {
+        duplicateMatchStrategy: duplicateResult.duplicateMatchStrategy,
+        duplicateMatchedProductId: duplicateResult.duplicateMatchedProductId,
+        duplicateCandidateCount: duplicateResult.duplicateCandidateCount,
+        externalListingId: duplicateResult.externalListingId,
+        listingUrl: duplicateResult.listingUrl,
+      });
+      emit('result', duplicateResult);
+      return duplicateResult;
     }
     emitStage('duplicate_checked');
 
@@ -242,8 +264,9 @@ export const PART_5 = String.raw`        }
       return draftState;
     };
 
-    // Overwrite Tradera autofill immediately after images. Resolve Buy now before
-    // setting price so the fixed-price field is mounted before we type into it.
+    // Overwrite autofilled title/description immediately after images. Resolve Buy
+    // now before setting price so the fixed-price field is mounted before we type
+    // into it. Category autofill may be preserved later when no mapping exists.
     await fillTitleAndDescription();
     emitStage('fields_filled');
 

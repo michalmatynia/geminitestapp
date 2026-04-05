@@ -94,7 +94,7 @@ export const resolveMarketplaceCategoryFetchContext = async (
 
   if (TRADERA_MARKETPLACE_SLUGS.has(integrationSlug)) {
     // Prefer the SOAP API when the connection has API credentials (appId + appKey).
-    // The API is faster and not subject to UI changes on the Tradera listing form.
+    // The API is faster and not subject to changes in the public categories page structure.
     try {
       const apiCredentials = resolveTraderaPublicApiCredentials(connection);
       return {

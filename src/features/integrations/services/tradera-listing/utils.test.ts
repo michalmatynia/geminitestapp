@@ -55,6 +55,14 @@ describe('classifyTraderaFailure', () => {
     ).toBe('FORM');
   });
 
+  it('keeps category picker stateful fallback failures classified as form errors', () => {
+    expect(
+      classifyTraderaFailure(
+        'FAIL_CATEGORY_SET: Fallback category path "Other > Other" not found. Last state: {"selectedPath":"Accessories > Patches & pins > Pins","breadcrumbs":["Accessories","Patches & pins"],"visibleOptions":["Patches","Pins"]}'
+      )
+    ).toBe('FORM');
+  });
+
   it('classifies missing Tradera shipping-group configuration as a form error', () => {
     expect(
       classifyTraderaFailure(

@@ -27,6 +27,7 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
+import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { GET_handler, POST_handler } from './handler';
 
 describe('integration connections handler', () => {
@@ -197,6 +198,53 @@ describe('integration connections handler', () => {
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,
+    });
+  });
+
+  it('normalizes the managed Tradera default script to runtime fallback on create', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Tradera browser',
+        username: 'seller@example.com',
+        password: 'secret',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-tradera-1',
+      integrationId: 'integration-tradera-1',
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      traderaBrowserMode: 'scripted',
+      playwrightListingScript: null,
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections', {
+        method: 'POST',
+      }) as never,
+      {} as never,
+      { id: 'integration-tradera-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-tradera-1', {
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      password: 'enc:secret',
+      traderaBrowserMode: 'scripted',
+      playwrightListingScript: null,
+    });
+    expect(payload).toMatchObject({
+      id: 'conn-tradera-1',
+      traderaBrowserMode: 'scripted',
+      playwrightListingScript: null,
+      hasPlaywrightListingScript: false,
     });
   });
 

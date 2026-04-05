@@ -1,40 +1,21 @@
 import 'server-only';
 
 import { enqueuePlaywrightNodeRun } from '@/features/ai/server';
+import { TRADERA_PUBLIC_CATEGORIES_URL } from '@/features/integrations/constants/tradera';
 import { DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT } from '@/features/integrations/services/tradera-listing/category-scrape-script';
 import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
-import { loadTraderaSystemSettings } from '@/features/integrations/services/tradera-system-settings';
-import {
-  TRADERA_CAPTCHA_HINTS,
-  TRADERA_MANUAL_VERIFICATION_TEXT_HINTS,
-  TRADERA_MANUAL_VERIFICATION_URL_HINTS,
-} from '@/features/integrations/services/tradera-listing/config';
 import { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
-import {
-  AppError,
-  AppErrorCodes,
-  authError,
-  badRequestError,
-} from '@/shared/errors/app-error';
+import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const CATEGORY_SCRAPE_TIMEOUT_MS = 300_000;
 
 const extractTrimmedString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-
-const includesAnyHint = (value: string | null, hints: readonly string[]): boolean => {
-  const normalized = value?.trim().toLowerCase() ?? '';
-  if (!normalized) {
-    return false;
-  }
-
-  return hints.some((hint) => normalized.includes(hint.toLowerCase()));
-};
 
 const normalizeParentId = (value: unknown): string => {
   const normalized = extractTrimmedString(value);
@@ -152,14 +133,11 @@ const collectRunnerFailureMessages = (
   }
 
   for (const logLine of Array.isArray(run.logs) ? run.logs : []) {
-    const normalizedLogLine = normalizeRunnerErrorMessage(logLine);
-    if (!normalizedLogLine) {
+    if (typeof logLine !== 'string' || !logLine.toLowerCase().includes('[runtime][error]')) {
       continue;
     }
-    if (
-      isAuthRequiredMessage(normalizedLogLine) ||
-      normalizedLogLine.toLowerCase().includes('[runtime][error]')
-    ) {
+    const normalizedLogLine = normalizeRunnerErrorMessage(logLine);
+    if (normalizedLogLine) {
       messages.add(normalizedLogLine);
     }
   }
@@ -167,114 +145,22 @@ const collectRunnerFailureMessages = (
   return Array.from(messages);
 };
 
-const isAuthRequiredMessage = (value: string | null): boolean => {
-  const normalized = value?.trim().toLowerCase() ?? '';
-  if (!normalized) {
-    return false;
-  }
-
-  return (
-    normalized.includes('auth_required') ||
-    normalized.includes('manual verification') ||
-    normalized.includes('captcha') ||
-    normalized.includes('login requires') ||
-    normalized.includes('session expired') ||
-    normalized.includes('missing or expired')
-  );
-};
-
-const toCompletedRunAuthError = ({
-  run,
-  connectionId,
-  resultValue,
-  finalUrl,
-}: {
-  run: Awaited<ReturnType<typeof enqueuePlaywrightNodeRun>>;
-  connectionId: string;
-  resultValue: Record<string, unknown>;
-  finalUrl: string | null;
-}): Error | null => {
-  const currentUrl =
-    extractTrimmedString(resultValue['currentUrl']) ??
-    finalUrl ??
-    extractTrimmedString(resultValue['scrapedFrom']);
-  const errorText =
-    extractTrimmedString(resultValue['errorText']) ?? extractTrimmedString(resultValue['message']);
-  const recoveryMessageFromResult = extractTrimmedString(resultValue['recoveryMessage']);
-  const loginPage = resultValue['loginPage'] === true;
-  const captchaDetected =
-    resultValue['captchaDetected'] === true ||
-    includesAnyHint(errorText, TRADERA_CAPTCHA_HINTS) ||
-    includesAnyHint(
-      currentUrl,
-      TRADERA_MANUAL_VERIFICATION_URL_HINTS.filter((hint) =>
-        hint.toLowerCase().includes('captcha')
-      )
-    );
-  const manualVerificationDetected =
-    resultValue['manualVerificationDetected'] === true ||
-    captchaDetected ||
-    includesAnyHint(errorText, TRADERA_MANUAL_VERIFICATION_TEXT_HINTS) ||
-    includesAnyHint(currentUrl, TRADERA_MANUAL_VERIFICATION_URL_HINTS);
-  const authRequired =
-    resultValue['authRequired'] === true ||
-    loginPage ||
-    manualVerificationDetected ||
-    isAuthRequiredMessage(recoveryMessageFromResult) ||
-    isAuthRequiredMessage(errorText);
-
-  if (!authRequired) {
-    return null;
-  }
-
-  const recoveryMessage =
-    recoveryMessageFromResult ??
-    (loginPage
-      ? 'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.'
-      : captchaDetected
-        ? 'Stored Tradera session expired and Tradera requires manual verification (captcha). Refresh the saved browser session.'
-        : 'Stored Tradera session expired and Tradera requires manual verification. Refresh the saved browser session.');
-
-  return authError(recoveryMessage, {
-    ...buildFailureMeta(run),
-    connectionId,
-    currentUrl,
-    errorText,
-    recoveryAction: 'tradera_manual_login',
-    recoveryMessage,
-    captchaDetected,
-    manualVerificationDetected,
-  });
-};
-
 const toCategoryFetchError = (
   run: Awaited<ReturnType<typeof enqueuePlaywrightNodeRun>>,
   connectionId: string
 ): Error => {
   const failureMessages = collectRunnerFailureMessages(run);
-  const rawMessage = failureMessages.find((message) => isAuthRequiredMessage(message)) ??
-    failureMessages[0] ??
-    null;
-  const failureMeta = {
-    ...buildFailureMeta(run),
-    connectionId,
-  };
-
-  if (rawMessage && isAuthRequiredMessage(rawMessage)) {
-    const recoveryMessage = rawMessage.replace(/^AUTH_REQUIRED:\s*/i, '').trim();
-    return authError(rawMessage.replace(/^AUTH_REQUIRED:\s*/i, '').trim(), {
-      ...failureMeta,
-      recoveryAction: 'tradera_manual_login',
-      recoveryMessage,
-    });
-  }
+  const rawMessage = failureMessages[0] ?? null;
 
   return new AppError(
-    rawMessage ?? 'Tradera categories could not be fetched from the live listing page.',
+    rawMessage ?? 'Tradera categories could not be fetched from the public categories pages.',
     {
       code: AppErrorCodes.operationFailed,
       httpStatus: 422,
-      meta: failureMeta,
+      meta: {
+        ...buildFailureMeta(run),
+        connectionId,
+      },
       expected: true,
     }
   );
@@ -284,14 +170,6 @@ export const fetchTraderaCategoriesForConnection = async (
   connection: IntegrationConnectionRecord
 ): Promise<TraderaCategoryRecord[]> => {
   const storageState = parsePersistedStorageState(connection.playwrightStorageState);
-  if (!storageState) {
-    throw badRequestError(
-      'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
-      { connectionId: connection.id }
-    );
-  }
-
-  const systemSettings = await loadTraderaSystemSettings();
   const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
   const personaId = connection.playwrightPersonaId?.trim() || undefined;
 
@@ -301,21 +179,19 @@ export const fetchTraderaCategoriesForConnection = async (
       input: {
         connectionId: connection.id,
         traderaConfig: {
-          listingFormUrl: systemSettings.listingFormUrl,
+          categoriesUrl: TRADERA_PUBLIC_CATEGORIES_URL,
         },
       },
       timeoutMs: CATEGORY_SCRAPE_TIMEOUT_MS,
       preventNewPages: true,
       browserEngine: 'chromium',
-      startUrl: systemSettings.listingFormUrl,
+      startUrl: TRADERA_PUBLIC_CATEGORIES_URL,
       capture: {
         screenshot: true,
         html: true,
       },
       ...(personaId ? { personaId } : {}),
-      contextOptions: {
-        storageState,
-      },
+      ...(storageState ? { contextOptions: { storageState } } : {}),
       settingsOverrides: {
         headless: playwrightSettings.headless,
         slowMo: playwrightSettings.slowMo,
@@ -347,42 +223,44 @@ export const fetchTraderaCategoriesForConnection = async (
   const { resultValue, finalUrl } = resolveRunnerOutputs(run.result);
   const categories = normalizeCategories(resultValue['categories']);
   const categorySource = extractTrimmedString(resultValue['categorySource']);
-  const withParent = categories.filter((c) => c.parentId && c.parentId !== '0');
+  const withParent = categories.filter((category) => category.parentId && category.parentId !== '0');
 
-  // eslint-disable-next-line no-console
-  console.log('[tradera-category-fetch]', JSON.stringify({
-    categorySource,
-    total: categories.length,
-    withParentCount: withParent.length,
-    rootCount: categories.length - withParent.length,
-    scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
-    sampleCategories: categories.slice(0, 5).map((c) => ({ id: c.id, name: c.name, parentId: c.parentId })),
-    runLogs: (Array.isArray(run.logs) ? run.logs : []).filter(
-      (l) => typeof l === 'string' && l.includes('tradera.category')
-    ).slice(-20),
-  }, null, 2));
+  console.log(
+    '[tradera-category-fetch]',
+    JSON.stringify(
+      {
+        categorySource,
+        total: categories.length,
+        withParentCount: withParent.length,
+        rootCount: categories.length - withParent.length,
+        scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
+        sampleCategories: categories
+          .slice(0, 5)
+          .map((category) => ({ id: category.id, name: category.name, parentId: category.parentId })),
+        crawlStats: isObjectRecord(resultValue['crawlStats']) ? resultValue['crawlStats'] : null,
+        runLogs: (Array.isArray(run.logs) ? run.logs : [])
+          .filter((line) => typeof line === 'string' && line.includes('tradera.category'))
+          .slice(-20),
+      },
+      null,
+      2
+    )
+  );
 
   if (categories.length === 0) {
-    const completedRunAuthError = toCompletedRunAuthError({
-      run,
-      connectionId: connection.id,
-      resultValue,
-      finalUrl,
-    });
-    if (completedRunAuthError) {
-      throw completedRunAuthError;
-    }
-
     throw new AppError(
-      'Tradera categories could not be scraped from the listing page — the page structure may have changed. Configure Tradera API credentials (App ID and App Key) on the connection to fetch categories via the Tradera SOAP API instead.',
+      'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed. Configure Tradera API credentials (App ID and App Key) on the connection to fetch categories via the Tradera SOAP API instead.',
       {
         code: AppErrorCodes.operationFailed,
         httpStatus: 422,
         meta: {
           ...buildFailureMeta(run),
+          connectionId: connection.id,
           finalUrl,
           categorySource: extractTrimmedString(resultValue['categorySource']),
           scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
+          diagnostics: isObjectRecord(resultValue['diagnostics']) ? resultValue['diagnostics'] : null,
+          crawlStats: isObjectRecord(resultValue['crawlStats']) ? resultValue['crawlStats'] : null,
           recoveryAction: 'tradera_configure_api_credentials',
           recoveryMessage:
             'Add Tradera API App ID and App Key to this connection, then retry category fetch.',

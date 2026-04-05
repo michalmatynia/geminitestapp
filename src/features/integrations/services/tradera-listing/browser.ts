@@ -23,7 +23,12 @@ export const runTraderaBrowserListing = async ({
   action: 'list' | 'relist';
   browserMode: PlaywrightRelistBrowserMode;
 }): Promise<TraderaBrowserListingResult> => {
-  if (connection.traderaBrowserMode === 'scripted' || browserMode !== 'connection_default') {
+  // Relist relies on the managed quicklist flow for duplicate detection before creating a new listing.
+  if (
+    action === 'relist' ||
+    connection.traderaBrowserMode === 'scripted' ||
+    browserMode !== 'connection_default'
+  ) {
     return runTraderaBrowserListingScripted({
       listing,
       connection,

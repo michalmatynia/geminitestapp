@@ -8,6 +8,9 @@ export const toRecord = (value: unknown): Record<string, unknown> =>
 export const readString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
+export const readBoolean = (value: unknown): boolean | null =>
+  typeof value === 'boolean' ? value : null;
+
 export const buildCanonicalTraderaItemUrl = (externalListingId: string): string =>
   `https://www.tradera.com/item/${externalListingId}`;
 
@@ -39,10 +42,21 @@ export const resolveCompletedAtFromListing = (
   const lastExecution = toRecord(traderaData['lastExecution']);
   const metadata = toRecord(lastExecution['metadata']);
   const rawCompletedAt =
-    readString(metadata['completedAt']) ?? readString(listing.listedAt ?? null);
+    readString(metadata['completedAt']) ??
+    readString(lastExecution['executedAt']) ??
+    readString(listing.listedAt ?? null);
   if (!rawCompletedAt) return null;
   const parsed = Date.parse(rawCompletedAt);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+export const resolveDuplicateLinkedFromListing = (
+  listing?: ProductListingWithDetails | null | undefined
+): boolean => {
+  const traderaData = toRecord(toRecord(listing?.marketplaceData)['tradera']);
+  const lastExecution = toRecord(traderaData['lastExecution']);
+  const metadata = toRecord(lastExecution['metadata']);
+  return readBoolean(metadata['duplicateLinked']) === true;
 };
 
 export const formatCompletedAt = (value: number | null | undefined): string | null => {

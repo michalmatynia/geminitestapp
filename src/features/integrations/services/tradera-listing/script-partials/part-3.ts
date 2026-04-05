@@ -44,30 +44,102 @@ export const PART_3 = String.raw`        expectedValue,
       return null;
     };
 
+    const findScopedSearchTrigger = async () => {
+      for (const label of ACTIVE_SEARCH_TRIGGER_LABELS) {
+        const escapedLabel = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+        const candidateLocators = [
+          page
+            .locator('main button, main a, [role="main"] button, [role="main"] a')
+            .filter({
+              hasText: new RegExp(escapedLabel, 'i'),
+            }),
+          page.getByRole('button', { name: new RegExp(escapedLabel, 'i') }),
+          page.getByRole('link', { name: new RegExp(escapedLabel, 'i') }),
+        ];
+
+        for (const locator of candidateLocators) {
+          const count = await locator.count().catch(() => 0);
+          for (let index = 0; index < count; index += 1) {
+            const candidate = locator.nth(index);
+            const visible = await candidate.isVisible().catch(() => false);
+            if (!visible) continue;
+
+            const insideHeader = await candidate
+              .evaluate((element) => Boolean(element.closest('header, #site-header, [role="banner"]')))
+              .catch(() => false);
+            if (insideHeader) continue;
+
+            return candidate;
+          }
+        }
+      }
+
+      return null;
+    };
+
     let searchInput = await findScopedSearchInput();
     if (searchInput) return searchInput;
 
-    for (const label of ACTIVE_SEARCH_TRIGGER_LABELS) {
-      const searchButton = page
-        .locator('main button')
-        .filter({
-          hasText: new RegExp(
-            '^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$',
-            'i'
-          ),
-        })
-        .first();
-      const searchButtonVisible = await searchButton.isVisible().catch(() => false);
-      if (!searchButtonVisible) continue;
-      await humanClick(searchButton);
+    const searchTrigger = await findScopedSearchTrigger();
+    if (searchTrigger) {
+      await humanClick(searchTrigger);
       await wait(500);
       searchInput = await findScopedSearchInput();
-      if (searchInput) {
-        break;
-      }
     }
 
     return searchInput;
+  };
+
+  const readActiveSearchInputValue = async (searchInput) => {
+    if (!searchInput) return '';
+
+    return normalizeWhitespace(
+      await searchInput
+        .evaluate((element) => {
+          if ('value' in element && typeof element.value === 'string') {
+            return element.value;
+          }
+          return element.textContent || '';
+        })
+        .catch(() => '')
+    );
+  };
+
+  const prepareActiveListingsSearchInput = async (searchInput, term) => {
+    const expectedTerm = normalizeWhitespace(term);
+    if (!searchInput || !expectedTerm) {
+      return '';
+    }
+
+    await humanClick(searchInput).catch(() => undefined);
+    await humanFill(searchInput, '', { pauseAfter: false });
+    let currentValue = await readActiveSearchInputValue(searchInput);
+    if (currentValue) {
+      await humanClick(searchInput).catch(() => undefined);
+      await clearFocusedEditableField().catch(() => undefined);
+      await humanFill(searchInput, '', { pauseAfter: false });
+      currentValue = await readActiveSearchInputValue(searchInput);
+    }
+
+    await humanFill(searchInput, expectedTerm, { pauseAfter: false });
+    await wait(250);
+
+    let appliedValue = await readActiveSearchInputValue(searchInput);
+    if (normalizeWhitespace(appliedValue).toLowerCase() !== expectedTerm.toLowerCase()) {
+      await humanClick(searchInput).catch(() => undefined);
+      await clearFocusedEditableField().catch(() => undefined);
+      await humanFill(searchInput, expectedTerm, { pauseAfter: false });
+      await wait(250);
+      appliedValue = await readActiveSearchInputValue(searchInput);
+    }
+
+    if (normalizeWhitespace(appliedValue).toLowerCase() !== expectedTerm.toLowerCase()) {
+      throw new Error(
+        'FAIL_DUPLICATE_UNCERTAIN: Active listings search input did not accept the English title search term.'
+      );
+    }
+
+    return appliedValue;
   };
 
   const triggerActiveSearchSubmit = async () => {
@@ -134,7 +206,16 @@ export const PART_3 = String.raw`        expectedValue,
 
     const activeTabTrigger = await findActiveTabTrigger();
     if (!activeTabTrigger) {
-      return false;
+      await page
+        .goto(ACTIVE_URL, {
+          waitUntil: 'domcontentloaded',
+          timeout: 30_000,
+        })
+        .catch(() => undefined);
+      await wait(700);
+      const afterReloadUrl = page.url().toLowerCase();
+      const hasActiveStateAfterReload = Boolean(await firstVisible(ACTIVE_TAB_STATE_SELECTORS));
+      return afterReloadUrl.includes('tab=active') || hasActiveStateAfterReload;
     }
 
     await humanClick(activeTabTrigger).catch(() => undefined);
@@ -455,29 +536,256 @@ export const PART_3 = String.raw`        expectedValue,
     return null;
   };
 
-  const chooseFallbackCategory = async () => {
+  const normalizeCategoryPathValue = (value) => {
+    const normalized = normalizeWhitespace(value || '');
+    if (!normalized) return '';
+    return normalized.replace(/\s*\/\s*/g, ' > ').replace(/\s*>\s*/g, ' > ').trim();
+  };
+
+  const isCategoryPlaceholderValue = (value) => {
+    const normalized = normalizeCategoryPathValue(value).toLowerCase();
+    if (!normalized) return true;
+
+    return CATEGORY_PLACEHOLDER_LABELS.some(
+      (label) => normalized === normalizeCategoryPathValue(label).toLowerCase()
+    );
+  };
+
+  const readSelectedCategoryPathFromTrigger = async (trigger) => {
+    if (!trigger) return null;
+
+    const resolvedValue = await trigger
+      .evaluate((element) => {
+        const labelledBy = (element.getAttribute('aria-labelledby') || '')
+          .split(/\s+/)
+          .map((value) => value.trim())
+          .filter(Boolean);
+        const labelledTexts = labelledBy
+          .map((id) => document.getElementById(id)?.textContent || '')
+          .map((text) => text.replace(/\s+/g, ' ').trim())
+          .filter(Boolean);
+        if (labelledTexts.length > 1) {
+          return labelledTexts[labelledTexts.length - 1];
+        }
+
+        return (element.textContent || '').replace(/\s+/g, ' ').trim();
+      })
+      .catch(() => null);
+    const normalizedValue = normalizeCategoryPathValue(resolvedValue);
+    if (!normalizedValue) return null;
+    if (isCategoryPlaceholderValue(normalizedValue)) return null;
+
+    for (const label of CATEGORY_FIELD_LABELS) {
+      const escapedLabel = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+      const withoutLabel = normalizedValue.replace(new RegExp('^' + escapedLabel + '\\s*', 'i'), '');
+      if (withoutLabel !== normalizedValue) {
+        const candidate = withoutLabel.trim() || null;
+        if (!candidate || isCategoryPlaceholderValue(candidate)) {
+          return null;
+        }
+        return candidate;
+      }
+    }
+
+    return normalizedValue;
+  };
+
+  const readCurrentSelectedCategoryPath = async () => {
+    const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);
+    if (!categoryTrigger) return null;
+    return readSelectedCategoryPathFromTrigger(categoryTrigger);
+  };
+
+  const readVisibleCategoryMenuOptions = async () => {
+    return page
+      .locator('[data-test-category-chooser="true"] [role="menuitem"]')
+      .evaluateAll((elements) =>
+        elements
+          .map((element) => {
+            const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+            const rect = element.getBoundingClientRect();
+            const style = window.getComputedStyle(element);
+            const visible =
+              rect.width > 0 &&
+              rect.height > 0 &&
+              style.visibility !== 'hidden' &&
+              style.display !== 'none';
+            return visible && text ? text : null;
+          })
+          .filter(Boolean)
+      )
+      .catch(() => []);
+  };
+
+  const readCategoryPickerBreadcrumbs = async () => {
+    return page
+      .locator(
+        '[data-test-category-chooser="true"] nav[aria-label="Breadcrumb"] button, [data-test-category-chooser="true"] nav[aria-label="Breadcrumb"] li'
+      )
+      .evaluateAll((elements) =>
+        elements
+          .map((element) => {
+            const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+            const rect = element.getBoundingClientRect();
+            const style = window.getComputedStyle(element);
+            const visible =
+              rect.width > 0 &&
+              rect.height > 0 &&
+              style.visibility !== 'hidden' &&
+              style.display !== 'none';
+            return visible && text ? text : null;
+          })
+          .filter(Boolean)
+      )
+      .catch(() => []);
+  };
+
+  const findVisibleCategoryBackButton = async () => {
+    const candidate = page
+      .locator(
+        '[data-test-category-chooser="true"] button[aria-label="Back"], [data-test-category-chooser="true"] button[title="Back"], [data-test-category-chooser="true"] button[aria-label="Tillbaka"], [data-test-category-chooser="true"] button[title="Tillbaka"]'
+      )
+      .first();
+    const visible = await candidate.isVisible().catch(() => false);
+    return visible ? candidate : null;
+  };
+
+  const readCategoryPickerState = async () => {
+    const [selectedPath, visibleOptions, breadcrumbs, backButton] = await Promise.all([
+      readCurrentSelectedCategoryPath(),
+      readVisibleCategoryMenuOptions(),
+      readCategoryPickerBreadcrumbs(),
+      findVisibleCategoryBackButton(),
+    ]);
+
+    return {
+      selectedPath,
+      visibleOptions,
+      breadcrumbs,
+      backButtonVisible: Boolean(backButton),
+    };
+  };
+
+  const ensureCategoryPickerOpen = async (context) => {
     const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);
     if (!categoryTrigger) {
       throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
     }
 
-    await logClickTarget('category-trigger:fallback', categoryTrigger);
+    const expanded = await categoryTrigger.getAttribute('aria-expanded').catch(() => null);
+    const visibleOptions = await readVisibleCategoryMenuOptions();
+    if (expanded === 'true' || visibleOptions.length > 0) {
+      return categoryTrigger;
+    }
+
+    await logClickTarget('category-trigger:' + context, categoryTrigger);
     await humanClick(categoryTrigger);
     await wait(400);
+    return categoryTrigger;
+  };
 
-    let selectedDepth = 0;
+  const clickCategoryMenuOptionByLabels = async (labels) => {
+    for (const label of labels) {
+      if (await clickMenuItemByName(label)) {
+        return label;
+      }
+    }
+    return null;
+  };
 
-    for (const segment of FALLBACK_CATEGORY_PATH_SEGMENTS) {
-      let selectedAtDepth = false;
-      for (const optionLabel of FALLBACK_CATEGORY_OPTION_LABELS) {
-        selectedAtDepth = await clickMenuItemByName(optionLabel);
-        if (selectedAtDepth) {
-          selectedDepth += 1;
-          break;
+  const ensureCategoryOptionVisible = async ({
+    targetPath,
+    optionLabels,
+    maxBackSteps = 8,
+    requireRoot = false,
+  }) => {
+    const normalizedOptionLabels = optionLabels.map((label) => normalizeWhitespace(label).toLowerCase());
+
+    for (let step = 0; step <= maxBackSteps; step += 1) {
+      const pickerState = await readCategoryPickerState();
+      const visibleOptions = pickerState.visibleOptions.map((value) =>
+        normalizeWhitespace(value).toLowerCase()
+      );
+      const optionVisible = normalizedOptionLabels.some((label) => visibleOptions.includes(label));
+      const atRequiredLevel = requireRoot ? !pickerState.backButtonVisible : true;
+
+      if (optionVisible && atRequiredLevel) {
+        if (step > 0) {
+          log?.('tradera.quicklist.category.repositioned', {
+            targetPath,
+            steps: step,
+            requireRoot,
+            selectedPath: pickerState.selectedPath,
+            breadcrumbs: pickerState.breadcrumbs,
+            visibleOptions: pickerState.visibleOptions,
+          });
         }
+        return true;
       }
 
-      if (!selectedAtDepth) {
-        if (selectedDepth === 0) {
-          throw new Error(
-            'FAIL_CATEGORY_SET: Fallback category path "' + FALLBACK_CATEGORY_PATH + '" not found.'`;
+      const backButton = await findVisibleCategoryBackButton();
+      if (!backButton) {
+        log?.('tradera.quicklist.category.reposition_failed', {
+          targetPath,
+          optionLabels,
+          requireRoot,
+          steps: step,
+          selectedPath: pickerState.selectedPath,
+          breadcrumbs: pickerState.breadcrumbs,
+          visibleOptions: pickerState.visibleOptions,
+        });
+        return false;
+      }
+
+      await logClickTarget('category-back:' + targetPath, backButton);
+      await humanClick(backButton).catch(() => undefined);
+      await wait(400);
+    }
+
+    const pickerState = await readCategoryPickerState();
+    log?.('tradera.quicklist.category.reposition_timeout', {
+      targetPath,
+      optionLabels,
+      requireRoot,
+      selectedPath: pickerState.selectedPath,
+      breadcrumbs: pickerState.breadcrumbs,
+      visibleOptions: pickerState.visibleOptions,
+    });
+    return false;
+  };
+
+  const categoryPathMatches = (currentPath, segments) => {
+    if (!currentPath || !Array.isArray(segments) || segments.length === 0) {
+      return false;
+    }
+
+    return (
+      normalizeCategoryPathValue(currentPath).toLowerCase() ===
+      normalizeCategoryPathValue(segments.join(' > ')).toLowerCase()
+    );
+  };
+
+  const chooseFallbackCategory = async () => {
+    const currentSelectedPath = await readCurrentSelectedCategoryPath();
+    if (categoryPathMatches(currentSelectedPath, FALLBACK_CATEGORY_PATH_SEGMENTS)) {
+      selectedCategoryPath = FALLBACK_CATEGORY_PATH;
+      selectedCategorySource = 'fallback';
+      log?.('tradera.quicklist.category.fallback', {
+        requestedPath: FALLBACK_CATEGORY_PATH,
+        selectedPath: selectedCategoryPath,
+        alreadySelected: true,
+      });
+      return;
+    }
+
+    await ensureCategoryPickerOpen('fallback');
+
+    const fallbackVisible = await ensureCategoryOptionVisible({
+      targetPath: FALLBACK_CATEGORY_PATH,
+      optionLabels: FALLBACK_CATEGORY_OPTION_LABELS,
+      requireRoot: true,
+    });
+    if (!fallbackVisible) {
+      const pickerState = await readCategoryPickerState();
+      throw new Error(
+        'FAIL_CATEGORY_SET: Fallback category path "' + FALLBACK_CATEGORY_PATH + '" not found. Last state: ' + JSON.stringify(pickerState) + ''`;

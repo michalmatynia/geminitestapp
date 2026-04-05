@@ -91,7 +91,7 @@ function renderFields(integrationSlug: string): void {
 }
 
 describe('ConnectionFormFields', () => {
-  it('shows scripted Tradera browser controls and seeds the default script on mode change', () => {
+  it('shows scripted Tradera browser controls without persisting a managed script body by default', () => {
     renderFields('tradera');
 
     expect(screen.getByLabelText('Browser automation mode')).toBeInTheDocument();
@@ -103,9 +103,7 @@ describe('ConnectionFormFields', () => {
 
     const textarea = screen.getByLabelText('Playwright listing script');
     expect(textarea).toBeInTheDocument();
-    expect((textarea as HTMLTextAreaElement).value).toContain(
-      'AUTH_REQUIRED: Tradera login requires manual verification.'
-    );
+    expect((textarea as HTMLTextAreaElement).value).toBe('');
   });
 
   it('does not show scripted browser controls for Tradera API connections', () => {

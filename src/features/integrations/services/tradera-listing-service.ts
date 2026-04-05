@@ -336,15 +336,19 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
     existingExternalListingId: resolved.listing.externalListingId,
     resultExternalListingId: result.externalListingId,
   });
+  const duplicateLinked = result.metadata?.['duplicateLinked'] === true;
+  const persistedListedAt = duplicateLinked ? resolved.listing.listedAt ?? null : now;
+  const persistedExpiresAt = duplicateLinked ? null : result.expiresAt ?? null;
+  const persistedNextRelistAt = duplicateLinked ? null : result.nextRelistAt ?? null;
 
   if (result.ok) {
     await resolved.repository.updateListingStatus(input.listingId, 'active');
     await resolved.repository.updateListing(input.listingId, {
       status: 'active',
       externalListingId: persistedExternalListingId,
-      listedAt: now,
-      expiresAt: result.expiresAt ?? null,
-      nextRelistAt: result.nextRelistAt ?? null,
+      listedAt: persistedListedAt,
+      expiresAt: persistedExpiresAt,
+      nextRelistAt: persistedNextRelistAt,
       lastRelistedAt: input.action === 'relist' ? now : null,
       lastStatusCheckAt: now,
       failureReason: null,
@@ -354,7 +358,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       exportedAt: now,
       status: 'active',
       externalListingId: persistedExternalListingId,
-      expiresAt: result.expiresAt ?? null,
+      expiresAt: persistedExpiresAt,
       failureReason: null,
       relist: input.action === 'relist',
       fields: historyFields,

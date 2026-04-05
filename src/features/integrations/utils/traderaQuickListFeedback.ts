@@ -13,6 +13,7 @@ export type PersistedTraderaQuickListFeedback = {
   listingUrl?: string | null | undefined;
   externalListingId?: string | null | undefined;
   completedAt?: number | null | undefined;
+  duplicateLinked?: boolean | null | undefined;
 };
 
 export const TRADERA_QUICK_LIST_FEEDBACK_STORAGE_KEY = 'tradera-quick-list-feedback';
@@ -90,6 +91,8 @@ const readPersistedFeedbackMap = (): Record<string, PersistedTraderaQuickListFee
         typeof record['completedAt'] === 'number' && Number.isFinite(record['completedAt'])
           ? record['completedAt']
           : null;
+      const duplicateLinked =
+        typeof record['duplicateLinked'] === 'boolean' ? record['duplicateLinked'] : null;
 
       if (
         status !== 'processing' &&
@@ -120,6 +123,7 @@ const readPersistedFeedbackMap = (): Record<string, PersistedTraderaQuickListFee
             listingUrl,
             externalListingId,
             completedAt,
+            duplicateLinked,
           };
         }
         return;
@@ -138,6 +142,7 @@ const readPersistedFeedbackMap = (): Record<string, PersistedTraderaQuickListFee
         listingUrl,
         externalListingId,
         completedAt,
+        duplicateLinked,
       };
     });
 
@@ -188,6 +193,7 @@ export const persistTraderaQuickListFeedback = (
     listingUrl?: string | null | undefined;
     externalListingId?: string | null | undefined;
     completedAt?: number | null | undefined;
+    duplicateLinked?: boolean | null | undefined;
   }
 ): void => {
   if (!productId.trim()) return;
@@ -206,6 +212,7 @@ export const persistTraderaQuickListFeedback = (
     listingUrl: options?.listingUrl ?? null,
     externalListingId: options?.externalListingId ?? null,
     completedAt: options?.completedAt ?? null,
+    duplicateLinked: options?.duplicateLinked ?? null,
   };
   writePersistedFeedbackMap(nextMap);
 };

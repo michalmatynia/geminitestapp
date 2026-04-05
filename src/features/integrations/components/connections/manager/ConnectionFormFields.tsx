@@ -158,12 +158,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                   onValueChange={(nextValue): void =>
                     setForm((prev) => ({
                       ...prev,
-                      traderaBrowserMode:
-                        nextValue === 'scripted' ? 'scripted' : 'builtin',
-                      playwrightListingScript:
-                        nextValue === 'scripted' && !prev.playwrightListingScript.trim()
-                          ? DEFAULT_TRADERA_QUICKLIST_SCRIPT
-                          : prev.playwrightListingScript,
+                      traderaBrowserMode: nextValue === 'scripted' ? 'scripted' : 'builtin',
                     }))
                   }
                   options={[...TRADERA_BROWSER_MODE_OPTIONS]}

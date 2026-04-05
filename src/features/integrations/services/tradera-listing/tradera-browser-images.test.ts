@@ -5,11 +5,15 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
   accessMock,
+  copyFileMock,
+  mkdtempMock,
   statMock,
   resolveAppBaseUrlMock,
   getPublicPathFromStoredPathMock,
 } = vi.hoisted(() => ({
   accessMock: vi.fn(),
+  copyFileMock: vi.fn(),
+  mkdtempMock: vi.fn(),
   statMock: vi.fn(),
   resolveAppBaseUrlMock: vi.fn(),
   getPublicPathFromStoredPathMock: vi.fn(),
@@ -17,9 +21,13 @@ const {
 
 vi.mock('node:fs/promises', () => ({
   access: (...args: unknown[]) => accessMock(...args),
+  copyFile: (...args: unknown[]) => copyFileMock(...args),
+  mkdtemp: (...args: unknown[]) => mkdtempMock(...args),
   stat: (...args: unknown[]) => statMock(...args),
   default: {
     access: (...args: unknown[]) => accessMock(...args),
+    copyFile: (...args: unknown[]) => copyFileMock(...args),
+    mkdtemp: (...args: unknown[]) => mkdtempMock(...args),
     stat: (...args: unknown[]) => statMock(...args),
   },
 }));
@@ -34,6 +42,7 @@ import {
   resolveLocalProductImagePaths,
   resolveProductImageUrls,
   resolveScriptInputImageDiagnostics,
+  resolveTraderaProductImageUploadPlan,
   toAbsolutePublicFilePath,
 } from './tradera-browser-images';
 
@@ -48,22 +57,30 @@ describe('tradera-browser-images', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resolveAppBaseUrlMock.mockReturnValue('http://localhost:3000');
+    mkdtempMock.mockResolvedValue('/tmp/tradera-upload-order-test');
+    copyFileMock.mockResolvedValue(undefined);
     getPublicPathFromStoredPathMock.mockImplementation((value: string) => {
       const filename = value.trim().split('/').pop() ?? 'image.jpg';
       return `/uploads/${filename}`;
     });
   });
 
-  it('deduplicates and trims product image URLs from links and image file fields', () => {
+  it('preserves canonical product image order and appends only new imageLinks', () => {
     const product = createProduct({
-      imageLinks: ['  /images/one.jpg  ', '', 'https://cdn.example.com/two.jpg'],
+      imageLinks: ['  /images/extra.jpg  ', '', '/images/one.jpg'],
       images: [
         {
           imageFile: {
             publicUrl: ' /images/one.jpg ',
-            url: ' https://cdn.example.com/two.jpg ',
-            thumbnailUrl: ' /images/thumb.jpg ',
-            filepath: ' /uploads/local.jpg ',
+            url: ' https://cdn.example.com/one-alt.jpg ',
+            thumbnailUrl: ' /images/one-thumb.jpg ',
+            filepath: ' /uploads/one-local.jpg ',
+          },
+        },
+        {
+          imageFile: {
+            url: ' /images/two.jpg ',
+            filepath: ' /uploads/two-local.jpg ',
           },
         },
       ],
@@ -71,9 +88,8 @@ describe('tradera-browser-images', () => {
 
     expect(resolveProductImageUrls(product)).toEqual([
       '/images/one.jpg',
-      'https://cdn.example.com/two.jpg',
-      '/images/thumb.jpg',
-      '/uploads/local.jpg',
+      '/images/two.jpg',
+      '/images/extra.jpg',
     ]);
   });
 
@@ -87,48 +103,125 @@ describe('tradera-browser-images', () => {
     expect(toAbsolutePublicFilePath('https://localhost:3000/uploads/example.jpg')).toBeNull();
   });
 
-  it('returns only readable local image paths that meet the byte threshold', async () => {
+  it('returns ordered staged local image paths only when local coverage is complete', async () => {
     getPublicPathFromStoredPathMock.mockImplementation((value: string) => {
       const normalized = value.trim();
-      if (normalized.includes('valid')) return '/uploads/valid.jpg';
-      if (normalized.includes('small')) return '/uploads/small.jpg';
-      if (normalized.includes('missing')) return '/uploads/missing.jpg';
+      if (normalized.includes('one-valid')) return '/uploads/one-valid.jpg';
+      if (normalized.includes('two-valid')) return '/uploads/two-valid.jpg';
       return '/uploads/other.jpg';
     });
 
-    accessMock.mockImplementation(async (candidate: string) => {
-      if (candidate.endsWith('/missing.jpg')) {
-        throw new Error('missing');
-      }
-    });
     statMock.mockImplementation(async (candidate: string) => ({
-      isFile: () => !candidate.endsWith('/not-file.jpg'),
-      size: candidate.endsWith('/small.jpg') ? MIN_TRADERA_IMAGE_BYTES - 1 : MIN_TRADERA_IMAGE_BYTES,
+      isFile: () => true,
+      size: MIN_TRADERA_IMAGE_BYTES,
     }));
 
     const product = createProduct({
-      imageLinks: [
-        ' /uploads/valid.jpg ',
-        'https://localhost:3000/uploads/valid.jpg',
-        '/uploads/small.jpg',
-        '/uploads/missing.jpg',
-      ],
+      sku: 'SKU-1',
+      imageLinks: ['https://localhost:3000/uploads/two-valid.jpg'],
       images: [
         {
           imageFile: {
-            filepath: ' /uploads/valid.jpg ',
-            publicUrl: ' https://localhost:3000/uploads/valid.jpg ',
-            url: ' /uploads/small.jpg ',
+            filepath: ' /uploads/one-valid.jpg ',
+            publicUrl: ' https://localhost:3000/uploads/one-valid.jpg ',
           },
         },
       ],
     });
 
     await expect(resolveLocalProductImagePaths(product)).resolves.toEqual([
-      path.join(process.cwd(), 'public', 'uploads/valid.jpg'),
+      '/tmp/tradera-upload-order-test/SKU-1_01.jpg',
+      '/tmp/tradera-upload-order-test/SKU-1_02.jpg',
     ]);
-    expect(accessMock).toHaveBeenCalledTimes(3);
+    expect(accessMock).toHaveBeenCalledTimes(2);
     expect(statMock).toHaveBeenCalledTimes(2);
+    expect(copyFileMock).toHaveBeenNthCalledWith(
+      1,
+      path.join(process.cwd(), 'public', 'uploads/one-valid.jpg'),
+      '/tmp/tradera-upload-order-test/SKU-1_01.jpg'
+    );
+    expect(copyFileMock).toHaveBeenNthCalledWith(
+      2,
+      path.join(process.cwd(), 'public', 'uploads/two-valid.jpg'),
+      '/tmp/tradera-upload-order-test/SKU-1_02.jpg'
+    );
+  });
+
+  it('falls back to ordered downloads when local coverage is partial', async () => {
+    getPublicPathFromStoredPathMock.mockImplementation((value: string) => {
+      const normalized = value.trim();
+      if (normalized.includes('one-valid')) return '/uploads/one-valid.jpg';
+      if (normalized.includes('two-remote')) return '/uploads/two-remote.jpg';
+      return '/uploads/other.jpg';
+    });
+
+    accessMock.mockImplementation(async (candidate: string) => {
+      if (candidate.endsWith('/two-remote.jpg')) {
+        throw new Error('missing');
+      }
+    });
+    statMock.mockImplementation(async () => ({
+      isFile: () => true,
+      size: MIN_TRADERA_IMAGE_BYTES,
+    }));
+
+    const product = createProduct({
+      imageLinks: ['https://cdn.example.com/two-remote.jpg'],
+      images: [
+        {
+          imageFile: {
+            filepath: '/uploads/one-valid.jpg',
+            publicUrl: 'https://localhost:3000/uploads/one-valid.jpg',
+          },
+        },
+      ],
+    });
+
+    await expect(resolveTraderaProductImageUploadPlan(product)).resolves.toEqual({
+      imageUrls: [
+        'https://localhost:3000/uploads/one-valid.jpg',
+        'https://cdn.example.com/two-remote.jpg',
+      ],
+      localImagePaths: [],
+      imageCount: 2,
+      localImageCoverageCount: 1,
+      imageOrderStrategy: 'download-ordered',
+    });
+    expect(copyFileMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to ordered downloads when staging local copies fails', async () => {
+    copyFileMock.mockRejectedValueOnce(new Error('copy failed'));
+
+    const product = createProduct({
+      sku: 'SKU-1',
+      imageLinks: ['https://localhost:3000/uploads/two-valid.jpg'],
+      images: [
+        {
+          imageFile: {
+            filepath: '/uploads/one-valid.jpg',
+            publicUrl: 'https://localhost:3000/uploads/one-valid.jpg',
+          },
+        },
+        {
+          imageFile: {
+            filepath: '/uploads/two-valid.jpg',
+            publicUrl: 'https://localhost:3000/uploads/two-valid.jpg',
+          },
+        },
+      ],
+    });
+
+    await expect(resolveTraderaProductImageUploadPlan(product)).resolves.toEqual({
+      imageUrls: [
+        'https://localhost:3000/uploads/one-valid.jpg',
+        'https://localhost:3000/uploads/two-valid.jpg',
+      ],
+      localImagePaths: [],
+      imageCount: 2,
+      localImageCoverageCount: 2,
+      imageOrderStrategy: 'download-ordered',
+    });
   });
 
   it('reports local, remote, and empty script input diagnostics from trimmed string arrays', () => {

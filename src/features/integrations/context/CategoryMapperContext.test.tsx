@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiError } from '@/shared/lib/api-client';
 import {
   CategoryMapperProvider,
   useCategoryMapperActions,
@@ -22,7 +21,6 @@ const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
   fetchMutateAsync: vi.fn(),
   saveMutateAsync: vi.fn(),
-  ensureTraderaBrowserSession: vi.fn(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', async () => {
@@ -68,22 +66,6 @@ vi.mock('@/features/integrations/hooks/useMarketplaceMutations', () => ({
     isPending: false,
     mutateAsync: mocks.saveMutateAsync,
   }),
-}));
-
-vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
-  ensureTraderaBrowserSession: (...args: unknown[]) =>
-    mocks.ensureTraderaBrowserSession(...args),
-  isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
-    const normalized = value?.trim().toLowerCase() ?? '';
-    return (
-      normalized.includes('auth_required') ||
-      normalized.includes('manual verification') ||
-      normalized.includes('captcha') ||
-      normalized.includes('login requires') ||
-      normalized.includes('session expired') ||
-      normalized.includes('missing or expired')
-    );
-  },
 }));
 
 const createCatalog = (
@@ -158,20 +140,11 @@ const createCategoryMapping = (
 
 function Harness(): React.JSX.Element {
   const { selectedCatalogId, categoryTree } = useCategoryMapperData();
-  const {
-    pendingMappings,
-    staleMappings,
-    stats,
-    showTraderaLoginRecoveryModal,
-    traderaLoginRecoveryReason,
-    openingTraderaLoginRecovery,
-  } = useCategoryMapperUIState();
+  const { pendingMappings, staleMappings, stats } = useCategoryMapperUIState();
   const {
     handleAutoMatchByName,
     getMappingForExternal,
     handleFetchExternalCategories,
-    handleOpenTraderaLoginRecovery,
-    closeTraderaLoginRecoveryModal,
   } = useCategoryMapperActions();
 
   return (
@@ -182,13 +155,6 @@ function Harness(): React.JSX.Element {
       <div data-testid='unmapped-count'>{String(stats.unmapped)}</div>
       <div data-testid='stale-summary'>
         {JSON.stringify(staleMappings)}
-      </div>
-      <div data-testid='tradera-recovery-open'>
-        {showTraderaLoginRecoveryModal ? 'open' : 'closed'}
-      </div>
-      <div data-testid='tradera-recovery-reason'>{traderaLoginRecoveryReason ?? 'none'}</div>
-      <div data-testid='tradera-recovery-loading'>
-        {openingTraderaLoginRecovery ? 'loading' : 'idle'}
       </div>
       <div data-testid='mapping-ext-match'>
         {getMappingForExternal('market-ext-match') ?? 'none'}
@@ -210,12 +176,6 @@ function Harness(): React.JSX.Element {
       <button type='button' onClick={() => void handleFetchExternalCategories()}>
         Fetch external categories
       </button>
-      <button type='button' onClick={() => void handleOpenTraderaLoginRecovery()}>
-        Open Tradera login
-      </button>
-      <button type='button' onClick={closeTraderaLoginRecoveryModal}>
-        Close Tradera login
-      </button>
     </div>
   );
 }
@@ -225,7 +185,6 @@ describe('CategoryMapperProvider auto-match by name', () => {
     mocks.toast.mockReset();
     mocks.fetchMutateAsync.mockReset();
     mocks.saveMutateAsync.mockReset();
-    mocks.ensureTraderaBrowserSession.mockReset();
 
     const deskLamps = createInternalCategory({ id: 'int-desk', name: 'Desk Lamps' });
 
@@ -346,19 +305,13 @@ describe('CategoryMapperProvider auto-match by name', () => {
     );
   });
 
-  it('opens Tradera login recovery instead of showing a generic fetch error', async () => {
+  it('shows the fetch error directly when category sync fails', async () => {
     const user = userEvent.setup();
-    const apiError = new ApiError('Your session has expired. Log in again to continue.', 401);
-    apiError.payload = {
-      error: 'Your session has expired. Log in again to continue.',
-      code: 'UNAUTHORIZED',
-      details: {
-        recoveryAction: 'tradera_manual_login',
-        recoveryMessage:
-          'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
-      },
-    };
-    mocks.fetchMutateAsync.mockRejectedValue(apiError);
+    mocks.fetchMutateAsync.mockRejectedValue(
+      new Error(
+        'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed.'
+      )
+    );
 
     render(
       <CategoryMapperProvider
@@ -374,143 +327,10 @@ describe('CategoryMapperProvider auto-match by name', () => {
     await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
 
     await waitFor(() =>
-      expect(screen.getByTestId('tradera-recovery-open')).toHaveTextContent('open')
-    );
-    expect(screen.getByTestId('tradera-recovery-reason')).toHaveTextContent(
-      'Tradera browser session is missing or expired.'
-    );
-    expect(mocks.toast).not.toHaveBeenCalledWith(expect.stringContaining('Failed to fetch'), {
-      variant: 'error',
-    });
-  });
-
-  it('refreshes the Tradera session and retries fetch after manual login', async () => {
-    const user = userEvent.setup();
-    const apiError = new ApiError('Your session has expired. Log in again to continue.', 401);
-    apiError.payload = {
-      error: 'Your session has expired. Log in again to continue.',
-      code: 'UNAUTHORIZED',
-      details: {
-        recoveryAction: 'tradera_manual_login',
-        recoveryMessage:
-          'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
-      },
-    };
-    mocks.fetchMutateAsync
-      .mockRejectedValueOnce(apiError)
-      .mockResolvedValueOnce({
-        message: 'Successfully synced 12 categories from Tradera',
-      });
-    mocks.ensureTraderaBrowserSession.mockResolvedValue({
-      response: { ok: true, steps: [] },
-      savedSession: true,
-    });
-
-    render(
-      <CategoryMapperProvider
-        connectionId='conn-1'
-        connectionName='Tradera'
-        integrationId='integration-tradera'
-        integrationSlug='tradera'
-      >
-        <Harness />
-      </CategoryMapperProvider>
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
-
-    await waitFor(() =>
-      expect(screen.getByTestId('tradera-recovery-open')).toHaveTextContent('open')
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Open Tradera login' }));
-
-    await waitFor(() =>
-      expect(mocks.ensureTraderaBrowserSession).toHaveBeenCalledWith({
-        integrationId: 'integration-tradera',
-        connectionId: 'conn-1',
-      })
-    );
-    await waitFor(() =>
-      expect(screen.getByTestId('tradera-recovery-open')).toHaveTextContent('closed')
-    );
-    expect(mocks.fetchMutateAsync).toHaveBeenCalledTimes(2);
-    expect(mocks.toast).toHaveBeenCalledWith('Tradera login session refreshed.', {
-      variant: 'success',
-    });
-    expect(mocks.toast).toHaveBeenCalledWith('Successfully synced 12 categories from Tradera', {
-      variant: 'success',
-    });
-  });
-
-  it('opens Tradera recovery from a generic api error when auth details only exist in logTail', async () => {
-    const user = userEvent.setup();
-    const apiError = new ApiError('An unexpected error occurred. Please try again later.', 500);
-    apiError.payload = {
-      error: 'An unexpected error occurred. Please try again later.',
-      code: 'INTERNAL_SERVER_ERROR',
-      details: {
-        logTail: [
-          '[runtime] Launching chromium browser.',
-          '[runtime][error] Error: AUTH_REQUIRED: Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
-        ],
-      },
-    };
-    mocks.fetchMutateAsync.mockRejectedValue(apiError);
-
-    render(
-      <CategoryMapperProvider
-        connectionId='conn-1'
-        connectionName='Tradera'
-        integrationId='integration-tradera'
-        integrationSlug='tradera'
-      >
-        <Harness />
-      </CategoryMapperProvider>
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
-
-    await waitFor(() =>
-      expect(screen.getByTestId('tradera-recovery-open')).toHaveTextContent('open')
-    );
-    expect(screen.getByTestId('tradera-recovery-reason')).toHaveTextContent(
-      'Tradera browser session is missing or expired.'
-    );
-  });
-
-  it('opens Tradera recovery from generic api errors when auth details only exist in diagnostics', async () => {
-    const user = userEvent.setup();
-    const apiError = new ApiError('An unexpected error occurred. Please try again later.', 500);
-    apiError.payload = {
-      error: 'An unexpected error occurred. Please try again later.',
-      code: 'INTERNAL_SERVER_ERROR',
-      details: {
-        currentUrl: 'https://www.tradera.com/en/verification',
-        errorText: 'Security check required before you can continue.',
-        manualVerificationDetected: true,
-      },
-    };
-    mocks.fetchMutateAsync.mockRejectedValue(apiError);
-
-    render(
-      <CategoryMapperProvider
-        connectionId='conn-1'
-        connectionName='Tradera'
-        integrationId='integration-tradera'
-        integrationSlug='tradera'
-      >
-        <Harness />
-      </CategoryMapperProvider>
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
-
-    await waitFor(() =>
-      expect(screen.getByTestId('tradera-recovery-open')).toHaveTextContent('open')
-    );
-    expect(screen.getByTestId('tradera-recovery-reason')).toHaveTextContent(
-      'Stored Tradera session expired and Tradera requires manual verification.'
+      expect(mocks.toast).toHaveBeenCalledWith(
+        'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed.',
+        { variant: 'error' }
+      )
     );
   });
 });

@@ -97,6 +97,11 @@ const resolveTraderaExecutionSummary = (
   categoryMappingReason: string | null;
   categoryMatchScope: string | null;
   categoryInternalCategoryId: string | null;
+  duplicateLinked: boolean | null;
+  duplicateMatchStrategy: string | null;
+  duplicateMatchedProductId: string | null;
+  duplicateCandidateCount: number | null;
+  duplicateSearchTitle: string | null;
   shippingCondition: string | null;
   shippingPriceEur: number | null;
   imageInputSource: string | null;
@@ -153,6 +158,11 @@ const resolveTraderaExecutionSummary = (
     categoryMappingReason: readString(metadata['categoryMappingReason']),
     categoryMatchScope: readString(metadata['categoryMatchScope']),
     categoryInternalCategoryId: readString(metadata['categoryInternalCategoryId']),
+    duplicateLinked: readBoolean(metadata['duplicateLinked']),
+    duplicateMatchStrategy: readString(metadata['duplicateMatchStrategy']),
+    duplicateMatchedProductId: readString(metadata['duplicateMatchedProductId']),
+    duplicateCandidateCount: readNumber(metadata['duplicateCandidateCount']),
+    duplicateSearchTitle: readString(metadata['duplicateSearchTitle']),
     shippingCondition: readString(metadata['shippingCondition']),
     shippingPriceEur: readNumber(metadata['shippingPriceEur']),
     imageInputSource: readString(metadata['imageInputSource']),
@@ -519,6 +529,42 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Category path'
               value={traderaExecution.categoryPath}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.duplicateLinked ? (
+            <MetadataItem
+              label='Existing listing linked'
+              value='Yes'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.duplicateMatchStrategy ? (
+            <MetadataItem
+              label='Duplicate match strategy'
+              value={traderaExecution.duplicateMatchStrategy}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.duplicateMatchedProductId ? (
+            <MetadataItem
+              label='Duplicate Product ID'
+              value={traderaExecution.duplicateMatchedProductId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.duplicateCandidateCount !== null ? (
+            <MetadataItem
+              label='Duplicate title matches'
+              value={String(traderaExecution.duplicateCandidateCount)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.duplicateSearchTitle ? (
+            <MetadataItem
+              label='Duplicate search title'
+              value={traderaExecution.duplicateSearchTitle}
               variant='minimal'
             />
           ) : null}

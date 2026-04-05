@@ -30,8 +30,12 @@ vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
 }));
 
 vi.mock('./ProductListingItem', () => ({
-  renderProductListingItem: ({ listing }: { listing: { id: string } }) => (
-    <div data-testid={`listing-${listing.id}`} />
+  renderProductListingItem: ({
+    listing,
+  }: {
+    listing: { id: string; status?: string | null };
+  }) => (
+    <div data-testid={`listing-${listing.id}`}>{listing.status ?? 'unknown'}</div>
   ),
 }));
 
@@ -640,5 +644,100 @@ describe('ProductListingsContent', () => {
       'href',
       'https://www.tradera.com/item/123'
     );
+  });
+
+  it('renders duplicate-linked Tradera quick-export copy when an existing listing was linked', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'active',
+              externalListingId: '725447805',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              connection: {
+                id: 'conn-tradera-1',
+                name: 'Tradera Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.tradera.com/item/725447805',
+                tradera: {
+                  lastExecution: {
+                    metadata: {
+                      duplicateLinked: true,
+                    },
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera existing listing linked')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'The product is now linked to an existing Tradera listing. Open the live Tradera item directly from here.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^Linked:/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Completed:/)).toBeNull();
+  });
+
+  it('shows active status immediately in the modal when quick export has completed but the server row is still queued', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      listingUrl: 'https://www.tradera.com/item/123',
+      externalListingId: '123',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'queued',
+              externalListingId: '123',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              connection: {
+                id: 'conn-tradera-1',
+                name: 'Tradera Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.tradera.com/item/123',
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera status: active')).toBeInTheDocument();
+    expect(screen.getByTestId('listing-listing-1')).toHaveTextContent('active');
   });
 });

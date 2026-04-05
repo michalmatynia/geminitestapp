@@ -25,18 +25,12 @@ import {
   formatAutoMatchCategoryMappingsByNameMessage,
 } from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
 import { buildCategoryTree } from '@/features/integrations/components/marketplaces/category-mapper/category-table/utils';
-import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
-import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-import {
-  ensureTraderaBrowserSession,
-  isTraderaBrowserAuthRequiredMessage,
-} from '@/features/integrations/utils/tradera-browser-session';
 import { createStrictContext } from './createStrictContext';
 
 // --- Granular Contexts ---
@@ -63,9 +57,6 @@ export interface CategoryMapperUIState {
   pendingMappings: Map<string, string | null>;
   expandedIds: Set<string>;
   toggleExpand: (categoryId: string) => void;
-  showTraderaLoginRecoveryModal: boolean;
-  traderaLoginRecoveryReason: string | null;
-  openingTraderaLoginRecovery: boolean;
   staleMappings: Array<{
     externalCategoryId: string;
     externalCategoryName: string;
@@ -85,92 +76,6 @@ export const { Context: ActionsContext, useValue: useCategoryMapperActions } =
     displayName: 'CategoryMapperActionsContext',
     errorMessage: 'useCategoryMapperActions must be used within CategoryMapperProvider',
   });
-
-const TRADERA_CAPTCHA_HINTS = ['captcha', 'recaptcha', 'fylla i captcha', 'captcha:n'] as const;
-const TRADERA_MANUAL_VERIFICATION_TEXT_HINTS = [
-  ...TRADERA_CAPTCHA_HINTS,
-  'verification',
-  'verify',
-  'manual verification',
-  'security check',
-  'two-factor',
-  '2fa',
-  'bankid',
-  'engangskod',
-  'säkerhetskontroll',
-] as const;
-const TRADERA_MANUAL_VERIFICATION_URL_HINTS = [
-  '/challenge',
-  '/captcha',
-  '/verify',
-  '/verification',
-  '/bankid',
-  '/two-factor',
-  '/2fa',
-] as const;
-
-const readTrimmedString = (value: unknown): string | null =>
-  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-
-const includesAnyHint = (value: string | null, hints: readonly string[]): boolean => {
-  const normalized = value?.trim().toLowerCase() ?? '';
-  if (!normalized) {
-    return false;
-  }
-
-  return hints.some((hint) => normalized.includes(hint.toLowerCase()));
-};
-
-const getApiErrorDetails = (error: unknown): Record<string, unknown> | null => {
-  if (!(error instanceof ApiError)) {
-    return null;
-  }
-
-  const details =
-    error.payload && typeof error.payload === 'object' && 'details' in error.payload
-      ? (error.payload as { details?: unknown }).details
-      : null;
-
-  return details && typeof details === 'object' ? (details as Record<string, unknown>) : null;
-};
-
-const inferTraderaRecoveryMessageFromDetails = (
-  details: Record<string, unknown> | null
-): string | null => {
-  if (!details) {
-    return null;
-  }
-
-  const currentUrl = readTrimmedString(details['currentUrl']);
-  const errorText = readTrimmedString(details['errorText']) ?? readTrimmedString(details['message']);
-  const loginPage = details['loginPage'] === true;
-  const captchaDetected =
-    details['captchaDetected'] === true ||
-    includesAnyHint(errorText, TRADERA_CAPTCHA_HINTS) ||
-    includesAnyHint(
-      currentUrl,
-      TRADERA_MANUAL_VERIFICATION_URL_HINTS.filter((hint) => hint.includes('captcha'))
-    );
-  const manualVerificationDetected =
-    details['manualVerificationDetected'] === true ||
-    captchaDetected ||
-    includesAnyHint(errorText, TRADERA_MANUAL_VERIFICATION_TEXT_HINTS) ||
-    includesAnyHint(currentUrl, TRADERA_MANUAL_VERIFICATION_URL_HINTS);
-
-  if (loginPage) {
-    return 'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.';
-  }
-
-  if (captchaDetected) {
-    return 'Stored Tradera session expired and Tradera requires manual verification (captcha). Refresh the saved browser session.';
-  }
-
-  if (manualVerificationDetected) {
-    return 'Stored Tradera session expired and Tradera requires manual verification. Refresh the saved browser session.';
-  }
-
-  return null;
-};
 
 const normalizeParentExternalId = (value: string | null | undefined): string | null => {
   const candidate = typeof value === 'string' ? value.trim() : '';
@@ -249,92 +154,6 @@ const buildInternalCategoryOptions = (categories: ProductCategory[]): InternalCa
   return options;
 };
 
-const extractTraderaRecoveryMessage = (
-  error: unknown,
-  fallbackMessage: string
-): string => {
-  const details = getApiErrorDetails(error);
-  if (details) {
-    if ('recoveryMessage' in details) {
-      const recoveryMessage = readTrimmedString(details['recoveryMessage']);
-      if (recoveryMessage) {
-        return recoveryMessage;
-      }
-    }
-
-    if ('logTail' in details && Array.isArray(details['logTail'])) {
-      for (const entry of details['logTail']) {
-        if (typeof entry !== 'string') {
-          continue;
-        }
-        const normalizedEntry = entry.replace(/^\[runtime\]\[error\]\s*/i, '').trim();
-        const authMatch = normalizedEntry.match(/AUTH_REQUIRED:\s*(.+)$/i);
-        if (authMatch?.[1]?.trim()) {
-          return authMatch[1].trim();
-        }
-      }
-    }
-
-    const inferredRecoveryMessage = inferTraderaRecoveryMessageFromDetails(details);
-    if (inferredRecoveryMessage) {
-      return inferredRecoveryMessage;
-    }
-  }
-
-  return fallbackMessage;
-};
-
-const isTraderaCategoryFetchAuthError = (
-  error: unknown,
-  message: string,
-  isTraderaBrowserConnection: boolean
-): boolean => {
-  if (!isTraderaBrowserConnection) {
-    return false;
-  }
-
-  if (isTraderaBrowserAuthRequiredMessage(message)) {
-    return true;
-  }
-
-  if (!(error instanceof ApiError)) {
-    return false;
-  }
-
-  if (error.status === 401) {
-    return true;
-  }
-
-  const details = getApiErrorDetails(error);
-
-  if (
-    details &&
-    'logTail' in details &&
-    Array.isArray(details['logTail'])
-  ) {
-    const logTail = details['logTail'];
-    if (
-      logTail.some(
-        (entry) =>
-          typeof entry === 'string' &&
-          (entry.toLowerCase().includes('auth_required') ||
-            entry.toLowerCase().includes('session is missing or expired'))
-      )
-    ) {
-      return true;
-    }
-  }
-
-  if (inferTraderaRecoveryMessageFromDetails(details)) {
-    return true;
-  }
-
-  return Boolean(
-    details &&
-      'recoveryAction' in details &&
-      details['recoveryAction'] === 'tradera_manual_login'
-  );
-};
 
 export function CategoryMapperProvider({
   connectionId,
@@ -350,7 +169,6 @@ export function CategoryMapperProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const { toast } = useToast();
-  const isTraderaBrowserConnection = isTraderaBrowserIntegrationSlug(integrationSlug);
 
   // Queries
   const catalogsQuery = useIntegrationCatalogs();
@@ -411,11 +229,6 @@ export function CategoryMapperProvider({
 
   const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [showTraderaLoginRecoveryModal, setShowTraderaLoginRecoveryModal] = useState(false);
-  const [traderaLoginRecoveryReason, setTraderaLoginRecoveryReason] = useState<string | null>(
-    null
-  );
-  const [openingTraderaLoginRecovery, setOpeningTraderaLoginRecovery] = useState(false);
   const hasInitializedExpansion = useRef(false);
 
   const isRootCategory = useCallback(
@@ -459,98 +272,21 @@ export function CategoryMapperProvider({
     return (): void => clearTimeout(timer);
   }, [selectedCatalogId]);
 
-  const closeTraderaLoginRecoveryModal = useCallback((): void => {
-    setShowTraderaLoginRecoveryModal(false);
-    setTraderaLoginRecoveryReason(null);
-  }, []);
-
-  const fetchExternalCategoriesWithRecovery = useCallback(
-    async (): Promise<'success' | 'auth_required' | 'error'> => {
-      try {
-        const result = await fetchMutation.mutateAsync({ connectionId });
-        closeTraderaLoginRecoveryModal();
-        toast(result.message, { variant: 'success' });
-        return 'success';
-      } catch (error: unknown) {
-        logClientCatch(error, {
-          source: 'CategoryMapper',
-          action: 'fetchExternalCategories',
-          connectionId,
-          integrationId,
-        });
-
-        const message = error instanceof Error ? error.message : 'Failed to fetch categories';
-        const recoveryMessage = extractTraderaRecoveryMessage(error, message);
-        if (isTraderaCategoryFetchAuthError(error, recoveryMessage, isTraderaBrowserConnection)) {
-          setTraderaLoginRecoveryReason(recoveryMessage);
-          setShowTraderaLoginRecoveryModal(true);
-          return 'auth_required';
-        }
-
-        toast(message, { variant: 'error' });
-        return 'error';
-      }
-    },
-    [
-      closeTraderaLoginRecoveryModal,
-      connectionId,
-      fetchMutation,
-      integrationId,
-      isTraderaBrowserConnection,
-      toast,
-    ]
-  );
-
   const handleFetchExternalCategories = useCallback(async (): Promise<void> => {
-    await fetchExternalCategoriesWithRecovery();
-  }, [fetchExternalCategoriesWithRecovery]);
-
-  const handleOpenTraderaLoginRecovery = useCallback(async (): Promise<void> => {
-    if (!integrationId) {
-      const message = 'Tradera integration is missing for this connection.';
-      setTraderaLoginRecoveryReason(message);
-      toast(message, { variant: 'error' });
-      return;
-    }
-
     try {
-      setOpeningTraderaLoginRecovery(true);
-      const response = await ensureTraderaBrowserSession({
-        integrationId,
-        connectionId,
-      });
-      toast(
-        response.savedSession
-          ? 'Tradera login session refreshed.'
-          : 'Tradera manual login completed.',
-        { variant: 'success' }
-      );
-
-      const result = await fetchExternalCategoriesWithRecovery();
-      if (result !== 'auth_required') {
-        closeTraderaLoginRecoveryModal();
-      }
+      const result = await fetchMutation.mutateAsync({ connectionId });
+      toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
       logClientCatch(error, {
         source: 'CategoryMapper',
-        action: 'openTraderaLoginRecovery',
+        action: 'fetchExternalCategories',
         connectionId,
         integrationId,
       });
-      const message =
-        error instanceof Error ? error.message : 'Failed to open Tradera login window';
-      setTraderaLoginRecoveryReason(message);
+      const message = error instanceof Error ? error.message : 'Failed to fetch categories';
       toast(message, { variant: 'error' });
-    } finally {
-      setOpeningTraderaLoginRecovery(false);
     }
-  }, [
-    closeTraderaLoginRecoveryModal,
-    connectionId,
-    fetchExternalCategoriesWithRecovery,
-    integrationId,
-    toast,
-  ]);
+  }, [connectionId, fetchMutation, integrationId, toast]);
 
   const getMappingForExternal = useCallback(
     (externalCategoryId: string): string | null => {
@@ -764,29 +500,15 @@ export function CategoryMapperProvider({
       pendingMappings,
       expandedIds,
       toggleExpand,
-      showTraderaLoginRecoveryModal,
-      traderaLoginRecoveryReason,
-      openingTraderaLoginRecovery,
       staleMappings,
       stats,
     }),
-    [
-      pendingMappings,
-      expandedIds,
-      toggleExpand,
-      showTraderaLoginRecoveryModal,
-      traderaLoginRecoveryReason,
-      openingTraderaLoginRecovery,
-      staleMappings,
-      stats,
-    ]
+    [pendingMappings, expandedIds, toggleExpand, staleMappings, stats]
   );
 
   const actionsValue = useMemo<CategoryMapperActions>(
     () => ({
       handleFetchExternalCategories,
-      handleOpenTraderaLoginRecovery,
-      closeTraderaLoginRecoveryModal,
       handleAutoMatchByName,
       handleMappingChange,
       handleSave,
@@ -796,8 +518,6 @@ export function CategoryMapperProvider({
     }),
     [
       handleFetchExternalCategories,
-      handleOpenTraderaLoginRecovery,
-      closeTraderaLoginRecoveryModal,
       handleAutoMatchByName,
       handleMappingChange,
       handleSave,

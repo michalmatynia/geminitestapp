@@ -32,6 +32,7 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
+import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { PUT_handler, deleteQuerySchema } from './handler';
 
 describe('integration connection by-id handler', () => {
@@ -117,6 +118,49 @@ describe('integration connection by-id handler', () => {
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,
+    });
+  });
+
+  it('normalizes the managed Tradera default script to runtime fallback on update', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Tradera browser',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+      },
+    });
+    updateConnectionMock.mockResolvedValue({
+      id: 'conn-tradera-1',
+      integrationId: 'integration-tradera-1',
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      traderaBrowserMode: 'scripted',
+      playwrightListingScript: null,
+    });
+
+    const response = await PUT_handler(
+      new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
+        method: 'PUT',
+      }) as never,
+      {} as never,
+      { id: 'conn-tradera-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(updateConnectionMock).toHaveBeenCalledWith('conn-tradera-1', {
+      name: 'Tradera browser',
+      traderaBrowserMode: 'scripted',
+      playwrightListingScript: null,
+    });
+    expect(payload).toMatchObject({
+      id: 'conn-tradera-1',
+      traderaBrowserMode: 'scripted',
+      playwrightListingScript: null,
+      hasPlaywrightListingScript: false,
     });
   });
 

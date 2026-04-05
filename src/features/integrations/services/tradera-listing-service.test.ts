@@ -614,4 +614,165 @@ describe('processTraderaListingJob', () => {
       })
     );
   });
+
+  it('links an existing Tradera duplicate without assigning a synthetic expiry window', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-duplicate-linked',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        externalListingId: null,
+        listedAt: null,
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockResolvedValue({
+      externalListingId: '725447805',
+      listingUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      metadata: {
+        scriptMode: 'scripted',
+        runId: 'run-duplicate-linked',
+        publishVerified: false,
+        duplicateLinked: true,
+        duplicateMatchStrategy: 'title+product-id',
+        duplicateMatchedProductId: 'BASE-1',
+        duplicateCandidateCount: 2,
+        duplicateSearchTitle: 'Example title',
+        browserMode: 'headed',
+        requestedBrowserMode: 'headed',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-duplicate-linked',
+      action: 'list',
+      source: 'manual',
+      jobId: 'job-tradera-duplicate-linked',
+    });
+
+    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-duplicate-linked', 'active');
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-duplicate-linked',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: '725447805',
+        listedAt: null,
+        expiresAt: null,
+        nextRelistAt: null,
+        failureReason: null,
+        marketplaceData: expect.objectContaining({
+          listingUrl:
+            'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+          externalListingId: '725447805',
+          tradera: expect.objectContaining({
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-duplicate-linked',
+              ok: true,
+              metadata: expect.objectContaining({
+                duplicateLinked: true,
+                duplicateMatchStrategy: 'title+product-id',
+                duplicateMatchedProductId: 'BASE-1',
+                duplicateCandidateCount: 2,
+                duplicateSearchTitle: 'Example title',
+                publishVerified: false,
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-duplicate-linked',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: '725447805',
+        expiresAt: null,
+        requestId: 'job-tradera-duplicate-linked',
+      })
+    );
+  });
+
+  it('links an existing Tradera duplicate during relist without dropping the original listedAt timestamp', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-relist-duplicate-linked',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        externalListingId: 'external-old',
+        listedAt: '2026-04-01T09:00:00.000Z',
+        marketplaceData: {
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-old',
+          externalListingId: 'external-old',
+          tradera: {},
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockResolvedValue({
+      externalListingId: '725447805',
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      metadata: {
+        scriptMode: 'scripted',
+        runId: 'run-relist-duplicate-linked',
+        publishVerified: false,
+        duplicateLinked: true,
+        duplicateMatchStrategy: 'title+product-id',
+        duplicateMatchedProductId: 'BASE-1',
+        duplicateCandidateCount: 2,
+        duplicateSearchTitle: 'Example title',
+        browserMode: 'headed',
+        requestedBrowserMode: 'headed',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-relist-duplicate-linked',
+      action: 'relist',
+      source: 'manual',
+      jobId: 'job-tradera-relist-duplicate-linked',
+    });
+
+    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-relist-duplicate-linked', 'active');
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-relist-duplicate-linked',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: '725447805',
+        listedAt: '2026-04-01T09:00:00.000Z',
+        expiresAt: null,
+        nextRelistAt: null,
+        lastRelistedAt: expect.any(Date),
+        failureReason: null,
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-relist-duplicate-linked',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: '725447805',
+        expiresAt: null,
+        relist: true,
+        requestId: 'job-tradera-relist-duplicate-linked',
+      })
+    );
+  });
 });

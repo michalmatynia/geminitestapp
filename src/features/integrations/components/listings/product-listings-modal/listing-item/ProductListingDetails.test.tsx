@@ -86,7 +86,7 @@ describe('ProductListingDetails', () => {
                     requestedBrowserMode: 'headed',
                     scriptSource: 'legacy-default-refresh',
                     scriptKind: 'managed',
-                    scriptMarker: 'tradera-quicklist-default:v90',
+                    scriptMarker: 'tradera-quicklist-default:v94',
                     listingFormUrl: 'https://www.tradera.com/en/selling/new',
                     runId: 'run-123',
                     playwrightPersonaId: 'persona-natural',
@@ -166,7 +166,7 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('Script type:')).toBeInTheDocument();
     expect(screen.getByText('managed')).toBeInTheDocument();
     expect(screen.getByText('Script marker:')).toBeInTheDocument();
-    expect(screen.getByText('tradera-quicklist-default:v90')).toBeInTheDocument();
+    expect(screen.getByText('tradera-quicklist-default:v94')).toBeInTheDocument();
     expect(screen.getByText('Start URL:')).toBeInTheDocument();
     expect(screen.getByText('https://www.tradera.com/en/selling/new')).toBeInTheDocument();
     expect(screen.getByText('Run ID:')).toBeInTheDocument();
@@ -381,6 +381,117 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('cross_catalog')).toBeInTheDocument();
     expect(screen.getByText('Internal category:')).toBeInTheDocument();
     expect(screen.getByText('internal-category-1')).toBeInTheDocument();
+  });
+
+  it('shows preserved Tradera autofill category metadata when no mapping was applied', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-1',
+            status: 'listed',
+            externalListingId: '123456789',
+            inventoryId: null,
+            listedAt: '2026-04-02T11:30:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T11:15:00.000Z',
+                  metadata: {
+                    scriptMode: 'scripted',
+                    categorySource: 'autofill',
+                    categoryMappingReason: 'no_active_mapping',
+                    categoryMatchScope: 'none',
+                    categoryInternalCategoryId: 'internal-category-1',
+                    categoryPath: 'Accessories > Patches & pins > Pins',
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Category source:')).toBeInTheDocument();
+    expect(screen.getByText('autofill')).toBeInTheDocument();
+    expect(screen.getByText('Category mapping reason:')).toBeInTheDocument();
+    expect(screen.getByText('no_active_mapping')).toBeInTheDocument();
+    expect(screen.getByText('Category match scope:')).toBeInTheDocument();
+    expect(screen.getByText('none')).toBeInTheDocument();
+  });
+
+  it('shows duplicate-linked Tradera metadata when an existing listing was linked', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-duplicate-linked',
+            status: 'active',
+            externalListingId: '725447805',
+            inventoryId: null,
+            listedAt: '2026-04-02T11:30:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              listingUrl:
+                'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T11:15:00.000Z',
+                  metadata: {
+                    scriptMode: 'scripted',
+                    scriptMarker: 'tradera-quicklist-default:v94',
+                    duplicateLinked: true,
+                    duplicateMatchStrategy: 'title+product-id',
+                    duplicateMatchedProductId: 'BASE-1',
+                    duplicateCandidateCount: 2,
+                    duplicateSearchTitle: 'Example title',
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Existing listing linked:')).toBeInTheDocument();
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate match strategy:')).toBeInTheDocument();
+    expect(screen.getByText('title+product-id')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate Product ID:')).toBeInTheDocument();
+    expect(screen.getByText('BASE-1')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate title matches:')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate search title:')).toBeInTheDocument();
+    expect(screen.getByText('Example title')).toBeInTheDocument();
   });
 
   it('shows pending Tradera relist metadata while a recovery relist is queued', () => {

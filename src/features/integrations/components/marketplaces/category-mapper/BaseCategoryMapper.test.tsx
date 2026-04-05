@@ -32,12 +32,6 @@ vi.mock('./BaseTagMapper', () => ({
   BaseTagMapper: () => <div data-testid='base-tag-mapper'>tags</div>,
 }));
 
-vi.mock('./TraderaCategoryFetchRecoveryModal', () => ({
-  TraderaCategoryFetchRecoveryModal: () => (
-    <div data-testid='tradera-category-recovery-modal'>recovery-modal</div>
-  ),
-}));
-
 import { BaseCategoryMapper } from './BaseCategoryMapper';
 
 describe('BaseCategoryMapper', () => {

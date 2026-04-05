@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   useIntegrationsActions,
@@ -9,14 +9,13 @@ import {
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
 import { Tabs, TabsContent } from '@/shared/ui/primitives.public';
-import { DetailModal } from '@/shared/ui/templates/modals';
+import { FormModal } from '@/shared/ui/FormModal';
 
 import { AllegroApiConsole } from './AllegroApiConsole';
 import { BaseApiConsole } from './BaseApiConsole';
 import { ConnectionManager } from './ConnectionManager';
 import { useIntegrationTabs } from './hooks/useIntegrationTabs';
 import { IntegrationModalHeader } from './integration-modal/IntegrationModalHeader';
-import { IntegrationModalHeaderActions } from './integration-modal/IntegrationModalHeaderActions';
 import { IntegrationModalSubtitle } from './integration-modal/IntegrationModalSubtitle';
 import {
   IntegrationModalViewProvider,
@@ -41,6 +40,7 @@ export function IntegrationModal(): React.JSX.Element {
     setShowTestSuccessModal,
   } = useIntegrationsTesting();
   const { showSessionModal, setShowSessionModal } = useIntegrationsSession();
+  const [isSaving, setIsSaving] = useState(false);
 
   const {
     activeTab,
@@ -55,6 +55,21 @@ export function IntegrationModal(): React.JSX.Element {
     activeConnection,
     handleSavePlaywrightSettings,
   } = useIntegrationTabs();
+
+  const canSaveBrowserSettings = isTradera && showPlaywright;
+
+  const handleSave = useCallback(async (): Promise<void> => {
+    if (!canSaveBrowserSettings || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await handleSavePlaywrightSettings();
+    } finally {
+      setIsSaving(false);
+    }
+  }, [canSaveBrowserSettings, handleSavePlaywrightSettings, isSaving]);
 
   if (!activeIntegration) return <></>;
 
@@ -72,14 +87,14 @@ export function IntegrationModal(): React.JSX.Element {
       activeConnection,
       onOpenSessionModal,
       onSavePlaywrightSettings: () => {
-        void handleSavePlaywrightSettings();
+        void handleSave();
       },
     }),
     [
       activeConnection,
       activeIntegration.name,
       activeTab,
-      handleSavePlaywrightSettings,
+      handleSave,
       isAllegro,
       isLinkedIn,
       isBaselinker,
@@ -93,12 +108,18 @@ export function IntegrationModal(): React.JSX.Element {
 
   return (
     <IntegrationModalViewProvider value={modalViewContextValue}>
-      <DetailModal
+      <FormModal
         isOpen={true}
         onClose={onCloseModal}
         title={<IntegrationModalHeader />}
         subtitle={<IntegrationModalSubtitle />}
-        headerActions={<IntegrationModalHeaderActions />}
+        onSave={() => void handleSave()}
+        isSaving={isSaving}
+        disableCloseWhileSaving={canSaveBrowserSettings}
+        showSaveButton={canSaveBrowserSettings}
+        showCancelButton={true}
+        cancelText='Close'
+        saveText='Save'
         size='xl'
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -149,7 +170,7 @@ export function IntegrationModal(): React.JSX.Element {
         />
 
         <SessionModal isOpen={showSessionModal} onClose={() => setShowSessionModal(false)} />
-      </DetailModal>
+      </FormModal>
     </IntegrationModalViewProvider>
   );
 }

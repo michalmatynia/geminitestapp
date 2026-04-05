@@ -73,6 +73,7 @@ export const TRADERA_MANUAL_VERIFICATION_URL_HINTS = [
   '/captcha',
   '/verify',
   '/verification',
+  '/multifactorauthentication',
   '/bankid',
   '/two-factor',
   '/2fa',

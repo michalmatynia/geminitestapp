@@ -6,9 +6,14 @@ export const PART_4 = String.raw`          );
       await wait(400);
     }
 
+    selectedCategoryPath =
+      selectedDepth > 0
+        ? FALLBACK_CATEGORY_PATH_SEGMENTS.slice(0, selectedDepth).join(' > ')
+        : null;
+    selectedCategorySource = selectedCategoryPath ? 'fallback' : null;
     log?.('tradera.quicklist.category.fallback', {
-      selectedDepth,
-      maxDepth: FALLBACK_CATEGORY_MAX_DEPTH,
+      requestedPath: FALLBACK_CATEGORY_PATH,
+      selectedPath: selectedCategoryPath,
     });
   };
 
@@ -29,24 +34,30 @@ export const PART_4 = String.raw`          );
     for (const segment of segments) {
       const clicked = await clickMenuItemByName(segment);
       if (!clicked) {
-        throw new Error(
-          'FAIL_CATEGORY_SET: Mapped Tradera category segment "' +
-            segment +
-            '" was not found for "' +
-            segments.join(' > ') +
-            '".'
+        log?.('tradera.quicklist.category.mapped_unavailable', {
+          missingSegment: segment,
+          mappedPath: segments.join(' > '),
+        });
+        await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+          () => undefined
         );
+        await wait(200);
+        return false;
       }
       await wait(500);
     }
 
+    selectedCategoryPath = segments.join(' > ');
+    selectedCategorySource = 'categoryMapper';
     return true;
   };
 
   const applyCategorySelection = async () => {
     if (mappedCategorySegments.length > 0) {
-      await chooseMappedCategory(mappedCategorySegments);
-      return;
+      const mappedCategoryApplied = await chooseMappedCategory(mappedCategorySegments);
+      if (mappedCategoryApplied) {
+        return;
+      }
     }
 
     await chooseFallbackCategory();

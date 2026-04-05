@@ -456,6 +456,198 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     return dedupeCategories(categories);
   };
 
+  const CHILDREN_KEYS = ['children', 'subCategories', 'subcategories', 'sub', 'items', 'nodes', 'categories'];
+
+  const itemId = (item) =>
+    String(item.id ?? item.categoryId ?? item.Id ?? item.CategoryId ?? item.value ?? '');
+
+  const itemName = (item) =>
+    String(item.name ?? item.label ?? item.title ?? item.Name ?? item.Label ?? item.Title ?? '');
+
+  const itemParentId = (item) =>
+    String(item.parentId ?? item.parent ?? item.parentCategoryId ?? item.ParentId ?? item.ParentCategoryId ?? '');
+
+  const flattenCategoryTree = (items, parentId) => {
+    const flat = [];
+    if (!Array.isArray(items)) return flat;
+    for (const item of items) {
+      if (!item || typeof item !== 'object') continue;
+      const id = itemId(item);
+      const name = itemName(item);
+      if (!id && !name) continue;
+      const explicitParent = itemParentId(item);
+      flat.push({
+        id,
+        name,
+        parentId: explicitParent || parentId || '',
+      });
+      for (const key of CHILDREN_KEYS) {
+        if (Array.isArray(item[key]) && item[key].length > 0) {
+          flat.push(...flattenCategoryTree(item[key], id));
+        }
+      }
+    }
+    return flat;
+  };
+
+  const isCategoryLikeArray = (arr) =>
+    arr.length > 2 && arr.some((item) =>
+      item && typeof item === 'object' &&
+      (itemId(item) || itemName(item)) &&
+      (itemId(item) !== '' || itemName(item) !== '')
+    );
+
+  const deepSearchCategories = (obj, depth) => {
+    const all = [];
+    if (depth > 12 || !obj || typeof obj !== 'object') return all;
+    if (Array.isArray(obj)) {
+      if (isCategoryLikeArray(obj)) {
+        all.push(...flattenCategoryTree(obj, ''));
+      }
+      for (const item of obj) {
+        all.push(...deepSearchCategories(item, depth + 1));
+      }
+    } else {
+      // Check if this single object is a category tree root with children
+      for (const key of CHILDREN_KEYS) {
+        if (Array.isArray(obj[key]) && isCategoryLikeArray(obj[key])) {
+          all.push(...flattenCategoryTree(obj[key], itemId(obj) || ''));
+        }
+      }
+      for (const value of Object.values(obj)) {
+        all.push(...deepSearchCategories(value, depth + 1));
+      }
+    }
+    return all;
+  };
+
+  const scrapeNextDataCategories = async () => {
+    const rawCategories = await page.evaluate((childKeys) => {
+      const script = document.getElementById('__NEXT_DATA__');
+      if (!script || !script.textContent) return [];
+      try {
+        const data = JSON.parse(script.textContent);
+        const flat = [];
+        const getId = (item) =>
+          String(item.id ?? item.categoryId ?? item.Id ?? item.CategoryId ?? item.value ?? '');
+        const getName = (item) =>
+          String(item.name ?? item.label ?? item.title ?? item.Name ?? item.Label ?? item.Title ?? '');
+        const getParent = (item) =>
+          String(item.parentId ?? item.parent ?? item.parentCategoryId ?? item.ParentId ?? item.ParentCategoryId ?? '');
+        const flatten = (items, pId) => {
+          if (!Array.isArray(items)) return;
+          for (const item of items) {
+            if (!item || typeof item !== 'object') continue;
+            const id = getId(item);
+            const name = getName(item);
+            if (!id && !name) continue;
+            flat.push({ id, name, parentId: getParent(item) || pId || '' });
+            for (const key of childKeys) {
+              if (Array.isArray(item[key]) && item[key].length > 0) {
+                flatten(item[key], id);
+              }
+            }
+          }
+        };
+        const isCatLike = (arr) =>
+          arr.length > 2 && arr.some((i) => i && typeof i === 'object' && (getId(i) || getName(i)));
+        const search = (obj, depth) => {
+          if (depth > 12 || !obj || typeof obj !== 'object') return;
+          if (Array.isArray(obj)) {
+            if (isCatLike(obj)) flatten(obj, '');
+            for (const item of obj) search(item, depth + 1);
+          } else {
+            for (const key of childKeys) {
+              if (Array.isArray(obj[key]) && isCatLike(obj[key])) {
+                flatten(obj[key], getId(obj) || '');
+              }
+            }
+            for (const value of Object.values(obj)) search(value, depth + 1);
+          }
+        };
+        search(data, 0);
+        return flat;
+      } catch {
+        return [];
+      }
+    }, CHILDREN_KEYS).catch(() => []);
+    return dedupeCategories(rawCategories);
+  };
+
+  const extractNetworkCategories = (responses) => {
+    const raw = [];
+    for (const entry of responses) {
+      raw.push(...deepSearchCategories(entry.data, 0));
+    }
+    return dedupeCategories(raw);
+  };
+
+  const scrapeCategoryLinks = async () => {
+    const rawCategories = await page.evaluate(() => {
+      const links = document.querySelectorAll('a[href*="/category/"]');
+      const results = [];
+      for (const link of links) {
+        const href = link.getAttribute('href') || '';
+        const match = href.match(/\/category\/(\d+)/);
+        if (!match) continue;
+        const id = match[1];
+        const name = (link.textContent || '').trim();
+        // Walk up the DOM to find parent category via nesting (ul > li > ul > li pattern)
+        let parentId = '';
+        const parentLi = link.closest('li');
+        if (parentLi) {
+          const parentUl = parentLi.parentElement;
+          if (parentUl && (parentUl.tagName === 'UL' || parentUl.tagName === 'OL')) {
+            const grandparentLi = parentUl.closest('li');
+            if (grandparentLi && grandparentLi !== parentLi) {
+              const parentLink = grandparentLi.querySelector(':scope > a[href*="/category/"]');
+              if (parentLink) {
+                const parentMatch = (parentLink.getAttribute('href') || '').match(/\/category\/(\d+)/);
+                if (parentMatch) {
+                  parentId = parentMatch[1];
+                }
+              }
+            }
+          }
+        }
+        results.push({ id, name, parentId });
+      }
+      return results;
+    }).catch(() => []);
+    return dedupeCategories(rawCategories);
+  };
+
+  const runPageDiagnostics = async () => {
+    return page.evaluate(() => {
+      const selectCount = document.querySelectorAll('select').length;
+      const roleMenuCount = document.querySelectorAll('[role="menu"]').length;
+      const roleListboxCount = document.querySelectorAll('[role="listbox"]').length;
+      const roleComboboxCount = document.querySelectorAll('[role="combobox"]').length;
+      const roleButtonCount = document.querySelectorAll('[role="button"]').length;
+      const categoryLinks = document.querySelectorAll('a[href*="/category/"]').length;
+      const hasNextData = !!document.getElementById('__NEXT_DATA__');
+      const headings = Array.from(document.querySelectorAll('h1, h2, h3'))
+        .slice(0, 5)
+        .map((h) => (h.textContent || '').trim());
+      const bodyClasses = document.body ? document.body.className : '';
+      return {
+        pageUrl: window.location.href,
+        title: document.title,
+        hasMain: !!document.querySelector('main'),
+        hasForm: !!document.querySelector('form'),
+        selectCount,
+        roleMenuCount,
+        roleListboxCount,
+        roleComboboxCount,
+        roleButtonCount,
+        categoryLinks,
+        hasNextData,
+        headings,
+        bodyClasses,
+      };
+    }).catch(() => ({ error: 'diagnostics failed' }));
+  };
+
   const captureDebugArtifacts = async (label, state) => {
     if (!artifacts) return;
     if (typeof artifacts.json === 'function') {
@@ -468,6 +660,22 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       await artifacts.html(label).catch(() => undefined);
     }
   };
+
+  // Set up network interception for category API responses
+  const networkCategoryResponses = [];
+  page.on('response', async (response) => {
+    try {
+      const url = response.url().toLowerCase();
+      const isCategoryLike = url.includes('categor') || url.includes('taxonomy');
+      const contentType = (response.headers()['content-type'] || '');
+      if (isCategoryLike && response.status() === 200 && contentType.includes('json')) {
+        const body = await response.json();
+        networkCategoryResponses.push({ url: response.url(), data: body });
+      }
+    } catch {
+      // Response might not be JSON — safe to ignore.
+    }
+  });
 
   await acceptCookiesIfPresent().catch(() => undefined);
   await wait(400);
@@ -485,6 +693,23 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     );
   }
 
+  // Strategy 1: Try __NEXT_DATA__ extraction (instant, no interaction needed)
+  const nextDataCategories = await scrapeNextDataCategories();
+  log('tradera.category.scrape.nextdata', {
+    count: nextDataCategories.length,
+    currentUrl: page.url(),
+  });
+  if (nextDataCategories.length > 0) {
+    const result = {
+      categories: nextDataCategories,
+      categorySource: 'nextdata',
+      scrapedFrom: page.url(),
+    };
+    emit('result', result);
+    return result;
+  }
+
+  // Wait for form readiness
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     const hasSelect = Boolean(await findCategorySelect());
@@ -492,7 +717,6 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     if (hasSelect || hasCategorySection) {
       break;
     }
-    // Also check if any category-labelled trigger is already visible
     let hasTrigger = false;
     for (const label of CATEGORY_FIELD_LABELS) {
       const trigger = await findFieldTriggerByLabel(label);
@@ -504,14 +728,36 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     if (hasTrigger) {
       break;
     }
+    // Also break if any category links are on the page already
+    const linkCount = await page.locator('a[href*="/category/"]').count().catch(() => 0);
+    if (linkCount > 3) {
+      break;
+    }
     await wait(400);
   }
 
+  // Re-check auth after readiness wait (page may have redirected)
+  const postWaitAuth = await readAuthDiagnostics();
+  if (postWaitAuth.authRequired) {
+    await captureDebugArtifacts('tradera-category-auth-required', {
+      ...postWaitAuth,
+      configuredListingUrl,
+    });
+    throw new Error(
+      'AUTH_REQUIRED: ' +
+        (postWaitAuth.recoveryMessage ||
+          'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.')
+    );
+  }
+
+  // Strategy 2: Native <select> scrape
   const selectCategories = await scrapeSelectCategories();
   log('tradera.category.scrape.select', {
     count: selectCategories.length,
     currentUrl: page.url(),
   });
+
+  // Strategy 3: Menu/trigger-based scrape (clicks the category picker open)
   const menuCategories = selectCategories.length > 0 ? [] : await scrapeMenuCategories();
   if (selectCategories.length === 0) {
     log('tradera.category.scrape.menu', {
@@ -519,8 +765,36 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       currentUrl: page.url(),
     });
   }
-  const categories = selectCategories.length > 0 ? selectCategories : menuCategories;
 
+  let categories = selectCategories.length > 0 ? selectCategories : menuCategories;
+  let categorySource = selectCategories.length > 0 ? 'select' : 'menu';
+
+  // Strategy 4: Check network-intercepted API responses (from page load + trigger click)
+  if (categories.length === 0 && networkCategoryResponses.length > 0) {
+    categories = extractNetworkCategories(networkCategoryResponses);
+    if (categories.length > 0) {
+      categorySource = 'network';
+    }
+    log('tradera.category.scrape.network', {
+      count: categories.length,
+      interceptedResponses: networkCategoryResponses.length,
+      urls: networkCategoryResponses.map((r) => r.url),
+    });
+  }
+
+  // Strategy 5: Link-based scraping (find <a href="*/category/*"> links)
+  if (categories.length === 0) {
+    categories = await scrapeCategoryLinks();
+    if (categories.length > 0) {
+      categorySource = 'links';
+    }
+    log('tradera.category.scrape.links', {
+      count: categories.length,
+      currentUrl: page.url(),
+    });
+  }
+
+  // If still empty, capture full diagnostics
   if (categories.length === 0) {
     const emptyAuthDiagnostics = await readAuthDiagnostics();
     if (emptyAuthDiagnostics.authRequired) {
@@ -539,9 +813,12 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       );
     }
 
+    const diagnostics = await runPageDiagnostics();
     const state = {
       ...emptyAuthDiagnostics,
       configuredListingUrl,
+      diagnostics,
+      networkIntercepted: networkCategoryResponses.length,
     };
     log('tradera.category.scrape.empty', state);
     await captureDebugArtifacts('tradera-category-empty', state);
@@ -549,7 +826,7 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
 
   const result = {
     categories,
-    categorySource: selectCategories.length > 0 ? 'select' : 'menu',
+    categorySource,
     scrapedFrom: page.url(),
   };
   emit('result', result);

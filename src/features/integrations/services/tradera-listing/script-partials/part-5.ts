@@ -351,6 +351,8 @@ export const PART_5 = String.raw`        }
       externalListingId,
       listingUrl,
       publishVerified: true,
+      categoryPath: selectedCategoryPath,
+      categorySource: selectedCategorySource,
       imageUploadSource: imageUploadResult?.uploadSource ?? null,
     };
     emit('result', result);

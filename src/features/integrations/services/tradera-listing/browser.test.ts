@@ -94,7 +94,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v77');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v78');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('helpers,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];");
@@ -121,7 +121,8 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CREATE_LISTING_TRIGGER_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const CATEGORY_FIELD_LABELS = ['Category', 'Kategori'];");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const FALLBACK_CATEGORY_OPTION_LABELS = ['Other', 'Övrigt'];");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const FALLBACK_CATEGORY_MAX_DEPTH = 3;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const FALLBACK_CATEGORY_PATH_SEGMENTS = ['Other', 'Other'];");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const FALLBACK_CATEGORY_PATH = FALLBACK_CATEGORY_PATH_SEGMENTS.join(' > ');");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const LISTING_FORMAT_FIELD_LABELS = ['Listing format', 'Annonsformat'];");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const BUY_NOW_OPTION_LABELS = ['Buy now', 'Buy Now', 'Fixed price', 'Köp nu', 'Fast pris'];");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const CONDITION_FIELD_LABELS = ['Condition', 'Skick'];");
@@ -295,10 +296,12 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const deliveryOptionLabels = configuredDeliveryOptionLabel');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const applyCategorySelection = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_CATEGORY_SET: Mapped Tradera category segment');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FALLBACK_CATEGORY_OPTION_LABELS.join');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('for (let depth = 0; depth < FALLBACK_CATEGORY_MAX_DEPTH; depth += 1)');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.category.mapped_unavailable'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_CATEGORY_SET: Fallback category path "');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('for (const segment of FALLBACK_CATEGORY_PATH_SEGMENTS)');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.category.fallback'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('requestedPath: FALLBACK_CATEGORY_PATH,');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('selectedPath: selectedCategoryPath,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const applyDeliveryCheckboxSelection = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const dismissVisibleShippingDialogIfPresent = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const resetDeliveryTogglesIfPresent = async () => {');
@@ -651,50 +654,165 @@ describe('runTraderaBrowserListing scripted mode', () => {
     });
   });
 
-  it('fails before launching Playwright when the Tradera category mapper has no active mapping', async () => {
-    listCategoryMappingsMock.mockResolvedValue([]);
-
-    await expect(
-      runTraderaBrowserListing({
-        listing: {
-          id: 'listing-1',
-          productId: 'product-1',
-          integrationId: 'integration-1',
-          connectionId: 'connection-1',
-          relistPolicy: {
-            enabled: true,
-            leadMinutes: 30,
-            durationHours: 48,
-            templateId: 'template-1',
-          },
-        } as never,
-        connection: {
-          id: 'connection-1',
-          traderaBrowserMode: 'scripted',
-          playwrightListingScript: 'export default async function run() {}',
-        } as never,
-        systemSettings: {
-          listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        } as never,
-        source: 'manual',
-        action: 'list',
-        browserMode: 'headed',
-      })
-    ).rejects.toMatchObject({
-      message:
-        'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
-      code: 'BAD_REQUEST',
-      meta: expect.objectContaining({
-        productId: 'product-1',
-        productCategoryId: 'internal-category-1',
-        connectionId: 'connection-1',
-        categoryMappingReason: 'no_active_mapping',
-        matchingMappingCount: 0,
-        validMappingCount: 0,
-      }),
+  it('records runtime fallback metadata when the mapped Tradera category is unavailable in the browser flow', async () => {
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-fallback-from-mapped',
+      externalListingId: 'listing-fallback-from-mapped',
+      listingUrl: 'https://www.tradera.com/item/fallback-from-mapped',
+      publishVerified: true,
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        listingUrl: 'https://www.tradera.com/item/fallback-from-mapped',
+        categoryPath: 'Other > Other',
+        categorySource: 'fallback',
+      },
     });
 
-    expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
+    const result = await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          traderaCategory: expect.objectContaining({
+            externalId: '101',
+            path: 'Collectibles > Pins',
+          }),
+        }),
+      })
+    );
+    expect(result).toMatchObject({
+      externalListingId: 'listing-fallback-from-mapped',
+      listingUrl: 'https://www.tradera.com/item/fallback-from-mapped',
+      metadata: {
+        categoryMappingReason: 'mapped',
+        categoryId: null,
+        categoryPath: 'Other > Other',
+        categorySource: 'fallback',
+      },
+    });
+  });
+
+  it('falls back to Other > Other when the Tradera category mapper has no active mapping', async () => {
+    listCategoryMappingsMock.mockResolvedValue([]);
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-fallback-no-mapping',
+      externalListingId: 'listing-fallback-no-mapping',
+      listingUrl: 'https://www.tradera.com/item/fallback-no-mapping',
+      publishVerified: true,
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        listingUrl: 'https://www.tradera.com/item/fallback-no-mapping',
+        categoryPath: 'Other > Other',
+        categorySource: 'fallback',
+      },
+    });
+
+    const result = await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+        relistPolicy: {
+          enabled: true,
+          leadMinutes: 30,
+          durationHours: 48,
+          templateId: 'template-1',
+        },
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    const playwrightInput = runPlaywrightListingScriptMock.mock.calls[0]?.[0]?.input as
+      | Record<string, unknown>
+      | undefined;
+
+    expect(playwrightInput).toBeDefined();
+    expect(playwrightInput).not.toHaveProperty('traderaCategory');
+    expect(playwrightInput).toMatchObject({
+      traderaCategoryMapping: {
+        reason: 'no_active_mapping',
+        matchScope: 'none',
+        internalCategoryId: 'internal-category-1',
+        matchingMappingCount: 0,
+        validMappingCount: 0,
+        catalogMatchedMappingCount: 0,
+      },
+    });
+    expect(result).toMatchObject({
+      externalListingId: 'listing-fallback-no-mapping',
+      listingUrl: 'https://www.tradera.com/item/fallback-no-mapping',
+      metadata: {
+        categoryMappingReason: 'no_active_mapping',
+        categoryMatchScope: 'none',
+        categoryInternalCategoryId: 'internal-category-1',
+        categoryId: null,
+        categoryPath: 'Other > Other',
+        categorySource: 'fallback',
+      },
+    });
   });
 
   it('sanitizes invalid Tradera listing form urls before passing them to the scripted flow', async () => {

@@ -155,7 +155,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const isPlaywrightRelistUnavailable = isRelistingCurrentListing || isPersistedPlaywrightQueueState;
 
   return (
-    <div className='ml-4 flex flex-col gap-2'>
+    <div className='flex w-full flex-col gap-2 sm:ml-4 sm:w-auto sm:shrink-0'>
       {isBaseListing && (
         <>
           {canRetryExport && (

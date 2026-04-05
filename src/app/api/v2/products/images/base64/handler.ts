@@ -29,10 +29,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const failed = failures.length;
 
   if (failed > 0) {
-    const { logger } = await import('@/shared/utils/logger');
-    logger.error(`[products.images.base64.bulk] ${failed} image conversions failed`, {
-      failures: failures.map((f) => String(f.reason)),
-      totalRequested: productIds.length,
+    const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
+    await logSystemEvent({
+      level: 'error',
+      source: 'products.images.base64.bulk.POST',
+      message: `${failed} image conversions failed`,
+      context: {
+        failures: failures.map((f) => String(f.reason)),
+        totalRequested: productIds.length,
+      },
     });
   }
 

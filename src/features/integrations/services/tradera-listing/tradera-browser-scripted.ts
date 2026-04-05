@@ -30,7 +30,7 @@ import {
 } from './tradera-browser-images';
 import type { TraderaBrowserListingResult } from './browser-types';
 
-export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v77';
+export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v78';
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 10_000;
 export const TRADERA_IMAGE_SETTLE_TIMEOUT_MESSAGE_PREFIX =
   'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish. Last state: ';
@@ -138,6 +138,12 @@ const buildMissingTraderaCategoryMappingMessage = ({
   }
 };
 
+const canUseFallbackTraderaCategory = ({
+  categoryMapping,
+}: {
+  categoryMapping: TraderaCategoryMappingResolution;
+}): boolean => categoryMapping.reason === 'no_active_mapping';
+
 const assertTraderaCategoryMappingReady = ({
   categoryMapping,
   product,
@@ -147,7 +153,7 @@ const assertTraderaCategoryMappingReady = ({
   product: ProductWithImages;
   connection: IntegrationConnectionRecord;
 }): void => {
-  if (categoryMapping.mapping) {
+  if (categoryMapping.mapping || canUseFallbackTraderaCategory({ categoryMapping })) {
     return;
   }
 
@@ -329,6 +335,29 @@ const buildSuccessMetadata = ({
   const traderaCategoryMapping = scriptInput['traderaCategoryMapping'];
   const traderaShipping = scriptInput['traderaShipping'];
   const imageDiagnostics = resolveScriptInputImageDiagnostics(scriptInput);
+  const rawCategoryPath =
+    typeof result.rawResult['categoryPath'] === 'string' ? result.rawResult['categoryPath'] : null;
+  const rawCategorySource =
+    typeof result.rawResult['categorySource'] === 'string'
+      ? result.rawResult['categorySource']
+      : null;
+  const resolvedCategorySource =
+    rawCategorySource === 'categoryMapper' || rawCategorySource === 'fallback'
+      ? rawCategorySource
+      : traderaCategory && typeof traderaCategory === 'object'
+        ? 'categoryMapper'
+        : 'fallback';
+  const resolvedCategoryId =
+    resolvedCategorySource === 'categoryMapper' && traderaCategory && typeof traderaCategory === 'object'
+      ? (traderaCategory as Record<string, unknown>)['externalId'] ?? null
+      : null;
+  const resolvedCategoryPath =
+    rawCategoryPath ??
+    (resolvedCategorySource === 'categoryMapper' &&
+    traderaCategory &&
+    typeof traderaCategory === 'object'
+      ? ((traderaCategory as Record<string, unknown>)['path'] ?? null)
+      : null);
   const effectiveBrowserMode =
     typeof result.effectiveBrowserMode === 'string'
       ? result.effectiveBrowserMode
@@ -375,16 +404,9 @@ const buildSuccessMetadata = ({
       traderaCategoryMapping && typeof traderaCategoryMapping === 'object'
         ? (traderaCategoryMapping as Record<string, unknown>)['internalCategoryId'] ?? null
         : null,
-    categoryId:
-      traderaCategory && typeof traderaCategory === 'object'
-        ? (traderaCategory as Record<string, unknown>)['externalId'] ?? null
-        : null,
-    categoryPath:
-      traderaCategory && typeof traderaCategory === 'object'
-        ? (traderaCategory as Record<string, unknown>)['path'] ?? null
-        : null,
-    categorySource:
-      traderaCategory && typeof traderaCategory === 'object' ? 'categoryMapper' : 'fallback',
+    categoryId: resolvedCategoryId,
+    categoryPath: resolvedCategoryPath,
+    categorySource: resolvedCategorySource,
     shippingGroupId:
       traderaShipping && typeof traderaShipping === 'object'
         ? (traderaShipping as Record<string, unknown>)['shippingGroupId'] ?? null

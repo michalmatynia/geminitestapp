@@ -70,7 +70,9 @@ export function TraderaQuickExportRecoveryBanner({
       <Card variant='subtle' padding='lg' className='bg-card/50 space-y-3'>
         <div className='space-y-1 text-center'>
           <div className='text-sm font-semibold text-white'>{title}</div>
-          <p className='text-xs text-gray-300'>{description}</p>
+          <p className='break-words whitespace-normal text-xs leading-relaxed text-gray-300'>
+            {description}
+          </p>
         </div>
         <div className='grid gap-2 text-xs text-gray-300 sm:grid-cols-2'>
           <div className='rounded-md border border-white/10 bg-card/60 px-3 py-2'>
@@ -108,12 +110,12 @@ export function TraderaQuickExportRecoveryBanner({
 
   return (
     <Card variant='subtle' padding='sm' className='bg-card/60 text-xs text-gray-300'>
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='min-w-0 flex-1'>
           <div className='text-sm font-semibold text-white'>{title}</div>
-          <div>{description}</div>
+          <div className='break-words whitespace-normal leading-relaxed'>{description}</div>
           {(requestId || runId) && (
-            <div className='mt-2 flex flex-wrap gap-3 font-mono text-[11px] text-gray-400'>
+            <div className='mt-2 flex min-w-0 flex-wrap gap-3 font-mono text-[11px] text-gray-400'>
               {requestId && (
                 <span>
                   Queue job: <span className='text-white'>{requestId}</span>
@@ -128,7 +130,7 @@ export function TraderaQuickExportRecoveryBanner({
           )}
         </div>
         {(canContinue || canOpenCategoryMapper) && (
-          <div className='flex shrink-0 flex-wrap gap-2'>
+          <div className='flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0'>
             {canOpenCategoryMapper && categoryMapperHref && (
               <Button asChild type='button' variant='outline' size='sm'>
                 <Link href={categoryMapperHref}>Open Category Mapper</Link>

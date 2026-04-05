@@ -153,6 +153,10 @@ describe('ProductListingDetails', () => {
     expect(screen.getAllByText(/2026/).length).toBeGreaterThan(0);
     expect(screen.getByText('Run mode:')).toBeInTheDocument();
     expect(screen.getByText('scripted')).toBeInTheDocument();
+    expect(screen.getByText('Tradera scripted listing failed.')).toHaveClass(
+      'break-words',
+      'whitespace-normal'
+    );
     expect(screen.getAllByText('Browser mode:').length).toBeGreaterThan(1);
     expect(screen.getAllByText('headed').length).toBeGreaterThan(1);
     expect(screen.getByText('Script source:')).toBeInTheDocument();

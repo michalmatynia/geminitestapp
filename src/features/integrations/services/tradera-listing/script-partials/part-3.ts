@@ -467,7 +467,7 @@ export const PART_3 = String.raw`        expectedValue,
 
     let selectedDepth = 0;
 
-    for (let depth = 0; depth < FALLBACK_CATEGORY_MAX_DEPTH; depth += 1) {
+    for (const segment of FALLBACK_CATEGORY_PATH_SEGMENTS) {
       let selectedAtDepth = false;
       for (const optionLabel of FALLBACK_CATEGORY_OPTION_LABELS) {
         selectedAtDepth = await clickMenuItemByName(optionLabel);
@@ -478,8 +478,6 @@ export const PART_3 = String.raw`        expectedValue,
       }
 
       if (!selectedAtDepth) {
-        if (depth === 0) {
+        if (selectedDepth === 0) {
           throw new Error(
-            'FAIL_CATEGORY_SET: Fallback top-level category "' +
-              FALLBACK_CATEGORY_OPTION_LABELS.join('" or "') +
-              '" not found.'`;
+            'FAIL_CATEGORY_SET: Fallback category path "' + FALLBACK_CATEGORY_PATH + '" not found.'`;

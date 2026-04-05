@@ -243,11 +243,13 @@ const nextConfig = {
     // Prevent webpack dev server from triggering HMR rebuilds when files are
     // written to public/uploads/ (e.g. batch screenshot captures).
     const existingWatchIgnored = config.watchOptions?.ignored;
-    const normalizedWatchIgnored = Array.isArray(existingWatchIgnored)
-      ? existingWatchIgnored
-      : existingWatchIgnored
-        ? [existingWatchIgnored]
-        : [];
+    const normalizedWatchIgnored = (
+      Array.isArray(existingWatchIgnored)
+        ? existingWatchIgnored
+        : existingWatchIgnored
+          ? [existingWatchIgnored]
+          : []
+    ).filter((pattern) => typeof pattern === 'string' && pattern.trim().length > 0);
 
     config.watchOptions = {
       ...config.watchOptions,

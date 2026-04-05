@@ -287,6 +287,7 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Failure'
               value={listing.failureReason}
+              wrap
               valueClassName='text-red-400 font-medium'
               variant='minimal'
             />

@@ -12,9 +12,9 @@ interface FormModalProps extends Partial<ModalStateProps> {
   open?: boolean;
   isOpen?: boolean;
   onClose: () => void;
-  title: string;
+  title: ReactNode;
   titleTestId?: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   children: ReactNode;
   onSave: () => void;
   isSaving?: boolean;
@@ -37,9 +37,9 @@ interface FormModalProps extends Partial<ModalStateProps> {
 }
 
 type FormModalHeaderProps = {
-  title: string;
+  title: ReactNode;
   titleTestId?: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   showSaveButton: boolean;
   onSave: () => void;
   saveText: string;
@@ -76,42 +76,59 @@ const renderFormModalHeaderContent = (props: FormModalHeaderProps): React.JSX.El
   } = props;
 
   return (
-  <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
-    <div className='min-w-0'>
-      <div className='flex min-w-0 items-center gap-2'>
-        {showSaveButton ? (
+    <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+      <div className='min-w-0'>
+        <div className='flex min-w-0 items-center gap-2'>
+          {showSaveButton ? (
+            <FormActions
+              onSave={onSave}
+              saveText={saveText}
+              saveTitle={saveTitle}
+              saveVariant={saveVariant}
+              saveIcon={saveIcon}
+              isSaving={isSaving}
+              isDisabled={isSaveButtonDisabled}
+              className='mr-2'
+            />
+          ) : null}
+          {typeof title === 'string' ? (
+            <h2
+              data-testid={titleTestId}
+              className='truncate text-2xl font-bold tracking-tight text-white'
+            >
+              {title}
+            </h2>
+          ) : (
+            <div
+              data-testid={titleTestId}
+              className='min-w-0 truncate text-2xl font-bold tracking-tight text-white'
+              role='heading'
+              aria-level={2}
+            >
+              {title}
+            </div>
+          )}
+        </div>
+        {subtitle ? (
+          typeof subtitle === 'string' ? (
+            <p className='mt-1 text-sm text-gray-400'>{subtitle}</p>
+          ) : (
+            <div className='mt-1 text-sm text-gray-400'>{subtitle}</div>
+          )
+        ) : null}
+      </div>
+      <div className='flex flex-wrap items-center justify-end gap-2'>
+        {actions}
+        {showCancelButton ? (
           <FormActions
-            onSave={onSave}
-            saveText={saveText}
-            saveTitle={saveTitle}
-            saveVariant={saveVariant}
-            saveIcon={saveIcon}
+            onCancel={onClose}
+            cancelText={cancelText}
             isSaving={isSaving}
-            isDisabled={isSaveButtonDisabled}
-            className='mr-2'
+            isDisabled={isCloseLocked}
           />
         ) : null}
-        <h2
-          data-testid={titleTestId}
-          className='truncate text-2xl font-bold tracking-tight text-white'
-        >
-          {title}
-        </h2>
       </div>
-      {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
     </div>
-    <div className='flex flex-wrap items-center justify-end gap-2'>
-      {actions}
-      {showCancelButton ? (
-        <FormActions
-          onCancel={onClose}
-          cancelText={cancelText}
-          isSaving={isSaving}
-          isDisabled={isCloseLocked}
-        />
-      ) : null}
-    </div>
-  </div>
   );
 };
 

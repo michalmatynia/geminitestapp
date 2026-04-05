@@ -90,5 +90,10 @@ describe('TraderaQuickExportRecoveryBanner', () => {
       'href',
       '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
     );
+    expect(
+      screen.getByText(
+        'Tradera export requires an active Tradera category mapping for this product category.'
+      )
+    ).toHaveClass('break-words', 'whitespace-normal');
   });
 });

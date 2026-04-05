@@ -91,7 +91,7 @@ vi.mock('@/features/cms/components/page-builder/settings/field-group-helpers', (
     }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,

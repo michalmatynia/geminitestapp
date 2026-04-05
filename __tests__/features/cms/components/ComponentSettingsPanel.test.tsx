@@ -103,8 +103,8 @@ vi.mock('@/features/cms/components/page-builder/section-registry', () => ({
   getImageBackgroundTargetOptions: () => [],
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   const MockTabsList = ({
     children,
     activeValue,

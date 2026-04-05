@@ -64,8 +64,8 @@ vi.mock('@/features/cms/hooks/useDragStateContext', () => ({
 }));
 
 // Mock the child components to simplify testing
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/navigation-and-layout.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/navigation-and-layout.public')>();
   return {
     ...actual,
     FolderTreePanel: (props: FolderTreePanelMockProps) => (
@@ -74,6 +74,13 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         {props.children}
       </div>
     ),
+  };
+});
+
+vi.mock('@/shared/ui/data-display.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/data-display.public')>();
+  return {
+    ...actual,
     TreeHeader: (props: TreeHeaderMockProps) => (
       <div>
         <h1>{props.title}</h1>

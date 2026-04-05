@@ -35,7 +35,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: vi.fn(),
 }));
 

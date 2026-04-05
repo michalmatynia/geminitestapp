@@ -38,8 +38,10 @@ vi.mock('@/features/cms/components/page-builder/section-templates', () => ({
 }));
 
 // Mock Dialog
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
+vi.mock('@/shared/ui/primitives.public', async () => {
+  const actual = await vi.importActual<typeof import('@/shared/ui/primitives.public')>(
+    '@/shared/ui/primitives.public'
+  );
   return {
     ...actual,
     Dialog: ({ children }: { children: React.ReactNode }) => (

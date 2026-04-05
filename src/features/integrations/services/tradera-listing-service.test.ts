@@ -89,6 +89,66 @@ describe('processTraderaListingJob', () => {
     });
   });
 
+  it('uses headed browser mode for API-triggered Tradera runs when the connection disables headless mode', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    const resolvedListing = {
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: {
+          tradera: {
+            categoryId: 12345,
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    };
+
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue(resolvedListing);
+    getConnectionByIdMock.mockResolvedValue({
+      id: 'connection-1',
+      integrationId: 'integration-1',
+      traderaBrowserMode: 'scripted',
+      playwrightHeadless: false,
+    });
+    runTraderaBrowserListingMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.tradera.com/item/1',
+      metadata: {
+        browserMode: 'headed',
+        requestedBrowserMode: 'headed',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'api',
+      jobId: 'job-tradera-api-1',
+    });
+
+    expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        browserMode: 'headed',
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        fields: ['browser_mode:headed'],
+        requestId: 'job-tradera-api-1',
+      })
+    );
+  });
+
   it('persists Tradera execution metadata on success', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();

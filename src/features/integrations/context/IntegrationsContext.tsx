@@ -2,6 +2,8 @@
 
 import React, { useMemo, type ReactNode } from 'react';
 
+import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { useDefaultTraderaConnection } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationsData } from '@/shared/contracts/integrations/context';
 
 import {
@@ -51,7 +53,12 @@ export {
 
 export function IntegrationsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const data = useIntegrationsDataImpl();
-  const form = useIntegrationsFormImpl(data.connections);
+  const defaultTraderaConnectionQuery = useDefaultTraderaConnection();
+  const preferredConnectionId =
+    isTraderaBrowserIntegrationSlug(data.activeIntegration?.slug)
+      ? defaultTraderaConnectionQuery.data?.connectionId ?? null
+      : null;
+  const form = useIntegrationsFormImpl(data.connections, preferredConnectionId);
   const testing = useIntegrationsTestingImpl();
   const session = useIntegrationsSessionImpl(
     data.connections.find((c) => c.id === form.editingConnectionId) ?? data.connections[0] ?? null

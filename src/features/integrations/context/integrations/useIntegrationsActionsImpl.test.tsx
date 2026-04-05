@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { Integration } from '@/shared/contracts/integrations/base';
+import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 
 const {
   toastMock,
@@ -150,5 +151,85 @@ describe('useIntegrationsActionsImpl', () => {
         }),
       })
     );
+  });
+
+  it('maps Playwright settings to connection payload fields when saving browser settings', async () => {
+    const activeIntegration = createIntegration('tradera');
+    const connection = {
+      id: 'connection-1',
+      integrationId: activeIntegration.id,
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      createdAt: '2026-04-02T00:00:00.000Z',
+      updatedAt: '2026-04-02T00:00:00.000Z',
+    } as IntegrationConnection;
+    const args = {
+      ...createArgs(activeIntegration),
+      connections: [connection],
+      editingConnectionId: connection.id,
+      playwrightPersonaId: 'persona-1',
+      playwrightSettings: {
+        ...defaultPlaywrightSettings,
+        headless: false,
+        slowMo: 125,
+        timeout: 45000,
+        navigationTimeout: 60000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 160,
+        inputDelayMin: 35,
+        inputDelayMax: 140,
+        actionDelayMin: 300,
+        actionDelayMax: 1100,
+        proxyEnabled: true,
+        proxyServer: 'http://proxy.example.test',
+        proxyUsername: 'proxy-user',
+        proxyPassword: 'proxy-pass',
+        emulateDevice: true,
+        deviceName: 'iPhone 14 Pro',
+      },
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handleSavePlaywrightSettings();
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        connectionId: connection.id,
+        payload: expect.objectContaining({
+          name: connection.name,
+          username: connection.username,
+          playwrightPersonaId: 'persona-1',
+          playwrightHeadless: false,
+          playwrightSlowMo: 125,
+          playwrightTimeout: 45000,
+          playwrightNavigationTimeout: 60000,
+          playwrightHumanizeMouse: true,
+          playwrightMouseJitter: 12,
+          playwrightClickDelayMin: 40,
+          playwrightClickDelayMax: 160,
+          playwrightInputDelayMin: 35,
+          playwrightInputDelayMax: 140,
+          playwrightActionDelayMin: 300,
+          playwrightActionDelayMax: 1100,
+          playwrightProxyEnabled: true,
+          playwrightProxyServer: 'http://proxy.example.test',
+          playwrightProxyUsername: 'proxy-user',
+          playwrightProxyPassword: 'proxy-pass',
+          playwrightEmulateDevice: true,
+          playwrightDeviceName: 'iPhone 14 Pro',
+        }),
+      })
+    );
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
+
+    expect(payload).not.toHaveProperty('headless');
+    expect(payload).not.toHaveProperty('slowMo');
+    expect(payload).not.toHaveProperty('proxyPassword');
   });
 });

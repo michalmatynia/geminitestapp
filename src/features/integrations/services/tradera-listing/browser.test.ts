@@ -94,7 +94,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v78');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v80');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('helpers,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];");
@@ -362,8 +362,19 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("initialUploadSource === 'local' && imageUrls.length > 0");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("imageUploadSource: imageUploadResult?.uploadSource ?? null");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('imageUploadSource: currentImageUploadSource,');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("emitStage('category_selected'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("emitStage('listing_format_selected'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("emitStage('listing_attributes_selected'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("emitStage('delivery_configured'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await trySelectOptionalFieldValue({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const FIXED_PRICE_INPUT_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.listing_format.inferred'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("reason: 'fixed-price-input-visible'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isSafeDraftImageRemoveControl = async (locator) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('return !resolveExternalClickTargetUrl(metadata);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('if (visible && (await isSafeDraftImageRemoveControl(candidate))) {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const safeDraftRemoveControl = await isSafeDraftImageRemoveControl(candidate);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'condition'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'department'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'delivery'");
@@ -551,7 +562,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         script: 'export default async function run() {}',
         browserMode: 'headed',
         disableStartUrlBootstrap: true,
-        failureHoldOpenMs: 10_000,
+        failureHoldOpenMs: 30_000,
         input: expect.objectContaining({
           baseProductId: 'BASE-1',
           sku: 'SKU-1',
@@ -1009,7 +1020,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
-        failureHoldOpenMs: 10_000,
+        failureHoldOpenMs: 30_000,
       })
     );
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
@@ -1127,7 +1138,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
-        failureHoldOpenMs: 10_000,
+        failureHoldOpenMs: 30_000,
       })
     );
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
@@ -1244,7 +1255,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
-        failureHoldOpenMs: 10_000,
+        failureHoldOpenMs: 30_000,
       })
     );
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
@@ -1317,7 +1328,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: compatibleManagedV76Script,
         browserMode: 'headed',
-        failureHoldOpenMs: 10_000,
+        failureHoldOpenMs: 30_000,
       })
     );
     expect(updateConnectionMock).not.toHaveBeenCalled();
@@ -1387,7 +1398,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
-        failureHoldOpenMs: 10_000,
+        failureHoldOpenMs: 30_000,
       })
     );
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
@@ -1458,7 +1469,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
-        failureHoldOpenMs: 10_000,
+        failureHoldOpenMs: 30_000,
       })
     );
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
@@ -1758,7 +1769,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
-        failureHoldOpenMs: 10_000,
+        failureHoldOpenMs: 30_000,
       })
     );
     expect(result).toEqual({

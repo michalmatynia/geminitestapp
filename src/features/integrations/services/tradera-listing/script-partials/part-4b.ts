@@ -42,21 +42,180 @@ export const PART_4B = String.raw`
   };
 
   const chooseBuyNowListingFormat = async () => {
-    const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);
-    if (!listingFormatTrigger) {
-      throw new Error('FAIL_PRICE_SET: Listing format selector not found.');
-    }
+    const FIXED_PRICE_INPUT_SELECTORS = ['input[name="price_fixedPrice"]', '#price_fixedPrice'];
+    const readLocatorTextSnapshot = async (locator) => {
+      if (!locator || typeof locator.evaluate !== 'function') {
+        return null;
+      }
 
-    await humanClick(listingFormatTrigger).catch(() => undefined);
-    await wait(400);
+      return locator
+        .evaluate((element) => {
+          const inputValue =
+            element instanceof HTMLInputElement ||
+            element instanceof HTMLTextAreaElement ||
+            element instanceof HTMLSelectElement
+              ? element.value || ''
+              : '';
 
-    for (const optionLabel of BUY_NOW_OPTION_LABELS) {
-      if (await clickMenuItemByName(optionLabel)) {
+          return {
+            text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
+            ariaLabel: element.getAttribute('aria-label') || '',
+            placeholder: element.getAttribute('placeholder') || '',
+            value: inputValue,
+          };
+        })
+        .catch(() => null);
+    };
+
+    const isBuyNowLikeValue = (value) => {
+      const normalized = normalizeWhitespace(value).toLowerCase();
+      if (!normalized) {
+        return false;
+      }
+
+      return BUY_NOW_OPTION_LABELS.some((label) =>
+        normalized.includes(normalizeWhitespace(label).toLowerCase())
+      );
+    };
+
+    const detectBuyNowListingFormatState = async (listingFormatTrigger = null) => {
+      const [triggerSnapshot, fixedPriceInput, genericPriceInput, publishButton] =
+        await Promise.all([
+          readLocatorTextSnapshot(listingFormatTrigger),
+          firstVisible(FIXED_PRICE_INPUT_SELECTORS).then(Boolean).catch(() => false),
+          firstVisible(PRICE_SELECTORS).then(Boolean).catch(() => false),
+          firstVisible(PUBLISH_SELECTORS).then(Boolean).catch(() => false),
+        ]);
+
+      const triggerText = [
+        triggerSnapshot?.text,
+        triggerSnapshot?.ariaLabel,
+        triggerSnapshot?.placeholder,
+        triggerSnapshot?.value,
+      ]
+        .filter((value) => typeof value === 'string' && value.trim().length > 0)
+        .join(' ');
+
+      if (isBuyNowLikeValue(triggerText)) {
+        return {
+          resolved: true,
+          reason: 'trigger-already-buy-now',
+          triggerText,
+          hasFixedPriceInput: fixedPriceInput,
+          hasGenericPriceInput: genericPriceInput,
+          hasPublishButton: publishButton,
+        };
+      }
+
+      if (fixedPriceInput) {
+        return {
+          resolved: true,
+          reason: 'fixed-price-input-visible',
+          triggerText,
+          hasFixedPriceInput: fixedPriceInput,
+          hasGenericPriceInput: genericPriceInput,
+          hasPublishButton: publishButton,
+        };
+      }
+
+      if (!listingFormatTrigger && genericPriceInput && publishButton) {
+        return {
+          resolved: true,
+          reason: 'listing-editor-ready-with-price',
+          triggerText,
+          hasFixedPriceInput: fixedPriceInput,
+          hasGenericPriceInput: genericPriceInput,
+          hasPublishButton: publishButton,
+        };
+      }
+
+      return {
+        resolved: false,
+        reason: 'unresolved',
+        triggerText,
+        hasFixedPriceInput: fixedPriceInput,
+        hasGenericPriceInput: genericPriceInput,
+        hasPublishButton: publishButton,
+      };
+    };
+
+    let lastObservedState = null;
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);
+      const inferredStateBeforeSelection = await detectBuyNowListingFormatState(
+        listingFormatTrigger
+      );
+      if (inferredStateBeforeSelection.resolved) {
+        log?.('tradera.quicklist.listing_format.inferred', {
+          attempt,
+          ...inferredStateBeforeSelection,
+        });
         return;
       }
+
+      if (!listingFormatTrigger) {
+        lastObservedState = {
+          attempt,
+          step: 'trigger-missing',
+          ...inferredStateBeforeSelection,
+        };
+        await wait(800);
+        continue;
+      }
+
+      await humanClick(listingFormatTrigger).catch(() => undefined);
+      await wait(400);
+
+      for (const optionLabel of BUY_NOW_OPTION_LABELS) {
+        if (await clickMenuItemByName(optionLabel)) {
+          log?.('tradera.quicklist.field.selected', {
+            field: 'listing-format',
+            option: optionLabel,
+          });
+          return;
+        }
+      }
+
+      const inferredStateAfterSelection = await detectBuyNowListingFormatState(
+        await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS)
+      );
+      if (inferredStateAfterSelection.resolved) {
+        log?.('tradera.quicklist.listing_format.inferred', {
+          attempt,
+          afterSelection: true,
+          ...inferredStateAfterSelection,
+        });
+        return;
+      }
+
+      lastObservedState = {
+        attempt,
+        step: 'option-missing',
+        ...inferredStateAfterSelection,
+      };
+      await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+        () => undefined
+      );
+      await wait(800);
     }
 
-    throw new Error('FAIL_PRICE_SET: Buy now listing format option not found.');
+    if (lastObservedState?.step === 'trigger-missing') {
+      throw new Error(
+        'FAIL_PRICE_SET: Listing format selector not found. Last state: ' +
+          JSON.stringify(lastObservedState)
+      );
+    }
+
+    throw new Error(
+      'FAIL_PRICE_SET: Buy now listing format option not found. Last state: ' +
+        JSON.stringify(lastObservedState)
+    );
+  };
+
+  const isSafeDraftImageRemoveControl = async (locator) => {
+    const metadata = await readClickTargetMetadata(locator);
+    return !resolveExternalClickTargetUrl(metadata);
   };
 
   const countDraftImageRemoveControls = async () => {
@@ -72,7 +231,7 @@ export const PART_4B = String.raw`
       for (let index = 0; index < count; index += 1) {
         const candidate = locator.nth(index);
         const visible = await candidate.isVisible().catch(() => false);
-        if (visible) {
+        if (visible && (await isSafeDraftImageRemoveControl(candidate))) {
           total += 1;
         }
       }
@@ -587,6 +746,8 @@ export const PART_4B = String.raw`
           const candidate = locator.nth(index);
           const visible = await candidate.isVisible().catch(() => false);
           if (!visible) continue;
+          const safeDraftRemoveControl = await isSafeDraftImageRemoveControl(candidate);
+          if (!safeDraftRemoveControl) continue;
           await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
           const clicked = await tryHumanClick(candidate);
           if (!clicked) {

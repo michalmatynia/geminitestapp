@@ -120,6 +120,52 @@ describe('integration connection by-id handler', () => {
     });
   });
 
+  it('persists an explicit headed preference for Playwright-backed Tradera connections', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Tradera browser',
+        playwrightHeadless: false,
+      },
+    });
+    updateConnectionMock.mockResolvedValue({
+      id: 'conn-tradera-1',
+      integrationId: 'integration-tradera-1',
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      playwrightHeadless: false,
+      traderaBrowserMode: 'scripted',
+      traderaDefaultDurationHours: 72,
+      traderaAutoRelistEnabled: true,
+      traderaAutoRelistLeadMinutes: 180,
+      traderaApiSandbox: false,
+    });
+
+    const response = await PUT_handler(
+      new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
+        method: 'PUT',
+      }) as never,
+      {} as never,
+      { id: 'conn-tradera-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(updateConnectionMock).toHaveBeenCalledWith(
+      'conn-tradera-1',
+      expect.objectContaining({
+        name: 'Tradera browser',
+        playwrightHeadless: false,
+      })
+    );
+    expect(payload).toMatchObject({
+      id: 'conn-tradera-1',
+      playwrightHeadless: false,
+    });
+  });
+
   it('rejects invalid scripted Tradera Playwright scripts during update', async () => {
     parseJsonBodyMock.mockResolvedValue({
       ok: true,

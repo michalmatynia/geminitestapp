@@ -15,6 +15,7 @@ import {
   parsePlaywrightFieldMapperJson,
   type PlaywrightFieldMapperTargetField,
 } from '@/features/integrations/services/playwright-listing/field-mapper';
+import { toPlaywrightConnectionPayload } from '@/features/integrations/utils/playwright-connection-payload';
 import { PlaywrightSettingsForm } from '@/shared/ui/playwright/PlaywrightSettingsForm';
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
 import { playwrightConfigCaptureRouteSchema } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
@@ -179,27 +180,6 @@ const connectionToSettings = (connection: IntegrationConnection | null): Playwri
     : {}),
 });
 
-const settingsToConnectionPayload = (settings: PlaywrightSettings): Record<string, unknown> => ({
-  playwrightHeadless: settings.headless,
-  playwrightSlowMo: settings.slowMo,
-  playwrightTimeout: settings.timeout,
-  playwrightNavigationTimeout: settings.navigationTimeout,
-  playwrightHumanizeMouse: settings.humanizeMouse,
-  playwrightMouseJitter: settings.mouseJitter,
-  playwrightClickDelayMin: settings.clickDelayMin,
-  playwrightClickDelayMax: settings.clickDelayMax,
-  playwrightInputDelayMin: settings.inputDelayMin,
-  playwrightInputDelayMax: settings.inputDelayMax,
-  playwrightActionDelayMin: settings.actionDelayMin,
-  playwrightActionDelayMax: settings.actionDelayMax,
-  playwrightProxyEnabled: settings.proxyEnabled,
-  playwrightProxyServer: settings.proxyServer,
-  playwrightProxyUsername: settings.proxyUsername,
-  playwrightProxyPassword: settings.proxyPassword,
-  playwrightEmulateDevice: settings.emulateDevice,
-  playwrightDeviceName: settings.deviceName,
-});
-
 const connectionToFieldMapperRows = (connection: IntegrationConnection | null): FieldMapperRow[] =>
   parsePlaywrightFieldMapperJson(connection?.playwrightFieldMapperJson).map((entry) => ({
     id: createRowId(),
@@ -333,7 +313,7 @@ export default function PlaywrightIntegrationPage({
         appearanceMode,
       }),
       playwrightFieldMapperJson: serializeFieldMapperRows(fieldMapperRows),
-      ...settingsToConnectionPayload(playwrightSettings),
+      ...toPlaywrightConnectionPayload(playwrightSettings),
     };
 
     try {

@@ -17,6 +17,7 @@ import {
   useBaseApiRequest,
   useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
+import { toPlaywrightConnectionPayload } from '@/features/integrations/utils/playwright-connection-payload';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionTestType } from '@/shared/contracts/integrations/session-testing';
@@ -419,8 +420,7 @@ export function useIntegrationsActionsImpl(args: {
           name: connection.name,
           username: connection.username,
           playwrightPersonaId: args.playwrightPersonaId,
-          ...args.playwrightSettings,
-          proxyPassword: args.playwrightSettings.proxyPassword,
+          ...toPlaywrightConnectionPayload(args.playwrightSettings),
         },
       });
       toast('Playwright settings saved.', { variant: 'success' });

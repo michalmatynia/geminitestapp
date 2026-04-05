@@ -125,7 +125,15 @@ export const PART_5 = String.raw`        }
     });
 
     await applyCategorySelection();
+    emitStage('category_selected', {
+      categoryPath: selectedCategoryPath,
+      categorySource: selectedCategorySource,
+    });
     await chooseBuyNowListingFormat();
+    emitStage('listing_format_selected', {
+      categoryPath: selectedCategoryPath,
+      categorySource: selectedCategorySource,
+    });
     await trySelectOptionalFieldValue({
       fieldLabels: CONDITION_FIELD_LABELS,
       optionLabels: CONDITION_OPTION_LABELS,
@@ -135,6 +143,10 @@ export const PART_5 = String.raw`        }
       fieldLabels: DEPARTMENT_FIELD_LABELS,
       optionLabels: DEPARTMENT_OPTION_LABELS,
       fieldKey: 'department',
+    });
+    emitStage('listing_attributes_selected', {
+      categoryPath: selectedCategoryPath,
+      categorySource: selectedCategorySource,
     });
     const selectionDraftState = await waitForDraftSaveSettled();
     if (!selectionDraftState?.settled) {
@@ -149,6 +161,12 @@ export const PART_5 = String.raw`        }
         'FAIL_SHIPPING_SET: Tradera draft save did not settle after delivery configuration.'
       );
     }
+    emitStage('delivery_configured', {
+      categoryPath: selectedCategoryPath,
+      categorySource: selectedCategorySource,
+      shippingCondition: configuredDeliveryOptionLabel,
+      shippingPriceEur: configuredDeliveryPriceEur,
+    });
     await wait(500);
 
     const titleInput = await firstVisible(TITLE_SELECTORS);

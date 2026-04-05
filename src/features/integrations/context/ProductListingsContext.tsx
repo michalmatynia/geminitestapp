@@ -202,6 +202,7 @@ export function ProductListingsProvider({
     setListingToPurge,
     setLogsOpen,
     setOpeningTraderaLogin,
+    setRecoveryContext: setResolvedRecoveryContext,
     setRelistingBrowserMode,
     setPurgingListing,
     setRelistingListing,

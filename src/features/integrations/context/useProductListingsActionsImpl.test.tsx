@@ -71,6 +71,7 @@ const buildBaseParams = (overrides?: {
   setListingToPurge: vi.fn(),
   setLogsOpen: vi.fn(),
   setOpeningTraderaLogin: vi.fn(),
+  setRecoveryContext: vi.fn(),
   setRelistingBrowserMode: vi.fn(),
   setPurgingListing: vi.fn(),
   setRelistingListing: vi.fn(),
@@ -246,6 +247,7 @@ describe('useProductListingsActionsImpl', () => {
 
   it('shows a toast for Tradera auth-required relist quick preflight failures', async () => {
     const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
     preflightTraderaQuickListSessionMock.mockRejectedValue(
       new Error(
         'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
@@ -266,6 +268,7 @@ describe('useProductListingsActionsImpl', () => {
             ],
           }),
           setError,
+          setRecoveryContext,
         }
       )
     );
@@ -278,14 +281,27 @@ describe('useProductListingsActionsImpl', () => {
       'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
       { variant: 'error' }
     );
-    expect(setError).toHaveBeenCalledWith(
+    expect(setError).toHaveBeenNthCalledWith(1, null);
+    expect(setError).not.toHaveBeenCalledWith(
       'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+    );
+    expect(setRecoveryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'tradera_quick_export_auth_required',
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        failureReason:
+          'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+      })
     );
     expect(relistTraderaMutateAsyncMock).not.toHaveBeenCalled();
   });
 
   it('shows a toast for Tradera auth-required manual login failures', async () => {
     const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
     ensureTraderaBrowserSessionMock.mockRejectedValue(
       new Error(
         'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
@@ -296,6 +312,7 @@ describe('useProductListingsActionsImpl', () => {
       useProductListingsActionsImpl({
         ...buildBaseParams(),
         setError,
+        setRecoveryContext,
       })
     );
 
@@ -313,9 +330,69 @@ describe('useProductListingsActionsImpl', () => {
       'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.',
       { variant: 'error' }
     );
-    expect(setError).toHaveBeenCalledWith(
+    expect(setError).toHaveBeenNthCalledWith(1, null);
+    expect(setError).not.toHaveBeenCalledWith(
       'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
     );
+    expect(setRecoveryContext).not.toHaveBeenCalled();
+  });
+
+  it('clears Tradera recovery state after a queued relist succeeds', async () => {
+    const setRecoveryContext = vi.fn();
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        {
+          ...buildBaseParams({
+            listings: [
+              {
+                id: 'listing-1',
+                integrationId: 'integration-tradera-1',
+                connectionId: 'connection-tradera-1',
+                integration: { slug: 'tradera' },
+              },
+            ],
+          }),
+          setRecoveryContext,
+        }
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleRelistTradera('listing-1');
+    });
+
+    expect(setRecoveryContext).toHaveBeenCalledWith(expect.any(Function));
+    const clearRecovery = setRecoveryContext.mock.calls.at(-1)?.[0] as (
+      current: { integrationSlug?: string } | null
+    ) => unknown;
+    expect(clearRecovery({ integrationSlug: 'tradera' })).toBeNull();
+    expect(clearRecovery({ integrationSlug: 'baselinker' })).toEqual({
+      integrationSlug: 'baselinker',
+    });
+  });
+
+  it('clears Tradera recovery state after manual login succeeds', async () => {
+    const setRecoveryContext = vi.fn();
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams(),
+        setRecoveryContext,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleOpenTraderaLogin(
+        'recovery',
+        'integration-tradera-1',
+        'connection-tradera-1'
+      );
+    });
+
+    expect(setRecoveryContext).toHaveBeenCalledWith(expect.any(Function));
+    const clearRecovery = setRecoveryContext.mock.calls.at(-1)?.[0] as (
+      current: { integrationSlug?: string } | null
+    ) => unknown;
+    expect(clearRecovery({ integrationSlug: 'tradera' })).toBeNull();
   });
 
   it('re-exports the current Base listing with listing identity and success feedback', async () => {

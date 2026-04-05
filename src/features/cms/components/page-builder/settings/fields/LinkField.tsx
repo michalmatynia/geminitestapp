@@ -21,7 +21,7 @@ export function LinkField(props: {
 
   const options = useMemo<SelectOption<string>[]>(
     () =>
-      slugs.map((s: string) => ({
+      slugs.map((s) => ({
         id: s.id,
         label: `/${s.slug}`,
         value: `/${s.slug}`,

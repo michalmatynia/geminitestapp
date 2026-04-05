@@ -69,8 +69,11 @@ vi.mock('./select-product-modal/ProductListSection', () => ({
   ProductListSection: () => <div data-testid='product-list-section' />,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   UI_GRID_ROOMY_CLASSNAME: 'grid gap-4',
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormModal: ({
     children,
     open,

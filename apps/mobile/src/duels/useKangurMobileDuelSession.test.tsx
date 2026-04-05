@@ -3,10 +3,8 @@
  */
 
 import React from 'react';
-import {
-  createDefaultKangurAiTutorLearnerMood,
-  type KangurDuelStateResponse,
-} from '@kangur/contracts';
+import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts/kangur-ai-tutor-mood';
+import type { KangurDuelStateResponse } from '@kangur/contracts/kangur-duels';
 import type {
   KangurAuthSession,
   KangurUser,

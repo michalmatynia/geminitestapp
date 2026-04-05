@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { kangurSubjectFocusSchema } from '@kangur/contracts/kangur-lesson-constants';
-import { type KangurLessonSubject } from '@kangur/contracts';
+import { type KangurLessonSubject } from '@kangur/contracts/kangur-lesson-constants';
 import {
   KANGUR_LEGACY_SETTINGS_COLLECTION,
   type KangurLegacySettingDocument,

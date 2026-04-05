@@ -15,13 +15,19 @@ vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
   useProductListingsModals: () => useProductListingsModalsMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
   Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   IntegrationSelector: () => <div data-testid='integration-selector' />,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
 }));
 

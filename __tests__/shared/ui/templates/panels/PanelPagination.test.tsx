@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { Pagination } from '@/shared/ui';
+import { Pagination } from '@/shared/ui/navigation-and-layout.public';
 
 describe('Pagination (panel variant)', () => {
   const defaultProps = {

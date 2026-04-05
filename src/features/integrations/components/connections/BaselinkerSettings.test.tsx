@@ -16,7 +16,7 @@ vi.mock('@/shared/hooks/useBaseOrderQuickImport', () => ({
   useQuickImportBaseOrdersMutation: () => useQuickImportBaseOrdersMutation(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -29,6 +29,23 @@ vi.mock('@/shared/ui', () => ({
     </button>
   ),
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  Alert: ({
+    children,
+    title,
+  }: {
+    children?: React.ReactNode;
+    title?: React.ReactNode;
+  }) => (
+    <div>
+      <span>{title}</span>
+      {children}
+    </div>
+  ),
+  useToast: () => ({ toast: toastMock }),
+  Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     value,
     onValueChange,
@@ -52,53 +69,75 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
-  StatusBadge: ({ status }: { status: string }) => <span>{status}</span>,
-  FormSection: ({ children, title, description }: { children?: React.ReactNode; title?: React.ReactNode; description?: React.ReactNode }) => (
+  FormSection: ({
+    children,
+    title,
+    description,
+  }: {
+    children?: React.ReactNode;
+    title?: React.ReactNode;
+    description?: React.ReactNode;
+  }) => (
     <section>
       <h2>{title}</h2>
       <p>{description}</p>
       {children}
     </section>
   ),
-  FormField: ({ children, label, description }: { children?: React.ReactNode; label?: React.ReactNode; description?: React.ReactNode }) => (
+  FormField: ({
+    children,
+    label,
+    description,
+  }: {
+    children?: React.ReactNode;
+    label?: React.ReactNode;
+    description?: React.ReactNode;
+  }) => (
     <label>
       <span>{label}</span>
       <span>{description}</span>
       {children}
     </label>
   ),
-  CompactEmptyState: ({ title, description }: { title?: React.ReactNode; description?: React.ReactNode }) => (
+  FormActions: ({
+    onSave,
+    saveText,
+    isDisabled,
+  }: {
+    onSave?: () => void;
+    saveText?: React.ReactNode;
+    isDisabled?: boolean;
+  }) => (
+    <button type='button' onClick={onSave} disabled={isDisabled}>
+      {saveText}
+    </button>
+  ),
+  Hint: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  StatusBadge: ({ status }: { status: string }) => <span>{status}</span>,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  CompactEmptyState: ({
+    title,
+    description,
+  }: {
+    title?: React.ReactNode;
+    description?: React.ReactNode;
+  }) => (
     <div>
       <span>{title}</span>
       <span>{description}</span>
     </div>
   ),
-  FormActions: ({ onSave, saveText, isDisabled }: { onSave?: () => void; saveText?: React.ReactNode; isDisabled?: boolean }) => (
-    <button type='button' onClick={onSave} disabled={isDisabled}>
-      {saveText}
-    </button>
-  ),
-  Alert: ({
-    children,
-    title,
-  }: {
-    children?: React.ReactNode;
-    title?: React.ReactNode;
-  }) => (
-    <div>
-      <span>{title}</span>
-      {children}
-    </div>
-  ),
-  useToast: () => ({ toast: toastMock }),
   MetadataItem: ({ label, value }: { label?: React.ReactNode; value?: React.ReactNode }) => (
     <div>
       <span>{label}</span>
       <span>{value}</span>
     </div>
   ),
-  Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  Hint: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   UI_GRID_ROOMY_CLASSNAME: 'grid gap-4',
 }));
 

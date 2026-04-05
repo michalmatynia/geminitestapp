@@ -41,9 +41,15 @@ vi.mock('./mass-list-modal/MassListProgressPanel', () => ({
   MassListProgressPanel: () => <div data-testid='mass-list-progress-panel' />,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormModal: ({
     children,
     open,

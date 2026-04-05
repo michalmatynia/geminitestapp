@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
-import type { KangurScore } from '@kangur/contracts';
+import type { KangurScore } from '@kangur/contracts/kangur';
 import {
   type KangurMobileHomeLessonCheckpointItem,
   useKangurMobileHomeLessonCheckpoints,

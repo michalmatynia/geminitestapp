@@ -16,10 +16,13 @@ const {
   useOptionalVectorDrawingActionsMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/documentation', () => ({
+vi.mock('@/shared/contracts/documentation', () => ({
   DOCUMENTATION_MODULE_IDS: {
     vectorDrawing: 'vector-drawing',
   },
+}));
+
+vi.mock('@/shared/lib/documentation/tooltips', () => ({
   getDocumentationTooltip: (...args: unknown[]) => getDocumentationTooltipMock(...args),
 }));
 

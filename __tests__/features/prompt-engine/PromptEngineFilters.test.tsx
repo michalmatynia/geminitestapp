@@ -16,7 +16,7 @@ vi.mock('@/features/prompt-engine/context/PromptEngineContext', () => ({
   usePromptEngineActions: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SegmentedControl: ({
     options,
   }: {
@@ -29,11 +29,6 @@ vi.mock('@/shared/ui', () => ({
         </button>
       ))}
     </div>
-  ),
-  Tabs: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TabsList: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TabsTrigger: ({ children, value }: { children: React.ReactNode; value: string }) => (
-    <button data-value={value}>{children}</button>
   ),
 }));
 

@@ -106,7 +106,7 @@ export type {
   KangurOperation,
   KangurQuestion,
 } from './math/types';
-export type { KangurQuestionChoice } from '@kangur/contracts';
+export type { KangurQuestionChoice } from '@kangur/contracts/kangur';
 
 export {
   DIFFICULTY_CONFIG,

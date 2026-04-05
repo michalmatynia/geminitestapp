@@ -1,4 +1,4 @@
-import type { KangurDuelLeaderboardEntry } from '@kangur/contracts';
+import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 

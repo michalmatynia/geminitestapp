@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts';
+import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts/kangur-ai-tutor-mood';
 
 import { resolveKangurMobileScoreScope } from './mobileScoreScope';
 

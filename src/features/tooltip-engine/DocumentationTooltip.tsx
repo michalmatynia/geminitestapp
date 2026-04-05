@@ -1,1 +1,1 @@
-export { DocumentationTooltip } from '@/shared/lib/documentation';
+export { DocumentationTooltip } from '@/shared/lib/documentation/DocumentationTooltip';

@@ -19,7 +19,7 @@ const {
   useListingBaseComSettingsMock: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 

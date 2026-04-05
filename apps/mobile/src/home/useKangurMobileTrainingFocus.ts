@@ -1,4 +1,4 @@
-import type { KangurScore } from '@kangur/contracts';
+import type { KangurScore } from '@kangur/contracts/kangur';
 import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
 import { useEffect, useMemo } from 'react';
 

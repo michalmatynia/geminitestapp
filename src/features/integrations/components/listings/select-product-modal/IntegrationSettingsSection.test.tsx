@@ -19,9 +19,11 @@ vi.mock('../BaseListingSettings', () => ({
   BaseListingSettings: () => <div data-testid='base-listing-settings' />,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
     children,
@@ -61,6 +63,10 @@ vi.mock('@/shared/ui', () => ({
       <span>{title}</span>
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
 }));
 
 import { IntegrationSettingsSection } from './IntegrationSettingsSection';

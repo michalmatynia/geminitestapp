@@ -14,7 +14,7 @@ vi.mock('./hooks/useIntegrationSelection', () => ({
   useIntegrationSelection: (...args: unknown[]) => useIntegrationSelectionMock(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormModal: ({
     children,
     open,

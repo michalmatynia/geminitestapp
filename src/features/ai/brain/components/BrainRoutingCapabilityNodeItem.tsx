@@ -8,7 +8,7 @@ import { Badge } from '@/shared/ui/primitives.public';
 import { StatusToggle } from '@/shared/ui/forms-and-actions.public';
 import { TreeContextMenu, TreeRow } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
-import { type MasterTreeNode } from '@/shared/utils';
+import { type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import type { AiBrainCapabilityKey } from '../settings';
 

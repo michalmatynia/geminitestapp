@@ -1,5 +1,5 @@
 import { createKangurProgressStore } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {

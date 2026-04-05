@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
-import { DocsTooltipEnhancer } from '@/shared/ui';
+import { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/lib/documentation/DocumentationTooltipEnhancer';
 
 import { PromptExploderLibraryTab } from '../components/PromptExploderLibraryTab';
 import { PromptExploderProvider } from '../context';

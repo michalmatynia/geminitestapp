@@ -15,7 +15,7 @@ vi.mock('@/features/integrations/context/CategoryMapperContext', () => ({
   useCategoryMapperActions: mocks.useCategoryMapperActions,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/feedback.public', () => ({
   AppModal: ({
     isOpen,
     title,
@@ -37,6 +37,9 @@ vi.mock('@/shared/ui', () => ({
         <div>{footer}</div>
       </div>
     ) : null,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,

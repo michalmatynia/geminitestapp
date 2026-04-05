@@ -25,7 +25,7 @@ import {
 } from '@/features/notesapp/utils/notes-master-tree-external-drop';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import { FolderTreePanel } from '@/shared/ui/navigation-and-layout.public';
-import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
+import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
 
 

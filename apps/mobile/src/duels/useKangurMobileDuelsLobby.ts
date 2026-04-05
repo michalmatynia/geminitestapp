@@ -1,13 +1,4 @@
-import type {
-  KangurDuelDifficulty,
-  KangurDuelLeaderboardEntry,
-  KangurDuelLobbyEntry,
-  KangurDuelLobbyPresenceEntry,
-  KangurDuelMode,
-  KangurDuelOpponentEntry,
-  KangurDuelOperation,
-  KangurDuelSearchEntry,
-} from '@kangur/contracts';
+import type { KangurDuelDifficulty, KangurDuelLeaderboardEntry, KangurDuelLobbyEntry, KangurDuelLobbyPresenceEntry, KangurDuelMode, KangurDuelOpponentEntry, KangurDuelOperation, KangurDuelSearchEntry } from '@kangur/contracts/kangur-duels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 

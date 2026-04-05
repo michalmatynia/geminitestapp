@@ -1,9 +1,9 @@
 import React from 'react';
 
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
-import { DocsTooltipEnhancer } from '@/shared/ui';
+import { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/lib/documentation/DocumentationTooltipEnhancer';
 
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
 import { usePersistenceState } from '../../context';

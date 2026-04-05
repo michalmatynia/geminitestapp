@@ -10,7 +10,8 @@ import {
   type KangurHelpSettings,
 } from '@/features/kangur/docs/help-settings';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
-import { DOCUMENTATION_MODULE_IDS, createDocsTooltipEnhancer } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import { createDocsTooltipEnhancer } from '@/shared/lib/documentation/create-docs-tooltip-enhancer';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 export const getKangurDocTooltip = (docId: string): string | null =>

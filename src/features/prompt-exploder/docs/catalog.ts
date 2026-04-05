@@ -1,5 +1,7 @@
-import { PROMPT_EXPLODER_DOC_CATALOG } from '@/shared/lib/documentation/catalogs/prompt-exploder';
-import { type PromptExploderDocEntry } from '@/shared/lib/documentation';
+import {
+  PROMPT_EXPLODER_DOC_CATALOG,
+  type PromptExploderDocEntry,
+} from '@/shared/lib/documentation/catalogs/prompt-exploder';
 
 export type { PromptExploderDocEntry };
 

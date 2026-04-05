@@ -1,7 +1,7 @@
 import { pathToFileURL } from 'node:url';
 
 import { getKangurAiTutorBridgeFollowUpDirection } from '@/features/kangur/ai-tutor/follow-up-reporting';
-import type { KangurObservabilityRange } from '@/shared/contracts';
+import type { KangurObservabilityRange } from '@/shared/contracts/kangur-observability';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {

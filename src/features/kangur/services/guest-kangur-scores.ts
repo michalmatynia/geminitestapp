@@ -2,7 +2,13 @@ import { z } from 'zod';
 
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 import { kangurScoreSchema, resolveKangurScoreSubject } from '@kangur/contracts/kangur';
-import { type KangurScore, type KangurScoreCreateInput, type KangurScoreFilters, type KangurScoreLimit, type KangurScoreSort } from '@kangur/contracts';
+import {
+  type KangurScore,
+  type KangurScoreCreateInput,
+  type KangurScoreFilters,
+  type KangurScoreLimit,
+  type KangurScoreSort,
+} from '@kangur/contracts/kangur';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 

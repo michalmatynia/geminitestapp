@@ -1,6 +1,6 @@
 import { type Href, useLocalSearchParams } from 'expo-router';
 
-import type { KangurScore } from '@kangur/contracts';
+import type { KangurScore } from '@kangur/contracts/kangur';
 import {
   buildKangurHomeDebugProofViewModel,
   resolveKangurHomeDebugProofOperation,

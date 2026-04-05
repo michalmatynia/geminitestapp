@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight, Copy, GripVertical } from 'lucide-react';
 import React from 'react';
 
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { Badge, Button, Tooltip } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 

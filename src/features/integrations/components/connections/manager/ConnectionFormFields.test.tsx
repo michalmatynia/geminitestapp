@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createEmptyConnectionForm } from '@/features/integrations/context/integrations-context-types';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props} />,
   Checkbox: ({
     checked,
@@ -24,6 +24,12 @@ vi.mock('@/shared/ui', () => ({
       onChange={(event) => onCheckedChange?.(event.target.checked)}
     />
   ),
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  Label: (props: React.LabelHTMLAttributes<HTMLLabelElement>) => <label {...props} />,
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
     children,
@@ -36,8 +42,6 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </div>
   ),
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
-  Label: (props: React.LabelHTMLAttributes<HTMLLabelElement>) => <label {...props} />,
   SelectSimple: ({
     value,
     onValueChange,
@@ -61,7 +65,9 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
-  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   UI_CENTER_ROW_SPACED_CLASSNAME: 'row',
 }));
 

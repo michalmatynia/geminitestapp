@@ -5,7 +5,7 @@ import React from 'react';
 import type { ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
+import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
 
 export type CategoryTreeNodeRuntimeContextValue = {
   categoryById: Map<string, ProductCategoryWithChildren>;

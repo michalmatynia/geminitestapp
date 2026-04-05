@@ -16,11 +16,18 @@ vi.mock('@/features/files/hooks/useFileQueries', () => ({
   useUpdateFileTags: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: () => ({ toast: vi.fn() }),
+  };
+});
+
+vi.mock('@/shared/ui/media.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/media.public')>();
+  return {
+    ...actual,
     FilePreviewModal: ({
       children,
       onClose,

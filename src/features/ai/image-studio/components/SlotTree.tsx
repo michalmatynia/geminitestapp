@@ -28,7 +28,11 @@ import type { IdDataDto } from '@/shared/contracts/base';
 import { MasterTreeSettingsButton } from '@/shared/ui/navigation-and-layout.public';
 import { getFolderTreeInstanceSettingsHref } from '@/shared/utils/folder-tree-profiles-v2';
 import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
-import { type MasterTreeDropPosition, type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
+import {
+  type MasterTreeDropPosition,
+  type MasterTreeId,
+  type MasterTreeNode,
+} from '@/shared/utils/master-folder-tree-contract';
 import {
   DRAG_KEYS,
   getFirstDragValue,

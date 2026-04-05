@@ -1,12 +1,4 @@
-import {
-  KANGUR_TEST_QUESTIONS_SETTING_KEY,
-  KANGUR_TEST_SUITES_SETTING_KEY,
-  kangurTestQuestionStoreSchema,
-  kangurTestSuitesSchema,
-  type KangurTestQuestion,
-  type KangurTestQuestionStore,
-  type KangurTestSuite,
-} from '@kangur/contracts';
+import { KANGUR_TEST_QUESTIONS_SETTING_KEY, KANGUR_TEST_SUITES_SETTING_KEY, kangurTestQuestionStoreSchema, kangurTestSuitesSchema, type KangurTestQuestion, type KangurTestQuestionStore, type KangurTestSuite } from '@kangur/contracts/kangur-tests';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 

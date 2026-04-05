@@ -25,14 +25,14 @@ vi.mock('@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips', () => ({
   useAiPathsDocsTooltips: () => ({ docsTooltipsEnabled: mockState.docsTooltipsEnabled }),
 }));
 
-vi.mock('@/shared/lib/documentation', () => ({
+vi.mock('@/shared/contracts/documentation', () => ({
   DOCUMENTATION_MODULE_IDS: {
     aiPaths: 'ai-paths-docs-module',
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
-  DocsTooltipEnhancer: ({
+vi.mock('@/shared/lib/documentation/DocumentationTooltipEnhancer', () => ({
+  DocumentationTooltipEnhancer: ({
     rootId,
     enabled,
     moduleId,
@@ -47,6 +47,9 @@ vi.mock('@/shared/ui', () => ({
       {`${rootId}|${String(enabled)}|${moduleId}|${fallbackDocId}`}
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   LoadingState: ({
     message,
     className,

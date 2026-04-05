@@ -1,7 +1,4 @@
-import type {
-  KangurDuelLobbyEntry,
-  KangurDuelStatus,
-} from '@kangur/contracts';
+import type { KangurDuelLobbyEntry, KangurDuelStatus } from '@kangur/contracts/kangur-duels';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 

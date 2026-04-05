@@ -13,7 +13,7 @@ import {
 import React from 'react';
 
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { Button, Tooltip, Badge } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 

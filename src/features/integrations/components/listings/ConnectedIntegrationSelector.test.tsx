@@ -2,10 +2,16 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({ children }: { children?: React.ReactNode }) => <section>{children}</section>,
   IntegrationSelector: () => <div data-testid='integration-selector' />,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
 }));
 

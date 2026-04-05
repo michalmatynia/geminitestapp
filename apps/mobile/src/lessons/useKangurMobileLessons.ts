@@ -13,7 +13,7 @@ import {
   type KangurLessonMasteryPresentation,
   type KangurPortableLesson,
 } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 

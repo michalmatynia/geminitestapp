@@ -188,8 +188,8 @@ vi.mock('@/shared/hooks/useUserPreferences', () => ({
   useUpdateUserPreferences: () => ({ mutate: vi.fn() }),
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: () => ({

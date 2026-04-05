@@ -14,7 +14,7 @@ import { sortScores } from '@/features/kangur/services/kangur-score-repository/s
 import type { KangurScoreCreateInput, KangurScoreRecord } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { kangurScoreSchema } from '@kangur/contracts/kangur';
-import { type KangurLessonSubject } from '@kangur/contracts';
+import { type KangurLessonSubject } from '@kangur/contracts/kangur-lesson-constants';
 import {
   isRecoverableKangurClientFetchError,
   reportKangurClientError,

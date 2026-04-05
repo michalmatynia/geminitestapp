@@ -6,7 +6,7 @@ import React from 'react';
 import { fromSlotMasterNodeId } from '@/features/ai/image-studio/utils/master-folder-tree';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
-import { type MasterTreeNode } from '@/shared/utils';
+import { type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { canNestTreeNodeV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 

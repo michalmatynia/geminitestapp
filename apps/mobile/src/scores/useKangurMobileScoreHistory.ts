@@ -1,4 +1,4 @@
-import type { KangurScore } from '@kangur/contracts';
+import type { KangurScore } from '@kangur/contracts/kangur';
 import { useQuery } from '@tanstack/react-query';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';

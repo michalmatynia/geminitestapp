@@ -5,7 +5,7 @@ import { syncKangurKnowledgeGraphToNeo4j } from '@/features/kangur/server/knowle
 import { enrichKangurKnowledgeGraphWithEmbeddings } from '@/features/kangur/server/knowledge-graph/semantic';
 import { getKangurKnowledgeGraphStatusSnapshot } from '@/features/kangur/server/knowledge-graph/status-loader';
 import { kangurKnowledgeGraphSyncRequestSchema, kangurKnowledgeGraphSyncResponseSchema } from '@/shared/contracts/kangur-observability';
-import { type ApiHandlerContext } from '@/shared/contracts';
+import { type ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';

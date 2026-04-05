@@ -6,7 +6,7 @@ import {
 import {
   createDefaultKangurProgressState,
   type KangurProgressState,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
 import { useMemo, useSyncExternalStore } from 'react';
 

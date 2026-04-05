@@ -32,12 +32,6 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
-  Card: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid='listing-card-legacy'>{children}</div>
-  ),
-}));
-
 vi.mock(
   '@/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails',
   () => ({

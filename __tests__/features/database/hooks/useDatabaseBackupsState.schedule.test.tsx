@@ -12,7 +12,7 @@ import {
   DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
 } from '@/shared/lib/db/database-engine-constants';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   useCreateBackupMutation,
@@ -35,7 +35,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: vi.fn(),
 }));
 

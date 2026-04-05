@@ -32,8 +32,8 @@ vi.mock('next-auth/react', () => ({
   SessionProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
-// Mock NoteSettingsProvider
-vi.mock('@/features/notesapp', () => ({
+// Mock NoteSettingsProvider (AdminLayout imports from shared providers, not notesapp)
+vi.mock('@/shared/providers/NoteSettingsProvider', () => ({
   NoteSettingsProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 

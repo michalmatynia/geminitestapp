@@ -1,10 +1,4 @@
-import type {
-  KangurDuelDifficulty,
-  KangurDuelMode,
-  KangurDuelOperation,
-  KangurDuelSeries,
-  KangurDuelStatus,
-} from '@kangur/contracts';
+import type { KangurDuelDifficulty, KangurDuelMode, KangurDuelOperation, KangurDuelSeries, KangurDuelStatus } from '@kangur/contracts/kangur-duels';
 import type { Href } from 'expo-router';
 import { Text, View } from 'react-native';
 

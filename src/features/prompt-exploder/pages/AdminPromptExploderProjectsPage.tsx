@@ -12,12 +12,12 @@ import { useRouter } from 'next/navigation';
 import React, { useMemo, useState, useCallback } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { Button, useToast, Card } from '@/shared/ui/primitives.public';
 import { ConfirmModal, PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { ToggleRow } from '@/shared/ui/forms-and-actions.public';
-import { DocsTooltipEnhancer } from '@/shared/ui';
+import { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/lib/documentation/DocumentationTooltipEnhancer';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { serializeSetting } from '@/shared/utils/settings-json';

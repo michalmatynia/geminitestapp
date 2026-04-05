@@ -2,7 +2,7 @@ import 'server-only';
 
 
 import { createDefaultKangurProgressState, normalizeKangurProgressState } from '@kangur/contracts/kangur';
-import { type KangurProgressState } from '@kangur/contracts';
+import { type KangurProgressState } from '@kangur/contracts/kangur';
 import {
   KANGUR_LEGACY_SETTINGS_COLLECTION,
   type KangurLegacySettingDocument,

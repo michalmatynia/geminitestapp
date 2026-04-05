@@ -10,37 +10,33 @@ vi.mock('@/features/cms/hooks/useCmsDomainSelection', () => ({
 }));
 
 // Mock SelectSimple to avoid Radix UI issues in unit tests
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
-  return {
-    ...actual,
-    SelectSimple: ({
-      value,
-      onValueChange,
-      options,
-      disabled,
-    }: {
-      value: string;
-      onValueChange: (val: string) => void;
-      options: Array<{ value: string; label: string }>;
-      disabled?: boolean;
-    }) => (
-      <select
-        data-testid='select-simple'
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onValueChange(e.target.value)}
-        aria-label='Zone selector'
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    ),
-  };
-});
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  SelectSimple: ({
+    value,
+    onValueChange,
+    options,
+    disabled,
+  }: {
+    value: string;
+    onValueChange: (val: string) => void;
+    options: Array<{ value: string; label: string }>;
+    disabled?: boolean;
+  }) => (
+    <select
+      data-testid='select-simple'
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onValueChange(e.target.value)}
+      aria-label='Zone selector'
+    >
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
 
 describe('CmsDomainSelector', () => {
   const mockDomains = [

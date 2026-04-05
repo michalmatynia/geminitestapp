@@ -1,1 +1,1 @@
-export { DocumentationTooltipEnhancer } from '@/shared/lib/documentation';
+export { DocumentationTooltipEnhancer } from '@/shared/lib/documentation/DocumentationTooltipEnhancer';

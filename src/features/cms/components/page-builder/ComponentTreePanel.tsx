@@ -9,7 +9,7 @@ import { Button } from '@/shared/ui/primitives.public';
 import { FolderTreePanel, CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { TreeHeader } from '@/shared/ui/data-display.public';
 import { canNestTreeNodeV2 } from '@/shared/utils/folder-tree-profiles-v2';
-import { type MasterTreeNode } from '@/shared/utils';
+import { type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import {
   PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,

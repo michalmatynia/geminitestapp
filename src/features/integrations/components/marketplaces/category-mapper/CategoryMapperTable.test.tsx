@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
   saveMutateAsync: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -35,6 +35,68 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+  Alert: ({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) => <div data-testid='mapper-alert'>{children}</div>,
+  Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
+  useToast: () => ({
+    toast: mocks.toast,
+  }),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  SelectSimple: ({
+    value,
+    onValueChange,
+    options,
+    placeholder,
+    disabled,
+    ariaLabel,
+    title,
+  }: {
+    value: string | undefined;
+    onValueChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    placeholder?: string;
+    disabled?: boolean;
+    ariaLabel?: string;
+    title?: string;
+  }) => (
+    <select
+      aria-label={ariaLabel}
+      title={title}
+      value={value ?? ''}
+      disabled={disabled}
+      onChange={(event) => onValueChange(event.target.value)}
+    >
+      <option value=''>{placeholder ?? 'Select catalog'}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  CompactEmptyState: ({
+    title,
+    description,
+  }: {
+    title: string;
+    description?: string;
+  }) => (
+    <div>
+      <h2>{title}</h2>
+      {description ? <p>{description}</p> : null}
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
   StandardDataTablePanel: ({
     title,
     description,
@@ -84,18 +146,6 @@ vi.mock('@/shared/ui', () => ({
       </ul>
     </section>
   ),
-  CompactEmptyState: ({
-    title,
-    description,
-  }: {
-    title: string;
-    description?: string;
-  }) => (
-    <div>
-      <h2>{title}</h2>
-      {description ? <p>{description}</p> : null}
-    </div>
-  ),
   GenericMapperStats: ({
     total,
     mapped,
@@ -113,47 +163,6 @@ vi.mock('@/shared/ui', () => ({
       {itemLabel}:{total}:{mapped}:{unmapped ?? 'na'}:{pending}
     </div>
   ),
-  Alert: ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }) => <div data-testid='mapper-alert'>{children}</div>,
-  Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
-  SelectSimple: ({
-    value,
-    onValueChange,
-    options,
-    placeholder,
-    disabled,
-    ariaLabel,
-    title,
-  }: {
-    value: string | undefined;
-    onValueChange: (value: string) => void;
-    options: Array<{ value: string; label: string }>;
-    placeholder?: string;
-    disabled?: boolean;
-    ariaLabel?: string;
-    title?: string;
-  }) => (
-    <select
-      aria-label={ariaLabel}
-      title={title}
-      value={value ?? ''}
-      disabled={disabled}
-      onChange={(event) => onValueChange(event.target.value)}
-    >
-      <option value=''>{placeholder ?? 'Select catalog'}</option>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  ),
-  useToast: () => ({
-    toast: mocks.toast,
-  }),
 }));
 
 vi.mock('@/features/integrations/hooks/useIntegrationProductQueries', () => ({

@@ -9,7 +9,7 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Badge } from '@/shared/ui/primitives.public';
 import { TreeContextMenu, TreeRow } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
-import { type MasterTreeNode } from '@/shared/utils';
+import { type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 export interface BrainCatalogNodeItemProps {
   node: MasterTreeNode;

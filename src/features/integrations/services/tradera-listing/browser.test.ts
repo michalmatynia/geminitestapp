@@ -544,19 +544,9 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_SHIPPING_SET: ');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let publishReadiness = await waitForPublishReadiness(publishButton);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const listingConfirmationState = await acknowledgeListingConfirmationIfPresent();');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForPostPublishNavigation = async (timeoutMs = 15_000) => {');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const verifyPublishedListingViaActiveSearch = async (terms) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForPublishInteractionEvidence = async (');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findPublishedListingMatchOnCurrentPage = async () => {');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const summarizePostPublishState = async (reason, resolvedListingMatch = null) => {');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.post_state', state);");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.click_result', publishInteraction);");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.verify_active_search'");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.verify_active_search_result'");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.verify_active_search_failed'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const activeListingsVisible = currentUrl.toLowerCase().includes(\'/my/listings\');');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const validationMessages = stillOnSellFlow ? await collectValidationMessages() : [];');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const publishButtonDisabled = stillOnSellFlow');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const publishTargetMetadata = await readClickTargetMetadata(publishButton);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await logClickTarget('publish', publishButton);");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await captureFailureArtifacts('publish-click', {");
@@ -564,17 +554,6 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_PUBLISH_CLICK: Tradera publish button click failed. ');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'FAIL_PUBLISH_CLICK: Publish button click did not trigger an observable Tradera publish interaction.'
-    );
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const postPublishDraftValidationMessages =');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const activeSearchVerification = await verifyPublishedListingViaActiveSearch([');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const visiblePublishedListing = await findPublishedListingMatchOnCurrentPage();');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("return summarizePostPublishState(");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("'active-listings-visible-match'");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
-      'if (!externalListingId && postPublishNavigation.stillOnSellFlow) {'
-    );
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
-      'if (!externalListingId && !postPublishNavigation.activeListingsVisible) {'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let prePublishValidationMessages = publishReadiness.messages;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("context: 'publish-readiness-recovery',");
@@ -584,15 +563,23 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let publishDisabled = publishReadiness.publishDisabled;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_PUBLISH_VALIDATION: ');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
-      'FAIL_PUBLISH_STUCK: Publish remained in the Tradera selling flow without producing a listing.'
-    );
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
-      'FAIL_PUBLISH_NOT_CONFIRMED: Publish left the Tradera selling flow but listing id could not be verified. Current URL: '
-    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera.quicklist.publish.id_not_extracted');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const baseProductDuplicate = await checkDuplicate(baseProductId);');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await captureFailureArtifacts('publish-not-confirmed', {");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("'active-listings-stable'");
+    // Post-publish: notification modal dismiss + listing link extraction
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('NOTIFICATION_MODAL_DISMISS_LABELS');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const dismissPostPublishNotificationModal = async (');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const extractPostPublishListingLink = async (');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.notification_dismiss',");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.link_extracted',");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.link_not_found',");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await dismissPostPublishNotificationModal();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const extracted = await extractPostPublishListingLink();');
+    // Removed functions should no longer be present
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('waitForPostPublishNavigation');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('verifyPublishedListingViaActiveSearch');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('findPublishedListingMatchOnCurrentPage');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('summarizePostPublishState');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('FAIL_PUBLISH_STUCK');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain(
       "await Promise.allSettled([\n      page.waitForLoadState('domcontentloaded', { timeout: 25_000 }),\n      humanClick(publishButton, { pauseAfter: false }),\n    ]);"
     );

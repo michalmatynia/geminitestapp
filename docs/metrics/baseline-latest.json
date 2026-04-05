@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-04T20:31:39.103Z",
+  "generatedAt": "2026-04-05T19:03:36.164Z",
   "source": {
-    "totalFiles": 9739,
-    "totalLines": 1593475,
+    "totalFiles": 9809,
+    "totalLines": 1598758,
     "useClientFiles": 1722,
     "hooksWithoutUseClient": 2,
-    "filesOver800": 90,
-    "filesOver1000": 1,
+    "filesOver800": 95,
+    "filesOver1000": 3,
     "filesOver1500": 0,
     "largestFile": {
-      "path": "src/features/products/components/settings/ShippingGroupsSettings.tsx",
-      "lines": 1004
+      "path": "src/features/integrations/services/tradera-listing/category-scrape-script.ts",
+      "lines": 1304
     }
   },
   "api": {
@@ -42,12 +42,12 @@
         "lines": 188
       },
       {
-        "path": "src/app/api/chatbot/[[...path]]/route.ts",
-        "lines": 168
+        "path": "src/app/api/v2/products/[[...path]]/route.ts",
+        "lines": 171
       },
       {
-        "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 167
+        "path": "src/app/api/chatbot/[[...path]]/route.ts",
+        "lines": 168
       },
       {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
@@ -108,8 +108,8 @@
     ]
   },
   "imports": {
-    "appFeatureBarrelImports": 1,
-    "appFeatureDeepImports": 0,
+    "appFeatureBarrelImports": 0,
+    "appFeatureDeepImports": 3,
     "featureToSharedTotalImports": 25,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 0
@@ -121,127 +121,127 @@
       {
         "feature": "kangur",
         "files": 2467,
-        "lines": 528360
+        "lines": 528250
       },
       {
         "feature": "ai",
-        "files": 1245,
-        "lines": 244090
+        "files": 1259,
+        "lines": 243314
       },
       {
         "feature": "products",
-        "files": 354,
-        "lines": 73330
-      },
-      {
-        "feature": "case-resolver",
-        "files": 324,
-        "lines": 67807
+        "files": 358,
+        "lines": 73816
       },
       {
         "feature": "integrations",
-        "files": 371,
-        "lines": 61379
+        "files": 379,
+        "lines": 67907
+      },
+      {
+        "feature": "case-resolver",
+        "files": 327,
+        "lines": 67313
       },
       {
         "feature": "cms",
-        "files": 357,
-        "lines": 53452
+        "files": 358,
+        "lines": 53409
       },
       {
         "feature": "filemaker",
         "files": 159,
-        "lines": 38024
+        "lines": 38018
       },
       {
         "feature": "prompt-exploder",
         "files": 135,
-        "lines": 26870
+        "lines": 26802
       },
       {
         "feature": "notesapp",
         "files": 94,
-        "lines": 13564
+        "lines": 13515
       },
       {
         "feature": "admin",
-        "files": 53,
-        "lines": 9935
+        "files": 58,
+        "lines": 9881
       },
       {
         "feature": "auth",
-        "files": 57,
-        "lines": 7497
+        "files": 58,
+        "lines": 7437
       },
       {
         "feature": "database",
-        "files": 41,
-        "lines": 7164
+        "files": 44,
+        "lines": 7102
       },
       {
         "feature": "data-import-export",
         "files": 36,
-        "lines": 6973
+        "lines": 6839
       },
       {
         "feature": "observability",
-        "files": 31,
-        "lines": 5956
+        "files": 30,
+        "lines": 5935
       },
       {
         "feature": "viewer3d",
-        "files": 36,
-        "lines": 5284
+        "files": 38,
+        "lines": 5262
       },
       {
         "feature": "prompt-engine",
-        "files": 28,
-        "lines": 4352
+        "files": 32,
+        "lines": 4374
       },
       {
         "feature": "drafter",
         "files": 19,
-        "lines": 3052
+        "lines": 3019
       },
       {
         "feature": "product-sync",
         "files": 11,
-        "lines": 2944
+        "lines": 2930
       },
       {
         "feature": "files",
         "files": 36,
-        "lines": 2783
+        "lines": 2773
       },
       {
         "feature": "internationalization",
-        "files": 24,
-        "lines": 2256
+        "files": 29,
+        "lines": 2284
+      },
+      {
+        "feature": "playwright",
+        "files": 26,
+        "lines": 600
       },
       {
         "feature": "jobs",
         "files": 5,
-        "lines": 574
-      },
-      {
-        "feature": "playwright",
-        "files": 15,
-        "lines": 544
+        "lines": 571
       },
       {
         "feature": "gsap",
-        "files": 5,
-        "lines": 409
+        "files": 8,
+        "lines": 430
       },
       {
         "feature": "tooltip-engine",
-        "files": 6,
-        "lines": 154
+        "files": 9,
+        "lines": 173
       },
       {
         "feature": "app-embeds",
-        "files": 5,
-        "lines": 109
+        "files": 9,
+        "lines": 135
       }
     ]
   },
@@ -434,7 +434,15 @@
     "topFilesByLines": [
       {
         "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-        "lines": 1906
+        "lines": 2786
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/category-scrape-script.ts",
+        "lines": 1304
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/script-partials/part-4b.ts",
+        "lines": 1047
       },
       {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
@@ -442,11 +450,11 @@
       },
       {
         "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
-        "lines": 1016
+        "lines": 1015
       },
       {
         "path": "src/features/products/components/settings/ShippingGroupsSettings.tsx",
-        "lines": 1004
+        "lines": 1006
       },
       {
         "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
@@ -466,7 +474,11 @@
       },
       {
         "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-        "lines": 986
+        "lines": 987
+      },
+      {
+        "path": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
+        "lines": 982
       },
       {
         "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx",
@@ -537,20 +549,8 @@
         "lines": 958
       },
       {
-        "path": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
-        "lines": 956
-      },
-      {
         "path": "src/features/products/hooks/useProductListState.tsx",
-        "lines": 955
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
-        "lines": 948
-      },
-      {
-        "path": "src/features/kangur/ui/components/primary-navigation/__tests__/KangurPrimaryNavigation.navigation.test.tsx",
-        "lines": 945
+        "lines": 956
       }
     ],
     "topPagesByLines": [

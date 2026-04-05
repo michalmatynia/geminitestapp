@@ -34,14 +34,18 @@ const collectProductImageCandidates = (
 ): string[] => {
   const candidates = new Set<string>();
 
-  (product.imageLinks ?? []).forEach((value) => {
-    addNormalizedCandidate(candidates, value);
-  });
-
+  // product.images is the canonical source of image ordering — iterate it first
+  // so the upload order matches the product's display order.
   (product.images ?? []).forEach((image) => {
     fields.forEach((field) => {
       addNormalizedCandidate(candidates, image.imageFile?.[field]);
     });
+  });
+
+  // imageLinks may contain additional URLs not present in product.images;
+  // append them after the canonical images.
+  (product.imageLinks ?? []).forEach((value) => {
+    addNormalizedCandidate(candidates, value);
   });
 
   return Array.from(candidates);

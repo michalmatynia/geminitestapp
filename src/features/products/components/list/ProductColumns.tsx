@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download, Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
@@ -32,7 +32,7 @@ import { ActionMenu } from '@/shared/ui/ActionMenu';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Checkbox } from '@/shared/ui/checkbox';
-import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/dropdown-menu';
 import { Tooltip } from '@/shared/ui/tooltip';
 
 import { cn } from '@/shared/utils/ui-utils';
@@ -115,6 +115,17 @@ const PlaywrightStatusButton = dynamic(
   }
 );
 
+const TraderaLinkModal = dynamic(
+  () =>
+    import('./TraderaLinkModal').then(
+      (mod: typeof import('./TraderaLinkModal')) => mod.TraderaLinkModal
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const CircleIconButton = (props: {
   onClick?: () => void;
   onMouseEnter?: () => void;
@@ -159,6 +170,8 @@ const ActionsCell: React.FC<ColumnActionsProps> = memo(function ActionsCell({
   const product: ProductWithImages = row.original;
   const { onProductEditClick, onProductDeleteClick, onDuplicateProduct, onPrefetchProductDetail } =
     useProductListRowActionsContext();
+  const { showTraderaBadge } = useProductListRowRuntime(product.id, product.baseProductId);
+  const [traderaLinkOpen, setTraderaLinkOpen] = useState(false);
 
   return (
     <div className='flex justify-end' onMouseEnter={() => onPrefetchProductDetail(product.id)}>
@@ -181,6 +194,21 @@ const ActionsCell: React.FC<ColumnActionsProps> = memo(function ActionsCell({
           Duplicate
         </DropdownMenuItem>
 
+        {showTraderaBadge && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                setTraderaLinkOpen(true);
+              }}
+            >
+              Link Tradera Listing
+            </DropdownMenuItem>
+          </>
+        )}
+
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           className='text-destructive focus:text-destructive'
           onSelect={(event: Event): void => {
@@ -191,6 +219,13 @@ const ActionsCell: React.FC<ColumnActionsProps> = memo(function ActionsCell({
           Remove
         </DropdownMenuItem>
       </ActionMenu>
+      {traderaLinkOpen && (
+        <TraderaLinkModal
+          isOpen={traderaLinkOpen}
+          product={product}
+          onClose={() => setTraderaLinkOpen(false)}
+        />
+      )}
     </div>
   );
 });

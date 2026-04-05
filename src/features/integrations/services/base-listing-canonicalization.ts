@@ -10,10 +10,7 @@ import {
   listingExistsAcrossProviders,
 } from '@/features/integrations/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import type {
-  ListingBadgesPayload,
-  ProductListingWithDetails,
-} from '@/shared/contracts/integrations';
+import type { ListingBadgesPayload, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const BASE_CANONICAL_INTEGRATION_SLUGS = new Set(['base', 'base-com', 'baselinker']);

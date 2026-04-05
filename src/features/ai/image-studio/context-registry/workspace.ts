@@ -5,10 +5,8 @@ import type {
   ContextRuntimeDocument,
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
-import type {
-  ImageStudioProjectRecord,
-  ImageStudioSlotRecord,
-} from '@/shared/contracts/image-studio';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio/image-studio/project';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export const IMAGE_STUDIO_CONTEXT_ROOT_IDS = [
   'page:admin-image-studio',

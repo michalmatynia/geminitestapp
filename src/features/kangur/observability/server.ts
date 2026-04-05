@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { KangurActor } from '@/features/kangur/services/kangur-actor';
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import type { NextRequest } from 'next/server';

@@ -47,18 +47,11 @@ import {
 } from '@/features/integrations/services/imports/base-import-service-shared';
 import { getCatalogParameterLinks } from '@/features/integrations/services/imports/parameter-import/link-map-repository';
 import { findProductListingsByProductsAndConnectionAcrossProviders } from '@/features/integrations/services/product-listing-repository';
-import type {
-  BaseImportRunDetailResponse,
-  BaseImportItemRecord,
-  BaseImportItemStatus,
-  BaseImportRunParams,
-  BaseImportRunRecord,
-  BaseImportStartResponse,
-  ProductListing,
-  ProductListingRepository,
-} from '@/shared/contracts/integrations';
-import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { BaseImportRunDetailResponse, BaseImportItemRecord, BaseImportItemStatus, BaseImportRunParams, BaseImportRunRecord, BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
+import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';

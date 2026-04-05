@@ -7,7 +7,7 @@ import { Button, Alert } from '@/shared/ui/primitives.public';
 import { FileUploadButton } from '@/shared/ui/forms-and-actions.public';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { DataTable } from '@/shared/ui/data-display.public';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/ui/base';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useDatabaseColumns } from '../components/DatabaseColumns';

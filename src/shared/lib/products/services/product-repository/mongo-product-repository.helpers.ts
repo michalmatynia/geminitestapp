@@ -1,10 +1,7 @@
 import { ObjectId, type Document, type Filter } from 'mongodb';
 
-import {
-  productAdvancedFilterGroupSchema,
-  type ProductAdvancedFilterGroup,
-  type ProductParameterValue,
-} from '@/shared/contracts/products';
+import { productAdvancedFilterGroupSchema } from '@/shared/contracts/products/filters';
+import { type ProductAdvancedFilterGroup, type ProductParameterValue } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {

@@ -1,5 +1,5 @@
-import type { BaseOrderImportStatusesResponse } from '@/shared/contracts/products';
-import { baseOrderImportStatusesPayloadSchema } from '@/shared/contracts/products';
+import type { BaseOrderImportStatusesResponse } from '@/shared/contracts/products/orders-import';
+import { baseOrderImportStatusesPayloadSchema } from '@/shared/contracts/products/orders-import';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);

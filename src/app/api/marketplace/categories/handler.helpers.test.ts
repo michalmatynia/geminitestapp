@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ExternalCategoryRepository } from '@/shared/contracts/integrations';
+import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 
 import {
   listMarketplaceCategories,

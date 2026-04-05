@@ -6,7 +6,7 @@ import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/au
 import { decryptAuthSecret } from '@/features/auth/server';
 import { generateRecoveryCodes, hashRecoveryCode, verifyTotpToken } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import {
   badRequestError,
   conflictError,

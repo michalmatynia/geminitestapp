@@ -3,7 +3,8 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import type { IntegrationConnection, Integration } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type { Integration } from '@/shared/contracts/integrations/base';
 
 const {
   toastMock,

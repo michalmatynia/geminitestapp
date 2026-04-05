@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import type { TreeContextMenuItem, TreeContextMenuProps } from '@/shared/contracts/ui';
+import type { TreeContextMenuItem, TreeContextMenuProps } from '@/shared/contracts/ui/ui/menus';
 import { cn } from '@/shared/utils/ui-utils';
 
 export type { TreeContextMenuItem, TreeContextMenuProps };

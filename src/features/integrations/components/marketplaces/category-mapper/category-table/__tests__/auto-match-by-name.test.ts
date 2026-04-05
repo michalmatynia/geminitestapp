@@ -4,8 +4,8 @@ import {
   autoMatchCategoryMappingsByName,
   formatAutoMatchCategoryMappingsByNameMessage,
 } from '../auto-match-by-name';
-import type { ExternalCategory } from '@/shared/contracts/integrations';
-import type { ProductCategory } from '@/shared/contracts/products';
+import type { ExternalCategory } from '@/shared/contracts/integrations/listings';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 const createExternalCategory = (
   overrides: Partial<ExternalCategory> & Pick<ExternalCategory, 'id' | 'name'>

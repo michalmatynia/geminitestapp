@@ -10,14 +10,10 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/public';
-import type { AiNode, CaseResolverEdge } from '@/shared/contracts/case-resolver';
-import {
-  type CaseResolverNodeMeta,
-  type CaseResolverEdgeMeta,
-  type CaseResolverGraph,
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  DEFAULT_CASE_RESOLVER_EDGE_META,
-} from '@/shared/contracts/case-resolver';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
+import { DEFAULT_CASE_RESOLVER_NODE_META, DEFAULT_CASE_RESOLVER_EDGE_META } from '@/shared/contracts/case-resolver/constants';
+import { type CaseResolverNodeMeta, type CaseResolverEdgeMeta, type CaseResolverGraph } from '@/shared/contracts/case-resolver';
 import { AI_PATHS_UI_STATE_KEY, EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
 import {
   fetchAiPathsSettingsCached,

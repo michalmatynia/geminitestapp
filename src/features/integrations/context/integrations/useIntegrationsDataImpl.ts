@@ -7,7 +7,8 @@ import {
   useIntegrationConnections,
   usePlaywrightPersonas,
 } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
+import type { Integration } from '@/shared/contracts/integrations/base';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { useToast } from '@/shared/ui/primitives.public';
 

@@ -7,10 +7,8 @@ import {
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
 import type { CaseResolverWorkspaceDebugEvent } from '@/features/case-resolver/workspace-persistence';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 const logCaseResolverWorkspaceEventMock = vi.fn();
 

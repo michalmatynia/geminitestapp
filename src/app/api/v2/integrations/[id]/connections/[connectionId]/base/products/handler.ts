@@ -5,7 +5,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { fetchBaseProducts } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const requestSchema = z.object({

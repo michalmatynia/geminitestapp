@@ -1,4 +1,4 @@
-import type { Producer, ProducerCreateInput } from '@/shared/contracts/products';
+import type { Producer, ProducerCreateInput } from '@/shared/contracts/products/producers';
 import { conflictError } from '@/shared/errors/app-error';
 
 export type ProducerCreateNameLookupInput = {

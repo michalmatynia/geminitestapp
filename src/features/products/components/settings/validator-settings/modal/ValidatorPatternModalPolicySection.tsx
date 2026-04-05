@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { PatternFormData } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
 import { normalizeProductValidationPatternReplacementScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { FormField } from '@/shared/ui/form-section';
 import { MultiSelect } from '@/shared/ui/multi-select';

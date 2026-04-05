@@ -1,4 +1,5 @@
-import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { normalizeProductTriggerStatus } from './build-triggered-product-entity-json.helpers';
 

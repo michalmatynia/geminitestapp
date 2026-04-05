@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { PanelAction } from '@/shared/contracts/ui';
+import type { PanelAction } from '@/shared/contracts/ui/ui/panels';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { SearchInput } from '@/shared/ui/forms-and-actions.public';

@@ -1,5 +1,5 @@
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
-import type { IntegrationConnection } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 
 export const toConnectionFormState = (connection: IntegrationConnection): ConnectionFormState => ({
   name: connection.name,

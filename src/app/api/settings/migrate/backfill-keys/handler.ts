@@ -5,7 +5,7 @@ import {
   settingsBackfillRequestSchema as backfillSchema,
   type SettingsBackfillResult as BackfillResult,
 } from '@/shared/contracts/database';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError, forbiddenError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';

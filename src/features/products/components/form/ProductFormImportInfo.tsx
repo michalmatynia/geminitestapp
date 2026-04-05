@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-import { ProductFormData } from '@/shared/contracts/products';
+import { ProductFormData } from '@/shared/contracts/products/drafts';
 import { FormSection, FormField } from '@/shared/ui/form-section';
 import { Input } from '@/shared/ui/input';
 

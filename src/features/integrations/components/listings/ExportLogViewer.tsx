@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import { useProductListingsLogs } from '@/features/integrations/context/ProductListingsContext';
-import type { LogListEntry } from '@/shared/contracts/ui';
+import type { LogListEntry } from '@/shared/contracts/ui/ui/logs';
 import { CopyButton } from '@/shared/ui/forms-and-actions.public';
 import { CollapsibleSection } from '@/shared/ui/primitives.public';
 import { LogList } from '@/shared/ui/data-display.public';

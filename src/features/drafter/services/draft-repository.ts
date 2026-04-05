@@ -2,14 +2,8 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import {
-  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
-  type ProductDraft,
-  type CreateProductDraftInput,
-  type UpdateProductDraftInput,
-  type ProductDraftOpenFormTab,
-  type ProductParameterValue,
-} from '@/shared/contracts/products';
+import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
+import { type ProductDraft, type CreateProductDraftInput, type UpdateProductDraftInput, type ProductDraftOpenFormTab, type ProductParameterValue } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 type MongoDraftDoc = {

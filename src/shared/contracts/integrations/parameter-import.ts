@@ -1,8 +1,5 @@
-import type {
-  ProductParameter,
-  ProductParameterValue,
-  ProductParameterCreateInput as ParameterCreateInput,
-} from '@/shared/contracts/products';
+import type { ProductParameter, ProductParameterCreateInput as ParameterCreateInput } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
 
 import type { ImportTemplateParameterImport } from './templates';
 

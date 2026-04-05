@@ -1,7 +1,7 @@
 'use client';
 
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { createStrictViewContext } from '../../createStrictViewContext';
 
 type ProductListingsModalViewContextValue = {

@@ -10,11 +10,10 @@ import {
   TagMultiSelectField,
 } from '@/features/products';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
-import {
-  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
-  type ProductDraftOpenFormTab,
-} from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
+import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
+import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { Button, Input, Textarea, Card } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';

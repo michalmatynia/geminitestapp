@@ -2,12 +2,10 @@
 
 import React from 'react';
 
-import type {
-  CatalogRecord,
-  Producer,
-  ProductCategory,
-  ProductTag,
-} from '@/shared/contracts/products';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { Producer } from '@/shared/contracts/products/producers';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductTag } from '@/shared/contracts/products/tags';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type ProductMetadataFieldContextValue = {

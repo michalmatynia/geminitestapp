@@ -15,11 +15,8 @@ import {
   useDeleteCategoryMutation,
   useReorderCategoryMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import type {
-  ProductCategoryWithChildren,
-  Catalog,
-  ProductCategory,
-} from '@/shared/contracts/products';
+import type { ProductCategoryWithChildren, ProductCategory } from '@/shared/contracts/products/categories';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';

@@ -7,7 +7,7 @@ import {
   resolveProductCategoryId,
   resolveProductCategoryDisplayLabel,
 } from '@/features/products/hooks/product-list-state-utils';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 describe('product-list-state-utils category guards', () => {
   it('builds category labels from runtime category payloads that expose _id instead of id', () => {

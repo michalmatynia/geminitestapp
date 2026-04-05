@@ -1,4 +1,4 @@
-import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver';
+import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver/base';
 export type { CaseResolverOcrProvider };
 
 const isOpenAiModelId = (modelName: string): boolean => {

@@ -14,11 +14,9 @@ import {
   toStorageDocumentValue,
   type DocumentContentCanonical,
 } from '@/shared/lib/document-editor/public';
-import type {
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverPartyReference,
-  CaseResolverPdfExportRequest,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
+import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverPdfExportRequest } from '@/shared/contracts/case-resolver/file';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/shared/lib/prompt-exploder/bridge';
 import { useToast } from '@/shared/ui/primitives.public';

@@ -1,8 +1,5 @@
 import type { IdNameDto } from '@/shared/contracts/base';
-import type {
-  ImageStudioCenterDetectionMode,
-  ImageStudioCenterShadowPolicy,
-} from '@/shared/contracts/image-studio';
+import type { ImageStudioCenterDetectionMode, ImageStudioCenterShadowPolicy } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
 
 import { sanitizeStudioProjectId } from './project-session';
 

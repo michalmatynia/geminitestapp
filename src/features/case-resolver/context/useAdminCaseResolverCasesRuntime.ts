@@ -3,13 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  CaseResolverCategory,
-  CaseResolverFile,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { UserPreferencesUpdate } from '@/shared/contracts/auth';
 import { useUpdateUserPreferences, useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

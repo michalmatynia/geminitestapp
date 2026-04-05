@@ -10,11 +10,8 @@ import type {
   ContextRuntimeDocument,
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
-import type {
-  ProductValidationDenyBehavior,
-  ProductValidationInstanceScope,
-  ProductWithImages,
-} from '@/shared/contracts/products';
+import type { ProductValidationDenyBehavior, ProductValidationInstanceScope } from '@/shared/contracts/products/validation';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
 import {
   pickProductTitle,

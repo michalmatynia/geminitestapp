@@ -8,7 +8,7 @@ import {
   fetchTags,
   reindexAssets3DFromDisk,
 } from '@/features/viewer3d/api';
-import type { ListQuery, SingleQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/ui/queries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { api } from '@/shared/lib/api-client';
 import {

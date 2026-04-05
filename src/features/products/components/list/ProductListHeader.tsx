@@ -18,8 +18,8 @@ import {
 } from '@/features/products/context/ProductListContext';
 import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Catalog } from '@/shared/contracts/products';
-import type { ProductDraft } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';

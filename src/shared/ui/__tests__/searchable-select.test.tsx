@@ -5,7 +5,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MultiSelectOption } from '@/shared/contracts/ui';
+import type { MultiSelectOption } from '@/shared/contracts/ui/ui/controls';
 import { SearchableSelect } from '@/shared/ui/searchable-select';
 
 type MockMultiSelectProps = {

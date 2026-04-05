@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type {
-  IntegrationConnectionRecord,
-  IntegrationRecord,
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/contracts/integrations/repositories';
 
 const {
   fetchBaseCategoriesMock,

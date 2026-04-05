@@ -2,12 +2,12 @@
 
 import React, { useCallback, useMemo } from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Input } from '@/shared/ui/primitives.public';
 import { Tag } from '@/shared/ui/forms-and-actions.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 
 import type { ContextDraft } from '../hooks/useChatbotContextState';
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ExternalCategoryRepository } from '@/shared/contracts/integrations';
+import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   optionalBooleanQuerySchema,

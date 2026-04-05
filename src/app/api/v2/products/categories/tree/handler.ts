@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';

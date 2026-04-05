@@ -15,7 +15,7 @@ import { EmptyState, ListPanel } from '@/shared/ui/navigation-and-layout.public'
 import { FormSection, SearchInput, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { ValidatorListTree } from './validator-lists/ValidatorListTree';

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { SimpleSettingsListItem } from '@/shared/contracts/ui';
+import type { SimpleSettingsListItem } from '@/shared/contracts/ui/ui/menus';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { ActionMenu } from '../ActionMenu';

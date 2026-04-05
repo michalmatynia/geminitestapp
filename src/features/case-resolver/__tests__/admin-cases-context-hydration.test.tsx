@@ -12,7 +12,7 @@ import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import type { CaseResolverWorkspaceRecordFetchResult } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspaceRecordFetchResult } from '@/shared/contracts/case-resolver/workspace';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 const fetchCaseResolverWorkspaceRecordDetailedMock = vi.fn();

@@ -8,7 +8,7 @@ import {
 } from '@/features/internationalization/server';
 import { paginationQuerySchema, type PaginationQuery } from '@/shared/contracts/base';
 import { type CurrencyCreateInput } from '@/shared/contracts/internationalization';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

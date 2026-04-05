@@ -12,10 +12,8 @@ import {
   TRADERA_MANUAL_VERIFICATION_TEXT_HINTS,
   TRADERA_MANUAL_VERIFICATION_URL_HINTS,
 } from '@/features/integrations/services/tradera-listing/config';
-import {
-  IntegrationConnectionRecord,
-  TraderaCategoryRecord,
-} from '@/shared/contracts/integrations';
+import { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
 import {
   AppError,
   AppErrorCodes,

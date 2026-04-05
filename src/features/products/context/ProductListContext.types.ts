@@ -1,13 +1,10 @@
-import type {
-  Catalog,
-  ProductAdvancedFilterPreset,
-  PriceGroupWithDetails,
-  ProductDraft,
-  ProductWithImages,
-} from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
+import type { PriceGroupWithDetails, ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductAiRunFeedback } from '@/features/products/lib/product-ai-run-feedback';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ReactNode, ProfilerOnRenderCallback } from 'react';

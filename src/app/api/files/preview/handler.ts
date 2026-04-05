@@ -7,7 +7,7 @@ import {
   getImageFileRepository,
   isHttpFilepath,
 } from '@/features/files/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';

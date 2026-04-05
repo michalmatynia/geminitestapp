@@ -2,18 +2,14 @@ import { type UseQueryResult } from '@tanstack/react-query';
 
 import { getLanguages } from '@/features/internationalization/public';
 import type { Language } from '@/shared/contracts/internationalization';
-import type {
-  CatalogRecord,
-  PriceGroupWithDetails,
-  Producer,
-  ProductCategory,
-  ProductCategoryWithChildren,
-  ProductParameter,
-  ProductShippingGroup,
-  ProductSimpleParameter,
-  ProductTag,
-} from '@/shared/contracts/products';
-import type { ListQuery, SaveMutation, DeleteMutation } from '@/shared/contracts/ui';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
+import type { Producer } from '@/shared/contracts/products/producers';
+import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
+import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
+import type { ProductTag } from '@/shared/contracts/products/tags';
+import type { ListQuery, SaveMutation, DeleteMutation } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

@@ -3,11 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver/capture/public';
-import type {
-  CaseResolverWorkspace,
-  CaseResolverFile,
-  CaseResolverCaptureSettings,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverCaptureSettings } from '@/shared/contracts/case-resolver/capture';
 import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { type Toast } from '@/shared/contracts/ui';
 import {

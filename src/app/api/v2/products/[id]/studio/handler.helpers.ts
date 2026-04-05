@@ -1,9 +1,7 @@
 import { z } from 'zod';
 
-import {
-  productStudioConfigResponseSchema,
-  type ProductStudioConfig,
-} from '@/shared/contracts/products';
+import { productStudioConfigResponseSchema } from '@/shared/contracts/products/studio';
+import { type ProductStudioConfig } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const putSchema = z.object({

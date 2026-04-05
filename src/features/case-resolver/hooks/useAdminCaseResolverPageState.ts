@@ -6,13 +6,11 @@ import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
 import type { FilemakerPartyKind } from '@/features/filemaker/public';
 import { resolveFilemakerPartyLabel } from '@/features/filemaker/public';
-import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver';
-import type {
-  AiNode,
-  CaseResolverFile,
-  CaseResolverNodeMeta,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverNodeMeta } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { useToast } from '@/shared/ui/primitives.public';
 

@@ -5,7 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
-import type { ProductParameter, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   ProductFormMetadataContext,
   type ProductFormMetadataContextType,

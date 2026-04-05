@@ -1,8 +1,5 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  IntegrationConnectionBasic,
-  IntegrationWithConnections,
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 
 export const resolveConnectedIntegrations = (
   integrations: IntegrationWithConnections[]

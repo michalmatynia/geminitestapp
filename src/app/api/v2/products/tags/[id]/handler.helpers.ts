@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ProductTag, ProductTagUpdateInput } from '@/shared/contracts/products';
+import type { ProductTag, ProductTagUpdateInput } from '@/shared/contracts/products/tags';
 import { conflictError, validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

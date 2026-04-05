@@ -1,5 +1,5 @@
-import type { ExternalCategory } from '@/shared/contracts/integrations';
-import type { ProductCategory } from '@/shared/contracts/products';
+import type { ExternalCategory } from '@/shared/contracts/integrations/listings';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 export type CategoryNameAutoMatch = {
   externalCategoryId: string;

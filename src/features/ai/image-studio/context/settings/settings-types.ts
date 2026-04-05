@@ -2,7 +2,7 @@ import type {
   ImageStudioSettings,
   ImageStudioSequenceOperation,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui';
+import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui/ui/base';
 
 import type * as React from 'react';
 

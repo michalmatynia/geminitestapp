@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProductCategory, ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import {
   buildLatestFieldMirrorSemanticState,

@@ -9,7 +9,7 @@ import {
   GET_handler as getLastTemplateHandler,
   POST_handler as postLastTemplateHandler,
 } from '@/app/api/v2/integrations/imports/base/last-template/handler';
-import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

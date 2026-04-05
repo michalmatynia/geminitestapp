@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 
 import {
   extractTraderaSellerAliasFromHtml,

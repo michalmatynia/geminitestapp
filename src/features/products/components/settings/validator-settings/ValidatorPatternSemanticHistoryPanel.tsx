@@ -2,10 +2,7 @@
 
 import React from 'react';
 
-import type {
-  ProductValidationPattern,
-  ProductValidationSemanticState,
-} from '@/shared/contracts/products';
+import type { ProductValidationPattern, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
 import { getProductValidationSemanticOperationUiMetadata } from '@/shared/lib/products/utils/validator-semantic-operations';
 import {
   describeProductValidationSemanticAuditRecord,

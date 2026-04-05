@@ -1,13 +1,8 @@
 import 'server-only';
 
 import { resolveImageStudioSequenceActiveSteps } from '@/features/ai/image-studio/server';
-import {
-  normalizeProductStudioSequenceGenerationMode,
-  type ProductStudioConfig,
-  type ProductStudioPreflightResponse,
-  type ProductStudioSequenceGenerationMode,
-  type ProductStudioVariantsResponse,
-} from '@/shared/contracts/products';
+import { normalizeProductStudioSequenceGenerationMode } from '@/shared/contracts/products/studio';
+import { type ProductStudioConfig, type ProductStudioPreflightResponse, type ProductStudioSequenceGenerationMode, type ProductStudioVariantsResponse } from '@/shared/contracts/products';
 
 import { resolveGenerationVariants } from './product-studio-service.analysis';
 import {

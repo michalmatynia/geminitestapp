@@ -15,7 +15,7 @@ import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,
 } from '@/features/ai/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

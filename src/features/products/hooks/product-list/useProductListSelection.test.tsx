@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
   getProductIdsMock,

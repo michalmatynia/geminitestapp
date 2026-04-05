@@ -1,11 +1,7 @@
-import type { AiNode, CaseResolverEdge } from '@/shared/contracts/case-resolver';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverFile,
-  CaseResolverRelationEdgeMeta,
-  CaseResolverRelationGraph,
-  CaseResolverRelationNodeMeta,
-} from '@/shared/contracts/case-resolver';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverRelationEdgeMeta, CaseResolverRelationGraph, CaseResolverRelationNodeMeta } from '@/shared/contracts/case-resolver/relations';
 import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 

@@ -1,5 +1,5 @@
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver/capture/public';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 
 import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';

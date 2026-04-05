@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
   accessMock,

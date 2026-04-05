@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { deleteFileFromStorage, getImageFileRepository } from '@/features/files/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
 const tagsSchema = z.object({

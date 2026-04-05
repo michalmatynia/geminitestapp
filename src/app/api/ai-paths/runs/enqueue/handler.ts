@@ -21,7 +21,7 @@ import {
   type Edge,
   type PathConfig,
 } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { compileGraph, evaluateAiPathsValidationPreflight, normalizeNodes, normalizeAiPathsValidationConfig, PATH_CONFIG_PREFIX, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
 import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';

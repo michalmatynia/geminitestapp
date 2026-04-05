@@ -6,7 +6,7 @@ import {
   normalizeProductListingsIntegrationScope,
   resolveProductListingsIntegrationScopeLabel,
 } from '@/features/integrations/utils/product-listings-recovery';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { createStrictViewContext } from '../../createStrictViewContext';
 
 export type ProductListingsViewContextValue = {

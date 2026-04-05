@@ -1,7 +1,4 @@
-import type {
-  ProductParameterValue,
-  ResolvedProductParameterValue,
-} from '@/shared/contracts/products';
+import type { ProductParameterValue, ResolvedProductParameterValue } from '@/shared/contracts/products/product';
 
 const normalizeTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';

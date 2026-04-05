@@ -1,9 +1,4 @@
-import {
-  type CaseResolverDocumentDateProposal,
-  type CaseResolverDocumentFormatVersion,
-  type CaseResolverFileType,
-  type CaseResolverPartyReference,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverDocumentDateProposal, type CaseResolverDocumentFormatVersion, type CaseResolverFileType, type CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 
 import { type CaseResolverPartySearchKind } from './settings.constants';
 

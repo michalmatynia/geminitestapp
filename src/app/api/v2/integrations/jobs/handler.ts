@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId, type Document, type Filter } from 'mongodb';
 
 import { getProductListingRepository } from '@/features/integrations/server';
-import type { ListingJob, ProductJob, ProductListing } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ListingJob, ProductJob } from '@/shared/contracts/integrations/domain';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   buildLookupValues,

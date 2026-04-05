@@ -10,7 +10,7 @@ import {
   type FilemakerEmailCampaignLaunchRunResponse,
 } from '@/features/filemaker/server';
 import { filemakerEmailCampaignLaunchRunRequestSchema } from '@/shared/contracts/filemaker';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/ui/api';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

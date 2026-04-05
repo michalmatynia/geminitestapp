@@ -7,7 +7,7 @@ import {
   type NoteFolderImportNodeDto,
   type NoteFolderImportResponseDto,
 } from '@/shared/contracts/notes';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 async function createFolderStructure(
   node: NoteFolderImportNodeDto,

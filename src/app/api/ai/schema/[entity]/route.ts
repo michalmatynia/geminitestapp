@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { registryBackend } from '@/features/ai/ai-context-registry/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 export const GET = apiHandlerWithParams<{ entity: string }>(

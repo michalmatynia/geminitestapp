@@ -1,12 +1,7 @@
-import type {
-  BaseApiResponse,
-  BaseInventory,
-  BaseWarehouse,
-  BaseProducer,
-  BaseTag,
-  BaseProductRecord,
-  BaseCategory,
-} from '@/shared/contracts/integrations';
+import type { BaseApiResponse, BaseProductRecord } from '@/shared/contracts/integrations/base-api';
+import type { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations/base-com';
+import type { BaseCategory } from '@/shared/contracts/integrations/listings';
+import type { BaseProducer, BaseTag } from '@/shared/contracts/integrations';
 
 const toArray = (value: unknown): unknown[] => {
   if (Array.isArray(value)) return value;

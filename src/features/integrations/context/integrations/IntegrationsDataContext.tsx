@@ -1,6 +1,6 @@
 'use client';
 
-import type { IntegrationsData } from '@/shared/contracts/integrations';
+import type { IntegrationsData } from '@/shared/contracts/integrations/context';
 import { createStrictContext } from '../createStrictContext';
 
 export const { Context: IntegrationsDataContext, useValue: useIntegrationsData } =

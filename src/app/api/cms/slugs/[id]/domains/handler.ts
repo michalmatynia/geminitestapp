@@ -11,7 +11,7 @@ import { getCmsRepository } from '@/features/cms/server';
 import { cmsSlugDomainsUpdateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { IdDto as Params } from '@/shared/contracts/base';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
 export async function GET_handler(

@@ -26,7 +26,7 @@ import {
   kangurLessonComponentIdSchema,
   kangurLessonSubjectSchema,
 } from '@/shared/contracts/kangur-lesson-constants';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 export { kangurGameLibraryPageQuerySchema as querySchema };
 

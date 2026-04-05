@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import type { DataAttributes } from '@/shared/contracts/ui';
+import type { DataAttributes } from '@/shared/contracts/ui/ui/base';
 import { cn } from '@/shared/utils/ui-utils';
 import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 

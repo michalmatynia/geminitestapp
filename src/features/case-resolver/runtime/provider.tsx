@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { getCaseResolverWorkspaceRevision } from '../workspace-persistence';
 import { useCaseResolverSelector } from './hooks/useCaseResolverStore';

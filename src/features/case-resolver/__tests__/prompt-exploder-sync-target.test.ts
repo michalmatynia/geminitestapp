@@ -14,11 +14,8 @@ import {
 import { parseCaseResolverCaptureSettings } from '@/features/case-resolver/capture/public';
 import { parseFilemakerDatabase } from '@/features/filemaker/public';
 import { savePromptExploderApplyPromptForCaseResolver } from '@/shared/lib/prompt-exploder/bridge';
-import type {
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import type { Dispatch, SetStateAction } from 'react';
 

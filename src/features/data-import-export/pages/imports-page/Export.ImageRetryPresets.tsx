@@ -11,7 +11,7 @@ import {
   getDefaultImageRetryPresets,
   withImageRetryPresetLabels,
 } from '@/features/data-import-export/utils/image-retry-presets';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 
 export function ExportImageRetryPresetsSection(): React.JSX.Element {
   const { imageRetryPresets, setImageRetryPresets } = useImportExportState();

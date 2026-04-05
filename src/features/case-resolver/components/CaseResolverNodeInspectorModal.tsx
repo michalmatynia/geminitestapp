@@ -4,12 +4,8 @@ import { Split } from 'lucide-react';
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  CASE_RESOLVER_JOIN_MODE_OPTIONS,
-  CASE_RESOLVER_NODE_ROLE_OPTIONS,
-  CASE_RESOLVER_QUOTE_MODE_OPTIONS,
-  type CaseResolverEditorNodeContext,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_JOIN_MODE_OPTIONS, CASE_RESOLVER_NODE_ROLE_OPTIONS, CASE_RESOLVER_QUOTE_MODE_OPTIONS } from '@/shared/contracts/case-resolver/constants';
+import { type CaseResolverEditorNodeContext } from '@/shared/contracts/case-resolver';
 import {
   VALIDATOR_PATTERN_LISTS_KEY,
   parseValidatorPatternLists,

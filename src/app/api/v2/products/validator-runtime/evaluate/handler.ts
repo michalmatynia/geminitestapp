@@ -15,12 +15,8 @@ import {
   shouldLaunchPattern,
 } from '@/features/products/validation-engine/core';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
-import type {
-  ProductValidationPattern,
-  ProductValidationPostAcceptBehavior,
-  ProductValidationSeverity,
-} from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ProductValidationPattern, ProductValidationPostAcceptBehavior, ProductValidationSeverity } from '@/shared/contracts/products/validation';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {

@@ -7,13 +7,10 @@ import {
   getIntegrationRepository,
 } from '@/features/integrations/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import type {
-  IntegrationConnectionRecord,
-  PlaywrightRelistBrowserMode,
-  PlaywrightListingJobInput,
-  ProductListing,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
+import type { PlaywrightListingJobInput } from '@/shared/contracts/integrations/tradera';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { notFoundError } from '@/shared/errors/app-error';
 import {
   resolveAppBaseUrl,

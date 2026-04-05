@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo } from 'react';
 
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { normalizeCaseResolverWorkspace } from '../settings';
 import {

@@ -10,7 +10,7 @@ import {
 } from '@/features/kangur/server';
 import { KANGUR_THEME_PRESET_MANIFEST_KEY } from '@/shared/contracts/kangur-settings-keys';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';

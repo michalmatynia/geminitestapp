@@ -1,11 +1,8 @@
 import { ObjectId } from 'mongodb';
 
-import type { CategoryRepository, CategoryFilters } from '@/shared/contracts/products';
-import type {
-  ProductCategoryCreateInput,
-  ProductCategoryUpdateInput,
-} from '@/shared/contracts/products';
-import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
+import type { CategoryRepository, CategoryFilters } from '@/shared/contracts/products/drafts';
+import type { ProductCategoryCreateInput, ProductCategoryUpdateInput } from '@/shared/contracts/products/categories';
+import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

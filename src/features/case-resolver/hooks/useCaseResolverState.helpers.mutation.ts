@@ -1,10 +1,7 @@
 import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
-import type {
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverRequestedCaseStatus,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverRequestedCaseStatus } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { createCaseResolverFile } from '../settings';
 import { buildCaseResolverFileComparableFingerprint } from './useCaseResolverState.helpers.canonical';

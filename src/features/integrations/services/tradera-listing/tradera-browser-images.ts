@@ -1,6 +1,6 @@
 import { access, stat } from 'node:fs/promises';
 import path from 'node:path';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   resolveAppBaseUrl,
   getPublicPathFromStoredPath,

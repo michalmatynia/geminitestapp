@@ -1,11 +1,5 @@
-import type {
-  CaseResolverFile,
-  CaseSearchScope,
-  CaseViewMode,
-  CaseFileTypeFilter,
-  CaseSortKey as SharedCaseSortKey,
-  CaseSortOrder as SharedCaseSortOrder,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseSearchScope, CaseViewMode, CaseFileTypeFilter, CaseSortKey as SharedCaseSortKey, CaseSortOrder as SharedCaseSortOrder } from '@/shared/contracts/case-resolver/base';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 export type { CaseSearchScope };
 

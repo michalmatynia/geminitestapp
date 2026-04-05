@@ -2,15 +2,10 @@
 
 import React, { useMemo } from 'react';
 
-import type {
-  AiNode,
-  CaseResolverNodeMeta,
-  CaseResolverFile,
-  CaseResolverEdge,
-  CaseResolverEdgeMeta,
-  CaseResolverCompileResult,
-  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
-} from '@/shared/contracts/case-resolver';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverNodeMeta, CaseResolverEdge, CaseResolverEdgeMeta, CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';

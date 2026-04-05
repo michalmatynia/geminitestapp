@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
+import type { ListingJob, ProductJob } from '@/shared/contracts/integrations/domain';
 import { useJobsState } from '@/shared/lib/jobs/context/JobsContext';
 
 import { type JobRowData } from '../types';

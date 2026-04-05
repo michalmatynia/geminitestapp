@@ -9,7 +9,7 @@ import type {
   KangurSocialImageAddon,
   KangurSocialImageAddonsBatchJob,
 } from '@/shared/contracts/kangur-social-image-addons';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
 
 type SocialPostContextValue = ReturnType<typeof useAdminKangurSocialPage> & {
   addonsQuery: ListQuery<KangurSocialImageAddon, KangurSocialImageAddon[]>;

@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import type { PatternFormData, ProductValidationLaunchOperator } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationLaunchOperator } from '@/shared/contracts/products/validation';
 import { normalizeProductValidationPatternLaunchScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
 import type { DynamicReplacementSourceMode } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { FormField, FormSection } from '@/shared/ui/form-section';

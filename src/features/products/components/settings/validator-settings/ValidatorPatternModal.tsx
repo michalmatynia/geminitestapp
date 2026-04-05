@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { PatternFormData } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
 import { getProductValidationSemanticOperationUiMetadata } from '@/shared/lib/products/utils/validator-semantic-operations';
 import { FormField } from '@/shared/ui/form-section';
 import { FormModal } from '@/shared/ui/FormModal';

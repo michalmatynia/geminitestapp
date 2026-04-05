@@ -8,7 +8,7 @@ import {
   toStorageDocumentValue,
   type DocumentContentCanonical,
 } from '@/shared/lib/document-editor/public';
-import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
 import { stableStringify } from '@/shared/lib/ai-paths';
 
 export type CaseResolverDraftCanonicalState = {

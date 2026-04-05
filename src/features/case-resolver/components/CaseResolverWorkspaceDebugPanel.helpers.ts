@@ -1,9 +1,5 @@
-import type {
-  CaseResolverWorkspaceDebugEvent,
-  CaseResolverWorkspaceObservabilitySnapshot,
-  RequestedContextSnapshot,
-  WorkspaceHydrationSelectionSnapshot,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverWorkspaceObservabilitySnapshot, RequestedContextSnapshot, WorkspaceHydrationSelectionSnapshot } from '@/shared/contracts/case-resolver/base';
 
 export type CaseResolverWorkspaceDebugMetric = {
   label: string;

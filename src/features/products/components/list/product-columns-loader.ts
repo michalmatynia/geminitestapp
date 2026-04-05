@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

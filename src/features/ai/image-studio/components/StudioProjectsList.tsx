@@ -20,7 +20,7 @@ import {
   defaultImageStudioSettings,
   getImageStudioProjectSettingsKey,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio/image-studio/project';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Badge, Button, Card, Input, useToast } from '@/shared/ui/primitives.public';
 import { SearchInput } from '@/shared/ui/forms-and-actions.public';

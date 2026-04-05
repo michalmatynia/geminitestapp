@@ -1,8 +1,5 @@
-import type {
-  CategoryMapping,
-  CategoryMappingRepository,
-  CategoryMappingUpdateInput,
-} from '@/shared/contracts/integrations';
+import type { CategoryMapping, CategoryMappingUpdateInput } from '@/shared/contracts/integrations/listings';
+import type { CategoryMappingRepository } from '@/shared/contracts/integrations/repositories';
 import { notFoundError } from '@/shared/errors/app-error';
 
 type CategoryMappingByIdRepository = Pick<CategoryMappingRepository, 'getById' | 'update' | 'delete'>;

@@ -13,7 +13,8 @@ import {
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { searchMasterTreeNodes } from '@/shared/lib/foldertree/public';
-import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { MasterTreeSettingsButton } from '@/shared/ui/navigation-and-layout.public';
 import { Button, Badge } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';

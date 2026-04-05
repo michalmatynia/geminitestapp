@@ -13,7 +13,7 @@ import {
   buildKangurSocialPostCombinedBody,
   type KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
-import type { LinkedInProfileResponseDto } from '@/shared/contracts/integrations';
+import type { LinkedInProfileResponseDto } from '@/shared/contracts/integrations/oauth';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 

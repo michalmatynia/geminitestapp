@@ -7,7 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React, { type ReactNode } from 'react';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
-import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 
 const { useProductListHeaderActionsContextMock, useProductListModalsContextMock } = vi.hoisted(() => ({

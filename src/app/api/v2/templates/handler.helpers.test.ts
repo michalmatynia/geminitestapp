@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ImportExportTemplateCreateInput } from '@/shared/contracts/integrations';
+import type { ImportExportTemplateCreateInput } from '@/shared/contracts/integrations/import-export';
 
 const {
   listExportTemplatesMock,

@@ -5,23 +5,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   toastMock,
+  exportToBaseMutateAsyncMock,
   ensureTraderaBrowserSessionMock,
   preflightTraderaQuickListSessionMock,
   relistTraderaMutateAsyncMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
+  exportToBaseMutateAsyncMock: vi.fn(),
   ensureTraderaBrowserSessionMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
   relistTraderaMutateAsyncMock: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 
 vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
   useDeleteFromBaseMutation: () => ({ mutateAsync: vi.fn() }),
-  useExportToBaseMutation: () => ({ mutateAsync: vi.fn() }),
+  useExportToBaseMutation: () => ({ mutateAsync: exportToBaseMutateAsyncMock }),
   usePurgeListingMutation: () => ({ mutateAsync: vi.fn() }),
   useRelistTraderaMutation: () => ({
     mutateAsync: relistTraderaMutateAsyncMock,
@@ -82,6 +84,11 @@ describe('useProductListingsActionsImpl', () => {
     ensureTraderaBrowserSessionMock.mockResolvedValue({
       response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
       savedSession: true,
+    });
+    exportToBaseMutateAsyncMock.mockResolvedValue({
+      status: 'queued',
+      jobId: 'job-base-export-1',
+      logs: [],
     });
     preflightTraderaQuickListSessionMock.mockResolvedValue({
       response: { ok: true, sessionReady: true, steps: [] },
@@ -309,5 +316,67 @@ describe('useProductListingsActionsImpl', () => {
     expect(setError).toHaveBeenCalledWith(
       'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
     );
+  });
+
+  it('re-exports the current Base listing with listing identity and success feedback', async () => {
+    const setError = vi.fn();
+    const setExportLogs = vi.fn();
+    const setLogsOpen = vi.fn();
+    const setLastExportListingId = vi.fn();
+    const setExportingListing = vi.fn();
+    const onListingsUpdated = vi.fn();
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams({
+          listings: [
+            {
+              id: 'listing-base-1',
+              connectionId: 'connection-base-1',
+              inventoryId: 'inventory-base-1',
+              externalListingId: 'base-product-123',
+              exportHistory: [
+                {
+                  exportedAt: '2026-04-03T10:00:00.000Z',
+                  templateId: 'template-older',
+                },
+                {
+                  exportedAt: '2026-04-04T10:00:00.000Z',
+                  templateId: 'template-latest',
+                },
+              ],
+            },
+          ],
+        }),
+        onListingsUpdated,
+        setError,
+        setExportLogs,
+        setLogsOpen,
+        setLastExportListingId,
+        setExportingListing,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleExportAgain('listing-base-1');
+    });
+
+    expect(exportToBaseMutateAsyncMock).toHaveBeenCalledWith({
+      connectionId: 'connection-base-1',
+      inventoryId: 'inventory-base-1',
+      listingId: 'listing-base-1',
+      externalListingId: 'base-product-123',
+      templateId: 'template-latest',
+      exportImagesAsBase64: false,
+    });
+    expect(setError).toHaveBeenCalledWith(null);
+    expect(setLastExportListingId).toHaveBeenCalledWith('listing-base-1');
+    expect(setLogsOpen).toHaveBeenCalledWith(true);
+    expect(toastMock).toHaveBeenCalledWith('Base.com export queued (job job-base-export-1).', {
+      variant: 'success',
+    });
+    expect(onListingsUpdated).toHaveBeenCalled();
+    expect(setExportingListing).toHaveBeenNthCalledWith(1, 'listing-base-1');
+    expect(setExportingListing).toHaveBeenLastCalledWith(null);
   });
 });

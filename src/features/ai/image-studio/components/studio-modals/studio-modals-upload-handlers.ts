@@ -1,7 +1,8 @@
 import { setImageStudioSlotImageLocked } from '@/features/ai/image-studio/utils/slot-image-lock';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ImageStudioAssetDto, ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { ImageStudioAssetDto } from '@/shared/contracts/image-studio/image-studio/misc';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { IdDataDto } from '@/shared/contracts/base';
 
 

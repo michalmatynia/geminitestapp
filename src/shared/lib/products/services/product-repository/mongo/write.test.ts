@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { mongoProductWriteImpl } from './write';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({

@@ -1,4 +1,4 @@
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { api } from '@/shared/lib/api-client';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';

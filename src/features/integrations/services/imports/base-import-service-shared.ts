@@ -1,21 +1,9 @@
 import { createHash } from 'crypto';
 import path from 'path';
 
-import type {
-  BaseImportErrorClass,
-  BaseImportErrorCode,
-  BaseImportItemRecord,
-  BaseImportParameterImportSummary,
-  BaseImportItemStatus,
-  BaseImportMode,
-  BaseImportRunParams,
-  BaseImportRunStatus,
-  PriceGroupLookup,
-  BaseConnectionContext,
-  ImportDecision,
-  ProcessItemResult,
-  NormalizedMappedProduct,
-} from '@/shared/contracts/integrations';
+import type { BaseImportErrorClass, BaseImportErrorCode, BaseImportItemRecord, BaseImportParameterImportSummary, BaseImportItemStatus, BaseImportMode, BaseImportRunParams, BaseImportRunStatus } from '@/shared/contracts/integrations/base-com';
+import type { PriceGroupLookup, BaseConnectionContext } from '@/shared/contracts/integrations/base-api';
+import type { ImportDecision, ProcessItemResult, NormalizedMappedProduct } from '@/shared/contracts/integrations/processing';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

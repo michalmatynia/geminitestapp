@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProducerMapping } from '@/shared/contracts/integrations';
+import type { ProducerMapping } from '@/shared/contracts/integrations/producers';
 
 import {
   parseMarketplaceProducerMappingsQuery,

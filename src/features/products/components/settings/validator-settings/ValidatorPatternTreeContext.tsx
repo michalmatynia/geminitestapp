@@ -3,11 +3,8 @@
 import React from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import type {
-  ProductValidationPattern,
-  SequenceGroupDraft,
-  SequenceGroupView,
-} from '@/shared/contracts/products';
+import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products/validation';
+import type { SequenceGroupView } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

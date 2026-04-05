@@ -8,11 +8,7 @@ import {
   getImageStudioSequenceRunById,
   updateImageStudioSequenceRun,
 } from '@/features/ai/image-studio/server/sequence-run-repository';
-import {
-  type ImageStudioSequenceMaskContext,
-  type ImageStudioSequenceRunDispatchMode,
-  type ImageStudioSequenceRunRecord,
-} from '@/shared/contracts/image-studio';
+import { type ImageStudioSequenceMaskContext, type ImageStudioSequenceRunDispatchMode, type ImageStudioSequenceRunRecord } from '@/shared/contracts/image-studio';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';

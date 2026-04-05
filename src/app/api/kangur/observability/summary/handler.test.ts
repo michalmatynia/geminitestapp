@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { authError, badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 const { assertSettingsManageAccessMock, getKangurObservabilitySummaryMock } = vi.hoisted(() => ({
   assertSettingsManageAccessMock: vi.fn(),

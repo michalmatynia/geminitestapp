@@ -5,10 +5,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { CanvasBoard } from '@/features/ai/public';
 import { AiPathsProvider } from '@/features/ai/public';
-import {
-  type AiNode,
-  type CaseResolverNodeFileSnapshot,
-} from '@/shared/contracts/case-resolver';
+import { type AiNode, type CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
 import { Button, Card, Tooltip, useToast, Badge } from '@/shared/ui/primitives.public';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { Chip } from '@/shared/ui/forms-and-actions.public';

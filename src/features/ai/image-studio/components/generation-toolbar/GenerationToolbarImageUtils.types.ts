@@ -9,7 +9,7 @@ import type {
   ImageStudioCenterObjectBounds,
   ImageStudioAutoScalePlan,
 } from '@/features/ai/image-studio/analysis/shared';
-import type { MaskShapeForExport } from '@/shared/contracts/image-studio';
+import type { MaskShapeForExport } from '@/shared/contracts/image-studio/image-studio/misc';
 import type {
   PositiveRectBoundsDto as CropRect,
   PositiveRectBoundsDto as ImageContentFrame,

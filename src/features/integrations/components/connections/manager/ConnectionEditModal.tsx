@@ -10,7 +10,7 @@ import {
   useIntegrationsActions,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
-import type { IntegrationConnection } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import { DetailModal } from '@/shared/ui/templates.public';
 import { FormActions } from '@/shared/ui/forms-and-actions.public';
 

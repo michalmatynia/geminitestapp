@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/ui/base';
 import { useToast } from '@/shared/ui/primitives.public';
 import { FileUploadButton } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';

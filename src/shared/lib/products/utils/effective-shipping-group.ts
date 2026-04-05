@@ -1,4 +1,5 @@
-import type { ProductCategory, ProductShippingGroup } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 
 type ProductCatalogRef = {
   catalogId?: string | null | undefined;

@@ -3,7 +3,8 @@ import { createElement } from 'react';
 import { useWatch } from 'react-hook-form';
 import { describe, expect, it } from 'vitest';
 
-import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 
 import {

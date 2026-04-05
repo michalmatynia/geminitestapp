@@ -1,6 +1,6 @@
 import { useInternationalizationData } from '@/features/internationalization/public';
 import type { Language } from '@/shared/contracts/internationalization';
-import { Catalog } from '@/shared/contracts/products';
+import { Catalog } from '@/shared/contracts/products/catalogs';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';

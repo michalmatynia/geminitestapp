@@ -12,7 +12,7 @@ import {
   productSchema,
   productWithImagesSchema,
 } from '@/shared/contracts/products/product';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import {
   createListQueryV2,
   createPaginatedListQueryV2,

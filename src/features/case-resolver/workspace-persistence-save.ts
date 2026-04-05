@@ -1,7 +1,4 @@
-import {
-  type CaseResolverWorkspace,
-  type PersistCaseResolverWorkspaceResult,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspace, type PersistCaseResolverWorkspaceResult } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 
 import {

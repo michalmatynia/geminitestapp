@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { resolveProductStudioSourceSlotCandidates } from './product-studio-service.preflight';
-import type { ProductStudioConfig } from '@/shared/contracts/products';
+import type { ProductStudioConfig } from '@/shared/contracts/products/studio';
 
 const makeConfig = (overrides: Partial<ProductStudioConfig> = {}): ProductStudioConfig => ({
   projectId: 'studio-a',

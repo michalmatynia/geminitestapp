@@ -1,16 +1,13 @@
-import type {
-  CatalogRecord,
-  Producer,
-  ProductCategory,
-  ProductCategoryWithChildren,
-  ProductTag,
-} from '@/shared/contracts/products';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { Producer } from '@/shared/contracts/products/producers';
+import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
+import type { ProductTag } from '@/shared/contracts/products/tags';
 import type { ProductFilter } from '@/shared/contracts/products/filters';
 import type {
   ProductWithImages,
   ProductsPagedResult,
 } from '@/shared/contracts/products/product';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

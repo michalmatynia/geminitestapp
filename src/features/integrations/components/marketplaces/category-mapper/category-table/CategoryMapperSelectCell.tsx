@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SearchableSelect } from '@/shared/ui/forms-and-actions.public';
-import type { GenericMapperExternalCellProps as CategoryMapperSelectCellProps } from '@/shared/contracts/ui';
+import type { GenericMapperExternalCellProps as CategoryMapperSelectCellProps } from '@/shared/contracts/ui/ui/api';
 
 export type { CategoryMapperSelectCellProps };
 

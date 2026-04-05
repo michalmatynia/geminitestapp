@@ -7,15 +7,11 @@ import {
   isLikelyImageFile,
   isLikelyScanInputFile,
 } from '@/features/case-resolver/utils/caseResolverUtils';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverAssetKind,
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverScanSlot,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
-import type { Toast } from '@/shared/contracts/ui';
+import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverAssetKind } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverScanSlot } from '@/shared/contracts/case-resolver/ocr';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 
 import {
   createCaseResolverAssetFile,

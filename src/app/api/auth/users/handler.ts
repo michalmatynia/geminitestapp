@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/features/auth/server';
 import { listAuthUsers } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError } from '@/shared/errors/app-error';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
 import { buildProductStudioWorkspaceContextBundle } from '@/features/products/context-registry/workspace';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context-shared';
 
 import type {

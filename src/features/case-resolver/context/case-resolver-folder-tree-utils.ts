@@ -1,4 +1,4 @@
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { parseString } from '../components/CaseResolverFolderTree.helpers';

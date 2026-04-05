@@ -8,7 +8,8 @@ import { IntegrationsActionsContext } from '@/features/integrations/context/inte
 import { IntegrationsDataContext } from '@/features/integrations/context/integrations/IntegrationsDataContext';
 import { IntegrationsFormContext } from '@/features/integrations/context/integrations/IntegrationsFormContext';
 import { IntegrationsTestingContext } from '@/features/integrations/context/integrations/IntegrationsTestingContext';
-import type { IntegrationConnection, Integration } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type { Integration } from '@/shared/contracts/integrations/base';
 import type { IntegrationsData } from '@/shared/contracts/integrations/context';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 

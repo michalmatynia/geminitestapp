@@ -5,7 +5,7 @@ import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { verifyKangurLearnerPassword } from '@/features/kangur/server';
 import { setKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
 import { ActivityTypes } from '@/shared/constants/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';

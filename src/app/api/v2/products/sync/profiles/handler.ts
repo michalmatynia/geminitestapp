@@ -11,7 +11,7 @@ import type {
   ProductSyncProfilesResponse,
 } from '@/shared/contracts/product-sync';
 import { productSyncProfileCreatePayloadSchema } from '@/shared/contracts/product-sync';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 export const createProfileSchema = productSyncProfileCreatePayloadSchema;
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

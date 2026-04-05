@@ -9,12 +9,8 @@ import {
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/server';
-import {
-  normalizeProductStudioSequenceGenerationMode,
-  type ProductStudioSequenceGenerationMode,
-  type ProductStudioSequencingConfig,
-  type ProductStudioSequencingDiagnostics,
-} from '@/shared/contracts/products';
+import { normalizeProductStudioSequenceGenerationMode } from '@/shared/contracts/products/studio';
+import { type ProductStudioSequenceGenerationMode, type ProductStudioSequencingConfig, type ProductStudioSequencingDiagnostics } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';

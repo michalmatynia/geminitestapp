@@ -8,7 +8,7 @@ import {
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { useToast } from '@/shared/ui/primitives.public';
 import { createStrictContext } from './createStrictContext';
 

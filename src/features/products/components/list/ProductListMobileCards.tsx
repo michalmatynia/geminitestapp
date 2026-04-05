@@ -18,7 +18,7 @@ import {
   loadProductIntegrationsAdapter,
   type ProductTriggerButtonBarProps,
 } from '@/features/products/lib/product-integrations-adapter-loader';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,

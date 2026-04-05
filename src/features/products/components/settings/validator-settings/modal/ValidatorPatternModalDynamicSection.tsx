@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { PatternFormData } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
 import type {
   DynamicReplacementMathOperation,
   DynamicReplacementRoundMode,

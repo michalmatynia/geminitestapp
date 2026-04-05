@@ -2,7 +2,7 @@ import {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import {
   buildProductValidationSemanticOperationPresetLabel,
   PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS,

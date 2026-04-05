@@ -1,4 +1,5 @@
-import type { ProductStudioConfig, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductStudioConfig } from '@/shared/contracts/products/studio';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import {
   getProductStudioConfig,

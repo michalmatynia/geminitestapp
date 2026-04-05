@@ -12,7 +12,7 @@ import {
   getMongoRestoreCommand,
   mongoExecFileAsync,
 } from '@/features/database/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';

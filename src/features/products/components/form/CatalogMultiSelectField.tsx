@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { CatalogRecord } from '@/shared/contracts/products';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 
 import { ProductMetadataMultiSelectField } from './ProductMetadataMultiSelectField';
 

@@ -1,32 +1,11 @@
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver/capture/public';
-import type {
-  CaseResolverFile,
-  CaseResolverAssetFile,
-  CaseResolverGraph,
-  CaseResolverNodeMeta,
-  CaseResolverEdgeMeta,
-  CaseResolverFileType,
-  CaseResolverPartyReference,
-  CaseResolverCategory,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-  CaseResolverScanSlot,
-  CaseResolverDocumentDateProposal,
-  CaseResolverWorkspace,
-  CaseResolverEditorNodeContext,
-  CaseResolverSettings,
-  CaseResolverAssetKind,
-  CaseResolverFileEditDraft,
-  CaseResolverCompiledSegment,
-  CaseResolverCompileResult,
-  CaseResolverDocumentVersion,
-  CaseResolverWorkspaceNormalizationDiagnostics,
-  CaseResolverEditorMode,
-  CaseResolverRequestedCaseStatus,
-  CaseResolverRequestedCaseIssue,
-  WorkspaceView,
-  EditorDetailsTab,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverAssetFile, CaseResolverDocumentDateProposal, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverGraph, CaseResolverNodeMeta, CaseResolverEdgeMeta } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverFileType, CaseResolverAssetKind, CaseResolverDocumentVersion, CaseResolverWorkspaceNormalizationDiagnostics, CaseResolverEditorMode, CaseResolverRequestedCaseStatus, CaseResolverRequestedCaseIssue, WorkspaceView, EditorDetailsTab } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverPartyReference, CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverScanSlot } from '@/shared/contracts/case-resolver/ocr';
+import type { CaseResolverWorkspace, CaseResolverEditorNodeContext, CaseResolverSettings } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverCompiledSegment, CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 

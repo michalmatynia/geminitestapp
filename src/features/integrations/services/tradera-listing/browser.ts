@@ -1,9 +1,6 @@
 import { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
-import type {
-  IntegrationConnectionRecord,
-  PlaywrightRelistBrowserMode,
-  ProductListing,
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 export { ensureLoggedIn } from './tradera-browser-auth';
 import { runTraderaBrowserListingScripted } from './tradera-browser-scripted';
 import { runTraderaBrowserListingStandard } from './tradera-browser-standard';

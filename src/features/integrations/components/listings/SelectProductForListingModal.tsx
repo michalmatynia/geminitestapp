@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useIntegrationProductsWithCount } from '@/features/integrations/hooks/useIntegrationProductQueries';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
 import { FormModal } from '@/shared/ui/forms-and-actions.public';
 import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 

@@ -21,11 +21,7 @@ import {
   ConnectionDeleteOptions,
   ConnectionDependencyCounts,
 } from './common';
-import {
-  IntegrationRecord,
-  IntegrationConnectionRecord,
-  IntegrationRepository,
-} from '@/shared/contracts/integrations';
+import { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository } from '@/shared/contracts/integrations/repositories';
 
 type IntegrationDocument = {
   name: string;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/contracts/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui/ui/base';
 import { FormModal } from '@/shared/ui/forms-and-actions.public';
 
 import { ConnectedIntegrationSelector } from './ConnectedIntegrationSelector';

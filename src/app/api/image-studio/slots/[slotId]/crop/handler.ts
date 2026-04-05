@@ -32,7 +32,7 @@ import {
 } from '@/features/ai/server';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
 import type { UploadedClientCropImage } from '@/shared/contracts/image-studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { studioRoot } from '@/shared/lib/files/server-constants';

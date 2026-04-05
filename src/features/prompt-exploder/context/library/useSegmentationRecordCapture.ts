@@ -6,7 +6,7 @@ import type {
   CaptureSegmentationRecordResult,
   PromptExploderSegmentationRecord,
 } from '@/shared/contracts/prompt-exploder';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {

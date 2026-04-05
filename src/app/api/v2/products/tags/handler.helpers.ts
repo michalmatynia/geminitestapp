@@ -1,4 +1,4 @@
-import type { ProductTag, ProductTagCreateInput, ProductTagFilters } from '@/shared/contracts/products';
+import type { ProductTag, ProductTagCreateInput, ProductTagFilters } from '@/shared/contracts/products/tags';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 
 const DEFAULT_PRODUCT_TAG_COLOR = '#38bdf8';

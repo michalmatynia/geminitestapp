@@ -8,8 +8,8 @@ import {
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations';
-import type { InventoryOption, Template } from '@/shared/contracts/integrations';
+import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
+import type { InventoryOption, Template } from '@/shared/contracts/integrations/import-export';
 import { Label } from '@/shared/ui/primitives.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 

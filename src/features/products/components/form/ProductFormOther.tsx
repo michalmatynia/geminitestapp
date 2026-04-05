@@ -19,13 +19,11 @@ import {
 } from '@/features/products/validation-engine/core';
 import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
 import { resolveValidatorFieldReplacement } from '@/features/products/lib/resolveValidatorFieldReplacement';
-import {
-  ProductFormData,
-  CatalogRecord,
-  PriceGroupWithDetails,
-  ProductCategory,
-  ProductShippingGroup,
-} from '@/shared/contracts/products';
+import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import { PriceGroupWithDetails } from '@/shared/contracts/products/product';
+import { ProductCategory } from '@/shared/contracts/products/categories';
+import { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { resolveEffectiveShippingGroup } from '@/shared/lib/products/utils/effective-shipping-group';
 import {

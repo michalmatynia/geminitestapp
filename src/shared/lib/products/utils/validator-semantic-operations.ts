@@ -1,8 +1,5 @@
-import type {
-  ProductValidationPattern,
-  ProductValidationSemanticState,
-} from '@/shared/contracts/products';
-import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION } from '@/shared/contracts/products';
+import type { ProductValidationPattern, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
+import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION } from '@/shared/contracts/products/validation';
 import { areValidatorCategoryLabelsEquivalent } from '@/shared/lib/products/utils/validator-category-labels';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 

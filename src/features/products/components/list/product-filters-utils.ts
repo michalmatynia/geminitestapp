@@ -2,12 +2,8 @@ import {
   createRuleId,
   readAdvancedPresetBundle,
 } from '@/features/products/components/list/advanced-filter';
-import {
-  productAdvancedFilterPresetSchema,
-  productAdvancedFilterPresetBundleSchema,
-  type ProductAdvancedFilterPreset,
-  type ProductAdvancedFilterGroup,
-} from '@/shared/contracts/products';
+import { productAdvancedFilterPresetSchema, productAdvancedFilterPresetBundleSchema } from '@/shared/contracts/products/filters';
+import { type ProductAdvancedFilterPreset, type ProductAdvancedFilterGroup } from '@/shared/contracts/products';
 
 export const normalizePresetName = (name: string): string => name.trim();
 

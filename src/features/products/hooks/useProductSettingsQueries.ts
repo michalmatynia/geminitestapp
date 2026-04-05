@@ -28,14 +28,7 @@ import {
   type UpdateProductValidationPatternInput as UpdateValidationPatternPayload,
   type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
 } from '@/shared/contracts/products/validation';
-import type {
-  UpdateMutation,
-  DeleteMutation,
-  SaveMutation,
-  CreateMutation,
-  ListQuery,
-  SingleQuery,
-} from '@/shared/contracts/ui';
+import type { UpdateMutation, DeleteMutation, SaveMutation, CreateMutation, ListQuery, SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import {
   type ProductValidatorImportRequest as ImportValidationPatternsPayload,
   type ProductValidatorImportResult as ImportValidationPatternsResult,

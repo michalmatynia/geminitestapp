@@ -2,13 +2,7 @@
 
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
 
-import type {
-  ProductValidationPattern,
-  ProductValidationDenyBehavior,
-  ProductValidationInstanceScope,
-  ProductValidationDenyIssueInput,
-  ProductValidationAcceptIssueInput,
-} from '@/shared/contracts/products';
+import type { ProductValidationPattern, ProductValidationDenyBehavior, ProductValidationInstanceScope, ProductValidationDenyIssueInput, ProductValidationAcceptIssueInput } from '@/shared/contracts/products/validation';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

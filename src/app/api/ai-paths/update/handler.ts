@@ -15,7 +15,7 @@ import { getProductDataProvider } from '@/shared/lib/products/services/product-p
 import { productService } from '@/shared/lib/products/services/productService';
 import { aiPathEntityUpdateRequestSchema } from '@/shared/contracts/ai-paths';
 import { NoteUpdateInput } from '@/shared/contracts/notes';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import {
   badRequestError,
   internalError,

@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import type { PatternFormData, ProductValidationRuntimeType } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationRuntimeType } from '@/shared/contracts/products/validation';
 import { FormField, FormSection } from '@/shared/ui/form-section';
 import { SelectSimple } from '@/shared/ui/select-simple';
 import { StatusToggle } from '@/shared/ui/status-toggle';

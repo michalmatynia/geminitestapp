@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
+import type { ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils';

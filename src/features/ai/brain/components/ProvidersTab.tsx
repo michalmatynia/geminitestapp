@@ -14,7 +14,7 @@ import {
 import { Button, Input, Label, useToast } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 
 import { useBrain } from '../context/BrainContext';
 import {

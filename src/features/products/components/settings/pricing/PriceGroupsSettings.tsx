@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { PriceGroup } from '@/shared/contracts/products';
+import { PriceGroup } from '@/shared/contracts/products/catalogs';
 import { findPriceGroupByIdentifier } from '@/shared/lib/products/utils/price-group-identifiers';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';

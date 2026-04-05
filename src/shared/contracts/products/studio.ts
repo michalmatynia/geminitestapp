@@ -1,10 +1,8 @@
 import { z } from 'zod';
 
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
-import {
-  imageStudioRunDispatchModeSchema,
-  imageStudioSlotSchema,
-} from '@/shared/contracts/image-studio';
+import { imageStudioRunDispatchModeSchema } from '@/shared/contracts/image-studio/image-studio/run';
+import { imageStudioSlotSchema } from '@/shared/contracts/image-studio/image-studio/slot';
 import { productWithImagesSchema } from './product';
 export const productStudioSequenceGenerationModeSchema = z.enum([
   'studio_prompt_then_sequence',

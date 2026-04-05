@@ -9,7 +9,7 @@ import {
   useUpdateFileTags,
 } from '@/features/files/hooks/useFileQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ExpandedImageFile } from '@/shared/contracts/products';
+import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
 import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';

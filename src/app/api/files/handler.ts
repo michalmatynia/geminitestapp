@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { imageFileService } from '@/features/files/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import {
   optionalCsvQueryStringArray,
   optionalTrimmedQueryString,

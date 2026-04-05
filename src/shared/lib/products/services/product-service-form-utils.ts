@@ -1,4 +1,4 @@
-import type { ProductImageRecord } from '@/shared/contracts/products';
+import type { ProductImageRecord } from '@/shared/contracts/products/product';
 
 export type ParsedProductImageSequenceEntry =
   | { kind: 'existing'; imageFileId: string }

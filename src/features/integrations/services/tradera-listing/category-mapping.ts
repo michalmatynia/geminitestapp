@@ -1,5 +1,5 @@
-import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { getCategoryMappingRepository } from '../category-mapping-repository';
 

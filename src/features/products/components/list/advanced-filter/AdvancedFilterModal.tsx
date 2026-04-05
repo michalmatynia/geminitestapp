@@ -3,11 +3,8 @@
 import { useEffect, useState, useId } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  productAdvancedFilterGroupSchema,
-  type ProductAdvancedFilterField,
-  type ProductAdvancedFilterGroup,
-} from '@/shared/contracts/products';
+import { productAdvancedFilterGroupSchema } from '@/shared/contracts/products/filters';
+import { type ProductAdvancedFilterField, type ProductAdvancedFilterGroup } from '@/shared/contracts/products';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';

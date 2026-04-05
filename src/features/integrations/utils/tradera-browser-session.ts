@@ -1,4 +1,4 @@
-import type { TestConnectionResponse } from '@/shared/contracts/integrations';
+import type { TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
 import { ApiError, api } from '@/shared/lib/api-client';
 
 export const TRADERA_BROWSER_MANUAL_TIMEOUT_MS = 240000;

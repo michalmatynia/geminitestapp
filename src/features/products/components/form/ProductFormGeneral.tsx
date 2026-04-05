@@ -21,8 +21,8 @@ import {
   sortValidatorPatterns,
 } from '@/features/products/validation-engine/core';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { ProductFormData } from '@/shared/contracts/products';
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { isPatternReplacementEnabledForValidationScope } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { Alert } from '@/shared/ui/alert';

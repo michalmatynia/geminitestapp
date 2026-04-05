@@ -30,11 +30,13 @@ vi.mock('@/features/integrations/components/listings/useImageRetryPresets', () =
 import { ProductListingActions } from './ProductListingActions';
 
 describe('ProductListingActions', () => {
+  const handleExportAgain = vi.fn();
   const handleOpenTraderaLogin = vi.fn();
   const handleRelistTradera = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    handleExportAgain.mockResolvedValue(undefined);
     handleOpenTraderaLogin.mockResolvedValue(true);
     handleRelistTradera.mockResolvedValue(undefined);
     useImageRetryPresetsMock.mockReturnValue([]);
@@ -50,7 +52,7 @@ describe('ProductListingActions', () => {
       openingTraderaLogin: null,
     });
     useProductListingsActionsMock.mockReturnValue({
-      handleExportAgain: vi.fn(),
+      handleExportAgain,
       handleExportImagesOnly: vi.fn(),
       handleSaveInventoryId: vi.fn(),
       handleRelistTradera,
@@ -345,5 +347,61 @@ describe('ProductListingActions', () => {
 
     expect(screen.getByRole('button', { name: 'Queued headed relist' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Relist headless' })).toBeDisabled();
+  });
+
+  it('dispatches Base re-export from the regular listing modal', () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-base-1',
+            status: 'active',
+            connectionId: 'connection-base-1',
+            integration: {
+              name: 'Base.com',
+              slug: 'base-com',
+            },
+            externalListingId: 'base-product-123',
+          } as never
+        }
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Re-export product' }));
+
+    expect(handleExportAgain).toHaveBeenCalledWith('listing-base-1');
+  });
+
+  it('shows an in-flight label while Base re-export is queueing', () => {
+    useProductListingsUIStateMock.mockReturnValue({
+      exportingListing: 'listing-base-1',
+      inventoryOverrides: {},
+      setInventoryOverrides: vi.fn(),
+      savingInventoryId: null,
+      deletingFromBase: null,
+      purgingListing: null,
+      relistingListing: null,
+      relistingBrowserMode: null,
+      openingTraderaLogin: null,
+    });
+
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-base-1',
+            status: 'active',
+            connectionId: 'connection-base-1',
+            integration: {
+              name: 'Base.com',
+              slug: 'base-com',
+            },
+            externalListingId: 'base-product-123',
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Queuing re-export...' })).toBeDisabled();
   });
 });

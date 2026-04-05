@@ -20,13 +20,11 @@ import {
   useProductImages,
   useProducers,
 } from '@/features/products';
-import type {
-  ProductCategory,
-  ProductTag,
-  ProductParameter,
-  ProductParameterValue,
-  CreateProductDraftInput,
-} from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductTag } from '@/shared/contracts/products/tags';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
+import type { CreateProductDraftInput } from '@/shared/contracts/products/drafts';
 import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { IconSelector } from '@/shared/lib/icons';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';

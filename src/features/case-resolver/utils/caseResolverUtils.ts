@@ -6,13 +6,9 @@ import {
   stripHtmlToPlainText,
   toStorageDocumentValue,
 } from '@/shared/lib/document-editor/public';
-import type {
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverFile,
-  CaseResolverTag,
-  CaseResolverPartyReference,
-  CaseResolverFileEditDraft,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
+import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverTag, CaseResolverPartyReference } from '@/shared/contracts/case-resolver/relations';
 // Modular imports
 export {
   isLikelyImageFile,

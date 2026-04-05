@@ -4,7 +4,7 @@ import { DatabaseIcon, ServerIcon, UploadIcon, EyeIcon, PlusIcon } from 'lucide-
 
 import type { IdLabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/ui/base';
 import { AdminDatabaseBreadcrumbs } from '@/shared/ui/admin.public';
 import { Badge, Button, Alert, Card, Input } from '@/shared/ui/primitives.public';
 import { FileUploadButton, ToggleRow, FormField } from '@/shared/ui/forms-and-actions.public';

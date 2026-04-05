@@ -13,8 +13,8 @@ import {
   setCaseResolverOcrJobDispatchMode,
 } from '@/features/case-resolver/server';
 import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/server';
-import { retryCaseResolverOcrJobSchema } from '@/shared/contracts/case-resolver';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { retryCaseResolverOcrJobSchema } from '@/shared/contracts/case-resolver/ocr';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

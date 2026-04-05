@@ -29,7 +29,7 @@ import { PanelHeader, ConfirmModal } from '@/shared/ui/templates.public';
 import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { cn } from '@/shared/utils/ui-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';

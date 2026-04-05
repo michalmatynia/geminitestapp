@@ -1,4 +1,5 @@
-import type { ProductShippingGroup, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
 import { getShippingGroupRepository } from '@/shared/lib/products/services/shipping-group-repository';

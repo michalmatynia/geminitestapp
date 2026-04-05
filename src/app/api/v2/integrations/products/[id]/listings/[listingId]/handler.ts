@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import {
-  productListingInventoryUpdatePayloadSchema,
-  type ProductListingUpdateResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { productListingInventoryUpdatePayloadSchema } from '@/shared/contracts/integrations/listings';
+import { type ProductListingUpdateResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 /**

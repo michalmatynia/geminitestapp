@@ -8,9 +8,10 @@ import {
   resolveProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
 import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
-import type { Toast } from '@/shared/contracts/ui';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 
 const enrichRecoveryContext = (
   productId: string,

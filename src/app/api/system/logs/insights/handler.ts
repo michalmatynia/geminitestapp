@@ -9,7 +9,7 @@ import {
   systemLogsInsightRequestSchema,
   systemLogsInsightsListQuerySchema,
 } from '@/shared/contracts/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';

@@ -1,7 +1,5 @@
-import type {
-  CreateProductValidationPatternInput,
-  ProductValidationPatternRepository,
-} from '@/shared/contracts/products';
+import type { CreateProductValidationPatternInput } from '@/shared/contracts/products/validation';
+import type { ProductValidationPatternRepository } from '@/shared/contracts/products/drafts';
 
 export const VALIDATOR_TEMPLATE_AUDIT_OPTIONS = {
   semanticAuditSource: 'template',

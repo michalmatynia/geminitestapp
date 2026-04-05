@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { buildObservabilityExpectedByCollection } from '@/shared/lib/observability/observability-index-manifest';

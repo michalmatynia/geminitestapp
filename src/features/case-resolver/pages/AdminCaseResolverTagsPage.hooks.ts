@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
+import type { CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';

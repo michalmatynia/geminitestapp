@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { Producer } from '@/shared/contracts/products';
+import type { Producer } from '@/shared/contracts/products/producers';
 
 import { ProductMetadataMultiSelectField } from './ProductMetadataMultiSelectField';
 

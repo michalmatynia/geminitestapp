@@ -8,11 +8,9 @@ import {
   useIntegrationsWithConnections,
 } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useLinkExistingTraderaListingMutation } from '@/features/integrations/hooks/useProductListingMutations';
-import type {
-  IntegrationWithConnections,
-  TraderaProductLinkExistingCandidate,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
+import type { TraderaProductLinkExistingCandidate } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError } from '@/shared/lib/api-client';
 import { FormModal } from '@/shared/ui/FormModal';
 import { Input } from '@/shared/ui/input';

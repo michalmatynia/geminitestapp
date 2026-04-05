@@ -1,12 +1,7 @@
 import 'server-only';
 
-import type {
-  TraderaApiCredentials,
-  TraderaApiUserInfo,
-  TraderaAddShopItemInput,
-  TraderaAddShopItemResult,
-  BaseCategory,
-} from '@/shared/contracts/integrations';
+import type { TraderaApiCredentials, TraderaApiUserInfo, TraderaAddShopItemInput, TraderaAddShopItemResult } from '@/shared/contracts/integrations/tradera';
+import type { BaseCategory } from '@/shared/contracts/integrations/listings';
 import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

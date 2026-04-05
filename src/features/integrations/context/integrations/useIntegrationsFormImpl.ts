@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { IntegrationConnection } from '@/shared/contracts/integrations';
+import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 
 export function useIntegrationsFormImpl(connections: IntegrationConnection[]) {

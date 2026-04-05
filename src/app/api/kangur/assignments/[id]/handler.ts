@@ -5,7 +5,7 @@ import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurAssignmentRepository } from '@/features/kangur/server';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
 import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 import { parseKangurAssignmentUpdatePayload } from '@/shared/validations/kangur';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';

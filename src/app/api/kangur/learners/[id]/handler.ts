@@ -8,7 +8,7 @@ import {
   resolveKangurActor,
   updateKangurLearner,
 } from '@/features/kangur/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { forbiddenError, validationError } from '@/shared/errors/app-error';
 import { parseKangurLearnerUpdatePayload } from '@/shared/validations/kangur';
 

@@ -1,4 +1,4 @@
-import { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations';
+import { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations/base-com';
 import { isAppError } from '@/shared/errors/app-error';
 
 import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';

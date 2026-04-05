@@ -6,12 +6,9 @@ import {
   createCaseResolverFile,
   createEmptyCaseResolverRelationGraph,
 } from '@/features/case-resolver/settings';
-import type {
-  CaseResolverWorkspace,
-  CaseResolverFile,
-  CaseResolverAssetFile,
-  CaseResolverGraph,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverFile, CaseResolverAssetFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverGraph } from '@/shared/contracts/case-resolver/graph';
 
 const buildWorkspaceFixture = (): CaseResolverWorkspace => {
   const caseA = createCaseResolverFile({

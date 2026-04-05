@@ -1,4 +1,4 @@
-import { createProductDraftSchema, updateProductDraftSchema } from '@/shared/contracts/products';
+import { createProductDraftSchema, updateProductDraftSchema } from '@/shared/contracts/products/drafts';
 
 export const createDraftPayloadSchema = createProductDraftSchema;
 export const updateDraftPayloadSchema = updateProductDraftSchema;

@@ -6,7 +6,7 @@ import type {
   DatabaseBrowseParams as BrowseParams,
   DatabaseBrowse as BrowseResponse,
 } from '@/shared/contracts/database';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   optionalIntegerQuerySchema,

@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import type { PatternFormData, ReplacementMode } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
+import type { ReplacementMode } from '@/shared/contracts/products/validation';
 import { normalizeProductValidationPatternScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { getProductValidationSemanticOperationUiMetadata } from '@/shared/lib/products/utils/validator-semantic-operations';
 import type { DynamicReplacementSourceMode } from '@/shared/lib/products/utils/validator-replacement-recipe';

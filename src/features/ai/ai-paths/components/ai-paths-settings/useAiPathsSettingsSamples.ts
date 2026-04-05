@@ -1,7 +1,7 @@
 import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { dbApi, entityApi } from '@/shared/lib/ai-paths';

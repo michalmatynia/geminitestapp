@@ -8,26 +8,17 @@ export {
   useDefaultExportInventory,
 } from '@/shared/hooks/useIntegrationQueries';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
-import {
-  type BaseImportInventoriesPayload,
-  type BaseImportInventoriesResponse,
-  type BaseActiveTemplatePreferenceResponse,
-  type BaseDefaultInventoryPreferenceResponse,
-  importExportTemplateSchema,
-  type ImportExportTemplate,
-  integrationSchema,
-  integrationConnectionSchema,
-  sessionPayloadSchema,
-  type SessionPayload,
-} from '@/shared/contracts/integrations';
-import type {
-  Integration,
-  IntegrationConnection,
-  BaseInventory,
-} from '@/shared/contracts/integrations';
+import { importExportTemplateSchema } from '@/shared/contracts/integrations/import-export';
+import { integrationSchema } from '@/shared/contracts/integrations/base';
+import { integrationConnectionSchema } from '@/shared/contracts/integrations/connections';
+import { sessionPayloadSchema } from '@/shared/contracts/integrations/session-testing';
+import { type BaseImportInventoriesPayload, type BaseImportInventoriesResponse, type BaseActiveTemplatePreferenceResponse, type BaseDefaultInventoryPreferenceResponse, type ImportExportTemplate, type SessionPayload } from '@/shared/contracts/integrations';
+import type { Integration } from '@/shared/contracts/integrations/base';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { normalizePlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import {

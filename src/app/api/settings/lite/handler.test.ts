@@ -7,7 +7,7 @@ import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
 } from '@/shared/contracts/kangur';
 import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 vi.mock('server-only', () => ({}));
 

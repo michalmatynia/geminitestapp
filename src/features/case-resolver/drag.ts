@@ -1,8 +1,4 @@
-import type {
-  CaseResolverDropDocumentToCanvasDetail,
-  CaseResolverShowDocumentInCanvasDetail,
-  CaseResolverTreeDragPayload,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverDropDocumentToCanvasDetail, CaseResolverShowDocumentInCanvasDetail, CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver/base';
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

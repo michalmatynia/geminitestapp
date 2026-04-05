@@ -3,15 +3,9 @@
 import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
-import {
-  PRODUCT_ADVANCED_FILTER_MAX_DEPTH,
-  type ProductAdvancedFilterCombinator,
-  type ProductAdvancedFilterCondition,
-  type ProductAdvancedFilterField,
-  type ProductAdvancedFilterGroup,
-  type ProductAdvancedFilterRule,
-} from '@/shared/contracts/products';
-import type { SelectSimpleOption } from '@/shared/contracts/ui';
+import { PRODUCT_ADVANCED_FILTER_MAX_DEPTH } from '@/shared/contracts/products/filters';
+import { type ProductAdvancedFilterCombinator, type ProductAdvancedFilterCondition, type ProductAdvancedFilterField, type ProductAdvancedFilterGroup, type ProductAdvancedFilterRule } from '@/shared/contracts/products';
+import type { SelectSimpleOption } from '@/shared/contracts/ui/ui/controls';
 import { Button } from '@/shared/ui/button';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';

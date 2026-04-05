@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 
-import type { SearchableListProps } from '@/shared/contracts/ui';
+import type { SearchableListProps } from '@/shared/contracts/ui/ui/controls';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { Badge } from './badge';

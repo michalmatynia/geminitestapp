@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ImportExportTemplateMappingDto } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ImportExportTemplateMappingDto } from '@/shared/contracts/integrations/import-export';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { resolveBaseExporterTemplateMappings } from './base-exporter-template-mappings';
 

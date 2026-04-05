@@ -20,8 +20,9 @@ import {
   useProductParameters,
   useProductSimpleParameters,
 } from '@/features/data-import-export/hooks/useImportQueries';
-import type { ImportTemplateParameterImport, TemplateMapping } from '@/shared/contracts/integrations';
-import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
+import type { TemplateMapping } from '@/shared/contracts/integrations/import-export';
+import type { ImportTemplateParameterImport } from '@/shared/contracts/integrations';
+import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products/base';
 import { Button, Checkbox, Input, Tabs, TabsList, TabsTrigger, Label, Card } from '@/shared/ui/primitives.public';
 import { ConfirmModal } from '@/shared/ui/templates.public';
 import { SelectSimple, Hint } from '@/shared/ui/forms-and-actions.public';

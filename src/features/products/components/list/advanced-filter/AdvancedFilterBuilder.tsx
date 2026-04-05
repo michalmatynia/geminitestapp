@@ -2,10 +2,7 @@
 
 import { memo, useMemo } from 'react';
 
-import type {
-  ProductAdvancedFilterGroup,
-  ProductAdvancedFilterRule,
-} from '@/shared/contracts/products';
+import type { ProductAdvancedFilterGroup, ProductAdvancedFilterRule } from '@/shared/contracts/products/filters';
 
 import {
   AdvancedFilterGroupEditor,

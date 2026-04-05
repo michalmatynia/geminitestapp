@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { SingleQuery } from '@/shared/contracts/ui';
+import type { SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import {
   DEFAULT_PROMPT_VALIDATION_SCOPES,
   PROMPT_ENGINE_SETTINGS_KEY,

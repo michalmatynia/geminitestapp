@@ -7,10 +7,8 @@ import {
   hasCaseResolverWorkspaceFilesArray,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import {
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  type CaseResolverFile,
-} from '@/shared/contracts/case-resolver';
+import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
+import { type CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   createCanonicalTextPromptNode,
   createCaseFilePayload,

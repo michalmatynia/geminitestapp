@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { enqueueBaseImportRunJob } from '@/features/integrations/workers/baseImportQueue';
-import type { BaseImportRunRecord, BaseImportStartResponse } from '@/shared/contracts/integrations';
+import type { BaseImportRunRecord, BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
 
 import {
   prepareBaseImportRun,

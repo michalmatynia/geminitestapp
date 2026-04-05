@@ -12,7 +12,7 @@ import {
   serializeAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

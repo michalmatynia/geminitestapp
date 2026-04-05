@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import type { PendingExternalMappingsState, PendingMappingStats } from '@/shared/contracts/ui';
+import type { PendingExternalMappingsState, PendingMappingStats } from '@/shared/contracts/ui/ui/api';
 
 type UsePendingMappingsConfig<TMapping> = {
   mappings: TMapping[];

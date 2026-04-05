@@ -1,24 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  baseApiRawResultSchema,
-  baseActiveTemplatePreferencePayloadSchema,
-  baseExportWarehousePreferencePayloadSchema,
-  baseExportWarehousePreferenceQuerySchema,
-  baseExportWarehousePreferenceResponseSchema,
-  baseScopedPreferenceQuerySchema,
-  baseConnectionContextSchema,
-  createImportExportTemplateSchema,
-  defaultBaseImportParameterImportSettings,
-  integrationBaseApiRequestSchema,
-  integrationWithConnectionsSchema,
-  linkedInProfileResponseSchema,
-  normalizeBaseImportParameterImportSettings,
-  oauthTokenResponseSchema,
-  playwrightStorageStateSchema,
-  sessionPayloadSchema,
-  traderaListingJobInputSchema,
-} from '@/shared/contracts/integrations';
+import { baseApiRawResultSchema, baseConnectionContextSchema } from '@/shared/contracts/integrations/base-api';
+import { baseActiveTemplatePreferencePayloadSchema, baseExportWarehousePreferencePayloadSchema, baseExportWarehousePreferenceQuerySchema, baseExportWarehousePreferenceResponseSchema, baseScopedPreferenceQuerySchema } from '@/shared/contracts/integrations/preferences';
+import { createImportExportTemplateSchema } from '@/shared/contracts/integrations/import-export';
+import { defaultBaseImportParameterImportSettings, normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
+import { integrationBaseApiRequestSchema } from '@/shared/contracts/integrations/api';
+import { integrationWithConnectionsSchema } from '@/shared/contracts/integrations/domain';
+import { linkedInProfileResponseSchema, oauthTokenResponseSchema } from '@/shared/contracts/integrations/oauth';
+import { playwrightStorageStateSchema, sessionPayloadSchema } from '@/shared/contracts/integrations/session-testing';
+import { traderaListingJobInputSchema } from '@/shared/contracts/integrations/tradera';
 
 describe('integrations contract runtime', () => {
   it('parses playwright storage state with typed origins', () => {

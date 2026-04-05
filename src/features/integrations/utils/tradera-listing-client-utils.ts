@@ -1,4 +1,4 @@
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 
 export const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value)

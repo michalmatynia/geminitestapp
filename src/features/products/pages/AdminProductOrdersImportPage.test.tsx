@@ -4,7 +4,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { BaseOrderImportPreviewResponse } from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewResponse } from '@/shared/contracts/products/orders-import';
 
 const useAdminProductOrdersImportState = vi.fn();
 const buildColumns = vi.fn();

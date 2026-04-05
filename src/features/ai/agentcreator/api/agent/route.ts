@@ -20,7 +20,7 @@ import type {
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type { IdDto } from '@/shared/contracts/base';
 import type { InputJsonValue } from '@/shared/contracts/json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, configurationError, internalError } from '@/shared/errors/app-error';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';

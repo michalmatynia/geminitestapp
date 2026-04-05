@@ -5,12 +5,9 @@ import { callBaseApi } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { getImportParameterCache, setImportParameterCache } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import {
-  baseImportParametersPayloadSchema,
-  type BaseImportParametersClearResponse,
-  type BaseImportParametersResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { baseImportParametersPayloadSchema } from '@/shared/contracts/integrations/import-export';
+import { type BaseImportParametersClearResponse, type BaseImportParametersResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

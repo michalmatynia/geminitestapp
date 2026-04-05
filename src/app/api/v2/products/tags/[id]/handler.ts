@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getTagRepository } from '@/features/products/server';
-import { updateProductTagSchema } from '@/shared/contracts/products';
+import { updateProductTagSchema } from '@/shared/contracts/products/tags';
 export { updateProductTagSchema as productTagUpdateSchema };
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { conflictError, notFoundError, validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

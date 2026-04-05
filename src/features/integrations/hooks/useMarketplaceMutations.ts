@@ -1,11 +1,7 @@
-import type {
-  BulkCategoryMappingRequest,
-  BulkProducerMappingRequest,
-  BulkTagMappingRequest,
-  MarketplaceBulkUpsertResponse,
-  MarketplaceConnectionRequest,
-  MarketplaceFetchResponse,
-} from '@/shared/contracts/integrations';
+import type { BulkCategoryMappingRequest } from '@/shared/contracts/integrations/base-com';
+import type { BulkProducerMappingRequest } from '@/shared/contracts/integrations/producers';
+import type { BulkTagMappingRequest } from '@/shared/contracts/integrations/listings';
+import type { MarketplaceBulkUpsertResponse, MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import { api } from '@/shared/lib/api-client';
 import { createMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {

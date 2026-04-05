@@ -10,7 +10,7 @@ import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { ProductFormData } from '@/shared/contracts/products';
+import { ProductFormData } from '@/shared/contracts/products/drafts';
 import { Button } from '@/shared/ui/button';
 import { Hint } from '@/shared/ui/Hint';
 

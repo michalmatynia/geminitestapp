@@ -7,7 +7,7 @@ import {
   LISTING_IN_FLIGHT_STATUSES,
   normalizeListingStatus,
 } from '@/features/products/hooks/product-list-state-utils';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 export function useProductListListingStatuses({
   data,

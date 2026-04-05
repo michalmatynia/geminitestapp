@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { getProductImagesAsBase64 } from './base-exporter-images';
 

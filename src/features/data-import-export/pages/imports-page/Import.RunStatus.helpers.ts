@@ -1,8 +1,4 @@
-import type {
-  BaseImportItemRecord,
-  BaseImportParameterImportSummary,
-  BaseImportRunParameterImportSummary,
-} from '@/shared/contracts/integrations';
+import type { BaseImportItemRecord, BaseImportParameterImportSummary, BaseImportRunParameterImportSummary } from '@/shared/contracts/integrations/base-com';
 
 const DEFAULT_PARAMETER_IMPORT_SUMMARY: BaseImportRunParameterImportSummary = {
   itemsApplied: 0,

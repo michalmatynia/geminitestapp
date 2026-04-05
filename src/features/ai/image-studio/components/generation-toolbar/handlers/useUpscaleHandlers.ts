@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { imageStudioUpscaleResponseSchema } from '@/shared/contracts/image-studio';
+import { imageStudioUpscaleResponseSchema } from '@/shared/contracts/image-studio/image-studio/slot';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { rotateProductStudioImageSlot } from '@/features/ai/server';
-import {
-  productStudioProductResponseSchema,
-  productStudioRotateRequestSchema as rotateSchema,
-} from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { productStudioProductResponseSchema, productStudioRotateRequestSchema as rotateSchema } from '@/shared/contracts/products/studio';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_handler(

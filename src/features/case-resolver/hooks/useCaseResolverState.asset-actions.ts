@@ -2,14 +2,10 @@
 
 import { useRef } from 'react';
 
-import type {
-  CaseResolverAssetKind,
-  CaseResolverRequestedCaseStatus,
-  CaseResolverFileEditDraft,
-  CaseResolverWorkspace,
-  CaseResolverAssetFile,
-} from '@/shared/contracts/case-resolver';
-import type { Toast } from '@/shared/contracts/ui';
+import type { CaseResolverAssetKind, CaseResolverRequestedCaseStatus } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverFileEditDraft, CaseResolverAssetFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 import { useCaseResolverAssetFactoryActions } from './useCaseResolverState.asset-factory-actions';

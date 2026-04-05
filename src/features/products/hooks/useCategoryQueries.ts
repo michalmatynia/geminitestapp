@@ -1,5 +1,5 @@
-import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
+import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';

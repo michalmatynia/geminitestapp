@@ -1,9 +1,4 @@
-import {
-  type CaseResolverCategory,
-  type CaseResolverCategoryTreeNode,
-  type CaseResolverIdentifier,
-  type CaseResolverTag,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverCategory, type CaseResolverCategoryTreeNode, type CaseResolverIdentifier, type CaseResolverTag } from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export type { CaseResolverCategoryTreeNode };

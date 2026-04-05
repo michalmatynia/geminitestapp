@@ -1,5 +1,5 @@
-import type { UpdateProductValidationPatternInput } from '@/shared/contracts/products';
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { UpdateProductValidationPatternInput } from '@/shared/contracts/products/validation';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 
 type ValidatorPatternReorderUpdateLike = {

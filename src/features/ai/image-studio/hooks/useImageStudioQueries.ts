@@ -1,11 +1,8 @@
-import type {
-  ImageStudioModelsResponse,
-  ImageStudioProjectRecord,
-  StudioProjectsResponse,
-  StudioSlotsResponse,
-} from '@/shared/contracts/image-studio';
-import { studioSlotsResponseSchema } from '@/shared/contracts/image-studio';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio/image-studio/misc';
+import type { ImageStudioProjectRecord, StudioProjectsResponse } from '@/shared/contracts/image-studio/image-studio/project';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/image-studio/slot';
+import { studioSlotsResponseSchema } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { studioKeys } from '@/shared/lib/query-key-exports';

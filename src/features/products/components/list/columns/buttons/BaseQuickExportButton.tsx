@@ -3,18 +3,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import type {
-  BaseActiveTemplatePreferenceResponse,
-  BaseDefaultConnectionPreferenceResponse,
-  BaseDefaultInventoryPreferenceResponse,
-  BaseImportInventoriesPayload,
-  BaseImportInventoriesResponse,
-  BaseProductLinkExistingPayload,
-  BaseProductLinkExistingResponse,
-  BaseProductSkuCheckPayload,
-  BaseProductSkuCheckResponse,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from '@/shared/contracts/integrations/import-export';
+import type { BaseProductLinkExistingPayload, BaseProductLinkExistingResponse, BaseProductSkuCheckPayload, BaseProductSkuCheckResponse } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
   fetchIntegrationsWithConnections,
@@ -24,7 +16,7 @@ import {
 import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
 import { createBaseRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import {
   subscribeToTrackedAiPathRun,
   type TrackedAiPathRunSnapshot,

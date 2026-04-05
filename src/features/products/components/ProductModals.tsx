@@ -16,8 +16,9 @@ import { resolveProductListingsIntegrationScope } from '@/features/integrations/
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
-import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
-import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   useDefaultExportConnection,
   useIntegrationsWithConnections,

@@ -12,13 +12,10 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/public';
-import type { AiNode, CaseResolverEdge } from '@/shared/contracts/case-resolver';
-import type {
-  CaseResolverFile,
-  CaseResolverRelationEdgeMeta,
-  CaseResolverRelationGraph,
-  CaseResolverRelationNodeMeta,
-} from '@/shared/contracts/case-resolver';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverRelationEdgeMeta, CaseResolverRelationGraph, CaseResolverRelationNodeMeta } from '@/shared/contracts/case-resolver/relations';
 import { EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';

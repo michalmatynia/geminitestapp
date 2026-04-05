@@ -4,7 +4,7 @@ import React from 'react';
 
 import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
 import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import { Button } from '@/shared/ui/button';
 
 import { cn } from '@/shared/utils/ui-utils';

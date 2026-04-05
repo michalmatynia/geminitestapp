@@ -1,25 +1,9 @@
-import type {
-  BaseActiveTemplatePreferencePayload,
-  BaseActiveTemplatePreferenceResponse,
-  BaseDefaultConnectionPreferencePayload,
-  BaseDefaultConnectionPreferenceResponse,
-  BaseDefaultInventoryPreferencePayload,
-  BaseDefaultInventoryPreferenceResponse,
-  BaseSyncAllImagesResponse,
-  IntegrationAllegroApiRequest,
-  IntegrationAllegroApiResponse,
-  IntegrationBaseApiRequest,
-  IntegrationBaseApiResponse,
-  IntegrationConnectionActionTarget,
-  IntegrationConnectionTestVariables,
-  Integration,
-  IntegrationConnection,
-  IntegrationDisconnectResponse,
-  TestConnectionResponse,
-  TraderaDefaultConnectionPreferencePayload,
-  TraderaDefaultConnectionPreferenceResponse,
-} from '@/shared/contracts/integrations';
-import type { MutationResult } from '@/shared/contracts/ui';
+import type { BaseActiveTemplatePreferencePayload, BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferencePayload, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferencePayload, BaseDefaultInventoryPreferenceResponse, BaseSyncAllImagesResponse, TraderaDefaultConnectionPreferencePayload, TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { IntegrationAllegroApiRequest, IntegrationAllegroApiResponse, IntegrationBaseApiRequest, IntegrationBaseApiResponse, IntegrationDisconnectResponse } from '@/shared/contracts/integrations/api';
+import type { IntegrationConnectionActionTarget, IntegrationConnectionTestVariables, TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
+import type { Integration } from '@/shared/contracts/integrations/base';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type { MutationResult } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createMutationV2,

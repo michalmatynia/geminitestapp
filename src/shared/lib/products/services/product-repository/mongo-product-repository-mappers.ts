@@ -1,9 +1,5 @@
-import type {
-  ProductCategory,
-  ProductParameterValue,
-  ProductRecord,
-  ProductWithImages,
-} from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductParameterValue, ProductRecord, ProductWithImages } from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {

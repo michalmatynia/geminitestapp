@@ -10,7 +10,7 @@ import type {
   AgentTeachingCollectionsResponse,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const createCollectionSchema = z.object({

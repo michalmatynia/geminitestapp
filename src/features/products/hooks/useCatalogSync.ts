@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { Catalog, PriceGroupWithDetails } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

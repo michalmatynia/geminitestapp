@@ -1,4 +1,4 @@
-import type { ProductBulkImagesBase64Response } from '@/shared/contracts/products';
+import type { ProductBulkImagesBase64Response } from '@/shared/contracts/products/product';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export const requireBulkProductImageBase64Ids = (productIds: string[]): string[] => {

@@ -4,11 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { Dispatch, SetStateAction } from 'react';
 
-import {
-  type MarketplaceBadgeEntry,
-  type ListingBadgesPayload,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import { type MarketplaceBadgeEntry, type ListingBadgesPayload } from '@/shared/contracts/integrations';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';

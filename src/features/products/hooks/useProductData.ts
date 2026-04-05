@@ -10,10 +10,8 @@ import {
   useProductsCount as useProductsCountQuery,
   useProductsWithCount,
 } from '@/features/products/hooks/useProductsQuery';
-import {
-  productAdvancedFilterGroupSchema,
-  type ProductWithImages,
-} from '@/shared/contracts/products';
+import { productAdvancedFilterGroupSchema } from '@/shared/contracts/products/filters';
+import { type ProductWithImages } from '@/shared/contracts/products';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

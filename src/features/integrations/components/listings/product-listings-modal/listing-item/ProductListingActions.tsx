@@ -14,7 +14,7 @@ import {
   useProductListingsModals,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { Button, DropdownMenuItem, Label, Input } from '@/shared/ui/primitives.public';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import type { ProductListingWithDetailsProps } from './types';
@@ -82,6 +82,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(
     normalizedListingStatus
   );
+  const isExportingCurrentListing = exportingListing === listing.id;
   const isExportRunningStatus = [
     'running',
     'processing',
@@ -165,9 +166,15 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
               onClick={(): void => {
                 void handleExportAgain(listing.id);
               }}
-              disabled={exportingListing === listing.id}
+              disabled={isExportingCurrentListing}
             >
-              {isSuccessStatus ? 'Re-export product' : 'Export again'}
+              {isExportingCurrentListing
+                ? isSuccessStatus
+                  ? 'Queuing re-export...'
+                  : 'Queuing export...'
+                : isSuccessStatus
+                  ? 'Re-export product'
+                  : 'Export again'}
             </Button>
           )}
           <ActionMenu

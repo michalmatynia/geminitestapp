@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAsset3DRepository, deleteAsset3D } from '@/features/viewer3d/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { asset3DUpdateInputSchema, type Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

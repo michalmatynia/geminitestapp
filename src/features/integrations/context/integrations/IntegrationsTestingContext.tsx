@@ -1,6 +1,6 @@
 'use client';
 
-import type { TestLogEntry } from '@/shared/contracts/integrations';
+import type { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 
 import type { StepWithResult } from '../integrations-context-types';
 import { createStrictContext } from '../createStrictContext';

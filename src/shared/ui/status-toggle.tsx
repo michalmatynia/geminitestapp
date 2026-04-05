@@ -3,7 +3,7 @@
 import { type VariantProps } from 'class-variance-authority';
 import React from 'react';
 
-import type { StatusToggleProps } from '@/shared/contracts/ui';
+import type { StatusToggleProps } from '@/shared/contracts/ui/ui/controls';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { badgeVariants } from './badge';

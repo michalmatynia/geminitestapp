@@ -4,15 +4,8 @@ import {
   parseCaseResolverWorkspace,
   parseNodeFileSnapshot,
 } from '@/features/case-resolver/settings';
-import {
-  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
-  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  type AiNode,
-  type CaseResolverFile,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS, DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode, type CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 const createPromptNode = (id: string): AiNode => ({
   id,

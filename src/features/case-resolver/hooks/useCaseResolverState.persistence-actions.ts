@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { type Toast } from '@/shared/contracts/ui';
 import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 

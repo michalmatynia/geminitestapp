@@ -1,7 +1,5 @@
-import type {
-  ImageStudioSlotRecord,
-  SlotGenerationMetadata,
-} from '@/shared/contracts/image-studio';
+import type { SlotGenerationMetadata } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import { readMeta } from './metadata';
 

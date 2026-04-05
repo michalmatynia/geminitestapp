@@ -9,7 +9,8 @@ import {
   resolveProductCatalogId,
   resolveProductCategoryId,
 } from '@/features/products/hooks/product-list-state-utils';
-import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

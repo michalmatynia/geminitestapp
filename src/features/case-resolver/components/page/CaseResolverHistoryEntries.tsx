@@ -2,7 +2,7 @@ import { History } from 'lucide-react';
 import React from 'react';
 
 import { resolveCaseResolverHistoryEntryPreview } from '@/features/case-resolver/utils/caseResolverUtils';
-import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
 import { Button } from '@/shared/ui/primitives.public';
 
 import {

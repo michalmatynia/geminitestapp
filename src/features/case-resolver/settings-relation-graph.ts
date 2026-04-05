@@ -1,18 +1,5 @@
-import {
-  CASE_RESOLVER_RELATION_ROOT_FOLDER_ID,
-  DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
-  DEFAULT_CASE_RESOLVER_RELATION_NODE_META,
-  type AiNode,
-  type CaseResolverEdge,
-  type CaseResolverAssetFile,
-  type CaseResolverFile,
-  type CaseResolverRelationEdgeKind,
-  type CaseResolverRelationEdgeMeta,
-  type CaseResolverRelationEntityType,
-  type CaseResolverRelationFileKind,
-  type CaseResolverRelationGraph,
-  type CaseResolverRelationNodeMeta,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_RELATION_ROOT_FOLDER_ID, DEFAULT_CASE_RESOLVER_RELATION_EDGE_META, DEFAULT_CASE_RESOLVER_RELATION_NODE_META } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode, type CaseResolverEdge, type CaseResolverAssetFile, type CaseResolverFile, type CaseResolverRelationEdgeKind, type CaseResolverRelationEdgeMeta, type CaseResolverRelationEntityType, type CaseResolverRelationFileKind, type CaseResolverRelationGraph, type CaseResolverRelationNodeMeta } from '@/shared/contracts/case-resolver';
 import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';

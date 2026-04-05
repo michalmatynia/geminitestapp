@@ -7,7 +7,7 @@ import {
 } from '@/features/cms/server';
 import { cmsDomainCreateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await resolveCmsDomainFromRequest(req);

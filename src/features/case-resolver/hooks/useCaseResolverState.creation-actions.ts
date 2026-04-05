@@ -3,13 +3,9 @@
 import { useCallback, useRef } from 'react';
 
 import { createId, createUniqueFolderPath } from '@/features/case-resolver/utils/caseResolverUtils';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverFile,
-  CaseResolverFolderRecord,
-  CaseResolverWorkspace,
-  CaseResolverRequestedCaseStatus,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverRequestedCaseStatus } from '@/shared/contracts/case-resolver/base';
 import { type Toast } from '@/shared/contracts/ui';
 import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 

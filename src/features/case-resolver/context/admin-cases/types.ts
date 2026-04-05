@@ -1,21 +1,7 @@
-import type {
-  CaseResolverCategory,
-  CaseResolverFile,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-  CaseResolverWorkspace,
-  CaseViewMode,
-  CaseSortKey,
-  CaseSortOrder,
-  CaseSearchScope,
-  CaseFileTypeFilter,
-  CaseStatusFilter,
-  CaseLockedFilter,
-  CaseSentFilter,
-  CaseHierarchyFilter,
-  CaseReferencesFilter,
-  CaseListViewDefaults,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseViewMode, CaseSortKey, CaseSortOrder, CaseSearchScope, CaseFileTypeFilter, CaseStatusFilter, CaseLockedFilter, CaseSentFilter, CaseHierarchyFilter, CaseReferencesFilter, CaseListViewDefaults } from '@/shared/contracts/case-resolver/base';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export type {

@@ -8,14 +8,11 @@ import {
   mergeProductListingsRecoveryContext,
   resolveProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
-import type {
-  PlaywrightRelistBrowserMode,
-  ProductListingWithDetails,
-} from '@/shared/contracts/integrations';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { PlaywrightRelistBrowserMode, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { createStrictContext } from './createStrictContext';
 import { useProductListingsActionsImpl } from './useProductListingsActionsImpl';

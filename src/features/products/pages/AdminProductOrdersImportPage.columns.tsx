@@ -7,7 +7,7 @@ import { Checkbox } from '@/shared/ui/checkbox';
 import { StatusBadge } from '@/shared/ui/status-badge';
 
 import type { ColumnDef, Row, Table } from '@tanstack/react-table';
-import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products/orders-import';
 import {
   formatOrderDate,
   formatOrderTotal,

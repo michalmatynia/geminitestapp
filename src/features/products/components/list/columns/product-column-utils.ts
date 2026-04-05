@@ -1,4 +1,4 @@
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 export type ProductNameKey = 'name_en' | 'name_pl' | 'name_de';
 

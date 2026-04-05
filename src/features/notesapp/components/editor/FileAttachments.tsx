@@ -9,7 +9,7 @@ import {
   useNoteFormRuntime,
 } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/ui/base';
 import { Button, Label, Card } from '@/shared/ui/primitives.public';
 import { FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';

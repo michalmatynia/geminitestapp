@@ -26,7 +26,8 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
-import type { ProductAdvancedFilterPreset, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ActionMenu } from '@/shared/ui/ActionMenu';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';

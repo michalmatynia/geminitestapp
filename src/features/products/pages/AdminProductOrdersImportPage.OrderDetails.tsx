@@ -4,7 +4,7 @@ import React from 'react';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 
-import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products/orders-import';
 import {
   formatOrderDate,
   formatOrderTotal,

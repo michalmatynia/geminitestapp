@@ -5,9 +5,9 @@ import { useEffect, useRef } from 'react';
 import {
   useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
 import { FormModal } from '@/shared/ui/forms-and-actions.public';
 
 import { ExportLogsPanel } from './ExportLogsPanel';

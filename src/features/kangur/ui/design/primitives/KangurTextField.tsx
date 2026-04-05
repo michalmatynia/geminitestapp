@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
-import type { DataAttributesDto } from '@/shared/contracts/ui';
+import type { DataAttributesDto } from '@/shared/contracts/ui/ui/base';
 
 export const kangurTextFieldVariants = cva(
   'kangur-text-field soft-card w-full border outline-none transition disabled:cursor-not-allowed disabled:opacity-70',

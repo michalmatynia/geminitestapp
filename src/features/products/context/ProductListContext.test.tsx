@@ -4,7 +4,8 @@ import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductAdvancedFilterPreset, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
   useIntegrationListingBadgesMock,

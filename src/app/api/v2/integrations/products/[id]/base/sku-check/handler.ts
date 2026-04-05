@@ -4,11 +4,9 @@ import { getIntegrationRepository, checkBaseSkuExists } from '@/features/integra
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getProductRepository } from '@/features/products/server';
-import {
-  baseProductSkuCheckPayloadSchema,
-  type BaseProductSkuCheckResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { baseProductSkuCheckPayloadSchema } from '@/shared/contracts/integrations/listings';
+import { type BaseProductSkuCheckResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const requestSchema = baseProductSkuCheckPayloadSchema;

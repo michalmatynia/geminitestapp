@@ -8,8 +8,8 @@ import {
   useSaveParameterMutation,
   useDeleteParameterMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import type { CatalogRecord } from '@/shared/contracts/products';
-import type { ProductParameter } from '@/shared/contracts/products';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { FormSection, FormField } from '@/shared/ui/form-section';

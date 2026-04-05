@@ -1,8 +1,5 @@
-import type {
-  CaseResolverAssetFile,
-  CaseResolverFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { DecodedMasterTreeNode as SharedDecodedMasterTreeNode } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

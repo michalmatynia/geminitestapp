@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ProductValidationRuntimeType } from '@/shared/contracts/products';
+import type { ProductValidationRuntimeType } from '@/shared/contracts/products/validation';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

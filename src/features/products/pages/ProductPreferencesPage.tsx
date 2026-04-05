@@ -9,8 +9,8 @@ import {
   useUpdateUserPreferences,
 } from '@/features/products/hooks/useUserPreferences';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Catalog } from '@/shared/contracts/products';
-import type { ProductListPreferences } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductListPreferences } from '@/shared/contracts/products/filters';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { Button } from '@/shared/ui/button';
 import { FormSection, FormField } from '@/shared/ui/form-section';

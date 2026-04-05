@@ -1,9 +1,4 @@
-import type {
-  BaseOrderImportPersistResponse,
-  BaseOrderImportPreviewItem,
-  BaseOrderImportPreviewResponse,
-  BaseOrderImportQuickImportResponse,
-} from '@/shared/contracts/products';
+import type { BaseOrderImportPersistResponse, BaseOrderImportPreviewItem, BaseOrderImportPreviewResponse, BaseOrderImportQuickImportResponse } from '@/shared/contracts/products/orders-import';
 
 const IMPORTABLE_ORDER_STATES = new Set(['new', 'changed']);
 

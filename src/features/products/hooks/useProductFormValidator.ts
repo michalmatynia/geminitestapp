@@ -14,14 +14,8 @@ import { buildProductValidationSourceValues } from '@/features/products/lib/vali
 import { getProductValidationFieldChangedAtDependencies } from '@/features/products/lib/validatorTargetAdapters';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
 import { isPatternConfiguredForFormatterAutoApply } from '@/features/products/validation-engine/core';
-import type {
-  ProductValidationDenyBehavior,
-  ProductValidationInstanceScope,
-  ProductValidationPattern,
-  ProductValidationAcceptIssueInput,
-  ProductValidationDenyIssueInput,
-} from '@/shared/contracts/products';
-import type { ProductFormData } from '@/shared/contracts/products';
+import type { ProductValidationDenyBehavior, ProductValidationInstanceScope, ProductValidationPattern, ProductValidationAcceptIssueInput, ProductValidationDenyIssueInput } from '@/shared/contracts/products/validation';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import { api } from '@/shared/lib/api-client';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';

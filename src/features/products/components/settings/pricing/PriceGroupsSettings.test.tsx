@@ -4,7 +4,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PriceGroup } from '@/shared/contracts/products';
+import type { PriceGroup } from '@/shared/contracts/products/catalogs';
 
 const mocks = vi.hoisted(() => ({
   useProductSettingsPriceGroupsContextMock: vi.fn(),

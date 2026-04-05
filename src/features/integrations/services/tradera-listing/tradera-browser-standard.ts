@@ -4,10 +4,8 @@ import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
-import type {
-  IntegrationConnectionRecord,
-  ProductListing,
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { getIntegrationRepository } from '../integration-repository';

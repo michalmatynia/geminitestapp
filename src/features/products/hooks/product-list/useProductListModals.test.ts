@@ -5,8 +5,8 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
   baseHandleListProductSuccessMock,

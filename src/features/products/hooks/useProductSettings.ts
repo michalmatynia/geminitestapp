@@ -2,10 +2,8 @@
 
 import { useCallback, useRef } from 'react';
 
-import {
-  normalizeProductStudioSequenceGenerationMode,
-  type ProductStudioSequenceGenerationMode,
-} from '@/shared/contracts/products';
+import { normalizeProductStudioSequenceGenerationMode } from '@/shared/contracts/products/studio';
+import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,

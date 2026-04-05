@@ -1,13 +1,6 @@
-import type {
-  DynamicReplacementSourceMode,
-  PatternFormData,
-  ProductCategory,
-  ProductValidationInstanceScope,
-  ProductValidationPattern,
-  ProductValidationSemanticState,
-  SequenceGroupView,
-  ValidatorPatternSimulatorInput,
-} from '@/shared/contracts/products';
+import type { DynamicReplacementSourceMode, ProductValidationInstanceScope, ProductValidationPattern, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
+import type { PatternFormData, SequenceGroupView, ValidatorPatternSimulatorInput } from '@/shared/contracts/products/drafts';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,

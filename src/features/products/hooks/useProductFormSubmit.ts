@@ -2,13 +2,9 @@
 
 import { useCallback, useRef, useState, useEffect } from 'react';
 
-import type {
-  ProductWithImages,
-  ProductFormData,
-  ProductParameterValue,
-  ResolvedProductParameterValue,
-} from '@/shared/contracts/products';
-import type { ProductImageSlot } from '@/shared/contracts/products';
+import type { ProductWithImages, ProductParameterValue, ResolvedProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductImageSlot } from '@/shared/contracts/products/drafts';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {

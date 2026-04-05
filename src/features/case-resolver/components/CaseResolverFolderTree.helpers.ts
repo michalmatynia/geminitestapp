@@ -1,10 +1,6 @@
 import { Brain, Sparkles } from 'lucide-react';
 
-import {
-  type NodeDefinition,
-  type PaletteEntry,
-  type FolderCaseFileStats,
-} from '@/shared/contracts/case-resolver';
+import { type NodeDefinition, type PaletteEntry, type FolderCaseFileStats } from '@/shared/contracts/case-resolver';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

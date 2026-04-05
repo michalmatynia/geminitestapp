@@ -7,7 +7,7 @@ import {
   buildCaseMetadataDraft,
   buildCaseMetadataPatch,
 } from '@/features/case-resolver/case-overview-draft';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 
 vi.mock('@/features/case-resolver/components/CaseResolverRelationsWorkspace', () => ({
   CaseResolverRelationsWorkspace: () => <div data-testid='relations-workspace'>relations</div>,

@@ -11,12 +11,7 @@ import {
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
 } from '@/features/ai/image-studio/server/center-utils';
-import {
-  type ImageStudioCenterExecutionMeta,
-  type ImageStudioCenterObjectBounds,
-  type ImageStudioRunExecutionResult,
-  type ImageStudioRunRequest,
-} from '@/shared/contracts/image-studio';
+import { type ImageStudioCenterExecutionMeta, type ImageStudioCenterObjectBounds, type ImageStudioRunExecutionResult, type ImageStudioRunRequest } from '@/shared/contracts/image-studio';
 import { badRequestError } from '@/shared/errors/app-error';
 
 import { createImageRecord, parseDataUrl, resolveCenterOutputFormat } from '../run-executor-utils';

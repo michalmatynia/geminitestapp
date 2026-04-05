@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
   applyProductListAdvancedFilterState,

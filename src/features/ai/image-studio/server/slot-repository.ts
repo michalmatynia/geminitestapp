@@ -3,7 +3,8 @@ import 'server-only';
 import fs from 'fs/promises';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
+import { SlotGenerationMetadata } from '@/shared/contracts/image-studio/image-studio/slot';
+import { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';

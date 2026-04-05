@@ -20,7 +20,7 @@ import {
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
-import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';

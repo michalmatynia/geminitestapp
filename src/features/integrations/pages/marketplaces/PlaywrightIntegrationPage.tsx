@@ -18,7 +18,8 @@ import {
 import { PlaywrightSettingsForm } from '@/shared/ui/playwright/PlaywrightSettingsForm';
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
 import { playwrightConfigCaptureRouteSchema } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
-import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
+import type { Integration } from '@/shared/contracts/integrations/base';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { api } from '@/shared/lib/api-client';
 import { createEmptyPlaywrightCaptureRoute } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';

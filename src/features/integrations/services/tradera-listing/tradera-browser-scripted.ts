@@ -1,11 +1,8 @@
 import { normalizeTraderaListingFormUrl, type TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
-import type {
-  IntegrationConnectionRecord,
-  PlaywrightRelistBrowserMode,
-  ProductListing,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 

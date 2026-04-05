@@ -5,7 +5,8 @@ import { useCallback, useState } from 'react';
 
 import { getProductIds } from '@/features/products/api';
 import { useBulkDeleteProductsMutation } from '@/features/products/hooks/useProductDataMutations';
-import type { ProductWithImages, ProductFilters } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductFilters } from '@/shared/contracts/products/drafts';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { useToast } from '@/shared/ui/toast';

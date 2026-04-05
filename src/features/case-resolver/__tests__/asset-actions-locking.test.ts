@@ -10,11 +10,8 @@ import {
   parseCaseResolverWorkspace,
   parseNodeFileSnapshot,
 } from '@/features/case-resolver/settings';
-import type {
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 type Deferred<T> = {

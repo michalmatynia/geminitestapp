@@ -1,4 +1,5 @@
-import type { ImageStudioSlotRecord, RunStudioPayload } from '@/shared/contracts/image-studio';
+import type { RunStudioPayload } from '@/shared/contracts/image-studio/image-studio/run';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/shared/lib/vector-drawing';
 
 import type { ImageStudioSettings } from './studio-settings';

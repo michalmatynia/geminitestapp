@@ -3,7 +3,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverNodeFileWorkspace } from '@/features/case-resolver/components/CaseResolverNodeFileWorkspace';
-import type { CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
+import type { CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver/graph';
 
 const setIsNodeInspectorOpenMock = vi.fn();
 const setConfigOpenMock = vi.fn();

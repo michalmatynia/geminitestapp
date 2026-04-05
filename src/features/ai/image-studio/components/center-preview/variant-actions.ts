@@ -1,10 +1,8 @@
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import type {
-  ImageStudioDeleteVariantResponse,
-  ImageStudioSlotRecord,
-  StudioSlotsResponse,
-} from '@/shared/contracts/image-studio';
-import type { Toast } from '@/shared/contracts/ui';
+import type { ImageStudioDeleteVariantResponse } from '@/shared/contracts/image-studio/image-studio/misc';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathRuns, invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';

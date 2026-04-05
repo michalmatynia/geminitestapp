@@ -1,10 +1,7 @@
 'use client';
 
 import type { LabeledOptionDto, UnknownRecordDto } from '@/shared/contracts/base';
-import type {
-  SettingsFieldsRendererProps,
-  SettingsPanelField,
-} from '@/shared/contracts/ui';
+import type { SettingsFieldsRendererProps, SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { Checkbox } from '../checkbox';

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { createProduct, createRowVisualsContext, createRowRuntimeContext, setupProductListMocks } from './ProductColumns.fixtures';
 
 const {

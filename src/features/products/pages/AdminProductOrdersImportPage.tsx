@@ -20,7 +20,7 @@ import {
 } from './AdminProductOrdersImportPage.utils';
 import { buildColumns } from './AdminProductOrdersImportPage.columns';
 import { OrderDetails } from './AdminProductOrdersImportPage.OrderDetails';
-import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products/orders-import';
 import { useAdminProductOrdersImportState } from './AdminProductOrdersImportPage.hooks';
 
 export function AdminProductOrdersImportPage(): React.JSX.Element {

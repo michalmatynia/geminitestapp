@@ -5,7 +5,7 @@ import { resolveKangurActor, setKangurLearnerAiTutorState } from '@/features/kan
 import {
   type KangurAiTutorAvailabilityReason,
 } from '@/features/kangur/ai-tutor/settings';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

@@ -1,8 +1,4 @@
-import type {
-  BaseImportErrorClass,
-  BaseImportErrorCode,
-  BaseImportRunRecord,
-} from '@/shared/contracts/integrations';
+import type { BaseImportErrorClass, BaseImportErrorCode, BaseImportRunRecord } from '@/shared/contracts/integrations/base-com';
 import { AppErrorCodes, isAppError, type AppError } from '@/shared/errors/app-error';
 
 import {

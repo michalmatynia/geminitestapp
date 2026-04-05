@@ -1,4 +1,4 @@
-import type { ProductCategory } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 import {
   coerceProductValidationNumericValue,

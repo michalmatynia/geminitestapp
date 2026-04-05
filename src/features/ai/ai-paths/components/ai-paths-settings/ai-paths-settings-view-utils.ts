@@ -1,6 +1,6 @@
 import type { PathMeta } from '@/shared/contracts/ai-paths';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { StatusVariant } from '@/shared/contracts/ui';
+import type { StatusVariant } from '@/shared/contracts/ui/ui/base';
 
 export const EXECUTION_OPTIONS = [
   { value: 'server', label: 'Run on Server' },

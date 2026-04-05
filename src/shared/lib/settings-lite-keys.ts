@@ -20,7 +20,7 @@ import {
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
 } from '@/shared/contracts/master-folder-tree';
 import { CLIENT_LOGGING_KEYS, OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
-import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
+import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products/base';
 import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,

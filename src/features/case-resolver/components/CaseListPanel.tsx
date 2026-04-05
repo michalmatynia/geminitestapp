@@ -19,7 +19,7 @@ import {
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Card, Skeleton } from '@/shared/ui/primitives.public';

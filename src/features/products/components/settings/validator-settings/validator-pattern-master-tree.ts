@@ -1,5 +1,6 @@
 import type { ReorderValidationPatternUpdatePayload } from '@/features/products/api/settings';
-import type { ProductValidationPattern, SequenceGroupView } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
+import type { SequenceGroupView } from '@/shared/contracts/products/drafts';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 // ─── Constants ───────────────────────────────────────────────────────────────

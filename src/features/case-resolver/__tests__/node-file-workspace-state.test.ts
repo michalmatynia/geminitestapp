@@ -1,7 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver/graph';
 import type {
   CaseResolverPageActionsValue,
   CaseResolverPageStateValue,

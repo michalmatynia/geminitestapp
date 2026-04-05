@@ -2,7 +2,7 @@ import { Download, Link2, Save } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/shared/ui/primitives.public';
-import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui';
+import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/ui/api';
 
 type CategoryMapperTableHeaderActionsProps = GenericMapperHeaderActionsProps & {
   onAutoMatchByName: () => void;

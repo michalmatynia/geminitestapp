@@ -1,14 +1,4 @@
-import type {
-  DynamicReplacementSourceMode,
-  DynamicReplacementMathOperation,
-  DynamicReplacementRoundMode,
-  DynamicReplacementResultAssembly,
-  DynamicReplacementTargetApply,
-  DynamicReplacementLogicOperator,
-  DynamicReplacementLogicAction,
-  DynamicReplacementRecipe,
-  ProductValidationPattern,
-} from '@/shared/contracts/products';
+import type { DynamicReplacementSourceMode, DynamicReplacementMathOperation, DynamicReplacementRoundMode, DynamicReplacementResultAssembly, DynamicReplacementTargetApply, DynamicReplacementLogicOperator, DynamicReplacementLogicAction, DynamicReplacementRecipe, ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

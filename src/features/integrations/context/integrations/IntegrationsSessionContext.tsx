@@ -1,6 +1,6 @@
 'use client';
 
-import type { SessionCookie, SessionOrigin } from '@/shared/contracts/integrations';
+import type { SessionCookie, SessionOrigin } from '@/shared/contracts/integrations/session-testing';
 import { createStrictContext } from '../createStrictContext';
 
 export interface IntegrationsSession {

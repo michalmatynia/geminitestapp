@@ -3,13 +3,9 @@
 import { useCallback, useMemo } from 'react';
 
 import { buildFilemakerPartyOptions } from '@/features/filemaker/public';
-import type {
-  CaseResolverCategory,
-  CaseResolverFile,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 
 import { buildPathLabelMap } from '../pages/admin-case-resolver-page-helpers';

@@ -18,7 +18,7 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { ToastOptions } from '@/shared/contracts/ui';
+import type { ToastOptions } from '@/shared/contracts/ui/ui/base';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { type GenerationToolbarState } from './GenerationToolbar.types';

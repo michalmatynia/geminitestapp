@@ -7,7 +7,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import { assertValidTraderaPlaywrightListingScript } from '@/features/integrations/services/tradera-listing/script-validation';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

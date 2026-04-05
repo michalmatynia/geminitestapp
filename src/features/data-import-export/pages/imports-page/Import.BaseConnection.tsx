@@ -12,7 +12,7 @@ import {
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { CatalogOption, InventoryOption, Template } from '@/shared/contracts/integrations';
+import type { CatalogOption, InventoryOption, Template } from '@/shared/contracts/integrations/import-export';
 import {
   BASE_CONNECTION_PLACEHOLDER_OPTION,
   IMAGE_MODE_OPTIONS,

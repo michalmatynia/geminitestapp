@@ -5,7 +5,7 @@ import {
   getExportWarehouseId,
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

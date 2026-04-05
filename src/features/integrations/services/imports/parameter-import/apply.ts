@@ -1,9 +1,6 @@
-import type {
-  ApplyBaseParameterImportInput,
-  ApplyBaseParameterImportResult,
-  ExtractedBaseParameter,
-} from '@/shared/contracts/integrations';
-import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
+import type { ApplyBaseParameterImportInput, ApplyBaseParameterImportResult, ExtractedBaseParameter } from '@/shared/contracts/integrations/parameter-import';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
 
 import { extractBaseParameters } from './extractor';
 import { getCatalogParameterLinks, mergeCatalogParameterLinks } from './link-map-repository';

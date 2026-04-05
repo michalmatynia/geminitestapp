@@ -1,5 +1,5 @@
 import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
-import type { CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver/file';
 
 import { expandFolderPath, normalizeFolderPath, renameFolderPath } from '../settings';
 

@@ -6,7 +6,7 @@ import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurSocialPostById } from '@/features/kangur/social/server/social-posts-repository';
 import { unpublishKangurSocialPost } from '@/features/kangur/social/server/social-posts-publish';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
 
 const bodySchema = z.object({

@@ -8,14 +8,8 @@ import {
   type AnyBulkWriteOperation,
 } from 'mongodb';
 
-import type {
-  CategoryMappingAssignment,
-  CategoryMapping,
-  CategoryMappingWithDetails,
-  CategoryMappingCreateInput,
-  CategoryMappingUpdateInput,
-  ExternalCategory,
-} from '@/shared/contracts/integrations';
+import type { CategoryMappingAssignment } from '@/shared/contracts/integrations/base-com';
+import type { CategoryMapping, CategoryMappingWithDetails, CategoryMappingCreateInput, CategoryMappingUpdateInput, ExternalCategory } from '@/shared/contracts/integrations/listings';
 import { type ProductCategory as InternalCategory } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

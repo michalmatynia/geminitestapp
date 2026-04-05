@@ -3,8 +3,8 @@ import {
   useIntegrationsApiConsole,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
-import type { ApiPreset } from '@/shared/contracts/ui';
-import type { IntegrationAllegroApiMethod } from '@/shared/contracts/integrations';
+import type { ApiPreset } from '@/shared/contracts/ui/ui/api';
+import type { IntegrationAllegroApiMethod } from '@/shared/contracts/integrations/api';
 import { GenericApiConsole } from '@/shared/ui/templates.public';
 
 export function AllegroApiConsole(): React.JSX.Element {

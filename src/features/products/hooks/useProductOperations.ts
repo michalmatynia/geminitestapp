@@ -6,8 +6,8 @@ import { useState } from 'react';
 
 import { getProductListQueryKey } from '@/features/products/hooks/productCache';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import type { ProductDraft } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { api } from '@/shared/lib/api-client';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';

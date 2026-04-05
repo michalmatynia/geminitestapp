@@ -5,10 +5,7 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
-import {
-  type DocumentRelationFileTypeFilter,
-  type DocumentRelationSortMode,
-} from '@/shared/contracts/case-resolver';
+import { type DocumentRelationFileTypeFilter, type DocumentRelationSortMode } from '@/shared/contracts/case-resolver';
 import { SelectSimple, SegmentedControl, Chip } from '@/shared/ui/forms-and-actions.public';
 import { Tooltip } from '@/shared/ui/primitives.public';
 

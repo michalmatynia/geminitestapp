@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { CategoryRepository } from '@/shared/contracts/products';
+import type { CategoryRepository } from '@/shared/contracts/products/drafts';
 import { type ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

@@ -2,7 +2,7 @@
 
 import React, { useMemo, type ReactNode } from 'react';
 
-import type { IntegrationsData } from '@/shared/contracts/integrations';
+import type { IntegrationsData } from '@/shared/contracts/integrations/context';
 
 import {
   IntegrationsActionsContext,

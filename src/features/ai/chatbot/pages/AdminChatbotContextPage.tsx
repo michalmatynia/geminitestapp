@@ -8,7 +8,7 @@ import { Button, useToast } from '@/shared/ui/primitives.public';
 import { Tag, FileUploadTrigger, StatusToggle, SearchInput, Hint } from '@/shared/ui/forms-and-actions.public';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { EmptyState, LoadingState } from '@/shared/ui/navigation-and-layout.public';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/ui/base';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { ChatbotContextModal } from '../components/ChatbotContextModal';

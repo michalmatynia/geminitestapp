@@ -3,7 +3,7 @@
 import { type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import type { ChipProps } from '@/shared/contracts/ui';
+import type { ChipProps } from '@/shared/contracts/ui/ui/controls';
 import { cn } from '@/shared/utils/ui-utils';
 import { getTextContent } from '@/shared/utils/a11y';
 

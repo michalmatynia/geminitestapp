@@ -9,7 +9,7 @@ import {
 } from '@/shared/lib/foldertree/public';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { SequenceGroupDraft } from '@/shared/contracts/products';
+import type { SequenceGroupDraft } from '@/shared/contracts/products/validation';
 import { Button } from '@/shared/ui/button';
 import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
 import { FormField } from '@/shared/ui/form-section';

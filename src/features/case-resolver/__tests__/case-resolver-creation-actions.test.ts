@@ -7,10 +7,8 @@ import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import type {
-  CaseResolverRequestedCaseStatus,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverRequestedCaseStatus } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 import * as workspacePersistence from '@/features/case-resolver/workspace-persistence';

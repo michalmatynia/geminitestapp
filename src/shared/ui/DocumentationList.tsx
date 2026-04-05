@@ -2,7 +2,7 @@
 
 import React, { type ReactNode, useMemo, useState } from 'react';
 
-import type { DocumentationListItem, DocumentationListVariant } from '@/shared/contracts/ui';
+import type { DocumentationListItem, DocumentationListVariant } from '@/shared/contracts/ui/ui/base';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { DocumentationSection } from './documentation-section';

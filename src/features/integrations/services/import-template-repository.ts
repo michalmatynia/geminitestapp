@@ -14,15 +14,9 @@ import {
   parseExportWarehouseByInventoryMap,
   stringifyExportWarehouseByInventoryMap,
 } from '@/features/integrations/services/export-warehouse-preference';
-import type {
-  IntegrationTemplate as Template,
-  IntegrationTemplateMapping as TemplateMapping,
-  ImportParameterCacheResponse,
-} from '@/shared/contracts/integrations';
-import {
-  normalizeBaseImportParameterImportSettings,
-  defaultBaseImportParameterImportSettings,
-} from '@/shared/contracts/integrations';
+import type { ImportParameterCacheResponse } from '@/shared/contracts/integrations/base-com';
+import type { IntegrationTemplate as Template, IntegrationTemplateMapping as TemplateMapping } from '@/shared/contracts/integrations';
+import { normalizeBaseImportParameterImportSettings, defaultBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

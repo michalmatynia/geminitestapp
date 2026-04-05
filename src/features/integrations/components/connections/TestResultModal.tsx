@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useIntegrationsTesting } from '@/features/integrations/context/integrations/IntegrationsTestingContext';
-import type { ModalStateProps } from '@/shared/contracts/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui/ui/base';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { Hint, CopyButton } from '@/shared/ui/forms-and-actions.public';
 import { Alert } from '@/shared/ui/primitives.public';

@@ -2,7 +2,7 @@
 
 import React, { type Dispatch, type SetStateAction } from 'react';
 
-import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { IntegrationSelector } from '@/shared/ui/forms-and-actions.public';
 
 import { IntegrationSelectionEmptyState } from './IntegrationSelectionEmptyState';

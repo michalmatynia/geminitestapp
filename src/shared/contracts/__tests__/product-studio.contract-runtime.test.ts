@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  productStudioAuditResponseSchema,
-  productStudioConfigResponseSchema,
-  productStudioLinkResponseSchema,
-  productStudioPreflightResponseSchema,
-  productStudioProductResponseSchema,
-  productStudioSendResponseSchema,
-  productStudioVariantsResponseSchema,
-} from '@/shared/contracts/products';
+import { productStudioAuditResponseSchema, productStudioConfigResponseSchema, productStudioLinkResponseSchema, productStudioPreflightResponseSchema, productStudioProductResponseSchema, productStudioSendResponseSchema, productStudioVariantsResponseSchema } from '@/shared/contracts/products/studio';
 
 const sampleConfig = {
   projectId: 'studio-project-1',

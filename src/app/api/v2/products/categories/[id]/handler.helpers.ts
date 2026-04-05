@@ -1,4 +1,4 @@
-import type { ProductCategory, ProductCategoryUpdateInput } from '@/shared/contracts/products';
+import type { ProductCategory, ProductCategoryUpdateInput } from '@/shared/contracts/products/categories';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 
 type ProductCategorySnapshot = Pick<ProductCategory, 'id' | 'name' | 'parentId' | 'catalogId'>;

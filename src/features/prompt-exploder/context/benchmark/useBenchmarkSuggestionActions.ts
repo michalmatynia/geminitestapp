@@ -6,7 +6,7 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   type PromptValidationRule,
 } from '@/shared/contracts/prompt-engine';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

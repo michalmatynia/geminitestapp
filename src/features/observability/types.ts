@@ -1,4 +1,4 @@
-import type { LabelValueOptionDto as AiPathRunDisplayModel } from '@/shared/contracts/ui';
+import type { LabelValueOptionDto as AiPathRunDisplayModel } from '@/shared/contracts/ui/ui/base';
 import type {
   AlertEvidenceContext as WorkerAlertEvidenceContext,
   AlertEvidenceSample as WorkerAlertEvidenceSample,

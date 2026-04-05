@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Button } from '@/shared/ui/primitives.public';
-import type { IntegrationConnection } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 
 import { AllegroSettings } from '../AllegroSettings';
 import { BaselinkerSettings } from '../BaselinkerSettings';

@@ -18,13 +18,9 @@ import {
   resolveConnectionPlaywrightSettings,
   type PersistedStorageState,
 } from '@/features/integrations/services/tradera-playwright-settings';
-import {
-  integrationConnectionTestRequestSchema,
-  type IntegrationConnectionTestRequest,
-  type TestConnectionResponse,
-  type TestLogEntry,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { integrationConnectionTestRequestSchema } from '@/shared/contracts/integrations/session-testing';
+import { type IntegrationConnectionTestRequest, type TestConnectionResponse, type TestLogEntry } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

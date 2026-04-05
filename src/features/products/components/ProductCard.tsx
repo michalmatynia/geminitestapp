@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import React from 'react';
 
 import { Link } from '@/i18n/navigation';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { normalizeSiteLocale, resolveLocalizedText } from '@/shared/lib/i18n/site-locale';
 import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';
 import { ResourceCard } from '@/shared/ui/ResourceCard';

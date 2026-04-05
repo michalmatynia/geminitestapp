@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { updateAuthSecurityProfile, getAuthSecurityProfile } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { internalError, authError, badRequestError } from '@/shared/errors/app-error';
 
 export const updateSchema = z.object({

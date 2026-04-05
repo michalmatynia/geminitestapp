@@ -8,7 +8,8 @@ import {
   useDeleteTagMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Catalog, ProductTag } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductTag } from '@/shared/contracts/products/tags';
 import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { FormSection, FormField } from '@/shared/ui/form-section';

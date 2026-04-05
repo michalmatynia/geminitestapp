@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { Catalog } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

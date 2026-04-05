@@ -6,7 +6,7 @@ import type {
   ChatbotSessionDto as ChatSession,
   ChatbotSessionListItem,
 } from '@/shared/contracts/chatbot';
-import type { CreateMutation, UpdateMutation } from '@/shared/contracts/ui';
+import type { CreateMutation, UpdateMutation } from '@/shared/contracts/ui/ui/queries';
 import {
   createCreateMutationV2,
   createDeleteMutationV2,

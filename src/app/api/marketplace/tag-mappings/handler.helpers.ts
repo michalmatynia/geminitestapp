@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import type {
-  TagMapping,
-  TagMappingCreateInput,
-} from '@/shared/contracts/integrations';
+import type { TagMapping, TagMappingCreateInput } from '@/shared/contracts/integrations/listings';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

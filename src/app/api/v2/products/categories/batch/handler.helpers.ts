@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ProductCategory } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   optionalBooleanQuerySchema,

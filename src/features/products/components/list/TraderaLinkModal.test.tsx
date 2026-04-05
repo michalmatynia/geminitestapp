@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError } from '@/shared/lib/api-client';
 
 const {

@@ -6,10 +6,7 @@ import {
   TRADERA_INTEGRATION_SLUGS,
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
-import type {
-  ProductListingWithDetails,
-  ProductListingsRecoveryContext,
-} from '@/shared/contracts/integrations';
+import type { ProductListingWithDetails, ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 
 export type TraderaRecoveryContext = Extract<
   ProductListingsRecoveryContext,

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { type KangurAssignment } from '@kangur/contracts';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 const {
   getKangurAssignmentRepositoryMock,

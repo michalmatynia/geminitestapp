@@ -1,28 +1,8 @@
 import { ObjectId, type Db, type Document, type Filter, type UpdateFilter } from 'mongodb';
 
-import type {
-  CreateProductValidationPatternInput,
-  ProductValidationPatternRepository,
-  ProductValidationPatternWriteOptions,
-  UpdateProductValidationPatternInput,
-} from '@/shared/contracts/products';
-import type {
-  ProductValidationChainMode,
-  ProductValidationDenyBehavior,
-  ProductValidationInstanceDenyBehaviorMap,
-  ProductValidationInstanceScope,
-  ProductValidationLaunchScopeBehavior,
-  ProductValidationLaunchOperator,
-  ProductValidationLaunchSourceMode,
-  ProductValidationPostAcceptBehavior,
-  ProductValidationRuntimeType,
-  ProductValidationPattern,
-  ProductValidationSemanticAuditRecord,
-  ProductValidationSemanticAuditSource,
-  ProductValidationSemanticState,
-  ProductValidationSeverity,
-  ProductValidationTarget,
-} from '@/shared/contracts/products';
+import type { CreateProductValidationPatternInput, UpdateProductValidationPatternInput } from '@/shared/contracts/products/validation';
+import type { ProductValidationPatternRepository, ProductValidationPatternWriteOptions } from '@/shared/contracts/products/drafts';
+import type { ProductValidationChainMode, ProductValidationDenyBehavior, ProductValidationInstanceDenyBehaviorMap, ProductValidationInstanceScope, ProductValidationLaunchScopeBehavior, ProductValidationLaunchOperator, ProductValidationLaunchSourceMode, ProductValidationPostAcceptBehavior, ProductValidationRuntimeType, ProductValidationPattern, ProductValidationSemanticAuditRecord, ProductValidationSemanticAuditSource, ProductValidationSemanticState, ProductValidationSeverity, ProductValidationTarget } from '@/shared/contracts/products/validation';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

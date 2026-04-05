@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { CatalogRepository } from '@/shared/contracts/products';
+import type { CatalogRepository } from '@/shared/contracts/products/drafts';
 import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
 import { type ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 

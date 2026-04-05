@@ -8,11 +8,8 @@ import {
   useCategoryMapperPageData,
   useCategoryMapperPageSelection,
 } from '@/features/integrations/context/CategoryMapperPageContext';
-import type {
-  IntegrationWithConnections,
-  IntegrationConnectionBasic,
-} from '@/shared/contracts/integrations';
-import type { PickerOption, PickerGroup } from '@/shared/contracts/ui';
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
+import type { PickerOption, PickerGroup } from '@/shared/contracts/ui/ui/pickers';
 import { Button, Skeleton } from '@/shared/ui/primitives.public';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';

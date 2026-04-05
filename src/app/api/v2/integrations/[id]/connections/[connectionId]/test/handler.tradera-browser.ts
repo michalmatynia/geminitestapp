@@ -21,12 +21,7 @@ import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
-import {
-  type IntegrationConnectionRecord,
-  type IntegrationRepository,
-  type TestConnectionResponse,
-  type TestLogEntry,
-} from '@/shared/contracts/integrations';
+import { type IntegrationConnectionRecord, type IntegrationRepository, type TestConnectionResponse, type TestLogEntry } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

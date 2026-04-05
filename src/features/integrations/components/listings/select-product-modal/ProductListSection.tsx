@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { FormSection, SearchInput } from '@/shared/ui/forms-and-actions.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { Button } from '@/shared/ui/primitives.public';

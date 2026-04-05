@@ -1,4 +1,4 @@
-import type { CreateProduct } from '@/shared/contracts/products';
+import type { CreateProduct } from '@/shared/contracts/products/io';
 import { getValueAtPath } from '@/shared/lib/ai-paths/core/utils/json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

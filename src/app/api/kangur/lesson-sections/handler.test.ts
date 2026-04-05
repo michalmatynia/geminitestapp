@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 const {
   getKangurLessonSectionRepositoryMock,

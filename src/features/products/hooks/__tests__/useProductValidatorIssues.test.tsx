@@ -16,7 +16,7 @@ vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
   useOptionalContextRegistryPageEnvelope: useOptionalContextRegistryPageEnvelopeMock,
 }));
 
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 
 import { useProductValidatorIssues } from '../useProductValidatorIssues';
 

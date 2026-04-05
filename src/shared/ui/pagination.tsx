@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { PaginationContextValue, PaginationProps } from '@/shared/contracts/ui';
+import type { PaginationContextValue, PaginationProps } from '@/shared/contracts/ui/ui/controls';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils/ui-utils';
 

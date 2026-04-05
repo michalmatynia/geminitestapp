@@ -20,8 +20,8 @@ import type {
   RuntimeTraceCacheDecision,
   NodeHandler,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { ToastOptions } from '@/shared/contracts/ui';
-import type { Toast } from '@/shared/contracts/ui';
+import type { ToastOptions } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 
 export type RuntimeProfileEvent = AiPathRuntimeProfileEvent;
 export type { RuntimeProfileNodeStats, RuntimeProfileSummary };

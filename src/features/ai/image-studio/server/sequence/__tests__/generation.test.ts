@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import type {
-  ImageStudioSequenceRunRecord,
-  ImageStudioSlotRecord,
-} from '@/shared/contracts/image-studio';
+import type { ImageStudioSequenceRunRecord } from '@/shared/contracts/image-studio/image-studio/sequence';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 const {
   createImageStudioRunMock,

@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type {
-  CaseResolverWorkspaceDebugEvent,
-  CaseResolverWorkspaceObservabilitySnapshot,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverWorkspaceObservabilitySnapshot } from '@/shared/contracts/case-resolver/base';
 
 import {
   buildCaseResolverWorkspaceDebugMetrics,

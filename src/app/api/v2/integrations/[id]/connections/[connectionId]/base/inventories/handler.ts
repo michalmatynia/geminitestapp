@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { fetchBaseInventories } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 /**

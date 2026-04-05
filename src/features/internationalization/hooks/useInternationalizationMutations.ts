@@ -6,7 +6,7 @@ import type {
   SaveCountryInput,
   SaveLanguageInput,
 } from '@/shared/contracts/internationalization';
-import type { DeleteMutation, SaveMutation } from '@/shared/contracts/ui';
+import type { DeleteMutation, SaveMutation } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createSaveMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

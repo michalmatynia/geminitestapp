@@ -1,7 +1,7 @@
 import { isParamUiControl, type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { type ParamSpec, type PromptValidationIssue } from '@/shared/contracts/prompt-engine';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { api } from '@/shared/lib/api-client';
 import { flattenParams, inferParamSpecs } from '@/shared/utils/prompt-params';
 

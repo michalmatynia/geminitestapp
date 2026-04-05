@@ -16,7 +16,7 @@ import {
   startKangurSocialImageAddonsBatchJob,
 } from '@/features/kangur/social/server/social-image-addons-batch-jobs';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import {
   AppErrorCodes,
   createAppError,

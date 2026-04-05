@@ -1,6 +1,7 @@
 import { Document, Collection, Filter, WithId } from 'mongodb';
 
-import { ProductFilters, ProductWithImages } from '@/shared/contracts/products';
+import { ProductFilters } from '@/shared/contracts/products/drafts';
+import { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import { buildMongoWhere } from '../mongo-product-repository.filters';

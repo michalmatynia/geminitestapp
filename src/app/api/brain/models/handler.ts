@@ -5,7 +5,7 @@ import {
   brainModelFamilySchema,
   brainModelModalitySchema,
 } from '@/shared/contracts/ai-brain';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import {
   optionalBooleanQuerySchema,

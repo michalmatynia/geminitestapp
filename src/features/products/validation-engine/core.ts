@@ -1,11 +1,5 @@
-import type {
-  ProductValidationInstanceScope,
-  ProductValidationPattern,
-  ProductValidationPostAcceptBehavior,
-  ProductValidationTarget,
-  ProductCategory,
-  FieldValidatorIssue,
-} from '@/shared/contracts/products';
+import type { ProductValidationInstanceScope, ProductValidationPattern, ProductValidationPostAcceptBehavior, ProductValidationTarget, FieldValidatorIssue } from '@/shared/contracts/products/validation';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import {
   isPatternEnabledForValidationScope,

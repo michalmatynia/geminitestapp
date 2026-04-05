@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
 import { resolveCaseResolverHistoryEntryPreview } from '@/features/case-resolver/utils/caseResolverUtils';
 
 const buildHistoryEntry = (

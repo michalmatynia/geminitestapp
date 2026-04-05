@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 

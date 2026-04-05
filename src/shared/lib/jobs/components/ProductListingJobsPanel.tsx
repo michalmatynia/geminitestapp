@@ -10,7 +10,7 @@ import { SectionHeader, Pagination, MetadataItem } from '@/shared/ui/navigation-
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { RefreshButton, FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
-import type { FilterField } from '@/shared/contracts/ui';
+import type { FilterField } from '@/shared/contracts/ui/ui/panels';
 
 import {
   JobTableActionsRuntimeProvider,

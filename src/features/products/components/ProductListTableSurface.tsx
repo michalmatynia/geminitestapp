@@ -10,7 +10,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
 import { logProductListDebug } from '@/features/products/lib/product-list-observability';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { Alert } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { DataTable } from '@/shared/ui/data-table';

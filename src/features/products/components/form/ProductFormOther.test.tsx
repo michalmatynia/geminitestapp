@@ -5,7 +5,7 @@ import { render, screen } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductFormData } from '@/shared/contracts/products';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
 
 const {
   useProductFormMetadataMock,

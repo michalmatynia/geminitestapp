@@ -4,7 +4,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ValidatorSettingsController } from '@/shared/contracts/products';
+import type { ValidatorSettingsController } from '@/shared/contracts/products/drafts';
 
 const { useValidatorSettingsContextMock } = vi.hoisted(() => ({
   useValidatorSettingsContextMock: vi.fn(),

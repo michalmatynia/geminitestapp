@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
-import { DebugInfo } from '@/shared/contracts/products';
+import { DebugInfo } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';

@@ -1,13 +1,10 @@
 import 'server-only';
 
 import { callBaseApi } from '@/features/integrations/services/imports/base-client';
-import type {
-  ImportExportTemplateMapping as ExportTemplateMapping,
-  BaseProductRecord,
-  ImageExportDiagnostics,
-  ImageUrlDiagnostic,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ImportExportTemplateMapping as ExportTemplateMapping } from '@/shared/contracts/integrations/import-export';
+import type { BaseProductRecord } from '@/shared/contracts/integrations/base-api';
+import type { ImageExportDiagnostics, ImageUrlDiagnostic } from '@/shared/contracts/integrations/session-testing';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getAllImageUrls, getProductImagesAsBase64 } from './base-exporter-images';

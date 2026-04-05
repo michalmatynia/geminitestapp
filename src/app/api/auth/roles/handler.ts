@@ -14,7 +14,7 @@ import {
 import type { AuthRoleSettings } from '@/shared/contracts/auth';
 import { authUserRoleMapSchema } from '@/shared/contracts/auth';
 import type { MongoSettingRecord } from '@/shared/contracts/base';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { serializeSetting } from '@/shared/utils/settings-json';

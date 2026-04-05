@@ -11,7 +11,7 @@ import {
 } from '@/features/ai/ai-paths/services/playwright-node-runner';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { aiPathsPlaywrightEnqueueRequestSchema } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 type CapturePayload = {
   screenshot?: boolean;

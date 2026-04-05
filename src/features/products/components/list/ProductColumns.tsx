@@ -19,7 +19,7 @@ import {
   loadProductIntegrationsAdapter,
   type ProductTriggerButtonBarProps,
 } from '@/features/products/lib/product-integrations-adapter-loader';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { LogListEntry } from '@/shared/contracts/ui';
+import type { LogListEntry } from '@/shared/contracts/ui/ui/logs';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { StatusBadge } from './status-badge';

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { resolveKangurActor, toKangurAuthUser } from '@/features/kangur/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
 
 export async function getKangurAuthMeHandler(

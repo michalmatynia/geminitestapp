@@ -1,8 +1,4 @@
-import type {
-  ProductShippingGroup,
-  ProductShippingGroupCreateInput,
-  ProductShippingGroupFilters,
-} from '@/shared/contracts/products';
+import type { ProductShippingGroup, ProductShippingGroupCreateInput, ProductShippingGroupFilters } from '@/shared/contracts/products/shipping-groups';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 
 export const requireShippingGroupCatalogId = (

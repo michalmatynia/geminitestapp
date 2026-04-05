@@ -1,8 +1,5 @@
-import type {
-  IntegrationConnectionRecord,
-  TraderaProductLinkExistingCandidate,
-  TraderaProductLinkExistingInferenceMethod,
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import type { TraderaProductLinkExistingCandidate, TraderaProductLinkExistingInferenceMethod } from '@/shared/contracts/integrations/listings';
 
 export type TraderaManualLinkConnectionCandidate = TraderaProductLinkExistingCandidate & {
   connection: IntegrationConnectionRecord;

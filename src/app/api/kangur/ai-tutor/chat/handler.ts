@@ -38,7 +38,7 @@ import {
   type KangurAiTutorCoachingMode,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, isAppError } from '@/shared/errors/app-error';
 import {
   resolveBrainExecutionConfigForCapability,

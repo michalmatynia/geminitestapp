@@ -12,7 +12,7 @@ import {
 } from '@/shared/lib/foldertree/public';
 import { useMasterFolderTreeSearch } from '@/shared/lib/foldertree/public';
 import type { MasterTreeDropInput } from '@/shared/lib/foldertree/public';
-import type { CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver';
+import type { CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver/base';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui/navigation-and-layout.public';
 import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';

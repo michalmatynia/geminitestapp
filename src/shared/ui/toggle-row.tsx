@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import type { ToggleRowProps } from '@/shared/contracts/ui';
+import type { ToggleRowProps } from '@/shared/contracts/ui/ui/controls';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils/ui-utils';
 

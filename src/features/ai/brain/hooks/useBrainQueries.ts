@@ -15,7 +15,7 @@ import type {
   SystemLogMetrics,
   SystemLogMetricsResponseDto as SystemLogMetricsResponse,
 } from '@/shared/contracts/observability';
-import type { SingleQuery } from '@/shared/contracts/ui';
+import type { SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';

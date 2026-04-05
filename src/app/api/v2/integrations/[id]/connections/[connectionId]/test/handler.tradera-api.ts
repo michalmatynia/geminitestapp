@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
 import { decryptSecret } from '@/features/integrations/server';
 import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api-client';
-import type {
-  IntegrationConnectionRecord,
-  IntegrationRepository,
-  TestConnectionResponse,
-  TestLogEntry,
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord, IntegrationRepository } from '@/shared/contracts/integrations/repositories';
+import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;

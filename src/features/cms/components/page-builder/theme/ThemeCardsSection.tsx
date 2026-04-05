@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 import { useThemeSettingsValue } from '../ThemeSettingsContext';

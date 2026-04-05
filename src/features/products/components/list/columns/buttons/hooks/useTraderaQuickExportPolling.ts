@@ -13,7 +13,7 @@ import type {
   TraderaQuickListFeedbackStatus,
 } from '@/features/integrations/utils/traderaQuickListFeedback';
 import { toRecord } from '@/features/integrations/utils/tradera-listing-client-utils';
-import type { ListingBadgesPayload } from '@/shared/contracts/integrations';
+import type { ListingBadgesPayload } from '@/shared/contracts/integrations/listings';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

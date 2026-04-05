@@ -1,4 +1,5 @@
-import type { CaseResolverFile, CaseMetadataDraft } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseMetadataDraft } from '@/shared/contracts/case-resolver/base';
 export type { CaseMetadataDraft };
 
 const NONE_OPTION_VALUE = '__none__';

@@ -5,7 +5,8 @@ import { act, renderHook } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductFormData, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const mocks = vi.hoisted(() => ({
   createMutationMock: vi.fn(),

@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import type {
-  ProducerMapping,
-  ProducerMappingCreateInput,
-} from '@/shared/contracts/integrations';
+import type { ProducerMapping, ProducerMappingCreateInput } from '@/shared/contracts/integrations/producers';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

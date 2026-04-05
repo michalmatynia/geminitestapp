@@ -1,10 +1,6 @@
 'use client';
 
-import type {
-  IntegrationAllegroApiMethod,
-  IntegrationAllegroApiResponse,
-  IntegrationBaseApiResponse,
-} from '@/shared/contracts/integrations';
+import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 import { createStrictContext } from '../createStrictContext';
 
 export interface IntegrationsApiConsole {

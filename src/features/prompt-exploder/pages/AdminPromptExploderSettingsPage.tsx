@@ -23,7 +23,7 @@ import { Alert, Input, Button, useToast } from '@/shared/ui/primitives.public';
 import { SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { DocsTooltipEnhancer } from '@/shared/ui';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

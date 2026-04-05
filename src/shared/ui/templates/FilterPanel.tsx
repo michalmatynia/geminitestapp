@@ -2,7 +2,7 @@
 
 import { type JSX, type ReactNode } from 'react';
 
-import { FilterField } from '@/shared/contracts/ui';
+import { FilterField } from '@/shared/contracts/ui/ui/panels';
 
 import { PanelFilters, PanelFiltersSearchPlaceholderRuntimeContext } from './panels/PanelFilters';
 

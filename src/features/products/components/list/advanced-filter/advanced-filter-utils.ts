@@ -1,13 +1,5 @@
-import {
-  productAdvancedFilterGroupSchema,
-  productAdvancedFilterPresetBundleSchema,
-  type ProductAdvancedFilterCondition,
-  type ProductAdvancedFilterField,
-  type ProductAdvancedFilterGroup,
-  type ProductAdvancedFilterOperator,
-  type ProductAdvancedFilterPreset,
-  type ProductAdvancedFilterRule,
-} from '@/shared/contracts/products';
+import { productAdvancedFilterGroupSchema, productAdvancedFilterPresetBundleSchema } from '@/shared/contracts/products/filters';
+import { type ProductAdvancedFilterCondition, type ProductAdvancedFilterField, type ProductAdvancedFilterGroup, type ProductAdvancedFilterOperator, type ProductAdvancedFilterPreset, type ProductAdvancedFilterRule } from '@/shared/contracts/products';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

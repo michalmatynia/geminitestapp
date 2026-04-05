@@ -6,7 +6,7 @@ import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths-
 import type { AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
-import type { SingleQuery } from '@/shared/contracts/ui';
+import type { SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import {
   catalogToEntries,
   entriesToCatalogArrays,
@@ -22,7 +22,7 @@ import {
   type BrainOperationsOverviewResponse,
   type InsightsSnapshot,
 } from '../hooks/useBrainQueries';
-import type { SelectSimpleOption } from '@/shared/contracts/ui';
+import type { SelectSimpleOption } from '@/shared/contracts/ui/ui/controls';
 
 import {
   ALL_BRAIN_FEATURE_KEYS,

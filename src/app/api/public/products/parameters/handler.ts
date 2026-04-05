@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getParameterRepository } from '@/features/products/server';
-import type { ProductParameter } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 

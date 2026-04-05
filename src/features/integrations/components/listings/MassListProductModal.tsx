@@ -5,7 +5,7 @@ import { useState } from 'react';
 import {
   useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
 import { FormModal } from '@/shared/ui/forms-and-actions.public';
 import { Alert } from '@/shared/ui/primitives.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';

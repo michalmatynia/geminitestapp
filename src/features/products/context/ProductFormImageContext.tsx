@@ -3,11 +3,8 @@
 import { createContext, useContext, useMemo } from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type {
-  ProductImageSlot,
-  ProductWithImages,
-  ProductDraft,
-} from '@/shared/contracts/products';
+import type { ProductImageSlot, ProductDraft } from '@/shared/contracts/products/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
 
 import { useProductImages } from '../hooks/useProductImages';

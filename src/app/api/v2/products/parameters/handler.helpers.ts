@@ -1,4 +1,4 @@
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 const TRUE_QUERY_VALUES = new Set(['1', 'true', 'yes', 'on']);
 const FALSE_QUERY_VALUES = new Set(['0', 'false', 'no', 'off']);

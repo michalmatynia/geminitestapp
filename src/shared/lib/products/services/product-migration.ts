@@ -1,9 +1,6 @@
 import 'server-only';
 
-import type {
-  ProductMigrationDirection as MigrationDirection,
-  ProductMigrationBatchResult as MigrationBatchResult,
-} from '@/shared/contracts/products';
+import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from '@/shared/contracts/products/migration';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export type { MigrationDirection };

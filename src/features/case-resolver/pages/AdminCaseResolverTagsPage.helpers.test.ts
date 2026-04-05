@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
+import type { CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
 
 import {
   buildNextTagsForDelete,

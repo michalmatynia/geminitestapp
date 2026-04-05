@@ -3,7 +3,7 @@ import { cn } from '@/shared/utils/ui-utils';
 import { SectionHeader } from '../section-header';
 import { UI_STACK_RELAXED_CLASSNAME } from '../layout';
 
-import type { TreeHeaderProps } from '@/shared/contracts/ui';
+import type { TreeHeaderProps } from '@/shared/contracts/ui/ui/menus';
 
 export type { TreeHeaderProps };
 

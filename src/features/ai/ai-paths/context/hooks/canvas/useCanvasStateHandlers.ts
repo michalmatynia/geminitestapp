@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
 import { clampTranslate } from '@/shared/lib/ai-paths';
 

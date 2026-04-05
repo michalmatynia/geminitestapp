@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
-import type {
-  CategoryMapping,
-  CategoryMappingCreateInput,
-  CategoryMappingRepository,
-} from '@/shared/contracts/integrations';
+import type { CategoryMapping, CategoryMappingCreateInput } from '@/shared/contracts/integrations/listings';
+import type { CategoryMappingRepository } from '@/shared/contracts/integrations/repositories';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type {
-  BaseOrderImportPersistResponse,
-  BaseOrderImportPreviewResponse,
-} from '@/shared/contracts/products';
+import type { BaseOrderImportPersistResponse, BaseOrderImportPreviewResponse } from '@/shared/contracts/products/orders-import';
 
 import {
   buildQuickImportNoopResponse,

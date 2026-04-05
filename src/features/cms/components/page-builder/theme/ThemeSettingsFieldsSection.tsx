@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import {

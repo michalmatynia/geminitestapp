@@ -3,7 +3,7 @@ import type {
   ChatbotJobsClearResponse,
   ChatbotJobsResponse,
 } from '@/shared/contracts/chatbot';
-import type { ProductJob } from '@/shared/contracts/integrations';
+import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type {
   ProductAiJob,
   ProductAiJobActionResponse,

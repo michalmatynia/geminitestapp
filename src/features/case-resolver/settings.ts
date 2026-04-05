@@ -1,8 +1,4 @@
-import {
-  type CaseResolverWorkspace,
-  type CaseResolverDefaultDocumentFormat,
-  type CaseResolverSettings,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspace, type CaseResolverDefaultDocumentFormat, type CaseResolverSettings } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 

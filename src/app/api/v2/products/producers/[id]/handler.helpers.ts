@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Producer, ProducerUpdateInput } from '@/shared/contracts/products';
+import type { Producer, ProducerUpdateInput } from '@/shared/contracts/products/producers';
 import { conflictError, validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

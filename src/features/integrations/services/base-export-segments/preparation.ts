@@ -8,7 +8,7 @@ import {
   type Template,
 } from '@/features/integrations/server';
 import { type CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
-import type { ProducerRepository } from '@/shared/contracts/products';
+import type { ProducerRepository } from '@/shared/contracts/products/drafts';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 import { getTagRepository } from '@/shared/lib/products/services/tag-repository';

@@ -1,14 +1,8 @@
 import 'server-only';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import {
-  ImageStudioRunDispatchMode,
-  ImageStudioRunRecord,
-  ImageStudioRunStatus,
-  ImageStudioRunHistoryEvent,
-  ImageStudioRunHistoryEventSource,
-  ImageStudioRunRequest,
-} from '@/shared/contracts/image-studio';
+import { ImageStudioRunDispatchMode, ImageStudioRunRecord, ImageStudioRunRequest } from '@/shared/contracts/image-studio/image-studio/run';
+import { ImageStudioRunStatus, ImageStudioRunHistoryEvent, ImageStudioRunHistoryEventSource } from '@/shared/contracts/image-studio/image-studio/base';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 

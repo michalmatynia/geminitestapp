@@ -1,14 +1,5 @@
-import type {
-  ProductValidationPattern,
-  ProductValidationSemanticAuditRecord,
-  ProductValidationSemanticAuditSource,
-  ProductValidationSemanticAuditTrigger,
-  ProductValidationSemanticState,
-} from '@/shared/contracts/products';
-import {
-  LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION,
-  productValidationSemanticAuditRecordSchema,
-} from '@/shared/contracts/products';
+import type { ProductValidationPattern, ProductValidationSemanticAuditRecord, ProductValidationSemanticAuditSource, ProductValidationSemanticAuditTrigger, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
+import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION, productValidationSemanticAuditRecordSchema } from '@/shared/contracts/products/validation';
 import {
   getProductValidationSemanticOperationUiMetadata,
   inferProductValidationSemanticStateFromPattern,

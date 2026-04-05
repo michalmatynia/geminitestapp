@@ -1,4 +1,4 @@
-import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
   getProducerNameFromLookup,

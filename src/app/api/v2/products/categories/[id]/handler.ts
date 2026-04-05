@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository } from '@/features/products/server';
-import { updateProductCategorySchema } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { updateProductCategorySchema } from '@/shared/contracts/products/categories';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 
 export { updateProductCategorySchema as productCategoryUpdateSchema };

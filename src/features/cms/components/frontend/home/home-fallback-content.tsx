@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import type { CmsAppearanceTone } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { HomeFallbackCollections } from './home-fallback-content.collections';
 import {

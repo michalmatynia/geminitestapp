@@ -1,10 +1,5 @@
-import {
-  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
-  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  type AiNode,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode } from '@/shared/contracts/case-resolver';
 
 type GraphPayload = {
   nodes: unknown[];

@@ -5,12 +5,7 @@ import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
-import type {
-  ApiHandlerOptions,
-  ApiHandlerContext,
-  ApiRouteHandler,
-  ApiRouteHandlerWithParams,
-} from '@/shared/contracts/ui';
+import type { ApiHandlerOptions, ApiHandlerContext, ApiRouteHandler, ApiRouteHandlerWithParams } from '@/shared/contracts/ui/ui/api';
 import {
   badRequestError,
   forbiddenError,

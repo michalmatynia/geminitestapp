@@ -1,6 +1,6 @@
 'use client';
 
-import type { IntegrationConnection } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 
 import type { IntegrationDefinition, SaveConnectionOptions } from '../integrations-context-types';
 import { createStrictContext } from '../createStrictContext';

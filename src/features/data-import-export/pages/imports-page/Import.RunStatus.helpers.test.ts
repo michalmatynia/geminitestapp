@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type {
-  BaseImportItemRecord,
-  BaseImportRunParameterImportSummary,
-} from '@/shared/contracts/integrations';
+import type { BaseImportItemRecord, BaseImportRunParameterImportSummary } from '@/shared/contracts/integrations/base-com';
 
 import {
   buildParameterImportSummaryFromItems,

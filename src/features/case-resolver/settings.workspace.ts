@@ -1,11 +1,4 @@
-import {
-  type CaseResolverAssetFile,
-  type CaseResolverFile,
-  type CaseResolverFileType,
-  type CaseResolverFolderRecord,
-  type CaseResolverWorkspace,
-  type CaseResolverWorkspaceNormalizationDiagnostics,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverAssetFile, type CaseResolverFile, type CaseResolverFileType, type CaseResolverFolderRecord, type CaseResolverWorkspace, type CaseResolverWorkspaceNormalizationDiagnostics } from '@/shared/contracts/case-resolver';
 
 import { sanitizeCaseResolverGraphNodeFileRelations } from './nodefile-relations';
 import {

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { FilterField } from '@/shared/contracts/ui';
+import type { FilterField } from '@/shared/contracts/ui/ui/panels';
 import {
   PROMPT_VALIDATION_SCOPE_LABELS,
   PROMPT_VALIDATION_SCOPE_VALUES,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { RedisOverview } from '@/shared/contracts/database';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { getRedisClient } from '@/shared/lib/redis';

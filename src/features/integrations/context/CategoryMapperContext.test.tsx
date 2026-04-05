@@ -10,8 +10,9 @@ import {
   useCategoryMapperData,
   useCategoryMapperUIState,
 } from './CategoryMapperContext';
-import type { CategoryMappingWithDetails, ExternalCategory } from '@/shared/contracts/integrations';
-import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
+import type { CategoryMappingWithDetails, ExternalCategory } from '@/shared/contracts/integrations/listings';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 const mocks = vi.hoisted(() => ({
   catalogs: [] as unknown[],

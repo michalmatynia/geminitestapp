@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import type { GridPickerItem } from '@/shared/contracts/ui';
+import type { GridPickerItem } from '@/shared/contracts/ui/ui/pickers';
 import { Tooltip } from '@/shared/ui/primitives.public';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 import { cn } from '@/shared/utils/ui-utils';

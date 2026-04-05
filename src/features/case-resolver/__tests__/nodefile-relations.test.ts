@@ -9,12 +9,8 @@ import {
   createCaseResolverAssetFile,
   createCaseResolverFile,
 } from '@/features/case-resolver/settings';
-import {
-  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
-  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
-  type AiNode,
-  type CaseResolverGraph,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode, type CaseResolverGraph } from '@/shared/contracts/case-resolver';
 
 const createPromptNode = (id: string): AiNode => ({
   id,

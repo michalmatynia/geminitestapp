@@ -15,7 +15,7 @@ import {
   isIncomingProductDetailSameRevision,
 } from '@/features/products/hooks/product-list-state-utils';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
   createSingleQueryV2,

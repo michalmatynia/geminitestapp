@@ -8,7 +8,7 @@ import {
   useProducers,
   useSaveProducerMutation,
 } from '@/features/products/hooks/useProductMetadataQueries';
-import type { Producer } from '@/shared/contracts/products';
+import type { Producer } from '@/shared/contracts/products/producers';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { Button } from '@/shared/ui/button';
@@ -18,7 +18,7 @@ import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder
 import { StandardDataTablePanel } from '@/shared/ui/templates/StandardDataTablePanel';
 import { useToast } from '@/shared/ui/toast';
 
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';

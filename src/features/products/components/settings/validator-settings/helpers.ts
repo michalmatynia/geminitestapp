@@ -1,8 +1,5 @@
-import type {
-  ProductValidationPattern,
-  ProductValidationPatternFormData as PatternFormData,
-  SequenceGroupView,
-} from '@/shared/contracts/products';
+import type { ProductValidationPattern, ProductValidationPatternFormData as PatternFormData } from '@/shared/contracts/products/validation';
+import type { SequenceGroupView } from '@/shared/contracts/products/drafts';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELD_LABELS,

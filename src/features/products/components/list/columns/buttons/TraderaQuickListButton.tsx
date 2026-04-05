@@ -12,8 +12,8 @@ import {
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

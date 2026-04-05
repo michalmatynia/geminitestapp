@@ -1,5 +1,5 @@
 import { ApiError } from '@/shared/lib/api-client';
-import type { ProductCategory } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import {
   formatCategoryRuleSummary,
   formatCurrencyRuleSummary,

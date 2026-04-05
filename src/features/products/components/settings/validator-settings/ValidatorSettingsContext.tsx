@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ValidatorSettingsController } from '@/shared/contracts/products';
+import type { ValidatorSettingsController } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

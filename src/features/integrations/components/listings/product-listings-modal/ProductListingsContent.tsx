@@ -15,7 +15,7 @@ import {
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
 import { renderProductListingItem } from './ProductListingItem';

@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import type {
-  ProductShippingGroup,
-  ProductShippingGroupUpdateInput,
-} from '@/shared/contracts/products';
+import type { ProductShippingGroup, ProductShippingGroupUpdateInput } from '@/shared/contracts/products/shipping-groups';
 import { conflictError, validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

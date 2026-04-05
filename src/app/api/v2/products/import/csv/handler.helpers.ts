@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { CreateProductInput, ProductCsvImportResponse } from '@/shared/contracts/products';
+import type { CreateProductInput, ProductCsvImportResponse } from '@/shared/contracts/products/io';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export interface CsvRow {

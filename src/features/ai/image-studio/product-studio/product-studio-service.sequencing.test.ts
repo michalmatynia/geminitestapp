@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { resolvePostProductionRoute } from './product-studio-service.sequencing';
-import type { ProductStudioSequencingConfig } from '@/shared/contracts/products';
+import type { ProductStudioSequencingConfig } from '@/shared/contracts/products/studio';
 
 const makeSequencing = (
   overrides: Partial<ProductStudioSequencingConfig> = {}

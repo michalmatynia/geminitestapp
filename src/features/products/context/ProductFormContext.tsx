@@ -8,8 +8,9 @@ import {
   warnNonHydratedEditProduct,
 } from '@/features/products/hooks/editingProductHydration';
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
-import { ProductParameterValue } from '@/shared/contracts/products';
-import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
+import { ProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {

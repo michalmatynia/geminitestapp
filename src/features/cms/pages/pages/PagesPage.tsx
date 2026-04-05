@@ -21,7 +21,7 @@ import { StatusBadge } from '@/shared/ui/data-display.public';
 import { SelectSimple, ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { StandardDataTablePanel, FilterPanel } from '@/shared/ui/templates.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
-import type { FilterField } from '@/shared/contracts/ui';
+import type { FilterField } from '@/shared/contracts/ui/ui/panels';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';

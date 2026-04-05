@@ -5,7 +5,8 @@ import {
   getCaseResolverWorkspaceRevision,
   persistCaseResolverWorkspaceSnapshot,
 } from '@/features/case-resolver/workspace-persistence';
-import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {

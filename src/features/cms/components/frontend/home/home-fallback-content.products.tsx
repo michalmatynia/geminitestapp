@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import { ProductCard } from '@/features/products/public';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { UI_GRID_ROOMY_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 
 export function HomeFallbackProducts({

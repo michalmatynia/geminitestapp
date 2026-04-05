@@ -9,7 +9,7 @@ import {
   kangurGameContentSetsSchema,
 } from '@/shared/contracts/kangur-game-instances';
 import { kangurGameIdSchema } from '@/shared/contracts/kangur-games';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

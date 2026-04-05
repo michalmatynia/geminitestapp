@@ -5,7 +5,7 @@ import {
   resolveCompletedAtFromFeedbackAndListing,
   resolveListingUrl,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { Card } from '@/shared/ui/primitives.public';
 import { ExternalLink } from '@/shared/ui/forms-and-actions.public';
 

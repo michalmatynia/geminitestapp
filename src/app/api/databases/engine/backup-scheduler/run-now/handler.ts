@@ -11,7 +11,7 @@ import {
   databaseEngineBackupRunNowRequestSchema as runNowSchema,
   type DatabaseEngineBackupRunNowRequest,
 } from '@/shared/contracts/database';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError, badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { markDatabaseBackupJobQueued } from '@/shared/lib/db/services/database-backup-scheduler';

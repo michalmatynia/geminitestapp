@@ -22,7 +22,8 @@ import {
   UseFormReturn,
 } from 'react-hook-form';
 
-import { ProductFormData, ProductWithImages, ProductDraft } from '@/shared/contracts/products';
+import { ProductFormData, ProductDraft } from '@/shared/contracts/products/drafts';
+import { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import {

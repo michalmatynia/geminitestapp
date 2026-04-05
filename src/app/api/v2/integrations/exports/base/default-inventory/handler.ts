@@ -5,11 +5,9 @@ import {
   setExportDefaultInventoryId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import {
-  baseDefaultInventoryPreferencePayloadSchema,
-  type BaseDefaultInventoryPreferenceResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { baseDefaultInventoryPreferencePayloadSchema } from '@/shared/contracts/integrations/preferences';
+import { type BaseDefaultInventoryPreferenceResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

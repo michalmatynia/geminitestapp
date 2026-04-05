@@ -3,7 +3,8 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, useMemo, useRef } from 'react';
 
-import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 
 import {
   type CaseResolverCaseListConfirmationState,

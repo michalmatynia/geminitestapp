@@ -4,19 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
-import type {
-  BaseImportItemRecord,
-  BaseImportItemStatus,
-  BaseImportParameterImportSummary,
-  BaseImportRunDetailResponse,
-  BaseImportErrorClass,
-  BaseImportRunParameterImportSummary,
-  BaseImportRunParams,
-  BaseImportRunRecord,
-  BaseImportRunStats,
-  BaseImportRunStatus,
-  BaseImportPreflight,
-} from '@/shared/contracts/integrations';
+import type { BaseImportItemRecord, BaseImportItemStatus, BaseImportParameterImportSummary, BaseImportRunDetailResponse, BaseImportErrorClass, BaseImportRunParameterImportSummary, BaseImportRunParams, BaseImportRunRecord, BaseImportRunStats, BaseImportRunStatus, BaseImportPreflight } from '@/shared/contracts/integrations/base-com';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

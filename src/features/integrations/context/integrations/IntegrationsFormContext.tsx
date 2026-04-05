@@ -1,6 +1,6 @@
 'use client';
 
-import type { IntegrationConnection } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { createStrictContext } from '../createStrictContext';
 

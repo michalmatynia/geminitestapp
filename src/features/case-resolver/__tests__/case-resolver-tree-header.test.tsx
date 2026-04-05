@@ -16,7 +16,7 @@ import type {
   CaseResolverFolderTreeUiActionsContextValue,
   CaseResolverFolderTreeUiStateContextValue,
 } from '@/features/case-resolver/context/CaseResolverFolderTreeContext';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 const routerPushMock = vi.fn();

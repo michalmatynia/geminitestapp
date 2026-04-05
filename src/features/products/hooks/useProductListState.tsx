@@ -21,8 +21,9 @@ import { useProductSettings } from '@/features/products/hooks/useProductSettings
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { isProductListDebugSearch, logProductListDebug } from '@/features/products/lib/product-list-observability';
 import * as queuedProductOps from '@/features/products/state/queued-product-ops';
-import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
 import { useDraftQueries } from '@/shared/hooks/useDraftQueries';
 import {
   type BackgroundSyncEvent,

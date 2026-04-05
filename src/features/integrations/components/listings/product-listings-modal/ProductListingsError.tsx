@@ -8,7 +8,7 @@ import {
   useProductListingsLogs,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { ImageRetryDropdown } from '@/shared/ui/forms-and-actions.public';
 import { Alert } from '@/shared/ui/primitives.public';
 

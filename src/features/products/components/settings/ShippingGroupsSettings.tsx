@@ -12,7 +12,9 @@ import {
   useSaveShippingGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Catalog, ProductCategory, ProductShippingGroup } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import { ApiError } from '@/shared/lib/api-client';
 import {
   buildCategoryPathLabelMap,

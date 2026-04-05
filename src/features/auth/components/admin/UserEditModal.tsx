@@ -7,7 +7,7 @@ import { StatusToggle, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { MetadataItem, LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { useToast } from '@/shared/ui/primitives.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 
 import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

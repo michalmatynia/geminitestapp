@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { portablePathRemediationWebhookQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError, serviceUnavailableError } from '@/shared/errors/app-error';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,

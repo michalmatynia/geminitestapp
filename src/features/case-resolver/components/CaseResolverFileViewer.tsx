@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver/file';
 import { Button, Label, Textarea, useToast, Card } from '@/shared/ui/primitives.public';
 import { ExternalLink, FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';

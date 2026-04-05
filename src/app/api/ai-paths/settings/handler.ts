@@ -12,7 +12,7 @@ import {
   aiPathsSettingsDeleteRequestSchema,
   aiPathsSettingWriteSchema,
 } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

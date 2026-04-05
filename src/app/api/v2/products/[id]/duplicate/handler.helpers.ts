@@ -1,4 +1,4 @@
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 export const requireDuplicateProductId = (params: { id: string }): string => {

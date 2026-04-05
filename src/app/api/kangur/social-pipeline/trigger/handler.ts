@@ -12,7 +12,7 @@ import {
   getKangurSocialProjectUrlError,
   normalizeKangurSocialProjectUrl,
 } from '@/features/kangur/social/project-url';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { imageFileSelectionSchema } from '@/shared/contracts/files';
 import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';

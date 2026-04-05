@@ -1,10 +1,7 @@
 import { ObjectId, type Filter } from 'mongodb';
 
-import type {
-  MongoExternalCatalogEntityDoc as MongoExternalProducerDoc,
-  ProducerMapping,
-  ProducerMappingWithDetails,
-} from '@/shared/contracts/integrations';
+import type { MongoExternalCatalogEntityDoc as MongoExternalProducerDoc } from '@/shared/contracts/integrations/mongo';
+import type { ProducerMapping, ProducerMappingWithDetails } from '@/shared/contracts/integrations/producers';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { MongoProducerDoc as SharedMongoProducerDoc } from '@/shared/lib/db/services/database-sync-types';
 

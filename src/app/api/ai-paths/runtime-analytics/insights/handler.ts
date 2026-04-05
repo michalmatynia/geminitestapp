@@ -12,7 +12,7 @@ import {
   type AiInsightsResponse,
 } from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

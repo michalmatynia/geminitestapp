@@ -21,7 +21,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Input, Button } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 

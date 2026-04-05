@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 
 import { Button } from '@/shared/ui/primitives.public';
 import { GenericGridPicker } from '@/shared/ui/templates.public';
-import type { GridPickerItem } from '@/shared/contracts/ui';
+import type { GridPickerItem } from '@/shared/contracts/ui/ui/pickers';
 
 export interface OutputImage {
   id: string;

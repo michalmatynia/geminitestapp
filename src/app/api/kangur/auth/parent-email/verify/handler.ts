@@ -4,7 +4,7 @@ import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-conte
 import { verifyKangurParentEmail } from '@/features/kangur/server/parent-email-auth';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { KangurParentEmailVerify } from '@/shared/contracts/kangur-auth';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { readTolerantServerAuthSession } from '@/features/auth/server';
 import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';

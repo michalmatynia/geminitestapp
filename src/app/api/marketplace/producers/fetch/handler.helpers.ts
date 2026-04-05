@@ -1,8 +1,5 @@
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import type {
-  MarketplaceConnectionRequest,
-  MarketplaceFetchResponse,
-} from '@/shared/contracts/integrations';
+import type { MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);

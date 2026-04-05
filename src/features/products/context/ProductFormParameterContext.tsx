@@ -2,12 +2,9 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import type {
-  ProductParameter,
-  ProductParameterValue,
-  ProductWithImages,
-  ProductDraft,
-} from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {

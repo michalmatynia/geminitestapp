@@ -17,11 +17,9 @@ import {
   initializeQueues,
 } from '@/features/jobs/server';
 import { getProductRepository, parseJsonBody } from '@/features/products/server';
-import {
-  productListingCreatePayloadSchema,
-  type ProductListingCreateResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { productListingCreatePayloadSchema } from '@/shared/contracts/integrations/listings';
+import { type ProductListingCreateResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

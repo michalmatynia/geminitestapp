@@ -7,16 +7,8 @@ import {
   coerceFiniteNumber,
   isFileLike,
 } from '@/features/ai/image-studio/server/image-handler-utils';
-import {
-  type ImageStudioCenterRequest,
-  type ImageStudioCenterResponse,
-  imageStudioCenterResponseSchema,
-  type ImageStudioSlotRecord,
-  type ImageStudioCenterShadowPolicy,
-  type ImageStudioCenterDetectionMode,
-  type UploadedClientCenterImage,
-  type ImageStudioCenterMetadata,
-} from '@/shared/contracts/image-studio';
+import { imageStudioCenterResponseSchema } from '@/shared/contracts/image-studio/image-studio/slot';
+import { type ImageStudioCenterRequest, type ImageStudioCenterResponse, type ImageStudioSlotRecord, type ImageStudioCenterShadowPolicy, type ImageStudioCenterDetectionMode, type UploadedClientCenterImage, type ImageStudioCenterMetadata } from '@/shared/contracts/image-studio';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

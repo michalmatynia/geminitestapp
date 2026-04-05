@@ -14,7 +14,7 @@ import {
 import { Checkbox } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 
 import {
   useComponentSettingsActions,

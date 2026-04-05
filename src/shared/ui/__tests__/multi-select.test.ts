@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { MultiSelectOption } from '@/shared/contracts/ui';
+import type { MultiSelectOption } from '@/shared/contracts/ui/ui/controls';
 import {
   filterMultiSelectOptions,
   formatMultiSelectDisplayValue,

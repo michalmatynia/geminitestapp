@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 
 export const querySchema = z.object({

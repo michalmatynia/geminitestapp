@@ -7,7 +7,7 @@ import {
   CaseListPanelControlsContext,
   type CaseListPanelControlsContextValue,
 } from '@/features/case-resolver/components/list/CaseListPanelControlsContext';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 const buildPanelControlsValue = (
   overrides: Partial<CaseListPanelControlsContextValue> = {}

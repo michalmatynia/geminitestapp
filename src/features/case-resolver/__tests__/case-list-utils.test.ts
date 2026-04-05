@@ -5,7 +5,7 @@ import {
   sortCaseTreeNodes,
 } from '@/features/case-resolver/components/list/case-list-utils';
 import { toCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const buildCaseFile = (id: string, name: string, happeningDate: string | null): CaseResolverFile =>

@@ -7,7 +7,7 @@ import {
   type AiPathRunListResult,
   type AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
-import type { StudioSlotsResponse } from '@/shared/contracts/image-studio';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/image-studio/slot';
 import {
   aiPathRunMatchesFilters,
   rememberOptimisticAiPathRun,

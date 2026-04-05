@@ -17,7 +17,7 @@ import {
 } from '@/features/integrations/services/base-export-segments/constants';
 import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/server';
 import type { AiPathRunListOptions, AiPathRunRepository } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import {
   hasRunRepositorySelectionMismatch,

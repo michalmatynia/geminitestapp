@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 
 import type { ClusterPreset } from '@/shared/contracts/ai-paths';
-import type { ModalStateProps } from '@/shared/contracts/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui/ui/base';
 import { Button, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 

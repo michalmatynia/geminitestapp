@@ -1,7 +1,5 @@
-import type {
-  CaseResolverDefaultDocumentFormat,
-  CaseResolverSettings,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverDefaultDocumentFormat } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverSettings } from '@/shared/contracts/case-resolver/workspace';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';

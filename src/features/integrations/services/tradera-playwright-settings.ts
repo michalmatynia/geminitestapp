@@ -1,11 +1,8 @@
 import 'server-only';
 
 import { decryptSecret } from '@/features/integrations/server';
-import {
-  playwrightStorageStateSchema,
-  type IntegrationConnectionRecord,
-  type PlaywrightStorageState,
-} from '@/shared/contracts/integrations';
+import { playwrightStorageStateSchema } from '@/shared/contracts/integrations/session-testing';
+import { type IntegrationConnectionRecord, type PlaywrightStorageState } from '@/shared/contracts/integrations';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';

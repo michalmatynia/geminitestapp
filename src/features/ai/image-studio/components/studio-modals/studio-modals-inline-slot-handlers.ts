@@ -1,6 +1,6 @@
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { IdDataDto, UnknownRecordDto } from '@/shared/contracts/base';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 
 import { asRecord } from './slot-inline-edit-utils';
 

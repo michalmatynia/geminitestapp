@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository, resolveBaseConnectionToken, callBaseApi } from '@/features/integrations/server';
 import { normalizeBaseOrderStatuses } from '@/features/products/services/product-orders-import-normalization';
-import {
-  baseOrderImportStatusesPayloadSchema,
-  type BaseOrderImportStatusesResponse,
-} from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { baseOrderImportStatusesPayloadSchema } from '@/shared/contracts/products/orders-import';
+import { type BaseOrderImportStatusesResponse } from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
-import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver';
+import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
 
 import { applyCaseResolverPlainTextValidation } from '../plain-text-validation';
 

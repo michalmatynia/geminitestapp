@@ -1,5 +1,5 @@
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { api, type ApiError } from '@/shared/lib/api-client';
 import {
   invalidateImageStudioSlots,

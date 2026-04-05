@@ -4,15 +4,9 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import type {
   ImageFileRepository,
 } from '@/shared/contracts/files';
-import type {
-  ProductParameterValue,
-  ProductWithImages,
-  ProductImageRecord,
-  ProductRecord,
-  ProductFilters,
-  ProductRepository,
-  ProductCreateInput,
-} from '@/shared/contracts/products';
+import type { ProductParameterValue, ProductWithImages, ProductImageRecord, ProductRecord } from '@/shared/contracts/products/product';
+import type { ProductFilters, ProductRepository } from '@/shared/contracts/products/drafts';
+import type { ProductCreateInput } from '@/shared/contracts/products/io';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import {
   deleteFileFromStorage,

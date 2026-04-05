@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import { ANIMATION_PRESETS, type AnimationPreset } from '@/shared/contracts/gsap';
-import type { GridPickerItem } from '@/shared/contracts/ui';
+import type { GridPickerItem } from '@/shared/contracts/ui/ui/pickers';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 
 import { AnimationPreviewIcon } from './AnimationPreviewIcon';

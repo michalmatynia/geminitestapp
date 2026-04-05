@@ -1,7 +1,7 @@
 import 'server-only';
 
-import type { ImportExportTemplateMappingDto as ExportTemplateMapping } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ImportExportTemplateMappingDto as ExportTemplateMapping } from '@/shared/contracts/integrations/import-export';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 
 import {

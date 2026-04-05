@@ -14,13 +14,7 @@ import {
   type MongoInternalProducerDoc,
   type MongoProducerMappingDoc,
 } from '@/features/integrations/services/producer-mapping-repository-mongo-utils';
-import type {
-  ProducerMappingAssignment,
-  ProducerMapping,
-  ProducerMappingCreateInput,
-  ProducerMappingUpdateInput,
-  ProducerMappingWithDetails,
-} from '@/shared/contracts/integrations';
+import type { ProducerMappingAssignment, ProducerMapping, ProducerMappingCreateInput, ProducerMappingUpdateInput, ProducerMappingWithDetails } from '@/shared/contracts/integrations/producers';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';

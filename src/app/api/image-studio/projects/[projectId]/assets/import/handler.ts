@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { getImageFileRepository } from '@/features/files/server';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import {
   badRequestError,
   externalServiceError,

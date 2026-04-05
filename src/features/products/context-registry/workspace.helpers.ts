@@ -1,7 +1,7 @@
 import type {
   ProductStudioVariantsResponse,
 } from '@/features/products/context/ProductStudioContext.types';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const normalizeTrimmedText = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') {

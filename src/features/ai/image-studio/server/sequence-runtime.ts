@@ -20,11 +20,7 @@ import {
   type ImageStudioSequenceDispatchMode,
 } from '@/features/ai/image-studio/workers/imageStudioSequenceQueue';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import {
-  type ImageStudioSequenceMaskContext,
-  type ImageStudioSequenceRunRecord,
-  type ImageStudioSequenceRunStartResponse,
-} from '@/shared/contracts/image-studio';
+import { type ImageStudioSequenceMaskContext, type ImageStudioSequenceRunRecord, type ImageStudioSequenceRunStartResponse } from '@/shared/contracts/image-studio';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

@@ -2,7 +2,7 @@
  * @vitest-environment node
  */
 
-import type { PriceGroupForCalculation } from '@/shared/contracts/products';
+import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
 import { describe, expect, it } from 'vitest';
 
 import { calculatePriceForCurrency, normalizeCurrencyCode } from './priceCalculation';

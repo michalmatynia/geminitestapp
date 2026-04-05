@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { PriceGroupForCalculation, ProductWithImages } from '@/shared/contracts/products';
+import type { PriceGroupForCalculation, ProductWithImages } from '@/shared/contracts/products/product';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { MongoPriceGroupDoc } from '@/shared/lib/db/services/database-sync-types';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';

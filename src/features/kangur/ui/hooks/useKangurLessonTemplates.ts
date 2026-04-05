@@ -16,7 +16,7 @@ import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,
 } from '@/features/kangur/observability/client';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

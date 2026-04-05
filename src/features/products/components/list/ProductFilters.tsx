@@ -12,11 +12,8 @@ import {
   useTags,
 } from '@/features/products/hooks/useProductMetadataQueries';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  ProductAdvancedFilterField,
-  ProductAdvancedFilterGroup,
-  ProductCategory,
-} from '@/shared/contracts/products';
+import type { ProductAdvancedFilterField, ProductAdvancedFilterGroup } from '@/shared/contracts/products/filters';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 const ID_MATCH_MODE_OPTIONS: Array<LabeledOptionDto<'exact' | 'partial'>> = [
   { value: 'exact', label: 'Exact' },
@@ -42,7 +39,7 @@ const STOCK_OPERATOR_OPTIONS: Array<
 import { Button } from '@/shared/ui/button';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 
-import type { FilterField } from '@/shared/contracts/ui';
+import type { FilterField } from '@/shared/contracts/ui/ui/panels';
 
 import {
   createAdvancedPreset,

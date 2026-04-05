@@ -1,12 +1,9 @@
 import 'server-only';
 
 import type { UnknownRecordDto } from '@/shared/contracts/base';
-import type {
-  ProductParameter,
-  ProductWithImages,
-  ProductRecord,
-} from '@/shared/contracts/products';
-import type { ProductFilters } from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductWithImages, ProductRecord } from '@/shared/contracts/products/product';
+import type { ProductFilters } from '@/shared/contracts/products/drafts';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { productService } from '@/shared/lib/products/services/productService';

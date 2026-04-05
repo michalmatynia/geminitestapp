@@ -7,7 +7,8 @@ import { useProductFormMetadata } from '@/features/products/context/ProductFormM
 import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
-import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
 import { Alert } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { CompactEmptyState } from '@/shared/ui/empty-state';

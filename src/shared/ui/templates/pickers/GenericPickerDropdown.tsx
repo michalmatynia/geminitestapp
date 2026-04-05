@@ -3,7 +3,7 @@
 import { Plus } from 'lucide-react';
 import { memo, useState, useCallback, useEffect, useId, useMemo, useRef } from 'react';
 
-import type { GenericPickerDropdownProps, PickerOption, PickerGroup } from '@/shared/contracts/ui';
+import type { GenericPickerDropdownProps, PickerOption, PickerGroup } from '@/shared/contracts/ui/ui/pickers';
 import { cn } from '@/shared/utils/ui-utils';
 
 const filterGenericPickerDropdownGroups = (

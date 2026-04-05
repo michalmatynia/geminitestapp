@@ -13,8 +13,8 @@ import {
   applyCanonicalBaseBadgeFallback,
   isCanonicalBaseIntegrationSlug,
 } from '@/features/integrations/services/base-listing-canonicalization';
-import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations/listings';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';

@@ -8,7 +8,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { deletePathRunWithRepository } from '@/features/ai/ai-paths/server';
 import { aiPathRunRouteParamsSchema } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import {

@@ -2,7 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ProductParameter, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const { useParametersMock } = vi.hoisted(() => ({
   useParametersMock: vi.fn(),

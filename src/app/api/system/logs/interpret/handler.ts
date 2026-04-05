@@ -10,7 +10,7 @@ import { startAiInsightsQueue } from '@/features/jobs/server';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import { systemLogsInterpretRequestSchema } from '@/shared/contracts/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/features/auth/server';

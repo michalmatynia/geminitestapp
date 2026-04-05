@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { playwrightConfigCaptureRouteSchema } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
-import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/contracts/integrations/repositories';
 import { buildCaptureRouteUrl } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

@@ -1,18 +1,5 @@
-import {
-  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
-  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  DEFAULT_CASE_RESOLVER_EDGE_META,
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
-  type AiNode,
-  type CaseResolverEdge,
-  type CaseResolverEdgeMeta,
-  type CaseResolverGraph,
-  type CaseResolverNodeMeta,
-  type CaseResolverPdfExtractionPresetId,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS, DEFAULT_CASE_RESOLVER_EDGE_META, DEFAULT_CASE_RESOLVER_NODE_META, DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type CaseResolverGraph, type CaseResolverNodeMeta, type CaseResolverPdfExtractionPresetId } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';

@@ -1,4 +1,4 @@
-import type { ExportResponse } from '@/shared/contracts/integrations';
+import type { ExportResponse } from '@/shared/contracts/integrations/base-com';
 
 type BaseExportFeedbackMode = 'default' | 'images_only';
 

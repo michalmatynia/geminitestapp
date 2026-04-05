@@ -4,14 +4,8 @@ import { ObjectId, type Filter, type UpdateFilter, type Document } from 'mongodb
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import {
-  CreateProductListingInput,
-  ProductListing,
-  ProductListingExportEvent,
-  ProductListingExportEventRecord,
-  ProductListingRepository,
-  ProductListingWithDetails,
-} from '@/shared/contracts/integrations';
+import { CreateProductListingInput, ProductListingExportEventRecord, ProductListingRepository } from '@/shared/contracts/integrations/repositories';
+import { ProductListing, ProductListingExportEvent, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

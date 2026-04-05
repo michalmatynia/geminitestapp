@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 
 const { getAsset3DRepositoryMock, deleteAsset3DMock, parseJsonBodyMock } = vi.hoisted(() => ({
   getAsset3DRepositoryMock: vi.fn(),

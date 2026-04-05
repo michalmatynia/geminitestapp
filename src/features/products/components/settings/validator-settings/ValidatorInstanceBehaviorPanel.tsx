@@ -1,5 +1,5 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { ProductValidationInstanceScope } from '@/shared/contracts/products';
+import type { ProductValidationInstanceScope } from '@/shared/contracts/products/validation';
 import { FormSection } from '@/shared/ui/form-section';
 import { SelectSimple } from '@/shared/ui/select-simple';
 

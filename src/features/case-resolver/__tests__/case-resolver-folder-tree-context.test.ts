@@ -11,7 +11,7 @@ import {
   toCaseResolverCaseNodeId,
   toCaseResolverFileNodeId,
 } from '@/features/case-resolver/master-tree';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 describe('case resolver folder tree root nodes', () => {
   const workspace: CaseResolverWorkspace = {

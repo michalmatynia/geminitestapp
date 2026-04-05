@@ -11,9 +11,9 @@ import {
 import {
   resolveProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import {

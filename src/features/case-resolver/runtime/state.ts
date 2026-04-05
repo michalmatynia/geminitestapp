@@ -1,4 +1,4 @@
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { parseCaseResolverWorkspace } from '../settings';
 import { getCaseResolverWorkspaceRevision } from '../workspace-persistence';

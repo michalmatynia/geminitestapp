@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
   resolveProductCatalogIds,

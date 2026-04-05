@@ -1,5 +1,5 @@
 import { fromCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import { getFolderTreeInstanceSettingsHref } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

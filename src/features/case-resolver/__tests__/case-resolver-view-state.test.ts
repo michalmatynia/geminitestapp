@@ -7,7 +7,7 @@ import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 describe('useCaseResolverStateViewState', () => {
   it('preserves case context when a selected folder is deactivated', () => {

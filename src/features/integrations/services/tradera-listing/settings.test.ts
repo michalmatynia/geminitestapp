@@ -7,7 +7,8 @@ import {
   resolveConnectionListingSettings,
   resolveEffectiveListingSettings,
 } from './settings';
-import type { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
 
 const makeConnection = (
   overrides: Partial<IntegrationConnectionRecord> = {}

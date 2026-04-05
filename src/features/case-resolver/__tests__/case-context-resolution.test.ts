@@ -18,11 +18,8 @@ import {
   stripCaseContextQueryParams,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers.requested-context';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
-import type {
-  CaseResolverFile,
-  CaseResolverFolderRecord,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 const buildFilesById = (files: CaseResolverFile[]): Map<string, CaseResolverFile> =>
   new Map(files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]));

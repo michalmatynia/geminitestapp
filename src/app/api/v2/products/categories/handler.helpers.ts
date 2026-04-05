@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import type {
-  ProductCategory,
-  ProductCategoryCreateInput,
-} from '@/shared/contracts/products';
+import type { ProductCategory, ProductCategoryCreateInput } from '@/shared/contracts/products/categories';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import {
   catalogIdQuerySchema,

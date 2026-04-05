@@ -11,7 +11,7 @@ import {
   KANGUR_DUELS_LOBBY_CHAT_MAX_LIMIT,
   kangurDuelLobbyChatCreateInputSchema,
 } from '@/shared/contracts/kangur-duels-chat';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { forbiddenError, validationError } from '@/shared/errors/app-error';
 import {
   optionalIntegerQuerySchema,

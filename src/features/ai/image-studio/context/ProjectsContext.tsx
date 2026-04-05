@@ -28,8 +28,8 @@ import {
   loadImageStudioActiveProjectLocal,
   saveImageStudioActiveProjectLocal,
 } from '@/features/ai/image-studio/utils/project-session';
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
-import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio/image-studio/project';
+import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/ui/queries';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {

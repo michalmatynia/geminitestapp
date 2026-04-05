@@ -7,7 +7,7 @@ import {
   createDefaultCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
 import type { CaseResolverPromptExploderPayloadReadState } from '@/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 const readPayloadStateRef: { current: CaseResolverPromptExploderPayloadReadState } = {
   current: {

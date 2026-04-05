@@ -20,7 +20,7 @@ import {
   resolveListingUrlFromListing,
   resolveTraderaRequestId,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';

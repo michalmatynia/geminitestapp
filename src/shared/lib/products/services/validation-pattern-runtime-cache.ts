@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 
 import { getProductDataProvider, type ProductDbProvider } from './product-provider';
 import { getValidationPatternRepository } from './validation-pattern-repository';

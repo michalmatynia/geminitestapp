@@ -5,7 +5,7 @@ import {
   aiPathRunStreamQuerySchema,
   type AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import {

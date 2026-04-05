@@ -1,5 +1,5 @@
 import type { SetStateAction } from 'react';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 export const VALIDATION_DENY_BEHAVIOR_SESSION_KEY = 'product_validation_deny_behavior_by_scope';
 export const VALIDATION_DENIED_ISSUES_SESSION_KEY = 'product_validation_denied_issues';

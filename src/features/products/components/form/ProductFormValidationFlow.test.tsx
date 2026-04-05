@@ -9,13 +9,8 @@ import {
   ProductValidationSettingsProvider,
   type ProductValidationSettingsValue,
 } from '@/features/products/context/ProductValidationSettingsContext';
-import type {
-  ProductFormData,
-  ProductValidationAcceptIssueInput,
-  ProductValidationDenyBehavior,
-  ProductValidationDenyIssueInput,
-  ProductValidationPattern,
-} from '@/shared/contracts/products';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationAcceptIssueInput, ProductValidationDenyBehavior, ProductValidationDenyIssueInput, ProductValidationPattern } from '@/shared/contracts/products/validation';
 
 const { useProductFormMetadataMock, setValueSpy } = vi.hoisted(() => ({
   useProductFormMetadataMock: vi.fn(),

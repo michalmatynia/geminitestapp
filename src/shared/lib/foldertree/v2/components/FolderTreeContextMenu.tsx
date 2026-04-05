@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import type { TreeContextMenuItem } from '@/shared/contracts/ui';
+import type { TreeContextMenuItem } from '@/shared/contracts/ui/ui/menus';
 import { TreeContextMenu } from '@/shared/ui/tree/TreeContextMenu';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

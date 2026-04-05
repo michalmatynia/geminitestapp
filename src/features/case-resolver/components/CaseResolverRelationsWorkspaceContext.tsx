@@ -2,11 +2,8 @@
 
 import React from 'react';
 
-import type {
-  CaseResolverAssetFile,
-  CaseResolverFile,
-  CaseResolverRelationGraph,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverRelationGraph } from '@/shared/contracts/case-resolver/relations';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

@@ -11,12 +11,9 @@ import {
   useSaveExportSettingsMutation,
 } from '@/features/data-import-export/hooks/useImportQueries';
 import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
-import type {
-  BaseImportMode,
-  DebugWarehouses,
-  ImageRetryPreset,
-  ImportResponse,
-} from '@/shared/contracts/integrations';
+import type { BaseImportMode } from '@/shared/contracts/integrations/base-com';
+import type { DebugWarehouses, ImportResponse } from '@/shared/contracts/integrations/import-export';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { createImportExportRuntimeActions } from './import-export-runtime-actions';

@@ -17,11 +17,9 @@ import {
   resolveImageStudioProjectSession,
 } from '@/features/ai/image-studio/utils/project-session';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type {
-  ImageStudioSlotRecord,
-  StudioSlotsResponse,
-  ImageStudioAssetDto as ImageStudioUploadedAsset,
-} from '@/shared/contracts/image-studio';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { ImageStudioAssetDto as ImageStudioUploadedAsset } from '@/shared/contracts/image-studio/image-studio/misc';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';

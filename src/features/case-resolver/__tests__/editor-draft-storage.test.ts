@@ -4,7 +4,7 @@ import {
   readStoredEditorDraft,
   writeStoredEditorDraft,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
-import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
 import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
 

@@ -1,4 +1,5 @@
-import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   resolveCatalogRelationIdValue,
   resolveCategoryDisplayLabel,

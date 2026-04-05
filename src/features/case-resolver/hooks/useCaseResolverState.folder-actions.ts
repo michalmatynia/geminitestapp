@@ -3,13 +3,9 @@
 import { useCallback } from 'react';
 
 import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
-import type { Toast as CaseResolverToast } from '@/shared/contracts/ui';
+import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { Toast as CaseResolverToast } from '@/shared/contracts/ui/ui/base';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 import { normalizeFolderPath, normalizeFolderPaths, renameFolderPath } from '../settings';

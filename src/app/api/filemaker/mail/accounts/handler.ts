@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 
 import { filemakerMailAccountDraftSchema } from '@/shared/contracts/filemaker-mail';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { requireFilemakerMailAdminSession } from '@/features/filemaker/server';
 import {
   listFilemakerMailAccounts,

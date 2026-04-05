@@ -2,12 +2,8 @@
 
 import React from 'react';
 
-import type {
-  CaseResolverWorkspaceDebugEvent,
-  CaseResolverWorkspaceObservabilitySnapshot,
-  RequestedContextSnapshot,
-  WorkspaceHydrationSelectionSnapshot,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverWorkspaceObservabilitySnapshot, RequestedContextSnapshot, WorkspaceHydrationSelectionSnapshot } from '@/shared/contracts/case-resolver/base';
 
 import {
   buildCaseResolverWorkspaceDebugMetrics,

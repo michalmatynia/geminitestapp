@@ -9,7 +9,7 @@ import type {
   NoteUpdateInput,
   NoteWithRelations,
 } from '@/shared/contracts/notes';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

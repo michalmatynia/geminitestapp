@@ -12,7 +12,7 @@ import {
   useRunProductSyncProfileMutation,
   useUpdateProductSyncProfileMutation,
 } from '@/features/product-sync/hooks/useProductSyncSettings';
-import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations';
+import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
 import {
   PRODUCT_SYNC_APP_FIELDS,
   PRODUCT_SYNC_DIRECTION_OPTIONS,

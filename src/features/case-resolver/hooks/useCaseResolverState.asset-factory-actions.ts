@@ -3,11 +3,9 @@
 import React, { useCallback } from 'react';
 
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
-import type { Toast } from '@/shared/contracts/ui';
+import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 import {

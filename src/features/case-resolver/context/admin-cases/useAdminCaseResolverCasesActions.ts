@@ -2,8 +2,9 @@
 
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
-import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { Toast } from '@/shared/contracts/ui';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {

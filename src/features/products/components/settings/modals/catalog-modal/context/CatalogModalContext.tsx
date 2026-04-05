@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';
-import type { PriceGroup } from '@/shared/contracts/products';
+import type { PriceGroup } from '@/shared/contracts/products/catalogs';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

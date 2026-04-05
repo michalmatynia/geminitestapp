@@ -28,7 +28,7 @@ vi.mock('@/shared/ui/toast', () => ({
   useToast: () => useToastMock(),
 }));
 
-import type { ProductDraft } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 
 import { useProductOperations } from './useProductOperations';

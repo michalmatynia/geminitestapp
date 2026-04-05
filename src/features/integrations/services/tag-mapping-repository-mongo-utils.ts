@@ -1,10 +1,7 @@
 import { ObjectId, type Filter } from 'mongodb';
 
-import type {
-  MongoExternalCatalogEntityDoc as MongoExternalTagDoc,
-  TagMapping,
-  TagMappingWithDetails,
-} from '@/shared/contracts/integrations';
+import type { MongoExternalCatalogEntityDoc as MongoExternalTagDoc } from '@/shared/contracts/integrations/mongo';
+import type { TagMapping, TagMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type MongoTagMappingDoc = {

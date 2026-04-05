@@ -6,11 +6,9 @@ import {
   setExportDefaultConnectionId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import {
-  baseDefaultConnectionPreferencePayloadSchema,
-  type BaseDefaultConnectionPreferenceResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { baseDefaultConnectionPreferencePayloadSchema } from '@/shared/contracts/integrations/preferences';
+import { type BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const normalizeOptionalId = (value: string | null | undefined): string | null => {

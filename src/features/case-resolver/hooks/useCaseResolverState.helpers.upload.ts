@@ -1,7 +1,4 @@
-import type {
-  CaseResolverAssetKind,
-  CaseResolverUploadedFile,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetKind, CaseResolverUploadedFile } from '@/shared/contracts/case-resolver/base';
 
 export type { CaseResolverUploadedFile };
 import { inferCaseResolverAssetKind, normalizeFolderPath } from '../settings';

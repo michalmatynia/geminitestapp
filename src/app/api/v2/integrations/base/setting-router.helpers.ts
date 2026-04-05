@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ApiRouteHandler } from '@/shared/contracts/ui';
+import type { ApiRouteHandler } from '@/shared/contracts/ui/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

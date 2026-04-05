@@ -1,11 +1,7 @@
 import { ObjectId } from 'mongodb';
 
-import {
-  IntegrationRecord,
-  IntegrationConnectionRecord,
-  ConnectionDeleteOptions,
-  ConnectionDependencyCounts,
-} from '@/shared/contracts/integrations';
+import { IntegrationRecord, IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { ConnectionDeleteOptions, ConnectionDependencyCounts } from '@/shared/contracts/integrations/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

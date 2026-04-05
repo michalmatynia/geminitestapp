@@ -1,14 +1,6 @@
 import 'server-only';
 
-import {
-  ImageStudioSequenceRunRecord,
-  ImageStudioSequenceRunStatus,
-  ImageStudioSequenceRunDispatchMode,
-  ImageStudioSequenceRunHistoryEvent,
-  ImageStudioSequenceRunHistoryEventSource,
-  ImageStudioSequenceRunRequest,
-  ImageStudioSequenceMaskContext,
-} from '@/shared/contracts/image-studio';
+import { ImageStudioSequenceRunRecord, ImageStudioSequenceRunStatus, ImageStudioSequenceRunDispatchMode, ImageStudioSequenceRunHistoryEvent, ImageStudioSequenceRunHistoryEventSource, ImageStudioSequenceRunRequest, ImageStudioSequenceMaskContext } from '@/shared/contracts/image-studio/image-studio/sequence';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

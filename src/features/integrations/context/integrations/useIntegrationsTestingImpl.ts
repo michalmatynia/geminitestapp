@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { TestLogEntry } from '@/shared/contracts/integrations';
+import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 
 import { StepWithResult } from '../integrations-context-types';
 

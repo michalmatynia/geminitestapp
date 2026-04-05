@@ -1,4 +1,4 @@
-import type { ProductPatchInput } from '@/shared/contracts/products';
+import type { ProductPatchInput } from '@/shared/contracts/products/io';
 
 export const buildProductsByIdServerTiming = (
   entries: Record<string, number | null | undefined>

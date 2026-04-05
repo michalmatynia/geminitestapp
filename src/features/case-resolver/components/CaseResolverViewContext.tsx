@@ -8,17 +8,11 @@ import type {
 } from '@/features/case-resolver/capture/public';
 import type { CaseResolverCaptureAction } from '@/features/case-resolver/capture/public';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import type {
-  CaseResolverGraph,
-  CaseResolverRelationGraph,
-  EditorDetailsTab,
-  CaseResolverFileEditDraft,
-  CaseResolverNodeMeta,
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverFile,
-  CaseMetadataDraft,
-  WorkspaceView as CaseResolverWorkspaceView,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverGraph, CaseResolverNodeMeta } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverRelationGraph } from '@/shared/contracts/case-resolver/relations';
+import type { EditorDetailsTab, CaseMetadataDraft, WorkspaceView as CaseResolverWorkspaceView } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverFileEditDraft, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

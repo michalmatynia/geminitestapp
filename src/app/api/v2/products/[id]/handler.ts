@@ -8,14 +8,9 @@ import {
   productService,
 } from '@/features/products/server';
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
-import {
-  type ProductPatchInput,
-  productPatchInputSchema,
-  productUpdateInputSchema,
-  type ProductRecord,
-  type ProductWithImages,
-} from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { productPatchInputSchema, productUpdateInputSchema } from '@/shared/contracts/products/io';
+import { type ProductPatchInput, type ProductRecord, type ProductWithImages } from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';

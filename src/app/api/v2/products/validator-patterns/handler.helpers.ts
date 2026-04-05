@@ -1,5 +1,5 @@
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
-import type { CreateProductValidationPatternInput } from '@/shared/contracts/products';
+import type { CreateProductValidationPatternInput } from '@/shared/contracts/products/validation';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,

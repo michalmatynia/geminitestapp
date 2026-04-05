@@ -8,12 +8,10 @@ import { integrationService } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper';
-import type {
-  ProductListingExportEvent,
-  ProductListingRepository,
-  ProductListing,
-} from '@/shared/contracts/integrations';
-import type { ProductRepository, ProductRecord } from '@/shared/contracts/products';
+import type { ProductListingExportEvent, ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
+import type { ProductRepository } from '@/shared/contracts/products/drafts';
+import type { ProductRecord } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';

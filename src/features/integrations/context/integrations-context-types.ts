@@ -1,14 +1,7 @@
-import {
-  integrationDefinitions,
-  type Integration,
-  type IntegrationConnection,
-  SessionCookie,
-  TestLogEntry,
-  SessionPayload,
-  ConnectionFormState,
-  StepWithResult,
-  SaveConnectionOptions,
-} from '@/shared/contracts/integrations';
+import { integrationDefinitions } from '@/shared/contracts/integrations/domain';
+import { SessionCookie, TestLogEntry, SessionPayload } from '@/shared/contracts/integrations/session-testing';
+import { ConnectionFormState, StepWithResult, SaveConnectionOptions } from '@/shared/contracts/integrations/connections';
+import { type Integration, type IntegrationConnection } from '@/shared/contracts/integrations';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 
 export type {

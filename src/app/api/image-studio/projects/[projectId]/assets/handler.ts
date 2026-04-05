@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getImageFileRepository } from '@/features/files/server';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { uploadFile } from '@/shared/lib/files/file-uploader';
 import { studioRoot } from '@/shared/lib/files/server-constants';

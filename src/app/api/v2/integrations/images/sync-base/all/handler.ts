@@ -7,7 +7,7 @@ import {
 } from '@/features/jobs/server';
 import { type BaseSyncAllImagesResponse } from '@/shared/contracts/integrations';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { logSystemError } from '@/shared/lib/observability/system-logger';
 
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

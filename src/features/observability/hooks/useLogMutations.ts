@@ -5,7 +5,7 @@ import {
   MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
   mongoRebuildIndexesResponseSchema,
 } from '@/shared/contracts/observability';
-import type { UpdateMutation } from '@/shared/contracts/ui';
+import type { UpdateMutation } from '@/shared/contracts/ui/ui/queries';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';

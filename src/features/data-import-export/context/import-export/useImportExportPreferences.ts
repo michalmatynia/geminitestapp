@@ -3,16 +3,9 @@
 import { useEffect, useRef } from 'react';
 
 import { normalizeImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
-import type {
-  BaseActiveTemplatePreferenceResponse,
-  BaseDefaultConnectionPreferenceResponse,
-  BaseDefaultInventoryPreferenceResponse,
-  BaseImageRetryPresetsResponse,
-  BaseSampleProductResponse,
-  BaseStockFallbackPreferenceResponse,
-  IntegrationConnectionBasic,
-  ImageRetryPreset,
-} from '@/shared/contracts/integrations';
+import type { BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse, BaseImageRetryPresetsResponse, BaseSampleProductResponse, BaseStockFallbackPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 
 export function useImportExportPreferences({
   lastImportTemplatePref,

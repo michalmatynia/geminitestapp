@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { resolveEffectiveDefaultPriceGroupId } from './product-column-utils';
 

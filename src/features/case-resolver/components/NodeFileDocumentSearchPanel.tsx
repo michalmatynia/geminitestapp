@@ -5,12 +5,8 @@ import React, { useCallback, useMemo } from 'react';
 
 import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  type AiNode,
-  type CaseResolverFile,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode, type CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { useFolderTreeProfile } from '@/shared/lib/foldertree/public';
 import { Button } from '@/shared/ui/primitives.public';
 import { SelectSimple, SegmentedControl } from '@/shared/ui/forms-and-actions.public';

@@ -1,5 +1,5 @@
-import type { ProductValidationPattern } from '@/shared/contracts/products';
-import type { PatternFormData } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationPatternLaunchScopes,

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { PanelAlert } from '@/shared/contracts/ui';
+import { PanelAlert } from '@/shared/contracts/ui/ui/panels';
 import { Alert, type AlertVariant } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/utils/ui-utils';

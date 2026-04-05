@@ -3,10 +3,8 @@ import 'server-only';
 import { enqueuePlaywrightNodeRun } from '@/features/ai/server';
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import type {
-  IntegrationConnectionRecord,
-  PlaywrightRelistBrowserMode,
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 import { internalError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 

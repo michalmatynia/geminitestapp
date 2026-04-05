@@ -1,9 +1,5 @@
 import { type ImageStudioRunDispatchMode } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
-import {
-  type ProductStudioExecutionRoute,
-  type ProductStudioSequenceGenerationMode,
-  type ProductStudioSequencingDiagnostics,
-} from '@/shared/contracts/products';
+import { type ProductStudioExecutionRoute, type ProductStudioSequenceGenerationMode, type ProductStudioSequencingDiagnostics } from '@/shared/contracts/products';
 import { createProductStudioRunAudit } from '@/shared/lib/products/services/product-studio-audit-service';
 
 export const buildAuditSettingsContext = (

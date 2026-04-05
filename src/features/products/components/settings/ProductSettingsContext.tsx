@@ -2,14 +2,11 @@
 
 import React from 'react';
 
-import type {
-  Catalog,
-  PriceGroup,
-  ProductCategoryWithChildren,
-  ProductParameter,
-  ProductShippingGroup,
-  ProductTag,
-} from '@/shared/contracts/products';
+import type { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
+import type { ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
+import type { ProductTag } from '@/shared/contracts/products/tags';
 import { internalError } from '@/shared/errors/app-error';
 
 type ProductSettingsContextValue = {

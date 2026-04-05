@@ -1,10 +1,5 @@
-import {
-  productStudioProductResponseSchema,
-  productStudioSendResponseSchema,
-  type ProductStudioSendRequest,
-  type ProductStudioSendResponse,
-  type ProductStudioProductResponse,
-} from '@/shared/contracts/products';
+import { productStudioProductResponseSchema, productStudioSendResponseSchema } from '@/shared/contracts/products/studio';
+import { type ProductStudioSendRequest, type ProductStudioSendResponse, type ProductStudioProductResponse } from '@/shared/contracts/products';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';

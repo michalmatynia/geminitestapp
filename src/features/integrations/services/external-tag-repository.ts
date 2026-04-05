@@ -2,7 +2,8 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId, type Filter } from 'mongodb';
 
-import type { BaseTag, ExternalTag, ExternalTagSyncInput } from '@/shared/contracts/integrations';
+import type { ExternalTag, ExternalTagSyncInput } from '@/shared/contracts/integrations/listings';
+import type { BaseTag } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 type ExternalTagRepository = {

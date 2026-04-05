@@ -11,7 +11,7 @@ import {
 } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { Button } from '@/shared/ui/button';
 

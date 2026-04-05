@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { logCaseResolverDurationMetric } from '../runtime/metrics';
 import {

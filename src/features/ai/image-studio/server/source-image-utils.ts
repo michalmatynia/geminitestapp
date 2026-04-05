@@ -2,7 +2,7 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import type { UploadedImageBinaryDto as ParsedImageDataUrl } from '@/shared/contracts/image-studio';
+import type { UploadedImageBinaryDto as ParsedImageDataUrl } from '@/shared/contracts/image-studio/image-studio/base';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

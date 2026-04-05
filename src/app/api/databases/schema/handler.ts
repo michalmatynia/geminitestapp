@@ -7,7 +7,7 @@ import type {
   SchemaProvider,
   SchemaResponse,
 } from '@/shared/contracts/database';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import {
   normalizeOptionalQueryString,
   optionalBooleanQuerySchema,

@@ -4,15 +4,13 @@ import { useMemo } from 'react';
 
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type {
-  CatalogRecord,
-  Producer,
-  ProductCategory,
-  ProductParameter,
-  ProductParameterValue,
-  ProductTag,
-} from '@/shared/contracts/products';
-import type { ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { Producer } from '@/shared/contracts/products/producers';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductTag } from '@/shared/contracts/products/tags';
+import type { ProductDraftOpenFormTab } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

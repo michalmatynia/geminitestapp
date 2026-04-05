@@ -8,13 +8,9 @@ import {
 } from '@/features/integrations/services/tradera-api-client';
 import { resolveTraderaPublicApiCredentials } from '@/features/integrations/services/tradera-listing/api';
 import { fetchTraderaCategoriesForConnection } from '@/features/integrations/services/tradera-listing/categories';
-import type {
-  BaseCategory,
-  IntegrationConnectionRecord,
-  IntegrationRecord,
-  MarketplaceConnectionRequest,
-  MarketplaceFetchResponse,
-} from '@/shared/contracts/integrations';
+import type { BaseCategory } from '@/shared/contracts/integrations/listings';
+import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/contracts/integrations/repositories';
+import type { MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);

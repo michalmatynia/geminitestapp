@@ -1,14 +1,7 @@
 import { type ImageStudioSequenceStep } from '@/features/ai/image-studio/server';
 import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
-import {
-  DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS,
-  type ProductStudioExecutionRoute,
-  type ProductStudioSequenceGenerationMode,
-  type ProductStudioSequencingConfig,
-  type ProductStudioSequencingDiagnostics,
-  type ProductStudioSequenceStepPlanEntry,
-  type ProductStudioSequenceReadiness,
-} from '@/shared/contracts/products';
+import { DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS } from '@/shared/contracts/products/studio';
+import { type ProductStudioExecutionRoute, type ProductStudioSequenceGenerationMode, type ProductStudioSequencingConfig, type ProductStudioSequencingDiagnostics, type ProductStudioSequenceStepPlanEntry, type ProductStudioSequenceReadiness } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 
 import { clamp01, trimString } from './product-studio-service.helpers';

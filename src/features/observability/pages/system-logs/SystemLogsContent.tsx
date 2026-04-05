@@ -3,7 +3,8 @@
 import React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { AnalyticsEventFilterBot, AnalyticsRange, AnalyticsScope } from '@/shared/contracts/analytics';
-import type { FilterField, SelectSimpleOption } from '@/shared/contracts/ui';
+import type { FilterField } from '@/shared/contracts/ui/ui/panels';
+import type { SelectSimpleOption } from '@/shared/contracts/ui/ui/controls';
 import {
   Copy,
   SearchIcon,

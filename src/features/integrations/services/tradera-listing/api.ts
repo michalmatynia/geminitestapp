@@ -4,7 +4,8 @@ import {
   TraderaApiCredentials,
   TraderaPublicApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
-import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
+import { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 

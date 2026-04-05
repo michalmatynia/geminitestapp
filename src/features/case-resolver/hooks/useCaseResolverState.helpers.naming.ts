@@ -1,5 +1,5 @@
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
-import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 
 import { normalizeFolderPath } from '../settings';
 

@@ -7,11 +7,8 @@ import {
   parsePersistedImageStudioSettings,
 } from '@/features/ai/server';
 import { auth } from '@/features/auth/server';
-import {
-  imageStudioUiExtractorRequestSchema,
-  imageStudioUiExtractorResponseSchema,
-} from '@/shared/contracts/image-studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { imageStudioUiExtractorRequestSchema, imageStudioUiExtractorResponseSchema } from '@/shared/contracts/image-studio/image-studio/misc';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';

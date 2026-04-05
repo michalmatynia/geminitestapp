@@ -1,4 +1,4 @@
-import type { TraderaSystemSettings } from '@/shared/contracts/integrations';
+import type { TraderaSystemSettings } from '@/shared/contracts/integrations/tradera';
 
 export type { TraderaSystemSettings };
 

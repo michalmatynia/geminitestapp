@@ -4,10 +4,8 @@ import React from 'react';
 
 import { useListingBaseComSettings } from '@/features/integrations/context/ListingSettingsContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  BaseInventory,
-  IntegrationTemplate as Template,
-} from '@/shared/contracts/integrations';
+import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
+import type { IntegrationTemplate as Template } from '@/shared/contracts/integrations';
 import { SelectSimple, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { Alert } from '@/shared/ui/primitives.public';
 

@@ -9,8 +9,8 @@ import {
   getImageStudioProjectSettingsKey,
   parsePersistedImageStudioSettings,
 } from '@/features/ai/server';
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio/image-studio/project';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { studioRoot } from '@/shared/lib/files/server-constants';

@@ -1,7 +1,7 @@
 import type { PageComponentInput } from '@/shared/contracts/cms';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
 
 import { HomeCmsDefaultContent } from './home-cms-default-content';

@@ -11,11 +11,8 @@ import {
   matchesProductListingsIntegrationScope,
   normalizeProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
-import type {
-  BaseDefaultConnectionPreferenceResponse,
-  IntegrationWithConnections,
-  TraderaDefaultConnectionPreferenceResponse,
-} from '@/shared/contracts/integrations';
+import type { BaseDefaultConnectionPreferenceResponse, TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

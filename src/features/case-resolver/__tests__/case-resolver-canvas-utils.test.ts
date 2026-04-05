@@ -5,11 +5,8 @@ import {
   resolvePromptNodeStaticOutputs,
   stripHtmlToPlainText,
 } from '@/features/case-resolver/components/case-resolver-canvas-utils';
-import {
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  type AiNode,
-  type CaseResolverFile,
-} from '@/shared/contracts/case-resolver';
+import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode, type CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 const createPromptNode = (template: string): AiNode => ({
   id: 'prompt-1',

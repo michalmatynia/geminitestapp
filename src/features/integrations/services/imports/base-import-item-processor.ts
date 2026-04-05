@@ -9,30 +9,16 @@ import {
   getProductListingRepository,
 } from '@/features/integrations/services/product-listing-repository';
 import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
-import type {
-  BaseImportErrorClass,
-  BaseImportErrorCode,
-  BaseImportItemRecord,
-  BaseImportMode,
-  BaseParameterImportSummary,
-  BaseImportRunRecord,
-  ProductListing,
-  ProductListingRepository,
-} from '@/shared/contracts/integrations';
-import {
-  defaultBaseImportParameterImportSettings,
-  normalizeBaseImportParameterImportSettings,
-  type ImportTemplateParameterImport,
-} from '@/shared/contracts/integrations';
-import type {
-  ParameterRepository,
-  ProductParameter,
-  ProductRecord,
-  ProductWithImages,
-  ProductParameterValue,
-  CreateProduct as ProductCreateInput,
-  UpdateProduct as ProductUpdateInput,
-} from '@/shared/contracts/products';
+import type { BaseImportErrorClass, BaseImportErrorCode, BaseImportItemRecord, BaseImportMode, BaseImportRunRecord } from '@/shared/contracts/integrations/base-com';
+import type { BaseParameterImportSummary } from '@/shared/contracts/integrations/parameter-import';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
+import { defaultBaseImportParameterImportSettings, normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
+import { type ImportTemplateParameterImport } from '@/shared/contracts/integrations/templates';
+import type { ParameterRepository } from '@/shared/contracts/products/drafts';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductRecord, ProductWithImages, ProductParameterValue } from '@/shared/contracts/products/product';
+import type { CreateProduct as ProductCreateInput, UpdateProduct as ProductUpdateInput } from '@/shared/contracts/products/io';
 import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import { productsRoot } from '@/shared/lib/files/server-constants';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';

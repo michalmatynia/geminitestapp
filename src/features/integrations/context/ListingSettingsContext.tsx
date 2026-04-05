@@ -3,14 +3,9 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
-import type {
-  IntegrationWithConnections,
-  IntegrationConnectionBasic,
-} from '@/shared/contracts/integrations';
-import type {
-  BaseInventory,
-  IntegrationTemplate as Template,
-} from '@/shared/contracts/integrations';
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
+import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
+import type { IntegrationTemplate as Template } from '@/shared/contracts/integrations';
 
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';
 import { useIntegrationSelection } from '../components/listings/hooks/useIntegrationSelection';

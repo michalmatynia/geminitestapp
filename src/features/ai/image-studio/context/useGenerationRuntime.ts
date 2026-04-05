@@ -6,13 +6,8 @@ import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context
 import { useRunStudio } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type {
-  ImageStudioRunDetailResponse,
-  ImageStudioRunOutputRecord,
-  ImageStudioRunRecord,
-  ImageStudioRunsResponse,
-  ImageStudioRunStatus,
-} from '@/shared/contracts/image-studio';
+import type { ImageStudioRunDetailResponse, ImageStudioRunOutputRecord, ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio/image-studio/run';
+import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/image-studio/base';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/primitives.public';

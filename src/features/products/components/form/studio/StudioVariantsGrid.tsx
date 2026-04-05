@@ -14,7 +14,7 @@ import { StatusBadge } from '@/shared/ui/status-badge';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPicker';
 
 import { cn } from '@/shared/utils/ui-utils';
-import type { GridPickerItem } from '@/shared/contracts/ui';
+import type { GridPickerItem } from '@/shared/contracts/ui/ui/pickers';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type StudioVariantGridItem = GridPickerItem<ImageStudioSlotRecord | null> & {

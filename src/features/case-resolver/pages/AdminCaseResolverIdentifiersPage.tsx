@@ -3,7 +3,7 @@
 import { Plus } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import type { CaseResolverIdentifier } from '@/shared/contracts/case-resolver';
+import type { CaseResolverIdentifier } from '@/shared/contracts/case-resolver/relations';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { AdminCaseResolverPageLayout } from '@/shared/ui/admin.public';

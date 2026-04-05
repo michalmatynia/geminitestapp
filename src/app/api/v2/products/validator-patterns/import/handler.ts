@@ -2,13 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
-import type {
-  CreateProductValidationPatternInput,
-  ProductValidationPattern,
-  ProductValidationRuntimeType,
-  UpdateProductValidationPatternInput,
-} from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { CreateProductValidationPatternInput, ProductValidationPattern, ProductValidationRuntimeType, UpdateProductValidationPatternInput } from '@/shared/contracts/products/validation';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import {
   productValidatorImportRequestSchema,
   type ProductValidatorImportError,

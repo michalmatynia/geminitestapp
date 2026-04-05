@@ -1,12 +1,7 @@
 import { ObjectId } from 'mongodb';
 
-import type {
-  ProductShippingGroup,
-  ProductShippingGroupCreateInput,
-  ProductShippingGroupUpdateInput,
-  ShippingGroupFilters,
-  ShippingGroupRepository,
-} from '@/shared/contracts/products';
+import type { ProductShippingGroup, ProductShippingGroupCreateInput, ProductShippingGroupUpdateInput } from '@/shared/contracts/products/shipping-groups';
+import type { ShippingGroupFilters, ShippingGroupRepository } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

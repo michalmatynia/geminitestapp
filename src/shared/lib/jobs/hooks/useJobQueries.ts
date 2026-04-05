@@ -1,8 +1,8 @@
 import { type Query } from '@tanstack/react-query';
 
 import type { ChatbotJobsResponse } from '@/shared/contracts/chatbot';
-import type { ProductJob } from '@/shared/contracts/integrations';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { ProductJob } from '@/shared/contracts/integrations/domain';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { jobKeys } from '@/shared/lib/query-key-exports';
 

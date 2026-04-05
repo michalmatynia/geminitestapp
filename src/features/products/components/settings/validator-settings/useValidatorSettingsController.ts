@@ -12,16 +12,8 @@ import {
   useValidationPatterns,
   useValidatorSettings,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import type {
-  ProductValidationDenyBehavior,
-  ProductValidationInstanceDenyBehaviorMap,
-  ProductValidationPattern,
-  ProductValidationSemanticState,
-  ProductValidationTarget,
-  ProductValidationInstanceScope,
-  SequenceGroupDraft,
-  PatternFormData,
-} from '@/shared/contracts/products';
+import type { ProductValidationDenyBehavior, ProductValidationInstanceDenyBehaviorMap, ProductValidationPattern, ProductValidationSemanticState, ProductValidationTarget, ProductValidationInstanceScope, SequenceGroupDraft } from '@/shared/contracts/products/validation';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
 import {
   type CreateProductValidationPatternInput as CreateValidationPatternPayload,
   type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,

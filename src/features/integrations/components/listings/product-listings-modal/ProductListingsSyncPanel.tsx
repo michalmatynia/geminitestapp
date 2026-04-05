@@ -8,7 +8,7 @@ import {
   useProductListingsModals,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { SyncDirection } from '@/shared/contracts/products';
+import type { SyncDirection } from '@/shared/contracts/products/migration';
 import { Button, Card, Badge } from '@/shared/ui/primitives.public';
 import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_RELAXED_CLASSNAME, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';

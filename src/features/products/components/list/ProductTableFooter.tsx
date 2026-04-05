@@ -8,7 +8,7 @@ import {
   useBulkDeleteProducts,
   useBulkConvertImagesToBase64,
 } from '@/features/products/hooks/useProductsMutations';
-import { ProductWithImages } from '@/shared/contracts/products';
+import { ProductWithImages } from '@/shared/contracts/products/product';
 import { Button } from '@/shared/ui/button';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { useToast } from '@/shared/ui/toast';

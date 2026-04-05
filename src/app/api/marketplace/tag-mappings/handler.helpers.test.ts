@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { TagMapping } from '@/shared/contracts/integrations';
+import type { TagMapping } from '@/shared/contracts/integrations/listings';
 
 import {
   parseMarketplaceTagMappingsQuery,

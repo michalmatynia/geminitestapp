@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ProductImageBase64Response, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductImageBase64Response, ProductWithImages } from '@/shared/contracts/products/product';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

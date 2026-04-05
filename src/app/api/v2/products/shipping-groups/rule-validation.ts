@@ -1,5 +1,5 @@
 import { getCategoryRepository, getShippingGroupRepository } from '@/features/products/server';
-import type { ProductShippingGroup } from '@/shared/contracts/products';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import { conflictError } from '@/shared/errors/app-error';
 import {
   buildShippingGroupRuleConflicts,

@@ -10,7 +10,7 @@ import {
   kangurLessonsReplacePayloadSchema,
   kangurLessonSubjectSchema,
 } from '@/shared/contracts/kangur';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { clearKangurLessonsCatalogCache } from '../lessons-catalog/handler';
 

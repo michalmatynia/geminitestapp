@@ -1,8 +1,5 @@
-import type {
-  ProductValidationInstanceDenyBehaviorMap,
-  ProductValidationPatternRepository,
-  UpdateProductValidatorSettings,
-} from '@/shared/contracts/products';
+import type { ProductValidationInstanceDenyBehaviorMap, UpdateProductValidatorSettings } from '@/shared/contracts/products/validation';
+import type { ProductValidationPatternRepository } from '@/shared/contracts/products/drafts';
 import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
 
 export const resolveValidatorEnabledByDefault = async (

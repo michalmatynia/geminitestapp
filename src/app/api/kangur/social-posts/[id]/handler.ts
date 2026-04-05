@@ -9,7 +9,7 @@ import {
   updateKangurSocialPost,
 } from '@/features/kangur/social/server/social-posts-repository';
 import { kangurSocialPostSchema } from '@/shared/contracts/kangur-social-posts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
 
 const updateSchema = z.object({

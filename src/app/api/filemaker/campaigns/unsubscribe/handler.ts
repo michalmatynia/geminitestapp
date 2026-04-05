@@ -22,7 +22,7 @@ import {
   type FilemakerEmailCampaignUnsubscribeResponse,
 } from '@/features/filemaker/server';
 import { filemakerEmailCampaignUnsubscribeRequestSchema } from '@/shared/contracts/filemaker';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const buildUnsubscribeNotes = (source: string | null | undefined): string =>

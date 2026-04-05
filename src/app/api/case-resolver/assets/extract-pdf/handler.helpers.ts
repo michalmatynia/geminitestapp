@@ -1,9 +1,7 @@
 import path from 'path';
 
-import {
-  caseResolverPdfExtractRequestSchema,
-  type CaseResolverPdfExtractResponse,
-} from '@/shared/contracts/case-resolver';
+import { caseResolverPdfExtractRequestSchema } from '@/shared/contracts/case-resolver/file';
+import { type CaseResolverPdfExtractResponse } from '@/shared/contracts/case-resolver';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export const CASE_RESOLVER_UPLOAD_PREFIX = '/uploads/case-resolver/';

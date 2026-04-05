@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import type { ProductParameter, ProductParameterUpdateInput } from '@/shared/contracts/products';
-import { productParameterSelectorTypeSchema } from '@/shared/contracts/products';
+import type { ProductParameter, ProductParameterUpdateInput } from '@/shared/contracts/products/parameters';
+import { productParameterSelectorTypeSchema } from '@/shared/contracts/products/parameters';
 import { conflictError } from '@/shared/errors/app-error';
 
 const SELECTOR_TYPES_REQUIRING_OPTIONS: ReadonlySet<ProductParameter['selectorType']> = new Set([

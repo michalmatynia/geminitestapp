@@ -21,12 +21,9 @@ import {
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
-import type {
-  PlaywrightRelistBrowserMode,
-  ProductListingWithDetails,
-  ProductListingExportEvent,
-} from '@/shared/contracts/integrations';
-import type { ImageRetryPreset, ImageTransformOptions } from '@/shared/contracts/integrations';
+import { resolveBaseExportSuccessMessage } from '@/features/integrations/utils/baseExportFeedback';
+import type { PlaywrightRelistBrowserMode, ProductListingWithDetails, ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
+import type { ImageRetryPreset, ImageTransformOptions } from '@/shared/contracts/integrations/base';
 import { badRequestError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -351,14 +348,17 @@ export const useProductListingsActionsImpl = ({
       const exportData: ExportToBaseVariables = {
         connectionId: listing.connectionId,
         inventoryId,
+        listingId: listing.id,
         exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform),
       };
       if (templateId) exportData.templateId = templateId;
+      if (listing.externalListingId) exportData.externalListingId = listing.externalListingId;
       if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
       if (options?.imageTransform) exportData.imageTransform = options.imageTransform;
 
       const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
       if (payloadRes.logs) setExportLogs(payloadRes.logs);
+      return payloadRes;
     },
     [exportToBaseMutation, inventoryOverrides, listings, setExportLogs]
   );
@@ -375,9 +375,11 @@ export const useProductListingsActionsImpl = ({
       try {
         setExportingListing(listingId);
         setLastExportListingId(listingId);
+        setError(null);
         setExportLogs([]);
         setLogsOpen(true);
-        await exportListingToBase(listingId);
+        const response = await exportListingToBase(listingId);
+        toast(resolveBaseExportSuccessMessage(response), { variant: 'success' });
         onListingsUpdated?.();
       } catch (err: unknown) {
         logClientCatch(err, {
@@ -428,6 +430,9 @@ export const useProductListingsActionsImpl = ({
 
         const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
         if (payloadRes.logs) setExportLogs(payloadRes.logs);
+        toast(resolveBaseExportSuccessMessage(payloadRes, { mode: 'images_only' }), {
+          variant: 'success',
+        });
 
         onListingsUpdated?.();
       } catch (err: unknown) {

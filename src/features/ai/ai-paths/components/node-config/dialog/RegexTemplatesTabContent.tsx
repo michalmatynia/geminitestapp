@@ -4,7 +4,7 @@ import type { RegexConfig, RegexTemplate } from '@/shared/lib/ai-paths';
 import { Button, Input, Label } from '@/shared/ui/primitives.public';
 import { CompactEmptyState, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 import { FormField, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
-import type { SelectSimpleOption } from '@/shared/contracts/ui';
+import type { SelectSimpleOption } from '@/shared/contracts/ui/ui/controls';
 
 type RegexTemplatesTabContentProps = {
   globalTemplates: RegexTemplate[];

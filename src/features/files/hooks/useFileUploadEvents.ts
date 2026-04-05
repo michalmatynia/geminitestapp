@@ -3,7 +3,7 @@ import type {
   FileUploadEventsResponse,
   FileUploadEventsFilters,
 } from '@/shared/contracts/files';
-import type { SingleQuery } from '@/shared/contracts/ui';
+import type { SingleQuery } from '@/shared/contracts/ui/ui/queries';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { buildQueryParams } from './useFileUploadEvents.helpers';

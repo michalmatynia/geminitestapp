@@ -3,11 +3,7 @@
 import React, { ChangeEvent, ReactElement, useMemo } from 'react';
 
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
-import type {
-  PlaywrightSettingsContextType,
-  PlaywrightSettingsFormProps,
-  PlaywrightSettingsProviderProps,
-} from '@/shared/contracts/ui';
+import type { PlaywrightSettingsContextType, PlaywrightSettingsFormProps, PlaywrightSettingsProviderProps } from '@/shared/contracts/ui/ui/playwright';
 import { internalError } from '@/shared/errors/app-error';
 import { playwrightDeviceOptions } from '@/shared/lib/playwright/settings';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';

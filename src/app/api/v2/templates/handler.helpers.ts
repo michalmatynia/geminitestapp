@@ -10,7 +10,7 @@ import {
   updateExportTemplate,
   updateImportTemplate,
 } from '@/features/integrations/server';
-import type { ImportExportTemplateCreateInput } from '@/shared/contracts/integrations';
+import type { ImportExportTemplateCreateInput } from '@/shared/contracts/integrations/import-export';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 export type TemplateType = 'export' | 'import';

@@ -9,7 +9,7 @@ import {
   ensureMongoBackupsDir,
 } from '@/features/database/server';
 import type { DatabaseBackupFile as DatabaseInfo } from '@/shared/contracts/database';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

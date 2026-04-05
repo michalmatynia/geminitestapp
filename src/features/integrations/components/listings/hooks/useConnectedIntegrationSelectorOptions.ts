@@ -2,10 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type {
-  IntegrationConnectionBasic,
-  IntegrationWithConnections,
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 
 import {
   resolveConnectedIntegrations,

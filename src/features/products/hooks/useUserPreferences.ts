@@ -7,11 +7,8 @@ import {
   type UserPreferencesResponse,
   userPreferencesUpdateSchema,
 } from '@/shared/contracts/auth';
-import type {
-  ProductAdvancedFilterPreset,
-  ProductListPreferences,
-} from '@/shared/contracts/products';
-import { productListPreferencesSchema } from '@/shared/contracts/products';
+import type { ProductAdvancedFilterPreset, ProductListPreferences } from '@/shared/contracts/products/filters';
+import { productListPreferencesSchema } from '@/shared/contracts/products/filters';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';

@@ -1,5 +1,5 @@
-import type { ExpandedImageFile } from '@/shared/contracts/products';
-import type { ListQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
+import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
+import type { ListQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

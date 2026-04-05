@@ -11,7 +11,7 @@ import {
   verifyCredentialsPayloadSchema,
   type VerifyCredentialsPayload,
 } from '@/shared/contracts/auth';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 

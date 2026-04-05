@@ -3,13 +3,13 @@
 import { Plus } from 'lucide-react';
 import React from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button, Input, Alert } from '@/shared/ui/primitives.public';
 import { Tag } from '@/shared/ui/forms-and-actions.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { formatFileSize } from '@/shared/utils/formatting';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';

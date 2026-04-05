@@ -3,7 +3,7 @@ import React from 'react';
 import type { ThemeSettings, ColorScheme } from '@/shared/contracts/cms-theme';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 
 const THEME_ANIMATION_EASING_OPTIONS = [
   { label: 'Ease out', value: 'ease-out' },

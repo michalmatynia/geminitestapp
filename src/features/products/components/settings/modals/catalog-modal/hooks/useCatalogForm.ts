@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Language } from '@/shared/contracts/internationalization';
-import type { Catalog, PriceGroup } from '@/shared/contracts/products';
+import type { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
 import { resolvePriceGroupIdentifierToId } from '@/shared/lib/products/utils/price-group-identifiers';
 import { useToast } from '@/shared/ui/toast';
 

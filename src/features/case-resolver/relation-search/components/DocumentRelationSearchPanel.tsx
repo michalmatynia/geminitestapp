@@ -2,10 +2,7 @@
 
 import React from 'react';
 
-import type {
-  DocumentRelationFileTypeFilter,
-  DocumentRelationSortMode,
-} from '@/shared/contracts/case-resolver';
+import type { DocumentRelationFileTypeFilter, DocumentRelationSortMode } from '@/shared/contracts/case-resolver/base';
 import { useFolderTreeProfile } from '@/shared/lib/foldertree/public';
 import { cn } from '@/shared/utils/ui-utils';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';

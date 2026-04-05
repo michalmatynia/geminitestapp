@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

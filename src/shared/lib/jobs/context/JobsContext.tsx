@@ -3,7 +3,7 @@
 import React, { useState, useMemo, type ReactNode } from 'react';
 
 import type { ChatbotJob } from '@/shared/contracts/chatbot';
-import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
+import type { ListingJob, ProductJob } from '@/shared/contracts/integrations/domain';
 import type { TraderaQueueHealthResponse } from '@/shared/contracts/jobs';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';

@@ -6,11 +6,7 @@ import React, { createContext, useContext, useState, useMemo, useCallback, useEf
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import {
-  productStudioAuditResponseSchema,
-  productStudioLinkResponseSchema,
-  productStudioVariantsResponseSchema,
-} from '@/shared/contracts/products';
+import { productStudioAuditResponseSchema, productStudioLinkResponseSchema, productStudioVariantsResponseSchema } from '@/shared/contracts/products/studio';
 import { internalError } from '@/shared/errors/app-error';
 import {
   useOptionalContextRegistryPageEnvelope,

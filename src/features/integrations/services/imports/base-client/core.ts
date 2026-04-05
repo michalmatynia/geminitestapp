@@ -1,4 +1,4 @@
-import type { BaseApiResponse, BaseApiRawResult } from '@/shared/contracts/integrations';
+import type { BaseApiResponse, BaseApiRawResult } from '@/shared/contracts/integrations/base-api';
 import {
   AppErrorCodes,
   createAppError,

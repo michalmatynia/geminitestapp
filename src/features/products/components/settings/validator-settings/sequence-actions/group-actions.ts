@@ -1,4 +1,4 @@
-import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
+import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products/validation';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {

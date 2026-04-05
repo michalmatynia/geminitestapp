@@ -1,8 +1,4 @@
-import {
-  type CaseResolverGraph,
-  type CaseResolverWorkspace,
-  type CaseResolverFile,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverGraph, type CaseResolverWorkspace, type CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 import {
   createEmptyNodeFileSnapshot,

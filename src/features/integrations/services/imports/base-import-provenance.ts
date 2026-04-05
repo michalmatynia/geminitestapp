@@ -1,4 +1,4 @@
-import type { ProductListing } from '@/shared/contracts/integrations';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
 
 export const BASE_IMPORTED_MARKETPLACE_SOURCE = 'base-import';
 

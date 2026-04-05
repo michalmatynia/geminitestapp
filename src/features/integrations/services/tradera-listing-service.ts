@@ -28,7 +28,7 @@ import {
   loadTraderaSystemSettings,
   toTruthyBoolean,
 } from '@/features/integrations/services/tradera-system-settings';
-import type { TraderaListingJobInput } from '@/shared/contracts/integrations';
+import type { TraderaListingJobInput } from '@/shared/contracts/integrations/tradera';
 import { isAppError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -45,7 +45,7 @@ import {
   resolveNextRelistAt,
   toRecord,
 } from './tradera-listing/utils';
-import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations';
+import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 
 const extractErrorMetadata = (error: unknown): Record<string, unknown> | undefined => {
   if (!isAppError(error)) return undefined;

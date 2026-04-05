@@ -2,12 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type {
-  CaseResolverOcrJobStatus,
-  CaseResolverOcrJobDispatchMode,
-  CaseResolverOcrErrorCategory,
-  CaseResolverOcrJobRecord,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverOcrJobStatus, CaseResolverOcrJobDispatchMode, CaseResolverOcrErrorCategory, CaseResolverOcrJobRecord } from '@/shared/contracts/case-resolver/ocr';
 import { getRedisConnection } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

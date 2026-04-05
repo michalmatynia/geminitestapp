@@ -8,7 +8,7 @@ import {
   useImportExportActions,
   useImportExportData,
 } from '@/features/data-import-export/context/ImportExportContext';
-import type { BaseImportItemRecord } from '@/shared/contracts/integrations';
+import type { BaseImportItemRecord } from '@/shared/contracts/integrations/base-com';
 import {
   getImportRunErrorItems,
   getParameterSyncHistoryItems,

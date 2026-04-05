@@ -2,15 +2,9 @@ import 'server-only';
 
 import { Collection } from 'mongodb';
 
-import {
-  ProductFilters,
-  ProductWithImages,
-  ProductRepository,
-  ProductRecord,
-  ProductCreateInput,
-  ProductUpdateInput,
-  ProductImageRecord,
-} from '@/shared/contracts/products';
+import { ProductFilters, ProductRepository } from '@/shared/contracts/products/drafts';
+import { ProductWithImages, ProductRecord, ProductImageRecord } from '@/shared/contracts/products/product';
+import { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { ProductDocument } from '../mongo-product-repository-mappers';

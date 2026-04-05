@@ -2,17 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';
 import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
-import type {
-  BaseImportRunsListQuery,
-  BaseImportRunsResponse,
-  BaseImportRunStartPayload,
-  BaseImportStartResponse,
-} from '@/shared/contracts/integrations';
-import {
-  baseImportRunsListQuerySchema,
-  baseImportRunStartPayloadSchema,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { BaseImportRunsListQuery, BaseImportRunsResponse, BaseImportRunStartPayload, BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
+import { baseImportRunsListQuerySchema, baseImportRunStartPayloadSchema } from '@/shared/contracts/integrations/base-com';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export const startRunSchema = baseImportRunStartPayloadSchema;

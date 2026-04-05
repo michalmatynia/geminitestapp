@@ -8,7 +8,7 @@ import {
   buildQueuedProductOfflineMutationSource,
   removeQueuedProductSource,
 } from '@/features/products/state/queued-product-ops';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { IdDataDto } from '@/shared/contracts/base';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';

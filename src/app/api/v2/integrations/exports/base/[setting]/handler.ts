@@ -25,7 +25,7 @@ import {
   GET_handler as getStockFallbackHandler,
   POST_handler as postStockFallbackHandler,
 } from '@/app/api/v2/integrations/exports/base/stock-fallback/handler';
-import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

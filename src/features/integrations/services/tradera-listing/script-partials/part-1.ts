@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v90
+  // tradera-quicklist-default:v97
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -51,6 +51,14 @@ export const PART_1 = String.raw`export default async function run({
     '[data-testid*="description"] textarea',
     '[contenteditable="true"]',
     '[role="textbox"][contenteditable="true"]',
+  ];
+  const DUPLICATE_DESCRIPTION_TEXT_SELECTORS = [
+    '[data-testid*="description"]',
+    '[id*="description" i]',
+    '[class*="description" i]',
+    '[class*="Description"]',
+    'article',
+    'main',
   ];
   const PRICE_SELECTORS = [
     'input[name="price_fixedPrice"]',
@@ -317,6 +325,15 @@ export const PART_1 = String.raw`export default async function run({
     'Sälj',
   ];
   const CATEGORY_FIELD_LABELS = ['Category', 'Kategori'];
+  const CATEGORY_PLACEHOLDER_LABELS = [
+    'Choose category',
+    'Select category',
+    'Choose a category',
+    'Select a category',
+    'Välj kategori',
+    'Välj en kategori',
+    'Välj kategori först',
+  ];
   const FALLBACK_CATEGORY_OPTION_LABELS = ['Other', 'Övrigt'];
   const FALLBACK_CATEGORY_PATH_SEGMENTS = ['Other', 'Other'];
   const FALLBACK_CATEGORY_PATH = FALLBACK_CATEGORY_PATH_SEGMENTS.join(' > ');
@@ -417,6 +434,10 @@ export const PART_1 = String.raw`export default async function run({
   };
 
   const baseProductId = toText(input?.baseProductId) || toText(input?.productId) || 'product';
+  const listingAction = toText(input?.listingAction) === 'relist' ? 'relist' : 'list';
+  const existingExternalListingId = toText(input?.existingExternalListingId);
+  const duplicateSearchTitle = toText(input?.duplicateSearchTitle);
+  const allowDuplicateLinking = true;
   const sku = toText(input?.sku);
   const username = toText(input?.username);
   const password = toText(input?.password);
@@ -468,6 +489,9 @@ export const PART_1 = String.raw`export default async function run({
         .filter((value) => typeof value === 'string')
         .slice(0, 12)
     : [];
+  const imageOrderStrategy = toText(input?.traderaImageOrder?.strategy);
+  const imageManifestCount = toNumber(input?.traderaImageOrder?.imageCount) ?? imageUrls.length;
+  const localImageCoverageCount = toNumber(input?.traderaImageOrder?.localImageCoverageCount);
   let unexpectedTraderaNavigation = null;
 
   const getUnexpectedTraderaNavigationPayload = (value) => {

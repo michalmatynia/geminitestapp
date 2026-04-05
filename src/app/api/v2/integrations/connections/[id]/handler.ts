@@ -5,7 +5,12 @@ import { z } from 'zod';
 import { auth, findAuthUserById } from '@/features/auth/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
-import { assertValidTraderaPlaywrightListingScript } from '@/features/integrations/services/tradera-listing/script-validation';
+import {
+  assertValidTraderaPlaywrightListingScript,
+} from '@/features/integrations/services/tradera-listing/script-validation';
+import {
+  normalizePersistedTraderaPlaywrightListingScript,
+} from '@/features/integrations/services/tradera-listing/managed-script';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError } from '@/shared/errors/app-error';
@@ -88,12 +93,16 @@ export async function PUT_handler(
     : null;
   const normalizedUsername = data.username?.trim();
   const normalizedPassword = data.password?.trim();
-  const normalizedPlaywrightListingScript =
-    typeof data.playwrightListingScript === 'string'
-      ? data.playwrightListingScript.trim() || null
-      : data.playwrightListingScript ?? undefined;
   const resolvedTraderaBrowserMode =
     data.traderaBrowserMode ?? existingConnection?.traderaBrowserMode ?? 'builtin';
+  const normalizedPlaywrightListingScript = normalizePersistedTraderaPlaywrightListingScript({
+    integrationSlug: integration?.slug,
+    traderaBrowserMode: resolvedTraderaBrowserMode,
+    playwrightListingScript:
+      typeof data.playwrightListingScript === 'string'
+        ? data.playwrightListingScript.trim() || null
+        : data.playwrightListingScript ?? undefined,
+  });
   const isBaseIntegration = Boolean(
     integration && BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );

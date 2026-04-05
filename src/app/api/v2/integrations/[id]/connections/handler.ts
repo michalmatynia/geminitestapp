@@ -3,7 +3,12 @@ import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
-import { assertValidTraderaPlaywrightListingScript } from '@/features/integrations/services/tradera-listing/script-validation';
+import {
+  assertValidTraderaPlaywrightListingScript,
+} from '@/features/integrations/services/tradera-listing/script-validation';
+import {
+  normalizePersistedTraderaPlaywrightListingScript,
+} from '@/features/integrations/services/tradera-listing/managed-script';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -139,14 +144,18 @@ export async function POST_handler(
   }
 
   const normalizedUsername = data.username?.trim() ?? '';
-  const normalizedPlaywrightListingScript =
-    typeof data.playwrightListingScript === 'string'
-      ? data.playwrightListingScript.trim() || null
-      : data.playwrightListingScript ?? undefined;
   const resolvedTraderaBrowserMode = data.traderaBrowserMode ?? 'builtin';
   const isBaseIntegration = BASE_INTEGRATION_SLUGS.has(
     (integration.slug ?? '').trim().toLowerCase()
   );
+  const normalizedPlaywrightListingScript = normalizePersistedTraderaPlaywrightListingScript({
+    integrationSlug: integration.slug,
+    traderaBrowserMode: resolvedTraderaBrowserMode,
+    playwrightListingScript:
+      typeof data.playwrightListingScript === 'string'
+        ? data.playwrightListingScript.trim() || null
+        : data.playwrightListingScript ?? undefined,
+  });
   if (integration.slug !== 'baselinker' && !normalizedUsername) {
     throw badRequestError('Username is required for this integration.', {
       integrationId,

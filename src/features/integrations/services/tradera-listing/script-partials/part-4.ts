@@ -1,8 +1,27 @@
-export const PART_4 = String.raw`          );
-        }
-        break;
+export const PART_4 = String.raw`);
+    }
+
+    let selectedDepth = 0;
+
+    for (const segment of FALLBACK_CATEGORY_PATH_SEGMENTS) {
+      const clickedLabel = await clickCategoryMenuOptionByLabels(FALLBACK_CATEGORY_OPTION_LABELS);
+      if (!clickedLabel) {
+        const pickerState = await readCategoryPickerState();
+        throw new Error(
+          'FAIL_CATEGORY_SET: Fallback category path "' +
+            FALLBACK_CATEGORY_PATH +
+            '" not found. Last state: ' +
+            JSON.stringify({
+              missingSegment: segment,
+              selectedDepth,
+              selectedPath: pickerState.selectedPath,
+              breadcrumbs: pickerState.breadcrumbs,
+              visibleOptions: pickerState.visibleOptions,
+            })
+        );
       }
 
+      selectedDepth += 1;
       await wait(400);
     }
 
@@ -22,21 +41,49 @@ export const PART_4 = String.raw`          );
       return false;
     }
 
-    const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);
-    if (!categoryTrigger) {
-      throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
+    const currentSelectedPath = await readCurrentSelectedCategoryPath();
+    if (categoryPathMatches(currentSelectedPath, segments)) {
+      selectedCategoryPath = segments.join(' > ');
+      selectedCategorySource = 'categoryMapper';
+      log?.('tradera.quicklist.category.mapped_already_selected', {
+        mappedPath: selectedCategoryPath,
+      });
+      return true;
     }
 
-    await logClickTarget('category-trigger:mapped', categoryTrigger);
-    await humanClick(categoryTrigger);
-    await wait(400);
+    await ensureCategoryPickerOpen('mapped');
+
+    const mappedRootVisible = await ensureCategoryOptionVisible({
+      targetPath: segments.join(' > '),
+      optionLabels: [segments[0]],
+      requireRoot: true,
+    });
+    if (!mappedRootVisible) {
+      const pickerState = await readCategoryPickerState();
+      log?.('tradera.quicklist.category.mapped_unavailable', {
+        missingSegment: segments[0],
+        mappedPath: segments.join(' > '),
+        selectedPath: pickerState.selectedPath,
+        breadcrumbs: pickerState.breadcrumbs,
+        visibleOptions: pickerState.visibleOptions,
+      });
+      await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+        () => undefined
+      );
+      await wait(200);
+      return false;
+    }
 
     for (const segment of segments) {
       const clicked = await clickMenuItemByName(segment);
       if (!clicked) {
+        const pickerState = await readCategoryPickerState();
         log?.('tradera.quicklist.category.mapped_unavailable', {
           missingSegment: segment,
           mappedPath: segments.join(' > '),
+          selectedPath: pickerState.selectedPath,
+          breadcrumbs: pickerState.breadcrumbs,
+          visibleOptions: pickerState.visibleOptions,
         });
         await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
           () => undefined
@@ -66,6 +113,16 @@ export const PART_4 = String.raw`          );
           FALLBACK_CATEGORY_PATH +
           '".'
       );
+    }
+
+    const currentSelectedPath = await readCurrentSelectedCategoryPath();
+    if (currentSelectedPath) {
+      selectedCategoryPath = currentSelectedPath;
+      selectedCategorySource = 'autofill';
+      log?.('tradera.quicklist.category.autofill_preserved', {
+        selectedPath: selectedCategoryPath,
+      });
+      return;
     }
 
     await chooseFallbackCategory();
@@ -164,7 +221,9 @@ export const PART_4 = String.raw`          );
         }
 
         const nestedCheckbox =
-          element.querySelector('input[type="checkbox"], [role="checkbox"]');
+          element.querySelector(
+            'input[type="checkbox"], [role="checkbox"], [role="switch"]'
+          );
         const nestedState = readCheckedState(nestedCheckbox);
         return typeof nestedState === 'boolean' ? nestedState : false;
       })
@@ -300,12 +359,24 @@ export const PART_4 = String.raw`          );
       const partialRoleVisible = await partialRoleCheckbox.isVisible().catch(() => false);
       if (partialRoleVisible) return partialRoleCheckbox;
 
+      const exactRoleSwitch = root
+        .getByRole('switch', { name: new RegExp('^' + escapedPattern + '\$', 'i') })
+        .first();
+      const exactRoleSwitchVisible = await exactRoleSwitch.isVisible().catch(() => false);
+      if (exactRoleSwitchVisible) return exactRoleSwitch;
+
+      const partialRoleSwitch = root
+        .getByRole('switch', { name: new RegExp(escapedPattern, 'i') })
+        .first();
+      const partialRoleSwitchVisible = await partialRoleSwitch.isVisible().catch(() => false);
+      if (partialRoleSwitchVisible) return partialRoleSwitch;
+
       const escapedText = label.replace(/"/g, '\\"');
       const labeledCheckbox = root
         .locator(
           'xpath=//*[normalize-space(text())="' +
             escapedText +
-            '"]/following::*[self::input[@type="checkbox"] or @role="checkbox"][1]'
+            '"]/following::*[self::input[@type="checkbox"] or @role="checkbox" or @role="switch"][1]'
         )
         .first();
       const labeledCheckboxVisible = await labeledCheckbox.isVisible().catch(() => false);
@@ -317,6 +388,12 @@ export const PART_4 = String.raw`          );
       const firstVisibleCheckboxVisible = await firstVisibleCheckbox.isVisible().catch(() => false);
       if (firstVisibleCheckboxVisible) {
         return firstVisibleCheckbox;
+      }
+
+      const firstVisibleSwitch = root.getByRole('switch').first();
+      const firstVisibleSwitchVisible = await firstVisibleSwitch.isVisible().catch(() => false);
+      if (firstVisibleSwitchVisible) {
+        return firstVisibleSwitch;
       }
     }
 

@@ -79,14 +79,75 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     return match && match[1] ? match[1] : null;
   };
 
-  const findListingLinkForTerm = async (term) => {
+  const collectVisibleListingCandidatePreview = async (limit = 8) => {
+    const candidates = page.locator('a[href*="/item/"], a[href*="/listing/"]');
+    const count = await candidates.count().catch(() => 0);
+    const previewLimit =
+      typeof limit === 'number' && Number.isFinite(limit) && limit > 0
+        ? Math.max(1, Math.floor(limit))
+        : 8;
+    const preview = [];
+    const seen = new Set();
+
+    for (let index = 0; index < count; index += 1) {
+      if (preview.length >= previewLimit) {
+        break;
+      }
+
+      const candidate = candidates.nth(index);
+      const visible = await candidate.isVisible().catch(() => false);
+      if (!visible) continue;
+
+      const candidateInfo = await candidate
+        .evaluate((element) => {
+          const candidateContainer =
+            element.closest('article, li, tr, [data-testid*="listing"], [data-testid*="item"], [class*="listing"], [class*="Listing"], [class*="result"], [class*="Result"]') ||
+            element;
+
+          return {
+            href: element.getAttribute('href') || '',
+            text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
+            containerText: (candidateContainer.textContent || '').replace(/\s+/g, ' ').trim(),
+          };
+        })
+        .catch(() => null);
+
+      if (!candidateInfo || !candidateInfo.href) continue;
+
+      let listingUrl = candidateInfo.href;
+      try {
+        listingUrl = new URL(candidateInfo.href, page.url()).toString();
+      } catch {}
+
+      const listingId = extractListingId(listingUrl);
+      const dedupeKey = listingId || listingUrl;
+      if (!dedupeKey || seen.has(dedupeKey)) continue;
+
+      seen.add(dedupeKey);
+      preview.push({
+        listingUrl,
+        listingId,
+        text: normalizeWhitespace(candidateInfo.containerText || candidateInfo.text || '').slice(0, 160),
+      });
+    }
+
+    return preview;
+  };
+
+  const collectListingLinksForTerm = async (term, maxMatches = null) => {
     const normalizedTerm = typeof term === 'string' ? term.trim().toLowerCase() : '';
-    if (!normalizedTerm) return null;
+    if (!normalizedTerm) return [];
 
     const candidates = page.locator('a[href*="/item/"], a[href*="/listing/"]');
     const count = await candidates.count().catch(() => 0);
+    const matchLimit =
+      typeof maxMatches === 'number' && Number.isFinite(maxMatches) && maxMatches > 0
+        ? Math.max(1, Math.floor(maxMatches))
+        : null;
+    const matches = [];
+    const seen = new Set();
 
-    for (let index = 0; index < Math.min(count, 20); index += 1) {
+    for (let index = 0; index < count; index += 1) {
       const candidate = candidates.nth(index);
       const visible = await candidate.isVisible().catch(() => false);
       if (!visible) continue;
@@ -115,14 +176,96 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
         listingUrl = new URL(candidateInfo.href, page.url()).toString();
       } catch {}
 
-      return {
+      const listingId = extractListingId(listingUrl);
+      const dedupeKey = listingId || listingUrl;
+      if (!dedupeKey || seen.has(dedupeKey)) continue;
+
+      seen.add(dedupeKey);
+      matches.push({
         listingUrl,
-        listingId: extractListingId(listingUrl),
+        listingId,
         text: candidateInfo.containerText || candidateInfo.text || '',
-      };
+      });
+      if (matchLimit !== null && matches.length >= matchLimit) {
+        break;
+      }
     }
 
-    return null;
+    return matches;
+  };
+
+  const findListingLinkForTerm = async (term) => {
+    const matches = await collectListingLinksForTerm(term, 1);
+    return matches[0] || null;
+  };
+
+  const extractReferencedProductId = (value) => {
+    const normalizedValue = normalizeWhitespace(value);
+    if (!normalizedValue) {
+      return null;
+    }
+
+    const match = normalizedValue.match(/(?:item reference|product id)\s*:\s*([^|\n\r]+)/i);
+    if (!match || !match[1]) {
+      return null;
+    }
+
+    const extracted = normalizeWhitespace(match[1]).replace(/[.,;:]+$/g, '').trim();
+    return extracted || null;
+  };
+
+  const readDuplicateCandidateListingText = async () => {
+    for (const selector of DUPLICATE_DESCRIPTION_TEXT_SELECTORS) {
+      const locator = page.locator(selector).first();
+      const visible = await locator.isVisible().catch(() => false);
+      if (!visible) continue;
+      const text = normalizeWhitespace(await locator.innerText().catch(() => ''));
+      if (text) {
+        return text;
+      }
+    }
+
+    const mainText = normalizeWhitespace(
+      await page
+        .locator('main')
+        .first()
+        .innerText()
+        .catch(() => '')
+    );
+    if (mainText) {
+      return mainText;
+    }
+
+    return normalizeWhitespace(
+      await page
+        .locator('body')
+        .first()
+        .innerText()
+        .catch(() => '')
+    );
+  };
+
+  const inspectDuplicateCandidateListing = async (candidate) => {
+    if (!candidate || !candidate.listingUrl) {
+      return null;
+    }
+
+    await page.goto(candidate.listingUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+    await assertAllowedTraderaPage('duplicate candidate inspection');
+    await wait(900);
+
+    const finalUrl = page.url();
+    const listingText = await readDuplicateCandidateListingText();
+
+    return {
+      listingUrl: finalUrl || candidate.listingUrl,
+      listingId: extractListingId(finalUrl) || candidate.listingId || null,
+      matchedProductId: extractReferencedProductId(listingText),
+      textSample: listingText ? listingText.slice(0, 400) : '',
+    };
   };
 
   const findVisibleListingLink = async () => {

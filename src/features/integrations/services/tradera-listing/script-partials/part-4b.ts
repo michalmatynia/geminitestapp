@@ -427,6 +427,122 @@ export const PART_4B = String.raw`
     return count;
   };
 
+  const summarizeUploadFileNames = (uploadFiles, limit = 12) => {
+    if (!Array.isArray(uploadFiles)) {
+      return [];
+    }
+
+    const maxItems =
+      typeof limit === 'number' && Number.isFinite(limit) && limit > 0
+        ? Math.max(1, Math.floor(limit))
+        : 12;
+
+    return uploadFiles.slice(0, maxItems).map((entry, index) => {
+      if (typeof entry === 'string') {
+        const parts = entry.split(/[\\/]+/);
+        const basename = normalizeWhitespace(parts[parts.length - 1] || '');
+        if (basename) {
+          return basename;
+        }
+      }
+
+      if (entry && typeof entry === 'object') {
+        const record = entry;
+        const basename = normalizeWhitespace(
+          record.name || record.fileName || record.filename || ''
+        );
+        if (basename) {
+          return basename;
+        }
+      }
+
+      return 'file-' + String(index + 1).padStart(2, '0');
+    });
+  };
+
+  const readUploadedImagePreviewDescriptors = async (limit = 12) => {
+    const maxItems =
+      typeof limit === 'number' && Number.isFinite(limit) && limit > 0
+        ? Math.max(1, Math.floor(limit))
+        : 12;
+    const descriptors = [];
+    const seen = new Set();
+
+    for (const selector of UPLOADED_IMAGE_PREVIEW_SELECTORS) {
+      const locator = page.locator(selector);
+      const candidateCount = await locator.count().catch(() => 0);
+      if (!candidateCount) continue;
+
+      for (let index = 0; index < candidateCount; index += 1) {
+        if (descriptors.length >= maxItems) {
+          return descriptors;
+        }
+
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+
+        const box = await candidate.boundingBox().catch(() => null);
+        if (!box || box.width < 24 || box.height < 24) continue;
+
+        const descriptor = await candidate
+          .evaluate((element) => {
+            const container =
+              element.closest(
+                'article, li, figure, [data-testid*="image"], [data-testid*="photo"], [data-testid*="preview"], [class*="image"], [class*="Image"], [class*="photo"], [class*="Photo"]'
+              ) ||
+              element.parentElement ||
+              element;
+
+            const src =
+              element instanceof HTMLImageElement
+                ? element.currentSrc || element.src || element.getAttribute('src') || ''
+                : element.getAttribute('src') || '';
+
+            return {
+              alt: element.getAttribute('alt') || '',
+              src,
+              ariaLabel:
+                element.getAttribute('aria-label') ||
+                container.getAttribute('aria-label') ||
+                '',
+              containerText: (container.textContent || '').replace(/\s+/g, ' ').trim(),
+            };
+          })
+          .catch(() => null);
+
+        if (!descriptor) continue;
+
+        const normalizedAlt = normalizeWhitespace(descriptor.alt);
+        const normalizedSrc = normalizeWhitespace(descriptor.src);
+        const normalizedAriaLabel = normalizeWhitespace(descriptor.ariaLabel);
+        const normalizedContainerText = normalizeWhitespace(descriptor.containerText);
+        const dedupeKey =
+          normalizedSrc.replace(/\?.*$/, '') +
+          '|' +
+          normalizedAlt +
+          '|' +
+          normalizedAriaLabel +
+          '|' +
+          normalizedContainerText;
+
+        if (!dedupeKey.replace(/\|/g, '')) continue;
+        if (seen.has(dedupeKey)) continue;
+        seen.add(dedupeKey);
+
+        descriptors.push({
+          position: descriptors.length + 1,
+          alt: normalizedAlt ? normalizedAlt.slice(0, 120) : null,
+          src: normalizedSrc ? normalizedSrc.slice(0, 240) : null,
+          ariaLabel: normalizedAriaLabel ? normalizedAriaLabel.slice(0, 120) : null,
+          containerText: normalizedContainerText ? normalizedContainerText.slice(0, 160) : null,
+        });
+      }
+    }
+
+    return descriptors;
+  };
+
   let draftImageCleanupCompleteRecoveryUsed = false;
 
   const readDraftImageCleanupState = async () => {
@@ -931,10 +1047,21 @@ export const PART_4B = String.raw`
   const resolveUploadFiles = async () => {
     if (localImagePaths.length) {
       log?.('tradera.quicklist.image.local_paths', {
+        strategy: imageOrderStrategy,
+        manifestCount: imageManifestCount,
+        localCoverageCount: localImageCoverageCount,
         count: localImagePaths.length,
         sample: localImagePaths.slice(0, 3),
       });
       return localImagePaths;
+    }
+
+    if (imageOrderStrategy === 'download-ordered') {
+      log?.('tradera.quicklist.image.order_preserved_by_download', {
+        strategy: imageOrderStrategy,
+        manifestCount: imageManifestCount,
+        localCoverageCount: localImageCoverageCount,
+      });
     }
 
     return downloadImages();
@@ -1016,7 +1143,28 @@ export const PART_4B = String.raw`
   };
 
   const checkDuplicate = async (term) => {
-    if (!term) return false;
+    const createDefaultDuplicateResult = () => ({
+      duplicateFound: false,
+      listingUrl: null,
+      listingId: null,
+      matchStrategy: null,
+      matchedProductId: null,
+      candidateCount: 0,
+      searchTitle: term || null,
+    });
+    const identifiersMatch = (left, right) =>
+      normalizeWhitespace(left).toLowerCase() === normalizeWhitespace(right).toLowerCase();
+
+    if (!term) {
+      log?.('tradera.quicklist.duplicate.skipped', {
+        reason: 'english-title-missing',
+        listingAction,
+        existingExternalListingId: existingExternalListingId || null,
+        duplicateSearchTitle: duplicateSearchTitle || null,
+      });
+      return createDefaultDuplicateResult();
+    }
+
     const activeContextReady = await ensureActiveListingsContext();
     if (!activeContextReady) {
       throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings context could not be confirmed.');
@@ -1026,21 +1174,141 @@ export const PART_4B = String.raw`
       throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings search input not found.');
     }
 
-    await humanFill(searchInput, term, { pauseAfter: false });
-    const searchTrigger = await triggerActiveSearchSubmit();
-    log?.('tradera.quicklist.duplicate.search', { term, searchTrigger });
-    await wait(1200);
-
-    const duplicateMatch = await findListingLinkForTerm(term);
-    log?.('tradera.quicklist.duplicate.result', {
+    const candidatePreviewBeforeSearch = await collectVisibleListingCandidatePreview();
+    log?.('tradera.quicklist.duplicate.search_prepare', {
       term,
-      duplicateFound: Boolean(duplicateMatch),
-      listingUrl: duplicateMatch?.listingUrl || null,
-      listingId: duplicateMatch?.listingId || null,
+      listingAction,
+      allowDuplicateLinking,
+      candidatePreviewBeforeSearch,
+      currentUrl: page.url(),
     });
 
-    return duplicateMatch
-      ? {
+    const preparedSearchValue = await prepareActiveListingsSearchInput(searchInput, term);
+    const searchTrigger = await triggerActiveSearchSubmit();
+    await wait(1200);
+    const searchInputValue = await readActiveSearchInputValue(searchInput);
+    const candidatePreviewAfterSearch = await collectVisibleListingCandidatePreview();
+    const searchStateChanged =
+      JSON.stringify(candidatePreviewBeforeSearch) !== JSON.stringify(candidatePreviewAfterSearch);
+    log?.('tradera.quicklist.duplicate.search_state', {
+      term,
+      preparedSearchValue,
+      searchInputValue,
+      searchTrigger,
+      searchStateChanged,
+      candidatePreviewBeforeSearch,
+      candidatePreviewAfterSearch,
+      currentUrl: page.url(),
+    });
+
+    const duplicateMatches = await collectListingLinksForTerm(term);
+    log?.('tradera.quicklist.duplicate.search', {
+      term,
+      preparedSearchValue,
+      searchInputValue,
+      searchTrigger,
+      candidateCount: duplicateMatches.length,
+      candidateScanMode: 'all-visible',
+      searchStateChanged,
+      listingAction,
+      allowDuplicateLinking,
+    });
+
+    if (duplicateMatches.length === 0) {
+      log?.('tradera.quicklist.duplicate.result', {
+        term,
+        duplicateFound: false,
+        matchStrategy: null,
+        candidateCount: 0,
+        listingUrl: null,
+        listingId: null,
+      });
+      return createDefaultDuplicateResult();
+    }
+
+    if (duplicateMatches.length === 1) {
+      const duplicateMatch = duplicateMatches[0];
+      log?.('tradera.quicklist.duplicate.result', {
+        term,
+        duplicateFound: true,
+        matchStrategy: 'title',
+        candidateCount: 1,
+        listingUrl: duplicateMatch?.listingUrl || null,
+        listingId: duplicateMatch?.listingId || null,
+      });
+
+      return {
+        duplicateFound: true,
+        listingUrl: duplicateMatch.listingUrl,
+        listingId: duplicateMatch.listingId || extractListingId(duplicateMatch.listingUrl),
+        matchStrategy: 'title',
+        matchedProductId: null,
+        candidateCount: 1,
+        searchTitle: term,
+      };
+    }
+
+    for (const candidate of duplicateMatches) {
+      let inspectedCandidate = null;
+      try {
+        inspectedCandidate = await inspectDuplicateCandidateListing(candidate);
+      } catch (error) {
+        throw new Error(
+          'FAIL_DUPLICATE_UNCERTAIN: Duplicate inspection failed for Tradera listing ' +
+            String(candidate?.listingId || candidate?.listingUrl || 'unknown') +
+            '. ' +
+            (error instanceof Error ? error.message : String(error))
+        );
+      }
+
+      log?.('tradera.quicklist.duplicate.inspect', {
+        term,
+        listingUrl: inspectedCandidate?.listingUrl || candidate.listingUrl,
+        listingId:
+          inspectedCandidate?.listingId || candidate.listingId || extractListingId(candidate.listingUrl),
+        matchedProductId: inspectedCandidate?.matchedProductId || null,
+        expectedProductId: baseProductId,
+      });
+
+      if (identifiersMatch(baseProductId, inspectedCandidate?.matchedProductId || '')) {
+        log?.('tradera.quicklist.duplicate.result', {
+          term,
           duplicateFound: true,
-          listingUrl: duplicateMatch.listingUrl,
+          matchStrategy: 'title+product-id',
+          candidateCount: duplicateMatches.length,
+          listingUrl: inspectedCandidate?.listingUrl || candidate.listingUrl,
+          listingId:
+            inspectedCandidate?.listingId ||
+            candidate.listingId ||
+            extractListingId(candidate.listingUrl),
+          matchedProductId: inspectedCandidate?.matchedProductId || null,
+        });
+
+        return {
+          duplicateFound: true,
+          listingUrl: inspectedCandidate?.listingUrl || candidate.listingUrl,
+          listingId:
+            inspectedCandidate?.listingId ||
+            candidate.listingId ||
+            extractListingId(candidate.listingUrl),
+          matchStrategy: 'title+product-id',
+          matchedProductId: inspectedCandidate?.matchedProductId || null,
+          candidateCount: duplicateMatches.length,
+          searchTitle: term,
+        };
+      }
+    }
+
+    log?.('tradera.quicklist.duplicate.result', {
+      term,
+      duplicateFound: false,
+      matchStrategy: 'title+product-id',
+      candidateCount: duplicateMatches.length,
+      expectedProductId: baseProductId,
+      listingUrl: null,
+      listingId: null,
+    });
+
+    return createDefaultDuplicateResult();
+  };
 `;

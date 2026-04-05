@@ -17,6 +17,7 @@ import {
 } from '@/features/integrations/utils/traderaQuickListFeedback';
 import {
   resolveCompletedAtFromListing,
+  resolveDuplicateLinkedFromListing,
   resolveListingUrlFromListing,
   resolveTraderaRequestId,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
@@ -35,6 +36,7 @@ import {
 
 export type TraderaFeedbackOptions = {
   completedAt?: number | null | undefined;
+  duplicateLinked?: boolean | null | undefined;
   failureReason?: string | null | undefined;
   runId?: string | null | undefined;
   requestId?: string | null | undefined;
@@ -76,6 +78,7 @@ export const buildTrackedTraderaFeedbackOptions = (
   feedback: PersistedTraderaQuickListFeedback
 ): TraderaFeedbackOptions => ({
   completedAt: resolveCompletedAtFromListing(listing),
+  duplicateLinked: resolveDuplicateLinkedFromListing(listing),
   runId: feedback.runId ?? null,
   requestId: feedback.requestId ?? resolveTraderaRequestId(listing),
   integrationId: listing.integrationId ?? feedback.integrationId ?? null,

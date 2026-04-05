@@ -18,7 +18,8 @@ import {
 /**
  * POST /api/marketplace/categories/fetch
  * Fetches marketplace categories and stores them locally.
- * Base.com uses the API, Tradera uses the live browser listing page scrape.
+ * Base.com uses the API, Tradera uses the SOAP API when configured and otherwise
+ * falls back to the public categories taxonomy pages.
  */
 export async function POST_handler(
   request: NextRequest,

@@ -266,4 +266,40 @@ describe('ProductListingsEmpty', () => {
     expect(screen.queryByText('No listings found')).toBeNull();
     expect(screen.queryByText('Not connected.')).toBeNull();
   });
+
+  it('renders duplicate-linked Tradera quick-export success copy when the row has not synced yet', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+      duplicateLinked: true,
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera existing listing linked')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'The product matched an existing Tradera listing and has now been linked in this modal. Use the link below to open the live Tradera item.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^Linked:/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Completed:/)).toBeNull();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/725447805'
+    );
+  });
 });

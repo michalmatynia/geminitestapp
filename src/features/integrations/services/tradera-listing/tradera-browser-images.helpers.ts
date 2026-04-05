@@ -1,13 +1,13 @@
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
-type ProductImageUrlField = 'publicUrl' | 'url' | 'thumbnailUrl' | 'filepath';
+type ProductImageUrlField = 'publicUrl' | 'url' | 'filepath' | 'thumbnailUrl';
 type ProductLocalImageField = 'filepath' | 'publicUrl' | 'url';
 
 const PRODUCT_IMAGE_URL_FIELDS: readonly ProductImageUrlField[] = [
   'publicUrl',
   'url',
-  'thumbnailUrl',
   'filepath',
+  'thumbnailUrl',
 ];
 const PRODUCT_LOCAL_IMAGE_FIELDS: readonly ProductLocalImageField[] = [
   'filepath',
@@ -28,30 +28,74 @@ const addNormalizedCandidate = (candidates: Set<string>, value: unknown): void =
   }
 };
 
-const collectProductImageCandidates = (
-  product: ProductWithImages,
-  fields: readonly ProductImageUrlField[] | readonly ProductLocalImageField[]
+const collectNormalizedCandidates = (
+  values: readonly unknown[]
 ): string[] => {
   const candidates = new Set<string>();
-
-  (product.imageLinks ?? []).forEach((value) => {
-    addNormalizedCandidate(candidates, value);
-  });
-
-  (product.images ?? []).forEach((image) => {
-    fields.forEach((field) => {
-      addNormalizedCandidate(candidates, image.imageFile?.[field]);
-    });
-  });
-
+  values.forEach((value) => addNormalizedCandidate(candidates, value));
   return Array.from(candidates);
 };
 
+export type TraderaCanonicalProductImageEntry = {
+  imageUrls: string[];
+  localCandidates: string[];
+};
+
+export const collectCanonicalTraderaProductImageEntries = (
+  product: ProductWithImages
+): TraderaCanonicalProductImageEntry[] => {
+  const entries: TraderaCanonicalProductImageEntry[] = [];
+  const seenExtraCandidates = new Set<string>();
+
+  // product.images is the canonical source of image ordering — emit one slot per
+  // product image so Tradera uploads can match the product exactly.
+  (product.images ?? []).forEach((image) => {
+    const imageUrls = collectNormalizedCandidates(
+      PRODUCT_IMAGE_URL_FIELDS.map((field) => image.imageFile?.[field])
+    );
+    const localCandidates = collectNormalizedCandidates(
+      PRODUCT_LOCAL_IMAGE_FIELDS.map((field) => image.imageFile?.[field])
+    );
+    const allCandidates = new Set<string>([...imageUrls, ...localCandidates]);
+
+    if (imageUrls.length === 0 && localCandidates.length === 0) {
+      return;
+    }
+
+    entries.push({
+      imageUrls,
+      localCandidates,
+    });
+    allCandidates.forEach((candidate) => seenExtraCandidates.add(candidate));
+  });
+
+  // imageLinks may contain additional images not present in product.images;
+  // append them only after the canonical images and only when they are new.
+  (product.imageLinks ?? []).forEach((value) => {
+    const normalized = normalizeNonEmptyString(value);
+    if (!normalized || seenExtraCandidates.has(normalized)) {
+      return;
+    }
+
+    entries.push({
+      imageUrls: [normalized],
+      localCandidates: [normalized],
+    });
+    seenExtraCandidates.add(normalized);
+  });
+
+  return entries;
+};
+
 export const collectProductImageUrlCandidates = (product: ProductWithImages): string[] =>
-  collectProductImageCandidates(product, PRODUCT_IMAGE_URL_FIELDS);
+  collectCanonicalTraderaProductImageEntries(product)
+    .map((entry) => entry.imageUrls[0] ?? entry.localCandidates[0] ?? null)
+    .filter((value): value is string => Boolean(value));
 
 export const collectProductLocalImageCandidates = (product: ProductWithImages): string[] =>
-  collectProductImageCandidates(product, PRODUCT_LOCAL_IMAGE_FIELDS);
+  collectCanonicalTraderaProductImageEntries(product)
+    .map((entry) => entry.localCandidates[0] ?? null)
+    .filter((value): value is string => Boolean(value));
 
 export const readNormalizedScriptInputStrings = (
   scriptInput: Record<string, unknown> | null,

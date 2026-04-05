@@ -1,18 +1,19 @@
-export const PART_5 = String.raw`        }
-      : {
-          duplicateFound: false,
-          listingUrl: null,
-          listingId: null,
-        };
-  };
+export const PART_5 = String.raw`
 
   let currentImageUploadSource = null;
 
   try {
     log?.('tradera.quicklist.start', {
+      listingAction,
+      duplicateSearchTitle,
+      allowDuplicateLinking,
       baseProductId,
       sku,
       imageCount: imageUrls.length,
+      imageOrderStrategy,
+      imageManifestCount,
+      localImagePathCount: localImagePaths.length,
+      localImageCoverageCount,
       mappedCategoryPath,
       categoryFallbackAllowed: mappedCategorySegments.length === 0,
       configuredDeliveryOptionLabel,
@@ -25,15 +26,36 @@ export const PART_5 = String.raw`        }
     await ensureLoggedIn();
     emitStage('active_loaded');
 
-    const baseProductDuplicate = await checkDuplicate(baseProductId);
-    if (baseProductDuplicate.duplicateFound) {
-      throw new Error('SKIP_PRODUCT_DUPLICATE_FOUND: Duplicate active Tradera listing for ' + baseProductId + '.');
-    }
-    if (sku) {
-      const skuDuplicate = await checkDuplicate(sku);
-      if (skuDuplicate.duplicateFound) {
-      throw new Error('SKIP_PRODUCT_DUPLICATE_FOUND: Duplicate active Tradera listing for ' + sku + '.');
-      }
+    const duplicateMatch = await checkDuplicate(duplicateSearchTitle);
+    if (duplicateMatch.duplicateFound) {
+      const duplicateResult = {
+        stage: 'duplicate_linked',
+        currentUrl: duplicateMatch.listingUrl || page.url(),
+        externalListingId:
+          duplicateMatch.listingId ||
+          extractListingId(duplicateMatch.listingUrl || '') ||
+          null,
+        listingUrl: duplicateMatch.listingUrl || null,
+        publishVerified: false,
+        duplicateLinked: true,
+        duplicateMatchStrategy: duplicateMatch.matchStrategy || null,
+        duplicateMatchedProductId: duplicateMatch.matchedProductId || null,
+        duplicateCandidateCount: duplicateMatch.candidateCount || null,
+        duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
+        categoryPath: null,
+        categorySource: null,
+        imageUploadSource: null,
+      };
+      log?.('tradera.quicklist.duplicate.linked', duplicateResult);
+      emitStage('duplicate_linked', {
+        duplicateMatchStrategy: duplicateResult.duplicateMatchStrategy,
+        duplicateMatchedProductId: duplicateResult.duplicateMatchedProductId,
+        duplicateCandidateCount: duplicateResult.duplicateCandidateCount,
+        externalListingId: duplicateResult.externalListingId,
+        listingUrl: duplicateResult.listingUrl,
+      });
+      emit('result', duplicateResult);
+      return duplicateResult;
     }
     emitStage('duplicate_checked');
 
@@ -242,8 +264,9 @@ export const PART_5 = String.raw`        }
       return draftState;
     };
 
-    // Overwrite Tradera autofill immediately after images. Resolve Buy now before
-    // setting price so the fixed-price field is mounted before we type into it.
+    // Overwrite autofilled title/description immediately after images. Resolve Buy
+    // now before setting price so the fixed-price field is mounted before we type
+    // into it. Category autofill may be preserved later when no mapping exists.
     await fillTitleAndDescription();
     emitStage('fields_filled');
 
@@ -474,182 +497,99 @@ export const PART_5 = String.raw`        }
       };
     };
 
-    const waitForPostPublishNavigation = async (timeoutMs = 15_000) => {
-      const deadline = Date.now() + timeoutMs;
-      const startedAt = Date.now();
-      let nonSellFlowSince = null;
+    const NOTIFICATION_MODAL_DISMISS_LABELS = [
+      'Maybe later',
+      'Maybe Later',
+      'Kanske senare',
+      'Not now',
+      'Inte nu',
+      'No thanks',
+      'Nej tack',
+      'Close',
+      'Stäng',
+    ];
 
-      const findPublishedListingMatchOnCurrentPage = async () => {
-        const candidateTerms = Array.from(
-          new Set([baseProductId, sku].map((value) => String(value || '').trim()).filter(Boolean))
-        );
-        for (const term of candidateTerms) {
-          const listingMatch = await findListingLinkForTerm(term).catch(() => null);
-          if (listingMatch?.listingId) {
-            return listingMatch;
+    const dismissPostPublishNotificationModal = async (timeoutMs = 6_000) => {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        const dialog = page.getByRole('dialog').first();
+        const dialogVisible = await dialog.isVisible().catch(() => false);
+        if (!dialogVisible) {
+          await wait(400);
+          continue;
+        }
+
+        for (const label of NOTIFICATION_MODAL_DISMISS_LABELS) {
+          const escapedPattern = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+
+          const dialogButton = dialog
+            .getByRole('button', { name: new RegExp(escapedPattern, 'i') })
+            .first();
+          const dialogButtonVisible = await dialogButton.isVisible().catch(() => false);
+          if (dialogButtonVisible) {
+            log?.('tradera.quicklist.publish.notification_dismiss', { label, method: 'dialog-button' });
+            await humanClick(dialogButton).catch(() => undefined);
+            await wait(500);
+            return true;
+          }
+
+          const dialogLink = dialog
+            .getByRole('link', { name: new RegExp(escapedPattern, 'i') })
+            .first();
+          const dialogLinkVisible = await dialogLink.isVisible().catch(() => false);
+          if (dialogLinkVisible) {
+            log?.('tradera.quicklist.publish.notification_dismiss', { label, method: 'dialog-link' });
+            await humanClick(dialogLink).catch(() => undefined);
+            await wait(500);
+            return true;
           }
         }
 
-        return null;
-      };
+        // Fallback: try Escape to close any dialog
+        await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(() => undefined);
+        await wait(500);
 
-      const summarizePostPublishState = async (reason, resolvedListingMatch = null) => {
-        const currentUrl = page.url();
-        const activeListingsVisible = currentUrl.toLowerCase().includes('/my/listings');
-        const onSellFlowRoute = isTraderaSellingRoute(currentUrl);
-        const listingFormVisible = onSellFlowRoute ? await isCreateListingPage() : false;
-        const stillOnSellFlow = onSellFlowRoute || listingFormVisible;
-        const validationMessages = stillOnSellFlow ? await collectValidationMessages() : [];
-        const publishButtonDisabled = stillOnSellFlow
-          ? await isControlDisabled(publishButton)
-          : null;
-        const visibleListingLink =
-          !stillOnSellFlow
-            ? resolvedListingMatch ||
-              (activeListingsVisible ? null : await findVisibleListingLink())
-            : null;
-        const externalListingId =
-          extractListingId(currentUrl) || visibleListingLink?.listingId || null;
-        const listingUrl = externalListingId
-          ? visibleListingLink?.listingUrl || currentUrl
-          : null;
-        const state = {
-          reason,
-          currentUrl,
-          currentTitle: await page.title().catch(() => null),
-          externalListingId,
-          listingUrl,
-          stillOnSellFlow,
-          activeListingsVisible,
-          validationMessages,
-          publishButtonDisabled,
-          elapsedMs: Date.now() - startedAt,
-        };
-        log?.('tradera.quicklist.publish.post_state', state);
-        return state;
-      };
+        const stillVisible = await dialog.isVisible().catch(() => false);
+        if (!stillVisible) {
+          log?.('tradera.quicklist.publish.notification_dismiss', { label: null, method: 'escape' });
+          return true;
+        }
 
+        break;
+      }
+
+      return false;
+    };
+
+    const extractPostPublishListingLink = async (timeoutMs = 8_000) => {
+      const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
         const currentUrl = page.url();
-        const extractedListingId = extractListingId(currentUrl);
-        if (extractedListingId) {
-          return summarizePostPublishState('listing-url');
+        const urlListingId = extractListingId(currentUrl);
+        if (urlListingId) {
+          log?.('tradera.quicklist.publish.link_extracted', {
+            method: 'url',
+            currentUrl,
+            externalListingId: urlListingId,
+          });
+          return { externalListingId: urlListingId, listingUrl: currentUrl };
         }
 
-        const activeListingsVisible = currentUrl.toLowerCase().includes('/my/listings');
-        const onSellFlowRoute = isTraderaSellingRoute(currentUrl);
-        const listingFormVisible = onSellFlowRoute ? await isCreateListingPage() : false;
-        const stillOnSellFlow = onSellFlowRoute || listingFormVisible;
-        const validationMessages = stillOnSellFlow ? await collectValidationMessages() : [];
-
-        if (stillOnSellFlow && validationMessages.length > 0) {
-          return summarizePostPublishState('validation');
-        }
-
-        if (!stillOnSellFlow) {
-          nonSellFlowSince ??= Date.now();
-          if (!activeListingsVisible) {
-            const visibleListingLink = await findVisibleListingLink();
-            if (visibleListingLink?.listingId) {
-              return summarizePostPublishState('listing-link');
-            }
-          } else if (Date.now() - nonSellFlowSince >= 1_500) {
-            const visiblePublishedListing = await findPublishedListingMatchOnCurrentPage();
-            return summarizePostPublishState(
-              visiblePublishedListing?.listingId
-                ? 'active-listings-visible-match'
-                : 'active-listings-stable',
-              visiblePublishedListing
-            );
-          }
-        } else {
-          nonSellFlowSince = null;
+        const visibleLink = await findVisibleListingLink();
+        if (visibleLink?.listingId) {
+          log?.('tradera.quicklist.publish.link_extracted', {
+            method: 'visible-link',
+            currentUrl,
+            externalListingId: visibleLink.listingId,
+            listingUrl: visibleLink.listingUrl,
+          });
+          return { externalListingId: visibleLink.listingId, listingUrl: visibleLink.listingUrl };
         }
 
         await wait(500);
       }
 
-      return summarizePostPublishState('timeout');
-    };
-
-    const verifyPublishedListingViaActiveSearch = async (terms) => {
-      const normalizedTerms = Array.from(
-        new Set(
-          (Array.isArray(terms) ? terms : [])
-            .map((value) => String(value || '').trim())
-            .filter(Boolean)
-        )
-      );
-      if (normalizedTerms.length === 0) {
-        return null;
-      }
-
-      log?.('tradera.quicklist.publish.verify_active_search', {
-        terms: normalizedTerms,
-      });
-
-      try {
-        await page.goto(ACTIVE_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-        await acceptCookiesIfPresent();
-      } catch (error) {
-        log?.('tradera.quicklist.publish.verify_active_search_failed', {
-          terms: normalizedTerms,
-          reason: 'goto_failed',
-          currentUrl: page.url(),
-          error: error instanceof Error ? error.message : String(error),
-        });
-        return null;
-      }
-
-      const activeContextReady = await ensureActiveListingsContext();
-      if (!activeContextReady) {
-        log?.('tradera.quicklist.publish.verify_active_search_failed', {
-          terms: normalizedTerms,
-          reason: 'active_context_missing',
-          currentUrl: page.url(),
-        });
-        return null;
-      }
-
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        for (const term of normalizedTerms) {
-          const duplicateMatch = await checkDuplicate(term).catch((error) => {
-            log?.('tradera.quicklist.publish.verify_active_search_failed', {
-              terms: normalizedTerms,
-              term,
-              attempt,
-              reason: 'search_failed',
-              currentUrl: page.url(),
-              error: error instanceof Error ? error.message : String(error),
-            });
-            return null;
-          });
-
-          if (duplicateMatch && duplicateMatch.duplicateFound && duplicateMatch.listingId) {
-            log?.('tradera.quicklist.publish.verify_active_search_result', {
-              term,
-              attempt,
-              listingId: duplicateMatch.listingId,
-              listingUrl: duplicateMatch.listingUrl || null,
-            });
-            return {
-              externalListingId: duplicateMatch.listingId,
-              listingUrl: duplicateMatch.listingUrl || null,
-              matchedTerm: term,
-            };
-          }
-        }
-
-        if (attempt + 1 < 3) {
-          await wait(1_500);
-        }
-      }
-
-      log?.('tradera.quicklist.publish.verify_active_search_result', {
-        terms: normalizedTerms,
-        listingId: null,
-        listingUrl: null,
-      });
+      log?.('tradera.quicklist.publish.link_not_found', { currentUrl: page.url() });
       return null;
     };
 
@@ -672,17 +612,25 @@ export const PART_5 = String.raw`        }
     const publishInteraction = await waitForPublishInteractionEvidence(prePublishUrl);
     log?.('tradera.quicklist.publish.click_result', publishInteraction);
     if (!publishInteraction.confirmed) {
+      // Check if we landed on validation errors while still on the sell flow
+      if (publishInteraction.stillOnSellFlow) {
+        const validationMessages = await collectValidationMessages();
+        if (validationMessages.length > 0) {
+          throw new Error(
+            (hasDeliveryValidationIssue(validationMessages)
+              ? 'FAIL_SHIPPING_SET: '
+              : 'FAIL_PUBLISH_VALIDATION: ') +
+              validationMessages.join(' | ')
+          );
+        }
+      }
+
       await captureFailureArtifacts('publish-click-not-confirmed', {
         currentUrl: publishInteraction.currentUrl,
         prePublishUrl,
         publishTarget: publishTargetMetadata,
         publishInteractionReason: publishInteraction.reason,
         stillOnSellFlow: publishInteraction.stillOnSellFlow,
-        activeListingsVisible: publishInteraction.activeListingsVisible,
-        publishButtonVisible: publishInteraction.publishButtonVisible,
-        publishButtonDisabled: publishInteraction.publishButtonDisabled,
-        externalListingId: publishInteraction.externalListingId,
-        listingUrl: publishInteraction.listingUrl,
       }).catch(() => undefined);
       throw new Error(
         'FAIL_PUBLISH_CLICK: Publish button click did not trigger an observable Tradera publish interaction.'
@@ -692,59 +640,27 @@ export const PART_5 = String.raw`        }
     emitStage('publish_clicked', {
       publishInteractionReason: publishInteraction.reason,
     });
-    const postPublishNavigation = await waitForPostPublishNavigation();
 
-    let listingUrl = postPublishNavigation.listingUrl || null;
-    let externalListingId = postPublishNavigation.externalListingId;
-    const postPublishDraftValidationMessages = postPublishNavigation.stillOnSellFlow
-      ? postPublishNavigation.validationMessages.length > 0
-        ? postPublishNavigation.validationMessages
-        : await collectValidationMessages()
-      : postPublishNavigation.validationMessages;
+    // Dismiss "Would you like to be notified of new bids?" modal if it appears
+    await dismissPostPublishNotificationModal();
 
-    if (
-      !externalListingId &&
-      !postPublishNavigation.activeListingsVisible &&
-      postPublishDraftValidationMessages.length === 0
-    ) {
-      const activeSearchVerification = await verifyPublishedListingViaActiveSearch([
-        baseProductId,
-        sku,
-      ]);
-      if (activeSearchVerification?.externalListingId) {
-        externalListingId = activeSearchVerification.externalListingId;
-        listingUrl = activeSearchVerification.listingUrl || listingUrl;
+    // Extract the listing link from the post-publish page
+    let listingUrl = publishInteraction.listingUrl || null;
+    let externalListingId = publishInteraction.externalListingId || null;
+
+    if (!externalListingId) {
+      const extracted = await extractPostPublishListingLink();
+      if (extracted) {
+        externalListingId = extracted.externalListingId;
+        listingUrl = extracted.listingUrl || listingUrl;
       }
     }
 
-    if (!externalListingId && postPublishNavigation.stillOnSellFlow) {
-      if (postPublishDraftValidationMessages.length > 0) {
-        throw new Error(
-          (hasDeliveryValidationIssue(postPublishDraftValidationMessages)
-            ? 'FAIL_SHIPPING_SET: '
-            : 'FAIL_PUBLISH_VALIDATION: ') +
-            postPublishDraftValidationMessages.join(' | ')
-        );
-      }
-
-      throw new Error(
-        'FAIL_PUBLISH_STUCK: Publish remained in the Tradera selling flow without producing a listing.'
-      );
-    }
-
-    if (!externalListingId && !postPublishNavigation.activeListingsVisible) {
-      await captureFailureArtifacts('publish-not-confirmed', {
-        currentUrl: postPublishNavigation.currentUrl,
-        currentTitle: postPublishNavigation.currentTitle || null,
-        stillOnSellFlow: postPublishNavigation.stillOnSellFlow,
-        activeListingsVisible: postPublishNavigation.activeListingsVisible,
-        validationMessages: postPublishNavigation.validationMessages,
-        publishButtonDisabled: postPublishNavigation.publishButtonDisabled,
-      }).catch(() => undefined);
-      throw new Error(
-        'FAIL_PUBLISH_NOT_CONFIRMED: Publish left the Tradera selling flow but listing id could not be verified. Current URL: ' +
-          postPublishNavigation.currentUrl
-      );
+    if (!externalListingId) {
+      log?.('tradera.quicklist.publish.id_not_extracted', {
+        currentUrl: page.url(),
+        publishInteractionReason: publishInteraction.reason,
+      });
     }
 
     const result = {

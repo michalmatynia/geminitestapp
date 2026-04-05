@@ -1,4 +1,5 @@
-import { access, stat } from 'node:fs/promises';
+import { access, copyFile, mkdtemp, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
@@ -6,13 +7,14 @@ import {
   getPublicPathFromStoredPath,
 } from '@/shared/lib/files/services/storage/file-storage-service';
 import {
+  collectCanonicalTraderaProductImageEntries,
   collectProductImageUrlCandidates,
-  collectProductLocalImageCandidates,
   readNormalizedScriptInputStrings,
   resolveScriptInputImageSource,
 } from './tradera-browser-images.helpers';
 
 export const MIN_TRADERA_IMAGE_BYTES = 10_240;
+const TRADERA_ORDERED_UPLOAD_DIR_PREFIX = 'tradera-upload-order-';
 
 export const resolveProductImageUrls = (product: ProductWithImages): string[] =>
   collectProductImageUrlCandidates(product);
@@ -46,19 +48,6 @@ export const toAbsolutePublicFilePath = (value: string): string | null => {
   return path.join(process.cwd(), 'public', publicPath.replace(/^\/+/, ''));
 };
 
-const resolveDistinctLocalImageCandidates = (product: ProductWithImages): string[] => {
-  const candidates = new Set<string>();
-
-  collectProductLocalImageCandidates(product).forEach((value) => {
-    const absolutePath = toAbsolutePublicFilePath(value);
-    if (absolutePath) {
-      candidates.add(absolutePath);
-    }
-  });
-
-  return Array.from(candidates);
-};
-
 const validateLocalProductImagePath = async (candidate: string): Promise<string | null> => {
   try {
     await access(candidate);
@@ -73,17 +62,135 @@ const validateLocalProductImagePath = async (candidate: string): Promise<string 
   return null;
 };
 
+const resolveFirstValidLocalProductImagePath = async (
+  candidates: readonly string[]
+): Promise<string | null> => {
+  for (const candidate of candidates) {
+    const absolutePath = toAbsolutePublicFilePath(candidate);
+    if (!absolutePath) {
+      continue;
+    }
+
+    const validatedPath = await validateLocalProductImagePath(absolutePath);
+    if (validatedPath) {
+      return validatedPath;
+    }
+  }
+
+  return null;
+};
+
+const sanitizeUploadFilenameSegment = (value: string): string => {
+  const normalized = value.trim().replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/-+/g, '-');
+  return normalized.replace(/^-+|-+$/g, '') || 'product';
+};
+
+const resolveOrderedUploadFilePrefix = (product: ProductWithImages): string =>
+  sanitizeUploadFilenameSegment(product.baseProductId || product.sku || product.id || 'product');
+
+const resolveOrderedUploadExtension = (sourcePath: string, sourceUrl: string | null): string => {
+  const localExtension = path.extname(sourcePath).trim().toLowerCase();
+  if (localExtension) {
+    return localExtension;
+  }
+
+  if (sourceUrl) {
+    try {
+      const parsed = new URL(sourceUrl, resolveAppBaseUrl());
+      const remoteExtension = path.extname(parsed.pathname).trim().toLowerCase();
+      if (remoteExtension) {
+        return remoteExtension;
+      }
+    } catch {
+      // Ignore malformed URLs and fall back to jpg.
+    }
+  }
+
+  return '.jpg';
+};
+
+const stageOrderedLocalProductImagePaths = async ({
+  product,
+  localImagePaths,
+  imageUrls,
+}: {
+  product: ProductWithImages;
+  localImagePaths: string[];
+  imageUrls: string[];
+}): Promise<string[]> => {
+  if (localImagePaths.length === 0) {
+    return [];
+  }
+
+  const directory = await mkdtemp(path.join(tmpdir(), TRADERA_ORDERED_UPLOAD_DIR_PREFIX));
+  const prefix = resolveOrderedUploadFilePrefix(product);
+  const padWidth = Math.max(2, String(localImagePaths.length).length);
+  const stagedPaths: string[] = [];
+
+  for (let index = 0; index < localImagePaths.length; index += 1) {
+    const sourcePath = localImagePaths[index];
+    const extension = resolveOrderedUploadExtension(sourcePath, imageUrls[index] ?? null);
+    const filename = `${prefix}_${String(index + 1).padStart(padWidth, '0')}${extension}`;
+    const stagedPath = path.join(directory, filename);
+    await copyFile(sourcePath, stagedPath);
+    stagedPaths.push(stagedPath);
+  }
+
+  return stagedPaths;
+};
+
+export type TraderaProductImageUploadPlan = {
+  imageUrls: string[];
+  localImagePaths: string[];
+  imageCount: number;
+  localImageCoverageCount: number;
+  imageOrderStrategy: 'local-complete' | 'download-ordered' | 'none';
+};
+
+export const resolveTraderaProductImageUploadPlan = async (
+  product: ProductWithImages
+): Promise<TraderaProductImageUploadPlan> => {
+  const imageEntries = collectCanonicalTraderaProductImageEntries(product);
+  const imageUrls = imageEntries
+    .map((entry) => entry.imageUrls[0] ?? entry.localCandidates[0] ?? null)
+    .filter((value): value is string => value !== null);
+  const validatedLocalPaths = await Promise.all(
+    imageEntries.map((entry) => resolveFirstValidLocalProductImagePath(entry.localCandidates))
+  );
+  const localImageCoverageCount = validatedLocalPaths.filter(
+    (candidate): candidate is string => candidate !== null
+  ).length;
+  const orderedValidatedLocalPaths =
+    imageUrls.length > 0 && localImageCoverageCount === imageUrls.length
+      ? validatedLocalPaths.filter((candidate): candidate is string => candidate !== null)
+      : [];
+  const localImagePaths =
+    orderedValidatedLocalPaths.length === imageUrls.length
+      ? await stageOrderedLocalProductImagePaths({
+          product,
+          localImagePaths: orderedValidatedLocalPaths,
+          imageUrls,
+        }).catch(() => [])
+      : [];
+  const imageOrderStrategy =
+    imageUrls.length === 0
+      ? 'none'
+      : localImagePaths.length === imageUrls.length
+        ? 'local-complete'
+        : 'download-ordered';
+
+  return {
+    imageUrls,
+    localImagePaths,
+    imageCount: imageUrls.length,
+    localImageCoverageCount,
+    imageOrderStrategy,
+  };
+};
+
 export const resolveLocalProductImagePaths = async (
   product: ProductWithImages
-): Promise<string[]> => {
-  const validPaths = await Promise.all(
-    resolveDistinctLocalImageCandidates(product).map((candidate) =>
-      validateLocalProductImagePath(candidate)
-    )
-  );
-
-  return validPaths.filter((candidate): candidate is string => candidate !== null);
-};
+): Promise<string[]> => (await resolveTraderaProductImageUploadPlan(product)).localImagePaths;
 
 export const resolveScriptInputImageDiagnostics = (
   scriptInput: Record<string, unknown> | null

@@ -3,6 +3,7 @@ import React from 'react';
 import type { PersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import {
   resolveCompletedAtFromFeedbackAndListing,
+  resolveDuplicateLinkedFromListing,
   resolveListingUrl,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
@@ -30,11 +31,20 @@ export function TraderaQuickExportSuccessBanner({
   const externalListingId = listing?.externalListingId ?? feedback.externalListingId ?? null;
   const localListingId = listing?.id ?? feedback.listingId ?? null;
   const completedAt = resolveCompletedAtFromFeedbackAndListing(feedback.completedAt, listing);
-  const title = 'Tradera quick export completed';
+  const duplicateLinked =
+    resolveDuplicateLinkedFromListing(listing) || feedback.duplicateLinked === true;
+  const title = duplicateLinked
+    ? 'Tradera existing listing linked'
+    : 'Tradera quick export completed';
   const description =
-    mode === 'empty'
-      ? 'The product was listed on Tradera, but the listing row is still catching up in this modal. Use the link below to open the created Tradera item now.'
-      : 'The product is now linked to the created Tradera listing. Open the live Tradera item directly from here.';
+    duplicateLinked
+      ? mode === 'empty'
+        ? 'The product matched an existing Tradera listing and has now been linked in this modal. Use the link below to open the live Tradera item.'
+        : 'The product is now linked to an existing Tradera listing. Open the live Tradera item directly from here.'
+      : mode === 'empty'
+        ? 'The product was listed on Tradera, but the listing row is still catching up in this modal. Use the link below to open the created Tradera item now.'
+        : 'The product is now linked to the created Tradera listing. Open the live Tradera item directly from here.';
+  const completedLabel = duplicateLinked ? 'Linked' : 'Completed';
 
   if (variant === 'full') {
     return (
@@ -60,7 +70,7 @@ export function TraderaQuickExportSuccessBanner({
           </div>
         )}
         {completedAt ? (
-          <div className='text-center text-[11px] text-emerald-100/75'>Completed: {completedAt}</div>
+          <div className='text-center text-[11px] text-emerald-100/75'>{completedLabel}: {completedAt}</div>
         ) : null}
         {listingUrl ? (
           <div className='flex justify-center'>
@@ -100,7 +110,7 @@ export function TraderaQuickExportSuccessBanner({
               ) : null}
             </div>
           )}
-          {completedAt ? <div className='mt-2 text-[11px] text-emerald-100/75'>Completed: {completedAt}</div> : null}
+          {completedAt ? <div className='mt-2 text-[11px] text-emerald-100/75'>{completedLabel}: {completedAt}</div> : null}
         </div>
         {listingUrl ? (
           <ExternalLink

@@ -1,1012 +1,35 @@
-import {
-  TRADERA_AUTH_ERROR_SELECTORS,
-  TRADERA_CAPTCHA_HINTS,
-  TRADERA_MANUAL_VERIFICATION_TEXT_HINTS,
-  TRADERA_MANUAL_VERIFICATION_URL_HINTS,
-} from './config';
-
-const LOGIN_FORM_SELECTORS = [
-  '#sign-in-form',
-  'form[data-sign-in-form="true"]',
-  'form[action*="login"]',
-];
-
-const COOKIE_ACCEPT_SELECTORS = [
-  '#onetrust-accept-btn-handler',
-  'button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',
-  'button:has-text("Accept all cookies")',
-  'button:has-text("Accept all")',
-  'button:has-text("Acceptera alla cookies")',
-  'button:has-text("Acceptera alla kakor")',
-  'button:has-text("Godkänn alla cookies")',
-  'button:has-text("Tillåt alla cookies")',
-];
-
-const CATEGORY_FIELD_LABELS = ['Category', 'Kategori'];
-
-const CATEGORY_SECTION_READY_SELECTORS = [
-  'section[data-validation-error-anchor="category"]',
-  '[data-test-category-chooser="true"]',
-];
-
-const CATEGORY_TRIGGER_DIRECT_SELECTORS = [
-  '[data-test-category-chooser="true"] [data-verify-test-category-picker-trigger-syi="true"]',
-  '[data-test-category-chooser="true"] [role="menu"]',
-  '[data-test-category-chooser="true"] [role="button"]',
-  '[data-test-category-chooser="true"] [role="combobox"]',
-  '[data-test-category-chooser="true"] [aria-haspopup="menu"]',
-  '[data-test-category-chooser="true"] [aria-haspopup="listbox"]',
-  '[data-test-category-chooser="true"] [aria-controls][aria-expanded]',
-  '[data-test-category-chooser="true"] button[aria-expanded]',
-  'section[data-validation-error-anchor="category"] [role="button"]',
-  'section[data-validation-error-anchor="category"] [role="combobox"]',
-  'section[data-validation-error-anchor="category"] [aria-haspopup="menu"]',
-  'section[data-validation-error-anchor="category"] [aria-haspopup="listbox"]',
-  'section[data-validation-error-anchor="category"] [aria-controls][aria-expanded]',
-  'section[data-validation-error-anchor="category"] button[aria-expanded]',
-];
-
-const CATEGORY_SELECTORS = [
-  'select[name*="category"]',
-  '#category',
-  '[data-testid*="category"] select',
-];
-
-const CATEGORY_MENU_SCOPE_SELECTORS = ['[role="menu"]', '[role="listbox"]', '[role="dialog"]'];
-
-const CATEGORY_MENU_ITEM_SELECTORS = [
-  '[role="menuitem"]',
-  '[role="menuitemradio"]',
-  '[role="option"]',
-  '[role="radio"]',
-  'button',
-  '[data-category-id]',
-  '[data-id]',
-  '[data-value]',
-  '[value]',
-];
-
 export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default async function run({
   page,
   input,
   emit,
   artifacts,
   log,
-  helpers,
 }) {
-  const LOGIN_FORM_SELECTORS = ${JSON.stringify(LOGIN_FORM_SELECTORS)};
-  const COOKIE_ACCEPT_SELECTORS = ${JSON.stringify(COOKIE_ACCEPT_SELECTORS)};
-  const TRADERA_AUTH_ERROR_SELECTORS = ${JSON.stringify(TRADERA_AUTH_ERROR_SELECTORS)};
-  const TRADERA_CAPTCHA_HINTS = ${JSON.stringify(TRADERA_CAPTCHA_HINTS)};
-  const TRADERA_MANUAL_VERIFICATION_TEXT_HINTS = ${JSON.stringify(TRADERA_MANUAL_VERIFICATION_TEXT_HINTS)};
-  const TRADERA_MANUAL_VERIFICATION_URL_HINTS = ${JSON.stringify(TRADERA_MANUAL_VERIFICATION_URL_HINTS)};
-  const CATEGORY_FIELD_LABELS = ${JSON.stringify(CATEGORY_FIELD_LABELS)};
-  const CATEGORY_SECTION_READY_SELECTORS = ${JSON.stringify(CATEGORY_SECTION_READY_SELECTORS)};
-  const CATEGORY_TRIGGER_DIRECT_SELECTORS = ${JSON.stringify(CATEGORY_TRIGGER_DIRECT_SELECTORS)};
-  const CATEGORY_SELECTORS = ${JSON.stringify(CATEGORY_SELECTORS)};
-  const CATEGORY_MENU_SCOPE_SELECTORS = ${JSON.stringify(CATEGORY_MENU_SCOPE_SELECTORS)};
-  const CATEGORY_MENU_ITEM_SELECTORS = ${JSON.stringify(CATEGORY_MENU_ITEM_SELECTORS)};
-  const configuredListingUrl =
-    typeof input?.traderaConfig?.listingFormUrl === 'string' &&
-    input.traderaConfig.listingFormUrl.trim()
-      ? input.traderaConfig.listingFormUrl.trim()
-      : page.url();
+  const DEFAULT_CATEGORIES_URL = 'https://www.tradera.com/en/categories';
+  const ROOT_SECTION_SUFFIXES = ['show more', 'visa fler'];
+  const STOP_TEXTS = ['all filters', 'alla filter', 'newest', 'senaste', 'sort by', 'sortera'];
+  const BLOCKED_URL_HINTS = ['/login', '/captcha', '/challenge', '/verification', '/verify'];
+  const BLOCKED_TEXT_HINTS = [
+    'log in',
+    'login',
+    'sign in',
+    'captcha',
+    'verification',
+    'security check',
+    'two-factor',
+    'two factor',
+    '2fa',
+  ];
+  const configuredCategoriesUrl =
+    typeof input?.traderaConfig?.categoriesUrl === 'string' &&
+    input.traderaConfig.categoriesUrl.trim()
+      ? input.traderaConfig.categoriesUrl.trim()
+      : DEFAULT_CATEGORIES_URL;
 
   const wait = async (ms) =>
     new Promise((resolve) => {
       setTimeout(resolve, Math.max(0, Math.trunc(ms)));
     });
-
-  const toTrimmedText = (value) =>
-    typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
-
-  const normalizeParentId = (value) => {
-    const normalized = toTrimmedText(value);
-    if (!normalized || normalized === '0' || normalized.toLowerCase() === 'null') {
-      return '0';
-    }
-    return normalized;
-  };
-
-  const normalizeCategoryId = (candidate) => {
-    if (candidate == null) return '';
-    const normalized = toTrimmedText(String(candidate));
-    if (!normalized) return '';
-    const match = normalized.match(/(?:^|[/?=&_-])(\d{2,})(?:$|[/?=&_-])/);
-    return match && match[1] ? match[1] : normalized;
-  };
-
-  const isPlaceholderOption = (name) => {
-    const normalized = toTrimmedText(name).toLowerCase();
-    return (
-      !normalized ||
-      normalized === 'category' ||
-      normalized === 'kategori' ||
-      normalized.includes('select category') ||
-      normalized.includes('välj kategori')
-    );
-  };
-
-  const dedupeCategories = (categories) => {
-    const byId = new Map();
-    for (const category of categories) {
-      const id = normalizeCategoryId(category?.id);
-      const name = toTrimmedText(category?.name);
-      if (!id || !name || isPlaceholderOption(name)) continue;
-      if (!byId.has(id)) {
-        byId.set(id, {
-          id,
-          name,
-          parentId: normalizeParentId(category?.parentId),
-        });
-      }
-    }
-    return Array.from(byId.values());
-  };
-
-  const firstVisible = async (selectors, root = page) => {
-    for (const selector of selectors) {
-      const locator = root.locator(selector);
-      const count = await locator.count().catch(() => 0);
-      if (!count) continue;
-
-      for (let index = 0; index < count; index += 1) {
-        const candidate = locator.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (!visible) continue;
-        return candidate;
-      }
-    }
-
-    return null;
-  };
-
-  const acceptCookiesIfPresent = async () => {
-    const trigger = await firstVisible(COOKIE_ACCEPT_SELECTORS);
-    if (!trigger) return false;
-    await helpers.click(trigger, { pauseBefore: false });
-    await wait(600);
-    return true;
-  };
-
-  const isLoginPage = async () => {
-    if (page.url().toLowerCase().includes('/login')) return true;
-    for (const selector of LOGIN_FORM_SELECTORS) {
-      const visible = await page.locator(selector).first().isVisible().catch(() => false);
-      if (visible) return true;
-    }
-    return false;
-  };
-
-  const includesAnyHint = (value, hints) => {
-    const normalized = toTrimmedText(value).toLowerCase();
-    if (!normalized) return false;
-    return hints.some((hint) => normalized.includes(toTrimmedText(hint).toLowerCase()));
-  };
-
-  const readVisibleText = async (selectors) => {
-    for (const selector of selectors) {
-      const locator = page.locator(selector);
-      const count = await locator.count().catch(() => 0);
-      if (!count) continue;
-
-      for (let index = 0; index < count; index += 1) {
-        const candidate = locator.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (!visible) continue;
-        const text = await candidate.innerText().catch(() => '');
-        if (toTrimmedText(text)) {
-          return toTrimmedText(text);
-        }
-      }
-    }
-    return '';
-  };
-
-  const readAuthText = async () => {
-    const authErrorText = await readVisibleText(TRADERA_AUTH_ERROR_SELECTORS);
-    if (authErrorText) {
-      return authErrorText;
-    }
-
-    const headingText = await readVisibleText(['h1', 'h2', '[role="heading"]']);
-    if (headingText) {
-      return headingText;
-    }
-
-    const main = page.locator('main').first();
-    const mainVisible = await main.isVisible().catch(() => false);
-    if (!mainVisible) {
-      return '';
-    }
-
-    return toTrimmedText(await main.innerText().catch(() => ''));
-  };
-
-  const readAuthDiagnostics = async () => {
-    const currentUrl = page.url();
-    const normalizedUrl = currentUrl.toLowerCase();
-    const loginPage = await isLoginPage().catch(() => false);
-    const errorText = await readAuthText();
-    const normalizedErrorText = errorText.toLowerCase();
-    const captchaDetected =
-      includesAnyHint(normalizedErrorText, TRADERA_CAPTCHA_HINTS) ||
-      includesAnyHint(
-        normalizedUrl,
-        TRADERA_MANUAL_VERIFICATION_URL_HINTS.filter((hint) =>
-          String(hint).toLowerCase().includes('captcha')
-        )
-      );
-    const manualVerificationDetected =
-      captchaDetected ||
-      includesAnyHint(normalizedErrorText, TRADERA_MANUAL_VERIFICATION_TEXT_HINTS) ||
-      includesAnyHint(normalizedUrl, TRADERA_MANUAL_VERIFICATION_URL_HINTS);
-
-    let recoveryMessage = '';
-    if (loginPage) {
-      recoveryMessage =
-        'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.';
-    } else if (captchaDetected) {
-      recoveryMessage =
-        'Stored Tradera session expired and Tradera requires manual verification (captcha). Refresh the saved browser session.';
-    } else if (manualVerificationDetected) {
-      recoveryMessage =
-        'Stored Tradera session expired and Tradera requires manual verification. Refresh the saved browser session.';
-    }
-
-    return {
-      currentUrl,
-      errorText,
-      loginPage,
-      captchaDetected,
-      manualVerificationDetected,
-      authRequired: loginPage || manualVerificationDetected,
-      recoveryMessage,
-    };
-  };
-
-  const findCategorySelect = async () => {
-    let fallback = null;
-    for (const selector of CATEGORY_SELECTORS) {
-      const locator = page.locator(selector);
-      const count = await locator.count().catch(() => 0);
-      if (!count) continue;
-
-      for (let index = 0; index < count; index += 1) {
-        const candidate = locator.nth(index);
-        const optionCount = await candidate.locator('option').count().catch(() => 0);
-        if (!optionCount) continue;
-        const visible = await candidate.isVisible().catch(() => false);
-        if (visible) return candidate;
-        fallback = fallback || candidate;
-      }
-    }
-
-    return fallback;
-  };
-
-  const scrapeSelectCategories = async () => {
-    const categorySelect = await findCategorySelect();
-    if (!categorySelect) return [];
-
-    const options = await categorySelect.locator('option').evaluateAll((nodes) =>
-      nodes.map((node) => {
-        const option = node;
-        const dataParentId =
-          option.getAttribute('data-parent-id') ||
-          option.getAttribute('parent-id') ||
-          option.getAttribute('data-parent') ||
-          option.getAttribute('data-parentid') ||
-          '';
-        return {
-          id:
-            option.value ||
-            option.getAttribute('value') ||
-            option.getAttribute('data-category-id') ||
-            option.getAttribute('data-id') ||
-            option.getAttribute('data-value') ||
-            '',
-          name: option.textContent || '',
-          parentId: dataParentId,
-        };
-      })
-    );
-
-    return dedupeCategories(options);
-  };
-
-  const findFieldTriggerByLabel = async (label) => {
-    for (const selector of CATEGORY_TRIGGER_DIRECT_SELECTORS) {
-      const locator = page.locator(selector);
-      const count = await locator.count().catch(() => 0);
-      if (!count) continue;
-
-      for (let index = 0; index < count; index += 1) {
-        const candidate = locator.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (visible) return candidate;
-      }
-    }
-
-    const escaped = label.replace(/"/g, '\\"');
-    const escapedPattern = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
-    const mainRoot = page.locator('main').first();
-    const mainRootVisible = await mainRoot.isVisible().catch(() => false);
-    const root = mainRootVisible ? mainRoot : page;
-
-    // Exact-match role searches
-    for (const role of ['button', 'menu', 'link', 'combobox']) {
-      const matches = root.getByRole(role, {
-        name: new RegExp('^' + escapedPattern + '\$', 'i'),
-      });
-      const count = await matches.count().catch(() => 0);
-      for (let index = 0; index < count; index += 1) {
-        const candidate = matches.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (visible) return candidate;
-      }
-    }
-
-    // Contains-match role searches (less strict)
-    for (const role of ['button', 'menu', 'link', 'combobox']) {
-      const matches = root.getByRole(role, {
-        name: new RegExp(escapedPattern, 'i'),
-      });
-      const count = await matches.count().catch(() => 0);
-      for (let index = 0; index < count; index += 1) {
-        const candidate = matches.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (visible) return candidate;
-      }
-    }
-
-    // Exact text in an ancestor button/link/div/label
-    const exactTextTrigger = root
-      .locator(
-        'xpath=//*[normalize-space(text())="' +
-          escaped +
-          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menu" or self::div or self::label][1]'
-      )
-      .first();
-    const exactTextVisible = await exactTextTrigger.isVisible().catch(() => false);
-    if (exactTextVisible) return exactTextTrigger;
-
-    // Exact text followed by a sibling interactive element
-    const labeledControlTrigger = root
-      .locator(
-        'xpath=//*[normalize-space(text())="' +
-          escaped +
-          '"]/following::*[(self::button or self::a or @role="button" or @role="link" or @role="menu" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu" or @aria-controls or @aria-expanded)][1]'
-      )
-      .first();
-    const labeledVisible = await labeledControlTrigger.isVisible().catch(() => false);
-    return labeledVisible ? labeledControlTrigger : null;
-  };
-
-  const getVisibleMenuScopes = async () => {
-    const scopes = [];
-    for (const selector of CATEGORY_MENU_SCOPE_SELECTORS) {
-      const locator = page.locator(selector);
-      const count = await locator.count().catch(() => 0);
-      for (let index = 0; index < count; index += 1) {
-        const candidate = locator.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (visible) scopes.push(candidate);
-      }
-    }
-    if (scopes.length > 0) {
-      return scopes;
-    }
-
-    const main = page.locator('main').first();
-    const mainVisible = await main.isVisible().catch(() => false);
-    return mainVisible ? [main] : [];
-  };
-
-  const scrapeMenuCategories = async () => {
-    for (const label of CATEGORY_FIELD_LABELS) {
-      const trigger = await findFieldTriggerByLabel(label);
-      if (!trigger) continue;
-      await helpers.click(trigger, { pauseBefore: false });
-      await wait(400);
-      break;
-    }
-
-    const scopes = await getVisibleMenuScopes();
-    if (scopes.length === 0) return [];
-
-    const categories = [];
-    for (const scope of scopes) {
-      for (const selector of CATEGORY_MENU_ITEM_SELECTORS) {
-        const locator = scope.locator(selector);
-        const count = await locator.count().catch(() => 0);
-        for (let index = 0; index < count; index += 1) {
-          const candidate = locator.nth(index);
-          const visible = await candidate.isVisible().catch(() => false);
-          if (!visible) continue;
-
-          const details = await candidate
-            .evaluate((element) => {
-              const idCandidate =
-                element.getAttribute('data-category-id') ||
-                element.getAttribute('data-id') ||
-                element.getAttribute('data-value') ||
-                element.getAttribute('value') ||
-                element.id ||
-                element.getAttribute('href') ||
-                '';
-              return {
-                id: idCandidate,
-                name: element.textContent || '',
-                parentId:
-                  element.getAttribute('data-parent-id') ||
-                  element.getAttribute('data-parent') ||
-                  '',
-              };
-            })
-            .catch(() => null);
-
-          if (details) {
-            categories.push(details);
-          }
-        }
-      }
-    }
-
-    return dedupeCategories(categories);
-  };
-
-  const CHILDREN_KEYS = ['children', 'subCategories', 'subcategories', 'sub', 'items', 'nodes', 'categories'];
-
-  const itemId = (item) =>
-    String(item.id ?? item.categoryId ?? item.Id ?? item.CategoryId ?? item.value ?? '');
-
-  const itemName = (item) =>
-    String(item.name ?? item.label ?? item.title ?? item.Name ?? item.Label ?? item.Title ?? '');
-
-  const itemParentId = (item) =>
-    String(item.parentId ?? item.parent ?? item.parentCategoryId ?? item.ParentId ?? item.ParentCategoryId ?? '');
-
-  const flattenCategoryTree = (items, parentId) => {
-    const flat = [];
-    if (!Array.isArray(items)) return flat;
-    for (const item of items) {
-      if (!item || typeof item !== 'object') continue;
-      const id = itemId(item);
-      const name = itemName(item);
-      if (!id && !name) continue;
-      const explicitParent = itemParentId(item);
-      flat.push({
-        id,
-        name,
-        parentId: explicitParent || parentId || '',
-      });
-      for (const key of CHILDREN_KEYS) {
-        if (Array.isArray(item[key]) && item[key].length > 0) {
-          flat.push(...flattenCategoryTree(item[key], id));
-        }
-      }
-    }
-    return flat;
-  };
-
-  const isCategoryLikeArray = (arr) =>
-    arr.length > 2 && arr.some((item) =>
-      item && typeof item === 'object' &&
-      (itemId(item) || itemName(item)) &&
-      (itemId(item) !== '' || itemName(item) !== '')
-    );
-
-  const deepSearchCategories = (obj, depth) => {
-    const all = [];
-    if (depth > 12 || !obj || typeof obj !== 'object') return all;
-    if (Array.isArray(obj)) {
-      if (isCategoryLikeArray(obj)) {
-        all.push(...flattenCategoryTree(obj, ''));
-      }
-      for (const item of obj) {
-        all.push(...deepSearchCategories(item, depth + 1));
-      }
-    } else {
-      // Check if this single object is a category tree root with children
-      for (const key of CHILDREN_KEYS) {
-        if (Array.isArray(obj[key]) && isCategoryLikeArray(obj[key])) {
-          all.push(...flattenCategoryTree(obj[key], itemId(obj) || ''));
-        }
-      }
-      for (const value of Object.values(obj)) {
-        all.push(...deepSearchCategories(value, depth + 1));
-      }
-    }
-    return all;
-  };
-
-  const scrapeNextDataCategories = async () => {
-    const rawCategories = await page.evaluate((childKeys) => {
-      const script = document.getElementById('__NEXT_DATA__');
-      if (!script || !script.textContent) return [];
-      try {
-        const data = JSON.parse(script.textContent);
-        const flat = [];
-        const getId = (item) =>
-          String(item.id ?? item.categoryId ?? item.Id ?? item.CategoryId ?? item.value ?? '');
-        const getName = (item) =>
-          String(item.name ?? item.label ?? item.title ?? item.Name ?? item.Label ?? item.Title ?? '');
-        const getParent = (item) =>
-          String(item.parentId ?? item.parent ?? item.parentCategoryId ?? item.ParentId ?? item.ParentCategoryId ?? '');
-        const flatten = (items, pId) => {
-          if (!Array.isArray(items)) return;
-          for (const item of items) {
-            if (!item || typeof item !== 'object') continue;
-            const id = getId(item);
-            const name = getName(item);
-            if (!id && !name) continue;
-            flat.push({ id, name, parentId: getParent(item) || pId || '' });
-            for (const key of childKeys) {
-              if (Array.isArray(item[key]) && item[key].length > 0) {
-                flatten(item[key], id);
-              }
-            }
-          }
-        };
-        const isCatLike = (arr) =>
-          arr.length > 2 && arr.some((i) => i && typeof i === 'object' && (getId(i) || getName(i)));
-        const search = (obj, depth) => {
-          if (depth > 12 || !obj || typeof obj !== 'object') return;
-          if (Array.isArray(obj)) {
-            if (isCatLike(obj)) flatten(obj, '');
-            for (const item of obj) search(item, depth + 1);
-          } else {
-            for (const key of childKeys) {
-              if (Array.isArray(obj[key]) && isCatLike(obj[key])) {
-                flatten(obj[key], getId(obj) || '');
-              }
-            }
-            for (const value of Object.values(obj)) search(value, depth + 1);
-          }
-        };
-        search(data, 0);
-        return flat;
-      } catch {
-        return [];
-      }
-    }, CHILDREN_KEYS).catch(() => []);
-    return dedupeCategories(rawCategories);
-  };
-
-  const extractNetworkCategories = (responses) => {
-    const raw = [];
-    for (const entry of responses) {
-      raw.push(...deepSearchCategories(entry.data, 0));
-    }
-    return dedupeCategories(raw);
-  };
-
-  const scrapeCategoryLinks = async () => {
-    const rawCategories = await page.evaluate(() => {
-      const links = document.querySelectorAll('a[href*="/category/"]');
-      const results = [];
-      for (const link of links) {
-        const href = link.getAttribute('href') || '';
-        const match = href.match(/\/category\/(\d+)/);
-        if (!match) continue;
-        const id = match[1];
-        const name = (link.textContent || '').trim();
-        // Walk up the DOM to find parent category via nesting (ul > li > ul > li pattern)
-        let parentId = '';
-        const parentLi = link.closest('li');
-        if (parentLi) {
-          const parentUl = parentLi.parentElement;
-          if (parentUl && (parentUl.tagName === 'UL' || parentUl.tagName === 'OL')) {
-            const grandparentLi = parentUl.closest('li');
-            if (grandparentLi && grandparentLi !== parentLi) {
-              const parentLink = grandparentLi.querySelector(':scope > a[href*="/category/"]');
-              if (parentLink) {
-                const parentMatch = (parentLink.getAttribute('href') || '').match(/\/category\/(\d+)/);
-                if (parentMatch) {
-                  parentId = parentMatch[1];
-                }
-              }
-            }
-          }
-        }
-        results.push({ id, name, parentId });
-      }
-      return results;
-    }).catch(() => []);
-    return dedupeCategories(rawCategories);
-  };
-
-  const scrapeMenuCategoriesRecursive = async () => {
-    const MAX_DEPTH = 2;
-    const SCRAPE_DEADLINE = Date.now() + 240_000;
-    const allCategories = [];
-
-    const hasTimeLeft = () => Date.now() < SCRAPE_DEADLINE;
-
-    const findTrigger = async () => {
-      for (const label of CATEGORY_FIELD_LABELS) {
-        const t = await findFieldTriggerByLabel(label);
-        if (t) return t;
-      }
-      return null;
-    };
-
-    const openPicker = async () => {
-      const t = await findTrigger();
-      if (!t) return false;
-      await helpers.click(t, { pauseBefore: false });
-      await wait(800);
-      return true;
-    };
-
-    const closePicker = async () => {
-      await page.keyboard.press('Escape');
-      await wait(300);
-      await page.locator('body').click({ position: { x: 5, y: 5 }, force: true }).catch(() => undefined);
-      await wait(200);
-    };
-
-    // Broad DOM search for any interactive elements that look like category items
-    const scrapeVisibleItemsBroad = async () => {
-      return page.evaluate(() => {
-        const items = [];
-        const seenText = new Set();
-        // Very broad selector — any clickable/interactive element
-        const selectors = [
-          '[role="menuitem"]', '[role="menuitemradio"]', '[role="option"]',
-          '[role="treeitem"]', '[role="radio"]', '[role="link"]',
-          'li a', 'li button', 'li [role="button"]',
-          '[data-category-id]', '[data-id]',
-          'a[href*="/category/"]',
-        ];
-        for (const selector of selectors) {
-          const elements = document.querySelectorAll(selector);
-          for (const el of elements) {
-            if (!el.checkVisibility || !el.checkVisibility()) {
-              // Fallback visibility check
-              const rect = el.getBoundingClientRect();
-              if (rect.width === 0 || rect.height === 0) continue;
-              const style = window.getComputedStyle(el);
-              if (style.display === 'none' || style.visibility === 'hidden') continue;
-            }
-            const name = (el.textContent || '').replace(/\s+/g, ' ').trim();
-            if (!name || name.length > 100 || seenText.has(name)) continue;
-            seenText.add(name);
-            const href = el.getAttribute('href') || '';
-            const hrefMatch = href.match(/\/category\/(\d+)/);
-            const id =
-              el.getAttribute('data-category-id') ||
-              el.getAttribute('data-id') ||
-              el.getAttribute('data-value') ||
-              el.getAttribute('value') ||
-              (hrefMatch ? hrefMatch[1] : '') ||
-              el.id ||
-              '';
-            items.push({ id, name });
-          }
-        }
-        return items;
-      }).catch(() => []);
-    };
-
-    // Click an element containing the exact text on the page
-    const clickByExactText = async (name) => {
-      const mainRoot = page.locator('main').first();
-      const mainRootVisible = await mainRoot.isVisible().catch(() => false);
-      const root = mainRootVisible ? mainRoot : page;
-
-      // Try getByText with exact match (catches any element type)
-      const byText = root.getByText(name, { exact: true }).first();
-      const byTextVisible = await byText.isVisible().catch(() => false);
-      if (byTextVisible) {
-        await helpers.click(byText, { pauseBefore: false });
-        await wait(500);
-        return true;
-      }
-
-      // Try role-based
-      for (const role of ['menuitem', 'menuitemradio', 'option', 'link', 'button', 'treeitem']) {
-        const escaped = name.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
-        const matches = root.getByRole(role, { name: new RegExp('^' + escaped + '\$', 'i') });
-        const count = await matches.count().catch(() => 0);
-        for (let i = 0; i < count; i++) {
-          const el = matches.nth(i);
-          if (await el.isVisible().catch(() => false)) {
-            await helpers.click(el, { pauseBefore: false });
-            await wait(500);
-            return true;
-          }
-        }
-      }
-
-      return false;
-    };
-
-    // Use __NEXT_DATA__ top-level categories as known starting point
-    const knownTopLevel = nextDataCategories.length > 0
-      ? nextDataCategories.map((c) => ({ id: normalizeCategoryId(c.id), name: c.name }))
-      : [];
-
-    if (knownTopLevel.length === 0) {
-      log('tradera.category.recursive.skip', { reason: 'no known top-level categories' });
-      return [];
-    }
-
-    // Record top-level
-    for (const item of knownTopLevel) {
-      if (item.id) {
-        allCategories.push({ id: item.id, name: item.name, parentId: '0' });
-      }
-    }
-
-    // Diagnostic: capture what the picker looks like after opening
-    if (!(await openPicker())) {
-      log('tradera.category.recursive.no-trigger', {});
-      return dedupeCategories(allCategories);
-    }
-
-    const pickerDiag = await page.evaluate(() => {
-      const menus = document.querySelectorAll('[role="menu"]');
-      const listboxes = document.querySelectorAll('[role="listbox"]');
-      const dialogs = document.querySelectorAll('[role="dialog"]');
-      const trees = document.querySelectorAll('[role="tree"]');
-      const visibleInteractive = [];
-      const all = document.querySelectorAll('button, a, [role="menuitem"], [role="option"], [role="treeitem"], [role="button"], [role="link"], li');
-      for (const el of all) {
-        const rect = el.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) continue;
-        const style = window.getComputedStyle(el);
-        if (style.display === 'none' || style.visibility === 'hidden') continue;
-        const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
-        if (text && text.length < 50) {
-          visibleInteractive.push({ tag: el.tagName, role: el.getAttribute('role') || '', text: text.substring(0, 40) });
-        }
-      }
-      return {
-        menuCount: menus.length,
-        listboxCount: listboxes.length,
-        dialogCount: dialogs.length,
-        treeCount: trees.length,
-        visibleInteractive: visibleInteractive.slice(0, 15),
-      };
-    }).catch(() => ({ error: 'diag failed' }));
-
-    log('tradera.category.recursive.picker-state', pickerDiag);
-    await closePicker();
-
-    // For each top-level category, open picker, click by name, scrape children
-    for (const topItem of knownTopLevel) {
-      if (!topItem.id || !hasTimeLeft()) continue;
-
-      if (!(await openPicker())) break;
-
-      const clicked = await clickByExactText(topItem.name);
-      if (!clicked) {
-        log('tradera.category.recursive.click-failed', { name: topItem.name, id: topItem.id });
-        await closePicker();
-        continue;
-      }
-
-      // Scrape whatever appeared after clicking
-      const childItems = await scrapeVisibleItemsBroad();
-      // Filter: remove items matching top-level category names
-      const topNames = new Set(knownTopLevel.map((t) => t.name));
-      const children = childItems.filter((c) => !topNames.has(c.name) && c.name !== topItem.name);
-
-      if (children.length > 0) {
-        log('tradera.category.recursive.children', {
-          parent: topItem.name,
-          parentId: topItem.id,
-          count: children.length,
-          sample: children.slice(0, 5).map((c) => c.name),
-        });
-      }
-
-      for (const child of children) {
-        const childId = normalizeCategoryId(child.id) || child.name;
-        if (!allCategories.some((c) => c.id === childId)) {
-          allCategories.push({
-            id: childId,
-            name: child.name,
-            parentId: topItem.id,
-          });
-        }
-      }
-
-      await closePicker();
-
-      // Recurse into children (depth 2) for up to 5 children per parent
-      if (MAX_DEPTH > 1 && hasTimeLeft()) {
-        const childrenToRecurse = children.slice(0, 5);
-        for (const child of childrenToRecurse) {
-          if (!hasTimeLeft()) break;
-          const childId = normalizeCategoryId(child.id) || child.name;
-          if (!(await openPicker())) break;
-
-          // Click top-level first
-          const clickedTop = await clickByExactText(topItem.name);
-          if (!clickedTop) { await closePicker(); continue; }
-
-          // Then click child
-          const clickedChild = await clickByExactText(child.name);
-          if (!clickedChild) { await closePicker(); continue; }
-
-          const grandchildren = await scrapeVisibleItemsBroad();
-          const parentNames = new Set([...topNames, ...children.map((c) => c.name)]);
-          const newGrandchildren = grandchildren.filter((g) => !parentNames.has(g.name) && g.name !== child.name);
-
-          for (const gc of newGrandchildren) {
-            const gcId = normalizeCategoryId(gc.id) || gc.name;
-            if (!allCategories.some((c) => c.id === gcId)) {
-              allCategories.push({
-                id: gcId,
-                name: gc.name,
-                parentId: childId,
-              });
-            }
-          }
-
-          await closePicker();
-        }
-      }
-    }
-
-    return dedupeCategories(allCategories);
-  };
-
-  const scrapeEmbeddedScriptCategories = async () => {
-    const rawCategories = await page.evaluate((childKeys) => {
-      const getId = (item) =>
-        String(item.id ?? item.categoryId ?? item.Id ?? item.CategoryId ?? item.value ?? '');
-      const getName = (item) =>
-        String(item.name ?? item.label ?? item.title ?? item.Name ?? item.Label ?? item.Title ?? '');
-      const getParent = (item) =>
-        String(item.parentId ?? item.parent ?? item.parentCategoryId ?? item.ParentId ?? item.ParentCategoryId ?? '');
-      const flatten = (items, pId, out) => {
-        if (!Array.isArray(items)) return;
-        for (const item of items) {
-          if (!item || typeof item !== 'object') continue;
-          const id = getId(item);
-          const name = getName(item);
-          if (!id && !name) continue;
-          out.push({ id, name, parentId: getParent(item) || pId || '' });
-          for (const key of childKeys) {
-            if (Array.isArray(item[key]) && item[key].length > 0) {
-              flatten(item[key], id, out);
-            }
-          }
-        }
-      };
-
-      const found = [];
-
-      // Search inline script tags for JSON containing category arrays
-      const scripts = document.querySelectorAll('script:not([src])');
-      for (const script of scripts) {
-        const text = script.textContent || '';
-        if (text.length < 50 || text.length > 5000000) continue;
-        // Look for keys that might contain category arrays
-        const patterns = [
-          /"(?:categories|categoryTree|allCategories|categoryList|subCategories|menuItems|navigationItems)":\s*\[/gi,
-        ];
-        for (const pattern of patterns) {
-          let match;
-          while ((match = pattern.exec(text)) !== null) {
-            const arrStart = text.indexOf('[', match.index);
-            if (arrStart === -1) continue;
-            // Find matching bracket
-            let depth = 0;
-            let arrEnd = arrStart;
-            for (let i = arrStart; i < text.length && i < arrStart + 2000000; i++) {
-              if (text[i] === '[') depth++;
-              if (text[i] === ']') {
-                depth--;
-                if (depth === 0) { arrEnd = i + 1; break; }
-              }
-            }
-            if (depth !== 0) continue;
-            try {
-              const arr = JSON.parse(text.substring(arrStart, arrEnd));
-              if (Array.isArray(arr) && arr.length > 2) {
-                flatten(arr, '', found);
-              }
-            } catch { /* not valid JSON */ }
-          }
-        }
-      }
-
-      return found;
-    }, CHILDREN_KEYS).catch(() => []);
-    return dedupeCategories(rawCategories);
-  };
-
-  const scrapeReactStateCategories = async () => {
-    const rawCategories = await page.evaluate((childKeys) => {
-      const getId = (item) =>
-        String(item.id ?? item.categoryId ?? item.Id ?? item.CategoryId ?? item.value ?? '');
-      const getName = (item) =>
-        String(item.name ?? item.label ?? item.title ?? item.Name ?? item.Label ?? item.Title ?? '');
-      const getParent = (item) =>
-        String(item.parentId ?? item.parent ?? item.parentCategoryId ?? item.ParentId ?? item.ParentCategoryId ?? '');
-      const flatten = (items, pId, out) => {
-        if (!Array.isArray(items)) return;
-        for (const item of items) {
-          if (!item || typeof item !== 'object') continue;
-          const id = getId(item);
-          const name = getName(item);
-          if (!id && !name) continue;
-          out.push({ id, name, parentId: getParent(item) || pId || '' });
-          for (const key of childKeys) {
-            if (Array.isArray(item[key]) && item[key].length > 0) {
-              flatten(item[key], id, out);
-            }
-          }
-        }
-      };
-
-      const found = [];
-      try {
-        const root = document.getElementById('__next');
-        if (!root) return found;
-        const fiberKey = Object.keys(root).find((k) => k.startsWith('__reactFiber$'));
-        if (!fiberKey) return found;
-        const visited = new WeakSet();
-        const walkFiber = (fiber, depth) => {
-          if (!fiber || depth > 40 || visited.has(fiber)) return;
-          visited.add(fiber);
-          // Check memoizedProps for category-like arrays
-          const props = fiber.memoizedProps;
-          if (props && typeof props === 'object') {
-            for (const val of Object.values(props)) {
-              if (Array.isArray(val) && val.length > 5) {
-                const sample = val[0];
-                if (sample && typeof sample === 'object' && (getId(sample) || getName(sample))) {
-                  flatten(val, '', found);
-                }
-              }
-            }
-          }
-          walkFiber(fiber.child, depth + 1);
-          walkFiber(fiber.sibling, depth + 1);
-        };
-        walkFiber(root[fiberKey], 0);
-      } catch { /* fiber access failed */ }
-      return found;
-    }, CHILDREN_KEYS).catch(() => []);
-    return dedupeCategories(rawCategories);
-  };
-
-  const runPageDiagnostics = async () => {
-    return page.evaluate(() => {
-      const selectCount = document.querySelectorAll('select').length;
-      const roleMenuCount = document.querySelectorAll('[role="menu"]').length;
-      const roleListboxCount = document.querySelectorAll('[role="listbox"]').length;
-      const roleComboboxCount = document.querySelectorAll('[role="combobox"]').length;
-      const roleButtonCount = document.querySelectorAll('[role="button"]').length;
-      const categoryLinks = document.querySelectorAll('a[href*="/category/"]').length;
-      const hasNextData = !!document.getElementById('__NEXT_DATA__');
-      const headings = Array.from(document.querySelectorAll('h1, h2, h3'))
-        .slice(0, 5)
-        .map((h) => (h.textContent || '').trim());
-      const bodyClasses = document.body ? document.body.className : '';
-      return {
-        pageUrl: window.location.href,
-        title: document.title,
-        hasMain: !!document.querySelector('main'),
-        hasForm: !!document.querySelector('form'),
-        selectCount,
-        roleMenuCount,
-        roleListboxCount,
-        roleComboboxCount,
-        roleButtonCount,
-        categoryLinks,
-        hasNextData,
-        headings,
-        bodyClasses,
-      };
-    }).catch(() => ({ error: 'diagnostics failed' }));
-  };
 
   const captureDebugArtifacts = async (label, state) => {
     if (!artifacts) return;
@@ -1021,281 +44,394 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     }
   };
 
-  // Set up network interception for category API responses
-  const networkCategoryResponses = [];
-  page.on('response', async (response) => {
-    try {
-      const url = response.url().toLowerCase();
-      const isCategoryLike = url.includes('categor') || url.includes('taxonomy');
-      const contentType = (response.headers()['content-type'] || '');
-      if (isCategoryLike && response.status() === 200 && contentType.includes('json')) {
-        const body = await response.json();
-        networkCategoryResponses.push({ url: response.url(), data: body });
+  await page.goto(configuredCategoriesUrl, { waitUntil: 'domcontentloaded' });
+  await wait(600);
+
+  const crawlResult = await page.evaluate(
+    async ({ seedUrl, rootSectionSuffixes, stopTexts, blockedUrlHints, blockedTextHints }) => {
+      const MAX_PAGES = 1200;
+      const MAX_CATEGORIES = 5000;
+      const parser = new DOMParser();
+
+      const toText = (value) =>
+        typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+
+      const toLowerText = (value) => toText(value).toLowerCase();
+
+      const normalizeCategoryId = (candidate) => {
+        if (candidate == null) return '';
+        const normalized = toText(String(candidate));
+        if (!normalized) return '';
+        const match = normalized.match(/\/category\/(\d+)(?:[/?#]|$)/i);
+        if (match && match[1]) {
+          return match[1];
+        }
+        const digits = normalized.match(/\b(\d{2,})\b/);
+        return digits && digits[1] ? digits[1] : normalized;
+      };
+
+      const resolveCategoryUrl = (href, baseUrl) => {
+        try {
+          const url = new URL(href, baseUrl);
+          if (!/\/category\/\d+/i.test(url.pathname)) {
+            return null;
+          }
+          url.hash = '';
+          return url.toString();
+        } catch {
+          return null;
+        }
+      };
+
+      const isBlockedDocument = (doc, currentUrl) => {
+        const normalizedUrl = toLowerText(currentUrl);
+        if (blockedUrlHints.some((hint) => normalizedUrl.includes(hint))) {
+          return true;
+        }
+
+        const title = toLowerText(doc.title);
+        const heading = toLowerText(
+          doc.querySelector('h1, [role="heading"]')?.textContent ?? ''
+        );
+        const bodyText = toLowerText(doc.body?.textContent ?? '').slice(0, 4000);
+        const haystack = [title, heading, bodyText].filter(Boolean).join(' ');
+        return blockedTextHints.some((hint) => haystack.includes(hint));
+      };
+
+      const dedupeCategories = (categories) => {
+        const byId = new Map();
+        for (const category of categories) {
+          const id = normalizeCategoryId(category?.id);
+          const name = toText(category?.name);
+          const parentId = toText(category?.parentId || '') || '0';
+          const url = typeof category?.url === 'string' ? category.url : null;
+          if (!id || !name) continue;
+          if (!byId.has(id)) {
+            byId.set(id, { id, name, parentId, url });
+          }
+        }
+        return Array.from(byId.values());
+      };
+
+      const fetchDocument = async (url) => {
+        const response = await fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+          redirect: 'follow',
+          cache: 'no-store',
+        });
+        const html = await response.text();
+        return {
+          requestedUrl: url,
+          finalUrl: response.url || url,
+          status: response.status,
+          html,
+          doc: parser.parseFromString(html, 'text/html'),
+        };
+      };
+
+      const cleanRootSectionName = (value) => {
+        let name = toText(value);
+        for (const suffix of rootSectionSuffixes) {
+          const escaped = suffix.replace(/[.*+?^\${}()|[\]\\]/g, '\\$&');
+          name = name.replace(new RegExp('\\s*' + escaped + '\\s*$', 'i'), '').trim();
+        }
+        return name;
+      };
+
+      const extractRootCategories = (doc, baseUrl) => {
+        const anchors = Array.from(doc.querySelectorAll('a[href*="/category/"]'));
+        const results = [];
+
+        for (const anchor of anchors) {
+          const rawText = toText(anchor.textContent || '');
+          const normalizedText = toLowerText(rawText);
+          if (!rootSectionSuffixes.some((suffix) => normalizedText.endsWith(suffix))) {
+            continue;
+          }
+
+          const url = resolveCategoryUrl(anchor.getAttribute('href') || '', baseUrl);
+          const id = normalizeCategoryId(url);
+          const name = cleanRootSectionName(rawText);
+          if (!id || !name || name.length > 120) {
+            continue;
+          }
+
+          results.push({
+            id,
+            name,
+            parentId: '0',
+            url,
+          });
+        }
+
+        return dedupeCategories(results);
+      };
+
+      const isStopNode = (node, stopSet) => {
+        if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+          return false;
+        }
+        const element = node;
+        const text = toLowerText(element.textContent || '');
+        if (!text || !stopSet.has(text)) {
+          return false;
+        }
+
+        const tag = (element.tagName || '').toLowerCase();
+        return (
+          tag === 'button' ||
+          tag === 'label' ||
+          tag === 'h1' ||
+          tag === 'h2' ||
+          tag === 'h3' ||
+          tag === 'h4' ||
+          tag === 'span' ||
+          tag === 'div' ||
+          tag === 'p' ||
+          element.getAttribute('role') === 'button'
+        );
+      };
+
+      const extractDirectChildren = (doc, baseUrl, currentCategory) => {
+        const main = doc.querySelector('main') || doc.body;
+        if (!main) {
+          return [];
+        }
+
+        const stopSet = new Set(stopTexts.map((value) => toLowerText(value)));
+        const normalizedCurrentName = toLowerText(currentCategory.name);
+        const ancestorIds = new Set([currentCategory.id, ...(currentCategory.ancestorIds || [])]);
+        const headingCandidates = Array.from(main.querySelectorAll('h1, [role="heading"]'));
+        const targetHeading =
+          headingCandidates.find(
+            (heading) => toLowerText(heading.textContent || '') === normalizedCurrentName
+          ) ||
+          headingCandidates[0] ||
+          null;
+
+        const children = [];
+        const seenIds = new Set();
+        const walker = doc.createTreeWalker(main, NodeFilter.SHOW_ELEMENT);
+        let collecting = targetHeading === null;
+        let node = walker.currentNode;
+
+        while (node) {
+          if (!collecting) {
+            if (node === targetHeading) {
+              collecting = true;
+            }
+            node = walker.nextNode();
+            continue;
+          }
+
+          if (node !== targetHeading && isStopNode(node, stopSet)) {
+            break;
+          }
+
+          const element = node;
+          if ((element.tagName || '').toLowerCase() === 'a') {
+            const href = element.getAttribute('href') || '';
+            const url = resolveCategoryUrl(href, baseUrl);
+            const id = normalizeCategoryId(url);
+            const name = toText(element.textContent || '');
+
+            if (
+              id &&
+              name &&
+              !ancestorIds.has(id) &&
+              toLowerText(name) !== normalizedCurrentName &&
+              !seenIds.has(id)
+            ) {
+              seenIds.add(id);
+              children.push({
+                id,
+                name,
+                parentId: currentCategory.id,
+                url,
+              });
+            }
+          }
+
+          node = walker.nextNode();
+        }
+
+        return dedupeCategories(children);
+      };
+
+      const seed = await fetchDocument(seedUrl);
+      const diagnostics = {
+        seedUrl,
+        seedFinalUrl: seed.finalUrl,
+        seedStatus: seed.status,
+        seedTitle: toText(seed.doc.title),
+      };
+
+      if (seed.status >= 400 || isBlockedDocument(seed.doc, seed.finalUrl)) {
+        return {
+          categories: [],
+          categorySource: 'public-categories',
+          scrapedFrom: seed.finalUrl,
+          diagnostics: {
+            ...diagnostics,
+            blocked: true,
+          },
+          crawlStats: {
+            pagesVisited: 1,
+            rootCount: 0,
+          },
+        };
       }
-    } catch {
-      // Response might not be JSON — safe to ignore.
+
+      const rootCategories = extractRootCategories(seed.doc, seed.finalUrl);
+      const categoriesById = new Map();
+      const queue = [];
+      const visitedPages = new Set();
+
+      for (const rootCategory of rootCategories) {
+        categoriesById.set(rootCategory.id, rootCategory);
+        queue.push({
+          id: rootCategory.id,
+          name: rootCategory.name,
+          url: rootCategory.url,
+          ancestorIds: [],
+        });
+      }
+
+      let pagesVisited = 1;
+      const pageErrors = [];
+
+      while (queue.length > 0 && visitedPages.size < MAX_PAGES && categoriesById.size < MAX_CATEGORIES) {
+        const currentCategory = queue.shift();
+        if (!currentCategory?.url || visitedPages.has(currentCategory.id)) {
+          continue;
+        }
+
+        visitedPages.add(currentCategory.id);
+
+        let pageResult;
+        try {
+          pageResult = await fetchDocument(currentCategory.url);
+        } catch (error) {
+          pageErrors.push({
+            categoryId: currentCategory.id,
+            categoryName: currentCategory.name,
+            error: String(error),
+          });
+          continue;
+        }
+
+        pagesVisited += 1;
+
+        if (pageResult.status >= 400 || isBlockedDocument(pageResult.doc, pageResult.finalUrl)) {
+          pageErrors.push({
+            categoryId: currentCategory.id,
+            categoryName: currentCategory.name,
+            finalUrl: pageResult.finalUrl,
+            blocked: true,
+            status: pageResult.status,
+          });
+          continue;
+        }
+
+        const children = extractDirectChildren(pageResult.doc, pageResult.finalUrl, currentCategory);
+        for (const child of children) {
+          if (!categoriesById.has(child.id)) {
+            categoriesById.set(child.id, child);
+            queue.push({
+              id: child.id,
+              name: child.name,
+              url: child.url,
+              ancestorIds: [...currentCategory.ancestorIds, currentCategory.id],
+            });
+            continue;
+          }
+
+          const existing = categoriesById.get(child.id);
+          if (
+            existing &&
+            (!existing.parentId || existing.parentId === '0') &&
+            child.parentId &&
+            child.parentId !== '0'
+          ) {
+            categoriesById.set(child.id, {
+              ...existing,
+              parentId: child.parentId,
+              url: existing.url || child.url,
+            });
+          }
+        }
+      }
+
+      return {
+        categories: dedupeCategories(Array.from(categoriesById.values())).map(({ url, ...category }) => category),
+        categorySource: 'public-categories',
+        scrapedFrom: seed.finalUrl,
+        diagnostics,
+        crawlStats: {
+          pagesVisited,
+          rootCount: rootCategories.length,
+          pageErrors: pageErrors.slice(0, 20),
+        },
+      };
+    },
+    {
+      seedUrl: configuredCategoriesUrl,
+      rootSectionSuffixes: ROOT_SECTION_SUFFIXES,
+      stopTexts: STOP_TEXTS,
+      blockedUrlHints: BLOCKED_URL_HINTS,
+      blockedTextHints: BLOCKED_TEXT_HINTS,
     }
-  });
+  );
 
-  await acceptCookiesIfPresent().catch(() => undefined);
-  await wait(400);
-
-  const initialAuthDiagnostics = await readAuthDiagnostics();
-  if (initialAuthDiagnostics.authRequired) {
-    await captureDebugArtifacts('tradera-category-auth-required', {
-      ...initialAuthDiagnostics,
-      configuredListingUrl,
-    });
-    throw new Error(
-      'AUTH_REQUIRED: ' +
-        (initialAuthDiagnostics.recoveryMessage ||
-          'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.')
-    );
-  }
-
-  // Strategy 1: Try __NEXT_DATA__ extraction (instant, no interaction needed)
-  const nextDataCategories = await scrapeNextDataCategories();
-  const nextDataHasHierarchy = nextDataCategories.some((c) => c.parentId && c.parentId !== '0');
-  log('tradera.category.scrape.nextdata', {
-    count: nextDataCategories.length,
-    hasHierarchy: nextDataHasHierarchy,
-    currentUrl: page.url(),
-  });
-  if (nextDataCategories.length > 0 && nextDataHasHierarchy) {
-    // __NEXT_DATA__ has full hierarchy — return immediately
+  if (!crawlResult || !Array.isArray(crawlResult.categories)) {
+    const state = {
+      configuredCategoriesUrl,
+      currentUrl: page.url(),
+      crawlResult,
+    };
+    log('tradera.category.scrape.invalid', state);
+    await captureDebugArtifacts('tradera-category-invalid', state);
     const result = {
-      categories: nextDataCategories,
-      categorySource: 'nextdata',
+      categories: [],
+      categorySource: 'public-categories',
       scrapedFrom: page.url(),
+      diagnostics: state,
     };
     emit('result', result);
     return result;
   }
-  // If __NEXT_DATA__ has flat categories, skip to recursive picker (strategies 2-7 return 0)
-  if (nextDataCategories.length > 0 && !nextDataHasHierarchy) {
-    log('tradera.category.scrape.flat-shortcut', {
-      reason: '__NEXT_DATA__ has flat categories, skipping to recursive picker',
-      count: nextDataCategories.length,
-    });
 
-    let categories = nextDataCategories;
-    let categorySource = 'nextdata';
+  const withParent = crawlResult.categories.filter((category) => category.parentId && category.parentId !== '0');
+  const roots = crawlResult.categories.filter((category) => !category.parentId || category.parentId === '0');
 
-    // Strategy 8: Recursive picker (the only strategy that can discover hierarchy interactively)
-    const recursiveCategories = await scrapeMenuCategoriesRecursive().catch((err) => {
-      log('tradera.category.scrape.recursive.error', { error: String(err) });
-      return [];
-    });
-    log('tradera.category.scrape.recursive.done', {
-      count: recursiveCategories.length,
-      withParent: recursiveCategories.filter((c) => c.parentId && c.parentId !== '0').length,
-    });
-    if (recursiveCategories.length > 0 && recursiveCategories.some((c) => c.parentId && c.parentId !== '0')) {
-      categories = recursiveCategories;
-      categorySource = 'recursive';
-    }
-
-    const withParent = categories.filter((c) => c.parentId && c.parentId !== '0');
-    const roots = categories.filter((c) => !c.parentId || c.parentId === '0');
-    log('tradera.category.scrape.result', {
-      source: categorySource,
-      total: categories.length,
-      withParentCount: withParent.length,
-      rootCount: roots.length,
-      sampleRoots: roots.slice(0, 3),
-      sampleChildren: withParent.slice(0, 3),
-    });
-
-    const result = { categories, categorySource, scrapedFrom: page.url() };
-    emit('result', result);
-    return result;
-  }
-
-  // Full strategy chain for non-__NEXT_DATA__ scenarios
-  // Wait for form readiness (skip if __NEXT_DATA__ already gave us categories)
-  if (nextDataCategories.length === 0) {
-    const deadline = Date.now() + 30_000;
-    while (Date.now() < deadline) {
-      const hasSelect = Boolean(await findCategorySelect());
-      const hasCategorySection = Boolean(await firstVisible(CATEGORY_SECTION_READY_SELECTORS));
-      if (hasSelect || hasCategorySection) {
-        break;
-      }
-      let hasTrigger = false;
-      for (const label of CATEGORY_FIELD_LABELS) {
-        const trigger = await findFieldTriggerByLabel(label);
-        if (trigger) {
-          hasTrigger = true;
-          break;
-        }
-      }
-      if (hasTrigger) {
-        break;
-      }
-      const linkCount = await page.locator('a[href*="/category/"]').count().catch(() => 0);
-      if (linkCount > 3) {
-        break;
-      }
-      await wait(400);
-    }
-  }
-
-  // Re-check auth after readiness wait (page may have redirected)
-  const postWaitAuth = await readAuthDiagnostics();
-  if (postWaitAuth.authRequired) {
-    await captureDebugArtifacts('tradera-category-auth-required', {
-      ...postWaitAuth,
-      configuredListingUrl,
-    });
-    throw new Error(
-      'AUTH_REQUIRED: ' +
-        (postWaitAuth.recoveryMessage ||
-          'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.')
-    );
-  }
-
-  // Strategy 2: Native <select> scrape
-  const selectCategories = await scrapeSelectCategories();
-  log('tradera.category.scrape.select', {
-    count: selectCategories.length,
-    currentUrl: page.url(),
+  log('tradera.category.scrape.result', {
+    source: crawlResult.categorySource,
+    total: crawlResult.categories.length,
+    withParentCount: withParent.length,
+    rootCount: roots.length,
+    crawlStats: crawlResult.crawlStats,
+    sampleRoots: roots.slice(0, 5),
+    sampleChildren: withParent.slice(0, 5),
   });
 
-  // Strategy 3: Menu/trigger-based scrape (clicks the category picker open)
-  const menuCategories = selectCategories.length > 0 ? [] : await scrapeMenuCategories();
-  if (selectCategories.length === 0) {
-    log('tradera.category.scrape.menu', {
-      count: menuCategories.length,
-      currentUrl: page.url(),
-    });
-  }
-
-  let categories =
-    selectCategories.length > 0 ? selectCategories :
-    menuCategories.length > 0 ? menuCategories :
-    nextDataCategories;
-  let categorySource =
-    selectCategories.length > 0 ? 'select' :
-    menuCategories.length > 0 ? 'menu' :
-    nextDataCategories.length > 0 ? 'nextdata' : 'none';
-
-  // Strategy 4: Check network-intercepted API responses (from page load + trigger click)
-  if (categories.length === 0 && networkCategoryResponses.length > 0) {
-    categories = extractNetworkCategories(networkCategoryResponses);
-    if (categories.length > 0) {
-      categorySource = 'network';
-    }
-    log('tradera.category.scrape.network', {
-      count: categories.length,
-      interceptedResponses: networkCategoryResponses.length,
-      urls: networkCategoryResponses.map((r) => r.url),
-    });
-  }
-
-  // Strategy 5: Link-based scraping (find <a href="*/category/*"> links)
-  if (categories.length === 0) {
-    categories = await scrapeCategoryLinks();
-    if (categories.length > 0) {
-      categorySource = 'links';
-    }
-    log('tradera.category.scrape.links', {
-      count: categories.length,
-      currentUrl: page.url(),
-    });
-  }
-
-  // Strategy 6: Search inline <script> tags for embedded category JSON
-  if (categories.length === 0 || categories.every((c) => !c.parentId || c.parentId === '0')) {
-    const scriptCategories = await scrapeEmbeddedScriptCategories();
-    log('tradera.category.scrape.scripts', {
-      count: scriptCategories.length,
-      withParent: scriptCategories.filter((c) => c.parentId && c.parentId !== '0').length,
-    });
-    if (scriptCategories.length > 0 && scriptCategories.some((c) => c.parentId && c.parentId !== '0')) {
-      categories = scriptCategories;
-      categorySource = 'scripts';
-    }
-  }
-
-  // Strategy 7: Walk React fiber tree for category state/props
-  if (categories.length === 0 || categories.every((c) => !c.parentId || c.parentId === '0')) {
-    const reactCategories = await scrapeReactStateCategories();
-    log('tradera.category.scrape.react', {
-      count: reactCategories.length,
-      withParent: reactCategories.filter((c) => c.parentId && c.parentId !== '0').length,
-    });
-    if (reactCategories.length > 0 && reactCategories.some((c) => c.parentId && c.parentId !== '0')) {
-      categories = reactCategories;
-      categorySource = 'react';
-    }
-  }
-
-  // Strategy 8: Recursive picker interaction — click through each level to discover children
-  if (categories.every((c) => !c.parentId || c.parentId === '0')) {
-    log('tradera.category.scrape.recursive.start', {
-      flatCategoryCount: categories.length,
-      reason: 'all categories are root-level, attempting interactive drill-down',
-    });
-    const recursiveCategories = await scrapeMenuCategoriesRecursive().catch((err) => {
-      log('tradera.category.scrape.recursive.error', { error: String(err) });
-      return [];
-    });
-    log('tradera.category.scrape.recursive.done', {
-      count: recursiveCategories.length,
-      withParent: recursiveCategories.filter((c) => c.parentId && c.parentId !== '0').length,
-    });
-    if (recursiveCategories.length > 0 && recursiveCategories.some((c) => c.parentId && c.parentId !== '0')) {
-      categories = recursiveCategories;
-      categorySource = 'recursive';
-    }
-  }
-
-  // If still empty, capture full diagnostics
-  if (categories.length === 0) {
-    const emptyAuthDiagnostics = await readAuthDiagnostics();
-    if (emptyAuthDiagnostics.authRequired) {
-      log('tradera.category.scrape.auth-required', {
-        ...emptyAuthDiagnostics,
-        configuredListingUrl,
-      });
-      await captureDebugArtifacts('tradera-category-auth-required', {
-        ...emptyAuthDiagnostics,
-        configuredListingUrl,
-      });
-      throw new Error(
-        'AUTH_REQUIRED: ' +
-          (emptyAuthDiagnostics.recoveryMessage ||
-            'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.')
-      );
-    }
-
-    const diagnostics = await runPageDiagnostics();
+  if (crawlResult.categories.length === 0) {
     const state = {
-      ...emptyAuthDiagnostics,
-      configuredListingUrl,
-      diagnostics,
-      networkIntercepted: networkCategoryResponses.length,
+      configuredCategoriesUrl,
+      currentUrl: page.url(),
+      diagnostics: crawlResult.diagnostics,
+      crawlStats: crawlResult.crawlStats,
     };
     log('tradera.category.scrape.empty', state);
     await captureDebugArtifacts('tradera-category-empty', state);
   }
 
-  // Log result summary for diagnostics
-  const withParent = categories.filter((c) => c.parentId && c.parentId !== '0');
-  const roots = categories.filter((c) => !c.parentId || c.parentId === '0');
-  log('tradera.category.scrape.result', {
-    source: categorySource,
-    total: categories.length,
-    withParentCount: withParent.length,
-    rootCount: roots.length,
-    sampleRoots: roots.slice(0, 3),
-    sampleChildren: withParent.slice(0, 3),
-  });
-
   const result = {
-    categories,
-    categorySource,
-    scrapedFrom: page.url(),
+    categories: crawlResult.categories,
+    categorySource: crawlResult.categorySource || 'public-categories',
+    scrapedFrom: crawlResult.scrapedFrom || page.url(),
+    diagnostics: crawlResult.diagnostics || null,
+    crawlStats: crawlResult.crawlStats || null,
   };
   emit('result', result);
   return result;

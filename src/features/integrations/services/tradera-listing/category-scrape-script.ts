@@ -26,6 +26,12 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       ? input.traderaConfig.categoriesUrl.trim()
       : DEFAULT_CATEGORIES_URL;
 
+  const MAX_PAGES = 600;
+  const MAX_CATEGORIES = 5000;
+  const TOTAL_BUDGET_MS = 270_000;
+  const NAV_TIMEOUT_MS = 15_000;
+  const SETTLE_DELAY_MS = 1200;
+
   const wait = async (ms) =>
     new Promise((resolve) => {
       setTimeout(resolve, Math.max(0, Math.trunc(ms)));
@@ -44,15 +50,38 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     }
   };
 
-  await page.goto(configuredCategoriesUrl, { waitUntil: 'domcontentloaded' });
-  await wait(600);
+  const COOKIE_ACCEPT_SELECTORS = [
+    '#onetrust-accept-btn-handler',
+    'button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',
+    'button:has-text("Accept all cookies")',
+    'button:has-text("Accept all")',
+    'button:has-text("Acceptera alla cookies")',
+    'button:has-text("Acceptera alla kakor")',
+    'button:has-text("Godkänn alla cookies")',
+    'button:has-text("Tillåt alla cookies")',
+  ];
 
-  const crawlResult = await page.evaluate(
-    async ({ seedUrl, rootSectionSuffixes, stopTexts, blockedUrlHints, blockedTextHints }) => {
-      const MAX_PAGES = 1200;
-      const MAX_CATEGORIES = 5000;
-      const parser = new DOMParser();
+  const acceptCookiesIfPresent = async () => {
+    for (const selector of COOKIE_ACCEPT_SELECTORS) {
+      const locator = page.locator(selector).first();
+      const visible = await locator.isVisible().catch(() => false);
+      if (!visible) continue;
+      await locator.click().catch(() => undefined);
+      await wait(600);
+      return true;
+    }
+    return false;
+  };
 
+  // --- Navigate to the categories page and wait for CSR to render ---
+  await page.goto(configuredCategoriesUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
+  await wait(1500);
+  await acceptCookiesIfPresent();
+
+  // --- Phase 1: extract root categories + immediate children from the rendered seed page ---
+  const seedData = await page.evaluate(
+    ({ rootSectionSuffixes, stopTexts, blockedUrlHints, blockedTextHints }) => {
       const toText = (value) =>
         typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
 
@@ -63,9 +92,7 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
         const normalized = toText(String(candidate));
         if (!normalized) return '';
         const match = normalized.match(/\/category\/(\d+)(?:[/?#]|$)/i);
-        if (match && match[1]) {
-          return match[1];
-        }
+        if (match && match[1]) return match[1];
         const digits = normalized.match(/\b(\d{2,})\b/);
         return digits && digits[1] ? digits[1] : normalized;
       };
@@ -73,61 +100,12 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       const resolveCategoryUrl = (href, baseUrl) => {
         try {
           const url = new URL(href, baseUrl);
-          if (!/\/category\/\d+/i.test(url.pathname)) {
-            return null;
-          }
+          if (!/\/category\/\d+/i.test(url.pathname)) return null;
           url.hash = '';
           return url.toString();
         } catch {
           return null;
         }
-      };
-
-      const isBlockedDocument = (doc, currentUrl) => {
-        const normalizedUrl = toLowerText(currentUrl);
-        if (blockedUrlHints.some((hint) => normalizedUrl.includes(hint))) {
-          return true;
-        }
-
-        const title = toLowerText(doc.title);
-        const heading = toLowerText(
-          doc.querySelector('h1, [role="heading"]')?.textContent ?? ''
-        );
-        const bodyText = toLowerText(doc.body?.textContent ?? '').slice(0, 4000);
-        const haystack = [title, heading, bodyText].filter(Boolean).join(' ');
-        return blockedTextHints.some((hint) => haystack.includes(hint));
-      };
-
-      const dedupeCategories = (categories) => {
-        const byId = new Map();
-        for (const category of categories) {
-          const id = normalizeCategoryId(category?.id);
-          const name = toText(category?.name);
-          const parentId = toText(category?.parentId || '') || '0';
-          const url = typeof category?.url === 'string' ? category.url : null;
-          if (!id || !name) continue;
-          if (!byId.has(id)) {
-            byId.set(id, { id, name, parentId, url });
-          }
-        }
-        return Array.from(byId.values());
-      };
-
-      const fetchDocument = async (url) => {
-        const response = await fetch(url, {
-          method: 'GET',
-          credentials: 'include',
-          redirect: 'follow',
-          cache: 'no-store',
-        });
-        const html = await response.text();
-        return {
-          requestedUrl: url,
-          finalUrl: response.url || url,
-          status: response.status,
-          html,
-          doc: parser.parseFromString(html, 'text/html'),
-        };
       };
 
       const cleanRootSectionName = (value) => {
@@ -139,69 +117,267 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
         return name;
       };
 
-      const extractRootCategories = (doc, baseUrl) => {
-        const anchors = Array.from(doc.querySelectorAll('a[href*="/category/"]'));
-        const results = [];
+      const baseUrl = window.location.href;
+      const pageTitle = document.title;
 
-        for (const anchor of anchors) {
-          const rawText = toText(anchor.textContent || '');
-          const normalizedText = toLowerText(rawText);
-          if (!rootSectionSuffixes.some((suffix) => normalizedText.endsWith(suffix))) {
-            continue;
-          }
+      // Blocked page detection — check URL for login/captcha redirects
+      const normalizedUrl = toLowerText(baseUrl);
+      if (blockedUrlHints.some((hint) => normalizedUrl.includes(hint))) {
+        return {
+          blocked: true,
+          categories: [],
+          rootCategories: [],
+          diagnostics: { seedUrl: baseUrl, seedFinalUrl: baseUrl, seedStatus: 0, seedTitle: pageTitle },
+        };
+      }
+      // Check main content area only (not nav header which normally contains "Log in" links)
+      const mainContent = document.querySelector('main') || document.querySelector('#site-main');
+      const mainText = toLowerText(mainContent?.textContent ?? '').slice(0, 4000);
+      const hasCategoryLinks = !!document.querySelector('a[href*="/category/"]');
+      if (!hasCategoryLinks && mainText && blockedTextHints.some((hint) => mainText.includes(hint))) {
+        return {
+          blocked: true,
+          categories: [],
+          rootCategories: [],
+          diagnostics: { seedUrl: baseUrl, seedFinalUrl: baseUrl, seedStatus: 0, seedTitle: pageTitle },
+        };
+      }
 
-          const url = resolveCategoryUrl(anchor.getAttribute('href') || '', baseUrl);
-          const id = normalizeCategoryId(url);
-          const name = cleanRootSectionName(rawText);
-          if (!id || !name || name.length > 120) {
-            continue;
-          }
+      // Extract root categories (anchors whose text ends with "show more" / "visa fler")
+      const allAnchors = Array.from(document.querySelectorAll('a[href*="/category/"]'));
+      const rootSuffixLower = rootSectionSuffixes.map((s) => s.toLowerCase());
+      const rootCategories = [];
+      const rootAnchors = [];
 
-          results.push({
-            id,
-            name,
-            parentId: '0',
-            url,
-          });
+      for (const anchor of allAnchors) {
+        const rawText = toText(anchor.textContent || '');
+        const normalizedText = toLowerText(rawText);
+        if (!rootSuffixLower.some((suffix) => normalizedText.endsWith(suffix))) continue;
+
+        const url = resolveCategoryUrl(anchor.getAttribute('href') || '', baseUrl);
+        const id = normalizeCategoryId(url);
+        const name = cleanRootSectionName(rawText);
+        if (!id || !name || name.length > 120) continue;
+
+        rootCategories.push({ id, name, parentId: '0', url });
+        rootAnchors.push({ id, anchor });
+      }
+
+      // Build final category list (roots + immediate children)
+      const allCategories = [];
+      const seenIds = new Set();
+
+      for (const root of rootCategories) {
+        if (seenIds.has(root.id)) continue;
+        seenIds.add(root.id);
+        allCategories.push(root);
+      }
+
+      // Iterate all category anchors in document order.
+      // Track "current root" — when we pass a root anchor, switch the parent context.
+      const rootIdSet = new Set(rootCategories.map((r) => r.id));
+      let currentRootId = '0';
+
+      for (const anchor of allAnchors) {
+        const url = resolveCategoryUrl(anchor.getAttribute('href') || '', baseUrl);
+        const id = normalizeCategoryId(url);
+        if (!id) continue;
+
+        // If this is a root category anchor, update current root context
+        if (rootIdSet.has(id)) {
+          currentRootId = id;
+          continue;
         }
 
-        return dedupeCategories(results);
+        if (seenIds.has(id)) continue;
+
+        const rawText = toText(anchor.textContent || '');
+        // Skip "show more" / "visa fler" suffixed text (could be secondary root mentions)
+        const normalizedText = toLowerText(rawText);
+        if (rootSuffixLower.some((suffix) => normalizedText.endsWith(suffix))) continue;
+
+        const name = rawText;
+        if (!name || name.length > 200) continue;
+
+        const stopSet = new Set(stopTexts.map((s) => s.toLowerCase()));
+        if (stopSet.has(normalizedText)) continue;
+
+        seenIds.add(id);
+        allCategories.push({
+          id,
+          name,
+          parentId: currentRootId,
+          url,
+        });
+      }
+
+      return {
+        blocked: false,
+        categories: allCategories,
+        rootCategories,
+        diagnostics: {
+          seedUrl: baseUrl,
+          seedFinalUrl: baseUrl,
+          seedStatus: 200,
+          seedTitle: pageTitle,
+        },
       };
+    },
+    {
+      rootSectionSuffixes: ROOT_SECTION_SUFFIXES,
+      stopTexts: STOP_TEXTS,
+      blockedUrlHints: BLOCKED_URL_HINTS,
+      blockedTextHints: BLOCKED_TEXT_HINTS,
+    }
+  );
 
-      const isStopNode = (node, stopSet) => {
-        if (!node || node.nodeType !== Node.ELEMENT_NODE) {
-          return false;
+  if (seedData.blocked) {
+    const state = {
+      configuredCategoriesUrl,
+      currentUrl: page.url(),
+      blocked: true,
+      diagnostics: seedData.diagnostics,
+    };
+    log('tradera.category.scrape.blocked', state);
+    await captureDebugArtifacts('tradera-category-blocked', state);
+    const result = {
+      categories: [],
+      categorySource: 'public-categories',
+      scrapedFrom: page.url(),
+      diagnostics: seedData.diagnostics,
+      crawlStats: { pagesVisited: 1, rootCount: 0 },
+    };
+    emit('result', result);
+    return result;
+  }
+
+  log('tradera.category.scrape.seed', {
+    rootCount: seedData.rootCategories.length,
+    totalFromSeed: seedData.categories.length,
+    sampleRoots: seedData.rootCategories.slice(0, 5).map(({ url, ...r }) => r),
+    sampleChildren: seedData.categories.filter((c) => c.parentId !== '0').slice(0, 5).map(({ url, ...c }) => c),
+  });
+
+  // --- Phase 2: BFS deep crawl via page.goto() + page.evaluate() ---
+  const categoriesById = new Map();
+  const queue = [];
+  const visitedPages = new Set();
+  const pageErrors = [];
+  let pagesVisited = 1;
+  const startTime = Date.now();
+
+  for (const cat of seedData.categories) {
+    categoriesById.set(cat.id, cat);
+  }
+
+  // Enqueue root categories first (to discover Level 2 children)
+  for (const root of seedData.rootCategories) {
+    if (root.url) {
+      queue.push({ id: root.id, name: root.name, url: root.url, ancestorIds: [], depth: 0 });
+    }
+  }
+
+  // Then enqueue Level 1 children that may have sub-children
+  for (const cat of seedData.categories) {
+    if (cat.parentId !== '0' && cat.url && !visitedPages.has(cat.id)) {
+      queue.push({ id: cat.id, name: cat.name, url: cat.url, ancestorIds: [cat.parentId], depth: 1 });
+    }
+  }
+
+  while (queue.length > 0 && visitedPages.size < MAX_PAGES && categoriesById.size < MAX_CATEGORIES) {
+    if (Date.now() - startTime > TOTAL_BUDGET_MS) {
+      log('tradera.category.scrape.budget_exhausted', {
+        pagesVisited,
+        categoriesFound: categoriesById.size,
+        queueRemaining: queue.length,
+      });
+      break;
+    }
+
+    const current = queue.shift();
+    if (!current?.url || visitedPages.has(current.id)) continue;
+    if (current.depth > 3) continue;
+    visitedPages.add(current.id);
+
+    try {
+      await page.goto(current.url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+      await page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
+      await wait(SETTLE_DELAY_MS);
+      await acceptCookiesIfPresent();
+    } catch (err) {
+      pageErrors.push({
+        categoryId: current.id,
+        categoryName: current.name,
+        error: String(err),
+      });
+      continue;
+    }
+
+    pagesVisited += 1;
+
+    const pageResult = await page.evaluate(
+      ({ currentCategory, stopTexts, blockedUrlHints, blockedTextHints }) => {
+        const toText = (value) =>
+          typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+
+        const toLowerText = (value) => toText(value).toLowerCase();
+
+        const normalizeCategoryId = (candidate) => {
+          if (candidate == null) return '';
+          const normalized = toText(String(candidate));
+          if (!normalized) return '';
+          const match = normalized.match(/\/category\/(\d+)(?:[/?#]|$)/i);
+          if (match && match[1]) return match[1];
+          const digits = normalized.match(/\b(\d{2,})\b/);
+          return digits && digits[1] ? digits[1] : normalized;
+        };
+
+        const resolveCategoryUrl = (href, baseUrl) => {
+          try {
+            const url = new URL(href, baseUrl);
+            if (!/\/category\/\d+/i.test(url.pathname)) return null;
+            url.hash = '';
+            return url.toString();
+          } catch {
+            return null;
+          }
+        };
+
+        const isStopNode = (node, stopSet) => {
+          if (!node || node.nodeType !== Node.ELEMENT_NODE) return false;
+          const element = node;
+          const text = toLowerText(element.textContent || '');
+          if (!text || !stopSet.has(text)) return false;
+          const tag = (element.tagName || '').toLowerCase();
+          return (
+            tag === 'button' ||
+            tag === 'label' ||
+            tag === 'h1' ||
+            tag === 'h2' ||
+            tag === 'h3' ||
+            tag === 'h4' ||
+            tag === 'span' ||
+            tag === 'div' ||
+            tag === 'p' ||
+            element.getAttribute('role') === 'button'
+          );
+        };
+
+        const baseUrl = window.location.href;
+
+        // Blocked check
+        const normalizedUrl = toLowerText(baseUrl);
+        if (blockedUrlHints.some((hint) => normalizedUrl.includes(hint))) {
+          return { blocked: true, children: [] };
         }
-        const element = node;
-        const text = toLowerText(element.textContent || '');
-        if (!text || !stopSet.has(text)) {
-          return false;
-        }
 
-        const tag = (element.tagName || '').toLowerCase();
-        return (
-          tag === 'button' ||
-          tag === 'label' ||
-          tag === 'h1' ||
-          tag === 'h2' ||
-          tag === 'h3' ||
-          tag === 'h4' ||
-          tag === 'span' ||
-          tag === 'div' ||
-          tag === 'p' ||
-          element.getAttribute('role') === 'button'
-        );
-      };
+        const main = document.querySelector('main') || document.body;
+        if (!main) return { blocked: false, children: [] };
 
-      const extractDirectChildren = (doc, baseUrl, currentCategory) => {
-        const main = doc.querySelector('main') || doc.body;
-        if (!main) {
-          return [];
-        }
-
-        const stopSet = new Set(stopTexts.map((value) => toLowerText(value)));
+        const stopSet = new Set(stopTexts.map((s) => toLowerText(s)));
         const normalizedCurrentName = toLowerText(currentCategory.name);
         const ancestorIds = new Set([currentCategory.id, ...(currentCategory.ancestorIds || [])]);
+
         const headingCandidates = Array.from(main.querySelectorAll('h1, [role="heading"]'));
         const targetHeading =
           headingCandidates.find(
@@ -212,22 +388,18 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
 
         const children = [];
         const seenIds = new Set();
-        const walker = doc.createTreeWalker(main, NodeFilter.SHOW_ELEMENT);
+        const walker = document.createTreeWalker(main, NodeFilter.SHOW_ELEMENT);
         let collecting = targetHeading === null;
         let node = walker.currentNode;
 
         while (node) {
           if (!collecting) {
-            if (node === targetHeading) {
-              collecting = true;
-            }
+            if (node === targetHeading) collecting = true;
             node = walker.nextNode();
             continue;
           }
 
-          if (node !== targetHeading && isStopNode(node, stopSet)) {
-            break;
-          }
+          if (node !== targetHeading && isStopNode(node, stopSet)) break;
 
           const element = node;
           if ((element.tagName || '').toLowerCase() === 'a') {
@@ -244,145 +416,72 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
               !seenIds.has(id)
             ) {
               seenIds.add(id);
-              children.push({
-                id,
-                name,
-                parentId: currentCategory.id,
-                url,
-              });
+              children.push({ id, name, parentId: currentCategory.id, url });
             }
           }
 
           node = walker.nextNode();
         }
 
-        return dedupeCategories(children);
-      };
-
-      const seed = await fetchDocument(seedUrl);
-      const diagnostics = {
-        seedUrl,
-        seedFinalUrl: seed.finalUrl,
-        seedStatus: seed.status,
-        seedTitle: toText(seed.doc.title),
-      };
-
-      if (seed.status >= 400 || isBlockedDocument(seed.doc, seed.finalUrl)) {
-        return {
-          categories: [],
-          categorySource: 'public-categories',
-          scrapedFrom: seed.finalUrl,
-          diagnostics: {
-            ...diagnostics,
-            blocked: true,
-          },
-          crawlStats: {
-            pagesVisited: 1,
-            rootCount: 0,
-          },
-        };
-      }
-
-      const rootCategories = extractRootCategories(seed.doc, seed.finalUrl);
-      const categoriesById = new Map();
-      const queue = [];
-      const visitedPages = new Set();
-
-      for (const rootCategory of rootCategories) {
-        categoriesById.set(rootCategory.id, rootCategory);
-        queue.push({
-          id: rootCategory.id,
-          name: rootCategory.name,
-          url: rootCategory.url,
-          ancestorIds: [],
-        });
-      }
-
-      let pagesVisited = 1;
-      const pageErrors = [];
-
-      while (queue.length > 0 && visitedPages.size < MAX_PAGES && categoriesById.size < MAX_CATEGORIES) {
-        const currentCategory = queue.shift();
-        if (!currentCategory?.url || visitedPages.has(currentCategory.id)) {
-          continue;
-        }
-
-        visitedPages.add(currentCategory.id);
-
-        let pageResult;
-        try {
-          pageResult = await fetchDocument(currentCategory.url);
-        } catch (error) {
-          pageErrors.push({
-            categoryId: currentCategory.id,
-            categoryName: currentCategory.name,
-            error: String(error),
-          });
-          continue;
-        }
-
-        pagesVisited += 1;
-
-        if (pageResult.status >= 400 || isBlockedDocument(pageResult.doc, pageResult.finalUrl)) {
-          pageErrors.push({
-            categoryId: currentCategory.id,
-            categoryName: currentCategory.name,
-            finalUrl: pageResult.finalUrl,
-            blocked: true,
-            status: pageResult.status,
-          });
-          continue;
-        }
-
-        const children = extractDirectChildren(pageResult.doc, pageResult.finalUrl, currentCategory);
-        for (const child of children) {
-          if (!categoriesById.has(child.id)) {
-            categoriesById.set(child.id, child);
-            queue.push({
-              id: child.id,
-              name: child.name,
-              url: child.url,
-              ancestorIds: [...currentCategory.ancestorIds, currentCategory.id],
-            });
-            continue;
-          }
-
-          const existing = categoriesById.get(child.id);
-          if (
-            existing &&
-            (!existing.parentId || existing.parentId === '0') &&
-            child.parentId &&
-            child.parentId !== '0'
-          ) {
-            categoriesById.set(child.id, {
-              ...existing,
-              parentId: child.parentId,
-              url: existing.url || child.url,
-            });
-          }
-        }
-      }
-
-      return {
-        categories: dedupeCategories(Array.from(categoriesById.values())).map(({ url, ...category }) => category),
-        categorySource: 'public-categories',
-        scrapedFrom: seed.finalUrl,
-        diagnostics,
-        crawlStats: {
-          pagesVisited,
-          rootCount: rootCategories.length,
-          pageErrors: pageErrors.slice(0, 20),
+        return { blocked: false, children };
+      },
+      {
+        currentCategory: {
+          id: current.id,
+          name: current.name,
+          ancestorIds: current.ancestorIds || [],
         },
-      };
-    },
-    {
-      seedUrl: configuredCategoriesUrl,
-      rootSectionSuffixes: ROOT_SECTION_SUFFIXES,
-      stopTexts: STOP_TEXTS,
-      blockedUrlHints: BLOCKED_URL_HINTS,
-      blockedTextHints: BLOCKED_TEXT_HINTS,
+        stopTexts: STOP_TEXTS,
+        blockedUrlHints: BLOCKED_URL_HINTS,
+        blockedTextHints: BLOCKED_TEXT_HINTS,
+      }
+    );
+
+    if (pageResult.blocked) {
+      pageErrors.push({ categoryId: current.id, categoryName: current.name, blocked: true });
+      continue;
     }
-  );
+
+    for (const child of pageResult.children) {
+      if (!categoriesById.has(child.id)) {
+        categoriesById.set(child.id, child);
+        queue.push({
+          id: child.id,
+          name: child.name,
+          url: child.url,
+          ancestorIds: [...(current.ancestorIds || []), current.id],
+          depth: (current.depth || 0) + 1,
+        });
+      } else {
+        const existing = categoriesById.get(child.id);
+        if (
+          existing &&
+          (!existing.parentId || existing.parentId === '0') &&
+          child.parentId &&
+          child.parentId !== '0'
+        ) {
+          categoriesById.set(child.id, {
+            ...existing,
+            parentId: child.parentId,
+            url: existing.url || child.url,
+          });
+        }
+      }
+    }
+  }
+
+  // --- Build result ---
+  const crawlResult = {
+    categories: Array.from(categoriesById.values()).map(({ url, ...category }) => category),
+    categorySource: 'public-categories',
+    scrapedFrom: seedData.diagnostics.seedUrl || page.url(),
+    diagnostics: seedData.diagnostics,
+    crawlStats: {
+      pagesVisited,
+      rootCount: seedData.rootCategories.length,
+      pageErrors: pageErrors.slice(0, 20),
+    },
+  };
 
   if (!crawlResult || !Array.isArray(crawlResult.categories)) {
     const state = {

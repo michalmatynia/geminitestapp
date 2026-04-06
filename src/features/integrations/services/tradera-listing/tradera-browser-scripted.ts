@@ -249,6 +249,7 @@ export const buildTraderaScriptInput = async ({
     baseProductId: product.baseProductId ?? product.id,
     sku: product.sku ?? null,
     duplicateSearchTitle: normalizeDuplicateSearchTitle(product.name_en),
+    rawDescriptionEn: toTrimmedString(product.description_en) || null,
     title,
     description,
     price: priceResolution.listingPrice,

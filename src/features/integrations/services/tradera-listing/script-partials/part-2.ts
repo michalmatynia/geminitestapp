@@ -199,6 +199,25 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     return matches[0] || null;
   };
 
+  const stripDescriptionMetadata = (value) => {
+    let text = normalizeWhitespace(value);
+    if (!text) return '';
+    // Strip trailing pipe-separated metadata: " | Product ID: xxx | SKU: yyy"
+    text = text.replace(/\s*\|(?:\s*(?:product\s*id|item\s*reference|sku)\s*:[^|]*)+$/i, '');
+    // Strip standalone trailing metadata: "Product ID: xxx" / "Item reference: xxx"
+    text = text.replace(/\s+(?:product\s*id|item\s*reference)\s*:\s*\S.*$/i, '');
+    // Strip standalone trailing SKU: "SKU: xxx"
+    text = text.replace(/\s+sku\s*:\s*\S.*$/i, '');
+    return text.trim();
+  };
+
+  const descriptionsMatch = (listingText, productDescription) => {
+    const strippedListing = stripDescriptionMetadata(listingText).toLowerCase();
+    const strippedProduct = stripDescriptionMetadata(productDescription).toLowerCase();
+    if (!strippedListing || !strippedProduct) return false;
+    return strippedListing === strippedProduct;
+  };
+
   const extractReferencedProductId = (value) => {
     const normalizedValue = normalizeWhitespace(value);
     if (!normalizedValue) {
@@ -264,6 +283,7 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       listingUrl: finalUrl || candidate.listingUrl,
       listingId: extractListingId(finalUrl) || candidate.listingId || null,
       matchedProductId: extractReferencedProductId(listingText),
+      listingDescription: listingText || '',
       textSample: listingText ? listingText.slice(0, 400) : '',
     };
   };

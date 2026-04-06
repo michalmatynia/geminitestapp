@@ -47,9 +47,16 @@ function ListProductModalContent(): React.JSX.Element {
     isTraderaIntegration,
   } = useListingSelection();
 
-  const { error, exportLogs, submitting, handleSubmit, handleImageRetry } = useListProductForm(
-    product.id
-  );
+  const {
+    error,
+    exportLogs,
+    submitting,
+    authRequired,
+    loggingIn,
+    handleSubmit,
+    handleTraderaLogin,
+    handleImageRetry,
+  } = useListProductForm(product.id);
 
   const productName = resolveProductListingsProductName(product);
   const selectedIntegrationName = resolveIntegrationDisplayName(selectedIntegration?.name);
@@ -92,6 +99,14 @@ function ListProductModalContent(): React.JSX.Element {
           error,
           submitting,
           onRetryImageExport: retryImageExport,
+          authRequired,
+          loggingIn,
+          onTraderaLogin: () => {
+            void handleTraderaLogin(onSuccess);
+          },
+          onRetrySubmit: () => {
+            void handleSubmit(onSuccess);
+          },
         }}
       >
         <div className='space-y-6'>

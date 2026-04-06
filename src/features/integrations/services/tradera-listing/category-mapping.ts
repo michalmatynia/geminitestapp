@@ -1,4 +1,5 @@
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { getCategoryMappingRepository } from '../category-mapping-repository';
@@ -14,6 +15,7 @@ export type ResolvedTraderaCategoryMapping = {
 
 export type TraderaCategoryMappingResolutionReason =
   | 'mapped'
+  | 'mapped_via_parent'
   | 'missing_internal_category'
   | 'no_active_mapping'
   | 'stale_external_category'
@@ -57,12 +59,90 @@ export const resolveProductCatalogIds = (product: ProductWithImages): string[] =
   return Array.from(catalogIds);
 };
 
+const MAX_PARENT_WALK_DEPTH = 10;
+
+const tryResolveMappingForCategoryId = (
+  candidateId: string,
+  mappings: CategoryMappingWithDetails[],
+  productCatalogIdSet: ReadonlySet<string>
+): {
+  mapping: ResolvedTraderaCategoryMapping;
+  matchScope: TraderaCategoryMappingMatchScope;
+  matchingMappingCount: number;
+  validMappingCount: number;
+  catalogMatchedMappingCount: number;
+} | null => {
+  const matchingMappings = mappings.filter(
+    (mapping) => mapping.isActive && toTrimmedString(mapping.internalCategoryId) === candidateId
+  );
+  if (matchingMappings.length === 0) return null;
+
+  const validMappings = matchingMappings.filter((mapping) => {
+    const exId = toTrimmedString(mapping.externalCategory?.externalId);
+    const exName = toTrimmedString(mapping.externalCategory?.name);
+    return exId && exName && !isMissingExternalCategory(exName);
+  });
+  if (validMappings.length === 0) return null;
+
+  const catalogMatchedMappings = validMappings.filter((mapping) =>
+    productCatalogIdSet.has(toTrimmedString(mapping.catalogId))
+  );
+  const prioritizedMappings =
+    catalogMatchedMappings.length > 0 ? catalogMatchedMappings : validMappings;
+  const matchScope: TraderaCategoryMappingMatchScope =
+    catalogMatchedMappings.length > 0 ? 'catalog_match' : 'cross_catalog';
+
+  const distinctExternalCategoryIds = Array.from(
+    new Set(
+      prioritizedMappings
+        .map((mapping) => toTrimmedString(mapping.externalCategory?.externalId))
+        .filter(Boolean)
+    )
+  );
+  if (distinctExternalCategoryIds.length !== 1) return null;
+
+  const selectedMapping =
+    [...prioritizedMappings].sort(
+      (a, b) =>
+        new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+    )[0] ?? null;
+  if (!selectedMapping) return null;
+
+  const externalCategoryId = toTrimmedString(selectedMapping.externalCategory?.externalId);
+  const externalCategoryName = toTrimmedString(selectedMapping.externalCategory?.name);
+  const externalCategoryPath =
+    toTrimmedString(selectedMapping.externalCategory?.path) || externalCategoryName || null;
+  const pathSegments = (externalCategoryPath ?? externalCategoryName)
+    .split(' > ')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (!externalCategoryId || !externalCategoryName || pathSegments.length === 0) return null;
+
+  return {
+    mapping: {
+      externalCategoryId,
+      externalCategoryName,
+      externalCategoryPath,
+      internalCategoryId: candidateId,
+      catalogId: selectedMapping.catalogId,
+      pathSegments,
+    },
+    matchScope,
+    matchingMappingCount: matchingMappings.length,
+    validMappingCount: validMappings.length,
+    catalogMatchedMappingCount: catalogMatchedMappings.length,
+  };
+};
+
 export const selectPreferredTraderaCategoryMappingResolution = ({
   mappings,
   product,
+  internalCategories,
 }: {
   mappings: CategoryMappingWithDetails[];
   product: ProductWithImages;
+  internalCategories?: ProductCategory[] | undefined;
 }): TraderaCategoryMappingResolution => {
   const internalCategoryId = toTrimmedString(product.categoryId);
   const productCatalogIds = resolveProductCatalogIds(product);
@@ -88,111 +168,105 @@ export const selectPreferredTraderaCategoryMappingResolution = ({
   }
 
   const productCatalogIdSet = new Set(productCatalogIds);
-  const matchingMappings = mappings.filter(
+
+  // --- Direct match on product's own category ---
+  const directMatch = tryResolveMappingForCategoryId(
+    internalCategoryId,
+    mappings,
+    productCatalogIdSet
+  );
+
+  if (directMatch) {
+    return {
+      mapping: directMatch.mapping,
+      reason: 'mapped',
+      matchScope: directMatch.matchScope,
+      internalCategoryId,
+      productCatalogIds,
+      matchingMappingCount: directMatch.matchingMappingCount,
+      validMappingCount: directMatch.validMappingCount,
+      catalogMatchedMappingCount: directMatch.catalogMatchedMappingCount,
+    };
+  }
+
+  // --- Check for stale/invalid mappings on direct category before parent walk ---
+  const directMatchingMappings = mappings.filter(
     (mapping) => mapping.isActive && toTrimmedString(mapping.internalCategoryId) === internalCategoryId
   );
-  if (matchingMappings.length === 0) {
-    return emptyResolution('no_active_mapping', {
-      matchingMappingCount: 0,
-    });
-  }
-
-  const validMappings = matchingMappings.filter((mapping) => {
-    const externalCategoryId = toTrimmedString(mapping.externalCategory?.externalId);
-    const externalCategoryName = toTrimmedString(mapping.externalCategory?.name);
-    if (!externalCategoryId || !externalCategoryName) {
-      return false;
-    }
-    return !isMissingExternalCategory(externalCategoryName);
-  });
-  if (validMappings.length === 0) {
-    const staleMappings = matchingMappings.filter((mapping) =>
+  if (directMatchingMappings.length > 0) {
+    const staleMappings = directMatchingMappings.filter((mapping) =>
       isMissingExternalCategory(toTrimmedString(mapping.externalCategory?.name))
     );
-    return emptyResolution(
-      staleMappings.length > 0 ? 'stale_external_category' : 'invalid_external_category',
-      {
-        matchingMappingCount: matchingMappings.length,
+    if (staleMappings.length === directMatchingMappings.length) {
+      return emptyResolution('stale_external_category', {
+        matchingMappingCount: directMatchingMappings.length,
         validMappingCount: 0,
-      }
-    );
-  }
-
-  const catalogMatchedMappings = validMappings.filter((mapping) =>
-    productCatalogIdSet.has(toTrimmedString(mapping.catalogId))
-  );
-  const prioritizedMappings =
-    catalogMatchedMappings.length > 0 ? catalogMatchedMappings : validMappings;
-  const matchScope: TraderaCategoryMappingMatchScope =
-    catalogMatchedMappings.length > 0 ? 'catalog_match' : 'cross_catalog';
-
-  const distinctExternalCategoryIds = Array.from(
-    new Set(
-      prioritizedMappings
-        .map((mapping) => toTrimmedString(mapping.externalCategory?.externalId))
-        .filter(Boolean)
-    )
-  );
-
-  if (distinctExternalCategoryIds.length !== 1) {
+      });
+    }
+    const validMappings = directMatchingMappings.filter((mapping) => {
+      const exId = toTrimmedString(mapping.externalCategory?.externalId);
+      const exName = toTrimmedString(mapping.externalCategory?.name);
+      return exId && exName && !isMissingExternalCategory(exName);
+    });
+    if (validMappings.length === 0) {
+      return emptyResolution('invalid_external_category', {
+        matchingMappingCount: directMatchingMappings.length,
+        validMappingCount: 0,
+      });
+    }
+    // Ambiguous direct mapping — don't fall through to parent
+    const catalogMatchedCount = validMappings.filter((mapping) =>
+      productCatalogIdSet.has(toTrimmedString(mapping.catalogId))
+    ).length;
     return emptyResolution('ambiguous_external_category', {
-      matchScope,
-      matchingMappingCount: matchingMappings.length,
+      matchScope: catalogMatchedCount > 0 ? 'catalog_match' : 'cross_catalog',
+      matchingMappingCount: directMatchingMappings.length,
       validMappingCount: validMappings.length,
-      catalogMatchedMappingCount: catalogMatchedMappings.length,
+      catalogMatchedMappingCount: catalogMatchedCount,
     });
   }
 
-  const selectedMapping =
-    [...prioritizedMappings].sort(
-      (a, b) =>
-        new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
-    )[0] ?? null;
+  // --- Parent category walk: inherit mapping from nearest ancestor ---
+  if (internalCategories && internalCategories.length > 0) {
+    const categoriesById = new Map(
+      internalCategories.map((cat) => [toTrimmedString(cat.id), cat])
+    );
+    const visited = new Set<string>();
+    let currentCategory = categoriesById.get(internalCategoryId);
+    let depth = 0;
 
-  if (!selectedMapping) {
-    return emptyResolution('invalid_external_category', {
-      matchScope,
-      matchingMappingCount: matchingMappings.length,
-      validMappingCount: validMappings.length,
-      catalogMatchedMappingCount: catalogMatchedMappings.length,
-    });
+    while (currentCategory && depth < MAX_PARENT_WALK_DEPTH) {
+      const parentId = toTrimmedString(currentCategory.parentId);
+      if (!parentId || visited.has(parentId)) break;
+      visited.add(parentId);
+      depth += 1;
+
+      const parentMatch = tryResolveMappingForCategoryId(
+        parentId,
+        mappings,
+        productCatalogIdSet
+      );
+
+      if (parentMatch) {
+        return {
+          mapping: parentMatch.mapping,
+          reason: 'mapped_via_parent',
+          matchScope: parentMatch.matchScope,
+          internalCategoryId,
+          productCatalogIds,
+          matchingMappingCount: parentMatch.matchingMappingCount,
+          validMappingCount: parentMatch.validMappingCount,
+          catalogMatchedMappingCount: parentMatch.catalogMatchedMappingCount,
+        };
+      }
+
+      currentCategory = categoriesById.get(parentId);
+    }
   }
 
-  const externalCategoryId = toTrimmedString(selectedMapping.externalCategory?.externalId);
-  const externalCategoryName = toTrimmedString(selectedMapping.externalCategory?.name);
-  const externalCategoryPath =
-    toTrimmedString(selectedMapping.externalCategory?.path) || externalCategoryName || null;
-  const pathSegments = (externalCategoryPath ?? externalCategoryName)
-    .split(' > ')
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-
-  if (!externalCategoryId || !externalCategoryName || pathSegments.length === 0) {
-    return emptyResolution('invalid_external_category', {
-      matchScope,
-      matchingMappingCount: matchingMappings.length,
-      validMappingCount: validMappings.length,
-      catalogMatchedMappingCount: catalogMatchedMappings.length,
-    });
-  }
-
-  return {
-    mapping: {
-      externalCategoryId,
-      externalCategoryName,
-      externalCategoryPath,
-      internalCategoryId,
-      catalogId: selectedMapping.catalogId,
-      pathSegments,
-    },
-    reason: 'mapped',
-    matchScope,
-    internalCategoryId,
-    productCatalogIds,
-    matchingMappingCount: matchingMappings.length,
-    validMappingCount: validMappings.length,
-    catalogMatchedMappingCount: catalogMatchedMappings.length,
-  };
+  return emptyResolution('no_active_mapping', {
+    matchingMappingCount: 0,
+  });
 };
 
 export const selectPreferredTraderaCategoryMapping = ({
@@ -213,7 +287,33 @@ export const resolveTraderaCategoryMappingResolutionForProduct = async ({
 }): Promise<TraderaCategoryMappingResolution> => {
   const categoryMappingRepository = getCategoryMappingRepository();
   const mappings = await categoryMappingRepository.listByConnection(connectionId);
-  return selectPreferredTraderaCategoryMappingResolution({ mappings, product });
+
+  // First try without parent walk for the fast path
+  const directResult = selectPreferredTraderaCategoryMappingResolution({ mappings, product });
+  if (directResult.reason !== 'no_active_mapping') {
+    return directResult;
+  }
+
+  // No direct mapping — load product categories for parent-chain inheritance
+  const catalogId = toTrimmedString(product.catalogId);
+  if (!catalogId) {
+    return directResult;
+  }
+
+  try {
+    const { getCategoryRepository } = await import(
+      '@/shared/lib/products/services/category-repository'
+    );
+    const categoryRepository = await getCategoryRepository();
+    const internalCategories = await categoryRepository.listCategories({ catalogId });
+    return selectPreferredTraderaCategoryMappingResolution({
+      mappings,
+      product,
+      internalCategories,
+    });
+  } catch {
+    return directResult;
+  }
 };
 
 export const resolveTraderaCategoryMappingForProduct = async ({

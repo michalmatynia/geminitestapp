@@ -184,6 +184,12 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
         count++;
       }
 
+      // Remove stale categories that were not part of this fetch
+      await collection.deleteMany({
+        connectionId,
+        fetchedAt: { $lt: now },
+      });
+
       return count;
     },
 

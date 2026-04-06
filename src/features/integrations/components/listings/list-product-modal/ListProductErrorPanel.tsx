@@ -3,7 +3,7 @@ import React from 'react';
 import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
-import { DropdownMenuItem, Alert } from '@/shared/ui/primitives.public';
+import { Button, DropdownMenuItem, Alert } from '@/shared/ui/primitives.public';
 
 import { useImageRetryPresets } from '../useImageRetryPresets';
 import { useListProductModalFormContext } from './context/ListProductModalFormContext';
@@ -14,7 +14,8 @@ const isImageExportError = (error: string): boolean => {
 
 export function ListProductErrorPanel(): React.JSX.Element {
   const { isBaseComIntegration } = useListingSelection();
-  const { error, submitting, onRetryImageExport } = useListProductModalFormContext();
+  const { error, submitting, onRetryImageExport, authRequired, loggingIn, onTraderaLogin, onRetrySubmit } =
+    useListProductModalFormContext();
   const imageRetryPresets = useImageRetryPresets();
 
   if (!error) {
@@ -25,7 +26,28 @@ export function ListProductErrorPanel(): React.JSX.Element {
     <Alert variant='error' className='p-3'>
       <div className='flex flex-col gap-3'>
         <span>{error}</span>
-        {isBaseComIntegration && isImageExportError(error) ? (
+        {authRequired ? (
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              disabled={loggingIn || submitting}
+              onClick={onTraderaLogin}
+            >
+              {loggingIn ? 'Waiting for login...' : 'Login and list on Tradera'}
+            </Button>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              disabled={loggingIn || submitting}
+              onClick={onRetrySubmit}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : isBaseComIntegration && isImageExportError(error) ? (
           <div className='flex flex-wrap items-center gap-2'>
             <ActionMenu
               trigger='Retry image export'

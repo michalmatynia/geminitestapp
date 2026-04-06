@@ -16,6 +16,7 @@ import {
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import {
+  ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
@@ -33,7 +34,10 @@ type UseListProductFormResult = {
   logsOpen: boolean;
   setLogsOpen: (value: boolean) => void;
   submitting: boolean;
+  authRequired: boolean;
+  loggingIn: boolean;
   handleSubmit: (onSuccess: () => void) => Promise<void>;
+  handleTraderaLogin: (onSuccess: () => void) => Promise<void>;
   handleImageRetry: (preset: ImageRetryPreset, onSuccess: () => void) => Promise<void>;
 };
 
@@ -41,6 +45,8 @@ export function useListProductForm(productId: string): UseListProductFormResult 
   const [error, setError] = useState<string | null>(null);
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
+  const [authRequired, setAuthRequired] = useState(false);
+  const [loggingIn, setLoggingIn] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -196,7 +202,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       });
       const errorMessage = err instanceof Error ? err.message : 'Failed to list product';
       if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
-        toast(errorMessage, { variant: 'error' });
+        setAuthRequired(true);
       }
       setError(errorMessage);
     }
@@ -228,6 +234,33 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     }
   };
 
+  const handleTraderaLogin = async (onSuccess: () => void): Promise<void> => {
+    if (!selectedIntegrationId || !selectedConnectionId) return;
+    try {
+      setLoggingIn(true);
+      setError(null);
+      await ensureTraderaBrowserSession({
+        integrationId: selectedIntegrationId,
+        connectionId: selectedConnectionId,
+      });
+      toast('Tradera login session refreshed.', { variant: 'success' });
+      setAuthRequired(false);
+      await handleSubmit(onSuccess);
+    } catch (err: unknown) {
+      logClientCatch(err, {
+        source: 'ListProductModal',
+        action: 'traderaLogin',
+        productId,
+        integrationId: selectedIntegrationId,
+        connectionId: selectedConnectionId,
+      });
+      const errorMessage = err instanceof Error ? err.message : 'Failed to open Tradera login';
+      setError(errorMessage);
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
   return {
     error,
     setError,
@@ -236,7 +269,10 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     logsOpen,
     setLogsOpen,
     submitting,
+    authRequired,
+    loggingIn,
     handleSubmit,
+    handleTraderaLogin,
     handleImageRetry,
   };
 }

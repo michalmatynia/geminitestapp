@@ -126,7 +126,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v96');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v98');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('helpers,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];");
@@ -347,6 +347,10 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const collectVisibleListingCandidatePreview = async (limit = 8) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const collectListingLinksForTerm = async (term, maxMatches = null) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const inspectDuplicateCandidateListing = async (candidate) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const stripDescriptionMetadata = (value) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const descriptionsMatch = (listingText, productDescription) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('listingDescription: listingText');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('descriptionMatched');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'FAIL_DUPLICATE_UNCERTAIN: Active listings search input did not accept the English title search term.'
     );
@@ -832,6 +836,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
           existingExternalListingId: null,
           baseProductId: 'BASE-1',
           duplicateSearchTitle: 'Example title',
+          rawDescriptionEn: 'Example description',
           sku: 'SKU-1',
           title: 'Example title',
           description: 'Example description | Product ID: BASE-1 | SKU: SKU-1',
@@ -1808,7 +1813,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v96',
+        scriptMarker: 'tradera-quicklist-default:v98',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -1936,7 +1941,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v96',
+        scriptMarker: 'tradera-quicklist-default:v98',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -2561,7 +2566,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v96',
+      'tradera-quicklist-default:v98',
       'tradera-quicklist-default:v89'
     );
 
@@ -2593,7 +2598,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v96',
+        scriptMarker: 'tradera-quicklist-default:v98',
         scriptStoredOnConnection: false,
         requestedBrowserMode: 'headed',
         runId: 'run-relist-homepage-cleanup',
@@ -2746,7 +2751,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v96',
+        scriptMarker: 'tradera-quicklist-default:v98',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
@@ -2867,7 +2872,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v96',
+        scriptMarker: 'tradera-quicklist-default:v98',
         scriptStoredOnConnection: false,
         runId: 'run-connection-default-relist',
         requestedBrowserMode: 'connection_default',

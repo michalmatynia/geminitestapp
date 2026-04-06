@@ -1,5 +1,11 @@
+'use client';
+
 import React from 'react';
 
+import {
+  useProductListingsActions,
+  useProductListingsUIState,
+} from '@/features/integrations/context/ProductListingsContext';
 import type { PersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import {
   resolveCompletedAtFromFeedbackAndListing,
@@ -7,7 +13,7 @@ import {
   resolveListingUrl,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
-import { Card } from '@/shared/ui/primitives.public';
+import { Button, Card } from '@/shared/ui/primitives.public';
 import { ExternalLink } from '@/shared/ui/forms-and-actions.public';
 
 type TraderaQuickExportSuccessBannerProps = {
@@ -27,9 +33,16 @@ export function TraderaQuickExportSuccessBanner({
     return null;
   }
 
+  const { handleSyncTradera } = useProductListingsActions();
+  const { syncingTraderaListing } = useProductListingsUIState();
+
   const listingUrl = resolveListingUrl(feedback.listingUrl, feedback.externalListingId, listing);
   const externalListingId = listing?.externalListingId ?? feedback.externalListingId ?? null;
   const localListingId = listing?.id ?? feedback.listingId ?? null;
+  const syncIntegrationId = listing?.integrationId ?? feedback.integrationId ?? null;
+  const syncConnectionId = listing?.connectionId ?? feedback.connectionId ?? null;
+  const canSync = Boolean(localListingId && syncIntegrationId && syncConnectionId);
+  const isSyncing = Boolean(localListingId && syncingTraderaListing === localListingId);
   const completedAt = resolveCompletedAtFromFeedbackAndListing(feedback.completedAt, listing);
   const duplicateLinked =
     resolveDuplicateLinkedFromListing(listing) || feedback.duplicateLinked === true;
@@ -72,14 +85,32 @@ export function TraderaQuickExportSuccessBanner({
         {completedAt ? (
           <div className='text-center text-[11px] text-emerald-100/75'>{completedLabel}: {completedAt}</div>
         ) : null}
-        {listingUrl ? (
-          <div className='flex justify-center'>
+        {(listingUrl || canSync) ? (
+          <div className='flex flex-wrap justify-center gap-2'>
+            {canSync && localListingId ? (
+              <Button
+                type='button'
+                variant='outline'
+                size='default'
+                onClick={(): void => {
+                  void handleSyncTradera(localListingId, {
+                    integrationId: syncIntegrationId,
+                    connectionId: syncConnectionId,
+                  });
+                }}
+                disabled={isSyncing}
+              >
+                {isSyncing ? 'Queuing sync...' : 'Sync with Tradera'}
+              </Button>
+            ) : null}
+            {listingUrl ? (
             <ExternalLink
               href={listingUrl}
               className='rounded-md border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-500/20 hover:text-white'
             >
               Open listing
             </ExternalLink>
+            ) : null}
           </div>
         ) : null}
       </Card>
@@ -112,13 +143,33 @@ export function TraderaQuickExportSuccessBanner({
           )}
           {completedAt ? <div className='mt-2 text-[11px] text-emerald-100/75'>{completedLabel}: {completedAt}</div> : null}
         </div>
-        {listingUrl ? (
-          <ExternalLink
-            href={listingUrl}
-            className='rounded-md border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-500/20 hover:text-white'
-          >
-            Open listing
-          </ExternalLink>
+        {(listingUrl || canSync) ? (
+          <div className='flex flex-wrap gap-2'>
+            {canSync && localListingId ? (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={(): void => {
+                  void handleSyncTradera(localListingId, {
+                    integrationId: syncIntegrationId,
+                    connectionId: syncConnectionId,
+                  });
+                }}
+                disabled={isSyncing}
+              >
+                {isSyncing ? 'Queuing sync...' : 'Sync with Tradera'}
+              </Button>
+            ) : null}
+            {listingUrl ? (
+              <ExternalLink
+                href={listingUrl}
+                className='rounded-md border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-500/20 hover:text-white'
+              >
+                Open listing
+              </ExternalLink>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </Card>

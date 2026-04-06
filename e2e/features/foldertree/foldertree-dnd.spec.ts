@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { ensureAdminSession as ensureSharedAdminSession } from '../../support/admin-auth';
+
 type SettingsRecord = {
   key: string;
   value: string;
@@ -16,7 +18,15 @@ const E2E_ADMIN_PASSWORD =
 
 async function dragAndDrop(page: Page, source: Locator, target: Locator): Promise<void> {
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
-  await source.dispatchEvent('dragstart', { dataTransfer });
+  await source.waitFor({ state: 'visible', timeout: 5_000 });
+  const sourceBox = await source.boundingBox();
+  const sourceClientX = sourceBox ? sourceBox.x + sourceBox.width / 2 : 8;
+  const sourceClientY = sourceBox ? sourceBox.y + sourceBox.height / 2 : 8;
+  await source.dispatchEvent('dragstart', {
+    dataTransfer,
+    clientX: sourceClientX,
+    clientY: sourceClientY,
+  });
   await target.waitFor({ state: 'visible', timeout: 5_000 });
   const box = await target.boundingBox();
   const clientX = box ? box.x + box.width / 2 : 8;
@@ -93,17 +103,140 @@ async function mockAuthAndSettings(
   });
 }
 
+async function mockProductsAdminBootstrap(page: Page, timestamp: string): Promise<void> {
+  await page.route('**/api/user/preferences', async (route) => {
+    const method = route.request().method();
+
+    if (method === 'GET' || method === 'PATCH') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify({}),
+      });
+      return;
+    }
+
+    await route.fallback();
+  });
+
+  await page.route('**/api/drafts**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify([]),
+    });
+  });
+
+  await page.route('**/api/ai-paths/trigger-buttons**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify([]),
+    });
+  });
+
+  await page.route('**/api/v2/products/metadata/price-groups**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify([
+        {
+          id: 'price-group-1',
+          name: 'Default Price Group',
+          description: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          groupId: 'default',
+          currencyId: 'currency-pln',
+          currencyCode: 'PLN',
+          isDefault: true,
+          type: 'default',
+          basePriceField: 'price',
+          sourceGroupId: null,
+          priceMultiplier: 1,
+          addToPrice: 0,
+          currency: {
+            id: 'currency-pln',
+            name: 'Polish Zloty',
+            description: null,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            code: 'PLN',
+            symbol: 'zl',
+          },
+        },
+      ]),
+    });
+  });
+
+  await page.route('**/api/v2/metadata/languages**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify([
+        {
+          id: 'language-en',
+          name: 'English',
+          description: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          code: 'EN',
+          nativeName: 'English',
+          isDefault: true,
+          isActive: true,
+        },
+      ]),
+    });
+  });
+
+  await page.route('**/api/v2/metadata/currencies**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify([
+        {
+          id: 'currency-pln',
+          name: 'Polish Zloty',
+          description: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          code: 'PLN',
+          symbol: 'zl',
+          isDefault: true,
+          isActive: true,
+        },
+      ]),
+    });
+  });
+
+  await page.route('**/api/v2/products/producers**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify([]),
+    });
+  });
+}
+
 async function ensureAdminSession(page: Page): Promise<void> {
-  await page.goto('/auth/signin?callbackUrl=%2Fadmin', { waitUntil: 'networkidle' });
-  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
-  if (!(await signInHeading.isVisible().catch(() => false))) {
+  await page.goto('/en/auth/signin?callbackUrl=%2Fen%2Fadmin', { waitUntil: 'domcontentloaded' });
+
+  const emailInput = page.locator('input[placeholder="name@example.com"]').first();
+  if (!(await emailInput.isVisible().catch(() => false))) {
     return;
   }
 
-  await page.getByRole('textbox', { name: 'Email' }).fill(E2E_ADMIN_EMAIL);
-  await page.getByRole('textbox', { name: 'Password' }).fill(E2E_ADMIN_PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await page.waitForURL(/\/admin(\/.*)?(\?.*)?$/);
+  await emailInput.fill(E2E_ADMIN_EMAIL);
+  await page.locator('input[type="password"]').first().fill(E2E_ADMIN_PASSWORD);
+  await page.locator('form button[type="submit"]').first().click();
+  await page.waitForURL(/\/(en\/)?admin(\/.*)?(\?.*)?$/);
 }
 
 test.describe('Master Folder Tree drag and drop', () => {
@@ -231,11 +364,13 @@ test.describe('Master Folder Tree drag and drop', () => {
   test('Product categories: dragging a root category into another root persists move payload', async ({
     page,
   }) => {
-    await ensureAdminSession(page);
-    await mockAuthAndSettings(page);
+    test.setTimeout(120_000);
 
     const now = new Date().toISOString();
     let reorderPayload: Record<string, unknown> | null = null;
+
+    await mockAuthAndSettings(page);
+    await mockProductsAdminBootstrap(page, now);
 
     const categories = [
       {
@@ -294,63 +429,53 @@ test.describe('Master Folder Tree drag and drop', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify(catalogsResponseBody),
       });
     });
 
-    await page.route('**/api/price-groups**', async (route) => {
+    await page.route(/\/api\/v2\/products\/tags(\?.*)?$/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify([]),
       });
     });
 
-    await page.route(/\/api\/products\/tags(\?.*)?$/, async (route) => {
+    await page.route(/\/api\/v2\/products\/shipping-groups(\?.*)?$/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify([]),
       });
     });
 
-    await page.route('**/api/currencies**', async (route) => {
+    await page.route(/\/api\/v2\/products\/parameters(\?.*)?$/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify([]),
       });
     });
 
-    await page.route('**/api/countries**', async (route) => {
+    await page.route(/\/api\/v2\/products\/categories\/tree(\?.*)?$/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([]),
-      });
-    });
-
-    await page.route('**/api/languages**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([]),
-      });
-    });
-
-    await page.route(/\/api\/products\/categories\/tree(\?.*)?$/, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify(categories),
       });
     });
 
-    await page.route('**/api/products/categories/reorder', async (route) => {
+    await page.route('**/api/v2/products/categories/reorder', async (route) => {
       reorderPayload = JSON.parse(route.request().postData() || '{}') as Record<string, unknown>;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify({
           id: 'root-a',
           name: 'Root A',
@@ -360,14 +485,21 @@ test.describe('Master Folder Tree drag and drop', () => {
       });
     });
 
-    await page.goto('/admin/products/settings', { waitUntil: 'networkidle' });
+    await ensureSharedAdminSession(page, '/admin/products/settings', {
+      initialNavigationTimeoutMs: 120_000,
+      destinationNavigationTimeoutMs: 120_000,
+      transitionTimeoutMs: 60_000,
+    });
 
-    const sourceRoot = page.locator('[data-master-tree-node-id="category:root-a"]').first();
-    await expect(sourceRoot).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add Category' }).first()).toBeVisible({
+      timeout: 30_000,
+    });
+    const sourceRootRow = page.locator('[data-master-tree-node-id="category:root-a"]').first();
+    await expect(sourceRootRow).toBeVisible();
 
     const targetRoot = page.locator('[data-master-tree-node-id="category:root-b"]').first();
     await expect(targetRoot).toBeVisible();
-    await dragAndDrop(page, sourceRoot, targetRoot);
+    await dragAndDrop(page, sourceRootRow, targetRoot);
 
     await expect.poll(() => reorderPayload, { timeout: 10_000 }).not.toBeNull();
     expect(reorderPayload).toMatchObject({

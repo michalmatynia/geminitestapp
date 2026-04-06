@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v98
+  // tradera-quicklist-default:v103
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -187,12 +187,20 @@ export const PART_1 = String.raw`export default async function run({
   const PUBLISH_SELECTORS = [
     'button[aria-label*="Review and publish" i]',
     'button[aria-label*="Publish" i]',
+    'button[aria-label*="Save changes" i]',
+    'button[aria-label*="Update listing" i]',
     'button[aria-label*="Granska och publicera" i]',
     'button[aria-label*="Publicera" i]',
+    'button[aria-label*="Spara ändringar" i]',
+    'button[aria-label*="Uppdatera annons" i]',
     'button:has-text("Review and publish")',
     'button:has-text("Publish")',
+    'button:has-text("Save changes")',
+    'button:has-text("Update listing")',
     'button:has-text("Granska och publicera")',
     'button:has-text("Publicera")',
+    'button:has-text("Spara ändringar")',
+    'button:has-text("Uppdatera annons")',
     'button:has-text("Lägg upp")',
     '[data-testid*="publish"]',
     'button[type="submit"]',
@@ -200,8 +208,12 @@ export const PART_1 = String.raw`export default async function run({
   const PUBLISH_ACTION_LABEL_HINTS = [
     'review and publish',
     'publish',
+    'save changes',
+    'update listing',
     'granska och publicera',
     'publicera',
+    'spara ändringar',
+    'uppdatera annons',
     'lägg upp',
   ];
   const VALIDATION_MESSAGE_SELECTORS = [
@@ -249,6 +261,44 @@ export const PART_1 = String.raw`export default async function run({
     '[aria-current="page"]:has-text("Aktiva")',
     '[aria-current="true"]:has-text("Aktiva")',
     '[role="tab"][aria-selected="true"]:has-text("Aktiva")',
+  ];
+  const EDIT_LISTING_LABELS = [
+    'Edit',
+    'Edit listing',
+    'Edit item',
+    'Update listing',
+    'Redigera',
+    'Redigera annons',
+    'Uppdatera annons',
+    'Ändra',
+  ];
+  const EDIT_LISTING_TRIGGER_SELECTORS = [
+    'a[href*="/selling/draft/"]',
+    'a[href*="/selling/edit"]',
+    'a[href*="/edit"]',
+    'button:has-text("Edit")',
+    'button:has-text("Edit listing")',
+    'button:has-text("Update listing")',
+    'button:has-text("Redigera")',
+    'button:has-text("Redigera annons")',
+    'button:has-text("Uppdatera annons")',
+    '[data-testid*="edit"]',
+  ];
+  const LISTING_ACTION_MENU_TRIGGER_SELECTORS = [
+    'button[aria-label*="More" i]',
+    'button[aria-label*="Actions" i]',
+    'button[aria-label*="Menu" i]',
+    'button[aria-label*="Mer" i]',
+    'button[aria-label*="Fler" i]',
+    'button[aria-label*="Hantera" i]',
+    'button[aria-label*="Alternativ" i]',
+    'button:has-text("More")',
+    'button:has-text("Mer")',
+    'button:has-text("Fler")',
+    'button:has-text("Hantera")',
+    '[data-testid*="menu"]',
+    '[data-testid*="actions"]',
+    '[aria-haspopup="menu"]',
   ];
   const LOGIN_FORM_SELECTORS = [
     '#sign-in-form',
@@ -377,6 +427,27 @@ export const PART_1 = String.raw`export default async function run({
   const SHIPPING_DIALOG_CLOSE_LABELS = ['Close', 'Stäng'];
   const SHIPPING_DIALOG_CANCEL_LABELS = ['Cancel', 'Avbryt'];
   const SHIPPING_DIALOG_SAVE_LABELS = ['Save', 'Spara'];
+  const WISHLIST_FAVORITES_DIALOG_TEXT_HINTS = [
+    'Wishlist your favorites',
+    'Wishlist your favourites',
+    'wishlist',
+    'favoriter',
+  ];
+  const WISHLIST_FAVORITES_DIALOG_DISMISS_LABELS = [
+    'Close',
+    'Stäng',
+    'Maybe later',
+    'Not now',
+    'No thanks',
+    'Skip',
+  ];
+  const WISHLIST_FAVORITES_DIALOG_CLOSE_SELECTORS = [
+    'button[aria-label*="Close" i]',
+    'button[aria-label*="Stäng" i]',
+    'button[title*="Close" i]',
+    'button[title*="Stäng" i]',
+    '[data-testid*="close"]',
+  ];
   const SHIPPING_DIALOG_PRICE_INPUT_SELECTORS = [
     'input[inputmode="decimal"]',
     'input[type="number"]',
@@ -434,8 +505,13 @@ export const PART_1 = String.raw`export default async function run({
   };
 
   const baseProductId = toText(input?.baseProductId) || toText(input?.productId) || 'product';
-  const listingAction = toText(input?.listingAction) === 'relist' ? 'relist' : 'list';
+  const requestedListingAction = toText(input?.listingAction);
+  const listingAction =
+    requestedListingAction === 'relist' || requestedListingAction === 'sync'
+      ? requestedListingAction
+      : 'list';
   const existingExternalListingId = toText(input?.existingExternalListingId);
+  const existingListingUrl = toText(input?.existingListingUrl);
   const duplicateSearchTitle = toText(input?.duplicateSearchTitle);
   const rawDescriptionEn = toText(input?.rawDescriptionEn);
   const allowDuplicateLinking = true;

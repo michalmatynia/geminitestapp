@@ -2,7 +2,6 @@ import React from 'react';
 
 import {
   useProductListingsActions,
-  useProductListingsModals,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
 
@@ -17,7 +16,6 @@ export function TraderaRecoveryContinueButton({
   connectionId,
   size = 'sm',
 }: TraderaRecoveryContinueButtonProps): React.JSX.Element {
-  const { onStartListing } = useProductListingsModals();
   const { handleOpenTraderaLogin } = useProductListingsActions();
   const { openingTraderaLogin } = useProductListingsUIState();
   const openingRecoveryLogin = openingTraderaLogin === 'recovery';
@@ -32,21 +30,16 @@ export function TraderaRecoveryContinueButton({
       className={className}
       onClick={(): void => {
         void (async (): Promise<void> => {
-          const recovered = await handleOpenTraderaLogin(
+          await handleOpenTraderaLogin(
             'recovery',
             integrationId,
             connectionId
           );
-          if (recovered) {
-            onStartListing?.(integrationId, connectionId, {
-              autoSubmit: true,
-            });
-          }
         })();
       }}
       disabled={openingRecoveryLogin}
     >
-      {openingRecoveryLogin ? 'Waiting for manual login...' : 'Login and continue listing'}
+      {openingRecoveryLogin ? 'Waiting for manual login...' : 'Login to Tradera'}
     </button>
   );
 }

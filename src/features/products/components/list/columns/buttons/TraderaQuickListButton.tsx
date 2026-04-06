@@ -195,7 +195,11 @@ export function TraderaQuickListButton(props: {
       await invalidateProductListingsAndBadges(queryClient, product.id);
       await invalidateProducts(queryClient);
     } catch (error: unknown) {
-      if (error instanceof ApiError && error.status === 409) {
+      if (
+        error instanceof ApiError &&
+        error.status === 409 &&
+        !isTraderaBrowserAuthRequiredMessage(error.message)
+      ) {
         setFeedbackStatus(null);
         toast(
           error.message ||

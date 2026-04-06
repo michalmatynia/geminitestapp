@@ -6,6 +6,7 @@ import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/t
 
 const {
   handleOpenTraderaLoginMock,
+  handleSyncTraderaMock,
   onStartListingMock,
   setRecoveryContextMock,
   useProductListingsDataMock,
@@ -14,6 +15,7 @@ const {
   useProductListingsUIStateMock,
 } = vi.hoisted(() => ({
   handleOpenTraderaLoginMock: vi.fn(),
+  handleSyncTraderaMock: vi.fn(),
   onStartListingMock: vi.fn(),
   setRecoveryContextMock: vi.fn(),
   useProductListingsDataMock: vi.fn(),
@@ -69,6 +71,7 @@ describe('ProductListingsContent', () => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
     handleOpenTraderaLoginMock.mockResolvedValue(true);
+    handleSyncTraderaMock.mockResolvedValue(undefined);
     useProductListingsDataMock.mockReturnValue({
       product: { id: 'product-1' },
     });
@@ -79,9 +82,11 @@ describe('ProductListingsContent', () => {
     });
     useProductListingsActionsMock.mockReturnValue({
       handleOpenTraderaLogin: handleOpenTraderaLoginMock,
+      handleSyncTradera: handleSyncTraderaMock,
     });
     useProductListingsUIStateMock.mockReturnValue({
       openingTraderaLogin: null,
+      syncingTraderaListing: null,
     });
   });
 
@@ -108,23 +113,19 @@ describe('ProductListingsContent', () => {
 
     expect(screen.getByText(/Tradera quick export requires recovery/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Login and continue listing' })
+      screen.getByRole('button', { name: 'Login to Tradera' })
     ).toBeInTheDocument();
     expect(screen.getByText('Tradera status: auth_required')).toBeInTheDocument();
     expect(screen.getByText('Queue job:')).toBeInTheDocument();
     expect(screen.getByText('job-tradera-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
       'recovery',
       'integration-tradera-1',
       'conn-tradera-1'
     );
-    expect(onStartListingMock).toHaveBeenCalledWith(
-      'integration-tradera-1',
-      'conn-tradera-1',
-      { autoSubmit: true }
-    );
+    expect(onStartListingMock).not.toHaveBeenCalled();
   });
 
   it('does not continue into listing flow when login recovery fails', async () => {
@@ -149,7 +150,7 @@ describe('ProductListingsContent', () => {
       </ProductListingsViewProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
 
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
@@ -196,7 +197,7 @@ describe('ProductListingsContent', () => {
       </ProductListingsViewProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
 
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
@@ -204,11 +205,7 @@ describe('ProductListingsContent', () => {
       'integration-tradera-1',
       'conn-tradera-1'
     );
-    expect(onStartListingMock).toHaveBeenCalledWith(
-      'integration-tradera-1',
-      'conn-tradera-1',
-      { autoSubmit: true }
-    );
+    expect(onStartListingMock).not.toHaveBeenCalled();
   });
 
   it('matches the Tradera recovery listing by queue job when multiple Tradera listings exist', async () => {
@@ -272,7 +269,7 @@ describe('ProductListingsContent', () => {
       </ProductListingsViewProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
 
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
@@ -280,11 +277,7 @@ describe('ProductListingsContent', () => {
       'integration-tradera-2',
       'conn-tradera-2'
     );
-    expect(onStartListingMock).toHaveBeenCalledWith(
-      'integration-tradera-2',
-      'conn-tradera-2',
-      { autoSubmit: true }
-    );
+    expect(onStartListingMock).not.toHaveBeenCalled();
     expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
       '"requestId":"job-tradera-target"'
     );
@@ -359,7 +352,7 @@ describe('ProductListingsContent', () => {
       </ProductListingsViewProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
 
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
@@ -367,11 +360,7 @@ describe('ProductListingsContent', () => {
       'integration-tradera-2',
       'conn-tradera-2'
     );
-    expect(onStartListingMock).toHaveBeenCalledWith(
-      'integration-tradera-2',
-      'conn-tradera-2',
-      { autoSubmit: true }
-    );
+    expect(onStartListingMock).not.toHaveBeenCalled();
     expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
       '"runId":"run-tradera-target"'
     );
@@ -460,7 +449,7 @@ describe('ProductListingsContent', () => {
       </ProductListingsViewProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
 
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
@@ -468,11 +457,7 @@ describe('ProductListingsContent', () => {
       'integration-tradera-2',
       'conn-tradera-2'
     );
-    expect(onStartListingMock).toHaveBeenCalledWith(
-      'integration-tradera-2',
-      'conn-tradera-2',
-      { autoSubmit: true }
-    );
+    expect(onStartListingMock).not.toHaveBeenCalled();
   });
 
   it('shows the failure reason instead of login recovery actions for non-auth Tradera failures', () => {
@@ -532,7 +517,7 @@ describe('ProductListingsContent', () => {
         'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
       '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
@@ -595,7 +580,7 @@ describe('ProductListingsContent', () => {
         'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Shipping Groups' })).toHaveAttribute(
       'href',
       '/admin/products/settings?section=shipping-groups'
@@ -644,6 +629,56 @@ describe('ProductListingsContent', () => {
       'href',
       'https://www.tradera.com/item/123'
     );
+  });
+
+  it('queues a Tradera sync from the quick-export success banner when the listing row is available', async () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+      listingUrl: 'https://www.tradera.com/item/123',
+      externalListingId: '123',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'active',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'conn-tradera-1',
+              externalListingId: '123',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              connection: {
+                id: 'conn-tradera-1',
+                name: 'Tradera Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.tradera.com/item/123',
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sync with Tradera' }));
+    await Promise.resolve();
+
+    expect(handleSyncTraderaMock).toHaveBeenCalledWith('listing-1', {
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
   });
 
   it('renders duplicate-linked Tradera quick-export copy when an existing listing was linked', () => {

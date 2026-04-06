@@ -38,6 +38,7 @@ export interface ProductListingsUIState {
   exportingListing: string | null;
   savingInventoryId: string | null;
   syncingImages: string | null;
+  syncingTraderaListing: string | null;
   relistingListing: string | null;
   relistingBrowserMode: PlaywrightRelistBrowserMode | null;
   openingTraderaLogin: string | null;
@@ -94,6 +95,14 @@ export interface ProductListingsActions {
   handlePurgeListing: (listingId: string) => Promise<void>;
   handleSaveInventoryId: (listingId: string) => Promise<void>;
   handleSyncBaseImages: (baseListing: ProductListingWithDetails | null) => Promise<void>;
+  handleSyncTradera: (
+    listingId: string,
+    options?: {
+      integrationId?: string | null;
+      connectionId?: string | null;
+      skipSessionPreflight?: boolean;
+    }
+  ) => Promise<void>;
   handleRelistTradera: (
     listingId: string,
     options?: {
@@ -151,6 +160,7 @@ export function ProductListingsProvider({
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
   const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
   const [syncingImages, setSyncingImages] = useState<string | null>(null);
+  const [syncingTraderaListing, setSyncingTraderaListing] = useState<string | null>(null);
   const [relistingListing, setRelistingListing] = useState<string | null>(null);
   const [relistingBrowserMode, setRelistingBrowserMode] =
     useState<PlaywrightRelistBrowserMode | null>(null);
@@ -208,6 +218,7 @@ export function ProductListingsProvider({
     setRelistingListing,
     setSavingInventoryId,
     setSyncingImages,
+    setSyncingTraderaListing,
   });
 
   const dataValue = useMemo<ProductListingsData>(
@@ -228,6 +239,7 @@ export function ProductListingsProvider({
       exportingListing,
       savingInventoryId,
       syncingImages,
+      syncingTraderaListing,
       relistingListing,
       relistingBrowserMode,
       openingTraderaLogin,
@@ -242,6 +254,7 @@ export function ProductListingsProvider({
       exportingListing,
       savingInventoryId,
       syncingImages,
+      syncingTraderaListing,
       relistingListing,
       relistingBrowserMode,
       openingTraderaLogin,

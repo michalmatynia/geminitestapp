@@ -6,6 +6,7 @@ import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/t
 
 const {
   handleOpenTraderaLoginMock,
+  handleSyncTraderaMock,
   onStartListingMock,
   useProductListingsDataMock,
   useProductListingsModalsMock,
@@ -13,6 +14,7 @@ const {
   useProductListingsUIStateMock,
 } = vi.hoisted(() => ({
   handleOpenTraderaLoginMock: vi.fn(),
+  handleSyncTraderaMock: vi.fn(),
   onStartListingMock: vi.fn(),
   useProductListingsDataMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
@@ -51,6 +53,7 @@ describe('ProductListingsEmpty', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     handleOpenTraderaLoginMock.mockResolvedValue(true);
+    handleSyncTraderaMock.mockResolvedValue(undefined);
     useProductListingsDataMock.mockReturnValue({
       product: { id: 'product-1' },
     });
@@ -60,9 +63,11 @@ describe('ProductListingsEmpty', () => {
     });
     useProductListingsActionsMock.mockReturnValue({
       handleOpenTraderaLogin: handleOpenTraderaLoginMock,
+      handleSyncTradera: handleSyncTraderaMock,
     });
     useProductListingsUIStateMock.mockReturnValue({
       openingTraderaLogin: null,
+      syncingTraderaListing: null,
     });
   });
 
@@ -116,24 +121,20 @@ describe('ProductListingsEmpty', () => {
     expect(screen.getByText('Tradera quick export needs recovery')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then continue directly into the Tradera listing flow from this modal.'
+        'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then choose whether to relist or sync from this modal.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('auth_required')).toBeInTheDocument();
     expect(screen.getByText('job-tradera-1')).toBeInTheDocument();
     expect(screen.getByText('Queue job')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
       'recovery',
       'integration-tradera-1',
       'conn-tradera-1'
     );
-    expect(onStartListingMock).toHaveBeenCalledWith(
-      'integration-tradera-1',
-      'conn-tradera-1',
-      { autoSubmit: true }
-    );
+    expect(onStartListingMock).not.toHaveBeenCalled();
   });
 
   it('does not continue into listing flow when Tradera manual login fails', async () => {
@@ -157,7 +158,7 @@ describe('ProductListingsEmpty', () => {
       </ProductListingsViewProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
 
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
@@ -196,7 +197,7 @@ describe('ProductListingsEmpty', () => {
         'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
       '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
@@ -230,7 +231,7 @@ describe('ProductListingsEmpty', () => {
         'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Shipping Groups' })).toHaveAttribute(
       'href',
       '/admin/products/settings?section=shipping-groups'
@@ -239,6 +240,9 @@ describe('ProductListingsEmpty', () => {
 
   it('renders a Tradera quick-export success banner when the row has not synced yet', () => {
     persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
       listingUrl: 'https://www.tradera.com/item/123',
       externalListingId: '123',
       completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
@@ -265,6 +269,39 @@ describe('ProductListingsEmpty', () => {
     );
     expect(screen.queryByText('No listings found')).toBeNull();
     expect(screen.queryByText('Not connected.')).toBeNull();
+  });
+
+  it('queues a Tradera sync from the empty-state success banner when feedback includes listing ids', async () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+      listingUrl: 'https://www.tradera.com/item/123',
+      externalListingId: '123',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sync with Tradera' }));
+    await Promise.resolve();
+
+    expect(handleSyncTraderaMock).toHaveBeenCalledWith('listing-1', {
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
   });
 
   it('renders duplicate-linked Tradera quick-export success copy when the row has not synced yet', () => {

@@ -95,7 +95,7 @@ export const resolveNextRelistAt = (
 export const captureTraderaListingDebugArtifacts = async (
   page: Page,
   listingId: string,
-  action: 'list' | 'relist'
+  action: 'list' | 'relist' | 'sync'
 ): Promise<string | null> => {
   try {
     const now = new Date().toISOString().replace(/[:.]/g, '-');

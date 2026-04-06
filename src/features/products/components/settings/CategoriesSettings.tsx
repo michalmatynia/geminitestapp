@@ -379,6 +379,50 @@ export function CategoriesSettings(): React.JSX.Element {
     []
   );
 
+  const canStartCategoryDrag = useCallback(
+    (input: {
+      node: MasterTreeNode;
+      event: React.DragEvent<HTMLDivElement>;
+    }): boolean => {
+      const { event } = input;
+      const target = event.target;
+      const eventTarget = target instanceof Element ? target : null;
+      const pointerElement =
+        typeof document !== 'undefined'
+          ? document.elementFromPoint(event.clientX, event.clientY)
+          : null;
+
+      const matchesSelector = (element: Element | null, selector: string): boolean =>
+        Boolean(element?.closest(selector));
+
+      if (
+        matchesSelector(eventTarget, '[data-master-tree-drag-handle="category"]') ||
+        matchesSelector(pointerElement, '[data-master-tree-drag-handle="category"]')
+      ) {
+        return true;
+      }
+
+      if (
+        matchesSelector(
+          eventTarget,
+          'button,[role="button"],input,textarea,select,a,[data-master-tree-no-drag="true"]'
+        ) ||
+        matchesSelector(
+          pointerElement,
+          'button,[role="button"],input,textarea,select,a,[data-master-tree-no-drag="true"]'
+        )
+      ) {
+        return false;
+      }
+
+      return (
+        matchesSelector(eventTarget, '[data-master-tree-drag-surface="category"]') ||
+        matchesSelector(pointerElement, '[data-master-tree-drag-surface="category"]')
+      );
+    },
+    []
+  );
+
   const categoryTreeNodeRuntimeValue = useMemo(
     (): CategoryTreeNodeRuntimeContextValue => ({
       categoryById,
@@ -496,6 +540,7 @@ export function CategoriesSettings(): React.JSX.Element {
                         controller={controller}
                         className='space-y-0.5'
                         rootDropUi={rootDropUi}
+                        canStartDrag={canStartCategoryDrag}
                         resolveDropPosition={resolveCategoryDropPosition}
                         renderNode={(nodeProps) => <CategoryTreeNodeRenderer {...nodeProps} />}
                       />

@@ -1,6 +1,7 @@
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCategoryMappingRepository } from '../category-mapping-repository';
 
@@ -296,22 +297,48 @@ export const resolveTraderaCategoryMappingResolutionForProduct = async ({
 
   // No direct mapping — load product categories for parent-chain inheritance
   const catalogId = toTrimmedString(product.catalogId);
-  if (!catalogId) {
-    return directResult;
-  }
+  let resolvedCategoryCatalogId: string | null = null;
 
   try {
     const { getCategoryRepository } = await import(
       '@/shared/lib/products/services/category-repository'
     );
     const categoryRepository = await getCategoryRepository();
-    const internalCategories = await categoryRepository.listCategories({ catalogId });
+    const internalCategoryId = toTrimmedString(product.categoryId);
+    const internalCategory =
+      internalCategoryId && typeof categoryRepository.getCategoryById === 'function'
+        ? await categoryRepository.getCategoryById(internalCategoryId)
+        : null;
+    const categoryCatalogId =
+      toTrimmedString(internalCategory?.catalogId) ||
+      catalogId ||
+      resolveProductCatalogIds(product)[0] ||
+      '';
+    resolvedCategoryCatalogId = categoryCatalogId || null;
+
+    if (!categoryCatalogId) {
+      return directResult;
+    }
+
+    const internalCategories = await categoryRepository.listCategories({
+      catalogId: categoryCatalogId,
+    });
     return selectPreferredTraderaCategoryMappingResolution({
       mappings,
       product,
       internalCategories,
     });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'tradera-category-mapping',
+      action: 'resolveTraderaCategoryMappingResolutionForProduct',
+      connectionId,
+      productId: toTrimmedString(product.id) || null,
+      productCategoryId: toTrimmedString(product.categoryId) || null,
+      productCatalogIds: resolveProductCatalogIds(product),
+      requestedCatalogId: catalogId || null,
+      resolvedCategoryCatalogId,
+    });
     return directResult;
   }
 };

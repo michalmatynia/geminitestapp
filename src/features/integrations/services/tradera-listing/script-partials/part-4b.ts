@@ -729,19 +729,54 @@ export const PART_4B = String.raw`
     expectedUploadCount = 1,
     baselinePreviewCount = 0
   ) => {
-    const waitForListingFormReady = async (timeoutMs = 20_000) => {
+    const waitForImageStepActionable = async (timeoutMs = 20_000) => {
       const deadline = Date.now() + timeoutMs;
+      let lastObservedState = null;
+
       while (Date.now() < deadline) {
         const listingEditorState = await readListingEditorState();
         if (listingEditorState.ready) {
           log?.('tradera.quicklist.image.editor_ready', listingEditorState);
-          return true;
+          return {
+            type: 'editor_ready',
+            button: null,
+            listingEditorState,
+          };
+        }
+
+        const continueButton = await firstVisible(CONTINUE_SELECTORS);
+        const continueButtonDisabled = continueButton
+          ? await isControlDisabled(continueButton)
+          : null;
+        const [imageUploadPromptVisible, imageUploadPending] = await Promise.all([
+          isImageUploadPromptVisible().catch(() => false),
+          isImageUploadPending().catch(() => false),
+        ]);
+
+        lastObservedState = {
+          continueButtonVisible: Boolean(continueButton),
+          continueButtonDisabled,
+          imageUploadPromptVisible,
+          imageUploadPending,
+          listingEditorState,
+        };
+
+        if (continueButton && continueButtonDisabled === false) {
+          return {
+            type: 'continue',
+            button: continueButton,
+            ...lastObservedState,
+          };
         }
 
         await wait(500);
       }
 
-      return false;
+      return {
+        type: 'timeout',
+        button: null,
+        ...lastObservedState,
+      };
     };
 
     const clickContinueButton = async (button) => {
@@ -796,47 +831,43 @@ export const PART_4B = String.raw`
       );
     }
 
-    const actionableContinueButton = await firstVisible(CONTINUE_SELECTORS);
-    if (!actionableContinueButton) {
-      const formReadyWithoutContinue = await waitForListingFormReady(8_000);
-      if (formReadyWithoutContinue) {
-        return false;
-      }
+    const imageStepEntry = await waitForImageStepActionable(20_000);
+    if (imageStepEntry.type === 'editor_ready') {
+      return true;
+    }
 
+    if (imageStepEntry.type !== 'continue' || !imageStepEntry.button) {
       throw new Error(
-        'FAIL_IMAGE_SET_INVALID: Tradera listing form did not appear after the image step.'
+        'FAIL_IMAGE_SET_INVALID: Tradera image step never became actionable after upload. State: ' +
+          JSON.stringify(imageStepEntry)
       );
     }
 
-    const disabled = await isControlDisabled(actionableContinueButton);
-
-    if (disabled) {
-      return false;
-    }
-
+    let actionableContinueButton = imageStepEntry.button;
     for (let attempt = 0; attempt < 3; attempt += 1) {
       await clickContinueButton(actionableContinueButton);
 
-      const formReady = await waitForListingFormReady(20_000);
-      if (formReady) {
+      const imageStepAfterContinue = await waitForImageStepActionable(20_000);
+      if (imageStepAfterContinue.type === 'editor_ready') {
         return true;
       }
 
-      const continueStillVisible = await actionableContinueButton.isVisible().catch(() => false);
-      const continueStillDisabled = continueStillVisible
-        ? await actionableContinueButton.isDisabled().catch(() => false)
-        : false;
-
-      if (!continueStillVisible || continueStillDisabled) {
+      if (imageStepAfterContinue.type !== 'continue' || !imageStepAfterContinue.button) {
         break;
       }
+
+      actionableContinueButton = imageStepAfterContinue.button;
     }
 
     const finalEditorState = await readListingEditorState();
+    const finalImageStepState = await waitForImageStepActionable(2_000);
 
     throw new Error(
       'FAIL_IMAGE_SET_INVALID: Continue completed the image step but the listing editor never became ready. Editor state: ' +
-        JSON.stringify(finalEditorState)
+        JSON.stringify({
+          ...finalEditorState,
+          imageStepState: finalImageStepState,
+        })
     );
   };
 

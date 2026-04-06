@@ -120,6 +120,21 @@ const renderViewport = (
 };
 
 describe('FolderTreeViewportV2 multi-select pointer behavior', () => {
+  it('renders a stable node id data attribute for each row container', () => {
+    const controller = createController();
+    const { container, disposeRuntime } = renderViewport(controller, {
+      enabled: false,
+      ctrlClick: true,
+      shiftClick: true,
+      selectAll: true,
+    });
+
+    expect(container.querySelector('[data-master-tree-node-id="a"]')).toBeTruthy();
+    expect(container.querySelector('[data-master-tree-node-id="b"]')).toBeTruthy();
+    expect(container.querySelector('[data-master-tree-node-id="c"]')).toBeTruthy();
+    disposeRuntime();
+  });
+
   it('keeps single-select behavior when multi-select is disabled', () => {
     const controller = createController();
     const { disposeRuntime } = renderViewport(controller, {

@@ -9,6 +9,7 @@ import {
 } from '../drag-data';
 
 type DataTransferStub = {
+  effectAllowed?: DataTransfer['effectAllowed'];
   store: Map<string, string>;
   setData: (key: string, value: string) => void;
   getData: (key: string) => string;
@@ -33,6 +34,7 @@ describe('master tree drag payload helpers', () => {
 
     expect(dataTransfer.store.get(MASTER_TREE_DRAG_NODE_ID)).toBe('section:hero');
     expect(dataTransfer.store.get(DRAG_KEYS.TEXT)).toBe('Hero');
+    expect(dataTransfer.effectAllowed).toBe('move');
   });
 
   it('uses node id as text fallback by default', () => {

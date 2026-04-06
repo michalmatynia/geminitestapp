@@ -33,12 +33,14 @@ describe('ProductListingActions', () => {
   const handleExportAgain = vi.fn();
   const handleOpenTraderaLogin = vi.fn();
   const handleRelistTradera = vi.fn();
+  const handleSyncTradera = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     handleExportAgain.mockResolvedValue(undefined);
     handleOpenTraderaLogin.mockResolvedValue(true);
     handleRelistTradera.mockResolvedValue(undefined);
+    handleSyncTradera.mockResolvedValue(undefined);
     useImageRetryPresetsMock.mockReturnValue([]);
     useProductListingsUIStateMock.mockReturnValue({
       exportingListing: null,
@@ -47,6 +49,7 @@ describe('ProductListingActions', () => {
       savingInventoryId: null,
       deletingFromBase: null,
       purgingListing: null,
+      syncingTraderaListing: null,
       relistingListing: null,
       relistingBrowserMode: null,
       openingTraderaLogin: null,
@@ -55,6 +58,7 @@ describe('ProductListingActions', () => {
       handleExportAgain,
       handleExportImagesOnly: vi.fn(),
       handleSaveInventoryId: vi.fn(),
+      handleSyncTradera,
       handleRelistTradera,
       handleOpenTraderaLogin,
     });
@@ -170,7 +174,79 @@ describe('ProductListingActions', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Open login window' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Sync with Tradera' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Relist now' })).toBeInTheDocument();
+  });
+
+  it('queues a Tradera sync from the listing actions', async () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: null,
+          } as never
+        }
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sync with Tradera' }));
+    await Promise.resolve();
+
+    expect(handleSyncTradera).toHaveBeenCalledWith('listing-1', {
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+    });
+  });
+
+  it('retries sync after manual login when the last Tradera execution action was sync', async () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'failed',
+            failureReason: 'Listing failed.',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  action: 'sync',
+                  errorCategory: 'AUTH',
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Login and retry sync' }));
+
+    await Promise.resolve();
+    expect(handleOpenTraderaLogin).toHaveBeenCalledWith(
+      'listing-1',
+      'integration-1',
+      'connection-1'
+    );
+    expect(handleSyncTradera).toHaveBeenCalledWith('listing-1', {
+      skipSessionPreflight: true,
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+    });
+    expect(handleRelistTradera).not.toHaveBeenCalled();
   });
 
   it('keeps the legacy failureReason fallback for older listings without execution metadata', () => {

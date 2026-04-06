@@ -36,6 +36,117 @@ export const PART_4 = String.raw`);
     });
   };
 
+  // Click a category option scoped to the category picker container.
+  // This prevents accidentally clicking breadcrumbs, navigation links,
+  // or other elements outside the picker that happen to share a name.
+  const clickCategoryPickerOptionByName = async (name) => {
+    const pickerRoot = page.locator('[data-test-category-chooser="true"]').first();
+    const pickerVisible = await pickerRoot.isVisible().catch(() => false);
+    if (!pickerVisible) {
+      return false;
+    }
+
+    const normalizedName = name.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+
+    // Try exact match first, then partial — only within the picker, excluding breadcrumbs.
+    const candidateSelectors = [
+      { role: 'menuitem', exact: true },
+      { role: 'menuitemradio', exact: true },
+      { role: 'option', exact: true },
+      { role: 'radio', exact: true },
+      { role: 'link', exact: true },
+      { role: 'button', exact: true },
+      { role: 'menuitem', exact: false },
+      { role: 'menuitemradio', exact: false },
+      { role: 'option', exact: false },
+      { role: 'radio', exact: false },
+      { role: 'link', exact: false },
+      { role: 'button', exact: false },
+    ];
+
+    for (const spec of candidateSelectors) {
+      const pattern = spec.exact
+        ? new RegExp('^' + normalizedName + '$', 'i')
+        : new RegExp(normalizedName, 'i');
+      const candidate = pickerRoot.getByRole(spec.role, { name: pattern }).first();
+      const visible = await candidate.isVisible().catch(() => false);
+      if (!visible) continue;
+
+      // Exclude breadcrumb elements
+      const isBreadcrumb = await candidate
+        .evaluate((element) =>
+          Boolean(element.closest('nav[aria-label="Breadcrumb"]'))
+        )
+        .catch(() => false);
+      if (isBreadcrumb) continue;
+
+      // Skip category-page navigation links — they would leave the picker
+      const href = await candidate.getAttribute('href').catch(() => null);
+      if (href && /\/category\/\d+/i.test(href)) continue;
+
+      await logClickTarget('category-picker-option:' + name, candidate);
+      await humanClick(candidate);
+      await wait(400);
+      return true;
+    }
+
+    // XPath text fallback scoped to the picker
+    const textFallback = pickerRoot
+      .locator(
+        'xpath=.//*[normalize-space(text())="' +
+          name.replace(/"/g, '\\"') +
+          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menuitem" or @role="menuitemradio" or @role="option" or @role="radio"][1]'
+      )
+      .first();
+    const fallbackVisible = await textFallback.isVisible().catch(() => false);
+    if (!fallbackVisible) return false;
+
+    const isBreadcrumb = await textFallback
+      .evaluate((element) =>
+        Boolean(element.closest('nav[aria-label="Breadcrumb"]'))
+      )
+      .catch(() => false);
+    if (isBreadcrumb) return false;
+
+    await logClickTarget('category-picker-option:' + name, textFallback);
+    await humanClick(textFallback).catch(() => undefined);
+    await wait(400);
+    return true;
+  };
+
+  // Wait for the category picker to reflect a segment click by checking
+  // that the visible options changed or the breadcrumbs updated.
+  const waitForCategoryPickerUpdate = async (clickedSegment, optionsBefore, timeoutMs = 8_000) => {
+    const deadline = Date.now() + timeoutMs;
+    const normalizedClickedSegment = normalizeWhitespace(clickedSegment).toLowerCase();
+    const beforeSet = new Set(optionsBefore.map((o) => normalizeWhitespace(o).toLowerCase()));
+
+    while (Date.now() < deadline) {
+      const currentOptions = await readVisibleCategoryMenuOptions();
+      const currentSet = new Set(currentOptions.map((o) => normalizeWhitespace(o).toLowerCase()));
+
+      // Options changed (new sub-level loaded) or the picker closed (leaf category selected)
+      const optionsChanged =
+        currentSet.size !== beforeSet.size ||
+        [...currentSet].some((o) => !beforeSet.has(o));
+
+      if (optionsChanged) {
+        return { updated: true, options: currentOptions };
+      }
+
+      // Breadcrumbs containing the clicked segment means navigation happened
+      const breadcrumbs = await readCategoryPickerBreadcrumbs();
+      const breadcrumbTexts = breadcrumbs.map((b) => normalizeWhitespace(b).toLowerCase());
+      if (breadcrumbTexts.includes(normalizedClickedSegment)) {
+        return { updated: true, options: currentOptions };
+      }
+
+      await wait(400);
+    }
+
+    return { updated: false, options: await readVisibleCategoryMenuOptions() };
+  };
+
   const chooseMappedCategory = async (segments) => {
     if (!Array.isArray(segments) || segments.length === 0) {
       return false;
@@ -74,12 +185,20 @@ export const PART_4 = String.raw`);
       return false;
     }
 
-    for (const segment of segments) {
-      const clicked = await clickMenuItemByName(segment);
+    for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+      const segment = segments[segmentIndex];
+      const optionsBefore = await readVisibleCategoryMenuOptions();
+
+      // Prefer picker-scoped click; fall back to global search only if
+      // the picker container is missing (e.g. data-test attribute removed).
+      const clicked =
+        (await clickCategoryPickerOptionByName(segment)) ||
+        (await clickMenuItemByName(segment));
       if (!clicked) {
         const pickerState = await readCategoryPickerState();
         log?.('tradera.quicklist.category.mapped_unavailable', {
           missingSegment: segment,
+          segmentIndex,
           mappedPath: segments.join(' > '),
           selectedPath: pickerState.selectedPath,
           breadcrumbs: pickerState.breadcrumbs,
@@ -91,7 +210,28 @@ export const PART_4 = String.raw`);
         await wait(200);
         return false;
       }
-      await wait(500);
+
+      // Wait for the picker to load sub-categories or close (leaf selected)
+      // instead of using a fixed delay.
+      if (segmentIndex < segments.length - 1) {
+        const updateResult = await waitForCategoryPickerUpdate(segment, optionsBefore);
+        log?.('tradera.quicklist.category.segment_selected', {
+          segment,
+          segmentIndex,
+          total: segments.length,
+          pickerUpdated: updateResult.updated,
+          visibleOptionsAfter: updateResult.options.slice(0, 8),
+        });
+      } else {
+        // Last segment — give the picker time to commit the selection
+        await wait(600);
+        log?.('tradera.quicklist.category.segment_selected', {
+          segment,
+          segmentIndex,
+          total: segments.length,
+          final: true,
+        });
+      }
     }
 
     selectedCategoryPath = segments.join(' > ');
@@ -452,6 +592,21 @@ export const PART_4 = String.raw`);
     return null;
   };
 
+  const waitForVisibleShippingDialog = async (timeoutMs = 6_000) => {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      const shippingDialog = await findVisibleShippingDialog();
+      if (shippingDialog) {
+        return shippingDialog;
+      }
+
+      await wait(150);
+    }
+
+    return findVisibleShippingDialog();
+  };
+
   const waitForDialogToClose = async (dialog, timeoutMs = 6_000) => {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
@@ -459,10 +614,193 @@ export const PART_4 = String.raw`);
       if (!visible) {
         return true;
       }
-      await wait(250);
+      await wait(150);
     }
 
     return !(await dialog.isVisible().catch(() => false));
+  };
+
+  const commitShippingDialogPriceInput = async (shippingPriceInput) => {
+    if (!shippingPriceInput) {
+      return;
+    }
+
+    await shippingPriceInput.focus().catch(() => undefined);
+    await humanPress('Tab', { pauseBefore: false, pauseAfter: false }).catch(
+      () => undefined
+    );
+    await shippingPriceInput
+      .evaluate((element) => {
+        if (element instanceof HTMLElement) {
+          element.blur();
+          element.dispatchEvent(
+            new Event('change', {
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        }
+      })
+      .catch(() => undefined);
+    await wait(200);
+    log?.('tradera.quicklist.delivery.price_committed', {
+      method: 'tab-blur',
+    });
+  };
+
+  const findVisibleWishlistFavoritesDialog = async () => {
+    const dialogs = page.getByRole('dialog');
+    const count = await dialogs.count().catch(() => 0);
+
+    for (let index = 0; index < count; index += 1) {
+      const candidate = dialogs.nth(index);
+      const visible = await candidate.isVisible().catch(() => false);
+      if (!visible) continue;
+
+      const textContent = await candidate.innerText().catch(() => '');
+      const normalized = normalizeWhitespace(textContent).toLowerCase();
+      const looksLikeWishlistFavorites = WISHLIST_FAVORITES_DIALOG_TEXT_HINTS.some((label) =>
+        normalized.includes(normalizeWhitespace(label).toLowerCase())
+      );
+
+      if (looksLikeWishlistFavorites) {
+        return candidate;
+      }
+    }
+
+    return null;
+  };
+
+  const dismissVisibleWishlistFavoritesModalIfPresent = async ({
+    context = 'unknown',
+    required = false,
+  } = {}) => {
+    const wishlistDialog = await findVisibleWishlistFavoritesDialog();
+    if (!wishlistDialog) {
+      return false;
+    }
+
+    const dialogText = normalizeWhitespace(await wishlistDialog.innerText().catch(() => ''));
+    log?.('tradera.quicklist.wishlist_modal.detected', {
+      context,
+      text: dialogText.slice(0, 160),
+    });
+
+    await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+      () => undefined
+    );
+    let dialogClosed = await waitForDialogToClose(wishlistDialog, 700);
+    if (dialogClosed) {
+      log?.('tradera.quicklist.wishlist_modal.dismissed', {
+        context,
+        method: 'escape',
+      });
+      return true;
+    }
+
+    const closeButton =
+      (await findButtonByLabelsWithin(
+        wishlistDialog,
+        WISHLIST_FAVORITES_DIALOG_DISMISS_LABELS
+      )) ||
+      (await firstVisibleWithin(
+        wishlistDialog,
+        WISHLIST_FAVORITES_DIALOG_CLOSE_SELECTORS
+      ));
+
+    if (closeButton) {
+      await humanClick(closeButton, { pauseAfter: false }).catch(() => undefined);
+      dialogClosed = await waitForDialogToClose(wishlistDialog, 1_500);
+      if (dialogClosed) {
+        log?.('tradera.quicklist.wishlist_modal.dismissed', {
+          context,
+          method: 'button',
+        });
+        return true;
+      }
+    }
+
+    log?.('tradera.quicklist.wishlist_modal.dismiss_failed', {
+      context,
+      text: dialogText.slice(0, 160),
+    });
+
+    if (required) {
+      throw new Error(
+        'FAIL_MODAL_DISMISS: Tradera wishlist favorites modal could not be dismissed (' +
+          context +
+          ').'
+      );
+    }
+
+    return false;
+  };
+
+  const waitForShippingDialogPriceInputReady = async (shippingDialog, timeoutMs = 4_000) => {
+    const deadline = Date.now() + timeoutMs;
+    let lastObservedState = null;
+
+    while (Date.now() < deadline) {
+      const dialogVisible = await shippingDialog.isVisible().catch(() => false);
+      const shippingPriceInput = dialogVisible
+        ? await firstVisibleWithin(shippingDialog, SHIPPING_DIALOG_PRICE_INPUT_SELECTORS)
+        : null;
+      const priceInputDisabled = shippingPriceInput
+        ? await isControlDisabled(shippingPriceInput)
+        : null;
+      const saveButton = dialogVisible
+        ? await findButtonByLabelsWithin(shippingDialog, SHIPPING_DIALOG_SAVE_LABELS)
+        : null;
+
+      lastObservedState = {
+        dialogVisible,
+        priceInputVisible: Boolean(shippingPriceInput),
+        priceInputDisabled,
+        saveButtonVisible: Boolean(saveButton),
+      };
+
+      if (dialogVisible && shippingPriceInput && priceInputDisabled === false) {
+        log?.('tradera.quicklist.delivery.price_input_ready', lastObservedState);
+        return {
+          shippingPriceInput,
+          saveButton,
+        };
+      }
+
+      await wait(150);
+    }
+
+    log?.('tradera.quicklist.delivery.price_input_ready_timeout', lastObservedState);
+    return null;
+  };
+
+  const waitForShippingDialogSaveReady = async (shippingDialog, timeoutMs = 2_000) => {
+    const deadline = Date.now() + timeoutMs;
+    let lastObservedState = null;
+
+    while (Date.now() < deadline) {
+      const dialogVisible = await shippingDialog.isVisible().catch(() => false);
+      const saveButton = dialogVisible
+        ? await findButtonByLabelsWithin(shippingDialog, SHIPPING_DIALOG_SAVE_LABELS)
+        : null;
+      const saveButtonDisabled = saveButton ? await isControlDisabled(saveButton) : null;
+
+      lastObservedState = {
+        dialogVisible,
+        saveButtonVisible: Boolean(saveButton),
+        saveButtonDisabled,
+      };
+
+      if (dialogVisible && saveButton && saveButtonDisabled === false) {
+        log?.('tradera.quicklist.delivery.save_ready', lastObservedState);
+        return saveButton;
+      }
+
+      await wait(150);
+    }
+
+    log?.('tradera.quicklist.delivery.save_ready_timeout', lastObservedState);
+    return null;
   };
 
   const confirmShippingDialogPriceValue = async (
@@ -489,11 +827,13 @@ export const PART_4 = String.raw`);
   };
 
   const submitShippingDialogSave = async (shippingDialog, saveButton) => {
+    let activeSaveButton = saveButton;
     const saveAttemptStrategies = [
       {
         name: 'human-click',
+        closeTimeoutMs: 1_200,
         run: async () => {
-          await humanClick(saveButton, {
+          await humanClick(activeSaveButton, {
             pauseAfter: false,
             clickOptions: { timeout: 5_000 },
           });
@@ -501,8 +841,9 @@ export const PART_4 = String.raw`);
       },
       {
         name: 'dom-click',
+        closeTimeoutMs: 1_000,
         run: async () => {
-          await saveButton
+          await activeSaveButton
             .evaluate((element) => {
               if (element instanceof HTMLElement) {
                 element.click();
@@ -513,8 +854,9 @@ export const PART_4 = String.raw`);
       },
       {
         name: 'focus-enter',
+        closeTimeoutMs: 1_500,
         run: async () => {
-          await saveButton.focus().catch(() => undefined);
+          await activeSaveButton.focus().catch(() => undefined);
           await humanPress('Enter', { pauseBefore: false, pauseAfter: false }).catch(
             () => undefined
           );
@@ -523,12 +865,26 @@ export const PART_4 = String.raw`);
     ];
 
     for (const attempt of saveAttemptStrategies) {
+      activeSaveButton =
+        (await waitForShippingDialogSaveReady(shippingDialog, 300)) || activeSaveButton;
+      const saveButtonDisabled = await isControlDisabled(activeSaveButton);
+      if (saveButtonDisabled !== false) {
+        log?.('tradera.quicklist.delivery.save.blocked', {
+          reason: 'button-disabled',
+          strategy: attempt.name,
+        });
+        continue;
+      }
+
       log?.('tradera.quicklist.delivery.save.attempt', {
         strategy: attempt.name,
       });
 
       await attempt.run();
-      const dialogClosed = await waitForDialogToClose(shippingDialog, 3_500);
+      const dialogClosed = await waitForDialogToClose(
+        shippingDialog,
+        attempt.closeTimeoutMs ?? 1_500
+      );
       if (dialogClosed) {
         log?.('tradera.quicklist.delivery.save.applied', {
           strategy: attempt.name,
@@ -706,10 +1062,15 @@ export const PART_4 = String.raw`);
         await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
           successWhen: async () => Boolean(await findVisibleShippingDialog()),
         });
-        await wait(700);
       }
 
-      shippingDialog = await findVisibleShippingDialog();
+      shippingDialog = await waitForVisibleShippingDialog(2_500);
+      if (shippingDialog) {
+        log?.('tradera.quicklist.delivery.dialog_opened', {
+          flow: 'checkbox',
+          shippingAlreadyEnabled,
+        });
+      }
     }
 
     if (!shippingDialog && requiresShippingDialogConfiguration) {
@@ -739,8 +1100,7 @@ export const PART_4 = String.raw`);
       await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
         successWhen: async () => Boolean(await findVisibleShippingDialog()),
       });
-      await wait(700);
-      shippingDialog = await findVisibleShippingDialog();
+      shippingDialog = await waitForVisibleShippingDialog(2_500);
 
       if (!shippingDialog) {
         const shippingReenableNeeded = !(await isCheckboxChecked(shippingToggle));
@@ -748,8 +1108,7 @@ export const PART_4 = String.raw`);
           await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
             successWhen: async () => Boolean(await findVisibleShippingDialog()),
           });
-          await wait(700);
-          shippingDialog = await findVisibleShippingDialog();
+          shippingDialog = await waitForVisibleShippingDialog(2_500);
         }
       }
 
@@ -795,7 +1154,6 @@ export const PART_4 = String.raw`);
         true,
         shippingDialog
       );
-      await wait(400);
     }
 
     if (configuredDeliveryPriceEur === null) {
@@ -806,34 +1164,45 @@ export const PART_4 = String.raw`);
       );
     }
 
-    const shippingPriceInput = await firstVisibleWithin(
-      shippingDialog,
-      SHIPPING_DIALOG_PRICE_INPUT_SELECTORS
-    );
-    if (!shippingPriceInput) {
-      throw new Error('FAIL_SHIPPING_SET: Tradera shipping price input was not found.');
-    }
-
     const expectedDeliveryPriceValue = configuredDeliveryPriceEur.toFixed(2);
     const normalizedConfiguredDeliveryPrice = normalizePriceValue(
       expectedDeliveryPriceValue
     );
 
+    const shippingDialogReady = await waitForShippingDialogPriceInputReady(shippingDialog, 4_000);
+    if (!shippingDialogReady?.shippingPriceInput) {
+      throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog price input was not ready.');
+    }
+
     await setAndVerifyFieldValue({
-      locator: shippingPriceInput,
+      locator: shippingDialogReady.shippingPriceInput,
       value: expectedDeliveryPriceValue,
       fieldKey: 'delivery-price',
       errorPrefix: 'FAIL_SHIPPING_SET',
       normalize: normalizePriceValue,
+      inputMethod: 'paste',
     });
     await confirmShippingDialogPriceValue(
-      shippingPriceInput,
+      shippingDialogReady.shippingPriceInput,
       normalizedConfiguredDeliveryPrice
     );
 
-    const saveButton = await findButtonByLabelsWithin(shippingDialog, SHIPPING_DIALOG_SAVE_LABELS);
+    log?.('tradera.quicklist.delivery.price_set', {
+      price: normalizedConfiguredDeliveryPrice,
+    });
+
+    let saveButton = await waitForShippingDialogSaveReady(shippingDialog, 2_000);
     if (!saveButton) {
-      throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog save button was not found.');
+      await commitShippingDialogPriceInput(shippingDialogReady.shippingPriceInput);
+      saveButton = await waitForShippingDialogSaveReady(shippingDialog, 3_000);
+    }
+    if (!saveButton) {
+      log?.('tradera.quicklist.delivery.save.blocked', {
+        reason: 'button-disabled-after-price-entry',
+      });
+      throw new Error(
+        'FAIL_SHIPPING_SET: Tradera shipping dialog save button stayed disabled after entering the price.'
+      );
     }
 
     const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);

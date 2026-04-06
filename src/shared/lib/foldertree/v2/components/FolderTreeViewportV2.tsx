@@ -485,6 +485,7 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
                   <div
                     key={virtualRow.key}
                     data-index={virtualRow.index}
+                    data-master-tree-node-id={node.id}
                     ref={rowVirtualizer.measureElement}
                     style={{
                       position: 'absolute',

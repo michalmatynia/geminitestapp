@@ -233,6 +233,28 @@ export const productListingRelistResponseSchema = z.object({
 
 export type ProductListingRelistResponse = z.infer<typeof productListingRelistResponseSchema>;
 
+export const productListingSyncPayloadSchema = z.object({
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
+});
+
+export type ProductListingSyncPayload = z.infer<typeof productListingSyncPayloadSchema>;
+
+export const productListingSyncVariablesSchema = productListingActionSchema.extend({
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
+});
+
+export type ProductListingSyncVariables = z.infer<typeof productListingSyncVariablesSchema>;
+
+export const productListingSyncResponseSchema = z.object({
+  queued: z.boolean(),
+  alreadyQueued: z.boolean().optional(),
+  listingId: z.string(),
+  status: z.string().optional(),
+  queue: productListingQueueJobSchema.optional(),
+});
+
+export type ProductListingSyncResponse = z.infer<typeof productListingSyncResponseSchema>;
+
 export const baseProductSkuCheckPayloadSchema = z.object({
   connectionId: z.string().trim().min(1),
   inventoryId: z.string().trim().min(1),

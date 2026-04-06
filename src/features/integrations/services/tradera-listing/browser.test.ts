@@ -9,7 +9,9 @@ const {
   copyFileMock,
   mkdtempMock,
   statMock,
+  getCategoryByIdMock,
   listCategoryMappingsMock,
+  listCategoriesMock,
   resolveTraderaShippingGroupResolutionForProductMock,
   resolveTraderaListingPriceForProductMock,
   resolveConnectionPlaywrightSettingsMock,
@@ -21,7 +23,9 @@ const {
   copyFileMock: vi.fn(),
   mkdtempMock: vi.fn(),
   statMock: vi.fn(),
+  getCategoryByIdMock: vi.fn(),
   listCategoryMappingsMock: vi.fn(),
+  listCategoriesMock: vi.fn(),
   resolveTraderaShippingGroupResolutionForProductMock: vi.fn(),
   resolveTraderaListingPriceForProductMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
@@ -59,6 +63,13 @@ vi.mock('../integration-repository', () => ({
 vi.mock('../category-mapping-repository', () => ({
   getCategoryMappingRepository: () => ({
     listByConnection: listCategoryMappingsMock,
+  }),
+}));
+
+vi.mock('@/shared/lib/products/services/category-repository', () => ({
+  getCategoryRepository: async () => ({
+    getCategoryById: getCategoryByIdMock,
+    listCategories: listCategoriesMock,
   }),
 }));
 
@@ -126,7 +137,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v98');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v103');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('helpers,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];");
@@ -325,6 +336,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.menu_option.skipped_navigation'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("reason: 'category-page-link'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("reason: 'outside-selection-ui'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-test-category-chooser="true"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(`': Required Tradera ' +`);
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(`' field was not available for option "' +`);
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const triggerActiveSearchSubmit = async () => {');
@@ -334,6 +346,25 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const partialButtonCandidate = page");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const ensureActiveListingsContext = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("FAIL_DUPLICATE_UNCERTAIN: Active listings context could not be confirmed.");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const resolvePreferredSyncListingUrl = () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const directListingUrl = normalizeWhitespace(existingListingUrl || '');");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clickSyncEditTargetWithinScope = async (scope, context) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await dismissVisibleWishlistFavoritesModalIfPresent({');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("context: 'sync-direct-target'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await page.goto(directSyncTargetUrl, {");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.sync.editor_opened'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_SYNC_TARGET_NOT_FOUND: Tradera sync requires an existing listing url or existing listing id.'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target resolved to the wrong Tradera listing. Expected '
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target edit page did not open the Tradera listing editor. Current URL: '
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target edit action was not available on the Tradera listing page. Current URL: '
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("GLOBAL_HEADER_SEARCH_HINTS.some((hint) => normalizedAria.includes(hint))");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("GLOBAL_HEADER_SEARCH_HINTS.some((hint) => normalizedPlaceholder.includes(hint))");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isControlDisabled = async (locator) => {');
@@ -378,7 +409,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('@role="option"');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('@role="radio"');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const readListingEditorState = async () => {');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForListingFormReady = async (timeoutMs = 20_000) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForImageStepActionable = async (timeoutMs = 20_000) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("new RegExp('/selling(?:[?#]|$)').test(currentUrl)");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("page.waitForURL(");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("/selling(?:/(?:new|draft(?:/[^/?#]+)?))?(?:[?#/]|$)|/sell(?:/new)?(?:[?#/]|$)");
@@ -392,6 +423,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('following::*[(self::button or self::a or @role="button" or @role="link" or @role="menu" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu")][1]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const AUTOFILL_PENDING_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const existingListingUrl = toText(input?.existingListingUrl);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const configuredDeliveryPriceEur = toNumber(input?.traderaShipping?.shippingPriceEur);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const configuredShippingGroupName = toText(input?.traderaShipping?.shippingGroupName);');
@@ -404,6 +436,10 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const applyCategorySelection = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizeCategoryPathValue = (value) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const readVisibleCategoryMenuOptions = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-test-category-chooser="true"] [role="menuitemradio"]');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-test-category-chooser="true"] a[href]');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("element.closest('nav[aria-label=\"Breadcrumb\"]')");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const ensureCategoryOptionVisible = async ({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('requireRoot = false,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.category.repositioned'");
@@ -420,6 +456,8 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('if (isCategoryPlaceholderValue(normalizedValue)) return null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const applyDeliveryCheckboxSelection = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const dismissVisibleShippingDialogIfPresent = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findVisibleWishlistFavoritesDialog = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const dismissVisibleWishlistFavoritesModalIfPresent = async ({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const resetDeliveryTogglesIfPresent = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clickCheckboxLabelByText = async (root, labels) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const setCheckboxChecked = async (locator, labels, desiredChecked, root = page, options = {}) => {');
@@ -428,13 +466,31 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isInteractiveSelectionTrigger = async (locator) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const applyDeliverySelection = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const dialogLooksLikeShipping =');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForVisibleShippingDialog = async (timeoutMs = 6_000) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const waitForShippingDialogPriceInputReady = async (shippingDialog, timeoutMs = 4_000) => {'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const waitForShippingDialogSaveReady = async (shippingDialog, timeoutMs = 2_000) => {'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const commitShippingDialogPriceInput = async (shippingPriceInput) => {'
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.dialog_reset'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.reset'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.dialog_opened'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.dialog_reused'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.dialog_reopened'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.wishlist_modal.detected'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.wishlist_modal.dismissed'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.wishlist_modal.dismiss_failed'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.price_input_ready'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.price_committed'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.price_set'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const confirmShippingDialogPriceValue = async (');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.save.blocked'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.price_confirmed'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.save_ready'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.save.attempt'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.delivery.save.applied'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("reason: 'non-interactive-delivery-trigger'");
@@ -445,6 +501,12 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'FAIL_SHIPPING_SET: Tradera shipping price was not preserved before saving.'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_SHIPPING_SET: Tradera shipping dialog price input was not ready.'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_SHIPPING_SET: Tradera shipping dialog save button stayed disabled after entering the price.'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('clickOptions: { timeout: 5_000 }');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const acknowledgeListingConfirmationIfPresent = async () => {');
@@ -484,11 +546,20 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.sell_page.homepage_retry'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("entryPoint = await openCreateListingPage();");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("entryPoint = await confirmStableSellPage();");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await ensureCreateListingPageReady('listing-editor bootstrap');");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "listingAction === 'sync' ? 'sync listing-editor bootstrap' : 'listing-editor bootstrap'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "context: listingAction === 'sync' ? 'sync-editor-ready' : 'listing-editor-ready',"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const initialStartUrl =');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("emitStage(listingAction === 'sync' ? 'sync_target_loaded' : 'active_loaded');");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await ensureImageStepSellPageReady('image input resolution');");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("inputMethod: 'paste'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const setTextFieldDirectly = async (locator, value) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain("tradera.quicklist.sell_page.homepage_redirect_recovery");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_MODAL_DISMISS: Tradera wishlist favorites modal could not be dismissed (');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await dismissVisibleWishlistFavoritesModalIfPresent({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await dismissVisibleShippingDialogIfPresent();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await clearDraftImagesIfPresent();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {');
@@ -571,6 +642,12 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('return !resolveExternalClickTargetUrl(metadata);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('if (visible && (await isSafeDraftImageRemoveControl(candidate))) {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const safeDraftRemoveControl = await isSafeDraftImageRemoveControl(candidate);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForImageStepActionable = async (timeoutMs = 20_000) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("type: 'continue'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_IMAGE_SET_INVALID: Tradera image step never became actionable after upload. State: '
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('imageStepState: finalImageStepState,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'condition'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'department'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'delivery'");
@@ -636,9 +713,29 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain(
       'if (!externalListingId && postPublishNavigation.activeListingsVisible) {\n      await page.goto(ACTIVE_URL'
     );
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('externalListingId: externalListingId || null,');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('listingUrl: listingUrl || null,');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('currentUrl: listingUrl || page.url(),');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const effectiveExternalListingId = externalListingId || existingExternalListingId || null;'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const effectiveListingUrl =');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('currentUrl: effectiveListingUrl || page.url(),');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('externalListingId: effectiveExternalListingId,');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('listingUrl: effectiveListingUrl,');
+    expect(
+      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+        'const shippingDialogReady = await waitForShippingDialogPriceInputReady(shippingDialog, 4_000);'
+      )
+    ).toBeLessThan(
+      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+        'const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);'
+      )
+    );
+    expect(
+      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf("log?.('tradera.quicklist.delivery.price_set'")
+    ).toBeLessThan(
+      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+        'const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);'
+      )
+    );
     expect(
       DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
         'const confirmedShippingPriceValue = normalizePriceValue('
@@ -648,6 +745,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
         'const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);'
       )
     );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('shippingDialogReady.saveButton ||');
   });
 });
 
@@ -661,6 +759,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
       isFile: () => true,
       size: 20_000,
     });
+    getCategoryByIdMock.mockResolvedValue(null);
+    listCategoriesMock.mockResolvedValue([]);
     getProductByIdMock.mockResolvedValue({
       id: 'product-1',
       sku: 'SKU-1',
@@ -956,6 +1056,253 @@ describe('runTraderaBrowserListing scripted mode', () => {
         shippingConditionReason: 'mapped',
         matchedCategoryRuleIds: [],
         matchingShippingGroupIds: ['shipping-group-1'],
+      },
+    });
+  });
+
+  it('passes the persisted Tradera listing url into scripted sync input', async () => {
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-sync-123',
+      listingUrl: 'https://www.tradera.com/item/external-existing',
+      publishVerified: true,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        stage: 'sync_verified',
+        listingUrl: 'https://www.tradera.com/item/external-existing',
+      },
+    });
+
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+        externalListingId: 'external-existing',
+        marketplaceData: {
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+        },
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'sync',
+      browserMode: 'headed',
+    });
+
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          listingAction: 'sync',
+          existingExternalListingId: 'external-existing',
+          existingListingUrl: 'https://www.tradera.com/item/external-existing',
+        }),
+      })
+    );
+  });
+
+  it('passes an inherited mapped category into quicklist input when only a parent category is mapped', async () => {
+    getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      sku: 'SKU-1',
+      baseProductId: 'BASE-1',
+      categoryId: 'anime-pins',
+      catalogId: 'catalog-primary',
+      catalogs: [{ catalogId: 'catalog-primary' }, { catalogId: 'catalog-jewellery' }],
+      name_en: 'Example title',
+      description_en: 'Example description',
+      price: 123,
+      imageLinks: ['https://cdn.example.com/a.jpg'],
+      images: [
+        {
+          imageFile: {
+            filepath: '/uploads/products/SKU-1/example.png',
+          },
+        },
+      ],
+    });
+    listCategoryMappingsMock.mockResolvedValue([
+      {
+        id: 'mapping-parent',
+        connectionId: 'connection-1',
+        externalCategoryId: '101',
+        internalCategoryId: 'jewellery-pins',
+        catalogId: 'catalog-jewellery',
+        isActive: true,
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T10:00:00.000Z',
+        externalCategory: {
+          id: 'external-category-101',
+          connectionId: 'connection-1',
+          externalId: '101',
+          name: 'Pins & Needles',
+          parentExternalId: '100',
+          path: 'Collectibles > Pins & Needles',
+          depth: 1,
+          isLeaf: true,
+          metadata: null,
+          fetchedAt: '2026-04-02T10:00:00.000Z',
+          createdAt: '2026-04-02T10:00:00.000Z',
+          updatedAt: '2026-04-02T10:00:00.000Z',
+        },
+        internalCategory: {
+          id: 'jewellery-pins',
+          name: 'Pins',
+          description: null,
+          color: null,
+          parentId: 'jewellery',
+          catalogId: 'catalog-jewellery',
+          createdAt: '2026-04-02T10:00:00.000Z',
+          updatedAt: '2026-04-02T10:00:00.000Z',
+        },
+      },
+    ]);
+    getCategoryByIdMock.mockResolvedValue({
+      id: 'anime-pins',
+      name: 'Anime Pins',
+      description: null,
+      color: null,
+      parentId: 'jewellery-pins',
+      catalogId: 'catalog-jewellery',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T10:00:00.000Z',
+    });
+    listCategoriesMock.mockResolvedValue([
+      {
+        id: 'jewellery',
+        name: 'Jewellery',
+        description: null,
+        color: null,
+        parentId: null,
+        catalogId: 'catalog-jewellery',
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T10:00:00.000Z',
+      },
+      {
+        id: 'jewellery-pins',
+        name: 'Pins',
+        description: null,
+        color: null,
+        parentId: 'jewellery',
+        catalogId: 'catalog-jewellery',
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T10:00:00.000Z',
+      },
+      {
+        id: 'anime-pins',
+        name: 'Anime Pins',
+        description: null,
+        color: null,
+        parentId: 'jewellery-pins',
+        catalogId: 'catalog-jewellery',
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T10:00:00.000Z',
+      },
+    ]);
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-parent-mapped',
+      externalListingId: 'listing-parent-mapped',
+      listingUrl: 'https://www.tradera.com/item/parent-mapped',
+      publishVerified: true,
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        listingUrl: 'https://www.tradera.com/item/parent-mapped',
+        categoryPath: 'Collectibles > Pins & Needles',
+        categorySource: 'categoryMapper',
+      },
+    });
+
+    const result = await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    expect(getCategoryByIdMock).toHaveBeenCalledWith('anime-pins');
+    expect(listCategoriesMock).toHaveBeenCalledWith({ catalogId: 'catalog-jewellery' });
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          traderaCategory: {
+            externalId: '101',
+            name: 'Pins & Needles',
+            path: 'Collectibles > Pins & Needles',
+            segments: ['Collectibles', 'Pins & Needles'],
+            internalCategoryId: 'jewellery-pins',
+            catalogId: 'catalog-jewellery',
+          },
+          traderaCategoryMapping: expect.objectContaining({
+            reason: 'mapped_via_parent',
+            matchScope: 'catalog_match',
+            internalCategoryId: 'anime-pins',
+            productCatalogIds: ['catalog-primary', 'catalog-jewellery'],
+          }),
+        }),
+      })
+    );
+    expect(result).toMatchObject({
+      externalListingId: 'listing-parent-mapped',
+      listingUrl: 'https://www.tradera.com/item/parent-mapped',
+      metadata: {
+        categoryMappingReason: 'mapped_via_parent',
+        categoryMatchScope: 'catalog_match',
+        categoryInternalCategoryId: 'anime-pins',
+        categoryId: '101',
+        categoryPath: 'Collectibles > Pins & Needles',
+        categorySource: 'categoryMapper',
       },
     });
   });
@@ -1813,7 +2160,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v98',
+        scriptMarker: 'tradera-quicklist-default:v103',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -1941,7 +2288,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v98',
+        scriptMarker: 'tradera-quicklist-default:v103',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -2566,7 +2913,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v98',
+      'tradera-quicklist-default:v103',
       'tradera-quicklist-default:v89'
     );
 
@@ -2598,7 +2945,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v98',
+        scriptMarker: 'tradera-quicklist-default:v103',
         scriptStoredOnConnection: false,
         requestedBrowserMode: 'headed',
         runId: 'run-relist-homepage-cleanup',
@@ -2751,7 +3098,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v98',
+        scriptMarker: 'tradera-quicklist-default:v103',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
@@ -2872,7 +3219,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v98',
+        scriptMarker: 'tradera-quicklist-default:v103',
         scriptStoredOnConnection: false,
         runId: 'run-connection-default-relist',
         requestedBrowserMode: 'connection_default',

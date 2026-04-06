@@ -5,7 +5,7 @@ import {
   TRADERA_INTEGRATION_SLUGS,
   normalizeIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
-import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
+import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingSyncResponse, ProductListingSyncVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
 import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type { ExportToBaseVariables, ExportResponse } from '@/shared/contracts/integrations/base-com';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
@@ -63,6 +63,8 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 const toBadgeEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};
 
+type ListingQueueBrowserMode = ProductListingRelistVariables['browserMode'];
+
 const patchQueuedPlaywrightRelist = (
   listing: ProductListingWithDetails,
   options: {
@@ -96,7 +98,8 @@ const patchQueuedPlaywrightRelist = (
 const patchQueuedTraderaRelist = (
   listing: ProductListingWithDetails,
   options: {
-    browserMode?: ProductListingRelistVariables['browserMode'];
+    action?: 'relist' | 'sync';
+    browserMode?: ListingQueueBrowserMode;
     requestId?: string | null;
     queuedAt?: string | null;
   }
@@ -114,6 +117,7 @@ const patchQueuedTraderaRelist = (
       tradera: {
         ...previousTraderaData,
         pendingExecution: {
+          action: options.action ?? 'relist',
           requestedBrowserMode: options.browserMode ?? 'connection_default',
           requestId: options.requestId ?? null,
           queuedAt: options.queuedAt ?? null,
@@ -653,6 +657,89 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
       }
       if (queueName === 'playwright-programmable-listings') {
         setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued_relist');
+      }
+      await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProducts(queryClient);
+    },
+  });
+}
+
+export function useSyncTraderaMutation(productId: string): UpdateMutation<
+  ProductListingSyncResponse,
+  ProductListingSyncVariables
+> {
+  const queryClient = useQueryClient();
+  const listingQueryKey = getProductListingsQueryKey(productId);
+
+  return createCreateMutationV2({
+    mutationFn: ({ listingId, browserMode }: ProductListingSyncVariables) =>
+      api.post<ProductListingSyncResponse>(
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/sync`,
+        {
+          ...(browserMode ? { browserMode } : {}),
+        }
+      ),
+    mutationKey: getProductListingsQueryKey(productId),
+    meta: {
+      source: 'integrations.hooks.useSyncTraderaMutation',
+      operation: 'create',
+      resource: 'integrations.listings.tradera-sync',
+      domain: 'integrations',
+      mutationKey: listingQueryKey,
+      tags: ['integrations', 'listings', 'tradera', 'sync'],
+      description: 'Creates integrations listings tradera sync.',
+    },
+    onMutate: async (vars): Promise<ProductListingAndJobsContext> => {
+      await cancelProductListingsAndJobs(queryClient, productId);
+
+      const previousListings =
+        queryClient.getQueryData<ProductListingWithDetails[]>(listingQueryKey);
+      const previousIntegrationJobs =
+        queryClient.getQueryData<ProductJob[]>(integrationJobsQueryKey);
+
+      if (previousListings) {
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          previousListings.map((listing) =>
+            listing.id === vars.listingId
+              ? patchQueuedTraderaRelist(listing, {
+                  action: 'sync',
+                  browserMode: vars.browserMode,
+                })
+              : listing
+          )
+        );
+      }
+
+      return { previousListings, previousIntegrationJobs };
+    },
+    onError: (_error, _vars, context: ProductListingAndJobsContext | undefined): void => {
+      if (context?.previousListings) {
+        queryClient.setQueryData(listingQueryKey, context.previousListings);
+      }
+      if (context?.previousIntegrationJobs) {
+        queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
+      }
+    },
+    invalidate: async (queryClient, data, vars) => {
+      if (data.queue?.name === 'tradera-listings') {
+        const queuedAt = data.queue.enqueuedAt ?? null;
+        const requestId = data.queue.jobId ?? null;
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          (current) =>
+            current?.map((listing) =>
+              listing.id === vars.listingId
+                ? patchQueuedTraderaRelist(listing, {
+                    action: 'sync',
+                    browserMode: vars.browserMode,
+                    requestId,
+                    queuedAt,
+                  })
+                : listing
+            ) ?? current
+        );
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
       }
       await invalidateProductListingsAndBadges(queryClient, productId);
       await invalidateProducts(queryClient);

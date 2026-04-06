@@ -9,12 +9,14 @@ const {
   ensureTraderaBrowserSessionMock,
   preflightTraderaQuickListSessionMock,
   relistTraderaMutateAsyncMock,
+  syncTraderaMutateAsyncMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   exportToBaseMutateAsyncMock: vi.fn(),
   ensureTraderaBrowserSessionMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
   relistTraderaMutateAsyncMock: vi.fn(),
+  syncTraderaMutateAsyncMock: vi.fn(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -27,6 +29,9 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
   usePurgeListingMutation: () => ({ mutateAsync: vi.fn() }),
   useRelistTraderaMutation: () => ({
     mutateAsync: relistTraderaMutateAsyncMock,
+  }),
+  useSyncTraderaMutation: () => ({
+    mutateAsync: syncTraderaMutateAsyncMock,
   }),
   useSyncBaseImagesMutation: () => ({ mutateAsync: vi.fn() }),
   useUpdateListingInventoryIdMutation: () => ({ mutateAsync: vi.fn() }),
@@ -77,6 +82,7 @@ const buildBaseParams = (overrides?: {
   setRelistingListing: vi.fn(),
   setSavingInventoryId: vi.fn(),
   setSyncingImages: vi.fn(),
+  setSyncingTraderaListing: vi.fn(),
 });
 
 describe('useProductListingsActionsImpl', () => {
@@ -97,6 +103,9 @@ describe('useProductListingsActionsImpl', () => {
     });
     relistTraderaMutateAsyncMock.mockResolvedValue({
       queue: { jobId: 'job-tradera-relist-1' },
+    });
+    syncTraderaMutateAsyncMock.mockResolvedValue({
+      queue: { jobId: 'job-tradera-sync-1' },
     });
   });
 
@@ -223,6 +232,167 @@ describe('useProductListingsActionsImpl', () => {
     expect(toastMock).toHaveBeenCalledWith('Playwright relist queued (headed, job job-tradera-relist-1).', {
       variant: 'success',
     });
+  });
+
+  it('runs fast Tradera quicklist preflight before queueing a Tradera sync', async () => {
+    const setSyncingTraderaListing = vi.fn();
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams({
+          listings: [
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'connection-tradera-1',
+              integration: { slug: 'tradera' },
+            },
+          ],
+        }),
+        setSyncingTraderaListing,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleSyncTradera('listing-1');
+    });
+
+    expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'connection-tradera-1',
+      productId: 'product-1',
+    });
+    expect(syncTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
+    expect(setSyncingTraderaListing).toHaveBeenNthCalledWith(1, 'listing-1');
+    expect(setSyncingTraderaListing).toHaveBeenLastCalledWith(null);
+    expect(toastMock).toHaveBeenCalledWith('Tradera sync queued (job job-tradera-sync-1).', {
+      variant: 'success',
+    });
+  });
+
+  it('can queue a Tradera sync from quicklist feedback ids before the listing row is visible', async () => {
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(buildBaseParams())
+    );
+
+    await act(async () => {
+      await result.current.handleSyncTradera('listing-1', {
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+      });
+    });
+
+    expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'connection-tradera-1',
+      productId: 'product-1',
+    });
+    expect(syncTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
+  });
+
+  it('shows a toast and opens Tradera recovery for auth-required sync preflight failures', async () => {
+    const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
+      new Error(
+        'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.'
+      )
+    );
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        {
+          ...buildBaseParams({
+            listings: [
+              {
+                id: 'listing-1',
+                productId: 'product-1',
+                integrationId: 'integration-tradera-1',
+                connectionId: 'connection-tradera-1',
+                integration: { slug: 'tradera' },
+              },
+            ],
+          }),
+          setError,
+          setRecoveryContext,
+        }
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleSyncTradera('listing-1');
+    });
+
+    expect(toastMock).toHaveBeenCalledWith(
+      'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.',
+      { variant: 'error' }
+    );
+    expect(setRecoveryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'tradera_quick_export_auth_required',
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        failureReason:
+          'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.',
+      })
+    );
+    expect(setError).toHaveBeenNthCalledWith(1, null);
+    expect(setError).not.toHaveBeenCalledWith(
+      'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.'
+    );
+    expect(syncTraderaMutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('stores Tradera recovery context for non-auth sync preflight failures before queueing', async () => {
+    const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
+      new Error(
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+      )
+    );
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        {
+          ...buildBaseParams({
+            listings: [
+              {
+                id: 'listing-1',
+                productId: 'product-1',
+                integrationId: 'integration-tradera-1',
+                connectionId: 'connection-tradera-1',
+                integration: { slug: 'tradera' },
+              },
+            ],
+          }),
+          setError,
+          setRecoveryContext,
+        }
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleSyncTradera('listing-1');
+    });
+
+    expect(setRecoveryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        failureReason:
+          'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+      })
+    );
+    expect(setError).toHaveBeenCalledWith(
+      'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+    );
+    expect(syncTraderaMutateAsyncMock).not.toHaveBeenCalled();
   });
 
   it('returns true when manual Tradera login succeeds', async () => {
@@ -415,6 +585,40 @@ describe('useProductListingsActionsImpl', () => {
 
     await act(async () => {
       await result.current.handleRelistTradera('listing-1');
+    });
+
+    expect(setRecoveryContext).toHaveBeenCalledWith(expect.any(Function));
+    const clearRecovery = setRecoveryContext.mock.calls.at(-1)?.[0] as (
+      current: { integrationSlug?: string } | null
+    ) => unknown;
+    expect(clearRecovery({ integrationSlug: 'tradera' })).toBeNull();
+    expect(clearRecovery({ integrationSlug: 'baselinker' })).toEqual({
+      integrationSlug: 'baselinker',
+    });
+  });
+
+  it('clears Tradera recovery state after a queued sync succeeds', async () => {
+    const setRecoveryContext = vi.fn();
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        {
+          ...buildBaseParams({
+            listings: [
+              {
+                id: 'listing-1',
+                integrationId: 'integration-tradera-1',
+                connectionId: 'connection-tradera-1',
+                integration: { slug: 'tradera' },
+              },
+            ],
+          }),
+          setRecoveryContext,
+        }
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleSyncTradera('listing-1');
     });
 
     expect(setRecoveryContext).toHaveBeenCalledWith(expect.any(Function));

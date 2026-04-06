@@ -20,12 +20,13 @@ export const runTraderaBrowserListing = async ({
   connection: IntegrationConnectionRecord;
   systemSettings: TraderaSystemSettings;
   source: 'manual' | 'scheduler' | 'api';
-  action: 'list' | 'relist';
+  action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
 }): Promise<TraderaBrowserListingResult> => {
   // Relist relies on the managed quicklist flow for duplicate detection before creating a new listing.
   if (
     action === 'relist' ||
+    action === 'sync' ||
     connection.traderaBrowserMode === 'scripted' ||
     browserMode !== 'connection_default'
   ) {

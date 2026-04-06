@@ -46,7 +46,7 @@ export const runTraderaBrowserListingStandard = async ({
   connection: IntegrationConnectionRecord;
   systemSettings: TraderaSystemSettings;
   source: 'manual' | 'scheduler' | 'api';
-  action: 'list' | 'relist';
+  action: 'list' | 'relist' | 'sync';
 }): Promise<TraderaBrowserListingResult> => {
   const listingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
   const storageState = parsePersistedStorageState(connection.playwrightStorageState);

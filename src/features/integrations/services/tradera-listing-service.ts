@@ -67,7 +67,7 @@ const buildTraderaMarketplaceData = ({
     'ok' | 'externalListingId' | 'listingUrl' | 'error' | 'errorCategory' | 'metadata'
   >;
   executedAt: Date;
-  action: 'list' | 'relist';
+  action: 'list' | 'relist' | 'sync';
   source: 'manual' | 'scheduler' | 'api';
   requestId: string | null;
 }): Record<string, unknown> => {
@@ -94,6 +94,11 @@ const buildTraderaMarketplaceData = ({
       ...traderaData,
       lastErrorCategory: result.ok ? null : result.errorCategory,
       pendingExecution: null,
+      ...(action === 'sync'
+        ? {
+            lastSyncedAt: executedAt.toISOString(),
+          }
+        : {}),
       lastExecution: {
         executedAt: executedAt.toISOString(),
         action,
@@ -147,12 +152,19 @@ const resolveRequestedTraderaBrowserMode = ({
 };
 
 const buildTraderaHistoryFields = (
-  browserMode: string | null | undefined
+  browserMode: string | null | undefined,
+  action: 'list' | 'relist' | 'sync'
 ): string[] | null => {
+  const fields: string[] = [];
   const normalizedBrowserMode =
     typeof browserMode === 'string' && browserMode.trim().length > 0 ? browserMode.trim() : null;
-  if (!normalizedBrowserMode) return null;
-  return [`browser_mode:${normalizedBrowserMode}`];
+  if (normalizedBrowserMode) {
+    fields.push(`browser_mode:${normalizedBrowserMode}`);
+  }
+  if (action === 'sync') {
+    fields.push('action:sync');
+  }
+  return fields.length > 0 ? fields : null;
 };
 
 export const runTraderaListing = async (
@@ -223,6 +235,17 @@ export const runTraderaListing = async (
     });
 
     if (useApi) {
+      if (action === 'sync') {
+        return {
+          ok: false,
+          externalListingId: null,
+          listingUrl: null,
+          expiresAt: null,
+          nextRelistAt: null,
+          error: 'Sync is only supported for Tradera browser listings.',
+          errorCategory: 'NOT_FOUND',
+        };
+      }
       const result = await runTraderaApiListing({ listing, connection });
       const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
       const expiresAt = resolveExpiry(settings.durationHours);
@@ -331,15 +354,31 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       : typeof result.metadata?.['requestedBrowserMode'] === 'string'
         ? result.metadata['requestedBrowserMode']
         : null;
-  const historyFields = buildTraderaHistoryFields(historyBrowserMode);
+  const action = input.action ?? 'list';
+  const historyFields = buildTraderaHistoryFields(historyBrowserMode, action);
   const persistedExternalListingId = resolvePersistedExternalListingId({
     existingExternalListingId: resolved.listing.externalListingId,
     resultExternalListingId: result.externalListingId,
   });
   const duplicateLinked = result.metadata?.['duplicateLinked'] === true;
-  const persistedListedAt = duplicateLinked ? resolved.listing.listedAt ?? null : now;
-  const persistedExpiresAt = duplicateLinked ? null : result.expiresAt ?? null;
-  const persistedNextRelistAt = duplicateLinked ? null : result.nextRelistAt ?? null;
+  const isSyncAction = action === 'sync';
+  const persistedListedAt = duplicateLinked
+    ? resolved.listing.listedAt ?? null
+    : isSyncAction
+      ? resolved.listing.listedAt ?? null
+      : now;
+  const persistedExpiresAt = duplicateLinked
+    ? null
+    : isSyncAction
+      ? resolved.listing.expiresAt ?? null
+      : result.expiresAt ?? null;
+  const persistedNextRelistAt = duplicateLinked
+    ? null
+    : isSyncAction
+      ? resolved.listing.nextRelistAt ?? null
+      : result.nextRelistAt ?? null;
+  const persistedLastRelistedAt =
+    action === 'relist' ? now : (resolved.listing.lastRelistedAt ?? null);
 
   if (result.ok) {
     await resolved.repository.updateListingStatus(input.listingId, 'active');
@@ -349,7 +388,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       listedAt: persistedListedAt,
       expiresAt: persistedExpiresAt,
       nextRelistAt: persistedNextRelistAt,
-      lastRelistedAt: input.action === 'relist' ? now : null,
+      lastRelistedAt: persistedLastRelistedAt,
       lastStatusCheckAt: now,
       failureReason: null,
       marketplaceData,
@@ -360,7 +399,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       externalListingId: persistedExternalListingId,
       expiresAt: persistedExpiresAt,
       failureReason: null,
-      relist: input.action === 'relist',
+      relist: action === 'relist',
       fields: historyFields,
       requestId: input.jobId ?? null,
     });
@@ -382,7 +421,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
     externalListingId: null,
     expiresAt: null,
     failureReason: result.error ?? 'Tradera listing failed.',
-    relist: input.action === 'relist',
+    relist: action === 'relist',
     fields: historyFields,
     requestId: input.jobId ?? null,
   });

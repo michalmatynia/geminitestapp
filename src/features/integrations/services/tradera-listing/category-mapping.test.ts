@@ -1,10 +1,40 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { getCategoryByIdMock, listCategoriesMock, listByConnectionMock } = vi.hoisted(() => ({
+  getCategoryByIdMock: vi.fn(),
+  listCategoriesMock: vi.fn(),
+  listByConnectionMock: vi.fn(),
+}));
+
+const { captureExceptionMock } = vi.hoisted(() => ({
+  captureExceptionMock: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/products/services/category-repository', () => ({
+  getCategoryRepository: async () => ({
+    getCategoryById: getCategoryByIdMock,
+    listCategories: listCategoriesMock,
+  }),
+}));
+
+vi.mock('../category-mapping-repository', () => ({
+  getCategoryMappingRepository: () => ({
+    listByConnection: listByConnectionMock,
+  }),
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
+}));
 
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
   resolveProductCatalogIds,
+  resolveTraderaCategoryMappingResolutionForProduct,
   selectPreferredTraderaCategoryMapping,
   selectPreferredTraderaCategoryMappingResolution,
 } from './category-mapping';
@@ -78,6 +108,14 @@ const createMapping = (overrides: Partial<CategoryMappingWithDetails> = {}): Cat
     },
     ...overrides,
   }) as CategoryMappingWithDetails;
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  getCategoryByIdMock.mockResolvedValue(null);
+  listCategoriesMock.mockResolvedValue([]);
+  listByConnectionMock.mockResolvedValue([]);
+  captureExceptionMock.mockResolvedValue(undefined);
+});
 
 describe('resolveProductCatalogIds', () => {
   it('returns unique direct and attached product catalog ids', () => {
@@ -275,5 +313,253 @@ describe('selectPreferredTraderaCategoryMapping', () => {
       catalogId: 'catalog-primary',
       pathSegments: ['Collectibles', 'Pins'],
     });
+  });
+
+  it('loads parent categories from the assigned category catalog during async resolution', async () => {
+    listByConnectionMock.mockResolvedValue([
+      createMapping({
+        internalCategoryId: 'jewellery-pins',
+        catalogId: 'catalog-jewellery',
+        externalCategoryId: '1001',
+        externalCategory: {
+          ...createMapping().externalCategory,
+          externalId: '1001',
+          name: 'Pins',
+          path: 'Collectibles > Pins',
+        },
+        internalCategory: {
+          ...createMapping().internalCategory,
+          id: 'jewellery-pins',
+          name: 'Pins',
+          parentId: 'jewellery',
+          catalogId: 'catalog-jewellery',
+        },
+      }),
+    ]);
+    getCategoryByIdMock.mockResolvedValue({
+      id: 'anime-pins',
+      name: 'Anime Pins',
+      parentId: 'jewellery-pins',
+      color: null,
+      catalogId: 'catalog-jewellery',
+      createdAt: '',
+      updatedAt: '',
+    });
+    listCategoriesMock.mockResolvedValue([
+      {
+        id: 'jewellery',
+        name: 'Jewellery',
+        parentId: null,
+        color: null,
+        catalogId: 'catalog-jewellery',
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'jewellery-pins',
+        name: 'Pins',
+        parentId: 'jewellery',
+        color: null,
+        catalogId: 'catalog-jewellery',
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'anime-pins',
+        name: 'Anime Pins',
+        parentId: 'jewellery-pins',
+        color: null,
+        catalogId: 'catalog-jewellery',
+        createdAt: '',
+        updatedAt: '',
+      },
+    ]);
+
+    const result = await resolveTraderaCategoryMappingResolutionForProduct({
+      connectionId: 'connection-1',
+      product: createProduct({
+        categoryId: 'anime-pins',
+        catalogId: 'catalog-primary',
+        catalogs: [
+          {
+            productId: 'product-1',
+            catalogId: 'catalog-primary',
+            assignedAt: '2026-04-02T00:00:00.000Z',
+          },
+          {
+            productId: 'product-1',
+            catalogId: 'catalog-jewellery',
+            assignedAt: '2026-04-02T00:00:00.000Z',
+          },
+        ],
+      }),
+    });
+
+    expect(getCategoryByIdMock).toHaveBeenCalledWith('anime-pins');
+    expect(listCategoriesMock).toHaveBeenCalledWith({ catalogId: 'catalog-jewellery' });
+    expect(result).toEqual({
+      mapping: {
+        externalCategoryId: '1001',
+        externalCategoryName: 'Pins',
+        externalCategoryPath: 'Collectibles > Pins',
+        internalCategoryId: 'jewellery-pins',
+        catalogId: 'catalog-jewellery',
+        pathSegments: ['Collectibles', 'Pins'],
+      },
+      reason: 'mapped_via_parent',
+      matchScope: 'catalog_match',
+      internalCategoryId: 'anime-pins',
+      productCatalogIds: ['catalog-primary', 'catalog-jewellery'],
+      matchingMappingCount: 1,
+      validMappingCount: 1,
+      catalogMatchedMappingCount: 1,
+    });
+  });
+
+  it('resolves parent mapping when the category carries the catalog but product.catalogId is empty', async () => {
+    listByConnectionMock.mockResolvedValue([
+      createMapping({
+        internalCategoryId: 'jewellery-pins',
+        catalogId: 'catalog-jewellery',
+        externalCategoryId: '1001',
+        externalCategory: {
+          ...createMapping().externalCategory,
+          externalId: '1001',
+          name: 'Pins',
+          path: 'Collectibles > Pins',
+        },
+        internalCategory: {
+          ...createMapping().internalCategory,
+          id: 'jewellery-pins',
+          name: 'Pins',
+          parentId: 'jewellery',
+          catalogId: 'catalog-jewellery',
+        },
+      }),
+    ]);
+    getCategoryByIdMock.mockResolvedValue({
+      id: 'anime-pins',
+      name: 'Anime Pins',
+      parentId: 'jewellery-pins',
+      color: null,
+      catalogId: 'catalog-jewellery',
+      createdAt: '',
+      updatedAt: '',
+    });
+    listCategoriesMock.mockResolvedValue([
+      {
+        id: 'jewellery',
+        name: 'Jewellery',
+        parentId: null,
+        color: null,
+        catalogId: 'catalog-jewellery',
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'jewellery-pins',
+        name: 'Pins',
+        parentId: 'jewellery',
+        color: null,
+        catalogId: 'catalog-jewellery',
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'anime-pins',
+        name: 'Anime Pins',
+        parentId: 'jewellery-pins',
+        color: null,
+        catalogId: 'catalog-jewellery',
+        createdAt: '',
+        updatedAt: '',
+      },
+    ]);
+
+    const result = await resolveTraderaCategoryMappingResolutionForProduct({
+      connectionId: 'connection-1',
+      product: createProduct({
+        categoryId: 'anime-pins',
+        catalogId: '',
+        catalogs: [
+          {
+            productId: 'product-1',
+            catalogId: 'catalog-jewellery',
+            assignedAt: '2026-04-02T00:00:00.000Z',
+          },
+        ],
+      }),
+    });
+
+    expect(listCategoriesMock).toHaveBeenCalledWith({ catalogId: 'catalog-jewellery' });
+    expect(result.reason).toBe('mapped_via_parent');
+    expect(result.mapping).toEqual({
+      externalCategoryId: '1001',
+      externalCategoryName: 'Pins',
+      externalCategoryPath: 'Collectibles > Pins',
+      internalCategoryId: 'jewellery-pins',
+      catalogId: 'catalog-jewellery',
+      pathSegments: ['Collectibles', 'Pins'],
+    });
+  });
+
+  it('logs category-tree load failures before falling back to the direct result', async () => {
+    listByConnectionMock.mockResolvedValue([]);
+    getCategoryByIdMock.mockResolvedValue({
+      id: 'anime-pins',
+      name: 'Anime Pins',
+      parentId: 'jewellery-pins',
+      color: null,
+      catalogId: 'catalog-jewellery',
+      createdAt: '',
+      updatedAt: '',
+    });
+    const repositoryError = new Error('category repository offline');
+    listCategoriesMock.mockRejectedValue(repositoryError);
+
+    const result = await resolveTraderaCategoryMappingResolutionForProduct({
+      connectionId: 'connection-1',
+      product: createProduct({
+        id: 'product-9',
+        categoryId: 'anime-pins',
+        catalogId: 'catalog-primary',
+        catalogs: [
+          {
+            productId: 'product-9',
+            catalogId: 'catalog-primary',
+            assignedAt: '2026-04-02T00:00:00.000Z',
+          },
+          {
+            productId: 'product-9',
+            catalogId: 'catalog-jewellery',
+            assignedAt: '2026-04-02T00:00:00.000Z',
+          },
+        ],
+      }),
+    });
+
+    expect(result).toEqual({
+      mapping: null,
+      reason: 'no_active_mapping',
+      matchScope: 'none',
+      internalCategoryId: 'anime-pins',
+      productCatalogIds: ['catalog-primary', 'catalog-jewellery'],
+      matchingMappingCount: 0,
+      validMappingCount: 0,
+      catalogMatchedMappingCount: 0,
+    });
+    expect(captureExceptionMock).toHaveBeenCalledWith(
+      repositoryError,
+      expect.objectContaining({
+        service: 'tradera-category-mapping',
+        action: 'resolveTraderaCategoryMappingResolutionForProduct',
+        connectionId: 'connection-1',
+        productId: 'product-9',
+        productCategoryId: 'anime-pins',
+        productCatalogIds: ['catalog-primary', 'catalog-jewellery'],
+        requestedCatalogId: 'catalog-primary',
+        resolvedCategoryCatalogId: 'catalog-jewellery',
+      })
+    );
   });
 });

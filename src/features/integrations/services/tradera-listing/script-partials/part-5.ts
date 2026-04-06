@@ -22,61 +22,93 @@ export const PART_5 = String.raw`
     log?.('tradera.quicklist.runtime', await readRuntimeEnvironment());
     emitStage('started');
 
-    await page.goto(ACTIVE_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    const initialStartUrl =
+      listingAction === 'sync'
+        ? existingListingUrl ||
+          (existingExternalListingId
+            ? 'https://www.tradera.com/item/' + existingExternalListingId
+            : ACTIVE_URL)
+        : ACTIVE_URL;
+    await page.goto(initialStartUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await ensureLoggedIn();
-    emitStage('active_loaded');
+    emitStage(listingAction === 'sync' ? 'sync_target_loaded' : 'active_loaded');
 
-    const duplicateMatch = await checkDuplicate(duplicateSearchTitle);
-    if (duplicateMatch.duplicateFound) {
-      const duplicateResult = {
-        stage: 'duplicate_linked',
-        currentUrl: duplicateMatch.listingUrl || page.url(),
-        externalListingId:
-          duplicateMatch.listingId ||
-          extractListingId(duplicateMatch.listingUrl || '') ||
-          null,
-        listingUrl: duplicateMatch.listingUrl || null,
-        publishVerified: false,
-        duplicateLinked: true,
-        duplicateMatchStrategy: duplicateMatch.matchStrategy || null,
-        duplicateMatchedProductId: duplicateMatch.matchedProductId || null,
-        duplicateCandidateCount: duplicateMatch.candidateCount || null,
-        duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
-        categoryPath: null,
-        categorySource: null,
-        imageUploadSource: null,
-      };
-      log?.('tradera.quicklist.duplicate.linked', duplicateResult);
-      emitStage('duplicate_linked', {
-        duplicateMatchStrategy: duplicateResult.duplicateMatchStrategy,
-        duplicateMatchedProductId: duplicateResult.duplicateMatchedProductId,
-        duplicateCandidateCount: duplicateResult.duplicateCandidateCount,
-        externalListingId: duplicateResult.externalListingId,
-        listingUrl: duplicateResult.listingUrl,
-      });
-      emit('result', duplicateResult);
-      return duplicateResult;
+    if (listingAction === 'sync') {
+      await openExistingListingEditorForSync();
+    } else {
+      const duplicateMatch = await checkDuplicate(duplicateSearchTitle);
+      if (duplicateMatch.duplicateFound) {
+        const duplicateResult = {
+          stage: 'duplicate_linked',
+          currentUrl: duplicateMatch.listingUrl || page.url(),
+          externalListingId:
+            duplicateMatch.listingId ||
+            extractListingId(duplicateMatch.listingUrl || '') ||
+            null,
+          listingUrl: duplicateMatch.listingUrl || null,
+          publishVerified: false,
+          duplicateLinked: true,
+          duplicateMatchStrategy: duplicateMatch.matchStrategy || null,
+          duplicateMatchedProductId: duplicateMatch.matchedProductId || null,
+          duplicateCandidateCount: duplicateMatch.candidateCount || null,
+          duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
+          categoryPath: null,
+          categorySource: null,
+          imageUploadSource: null,
+        };
+        log?.('tradera.quicklist.duplicate.linked', duplicateResult);
+        emitStage('duplicate_linked', {
+          duplicateMatchStrategy: duplicateResult.duplicateMatchStrategy,
+          duplicateMatchedProductId: duplicateResult.duplicateMatchedProductId,
+          duplicateCandidateCount: duplicateResult.duplicateCandidateCount,
+          externalListingId: duplicateResult.externalListingId,
+          listingUrl: duplicateResult.listingUrl,
+        });
+        emit('result', duplicateResult);
+        return duplicateResult;
+      }
+      emitStage('duplicate_checked');
+
+      await gotoSellPage();
     }
-    emitStage('duplicate_checked');
-
-    await gotoSellPage();
     // Wait for SPA to fully render the listing form
     await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
     await wait(1500);
-    await ensureCreateListingPageReady('listing-editor bootstrap');
+    await ensureCreateListingPageReady(
+      listingAction === 'sync' ? 'sync listing-editor bootstrap' : 'listing-editor bootstrap'
+    );
     emitStage('sell_page_ready');
+    await dismissVisibleWishlistFavoritesModalIfPresent({
+      context: listingAction === 'sync' ? 'sync-editor-ready' : 'listing-editor-ready',
+      required: true,
+    });
     await dismissVisibleShippingDialogIfPresent();
     await clearDraftImagesIfPresent();
     emitStage('draft_cleared');
 
+    const waitForImagePreviewCountToReach = async (targetCount, timeoutMs = 30_000) => {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        const current = await countUploadedImagePreviews();
+        if (current >= targetCount) return current;
+        const pending = await isImageUploadPending();
+        if (!pending && current >= targetCount) return current;
+        await wait(800);
+      }
+      return countUploadedImagePreviews();
+    };
+
     const performImageUpload = async (uploadFiles, uploadSource) => {
       currentImageUploadSource = uploadSource;
-      const expectedUploadCount = Array.isArray(uploadFiles) ? uploadFiles.length : 1;
+      const filesArray = Array.isArray(uploadFiles) ? uploadFiles : [uploadFiles];
+      const expectedUploadCount = filesArray.length;
+      const useSequentialUpload = expectedUploadCount > 1;
 
       for (let uploadAttempt = 0; uploadAttempt < 2; uploadAttempt += 1) {
         log?.('tradera.quicklist.image.upload_prepare', {
           uploadSource,
           uploadAttempt,
+          sequential: useSequentialUpload,
           currentUrl: page.url(),
         });
         const imageInput = await ensureImageInputReady();
@@ -99,16 +131,78 @@ export const PART_5 = String.raw`
         log?.('tradera.quicklist.image.upload_start', {
           uploadSource,
           uploadAttempt,
+          sequential: useSequentialUpload,
           currentUrl: page.url(),
           baselinePreviewCount,
+          fileCount: expectedUploadCount,
         });
 
         try {
-          await imageInput.setInputFiles(uploadFiles);
+          if (useSequentialUpload) {
+            // Upload images one at a time to preserve product image order.
+            // Bulk setInputFiles causes Tradera to upload in parallel, and
+            // smaller images that finish first get positioned before larger
+            // ones, breaking the intended order.
+            for (let fileIndex = 0; fileIndex < filesArray.length; fileIndex += 1) {
+              const singleFile = filesArray[fileIndex];
+              const currentInput = fileIndex === 0
+                ? imageInput
+                : await ensureImageInputReady();
+              if (!currentInput) {
+                throw new Error(
+                  'FAIL_IMAGE_SET_INVALID: Tradera image upload input not found for image ' +
+                    (fileIndex + 1) + '/' + filesArray.length + '.'
+                );
+              }
+
+              const previewsBefore = await countUploadedImagePreviews();
+              await currentInput.setInputFiles(
+                Array.isArray(singleFile) ? singleFile : [singleFile]
+              );
+
+              const targetPreviewCount = previewsBefore + 1;
+              const reachedCount = await waitForImagePreviewCountToReach(
+                targetPreviewCount,
+                30_000
+              );
+
+              // Wait for the server-side upload to finish before uploading the
+              // next image.  The preview count can increase immediately (from a
+              // client-side blob) while the actual upload is still in flight.
+              // If we dispatch the next image before the current one settles,
+              // Tradera may assign positions based on upload-completion order
+              // rather than dispatch order, breaking the intended sequence.
+              const pendingDeadline = Date.now() + 20_000;
+              let pendingCleared = false;
+              while (Date.now() < pendingDeadline) {
+                const stillPending = await isImageUploadPending();
+                if (!stillPending) {
+                  pendingCleared = true;
+                  break;
+                }
+                await wait(500);
+              }
+
+              log?.('tradera.quicklist.image.sequential_uploaded', {
+                fileIndex,
+                total: filesArray.length,
+                previewsBefore,
+                previewsAfter: reachedCount,
+                targetPreviewCount,
+                pendingCleared,
+              });
+              if (fileIndex < filesArray.length - 1) {
+                await wait(800);
+              }
+            }
+          } else {
+            await imageInput.setInputFiles(uploadFiles);
+          }
         } catch (error) {
           log?.('tradera.quicklist.image.upload_dispatch_error', {
             uploadSource,
             uploadAttempt,
+            sequential: useSequentialUpload,
             currentUrl: page.url(),
             error: error instanceof Error ? error.message : String(error),
           });
@@ -120,17 +214,19 @@ export const PART_5 = String.raw`
           throw error;
         }
 
-        const selectedImageFileCount = await waitForSelectedImageFileCount(
-          imageInput,
-          expectedUploadCount
-        );
-        if (selectedImageFileCount < Math.max(1, expectedUploadCount)) {
-          log?.('tradera.quicklist.image.selection_pending', {
-            url: page.url(),
-            uploadSource,
-            expectedUploadCount,
-            selectedImageFileCount,
-          });
+        if (!useSequentialUpload) {
+          const selectedImageFileCount = await waitForSelectedImageFileCount(
+            imageInput,
+            expectedUploadCount
+          );
+          if (selectedImageFileCount < Math.max(1, expectedUploadCount)) {
+            log?.('tradera.quicklist.image.selection_pending', {
+              url: page.url(),
+              uploadSource,
+              expectedUploadCount,
+              selectedImageFileCount,
+            });
+          }
         }
 
         await advancePastImagesStep(imageInput, expectedUploadCount, baselinePreviewCount);
@@ -142,7 +238,7 @@ export const PART_5 = String.raw`
         }
 
         return {
-          imageCount: Array.isArray(uploadFiles) ? uploadFiles.length : null,
+          imageCount: expectedUploadCount,
           uploadSource,
         };
       }
@@ -663,11 +759,18 @@ export const PART_5 = String.raw`
       });
     }
 
+    const effectiveExternalListingId = externalListingId || existingExternalListingId || null;
+    const effectiveListingUrl =
+      listingUrl ||
+      (effectiveExternalListingId
+        ? 'https://www.tradera.com/item/' + effectiveExternalListingId
+        : null);
+
     const result = {
-      stage: 'publish_verified',
-      currentUrl: listingUrl || page.url(),
-      externalListingId: externalListingId || null,
-      listingUrl: listingUrl || null,
+      stage: listingAction === 'sync' ? 'sync_verified' : 'publish_verified',
+      currentUrl: effectiveListingUrl || page.url(),
+      externalListingId: effectiveExternalListingId,
+      listingUrl: effectiveListingUrl,
       publishVerified: true,
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,

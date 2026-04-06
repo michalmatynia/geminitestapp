@@ -52,6 +52,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     savingInventoryId,
     deletingFromBase,
     purgingListing,
+    syncingTraderaListing,
     relistingListing,
     relistingBrowserMode,
     openingTraderaLogin,
@@ -61,6 +62,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     handleExportAgain,
     handleExportImagesOnly,
     handleSaveInventoryId,
+    handleSyncTradera,
     handleRelistTradera,
     handleOpenTraderaLogin,
   } = useProductListingsActions();
@@ -101,6 +103,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const traderaErrorCategory = (
     readString(traderaLastExecution['errorCategory']) ?? readString(traderaData['lastErrorCategory']) ?? ''
   ).trim().toLowerCase();
+  const traderaLastExecutionAction = (readString(traderaLastExecution['action']) ?? '').trim().toLowerCase();
   const traderaExecutionError = readString(traderaLastExecution['error']);
   const traderaFailureReason = (listing.failureReason ?? '').trim().toLowerCase();
   const traderaNeedsManualLogin =
@@ -110,6 +113,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
       hasTraderaAuthSignal(traderaFailureReason) ||
       hasTraderaAuthSignal(traderaExecutionError));
   const isRelistingCurrentListing = relistingListing === listing.id;
+  const isSyncingCurrentListing = syncingTraderaListing === listing.id;
   const isRelistingPlaywrightHeadless =
     isRelistingCurrentListing && relistingBrowserMode === 'headless';
   const isRelistingPlaywrightHeaded =
@@ -121,12 +125,18 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const persistedTraderaPendingBrowserMode = readString(
     traderaPendingExecution['requestedBrowserMode']
   );
+  const persistedTraderaPendingAction = (readString(traderaPendingExecution['action']) ?? '').trim().toLowerCase();
   const isPersistedTraderaQueueState =
     isTraderaBrowserListing &&
     ['queued', 'queued_relist', 'running', 'processing', 'pending', 'in_progress'].includes(
       normalizedListingStatus
     ) &&
-    Boolean(persistedTraderaPendingBrowserMode);
+    Boolean(persistedTraderaPendingBrowserMode || persistedTraderaPendingAction);
+  const isQueuedTraderaSync =
+    !isSyncingCurrentListing &&
+    isPersistedTraderaQueueState &&
+    persistedTraderaPendingAction === 'sync';
+  const syncRetryPreferred = persistedTraderaPendingAction === 'sync' || traderaLastExecutionAction === 'sync';
   const isQueuedTraderaHeadless =
     !isRelistingCurrentListing &&
     isPersistedTraderaQueueState &&
@@ -268,10 +278,18 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                     listing.connectionId
                   );
                   if (recovered) {
-                    await handleRelistTradera(listing.id, {
-                      skipSessionPreflight: true,
-                      browserMode: 'headed',
-                    });
+                    if (syncRetryPreferred) {
+                      await handleSyncTradera(listing.id, {
+                        skipSessionPreflight: true,
+                        integrationId: listing.integrationId,
+                        connectionId: listing.connectionId,
+                      });
+                    } else {
+                      await handleRelistTradera(listing.id, {
+                        skipSessionPreflight: true,
+                        browserMode: 'headed',
+                      });
+                    }
                   }
                 })();
               }}
@@ -279,7 +297,29 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
             >
               {openingTraderaLogin === listing.id
                 ? 'Waiting for manual login...'
-                : 'Login and retry relist'}
+                : syncRetryPreferred
+                  ? 'Login and retry sync'
+                  : 'Login and retry relist'}
+            </Button>
+          )}
+          {isTraderaBrowserListing && (
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                void handleSyncTradera(listing.id, {
+                  integrationId: listing.integrationId,
+                  connectionId: listing.connectionId,
+                });
+              }}
+              disabled={isSyncingCurrentListing || isPersistedTraderaQueueState}
+            >
+              {isQueuedTraderaSync
+                ? 'Queued sync'
+                : isSyncingCurrentListing
+                  ? 'Queuing sync...'
+                  : 'Sync with Tradera'}
             </Button>
           )}
           <Button
@@ -289,7 +329,11 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
             onClick={(): void => {
               void handleRelistTradera(listing.id);
             }}
-            disabled={relistingListing === listing.id || isPersistedTraderaQueueState}
+            disabled={
+              relistingListing === listing.id ||
+              isPersistedTraderaQueueState ||
+              isSyncingCurrentListing
+            }
           >
             {isRelistingTraderaHeaded
               ? 'Queuing headed relist...'

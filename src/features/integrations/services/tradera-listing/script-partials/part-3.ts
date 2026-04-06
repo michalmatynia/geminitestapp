@@ -226,6 +226,354 @@ export const PART_3 = String.raw`        expectedValue,
     return afterClickUrl.includes('tab=active') || hasActiveStateAfterClick;
   };
 
+  const findActiveListingCandidateForSync = async () => {
+    const preferredListingId = normalizeWhitespace(existingExternalListingId || '');
+    const candidateSearchTerms = Array.from(
+      new Set(
+        [duplicateSearchTitle, title, preferredListingId]
+          .map((value) => normalizeWhitespace(value || ''))
+          .filter((value) => Boolean(value))
+      )
+    );
+
+    const scanVisibleCandidates = async (searchTerm = null) => {
+      const normalizedSearchTerm = normalizeWhitespace(searchTerm || '').toLowerCase();
+      const candidates = page.locator('a[href*="/item/"], a[href*="/listing/"]');
+      const count = await candidates.count().catch(() => 0);
+      let firstTermMatch = null;
+
+      for (let index = 0; index < count; index += 1) {
+        const candidateLink = candidates.nth(index);
+        const visible = await candidateLink.isVisible().catch(() => false);
+        if (!visible) continue;
+
+        const candidateInfo = await candidateLink
+          .evaluate((element) => {
+            const candidateContainer =
+              element.closest(
+                'article, li, tr, [data-testid*="listing"], [data-testid*="item"], [class*="listing"], [class*="Listing"], [class*="result"], [class*="Result"]'
+              ) || element;
+
+            return {
+              href: element.getAttribute('href') || '',
+              text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
+              containerText: (candidateContainer.textContent || '').replace(/\s+/g, ' ').trim(),
+            };
+          })
+          .catch(() => null);
+        if (!candidateInfo?.href) continue;
+
+        let listingUrl = candidateInfo.href;
+        try {
+          listingUrl = new URL(candidateInfo.href, page.url()).toString();
+        } catch {}
+
+        const listingId = extractListingId(listingUrl);
+        const haystack = normalizeWhitespace(
+          candidateInfo.containerText || candidateInfo.text || ''
+        ).toLowerCase();
+
+        if (preferredListingId && listingId === preferredListingId) {
+          return {
+            matchedBy: 'external_listing_id',
+            link: candidateLink,
+            listingId,
+            listingUrl,
+            text: candidateInfo.containerText || candidateInfo.text || '',
+          };
+        }
+
+        if (!firstTermMatch && normalizedSearchTerm && haystack.includes(normalizedSearchTerm)) {
+          firstTermMatch = {
+            matchedBy: 'search_term',
+            link: candidateLink,
+            listingId,
+            listingUrl,
+            text: candidateInfo.containerText || candidateInfo.text || '',
+          };
+        }
+      }
+
+      return firstTermMatch;
+    };
+
+    const searchInput = await openActiveSearchInput();
+    for (const searchTerm of candidateSearchTerms) {
+      if (searchInput) {
+        await prepareActiveListingsSearchInput(searchInput, searchTerm);
+        await triggerActiveSearchSubmit();
+        await wait(1200);
+      }
+
+      const matchedCandidate = await scanVisibleCandidates(searchTerm);
+      if (matchedCandidate) {
+        log?.('tradera.quicklist.sync.candidate_found', {
+          searchTerm,
+          matchedBy: matchedCandidate.matchedBy,
+          listingId: matchedCandidate.listingId,
+          listingUrl: matchedCandidate.listingUrl,
+          text: normalizeWhitespace(matchedCandidate.text).slice(0, 200),
+        });
+        return matchedCandidate;
+      }
+    }
+
+    return scanVisibleCandidates();
+  };
+
+  const resolveSyncListingCandidateContainer = async (candidateLink) => {
+    if (!candidateLink) return null;
+
+    const containerCandidates = [
+      candidateLink.locator('xpath=ancestor::*[self::article or self::li or self::tr][1]'),
+      candidateLink.locator(
+        'xpath=ancestor::*[contains(@data-testid, "listing") or contains(@data-testid, "item")][1]'
+      ),
+      candidateLink.locator(
+        'xpath=ancestor::*[contains(@class, "listing") or contains(@class, "Listing") or contains(@class, "result") or contains(@class, "Result")][1]'
+      ),
+      candidateLink,
+    ];
+
+    for (const container of containerCandidates) {
+      const visible = await container.first().isVisible().catch(() => false);
+      if (visible) return container.first();
+    }
+
+    return candidateLink;
+  };
+
+  const isSafeScopedEditTarget = async (locator) => {
+    if (!locator) return false;
+
+    const metadata = await readClickTargetMetadata(locator);
+    if (!metadata || resolveExternalClickTargetUrl(metadata)) {
+      return false;
+    }
+
+    const hrefCandidate = normalizeWhitespace(metadata.href || metadata.hrefAttribute || '');
+    if (!hrefCandidate || hrefCandidate === '#' || hrefCandidate.startsWith('#')) {
+      return true;
+    }
+    if (/^(javascript|mailto|tel):/i.test(hrefCandidate)) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(hrefCandidate, page.url());
+      const pathname = parsed.pathname.toLowerCase();
+      return pathname.includes('/selling/') || pathname.includes('/edit');
+    } catch {
+      return false;
+    }
+  };
+
+  const findScopedEditTarget = async (scope) => {
+    if (!scope) return null;
+
+    for (const selector of EDIT_LISTING_TRIGGER_SELECTORS) {
+      const locator = scope.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      for (let index = 0; index < count; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible || !(await isSafeScopedEditTarget(candidate))) continue;
+        return candidate;
+      }
+    }
+
+    for (const label of EDIT_LISTING_LABELS) {
+      const escapedPattern = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+      const candidateLocators = [
+        scope.getByRole('button', { name: new RegExp('^' + escapedPattern + '\$', 'i') }).first(),
+        scope.getByRole('link', { name: new RegExp('^' + escapedPattern + '\$', 'i') }).first(),
+        scope.getByRole('button', { name: new RegExp(escapedPattern, 'i') }).first(),
+        scope.getByRole('link', { name: new RegExp(escapedPattern, 'i') }).first(),
+      ];
+
+      for (const candidate of candidateLocators) {
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible || !(await isSafeScopedEditTarget(candidate))) continue;
+        return candidate;
+      }
+    }
+
+    return null;
+  };
+
+  const findScopedListingActionMenuTrigger = async (scope) => {
+    if (!scope) return null;
+
+    for (const selector of LISTING_ACTION_MENU_TRIGGER_SELECTORS) {
+      const locator = scope.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      for (let index = 0; index < count; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+        const metadata = await readClickTargetMetadata(candidate);
+        if (metadata && resolveExternalClickTargetUrl(metadata)) {
+          continue;
+        }
+        return candidate;
+      }
+    }
+
+    return null;
+  };
+
+  const waitForExistingListingEditor = async (timeoutMs = 15_000) => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (await isCreateListingPage()) {
+        return true;
+      }
+
+      const stableEntryPoint = await confirmStableSellPage(700, 1_800);
+      if (stableEntryPoint === 'form') {
+        return true;
+      }
+
+      await wait(250);
+    }
+
+    return isCreateListingPage();
+  };
+
+  const resolvePreferredSyncListingUrl = () => {
+    const directListingUrl = normalizeWhitespace(existingListingUrl || '');
+    if (directListingUrl) {
+      return directListingUrl;
+    }
+
+    const preferredListingId = normalizeWhitespace(existingExternalListingId || '');
+    return preferredListingId ? 'https://www.tradera.com/item/' + preferredListingId : null;
+  };
+
+  const clickSyncEditTargetWithinScope = async (scope, context) => {
+    if (!scope) return false;
+
+    await dismissVisibleWishlistFavoritesModalIfPresent({
+      context: context + ':pre-edit',
+      required: true,
+    });
+
+    const directEditTarget = await findScopedEditTarget(scope);
+    if (directEditTarget) {
+      await logClickTarget(context + ':edit-target', directEditTarget).catch(() => undefined);
+      await Promise.allSettled([
+        page.waitForLoadState('domcontentloaded', { timeout: 20_000 }),
+        humanClick(directEditTarget, { pauseAfter: false }),
+      ]);
+      await wait(1200);
+      return true;
+    }
+
+    const menuTrigger = await findScopedListingActionMenuTrigger(scope);
+    if (!menuTrigger) {
+      return false;
+    }
+
+    await logClickTarget(context + ':actions-menu', menuTrigger).catch(() => undefined);
+    await humanClick(menuTrigger);
+    await wait(400);
+
+    for (const label of EDIT_LISTING_LABELS) {
+      if (await clickMenuItemByName(label)) {
+        await wait(1200);
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const openExistingListingEditorForSync = async () => {
+    if (!existingListingUrl && !existingExternalListingId) {
+      throw new Error(
+        'FAIL_SYNC_TARGET_NOT_FOUND: Tradera sync requires an existing listing url or existing listing id.'
+      );
+    }
+
+    const preferredListingId = normalizeWhitespace(existingExternalListingId || '');
+    const directSyncTargetUrl = resolvePreferredSyncListingUrl();
+    if (directSyncTargetUrl) {
+      await page.goto(directSyncTargetUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      });
+      await assertAllowedTraderaPage('sync listing target open');
+      await wait(900);
+      await dismissVisibleWishlistFavoritesModalIfPresent({
+        context: 'sync-direct-target',
+        required: true,
+      });
+
+      const resolvedDirectListingId =
+        extractListingId(page.url()) || extractListingId(directSyncTargetUrl) || null;
+      if (
+        preferredListingId &&
+        resolvedDirectListingId &&
+        resolvedDirectListingId !== preferredListingId
+      ) {
+        throw new Error(
+          'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target resolved to the wrong Tradera listing. Expected ' +
+            preferredListingId +
+            ' but opened ' +
+            resolvedDirectListingId +
+            '.'
+        );
+      } else {
+        const alreadyInEditor = await waitForExistingListingEditor(2_500);
+        if (alreadyInEditor) {
+          log?.('tradera.quicklist.sync.editor_opened', {
+            listingId: resolvedDirectListingId,
+            listingUrl: page.url(),
+            matchedBy: 'direct_listing_url',
+            currentUrl: page.url(),
+          });
+          return {
+            matchedBy: 'direct_listing_url',
+            listingId: resolvedDirectListingId,
+            listingUrl: page.url(),
+          };
+        }
+
+        const openedFromDirectTarget = await clickSyncEditTargetWithinScope(page, 'sync-direct');
+        if (openedFromDirectTarget) {
+          const editorReady = await waitForExistingListingEditor();
+          if (editorReady) {
+            log?.('tradera.quicklist.sync.editor_opened', {
+              listingId: resolvedDirectListingId,
+              listingUrl: directSyncTargetUrl,
+              matchedBy: 'direct_listing_url',
+              currentUrl: page.url(),
+            });
+            return {
+              matchedBy: 'direct_listing_url',
+              listingId: resolvedDirectListingId,
+              listingUrl: directSyncTargetUrl,
+            };
+          }
+
+          throw new Error(
+            'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target edit page did not open the Tradera listing editor. Current URL: ' +
+              page.url()
+          );
+        } else {
+          throw new Error(
+            'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target edit action was not available on the Tradera listing page. Current URL: ' +
+              page.url()
+          );
+        }
+      }
+    }
+
+    throw new Error(
+      'FAIL_SYNC_TARGET_NOT_FOUND: Tradera sync could not resolve a direct listing target.'
+    );
+  };
+
   const clickMenuItemByName = async (name) => {
     const normalizedNamePattern = name.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
     const isSafeMenuChoiceTarget = async (locator) => {
@@ -235,6 +583,16 @@ export const PART_3 = String.raw`        expectedValue,
       if (!metadata) {
         return true;
       }
+
+      const insideSelectionUi = await locator
+        .evaluate((element) =>
+          Boolean(
+            element.closest(
+              '[role="menu"], [role="listbox"], [role="dialog"], [aria-modal="true"], [data-radix-popper-content-wrapper], [data-test-category-chooser="true"]'
+            )
+          )
+        )
+        .catch(() => false);
 
       const hrefCandidate = normalizeWhitespace(metadata.href || metadata.hrefAttribute || '');
       if (!hrefCandidate || hrefCandidate === '#' || hrefCandidate.startsWith('#')) {
@@ -247,7 +605,7 @@ export const PART_3 = String.raw`        expectedValue,
       try {
         const parsed = new URL(hrefCandidate, page.url());
         const pathname = parsed.pathname.toLowerCase();
-        if (/\/category\/\d+(?:[/?#]|$)/i.test(pathname)) {
+        if (/\/category\/\d+(?:[/?#]|$)/i.test(pathname) && !insideSelectionUi) {
           log?.('tradera.quicklist.menu_option.skipped_navigation', {
             name,
             href: parsed.toString(),
@@ -256,16 +614,6 @@ export const PART_3 = String.raw`        expectedValue,
           return false;
         }
       } catch {}
-
-      const insideSelectionUi = await locator
-        .evaluate((element) =>
-          Boolean(
-            element.closest(
-              '[role="menu"], [role="listbox"], [role="dialog"], [aria-modal="true"], [data-radix-popper-content-wrapper]'
-            )
-          )
-        )
-        .catch(() => false);
 
       if (!insideSelectionUi) {
         log?.('tradera.quicklist.menu_option.skipped_navigation', {
@@ -598,11 +946,28 @@ export const PART_3 = String.raw`        expectedValue,
 
   const readVisibleCategoryMenuOptions = async () => {
     return page
-      .locator('[data-test-category-chooser="true"] [role="menuitem"]')
+      .locator(
+        '[data-test-category-chooser="true"] [role="menuitem"], [data-test-category-chooser="true"] [role="menuitemradio"], [data-test-category-chooser="true"] [role="option"], [data-test-category-chooser="true"] [role="radio"], [data-test-category-chooser="true"] a[href], [data-test-category-chooser="true"] button'
+      )
       .evaluateAll((elements) =>
         elements
           .map((element) => {
-            const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+            if (element.closest('nav[aria-label="Breadcrumb"]')) {
+              return null;
+            }
+
+            const text = (
+              element.getAttribute('aria-label') ||
+              element.getAttribute('title') ||
+              element.textContent ||
+              ''
+            )
+              .replace(/\s+/g, ' ')
+              .trim();
+            const normalizedText = text.toLowerCase();
+            if (!text || normalizedText === 'back' || normalizedText === 'tillbaka') {
+              return null;
+            }
             const rect = element.getBoundingClientRect();
             const style = window.getComputedStyle(element);
             const visible =

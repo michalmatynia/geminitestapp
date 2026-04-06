@@ -44,6 +44,7 @@ export function CategoryTreeNodeRenderer(
         )}
       />
       <div
+        data-master-tree-drag-surface='category'
         className={cn(
           'group flex w-full select-none items-center gap-1 rounded px-2 py-1.5 text-left text-sm transition',
           'text-gray-200 hover:bg-muted/40',
@@ -52,7 +53,11 @@ export function CategoryTreeNodeRenderer(
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
         title={category.name}
       >
-        <span className='inline-flex cursor-grab items-center justify-center opacity-0 transition group-hover:opacity-100 active:cursor-grabbing'>
+        <span
+          data-master-tree-drag-handle='category'
+          title={`Drag ${category.name}`}
+          className='inline-flex cursor-grab items-center justify-center opacity-0 transition group-hover:opacity-100 active:cursor-grabbing'
+        >
           <DragHandleIcon className='size-3 shrink-0 text-gray-500' />
         </span>
         <TreeCaret

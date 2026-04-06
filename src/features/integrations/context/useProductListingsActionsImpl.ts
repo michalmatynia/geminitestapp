@@ -11,6 +11,7 @@ import {
   useExportToBaseMutation,
   usePurgeListingMutation,
   useRelistTraderaMutation,
+  useSyncTraderaMutation,
   useSyncBaseImagesMutation,
   useUpdateListingInventoryIdMutation,
   type ExportToBaseVariables,
@@ -71,6 +72,7 @@ export const useProductListingsActionsImpl = ({
   setRelistingListing,
   setSavingInventoryId,
   setSyncingImages,
+  setSyncingTraderaListing,
 }: {
   inventoryOverrides: Record<string, string>;
   lastExportListingId: string | null;
@@ -95,6 +97,7 @@ export const useProductListingsActionsImpl = ({
   setRelistingListing: Dispatch<SetStateAction<string | null>>;
   setSavingInventoryId: Dispatch<SetStateAction<string | null>>;
   setSyncingImages: Dispatch<SetStateAction<string | null>>;
+  setSyncingTraderaListing: Dispatch<SetStateAction<string | null>>;
 }): ProductListingsActions => {
   const { toast } = useToast();
 
@@ -103,6 +106,7 @@ export const useProductListingsActionsImpl = ({
   const updateInventoryIdMutation = useUpdateListingInventoryIdMutation(productId);
   const exportToBaseMutation = useExportToBaseMutation(productId);
   const relistTraderaMutation = useRelistTraderaMutation(productId);
+  const syncTraderaMutation = useSyncTraderaMutation(productId);
   const syncBaseImagesMutation = useSyncBaseImagesMutation(productId);
 
   const handleDeleteFromBase = useCallback(
@@ -339,6 +343,97 @@ export const useProductListingsActionsImpl = ({
     ]
   );
 
+  const handleSyncTradera = useCallback(
+    async (
+      listingId: string,
+      options?: {
+        integrationId?: string | null;
+        connectionId?: string | null;
+        skipSessionPreflight?: boolean;
+      }
+    ) => {
+      const listing = listings.find((item) => item.id === listingId);
+      const integrationId = listing?.integrationId ?? options?.integrationId ?? null;
+      const connectionId = listing?.connectionId ?? options?.connectionId ?? null;
+
+      try {
+        setSyncingTraderaListing(listingId);
+        setError(null);
+
+        if (!options?.skipSessionPreflight && integrationId && connectionId) {
+          await preflightTraderaQuickListSession({
+            integrationId,
+            connectionId,
+            productId:
+              typeof listing?.productId === 'string' && listing.productId.trim()
+                ? listing.productId.trim()
+                : productId,
+          });
+        }
+
+        const response = await syncTraderaMutation.mutateAsync({ listingId });
+        const queueJobId = response.queue?.jobId;
+        toast(
+          queueJobId
+            ? `Tradera sync queued (job ${queueJobId}).`
+            : 'Tradera sync queued.',
+          { variant: 'success' }
+        );
+        setRecoveryContext((current) =>
+          current?.integrationSlug === 'tradera' ? null : current
+        );
+        onListingsUpdated?.();
+      } catch (err: unknown) {
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'syncTradera',
+          listingId,
+          productId,
+        });
+        const errorMessage = err instanceof Error ? err.message : 'Failed to queue Tradera sync';
+        if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+          if (integrationId && connectionId) {
+            setRecoveryContext(
+              createTraderaRecoveryContext({
+                status: 'auth_required',
+                runId: null,
+                failureReason: errorMessage,
+                integrationId,
+                connectionId,
+              })
+            );
+          }
+          toast(errorMessage, { variant: 'error' });
+          return;
+        }
+        if (integrationId && connectionId) {
+          setRecoveryContext(
+            createTraderaRecoveryContext({
+              status: 'failed',
+              runId: null,
+              failureReason: errorMessage,
+              integrationId,
+              connectionId,
+            })
+          );
+        }
+        setError(errorMessage);
+      } finally {
+        setSyncingTraderaListing(null);
+      }
+    },
+    [
+      listings,
+      onListingsUpdated,
+      productId,
+      setRecoveryContext,
+      setError,
+      setSyncingTraderaListing,
+      syncTraderaMutation,
+      toast,
+    ]
+  );
+
   const handleOpenTraderaLogin = useCallback(
     async (listingId: string, integrationId: string, connectionId: string): Promise<boolean> => {
       try {
@@ -552,6 +647,7 @@ export const useProductListingsActionsImpl = ({
     handlePurgeListing,
     handleSaveInventoryId,
     handleSyncBaseImages,
+    handleSyncTradera,
     handleRelistTradera,
     handleOpenTraderaLogin,
     handleExportAgain,

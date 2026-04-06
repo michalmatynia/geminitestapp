@@ -18,6 +18,7 @@ import {
 } from '@/shared/lib/files/services/storage/file-storage-service';
 import {
   extractExternalListingId,
+  buildCanonicalTraderaListingUrl,
 } from './utils';
 import { resolveTraderaListingPriceForProduct } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
@@ -47,6 +48,25 @@ const toTrimmedString = (value: unknown): string =>
 const normalizeDuplicateSearchTitle = (value: unknown): string | null => {
   const normalized = toTrimmedString(value).replace(/\s+/g, ' ').trim();
   return normalized.length > 0 ? normalized : null;
+};
+
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
+const resolveExistingListingUrl = (listing: ProductListing): string | null => {
+  const marketplaceData = toRecord(listing.marketplaceData);
+  const directListingUrl = toTrimmedString(marketplaceData['listingUrl']);
+  if (directListingUrl) {
+    return directListingUrl;
+  }
+
+  const traderaData = toRecord(marketplaceData['tradera']);
+  const nestedListingUrl = toTrimmedString(traderaData['listingUrl']);
+  if (nestedListingUrl) {
+    return nestedListingUrl;
+  }
+
+  return listing.externalListingId ? buildCanonicalTraderaListingUrl(listing.externalListingId) : null;
 };
 
 const parseImageSettleState = (message: string): Record<string, unknown> | null => {
@@ -82,14 +102,14 @@ const resolveTraderaFailureHoldOpenMs = ({
   action,
   browserMode,
 }: {
-  action: 'list' | 'relist';
+  action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
 }): number | undefined => {
   if (browserMode !== 'headed') {
     return undefined;
   }
 
-  return action === 'relist' ? undefined : TRADERA_HEADED_FAILURE_HOLD_OPEN_MS;
+  return action === 'list' ? TRADERA_HEADED_FAILURE_HOLD_OPEN_MS : undefined;
 };
 
 const buildManagedQuicklistScriptMetadata = ({
@@ -199,7 +219,7 @@ export const buildTraderaScriptInput = async ({
   listing: ProductListing;
   systemSettings: TraderaSystemSettings;
   connection: IntegrationConnectionRecord;
-  action: 'list' | 'relist';
+  action: 'list' | 'relist' | 'sync';
 }): Promise<Record<string, unknown>> => {
   const title =
     product.name_en || product.name_pl || product.name_de || product.sku || `Listing ${listing.productId}`;
@@ -238,6 +258,7 @@ export const buildTraderaScriptInput = async ({
     });
   const shippingGroup = shippingGroupResolution.shippingGroup;
   const mappedCategory = categoryMapping.mapping;
+  const existingListingUrl = resolveExistingListingUrl(listing);
 
   return {
     productId: product.id,
@@ -246,6 +267,7 @@ export const buildTraderaScriptInput = async ({
     connectionId: listing.connectionId,
     listingAction: action,
     existingExternalListingId: listing.externalListingId ?? null,
+    existingListingUrl,
     baseProductId: product.baseProductId ?? product.id,
     sku: product.sku ?? null,
     duplicateSearchTitle: normalizeDuplicateSearchTitle(product.name_en),
@@ -522,7 +544,7 @@ export const runTraderaBrowserListingScripted = async ({
   connection: IntegrationConnectionRecord;
   systemSettings: TraderaSystemSettings;
   source: 'manual' | 'scheduler' | 'api';
-  action: 'list' | 'relist';
+  action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
 }): Promise<TraderaBrowserListingResult> => {
   const productRepository = await getProductRepository();
@@ -572,6 +594,7 @@ export const runTraderaBrowserListingScripted = async ({
 
     const externalListingId =
       result.externalListingId ??
+      (action === 'sync' ? listing.externalListingId ?? null : null) ??
       (typeof result.listingUrl === 'string'
         ? extractExternalListingId(result.listingUrl)
         : null);

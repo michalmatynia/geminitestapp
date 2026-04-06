@@ -215,7 +215,12 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     const strippedListing = stripDescriptionMetadata(listingText).toLowerCase();
     const strippedProduct = stripDescriptionMetadata(productDescription).toLowerCase();
     if (!strippedListing || !strippedProduct) return false;
-    return strippedListing === strippedProduct;
+    // Exact match (when the selector captured only the description text)
+    if (strippedListing === strippedProduct) return true;
+    // Contains match (when the selector captured a broader page section
+    // that includes the description alongside price, seller, shipping, etc.)
+    if (strippedProduct.length >= 20 && strippedListing.includes(strippedProduct)) return true;
+    return false;
   };
 
   const extractReferencedProductId = (value) => {

@@ -42,6 +42,7 @@ const migratedRouteHandlerPaths = [
   'products/[id]/listings/[listingId]/delete-from-base/route-handler.ts',
   'products/[id]/listings/[listingId]/purge/route-handler.ts',
   'products/[id]/listings/[listingId]/relist/route-handler.ts',
+  'products/[id]/listings/[listingId]/sync/route-handler.ts',
   'products/[id]/listings/[listingId]/sync-base-images/route-handler.ts',
 ] as const;
 

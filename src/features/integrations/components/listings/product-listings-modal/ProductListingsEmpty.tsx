@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import {
   useProductListingsData,
   useProductListingsModals,
@@ -10,7 +11,6 @@ import {
   resolveProductListingsEmptyDescription,
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
-import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import { BaseQuickExportFailureBanner } from './BaseQuickExportFailureBanner';
@@ -56,7 +56,7 @@ export function ProductListingsEmpty(): React.JSX.Element {
     (recoveryStatus === 'auth_required' ||
       recoveryStatus === 'needs_login' ||
       hasTraderaAuthSignal(recoveryFailureReason));
-  const persistedQuickListFeedback = readPersistedTraderaQuickListFeedback(product.id);
+  const { feedback: persistedQuickListFeedback } = useTraderaQuickListFeedback(product.id);
   const shouldShowQuickListSuccessBanner = Boolean(
     !isTraderaQuickExportRecovery &&
       persistedQuickListFeedback?.status === 'completed' &&

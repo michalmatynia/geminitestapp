@@ -3,10 +3,16 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { refetchListingsMock, useProductListingsActionsImplMock } = vi.hoisted(() => ({
+import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+
+const {
+  refetchListingsMock,
+  useProductListingsActionsImplMock,
+  useTraderaQuickExportPollingMock,
+} = vi.hoisted(() => ({
   refetchListingsMock: vi.fn(),
   useProductListingsActionsImplMock: vi.fn(() => ({
     handleDeleteFromBase: vi.fn(),
@@ -20,6 +26,7 @@ const { refetchListingsMock, useProductListingsActionsImplMock } = vi.hoisted(()
     handleImageRetry: vi.fn(),
     refetchListings: vi.fn(),
   })),
+  useTraderaQuickExportPollingMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/hooks/useListingQueries', () => ({
@@ -34,6 +41,13 @@ vi.mock('@/features/integrations/hooks/useListingQueries', () => ({
 vi.mock('./useProductListingsActionsImpl', () => ({
   useProductListingsActionsImpl: useProductListingsActionsImplMock,
 }));
+
+vi.mock(
+  '@/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportPolling',
+  () => ({
+    useTraderaQuickExportPolling: useTraderaQuickExportPollingMock,
+  })
+);
 
 import { ProductListingsProvider, useProductListingsModals } from './ProductListingsContext';
 
@@ -77,6 +91,7 @@ function RecoveryContextUpdater(): React.JSX.Element {
 describe('ProductListingsProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
   });
 
   it('shares recovery-context updates with later consumers in the same open modal', () => {
@@ -221,5 +236,41 @@ describe('ProductListingsProvider', () => {
     expect(screen.getByTestId('integration-id')).toHaveTextContent('integration-tradera-2');
     expect(screen.getByTestId('connection-id')).toHaveTextContent('conn-tradera-2');
     expect(screen.getByTestId('run-id')).toHaveTextContent('run-tradera-2');
+  });
+
+  it('updates the recovery banner state when Tradera quicklist feedback fails in the same tab', () => {
+    render(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+      >
+        <RecoveryContextSummary />
+      </ProductListingsProvider>
+    );
+
+    act(() => {
+      persistTraderaQuickListFeedback('product-1', 'failed', {
+        runId: 'run-tradera-feedback',
+        requestId: 'job-tradera-feedback',
+        integrationId: 'integration-tradera-feedback',
+        connectionId: 'conn-tradera-feedback',
+        failureReason: 'Shipping configuration failed.',
+      });
+    });
+
+    expect(screen.getByTestId('filter-integration-slug')).toHaveTextContent('tradera');
+    expect(screen.getByTestId('integration-id')).toHaveTextContent(
+      'integration-tradera-feedback'
+    );
+    expect(screen.getByTestId('connection-id')).toHaveTextContent(
+      'conn-tradera-feedback'
+    );
+    expect(screen.getByTestId('run-id')).toHaveTextContent('run-tradera-feedback');
   });
 });

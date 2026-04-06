@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
@@ -269,6 +269,38 @@ describe('ProductListingsEmpty', () => {
     );
     expect(screen.queryByText('No listings found')).toBeNull();
     expect(screen.queryByText('Not connected.')).toBeNull();
+  });
+
+  it('updates the empty-state success banner immediately when quicklist feedback changes in the same tab', () => {
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.queryByText('Tradera quick export completed')).toBeNull();
+
+    act(() => {
+      persistTraderaQuickListFeedback('product-1', 'completed', {
+        listingId: 'listing-2',
+        listingUrl: 'https://www.tradera.com/item/789',
+        externalListingId: '789',
+      });
+    });
+
+    expect(screen.getByText('Tradera quick export completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/789'
+    );
   });
 
   it('queues a Tradera sync from the empty-state success banner when feedback includes listing ids', async () => {

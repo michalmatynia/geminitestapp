@@ -280,9 +280,96 @@ export const PART_5 = String.raw`
       uploadSource: imageUploadResult?.uploadSource ?? null,
     });
 
+    const clickResidualContinueButton = async (button) => {
+      await button.scrollIntoViewIfNeeded().catch(() => undefined);
+      let primaryClickFailed = false;
+      try {
+        await humanClick(button);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error || '');
+        if (message.includes('FAIL_SELL_PAGE_INVALID:')) {
+          throw error;
+        }
+        primaryClickFailed = true;
+      }
+      await wait(400);
+
+      const stillVisible = await button.isVisible().catch(() => false);
+      if (stillVisible) {
+        await button.evaluate((element) => {
+          element.click();
+        }).catch(() => undefined);
+      } else if (primaryClickFailed) {
+        return;
+      }
+    };
+
+    const resolveTitleAndDescriptionInputs = async () => {
+      let [titleInput, descriptionInput] = await Promise.all([
+        firstVisible(TITLE_SELECTORS),
+        firstVisible(DESCRIPTION_SELECTORS),
+      ]);
+      if (titleInput && descriptionInput) {
+        return { titleInput, descriptionInput };
+      }
+
+      const continueButton = await firstVisible(CONTINUE_SELECTORS);
+      const continueButtonDisabled = continueButton
+        ? await isControlDisabled(continueButton)
+        : null;
+      const [uploadedImagePreviewCount, imageUploadPromptVisible, imageUploadPending] =
+        await Promise.all([
+          countUploadedImagePreviews().catch(() => 0),
+          isImageUploadPromptVisible().catch(() => false),
+          isImageUploadPending().catch(() => false),
+        ]);
+
+      const canRetryViaContinue =
+        continueButton &&
+        continueButtonDisabled === false &&
+        uploadedImagePreviewCount > 0 &&
+        imageUploadPending === false;
+
+      if (canRetryViaContinue) {
+        log?.('tradera.quicklist.field.selector_retry', {
+          fieldGroup: 'title-description',
+          reason: 'image-step-continue',
+          uploadedImagePreviewCount,
+          imageUploadPromptVisible,
+          imageUploadPending,
+        });
+        await clickResidualContinueButton(continueButton);
+
+        const deadline = Date.now() + 20_000;
+        while (Date.now() < deadline) {
+          [titleInput, descriptionInput] = await Promise.all([
+            firstVisible(TITLE_SELECTORS),
+            firstVisible(DESCRIPTION_SELECTORS),
+          ]);
+          if (titleInput && descriptionInput) {
+            return { titleInput, descriptionInput };
+          }
+
+          await wait(500);
+        }
+      }
+
+      log?.('tradera.quicklist.field.selector_missing', {
+        fieldGroup: 'title-description',
+        hasTitleInput: Boolean(titleInput),
+        hasDescriptionInput: Boolean(descriptionInput),
+        continueButtonVisible: Boolean(continueButton),
+        continueButtonDisabled,
+        uploadedImagePreviewCount,
+        imageUploadPromptVisible,
+        imageUploadPending,
+      });
+
+      return { titleInput, descriptionInput };
+    };
+
     const fillTitleAndDescription = async () => {
-      const titleInput = await firstVisible(TITLE_SELECTORS);
-      const descriptionInput = await firstVisible(DESCRIPTION_SELECTORS);
+      const { titleInput, descriptionInput } = await resolveTitleAndDescriptionInputs();
 
       if (!titleInput || !descriptionInput) {
         throw new Error(

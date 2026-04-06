@@ -1,5 +1,8 @@
 export type TraderaQuickListFeedbackStatus = 'processing' | 'queued' | 'completed' | 'failed' | 'auth_required';
 
+export const TRADERA_QUICK_LIST_FEEDBACK_EVENT_NAME =
+  'integrations:tradera-quick-list-feedback-updated';
+
 export type PersistedTraderaQuickListFeedback = {
   productId: string;
   status: TraderaQuickListFeedbackStatus;
@@ -16,6 +19,19 @@ export type PersistedTraderaQuickListFeedback = {
   duplicateLinked?: boolean | null | undefined;
 };
 
+export type PersistTraderaQuickListFeedbackOptions = {
+  runId?: string | null | undefined;
+  requestId?: string | null | undefined;
+  integrationId?: string | null | undefined;
+  connectionId?: string | null | undefined;
+  failureReason?: string | null | undefined;
+  listingId?: string | null | undefined;
+  listingUrl?: string | null | undefined;
+  externalListingId?: string | null | undefined;
+  completedAt?: number | null | undefined;
+  duplicateLinked?: boolean | null | undefined;
+};
+
 export const TRADERA_QUICK_LIST_FEEDBACK_STORAGE_KEY = 'tradera-quick-list-feedback';
 
 const PROCESSING_FEEDBACK_TTL_MS = 2 * 60 * 1000;
@@ -25,6 +41,16 @@ const FAILED_FEEDBACK_TTL_MS = 30 * 60 * 1000;
 
 const canUseSessionStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+
+const emitTraderaQuickListFeedbackUpdated = (productId: string): void => {
+  if (typeof window === 'undefined') return;
+
+  window.dispatchEvent(
+    new CustomEvent(TRADERA_QUICK_LIST_FEEDBACK_EVENT_NAME, {
+      detail: { productId },
+    })
+  );
+};
 
 const resolveFeedbackTtlMs = (status: TraderaQuickListFeedbackStatus): number =>
   status === 'processing'
@@ -180,21 +206,45 @@ export const readPersistedTraderaQuickListFeedback = (
   return nextMap[productId] ?? null;
 };
 
+export const subscribeToTraderaQuickListFeedback = (
+  onStoreChange: () => void
+): (() => void) => {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  const handleFeedbackUpdate = (): void => {
+    onStoreChange();
+  };
+  const handleStorage = (event: StorageEvent): void => {
+    if (
+      event.key !== null &&
+      event.key !== TRADERA_QUICK_LIST_FEEDBACK_STORAGE_KEY
+    ) {
+      return;
+    }
+    onStoreChange();
+  };
+
+  window.addEventListener(
+    TRADERA_QUICK_LIST_FEEDBACK_EVENT_NAME,
+    handleFeedbackUpdate as EventListener
+  );
+  window.addEventListener('storage', handleStorage);
+
+  return () => {
+    window.removeEventListener(
+      TRADERA_QUICK_LIST_FEEDBACK_EVENT_NAME,
+      handleFeedbackUpdate as EventListener
+    );
+    window.removeEventListener('storage', handleStorage);
+  };
+};
+
 export const persistTraderaQuickListFeedback = (
   productId: string,
   status: TraderaQuickListFeedbackStatus,
-  options?: {
-    runId?: string | null | undefined;
-    requestId?: string | null | undefined;
-    integrationId?: string | null | undefined;
-    connectionId?: string | null | undefined;
-    failureReason?: string | null | undefined;
-    listingId?: string | null | undefined;
-    listingUrl?: string | null | undefined;
-    externalListingId?: string | null | undefined;
-    completedAt?: number | null | undefined;
-    duplicateLinked?: boolean | null | undefined;
-  }
+  options?: PersistTraderaQuickListFeedbackOptions
 ): void => {
   if (!productId.trim()) return;
 
@@ -215,6 +265,7 @@ export const persistTraderaQuickListFeedback = (
     duplicateLinked: options?.duplicateLinked ?? null,
   };
   writePersistedFeedbackMap(nextMap);
+  emitTraderaQuickListFeedbackUpdated(productId);
 };
 
 export const clearPersistedTraderaQuickListFeedback = (productId: string): void => {
@@ -225,4 +276,5 @@ export const clearPersistedTraderaQuickListFeedback = (productId: string): void 
 
   delete nextMap[productId];
   writePersistedFeedbackMap(nextMap);
+  emitTraderaQuickListFeedbackUpdated(productId);
 };

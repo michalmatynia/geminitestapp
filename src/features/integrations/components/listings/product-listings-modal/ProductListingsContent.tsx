@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import {
   useProductListingsData,
   useProductListingsModals,
@@ -17,7 +18,6 @@ import {
 } from '@/features/integrations/utils/product-listings-recovery';
 import {
   persistTraderaQuickListFeedback,
-  readPersistedTraderaQuickListFeedback,
   type PersistedTraderaQuickListFeedback,
 } from '@/features/integrations/utils/traderaQuickListFeedback';
 import { resolveTraderaRequestId } from '@/features/integrations/utils/tradera-listing-client-utils';
@@ -113,7 +113,7 @@ export function ProductListingsContent(): React.JSX.Element {
     .toLowerCase();
   const fallbackRecoveryError = readString(fallbackRecoveryLastExecution['error']);
   const fallbackRecoveryFailureReason = fallbackRecoveryListing?.failureReason ?? null;
-  const persistedQuickListFeedback = readPersistedTraderaQuickListFeedback(product.id);
+  const { feedback: persistedQuickListFeedback } = useTraderaQuickListFeedback(product.id);
   const trackedSuccessListing =
     persistedQuickListFeedback?.status === 'completed'
       ? findTrackedTraderaListing(filteredListings, persistedQuickListFeedback)

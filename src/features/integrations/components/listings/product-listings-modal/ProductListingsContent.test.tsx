@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
@@ -628,6 +628,35 @@ describe('ProductListingsContent', () => {
     expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
       'href',
       'https://www.tradera.com/item/123'
+    );
+  });
+
+  it('updates the success banner immediately when quicklist feedback is persisted in the same tab', () => {
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.queryByText('Tradera quick export completed')).toBeNull();
+
+    act(() => {
+      persistTraderaQuickListFeedback('product-1', 'completed', {
+        listingId: 'listing-1',
+        listingUrl: 'https://www.tradera.com/item/456',
+        externalListingId: '456',
+      });
+    });
+
+    expect(screen.getByText('Tradera quick export completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/456'
     );
   });
 

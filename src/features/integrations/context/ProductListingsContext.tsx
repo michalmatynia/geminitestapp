@@ -2,12 +2,16 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 
+import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
 import {
   areProductListingsRecoveryContextsEqual,
+  createTraderaRecoveryContext,
+  isTraderaQuickExportRecoveryContext,
   mergeProductListingsRecoveryContext,
   resolveProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
+import { useTraderaQuickExportPolling } from '@/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportPolling';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { PlaywrightRelistBrowserMode, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
@@ -16,6 +20,42 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { createStrictContext } from './createStrictContext';
 import { useProductListingsActionsImpl } from './useProductListingsActionsImpl';
+
+const doesTraderaRecoveryContextMatchFeedback = (
+  recoveryContext: ProductListingsRecoveryContext | null,
+  feedback: {
+    requestId?: string | null | undefined;
+    runId?: string | null | undefined;
+    integrationId?: string | null | undefined;
+    connectionId?: string | null | undefined;
+  } | null
+): boolean => {
+  if (!isTraderaQuickExportRecoveryContext(recoveryContext) || !feedback) {
+    return false;
+  }
+
+  if (recoveryContext.requestId && feedback.requestId) {
+    return recoveryContext.requestId === feedback.requestId;
+  }
+
+  if (recoveryContext.runId && feedback.runId) {
+    return recoveryContext.runId === feedback.runId;
+  }
+
+  if (
+    recoveryContext.integrationId &&
+    feedback.integrationId &&
+    recoveryContext.connectionId &&
+    feedback.connectionId
+  ) {
+    return (
+      recoveryContext.integrationId === feedback.integrationId &&
+      recoveryContext.connectionId === feedback.connectionId
+    );
+  }
+
+  return true;
+};
 
 // --- Granular Contexts ---
 
@@ -170,6 +210,10 @@ export function ProductListingsProvider({
   const [isSyncImagesConfirmOpen, setIsSyncImagesConfirmOpen] = useState(false);
   const [resolvedRecoveryContext, setResolvedRecoveryContext] =
     useState<ProductListingsRecoveryContext | null>(recoveryContext ?? null);
+  const {
+    feedback: traderaQuickListFeedback,
+    setFeedbackStatus: setTraderaQuickListFeedbackStatus,
+  } = useTraderaQuickListFeedback(product.id);
 
   useEffect(() => {
     setResolvedRecoveryContext((current) => {
@@ -193,6 +237,63 @@ export function ProductListingsProvider({
   const listings = listingsQuery.data ?? [];
   const isListingsLoading =
     listingsQuery.isLoading || (listingsQuery.isFetching && listings.length === 0);
+
+  useTraderaQuickExportPolling(
+    product.id,
+    traderaQuickListFeedback,
+    setTraderaQuickListFeedbackStatus
+  );
+
+  useEffect(() => {
+    if (!traderaQuickListFeedback) {
+      return;
+    }
+
+    const feedbackStatus = (traderaQuickListFeedback.status ?? '').trim().toLowerCase();
+
+    if (feedbackStatus === 'auth_required' || feedbackStatus === 'failed') {
+      const nextRecoveryContext = createTraderaRecoveryContext({
+        status: traderaQuickListFeedback.status,
+        runId: traderaQuickListFeedback.runId ?? null,
+        failureReason: traderaQuickListFeedback.failureReason ?? null,
+        requestId: traderaQuickListFeedback.requestId ?? null,
+        integrationId: traderaQuickListFeedback.integrationId ?? null,
+        connectionId: traderaQuickListFeedback.connectionId ?? null,
+      });
+
+      setResolvedRecoveryContext((current) => {
+        const mergedRecoveryContext = mergeProductListingsRecoveryContext(
+          nextRecoveryContext,
+          current
+        );
+        return areProductListingsRecoveryContextsEqual(current, mergedRecoveryContext)
+          ? current
+          : mergedRecoveryContext;
+      });
+      return;
+    }
+
+    if (
+      feedbackStatus === 'processing' ||
+      feedbackStatus === 'queued' ||
+      feedbackStatus === 'completed'
+    ) {
+      setResolvedRecoveryContext((current) => {
+        if (!doesTraderaRecoveryContextMatchFeedback(current, traderaQuickListFeedback)) {
+          return current;
+        }
+        return null;
+      });
+    }
+  }, [
+    traderaQuickListFeedback,
+    traderaQuickListFeedback?.connectionId,
+    traderaQuickListFeedback?.failureReason,
+    traderaQuickListFeedback?.integrationId,
+    traderaQuickListFeedback?.requestId,
+    traderaQuickListFeedback?.runId,
+    traderaQuickListFeedback?.status,
+  ]);
 
   const actions = useProductListingsActionsImpl({
     inventoryOverrides,

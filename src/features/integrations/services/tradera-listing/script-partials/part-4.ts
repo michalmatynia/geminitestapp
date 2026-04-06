@@ -648,6 +648,59 @@ export const PART_4 = String.raw`);
     });
   };
 
+  const buildShippingDialogPriceEntryVariants = (priceValue) => {
+    const numericPrice = Number(priceValue);
+    const variants = new Set();
+    const addVariant = (value) => {
+      const normalized = normalizeWhitespace(value);
+      if (normalized) {
+        variants.add(normalized);
+      }
+    };
+
+    addVariant(priceValue);
+    if (!Number.isFinite(numericPrice)) {
+      return Array.from(variants);
+    }
+
+    addVariant(String(numericPrice));
+    addVariant(numericPrice.toFixed(1));
+    addVariant(numericPrice.toFixed(2));
+    addVariant(String(numericPrice).replace('.', ','));
+    addVariant(numericPrice.toFixed(1).replace('.', ','));
+    addVariant(numericPrice.toFixed(2).replace('.', ','));
+
+    return Array.from(variants);
+  };
+
+  const captureShippingDialogSaveState = async (shippingDialog) => {
+    const shippingPriceInput = await firstVisibleWithin(
+      shippingDialog,
+      SHIPPING_DIALOG_PRICE_INPUT_SELECTORS
+    );
+    const priceValue = shippingPriceInput
+      ? normalizeWhitespace(await readFieldValue(shippingPriceInput))
+      : null;
+    const saveButton = await findButtonByLabelsWithin(
+      shippingDialog,
+      SHIPPING_DIALOG_SAVE_LABELS
+    );
+    const saveButtonDisabled = saveButton ? await isControlDisabled(saveButton) : null;
+    const optionCheckbox = await findCheckboxByLabelsWithin(
+      shippingDialog,
+      SHIPPING_DIALOG_OPTION_LABELS,
+      { fallbackToFirstVisible: true }
+    );
+    const optionChecked = optionCheckbox ? await isCheckboxChecked(optionCheckbox) : null;
+
+    return {
+      priceValue,
+      saveButtonVisible: Boolean(saveButton),
+      saveButtonDisabled,
+      optionChecked,
+    };
+  };
+
   const findVisibleWishlistFavoritesDialog = async () => {
     const dialogs = page.getByRole('dialog');
     const count = await dialogs.count().catch(() => 0);
@@ -824,6 +877,86 @@ export const PART_4 = String.raw`);
     log?.('tradera.quicklist.delivery.price_confirmed', {
       price: confirmedShippingPriceValue,
     });
+  };
+
+  const enableShippingDialogSaveButton = async ({
+    shippingDialog,
+    shippingPriceInput,
+    expectedNormalizedPriceValue,
+    rawPriceValue,
+  }) => {
+    const candidateValues = buildShippingDialogPriceEntryVariants(rawPriceValue);
+    const inputMethods = ['default', 'paste'];
+    const attempts = [];
+
+    for (const inputMethod of inputMethods) {
+      for (const candidateValue of candidateValues) {
+        await setAndVerifyFieldValue({
+          locator: shippingPriceInput,
+          value: candidateValue,
+          fieldKey: 'delivery-price',
+          errorPrefix: 'FAIL_SHIPPING_SET',
+          normalize: normalizePriceValue,
+          inputMethod,
+        });
+        await confirmShippingDialogPriceValue(
+          shippingPriceInput,
+          expectedNormalizedPriceValue
+        );
+        await commitShippingDialogPriceInput(shippingPriceInput);
+
+        let saveButton = await waitForShippingDialogSaveReady(shippingDialog, 1_500);
+        let optionChecked = null;
+
+        if (!saveButton) {
+          const optionCheckbox = await findCheckboxByLabelsWithin(
+            shippingDialog,
+            SHIPPING_DIALOG_OPTION_LABELS,
+            { fallbackToFirstVisible: true }
+          );
+          optionChecked = optionCheckbox ? await isCheckboxChecked(optionCheckbox) : null;
+          if (optionCheckbox && optionChecked === false) {
+            await setCheckboxChecked(
+              optionCheckbox,
+              SHIPPING_DIALOG_OPTION_LABELS,
+              true,
+              shippingDialog
+            );
+            await wait(250);
+            saveButton = await waitForShippingDialogSaveReady(shippingDialog, 1_000);
+            optionChecked = await isCheckboxChecked(optionCheckbox);
+          }
+        } else {
+          const optionCheckbox = await findCheckboxByLabelsWithin(
+            shippingDialog,
+            SHIPPING_DIALOG_OPTION_LABELS,
+            { fallbackToFirstVisible: true }
+          );
+          optionChecked = optionCheckbox ? await isCheckboxChecked(optionCheckbox) : null;
+        }
+
+        const attemptSummary = {
+          value: candidateValue,
+          inputMethod,
+          saveReady: Boolean(saveButton),
+          optionChecked,
+        };
+        attempts.push(attemptSummary);
+        log?.('tradera.quicklist.delivery.price_attempt', attemptSummary);
+
+        if (saveButton) {
+          return {
+            saveButton,
+            attempts,
+          };
+        }
+      }
+    }
+
+    return {
+      saveButton: null,
+      attempts,
+    };
   };
 
   const submitShippingDialogSave = async (shippingDialog, saveButton) => {
@@ -1174,31 +1307,25 @@ export const PART_4 = String.raw`);
       throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog price input was not ready.');
     }
 
-    await setAndVerifyFieldValue({
-      locator: shippingDialogReady.shippingPriceInput,
-      value: expectedDeliveryPriceValue,
-      fieldKey: 'delivery-price',
-      errorPrefix: 'FAIL_SHIPPING_SET',
-      normalize: normalizePriceValue,
-      inputMethod: 'paste',
+    const shippingSaveEnablement = await enableShippingDialogSaveButton({
+      shippingDialog,
+      shippingPriceInput: shippingDialogReady.shippingPriceInput,
+      expectedNormalizedPriceValue: normalizedConfiguredDeliveryPrice,
+      rawPriceValue: expectedDeliveryPriceValue,
     });
-    await confirmShippingDialogPriceValue(
-      shippingDialogReady.shippingPriceInput,
-      normalizedConfiguredDeliveryPrice
-    );
 
     log?.('tradera.quicklist.delivery.price_set', {
       price: normalizedConfiguredDeliveryPrice,
+      attempts: shippingSaveEnablement.attempts,
     });
 
-    let saveButton = await waitForShippingDialogSaveReady(shippingDialog, 2_000);
+    const saveButton = shippingSaveEnablement.saveButton;
     if (!saveButton) {
-      await commitShippingDialogPriceInput(shippingDialogReady.shippingPriceInput);
-      saveButton = await waitForShippingDialogSaveReady(shippingDialog, 3_000);
-    }
-    if (!saveButton) {
+      const blockedState = await captureShippingDialogSaveState(shippingDialog);
       log?.('tradera.quicklist.delivery.save.blocked', {
         reason: 'button-disabled-after-price-entry',
+        attempts: shippingSaveEnablement.attempts,
+        ...blockedState,
       });
       throw new Error(
         'FAIL_SHIPPING_SET: Tradera shipping dialog save button stayed disabled after entering the price.'

@@ -1226,28 +1226,7 @@ export const PART_4B = String.raw`
       return createDefaultDuplicateResult();
     }
 
-    if (duplicateMatches.length === 1) {
-      const duplicateMatch = duplicateMatches[0];
-      log?.('tradera.quicklist.duplicate.result', {
-        term,
-        duplicateFound: true,
-        matchStrategy: 'title',
-        candidateCount: 1,
-        listingUrl: duplicateMatch?.listingUrl || null,
-        listingId: duplicateMatch?.listingId || null,
-      });
-
-      return {
-        duplicateFound: true,
-        listingUrl: duplicateMatch.listingUrl,
-        listingId: duplicateMatch.listingId || extractListingId(duplicateMatch.listingUrl),
-        matchStrategy: 'title',
-        matchedProductId: null,
-        candidateCount: 1,
-        searchTitle: term,
-      };
-    }
-
+    // Inspect every title-matched candidate: Phase 1 = description match, Phase 2 = product ID match
     for (const candidate of duplicateMatches) {
       let inspectedCandidate = null;
       try {
@@ -1261,36 +1240,61 @@ export const PART_4B = String.raw`
         );
       }
 
+      const resolvedListingUrl = inspectedCandidate?.listingUrl || candidate.listingUrl;
+      const resolvedListingId =
+        inspectedCandidate?.listingId || candidate.listingId || extractListingId(candidate.listingUrl);
+      const descriptionMatched = rawDescriptionEn
+        ? descriptionsMatch(inspectedCandidate?.listingDescription || '', rawDescriptionEn)
+        : false;
+
       log?.('tradera.quicklist.duplicate.inspect', {
         term,
-        listingUrl: inspectedCandidate?.listingUrl || candidate.listingUrl,
-        listingId:
-          inspectedCandidate?.listingId || candidate.listingId || extractListingId(candidate.listingUrl),
+        listingUrl: resolvedListingUrl,
+        listingId: resolvedListingId,
         matchedProductId: inspectedCandidate?.matchedProductId || null,
         expectedProductId: baseProductId,
+        descriptionMatched,
       });
 
+      // Phase 1: description match
+      if (descriptionMatched) {
+        log?.('tradera.quicklist.duplicate.result', {
+          term,
+          duplicateFound: true,
+          matchStrategy: 'title+description',
+          candidateCount: duplicateMatches.length,
+          listingUrl: resolvedListingUrl,
+          listingId: resolvedListingId,
+          matchedProductId: inspectedCandidate?.matchedProductId || null,
+        });
+
+        return {
+          duplicateFound: true,
+          listingUrl: resolvedListingUrl,
+          listingId: resolvedListingId,
+          matchStrategy: 'title+description',
+          matchedProductId: inspectedCandidate?.matchedProductId || null,
+          candidateCount: duplicateMatches.length,
+          searchTitle: term,
+        };
+      }
+
+      // Phase 2: product ID match
       if (identifiersMatch(baseProductId, inspectedCandidate?.matchedProductId || '')) {
         log?.('tradera.quicklist.duplicate.result', {
           term,
           duplicateFound: true,
           matchStrategy: 'title+product-id',
           candidateCount: duplicateMatches.length,
-          listingUrl: inspectedCandidate?.listingUrl || candidate.listingUrl,
-          listingId:
-            inspectedCandidate?.listingId ||
-            candidate.listingId ||
-            extractListingId(candidate.listingUrl),
+          listingUrl: resolvedListingUrl,
+          listingId: resolvedListingId,
           matchedProductId: inspectedCandidate?.matchedProductId || null,
         });
 
         return {
           duplicateFound: true,
-          listingUrl: inspectedCandidate?.listingUrl || candidate.listingUrl,
-          listingId:
-            inspectedCandidate?.listingId ||
-            candidate.listingId ||
-            extractListingId(candidate.listingUrl),
+          listingUrl: resolvedListingUrl,
+          listingId: resolvedListingId,
           matchStrategy: 'title+product-id',
           matchedProductId: inspectedCandidate?.matchedProductId || null,
           candidateCount: duplicateMatches.length,
@@ -1302,7 +1306,7 @@ export const PART_4B = String.raw`
     log?.('tradera.quicklist.duplicate.result', {
       term,
       duplicateFound: false,
-      matchStrategy: 'title+product-id',
+      matchStrategy: null,
       candidateCount: duplicateMatches.length,
       expectedProductId: baseProductId,
       listingUrl: null,

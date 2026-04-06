@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v97
+  // tradera-quicklist-default:v98
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -437,6 +437,7 @@ export const PART_1 = String.raw`export default async function run({
   const listingAction = toText(input?.listingAction) === 'relist' ? 'relist' : 'list';
   const existingExternalListingId = toText(input?.existingExternalListingId);
   const duplicateSearchTitle = toText(input?.duplicateSearchTitle);
+  const rawDescriptionEn = toText(input?.rawDescriptionEn);
   const allowDuplicateLinking = true;
   const sku = toText(input?.sku);
   const username = toText(input?.username);

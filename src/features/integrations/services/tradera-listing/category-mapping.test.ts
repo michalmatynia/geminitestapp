@@ -208,6 +208,59 @@ describe('selectPreferredTraderaCategoryMapping', () => {
     });
   });
 
+  it('inherits mapping from parent category when product subcategory has no direct mapping', () => {
+    const result = selectPreferredTraderaCategoryMappingResolution({
+      product: createProduct({ categoryId: 'anime-pins' }),
+      mappings: [
+        createMapping({
+          internalCategoryId: 'jewellery-pins',
+          externalCategoryId: '1001',
+          externalCategory: {
+            ...createMapping().externalCategory,
+            externalId: '1001',
+            name: 'Pins',
+            path: 'Collectibles > Pins',
+          },
+          internalCategory: {
+            ...createMapping().internalCategory,
+            id: 'jewellery-pins',
+            name: 'Pins',
+            parentId: 'jewellery',
+          },
+        }),
+      ],
+      internalCategories: [
+        { id: 'jewellery', name: 'Jewellery', parentId: null, color: null, catalogId: 'catalog-primary', createdAt: '', updatedAt: '' } as never,
+        { id: 'jewellery-pins', name: 'Pins', parentId: 'jewellery', color: null, catalogId: 'catalog-primary', createdAt: '', updatedAt: '' } as never,
+        { id: 'anime-pins', name: 'Anime Pins', parentId: 'jewellery-pins', color: null, catalogId: 'catalog-primary', createdAt: '', updatedAt: '' } as never,
+      ],
+    });
+
+    expect(result.reason).toBe('mapped_via_parent');
+    expect(result.mapping).toEqual({
+      externalCategoryId: '1001',
+      externalCategoryName: 'Pins',
+      externalCategoryPath: 'Collectibles > Pins',
+      internalCategoryId: 'jewellery-pins',
+      catalogId: 'catalog-primary',
+      pathSegments: ['Collectibles', 'Pins'],
+    });
+  });
+
+  it('returns no_active_mapping when no parent has a mapping either', () => {
+    const result = selectPreferredTraderaCategoryMappingResolution({
+      product: createProduct({ categoryId: 'anime-pins' }),
+      mappings: [],
+      internalCategories: [
+        { id: 'jewellery', name: 'Jewellery', parentId: null, color: null, catalogId: 'catalog-primary', createdAt: '', updatedAt: '' } as never,
+        { id: 'anime-pins', name: 'Anime Pins', parentId: 'jewellery', color: null, catalogId: 'catalog-primary', createdAt: '', updatedAt: '' } as never,
+      ],
+    });
+
+    expect(result.reason).toBe('no_active_mapping');
+    expect(result.mapping).toBeNull();
+  });
+
   it('keeps the simple selector returning only the resolved mapping', () => {
     const result = selectPreferredTraderaCategoryMapping({
       product: createProduct(),

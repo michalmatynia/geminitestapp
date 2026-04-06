@@ -280,6 +280,7 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
 
   const isImported = hasImportedProductOrigin(product);
   const normalizedSku = (product.sku ?? '').trim();
+  const normalizedProductId = (product.baseProductId ?? product.id ?? '').trim();
   const categoryLabel = resolveProductCategoryLabel(
     product,
     categoryNameById,
@@ -348,6 +349,15 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
           title={normalizedSku || 'No SKU'}
         >
           {normalizedSku || 'No SKU'}
+        </span>
+        <span aria-hidden='true' className='text-gray-600'>
+          |
+        </span>
+        <span
+          className='max-w-[10rem] truncate select-text cursor-text'
+          title={normalizedProductId}
+        >
+          {normalizedProductId}
         </span>
         <span aria-hidden='true' className='text-gray-600'>
           |

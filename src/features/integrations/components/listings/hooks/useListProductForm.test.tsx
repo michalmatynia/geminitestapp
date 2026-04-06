@@ -177,10 +177,7 @@ describe('useListProductForm', () => {
       await result.current.handleSubmit(onSuccess);
     });
 
-    expect(toastMock).toHaveBeenCalledWith(
-      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
-      { variant: 'error' }
-    );
+    expect(result.current.authRequired).toBe(true);
     expect(result.current.error).toBe(
       'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
     );

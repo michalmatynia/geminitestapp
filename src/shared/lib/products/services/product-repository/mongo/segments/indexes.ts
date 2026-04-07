@@ -1,7 +1,7 @@
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { ProductDocument } from '../mongo-product-repository-mappers';
-import { productCollectionName } from '../mongo-product-repository.helpers';
+import { ProductDocument } from '../../mongo-product-repository-mappers';
+import { productCollectionName } from '../../mongo-product-repository.helpers';
 
 let productIndexesEnsured: Promise<void> | null = null;
 

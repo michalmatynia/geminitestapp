@@ -27,7 +27,7 @@ import {
   FAILURE_STATUSES,
   SUCCESS_STATUSES,
   normalizeMarketplaceStatus,
-} from '../../product-column-utils';
+} from '@/features/integrations/utils.public';
 import type { TraderaFeedbackOptions } from './useTraderaQuickExportFeedback';
 import {
   buildTrackedTraderaFeedbackOptions,

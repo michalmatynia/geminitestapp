@@ -161,7 +161,7 @@ export function KangurMusicPianoRollProvider<NoteId extends string>({
 }) {
   return (
     <KangurMusicPianoRollContext.Provider
-      value={value}
+      value={value as KangurMusicPianoRollContextValue<string>}
     >
       {children}
     </KangurMusicPianoRollContext.Provider>

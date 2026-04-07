@@ -14,7 +14,7 @@ import {
 import { Checkbox } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
+import type { SettingsPanelField, SettingsFieldRenderProps } from '@/shared/contracts/ui/settings';
 
 import {
   useComponentSettingsActions,
@@ -82,7 +82,9 @@ export function CssAnimationConfigPanel(): React.ReactNode {
         key: 'easing',
         label: 'Easing',
         type: 'custom',
-        render: ({ value, onChange: fieldChange }: { value: string; onChange: (val: string) => void }) => (
+        render: ({ value, onChange: fieldChange }: SettingsFieldRenderProps) => {
+          const strValue = String(value ?? '');
+          return (
           <div className='space-y-2'>
             <SettingsFieldsRenderer
               fields={[
@@ -95,7 +97,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
               ]}
               values={{ easing: easingSelectValue || 'ease-out' }}
               onChange={(vals: Partial<{ easing: string }>) =>
-                fieldChange(vals.easing === 'custom' ? value : vals.easing)
+                fieldChange(vals.easing === 'custom' ? strValue : (vals.easing ?? strValue))
               }
             />
             {easingSelectValue === 'custom' && (
@@ -109,12 +111,13 @@ export function CssAnimationConfigPanel(): React.ReactNode {
                     className: 'text-xs font-mono',
                   } as SettingsPanelField<{ easing: string }>,
                 ]}
-                values={{ easing: String(value) }}
-                onChange={(vals: Partial<{ easing: string }>) => fieldChange(vals.easing)}
+                values={{ easing: strValue }}
+                onChange={(vals: Partial<{ easing: string }>) => fieldChange(vals.easing ?? strValue)}
               />
             )}
           </div>
-        ),
+          );
+        },
       },
       {
         key: 'loop',

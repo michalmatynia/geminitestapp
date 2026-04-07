@@ -32,7 +32,7 @@ import {
   PROCESSING_STATUSES,
   SUCCESS_STATUSES,
   normalizeMarketplaceStatus,
-} from '../../product-column-utils';
+} from '@/features/integrations/public';
 
 export type TraderaFeedbackOptions = {
   completedAt?: number | null | undefined;

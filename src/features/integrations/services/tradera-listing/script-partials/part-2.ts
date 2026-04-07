@@ -623,8 +623,20 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     // Auth is already verified before gotoSellPage is called (ensureLoggedIn on ACTIVE_URL).
     // Do NOT call ensureLoggedIn here — on /selling/new the auth detection is unreliable
     // (LOGIN_FORM_SELECTORS like form[action*="login"] can false-positive on listing pages).
-    for (const candidate of SELL_URL_CANDIDATES) {
-      const maxAttempts = candidate === DIRECT_SELL_URL ? 3 : 1;
+
+    // When a mapped category external ID is available, try navigating to the sell page
+    // with the categoryId query parameter so Tradera pre-selects it — bypassing the
+    // picker interaction entirely.
+    const categoryPreselectionUrl =
+      mappedCategoryExternalId && mappedCategoryExternalId.length > 0
+        ? DIRECT_SELL_URL + '?categoryId=' + encodeURIComponent(mappedCategoryExternalId)
+        : null;
+    const candidatesToTry = categoryPreselectionUrl
+      ? [categoryPreselectionUrl, ...SELL_URL_CANDIDATES]
+      : SELL_URL_CANDIDATES;
+
+    for (const candidate of candidatesToTry) {
+      const maxAttempts = candidate === DIRECT_SELL_URL || candidate === categoryPreselectionUrl ? 3 : 1;
 
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         log?.('tradera.quicklist.sell_page.trying', { candidate, attempt });

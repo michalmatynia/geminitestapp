@@ -12,6 +12,10 @@ import {
 import { validatorPatternListSchema, validatorScopeSchema, type ValidatorScope } from './validator';
 
 export type { PromptExploderSegmentType as PromptExploderRuleSegmentType } from './prompt-exploder-core';
+export type {
+  PromptExploderRuntimeValidationScope,
+  PromptExploderValidationRuleStack,
+} from './prompt-exploder-core';
 
 export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
 

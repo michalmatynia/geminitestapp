@@ -331,7 +331,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
           <SelectSimple
             size='sm'
             value={getSingleSelectValue(value)}
-            onValueChange={(val: boolean) => onChange(val)}
+            onValueChange={(val: string) => onChange(val)}
             options={options}
             placeholder={field.placeholder}
             triggerClassName='h-8 w-full min-w-[9rem]'

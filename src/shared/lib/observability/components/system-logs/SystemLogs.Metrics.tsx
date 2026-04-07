@@ -7,7 +7,7 @@ import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
 import { LoadingState, MetadataItem, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
-import { formatTimestamp } from '../../utils/formatTimestamp';
+import { formatTimestamp } from '@/features/observability/utils/formatTimestamp';
 
 export function LogMetrics(): React.JSX.Element {
   const { metricsQuery, metrics, levels } = useSystemLogsState();

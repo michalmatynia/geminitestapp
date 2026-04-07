@@ -114,6 +114,88 @@ export const PART_4 = String.raw`);
     return true;
   };
 
+  // Try to select a category by typing into the picker's search/combobox input.
+  // Tradera's sell page may show a text-search field inside the category chooser
+  // rather than (or in addition to) the hierarchical menu.
+  // Returns true if the selection was confirmed, false if search is unavailable.
+  const trySearchCategoryInPicker = async (segments) => {
+    if (!Array.isArray(segments) || segments.length === 0) return false;
+
+    const pickerRoot = page.locator('[data-test-category-chooser="true"]').first();
+    const pickerVisible = await pickerRoot.isVisible().catch(() => false);
+    if (!pickerVisible) return false;
+
+    // Look for a text input or search box inside the picker
+    const searchInput = pickerRoot
+      .locator('input[type="text"], input[type="search"], [role="searchbox"], [role="combobox"]:not([aria-expanded])')
+      .first();
+    const searchVisible = await searchInput.isVisible().catch(() => false);
+    if (!searchVisible) return false;
+
+    // Type the leaf category name (last segment) to trigger autocomplete
+    const leafName = segments[segments.length - 1];
+    log?.('tradera.quicklist.category.search_attempt', { leafName, fullPath: segments.join(' > ') });
+
+    await searchInput.click({ force: true }).catch(() => undefined);
+    await wait(200);
+    await searchInput.fill('').catch(() => undefined);
+    await searchInput.type(leafName, { delay: 60 }).catch(() => undefined);
+    await wait(1500); // wait for suggestions to load
+
+    // The autocomplete suggestions may appear inside the picker or in a listbox/menu
+    const optionsAfter = await readVisibleCategoryMenuOptions();
+    if (optionsAfter.length === 0) {
+      log?.('tradera.quicklist.category.search_no_suggestions', { leafName });
+      return false;
+    }
+
+    // Prefer option whose text matches the full path (contains all segments)
+    const normalizedSegments = segments.map((s) => normalizeWhitespace(s).toLowerCase());
+    const fullPathOption = optionsAfter.find((opt) => {
+      const normalizedOpt = normalizeWhitespace(opt).toLowerCase();
+      return normalizedSegments.every((seg) => normalizedOpt.includes(seg));
+    });
+
+    // Fall back to the option whose text includes the leaf name
+    const leafOption =
+      fullPathOption ||
+      optionsAfter.find((opt) =>
+        normalizeWhitespace(opt).toLowerCase().includes(normalizeWhitespace(leafName).toLowerCase())
+      );
+
+    if (!leafOption) {
+      log?.('tradera.quicklist.category.search_no_match', {
+        leafName,
+        suggestions: optionsAfter.slice(0, 8),
+      });
+      return false;
+    }
+
+    const clicked = await clickCategoryPickerOptionByName(leafOption);
+    if (!clicked) {
+      // Fall back to global click
+      await clickMenuItemByName(leafOption).catch(() => false);
+    }
+    await wait(600);
+
+    // Verify the selection was applied
+    const confirmedPath = await readCurrentSelectedCategoryPath();
+    const confirmed =
+      confirmedPath !== null &&
+      !isCategoryPlaceholderValue(confirmedPath) &&
+      normalizedSegments.some((seg) =>
+        normalizeWhitespace(confirmedPath).toLowerCase().includes(seg)
+      );
+
+    log?.('tradera.quicklist.category.search_result', {
+      leafName,
+      selectedOption: leafOption,
+      confirmedPath,
+      confirmed,
+    });
+    return confirmed;
+  };
+
   // Wait for the category picker to reflect a segment click by checking
   // that the visible options changed or the breadcrumbs updated.
   const waitForCategoryPickerUpdate = async (clickedSegment, optionsBefore, timeoutMs = 8_000) => {
@@ -163,6 +245,19 @@ export const PART_4 = String.raw`);
     }
 
     await ensureCategoryPickerOpen('mapped');
+
+    // Strategy 1: search/typeahead — works when Tradera shows a text-search field
+    // inside the picker (increasingly common on CSR/Next.js listing pages).
+    const searchSelected = await trySearchCategoryInPicker(segments);
+    if (searchSelected) {
+      selectedCategoryPath = segments.join(' > ');
+      selectedCategorySource = 'categoryMapper';
+      return true;
+    }
+
+    // Strategy 2: hierarchical click-through (original approach).
+    // Re-open picker in case search interaction closed or corrupted it.
+    await ensureCategoryPickerOpen('mapped-hierarchical');
 
     const mappedRootVisible = await ensureCategoryOptionVisible({
       targetPath: segments.join(' > '),

@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v111
+  // tradera-quicklist-default:v112
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -272,7 +272,19 @@ export const PART_1 = String.raw`export default async function run({
     'Uppdatera annons',
     'Ändra',
   ];
+  // Labels for an intermediate menu item that must be clicked first to reveal
+  // the edit option (e.g. Tradera's "Show Options" submenu trigger).
+  const EDIT_INTERMEDIATE_MENU_LABELS = [
+    'Show Options',
+    'Show options',
+    'Options',
+    'Visa alternativ',
+    'Alternativ',
+    'Manage',
+    'Hantera annons',
+  ];
   const EDIT_LISTING_TRIGGER_SELECTORS = [
+    'a[href*="/selling/features/"]',
     'a[href*="/selling/draft/"]',
     'a[href*="/selling/edit"]',
     'a[href*="/edit"]',
@@ -285,20 +297,27 @@ export const PART_1 = String.raw`export default async function run({
     '[data-testid*="edit"]',
   ];
   const LISTING_ACTION_MENU_TRIGGER_SELECTORS = [
+    // Tradera-specific: the "Show options" dropdown trigger on the item page
+    '[data-open-edit-item="true"]',
+    '[data-open-edit-item]',
+    'button:has-text("Show options")',
+    'button:has-text("Show Options")',
+    'button:has-text("Visa alternativ")',
     'button[aria-label*="More" i]',
     'button[aria-label*="Actions" i]',
-    'button[aria-label*="Menu" i]',
+    'button[aria-label*="Options" i]',
     'button[aria-label*="Mer" i]',
     'button[aria-label*="Fler" i]',
     'button[aria-label*="Hantera" i]',
     'button[aria-label*="Alternativ" i]',
+    'button:has-text("More options")',
+    'button:has-text("Options")',
     'button:has-text("More")',
     'button:has-text("Mer")',
     'button:has-text("Fler")',
     'button:has-text("Hantera")',
     '[data-testid*="menu"]',
     '[data-testid*="actions"]',
-    '[aria-haspopup="menu"]',
   ];
   const LOGIN_FORM_SELECTORS = [
     '#sign-in-form',
@@ -572,6 +591,7 @@ export const PART_1 = String.raw`export default async function run({
     mappedCategorySegments.length > 0
       ? mappedCategorySegments.join(' > ')
       : toText(input?.traderaCategory?.path) || toText(input?.traderaCategory?.name);
+  const mappedCategoryExternalId = toText(input?.traderaCategory?.externalId);
   let selectedCategoryPath = null;
   let selectedCategorySource = null;
   const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);

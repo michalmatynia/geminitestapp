@@ -11,7 +11,7 @@ import {
 } from '@/shared/lib/ai-context-registry/page-context';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
-import { SystemLogsContent } from './system-logs/SystemLogsContent';
+import { SystemLogsContent } from './SystemLogsContent';
 
 export default function SystemLogsPage(): React.JSX.Element {
   return (

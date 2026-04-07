@@ -129,7 +129,11 @@ const stageOrderedLocalProductImagePaths = async ({
 
   for (let index = 0; index < localImagePaths.length; index += 1) {
     const sourcePath = localImagePaths[index];
-    const extension = resolveOrderedUploadExtension(sourcePath, imageUrls[index] ?? null);
+    if (!sourcePath) {
+      continue;
+    }
+    const imageUrl = imageUrls[index];
+    const extension = resolveOrderedUploadExtension(sourcePath, imageUrl ?? null);
     const filename = `${prefix}_${String(index + 1).padStart(padWidth, '0')}${extension}`;
     const stagedPath = path.join(directory, filename);
     await copyFile(sourcePath, stagedPath);

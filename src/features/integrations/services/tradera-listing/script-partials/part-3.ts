@@ -230,7 +230,7 @@ export const PART_3 = String.raw`        expectedValue,
     const preferredListingId = normalizeWhitespace(existingExternalListingId || '');
     const candidateSearchTerms = Array.from(
       new Set(
-        [duplicateSearchTitle, title, preferredListingId]
+        [duplicateSearchTitle, title]
           .map((value) => normalizeWhitespace(value || ''))
           .filter((value) => Boolean(value))
       )
@@ -269,6 +269,7 @@ export const PART_3 = String.raw`        expectedValue,
         } catch {}
 
         const listingId = extractListingId(listingUrl);
+        const normalizedCandidateTitle = normalizeWhitespace(candidateInfo.text || '').toLowerCase();
         const haystack = normalizeWhitespace(
           candidateInfo.containerText || candidateInfo.text || ''
         ).toLowerCase();
@@ -283,9 +284,14 @@ export const PART_3 = String.raw`        expectedValue,
           };
         }
 
-        if (!firstTermMatch && normalizedSearchTerm && haystack.includes(normalizedSearchTerm)) {
+        if (
+          !firstTermMatch &&
+          normalizedSearchTerm &&
+          normalizedCandidateTitle &&
+          normalizedCandidateTitle === normalizedSearchTerm
+        ) {
           firstTermMatch = {
-            matchedBy: 'search_term',
+            matchedBy: 'exact_title',
             link: candidateLink,
             listingId,
             listingUrl,
@@ -401,6 +407,77 @@ export const PART_3 = String.raw`        expectedValue,
     return null;
   };
 
+  const tryOpenExistingListingEditorFromActiveListings = async () => {
+    await page.goto(ACTIVE_URL, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+    await page.waitForLoadState('networkidle', { timeout: 12_000 }).catch(() => undefined);
+    await assertAllowedTraderaPage('sync active listings fallback');
+    await dismissVisibleWishlistFavoritesModalIfPresent({
+      context: 'sync-active-listings-fallback',
+      required: true,
+    });
+
+    const activeContextReady = await ensureActiveListingsContext();
+    if (!activeContextReady) {
+      log?.('tradera.quicklist.sync.active_fallback', {
+        status: 'active-context-missing',
+        currentUrl: page.url(),
+      });
+      return null;
+    }
+
+    const matchedCandidate = await findActiveListingCandidateForSync();
+    if (!matchedCandidate?.link) {
+      log?.('tradera.quicklist.sync.active_fallback', {
+        status: 'candidate-missing',
+        currentUrl: page.url(),
+      });
+      return null;
+    }
+
+    const candidateContainer = await resolveSyncListingCandidateContainer(matchedCandidate.link);
+    const openedFromCandidate = await clickSyncEditTargetWithinScope(
+      candidateContainer,
+      'sync-active-fallback'
+    );
+    if (!openedFromCandidate) {
+      log?.('tradera.quicklist.sync.active_fallback', {
+        status: 'edit-action-missing',
+        matchedBy: matchedCandidate.matchedBy,
+        listingId: matchedCandidate.listingId,
+        listingUrl: matchedCandidate.listingUrl,
+        currentUrl: page.url(),
+      });
+      return null;
+    }
+
+    const editorReady = await waitForExistingListingEditor();
+    if (!editorReady) {
+      log?.('tradera.quicklist.sync.active_fallback', {
+        status: 'editor-not-ready',
+        matchedBy: matchedCandidate.matchedBy,
+        listingId: matchedCandidate.listingId,
+        listingUrl: matchedCandidate.listingUrl,
+        currentUrl: page.url(),
+      });
+      return null;
+    }
+
+    log?.('tradera.quicklist.sync.editor_opened', {
+      listingId: matchedCandidate.listingId || null,
+      listingUrl: matchedCandidate.listingUrl || null,
+      matchedBy: 'active_listings_' + matchedCandidate.matchedBy,
+      currentUrl: page.url(),
+    });
+    return {
+      matchedBy: 'active_listings_' + matchedCandidate.matchedBy,
+      listingId: matchedCandidate.listingId || null,
+      listingUrl: matchedCandidate.listingUrl || null,
+    };
+  };
+
   const findScopedListingActionMenuTrigger = async (scope) => {
     if (!scope) return null;
 
@@ -450,6 +527,44 @@ export const PART_3 = String.raw`        expectedValue,
     return preferredListingId ? 'https://www.tradera.com/item/' + preferredListingId : null;
   };
 
+  // Click a visible button or link whose text matches the label anywhere on the page,
+  // without the selection-UI container restriction of clickMenuItemByName.
+  // Used in the sync edit flow where Tradera's dropdown may not use ARIA containers.
+  const clickVisibleTextElement = async (label, context) => {
+    const escaped = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+    const pattern = new RegExp(escaped, 'i');
+    const exactPattern = new RegExp('^' + escaped + '$', 'i');
+
+    const candidateLocators = [
+      page.getByRole('menuitem', { name: exactPattern }).first(),
+      page.getByRole('button', { name: exactPattern }).first(),
+      page.getByRole('link', { name: exactPattern }).first(),
+      page.getByRole('menuitem', { name: pattern }).first(),
+      page.getByRole('button', { name: pattern }).first(),
+      page.getByRole('link', { name: pattern }).first(),
+      page.locator('xpath=//*[normalize-space(text())="' + label.replace(/"/g, '\\"') + '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menuitem"][1]').first(),
+      page.locator('xpath=//*[contains(normalize-space(text()),"' + label.replace(/"/g, '\\"') + '")]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menuitem"][1]').first(),
+    ];
+
+    for (const locator of candidateLocators) {
+      const visible = await locator.isVisible().catch(() => false);
+      if (!visible) continue;
+
+      // Skip elements that would navigate away from the page (e.g. /item/, /category/ links)
+      const href = await locator.getAttribute('href').catch(() => null);
+      if (href && /\/(item|category|selling)\//i.test(href) && !/\/selling\/(draft|edit)/i.test(href)) {
+        continue;
+      }
+
+      await logClickTarget(context + ':' + label, locator).catch(() => undefined);
+      await humanClick(locator);
+      await wait(400);
+      return true;
+    }
+
+    return false;
+  };
+
   const clickSyncEditTargetWithinScope = async (scope, context) => {
     if (!scope) return false;
 
@@ -476,12 +591,47 @@ export const PART_3 = String.raw`        expectedValue,
 
     await logClickTarget(context + ':actions-menu', menuTrigger).catch(() => undefined);
     await humanClick(menuTrigger);
-    await wait(400);
+    await wait(500);
 
+    // Try edit labels directly (standard menus with ARIA roles).
     for (const label of EDIT_LISTING_LABELS) {
       if (await clickMenuItemByName(label)) {
         await wait(1200);
         return true;
+      }
+    }
+
+    // Tradera's dropdown may not use ARIA role="menu" containers, so
+    // clickMenuItemByName silently skips all items. Try a permissive text search.
+    for (const label of EDIT_LISTING_LABELS) {
+      if (await clickVisibleTextElement(label, context + ':direct')) {
+        await wait(1200);
+        return true;
+      }
+    }
+
+    // The menu may show an intermediate "Show Options" item that opens a second
+    // level containing the actual Edit action. Try clicking it first.
+    for (const intermediateLabel of EDIT_INTERMEDIATE_MENU_LABELS) {
+      const clickedIntermediate =
+        (await clickMenuItemByName(intermediateLabel)) ||
+        (await clickVisibleTextElement(intermediateLabel, context + ':intermediate'));
+
+      if (clickedIntermediate) {
+        log?.('tradera.quicklist.sync.intermediate_menu_clicked', { label: intermediateLabel });
+        await wait(600);
+
+        for (const label of EDIT_LISTING_LABELS) {
+          if (
+            (await clickMenuItemByName(label)) ||
+            (await clickVisibleTextElement(label, context + ':after-intermediate'))
+          ) {
+            await wait(1200);
+            return true;
+          }
+        }
+
+        break;
       }
     }
 
@@ -498,15 +648,52 @@ export const PART_3 = String.raw`        expectedValue,
     const preferredListingId = normalizeWhitespace(existingExternalListingId || '');
     const directSyncTargetUrl = resolvePreferredSyncListingUrl();
     if (directSyncTargetUrl) {
+      const tryActiveFallback = async () => {
+        const fallbackResult = await tryOpenExistingListingEditorFromActiveListings();
+        if (fallbackResult) {
+          return fallbackResult;
+        }
+        return null;
+      };
+
       await page.goto(directSyncTargetUrl, {
         waitUntil: 'domcontentloaded',
         timeout: 30_000,
       });
+      // CSR page — wait for full hydration so the seller toolbar ("Show options") appears.
+      await page.waitForLoadState('networkidle', { timeout: 12_000 }).catch(() => undefined);
       await assertAllowedTraderaPage('sync listing target open');
-      await wait(900);
       await dismissVisibleWishlistFavoritesModalIfPresent({
         context: 'sync-direct-target',
         required: true,
+      });
+
+      // Wait for the seller edit button to become visible before trying to interact.
+      // The "Show options" / data-open-edit-item button only appears after auth-state
+      // hydration on the CSR listing page and may take several seconds.
+      const editButtonSelectors = [
+        '[data-open-edit-item="true"]',
+        '[data-open-edit-item]',
+        'button:has-text("Show options")',
+        ...EDIT_LISTING_TRIGGER_SELECTORS,
+      ];
+      const editButtonDeadline = Date.now() + 12_000;
+      let editButtonReady = false;
+      while (Date.now() < editButtonDeadline) {
+        for (const sel of editButtonSelectors) {
+          const visible = await page.locator(sel).first().isVisible().catch(() => false);
+          if (visible) {
+            editButtonReady = true;
+            break;
+          }
+        }
+        if (editButtonReady) break;
+        await wait(500);
+      }
+      log?.('tradera.quicklist.sync.edit_button_wait', {
+        ready: editButtonReady,
+        elapsed: 12_000 - Math.max(0, editButtonDeadline - Date.now()),
+        url: page.url(),
       });
 
       const resolvedDirectListingId =
@@ -516,6 +703,11 @@ export const PART_3 = String.raw`        expectedValue,
         resolvedDirectListingId &&
         resolvedDirectListingId !== preferredListingId
       ) {
+        const fallbackResult = await tryActiveFallback();
+        if (fallbackResult) {
+          return fallbackResult;
+        }
+
         throw new Error(
           'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target resolved to the wrong Tradera listing. Expected ' +
             preferredListingId +
@@ -556,11 +748,21 @@ export const PART_3 = String.raw`        expectedValue,
             };
           }
 
+          const fallbackResult = await tryActiveFallback();
+          if (fallbackResult) {
+            return fallbackResult;
+          }
+
           throw new Error(
             'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target edit page did not open the Tradera listing editor. Current URL: ' +
               page.url()
           );
         } else {
+          const fallbackResult = await tryActiveFallback();
+          if (fallbackResult) {
+            return fallbackResult;
+          }
+
           throw new Error(
             'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target edit action was not available on the Tradera listing page. Current URL: ' +
               page.url()

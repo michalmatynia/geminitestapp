@@ -33,7 +33,10 @@ import {
   parseStatusCodeInput,
   systemLogFilterFields,
 } from './SystemLogsContext.shared';
-import { readSystemLogUrlState, writeSystemLogUrlState } from '../lib/system-log-filter-url-state';
+import {
+  readSystemLogUrlState,
+  writeSystemLogUrlState,
+} from '@/features/observability/lib/system-log-filter-url-state';
 
 import type {
   SystemLogsActionsContextValue,

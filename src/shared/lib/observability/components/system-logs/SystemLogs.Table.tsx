@@ -16,13 +16,12 @@ import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils/ui-utils';
-
 import type {
   ContextDocumentDisplay,
   ContextDocumentSectionDisplay,
   ContextRegistryNodeDisplay,
-} from '../../types';
-import { formatTimestamp } from '../../utils/formatTimestamp';
+} from '@/features/observability/types';
+import { formatTimestamp } from '@/features/observability/utils/formatTimestamp';
 import {
   getLogCategory,
   getPrimaryContextDocument,
@@ -30,7 +29,7 @@ import {
   readAlertEvidence,
   readContextString,
   readLogContextRegistry,
-} from '../../utils/logHelpers';
+} from '@/features/observability/utils/logHelpers';
 
 export function ContextDocumentCard(props: {
   document: ContextDocumentDisplay;

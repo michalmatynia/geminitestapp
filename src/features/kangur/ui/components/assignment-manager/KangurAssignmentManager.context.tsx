@@ -20,10 +20,12 @@ export function KangurAssignmentManagerProvider({
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useKangurAssignmentManagerContext(): AssignmentManagerState {
   const context = useContext(KangurAssignmentManagerContext);
   if (!context) {
-    throw new Error('useKangurAssignmentManagerContext must be used within a KangurAssignmentManagerProvider');
+    throw internalError('useKangurAssignmentManagerContext must be used within a KangurAssignmentManagerProvider');
   }
   return context;
 }

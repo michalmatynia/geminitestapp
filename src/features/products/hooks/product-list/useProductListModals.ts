@@ -5,9 +5,12 @@ import { useCallback, useState } from 'react';
 import {
   useIntegrationModalOperations,
   isTraderaQuickExportRecoveryContext,
+  isVintedQuickExportRecoveryContext,
   resolveProductListingsIntegrationScope,
   isTraderaIntegrationSlug,
+  isVintedIntegrationSlug,
   readPersistedTraderaQuickListFeedback,
+  readPersistedVintedQuickListFeedback,
 } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -20,11 +23,16 @@ const enrichRecoveryContext = (
 ): ProductListingsRecoveryContext | null => {
   if (!recoveryContext) return null;
 
-  if (!isTraderaQuickExportRecoveryContext(recoveryContext)) {
+  if (
+    !isTraderaQuickExportRecoveryContext(recoveryContext) &&
+    !isVintedQuickExportRecoveryContext(recoveryContext)
+  ) {
     return recoveryContext;
   }
 
-  const persistedFeedback = readPersistedTraderaQuickListFeedback(productId);
+  const persistedFeedback = isTraderaQuickExportRecoveryContext(recoveryContext)
+    ? readPersistedTraderaQuickListFeedback(productId)
+    : readPersistedVintedQuickListFeedback(productId);
   if (!persistedFeedback) return recoveryContext;
 
   return {
@@ -91,7 +99,9 @@ export function useProductListModals({
       });
       const shouldRefreshListings =
         isTraderaIntegrationSlug(resolvedFilterIntegrationSlug) ||
-        isTraderaQuickExportRecoveryContext(recoveryContext);
+        isVintedIntegrationSlug(resolvedFilterIntegrationSlug) ||
+        isTraderaQuickExportRecoveryContext(recoveryContext) ||
+        isVintedQuickExportRecoveryContext(recoveryContext);
       prefetchIntegrationSelectionData();
       prefetchProductListingsData(product.id);
       if (shouldRefreshListings) {

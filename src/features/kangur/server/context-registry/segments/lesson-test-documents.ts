@@ -154,8 +154,7 @@ export const buildKangurLessonContextRuntimeDocument = async (input: {
         id: 'lesson_document',
         kind: 'text',
         title: 'Lesson content summary',
-        text: documentSnippets.join('
-'),
+        text: documentSnippets.join('\n'),
       },
       {
         id: 'lesson_navigation',

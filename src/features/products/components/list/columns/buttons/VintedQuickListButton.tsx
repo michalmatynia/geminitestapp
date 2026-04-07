@@ -2,16 +2,18 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   useCreateListingMutation,
+  createVintedRecoveryContext,
   isVintedBrowserAuthRequiredMessage,
   preflightVintedQuickListSession,
   ensureVintedBrowserSession,
 } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { ApiError } from '@/shared/lib/api-client';
 import {
   invalidateProductListingsAndBadges,
   invalidateProducts,
@@ -66,10 +68,11 @@ export function VintedQuickListButton(props: {
     normalizedVintedStatus,
   } = useVintedQuickExportFeedback(product.id, vintedStatus, showVintedBadge);
   useVintedQuickExportPolling(product.id, localFeedback, setFeedbackStatus);
+  const localFeedbackRef = useRef(localFeedback);
+  localFeedbackRef.current = localFeedback;
 
-  // Flash checkmark for 3s when status transitions to completed
   useEffect(() => {
-    if (localFeedbackStatus === 'active') {
+    if (localFeedbackStatus === 'completed') {
       setShowCheckmark(true);
       const timerId = window.setTimeout(() => setShowCheckmark(false), 3000);
       return () => {
@@ -126,14 +129,15 @@ export function VintedQuickListButton(props: {
             'Vinted login session could not be saved. Complete login verification and retry.',
             { variant: 'error' }
           );
-          onOpenIntegrations?.({
-            source: 'vinted_quick_export_auth_required',
-            integrationSlug: 'vinted',
-            status: 'auth_required',
-            runId: null,
-            integrationId: recoveryTarget.integrationId,
-            connectionId: recoveryTarget.connectionId,
-          });
+          onOpenIntegrations?.(
+            createVintedRecoveryContext({
+              status: 'auth_required',
+              runId: localFeedbackRef.current?.runId ?? null,
+              requestId: null,
+              integrationId: recoveryTarget.integrationId,
+              connectionId: recoveryTarget.connectionId,
+            })
+          );
           return;
         }
         toast('Vinted login session refreshed.', { variant: 'success' });
@@ -149,9 +153,14 @@ export function VintedQuickListButton(props: {
         response.queue.jobId.trim().length > 0
           ? response.queue.jobId.trim()
           : null;
-          
+      const listingId =
+        typeof response.id === 'string' && response.id.trim().length > 0
+          ? response.id.trim()
+          : null;
+
       setFeedbackStatus('queued', {
         ...recoveryTarget,
+        listingId,
         requestId: queueJobId,
       });
 
@@ -165,11 +174,26 @@ export function VintedQuickListButton(props: {
       await invalidateProductListingsAndBadges(queryClient, product.id);
       await invalidateProducts(queryClient);
     } catch (error: unknown) {
+      if (
+        error instanceof ApiError &&
+        error.status === 409 &&
+        !isVintedBrowserAuthRequiredMessage(error.message)
+      ) {
+        setFeedbackStatus(null);
+        toast(
+          error.message ||
+            'This product already has a Vinted listing on this account.',
+          { variant: 'error' }
+        );
+        onOpenIntegrations?.();
+        return;
+      }
+
       const errorMessage =
         error instanceof Error
           ? error.message
           : 'Failed to queue Vinted listing.';
-      
+
       const authRequired = isVintedBrowserAuthRequiredMessage(errorMessage);
       setFeedbackStatus(authRequired ? 'auth_required' : 'failed', {
           ...attemptedRecoveryTarget,
@@ -184,14 +208,15 @@ export function VintedQuickListButton(props: {
       toast(errorMessage, { variant: 'error' });
 
       if (authRequired && onOpenIntegrations && attemptedRecoveryTarget) {
-        onOpenIntegrations({
-          source: 'vinted_quick_export_auth_required',
-          integrationSlug: 'vinted',
-          status: 'auth_required',
-          runId: null,
-          integrationId: attemptedRecoveryTarget.integrationId,
-          connectionId: attemptedRecoveryTarget.connectionId,
-        });
+        onOpenIntegrations(
+          createVintedRecoveryContext({
+            status: 'auth_required',
+            runId: localFeedbackRef.current?.runId ?? null,
+            requestId: localFeedbackRef.current?.requestId ?? null,
+            integrationId: attemptedRecoveryTarget.integrationId,
+            connectionId: attemptedRecoveryTarget.connectionId,
+          })
+        );
       }
     } finally {
       setSubmitting(false);
@@ -231,16 +256,14 @@ export function VintedQuickListButton(props: {
     : 'One-click export to Vinted.pl';
 
   const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
-    ? {
-        source: 'vinted_quick_export_failed',
-        integrationSlug: 'vinted',
+    ? createVintedRecoveryContext({
         status: resolvedButtonStatus,
         runId: localFeedback?.runId ?? null,
         failureReason: localFeedback?.failureReason ?? null,
         requestId: localFeedback?.requestId ?? null,
         integrationId: localFeedback?.integrationId ?? null,
         connectionId: localFeedback?.connectionId ?? null,
-      }
+      })
     : undefined;
 
   return (

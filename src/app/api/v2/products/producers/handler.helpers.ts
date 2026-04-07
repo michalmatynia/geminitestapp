@@ -1,9 +1,8 @@
 import type { Producer, ProducerCreateInput } from '@/shared/contracts/products/producers';
 import { conflictError } from '@/shared/errors/app-error';
+import type { NameLookupDto } from '@/shared/contracts/base';
 
-export type ProducerCreateNameLookupInput = {
-  name: string;
-};
+export type ProducerCreateNameLookupInput = NameLookupDto;
 
 export const buildProducerCreateNameLookupInput = (
   data: ProducerCreateInput

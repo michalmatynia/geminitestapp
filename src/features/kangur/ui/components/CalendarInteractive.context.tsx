@@ -340,10 +340,12 @@ export function CalendarInteractiveProvider({
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useCalendarInteractiveContext() {
   const context = useContext(CalendarInteractiveContext);
   if (!context) {
-    throw new Error('useCalendarInteractiveContext must be used within a CalendarInteractiveProvider');
+    throw internalError('useCalendarInteractiveContext must be used within a CalendarInteractiveProvider');
   }
   return context;
 }

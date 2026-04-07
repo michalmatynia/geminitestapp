@@ -1,12 +1,9 @@
 import React from 'react';
 
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import type { ProgressSnapshotDto } from '@/shared/contracts/base';
 
-export type MassListProgressPanelProps = {
-  current: number;
-  total: number;
-  errors: number;
-};
+export type MassListProgressPanelProps = ProgressSnapshotDto;
 
 export function MassListProgressPanel({
   current,

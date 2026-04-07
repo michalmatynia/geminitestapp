@@ -8,26 +8,23 @@ canonical: true
 ---
 # Timer Cleanup Check
 
-Generated at: 2026-04-07T11:43:02.880Z
+Generated at: 2026-04-07T12:32:19.997Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 3026
+- Status: PASSED
+- Files scanned: 3029
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| settimeout-no-cleanup | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | settimeout-no-cleanup | src/features/integrations/hooks/useVintedQuickExportPolling.ts:46 | setTimeout() in a component with useEffect but no clearTimeout(). Consider cleaning up timers on unmount. |
+All timers and event listeners have proper cleanup.
 
 ## Notes
 

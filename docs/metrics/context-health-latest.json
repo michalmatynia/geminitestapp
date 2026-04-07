@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-04-07T11:43:02.481Z",
-  "status": "warn",
+  "generatedAt": "2026-04-07T12:32:19.515Z",
+  "status": "passed",
   "summary": {
-    "total": 24,
+    "total": 8,
     "errorCount": 0,
-    "warningCount": 15,
-    "infoCount": 9,
-    "status": "warn",
+    "warningCount": 0,
+    "infoCount": 8,
+    "status": "passed",
     "contextFileCount": 262
   },
   "scope": {
@@ -19,170 +19,10 @@
   },
   "issues": [
     {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 540 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/integrations/context/CategoryMapperContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-monolith",
-      "message": "Context provider value has ~17 fields (threshold: 15). Consider splitting into domain-specific contexts.",
-      "file": "src/features/kangur/social/admin/workspace/SocialPostContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/kangur/ui/components/ai-tutor-guided/KangurAiTutorGuided.context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/kangur/ui/components/CalendarInteractive.context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/kangur/ui/components/KangurAiTutorGuidedCallout.context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/kangur/ui/components/parent-dashboard/MonitoringWidget.context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/kangur/ui/components/parent-dashboard/ProgressWidget.context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.context.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 617 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/kangur/ui/context/KangurAuthContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 585 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/kangur/ui/context/KangurLearnerProfileRuntimeContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 810 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/kangur/ui/context/KangurLessonsRuntimeContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/products/components/settings/shipping-groups/ShippingGroupsContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 916 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/products/components/settings/shipping-groups/ShippingGroupsContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
       "severity": "info",
       "ruleId": "context-missing-split",
       "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
       "file": "src/features/cms/components/page-builder/PageBuilderPolicyContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "context-missing-split",
-      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
-      "file": "src/features/kangur/social/admin/workspace/SocialPostContext.tsx",
       "line": null,
       "column": null,
       "snippet": null,
@@ -261,29 +101,11 @@
   ],
   "rules": [
     {
-      "ruleId": "context-generic-error",
-      "errorCount": 0,
-      "warningCount": 9,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "context-oversized",
-      "errorCount": 0,
-      "warningCount": 5,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "context-monolith",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    },
-    {
       "ruleId": "context-missing-split",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 9
+      "infoCount": 8
     }
   ],
-  "durationMs": 273
+  "durationMs": 306
 }

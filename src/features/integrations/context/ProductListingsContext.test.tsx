@@ -7,11 +7,13 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { persistVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
 
 const {
   refetchListingsMock,
   useProductListingsActionsImplMock,
   useTraderaQuickExportPollingMock,
+  useVintedQuickExportPollingMock,
 } = vi.hoisted(() => ({
   refetchListingsMock: vi.fn(),
   useProductListingsActionsImplMock: vi.fn(() => ({
@@ -27,6 +29,7 @@ const {
     refetchListings: vi.fn(),
   })),
   useTraderaQuickExportPollingMock: vi.fn(),
+  useVintedQuickExportPollingMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/hooks/useListingQueries', () => ({
@@ -46,6 +49,13 @@ vi.mock(
   '@/features/integrations/hooks/useTraderaQuickExportPolling',
   () => ({
     useTraderaQuickExportPolling: useTraderaQuickExportPollingMock,
+  })
+);
+
+vi.mock(
+  '@/features/integrations/hooks/useVintedQuickExportPolling',
+  () => ({
+    useVintedQuickExportPolling: useVintedQuickExportPollingMock,
   })
 );
 
@@ -272,5 +282,41 @@ describe('ProductListingsProvider', () => {
       'conn-tradera-feedback'
     );
     expect(screen.getByTestId('run-id')).toHaveTextContent('run-tradera-feedback');
+  });
+
+  it('updates the recovery banner state when Vinted quicklist feedback fails in the same tab', () => {
+    render(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+      >
+        <RecoveryContextSummary />
+      </ProductListingsProvider>
+    );
+
+    act(() => {
+      persistVintedQuickListFeedback('product-1', 'failed', {
+        runId: 'run-vinted-feedback',
+        requestId: 'job-vinted-feedback',
+        integrationId: 'integration-vinted-feedback',
+        connectionId: 'conn-vinted-feedback',
+        failureReason: 'Session expired.',
+      });
+    });
+
+    expect(screen.getByTestId('filter-integration-slug')).toHaveTextContent('vinted');
+    expect(screen.getByTestId('integration-id')).toHaveTextContent(
+      'integration-vinted-feedback'
+    );
+    expect(screen.getByTestId('connection-id')).toHaveTextContent(
+      'conn-vinted-feedback'
+    );
+    expect(screen.getByTestId('run-id')).toHaveTextContent('run-vinted-feedback');
   });
 });

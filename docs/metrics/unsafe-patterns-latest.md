@@ -8,22 +8,22 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-04-07T11:43:00.952Z
+Generated at: 2026-04-07T12:32:17.765Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 7066
+- Files scanned: 7086
 - Errors: 0
 - Warnings: 0
-- Info: 19
+- Info: 20
 
 ## Trend Counters
 
 | Metric | Count |
 | --- | ---: |
 | doubleAssertionCount | 0 |
-| anyCount | 2 |
+| anyCount | 3 |
 | eslintDisableCount | 16 |
 | nonNullAssertionCount | 1 |
 | tsIgnoreCount | 0 |
@@ -45,7 +45,7 @@ Generated at: 2026-04-07T11:43:00.952Z
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
 | eslint-disable | 0 | 0 | 16 |
-| explicit-any | 0 | 0 | 2 |
+| explicit-any | 0 | 0 | 3 |
 | non-null-assertion | 0 | 0 | 1 |
 
 ## Issues
@@ -60,6 +60,7 @@ Generated at: 2026-04-07T11:43:00.952Z
 | INFO | eslint-disable | src/features/kangur/ui/KangurLoginPage.test-support.tsx:6 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-return |
 | INFO | eslint-disable | src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx:392 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call |
 | INFO | eslint-disable | src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx:394 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access |
+| INFO | explicit-any | src/features/products/components/settings/shipping-groups/ShippingGroupsContext.handlers.ts:47 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | eslint-disable | src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts:269 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call |
 | INFO | eslint-disable | src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts:276 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access |
 | INFO | eslint-disable | src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts:278 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access |

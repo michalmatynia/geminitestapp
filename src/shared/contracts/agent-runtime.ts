@@ -321,6 +321,14 @@ export type AgentToolLog = (
   metadata?: Record<string, unknown>
 ) => Promise<void>;
 
+export type AgentLlmContext = {
+  model: string;
+  runId: string;
+  log?: AgentToolLog;
+  activeStepId?: string | null;
+  stepLabel?: string | null;
+};
+
 export const agentRunStatusTypeSchema = z.enum([
   'queued',
   'running',

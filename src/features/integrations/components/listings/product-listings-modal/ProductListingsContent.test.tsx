@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { persistVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
 
 const {
   handleOpenTraderaLoginMock,
@@ -803,5 +804,101 @@ describe('ProductListingsContent', () => {
 
     expect(screen.getByText('Tradera status: active')).toBeInTheDocument();
     expect(screen.getByTestId('listing-listing-1')).toHaveTextContent('active');
+  });
+
+  it('renders a Vinted quick-export success banner when a completed Vinted listing is tracked', () => {
+    persistVintedQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-vinted-1',
+      listingUrl: 'https://www.vinted.pl/items/456',
+      externalListingId: '456',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'vinted',
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          filteredListings: [
+            {
+              id: 'listing-vinted-1',
+              status: 'active',
+              externalListingId: '456',
+              integration: {
+                id: 'integration-vinted-1',
+                slug: 'vinted',
+                name: 'Vinted.pl',
+              },
+              connection: {
+                id: 'conn-vinted-1',
+                name: 'Vinted Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.vinted.pl/items/456',
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Vinted.pl quick export completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.vinted.pl/items/456'
+    );
+  });
+
+  it('shows active status immediately in the modal when Vinted quick export has completed but the server row is still queued', () => {
+    persistVintedQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-vinted-1',
+      listingUrl: 'https://www.vinted.pl/items/456',
+      externalListingId: '456',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'vinted',
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          filteredListings: [
+            {
+              id: 'listing-vinted-1',
+              status: 'queued',
+              externalListingId: '456',
+              integration: {
+                id: 'integration-vinted-1',
+                slug: 'vinted',
+                name: 'Vinted.pl',
+              },
+              connection: {
+                id: 'conn-vinted-1',
+                name: 'Vinted Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.vinted.pl/items/456',
+                vinted: {
+                  lastExecution: {
+                    requestId: 'job-vinted-1',
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Vinted.pl status: active')).toBeInTheDocument();
+    expect(screen.getByTestId('listing-listing-vinted-1')).toHaveTextContent('active');
   });
 });

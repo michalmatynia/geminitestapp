@@ -1,6 +1,6 @@
 import type { PathConfig } from '@/shared/contracts/ai-paths';
-import { resolvePortablePathInput } from '../../portable-engine/portable-engine-resolvers';
-import { sanitizeEdges } from '../utils/graph';
+import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine/portable-engine-resolvers';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/utils/graph';
 import {
   hasCanonicalGraphHash,
   hasParameterInferencePromptStructure,

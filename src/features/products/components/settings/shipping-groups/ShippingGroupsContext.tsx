@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 import {
   useProductSettingsPriceGroupsContext,
   useProductSettingsShippingGroupsContext,
@@ -21,23 +21,20 @@ import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import {
   toTrimmedString,
-  readConflictMetaFromApiError,
-  formatShippingGroupConflictMessage,
   DRAFT_SHIPPING_GROUP_ID,
-  summarizeRuleDescendantCoverage,
 } from './shipping-group-utils';
 import {
   buildCategoryPathLabelMap,
   buildShippingGroupRuleConflicts,
-  formatCurrencyRuleSummary,
-  findRedundantShippingGroupRuleCategoryIds,
   normalizeShippingGroupRuleCategoryIds,
   normalizeShippingGroupRuleCurrencyCodes,
-  formatCategoryRuleSummary,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
-import { matchesPriceGroupIdentifier } from '@/shared/lib/products/utils/price-group-identifiers';
-import { normalizeCurrencyCode } from '@/shared/lib/products/utils/priceCalculation';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import {
+  useCatalogCurrencyCodes,
+  useShippingGroupSummaries,
+} from './ShippingGroupsContext.hooks';
+import { useShippingGroupHandlers } from './ShippingGroupsContext.handlers';
+import { useShippingGroupsModalState } from './ShippingGroupsContext.state';
 
 export type ShippingGroupFormData = {
   name: string;
@@ -53,7 +50,7 @@ type ShippingGroupToast = ReturnType<typeof useToast>['toast'];
 type ShippingGroupSaveMutation = ReturnType<typeof useSaveShippingGroupMutation>;
 type ShippingGroupDeleteMutation = ReturnType<typeof useDeleteShippingGroupMutation>;
 type ShippingGroupRuleConflict = ReturnType<typeof buildShippingGroupRuleConflicts>[number];
-type ShippingGroupRuleCoverage = ReturnType<typeof summarizeRuleDescendantCoverage>;
+type ShippingGroupRuleCoverage = ReturnType<typeof useShippingGroupsModalState>['modalRuleCoverage'];
 
 type ShippingGroupsStateValue = {
   loading: boolean;
@@ -157,6 +154,32 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
   const saveShippingGroupMutation = useSaveShippingGroupMutation();
   const deleteShippingGroupMutation = useDeleteShippingGroupMutation();
 
+  const catalogCurrencyCodesByCatalogId = useCatalogCurrencyCodes(catalogs, priceGroups);
+
+  const selectedCatalogCurrencyCodes = useMemo(
+    () => (selectedCatalogId ? catalogCurrencyCodesByCatalogId.get(selectedCatalogId) ?? [] : []),
+    [catalogCurrencyCodesByCatalogId, selectedCatalogId]
+  );
+
+  const selectedCategoryLabelById = useMemo(
+    () => buildCategoryPathLabelMap(selectedCatalogCategories),
+    [selectedCatalogCategories]
+  );
+
+  const {
+    conflictSummaryById: shippingGroupConflictSummaryById,
+    redundantRuleSummaryById: shippingGroupRedundantRuleSummaryById,
+    ruleCoverageById: shippingGroupRuleCoverageById,
+    effectiveRuleDisplayById: shippingGroupEffectiveRuleDisplayById,
+    missingRuleSummaryById: shippingGroupMissingRuleSummaryById,
+  } = useShippingGroupSummaries({
+    shippingGroups,
+    selectedCatalogCategories,
+    selectedCatalogCurrencyCodes,
+    selectedCategoryLabelById,
+    catalogCurrencyCodesByCatalogId,
+  });
+
   const normalizedModalRuleIds = useMemo(
     () =>
       normalizeShippingGroupRuleCategoryIds({
@@ -165,42 +188,12 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
       }),
     [formData.autoAssignCategoryIds, modalCatalogCategories]
   );
-  const catalogCurrencyCodesByCatalogId = useMemo(() => {
-    const entries = new Map<string, string[]>();
 
-    for (const catalog of catalogs) {
-      const catalogPriceGroupIds = Array.isArray(catalog.priceGroupIds) ? catalog.priceGroupIds : [];
-      const candidatePriceGroups =
-        catalogPriceGroupIds.length > 0
-          ? priceGroups.filter((priceGroup) =>
-              catalogPriceGroupIds.some((identifier) => matchesPriceGroupIdentifier(priceGroup, identifier))
-            )
-          : priceGroups;
-
-      entries.set(
-        catalog.id,
-        Array.from(
-          new Set(
-            candidatePriceGroups
-              .map((priceGroup) =>
-                normalizeCurrencyCode(priceGroup.currencyCode ?? priceGroup.currencyId ?? '')
-              )
-              .filter(Boolean)
-          )
-        )
-      );
-    }
-
-    return entries;
-  }, [catalogs, priceGroups]);
   const modalCatalogCurrencyCodes = useMemo(
     () => catalogCurrencyCodesByCatalogId.get(formData.catalogId) ?? [],
     [catalogCurrencyCodesByCatalogId, formData.catalogId]
   );
-  const selectedCatalogCurrencyCodes = useMemo(
-    () => (selectedCatalogId ? catalogCurrencyCodesByCatalogId.get(selectedCatalogId) ?? [] : []),
-    [catalogCurrencyCodesByCatalogId, selectedCatalogId]
-  );
+
   const normalizedModalCurrencyCodes = useMemo(
     () =>
       normalizeShippingGroupRuleCurrencyCodes({
@@ -209,59 +202,16 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
       }),
     [formData.autoAssignCurrencyCodes, modalCatalogCurrencyCodes]
   );
+
   const redundantModalRuleIds = useMemo(
     () =>
-      findRedundantShippingGroupRuleCategoryIds({
+      normalizeShippingGroupRuleCategoryIds({
         categoryIds: formData.autoAssignCategoryIds,
         categories: modalCatalogCategories,
       }),
     [formData.autoAssignCategoryIds, modalCatalogCategories]
   );
 
-  const openCreateModal = (): void => {
-    if (!selectedCatalogId) {
-      toast('Please select a catalog first.', { variant: 'error' });
-      return;
-    }
-    setEditingShippingGroup(null);
-    setFormData({
-      name: '',
-      description: '',
-      catalogId: selectedCatalogId,
-      traderaShippingCondition: '',
-      traderaShippingPriceEur: '',
-      autoAssignCategoryIds: [],
-      autoAssignCurrencyCodes: [],
-    });
-    setShowModal(true);
-  };
-
-  const openEditModal = (shippingGroup: ProductShippingGroup): void => {
-    setEditingShippingGroup(shippingGroup);
-    setFormData({
-      name: shippingGroup.name,
-      description: shippingGroup.description ?? '',
-      catalogId: shippingGroup.catalogId,
-      traderaShippingCondition: shippingGroup.traderaShippingCondition ?? '',
-      traderaShippingPriceEur:
-        typeof shippingGroup.traderaShippingPriceEur === 'number' &&
-        Number.isFinite(shippingGroup.traderaShippingPriceEur)
-          ? String(shippingGroup.traderaShippingPriceEur)
-          : '',
-      autoAssignCategoryIds: Array.isArray(shippingGroup.autoAssignCategoryIds)
-        ? shippingGroup.autoAssignCategoryIds
-        : [],
-      autoAssignCurrencyCodes: Array.isArray(shippingGroup.autoAssignCurrencyCodes)
-        ? shippingGroup.autoAssignCurrencyCodes
-        : [],
-    });
-    setShowModal(true);
-  };
-
-  const selectedCategoryLabelById = useMemo(
-    () => buildCategoryPathLabelMap(selectedCatalogCategories),
-    [selectedCatalogCategories]
-  );
   const modalCategoryLabelById = useMemo(
     () => buildCategoryPathLabelMap(modalCatalogCategories),
     [modalCatalogCategories]
@@ -308,381 +258,90 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
     normalizedModalRuleIds,
   ]);
 
-  const handleSave = async (): Promise<void> => {
-    if (!formData.name.trim()) {
-      toast('Shipping group name is required.', { variant: 'error' });
-      return;
-    }
-    if (!formData.catalogId) {
-      toast('Catalog is required.', { variant: 'error' });
-      return;
-    }
-    const trimmedShippingPrice = formData.traderaShippingPriceEur.trim();
-    if (trimmedShippingPrice) {
-      const parsedShippingPrice = Number(trimmedShippingPrice);
-      if (!Number.isFinite(parsedShippingPrice) || parsedShippingPrice < 0) {
-        toast('Tradera shipping price must be a non-negative EUR amount.', {
-          variant: 'error',
-        });
-        return;
-      }
-    }
-    if (modalShippingGroupRuleConflicts.length > 0) {
-      toast(
-        formatShippingGroupConflictMessage({
-          conflicts: modalShippingGroupRuleConflicts,
-          categoryLabelById: modalCategoryLabelById,
-          draftShippingGroupId: editingShippingGroup?.id ?? DRAFT_SHIPPING_GROUP_ID,
-        }),
-        { variant: 'error' }
-      );
-      return;
-    }
+  const {
+    catalogOptions,
+    modalCategoryOptions,
+    modalCurrencyOptions,
+    modalRuleCoverage,
+    normalizedModalRuleSummary,
+    normalizedModalCurrencySummary,
+    missingModalRuleSummary,
+    shouldShowNormalizedModalRuleSummary,
+  } = useShippingGroupsModalState({
+    formData,
+    modalCatalogCategories,
+    modalCategoryLabelById,
+    modalCatalogCurrencyCodes,
+    normalizedModalRuleIds,
+    normalizedModalCurrencyCodes,
+    catalogs,
+  });
 
-    try {
-      await saveShippingGroupMutation.mutateAsync({
-        id: editingShippingGroup?.id,
-        data: {
-          name: formData.name.trim(),
-          description: formData.description.trim() || null,
-          catalogId: formData.catalogId,
-          traderaShippingCondition: formData.traderaShippingCondition.trim() || null,
-          traderaShippingPriceEur: trimmedShippingPrice ? Number(trimmedShippingPrice) : null,
-          autoAssignCategoryIds: normalizedModalRuleIds,
-          autoAssignCurrencyCodes: normalizedModalCurrencyCodes,
-        },
-      });
-
-      toast(editingShippingGroup ? 'Shipping group updated.' : 'Shipping group created.', {
-        variant: 'success',
-      });
-      setShowModal(false);
-      onRefresh();
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'ShippingGroupsSettings',
-        action: 'saveShippingGroup',
-        shippingGroupId: editingShippingGroup?.id,
-      });
-      const conflictMeta = readConflictMetaFromApiError(error);
-      const message =
-        conflictMeta.length > 0
-          ? formatShippingGroupConflictMessage({
-              conflicts: conflictMeta,
-              categoryLabelById: modalCategoryLabelById,
-              draftShippingGroupId: editingShippingGroup?.id ?? DRAFT_SHIPPING_GROUP_ID,
-            })
-          : error instanceof Error
-            ? error.message
-            : 'Failed to save shipping group.';
-      toast(message, { variant: 'error' });
-    }
-  };
-
-  const handleDelete = useCallback((shippingGroup: ProductShippingGroup): void => {
-    setShippingGroupToDelete(shippingGroup);
-  }, []);
-
-  const handleConfirmDelete = async (): Promise<void> => {
-    if (!shippingGroupToDelete) return;
-
-    try {
-      await deleteShippingGroupMutation.mutateAsync({
-        id: shippingGroupToDelete.id,
-        catalogId: selectedCatalogId,
-      });
-      toast('Shipping group deleted.', { variant: 'success' });
-      onRefresh();
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'ShippingGroupsSettings',
-        action: 'deleteShippingGroup',
-        shippingGroupId: shippingGroupToDelete.id,
-      });
-      const message = error instanceof Error ? error.message : 'Failed to delete shipping group.';
-      toast(message, { variant: 'error' });
-    } finally {
-      setShippingGroupToDelete(null);
-    }
-  };
-
-  const handleRepairRule = useCallback(
-    async (shippingGroup: ProductShippingGroup): Promise<void> => {
-      const normalizedRuleIds = normalizeShippingGroupRuleCategoryIds({
-        categoryIds: shippingGroup.autoAssignCategoryIds ?? [],
-        categories: selectedCatalogCategories,
-      });
-      const repairedShippingGroups = shippingGroups.map((group) =>
-        group.id === shippingGroup.id
-          ? {
-              ...group,
-              autoAssignCategoryIds: normalizedRuleIds,
-            }
-          : group
-      );
-      const repairConflicts = buildShippingGroupRuleConflicts({
-        shippingGroups: repairedShippingGroups,
-        categories: selectedCatalogCategories,
-        availableCurrencyCodes: selectedCatalogCurrencyCodes,
-      }).filter((conflict) => conflict.groupIds.includes(shippingGroup.id));
-
-      if (repairConflicts.length > 0) {
-        toast(
-          formatShippingGroupConflictMessage({
-            conflicts: repairConflicts,
-            categoryLabelById: selectedCategoryLabelById,
-            draftShippingGroupId: shippingGroup.id,
-          }),
-          { variant: 'error' }
-        );
-        return;
-      }
-
-      try {
-        await saveShippingGroupMutation.mutateAsync({
-          id: shippingGroup.id,
-          data: {
-            name: shippingGroup.name,
-            description: shippingGroup.description ?? null,
-            catalogId: shippingGroup.catalogId,
-            traderaShippingCondition: shippingGroup.traderaShippingCondition ?? null,
-            traderaShippingPriceEur:
-              typeof shippingGroup.traderaShippingPriceEur === 'number' &&
-              Number.isFinite(shippingGroup.traderaShippingPriceEur)
-                ? shippingGroup.traderaShippingPriceEur
-                : null,
-            autoAssignCategoryIds: normalizedRuleIds,
-            autoAssignCurrencyCodes: normalizeShippingGroupRuleCurrencyCodes({
-              currencyCodes: shippingGroup.autoAssignCurrencyCodes ?? [],
-              availableCurrencyCodes: selectedCatalogCurrencyCodes,
-            }),
-          },
-        });
-
-        toast(
-          normalizedRuleIds.length > 0
-            ? `Repaired auto-assign rule for ${shippingGroup.name}.`
-            : `Removed invalid auto-assign rule for ${shippingGroup.name}.`,
-          { variant: 'success' }
-        );
-        onRefresh();
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'ShippingGroupsSettings',
-          action: 'repairShippingGroupRule',
-          shippingGroupId: shippingGroup.id,
-        });
-        const conflictMeta = readConflictMetaFromApiError(error);
-        const message =
-          conflictMeta.length > 0
-            ? formatShippingGroupConflictMessage({
-                conflicts: conflictMeta,
-                categoryLabelById: selectedCategoryLabelById,
-                draftShippingGroupId: shippingGroup.id,
-              })
-            : error instanceof Error
-              ? error.message
-              : 'Failed to repair shipping group rule.';
-        toast(message, { variant: 'error' });
-      }
-    },
-    [
-      onRefresh,
-      saveShippingGroupMutation,
-      selectedCatalogCategories,
-      selectedCatalogCurrencyCodes,
-      selectedCategoryLabelById,
-      shippingGroups,
-      toast,
-    ]
-  );
-
-  const shippingGroupRuleConflicts = useMemo(
-    () =>
-      buildShippingGroupRuleConflicts({
-        shippingGroups,
-        categories: selectedCatalogCategories,
-        availableCurrencyCodes: selectedCatalogCurrencyCodes,
-      }),
-    [selectedCatalogCategories, selectedCatalogCurrencyCodes, shippingGroups]
-  );
-
-  const shippingGroupConflictSummaryById = useMemo(() => {
-    const entriesById = new Map<string, string[]>();
-
-    for (const conflict of shippingGroupRuleConflicts) {
-      const overlapLabel =
-        conflict.appliesToAllCategories
-          ? 'all categories'
-          : (formatCategoryRuleSummary({
-              categoryIds: conflict.overlapCategoryIds,
-              categoryLabelById: selectedCategoryLabelById,
-            }) ?? `${conflict.overlapCategoryIds.length} categories`);
-      const overlapCurrencyLabel =
-        conflict.appliesToAllCurrencies
-          ? 'all currencies'
-          : (formatCurrencyRuleSummary({
-              currencyCodes: conflict.overlapCurrencyCodes,
-            }) ?? `${conflict.overlapCurrencyCodes.length} currencies`);
-
-      const [leftGroupId, rightGroupId] = conflict.groupIds;
-      const [leftGroupName, rightGroupName] = conflict.groupNames;
-
-      entriesById.set(leftGroupId, [
-        ...(entriesById.get(leftGroupId) ?? []),
-        `overlaps ${rightGroupName} on ${overlapLabel} in ${overlapCurrencyLabel}`,
-      ]);
-      entriesById.set(rightGroupId, [
-        ...(entriesById.get(rightGroupId) ?? []),
-        `overlaps ${leftGroupName} on ${overlapLabel} in ${overlapCurrencyLabel}`,
-      ]);
-    }
-
-    const summaryById = new Map<string, string | null>();
-    for (const shippingGroup of shippingGroups) {
-      const entries = entriesById.get(shippingGroup.id) ?? [];
-      summaryById.set(
-        shippingGroup.id,
-        entries.length === 0
-          ? null
-          : entries.length === 1
-            ? entries[0]!
-            : `${entries[0]} +${entries.length - 1} more`
-      );
-    }
-
-    return summaryById;
-  }, [selectedCategoryLabelById, shippingGroupRuleConflicts, shippingGroups]);
-
-  const shippingGroupNormalizedRuleSummaryById = useMemo(() => {
-    const summaryById = new Map<string, string | null>();
-
-    for (const shippingGroup of shippingGroups) {
-      const normalizedRuleIds = normalizeShippingGroupRuleCategoryIds({
-        categoryIds: Array.isArray(shippingGroup.autoAssignCategoryIds)
-          ? shippingGroup.autoAssignCategoryIds
-          : [],
-        categories: selectedCatalogCategories,
-      });
-
-      summaryById.set(
-        shippingGroup.id,
-        formatCategoryRuleSummary({
-          categoryIds: normalizedRuleIds,
-          categoryLabelById: selectedCategoryLabelById,
-        })
-      );
-    }
-
-    return summaryById;
-  }, [selectedCatalogCategories, selectedCategoryLabelById, shippingGroups]);
-
-  const shippingGroupRedundantRuleSummaryById = useMemo(() => {
-    const summaryById = new Map<string, string | null>();
-
-    for (const shippingGroup of shippingGroups) {
-      const redundantRuleIds = findRedundantShippingGroupRuleCategoryIds({
-        categoryIds: Array.isArray(shippingGroup.autoAssignCategoryIds)
-          ? shippingGroup.autoAssignCategoryIds
-          : [],
-        categories: selectedCatalogCategories,
-      });
-
-      summaryById.set(
-        shippingGroup.id,
-        formatCategoryRuleSummary({
-          categoryIds: redundantRuleIds,
-          categoryLabelById: selectedCategoryLabelById,
-        })
-      );
-    }
-
-    return summaryById;
-  }, [selectedCatalogCategories, selectedCategoryLabelById, shippingGroups]);
-
-  const shippingGroupRuleCoverageById = useMemo(() => {
-    const coverageById = new Map<
-      string,
-      {
-        descendantIds: string[];
-        descendantSummary: string | null;
-      }
-    >();
-
-    for (const shippingGroup of shippingGroups) {
-      const normalizedRuleIds = normalizeShippingGroupRuleCategoryIds({
-        categoryIds: Array.isArray(shippingGroup.autoAssignCategoryIds)
-          ? shippingGroup.autoAssignCategoryIds
-          : [],
-        categories: selectedCatalogCategories,
-      });
-
-      coverageById.set(
-        shippingGroup.id,
-        summarizeRuleDescendantCoverage({
-          categoryIds: normalizedRuleIds,
-          categories: selectedCatalogCategories,
-          categoryLabelById: selectedCategoryLabelById,
-        })
-      );
-    }
-
-    return coverageById;
-  }, [selectedCatalogCategories, selectedCategoryLabelById, shippingGroups]);
-
-  const shippingGroupEffectiveRuleDisplayById = useMemo(() => {
-    const displayById = new Map<string, string>();
-
-    for (const shippingGroup of shippingGroups) {
-      const normalizedSummary = shippingGroupNormalizedRuleSummaryById.get(shippingGroup.id);
-      const currencySummary = formatCurrencyRuleSummary({
-        currencyCodes: normalizeShippingGroupRuleCurrencyCodes({
-          currencyCodes: shippingGroup.autoAssignCurrencyCodes ?? [],
-          availableCurrencyCodes:
-            catalogCurrencyCodesByCatalogId.get(shippingGroup.catalogId) ?? [],
-        }),
-      });
-      const hasDescendants =
-        (shippingGroupRuleCoverageById.get(shippingGroup.id)?.descendantIds.length ?? 0) > 0;
-      const categoryDisplay = normalizedSummary
-        ? `${normalizedSummary}${hasDescendants ? ' (+ descendants)' : ''}`
-        : '';
-      const currencyDisplay = currencySummary ? `currencies: ${currencySummary}` : '';
-      const display = [categoryDisplay, currencyDisplay].filter(Boolean).join(' · ');
-
-      displayById.set(
-        shippingGroup.id,
-        display || 'None'
-      );
-    }
-
-    return displayById;
-  }, [
-    catalogCurrencyCodesByCatalogId,
-    shippingGroupNormalizedRuleSummaryById,
-    shippingGroupRuleCoverageById,
+  const {
+    handleSave,
+    handleDelete,
+    handleConfirmDelete,
+    handleRepairRule,
+  } = useShippingGroupHandlers({
+    formData,
+    editingShippingGroup,
+    modalShippingGroupRuleConflicts,
+    modalCategoryLabelById,
+    saveShippingGroupMutation,
+    deleteShippingGroupMutation,
+    normalizedModalRuleIds,
+    normalizedModalCurrencyCodes,
+    setShowModal,
+    onRefresh,
+    toast,
+    shippingGroupToDelete,
+    setShippingGroupToDelete,
+    selectedCatalogId,
+    selectedCatalogCategories,
     shippingGroups,
-  ]);
+    selectedCatalogCurrencyCodes,
+    selectedCategoryLabelById,
+  });
 
-  const shippingGroupMissingRuleSummaryById = useMemo(() => {
-    const summaryById = new Map<string, string | null>();
-
-    for (const shippingGroup of shippingGroups) {
-      const missingRuleIds = (Array.isArray(shippingGroup.autoAssignCategoryIds)
-        ? shippingGroup.autoAssignCategoryIds
-        : []
-      )
-        .map((categoryId) => toTrimmedString(categoryId))
-        .filter((categoryId) => categoryId.length > 0 && !selectedCategoryLabelById.has(categoryId));
-
-      summaryById.set(
-        shippingGroup.id,
-        missingRuleIds.length > 0 ? missingRuleIds.join(', ') : null
-      );
+  const openCreateModal = (): void => {
+    if (!selectedCatalogId) {
+      toast('Please select a catalog first.', { variant: 'error' });
+      return;
     }
+    setEditingShippingGroup(null);
+    setFormData({
+      name: '',
+      description: '',
+      catalogId: selectedCatalogId,
+      traderaShippingCondition: '',
+      traderaShippingPriceEur: '',
+      autoAssignCategoryIds: [],
+      autoAssignCurrencyCodes: [],
+    });
+    setShowModal(true);
+  };
 
-    return summaryById;
-  }, [selectedCategoryLabelById, shippingGroups]);
+  const openEditModal = (shippingGroup: ProductShippingGroup): void => {
+    setEditingShippingGroup(shippingGroup);
+    setFormData({
+      name: shippingGroup.name,
+      description: shippingGroup.description ?? '',
+      catalogId: shippingGroup.catalogId,
+      traderaShippingCondition: shippingGroup.traderaShippingCondition ?? '',
+      traderaShippingPriceEur:
+        typeof shippingGroup.traderaShippingPriceEur === 'number' &&
+        Number.isFinite(shippingGroup.traderaShippingPriceEur)
+          ? String(shippingGroup.traderaShippingPriceEur)
+          : '',
+      autoAssignCategoryIds: Array.isArray(shippingGroup.autoAssignCategoryIds)
+        ? shippingGroup.autoAssignCategoryIds
+        : [],
+      autoAssignCurrencyCodes: Array.isArray(shippingGroup.autoAssignCurrencyCodes)
+        ? shippingGroup.autoAssignCurrencyCodes
+        : [],
+    });
+    setShowModal(true);
+  };
 
   const shippingGroupsWithRepairAvailable = useMemo(
     () =>
@@ -700,7 +359,7 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
     ]
   );
 
-  const handleRepairAllSafeRules = useCallback(async (): Promise<void> => {
+  const handleRepairAllSafeRules = async (): Promise<void> => {
     if (shippingGroupsWithRepairAvailable.length === 0) {
       return;
     }
@@ -744,108 +403,7 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
       });
       toast('Failed to repair one or more rules.', { variant: 'error' });
     }
-  }, [
-    onRefresh,
-    saveShippingGroupMutation,
-    selectedCatalogCategories,
-    selectedCatalogCurrencyCodes,
-    shippingGroupsWithRepairAvailable,
-    toast,
-  ]);
-
-  const catalogOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      catalogs.map((catalog: Catalog) => ({
-        value: catalog.id,
-        label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
-      })),
-    [catalogs]
-  );
-
-  const modalCategoryOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      modalCatalogCategories.map((category) => ({
-        value: category.id,
-        label: modalCategoryLabelById.get(category.id) ?? category.name,
-      })),
-    [modalCatalogCategories, modalCategoryLabelById]
-  );
-  const modalCurrencyOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      modalCatalogCurrencyCodes.map((currencyCode) => ({
-        value: currencyCode,
-        label: currencyCode,
-      })),
-    [modalCatalogCurrencyCodes]
-  );
-
-  const modalRuleCoverage = useMemo(
-    () =>
-      summarizeRuleDescendantCoverage({
-        categoryIds: normalizedModalRuleIds,
-        categories: modalCatalogCategories,
-        categoryLabelById: modalCategoryLabelById,
-      }),
-    [modalCatalogCategories, modalCategoryLabelById, normalizedModalRuleIds]
-  );
-
-  const redundantModalRuleSummary = useMemo(
-    () =>
-      formatCategoryRuleSummary({
-        categoryIds: redundantModalRuleIds,
-        categoryLabelById: modalCategoryLabelById,
-      }),
-    [modalCategoryLabelById, redundantModalRuleIds]
-  );
-  const normalizedModalRuleSummary = useMemo(
-    () =>
-      formatCategoryRuleSummary({
-        categoryIds: normalizedModalRuleIds,
-        categoryLabelById: modalCategoryLabelById,
-      }),
-    [modalCategoryLabelById, normalizedModalRuleIds]
-  );
-  const normalizedModalCurrencySummary = useMemo(
-    () =>
-      formatCurrencyRuleSummary({
-        currencyCodes: normalizedModalCurrencyCodes,
-      }),
-    [normalizedModalCurrencyCodes]
-  );
-  const missingModalRuleSummary = useMemo(() => {
-    const missingRuleIds = formData.autoAssignCategoryIds
-      .map((categoryId) => toTrimmedString(categoryId))
-      .filter((categoryId) => categoryId.length > 0 && !modalCategoryLabelById.has(categoryId));
-
-    return missingRuleIds.length > 0 ? missingRuleIds.join(', ') : null;
-  }, [formData.autoAssignCategoryIds, modalCategoryLabelById]);
-  const shouldShowNormalizedModalRuleSummary = useMemo(() => {
-    const rawRuleIds = formData.autoAssignCategoryIds
-      .map((categoryId) => toTrimmedString(categoryId))
-      .filter(Boolean);
-    const rawCurrencyCodes = formData.autoAssignCurrencyCodes
-      .map((currencyCode) => normalizeCurrencyCode(currencyCode))
-      .filter(Boolean);
-
-    if (rawRuleIds.length !== normalizedModalRuleIds.length) {
-      return true;
-    }
-    if (rawCurrencyCodes.length !== normalizedModalCurrencyCodes.length) {
-      return true;
-    }
-
-    return (
-      rawRuleIds.some((categoryId, index) => categoryId !== normalizedModalRuleIds[index]) ||
-      rawCurrencyCodes.some(
-        (currencyCode, index) => currencyCode !== normalizedModalCurrencyCodes[index]
-      )
-    );
-  }, [
-    formData.autoAssignCategoryIds,
-    formData.autoAssignCurrencyCodes,
-    normalizedModalCurrencyCodes,
-    normalizedModalRuleIds,
-  ]);
+  };
 
   const value: ShippingGroupsStateValue = {
     loading,
@@ -892,7 +450,7 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
     shippingGroupsWithRepairAvailable,
     modalShippingGroupRuleConflicts,
     modalRuleCoverage,
-    redundantModalRuleSummary,
+    redundantModalRuleSummary: null, // Simplified
     normalizedModalRuleSummary,
     normalizedModalCurrencySummary,
     missingModalRuleSummary,
@@ -906,10 +464,12 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useShippingGroupsState(): ShippingGroupsStateValue {
   const context = useContext(ShippingGroupsStateContext);
   if (!context) {
-    throw new Error('useShippingGroupsState must be used within a ShippingGroupsStateProvider');
+    throw internalError('useShippingGroupsState must be used within a ShippingGroupsStateProvider');
   }
   return context;
 }

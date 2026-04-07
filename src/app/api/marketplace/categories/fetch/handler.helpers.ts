@@ -9,17 +9,14 @@ import {
 import { resolveTraderaPublicApiCredentials } from '@/features/integrations/services/tradera-listing/api';
 import { fetchTraderaCategoriesForConnection } from '@/features/integrations/services/tradera-listing/categories';
 import type { BaseCategory } from '@/shared/contracts/integrations/listings';
-import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/contracts/integrations/repositories';
+import type { IntegrationConnectionRecord, IntegrationLookupRepository } from '@/shared/contracts/integrations/repositories';
 import type { MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera', 'tradera-api']);
 
-export type CategoryFetchIntegrationRepository = {
-  getConnectionById: (id: string) => Promise<IntegrationConnectionRecord | null>;
-  getIntegrationById: (id: string) => Promise<IntegrationRecord | null>;
-};
+export type CategoryFetchIntegrationRepository = IntegrationLookupRepository;
 
 export type MarketplaceCategoryFetchContext =
   | {

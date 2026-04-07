@@ -168,10 +168,12 @@ export function KangurMusicPianoRollProvider<NoteId extends string>({
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useKangurMusicPianoRollContext<NoteId extends string = string>(): KangurMusicPianoRollContextValue<NoteId> {
   const context = useContext(KangurMusicPianoRollContext);
   if (!context) {
-    throw new Error('useKangurMusicPianoRollContext must be used within a KangurMusicPianoRollProvider');
+    throw internalError('useKangurMusicPianoRollContext must be used within a KangurMusicPianoRollProvider');
   }
   return context as KangurMusicPianoRollContextValue<NoteId>;
 }

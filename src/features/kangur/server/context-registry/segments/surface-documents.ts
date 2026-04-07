@@ -66,8 +66,7 @@ export const buildKangurGameSurfaceRuntimeDocument = (
         id: 'game_overview',
         kind: 'text',
         title: 'Game overview',
-        text: [title, description, masterySummary, assignmentSummary].filter(Boolean).join('
-'),
+        text: [title, description, masterySummary, assignmentSummary].filter(Boolean).join('\n'),
       },
       {
         id: 'current_question',
@@ -132,8 +131,7 @@ export const buildKangurTestSurfaceRuntimeDocument = (
         id: 'test_overview',
         kind: 'text',
         title: 'Test overview',
-        text: [title, reviewSummary, resultSummary].filter(Boolean).join('
-'),
+        text: [title, reviewSummary, resultSummary].filter(Boolean).join('\n'),
       },
     ],
     provenance: {

@@ -451,10 +451,12 @@ export function KangurPrimaryNavigationProvider({
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useKangurPrimaryNavigationContext(): KangurPrimaryNavigationContextValue {
   const context = useContext(KangurPrimaryNavigationContext);
   if (!context) {
-    throw new Error('useKangurPrimaryNavigationContext must be used within a KangurPrimaryNavigationProvider');
+    throw internalError('useKangurPrimaryNavigationContext must be used within a KangurPrimaryNavigationProvider');
   }
   return context;
 }

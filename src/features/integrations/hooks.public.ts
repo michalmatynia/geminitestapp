@@ -7,6 +7,8 @@ export * from './components/listings/hooks/useIntegrationSelection';
 export * from './hooks/useTraderaQuickExportPolling';
 export * from './hooks/useTraderaQuickExportConnection';
 export * from './hooks/useTraderaQuickExportFeedback';
+export * from './hooks/useTraderaQuickListFeedback';
 export * from './hooks/useVintedQuickExportPolling';
 export * from './hooks/useVintedQuickExportConnection';
 export * from './hooks/useVintedQuickExportFeedback';
+export * from './hooks/useVintedQuickListFeedback';

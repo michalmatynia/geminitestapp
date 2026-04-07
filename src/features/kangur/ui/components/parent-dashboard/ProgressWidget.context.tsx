@@ -16,10 +16,12 @@ export function ProgressWidgetProvider({ children }: { children: React.ReactNode
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useProgressWidgetContext(): ProgressWidgetState {
   const context = useContext(ProgressWidgetContext);
   if (!context) {
-    throw new Error('useProgressWidgetContext must be used within a ProgressWidgetProvider');
+    throw internalError('useProgressWidgetContext must be used within a ProgressWidgetProvider');
   }
   return context;
 }

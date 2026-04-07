@@ -2,12 +2,14 @@ import React from 'react';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
+import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
 import {
   useProductListingsData,
   useProductListingsModals,
 } from '@/features/integrations/context/ProductListingsContext';
 import {
   isBaseQuickExportRecoveryContext,
+  isVintedQuickExportRecoveryContext,
   resolveProductListingsEmptyDescription,
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
@@ -18,6 +20,8 @@ import { useProductListingsViewContext } from './context/ProductListingsViewCont
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
+import { VintedQuickExportRecoveryBanner } from './VintedQuickExportRecoveryBanner';
+import { VintedQuickExportSuccessBanner } from './VintedQuickExportSuccessBanner';
 
 const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
   const normalized = (value ?? '').trim().toLowerCase();
@@ -38,6 +42,7 @@ export function ProductListingsEmpty(): React.JSX.Element {
     useProductListingsViewContext();
   const { recoveryContext } = useProductListingsModals();
   const isFailedBaseQuickExportRecovery = isBaseQuickExportRecoveryContext(recoveryContext);
+  const isVintedQuickExportRecovery = isVintedQuickExportRecoveryContext(recoveryContext);
   const {
     isRecovery: isTraderaQuickExportRecovery,
     requestId: recoveryRequestId,
@@ -57,10 +62,16 @@ export function ProductListingsEmpty(): React.JSX.Element {
       recoveryStatus === 'needs_login' ||
       hasTraderaAuthSignal(recoveryFailureReason));
   const { feedback: persistedQuickListFeedback } = useTraderaQuickListFeedback(product.id);
+  const { feedback: persistedVintedQuickListFeedback } = useVintedQuickListFeedback(product.id);
   const shouldShowQuickListSuccessBanner = Boolean(
     !isTraderaQuickExportRecovery &&
       persistedQuickListFeedback?.status === 'completed' &&
       isTraderaIntegrationSlug(filterIntegrationSlug)
+  );
+  const shouldShowVintedQuickListSuccessBanner = Boolean(
+    !isVintedQuickExportRecovery &&
+      persistedVintedQuickListFeedback?.status === 'completed' &&
+      filterIntegrationSlug === 'vinted'
   );
 
   return (
@@ -70,6 +81,13 @@ export function ProductListingsEmpty(): React.JSX.Element {
           mode='empty'
           variant='full'
           feedback={persistedQuickListFeedback}
+        />
+      ) : null}
+      {shouldShowVintedQuickListSuccessBanner && persistedVintedQuickListFeedback ? (
+        <VintedQuickExportSuccessBanner
+          mode='empty'
+          variant='full'
+          feedback={persistedVintedQuickListFeedback}
         />
       ) : null}
       {isFailedBaseQuickExportRecovery && (
@@ -90,7 +108,17 @@ export function ProductListingsEmpty(): React.JSX.Element {
           connectionId={recoveryConnectionId}
         />
       )}
-      {shouldShowQuickListSuccessBanner ? null : filterIntegrationSlug ? (
+      {isVintedQuickExportRecovery && (
+        <VintedQuickExportRecoveryBanner
+          mode='empty'
+          variant='full'
+          status={recoveryContext?.status}
+          requestId={recoveryContext?.requestId}
+          runId={recoveryContext?.runId}
+          failureReason={recoveryFailureReason}
+        />
+      )}
+      {shouldShowQuickListSuccessBanner || shouldShowVintedQuickListSuccessBanner ? null : filterIntegrationSlug ? (
         <ProductListingsScopedStatusPanel
           statusTargetLabel={statusTargetLabel}
           isBaseFilter={isBaseFilter}
@@ -100,7 +128,9 @@ export function ProductListingsEmpty(): React.JSX.Element {
         <EmptyState
           title='No listings found'
           description={
-            isFailedBaseQuickExportRecovery || isTraderaQuickExportRecovery
+            isFailedBaseQuickExportRecovery ||
+            isTraderaQuickExportRecovery ||
+            isVintedQuickExportRecovery
               ? undefined
               : resolveProductListingsEmptyDescription(recoveryContext)
           }

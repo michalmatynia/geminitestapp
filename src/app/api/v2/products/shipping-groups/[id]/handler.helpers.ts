@@ -1,7 +1,6 @@
-import { z } from 'zod';
-
 import type { ProductShippingGroup, ProductShippingGroupUpdateInput } from '@/shared/contracts/products/shipping-groups';
 import { conflictError, validationError } from '@/shared/errors/app-error';
+import type { CatalogNameLookupDto } from '@/shared/contracts/base';
 
 const paramsSchema = z.object({
   id: z.string().trim().min(1, 'Shipping group id is required'),
@@ -19,10 +18,7 @@ type ProductShippingGroupSnapshot = Pick<
   | 'autoAssignCurrencyCodes'
 >;
 
-export type ShippingGroupNameLookupInput = {
-  catalogId: string;
-  name: string;
-};
+export type ShippingGroupNameLookupInput = CatalogNameLookupDto;
 
 export const parseShippingGroupId = (params: { id: string }): string => {
   const parsed = paramsSchema.safeParse(params);

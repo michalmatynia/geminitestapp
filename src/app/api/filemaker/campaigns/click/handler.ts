@@ -16,12 +16,19 @@ import {
 import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { z } from 'zod';
+
 const resolveRedirectTarget = (req: NextRequest, redirectTo: string | null | undefined): string => {
   if (!redirectTo) {
     return `${new URL(req.url).origin}/`;
   }
   return new URL(redirectTo, req.url).toString();
 };
+
+const querySchema = z.object({
+  token: optionalTrimmedQueryString(),
+});
 
 const buildRedirectResponse = (location: string): Response =>
   new Response(null, {
@@ -32,8 +39,8 @@ const buildRedirectResponse = (location: string): Response =>
   });
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const token = req.nextUrl.searchParams.get('token');
-  const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token);
+  const { token } = querySchema.parse(Object.fromEntries(req.nextUrl.searchParams.entries()));
+  const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token ?? null);
   const redirectTarget = resolveRedirectTarget(req, tokenPayload?.redirectTo);
   if (!tokenPayload?.campaignId || !tokenPayload.redirectTo) {
     return buildRedirectResponse(redirectTarget);

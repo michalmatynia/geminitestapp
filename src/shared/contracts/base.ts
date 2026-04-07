@@ -55,6 +55,23 @@ export interface IdNameDto {
 }
 export type IdName = IdNameDto;
 
+export interface CodeNameDto {
+  code: string;
+  name: string;
+}
+export type CodeName = CodeNameDto;
+
+/**
+ * Generic lookup DTOs
+ */
+export type NameLookupDto = {
+  name: string;
+};
+
+export type CatalogNameLookupDto = NameLookupDto & {
+  catalogId: string;
+};
+
 export type LabeledOptionDto<TValue = string> = {
   label: string;
   value: TValue;
@@ -326,3 +343,14 @@ export type MongoSettingRecordDto<TId = string, TValue = string> = {
 };
 export type MongoSettingRecord = MongoSettingRecordDto;
 export type MongoDocument<T> = T & { _id: string };
+
+/**
+ * Common progress tracking structure
+ */
+export type ProgressSnapshotDto = {
+  current: number;
+  total: number;
+  errors: number;
+  metadata?: Record<string, unknown>;
+};
+export type ProgressSnapshot = ProgressSnapshotDto;

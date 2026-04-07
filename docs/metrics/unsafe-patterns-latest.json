@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-07T11:43:00.952Z",
+  "generatedAt": "2026-04-07T12:32:17.765Z",
   "status": "passed",
   "summary": {
-    "total": 19,
+    "total": 20,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 19,
+    "infoCount": 20,
     "status": "passed",
-    "fileCount": 7066
+    "fileCount": 7086
   },
   "scope": {
     "root": "src",
@@ -16,7 +16,7 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 2,
+    "anyCount": 3,
     "eslintDisableCount": 16,
     "nonNullAssertionCount": 1,
     "tsIgnoreCount": 0,
@@ -107,6 +107,16 @@
       "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access",
       "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
       "line": 394,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/products/components/settings/shipping-groups/ShippingGroupsContext.handlers.ts",
+      "line": 47,
       "column": null,
       "snippet": null,
       "context": null
@@ -233,7 +243,7 @@
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 2
+      "infoCount": 3
     },
     {
       "ruleId": "non-null-assertion",
@@ -242,5 +252,5 @@
       "infoCount": 1
     }
   ],
-  "durationMs": 2053
+  "durationMs": 1499
 }

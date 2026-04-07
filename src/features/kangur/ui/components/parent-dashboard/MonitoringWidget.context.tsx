@@ -16,10 +16,12 @@ export function MonitoringWidgetProvider({ children }: { children: React.ReactNo
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useMonitoringWidgetContext(): MonitoringWidgetState {
   const context = useContext(MonitoringWidgetContext);
   if (!context) {
-    throw new Error('useMonitoringWidgetContext must be used within a MonitoringWidgetProvider');
+    throw internalError('useMonitoringWidgetContext must be used within a MonitoringWidgetProvider');
   }
   return context;
 }

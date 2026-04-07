@@ -2,8 +2,8 @@ import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { DatabaseOperation } from '@/shared/contracts/ai-paths-core';
 import type { CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
 import type { AiTriggerButtonDisplay } from '@/shared/contracts/ai-trigger-buttons';
-import { deserializeSemanticCanvasToPathConfig } from '../semantic-grammar/deserialize';
-import { sanitizeEdges } from '../utils/graph';
+import { deserializeSemanticCanvasToPathConfig } from '../../semantic-grammar/deserialize';
+import { sanitizeEdges } from '../../utils/graph';
 import type {
   AiPathsStarterProvenance,
   AiPathTemplateRegistryEntry,

@@ -1,10 +1,6 @@
 import type { CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver/workspace';
 import type { CaseResolverWorkspaceObservabilitySnapshot, RequestedContextSnapshot, WorkspaceHydrationSelectionSnapshot } from '@/shared/contracts/case-resolver/base';
-
-export type CaseResolverWorkspaceDebugMetric = {
-  label: string;
-  value: string;
-};
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export const formatCaseResolverWorkspaceDebugBoolean = (
   value: boolean | null
@@ -18,7 +14,7 @@ export const formatCaseResolverWorkspaceDebugBoolean = (
 
 export const buildCaseResolverWorkspaceDebugMetrics = (
   snapshot: CaseResolverWorkspaceObservabilitySnapshot
-): CaseResolverWorkspaceDebugMetric[] => [
+): LabeledOptionDto[] => [
   { label: 'save p95', value: `${Math.round(snapshot.persistDurationMs.p95)}ms` },
   { label: 'payload p95', value: `${Math.round(snapshot.payloadBytes.p95)}B` },
   { label: 'success', value: `${(snapshot.saveSuccessRate * 100).toFixed(1)}%` },

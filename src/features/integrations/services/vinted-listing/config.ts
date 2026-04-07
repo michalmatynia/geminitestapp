@@ -40,6 +40,38 @@ export const VINTED_PRICE_SELECTORS = [
   'input[data-testid*="price"]',
 ];
 
+export const VINTED_IMAGE_UPLOAD_SELECTORS = [
+  'input[type="file"]',
+  '#photos-input',
+  '.c-file-input__input',
+];
+
+export const VINTED_CATEGORY_SELECTORS = [
+  '#category_id',
+  '.c-category-select',
+  'div:has-text("Kategoria")',
+  'div:has-text("Category")',
+];
+
+export const VINTED_BRAND_SELECTORS = [
+  '#brand_id',
+  'input[name="brand_id"]',
+  'div:has-text("Marka")',
+  'div:has-text("Brand")',
+];
+
+export const VINTED_SIZE_SELECTORS = [
+  '#size_id',
+  'div:has-text("Rozmiar")',
+  'div:has-text("Size")',
+];
+
+export const VINTED_CONDITION_SELECTORS = [
+  '#status_id',
+  'div:has-text("Stan")',
+  'div:has-text("Condition")',
+];
+
 export const VINTED_SUBMIT_SELECTORS = [
   'button[type="submit"]',
   'button:has-text("Dodaj")',

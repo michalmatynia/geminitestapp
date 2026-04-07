@@ -245,9 +245,7 @@ export const buildBody = (
     }
   }
 
-  return dedupeOrdered(parts).join('
-
-');
+  return dedupeOrdered(parts).join('\n\n');
 };
 
 export const buildTriggerPhrases = (

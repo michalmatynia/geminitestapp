@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-02T15:08:24.764Z",
+  "generatedAt": "2026-04-07T12:30:59.254Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -10,26 +10,262 @@
   },
   "filters": {
     "domains": [],
-    "minRisk": 0,
-    "topLimit": 25,
+    "minRisk": 5,
+    "topLimit": 50,
     "planTopLimit": 20
   },
   "thresholds": {
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 9090,
-    "exportedDeclarationsScanned": 5731,
-    "candidateDeclarationsScanned": 5710,
-    "exactShapeClusters": 5,
-    "nearShapeClusters": 3,
-    "clustersAfterFilters": 8,
-    "declarationsInClusters": 16,
-    "highestRiskScore": 13
+    "filesScanned": 9935,
+    "exportedDeclarationsScanned": 5888,
+    "candidateDeclarationsScanned": 5867,
+    "exactShapeClusters": 11,
+    "nearShapeClusters": 7,
+    "clustersAfterFilters": 18,
+    "declarationsInClusters": 44,
+    "highestRiskScore": 17
   },
   "clusters": [
     {
-      "clusterId": "near-0001",
+      "clusterId": "exact-0001",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 17,
+      "declarationCount": 5,
+      "domains": [
+        "app"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "e28f1cd680b5",
+        "memberCount": 1,
+        "preview": "z.infer<typeof querySchema>"
+      },
+      "declarations": [
+        {
+          "name": "ProductCategoryBatchQuery",
+          "kind": "type",
+          "path": "src/app/api/v2/products/categories/batch/handler.helpers.ts",
+          "line": 19,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "ProductCategoriesQuery",
+          "kind": "type",
+          "path": "src/app/api/v2/products/categories/handler.helpers.ts",
+          "line": 32,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "ProductCategoryTreeQuery",
+          "kind": "type",
+          "path": "src/app/api/v2/products/categories/tree/handler.helpers.ts",
+          "line": 11,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "ProductSyncRunDetailQuery",
+          "kind": "type",
+          "path": "src/app/api/v2/products/sync/runs/[runId]/handler.helpers.ts",
+          "line": 15,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "ProductValidatorConfigQuery",
+          "kind": "type",
+          "path": "src/app/api/v2/products/validator-config/handler.helpers.ts",
+          "line": 10,
+          "domain": "app",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0004",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
+      "declarationCount": 3,
+      "domains": [
+        "feature:integrations",
+        "feature:products",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "023120f455ba",
+        "memberCount": 1,
+        "preview": "ProgressSnapshotDto"
+      },
+      "declarations": [
+        {
+          "name": "MassListProgressPanelProps",
+          "kind": "type",
+          "path": "src/features/integrations/components/listings/mass-list-modal/MassListProgressPanel.tsx",
+          "line": 6,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "MassQuickExportProgress",
+          "kind": "type",
+          "path": "src/features/products/hooks/product-list/useTraderaMassQuickExport.ts",
+          "line": 31,
+          "domain": "feature:products",
+          "usageCount": 0
+        },
+        {
+          "name": "ProgressSnapshot",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 356,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 3,
+      "domains": [
+        "app"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "e6ce4af6c79c",
+        "memberCount": 1,
+        "preview": "IntegrationLookupRepository"
+      },
+      "declarations": [
+        {
+          "name": "CategoryFetchIntegrationRepository",
+          "kind": "type",
+          "path": "src/app/api/marketplace/categories/fetch/handler.helpers.ts",
+          "line": 19,
+          "domain": "app",
+          "usageCount": 1
+        },
+        {
+          "name": "ProducerFetchIntegrationRepository",
+          "kind": "type",
+          "path": "src/app/api/marketplace/producers/fetch/handler.helpers.ts",
+          "line": 8,
+          "domain": "app",
+          "usageCount": 1
+        },
+        {
+          "name": "TagFetchIntegrationRepository",
+          "kind": "type",
+          "path": "src/app/api/marketplace/tags/fetch/handler.helpers.ts",
+          "line": 8,
+          "domain": "app",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0005",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 3,
+      "domains": [
+        "feature:internationalization",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "d2a8fe8b3537",
+        "memberCount": 1,
+        "preview": "CodeNameDto"
+      },
+      "declarations": [
+        {
+          "name": "CountryFormState",
+          "kind": "type",
+          "path": "src/features/internationalization/components/country-modal/CountryModal.helpers.tsx",
+          "line": 8,
+          "domain": "feature:internationalization",
+          "usageCount": 1
+        },
+        {
+          "name": "CountryCodeOption",
+          "kind": "type",
+          "path": "src/features/internationalization/components/country-modal/CountryModal.helpers.tsx",
+          "line": 9,
+          "domain": "feature:internationalization",
+          "usageCount": 0
+        },
+        {
+          "name": "CodeName",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 62,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0003",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "13db6a14dec9",
+        "memberCount": 5,
+        "preview": "prop:activeStepId?:string | null; prop:log?:(level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; prop:model:string; prop:runId:string; prop:stepLabel?:string | null"
+      },
+      "declarations": [
+        {
+          "name": "LLMContext",
+          "kind": "type",
+          "path": "src/features/ai/agent-runtime/tools/llm/segments/shared.ts",
+          "line": 6,
+          "domain": "feature:ai",
+          "usageCount": 4
+        },
+        {
+          "name": "ToolLlmContext",
+          "kind": "type",
+          "path": "src/features/ai/agent-runtime/tools/segments/types.ts",
+          "line": 10,
+          "domain": "feature:ai",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0006",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 13,
@@ -67,74 +303,44 @@
       ]
     },
     {
-      "clusterId": "near-0002",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 12,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur",
-        "shared:contracts"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "a64b1e223761",
-        "memberCount": 7,
-        "preview": "prop:description?:string; prop:id:string; prop:path:string; prop:selector?:string; prop:title:string; prop:waitForMs?:number; prop:waitForSelectorMs?:number"
-      },
-      "declarations": [
-        {
-          "name": "PlaywrightCaptureRoute",
-          "kind": "type",
-          "path": "src/shared/contracts/playwright.ts",
-          "line": 113,
-          "domain": "shared:contracts",
-          "usageCount": 2
-        },
-        {
-          "name": "KangurSocialCapturePreset",
-          "kind": "type",
-          "path": "src/features/kangur/social/shared/social-capture-presets.ts",
-          "line": 3,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
       "clusterId": "exact-0003",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 10,
-      "declarationCount": 2,
+      "riskScore": 11,
+      "declarationCount": 3,
       "domains": [
-        "feature:kangur"
+        "app"
       ],
       "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "4003905b8de3",
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "641ffbc04ce9",
         "memberCount": 1,
-        "preview": "'all' | 'draft' | 'scheduled' | 'published' | 'failed'"
+        "preview": "prop:connectionId:string"
       },
       "declarations": [
         {
-          "name": "KangurSocialPostListStatus",
+          "name": "MarketplaceConnectionListQuery",
           "kind": "type",
-          "path": "src/features/kangur/social/hooks/useKangurSocialPosts.ts",
-          "line": 27,
-          "domain": "feature:kangur",
-          "usageCount": 1
+          "path": "src/app/api/marketplace/connection-list-query.helpers.ts",
+          "line": 10,
+          "domain": "app",
+          "usageCount": 0
         },
         {
-          "name": "KangurSocialPostListStatus",
+          "name": "MarketplaceProducerMappingsListQuery",
           "kind": "type",
-          "path": "src/features/kangur/social/server/social-posts-repository.ts",
-          "line": 25,
-          "domain": "feature:kangur",
-          "usageCount": 1
+          "path": "src/app/api/marketplace/producer-mappings/handler.helpers.ts",
+          "line": 11,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "MarketplaceTagMappingsListQuery",
+          "kind": "type",
+          "path": "src/app/api/marketplace/tag-mappings/handler.helpers.ts",
+          "line": 11,
+          "domain": "app",
+          "usageCount": 0
         }
       ],
       "notes": [
@@ -142,37 +348,118 @@
       ]
     },
     {
-      "clusterId": "exact-0005",
+      "clusterId": "near-0001",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 3,
+      "domains": [
+        "app"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "7839e8389f1c",
+        "memberCount": 2,
+        "preview": "prop:body:CategoryMapping; prop:status:200 | 201"
+      },
+      "declarations": [
+        {
+          "name": "CategoryMappingSaveResult",
+          "kind": "type",
+          "path": "src/app/api/marketplace/mappings/handler.helpers.ts",
+          "line": 25,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "ProducerMappingSaveResult",
+          "kind": "type",
+          "path": "src/app/api/marketplace/producer-mappings/handler.helpers.ts",
+          "line": 33,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "TagMappingSaveResult",
+          "kind": "type",
+          "path": "src/app/api/marketplace/tag-mappings/handler.helpers.ts",
+          "line": 30,
+          "domain": "app",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0005",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "959fdb4514a4",
+        "memberCount": 5,
+        "preview": "prop:completedAt?:string; prop:externalListingId:string | null; prop:listingUrl?:string; prop:metadata?:Record<string, unknown>; prop:simulated?:boolean"
+      },
+      "declarations": [
+        {
+          "name": "TraderaBrowserListingResult",
+          "kind": "type",
+          "path": "src/features/integrations/services/tradera-listing/browser-types.ts",
+          "line": 1,
+          "domain": "feature:integrations",
+          "usageCount": 3
+        },
+        {
+          "name": "VintedBrowserListingResult",
+          "kind": "type",
+          "path": "src/features/integrations/services/vinted-listing/vinted-browser-listing.ts",
+          "line": 26,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0009",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 10,
       "declarationCount": 2,
       "domains": [
-        "feature:kangur",
-        "feature:playwright"
+        "feature:integrations"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "7fa60a059dfb",
-        "memberCount": 3,
-        "preview": "prop:issue:string | null; prop:resolvedUrl:string | null; prop:routeId:string"
+        "normalizedShapeHash": "654ecdffc4b2",
+        "memberCount": 10,
+        "preview": "prop:completedAt?:number | null | undefined; prop:connectionId?:string | null | undefined; prop:duplicateLinked?:boolean | null | undefined; prop:externalListingId?:string | null | undefined; prop:failureReason?:string | null | undefined; prop:integrationId?:string | null | undefined; prop:listingId?:string | null | undefined; prop:listingUrl?:string | null | undefined"
       },
       "declarations": [
         {
-          "name": "KangurSocialProgrammableCaptureRouteValidation",
+          "name": "TraderaFeedbackOptions",
           "kind": "type",
-          "path": "src/features/kangur/social/shared/social-playwright-capture.ts",
-          "line": 120,
-          "domain": "feature:kangur",
-          "usageCount": 0
+          "path": "src/features/integrations/hooks/useTraderaQuickExportFeedback.ts",
+          "line": 37,
+          "domain": "feature:integrations",
+          "usageCount": 1
         },
         {
-          "name": "PlaywrightCaptureRouteValidation",
+          "name": "PersistTraderaQuickListFeedbackOptions",
           "kind": "type",
-          "path": "src/features/playwright/engine/playwright-capture-validator.ts",
-          "line": 3,
-          "domain": "feature:playwright",
-          "usageCount": 0
+          "path": "src/features/integrations/utils/traderaQuickListFeedback.ts",
+          "line": 22,
+          "domain": "feature:integrations",
+          "usageCount": 1
         }
       ],
       "notes": [
@@ -180,147 +467,295 @@
       ]
     },
     {
-      "clusterId": "near-0003",
+      "clusterId": "exact-0010",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "33569a4cbe7c",
+        "memberCount": 9,
+        "preview": "prop:completedAt?:number | null | undefined; prop:connectionId?:string | null | undefined; prop:externalListingId?:string | null | undefined; prop:failureReason?:string | null | undefined; prop:integrationId?:string | null | undefined; prop:listingId?:string | null | undefined; prop:listingUrl?:string | null | undefined; prop:requestId?:string | null | undefined"
+      },
+      "declarations": [
+        {
+          "name": "VintedFeedbackOptions",
+          "kind": "type",
+          "path": "src/features/integrations/hooks/useVintedQuickExportFeedback.ts",
+          "line": 39,
+          "domain": "feature:integrations",
+          "usageCount": 1
+        },
+        {
+          "name": "PersistVintedQuickListFeedbackOptions",
+          "kind": "type",
+          "path": "src/features/integrations/utils/vintedQuickListFeedback.ts",
+          "line": 26,
+          "domain": "feature:integrations",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0002",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 10,
       "declarationCount": 2,
       "domains": [
-        "feature:kangur",
-        "feature:playwright"
+        "app",
+        "shared"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "1ed31a15ccab",
-        "memberCount": 4,
-        "preview": "prop:firstIssue:string | null; prop:isValid:boolean; prop:issueCount:number; prop:routes:KangurSocialProgrammableCaptureRouteValidation[]"
+        "normalizedShapeHash": "07c67cb48755",
+        "memberCount": 8,
+        "preview": "prop:category?:string | undefined; prop:from?:string | undefined; prop:page:number; prop:pageSize:number; prop:projectId?:string | undefined; prop:query?:string | undefined; prop:status?:UploadEventStatus; prop:to?:string | undefined"
       },
       "declarations": [
         {
-          "name": "KangurSocialProgrammableCaptureValidationResult",
+          "name": "UploadEventsQueryInput",
           "kind": "type",
-          "path": "src/features/kangur/social/shared/social-playwright-capture.ts",
-          "line": 126,
-          "domain": "feature:kangur",
+          "path": "src/app/api/system/upload-events/handler.helpers.ts",
+          "line": 6,
+          "domain": "app",
           "usageCount": 0
         },
         {
-          "name": "PlaywrightCaptureValidationResult",
+          "name": "ListFileUploadEventsInput",
           "kind": "type",
-          "path": "src/features/playwright/engine/playwright-capture-validator.ts",
-          "line": 9,
-          "domain": "feature:playwright",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0001",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "feature:filemaker"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "4b53a736335a",
-        "memberCount": 2,
-        "preview": "prop:count:number; prop:reason:string"
-      },
-      "declarations": [
-        {
-          "name": "FilemakerEmailCampaignSchedulerSkipReason",
-          "kind": "type",
-          "path": "src/features/filemaker/server/filemakerEmailCampaignScheduler.ts",
-          "line": 52,
-          "domain": "feature:filemaker",
-          "usageCount": 0
-        },
-        {
-          "name": "FilemakerEmailCampaignSchedulerSkipReason",
-          "kind": "type",
-          "path": "src/features/filemaker/settings/campaign-scheduling.ts",
-          "line": 8,
-          "domain": "feature:filemaker",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0002",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "feature:filemaker"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "f0c8f39807f9",
-        "memberCount": 2,
-        "preview": "prop:campaignId:string; prop:message:string"
-      },
-      "declarations": [
-        {
-          "name": "FilemakerEmailCampaignSchedulerLaunchFailure",
-          "kind": "type",
-          "path": "src/features/filemaker/server/filemakerEmailCampaignScheduler.ts",
-          "line": 57,
-          "domain": "feature:filemaker",
-          "usageCount": 0
-        },
-        {
-          "name": "FilemakerEmailCampaignSchedulerLaunchFailure",
-          "kind": "type",
-          "path": "src/features/filemaker/settings/campaign-scheduling.ts",
-          "line": 13,
-          "domain": "feature:filemaker",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0004",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "2830e80c052d",
-        "memberCount": 5,
-        "preview": "prop:page:number; prop:pageSize:number; prop:posts:KangurSocialPost[]; prop:statusCounts:Record<Exclude<KangurSocialPostListStatus, 'all'>, number>; prop:total:number"
-      },
-      "declarations": [
-        {
-          "name": "KangurSocialPostsPageResult",
-          "kind": "type",
-          "path": "src/features/kangur/social/hooks/useKangurSocialPosts.ts",
-          "line": 37,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        },
-        {
-          "name": "KangurSocialPostsPage",
-          "kind": "type",
-          "path": "src/features/kangur/social/server/social-posts-repository.ts",
+          "path": "src/shared/lib/files/services/file-upload-events.ts",
           "line": 27,
-          "domain": "feature:kangur",
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0006",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "app"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b7c51b836c0f",
+        "memberCount": 3,
+        "preview": "prop:connectionId:string; prop:inventoryId:string | null; prop:token:string"
+      },
+      "declarations": [
+        {
+          "name": "BaseMarketplaceProducerFetchContext",
+          "kind": "type",
+          "path": "src/app/api/marketplace/producers/fetch/handler.helpers.ts",
+          "line": 10,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "BaseMarketplaceTagFetchContext",
+          "kind": "type",
+          "path": "src/app/api/marketplace/tags/fetch/handler.helpers.ts",
+          "line": 10,
+          "domain": "app",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0007",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "app"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "7c552256f89c",
+        "memberCount": 1,
+        "preview": "NameLookupDto"
+      },
+      "declarations": [
+        {
+          "name": "ProducerNameLookupInput",
+          "kind": "type",
+          "path": "src/app/api/v2/products/producers/[id]/handler.helpers.ts",
+          "line": 11,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "ProducerCreateNameLookupInput",
+          "kind": "type",
+          "path": "src/app/api/v2/products/producers/handler.helpers.ts",
+          "line": 5,
+          "domain": "app",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0008",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "app"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "52bac63d5d00",
+        "memberCount": 1,
+        "preview": "CatalogNameLookupDto"
+      },
+      "declarations": [
+        {
+          "name": "ShippingGroupNameLookupInput",
+          "kind": "type",
+          "path": "src/app/api/v2/products/shipping-groups/[id]/handler.helpers.ts",
+          "line": 21,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "ProductTagNameLookupInput",
+          "kind": "type",
+          "path": "src/app/api/v2/products/tags/[id]/handler.helpers.ts",
+          "line": 11,
+          "domain": "app",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0011",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "70a7a713946e",
+        "memberCount": 2,
+        "preview": "prop:imageUrls:string[]; prop:localCandidates:string[]"
+      },
+      "declarations": [
+        {
+          "name": "TraderaCanonicalProductImageEntry",
+          "kind": "type",
+          "path": "src/features/integrations/services/tradera-listing/tradera-browser-images.helpers.ts",
+          "line": 39,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "VintedCanonicalProductImageEntry",
+          "kind": "type",
+          "path": "src/features/integrations/services/vinted-listing/vinted-browser-images.helpers.ts",
+          "line": 39,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0004",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "a87c53e3f39f",
+        "memberCount": 2,
+        "preview": "prop:connection:BasicTraderaConnection; prop:integrationId:string"
+      },
+      "declarations": [
+        {
+          "name": "ResolvedTraderaBrowserConnection",
+          "kind": "type",
+          "path": "src/features/integrations/hooks/useTraderaQuickExportConnection.ts",
+          "line": 21,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "ResolvedVintedBrowserConnection",
+          "kind": "type",
+          "path": "src/features/integrations/hooks/useVintedQuickExportConnection.ts",
+          "line": 17,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0007",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "5276e0acfc17",
+        "memberCount": 23,
+        "preview": "prop:contentBackground?:string | undefined; prop:contentTextColor?:string | undefined; prop:debounceMs?:number | undefined; prop:editorWidth?:number | null | undefined; prop:isCodeMode?:boolean | undefined; prop:isDraggingSplitter?:boolean | undefined; prop:isPasting?:boolean | undefined; prop:onChange?:(nextValue: string) => void"
+      },
+      "declarations": [
+        {
+          "name": "MarkdownSplitEditorProps",
+          "kind": "interface",
+          "path": "src/shared/lib/document-editor/components/MarkdownSplitEditor.tsx",
+          "line": 14,
+          "domain": "shared",
+          "usageCount": 0
+        },
+        {
+          "name": "MarkdownSplitEditorContextValue",
+          "kind": "interface",
+          "path": "src/shared/lib/document-editor/context/MarkdownSplitEditorContext.tsx",
+          "line": 8,
+          "domain": "shared",
           "usageCount": 0
         }
       ],

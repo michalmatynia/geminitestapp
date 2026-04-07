@@ -4,15 +4,18 @@ import {
   areProductListingsRecoveryContextsEqual,
   createBaseRecoveryContext,
   createTraderaRecoveryContext,
+  createVintedRecoveryContext,
   findTraderaRecoveryListing,
   isBaseQuickExportRecoveryContext,
   isTraderaQuickExportRecoveryContext,
+  isVintedQuickExportRecoveryContext,
   matchesProductListingsIntegrationScope,
   normalizeProductListingsIntegrationScope,
   readProductListingsRecoveryString,
   mergeProductListingsRecoveryContext,
   resolveProductListingsEmptyDescription,
   resolveTraderaRecoverySource,
+  resolveVintedRecoverySource,
   resolveProductListingsRecoveryIdentifiers,
   resolveProductListingsIntegrationScope,
   resolveProductListingsIntegrationScopeLabel,
@@ -64,6 +67,7 @@ describe('product-listings-recovery', () => {
   it('maps scoped labels for the known marketplace groups', () => {
     expect(resolveProductListingsIntegrationScopeLabel('base')).toBe('Base.com');
     expect(resolveProductListingsIntegrationScopeLabel('tradera')).toBe('Tradera');
+    expect(resolveProductListingsIntegrationScopeLabel('vinted')).toBe('Vinted.pl');
     expect(resolveProductListingsIntegrationScopeLabel('playwright-programmable')).toBe(
       'Playwright'
     );
@@ -86,6 +90,14 @@ describe('product-listings-recovery', () => {
       isTraderaQuickExportRecoveryContext({
         source: 'tradera_quick_export_auth_required',
         integrationSlug: 'tradera',
+        status: 'auth_required',
+        runId: null,
+      })
+    ).toBe(true);
+    expect(
+      isVintedQuickExportRecoveryContext({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
         status: 'auth_required',
         runId: null,
       })
@@ -149,6 +161,17 @@ describe('product-listings-recovery', () => {
       'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
     );
 
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+      })
+    ).toBe(
+      'The last Vinted.pl quick export stopped before a stable listing record was available. Refresh the Vinted browser session if needed, then retry the Vinted listing flow from this modal.'
+    );
+
     expect(resolveProductListingsEmptyDescription(null)).toBe(
       'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.'
     );
@@ -165,6 +188,10 @@ describe('product-listings-recovery', () => {
       'tradera_quick_export_auth_required'
     );
     expect(resolveTraderaRecoverySource('failed')).toBe('tradera_quick_export_failed');
+    expect(resolveVintedRecoverySource('auth_required')).toBe(
+      'vinted_quick_export_auth_required'
+    );
+    expect(resolveVintedRecoverySource('failed')).toBe('vinted_quick_export_failed');
   });
 
   it('extracts recovery identifiers from the recovery context', () => {
@@ -205,6 +232,27 @@ describe('product-listings-recovery', () => {
       requestId: 'job-tradera-1',
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
+    });
+  });
+
+  it('builds a normalized Vinted recovery context object', () => {
+    expect(
+      createVintedRecoveryContext({
+        status: 'needs_login',
+        runId: 'run-vinted-1',
+        requestId: 'job-vinted-1',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      })
+    ).toEqual({
+      source: 'vinted_quick_export_auth_required',
+      integrationSlug: 'vinted',
+      status: 'needs_login',
+      runId: 'run-vinted-1',
+      failureReason: null,
+      requestId: 'job-vinted-1',
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
     });
   });
 

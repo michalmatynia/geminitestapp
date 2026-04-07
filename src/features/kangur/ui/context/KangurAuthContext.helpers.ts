@@ -3,7 +3,15 @@ import type { KangurUser } from '@kangur/platform';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
+import type {
+  KangurAuthMode,
+  KangurAuthError,
+  KangurAuthContextValue,
+  KangurAuthStateContextValue,
+  KangurAuthActionsContextValue,
+  KangurAuthBootstrapSnapshot,
+  KangurAuthRuntimeSetters,
+} from '@/shared/contracts/kangur-auth';
 
 import {
   kangurPlatform,
@@ -16,61 +24,6 @@ import {
 export type KangurAuthCheckAppStateOptions = {
   timeoutMs?: number | null;
   useBootstrapCache?: boolean;
-};
-
-export type KangurAuthError = {
-  type: 'unknown' | 'auth_required' | 'user_not_registered';
-  message: string;
-};
-
-export type KangurAuthContextValue = {
-  user: KangurUser | null;
-  isAuthenticated: boolean;
-  hasResolvedAuth: boolean;
-  canAccessParentAssignments: boolean;
-  isLoadingAuth: boolean;
-  isLoggingOut?: boolean;
-  isLoadingPublicSettings: boolean;
-  authError: KangurAuthError | null;
-  appPublicSettings: null;
-  logout: (shouldRedirect?: boolean) => void;
-  navigateToLogin: (options?: { authMode?: KangurAuthMode }) => void;
-  checkAppState: (options?: KangurAuthCheckAppStateOptions) => Promise<KangurUser | null>;
-  selectLearner: (learnerId: string) => Promise<void>;
-};
-
-export type KangurAuthStateContextValue = Pick<
-  KangurAuthContextValue,
-  | 'user'
-  | 'isAuthenticated'
-  | 'hasResolvedAuth'
-  | 'canAccessParentAssignments'
-  | 'isLoadingAuth'
-  | 'isLoadingPublicSettings'
-  | 'authError'
-  | 'appPublicSettings'
->;
-
-export type KangurAuthActionsContextValue = Pick<
-  KangurAuthContextValue,
-  'logout' | 'navigateToLogin' | 'checkAppState' | 'selectLearner'
->;
-
-type KangurAuthBootstrapSnapshot = {
-  cachedUser: KangurUser | null | undefined;
-  hasResolvedAuth: boolean;
-  isAuthenticated: boolean;
-  isLoadingAuth: boolean;
-  user: KangurUser | null;
-};
-
-export type KangurAuthRuntimeSetters = {
-  authRequestVersionRef: { current: number };
-  setAuthError: (value: KangurAuthError | null) => void;
-  setHasResolvedAuth: (value: boolean) => void;
-  setIsAuthenticated: (value: boolean) => void;
-  setIsLoadingAuth: (value: boolean) => void;
-  setUser: (value: KangurUser | null) => void;
 };
 
 type KangurAuthRoutingSnapshot = {

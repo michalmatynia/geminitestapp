@@ -15,6 +15,8 @@ export const PROCESSING_STATUSES = new Set([
 export const FAILURE_STATUSES = new Set([
   'failed',
   'error',
+  'auth_required',
+  'needs_login',
   'removed',
   'archived',
 ]);

@@ -16,10 +16,17 @@ import {
 import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { z } from 'zod';
+
 const TRANSPARENT_GIF = Buffer.from(
   'R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==',
   'base64'
 );
+
+const querySchema = z.object({
+  token: optionalTrimmedQueryString(),
+});
 
 const buildTransparentPixelResponse = (): Response =>
   new Response(TRANSPARENT_GIF, {
@@ -33,8 +40,8 @@ const buildTransparentPixelResponse = (): Response =>
   });
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const token = req.nextUrl.searchParams.get('token');
-  const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token);
+  const { token } = querySchema.parse(Object.fromEntries(req.nextUrl.searchParams.entries()));
+  const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token ?? null);
   if (!tokenPayload?.campaignId) {
     return buildTransparentPixelResponse();
   }

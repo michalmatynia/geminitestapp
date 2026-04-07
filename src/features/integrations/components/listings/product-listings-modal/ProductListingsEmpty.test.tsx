@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { persistVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
 
 const {
   handleOpenTraderaLoginMock,
@@ -370,5 +371,37 @@ describe('ProductListingsEmpty', () => {
       'href',
       'https://www.tradera.com/item/725447805'
     );
+  });
+
+  it('renders a Vinted quick-export success banner when the row has not synced yet', () => {
+    persistVintedQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-vinted-1',
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
+      listingUrl: 'https://www.vinted.pl/items/456',
+      externalListingId: '456',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'vinted',
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Vinted.pl quick export completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.vinted.pl/items/456'
+    );
+    expect(screen.queryByText('No listings found')).toBeNull();
   });
 });

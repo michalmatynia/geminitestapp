@@ -1,18 +1,12 @@
 import type { CurrencyOption } from '@/shared/contracts/internationalization';
 import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import type { CodeNameDto } from '@/shared/contracts/base';
 
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';
 
-export type CountryFormState = {
-  code: string;
-  name: string;
-};
-
-export type CountryCodeOption = {
-  code: string;
-  name: string;
-};
+export type CountryFormState = CodeNameDto;
+export type CountryCodeOption = CodeNameDto;
 
 export const resolveCountryModalDefaults = (
   options: readonly CountryCodeOption[]

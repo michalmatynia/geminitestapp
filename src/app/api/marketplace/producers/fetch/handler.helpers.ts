@@ -1,23 +1,11 @@
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
+import type { IntegrationLookupRepository } from '@/shared/contracts/integrations/repositories';
 import type { MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 
-type ProducerFetchConnectionRecord = {
-  integrationId: string;
-  baseApiToken?: string | null;
-  baseLastInventoryId?: string | null;
-};
-
-type ProducerFetchIntegrationRecord = {
-  slug?: string | null;
-};
-
-export type ProducerFetchIntegrationRepository = {
-  getConnectionById: (id: string) => Promise<ProducerFetchConnectionRecord | null>;
-  getIntegrationById: (id: string) => Promise<ProducerFetchIntegrationRecord | null>;
-};
+export type ProducerFetchIntegrationRepository = IntegrationLookupRepository;
 
 export type BaseMarketplaceProducerFetchContext = {
   connectionId: string;

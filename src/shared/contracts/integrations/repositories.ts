@@ -64,6 +64,11 @@ export type IntegrationRepository = {
   ) => Promise<void>;
 };
 
+export type IntegrationLookupRepository = Pick<
+  IntegrationRepository,
+  'getConnectionById' | 'getIntegrationById'
+>;
+
 export type ExternalCategoryRepository = {
   syncFromBase: (connectionId: string, categories: BaseCategory[]) => Promise<number>;
   listByConnection: (connectionId: string) => Promise<ExternalCategory[]>;

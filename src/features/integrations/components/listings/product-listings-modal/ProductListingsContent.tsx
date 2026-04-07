@@ -4,6 +4,7 @@ import React from 'react';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
+import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
 import {
   useProductListingsData,
   useProductListingsModals,
@@ -12,6 +13,7 @@ import {
   areProductListingsRecoveryContextsEqual,
   createTraderaRecoveryContext,
   findTraderaRecoveryListing,
+  isVintedQuickExportRecoveryContext,
   mergeProductListingsRecoveryContext,
   resolveTraderaRecoveryMetadata,
   resolveTraderaRecoveryTarget,
@@ -29,7 +31,10 @@ import { renderProductListingItem } from './ProductListingItem';
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
+import { VintedQuickExportRecoveryBanner } from './VintedQuickExportRecoveryBanner';
+import { VintedQuickExportSuccessBanner } from './VintedQuickExportSuccessBanner';
 import { SUCCESS_STATUSES, normalizeMarketplaceStatus } from '@/features/integrations/public';
+import { findTrackedVintedListing } from '@/features/integrations/hooks/useVintedQuickExportFeedback';
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -81,6 +86,7 @@ export function ProductListingsContent(): React.JSX.Element {
   const { filteredListings, statusTargetLabel, filterIntegrationSlug, isBaseFilter, showSync } =
     useProductListingsViewContext();
   const { recoveryContext, setRecoveryContext } = useProductListingsModals();
+  const isVintedQuickExportRecovery = isVintedQuickExportRecoveryContext(recoveryContext);
   const {
     isRecovery: isTraderaQuickExportRecovery,
     requestId: recoveryRequestId,
@@ -114,9 +120,14 @@ export function ProductListingsContent(): React.JSX.Element {
   const fallbackRecoveryError = readString(fallbackRecoveryLastExecution['error']);
   const fallbackRecoveryFailureReason = fallbackRecoveryListing?.failureReason ?? null;
   const { feedback: persistedQuickListFeedback } = useTraderaQuickListFeedback(product.id);
+  const { feedback: persistedVintedQuickListFeedback } = useVintedQuickListFeedback(product.id);
   const trackedSuccessListing =
     persistedQuickListFeedback?.status === 'completed'
       ? findTrackedTraderaListing(filteredListings, persistedQuickListFeedback)
+      : null;
+  const trackedVintedSuccessListing =
+    persistedVintedQuickListFeedback?.status === 'completed'
+      ? findTrackedVintedListing(filteredListings, persistedVintedQuickListFeedback)
       : null;
   const displayListings =
     persistedQuickListFeedback?.status === 'completed' && trackedSuccessListing
@@ -129,16 +140,34 @@ export function ProductListingsContent(): React.JSX.Element {
               }
             : listing
         )
-      : filteredListings;
+      : persistedVintedQuickListFeedback?.status === 'completed' && trackedVintedSuccessListing
+        ? filteredListings.map((listing) =>
+            listing.id === trackedVintedSuccessListing.id &&
+            !SUCCESS_STATUSES.has(normalizeMarketplaceStatus(listing.status ?? ''))
+              ? {
+                  ...listing,
+                  status: 'active',
+                }
+              : listing
+          )
+        : filteredListings;
   const displayScopedStatus =
     persistedQuickListFeedback?.status === 'completed' &&
     isTraderaIntegrationSlug(filterIntegrationSlug)
       ? 'active'
-      : displayListings[0]?.status ?? 'Unknown';
+      : persistedVintedQuickListFeedback?.status === 'completed' &&
+          filterIntegrationSlug === 'vinted'
+        ? 'active'
+        : displayListings[0]?.status ?? 'Unknown';
   const shouldShowQuickListSuccessBanner = Boolean(
     !isTraderaQuickExportRecovery &&
       persistedQuickListFeedback?.status === 'completed' &&
       (isTraderaIntegrationSlug(filterIntegrationSlug) || trackedSuccessListing)
+  );
+  const shouldShowVintedQuickListSuccessBanner = Boolean(
+    !isVintedQuickExportRecovery &&
+      persistedVintedQuickListFeedback?.status === 'completed' &&
+      (filterIntegrationSlug === 'vinted' || trackedVintedSuccessListing)
   );
   const recoveryNeedsManualLogin =
     isTraderaQuickExportRecovery &&
@@ -211,6 +240,13 @@ export function ProductListingsContent(): React.JSX.Element {
           listing={trackedSuccessListing}
         />
       ) : null}
+      {shouldShowVintedQuickListSuccessBanner && persistedVintedQuickListFeedback ? (
+        <VintedQuickExportSuccessBanner
+          mode='content'
+          feedback={persistedVintedQuickListFeedback}
+          listing={trackedVintedSuccessListing}
+        />
+      ) : null}
       {isTraderaQuickExportRecovery && (
         <TraderaQuickExportRecoveryBanner
           mode='content'
@@ -221,6 +257,19 @@ export function ProductListingsContent(): React.JSX.Element {
           canContinue={canOpenTraderaRecoveryLogin}
           integrationId={recoveryIntegrationId}
           connectionId={recoveryConnectionId}
+        />
+      )}
+      {isVintedQuickExportRecovery && (
+        <VintedQuickExportRecoveryBanner
+          mode='content'
+          status={recoveryContext?.status}
+          requestId={recoveryContext?.requestId}
+          runId={recoveryContext?.runId}
+          failureReason={
+            recoveryContext && 'failureReason' in recoveryContext
+              ? recoveryContext.failureReason ?? null
+              : null
+          }
         />
       )}
       {filterIntegrationSlug && (

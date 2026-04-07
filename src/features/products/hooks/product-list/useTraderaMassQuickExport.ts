@@ -17,6 +17,7 @@ import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { useToast } from '@/shared/ui/toast';
+import type { ProgressSnapshotDto } from '@/shared/contracts/base';
 
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -27,11 +28,7 @@ type ResolvedConnection = {
   connectionId: string;
 };
 
-export type MassQuickExportProgress = {
-  current: number;
-  total: number;
-  errors: number;
-};
+export type MassQuickExportProgress = ProgressSnapshotDto;
 
 const hasPlaywrightListingScriptConfigured = (
   connection: BasicTraderaConnection

@@ -8,13 +8,13 @@ import {
   useRebuildIndexesMutation,
   useRunLogInsight,
   useInterpretLog,
-} from '@/features/observability/hooks/useLogMutations';
+} from '../hooks/useLogMutations';
 import {
   useSystemLogs,
   useSystemLogMetrics,
   useMongoDiagnostics,
   useLogInsights,
-} from '@/features/observability/hooks/useLogQueries';
+} from '../hooks/useLogQueries';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
   ClearLogsTargetDto as ClearLogsTarget,
@@ -32,16 +32,16 @@ import {
   parseMinDurationInput,
   parseStatusCodeInput,
   systemLogFilterFields,
-} from './SystemLogsContext.shared';
+} from '../utils/log-parsing';
 import {
   readSystemLogUrlState,
   writeSystemLogUrlState,
-} from '@/features/observability/lib/system-log-filter-url-state';
+} from '../utils/system-log-filter-url-state';
 
 import type {
   SystemLogsActionsContextValue,
   SystemLogsStateContextValue,
-} from './SystemLogsContext.shared';
+} from '@/shared/contracts/ui/observability-context';
 
 const {
   Context: SystemLogsStateContext,

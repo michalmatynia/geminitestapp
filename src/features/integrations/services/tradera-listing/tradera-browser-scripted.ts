@@ -50,6 +50,28 @@ const normalizeDuplicateSearchTitle = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const buildDuplicateSearchTerms = (values: unknown[]): string[] => {
+  const terms: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    const normalized = normalizeDuplicateSearchTitle(value);
+    if (!normalized) {
+      continue;
+    }
+
+    const dedupeKey = normalized.toLowerCase();
+    if (seen.has(dedupeKey)) {
+      continue;
+    }
+
+    seen.add(dedupeKey);
+    terms.push(normalized);
+  }
+
+  return terms;
+};
+
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
@@ -233,6 +255,7 @@ export const buildTraderaScriptInput = async ({
   const imageUploadPlan = await resolveTraderaProductImageUploadPlan(product);
   const imageUrls = imageUploadPlan.imageUrls.map((url) => toAbsoluteUrl(url, appBaseUrl));
   const localImagePaths = imageUploadPlan.localImagePaths;
+  const duplicateSearchTerms = buildDuplicateSearchTerms([product.name_en]);
   const priceResolution = await resolveTraderaListingPriceForProduct({
     product,
     targetCurrencyCode: 'EUR',
@@ -270,7 +293,8 @@ export const buildTraderaScriptInput = async ({
     existingListingUrl,
     baseProductId: product.baseProductId ?? product.id,
     sku: product.sku ?? null,
-    duplicateSearchTitle: normalizeDuplicateSearchTitle(product.name_en),
+    duplicateSearchTitle: duplicateSearchTerms[0] ?? null,
+    duplicateSearchTerms,
     rawDescriptionEn: toTrimmedString(product.description_en) || null,
     title,
     description,

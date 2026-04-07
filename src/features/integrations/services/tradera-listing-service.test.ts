@@ -4,6 +4,7 @@ import { badRequestError, internalError } from '@/shared/errors/app-error';
 
 const {
   findProductListingByIdAcrossProvidersMock,
+  listProductListingsByProductIdAcrossProvidersMock,
   getConnectionByIdMock,
   getIntegrationByIdMock,
   loadTraderaSystemSettingsMock,
@@ -14,6 +15,7 @@ const {
   captureExceptionMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
+  listProductListingsByProductIdAcrossProvidersMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   loadTraderaSystemSettingsMock: vi.fn(),
@@ -27,6 +29,8 @@ const {
 vi.mock('@/features/integrations/server', () => ({
   findProductListingByIdAcrossProviders: (...args: unknown[]) =>
     findProductListingByIdAcrossProvidersMock(...args) as Promise<unknown>,
+  listProductListingsByProductIdAcrossProviders: (...args: unknown[]) =>
+    listProductListingsByProductIdAcrossProvidersMock(...args) as Promise<unknown>,
   getIntegrationRepository: async () => ({
     getConnectionById: getConnectionByIdMock,
     getIntegrationById: getIntegrationByIdMock,
@@ -68,6 +72,7 @@ describe('processTraderaListingJob', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     loadTraderaSystemSettingsMock.mockResolvedValue({});
+    listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([]);
     resolveEffectiveListingSettingsMock.mockReturnValue({
       durationHours: 48,
       autoRelistEnabled: true,
@@ -87,6 +92,97 @@ describe('processTraderaListingJob', () => {
       id: 'integration-1',
       slug: 'tradera',
     });
+  });
+
+  it('short-circuits list jobs when a linked Tradera record already exists for the same product and connection', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        externalListingId: null,
+        listedAt: null,
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([
+      {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        externalListingId: null,
+        marketplaceData: null,
+      },
+      {
+        id: 'listing-linked-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        externalListingId: '721891408',
+        marketplaceData: {
+          listingUrl:
+            'https://www.tradera.com/en/item/292901/721891408/the-alien-4-cm-pin-alf',
+        },
+      },
+    ]);
+
+    await processTraderaListingJob({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'manual',
+      jobId: 'job-tradera-existing-link',
+    });
+
+    expect(runTraderaBrowserListingMock).not.toHaveBeenCalled();
+    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'active');
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: '721891408',
+        listedAt: null,
+        expiresAt: null,
+        nextRelistAt: null,
+        failureReason: null,
+        marketplaceData: expect.objectContaining({
+          marketplace: 'tradera',
+          listingUrl:
+            'https://www.tradera.com/en/item/292901/721891408/the-alien-4-cm-pin-alf',
+          externalListingId: '721891408',
+          tradera: expect.objectContaining({
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-existing-link',
+              ok: true,
+              action: 'list',
+              source: 'manual',
+              metadata: expect.objectContaining({
+                duplicateLinked: true,
+                duplicateMatchStrategy: 'existing-linked-record',
+                persistedLinkedListingGuard: true,
+                linkedListingId: 'listing-linked-1',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: '721891408',
+        requestId: 'job-tradera-existing-link',
+      })
+    );
   });
 
   it('uses headed browser mode for API-triggered Tradera runs when the connection disables headless mode', async () => {

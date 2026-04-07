@@ -8,9 +8,11 @@ import {
 import {
   getProductListingRepository,
   listingExistsAcrossProviders,
+  listProductListingsByProductIdAcrossProviders,
 } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { listCanonicalBaseProductListings } from '@/features/integrations/services/base-listing-canonicalization';
+import { resolvePersistedTraderaLinkedTarget } from '@/features/integrations/services/tradera-listing/utils';
 import {
   enqueuePlaywrightListingJob,
   enqueueTraderaListingJob,
@@ -120,6 +122,35 @@ export async function POST_handler(
         productId,
         connectionId: data.connectionId,
       });
+    }
+
+    if (isTraderaIntegrationSlug(integration.slug)) {
+      const productListings = await listProductListingsByProductIdAcrossProviders(productId);
+      const linkedTraderaListing = productListings.find((listing) => {
+        if (listing.connectionId !== data.connectionId) {
+          return false;
+        }
+
+        const linkedTarget = resolvePersistedTraderaLinkedTarget({
+          externalListingId: listing.externalListingId,
+          marketplaceData: listing.marketplaceData,
+        });
+        return Boolean(linkedTarget.externalListingId || linkedTarget.listingUrl);
+      });
+
+      if (linkedTraderaListing) {
+        const linkedTarget = resolvePersistedTraderaLinkedTarget({
+          externalListingId: linkedTraderaListing.externalListingId,
+          marketplaceData: linkedTraderaListing.marketplaceData,
+        });
+        throw conflictError('Product is already linked to a Tradera listing on this account', {
+          productId,
+          connectionId: data.connectionId,
+          listingId: linkedTraderaListing.id,
+          externalListingId: linkedTarget.externalListingId,
+          listingUrl: linkedTarget.listingUrl,
+        });
+      }
     }
 
     const listing = await listingRepo.createListing({

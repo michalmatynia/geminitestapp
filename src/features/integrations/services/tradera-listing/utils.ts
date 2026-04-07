@@ -127,6 +127,45 @@ export const findVisibleLocator = async (page: Page, selectors: string[]) => {
 export const buildCanonicalTraderaListingUrl = (externalListingId: string): string =>
   `https://www.tradera.com/item/${externalListingId}`;
 
+export const resolvePersistedTraderaLinkedTarget = ({
+  externalListingId,
+  marketplaceData,
+}: {
+  externalListingId: unknown;
+  marketplaceData: unknown;
+}): {
+  externalListingId: string | null;
+  listingUrl: string | null;
+} => {
+  const marketplaceRecord = toRecord(marketplaceData);
+  const traderaRecord = toRecord(marketplaceRecord['tradera']);
+  const resolvedExternalListingId =
+    (typeof marketplaceRecord['externalListingId'] === 'string' &&
+    marketplaceRecord['externalListingId'].trim()
+      ? marketplaceRecord['externalListingId'].trim()
+      : null) ||
+    (typeof traderaRecord['externalListingId'] === 'string' &&
+    traderaRecord['externalListingId'].trim()
+      ? traderaRecord['externalListingId'].trim()
+      : null) ||
+    (typeof externalListingId === 'string' && externalListingId.trim()
+      ? externalListingId.trim()
+      : null);
+  const resolvedListingUrl =
+    (typeof marketplaceRecord['listingUrl'] === 'string' && marketplaceRecord['listingUrl'].trim()
+      ? marketplaceRecord['listingUrl'].trim()
+      : null) ||
+    (typeof traderaRecord['listingUrl'] === 'string' && traderaRecord['listingUrl'].trim()
+      ? traderaRecord['listingUrl'].trim()
+      : null) ||
+    (resolvedExternalListingId ? buildCanonicalTraderaListingUrl(resolvedExternalListingId) : null);
+
+  return {
+    externalListingId: resolvedExternalListingId,
+    listingUrl: resolvedListingUrl,
+  };
+};
+
 export const extractExternalListingId = (url: string): string | null => {
   const listingIdPattern = /\/(?:item\/(?:\d+\/)?|listing\/)(\d{6,})(?:[/?#]|$)/i;
   try {

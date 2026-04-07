@@ -692,13 +692,117 @@ export const PART_4 = String.raw`);
       { fallbackToFirstVisible: true }
     );
     const optionChecked = optionCheckbox ? await isCheckboxChecked(optionCheckbox) : null;
+    const optionMetadata = optionCheckbox
+      ? await optionCheckbox
+          .evaluate((element) => {
+            return {
+              tagName: element.tagName.toLowerCase(),
+              role: element.getAttribute('role') || null,
+              dataState: element.getAttribute('data-state') || null,
+              value: element.getAttribute('value') || null,
+            };
+          })
+          .catch(() => null)
+      : null;
+    const priceInputMetadata = shippingPriceInput
+      ? await shippingPriceInput
+          .evaluate((element) => {
+            return {
+              required:
+                element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
+                  ? element.required
+                  : element.hasAttribute('required'),
+              inputMode: element.getAttribute('inputmode') || null,
+              valueLength:
+                element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
+                  ? element.value.length
+                  : String(element.textContent || '').length,
+            };
+          })
+          .catch(() => null)
+      : null;
 
     return {
       priceValue,
       saveButtonVisible: Boolean(saveButton),
       saveButtonDisabled,
       optionChecked,
+      optionTagName: optionMetadata?.tagName ?? null,
+      optionRole: optionMetadata?.role ?? null,
+      optionDataState: optionMetadata?.dataState ?? null,
+      optionValue: optionMetadata?.value ?? null,
+      priceInputRequired: priceInputMetadata?.required ?? null,
+      priceInputMode: priceInputMetadata?.inputMode ?? null,
+      priceValueLength: priceInputMetadata?.valueLength ?? null,
     };
+  };
+
+  const refreshShippingDialogOptionSelection = async (shippingDialog) => {
+    const initialOptionCheckbox = await findCheckboxByLabelsWithin(
+      shippingDialog,
+      SHIPPING_DIALOG_OPTION_LABELS,
+      { fallbackToFirstVisible: true }
+    );
+    if (!initialOptionCheckbox) {
+      return {
+        optionAvailable: false,
+        initialChecked: null,
+        toggledOff: false,
+        toggledOn: false,
+        finalChecked: null,
+      };
+    }
+
+    const initialChecked = await isCheckboxChecked(initialOptionCheckbox);
+    let toggledOff = false;
+
+    if (initialChecked === true) {
+      toggledOff = await setCheckboxChecked(
+        initialOptionCheckbox,
+        SHIPPING_DIALOG_OPTION_LABELS,
+        false,
+        shippingDialog
+      );
+      if (toggledOff) {
+        await wait(250);
+      }
+    }
+
+    const refreshedOptionCheckbox = await findCheckboxByLabelsWithin(
+      shippingDialog,
+      SHIPPING_DIALOG_OPTION_LABELS,
+      { fallbackToFirstVisible: true }
+    );
+    const toggledOn = refreshedOptionCheckbox
+      ? await setCheckboxChecked(
+          refreshedOptionCheckbox,
+          SHIPPING_DIALOG_OPTION_LABELS,
+          true,
+          shippingDialog
+        )
+      : false;
+    if (toggledOn) {
+      await wait(250);
+    }
+
+    const finalOptionCheckbox = await findCheckboxByLabelsWithin(
+      shippingDialog,
+      SHIPPING_DIALOG_OPTION_LABELS,
+      { fallbackToFirstVisible: true }
+    );
+    const finalChecked = finalOptionCheckbox
+      ? await isCheckboxChecked(finalOptionCheckbox)
+      : null;
+
+    const refreshState = {
+      optionAvailable: true,
+      initialChecked,
+      toggledOff,
+      toggledOn,
+      finalChecked,
+    };
+    log?.('tradera.quicklist.delivery.option_refresh', refreshState);
+    return refreshState;
   };
 
   const findVisibleWishlistFavoritesDialog = async () => {
@@ -886,7 +990,7 @@ export const PART_4 = String.raw`);
     rawPriceValue,
   }) => {
     const candidateValues = buildShippingDialogPriceEntryVariants(rawPriceValue);
-    const inputMethods = ['default', 'paste'];
+    const inputMethods = ['type', 'default', 'paste'];
     const attempts = [];
 
     for (const inputMethod of inputMethods) {
@@ -907,6 +1011,7 @@ export const PART_4 = String.raw`);
 
         let saveButton = await waitForShippingDialogSaveReady(shippingDialog, 1_500);
         let optionChecked = null;
+        let selectionRefresh = null;
 
         if (!saveButton) {
           const optionCheckbox = await findCheckboxByLabelsWithin(
@@ -926,6 +1031,33 @@ export const PART_4 = String.raw`);
             saveButton = await waitForShippingDialogSaveReady(shippingDialog, 1_000);
             optionChecked = await isCheckboxChecked(optionCheckbox);
           }
+
+          if (!saveButton) {
+            selectionRefresh = await refreshShippingDialogOptionSelection(shippingDialog);
+            optionChecked = selectionRefresh.finalChecked;
+
+            const refreshedDialogReady = await waitForShippingDialogPriceInputReady(
+              shippingDialog,
+              2_000
+            );
+            const activeShippingPriceInput =
+              refreshedDialogReady?.shippingPriceInput || shippingPriceInput;
+
+            await setAndVerifyFieldValue({
+              locator: activeShippingPriceInput,
+              value: candidateValue,
+              fieldKey: 'delivery-price',
+              errorPrefix: 'FAIL_SHIPPING_SET',
+              normalize: normalizePriceValue,
+              inputMethod: 'type',
+            });
+            await confirmShippingDialogPriceValue(
+              activeShippingPriceInput,
+              expectedNormalizedPriceValue
+            );
+            await commitShippingDialogPriceInput(activeShippingPriceInput);
+            saveButton = await waitForShippingDialogSaveReady(shippingDialog, 2_000);
+          }
         } else {
           const optionCheckbox = await findCheckboxByLabelsWithin(
             shippingDialog,
@@ -940,6 +1072,11 @@ export const PART_4 = String.raw`);
           inputMethod,
           saveReady: Boolean(saveButton),
           optionChecked,
+          selectionRefreshApplied: Boolean(
+            selectionRefresh &&
+              (selectionRefresh.toggledOff || selectionRefresh.toggledOn)
+          ),
+          selectionRefreshFinalChecked: selectionRefresh?.finalChecked ?? null,
         };
         attempts.push(attemptSummary);
         log?.('tradera.quicklist.delivery.price_attempt', attemptSummary);

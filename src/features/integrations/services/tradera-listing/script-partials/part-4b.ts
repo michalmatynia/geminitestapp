@@ -1173,7 +1173,13 @@ export const PART_4B = String.raw`
     return removedCount;
   };
 
-  const checkDuplicate = async (term) => {
+  const checkDuplicate = async (terms) => {
+    const resolveDuplicateSearchTerms = () => {
+      const firstTerm = Array.isArray(terms) ? terms[0] : terms;
+      const normalized = normalizeWhitespace(firstTerm || duplicateSearchTitle || '');
+      return normalized ? [normalized] : [];
+    };
+    const searchTerms = resolveDuplicateSearchTerms();
     const createDefaultDuplicateResult = () => ({
       duplicateFound: false,
       listingUrl: null,
@@ -1181,164 +1187,205 @@ export const PART_4B = String.raw`
       matchStrategy: null,
       matchedProductId: null,
       candidateCount: 0,
-      searchTitle: term || null,
+      searchTitle: searchTerms[0] || null,
     });
     const identifiersMatch = (left, right) =>
       normalizeWhitespace(left).toLowerCase() === normalizeWhitespace(right).toLowerCase();
 
-    if (!term) {
+    if (searchTerms.length === 0) {
       log?.('tradera.quicklist.duplicate.skipped', {
-        reason: 'english-title-missing',
+        reason: 'search-terms-missing',
         listingAction,
         existingExternalListingId: existingExternalListingId || null,
         duplicateSearchTitle: duplicateSearchTitle || null,
+        duplicateSearchTerms: searchTerms,
       });
       return createDefaultDuplicateResult();
     }
 
-    const activeContextReady = await ensureActiveListingsContext();
-    if (!activeContextReady) {
-      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings context could not be confirmed.');
-    }
-    const searchInput = await openActiveSearchInput();
-    if (!searchInput) {
-      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings search input not found.');
-    }
+    let hadTrustedNoDuplicateSignal = false;
+    const uncertainSearchAttempts = [];
 
-    const candidatePreviewBeforeSearch = await collectVisibleListingCandidatePreview();
-    log?.('tradera.quicklist.duplicate.search_prepare', {
-      term,
-      listingAction,
-      allowDuplicateLinking,
-      candidatePreviewBeforeSearch,
-      currentUrl: page.url(),
-    });
-
-    const preparedSearchValue = await prepareActiveListingsSearchInput(searchInput, term);
-    const searchTrigger = await triggerActiveSearchSubmit();
-    await wait(1200);
-    const searchInputValue = await readActiveSearchInputValue(searchInput);
-    const candidatePreviewAfterSearch = await collectVisibleListingCandidatePreview();
-    const searchStateChanged =
-      JSON.stringify(candidatePreviewBeforeSearch) !== JSON.stringify(candidatePreviewAfterSearch);
-    log?.('tradera.quicklist.duplicate.search_state', {
-      term,
-      preparedSearchValue,
-      searchInputValue,
-      searchTrigger,
-      searchStateChanged,
-      candidatePreviewBeforeSearch,
-      candidatePreviewAfterSearch,
-      currentUrl: page.url(),
-    });
-
-    const duplicateMatches = await collectListingLinksForTerm(term);
-    log?.('tradera.quicklist.duplicate.search', {
-      term,
-      preparedSearchValue,
-      searchInputValue,
-      searchTrigger,
-      candidateCount: duplicateMatches.length,
-      candidateScanMode: 'all-visible',
-      searchStateChanged,
-      listingAction,
-      allowDuplicateLinking,
-    });
-
-    if (duplicateMatches.length === 0) {
-      log?.('tradera.quicklist.duplicate.result', {
-        term,
-        duplicateFound: false,
-        matchStrategy: null,
-        candidateCount: 0,
-        listingUrl: null,
-        listingId: null,
-      });
-      return createDefaultDuplicateResult();
-    }
-
-    // Inspect every title-matched candidate: Phase 1 = description match, Phase 2 = product ID match
-    for (const candidate of duplicateMatches) {
-      let inspectedCandidate = null;
-      try {
-        inspectedCandidate = await inspectDuplicateCandidateListing(candidate);
-      } catch (error) {
-        throw new Error(
-          'FAIL_DUPLICATE_UNCERTAIN: Duplicate inspection failed for Tradera listing ' +
-            String(candidate?.listingId || candidate?.listingUrl || 'unknown') +
-            '. ' +
-            (error instanceof Error ? error.message : String(error))
-        );
+    for (const searchTerm of searchTerms) {
+      const activeContextReady = await ensureActiveListingsContext();
+      if (!activeContextReady) {
+        throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings context could not be confirmed.');
+      }
+      const searchInput = await openActiveSearchInput();
+      if (!searchInput) {
+        throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings search input not found.');
       }
 
-      const resolvedListingUrl = inspectedCandidate?.listingUrl || candidate.listingUrl;
-      const resolvedListingId =
-        inspectedCandidate?.listingId || candidate.listingId || extractListingId(candidate.listingUrl);
-      const descriptionMatched = rawDescriptionEn
-        ? descriptionsMatch(inspectedCandidate?.listingDescription || '', rawDescriptionEn)
-        : false;
-
-      log?.('tradera.quicklist.duplicate.inspect', {
-        term,
-        listingUrl: resolvedListingUrl,
-        listingId: resolvedListingId,
-        matchedProductId: inspectedCandidate?.matchedProductId || null,
-        expectedProductId: baseProductId,
-        descriptionMatched,
+      const candidatePreviewBeforeSearch = await collectVisibleListingCandidatePreview();
+      log?.('tradera.quicklist.duplicate.search_prepare', {
+        term: searchTerm,
+        listingAction,
+        allowDuplicateLinking,
+        candidatePreviewBeforeSearch,
+        currentUrl: page.url(),
       });
 
-      // Phase 1: description match
-      if (descriptionMatched) {
-        log?.('tradera.quicklist.duplicate.result', {
-          term,
-          duplicateFound: true,
-          matchStrategy: 'title+description',
-          candidateCount: duplicateMatches.length,
-          listingUrl: resolvedListingUrl,
-          listingId: resolvedListingId,
-          matchedProductId: inspectedCandidate?.matchedProductId || null,
-        });
+      const preparedSearchValue = await prepareActiveListingsSearchInput(searchInput, searchTerm);
+      const searchTrigger = await triggerActiveSearchSubmit();
+      await wait(1200);
+      const searchInputValue = await readActiveSearchInputValue(searchInput);
+      const candidatePreviewAfterSearch = await collectVisibleListingCandidatePreview();
+      const searchStateChanged =
+        JSON.stringify(candidatePreviewBeforeSearch) !== JSON.stringify(candidatePreviewAfterSearch);
+      log?.('tradera.quicklist.duplicate.search_state', {
+        term: searchTerm,
+        preparedSearchValue,
+        searchInputValue,
+        searchTrigger,
+        searchStateChanged,
+        candidatePreviewBeforeSearch,
+        candidatePreviewAfterSearch,
+        currentUrl: page.url(),
+      });
 
-        return {
-          duplicateFound: true,
-          listingUrl: resolvedListingUrl,
-          listingId: resolvedListingId,
-          matchStrategy: 'title+description',
-          matchedProductId: inspectedCandidate?.matchedProductId || null,
-          candidateCount: duplicateMatches.length,
-          searchTitle: term,
-        };
+      const duplicateMatches = await collectListingLinksForTerm(searchTerm);
+      const visibleCandidates = await collectVisibleListingCandidates(8);
+      const inspectionCandidates = duplicateMatches;
+      const nonExactVisibleCandidateCount = visibleCandidates.filter(
+        (candidate) => !titlesExactlyMatch(candidate?.title || '', searchTerm)
+      ).length;
+
+      const hadVisibleCandidates =
+        candidatePreviewBeforeSearch.length > 0 ||
+        candidatePreviewAfterSearch.length > 0 ||
+        visibleCandidates.length > 0;
+      const uncertainSearch =
+        normalizeWhitespace(searchInputValue).toLowerCase() ===
+          normalizeWhitespace(searchTerm).toLowerCase() &&
+        !searchStateChanged &&
+        inspectionCandidates.length === 0 &&
+        hadVisibleCandidates;
+
+      log?.('tradera.quicklist.duplicate.search', {
+        term: searchTerm,
+        preparedSearchValue,
+        searchInputValue,
+        searchTrigger,
+        candidateCount: duplicateMatches.length,
+        visibleCandidateCount: visibleCandidates.length,
+        exactTitleCandidateCount: duplicateMatches.length,
+        inspectionCandidateCount: inspectionCandidates.length,
+        nonExactVisibleCandidateCount,
+        candidateScanMode: 'exact-english-title-search-matches-only',
+        searchStateChanged,
+        uncertainSearch,
+        listingAction,
+        allowDuplicateLinking,
+      });
+
+      if (uncertainSearch) {
+        uncertainSearchAttempts.push({
+          term: searchTerm,
+          preparedSearchValue,
+          searchInputValue,
+          searchTrigger,
+          candidatePreviewBeforeSearch,
+          candidatePreviewAfterSearch,
+          visibleCandidateCount: visibleCandidates.length,
+          nonExactVisibleCandidateCount,
+        });
+      } else {
+        hadTrustedNoDuplicateSignal = true;
       }
 
-      // Phase 2: product ID match
-      if (identifiersMatch(baseProductId, inspectedCandidate?.matchedProductId || '')) {
-        log?.('tradera.quicklist.duplicate.result', {
-          term,
-          duplicateFound: true,
-          matchStrategy: 'title+product-id',
-          candidateCount: duplicateMatches.length,
+      for (const candidate of inspectionCandidates) {
+        let inspectedCandidate = null;
+        try {
+          inspectedCandidate = await inspectDuplicateCandidateListing(candidate);
+        } catch (error) {
+          throw new Error(
+            'FAIL_DUPLICATE_UNCERTAIN: Duplicate inspection failed for Tradera listing ' +
+              String(candidate?.listingId || candidate?.listingUrl || 'unknown') +
+              '. ' +
+              (error instanceof Error ? error.message : String(error))
+          );
+        }
+
+        const resolvedListingUrl = inspectedCandidate?.listingUrl || candidate.listingUrl;
+        const resolvedListingId =
+          inspectedCandidate?.listingId ||
+          candidate.listingId ||
+          extractListingId(candidate.listingUrl);
+        const descriptionMatched = rawDescriptionEn
+          ? descriptionsMatch(inspectedCandidate?.listingDescription || '', rawDescriptionEn)
+          : false;
+
+        log?.('tradera.quicklist.duplicate.inspect', {
+          term: searchTerm,
           listingUrl: resolvedListingUrl,
           listingId: resolvedListingId,
           matchedProductId: inspectedCandidate?.matchedProductId || null,
+          expectedProductId: baseProductId,
+          descriptionMatched,
         });
 
-        return {
-          duplicateFound: true,
-          listingUrl: resolvedListingUrl,
-          listingId: resolvedListingId,
-          matchStrategy: 'title+product-id',
-          matchedProductId: inspectedCandidate?.matchedProductId || null,
-          candidateCount: duplicateMatches.length,
-          searchTitle: term,
-        };
+        if (descriptionMatched) {
+          log?.('tradera.quicklist.duplicate.result', {
+            term: searchTerm,
+            duplicateFound: true,
+            matchStrategy: 'title+description',
+            candidateCount: inspectionCandidates.length,
+            listingUrl: resolvedListingUrl,
+            listingId: resolvedListingId,
+            matchedProductId: inspectedCandidate?.matchedProductId || null,
+          });
+
+          return {
+            duplicateFound: true,
+            listingUrl: resolvedListingUrl,
+            listingId: resolvedListingId,
+            matchStrategy: 'title+description',
+            matchedProductId: inspectedCandidate?.matchedProductId || null,
+            candidateCount: inspectionCandidates.length,
+            searchTitle: searchTerm,
+          };
+        }
+
+        if (identifiersMatch(baseProductId, inspectedCandidate?.matchedProductId || '')) {
+          log?.('tradera.quicklist.duplicate.result', {
+            term: searchTerm,
+            duplicateFound: true,
+            matchStrategy: 'title+product-id',
+            candidateCount: inspectionCandidates.length,
+            listingUrl: resolvedListingUrl,
+            listingId: resolvedListingId,
+            matchedProductId: inspectedCandidate?.matchedProductId || null,
+          });
+
+          return {
+            duplicateFound: true,
+            listingUrl: resolvedListingUrl,
+            listingId: resolvedListingId,
+            matchStrategy: 'title+product-id',
+            matchedProductId: inspectedCandidate?.matchedProductId || null,
+            candidateCount: inspectionCandidates.length,
+            searchTitle: searchTerm,
+          };
+        }
       }
+    }
+
+    if (uncertainSearchAttempts.length > 0 && !hadTrustedNoDuplicateSignal) {
+      log?.('tradera.quicklist.duplicate.uncertain', {
+        searchTerms,
+        attempts: uncertainSearchAttempts,
+      });
+      throw new Error(
+        'FAIL_DUPLICATE_UNCERTAIN: Active listings search results could not be confirmed for duplicate detection.'
+      );
     }
 
     log?.('tradera.quicklist.duplicate.result', {
-      term,
+      term: searchTerms[0] || null,
+      searchedTerms: searchTerms,
       duplicateFound: false,
       matchStrategy: null,
-      candidateCount: duplicateMatches.length,
+      candidateCount: 0,
       expectedProductId: baseProductId,
       listingUrl: null,
       listingId: null,

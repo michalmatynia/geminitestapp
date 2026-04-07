@@ -79,18 +79,18 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     return match && match[1] ? match[1] : null;
   };
 
-  const collectVisibleListingCandidatePreview = async (limit = 8) => {
+  const collectVisibleListingCandidates = async (limit = null) => {
     const candidates = page.locator('a[href*="/item/"], a[href*="/listing/"]');
     const count = await candidates.count().catch(() => 0);
-    const previewLimit =
+    const candidateLimit =
       typeof limit === 'number' && Number.isFinite(limit) && limit > 0
         ? Math.max(1, Math.floor(limit))
-        : 8;
-    const preview = [];
+        : null;
+    const collected = [];
     const seen = new Set();
 
     for (let index = 0; index < count; index += 1) {
-      if (preview.length >= previewLimit) {
+      if (candidateLimit !== null && collected.length >= candidateLimit) {
         break;
       }
 
@@ -103,11 +103,15 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
           const candidateContainer =
             element.closest('article, li, tr, [data-testid*="listing"], [data-testid*="item"], [class*="listing"], [class*="Listing"], [class*="result"], [class*="Result"]') ||
             element;
+          const titleElement = candidateContainer.querySelector(
+            'h1, h2, h3, h4, [data-testid*="title"], [data-testid*="Title"], [class*="title"], [class*="Title"]'
+          );
 
           return {
             href: element.getAttribute('href') || '',
             text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
             containerText: (candidateContainer.textContent || '').replace(/\s+/g, ' ').trim(),
+            titleText: ((titleElement && titleElement.textContent) || '').replace(/\s+/g, ' ').trim(),
           };
         })
         .catch(() => null);
@@ -124,68 +128,48 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       if (!dedupeKey || seen.has(dedupeKey)) continue;
 
       seen.add(dedupeKey);
-      preview.push({
+      collected.push({
         listingUrl,
         listingId,
-        text: normalizeWhitespace(candidateInfo.containerText || candidateInfo.text || '').slice(0, 160),
+        title: normalizeWhitespace(candidateInfo.titleText || ''),
+        text: normalizeWhitespace(candidateInfo.containerText || candidateInfo.text || ''),
       });
     }
 
-    return preview;
+    return collected;
+  };
+
+  const collectVisibleListingCandidatePreview = async (limit = 8) => {
+    const previewCandidates = await collectVisibleListingCandidates(limit);
+    return previewCandidates.map((candidate) => ({
+      listingUrl: candidate.listingUrl,
+      listingId: candidate.listingId,
+      title: normalizeWhitespace(candidate.title || '').slice(0, 120),
+      text: normalizeWhitespace(candidate.text || '').slice(0, 160),
+    }));
+  };
+
+  const titlesExactlyMatch = (left, right) => {
+    const normalizedLeft = normalizeWhitespace(left).toLowerCase();
+    const normalizedRight = normalizeWhitespace(right).toLowerCase();
+    return Boolean(normalizedLeft) && normalizedLeft === normalizedRight;
   };
 
   const collectListingLinksForTerm = async (term, maxMatches = null) => {
     const normalizedTerm = typeof term === 'string' ? term.trim().toLowerCase() : '';
     if (!normalizedTerm) return [];
 
-    const candidates = page.locator('a[href*="/item/"], a[href*="/listing/"]');
-    const count = await candidates.count().catch(() => 0);
     const matchLimit =
       typeof maxMatches === 'number' && Number.isFinite(maxMatches) && maxMatches > 0
         ? Math.max(1, Math.floor(maxMatches))
         : null;
+    const candidates = await collectVisibleListingCandidates();
     const matches = [];
-    const seen = new Set();
 
-    for (let index = 0; index < count; index += 1) {
-      const candidate = candidates.nth(index);
-      const visible = await candidate.isVisible().catch(() => false);
-      if (!visible) continue;
-
-      const candidateInfo = await candidate
-        .evaluate((element) => {
-          const candidateContainer =
-            element.closest('article, li, tr, [data-testid*="listing"], [data-testid*="item"], [class*="listing"], [class*="Listing"], [class*="result"], [class*="Result"]') ||
-            element;
-
-          return {
-            href: element.getAttribute('href') || '',
-            text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
-            containerText: (candidateContainer.textContent || '').replace(/\s+/g, ' ').trim(),
-          };
-        })
-        .catch(() => null);
-
-      if (!candidateInfo || !candidateInfo.href) continue;
-
-      const haystack = (candidateInfo.containerText || candidateInfo.text || '').toLowerCase();
-      if (!haystack.includes(normalizedTerm)) continue;
-
-      let listingUrl = candidateInfo.href;
-      try {
-        listingUrl = new URL(candidateInfo.href, page.url()).toString();
-      } catch {}
-
-      const listingId = extractListingId(listingUrl);
-      const dedupeKey = listingId || listingUrl;
-      if (!dedupeKey || seen.has(dedupeKey)) continue;
-
-      seen.add(dedupeKey);
-      matches.push({
-        listingUrl,
-        listingId,
-        text: candidateInfo.containerText || candidateInfo.text || '',
-      });
+    for (const candidate of candidates) {
+      const normalizedCandidateTitle = normalizeWhitespace(candidate.title || '').toLowerCase();
+      if (!normalizedCandidateTitle || normalizedCandidateTitle !== normalizedTerm) continue;
+      matches.push(candidate);
       if (matchLimit !== null && matches.length >= matchLimit) {
         break;
       }
@@ -812,13 +796,32 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
   };
 
   const setTextField = async (locator, value, options = {}) => {
-    const inputMethod = options?.inputMethod === 'paste' ? 'paste' : 'default';
+    const inputMethod =
+      options?.inputMethod === 'paste'
+        ? 'paste'
+        : options?.inputMethod === 'type'
+          ? 'type'
+          : 'default';
     const tagName = await locator.evaluate((element) => element.tagName.toLowerCase()).catch(() => '');
     const isContentEditable = await locator.evaluate((element) => element.isContentEditable).catch(() => false);
 
     if (inputMethod === 'paste') {
       await humanClick(locator, { pauseAfter: false }).catch(() => undefined);
       await setTextFieldDirectly(locator, value);
+      return;
+    }
+
+    if (inputMethod === 'type') {
+      await humanClick(locator, { pauseAfter: false }).catch(() => undefined);
+
+      if (tagName === 'input' || tagName === 'textarea' || isContentEditable) {
+        await clearFocusedEditableField();
+        await humanType(value, { pauseBefore: false, pauseAfter: false });
+        return;
+      }
+
+      await clearFocusedEditableField();
+      await humanType(value, { pauseBefore: false, pauseAfter: false });
       return;
     }
 

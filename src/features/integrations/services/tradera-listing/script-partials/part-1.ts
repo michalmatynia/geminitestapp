@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v105
+  // tradera-quicklist-default:v111
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -487,6 +487,35 @@ export const PART_1 = String.raw`export default async function run({
     String(value || '')
       .replace(/\s+/g, ' ')
       .trim();
+  const toUniqueTextList = (values, limit = 8) => {
+    const rawValues = Array.isArray(values) ? values : [values];
+    const maxItems =
+      typeof limit === 'number' && Number.isFinite(limit) && limit > 0
+        ? Math.max(1, Math.floor(limit))
+        : 8;
+    const seen = new Set();
+    const result = [];
+
+    for (const value of rawValues) {
+      const normalized = normalizeWhitespace(toText(value));
+      if (!normalized) {
+        continue;
+      }
+
+      const dedupeKey = normalized.toLowerCase();
+      if (seen.has(dedupeKey)) {
+        continue;
+      }
+
+      seen.add(dedupeKey);
+      result.push(normalized);
+      if (result.length >= maxItems) {
+        break;
+      }
+    }
+
+    return result;
+  };
   const hasPublishActionHint = (value) => {
     const normalized = normalizeWhitespace(value).toLowerCase();
     if (!normalized) {
@@ -512,13 +541,18 @@ export const PART_1 = String.raw`export default async function run({
       : 'list';
   const existingExternalListingId = toText(input?.existingExternalListingId);
   const existingListingUrl = toText(input?.existingListingUrl);
-  const duplicateSearchTitle = toText(input?.duplicateSearchTitle);
   const rawDescriptionEn = toText(input?.rawDescriptionEn);
   const allowDuplicateLinking = true;
   const sku = toText(input?.sku);
   const username = toText(input?.username);
   const password = toText(input?.password);
   const title = toText(input?.title) || 'Listing ' + baseProductId;
+  const duplicateSearchTerms = toUniqueTextList(
+    Array.isArray(input?.duplicateSearchTerms)
+      ? input.duplicateSearchTerms
+      : [input?.duplicateSearchTitle]
+  );
+  const duplicateSearchTitle = duplicateSearchTerms[0] || null;
   const PRODUCT_ID_PATTERN = /(item reference|product id)\s*:/i;
   const SKU_REFERENCE_PATTERN = /\bsku\s*:/i;
   const rawDescription = (toText(input?.description) || title).replace(/\s+$/g, '');

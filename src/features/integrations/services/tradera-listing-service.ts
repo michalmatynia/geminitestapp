@@ -23,6 +23,7 @@ import { isTraderaApiIntegrationSlug } from '@/features/integrations/constants/s
 import {
   findProductListingByIdAcrossProviders,
   getIntegrationRepository,
+  listProductListingsByProductIdAcrossProviders,
 } from '@/features/integrations/server';
 import {
   loadTraderaSystemSettings,
@@ -44,6 +45,7 @@ import {
   resolveExpiry,
   resolveNextRelistAt,
   toRecord,
+  resolvePersistedTraderaLinkedTarget,
 } from './tradera-listing/utils';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 
@@ -167,6 +169,48 @@ const buildTraderaHistoryFields = (
   return fields.length > 0 ? fields : null;
 };
 
+const resolveExistingLinkedTraderaListingCandidate = async ({
+  listingId,
+  productId,
+  connectionId,
+}: {
+  listingId: string;
+  productId: string;
+  connectionId: string;
+}): Promise<{
+  listingId: string;
+  externalListingId: string | null;
+  listingUrl: string | null;
+} | null> => {
+  const listings = await listProductListingsByProductIdAcrossProviders(productId);
+  const prioritizedCandidates = [
+    ...listings.filter((candidate) => candidate.id === listingId),
+    ...listings.filter((candidate) => candidate.id !== listingId),
+  ];
+
+  for (const candidate of prioritizedCandidates) {
+    if (candidate.connectionId !== connectionId) {
+      continue;
+    }
+
+    const linkedTarget = resolvePersistedTraderaLinkedTarget({
+      externalListingId: candidate.externalListingId,
+      marketplaceData: candidate.marketplaceData,
+    });
+    if (!linkedTarget.externalListingId && !linkedTarget.listingUrl) {
+      continue;
+    }
+
+    return {
+      listingId: candidate.id,
+      externalListingId: linkedTarget.externalListingId,
+      listingUrl: linkedTarget.listingUrl,
+    };
+  }
+
+  return null;
+};
+
 export const runTraderaListing = async (
   input: TraderaListingJobInput
 ): Promise<{
@@ -227,6 +271,34 @@ export const runTraderaListing = async (
     const systemSettings = await loadTraderaSystemSettings();
     const integrationSlug = integration.slug;
     const useApi = isTraderaApiIntegrationSlug(integrationSlug);
+    if (!useApi && action === 'list') {
+      const linkedTraderaListing = await resolveExistingLinkedTraderaListingCandidate({
+        listingId: listing.id,
+        productId: listing.productId,
+        connectionId: listing.connectionId,
+      });
+
+      if (linkedTraderaListing) {
+        return {
+          ok: true,
+          externalListingId: linkedTraderaListing.externalListingId,
+          listingUrl: linkedTraderaListing.listingUrl,
+          expiresAt: null,
+          nextRelistAt: null,
+          error: null,
+          errorCategory: null,
+          metadata: {
+            duplicateLinked: true,
+            duplicateMatchStrategy: 'existing-linked-record',
+            latestStage: 'duplicate_linked',
+            latestStageUrl: linkedTraderaListing.listingUrl,
+            publishVerified: false,
+            persistedLinkedListingGuard: true,
+            linkedListingId: linkedTraderaListing.listingId,
+          },
+        };
+      }
+    }
     const requestedBrowserMode = resolveRequestedTraderaBrowserMode({
       requestedBrowserMode: input.browserMode,
       source,

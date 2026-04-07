@@ -6,6 +6,7 @@ const {
   getIntegrationByIdMock,
   getConnectionByIdAndIntegrationMock,
   listingExistsAcrossProvidersMock,
+  listProductListingsByProductIdAcrossProvidersMock,
   createListingMock,
   enqueueTraderaListingJobMock,
   initializeQueuesMock,
@@ -15,6 +16,7 @@ const {
   getIntegrationByIdMock: vi.fn(),
   getConnectionByIdAndIntegrationMock: vi.fn(),
   listingExistsAcrossProvidersMock: vi.fn(),
+  listProductListingsByProductIdAcrossProvidersMock: vi.fn(),
   createListingMock: vi.fn(),
   enqueueTraderaListingJobMock: vi.fn(),
   initializeQueuesMock: vi.fn(),
@@ -33,6 +35,8 @@ vi.mock('@/features/integrations/server', () => ({
   }),
   listingExistsAcrossProviders: (...args: unknown[]) =>
     listingExistsAcrossProvidersMock(...args),
+  listProductListingsByProductIdAcrossProviders: (...args: unknown[]) =>
+    listProductListingsByProductIdAcrossProvidersMock(...args),
   getIntegrationRepository: async () => ({
     getIntegrationById: (...args: unknown[]) => getIntegrationByIdMock(...args),
     getConnectionByIdAndIntegration: (...args: unknown[]) =>
@@ -73,6 +77,7 @@ describe('integration product listings handler', () => {
       traderaDefaultTemplateId: null,
     });
     listingExistsAcrossProvidersMock.mockResolvedValue(false);
+    listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([]);
     createListingMock.mockResolvedValue({
       id: 'listing-1',
       productId: 'product-1',
@@ -122,6 +127,47 @@ describe('integration product listings handler', () => {
       details: {
         productId: 'product-1',
         connectionId: 'connection-tradera-1',
+      },
+    });
+    expect(createListingMock).not.toHaveBeenCalled();
+    expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
+  });
+
+  it('returns a conflict when a linked Tradera listing already exists for the connection, even if the old row is terminal', async () => {
+    listingExistsAcrossProvidersMock.mockResolvedValue(false);
+    listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([
+      {
+        id: 'listing-linked-1',
+        productId: 'product-1',
+        connectionId: 'connection-tradera-1',
+        status: 'failed',
+        externalListingId: '721891408',
+        marketplaceData: {
+          listingUrl:
+            'https://www.tradera.com/en/item/292901/721891408/the-alien-4-cm-pin-alf',
+        },
+      },
+    ]);
+
+    const response = await POST_handler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload).toMatchObject({
+      error: 'Product is already linked to a Tradera listing on this account',
+      code: expect.any(String),
+      details: {
+        productId: 'product-1',
+        connectionId: 'connection-tradera-1',
+        listingId: 'listing-linked-1',
+        externalListingId: '721891408',
+        listingUrl:
+          'https://www.tradera.com/en/item/292901/721891408/the-alien-4-cm-pin-alf',
       },
     });
     expect(createListingMock).not.toHaveBeenCalled();

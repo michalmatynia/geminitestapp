@@ -6,6 +6,7 @@ export const PART_5 = String.raw`
     log?.('tradera.quicklist.start', {
       listingAction,
       duplicateSearchTitle,
+      duplicateSearchTerms,
       allowDuplicateLinking,
       baseProductId,
       sku,
@@ -36,7 +37,7 @@ export const PART_5 = String.raw`
     if (listingAction === 'sync') {
       await openExistingListingEditorForSync();
     } else {
-      const duplicateMatch = await checkDuplicate(duplicateSearchTitle);
+      const duplicateMatch = await checkDuplicate(duplicateSearchTerms);
       if (duplicateMatch.duplicateFound) {
         const duplicateResult = {
           stage: 'duplicate_linked',

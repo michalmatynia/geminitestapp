@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type {
   FilemakerMailAccount,
   FilemakerMailFolderSummary,
@@ -19,8 +19,8 @@ export const useFilemakerMailData = ({
   selectedMailboxPath,
   searchContextAccountId,
   searchQuery,
-  recentMailboxFilter,
-  recentQuery,
+  recentMailboxFilter: _recentMailboxFilter,
+  recentQuery: _recentQuery,
 }: {
   refreshKey: number;
   selectedAccountId: string | null;

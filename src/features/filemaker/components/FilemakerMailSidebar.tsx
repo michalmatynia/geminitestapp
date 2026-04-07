@@ -30,6 +30,7 @@ import {
 } from '../mail-master-tree';
 import {
   buildFilemakerMailSelectionHref as buildMailSelectionHref,
+  fetchFilemakerMailJson as fetchJson,
 } from '../mail-ui-helpers';
 import {
   buildFilemakerMailComposeHref as buildComposeHref,
@@ -113,8 +114,6 @@ export function FilemakerMailSidebar({
     folders,
     threads,
     recentThreads,
-    setRecentThreads,
-    setThreads,
     isLoading,
     syncingAccountId,
     setSyncingAccountId,

@@ -179,7 +179,6 @@ export const runVintedBrowserListing = async ({
   const {
     safeGoto,
     acceptCookieConsent,
-    humanizedFill,
     safeIsVisible,
   } = createVintedBrowserTestUtils({
     page,
@@ -271,7 +270,6 @@ export const runVintedBrowserListing = async ({
 
     // 7. Fill price (after optional fields to avoid Vinted re-rendering clearing it)
     await fillField(page, VINTED_PRICE_SELECTORS, price, 'Price', true);
-    await humanizedFill(page.locator(VINTED_PRICE_SELECTORS[0]!).first(), price);
 
     // 8. Submit the listing
     const submitButton = await findFirstVisible(page, VINTED_SUBMIT_SELECTORS);

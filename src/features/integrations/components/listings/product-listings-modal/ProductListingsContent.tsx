@@ -12,6 +12,7 @@ import {
 import {
   areProductListingsRecoveryContextsEqual,
   createTraderaRecoveryContext,
+  createVintedRecoveryContext,
   findTraderaRecoveryListing,
   isVintedQuickExportRecoveryContext,
   mergeProductListingsRecoveryContext,
@@ -23,6 +24,11 @@ import {
   type PersistedTraderaQuickListFeedback,
 } from '@/features/integrations/utils/traderaQuickListFeedback';
 import { resolveTraderaRequestId } from '@/features/integrations/utils/tradera-listing-client-utils';
+import {
+  persistVintedQuickListFeedback,
+  type PersistedVintedQuickListFeedback,
+} from '@/features/integrations/utils/vintedQuickListFeedback';
+import { resolveVintedRequestId } from '@/features/integrations/utils/vinted-listing-client-utils';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 
@@ -43,6 +49,19 @@ const readString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
 const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('login') ||
+    normalized.includes('verification') ||
+    normalized.includes('captcha') ||
+    normalized.includes('auth') ||
+    normalized.includes('session expired')
+  );
+};
+
+const hasVintedAuthSignal = (value: string | null | undefined): boolean => {
   const normalized = (value ?? '').trim().toLowerCase();
   if (!normalized) return false;
   return (
@@ -79,6 +98,41 @@ const findTrackedTraderaListing = (
   }
 
   return null;
+};
+
+const findFallbackVintedRecoveryListing = (
+  listings: ProductListingWithDetails[],
+  recoveryContext: ProductListingsRecoveryContext | null | undefined
+): ProductListingWithDetails | null => {
+  const requestId = recoveryContext?.requestId ?? null;
+  if (requestId) {
+    const byRequestId = listings.find(
+      (listing) => resolveVintedRequestId(listing) === requestId
+    );
+    if (byRequestId) return byRequestId;
+  }
+
+  const integrationId = recoveryContext?.integrationId ?? null;
+  const connectionId = recoveryContext?.connectionId ?? null;
+  if (integrationId && connectionId) {
+    const byConnection = listings.find(
+      (listing) =>
+        listing.integrationId === integrationId &&
+        listing.connectionId === connectionId
+    );
+    if (byConnection) return byConnection;
+  }
+
+  return (
+    listings.find((listing) => {
+      const normalizedSlug = (listing.integration?.slug ?? '').trim().toLowerCase();
+      const normalizedStatus = normalizeMarketplaceStatus(listing.status ?? '');
+      return (
+        normalizedSlug === 'vinted' &&
+        ['auth_required', 'needs_login', 'failed'].includes(normalizedStatus)
+      );
+    }) ?? null
+  );
 };
 
 export function ProductListingsContent(): React.JSX.Element {
@@ -119,6 +173,17 @@ export function ProductListingsContent(): React.JSX.Element {
     .toLowerCase();
   const fallbackRecoveryError = readString(fallbackRecoveryLastExecution['error']);
   const fallbackRecoveryFailureReason = fallbackRecoveryListing?.failureReason ?? null;
+  const fallbackVintedRecoveryListing = isVintedQuickExportRecovery
+    ? findFallbackVintedRecoveryListing(filteredListings, recoveryContext)
+    : null;
+  const vintedRecoveryIntegrationId =
+    recoveryContext?.integrationId ?? fallbackVintedRecoveryListing?.integrationId ?? null;
+  const vintedRecoveryConnectionId =
+    recoveryContext?.connectionId ?? fallbackVintedRecoveryListing?.connectionId ?? null;
+  const vintedRecoveryFailureReason =
+    (recoveryContext && 'failureReason' in recoveryContext
+      ? recoveryContext.failureReason ?? null
+      : null) ?? fallbackVintedRecoveryListing?.failureReason ?? null;
   const { feedback: persistedQuickListFeedback } = useTraderaQuickListFeedback(product.id);
   const { feedback: persistedVintedQuickListFeedback } = useVintedQuickListFeedback(product.id);
   const trackedSuccessListing =
@@ -181,6 +246,16 @@ export function ProductListingsContent(): React.JSX.Element {
   const canOpenTraderaRecoveryLogin = Boolean(
     recoveryNeedsManualLogin && recoveryIntegrationId && recoveryConnectionId
   );
+  const vintedRecoveryStatus = normalizeMarketplaceStatus(
+    recoveryContext?.status ?? fallbackVintedRecoveryListing?.status ?? ''
+  );
+  const canOpenVintedRecoveryLogin = Boolean(
+    vintedRecoveryIntegrationId &&
+      vintedRecoveryConnectionId &&
+      (vintedRecoveryStatus === 'auth_required' ||
+        vintedRecoveryStatus === 'needs_login' ||
+        hasVintedAuthSignal(vintedRecoveryFailureReason))
+  );
 
   React.useEffect(() => {
     if (!isTraderaQuickExportRecovery || !fallbackRecoveryListing) return;
@@ -231,6 +306,54 @@ export function ProductListingsContent(): React.JSX.Element {
     setRecoveryContext,
   ]);
 
+  React.useEffect(() => {
+    if (!isVintedQuickExportRecovery || !fallbackVintedRecoveryListing) return;
+
+    const nextRecoveryContext: Extract<ProductListingsRecoveryContext, { integrationSlug: 'vinted' }> =
+      createVintedRecoveryContext({
+        source: recoveryContext?.source,
+        status: recoveryContext?.status ?? fallbackVintedRecoveryListing.status ?? 'failed',
+        runId: recoveryContext?.runId ?? null,
+        requestId: recoveryContext?.requestId ?? resolveVintedRequestId(fallbackVintedRecoveryListing),
+        integrationId: fallbackVintedRecoveryListing.integrationId ?? null,
+        connectionId: fallbackVintedRecoveryListing.connectionId ?? null,
+        failureReason:
+          (recoveryContext && 'failureReason' in recoveryContext
+            ? recoveryContext.failureReason ?? null
+            : null) ?? fallbackVintedRecoveryListing.failureReason ?? null,
+      });
+
+    setRecoveryContext((current) => {
+      const mergedRecoveryContext = mergeProductListingsRecoveryContext(
+        nextRecoveryContext,
+        current
+      );
+      if (areProductListingsRecoveryContextsEqual(current, mergedRecoveryContext)) {
+        return current;
+      }
+      return mergedRecoveryContext;
+    });
+
+    persistVintedQuickListFeedback(
+      product.id,
+      nextRecoveryContext.status === 'auth_required' || nextRecoveryContext.status === 'needs_login'
+        ? 'auth_required'
+        : 'failed',
+      {
+        runId: nextRecoveryContext.runId,
+        requestId: nextRecoveryContext.requestId,
+        integrationId: nextRecoveryContext.integrationId,
+        connectionId: nextRecoveryContext.connectionId,
+      }
+    );
+  }, [
+    fallbackVintedRecoveryListing,
+    isVintedQuickExportRecovery,
+    product.id,
+    recoveryContext,
+    setRecoveryContext,
+  ]);
+
   return (
     <div className='space-y-3'>
       {shouldShowQuickListSuccessBanner && persistedQuickListFeedback ? (
@@ -265,11 +388,10 @@ export function ProductListingsContent(): React.JSX.Element {
           status={recoveryContext?.status}
           requestId={recoveryContext?.requestId}
           runId={recoveryContext?.runId}
-          failureReason={
-            recoveryContext && 'failureReason' in recoveryContext
-              ? recoveryContext.failureReason ?? null
-              : null
-          }
+          integrationId={vintedRecoveryIntegrationId}
+          connectionId={vintedRecoveryConnectionId}
+          failureReason={vintedRecoveryFailureReason}
+          canContinue={canOpenVintedRecoveryLogin}
         />
       )}
       {filterIntegrationSlug && (

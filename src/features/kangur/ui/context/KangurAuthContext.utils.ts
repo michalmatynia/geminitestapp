@@ -11,10 +11,8 @@ import type { useOptionalKangurRouting } from '@/features/kangur/ui/context/Kang
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import type { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 export type {
-  KangurAuthError,
   KangurAuthBootstrapSnapshot,
   KangurAuthRuntimeSetters,
-  KangurAuthContextValue,
 } from '@/shared/contracts/kangur-auth';
 
 export type KangurAuthCheckAppStateOptions = {

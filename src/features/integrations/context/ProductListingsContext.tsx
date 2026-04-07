@@ -52,6 +52,7 @@ export interface ProductListingsUIState {
   relistingListing: string | null;
   relistingBrowserMode: PlaywrightRelistBrowserMode | null;
   openingTraderaLogin: string | null;
+  openingVintedLogin: string | null;
   inventoryOverrides: Record<string, string>;
   setInventoryOverrides: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   historyOpenByListing: Record<string, boolean>;
@@ -125,6 +126,11 @@ export interface ProductListingsActions {
     integrationId: string,
     connectionId: string
   ) => Promise<boolean>;
+  handleOpenVintedLogin: (
+    listingId: string,
+    integrationId: string,
+    connectionId: string
+  ) => Promise<boolean>;
   handleExportAgain: (listingId: string) => Promise<void>;
   handleExportImagesOnly: (listingId: string, preset?: ImageRetryPreset) => Promise<void>;
   handleImageRetry: (preset: ImageRetryPreset) => Promise<void>;
@@ -175,6 +181,7 @@ export function ProductListingsProvider({
   const [relistingBrowserMode, setRelistingBrowserMode] =
     useState<PlaywrightRelistBrowserMode | null>(null);
   const [openingTraderaLogin, setOpeningTraderaLogin] = useState<string | null>(null);
+  const [openingVintedLogin, setOpeningVintedLogin] = useState<string | null>(null);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
   const [listingToPurge, setListingToPurge] = useState<string | null>(null);
   const [isSyncImagesConfirmOpen, setIsSyncImagesConfirmOpen] = useState(false);
@@ -343,6 +350,7 @@ export function ProductListingsProvider({
     setListingToPurge,
     setLogsOpen,
     setOpeningTraderaLogin,
+    setOpeningVintedLogin,
     setRecoveryContext: setResolvedRecoveryContext,
     setRelistingBrowserMode,
     setPurgingListing,
@@ -374,6 +382,7 @@ export function ProductListingsProvider({
       relistingListing,
       relistingBrowserMode,
       openingTraderaLogin,
+      openingVintedLogin,
       inventoryOverrides,
       setInventoryOverrides,
       historyOpenByListing,
@@ -389,6 +398,7 @@ export function ProductListingsProvider({
       relistingListing,
       relistingBrowserMode,
       openingTraderaLogin,
+      openingVintedLogin,
       inventoryOverrides,
       historyOpenByListing,
     ]

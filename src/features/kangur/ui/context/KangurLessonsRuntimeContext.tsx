@@ -11,7 +11,6 @@ import {
   type JSX,
 } from 'react';
 
-import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import {
   useKangurLessonDocument,
 } from '@/features/kangur/ui/hooks/useKangurLessons';
@@ -34,7 +33,6 @@ import {
   resolveLessonAssignmentsByComponent,
   resolveOrderedKangurLessons,
   resolveKangurActiveLessonRuntime,
-  EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT,
 } from './KangurLessonsRuntimeContext.utils';
 
 import {

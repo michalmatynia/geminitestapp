@@ -17,8 +17,7 @@ import {
 } from '@/features/kangur/observability/client';
 import { signalBootReady } from '@/features/kangur/ui/boot/boot-ready-signal';
 import type { KangurUser } from '@kangur/platform';
-import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { getKangurLoginHref } from '@/features/kangur/config/routing';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { internalError } from '@/features/kangur/shared/errors/app-error';

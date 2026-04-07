@@ -7,6 +7,7 @@ import { persistVintedQuickListFeedback } from '@/features/integrations/utils/vi
 
 const {
   handleOpenTraderaLoginMock,
+  handleOpenVintedLoginMock,
   handleSyncTraderaMock,
   onStartListingMock,
   useProductListingsDataMock,
@@ -15,6 +16,7 @@ const {
   useProductListingsUIStateMock,
 } = vi.hoisted(() => ({
   handleOpenTraderaLoginMock: vi.fn(),
+  handleOpenVintedLoginMock: vi.fn(),
   handleSyncTraderaMock: vi.fn(),
   onStartListingMock: vi.fn(),
   useProductListingsDataMock: vi.fn(),
@@ -54,6 +56,7 @@ describe('ProductListingsEmpty', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     handleOpenTraderaLoginMock.mockResolvedValue(true);
+    handleOpenVintedLoginMock.mockResolvedValue(true);
     handleSyncTraderaMock.mockResolvedValue(undefined);
     useProductListingsDataMock.mockReturnValue({
       product: { id: 'product-1' },
@@ -64,10 +67,12 @@ describe('ProductListingsEmpty', () => {
     });
     useProductListingsActionsMock.mockReturnValue({
       handleOpenTraderaLogin: handleOpenTraderaLoginMock,
+      handleOpenVintedLogin: handleOpenVintedLoginMock,
       handleSyncTradera: handleSyncTraderaMock,
     });
     useProductListingsUIStateMock.mockReturnValue({
       openingTraderaLogin: null,
+      openingVintedLogin: null,
       syncingTraderaListing: null,
     });
   });
@@ -403,5 +408,44 @@ describe('ProductListingsEmpty', () => {
       'https://www.vinted.pl/items/456'
     );
     expect(screen.queryByText('No listings found')).toBeNull();
+  });
+
+  it('renders Vinted quick-export recovery details with a Vinted login action when no listing exists yet', async () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        requestId: 'job-vinted-1',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'vinted',
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Vinted.pl quick export needs recovery')).toBeInTheDocument();
+    expect(screen.getByText('auth_required')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Vinted.pl' }));
+    await Promise.resolve();
+    expect(handleOpenVintedLoginMock).toHaveBeenCalledWith(
+      'recovery',
+      'integration-vinted-1',
+      'conn-vinted-1'
+    );
   });
 });

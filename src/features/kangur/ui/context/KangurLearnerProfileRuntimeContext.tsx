@@ -11,10 +11,6 @@ import {
 } from 'react';
 
 import {
-  getKangurPageHref as createPageUrl,
-} from '@/features/kangur/config/routing';
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import {
   KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES,
   KANGUR_PROFILE_RECOMMENDATION_ACCENTS,
   hasScopedMessage,
@@ -42,7 +38,6 @@ import {
   buildKangurLearnerProfileSnapshot,
   translateKangurLearnerProfileWithFallback,
 } from '@/features/kangur/ui/services/profile';
-import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLearnerProfileSnapshot } from '@/features/kangur/shared/contracts/kangur-profile';
 import type {
   KangurProgressState,

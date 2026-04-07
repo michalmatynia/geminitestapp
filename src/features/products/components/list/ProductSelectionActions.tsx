@@ -26,6 +26,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
+import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
 import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ActionMenu } from '@/shared/ui/ActionMenu';
@@ -81,6 +82,8 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     useBulkConvertImagesToBase64();
   const { execute: executeTraderaMassExport, isRunning: isTraderaMassExportRunning } =
     useTraderaMassQuickExport();
+  const { execute: executeVintedMassExport, isRunning: isVintedMassExportRunning } =
+    useVintedMassQuickExport();
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]
@@ -121,6 +124,15 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     }
     await executeTraderaMassExport(selectedProductIds);
   }, [executeTraderaMassExport, rowSelection, toast]);
+
+  const handleQuickExportVinted = useCallback(async (): Promise<void> => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to export.', { variant: 'error' });
+      return;
+    }
+    await executeVintedMassExport(selectedProductIds);
+  }, [executeVintedMassExport, rowSelection, toast]);
 
   const selectedCount = useMemo(
     () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
@@ -407,6 +419,16 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
             >
               <Send className='h-4 w-4' />
               {isTraderaMassExportRunning ? 'Exporting to Tradera...' : 'Quick Export to Tradera'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                void handleQuickExportVinted();
+              }}
+              className='cursor-pointer gap-2'
+              disabled={isVintedMassExportRunning || selectedCount === 0}
+            >
+              <Send className='h-4 w-4' />
+              {isVintedMassExportRunning ? 'Exporting to Vinted...' : 'Quick Export to Vinted'}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {

@@ -2,12 +2,17 @@ import React from 'react';
 
 import { Card } from '@/shared/ui/primitives.public';
 
+import { VintedRecoveryContinueButton } from './VintedRecoveryContinueButton';
+
 type VintedQuickExportRecoveryBannerProps = {
   mode: 'empty' | 'content';
   status: string | null | undefined;
   requestId?: string | null | undefined;
   runId?: string | null | undefined;
+  integrationId?: string | null | undefined;
+  connectionId?: string | null | undefined;
   failureReason?: string | null | undefined;
+  canContinue?: boolean;
   variant?: 'compact' | 'full';
 };
 
@@ -29,13 +34,18 @@ export function VintedQuickExportRecoveryBanner({
   status,
   requestId,
   runId,
+  integrationId,
+  connectionId,
   failureReason,
+  canContinue = Boolean(integrationId && connectionId),
   variant = 'compact',
 }: VintedQuickExportRecoveryBannerProps): React.JSX.Element {
   const title =
     mode === 'empty'
       ? 'Vinted.pl quick export needs recovery'
-      : 'Vinted.pl quick export requires attention';
+      : canContinue
+        ? 'Vinted.pl quick export requires recovery'
+        : 'Vinted.pl quick export requires attention';
   const description =
     failureReason &&
     !hasAuthSignal(failureReason) &&
@@ -44,7 +54,15 @@ export function VintedQuickExportRecoveryBanner({
       ? failureReason
       : mode === 'empty'
         ? 'The Vinted.pl one-click export did not leave behind a usable listing record yet. Refresh the Vinted browser session if needed, then retry from this modal.'
-        : 'Review the Vinted status below. If the last run needs a fresh browser session, refresh the Vinted connection session and retry the listing manually.';
+        : canContinue
+          ? (
+            <>
+              Review the Vinted listing below and use
+              <span className='font-semibold text-white'> Login to Vinted.pl </span>
+              if the last run needs a fresh browser session. After login, retry the Vinted listing manually.
+            </>
+          )
+          : 'Review the Vinted status below. If the last run needs a fresh browser session, refresh the Vinted connection session and retry the listing manually.';
 
   if (variant === 'full') {
     return (
@@ -69,6 +87,15 @@ export function VintedQuickExportRecoveryBanner({
             <div className='font-mono text-white'>{requestId ?? 'Unavailable'}</div>
           </div>
         </div>
+        {canContinue && integrationId && connectionId && (
+          <div className='flex flex-wrap justify-center gap-2'>
+            <VintedRecoveryContinueButton
+              integrationId={integrationId}
+              connectionId={connectionId}
+              size='md'
+            />
+          </div>
+        )}
       </Card>
     );
   }
@@ -94,6 +121,14 @@ export function VintedQuickExportRecoveryBanner({
             </div>
           )}
         </div>
+        {canContinue && integrationId && connectionId && (
+          <div className='flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0'>
+            <VintedRecoveryContinueButton
+              integrationId={integrationId}
+              connectionId={connectionId}
+            />
+          </div>
+        )}
       </div>
     </Card>
   );

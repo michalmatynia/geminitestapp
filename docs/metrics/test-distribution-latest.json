@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T12:45:57.155Z",
+  "generatedAt": "2026-04-07T13:05:52.774Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 3368,
+    "totalTestFiles": 3372,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -42,15 +42,15 @@
     },
     {
       "feature": "products",
-      "testCount": 151,
-      "fastTestCount": 143,
+      "testCount": 154,
+      "fastTestCount": 146,
       "e2eTestCount": 8,
-      "negativePathTestCount": 53
+      "negativePathTestCount": 54
     },
     {
       "feature": "integrations",
-      "testCount": 142,
-      "fastTestCount": 141,
+      "testCount": 143,
+      "fastTestCount": 142,
       "e2eTestCount": 1,
       "negativePathTestCount": 51
     },
@@ -535,5 +535,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 467
+  "durationMs": 693
 }

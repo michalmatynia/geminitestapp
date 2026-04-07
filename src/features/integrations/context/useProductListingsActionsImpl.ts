@@ -22,7 +22,14 @@ import {
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
-import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
+import {
+  ensureVintedBrowserSession,
+  isVintedBrowserAuthRequiredMessage,
+} from '@/features/integrations/utils/vinted-browser-session';
+import {
+  createTraderaRecoveryContext,
+  createVintedRecoveryContext,
+} from '@/features/integrations/utils/product-listings-recovery';
 import { resolveBaseExportSuccessMessage } from '@/features/integrations/utils/baseExportFeedback';
 import type {
   PlaywrightRelistBrowserMode,
@@ -66,6 +73,7 @@ export const useProductListingsActionsImpl = ({
   setListingToPurge,
   setLogsOpen,
   setOpeningTraderaLogin,
+  setOpeningVintedLogin,
   setRecoveryContext,
   setRelistingBrowserMode,
   setPurgingListing,
@@ -91,6 +99,7 @@ export const useProductListingsActionsImpl = ({
   setListingToPurge: Dispatch<SetStateAction<string | null>>;
   setLogsOpen: Dispatch<SetStateAction<boolean>>;
   setOpeningTraderaLogin: Dispatch<SetStateAction<string | null>>;
+  setOpeningVintedLogin: Dispatch<SetStateAction<string | null>>;
   setRecoveryContext: Dispatch<SetStateAction<ProductListingsRecoveryContext | null>>;
   setRelistingBrowserMode: Dispatch<SetStateAction<PlaywrightRelistBrowserMode | null>>;
   setPurgingListing: Dispatch<SetStateAction<string | null>>;
@@ -487,6 +496,68 @@ export const useProductListingsActionsImpl = ({
     ]
   );
 
+  const handleOpenVintedLogin = useCallback(
+    async (listingId: string, integrationId: string, connectionId: string): Promise<boolean> => {
+      try {
+        setOpeningVintedLogin(listingId);
+        setError(null);
+        const response = await ensureVintedBrowserSession({
+          integrationId,
+          connectionId,
+        });
+        toast(
+          response.savedSession
+            ? 'Vinted login session refreshed.'
+            : 'Vinted manual login completed.',
+          { variant: 'success' }
+        );
+        setRecoveryContext((current) =>
+          current?.integrationSlug === 'vinted' ? null : current
+        );
+        await refetchListingsQuery();
+        onListingsUpdated?.();
+        return true;
+      } catch (err: unknown) {
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'openVintedLogin',
+          listingId,
+          productId,
+          integrationId,
+          connectionId,
+        });
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to open Vinted login window';
+        if (isVintedBrowserAuthRequiredMessage(errorMessage)) {
+          setRecoveryContext(
+            createVintedRecoveryContext({
+              status: 'auth_required',
+              runId: null,
+              failureReason: errorMessage,
+              integrationId,
+              connectionId,
+            })
+          );
+          toast(errorMessage, { variant: 'error' });
+          return false;
+        }
+        setError(errorMessage);
+        return false;
+      } finally {
+        setOpeningVintedLogin(null);
+      }
+    },
+    [
+      onListingsUpdated,
+      productId,
+      refetchListingsQuery,
+      setError,
+      setOpeningVintedLogin,
+      setRecoveryContext,
+      toast,
+    ]
+  );
+
   const exportListingToBase = useCallback(
     async (
       listingId: string,
@@ -650,6 +721,7 @@ export const useProductListingsActionsImpl = ({
     handleSyncTradera,
     handleRelistTradera,
     handleOpenTraderaLogin,
+    handleOpenVintedLogin,
     handleExportAgain,
     handleExportImagesOnly,
     handleImageRetry,

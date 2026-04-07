@@ -1,0 +1,193 @@
+import React from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const {
+  executeTraderaMassExportMock,
+  executeVintedMassExportMock,
+  useBulkConvertImagesToBase64Mock,
+  useProductListFiltersContextMock,
+  useProductListSelectionContextMock,
+  useTraderaMassQuickExportMock,
+  useVintedMassQuickExportMock,
+} = vi.hoisted(() => ({
+  executeTraderaMassExportMock: vi.fn(),
+  executeVintedMassExportMock: vi.fn(),
+  useBulkConvertImagesToBase64Mock: vi.fn(),
+  useProductListFiltersContextMock: vi.fn(),
+  useProductListSelectionContextMock: vi.fn(),
+  useTraderaMassQuickExportMock: vi.fn(),
+  useVintedMassQuickExportMock: vi.fn(),
+}));
+
+vi.mock('@/features/products/context/ProductListContext', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/products/context/ProductListContext')>();
+  return {
+    ...actual,
+    useProductListFiltersContext: () => useProductListFiltersContextMock(),
+    useProductListSelectionContext: () => useProductListSelectionContextMock(),
+  };
+});
+
+vi.mock('@/features/products/hooks/useProductsMutations', () => ({
+  useBulkConvertImagesToBase64: () => useBulkConvertImagesToBase64Mock(),
+}));
+
+vi.mock('@/features/products/hooks/product-list/useTraderaMassQuickExport', () => ({
+  useTraderaMassQuickExport: () => useTraderaMassQuickExportMock(),
+}));
+
+vi.mock('@/features/products/hooks/product-list/useVintedMassQuickExport', () => ({
+  useVintedMassQuickExport: () => useVintedMassQuickExportMock(),
+}));
+
+vi.mock('@/shared/ui/selection-bar', () => ({
+  SelectionBar: ({
+    actions,
+    rightActions,
+  }: {
+    actions?: React.ReactNode;
+    rightActions?: React.ReactNode;
+  }) => (
+    <div>
+      <div>{actions}</div>
+      <div>{rightActions}</div>
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/ActionMenu', () => ({
+  ActionMenu: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/app-modal', () => ({
+  AppModal: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/button', () => ({
+  Button: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
+    <button {...props}>{children}</button>
+  ),
+}));
+
+vi.mock('@/shared/ui/chip', () => ({
+  Chip: ({ label }: { label: string }) => <div>{label}</div>,
+}));
+
+vi.mock('@/shared/ui/dropdown-menu', () => ({
+  DropdownMenuItem: ({
+    children,
+    onClick,
+    disabled,
+  }: {
+    children?: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
+    <button type='button' onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
+  ),
+  DropdownMenuLabel: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuSeparator: () => <div data-testid='separator' />,
+  DropdownMenuSub: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuSubContent: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuSubTrigger: ({
+    children,
+    onClick,
+  }: {
+    children?: React.ReactNode;
+    onClick?: () => void;
+  }) => (
+    <button type='button' onClick={onClick}>
+      {children}
+    </button>
+  ),
+}));
+
+vi.mock('@/shared/ui/input', () => ({
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+}));
+
+vi.mock('@/shared/ui/templates/modals/JSONImportModal', () => ({
+  JSONImportModal: () => null,
+}));
+
+vi.mock('@/shared/ui/toast', () => ({
+  useToast: () => ({
+    toast: vi.fn(),
+  }),
+}));
+
+import { ProductSelectionActions } from './ProductSelectionActions';
+
+describe('ProductSelectionActions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [{ id: 'product-1' }, { id: 'product-2' }],
+      rowSelection: {
+        'product-1': true,
+        'product-2': true,
+      },
+      setRowSelection: vi.fn(),
+      onSelectAllGlobal: vi.fn(),
+      loadingGlobal: false,
+      onDeleteSelected: vi.fn(),
+      onAddToMarketplace: vi.fn(),
+    });
+    useProductListFiltersContextMock.mockReturnValue({
+      advancedFilter: '',
+      activeAdvancedFilterPresetId: null,
+      advancedFilterPresets: [],
+      setAdvancedFilterPresets: vi.fn(),
+      setAdvancedFilterState: vi.fn(),
+    });
+    useBulkConvertImagesToBase64Mock.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
+    useTraderaMassQuickExportMock.mockReturnValue({
+      execute: executeTraderaMassExportMock,
+      isRunning: false,
+      progress: { current: 0, total: 0, errors: 0 },
+    });
+    useVintedMassQuickExportMock.mockReturnValue({
+      execute: executeVintedMassExportMock,
+      isRunning: false,
+      progress: { current: 0, total: 0, errors: 0 },
+    });
+  });
+
+  it('passes the selected product ids into the Vinted mass quick export action', () => {
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Quick Export to Vinted' }));
+
+    expect(executeVintedMassExportMock).toHaveBeenCalledWith([
+      'product-1',
+      'product-2',
+    ]);
+  });
+
+  it('disables the Vinted mass quick export action when no products are selected', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [{ id: 'product-1' }],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+      onSelectAllGlobal: vi.fn(),
+      loadingGlobal: false,
+      onDeleteSelected: vi.fn(),
+      onAddToMarketplace: vi.fn(),
+    });
+
+    render(<ProductSelectionActions />);
+
+    expect(screen.getByRole('button', { name: 'Quick Export to Vinted' })).toBeDisabled();
+  });
+});

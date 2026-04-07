@@ -138,7 +138,7 @@ export const useKangurSocialPostsPage = (
     retry: 1,
     meta: {
       source: 'kangur.hooks.useKangurSocialPostsPage',
-      operation: 'list',
+      operation: 'info',
       resource: 'kangur.social-posts.paged',
       domain: 'kangur',
       tags: ['kangur', 'social-posts', 'paged'],

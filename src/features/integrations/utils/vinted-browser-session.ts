@@ -1,4 +1,4 @@
-import { ApiError, api } from '@/shared/lib/api-client';
+import { api } from '@/shared/lib/api-client';
 import type { TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
 
 export const VINTED_BROWSER_MANUAL_TIMEOUT_MS = 240000;

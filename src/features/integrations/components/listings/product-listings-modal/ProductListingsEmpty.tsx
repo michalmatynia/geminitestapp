@@ -36,6 +36,19 @@ const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
   );
 };
 
+const hasVintedAuthSignal = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('login') ||
+    normalized.includes('verification') ||
+    normalized.includes('captcha') ||
+    normalized.includes('auth') ||
+    normalized.includes('session expired')
+  );
+};
+
 export function ProductListingsEmpty(): React.JSX.Element {
   const { product } = useProductListingsData();
   const { filterIntegrationSlug, statusTargetLabel, isBaseFilter, showSync } =
@@ -61,6 +74,17 @@ export function ProductListingsEmpty(): React.JSX.Element {
     (recoveryStatus === 'auth_required' ||
       recoveryStatus === 'needs_login' ||
       hasTraderaAuthSignal(recoveryFailureReason));
+  const vintedRecoveryIntegrationId = isVintedQuickExportRecovery
+    ? recoveryContext?.integrationId ?? null
+    : null;
+  const vintedRecoveryConnectionId = isVintedQuickExportRecovery
+    ? recoveryContext?.connectionId ?? null
+    : null;
+  const canOpenVintedRecoveryLogin =
+    Boolean(vintedRecoveryIntegrationId && vintedRecoveryConnectionId) &&
+    (recoveryStatus === 'auth_required' ||
+      recoveryStatus === 'needs_login' ||
+      hasVintedAuthSignal(recoveryFailureReason));
   const { feedback: persistedQuickListFeedback } = useTraderaQuickListFeedback(product.id);
   const { feedback: persistedVintedQuickListFeedback } = useVintedQuickListFeedback(product.id);
   const shouldShowQuickListSuccessBanner = Boolean(
@@ -115,7 +139,10 @@ export function ProductListingsEmpty(): React.JSX.Element {
           status={recoveryContext?.status}
           requestId={recoveryContext?.requestId}
           runId={recoveryContext?.runId}
+          integrationId={vintedRecoveryIntegrationId}
+          connectionId={vintedRecoveryConnectionId}
           failureReason={recoveryFailureReason}
+          canContinue={canOpenVintedRecoveryLogin}
         />
       )}
       {shouldShowQuickListSuccessBanner || shouldShowVintedQuickListSuccessBanner ? null : filterIntegrationSlug ? (

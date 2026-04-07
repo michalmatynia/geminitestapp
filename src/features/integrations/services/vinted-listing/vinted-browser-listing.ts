@@ -1,4 +1,4 @@
-import { chromium, devices, type BrowserContextOptions } from 'playwright';
+import { chromium } from 'playwright';
 import {
   VINTED_LISTING_FORM_URL,
   VINTED_TITLE_SELECTORS,
@@ -30,7 +30,6 @@ export const runVintedBrowserListing = async ({
   listing,
   connection,
   source: _source,
-  action,
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
@@ -68,8 +67,6 @@ export const runVintedBrowserListing = async ({
     humanizedFill,
     humanizedClick,
     safeIsVisible,
-    safeWaitFor,
-    successSelector,
   } = createVintedBrowserTestUtils({
     page,
     connectionId: connection.id,

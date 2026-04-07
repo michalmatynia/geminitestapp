@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T12:46:15.678Z",
+  "generatedAt": "2026-04-07T13:06:10.530Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 7064,
+    "fileCount": 7067,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -20009,6 +20009,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/components/listings/product-listings-modal/context/ProductListingsModalViewContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32393,6 +32399,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/components/list/columns/buttons/VintedStatusButton.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/components/list/columns/product-column-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -33012,6 +33024,12 @@
     },
     {
       "file": "src/features/products/hooks/product-list/useTraderaMassQuickExport.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/hooks/product-list/useVintedMassQuickExport.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -42427,5 +42445,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2893
+  "durationMs": 2754
 }

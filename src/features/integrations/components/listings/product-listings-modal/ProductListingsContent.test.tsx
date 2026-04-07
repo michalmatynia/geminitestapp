@@ -7,6 +7,7 @@ import { persistVintedQuickListFeedback } from '@/features/integrations/utils/vi
 
 const {
   handleOpenTraderaLoginMock,
+  handleOpenVintedLoginMock,
   handleSyncTraderaMock,
   onStartListingMock,
   setRecoveryContextMock,
@@ -16,6 +17,7 @@ const {
   useProductListingsUIStateMock,
 } = vi.hoisted(() => ({
   handleOpenTraderaLoginMock: vi.fn(),
+  handleOpenVintedLoginMock: vi.fn(),
   handleSyncTraderaMock: vi.fn(),
   onStartListingMock: vi.fn(),
   setRecoveryContextMock: vi.fn(),
@@ -72,6 +74,7 @@ describe('ProductListingsContent', () => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
     handleOpenTraderaLoginMock.mockResolvedValue(true);
+    handleOpenVintedLoginMock.mockResolvedValue(true);
     handleSyncTraderaMock.mockResolvedValue(undefined);
     useProductListingsDataMock.mockReturnValue({
       product: { id: 'product-1' },
@@ -83,10 +86,12 @@ describe('ProductListingsContent', () => {
     });
     useProductListingsActionsMock.mockReturnValue({
       handleOpenTraderaLogin: handleOpenTraderaLoginMock,
+      handleOpenVintedLogin: handleOpenVintedLoginMock,
       handleSyncTradera: handleSyncTraderaMock,
     });
     useProductListingsUIStateMock.mockReturnValue({
       openingTraderaLogin: null,
+      openingVintedLogin: null,
       syncingTraderaListing: null,
     });
   });
@@ -900,5 +905,122 @@ describe('ProductListingsContent', () => {
 
     expect(screen.getByText('Vinted.pl status: active')).toBeInTheDocument();
     expect(screen.getByTestId('listing-listing-vinted-1')).toHaveTextContent('active');
+  });
+
+  it('renders a Vinted recovery banner with a Vinted login action when opened from a Vinted recovery path', async () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        requestId: 'job-vinted-1',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'vinted',
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          filteredListings: [
+            {
+              id: 'listing-vinted-1',
+              status: 'auth_required',
+              integrationId: 'integration-vinted-1',
+              connectionId: 'conn-vinted-1',
+              integration: {
+                id: 'integration-vinted-1',
+                slug: 'vinted',
+                name: 'Vinted.pl',
+              },
+              connection: {
+                id: 'conn-vinted-1',
+                name: 'Vinted Browser',
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText(/Vinted\.pl quick export requires recovery/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Vinted.pl' }));
+    await Promise.resolve();
+    expect(handleOpenVintedLoginMock).toHaveBeenCalledWith(
+      'recovery',
+      'integration-vinted-1',
+      'conn-vinted-1'
+    );
+  });
+
+  it('falls back to the existing Vinted listing connection when recovery context ids are missing', async () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        requestId: 'job-vinted-1',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'vinted',
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          filteredListings: [
+            {
+              id: 'listing-vinted-1',
+              status: 'auth_required',
+              integrationId: 'integration-vinted-1',
+              connectionId: 'conn-vinted-1',
+              failureReason:
+                'AUTH_REQUIRED: Stored Vinted session expired and Vinted requires manual verification.',
+              integration: {
+                id: 'integration-vinted-1',
+                slug: 'vinted',
+                name: 'Vinted.pl',
+              },
+              connection: {
+                id: 'conn-vinted-1',
+                name: 'Vinted Browser',
+              },
+              marketplaceData: {
+                vinted: {
+                  lastExecution: {
+                    requestId: 'job-vinted-1',
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Vinted.pl' }));
+    await Promise.resolve();
+
+    expect(handleOpenVintedLoginMock).toHaveBeenCalledWith(
+      'recovery',
+      'integration-vinted-1',
+      'conn-vinted-1'
+    );
   });
 });

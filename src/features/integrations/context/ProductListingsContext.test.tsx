@@ -23,6 +23,7 @@ const {
     handleSyncBaseImages: vi.fn(),
     handleRelistTradera: vi.fn(),
     handleOpenTraderaLogin: vi.fn(),
+    handleOpenVintedLogin: vi.fn(),
     handleExportAgain: vi.fn(),
     handleExportImagesOnly: vi.fn(),
     handleImageRetry: vi.fn(),

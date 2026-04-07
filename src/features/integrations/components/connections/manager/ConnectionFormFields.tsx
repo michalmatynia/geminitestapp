@@ -6,6 +6,7 @@ import {
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
@@ -45,62 +46,79 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
+  const isVinted = isVintedIntegrationSlug(integrationSlug);
 
   const connectionNamePlaceholder = isAllegro
     ? 'Integration name (e.g. Allegro Main)'
     : isLinkedIn
       ? 'Integration name (e.g. LinkedIn Main)'
-    : isBaselinker
-      ? 'Integration name (e.g. Main Baselinker)'
-      : 'Integration name (e.g. John\'s Tradera)';
+      : isVinted
+        ? 'Integration name (e.g. Vinted Browser)'
+      : isBaselinker
+        ? 'Integration name (e.g. Main Baselinker)'
+        : 'Integration name (e.g. John\'s Tradera)';
 
   const usernameLabel = isAllegro
     ? 'Allegro client ID'
     : isLinkedIn
       ? 'LinkedIn client ID'
-    : isBaselinker
-      ? 'Account name (optional)'
-      : isTraderaApi
-        ? 'Tradera username/alias'
-        : 'Tradera username';
+      : isVinted
+        ? 'Vinted email (optional)'
+      : isBaselinker
+        ? 'Account name (optional)'
+        : isTraderaApi
+          ? 'Tradera username/alias'
+          : 'Tradera username';
 
   const usernamePlaceholder = isAllegro
     ? 'Allegro client ID'
     : isLinkedIn
       ? 'LinkedIn client ID'
-    : isBaselinker
-      ? 'Account name (for reference)'
-      : isTraderaApi
-        ? 'Tradera username/alias'
-        : 'Tradera username';
+      : isVinted
+        ? 'Vinted email (optional)'
+      : isBaselinker
+        ? 'Account name (for reference)'
+        : isTraderaApi
+          ? 'Tradera username/alias'
+          : 'Tradera username';
 
   const passwordLabel = isAllegro
     ? 'Allegro client secret'
     : isLinkedIn
       ? 'LinkedIn client secret'
-    : isBaselinker
-      ? 'Baselinker API token'
-      : isTraderaApi
-        ? 'Fallback secret'
-        : 'Tradera password';
+      : isVinted
+        ? 'Vinted password (optional)'
+      : isBaselinker
+        ? 'Baselinker API token'
+        : isTraderaApi
+          ? 'Fallback secret'
+          : 'Tradera password';
 
   const passwordPlaceholder = isCreateMode
     ? isAllegro
       ? 'Allegro client secret'
       : isLinkedIn
         ? 'LinkedIn client secret'
-      : isBaselinker
-        ? 'Baselinker API token'
-        : isTraderaApi
-          ? 'Fallback secret (required)'
-          : 'Tradera password'
+        : isVinted
+          ? 'Vinted password (optional)'
+        : isBaselinker
+          ? 'Baselinker API token'
+          : isTraderaApi
+            ? 'Fallback secret (required)'
+            : 'Tradera password'
     : isAllegro
       ? 'New client secret (leave blank to keep)'
       : isLinkedIn
         ? 'New client secret (leave blank to keep)'
+        : isVinted
+          ? 'New Vinted password (leave blank to keep)'
       : isTraderaApi
-        ? 'New fallback secret (leave blank to keep)'
-        : 'New password (leave blank to keep)';
+          ? 'New fallback secret (leave blank to keep)'
+          : 'New password (leave blank to keep)';
+
+  const vintedCredentialDescription = isVinted
+    ? 'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
+    : undefined;
 
   return (
     <>
@@ -118,7 +136,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           }
          aria-label={connectionNamePlaceholder} title={connectionNamePlaceholder}/>
       </FormField>
-      <FormField label={usernameLabel}>
+      <FormField label={usernameLabel} description={vintedCredentialDescription}>
         <Input
           variant='subtle'
           size='sm'
@@ -132,7 +150,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           }
          aria-label={usernamePlaceholder} title={usernamePlaceholder}/>
       </FormField>
-      <FormField label={passwordLabel}>
+      <FormField label={passwordLabel} description={vintedCredentialDescription}>
         <Input
           variant='subtle'
           size='sm'

@@ -16,8 +16,6 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera', 'tradera-api']);
 
-export type CategoryFetchIntegrationRepository = IntegrationLookupRepository;
-
 export type MarketplaceCategoryFetchContext =
   | {
       connectionId: string;
@@ -51,7 +49,7 @@ export const requireMarketplaceConnectionId = (
 };
 
 export const resolveMarketplaceCategoryFetchContext = async (
-  integrationRepo: CategoryFetchIntegrationRepository,
+  integrationRepo: IntegrationLookupRepository,
   connectionId: string
 ): Promise<MarketplaceCategoryFetchContext> => {
   const connection = await integrationRepo.getConnectionById(connectionId);

@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  isVintedGoogleSignInBlockedMessage,
+  resolveVintedGoogleSignInBlockedRecoveryDescription,
+} from '@/features/integrations/utils/vinted-browser-messages';
 import { Card } from '@/shared/ui/primitives.public';
 
 import { VintedRecoveryContinueButton } from './VintedRecoveryContinueButton';
@@ -40,6 +44,7 @@ export function VintedQuickExportRecoveryBanner({
   canContinue = Boolean(integrationId && connectionId),
   variant = 'compact',
 }: VintedQuickExportRecoveryBannerProps): React.JSX.Element {
+  const googleSignInBlocked = isVintedGoogleSignInBlockedMessage(failureReason);
   const title =
     mode === 'empty'
       ? 'Vinted.pl quick export needs recovery'
@@ -47,22 +52,33 @@ export function VintedQuickExportRecoveryBanner({
         ? 'Vinted.pl quick export requires recovery'
         : 'Vinted.pl quick export requires attention';
   const description =
-    failureReason &&
-    !hasAuthSignal(failureReason) &&
-    (status ?? '').trim().toLowerCase() !== 'auth_required' &&
-    (status ?? '').trim().toLowerCase() !== 'needs_login'
-      ? failureReason
-      : mode === 'empty'
-        ? 'The Vinted.pl one-click export did not leave behind a usable listing record yet. Refresh the Vinted browser session if needed, then retry from this modal.'
-        : canContinue
-          ? (
-            <>
-              Review the Vinted listing below and use
-              <span className='font-semibold text-white'> Login to Vinted.pl </span>
-              if the last run needs a fresh browser session. After login, retry the Vinted listing manually.
-            </>
-          )
-          : 'Review the Vinted status below. If the last run needs a fresh browser session, refresh the Vinted connection session and retry the listing manually.';
+    googleSignInBlocked
+      ? canContinue
+        ? (
+          <>
+            Google sign-in is blocked in this automated browser. Use
+            <span className='font-semibold text-white'> Vinted.pl email/password </span>
+            instead of Continue with Google, then refresh the Vinted.pl session and retry the
+            listing.
+          </>
+        )
+        : resolveVintedGoogleSignInBlockedRecoveryDescription(true)
+      : failureReason &&
+          !hasAuthSignal(failureReason) &&
+          (status ?? '').trim().toLowerCase() !== 'auth_required' &&
+          (status ?? '').trim().toLowerCase() !== 'needs_login'
+        ? failureReason
+        : mode === 'empty'
+          ? 'The Vinted.pl one-click export did not leave behind a usable listing record yet. Refresh the Vinted.pl browser session if needed, then retry from this modal.'
+          : canContinue
+            ? (
+              <>
+                Review the Vinted.pl listing below and use
+                <span className='font-semibold text-white'> Login to Vinted.pl </span>
+                if the last run needs a fresh browser session. After login, retry the Vinted.pl listing manually.
+              </>
+            )
+            : 'Review the Vinted.pl status below. If the last run needs a fresh browser session, refresh the Vinted.pl connection session and retry the listing manually.';
 
   if (variant === 'full') {
     return (

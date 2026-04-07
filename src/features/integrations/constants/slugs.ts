@@ -23,6 +23,11 @@ export const isVintedIntegrationSlug = (value: string | null | undefined): boole
 export const isTraderaBrowserIntegrationSlug = (value: string | null | undefined): boolean =>
   normalizeIntegrationSlug(value) === TRADERA_BROWSER_INTEGRATION_SLUG;
 
+export const isBrowserAutomationIntegrationSlug = (
+  value: string | null | undefined
+): boolean =>
+  isTraderaBrowserIntegrationSlug(value) || isVintedIntegrationSlug(value);
+
 export const isTraderaApiIntegrationSlug = (value: string | null | undefined): boolean =>
   normalizeIntegrationSlug(value) === TRADERA_API_INTEGRATION_SLUG;
 

@@ -182,6 +182,75 @@ export async function checkBaseSkuExists(
   }
 }
 
+/**
+ * Fetch a single product's full detail from Base.com.
+ * Tries dedicated single-product endpoints first (richer data), then falls back to batch methods.
+ * Returns null if the product cannot be found via any supported method.
+ */
+export async function fetchBaseProductById(
+  token: string,
+  inventoryId: string,
+  productId: string
+): Promise<BaseProductRecord | null> {
+  // Try dedicated single-product endpoints first — they may return extended attributes
+  const singleCandidates = [
+    { method: 'getInventoryProductDetails', paramKey: 'inventory_id' },
+    { method: 'getProductDetails', paramKey: 'storage_id' },
+  ];
+
+  for (const candidate of singleCandidates) {
+    try {
+      const payload = await callBaseApi(token, candidate.method, {
+        [candidate.paramKey]: inventoryId,
+        product_id: productId,
+      });
+      const products = extractProducts(payload);
+      if (products.length > 0) return products[0] ?? null;
+      // Some endpoints wrap single product directly rather than in an array
+      if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        const record = payload as Record<string, unknown>;
+        const directId =
+          toStringId(record['product_id']) ?? toStringId(record['id']) ?? toStringId(record['base_product_id']);
+        if (directId) return record as BaseProductRecord;
+      }
+    } catch (error) {
+      logClientError(error);
+      // Continue to next candidate
+    }
+  }
+
+  // Fall back to batch endpoints with a single-item list
+  const batchCandidates = [
+    { method: 'getInventoryProductsData', paramKey: 'inventory_id' },
+    { method: 'getProductsData', paramKey: 'storage_id' },
+  ];
+
+  for (const candidate of batchCandidates) {
+    try {
+      const payload = await callBaseApi(token, candidate.method, {
+        [candidate.paramKey]: inventoryId,
+        products: [productId],
+      });
+      const products = extractProducts(payload);
+      if (products.length > 0) return products[0] ?? null;
+    } catch (error) {
+      logClientError(error);
+      // Continue to next candidate
+    }
+  }
+  return null;
+}
+
+/** Returns true if a product record is considered sparse (no name or description in any language). */
+export function isBaseProductRecordSparse(record: BaseProductRecord): boolean {
+  const hasName =
+    typeof record['name'] === 'string' && record['name'].trim().length > 0 ||
+    typeof record['name_pl'] === 'string' && record['name_pl'].trim().length > 0 ||
+    typeof record['name_en'] === 'string' && record['name_en'].trim().length > 0 ||
+    typeof record['title'] === 'string' && record['title'].trim().length > 0;
+  return !hasName;
+}
+
 export async function deleteBaseProduct(
   token: string,
   inventoryId: string,

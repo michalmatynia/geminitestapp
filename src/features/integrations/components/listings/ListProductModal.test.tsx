@@ -175,6 +175,54 @@ describe('ListProductModal', () => {
     );
   });
 
+  it('uses Vinted-specific modal copy for Vinted listing flows', async () => {
+    useListingSelectionMock.mockReturnValue({
+      integrations: [
+        {
+          id: 'integration-vinted-1',
+          name: 'Vinted',
+          slug: 'vinted',
+          connections: [{ id: 'conn-vinted-1', name: 'Vinted Browser' }],
+        },
+      ],
+      loadingIntegrations: false,
+      selectedIntegrationId: 'integration-vinted-1',
+      selectedConnectionId: 'conn-vinted-1',
+      isBaseComIntegration: false,
+      isTraderaIntegration: false,
+      selectedIntegration: {
+        id: 'integration-vinted-1',
+        name: 'Vinted',
+        slug: 'vinted',
+        connections: [{ id: 'conn-vinted-1', name: 'Vinted Browser' }],
+      },
+    });
+
+    render(
+      <ListProductModal
+        isOpen={true}
+        item={{
+          id: 'product-1',
+          sku: 'SKU-1',
+          name: 'Product 1',
+          images: [],
+          catalogIds: [],
+        } as never}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        initialIntegrationId='integration-vinted-1'
+        initialConnectionId='conn-vinted-1'
+      />
+    );
+
+    expect(formModalPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'List on Vinted.pl - Unnamed Product',
+        saveText: 'List on Vinted.pl',
+      })
+    );
+  });
+
   it('uses Base-specific modal copy for Base export flows', async () => {
     useListingSelectionMock.mockReturnValue({
       integrations: [

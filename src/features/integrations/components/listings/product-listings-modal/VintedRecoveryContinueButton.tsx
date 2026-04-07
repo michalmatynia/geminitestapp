@@ -35,7 +35,7 @@ export function VintedRecoveryContinueButton({
       }}
       disabled={openingRecoveryLogin}
     >
-      {openingRecoveryLogin ? 'Waiting for Vinted login...' : 'Login to Vinted.pl'}
+      {openingRecoveryLogin ? 'Waiting for Vinted.pl login...' : 'Login to Vinted.pl'}
     </button>
   );
 }

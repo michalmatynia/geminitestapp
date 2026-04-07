@@ -1,7 +1,5 @@
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
 import { VINTED_INTEGRATION_SLUG } from '@/features/integrations/constants/slugs';
-import { v4 as uuidv4 } from 'uuid';
-
 async function main() {
   try {
     if (!process.env['MONGODB_URI']) {

@@ -3,18 +3,9 @@ import {
   hasAliasOrTriggerMatch,
   hasNodeOfType,
   normalizeText,
-  normalizeTextLower,
   toRecord,
 } from './utils';
 import type { AiPathTemplateRegistryEntry } from './types';
-
-export const hasCanonicalGraphHash = (entry: AiPathTemplateRegistryEntry, graphHash: string): boolean => {
-  const normalizedHash = normalizeTextLower(graphHash);
-  if (!normalizedHash) return false;
-  return entry.starterLineage.canonicalGraphHashes.some(
-    (hash) => normalizeTextLower(hash) === normalizedHash
-  );
-};
 
 const hasTranslationRepairDatabaseUpdateTemplate = (config: PathConfig): boolean =>
   hasNodeOfType(config, 'database', (node) => {

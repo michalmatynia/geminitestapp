@@ -1,3 +1,19 @@
+import { isVintedIntegrationSlug } from '@/features/integrations/constants/slugs';
+
+const resolveMarketplaceActionLabel = ({
+  selectedIntegrationName,
+  selectedIntegrationSlug,
+}: {
+  selectedIntegrationName: string | null;
+  selectedIntegrationSlug?: string | null;
+}): string | null => {
+  if (isVintedIntegrationSlug(selectedIntegrationSlug)) {
+    return 'Vinted.pl';
+  }
+
+  return selectedIntegrationName;
+};
+
 export const resolveProductListingsModalTitle = ({
   productName,
   integrationScopeLabel,
@@ -12,15 +28,22 @@ export const resolveListProductModalCopy = ({
   isBaseComIntegration,
   isTraderaIntegration,
   selectedIntegrationName,
+  selectedIntegrationSlug,
 }: {
   productName: string;
   isBaseComIntegration: boolean;
   isTraderaIntegration: boolean;
   selectedIntegrationName: string | null;
+  selectedIntegrationSlug?: string | null;
 }): {
   modalTitle: string;
   saveText: string;
 } => {
+  const marketplaceActionLabel = resolveMarketplaceActionLabel({
+    selectedIntegrationName,
+    selectedIntegrationSlug,
+  });
+
   if (isBaseComIntegration) {
     return {
       modalTitle: `Export to Base.com - ${productName}`,
@@ -35,10 +58,12 @@ export const resolveListProductModalCopy = ({
     };
   }
 
-  if (selectedIntegrationName) {
+  if (marketplaceActionLabel) {
     return {
-      modalTitle: `List on ${selectedIntegrationName} - ${productName}`,
-      saveText: 'List Product',
+      modalTitle: `List on ${marketplaceActionLabel} - ${productName}`,
+      saveText: isVintedIntegrationSlug(selectedIntegrationSlug)
+        ? 'List on Vinted.pl'
+        : 'List Product',
     };
   }
 
@@ -51,18 +76,28 @@ export const resolveListProductModalCopy = ({
 export const resolveMassListProductModalCopy = ({
   productCount,
   selectedIntegrationName,
+  selectedIntegrationSlug,
   isBaseComIntegration,
 }: {
   productCount: number;
   selectedIntegrationName: string | null;
+  selectedIntegrationSlug?: string | null;
   isBaseComIntegration: boolean;
 }): {
   modalTitle: string;
   saveText: string;
-} => ({
-  modalTitle: `List ${productCount} Products to ${selectedIntegrationName || 'Marketplace'}`,
-  saveText: isBaseComIntegration ? 'Export to Base.com' : 'List Products',
-});
+} => {
+  const marketplaceActionLabel =
+    resolveMarketplaceActionLabel({
+      selectedIntegrationName,
+      selectedIntegrationSlug,
+    }) || 'Marketplace';
+
+  return {
+    modalTitle: `List ${productCount} Products to ${marketplaceActionLabel}`,
+    saveText: isBaseComIntegration ? 'Export to Base.com' : 'List Products',
+  };
+};
 
 export const resolveSelectProductForListingModalCopy = (): {
   modalTitle: string;
@@ -113,8 +148,10 @@ export const resolveIntegrationSelectionConfiguredAccountsEmptyStateCopy = (): {
 
 export const resolveListProductIntegrationSelectionCopy = ({
   selectedIntegrationName,
+  selectedIntegrationSlug,
 }: {
   selectedIntegrationName: string | null;
+  selectedIntegrationSlug?: string | null;
 }): {
   sectionTitle: string;
   marketplaceLabel: string;
@@ -122,16 +159,23 @@ export const resolveListProductIntegrationSelectionCopy = ({
   accountLabel: string;
   accountPlaceholder: string;
   accountDescription: string | null;
-} => ({
-  sectionTitle: 'Integration Target',
-  marketplaceLabel: 'Marketplace / Integration',
-  marketplacePlaceholder: 'Select a marketplace...',
-  accountLabel: 'Account',
-  accountPlaceholder: 'Select an account...',
-  accountDescription: selectedIntegrationName
-    ? `Choose which account to use for listing this product on ${selectedIntegrationName}.`
-    : null,
-});
+} => {
+  const marketplaceActionLabel = resolveMarketplaceActionLabel({
+    selectedIntegrationName,
+    selectedIntegrationSlug,
+  });
+
+  return {
+    sectionTitle: 'Integration Target',
+    marketplaceLabel: 'Marketplace / Integration',
+    marketplacePlaceholder: 'Select a marketplace...',
+    accountLabel: 'Account',
+    accountPlaceholder: 'Select an account...',
+    accountDescription: marketplaceActionLabel
+      ? `Choose which account to use for listing this product on ${marketplaceActionLabel}.`
+      : null,
+  };
+};
 
 export const resolveSelectProductIntegrationSettingsCopy = (): {
   sectionTitle: string;

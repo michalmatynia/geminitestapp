@@ -13,6 +13,7 @@ import {
   resolveProductListingsEmptyDescription,
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
+import { isVintedGoogleSignInBlockedMessage } from '@/features/integrations/utils/vinted-browser-messages';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import { BaseQuickExportFailureBanner } from './BaseQuickExportFailureBanner';
@@ -45,7 +46,8 @@ const hasVintedAuthSignal = (value: string | null | undefined): boolean => {
     normalized.includes('verification') ||
     normalized.includes('captcha') ||
     normalized.includes('auth') ||
-    normalized.includes('session expired')
+    normalized.includes('session expired') ||
+    isVintedGoogleSignInBlockedMessage(normalized)
   );
 };
 

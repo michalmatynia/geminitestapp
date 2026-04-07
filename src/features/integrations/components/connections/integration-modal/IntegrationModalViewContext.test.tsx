@@ -20,6 +20,7 @@ describe('IntegrationModalViewContext', () => {
           integrationName: 'Tradera',
           activeTab: 'settings',
           isTradera: true,
+          isVinted: false,
           isAllegro: false,
           isLinkedIn: false,
           isBaselinker: false,

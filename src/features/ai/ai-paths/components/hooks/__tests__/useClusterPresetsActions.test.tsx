@@ -63,9 +63,11 @@ const mockState = vi.hoisted(() => ({
   updateView: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mockState.toast }),
 }));
+
+vi.mock('@/shared/ui', () => ({}));
 
 vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   useConfirm: () => ({

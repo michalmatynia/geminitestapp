@@ -87,6 +87,8 @@ vi.mock('@/features/integrations/utils/vinted-browser-session', () => ({
       normalized.includes('auth_required') ||
       normalized.includes('manual verification') ||
       normalized.includes('browser challenge') ||
+      normalized.includes('could not be verified') ||
+      normalized.includes('verification is incomplete') ||
       normalized.includes('session expired')
     );
   },
@@ -274,7 +276,7 @@ describe('useListProductForm', () => {
     expect(updateDefaultVintedConnectionMutateAsyncMock).toHaveBeenCalledWith({
       connectionId: 'conn-vinted-1',
     });
-    expect(toastMock).toHaveBeenCalledWith('Vinted listing queued (job job-vinted-1).', {
+    expect(toastMock).toHaveBeenCalledWith('Vinted.pl listing queued (job job-vinted-1).', {
       variant: 'success',
     });
     expect(onSuccess).toHaveBeenCalled();
@@ -311,7 +313,7 @@ describe('useListProductForm', () => {
     expect(result.current.authRequired).toBe(true);
     expect(result.current.authRequiredMarketplace).toBe('vinted');
     expect(result.current.error).toBe(
-      'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.'
+      'Vinted.pl login requires manual verification. Solve the browser challenge in the opened window and retry.'
     );
 
     await act(async () => {
@@ -322,7 +324,7 @@ describe('useListProductForm', () => {
       integrationId: 'integration-vinted-1',
       connectionId: 'conn-vinted-1',
     });
-    expect(toastMock).toHaveBeenCalledWith('Vinted login session refreshed.', {
+    expect(toastMock).toHaveBeenCalledWith('Vinted.pl login session refreshed.', {
       variant: 'success',
     });
     expect(createListingMutateAsyncMock).toHaveBeenCalledWith({

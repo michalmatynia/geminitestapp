@@ -31,7 +31,7 @@ export function ListProductErrorPanel(): React.JSX.Element {
       : 'Login and list on Tradera';
   const waitingLabel =
     authRequiredMarketplace === 'vinted'
-      ? 'Waiting for Vinted login...'
+      ? 'Waiting for Vinted.pl login...'
       : 'Waiting for login...';
 
   if (!error) {

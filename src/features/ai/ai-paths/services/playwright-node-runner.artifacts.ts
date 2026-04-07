@@ -2,7 +2,8 @@ import path from 'node:path';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import type { BrowserContext, Page } from 'playwright';
-import { nowIso, updateRunState, RUN_ROOT_DIR } from './playwright-node-runner';
+import { nowIso, updateRunState } from './playwright-node-runner';
+import { RUN_ROOT_DIR } from './playwright-node-runner.helpers';
 import type {
   PlaywrightNodeRunArtifact,
   PlaywrightNodeRunRecord,

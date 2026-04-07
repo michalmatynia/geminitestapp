@@ -34,7 +34,7 @@ describe('VintedQuickExportRecoveryBanner', () => {
     expect(screen.getByText('Vinted.pl quick export needs recovery')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'The Vinted.pl one-click export did not leave behind a usable listing record yet. Refresh the Vinted browser session if needed, then retry from this modal.'
+        'The Vinted.pl one-click export did not leave behind a usable listing record yet. Refresh the Vinted.pl browser session if needed, then retry from this modal.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('auth_required')).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe('VintedQuickExportRecoveryBanner', () => {
     );
 
     expect(screen.getByText('Vinted.pl quick export requires recovery')).toBeInTheDocument();
-    expect(screen.getByText(/Review the Vinted listing below and use/i)).toBeInTheDocument();
+    expect(screen.getByText(/Review the Vinted\.pl listing below and use/i)).toBeInTheDocument();
     expect(screen.getByText('Login to Vinted.pl')).toBeInTheDocument();
     expect(screen.getByText('job-vinted-2')).toBeInTheDocument();
     expect(screen.getByText('run-vinted-2')).toBeInTheDocument();
@@ -81,5 +81,28 @@ describe('VintedQuickExportRecoveryBanner', () => {
       screen.getByText('Vinted listing failed because the item title selector changed.')
     ).toBeInTheDocument();
     expect(screen.queryByText('Login to Vinted.pl')).toBeNull();
+  });
+
+  it('renders Google-specific recovery guidance when Google sign-in is blocked', () => {
+    render(
+      <VintedQuickExportRecoveryBanner
+        mode='content'
+        status='auth_required'
+        requestId='job-vinted-4'
+        integrationId='integration-vinted-4'
+        connectionId='conn-vinted-4'
+        failureReason='AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.'
+      />
+    );
+
+    expect(
+      screen.getByText(/Google sign-in is blocked in this automated browser\./i)
+    ).toBeInTheDocument();
+    expect(screen.getByText('Vinted.pl email/password')).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.'
+      )
+    ).toBeNull();
   });
 });

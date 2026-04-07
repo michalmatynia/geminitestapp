@@ -2,17 +2,15 @@ import type { Producer, ProducerCreateInput } from '@/shared/contracts/products/
 import { conflictError } from '@/shared/errors/app-error';
 import type { NameLookupDto } from '@/shared/contracts/base';
 
-export type ProducerCreateNameLookupInput = NameLookupDto;
-
 export const buildProducerCreateNameLookupInput = (
   data: ProducerCreateInput
-): ProducerCreateNameLookupInput => ({
+): NameLookupDto => ({
   name: data.name.trim(),
 });
 
 export const assertAvailableProducerCreateName = (
   existing: Pick<Producer, 'id'> | null,
-  lookup: ProducerCreateNameLookupInput
+  lookup: NameLookupDto
 ): void => {
   if (!existing) return;
 

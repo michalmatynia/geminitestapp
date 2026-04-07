@@ -29,6 +29,7 @@ import {
   isVintedBrowserAuthRequiredMessage,
   preflightVintedQuickListSession,
 } from '@/features/integrations/utils/vinted-browser-session';
+import { normalizeVintedDisplayText } from '@/features/integrations/utils/vinted-display';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -173,7 +174,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
           });
           if (!preflightResponse.ready) {
             throw new Error(
-              'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.'
+              'Vinted.pl login requires manual verification. Solve the browser challenge in the opened window and retry.'
             );
           }
         }
@@ -238,8 +239,8 @@ export function useListProductForm(productId: string): UseListProductFormResult 
           const queue = response.queue;
           toast(
             queue?.jobId
-              ? `Vinted listing queued (job ${queue.jobId}).`
-              : 'Vinted listing queued.',
+              ? `Vinted.pl listing queued (job ${queue.jobId}).`
+              : 'Vinted.pl listing queued.',
             { variant: 'success' }
           );
         }
@@ -254,22 +255,25 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       });
       const errorMessage = err instanceof Error ? err.message : 'Failed to list product';
       const isSelectedVintedIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
+      const displayErrorMessage = isSelectedVintedIntegration
+        ? normalizeVintedDisplayText(errorMessage)
+        : errorMessage;
       const isSelectedTraderaBrowserIntegration =
         isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
       if (
         isSelectedVintedIntegration &&
-        isVintedBrowserAuthRequiredMessage(errorMessage)
+        isVintedBrowserAuthRequiredMessage(displayErrorMessage)
       ) {
         setAuthRequired(true);
         setAuthRequiredMarketplace('vinted');
       } else if (
         isSelectedTraderaBrowserIntegration &&
-        isTraderaBrowserAuthRequiredMessage(errorMessage)
+        isTraderaBrowserAuthRequiredMessage(displayErrorMessage)
       ) {
         setAuthRequired(true);
         setAuthRequiredMarketplace('tradera');
       }
-      setError(errorMessage);
+      setError(displayErrorMessage);
     }
   };
 
@@ -324,13 +328,13 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         });
         if (!response.savedSession) {
           setError(
-            'Vinted login session could not be saved. Complete login verification and retry.'
+            'Vinted.pl login session could not be saved. Complete login verification and retry.'
           );
           setAuthRequired(true);
           setAuthRequiredMarketplace('vinted');
           return;
         }
-        toast('Vinted login session refreshed.', { variant: 'success' });
+        toast('Vinted.pl login session refreshed.', { variant: 'success' });
       }
       setAuthRequired(false);
       setAuthRequiredMarketplace(null);
@@ -347,9 +351,11 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         err instanceof Error
           ? err.message
           : marketplace === 'vinted'
-            ? 'Failed to open Vinted login'
+            ? 'Failed to open Vinted.pl login'
             : 'Failed to open Tradera login';
-      setError(errorMessage);
+      setError(
+        marketplace === 'vinted' ? normalizeVintedDisplayText(errorMessage) : errorMessage
+      );
     } finally {
       setLoggingIn(false);
     }

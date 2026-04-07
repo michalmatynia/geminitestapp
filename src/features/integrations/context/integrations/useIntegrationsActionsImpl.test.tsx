@@ -232,4 +232,36 @@ describe('useIntegrationsActionsImpl', () => {
     expect(payload).not.toHaveProperty('slowMo');
     expect(payload).not.toHaveProperty('proxyPassword');
   });
+
+  it('allows creating a Vinted browser connection without username or password', async () => {
+    const activeIntegration = createIntegration('vinted');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Vinted Browser',
+      username: '   ',
+      password: '   ',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: 'Vinted Browser',
+        }),
+      })
+    );
+    expect(payload).not.toHaveProperty('username');
+    expect(payload).not.toHaveProperty('password');
+  });
 });

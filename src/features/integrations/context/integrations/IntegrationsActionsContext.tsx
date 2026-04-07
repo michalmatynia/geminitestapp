@@ -14,6 +14,7 @@ export interface IntegrationsActions {
   handleAllegroTest: (connection: IntegrationConnection) => Promise<void>;
   handleTestConnection: (connection: IntegrationConnection) => Promise<void>;
   handleTraderaManualLogin: (connection: IntegrationConnection) => Promise<void>;
+  handleVintedManualLogin: (connection: IntegrationConnection) => Promise<void>;
   handleSelectPlaywrightPersona: (personaId: string | null) => Promise<void>;
   handleSavePlaywrightSettings: () => Promise<void>;
   handleAllegroAuthorize: () => void;

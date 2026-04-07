@@ -1,12 +1,11 @@
 import { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
+import type { BrowserListingResultDto, PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 export { ensureLoggedIn } from './tradera-browser-auth';
 import { runTraderaBrowserListingScripted } from './tradera-browser-scripted';
 import { runTraderaBrowserListingStandard } from './tradera-browser-standard';
-import type { TraderaBrowserListingResult } from './browser-types';
 
-export type { TraderaBrowserListingResult } from './browser-types';
+export type { BrowserListingResultDto as TraderaBrowserListingResult };
 
 export const runTraderaBrowserListing = async ({
   listing,
@@ -22,7 +21,7 @@ export const runTraderaBrowserListing = async ({
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
-}): Promise<TraderaBrowserListingResult> => {
+}): Promise<BrowserListingResultDto> => {
   // Relist relies on the managed quicklist flow for duplicate detection before creating a new listing.
   if (
     action === 'relist' ||

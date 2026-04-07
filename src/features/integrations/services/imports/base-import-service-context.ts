@@ -3,6 +3,8 @@ import 'server-only';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import {
   fetchBaseProductDetails,
+  fetchBaseProductById,
+  isBaseProductRecordSparse,
   type BaseProductRecord,
 } from '@/features/integrations/services/imports/base-client';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
@@ -266,5 +268,30 @@ export const fetchDetailsMap = async (
       }
     });
   }
+
+  // For sparse records (no name in any language), attempt a richer single-product fetch.
+  // This catches cases where the batch endpoint omits extended attributes.
+  const sparseIds: string[] = [];
+  for (const [id, record] of map.entries()) {
+    if (isBaseProductRecordSparse(record)) {
+      sparseIds.push(id);
+    }
+  }
+
+  if (sparseIds.length > 0) {
+    await Promise.all(
+      sparseIds.map(async (id) => {
+        try {
+          const enriched = await fetchBaseProductById(token, inventoryId, id);
+          if (enriched && !isBaseProductRecordSparse(enriched)) {
+            map.set(id, enriched);
+          }
+        } catch {
+          // Enrichment is best-effort; keep the sparse record
+        }
+      })
+    );
+  }
+
   return map;
 };

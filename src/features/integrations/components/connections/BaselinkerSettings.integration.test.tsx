@@ -306,6 +306,7 @@ const renderWithProviders = ({
     handleAllegroTest: noopAsync,
     handleTestConnection: noopAsync,
     handleTraderaManualLogin: noopAsync,
+    handleVintedManualLogin: noopAsync,
     handleSelectPlaywrightPersona: noopAsync,
     handleSavePlaywrightSettings: noopAsync,
     handleAllegroAuthorize: vi.fn(),
@@ -318,6 +319,7 @@ const renderWithProviders = ({
     handleAllegroApiRequest: noopAsync,
     onCloseModal: vi.fn(),
     onOpenSessionModal: vi.fn(),
+    handleResetListingScript: noopAsync,
   };
 
   const testingValue = {

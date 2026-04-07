@@ -2,7 +2,10 @@
 
 import React from 'react';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   useIntegrationsActions,
   useIntegrationsData,
@@ -30,13 +33,15 @@ export function ConnectionList(): React.JSX.Element {
     handleBaselinkerTest,
     handleAllegroTest,
     handleTraderaManualLogin,
+    handleVintedManualLogin,
   } = useIntegrationsActions();
 
   if (!activeIntegration) return <></>;
 
   const integrationSlug = activeIntegration.slug;
-  const isTradera = isTraderaIntegrationSlug(integrationSlug);
-  const isTraderaBrowser = isTradera && integrationSlug !== 'tradera-api';
+  const isTraderaBrowser = isTraderaBrowserIntegrationSlug(integrationSlug);
+  const isVinted = isVintedIntegrationSlug(integrationSlug);
+  const isBrowserAutomation = isTraderaBrowser || isVinted;
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
 
@@ -46,7 +51,7 @@ export function ConnectionList(): React.JSX.Element {
         items={connections.map((connection: IntegrationConnection) => ({
           id: connection.id,
           title: connection.name,
-          subtitle: connection.username,
+          subtitle: connection.username?.trim() || (isVinted ? 'Session-based browser login' : undefined),
           description:
             editingConnectionId === connection.id ? (
               <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>
@@ -90,14 +95,15 @@ export function ConnectionList(): React.JSX.Element {
             >
               {isTesting ? 'Testing...' : 'Test'}
             </Button>
-            {isTraderaBrowser && (
+            {isBrowserAutomation && (
               <Button
                 variant='outline'
                 size='xs'
                 className='h-7 text-[10px] uppercase font-bold text-emerald-300 hover:text-emerald-200'
                 type='button'
                 onClick={(): void => {
-                  void handleTraderaManualLogin(item.original);
+                  if (isVinted) void handleVintedManualLogin(item.original);
+                  else void handleTraderaManualLogin(item.original);
                 }}
                 disabled={isTesting}
               >

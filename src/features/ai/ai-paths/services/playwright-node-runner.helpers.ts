@@ -3,13 +3,6 @@ import 'server-only';
 import { createRequire } from 'module';
 import os from 'os';
 import path from 'path';
-import type {
-  PLAYWRIGHT_PERSONA_SETTINGS_KEY,
-  playwrightSettingsSchema,
-  type PlaywrightPersona,
-  type PlaywrightSettings,
-} from '@/shared/contracts/playwright';
-
 export const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
 export const RUN_TTL_MS = 24 * 60 * 60 * 1000;
 

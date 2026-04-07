@@ -72,6 +72,79 @@ export const PART_1 = String.raw`export default async function run({
     'input[aria-label*="price" i]',
     'input[aria-label*="pris" i]',
   ];
+  const QUANTITY_SELECTORS = [
+    'input[name="quantity"]',
+    '#quantity',
+    'input[name="itemCount"]',
+    '#itemCount',
+    '[data-testid*="quantity"] input',
+    '[data-testid*="item-count"] input',
+    'input[placeholder*="quantity" i]',
+    'input[placeholder*="antal" i]',
+    'input[aria-label*="quantity" i]',
+    'input[aria-label*="antal" i]',
+  ];
+  const EAN_SELECTORS = [
+    'input[name="ean"]',
+    '#ean',
+    'input[name="gtin"]',
+    '#gtin',
+    '[data-testid*="ean"] input',
+    '[data-testid*="gtin"] input',
+    'input[placeholder*="EAN" i]',
+    'input[placeholder*="GTIN" i]',
+    'input[placeholder*="barcode" i]',
+    'input[aria-label*="EAN" i]',
+    'input[aria-label*="GTIN" i]',
+    'input[aria-label*="barcode" i]',
+  ];
+  const BRAND_SELECTORS = [
+    'input[name="brand"]',
+    '#brand',
+    'input[name="producer"]',
+    '#producer',
+    '[data-testid*="brand"] input',
+    '[data-testid*="producer"] input',
+    'input[placeholder*="brand" i]',
+    'input[placeholder*="märke" i]',
+    'input[aria-label*="brand" i]',
+    'input[aria-label*="märke" i]',
+  ];
+  const WEIGHT_SELECTORS = [
+    'input[name="weight"]',
+    '#weight',
+    'input[name="vikt"]',
+    '#vikt',
+    '[data-testid*="weight"] input',
+    'input[placeholder*="weight" i]',
+    'input[placeholder*="vikt" i]',
+    'input[aria-label*="weight" i]',
+    'input[aria-label*="vikt" i]',
+  ];
+  const WIDTH_SELECTORS = [
+    'input[name="width"]',
+    '#width',
+    'input[name="bredd"]',
+    '#bredd',
+    'input[placeholder*="width" i]',
+    'input[placeholder*="bredd" i]',
+  ];
+  const LENGTH_SELECTORS = [
+    'input[name="length"]',
+    '#length',
+    'input[name="längd"]',
+    '#längd',
+    'input[placeholder*="length" i]',
+    'input[placeholder*="längd" i]',
+  ];
+  const HEIGHT_SELECTORS = [
+    'input[name="height"]',
+    '#height',
+    'input[name="höjd"]',
+    '#höjd',
+    'input[placeholder*="height" i]',
+    'input[placeholder*="höjd" i]',
+  ];
   const IMAGE_INPUT_SELECTORS = [
     'input[type="file"][accept*="image"]',
     '[data-testid*="image"] input[type="file"]',
@@ -582,6 +655,13 @@ export const PART_1 = String.raw`export default async function run({
   const description =
     referenceLines.length > 0 ? rawDescription + ' | ' + referenceLines.join(' | ') : rawDescription;
   const price = toNumber(input?.price) ?? 1;
+  const quantity = toNumber(input?.quantity) || toNumber(input?.stock) || 1;
+  const ean = toText(input?.ean) || toText(input?.gtin);
+  const brand = toText(input?.brand) || toText(input?.producer);
+  const weight = toNumber(input?.weight);
+  const width = toNumber(input?.width);
+  const length = toNumber(input?.length);
+  const height = toNumber(input?.height);
   const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)
     ? input.traderaCategory.segments
         .map((value) => toText(value))

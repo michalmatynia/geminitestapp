@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 
 import {
+  isVintedIntegrationSlug,
   isLinkedInIntegrationSlug,
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
@@ -147,6 +148,7 @@ export function useIntegrationsActionsImpl(args: {
     const isTraderaApiIntegration = isTraderaApiIntegrationSlug(args.activeIntegration.slug);
     const isTraderaBrowserIntegration =
       isTraderaIntegration && !isTraderaApiIntegration;
+    const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -160,7 +162,12 @@ export function useIntegrationsActionsImpl(args: {
       toast('Connection name is required.', { variant: 'error' });
       return null;
     }
-    if (!isBaselinkerIntegration && !isLinkedInIntegration && !normalizedUsername) {
+    if (
+      !isBaselinkerIntegration &&
+      !isLinkedInIntegration &&
+      !isVintedIntegration &&
+      !normalizedUsername
+    ) {
       toast('Username is required for this integration.', { variant: 'error' });
       return null;
     }
@@ -168,13 +175,15 @@ export function useIntegrationsActionsImpl(args: {
       toast('Connection id is required for update.', { variant: 'error' });
       return null;
     }
-    if (isCreateMode && !isLinkedInIntegration && !formData.password.trim()) {
+    if (isCreateMode && !isLinkedInIntegration && !isVintedIntegration && !formData.password.trim()) {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }
     const payload: Record<string, unknown> = {
       name: normalizedName,
-      username: normalizedUsername,
+      ...(normalizedUsername || !isCreateMode || !isVintedIntegration
+        ? { username: normalizedUsername }
+        : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
       ...(isTraderaIntegration
         ? {
@@ -393,6 +402,11 @@ export function useIntegrationsActionsImpl(args: {
     handleConnectionTest(c, 'test', 'Connection test');
   const handleTraderaManualLogin = (c: IntegrationConnection) =>
     handleConnectionTest(c, 'test', 'Manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 240000 },
+      timeoutMs: 300000,
+    });
+  const handleVintedManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', 'Vinted manual login test', {
       body: { mode: 'manual', manualTimeoutMs: 240000 },
       timeoutMs: 300000,
     });
@@ -675,6 +689,7 @@ export function useIntegrationsActionsImpl(args: {
     handleAllegroTest,
     handleTestConnection,
     handleTraderaManualLogin,
+    handleVintedManualLogin,
     handleSelectPlaywrightPersona,
     handleSavePlaywrightSettings,
     handleAllegroAuthorize,

@@ -48,6 +48,14 @@ const AVAILABLE_INTEGRATIONS = [
     type: 'marketplace',
     method: 'api',
   },
+  {
+    name: 'Vinted.pl',
+    slug: 'vinted',
+    description:
+      'Browser-based Vinted.pl integration with reusable Playwright session storage.',
+    type: 'marketplace',
+    method: 'browser',
+  },
 ] as const;
 
 export default function AddIntegrationPage(): React.JSX.Element {

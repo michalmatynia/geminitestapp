@@ -16,6 +16,8 @@ import { StatusBadge, JsonViewer } from '@/shared/ui/data-display.public';
 import { Card, Button } from '@/shared/ui/primitives.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { Hint, ExternalLink } from '@/shared/ui/forms-and-actions.public';
+
+import { resolveIntegrationDisplayName } from '../../product-listings-labels';
 import type { ProductListingWithDetailsProps } from './types';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {
@@ -249,11 +251,14 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
   };
 
   const isHistoryOpen = historyOpenByListing[listing.id] ?? false;
+  const integrationDisplayName =
+    resolveIntegrationDisplayName(listing.integration.name, listing.integration.slug) ??
+    listing.integration.name;
 
   return (
     <div className='flex-1 min-w-0'>
       <div className='flex items-center gap-2 mb-2'>
-        <span className='font-semibold text-white truncate'>{listing.integration.name}</span>
+        <span className='font-semibold text-white truncate'>{integrationDisplayName}</span>
         <StatusBadge status={listing.status} />
       </div>
 

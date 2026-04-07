@@ -60,12 +60,16 @@ function ListProductModalContent(): React.JSX.Element {
   } = useListProductForm(product.id);
 
   const productName = resolveProductListingsProductName(product);
-  const selectedIntegrationName = resolveIntegrationDisplayName(selectedIntegration?.name);
+  const selectedIntegrationName = resolveIntegrationDisplayName(
+    selectedIntegration?.name,
+    selectedIntegration?.slug
+  );
   const { modalTitle, saveText } = resolveListProductModalCopy({
     productName,
     isBaseComIntegration,
     isTraderaIntegration,
     selectedIntegrationName,
+    selectedIntegrationSlug: selectedIntegration?.slug,
   });
   const autoSubmitAttemptedRef = useRef(false);
 

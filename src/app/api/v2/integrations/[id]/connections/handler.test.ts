@@ -277,4 +277,51 @@ describe('integration connections handler', () => {
 
     expect(createConnectionMock).not.toHaveBeenCalled();
   });
+
+  it('allows creating a Vinted browser connection without credentials', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-vinted-1',
+      slug: 'vinted',
+    });
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Vinted Browser',
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-vinted-1',
+      integrationId: 'integration-vinted-1',
+      name: 'Vinted Browser',
+      username: undefined,
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      playwrightStorageStateUpdatedAt: null,
+      playwrightPersonaId: null,
+      traderaBrowserMode: 'builtin',
+      traderaDefaultDurationHours: 72,
+      traderaAutoRelistEnabled: true,
+      traderaAutoRelistLeadMinutes: 180,
+      traderaApiSandbox: false,
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api/v2/integrations/integration-vinted-1/connections', {
+        method: 'POST',
+      }) as never,
+      {} as never,
+      { id: 'integration-vinted-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-vinted-1', {
+      name: 'Vinted Browser',
+    });
+    expect(encryptSecretMock).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      id: 'conn-vinted-1',
+      name: 'Vinted Browser',
+    });
+  });
 });

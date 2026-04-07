@@ -86,6 +86,8 @@ vi.mock('@/features/integrations/utils/vinted-browser-session', () => ({
       normalized.includes('auth_required') ||
       normalized.includes('manual verification') ||
       normalized.includes('browser challenge') ||
+      normalized.includes('could not be verified') ||
+      normalized.includes('verification is incomplete') ||
       normalized.includes('session expired')
     );
   },
@@ -334,6 +336,9 @@ describe('useMassListForm', () => {
 
     expect(result.current.authRequired).toBe(true);
     expect(result.current.authRequiredMarketplace).toBe('vinted');
+    expect(result.current.error).toBe(
+      'Vinted.pl login requires manual verification. Solve the browser challenge in the opened window and retry.'
+    );
     expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -345,7 +350,7 @@ describe('useMassListForm', () => {
       connectionId: 'conn-vinted-1',
     });
     expect(result.current.error).toBe(
-      'Vinted login session could not be saved. Complete login verification and retry.'
+      'Vinted.pl login session could not be saved. Complete login verification and retry.'
     );
     expect(result.current.authRequired).toBe(true);
     expect(result.current.authRequiredMarketplace).toBe('vinted');

@@ -106,10 +106,14 @@ export async function PUT_handler(
   const isBaseIntegration = Boolean(
     integration && BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
+  const isVintedIntegration = Boolean(
+    integration && (integration.slug ?? '').trim().toLowerCase() === 'vinted'
+  );
 
   if (
     integration &&
     integration.slug !== 'baselinker' &&
+    !isVintedIntegration &&
     typeof normalizedUsername === 'string' &&
     !normalizedUsername
   ) {

@@ -172,6 +172,19 @@ describe('product-listings-recovery', () => {
       'The last Vinted.pl quick export stopped before a stable listing record was available. Refresh the Vinted browser session if needed, then retry the Vinted listing flow from this modal.'
     );
 
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        failureReason:
+          'AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.',
+      })
+    ).toBe(
+      'Google sign-in is blocked in the automated Vinted.pl browser. Use Vinted.pl email/password instead of Continue with Google, then refresh the Vinted browser session and retry.'
+    );
+
     expect(resolveProductListingsEmptyDescription(null)).toBe(
       'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.'
     );

@@ -1,17 +1,10 @@
-import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import type { IntegrationLookupRepository } from '@/shared/contracts/integrations/repositories';
 import type { MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-
-const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
-
-export type TagFetchIntegrationRepository = IntegrationLookupRepository;
-
-export type BaseMarketplaceTagFetchContext = {
-  connectionId: string;
-  inventoryId: string | null;
-  token: string;
-};
+import { badRequestError } from '@/shared/errors/app-error';
+import {
+  type BaseMarketplaceFetchContext,
+  resolveBaseMarketplaceFetchContext,
+} from '../../marketplace-fetch.helpers';
 
 export const requireMarketplaceConnectionId = (
   body: Pick<MarketplaceConnectionRequest, 'connectionId'>
@@ -22,40 +15,11 @@ export const requireMarketplaceConnectionId = (
   return body.connectionId;
 };
 
-export const resolveBaseMarketplaceTagFetchContext = async (
-  integrationRepo: TagFetchIntegrationRepository,
+export const resolveBaseMarketplaceTagFetchContext = (
+  integrationRepo: IntegrationLookupRepository,
   connectionId: string
-): Promise<BaseMarketplaceTagFetchContext> => {
-  const connection = await integrationRepo.getConnectionById(connectionId);
-  if (!connection) {
-    throw notFoundError('Connection not found');
-  }
-
-  const integration = await integrationRepo.getIntegrationById(connection.integrationId);
-  if (!integration) {
-    throw notFoundError('Integration not found');
-  }
-
-  const integrationSlug = integration.slug?.toLowerCase();
-  if (!integrationSlug || !BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
-    throw badRequestError('Only Base.com connections are supported for tag fetch');
-  }
-
-  const tokenResolution = resolveBaseConnectionToken({
-    baseApiToken: connection.baseApiToken,
-  });
-  if (!tokenResolution.token) {
-    throw badRequestError(
-      tokenResolution.error ?? 'Base.com API token not configured for this connection'
-    );
-  }
-
-  return {
-    connectionId,
-    inventoryId: connection.baseLastInventoryId ?? null,
-    token: tokenResolution.token,
-  };
-};
+): Promise<BaseMarketplaceFetchContext> =>
+  resolveBaseMarketplaceFetchContext(integrationRepo, connectionId, 'tag');
 
 export const buildEmptyMarketplaceTagFetchResponse = (): MarketplaceFetchResponse => ({
   fetched: 0,

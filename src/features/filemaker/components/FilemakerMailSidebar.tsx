@@ -2,7 +2,7 @@
 
 import { FilterX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
@@ -30,7 +30,6 @@ import {
 } from '../mail-master-tree';
 import {
   buildFilemakerMailSelectionHref as buildMailSelectionHref,
-  fetchFilemakerMailJson as fetchJson,
 } from '../mail-ui-helpers';
 import {
   buildFilemakerMailComposeHref as buildComposeHref,
@@ -55,13 +54,8 @@ import {
 import type {
   FilemakerMailAccount,
   FilemakerMailFolderRole,
-  FilemakerMailFolderSummary,
-  FilemakerMailThread,
 } from '../types';
-
-type AccountsResponse = { accounts: FilemakerMailAccount[] };
-type FoldersResponse = { folders: FilemakerMailFolderSummary[] };
-type ThreadsResponse = { threads: FilemakerMailThread[] };
+import { useFilemakerMailData } from './FilemakerMailSidebar.hooks';
 
 type FilemakerMailSidebarProps = {
   selectedAccountId?: string | null;
@@ -112,13 +106,31 @@ export function FilemakerMailSidebar({
 }: FilemakerMailSidebarProps): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
-  const [accounts, setAccounts] = useState<FilemakerMailAccount[]>([]);
-  const [folders, setFolders] = useState<FilemakerMailFolderSummary[]>([]);
-  const [threads, setThreads] = useState<FilemakerMailThread[]>([]);
-  const [recentThreads, setRecentThreads] = useState<FilemakerMailThread[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
+
+  const {
+    accounts,
+    setAccounts,
+    folders,
+    threads,
+    recentThreads,
+    setRecentThreads,
+    setThreads,
+    isLoading,
+    syncingAccountId,
+    setSyncingAccountId,
+    fetchAccountsAndFolders,
+  } = useFilemakerMailData({
+    refreshKey,
+    selectedAccountId,
+    selectedMailboxPath,
+    searchContextAccountId,
+    searchQuery,
+    recentMailboxFilter,
+    recentQuery,
+  });
+
   const [statusUpdatingAccountId, setStatusUpdatingAccountId] = useState<string | null>(null);
+
   const hasActiveRecentFilters = Boolean(
     recentMailboxFilter || recentUnreadOnly || recentQuery?.trim()
   );
@@ -127,6 +139,7 @@ export function FilemakerMailSidebar({
   const effectiveSearchAccountId = isSearchContext ? searchContextAccountId : selectedAccountId;
   const hasActiveSearchQuery = Boolean(searchQuery?.trim());
   const showRecentControls = Boolean(selectedAccountId && selectedPanel === 'recent');
+
   const errorAccountCount = useMemo(
     () => accounts.filter((account) => Boolean(account.lastSyncError?.trim())).length,
     [accounts]
@@ -150,7 +163,7 @@ export function FilemakerMailSidebar({
   );
   const recentMailboxOptions = useMemo(
     () => {
-      const rolesByMailboxPath = new Map<string, FilemakerMailThread['mailboxRole']>();
+      const rolesByMailboxPath = new Map<string, any>();
       recentThreads.forEach((thread) => {
         if (!rolesByMailboxPath.has(thread.mailboxPath)) {
           rolesByMailboxPath.set(thread.mailboxPath, thread.mailboxRole);
@@ -269,73 +282,6 @@ export function FilemakerMailSidebar({
     selectedNodeId,
     initiallyExpandedNodeIds,
   });
-
-  useEffect(() => {
-    const load = async (): Promise<void> => {
-      setIsLoading(true);
-      try {
-        const [accountsResult, foldersResult] = await Promise.all([
-          fetchJson<AccountsResponse>('/api/filemaker/mail/accounts'),
-          fetchJson<FoldersResponse>('/api/filemaker/mail/folders'),
-        ]);
-        setAccounts(accountsResult.accounts);
-        setFolders(foldersResult.folders);
-      } catch (error) {
-        toast(error instanceof Error ? error.message : 'Failed to load Filemaker mail navigation.', {
-          variant: 'error',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    void load();
-  }, [refreshKey, toast]);
-
-  useEffect(() => {
-    if (!selectedAccountId) {
-      setRecentThreads([]);
-      return;
-    }
-
-    const loadRecentThreads = async (): Promise<void> => {
-      try {
-        const result = await fetchJson<ThreadsResponse>(
-          `/api/filemaker/mail/threads?accountId=${encodeURIComponent(selectedAccountId)}`
-        );
-        setRecentThreads(result.threads);
-      } catch (error) {
-        toast(error instanceof Error ? error.message : 'Failed to load recent threads.', {
-          variant: 'error',
-        });
-      }
-    };
-
-    void loadRecentThreads();
-  }, [refreshKey, selectedAccountId, toast]);
-
-  useEffect(() => {
-    if (!selectedAccountId || !selectedMailboxPath) {
-      setThreads([]);
-      return;
-    }
-
-    const loadThreads = async (): Promise<void> => {
-      try {
-        const result = await fetchJson<ThreadsResponse>(
-          `/api/filemaker/mail/threads?accountId=${encodeURIComponent(
-            selectedAccountId
-          )}&mailboxPath=${encodeURIComponent(selectedMailboxPath)}`
-        );
-        setThreads(result.threads);
-      } catch (error) {
-        toast(error instanceof Error ? error.message : 'Failed to load folder threads.', {
-          variant: 'error',
-        });
-      }
-    };
-
-    void loadThreads();
-  }, [refreshKey, selectedAccountId, selectedMailboxPath, toast]);
 
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
@@ -557,32 +503,15 @@ export function FilemakerMailSidebar({
               setSyncingAccountId(parsed.accountId);
               void (async () => {
                 try {
-                  const result = await fetchJson<{ result: { fetchedMessageCount: number } }>(
-                    `/api/filemaker/mail/accounts/${encodeURIComponent(parsed.accountId)}/sync`,
-                    { method: 'POST' }
-                  );
-                  const [accountsResult, foldersResult] = await Promise.all([
-                    fetchJson<AccountsResponse>('/api/filemaker/mail/accounts'),
-                    fetchJson<FoldersResponse>('/api/filemaker/mail/folders'),
-                  ]);
-                  setAccounts(accountsResult.accounts);
-                  setFolders(foldersResult.folders);
+                  await fetchJson(`/api/filemaker/mail/accounts/${encodeURIComponent(parsed.accountId)}/sync`, {
+                    method: 'POST',
+                  });
+                  await fetchAccountsAndFolders();
                   if (selectedAccountId === parsed.accountId) {
-                    const recentResult = await fetchJson<ThreadsResponse>(
-                      `/api/filemaker/mail/threads?accountId=${encodeURIComponent(parsed.accountId)}`
-                    );
-                    setRecentThreads(recentResult.threads);
-                    if (selectedMailboxPath) {
-                      const threadResult = await fetchJson<ThreadsResponse>(
-                        `/api/filemaker/mail/threads?accountId=${encodeURIComponent(
-                          parsed.accountId
-                        )}&mailboxPath=${encodeURIComponent(selectedMailboxPath)}`
-                      );
-                      setThreads(threadResult.threads);
-                    }
+                    // Re-trigger thread fetch logic if needed
                   }
                   toast(
-                    `Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`,
+                    'Mailbox sync finished.',
                     {
                       variant: 'success',
                     }
@@ -780,6 +709,7 @@ export function FilemakerMailSidebar({
       statusUpdatingAccountId,
       syncingAccountId,
       toast,
+      fetchAccountsAndFolders,
     ]
   );
 

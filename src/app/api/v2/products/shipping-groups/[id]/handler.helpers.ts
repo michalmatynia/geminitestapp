@@ -1,11 +1,6 @@
-import { z } from 'zod';
 import type { ProductShippingGroup, ProductShippingGroupUpdateInput } from '@/shared/contracts/products/shipping-groups';
-import { conflictError, validationError } from '@/shared/errors/app-error';
+import { conflictError } from '@/shared/errors/app-error';
 import type { CatalogNameLookupDto } from '@/shared/contracts/base';
-
-const paramsSchema = z.object({
-  id: z.string().trim().min(1, 'Shipping group id is required'),
-});
 
 type ProductShippingGroupSnapshot = Pick<
   ProductShippingGroup,
@@ -19,23 +14,10 @@ type ProductShippingGroupSnapshot = Pick<
   | 'autoAssignCurrencyCodes'
 >;
 
-export type ShippingGroupNameLookupInput = CatalogNameLookupDto;
-
-export const parseShippingGroupId = (params: { id: string }): string => {
-  const parsed = paramsSchema.safeParse(params);
-  if (!parsed.success) {
-    throw validationError('Invalid route parameters', {
-      issues: parsed.error.flatten(),
-    });
-  }
-
-  return parsed.data.id;
-};
-
 export const buildShippingGroupNameLookupInput = (
   current: ProductShippingGroupSnapshot,
   data: ProductShippingGroupUpdateInput
-): ShippingGroupNameLookupInput | null => {
+): CatalogNameLookupDto | null => {
   if (data.name === undefined) return null;
 
   return {
@@ -47,7 +29,7 @@ export const buildShippingGroupNameLookupInput = (
 export const assertAvailableShippingGroupName = (
   existing: Pick<ProductShippingGroup, 'id'> | null,
   shippingGroupId: string,
-  lookup: ShippingGroupNameLookupInput
+  lookup: CatalogNameLookupDto
 ): void => {
   if (!existing || existing.id === shippingGroupId) return;
 

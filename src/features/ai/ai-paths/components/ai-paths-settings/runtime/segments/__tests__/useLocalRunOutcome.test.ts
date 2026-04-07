@@ -24,9 +24,12 @@ vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
   useRuntimeActions: () => mockState.runtimeActions,
 }));
 
+vi.mock('@/shared/lib/ai-paths/local-runs', () => ({
+  appendLocalRun: (...args: unknown[]) => mockState.appendLocalRun(...args),
+}));
+
 vi.mock('@/shared/lib/ai-paths', () => ({
   PATH_DEBUG_PREFIX: 'path-debug:',
-  appendLocalRun: (...args: unknown[]) => mockState.appendLocalRun(...args),
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({

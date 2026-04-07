@@ -36,7 +36,11 @@ export function IntegrationSelection(): React.JSX.Element {
     accountPlaceholder,
     accountDescription,
   } = resolveListProductIntegrationSelectionCopy({
-    selectedIntegrationName: resolveIntegrationDisplayName(selectedIntegration?.name),
+    selectedIntegrationName: resolveIntegrationDisplayName(
+      selectedIntegration?.name,
+      selectedIntegration?.slug
+    ),
+    selectedIntegrationSlug: selectedIntegration?.slug,
   });
   const { message: emptyStateMessage, detail: emptyStateDetail } =
     resolveIntegrationSelectionConfiguredAccountsEmptyStateCopy();

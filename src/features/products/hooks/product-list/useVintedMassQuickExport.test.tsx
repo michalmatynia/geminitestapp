@@ -46,7 +46,14 @@ vi.mock('@/features/integrations/public', () => ({
   },
   isVintedBrowserAuthRequiredMessage: (value: string | null | undefined) => {
     const normalized = value?.trim().toLowerCase() ?? '';
-    return normalized.includes('auth_required') || normalized.includes('session expired');
+    return (
+      normalized.includes('auth_required') ||
+      normalized.includes('manual verification') ||
+      normalized.includes('browser challenge') ||
+      normalized.includes('could not be verified') ||
+      normalized.includes('verification is incomplete') ||
+      normalized.includes('session expired')
+    );
   },
   isVintedIntegrationSlug: (value: string | null | undefined) =>
     (value ?? '').trim().toLowerCase() === 'vinted',

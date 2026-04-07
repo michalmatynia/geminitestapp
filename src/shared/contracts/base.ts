@@ -68,6 +68,11 @@ export type NameLookupDto = {
   name: string;
 };
 
+export type TitleDescriptionDto = {
+  title: string;
+  description: string;
+};
+
 export type CatalogNameLookupDto = NameLookupDto & {
   catalogId: string;
 };

@@ -51,7 +51,11 @@ function MassListProductModalContent(): React.JSX.Element {
   } = useMassListForm();
   const { modalTitle, saveText } = resolveMassListProductModalCopy({
     productCount: productIds.length,
-    selectedIntegrationName: resolveIntegrationDisplayName(selectedIntegration?.name),
+    selectedIntegrationName: resolveIntegrationDisplayName(
+      selectedIntegration?.name,
+      selectedIntegration?.slug
+    ),
+    selectedIntegrationSlug: selectedIntegration?.slug,
     isBaseComIntegration,
   });
   const loginButtonLabel =
@@ -60,7 +64,7 @@ function MassListProductModalContent(): React.JSX.Element {
       : 'Login and continue on Tradera';
   const waitingLabel =
     authRequiredMarketplace === 'vinted'
-      ? 'Waiting for Vinted login...'
+      ? 'Waiting for Vinted.pl login...'
       : 'Waiting for login...';
   const retryButtonLabel =
     progress && progress.current > 1 ? 'Retry remaining products' : 'Retry';

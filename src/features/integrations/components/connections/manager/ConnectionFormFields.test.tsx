@@ -32,13 +32,16 @@ vi.mock('@/shared/ui/primitives.public', () => ({
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
+    description,
     children,
   }: {
     label: string;
+    description?: string;
     children: React.ReactNode;
   }) => (
     <div>
       <div>{label}</div>
+      {description ? <div>{description}</div> : null}
       {children}
     </div>
   ),
@@ -111,5 +114,19 @@ describe('ConnectionFormFields', () => {
 
     expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
     expect(screen.queryByLabelText('Playwright listing script')).toBeNull();
+  });
+
+  it('shows optional Vinted credential fields for reusable browser sessions', () => {
+    renderFields('vinted');
+
+    expect(screen.getByLabelText('Integration name (e.g. Vinted Browser)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Vinted email (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Vinted password (optional)')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
+      )
+    ).toHaveLength(2);
+    expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
   });
 });

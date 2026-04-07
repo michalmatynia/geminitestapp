@@ -8,12 +8,12 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-04-07T13:41:47.959Z
+Generated at: 2026-04-07T15:49:31.172Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 7093
+- Files scanned: 7104
 - Errors: 0
 - Warnings: 0
 - Info: 10
@@ -52,14 +52,14 @@ Generated at: 2026-04-07T13:41:47.959Z
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| INFO | explicit-any | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts:20 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
-| INFO | explicit-any | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts:21 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts:133 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts:28 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts:29 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | eslint-disable | src/app/api/v2/integrations/products/[id]/listings/handler.ts:213 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call |
 | INFO | eslint-disable | src/app/api/v2/integrations/products/[id]/listings/handler.ts:234 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
 | INFO | non-null-assertion | src/features/filemaker/server/filemaker-mail-service.ts:712 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | eslint-disable | src/features/kangur/ui/KangurLoginPage.test-support.tsx:6 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-return |
 | INFO | eslint-disable | src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx:399 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call |
-| INFO | explicit-any | src/features/products/components/settings/shipping-groups/ShippingGroupsContext.handlers.ts:49 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | eslint-disable | src/shared/lib/jobs/context/JobsContext.tsx:149 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion |
 | INFO | eslint-disable | src/shared/lib/jobs/context/JobsContext.tsx:158 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion |
 

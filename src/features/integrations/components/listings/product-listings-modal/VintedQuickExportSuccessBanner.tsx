@@ -42,7 +42,7 @@ export function VintedQuickExportSuccessBanner({
   const title = 'Vinted.pl quick export completed';
   const description =
     mode === 'empty'
-      ? 'The product was listed on Vinted.pl, but the listing row is still catching up in this modal. Use the link below to open the created Vinted item now.'
+      ? 'The product was listed on Vinted.pl, but the listing row is still catching up in this modal. Use the link below to open the created Vinted.pl item now.'
       : 'The product is now linked to the created Vinted.pl listing. Open the live Vinted item directly from here.';
 
   if (variant === 'full') {

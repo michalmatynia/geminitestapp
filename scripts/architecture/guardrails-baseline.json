@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T13:41:23.778Z",
+  "generatedAt": "2026-04-07T15:49:50.526Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
     "imports.featuresToAppApiTotalImports": 0,
@@ -8,9 +8,9 @@
   "max": {
     "source.filesOver1000": 0,
     "source.filesOver1500": 0,
-    "source.useClientFiles": 1732,
+    "source.useClientFiles": 1733,
     "source.hooksWithoutUseClient": 0,
-    "source.largestFileLines": 993,
+    "source.largestFileLines": 992,
     "api.totalRoutes": 30,
     "api.delegatedServerRoutes": 179,
     "api.routesWithoutApiHandler": 0,

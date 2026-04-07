@@ -8,6 +8,10 @@ import {
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import type { ProductListingWithDetails, ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import {
+  isVintedGoogleSignInBlockedMessage,
+  resolveVintedGoogleSignInBlockedRecoveryDescription,
+} from './vinted-browser-messages';
 
 export type TraderaRecoveryContext = Extract<
   ProductListingsRecoveryContext,
@@ -117,6 +121,9 @@ export const resolveProductListingsEmptyDescription = (
       recoveryContext.failureReason.trim().length > 0
         ? recoveryContext.failureReason.trim()
         : null;
+    if (isVintedGoogleSignInBlockedMessage(failureReason)) {
+      return resolveVintedGoogleSignInBlockedRecoveryDescription(true);
+    }
     if (
       failureReason &&
       normalizedStatus !== 'auth_required' &&

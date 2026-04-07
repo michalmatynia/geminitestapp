@@ -34,6 +34,8 @@ describe('product-listings-labels', () => {
 
   it('normalizes integration display names by trimming empty values to null', () => {
     expect(resolveIntegrationDisplayName('  Tradera  ')).toBe('Tradera');
+    expect(resolveIntegrationDisplayName('Vinted', 'vinted')).toBe('Vinted.pl');
+    expect(resolveIntegrationDisplayName('  Vinted  ')).toBe('Vinted.pl');
     expect(resolveIntegrationDisplayName('   ')).toBeNull();
     expect(resolveIntegrationDisplayName(null)).toBeNull();
   });

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React from 'react';
 
+import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   useIntegrationsActions,
   useIntegrationsData,
@@ -22,9 +23,10 @@ const CUSTOM_PERSONA_OPTION: LabeledOptionDto<string> = {
 };
 
 export function PlaywrightTabContent(): React.JSX.Element {
-  const { playwrightPersonas, playwrightPersonasLoading } = useIntegrationsData();
+  const { activeIntegration, playwrightPersonas, playwrightPersonasLoading } = useIntegrationsData();
   const { playwrightPersonaId } = useIntegrationsForm();
   const { handleSelectPlaywrightPersona, handleResetListingScript } = useIntegrationsActions();
+  const canResetListingScript = isTraderaBrowserIntegrationSlug(activeIntegration?.slug);
   const personaOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> => [
       CUSTOM_PERSONA_OPTION,
@@ -94,23 +96,25 @@ export function PlaywrightTabContent(): React.JSX.Element {
 
       <DynamicPlaywrightSettingsForm />
 
-      <FormSection
-        title='Listing script'
-        description='Reset the custom listing script so this connection uses the latest managed default.'
-        className='p-4'
-      >
-        <div className='mt-4'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={(): void => {
-              void handleResetListingScript();
-            }}
-          >
-            Reset to managed default
-          </Button>
-        </div>
-      </FormSection>
+      {canResetListingScript && (
+        <FormSection
+          title='Listing script'
+          description='Reset the custom listing script so this connection uses the latest managed default.'
+          className='p-4'
+        >
+          <div className='mt-4'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                void handleResetListingScript();
+              }}
+            >
+              Reset to managed default
+            </Button>
+          </div>
+        </FormSection>
+      )}
     </>
   );
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T13:41:47.959Z",
+  "generatedAt": "2026-04-07T15:49:31.172Z",
   "status": "passed",
   "summary": {
     "total": 10,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 10,
     "status": "passed",
-    "fileCount": 7093
+    "fileCount": 7104
   },
   "scope": {
     "root": "src",
@@ -35,8 +35,8 @@
       "severity": "info",
       "ruleId": "explicit-any",
       "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts",
-      "line": 20,
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
+      "line": 133,
       "column": null,
       "snippet": null,
       "context": null
@@ -46,7 +46,17 @@
       "ruleId": "explicit-any",
       "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
       "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts",
-      "line": 21,
+      "line": 28,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts",
+      "line": 29,
       "column": null,
       "snippet": null,
       "context": null
@@ -103,16 +113,6 @@
     },
     {
       "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/products/components/settings/shipping-groups/ShippingGroupsContext.handlers.ts",
-      "line": 49,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
       "ruleId": "eslint-disable",
       "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion",
       "file": "src/shared/lib/jobs/context/JobsContext.tsx",
@@ -152,5 +152,5 @@
       "infoCount": 1
     }
   ],
-  "durationMs": 1436
+  "durationMs": 2331
 }

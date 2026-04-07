@@ -9,8 +9,6 @@ const paramsSchema = z.object({
 
 type ProducerSnapshot = Pick<Producer, 'id'>;
 
-export type ProducerNameLookupInput = NameLookupDto;
-
 const normalizeProducerName = (name: string | undefined): string | undefined =>
   typeof name === 'string' ? name.trim() : undefined;
 
@@ -27,7 +25,7 @@ export const parseProducerId = (params: { id: string }): string => {
 
 export const buildProducerNameLookupInput = (
   data: ProducerUpdateInput
-): ProducerNameLookupInput | null => {
+): NameLookupDto | null => {
   const normalizedName = normalizeProducerName(data.name);
   if (!normalizedName) return null;
 
@@ -39,7 +37,7 @@ export const buildProducerNameLookupInput = (
 export const assertAvailableProducerName = (
   existing: ProducerSnapshot | null,
   producerId: string,
-  lookup: ProducerNameLookupInput
+  lookup: NameLookupDto
 ): void => {
   if (!existing || existing.id === producerId) return;
 

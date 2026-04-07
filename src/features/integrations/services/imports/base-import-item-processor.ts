@@ -175,28 +175,50 @@ const classifyByErrorCode = (
   return { errorClass: 'permanent', retryable: false };
 };
 
+const DOWNLOAD_MAX_ATTEMPTS = 3;
+const DOWNLOAD_RETRY_DELAY_MS = 1000;
+
+/** Returns true for HTTP status codes that are worth retrying (rate limit, server errors). */
+const isRetryableHttpStatus = (status: number): boolean =>
+  status === 429 || status === 503 || status === 502 || status === 504;
+
 const downloadImage = async (url: string, sku: string, index: number): Promise<{ id: string }> => {
   const nodeFs = getFsPromises();
   const imageRepository = await getImageFileRepository();
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download image (${response.status})`, { cause: response });
-  }
-  const contentType = response.headers.get('content-type') || guessMimeType(url);
-  const buffer = Buffer.from(await response.arrayBuffer());
-  const folderName = sku ? sanitizeSku(sku) : 'temp';
-  const filename = `${Date.now()}-${index}-${extractFilename(url, 'image.jpg')}`;
-  const diskDir = path.join(productsRoot, folderName);
-  const publicPath = `/uploads/products/${folderName}/${filename}`;
-  await nodeFs.mkdir(diskDir, { recursive: true });
-  await nodeFs.writeFile(joinRuntimePath(diskDir, filename), buffer);
 
-  return imageRepository.createImageFile({
-    filename,
-    filepath: publicPath,
-    mimetype: contentType,
-    size: buffer.length,
-  });
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= DOWNLOAD_MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        if (isRetryableHttpStatus(response.status) && attempt < DOWNLOAD_MAX_ATTEMPTS) {
+          await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_RETRY_DELAY_MS * attempt));
+          continue;
+        }
+        throw new Error(`Failed to download image (${response.status})`, { cause: response });
+      }
+      const contentType = response.headers.get('content-type') || guessMimeType(url);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const folderName = sku ? sanitizeSku(sku) : 'temp';
+      const filename = `${Date.now()}-${index}-${extractFilename(url, 'image.jpg')}`;
+      const diskDir = path.join(productsRoot, folderName);
+      const publicPath = `/uploads/products/${folderName}/${filename}`;
+      await nodeFs.mkdir(diskDir, { recursive: true });
+      await nodeFs.writeFile(joinRuntimePath(diskDir, filename), buffer);
+      return imageRepository.createImageFile({
+        filename,
+        filepath: publicPath,
+        mimetype: contentType,
+        size: buffer.length,
+      });
+    } catch (error) {
+      lastError = error;
+      if (attempt < DOWNLOAD_MAX_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_RETRY_DELAY_MS * attempt));
+      }
+    }
+  }
+  throw lastError;
 };
 
 const createLinkedImage = async (url: string, index: number): Promise<{ id: string }> => {

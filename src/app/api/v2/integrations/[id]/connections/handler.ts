@@ -17,7 +17,7 @@ const createConnectionSchema = z
   .object({
     name: z.string().trim().min(1),
     username: z.string().trim().optional(),
-    password: z.string().trim().min(1),
+    password: z.string().trim().optional(),
     traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
     playwrightListingScript: z.string().trim().nullable().optional(),
     traderaDefaultTemplateId: z.string().trim().nullable().optional(),
@@ -143,11 +143,12 @@ export async function POST_handler(
     throw notFoundError('Integration not found', { integrationId });
   }
 
+  const integrationSlug = (integration.slug ?? '').trim().toLowerCase();
   const normalizedUsername = data.username?.trim() ?? '';
+  const normalizedPassword = data.password?.trim() ?? '';
   const resolvedTraderaBrowserMode = data.traderaBrowserMode ?? 'builtin';
-  const isBaseIntegration = BASE_INTEGRATION_SLUGS.has(
-    (integration.slug ?? '').trim().toLowerCase()
-  );
+  const isBaseIntegration = BASE_INTEGRATION_SLUGS.has(integrationSlug);
+  const isVintedIntegration = integrationSlug === 'vinted';
   const normalizedPlaywrightListingScript = normalizePersistedTraderaPlaywrightListingScript({
     integrationSlug: integration.slug,
     traderaBrowserMode: resolvedTraderaBrowserMode,
@@ -156,8 +157,14 @@ export async function POST_handler(
         ? data.playwrightListingScript.trim() || null
         : data.playwrightListingScript ?? undefined,
   });
-  if (integration.slug !== 'baselinker' && !normalizedUsername) {
+  if (integrationSlug !== 'baselinker' && !isVintedIntegration && !normalizedUsername) {
     throw badRequestError('Username is required for this integration.', {
+      integrationId,
+      integrationSlug: integration.slug,
+    });
+  }
+  if (!isVintedIntegration && !normalizedPassword) {
+    throw badRequestError('Password/Token is required for this integration.', {
       integrationId,
       integrationSlug: integration.slug,
     });
@@ -169,13 +176,13 @@ export async function POST_handler(
     playwrightListingScript: normalizedPlaywrightListingScript,
   });
 
-  const encryptedPassword = encryptSecret(data.password);
+  const encryptedPassword = normalizedPassword ? encryptSecret(normalizedPassword) : null;
 
   const created = await repo.createConnection(integrationId, {
     name: data.name,
-    username: normalizedUsername,
-    password: encryptedPassword,
-    ...(isBaseIntegration
+    ...(normalizedUsername || !isVintedIntegration ? { username: normalizedUsername } : {}),
+    ...(encryptedPassword ? { password: encryptedPassword } : {}),
+    ...(isBaseIntegration && encryptedPassword
       ? {
         baseApiToken: encryptedPassword,
         baseTokenUpdatedAt: new Date().toISOString(),

@@ -264,9 +264,11 @@ vi.mock('@/shared/lib/ai-paths/core/definitions/docs-snippets', () => ({
   DOCS_JOBS_SNIPPET: 'jobs snippet',
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mockState.toast }),
 }));
+
+vi.mock('@/shared/ui', () => ({}));
 
 vi.mock('@/shared/utils/object-utils', () => ({
   isObjectRecord: (value: unknown) => typeof value === 'object' && value !== null && !Array.isArray(value),

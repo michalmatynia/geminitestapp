@@ -1,21 +1,14 @@
 import { api } from '@/shared/lib/api-client';
 import type { TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
+import {
+  isVintedBrowserAuthRequiredMessage,
+  isVintedGoogleSignInBlockedMessage,
+} from './vinted-browser-messages';
 
 export const VINTED_BROWSER_MANUAL_TIMEOUT_MS = 240000;
 export const VINTED_BROWSER_MANUAL_REQUEST_TIMEOUT_MS = VINTED_BROWSER_MANUAL_TIMEOUT_MS + 30000;
 export const VINTED_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS = 20000;
-
-export const isVintedBrowserAuthRequiredMessage = (
-  value: string | null | undefined
-): boolean => {
-  const normalized = value?.trim().toLowerCase() ?? '';
-  if (!normalized) return false;
-  return (
-    normalized.includes('auth_required') ||
-    normalized.includes('manual verification') ||
-    normalized.includes('vinted session expired')
-  );
-};
+export { isVintedBrowserAuthRequiredMessage, isVintedGoogleSignInBlockedMessage };
 
 export const hasSavedVintedBrowserSession = (response: TestConnectionResponse): boolean =>
   Array.isArray(response.steps)

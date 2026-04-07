@@ -38,9 +38,11 @@ vi.mock('next/navigation', () => ({
   usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toastMock }),
 }));
+
+vi.mock('@/shared/ui', () => ({}));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
   createListQueryV2:

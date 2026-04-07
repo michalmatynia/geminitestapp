@@ -320,6 +320,44 @@ export function extractBaseImageUrls(record: BaseProductRecord): string[] {
   return Array.from(new Set(urls));
 }
 
+/**
+ * Auto-extract producer IDs from the raw Base.com product record.
+ * Reads record.producers / record.manufacturers arrays before template mappings apply.
+ * Template mappings can override these values.
+ */
+const autoExtractProducerIds = (record: BaseProductRecord): string[] => {
+  const raw = record['producers'] ?? record['manufacturers'];
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  const ids = new Set<string>();
+  for (const entry of raw as unknown[]) {
+    if (!entry || typeof entry !== 'object') continue;
+    const rec = entry as Record<string, unknown>;
+    const id = toTrimmedString(
+      rec['producerId'] ?? rec['producer_id'] ?? rec['manufacturerId'] ?? rec['manufacturer_id'] ?? rec['id']
+    );
+    if (id) ids.add(id);
+  }
+  return Array.from(ids);
+};
+
+/**
+ * Auto-extract tag IDs from the raw Base.com product record.
+ * Reads record.tags / record.labels arrays before template mappings apply.
+ * Template mappings can override these values.
+ */
+const autoExtractTagIds = (record: BaseProductRecord): string[] => {
+  const raw = record['tags'] ?? record['labels'];
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  const ids = new Set<string>();
+  for (const entry of raw as unknown[]) {
+    if (!entry || typeof entry !== 'object') continue;
+    const rec = entry as Record<string, unknown>;
+    const id = toTrimmedString(rec['tagId'] ?? rec['tag_id'] ?? rec['id']);
+    if (id) ids.add(id);
+  }
+  return Array.from(ids);
+};
+
 const NUMBER_FIELDS = new Set(['price', 'stock', 'sizeLength', 'sizeWidth', 'weight', 'length']);
 
 const PRODUCER_TARGET_FIELDS = new Set([
@@ -805,6 +843,14 @@ export function mapBaseProduct(
     ...mapped,
     sku: finalSku,
   };
+
+  // Auto-extract producers and tags from the raw record before template mappings.
+  // Template mappings applied below can still override these auto-extracted values.
+  const extendedResult = result as ProductCreateInput & { producerIds?: string[]; tagIds?: string[] };
+  const autoProducerIds = autoExtractProducerIds(record);
+  if (autoProducerIds.length > 0) extendedResult.producerIds = autoProducerIds;
+  const autoTagIds = autoExtractTagIds(record);
+  if (autoTagIds.length > 0) extendedResult.tagIds = autoTagIds;
 
   applyTemplateMappings(record, result, mappings);
 

@@ -1,16 +1,11 @@
-import { z } from 'zod';
-
 import type { TagMapping, TagMappingCreateInput } from '@/shared/contracts/integrations/listings';
 import { badRequestError } from '@/shared/errors/app-error';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-const marketplaceTagMappingsQuerySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
-});
-
-export type MarketplaceTagMappingsListQuery = {
-  connectionId: string;
-};
+import {
+  connectionIdQuerySchema,
+  type ConnectionIdQuery,
+} from '@/shared/validations/product-metadata-api-schemas';
+import { type MarketplaceMappingSaveResult } from '../marketplace-api.types';
 
 export type TagMappingCreateFields = {
   connectionId: string;
@@ -27,27 +22,19 @@ export type TagMappingSaveRepository = {
   create: (input: TagMappingCreateFields) => Promise<TagMapping>;
 };
 
-export type TagMappingSaveResult = {
-  body: TagMapping;
-  status: 200 | 201;
-};
+export type TagMappingSaveResult = MarketplaceMappingSaveResult<TagMapping>;
 
 export const parseMarketplaceTagMappingsQuery = (
   rawQuery: unknown
-): MarketplaceTagMappingsListQuery => {
-  const query = marketplaceTagMappingsQuerySchema.safeParse(rawQuery);
+): ConnectionIdQuery => {
+  const query = connectionIdQuerySchema.safeParse(rawQuery);
   if (!query.success) {
     throw badRequestError('Invalid marketplace tag mappings query.', {
       errors: query.error.flatten(),
     });
   }
 
-  const { connectionId } = query.data;
-  if (!connectionId) {
-    throw badRequestError('connectionId is required');
-  }
-
-  return { connectionId };
+  return query.data;
 };
 
 export const requireTagMappingCreateFields = (

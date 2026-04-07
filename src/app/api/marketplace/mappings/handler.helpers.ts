@@ -1,12 +1,14 @@
-import { z } from 'zod';
-
 import type { CategoryMapping, CategoryMappingCreateInput } from '@/shared/contracts/integrations/listings';
 import type { CategoryMappingRepository } from '@/shared/contracts/integrations/repositories';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-const marketplaceMappingsQuerySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
+import {
+  marketplaceConnectionQuerySchema,
+  type MarketplaceMappingSaveResult,
+} from '../marketplace-api.types';
+
+const marketplaceMappingsQuerySchema = marketplaceConnectionQuerySchema.extend({
   catalogId: optionalTrimmedQueryString(),
 });
 
@@ -22,10 +24,7 @@ export type CategoryMappingCreateFields = {
   catalogId: string;
 };
 
-export type CategoryMappingSaveResult = {
-  body: CategoryMapping;
-  status: 200 | 201;
-};
+export type CategoryMappingSaveResult = MarketplaceMappingSaveResult<CategoryMapping>;
 
 type CategoryMappingSaveRepository = Pick<
   CategoryMappingRepository,

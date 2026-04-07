@@ -238,6 +238,57 @@ describe('integration connection by-id handler', () => {
     expect(updateConnectionMock).not.toHaveBeenCalled();
   });
 
+  it('allows clearing the username for Vinted browser connections', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Vinted Browser',
+        username: '',
+      },
+    });
+    getConnectionByIdMock.mockResolvedValue({
+      id: 'conn-vinted-1',
+      integrationId: 'integration-vinted-1',
+    });
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-vinted-1',
+      slug: 'vinted',
+    });
+    updateConnectionMock.mockResolvedValue({
+      id: 'conn-vinted-1',
+      integrationId: 'integration-vinted-1',
+      name: 'Vinted Browser',
+      username: '',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      traderaBrowserMode: 'builtin',
+      traderaDefaultDurationHours: 72,
+      traderaAutoRelistEnabled: true,
+      traderaAutoRelistLeadMinutes: 180,
+      traderaApiSandbox: false,
+    });
+
+    const response = await PUT_handler(
+      new Request('http://localhost/api/v2/integrations/connections/conn-vinted-1', {
+        method: 'PUT',
+      }) as never,
+      {} as never,
+      { id: 'conn-vinted-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(updateConnectionMock).toHaveBeenCalledWith('conn-vinted-1', {
+      name: 'Vinted Browser',
+      username: '',
+    });
+    expect(payload).toMatchObject({
+      id: 'conn-vinted-1',
+      name: 'Vinted Browser',
+      username: '',
+    });
+  });
+
   it('still exports the delete query schema', () => {
     expect(typeof deleteQuerySchema.safeParse).toBe('function');
   });

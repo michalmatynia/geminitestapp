@@ -23,6 +23,7 @@ import {
   isVintedBrowserAuthRequiredMessage,
   preflightVintedQuickListSession,
 } from '@/features/integrations/utils/vinted-browser-session';
+import { normalizeVintedDisplayText } from '@/features/integrations/utils/vinted-display';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -113,7 +114,7 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
           });
           if (!preflightResponse.ready) {
             throw new Error(
-              'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.'
+              'Vinted.pl login requires manual verification. Solve the browser challenge in the opened window and retry.'
             );
           }
         }
@@ -127,20 +128,23 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
       logClientCatch(err, { source: 'SelectProductForListingModal', action: 'submit' });
       const errorMessage = err instanceof Error ? err.message : 'Failed to list product';
       const isSelectedVintedIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
+      const displayErrorMessage = isSelectedVintedIntegration
+        ? normalizeVintedDisplayText(errorMessage)
+        : errorMessage;
       const isSelectedTraderaBrowserIntegration =
         isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
       if (
         isSelectedVintedIntegration &&
-        isVintedBrowserAuthRequiredMessage(errorMessage)
+        isVintedBrowserAuthRequiredMessage(displayErrorMessage)
       ) {
-        toast(errorMessage, { variant: 'error' });
+        toast(displayErrorMessage, { variant: 'error' });
       } else if (
         isSelectedTraderaBrowserIntegration &&
-        isTraderaBrowserAuthRequiredMessage(errorMessage)
+        isTraderaBrowserAuthRequiredMessage(displayErrorMessage)
       ) {
-        toast(errorMessage, { variant: 'error' });
+        toast(displayErrorMessage, { variant: 'error' });
       }
-      setError(errorMessage);
+      setError(displayErrorMessage);
     }
   };
 

@@ -8,20 +8,20 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-05T19:03:36.164Z
+Generated at: 2026-04-07T14:22:26.720Z
 
 ## Snapshot
 
-- Source files: 9809
-- Source lines: 1598758
-- use client files: 1722
-- Files >= 1000 LOC: 3
+- Source files: 9973
+- Source lines: 1613086
+- use client files: 1732
+- Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/integrations/services/tradera-listing/category-scrape-script.ts` (1304 LOC)
+- Largest file: `src/features/ai/ai-paths/services/playwright-node-runner.ts` (993 LOC)
 - API routes: 30
-- API delegated server routes: 177
+- API delegated server routes: 179
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 303/30 (1010.0%)
+- API explicit cache policy coverage: 305/30 (1016.7%)
 - Cross-feature dependency pairs: 0
 - Shared -> features imports: 0
 - setInterval occurrences: 0
@@ -32,13 +32,13 @@ Generated at: 2026-04-05T19:03:36.164Z
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 235 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
-| `src/app/api/databases/[[...path]]/route.ts` | 203 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 188 |
 | `src/app/api/v2/products/[[...path]]/route.ts` | 171 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 168 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 146 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 126 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 116 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 111 |
+| `src/app/api/databases/[[...path]]/route.ts` | 102 |
 | `src/app/api/kangur/[[...path]]/route.ts` | 62 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
 | `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 32 |
@@ -57,18 +57,17 @@ Generated at: 2026-04-05T19:03:36.164Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/integrations/services/tradera-listing/browser.test.ts` | 2786 |
-| `src/features/integrations/services/tradera-listing/category-scrape-script.ts` | 1304 |
-| `src/features/integrations/services/tradera-listing/script-partials/part-4b.ts` | 1047 |
-| `src/features/products/components/list/ProductColumns.test.tsx` | 1038 |
+| `src/features/integrations/services/tradera-listing/browser.test.ts` | 3606 |
+| `src/features/products/components/list/ProductColumns.test.tsx` | 1084 |
+| `src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx` | 1027 |
 | `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1015 |
-| `src/features/products/components/settings/ShippingGroupsSettings.tsx` | 1006 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
-| `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 992 |
+| `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts` | 997 |
+| `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 993 |
+| `src/features/integrations/services/tradera-listing/script-partials/part-4.ts` | 992 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
 | `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 987 |
-| `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts` | 982 |
 | `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx` | 982 |
 | `src/features/kangur/ui/services/geometry-drawing.ts` | 981 |
 | `src/app/api/settings/handler.ts` | 978 |
@@ -77,3 +76,4 @@ Generated at: 2026-04-05T19:03:36.164Z
 | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx` | 974 |
 | `src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx` | 970 |
 | `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 970 |
+| `src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts` | 969 |

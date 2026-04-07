@@ -8,6 +8,7 @@ export type IntegrationModalViewContextValue = {
   integrationName: string;
   activeTab: string;
   isTradera: boolean;
+  isVinted: boolean;
   isAllegro: boolean;
   isLinkedIn: boolean;
   isBaselinker: boolean;

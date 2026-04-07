@@ -30,6 +30,7 @@ import {
   isVintedBrowserAuthRequiredMessage,
   preflightVintedQuickListSession,
 } from '@/features/integrations/utils/vinted-browser-session';
+import { normalizeVintedDisplayText } from '@/features/integrations/utils/vinted-display';
 import { massListProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -164,7 +165,7 @@ export function useMassListForm() {
         });
         if (!preflightResponse.ready) {
           throw new Error(
-            'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.'
+            'Vinted.pl login requires manual verification. Solve the browser challenge in the opened window and retry.'
           );
         }
       }
@@ -254,9 +255,12 @@ export function useMassListForm() {
             integrationId,
           });
           const errorMessage = e instanceof Error ? e.message : 'Failed to list product';
-          const marketplace = resolveAuthRequiredMarketplace(errorMessage);
+          const displayErrorMessage = isSelectedVintedIntegration
+            ? normalizeVintedDisplayText(errorMessage)
+            : errorMessage;
+          const marketplace = resolveAuthRequiredMarketplace(displayErrorMessage);
           if (marketplace) {
-            setError(errorMessage);
+            setError(displayErrorMessage);
             setAuthRequired(true);
             setAuthRequiredMarketplace(marketplace);
             setResumeIndex(i);
@@ -362,7 +366,7 @@ export function useMassListForm() {
         });
         if (!response.savedSession) {
           setError(
-            'Vinted login session could not be saved. Complete login verification and retry.'
+            'Vinted.pl login session could not be saved. Complete login verification and retry.'
           );
           setAuthRequired(true);
           setAuthRequiredMarketplace('vinted');
@@ -387,11 +391,13 @@ export function useMassListForm() {
         err instanceof Error
           ? err.message
           : marketplace === 'vinted'
-            ? 'Failed to open Vinted login'
+            ? 'Failed to open Vinted.pl login'
             : 'Failed to open Tradera login';
-      setError(errorMessage);
+      const displayErrorMessage =
+        marketplace === 'vinted' ? normalizeVintedDisplayText(errorMessage) : errorMessage;
+      setError(displayErrorMessage);
 
-      const nextMarketplace = resolveAuthRequiredMarketplace(errorMessage);
+      const nextMarketplace = resolveAuthRequiredMarketplace(displayErrorMessage);
       if (nextMarketplace) {
         setAuthRequired(true);
         setAuthRequiredMarketplace(nextMarketplace);

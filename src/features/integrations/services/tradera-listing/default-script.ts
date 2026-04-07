@@ -8,6 +8,7 @@ import { PART_4C } from './script-partials/part-4c';
 import { PART_4B } from './script-partials/part-4b';
 import { PART_4D } from './script-partials/part-4d';
 import { PART_5 } from './script-partials/part-5';
+import { PART_5B } from './script-partials/part-5b';
 
 export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = [
   PART_1,
@@ -20,4 +21,5 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = [
   PART_4B,
   PART_4D,
   PART_5,
+  PART_5B,
 ].join('');

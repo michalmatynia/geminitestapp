@@ -106,6 +106,9 @@ vi.mock('@/features/integrations/public', async (importOriginal) => {
     isVintedBrowserAuthRequiredMessage: (message: string) =>
       message.toLowerCase().includes('auth_required') ||
       message.toLowerCase().includes('manual verification') ||
+      message.toLowerCase().includes('browser challenge') ||
+      message.toLowerCase().includes('could not be verified') ||
+      message.toLowerCase().includes('verification is incomplete') ||
       message.toLowerCase().includes('vinted session expired'),
     preflightVintedQuickListSession: (...args: unknown[]) =>
       preflightVintedQuickListSessionMock(...args) as Promise<unknown>,
@@ -302,6 +305,37 @@ describe('VintedQuickListButton', () => {
         integrationId: 'integration-vinted-1',
         connectionId: 'conn-vinted-1',
       })
+    );
+  });
+
+  it('treats softer Vinted verification failures as auth-required recovery states', async () => {
+    const onOpenIntegrations = vi.fn();
+    preflightVintedQuickListSessionMock.mockRejectedValue(
+      new Error('Vinted login could not be verified.')
+    );
+
+    renderButton({ onOpenIntegrations });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Vinted.pl' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith('Vinted login could not be verified.', {
+        variant: 'error',
+      });
+    });
+
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    expect(onOpenIntegrations).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      })
+    );
+    expect(window.sessionStorage.getItem('vinted-quick-list-feedback')).toContain(
+      '"auth_required"'
     );
   });
 

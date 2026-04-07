@@ -26,6 +26,7 @@ import {
   ensureVintedBrowserSession,
   isVintedBrowserAuthRequiredMessage,
 } from '@/features/integrations/utils/vinted-browser-session';
+import { normalizeVintedDisplayText } from '@/features/integrations/utils/vinted-display';
 import {
   createTraderaRecoveryContext,
   createVintedRecoveryContext,
@@ -505,10 +506,23 @@ export const useProductListingsActionsImpl = ({
           integrationId,
           connectionId,
         });
+        if (!response.savedSession) {
+          const errorMessage =
+            'Vinted.pl login session could not be saved. Complete login verification and retry.';
+          setRecoveryContext(
+            createVintedRecoveryContext({
+              status: 'auth_required',
+              runId: null,
+              failureReason: errorMessage,
+              integrationId,
+              connectionId,
+            })
+          );
+          toast(errorMessage, { variant: 'error' });
+          return false;
+        }
         toast(
-          response.savedSession
-            ? 'Vinted login session refreshed.'
-            : 'Vinted manual login completed.',
+          'Vinted.pl login session refreshed.',
           { variant: 'success' }
         );
         setRecoveryContext((current) =>
@@ -527,7 +541,9 @@ export const useProductListingsActionsImpl = ({
           connectionId,
         });
         const errorMessage =
-          err instanceof Error ? err.message : 'Failed to open Vinted login window';
+          normalizeVintedDisplayText(
+            err instanceof Error ? err.message : 'Failed to open Vinted.pl login window'
+          );
         if (isVintedBrowserAuthRequiredMessage(errorMessage)) {
           setRecoveryContext(
             createVintedRecoveryContext({

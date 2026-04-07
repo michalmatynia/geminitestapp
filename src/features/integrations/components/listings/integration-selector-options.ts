@@ -1,6 +1,8 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 
+import { resolveIntegrationDisplayName } from './product-listings-labels';
+
 export const resolveConnectedIntegrations = (
   integrations: IntegrationWithConnections[]
 ): IntegrationWithConnections[] =>
@@ -14,7 +16,8 @@ export const resolveIntegrationOptions = (
 ): Array<LabeledOptionDto<string>> =>
   integrations.map((integration: IntegrationWithConnections) => ({
     value: integration.id,
-    label: integration.name,
+    label:
+      resolveIntegrationDisplayName(integration.name, integration.slug) ?? integration.name,
   }));
 
 export const resolveConnectionOptions = (

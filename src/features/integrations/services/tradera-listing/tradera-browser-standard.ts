@@ -5,7 +5,7 @@ import {
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { BrowserListingResultDto, ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { getIntegrationRepository } from '../integration-repository';
@@ -25,7 +25,6 @@ import {
   ensureLoggedIn,
   readTraderaAuthState,
 } from './tradera-browser-auth';
-import type { TraderaBrowserListingResult } from './browser-types';
 import { resolveTraderaListingPriceForProduct } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
 import { buildTraderaListingDescription } from './description';
@@ -47,7 +46,7 @@ export const runTraderaBrowserListingStandard = async ({
   systemSettings: TraderaSystemSettings;
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
-}): Promise<TraderaBrowserListingResult> => {
+}): Promise<BrowserListingResultDto> => {
   const listingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
   const storageState = parsePersistedStorageState(connection.playwrightStorageState);
   const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);

@@ -1,5 +1,12 @@
+import { mkdir, readdir, stat, unlink, writeFile } from 'fs/promises';
+import path from 'path';
+
 import type { Locator, Page } from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import {
+  VINTED_COOKIE_ACCEPT_SELECTORS,
+  VINTED_LOGIN_SUCCESS_SELECTORS,
+} from './config';
 
 export type VintedBrowserTestUtils = {
   safeWaitForSelector: (selector: string, options?: { state?: 'attached' | 'visible'; timeout?: number }, stepName?: string) => Promise<void>;
@@ -13,6 +20,7 @@ export type VintedBrowserTestUtils = {
   humanizedClick: (locator: Locator) => Promise<void>;
   humanizedFill: (locator: Locator, value: string) => Promise<void>;
   acceptCookieConsent: () => Promise<void>;
+  failWithDebug: (step: string, detail: string, status?: number) => Promise<never>;
   successSelector: string;
   errorSelector: string;
 };
@@ -31,6 +39,7 @@ export function createVintedBrowserTestUtils(params: {
   actionDelayMax?: number;
 }): VintedBrowserTestUtils {
   const { page, fail, actionDelayMin = 500, actionDelayMax = 1500 } = params;
+  const successSelector = VINTED_LOGIN_SUCCESS_SELECTORS.join(', ');
 
   const humanizedPause = async (min = actionDelayMin, max = actionDelayMax) => {
     const delay = Math.floor(Math.random() * (max - min + 1) + min);
@@ -100,12 +109,7 @@ export function createVintedBrowserTestUtils(params: {
   };
 
   const acceptCookieConsent = async () => {
-    const selectors = [
-      '#onetrust-accept-btn-handler',
-      'button:has-text("Akceptuję")',
-      'button:has-text("Accept all")',
-    ];
-    for (const selector of selectors) {
+    for (const selector of VINTED_COOKIE_ACCEPT_SELECTORS) {
       const locator = page.locator(selector).first();
       if (await safeIsVisible(locator)) {
         await locator.click().catch(() => undefined);
@@ -113,6 +117,55 @@ export function createVintedBrowserTestUtils(params: {
         return;
       }
     }
+  };
+
+  const captureDebugArtifacts = async (label: string): Promise<string> => {
+    try {
+      const now = new Date().toISOString().replace(/[:.]/g, '-');
+      const safeLabel = label
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .slice(0, 40);
+      const baseDir = path.join(process.cwd(), 'playwright-debug');
+      await mkdir(baseDir, { recursive: true });
+      try {
+        const entries = await readdir(baseDir);
+        const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        await Promise.all(
+          entries.map(async (entry) => {
+            const entryPath = path.join(baseDir, entry);
+            const info = await stat(entryPath);
+            if (info.mtimeMs < cutoff) {
+              await unlink(entryPath);
+            }
+          })
+        );
+      } catch (error) {
+        void ErrorSystem.captureException(error);
+      }
+      const prefix = `${params.connectionId}-${now}-${safeLabel || 'debug'}`;
+      const screenshotPath = path.join(baseDir, `${prefix}.png`);
+      const htmlPath = path.join(baseDir, `${prefix}.html`);
+      await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => undefined);
+      const html = await page.content().catch(() => '');
+      if (html) {
+        await writeFile(htmlPath, html, 'utf8');
+      }
+      return `Screenshot: ${screenshotPath}\nHTML: ${htmlPath}`;
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+      return '';
+    }
+  };
+
+  const failWithDebug = async (
+    step: string,
+    detail: string,
+    status = 400
+  ): Promise<never> => {
+    const debugInfo = await captureDebugArtifacts(step);
+    const combined = debugInfo ? `${detail}\n\nDebug:\n${debugInfo}` : detail;
+    return await fail(step, combined, status);
   };
 
   return {
@@ -127,7 +180,8 @@ export function createVintedBrowserTestUtils(params: {
     humanizedClick,
     humanizedFill,
     acceptCookieConsent,
-    successSelector: 'header, .c-header', // Simplistic Vinted success indicator
+    failWithDebug,
+    successSelector,
     errorSelector: '.c-form-error, .u-color-error',
   };
 }

@@ -65,6 +65,8 @@ vi.mock('@/features/integrations/utils/vinted-browser-session', () => ({
       normalized.includes('auth_required') ||
       normalized.includes('manual verification') ||
       normalized.includes('browser challenge') ||
+      normalized.includes('could not be verified') ||
+      normalized.includes('verification is incomplete') ||
       normalized.includes('session expired')
     );
   },
@@ -239,11 +241,11 @@ describe('useProductSelectionForm', () => {
     });
 
     expect(toastMock).toHaveBeenCalledWith(
-      'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.',
+      'Vinted.pl login requires manual verification. Solve the browser challenge in the opened window and retry.',
       { variant: 'error' }
     );
     expect(result.current.error).toBe(
-      'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.'
+      'Vinted.pl login requires manual verification. Solve the browser challenge in the opened window and retry.'
     );
     expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();

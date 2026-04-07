@@ -1,7 +1,7 @@
 import { normalizeTraderaListingFormUrl, type TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 import { validatePlaywrightNodeScript } from '@/features/ai/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
+import type { BrowserListingResultDto, PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
@@ -27,7 +27,6 @@ import {
   resolveTraderaProductImageUploadPlan,
   resolveScriptInputImageDiagnostics,
 } from './tradera-browser-images';
-import type { TraderaBrowserListingResult } from './browser-types';
 import { validateTraderaQuickListProductConfig } from './preflight';
 import {
   extractManagedTraderaQuickListMarker,
@@ -250,6 +249,8 @@ export const buildTraderaScriptInput = async ({
     fallbackTitle: title,
     baseProductId: product.baseProductId ?? product.id,
     sku: product.sku,
+    ean: product.ean,
+    gtin: product.gtin,
   });
   const appBaseUrl = resolveAppBaseUrl();
   const imageUploadPlan = await resolveTraderaProductImageUploadPlan(product);
@@ -293,6 +294,15 @@ export const buildTraderaScriptInput = async ({
     existingListingUrl,
     baseProductId: product.baseProductId ?? product.id,
     sku: product.sku ?? null,
+    stock: product.stock,
+    quantity: product.stock ?? 1,
+    ean: product.ean ?? null,
+    gtin: product.gtin ?? null,
+    brand: product.producers?.[0]?.producer?.name ?? null,
+    weight: product.weight ?? null,
+    width: product.sizeWidth ?? null,
+    length: product.length ?? null,
+    height: product.sizeLength ?? null,
     duplicateSearchTitle: duplicateSearchTerms[0] ?? null,
     duplicateSearchTerms,
     rawDescriptionEn: toTrimmedString(product.description_en) || null,
@@ -570,7 +580,7 @@ export const runTraderaBrowserListingScripted = async ({
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
-}): Promise<TraderaBrowserListingResult> => {
+}): Promise<BrowserListingResultDto> => {
   const productRepository = await getProductRepository();
   const product = await productRepository.getProductById(listing.productId);
   if (!product) {
@@ -602,7 +612,7 @@ export const runTraderaBrowserListingScripted = async ({
       | 'invalid-connection-fallback'
       | 'runtime-default-refresh';
     scriptValidationError?: string;
-  }): Promise<TraderaBrowserListingResult> => {
+  }): Promise<BrowserListingResultDto> => {
     const runtimeSettingsOverrides = buildManagedQuicklistRuntimeSettingsOverrides(script);
     const failureHoldOpenMs = resolveTraderaFailureHoldOpenMs({ action, browserMode });
     const result = await runPlaywrightListingScript({

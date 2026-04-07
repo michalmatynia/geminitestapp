@@ -235,6 +235,40 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText(/continueButtonDisabled/)).toBeInTheDocument();
   });
 
+  it('normalizes the listing integration header to Vinted.pl for Vinted listings', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-vinted-1',
+            status: 'listed',
+            externalListingId: '123456789',
+            inventoryId: null,
+            listedAt: '2026-04-02T11:30:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Vinted',
+              slug: 'vinted',
+            },
+            connection: {
+              id: 'connection-vinted-1',
+              name: 'Vinted Browser',
+            },
+            marketplaceData: {},
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Vinted.pl')).toBeInTheDocument();
+    expect(screen.queryByText('Vinted')).toBeNull();
+  });
+
   it('falls back to Tradera lastErrorCategory when lastExecution has no category', () => {
     render(
       <ProductListingDetails

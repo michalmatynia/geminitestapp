@@ -67,7 +67,9 @@ vi.mock('@/features/integrations/utils/vinted-browser-session', () => ({
       normalized.includes('captcha') ||
       normalized.includes('login requires') ||
       normalized.includes('session expired') ||
-      normalized.includes('browser challenge')
+      normalized.includes('browser challenge') ||
+      normalized.includes('could not be verified') ||
+      normalized.includes('verification is incomplete')
     );
   },
 }));
@@ -613,7 +615,7 @@ describe('useProductListingsActionsImpl', () => {
       integrationId: 'integration-vinted-1',
       connectionId: 'connection-vinted-1',
     });
-    expect(toastMock).toHaveBeenCalledWith('Vinted login session refreshed.', {
+    expect(toastMock).toHaveBeenCalledWith('Vinted.pl login session refreshed.', {
       variant: 'success',
     });
     expect(refetchListingsQuery).toHaveBeenCalled();
@@ -653,12 +655,12 @@ describe('useProductListingsActionsImpl', () => {
 
     expect(success).toBe(false);
     expect(toastMock).toHaveBeenCalledWith(
-      'AUTH_REQUIRED: Stored Vinted session expired and Vinted requires manual verification.',
+      'AUTH_REQUIRED: Stored Vinted.pl session expired and Vinted.pl requires manual verification.',
       { variant: 'error' }
     );
     expect(setError).toHaveBeenNthCalledWith(1, null);
     expect(setError).not.toHaveBeenCalledWith(
-      'AUTH_REQUIRED: Stored Vinted session expired and Vinted requires manual verification.'
+      'AUTH_REQUIRED: Stored Vinted.pl session expired and Vinted.pl requires manual verification.'
     );
     expect(setRecoveryContext).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -668,9 +670,66 @@ describe('useProductListingsActionsImpl', () => {
         integrationId: 'integration-vinted-1',
         connectionId: 'connection-vinted-1',
         failureReason:
-          'AUTH_REQUIRED: Stored Vinted session expired and Vinted requires manual verification.',
+          'AUTH_REQUIRED: Stored Vinted.pl session expired and Vinted.pl requires manual verification.',
       })
     );
+  });
+
+  it('keeps Vinted recovery active when manual login finishes without saving a session', async () => {
+    const refetchListingsQuery = vi.fn().mockResolvedValue(undefined);
+    const onListingsUpdated = vi.fn();
+    const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
+    ensureVintedBrowserSessionMock.mockResolvedValue({
+      response: { ok: true, sessionReady: true, steps: [] },
+      savedSession: false,
+    });
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams(),
+        refetchListingsQuery,
+        onListingsUpdated,
+        setError,
+        setRecoveryContext,
+      })
+    );
+
+    let success = true;
+    await act(async () => {
+      success = await result.current.handleOpenVintedLogin(
+        'recovery',
+        'integration-vinted-1',
+        'connection-vinted-1'
+      );
+    });
+
+    expect(success).toBe(false);
+    expect(ensureVintedBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-vinted-1',
+      connectionId: 'connection-vinted-1',
+    });
+    expect(toastMock).toHaveBeenCalledWith(
+      'Vinted.pl login session could not be saved. Complete login verification and retry.',
+      { variant: 'error' }
+    );
+    expect(setError).toHaveBeenNthCalledWith(1, null);
+    expect(setError).not.toHaveBeenCalledWith(
+      'Vinted.pl login session could not be saved. Complete login verification and retry.'
+    );
+    expect(setRecoveryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'connection-vinted-1',
+        failureReason:
+          'Vinted.pl login session could not be saved. Complete login verification and retry.',
+      })
+    );
+    expect(refetchListingsQuery).not.toHaveBeenCalled();
+    expect(onListingsUpdated).not.toHaveBeenCalled();
   });
 
   it('clears Tradera recovery state after a queued relist succeeds', async () => {

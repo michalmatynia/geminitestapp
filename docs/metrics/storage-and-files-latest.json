@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T13:42:05.229Z",
+  "generatedAt": "2026-04-07T15:29:33.058Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 7067,
+    "fileCount": 7075,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -5982,6 +5982,18 @@
     },
     {
       "file": "src/app/api/marketplace/mappings/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/marketplace/marketplace-api.types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/marketplace/marketplace-fetch.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20963,12 +20975,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/integrations/services/tradera-listing/browser-types.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/integrations/services/tradera-listing/browser.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21179,6 +21185,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/services/vinted-listing/vinted-browser-auth.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/services/vinted-listing/vinted-browser-images.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21199,7 +21211,7 @@
     {
       "file": "src/features/integrations/services/vinted-listing/vinted-browser-test-utils.ts",
       "dynamicPublicResolvers": 0,
-      "readOps": 0,
+      "readOps": 1,
       "strongRootGuard": false
     },
     {
@@ -21275,7 +21287,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/utils/vinted-browser-messages.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/utils/vinted-browser-session.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/utils/vinted-display.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -29741,12 +29765,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/ui/context/KangurAuthContext.helpers.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/kangur/ui/context/KangurAuthContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -35016,6 +35034,36 @@
     },
     {
       "file": "src/shared/contracts/cms-menu.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/cms-theme/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/cms-theme/segments/base.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/cms-theme/segments/defaults.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/cms-theme/segments/helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/cms-theme/segments/main.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -42445,5 +42493,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2534
+  "durationMs": 2724
 }

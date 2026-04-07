@@ -28,7 +28,7 @@ type ResolvedConnection = {
   connectionId: string;
 };
 
-export type MassQuickExportProgress = ProgressSnapshotDto;
+export type { ProgressSnapshotDto as MassQuickExportProgress };
 
 const hasPlaywrightListingScriptConfigured = (
   connection: BasicTraderaConnection
@@ -52,12 +52,12 @@ const hasScriptedConfig = (connection: BasicTraderaConnection): boolean => {
 export function useTraderaMassQuickExport(): {
   execute: (productIds: string[]) => Promise<void>;
   isRunning: boolean;
-  progress: MassQuickExportProgress;
+  progress: ProgressSnapshotDto;
 } {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isRunning, setIsRunning] = useState(false);
-  const [progress, setProgress] = useState<MassQuickExportProgress>({
+  const [progress, setProgress] = useState<ProgressSnapshotDto>({
     current: 0,
     total: 0,
     errors: 0,

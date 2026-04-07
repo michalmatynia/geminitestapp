@@ -340,6 +340,7 @@ export type TraderaProductLinkExistingResponse = z.infer<
 export type MarketplaceBadgeEntry = {
   base?: string;
   tradera?: string;
+  vinted?: string;
   playwrightProgrammable?: string;
 };
 
@@ -519,6 +520,16 @@ export type ProductListingsRecoveryContext =
   | {
     source: 'tradera_quick_export_failed' | 'tradera_quick_export_auth_required';
     integrationSlug: 'tradera';
+    status: string;
+    runId: string | null;
+    failureReason?: string | null | undefined;
+    requestId?: string | null | undefined;
+    integrationId?: string | null | undefined;
+    connectionId?: string | null | undefined;
+  }
+  | {
+    source: 'vinted_quick_export_failed' | 'vinted_quick_export_auth_required';
+    integrationSlug: 'vinted';
     status: string;
     runId: string | null;
     failureReason?: string | null | undefined;

@@ -4,6 +4,7 @@ import {
   isBaseIntegrationSlug,
   isPlaywrightProgrammableSlug,
   isTraderaIntegrationSlug,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   getProductListingRepository,
@@ -16,6 +17,7 @@ import { resolvePersistedTraderaLinkedTarget } from '@/features/integrations/ser
 import {
   enqueuePlaywrightListingJob,
   enqueueTraderaListingJob,
+  enqueueVintedListingJob,
   initializeQueues,
 } from '@/features/jobs/server';
 import { getProductRepository, parseJsonBody } from '@/features/products/server';
@@ -159,16 +161,19 @@ export async function POST_handler(
       connectionId: data.connectionId,
       status:
         isTraderaIntegrationSlug(integration.slug) ||
+        isVintedIntegrationSlug(integration.slug) ||
         isPlaywrightProgrammableSlug(integration.slug)
           ? 'queued'
           : 'pending',
       marketplaceData: isTraderaIntegrationSlug(integration.slug)
-        ? { source: 'manual-listing', marketplace: 'tradera' }
-        : isPlaywrightProgrammableSlug(integration.slug)
-          ? { source: 'manual-listing', marketplace: 'playwright-programmable' }
-        : isBaseIntegrationSlug(integration.slug)
-          ? { source: 'manual-listing', marketplace: 'base' }
-          : { source: 'manual-listing' },
+        ? { marketplace: 'tradera', source: 'manual-listing' }
+        : isVintedIntegrationSlug(integration.slug)
+          ? { marketplace: 'vinted', source: 'manual-listing' }
+          : isPlaywrightProgrammableSlug(integration.slug)
+            ? { marketplace: 'playwright-programmable', source: 'manual-listing' }
+            : isBaseIntegrationSlug(integration.slug)
+              ? { marketplace: 'base', source: 'manual-listing' }
+              : { source: 'manual-listing' },
       relistPolicy: isTraderaIntegrationSlug(integration.slug)
         ? {
           enabled: data.autoRelistEnabled ?? connection.traderaAutoRelistEnabled ?? true,
@@ -202,9 +207,31 @@ export async function POST_handler(
       return NextResponse.json(response, { status: 201 });
     }
 
+    if (isVintedIntegrationSlug(integration.slug)) {
+      initializeQueues();
+      const enqueuedAt = new Date().toISOString();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const jobId = await enqueueVintedListingJob({
+        listingId: listing.id,
+        action: 'list',
+        source: 'api',
+      });
+      const response: ProductListingCreateResponse = {
+        ...listing,
+        queued: true,
+        queue: {
+          name: 'vinted-listings',
+          jobId,
+          enqueuedAt,
+        },
+      };
+      return NextResponse.json(response, { status: 201 });
+    }
+
     if (isPlaywrightProgrammableSlug(integration.slug)) {
       initializeQueues();
       const enqueuedAt = new Date().toISOString();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const jobId = await enqueuePlaywrightListingJob({
         listingId: listing.id,
         action: 'list',

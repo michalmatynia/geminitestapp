@@ -94,6 +94,17 @@ const TraderaQuickListButton = dynamic(
   }
 );
 
+const VintedQuickListButton = dynamic(
+  () =>
+    import('./columns/buttons/VintedQuickListButton').then(
+      (mod: typeof import('./columns/buttons/VintedQuickListButton')) => mod.VintedQuickListButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const TraderaStatusButton = dynamic(
   () =>
     import('./columns/buttons/TraderaStatusButton').then(
@@ -529,6 +540,8 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
     integrationStatus: status,
     showTraderaBadge,
     traderaStatus,
+    showVintedBadge,
+    vintedStatus,
     showPlaywrightProgrammableBadge,
     playwrightProgrammableStatus,
   } = useProductListRowRuntime(product.id, product.baseProductId);
@@ -600,6 +613,15 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         }
         showTraderaBadge={showTraderaBadge}
         traderaStatus={traderaStatus}
+      />
+      <VintedQuickListButton
+        product={product}
+        prefetchListings={prefetchListings}
+        onOpenIntegrations={(recoveryContext): void =>
+          handleClick(product, recoveryContext, 'vinted')
+        }
+        showVintedBadge={showVintedBadge}
+        vintedStatus={vintedStatus}
       />
       {triggerButtonsReady ? (
         <TriggerButtonBar

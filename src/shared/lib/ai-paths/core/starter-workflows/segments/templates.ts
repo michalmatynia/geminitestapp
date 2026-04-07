@@ -1,0 +1,173 @@
+import type { CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
+import baseExportBlwoAsset from '../assets/base-export-blwo.canvas.json';
+import descriptionInferenceLiteAsset from '../assets/description-inference-lite.canvas.json';
+import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
+import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
+import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
+import translationEnPlAsset from '../assets/translation-en-pl.canvas.json';
+import {
+  buildTriggerDisplay,
+  computeStarterWorkflowGraphHash,
+  materializeSemanticAsset,
+} from './utils';
+import type { AiPathTemplateRegistryEntry } from './types';
+
+const TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES: string[] = ['97eb2bff'];
+const PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES: string[] = ['7f2d8625'];
+
+const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
+  {
+    templateId: 'starter_parameter_inference',
+    name: 'Parameter Inference',
+    description:
+      'Infer product parameter values from title, description, and images, then update product parameters.',
+    semanticAsset: parameterInferenceAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: 'path_syr8f4',
+      isActive: true,
+      isLocked: false,
+      sortOrder: 20,
+    },
+    triggerButtonPresets: [
+      {
+        id: '0ef40981-7ac6-416e-9205-7200289f851c',
+        name: 'Infer Parameters',
+        pathId: 'path_syr8f4',
+        locations: ['product_modal'],
+        display: buildTriggerDisplay('Infer Parameters'),
+        enabled: true,
+        mode: 'click',
+        sortIndex: 20,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'parameter_inference',
+      templateVersion: 16,
+      canonicalGraphHashes: PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES,
+    },
+  },
+  {
+    templateId: 'starter_description_inference_lite',
+    name: 'Description Inference v3 Lite',
+    description:
+      'Single-model grounded description generation workflow optimized for server execution.',
+    semanticAsset: descriptionInferenceLiteAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: false,
+      defaultPathId: 'path_descv3lite',
+      isActive: true,
+      isLocked: false,
+      sortOrder: 30,
+    },
+    triggerButtonPresets: [
+      {
+        id: '4c07d35b-ea92-4d1f-b86b-c586359f68de',
+        name: 'Infer Description Lite',
+        pathId: 'path_descv3lite',
+        locations: ['product_modal'],
+        display: buildTriggerDisplay('Infer Description Lite'),
+        enabled: true,
+        mode: 'click',
+        sortIndex: 30,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'description_inference_lite',
+      templateVersion: 6,
+      canonicalGraphHashes: [],
+    },
+  },
+  {
+    templateId: 'starter_base_export_blwo',
+    name: 'Base Export Workflow (BLWo)',
+    description: 'Product-row workflow export to Base.com launched by BLWo trigger button.',
+    semanticAsset: baseExportBlwoAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: 'path_base_export_blwo_v1',
+      isActive: true,
+      isLocked: false,
+      sortOrder: 40,
+    },
+    triggerButtonPresets: [
+      {
+        id: '5f36f340-3d89-4f6f-a08f-2387f380b90b',
+        name: 'BLWo',
+        pathId: 'path_base_export_blwo_v1',
+        locations: ['product_row'],
+        display: buildTriggerDisplay('BLWo'),
+        enabled: true,
+        mode: 'click',
+        sortIndex: 40,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'base_export_blwo',
+      templateVersion: 2,
+      canonicalGraphHashes: [],
+    },
+  },
+  {
+    templateId: 'starter_translation_en_pl',
+    name: 'Translation EN->PL Description + Parameters',
+    description: 'Translate English description and parameters to Polish and update the product.',
+    semanticAsset: translationEnPlAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: false,
+      defaultPathId: 'path_96708d',
+      isActive: true,
+      isLocked: false,
+      sortOrder: 50,
+    },
+    starterLineage: {
+      starterKey: 'translation_en_pl',
+      templateVersion: 6,
+      canonicalGraphHashes: TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES,
+    },
+  },
+  {
+    templateId: 'gemma_vision_object_analyser_model',
+    name: 'Gemma Vision Object Analyser',
+    description:
+      'Image Studio → Fetcher → Prompt → vision model → bounds extraction → canvas repositioning.',
+    semanticAsset: gemmaVisionObjectAnalyserModelAsset as CanvasSemanticDocument,
+    starterLineage: {
+      starterKey: 'gemma_vision_object_analyser_model',
+      templateVersion: 1,
+      canonicalGraphHashes: [],
+    },
+  },
+  {
+    templateId: 'gemma_vision_object_analyser_api',
+    name: 'Gemma Vision Analyser (Custom API)',
+    description:
+      'Image Studio → Fetcher → custom vision REST API → bounds extraction → canvas repositioning.',
+    semanticAsset: gemmaVisionObjectAnalyserApiAsset as CanvasSemanticDocument,
+    starterLineage: {
+      starterKey: 'gemma_vision_object_analyser_api',
+      templateVersion: 1,
+      canonicalGraphHashes: [],
+    },
+  },
+];
+
+export const STARTER_WORKFLOW_REGISTRY: AiPathTemplateRegistryEntry[] = rawRegistryEntries.map(
+  (entry: AiPathTemplateRegistryEntry): AiPathTemplateRegistryEntry => {
+    const latestConfig = materializeSemanticAsset(entry.semanticAsset, {
+      pathId: entry.seedPolicy?.defaultPathId ?? entry.semanticAsset.path.id,
+      isActive: entry.seedPolicy?.isActive,
+      isLocked: entry.seedPolicy?.isLocked,
+    });
+    const latestHash = computeStarterWorkflowGraphHash(latestConfig);
+    return {
+      ...entry,
+      starterLineage: {
+        ...entry.starterLineage,
+        canonicalGraphHashes: Array.from(
+          new Set([latestHash, ...entry.starterLineage.canonicalGraphHashes])
+        ),
+      },
+    };
+  }
+);

@@ -8,17 +8,17 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-04-07T09:14:03.790Z
+Generated at: 2026-04-07T11:43:12.358Z
 
 ## Snapshot
 
-- Scanned source files: 6949
-- JSX files scanned: 2499
-- Components detected: 4349
+- Scanned source files: 7048
+- JSX files scanned: 2493
+- Components detected: 4340
 - Components forwarding parent props (hotspot threshold): 120
-- Components forwarding parent props (any): 295
-- Resolved forwarded transitions: 1229
-- Candidate chains (depth >= 2): 1229
+- Components forwarding parent props (any): 294
+- Resolved forwarded transitions: 1228
+- Candidate chains (depth >= 2): 1228
 - Candidate chains (depth >= 3): 230
 - High-priority chains (depth >= 4): 66
 - Unknown spread forwarding edges: 12
@@ -40,7 +40,6 @@ Generated at: 2026-04-07T09:14:03.790Z
 | `shared-lib` | 2 |
 | `feature:playwright` | 2 |
 | `feature:notesapp` | 1 |
-| `feature:observability` | 1 |
 
 ## Top Prop-Drilling Components
 

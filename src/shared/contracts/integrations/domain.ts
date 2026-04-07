@@ -61,6 +61,7 @@ export type ExportJobDetail = z.infer<typeof exportJobDetailSchema>;
 export const integrationDefinitions = [
   { name: 'Tradera', slug: 'tradera' },
   { name: 'Tradera API', slug: 'tradera-api' },
+  { name: 'Vinted.pl', slug: 'vinted' },
   { name: 'Allegro', slug: 'allegro' },
   { name: 'Baselinker', slug: 'baselinker' },
   { name: 'LinkedIn', slug: 'linkedin' },

@@ -8,12 +8,12 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-04-07T10:12:55.121Z
+Generated at: 2026-04-07T11:43:01.836Z
 
 ## Summary
 
 - Status: WARN
-- Files scanned: 1093
+- Files scanned: 1095
 - Total handlers: 972
 - Validated handlers: 972
 - **Coverage: 100%**

@@ -98,6 +98,8 @@ export interface ProductListContextType {
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeIds: Set<string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeIds: Set<string>;
+  vintedBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
   productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
   categoryNameById: ReadonlyMap<string, string>;
@@ -289,6 +291,8 @@ export interface ProductListRowRuntimeContextType {
   integrationStatus: string;
   showTraderaBadge: boolean;
   traderaStatus: string;
+  showVintedBadge: boolean;
+  vintedStatus: string;
   showPlaywrightProgrammableBadge: boolean;
   playwrightProgrammableStatus: string;
   productAiRunFeedback: ProductAiRunFeedback | null;

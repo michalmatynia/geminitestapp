@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T10:12:57.025Z",
+  "generatedAt": "2026-04-07T11:43:03.709Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 3366,
+    "totalTestFiles": 3362,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -83,18 +83,18 @@
       "negativePathTestCount": 15
     },
     {
-      "feature": "observability",
-      "testCount": 28,
-      "fastTestCount": 27,
-      "e2eTestCount": 1,
-      "negativePathTestCount": 4
-    },
-    {
       "feature": "admin",
       "testCount": 25,
       "fastTestCount": 22,
       "e2eTestCount": 3,
       "negativePathTestCount": 4
+    },
+    {
+      "feature": "observability",
+      "testCount": 24,
+      "fastTestCount": 23,
+      "e2eTestCount": 1,
+      "negativePathTestCount": 3
     },
     {
       "feature": "database",
@@ -535,5 +535,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 619
+  "durationMs": 611
 }

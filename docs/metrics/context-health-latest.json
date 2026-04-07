@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T10:12:55.786Z",
+  "generatedAt": "2026-04-07T11:43:02.481Z",
   "status": "warn",
   "summary": {
     "total": 24,
@@ -7,7 +7,7 @@
     "warningCount": 15,
     "infoCount": 9,
     "status": "warn",
-    "contextFileCount": 263
+    "contextFileCount": 262
   },
   "scope": {
     "sourceDirs": [
@@ -285,5 +285,5 @@
       "infoCount": 9
     }
   ],
-  "durationMs": 277
+  "durationMs": 273
 }

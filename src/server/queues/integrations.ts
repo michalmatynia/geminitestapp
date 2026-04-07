@@ -5,6 +5,8 @@ export {
   enqueuePlaywrightListingJob,
   startTraderaListingQueue,
   enqueueTraderaListingJob,
+  startVintedListingQueue,
+  enqueueVintedListingJob,
   startTraderaRelistSchedulerQueue,
 } from '@/features/integrations/server';
 export {

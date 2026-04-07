@@ -1,13 +1,13 @@
 {
   "summary": {
-    "generatedAt": "2026-04-07T09:14:03.790Z",
-    "scannedSourceFiles": 6949,
-    "scannedJsxFiles": 2499,
-    "componentCount": 4349,
+    "generatedAt": "2026-04-07T11:43:12.358Z",
+    "scannedSourceFiles": 7048,
+    "scannedJsxFiles": 2493,
+    "componentCount": 4340,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 295,
-    "resolvedTransitionCount": 1229,
-    "depth2CandidateChainCount": 1229,
+    "componentsWithAnyForwarding": 294,
+    "resolvedTransitionCount": 1228,
+    "depth2CandidateChainCount": 1228,
     "candidateChainCount": 230,
     "highPriorityChainCount": 66,
     "unknownSpreadForwardingCount": 12,
@@ -60,10 +60,6 @@
       },
       {
         "scope": "feature:notesapp",
-        "count": 1
-      },
-      {
-        "scope": "feature:observability",
         "count": 1
       }
     ]
@@ -17288,32 +17284,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx#EventStreamPanel",
-      "sinkComponentId": "src/shared/ui/templates/StandardDataTablePanel.tsx#StandardDataTablePanel",
-      "componentPath": [
-        "src/features/observability/pages/system-logs/SystemLogs.Table.tsx#EventStreamPanel",
-        "src/shared/ui/templates/StandardDataTablePanel.tsx#StandardDataTablePanel"
-      ],
-      "propPath": [
-        "showFooterPagination",
-        "footer"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx#EventStreamPanel",
-          "toComponentId": "src/shared/ui/templates/StandardDataTablePanel.tsx#StandardDataTablePanel",
-          "sourceProp": "showFooterPagination",
-          "targetProp": "footer",
-          "relativePath": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
-          "line": 670
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/playwright/pages/PlaywrightPersonasPage.tsx#PlaywrightPersonasPage",
       "sinkComponentId": "src/shared/ui/item-library.tsx#ItemLibrary",
       "componentPath": [
@@ -27471,7 +27441,7 @@
           "sourceProp": "canReadAdminSettings",
           "targetProp": "canReadAdminSettings",
           "relativePath": "src/features/admin/layout/AdminLayout.tsx",
-          "line": 386
+          "line": 383
         }
       ]
     },
@@ -28199,7 +28169,7 @@
           "sourceProp": "hasInitialMenuPreference",
           "targetProp": "hasInitialMenuPreference",
           "relativePath": "src/features/admin/layout/AdminLayout.tsx",
-          "line": 390
+          "line": 387
         }
       ]
     },
@@ -39211,15 +39181,6 @@
       "name": "ParentDashboardAuthLoadingState",
       "relativePath": "src/features/kangur/ui/pages/ParentDashboard.tsx",
       "feature": "feature:kangur",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 1,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx#EventStreamPanel",
-      "name": "EventStreamPanel",
-      "relativePath": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
-      "feature": "feature:observability",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false

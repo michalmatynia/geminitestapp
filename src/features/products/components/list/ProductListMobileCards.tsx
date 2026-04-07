@@ -81,6 +81,17 @@ const TraderaQuickListButton = dynamic(
   }
 );
 
+const VintedQuickListButton = dynamic(
+  () =>
+    import('./columns/buttons/VintedQuickListButton').then(
+      (mod: typeof import('./columns/buttons/VintedQuickListButton')) => mod.VintedQuickListButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const TraderaStatusButton = dynamic(
   () =>
     import('./columns/buttons/TraderaStatusButton').then(
@@ -248,6 +259,8 @@ const renderProductListMobileCard = ({
     integrationStatus: status,
     showTraderaBadge,
     traderaStatus,
+    showVintedBadge,
+    vintedStatus,
     showPlaywrightProgrammableBadge,
     playwrightProgrammableStatus,
     productAiRunFeedback,
@@ -424,6 +437,15 @@ const renderProductListMobileCard = ({
           }
           showTraderaBadge={showTraderaBadge}
           traderaStatus={traderaStatus}
+        />
+        <VintedQuickListButton
+          product={product}
+          prefetchListings={() => prefetchListings(product.id)}
+          onOpenIntegrations={(recoveryContext) =>
+            onIntegrationsClick(product, recoveryContext, 'vinted')
+          }
+          showVintedBadge={showVintedBadge}
+          vintedStatus={vintedStatus}
         />
 
         {triggerButtonsReady ? (

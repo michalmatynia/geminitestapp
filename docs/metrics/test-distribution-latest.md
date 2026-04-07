@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-04-07T10:12:57.025Z
+Generated at: 2026-04-07T11:43:03.709Z
 
 ## Summary
 
@@ -18,7 +18,7 @@ Generated at: 2026-04-07T10:12:57.025Z
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 3366
+- Total test files: 3362
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -35,8 +35,8 @@ Generated at: 2026-04-07T10:12:57.025Z
 | cms | 85 | 84 | 1 | 21 |
 | prompt-exploder | 54 | 54 | 0 | 29 |
 | filemaker | 40 | 40 | 0 | 15 |
-| observability | 28 | 27 | 1 | 4 |
 | admin | 25 | 22 | 3 | 4 |
+| observability | 24 | 23 | 1 | 3 |
 | database | 20 | 19 | 1 | 12 |
 | notesapp | 18 | 16 | 2 | 6 |
 | auth | 16 | 16 | 0 | 8 |

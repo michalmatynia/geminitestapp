@@ -1,17 +1,17 @@
 {
   "summary": {
-    "generatedAt": "2026-04-07T09:14:03.468Z",
-    "scannedFileCount": 2528,
-    "duplicateNameClusterCount": 2,
-    "propSignatureClusterCount": 1,
-    "tokenSimilarityClusterCount": 2,
+    "generatedAt": "2026-04-07T11:43:13.139Z",
+    "scannedFileCount": 2527,
+    "duplicateNameClusterCount": 0,
+    "propSignatureClusterCount": 0,
+    "tokenSimilarityClusterCount": 0,
     "thinReExportWrapperCount": 38,
-    "totalOpportunities": 5,
-    "highPriorityCount": 2,
+    "totalOpportunities": 0,
+    "highPriorityCount": 0,
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1844
+        "count": 1845
       },
       {
         "family": "Page",
@@ -39,7 +39,7 @@
       },
       {
         "family": "Settings",
-        "count": 25
+        "count": 24
       },
       {
         "family": "Header",
@@ -71,7 +71,7 @@
       },
       {
         "family": "Table",
-        "count": 6
+        "count": 5
       },
       {
         "family": "Drawer",
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 1955
+        "count": 1954
       },
       {
         "domain": "app",
@@ -125,7 +125,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/viewer3d/pages.public"
+        "@/features/viewer3d/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -160,7 +160,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/viewer3d/pages.public"
+        "@/features/viewer3d/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -4631,9 +4631,9 @@
       "lines": 15,
       "useClient": false,
       "imports": [
-        "@/features/admin/layout/AdminRouteLoading",
+        "@/features/admin/public",
         "react",
-        "@/features/observability/pages/SystemLogsPage"
+        "@/features/observability/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -6067,7 +6067,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 73,
+      "lines": 72,
       "useClient": false,
       "imports": [
         "next-intl",
@@ -6077,10 +6077,11 @@
         "@/shared/utils/ui-utils",
         "@/shared/contracts/site-i18n",
         "@/shared/lib/lite-settings-ssr",
+        "@/shared/ui/SkipToContentLink",
         "next"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": null,
       "thinReExportWrapper": false
@@ -17501,7 +17502,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Panel",
-      "lines": 236,
+      "lines": 239,
       "useClient": true,
       "imports": [
         "react",
@@ -23033,7 +23034,7 @@
         "./ProductListingsScopedStatusPanel",
         "./TraderaQuickExportRecoveryBanner",
         "./TraderaQuickExportSuccessBanner",
-        "@/features/products/components/list/columns/product-column-utils"
+        "@/features/integrations/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -46236,65 +46237,6 @@
       "thinReExportWrapper": false
     },
     {
-      "path": "src/features/observability/pages/system-logs/SystemLogs.Settings.tsx",
-      "basename": "SystemLogs.Settings.tsx",
-      "domain": "feature",
-      "scope": "feature:observability",
-      "family": "Settings",
-      "lines": 192,
-      "useClient": true,
-      "imports": [
-        "react",
-        "@/shared/contracts/observability",
-        "@/shared/hooks/use-settings",
-        "@/shared/lib/observability/logging-controls",
-        "@/shared/ui/primitives.public",
-        "@/shared/ui/forms-and-actions.public",
-        "@/shared/ui/navigation-and-layout.public",
-        "@/shared/utils/observability/client-error-logger",
-        "@/shared/utils/settings-json"
-      ],
-      "templateImports": 0,
-      "uiPrimitiveImports": 3,
-      "tokenSet": {},
-      "propsSignature": "initialControls|initialFlags|initialTags",
-      "thinReExportWrapper": false
-    },
-    {
-      "path": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
-      "basename": "SystemLogs.Table.tsx",
-      "domain": "feature",
-      "scope": "feature:observability",
-      "family": "Table",
-      "lines": 708,
-      "useClient": true,
-      "imports": [
-        "react",
-        "lucide-react",
-        "@tanstack/react-table",
-        "@/features/observability/context/SystemLogsContext",
-        "@/shared/lib/documentation/tooltips",
-        "@/shared/contracts/documentation",
-        "@/shared/contracts/observability",
-        "@/shared/contracts/ui/base",
-        "@/shared/ui/primitives.public",
-        "@/shared/ui/forms-and-actions.public",
-        "@/shared/ui/navigation-and-layout.public",
-        "@/shared/ui/templates.public",
-        "@/shared/ui/data-display.public",
-        "@/shared/ui/templates/modals",
-        "@/shared/utils/ui-utils",
-        "../../types",
-        "../../utils/formatTimestamp",
-        "../../utils/logHelpers"
-      ],
-      "templateImports": 2,
-      "uiPrimitiveImports": 6,
-      "tokenSet": {},
-      "propsSignature": null,
-      "thinReExportWrapper": false
-    },
-    {
       "path": "src/features/playwright/components/PlaywrightEngineLogoButton.tsx",
       "basename": "PlaywrightEngineLogoButton.tsx",
       "domain": "feature",
@@ -46459,7 +46401,7 @@
         "@/shared/contracts/products/product",
         "@/shared/ui/admin-products-page-layout",
         "@/shared/ui/button",
-        "@/features/files/components/FileManager"
+        "@/features/files/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 2,
@@ -46732,7 +46674,7 @@
         "@/features/products/context/ProductFormCoreContext",
         "@/features/products/context/ProductFormImageContext",
         "@/features/products/context/ProductListContext",
-        "@/features/integrations/utils/product-listings-recovery",
+        "@/features/integrations/public",
         "@/features/products/hooks/editingProductHydration",
         "@/features/products/lib/build-triggered-product-entity-json",
         "@/features/products/lib/product-integrations-adapter-loader",
@@ -46745,11 +46687,8 @@
         "@/shared/ui/integration-selector",
         "@/shared/ui/skeleton",
         "./product-form-preload",
-        "@/features/files/components/FileManager",
-        "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar",
-        "@/features/integrations/components/listings/ListProductModal",
-        "@/features/integrations/components/listings/MassListProductModal",
-        "@/features/integrations/components/listings/ProductListingsModal"
+        "@/features/files/public",
+        "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 4,
@@ -47273,7 +47212,7 @@
         "@/shared/ui/form-section",
         "@/shared/ui/image-slot-manager",
         "./ProductImagesTabContext",
-        "@/features/files/components/FileManager"
+        "@/features/files/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 3,
@@ -47529,13 +47468,12 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 164,
+      "lines": 163,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
-        "@/features/ai/image-studio/components/center-preview/CenterPreviewContext",
-        "@/features/ai/image-studio/components/center-preview/SplitVariantPreview",
+        "@/features/ai/public",
         "@/features/products/context/ProductStudioContext",
         "@/shared/ui/button",
         "@/shared/ui/form-section"
@@ -47622,7 +47560,7 @@
         "lucide-react",
         "next/image",
         "react",
-        "@/features/ai/image-studio/image-src",
+        "@/features/ai/public",
         "@/features/products/context/ProductStudioContext",
         "@/features/products/hooks/useProductSettings",
         "@/shared/ui/button",
@@ -47669,7 +47607,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 792,
+      "lines": 814,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -47678,7 +47616,7 @@
         "react",
         "@/features/products/components/cells/ProductImageCell",
         "@/features/products/components/EditableCell",
-        "@/features/integrations/hooks/useListingQueries",
+        "@/features/integrations/public",
         "@/features/products/context/ProductListContext",
         "@/features/products/lib/build-triggered-product-entity-json",
         "@/features/products/lib/product-integrations-adapter-loader",
@@ -47702,6 +47640,7 @@
         "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar",
         "./columns/buttons/BaseQuickExportButton",
         "./columns/buttons/TraderaQuickListButton",
+        "./columns/buttons/VintedQuickListButton",
         "./columns/buttons/TraderaStatusButton",
         "./columns/buttons/PlaywrightStatusButton",
         "./TraderaLinkModal"
@@ -47844,7 +47783,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 641,
+      "lines": 663,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -47852,7 +47791,7 @@
         "next/dynamic",
         "react",
         "@/features/products/components/cells/ProductImageCell",
-        "@/features/integrations/hooks/useListingQueries",
+        "@/features/integrations/public",
         "@/features/products/context/ProductListContext",
         "@/features/products/lib/build-triggered-product-entity-json",
         "@/features/products/lib/product-integrations-adapter-loader",
@@ -47871,6 +47810,7 @@
         "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar",
         "./columns/buttons/BaseQuickExportButton",
         "./columns/buttons/TraderaQuickListButton",
+        "./columns/buttons/VintedQuickListButton",
         "./columns/buttons/TraderaStatusButton",
         "./columns/buttons/PlaywrightStatusButton"
       ],
@@ -47992,9 +47932,7 @@
       "useClient": true,
       "imports": [
         "react",
-        "@/features/integrations/constants/slugs",
-        "@/features/integrations/hooks/useIntegrationQueries",
-        "@/features/integrations/hooks/useProductListingMutations",
+        "@/features/integrations/public",
         "@/shared/contracts/integrations/domain",
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
@@ -48136,20 +48074,17 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 838,
+      "lines": 834,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
         "react",
         "@/shared/contracts/integrations/preferences",
+        "@/features/integrations/public",
         "@/shared/contracts/integrations/import-export",
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
         "@/shared/lib/api-client",
-        "@/features/integrations/components/listings/hooks/useIntegrationSelection",
-        "@/features/integrations/constants/slugs",
-        "@/features/integrations/hooks/useProductListingMutations",
-        "@/features/integrations/utils/product-listings-recovery",
         "@/shared/lib/ai-paths/client-run-tracker",
         "@/shared/lib/ai-paths/trigger-button-run-feedback",
         "@/shared/lib/query-factories-v2",
@@ -48221,16 +48156,13 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 341,
+      "lines": 344,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
         "lucide-react",
         "react",
-        "@/features/integrations/components/listings/hooks/useIntegrationSelection",
-        "@/features/integrations/hooks/useProductListingMutations",
-        "@/features/integrations/utils/product-listings-recovery",
-        "@/features/integrations/utils/tradera-browser-session",
+        "@/features/integrations/public",
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
         "@/shared/lib/api-client",
@@ -48240,10 +48172,7 @@
         "@/shared/ui/toast",
         "@/shared/utils/ui-utils",
         "@/shared/utils/observability/client-error-logger",
-        "../product-column-utils",
-        "./hooks/useTraderaQuickExportConnection",
-        "./hooks/useTraderaQuickExportFeedback",
-        "./hooks/useTraderaQuickExportPolling"
+        "../product-column-utils"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 2,
@@ -48277,12 +48206,11 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 63,
+      "lines": 62,
       "useClient": true,
       "imports": [
         "react",
-        "@/features/integrations/utils/product-listings-recovery",
-        "@/features/integrations/utils/traderaQuickListFeedback",
+        "@/features/integrations/public",
         "@/shared/contracts/integrations/listings",
         "@/shared/ui/button",
         "@/shared/utils/ui-utils",
@@ -48290,6 +48218,34 @@
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/list/columns/buttons/VintedQuickListButton.tsx",
+      "basename": "VintedQuickListButton.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 298,
+      "useClient": true,
+      "imports": [
+        "@tanstack/react-query",
+        "lucide-react",
+        "react",
+        "@/features/integrations/public",
+        "@/shared/contracts/integrations/listings",
+        "@/shared/contracts/products/product",
+        "@/shared/lib/query-invalidation",
+        "@/shared/ui/button",
+        "@/shared/ui/toast",
+        "@/shared/utils/ui-utils",
+        "@/shared/utils/observability/client-error-logger",
+        "../product-column-utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 2,
       "tokenSet": {},
       "propsSignature": null,
       "thinReExportWrapper": false
@@ -48456,7 +48412,7 @@
       "imports": [
         "next/navigation",
         "react",
-        "@/features/ai/image-studio/hooks/useImageStudioQueries",
+        "@/features/ai/public",
         "@/features/products/hooks/useProductSettings",
         "@/shared/contracts/base",
         "@/shared/contracts/products",
@@ -48529,7 +48485,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Settings",
-      "lines": 1006,
+      "lines": 866,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -48555,7 +48511,8 @@
         "@/shared/ui/textarea",
         "@/shared/ui/toast",
         "@/shared/utils/observability/client-error-logger",
-        "./ProductSettingsContext"
+        "./ProductSettingsContext",
+        "../../utils/shipping-group-settings-utils"
       ],
       "templateImports": 2,
       "uiPrimitiveImports": 12,
@@ -52302,7 +52259,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 116,
+      "lines": 117,
       "useClient": true,
       "imports": [
         "next/navigation",
@@ -54827,12 +54784,13 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 493,
+      "lines": 494,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/shared/contracts/ui/panels",
+        "@/shared/contracts/base",
         "@/shared/ui/primitives.public",
         "@/shared/ui/forms-and-actions.public",
         "@/shared/ui/checkbox",
@@ -55445,314 +55403,10 @@
       "thinReExportWrapper": false
     }
   ],
-  "opportunities": [
-    {
-      "method": "token_similarity",
-      "family": "Table",
-      "score": 2529,
-      "fileCount": 2,
-      "totalLines": 1415,
-      "maxLines": 708,
-      "featureCount": 2,
-      "scopes": [
-        "feature:observability",
-        "shared-lib"
-      ],
-      "templateUsers": 2,
-      "templateCoverage": 1,
-      "recommendation": "migrate-to-standard-data-table-panel",
-      "risk": "high",
-      "similarity": 1,
-      "files": [
-        {
-          "path": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
-          "lines": 708,
-          "scope": "feature:observability",
-          "family": "Table",
-          "templateImports": 2,
-          "useClient": true
-        },
-        {
-          "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Table.tsx",
-          "lines": 707,
-          "scope": "shared-lib",
-          "family": "Table",
-          "templateImports": 2,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "duplicate_name",
-      "family": "Table",
-      "score": 2140,
-      "fileCount": 2,
-      "totalLines": 1415,
-      "maxLines": 708,
-      "featureCount": 2,
-      "scopes": [
-        "feature:observability",
-        "shared-lib"
-      ],
-      "templateUsers": 2,
-      "templateCoverage": 1,
-      "recommendation": "migrate-to-standard-data-table-panel",
-      "risk": "high",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
-          "lines": 708,
-          "scope": "feature:observability",
-          "family": "Table",
-          "templateImports": 2,
-          "useClient": true
-        },
-        {
-          "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Table.tsx",
-          "lines": 707,
-          "scope": "shared-lib",
-          "family": "Table",
-          "templateImports": 2,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "token_similarity",
-      "family": "Settings",
-      "score": 874,
-      "fileCount": 2,
-      "totalLines": 384,
-      "maxLines": 192,
-      "featureCount": 2,
-      "scopes": [
-        "feature:observability",
-        "shared-lib"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "review-for-extraction",
-      "risk": "medium",
-      "similarity": 1,
-      "files": [
-        {
-          "path": "src/features/observability/pages/system-logs/SystemLogs.Settings.tsx",
-          "lines": 192,
-          "scope": "feature:observability",
-          "family": "Settings",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Settings.tsx",
-          "lines": 192,
-          "scope": "shared-lib",
-          "family": "Settings",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "prop_signature",
-      "family": "Settings",
-      "score": 806,
-      "fileCount": 2,
-      "totalLines": 384,
-      "maxLines": 192,
-      "featureCount": 2,
-      "scopes": [
-        "feature:observability",
-        "shared-lib"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "review-for-extraction",
-      "risk": "medium",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/observability/pages/system-logs/SystemLogs.Settings.tsx",
-          "lines": 192,
-          "scope": "feature:observability",
-          "family": "Settings",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Settings.tsx",
-          "lines": 192,
-          "scope": "shared-lib",
-          "family": "Settings",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "duplicate_name",
-      "family": "Settings",
-      "score": 739,
-      "fileCount": 2,
-      "totalLines": 384,
-      "maxLines": 192,
-      "featureCount": 2,
-      "scopes": [
-        "feature:observability",
-        "shared-lib"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "review-for-extraction",
-      "risk": "medium",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/observability/pages/system-logs/SystemLogs.Settings.tsx",
-          "lines": 192,
-          "scope": "feature:observability",
-          "family": "Settings",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Settings.tsx",
-          "lines": 192,
-          "scope": "shared-lib",
-          "family": "Settings",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    }
-  ],
+  "opportunities": [],
   "clusterDiagnostics": {
-    "duplicateName": [
-      {
-        "method": "duplicate_name",
-        "family": "Table",
-        "clusterKey": "name:SystemLogs.Table.tsx",
-        "fileCount": 2,
-        "totalLines": 1415,
-        "scopes": [
-          "feature:observability",
-          "shared-lib"
-        ],
-        "similarity": null,
-        "files": [
-          {
-            "path": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
-            "lines": 708,
-            "scope": "feature:observability"
-          },
-          {
-            "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Table.tsx",
-            "lines": 707,
-            "scope": "shared-lib"
-          }
-        ]
-      },
-      {
-        "method": "duplicate_name",
-        "family": "Settings",
-        "clusterKey": "name:SystemLogs.Settings.tsx",
-        "fileCount": 2,
-        "totalLines": 384,
-        "scopes": [
-          "feature:observability",
-          "shared-lib"
-        ],
-        "similarity": null,
-        "files": [
-          {
-            "path": "src/features/observability/pages/system-logs/SystemLogs.Settings.tsx",
-            "lines": 192,
-            "scope": "feature:observability"
-          },
-          {
-            "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Settings.tsx",
-            "lines": 192,
-            "scope": "shared-lib"
-          }
-        ]
-      }
-    ],
-    "propSignature": [
-      {
-        "method": "prop_signature",
-        "family": "Settings",
-        "clusterKey": "props:Settings|initialControls|initialFlags|initialTags",
-        "fileCount": 2,
-        "totalLines": 384,
-        "scopes": [
-          "feature:observability",
-          "shared-lib"
-        ],
-        "similarity": null,
-        "files": [
-          {
-            "path": "src/features/observability/pages/system-logs/SystemLogs.Settings.tsx",
-            "lines": 192,
-            "scope": "feature:observability"
-          },
-          {
-            "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Settings.tsx",
-            "lines": 192,
-            "scope": "shared-lib"
-          }
-        ]
-      }
-    ],
-    "tokenSimilarity": [
-      {
-        "method": "token_similarity",
-        "family": "Table",
-        "clusterKey": "tokens:Table:src/features/observability/pages/system-logs/SystemLogs.Table.tsx|src/shared/lib/observability/components/system-logs/SystemLogs.Table.tsx",
-        "fileCount": 2,
-        "totalLines": 1415,
-        "scopes": [
-          "feature:observability",
-          "shared-lib"
-        ],
-        "similarity": 1,
-        "files": [
-          {
-            "path": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
-            "lines": 708,
-            "scope": "feature:observability"
-          },
-          {
-            "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Table.tsx",
-            "lines": 707,
-            "scope": "shared-lib"
-          }
-        ]
-      },
-      {
-        "method": "token_similarity",
-        "family": "Settings",
-        "clusterKey": "tokens:Settings:src/features/observability/pages/system-logs/SystemLogs.Settings.tsx|src/shared/lib/observability/components/system-logs/SystemLogs.Settings.tsx",
-        "fileCount": 2,
-        "totalLines": 384,
-        "scopes": [
-          "feature:observability",
-          "shared-lib"
-        ],
-        "similarity": 1,
-        "files": [
-          {
-            "path": "src/features/observability/pages/system-logs/SystemLogs.Settings.tsx",
-            "lines": 192,
-            "scope": "feature:observability"
-          },
-          {
-            "path": "src/shared/lib/observability/components/system-logs/SystemLogs.Settings.tsx",
-            "lines": 192,
-            "scope": "shared-lib"
-          }
-        ]
-      }
-    ]
+    "duplicateName": [],
+    "propSignature": [],
+    "tokenSimilarity": []
   }
 }

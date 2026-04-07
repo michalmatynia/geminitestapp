@@ -8,12 +8,12 @@ canonical: true
 ---
 # Context Health Check
 
-Generated at: 2026-04-07T10:12:55.786Z
+Generated at: 2026-04-07T11:43:02.481Z
 
 ## Summary
 
 - Status: WARN
-- Context files scanned: 263
+- Context files scanned: 262
 - Errors: 0
 - Warnings: 15
 - Info: 9

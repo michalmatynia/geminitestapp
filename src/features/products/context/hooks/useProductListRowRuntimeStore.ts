@@ -9,6 +9,8 @@ export type ProductListRowRuntimeStoreState = Pick<
   | 'traderaBadgeStatuses'
   | 'playwrightProgrammableBadgeIds'
   | 'playwrightProgrammableBadgeStatuses'
+  | 'vintedBadgeIds'
+  | 'vintedBadgeStatuses'
   | 'queuedProductIds'
   | 'productAiRunStatusByProductId'
 >;
@@ -27,6 +29,8 @@ export const EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT: ProductListRowRuntimeConte
   integrationStatus: 'not_started',
   showTraderaBadge: false,
   traderaStatus: 'not_started',
+  showVintedBadge: false,
+  vintedStatus: 'not_started',
   showPlaywrightProgrammableBadge: false,
   playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,
@@ -108,6 +112,8 @@ export const createProductListRowRuntimeStore = (
           (normalizedBaseProductId.length > 0 ? 'active' : 'not_started'),
         showTraderaBadge: state.traderaBadgeIds.has(productId),
         traderaStatus: state.traderaBadgeStatuses.get(productId) ?? 'not_started',
+        showVintedBadge: state.vintedBadgeIds.has(productId),
+        vintedStatus: state.vintedBadgeStatuses.get(productId) ?? 'not_started',
         showPlaywrightProgrammableBadge: state.playwrightProgrammableBadgeIds.has(productId),
         playwrightProgrammableStatus:
           state.playwrightProgrammableBadgeStatuses.get(productId) ?? 'not_started',

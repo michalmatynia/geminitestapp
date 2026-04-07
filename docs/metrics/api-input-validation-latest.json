@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T10:12:55.121Z",
+  "generatedAt": "2026-04-07T11:43:01.836Z",
   "status": "warn",
   "summary": {
     "total": 9,
@@ -7,7 +7,7 @@
     "warningCount": 9,
     "infoCount": 0,
     "status": "warn",
-    "fileCount": 1093,
+    "fileCount": 1095,
     "totalHandlers": 972,
     "validatedHandlers": 972,
     "coveragePercent": 100
@@ -121,5 +121,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 79
+  "durationMs": 81
 }

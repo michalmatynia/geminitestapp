@@ -1,11 +1,13 @@
 import { handleLinkedinApiTest } from './handler.linkedin';
 import { handleTraderaApiTest } from './handler.tradera-api';
+import { handleVintedBrowserTest } from './handler.vinted-browser';
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium, devices, type BrowserContextOptions } from 'playwright';
 
 import {
   isTraderaApiIntegrationSlug,
   isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
@@ -135,6 +137,19 @@ export async function postTestConnectionHandler(
 
   if (integration.slug === 'linkedin') {
     return handleLinkedinApiTest(connection, steps, pushStep, fail);
+  }
+
+  if (isVintedIntegrationSlug(integration.slug)) {
+    return handleVintedBrowserTest(
+      connection,
+      repo,
+      manualMode,
+      quicklistPreflightMode,
+      manualLoginTimeoutMs,
+      steps,
+      pushStep,
+      fail
+    );
   }
 
   if (!isTraderaBrowserIntegrationSlug(integration.slug)) {

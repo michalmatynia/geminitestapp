@@ -1,7 +1,7 @@
-import { AdminRouteLoading } from '@/features/admin/layout/AdminRouteLoading';
+import { AdminRouteLoading } from '@/features/admin/public';
 import { JSX, Suspense } from 'react';
 
-import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
+import { SystemLogsPage } from '@/features/observability/public';
 
 export const dynamic = 'force-dynamic';
 

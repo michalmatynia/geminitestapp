@@ -14,6 +14,7 @@ export function useProductListListingStatuses({
   integrationBadgeStatuses,
   traderaBadgeStatuses,
   playwrightProgrammableBadgeStatuses,
+  vintedBadgeStatuses,
   visibleProductIdSet,
   triggerJobCompletionHighlight,
 }: {
@@ -21,6 +22,7 @@ export function useProductListListingStatuses({
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeStatuses: Map<string, string>;
   visibleProductIdSet: Set<string>;
   triggerJobCompletionHighlight: (productId: string) => void;
 }) {
@@ -43,9 +45,13 @@ export function useProductListListingStatuses({
       if (playwrightProgrammableStatus) {
         statuses.set(`${product.id}:playwright-programmable`, playwrightProgrammableStatus);
       }
+      const vintedStatus = normalizeListingStatus(vintedBadgeStatuses.get(product.id));
+      if (vintedStatus) {
+        statuses.set(`${product.id}:vinted`, vintedStatus);
+      }
     }
     return statuses;
-  }, [data, integrationBadgeStatuses, playwrightProgrammableBadgeStatuses, traderaBadgeStatuses]);
+  }, [data, integrationBadgeStatuses, playwrightProgrammableBadgeStatuses, traderaBadgeStatuses, vintedBadgeStatuses]);
 
   useEffect(() => {
     const previousStatuses = previousListingBadgeStatusesRef.current;

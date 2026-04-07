@@ -1,0 +1,49 @@
+export const VINTED_LOGIN_SUCCESS_SELECTORS = [
+  'button[aria-label*="Profil"], button[aria-label*="Profile"], .c-header__item--user',
+  'a[href*="/member/"]',
+  'a[href*="/settings"]',
+  'button:has-text("Wyloguj")',
+  'button:has-text("Log out")',
+] as const;
+
+export const VINTED_LOGIN_FORM_SELECTOR = [
+  'form[action*="login"]',
+  '.c-login-form',
+].join(', ');
+
+export const VINTED_USERNAME_SELECTORS = ['input[name="username"]', 'input[name="email"]', '#username', '#email'];
+export const VINTED_PASSWORD_SELECTORS = ['input[name="password"]', '#password'];
+
+export const VINTED_COOKIE_ACCEPT_SELECTORS = [
+  '#onetrust-accept-btn-handler',
+  'button:has-text("Akceptuję")',
+  'button:has-text("Accept all")',
+] as const;
+
+export const VINTED_TITLE_SELECTORS = [
+  'input[name="title"]',
+  '#title',
+  'input[placeholder*="np. Biała koszula"]',
+  'input[placeholder*="e.g. White shirt"]',
+];
+
+export const VINTED_DESCRIPTION_SELECTORS = [
+  'textarea[name="description"]',
+  '#description',
+  'textarea[placeholder*="np. kilka razy założona"]',
+  'textarea[placeholder*="e.g. only worn a few times"]',
+];
+
+export const VINTED_PRICE_SELECTORS = [
+  'input[name="price"]',
+  '#price',
+  'input[data-testid*="price"]',
+];
+
+export const VINTED_SUBMIT_SELECTORS = [
+  'button[type="submit"]',
+  'button:has-text("Dodaj")',
+  'button:has-text("Add")',
+];
+
+export const VINTED_LISTING_FORM_URL = 'https://www.vinted.pl/items/new';

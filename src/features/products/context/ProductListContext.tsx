@@ -170,6 +170,7 @@ export function ProductListProvider({
     integrationBadgeStatuses: badgeState.integrationBadgeStatuses,
     traderaBadgeStatuses: badgeState.traderaBadgeStatuses,
     playwrightProgrammableBadgeStatuses: badgeState.playwrightProgrammableBadgeStatuses,
+    vintedBadgeStatuses: badgeState.vintedBadgeStatuses,
     visibleProductIdSet,
     triggerJobCompletionHighlight:
       value.triggerListingStatusHighlight ?? NOOP_TRIGGER_LISTING_STATUS_HIGHLIGHT,
@@ -183,6 +184,8 @@ export function ProductListProvider({
       traderaBadgeStatuses: badgeState.traderaBadgeStatuses,
       playwrightProgrammableBadgeIds: badgeState.playwrightProgrammableBadgeIds,
       playwrightProgrammableBadgeStatuses: badgeState.playwrightProgrammableBadgeStatuses,
+      vintedBadgeIds: badgeState.vintedBadgeIds,
+      vintedBadgeStatuses: badgeState.vintedBadgeStatuses,
       queuedProductIds: value.queuedProductIds,
       productAiRunStatusByProductId: value.productAiRunStatusByProductId,
     }),

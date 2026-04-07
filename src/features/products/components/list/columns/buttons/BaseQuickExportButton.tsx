@@ -4,12 +4,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { IntegrationWithConnections } from '@/features/integrations/public';
 import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from '@/shared/contracts/integrations/import-export';
 import type { BaseProductLinkExistingPayload, BaseProductLinkExistingResponse, BaseProductSkuCheckPayload, BaseProductSkuCheckResponse } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { fetchIntegrationsWithConnections } from '@/shared/contracts/integrations/client';
-import { useIntegrationSelection, isBaseIntegrationSlug, useGenericExportToBaseMutation, createBaseRecoveryContext } from '@/features/integrations/public';
+import { isBaseIntegrationSlug, useGenericExportToBaseMutation, createBaseRecoveryContext, fetchIntegrationsWithConnections } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import {
   subscribeToTrackedAiPathRun,
@@ -66,7 +66,7 @@ const resolveFallbackInventoryId = (
 };
 
 const resolveBaseConnectionCandidates = (
-  integrations: Awaited<ReturnType<typeof fetchIntegrationsWithConnections>> | null | undefined
+  integrations: IntegrationWithConnections[] | null | undefined
 ): string[] => {
   const seen = new Set<string>();
   const candidates: string[] = [];
@@ -389,8 +389,10 @@ export function BaseQuickExportButton(props: {
 
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       const [preferredConnection, defaultInventory, integrationsWithConnections] =
-        await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        await Promise.all<[BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse, IntegrationWithConnections[]]>([
         fetchQueryV2<BaseDefaultConnectionPreferenceResponse>(queryClient, {
           queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
           queryFn: () => fetchPreferredBaseConnection(),
@@ -420,7 +422,7 @@ export function BaseQuickExportButton(props: {
             tags: ['integrations', 'default-inventory', 'fetch'],
             description: 'Loads integrations default inventory.'},
         })(),
-        fetchQueryV2<Awaited<ReturnType<typeof fetchIntegrationsWithConnections>>>(queryClient, {
+        fetchQueryV2<IntegrationWithConnections[]>(queryClient, {
           queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
           queryFn: () => fetchIntegrationsWithConnections(),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,

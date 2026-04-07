@@ -1,4 +1,4 @@
-import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ExternalCategory, CategoryMappingWithDetails, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { ExternalProducer, ProducerMappingWithDetails } from '@/shared/contracts/integrations/producers';
 import type { ExternalTag, TagMappingWithDetails } from '@/shared/contracts/integrations/listings';
 export { useCategoryMappingsByConnection } from '@/shared/hooks/useIntegrationQueries';
@@ -6,6 +6,7 @@ import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { marketplaceKeys } from '@/shared/lib/query-key-exports';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useExternalCategories(connectionId: string): ListQuery<ExternalCategory> {
   const queryKey = marketplaceKeys.categories(connectionId);
@@ -123,4 +124,22 @@ export function useTagMappings(connectionId: string): ListQuery<TagMappingWithDe
       tags: ['integrations', 'marketplace', 'tag-mappings'],
       description: 'Loads marketplace tag mappings.'},
   });
+}
+
+export function useMarketplaceBadgeStatus(
+  productId: string,
+  marketplace: string,
+  enabled: boolean = true
+): { status: string | null; isFetching: boolean } {
+  const { data, isFetching } = createListQueryV2<ProductListingWithDetails[]>({
+    queryKey: QUERY_KEYS.integrations.listings(productId),
+    queryFn: () => api.get<ProductListingWithDetails[]>(`/api/v2/integrations/products/${productId}/listings`),
+    enabled: enabled && !!productId,
+    staleTime: 30000,
+  });
+
+  const listings = Array.isArray(data) ? data : [];
+  const status = listings.find((l) => l.integration?.slug === marketplace)?.status ?? null;
+
+  return { status, isFetching };
 }

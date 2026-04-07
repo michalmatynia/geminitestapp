@@ -24,6 +24,7 @@ import {
 } from './KangurLearnerProfileRuntimeContext.utils';
 import { useLearnerProfileScores } from './KangurLearnerProfileRuntimeContext.hooks';
 
+import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 const kangurPlatform = getKangurPlatform();
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';

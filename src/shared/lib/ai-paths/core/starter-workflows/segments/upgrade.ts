@@ -2,12 +2,12 @@ import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine/portable-engine-resolvers';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import {
+  hasCanonicalGraphHash,
   hasParameterInferencePromptStructure,
   matchesLegacyStarterWorkflowRepairSignature,
 } from './legacy-repair';
 import {
   computeStarterWorkflowGraphHash,
-  hasCanonicalGraphHash,
   isDatabaseOperation,
   normalizeText,
   readStarterProvenance,
@@ -52,11 +52,7 @@ const deriveCustomUpdateTemplateFromMappings = (value: unknown): string | null =
     ([targetPath, token]) =>
       `    "${targetPath}": ${token.startsWith('{{') ? token : JSON.stringify(token)}`
   );
-  return `{
-  "$set": {
-${lines.join(',\n')}
-  }
-}`;
+  return `{\n  "$set": {\n${lines.join(',\n')}\n  }\n}`;
 };
 
 const buildIncomingPortMap = (config: PathConfig): Map<string, Set<string>> => {
@@ -266,16 +262,13 @@ const countNodeIdOverlap = (left: PathConfig, right: PathConfig): number => {
 
 const selectStarterOverlaySource = (current: PathConfig, latest: PathConfig): PathConfig => {
   const variants: PathConfig[] = [latest];
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const resolvedLatest = resolvePortablePathInput(latest, {
     repairIdentities: true,
     includeConnections: false,
     signingPolicyTelemetrySurface: 'api',
     nodeCodeObjectHashVerificationMode: 'warn',
   });
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if (resolvedLatest.ok) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     variants.push(resolvedLatest.value.pathConfig);
   }
 
@@ -328,7 +321,6 @@ export const upgradeStarterWorkflowPathConfig = (
   const currentGraphHash = computeStarterWorkflowGraphHash(config);
   const provenance = readStarterProvenance(config);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const latest = materializeStarterWorkflowPathConfig(resolution.entry, {
     pathId: config.id,
     name: normalizeText(config.name) || resolution.entry.name,
@@ -364,10 +356,8 @@ export const upgradeStarterWorkflowPathConfig = (
   }
 
   const next = shouldReplaceGraphCompletely
-    ? // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      buildStarterGraphReplacement(config, latest)
-    : // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      buildStarterAssetOverlay(config, overlaySource);
+    ? buildStarterGraphReplacement(config, latest)
+    : buildStarterAssetOverlay(config, overlaySource);
   if (next === config || JSON.stringify(next) === JSON.stringify(config)) {
     return { config: next, changed: false, resolution };
   }

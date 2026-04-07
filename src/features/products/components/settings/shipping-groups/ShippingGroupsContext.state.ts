@@ -5,8 +5,6 @@ import type { ProductCategory } from '@/shared/contracts/products/categories';
 import {
   formatCategoryRuleSummary,
   formatCurrencyRuleSummary,
-  normalizeShippingGroupRuleCategoryIds,
-  normalizeShippingGroupRuleCurrencyCodes,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
 import { normalizeCurrencyCode } from '@/shared/lib/products/utils/priceCalculation';
 import {

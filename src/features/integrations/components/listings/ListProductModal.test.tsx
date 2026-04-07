@@ -22,7 +22,11 @@ vi.mock('./hooks/useListProductForm', () => ({
     error: null,
     exportLogs: [],
     submitting: false,
+    authRequired: false,
+    authRequiredMarketplace: null,
+    loggingIn: false,
     handleSubmit: handleSubmitMock,
+    handleMarketplaceLogin: vi.fn(),
     handleImageRetry: vi.fn(),
   }),
 }));

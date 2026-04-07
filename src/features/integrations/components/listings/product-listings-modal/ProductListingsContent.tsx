@@ -26,7 +26,6 @@ import {
 import { resolveTraderaRequestId } from '@/features/integrations/utils/tradera-listing-client-utils';
 import {
   persistVintedQuickListFeedback,
-  type PersistedVintedQuickListFeedback,
 } from '@/features/integrations/utils/vintedQuickListFeedback';
 import { resolveVintedRequestId } from '@/features/integrations/utils/vinted-listing-client-utils';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';

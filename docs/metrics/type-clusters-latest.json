@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-07T12:38:00.996Z",
+  "generatedAt": "2026-04-07T13:18:43.589Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -10,24 +10,79 @@
   },
   "filters": {
     "domains": [],
-    "minRisk": 5,
-    "topLimit": 50,
+    "minRisk": 0,
+    "topLimit": 25,
     "planTopLimit": 20
   },
   "thresholds": {
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 9935,
-    "exportedDeclarationsScanned": 5888,
-    "candidateDeclarationsScanned": 5867,
-    "exactShapeClusters": 10,
+    "filesScanned": 9950,
+    "exportedDeclarationsScanned": 5892,
+    "candidateDeclarationsScanned": 5871,
+    "exactShapeClusters": 11,
     "nearShapeClusters": 5,
-    "clustersAfterFilters": 15,
-    "declarationsInClusters": 39,
-    "highestRiskScore": 17
+    "clustersAfterFilters": 16,
+    "declarationsInClusters": 42,
+    "highestRiskScore": 18
   },
   "clusters": [
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 18,
+      "declarationCount": 4,
+      "domains": [
+        "feature:integrations",
+        "feature:products",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "023120f455ba",
+        "memberCount": 1,
+        "preview": "ProgressSnapshotDto"
+      },
+      "declarations": [
+        {
+          "name": "MassListProgressPanelProps",
+          "kind": "type",
+          "path": "src/features/integrations/components/listings/mass-list-modal/MassListProgressPanel.tsx",
+          "line": 6,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "MassQuickExportProgress",
+          "kind": "type",
+          "path": "src/features/products/hooks/product-list/useTraderaMassQuickExport.ts",
+          "line": 31,
+          "domain": "feature:products",
+          "usageCount": 0
+        },
+        {
+          "name": "MassQuickExportProgress",
+          "kind": "type",
+          "path": "src/features/products/hooks/product-list/useVintedMassQuickExport.ts",
+          "line": 36,
+          "domain": "feature:products",
+          "usageCount": 0
+        },
+        {
+          "name": "ProgressSnapshot",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 356,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
     {
       "clusterId": "exact-0001",
       "clusterKind": "exact-shape",
@@ -136,54 +191,7 @@
       ]
     },
     {
-      "clusterId": "exact-0004",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 15,
-      "declarationCount": 3,
-      "domains": [
-        "feature:integrations",
-        "feature:products",
-        "shared:contracts"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "023120f455ba",
-        "memberCount": 1,
-        "preview": "ProgressSnapshotDto"
-      },
-      "declarations": [
-        {
-          "name": "MassListProgressPanelProps",
-          "kind": "type",
-          "path": "src/features/integrations/components/listings/mass-list-modal/MassListProgressPanel.tsx",
-          "line": 6,
-          "domain": "feature:integrations",
-          "usageCount": 0
-        },
-        {
-          "name": "MassQuickExportProgress",
-          "kind": "type",
-          "path": "src/features/products/hooks/product-list/useTraderaMassQuickExport.ts",
-          "line": 31,
-          "domain": "feature:products",
-          "usageCount": 0
-        },
-        {
-          "name": "ProgressSnapshot",
-          "kind": "type",
-          "path": "src/shared/contracts/base.ts",
-          "line": 356,
-          "domain": "shared:contracts",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0002",
+      "clusterId": "exact-0003",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 14,
@@ -349,7 +357,7 @@
       ]
     },
     {
-      "clusterId": "exact-0003",
+      "clusterId": "exact-0004",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 11,
@@ -469,6 +477,43 @@
           "path": "src/shared/lib/files/services/file-upload-events.ts",
           "line": 27,
           "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0011",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "c460821d05de",
+        "memberCount": 2,
+        "preview": "prop:timeoutMs?:number | null; prop:useBootstrapCache?:boolean"
+      },
+      "declarations": [
+        {
+          "name": "KangurAuthCheckAppStateOptions",
+          "kind": "type",
+          "path": "src/features/kangur/ui/context/KangurAuthContext.utils.ts",
+          "line": 25,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "KangurAuthCheckAppStateOptions",
+          "kind": "type",
+          "path": "src/features/kangur/ui/context/KangurAuthContext.helpers.ts",
+          "line": 24,
+          "domain": "feature:kangur",
           "usageCount": 0
         }
       ],
@@ -615,7 +660,7 @@
           "name": "ResolvedVintedBrowserConnection",
           "kind": "type",
           "path": "src/features/integrations/hooks/useVintedQuickExportConnection.ts",
-          "line": 17,
+          "line": 19,
           "domain": "feature:integrations",
           "usageCount": 0
         }

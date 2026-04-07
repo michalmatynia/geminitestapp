@@ -8,7 +8,7 @@ canonical: true
 ---
 # Static Security Review
 
-Generated at: 2026-04-07T13:05:58.750Z
+Generated at: 2026-04-07T13:08:11.230Z
 
 ## Summary
 

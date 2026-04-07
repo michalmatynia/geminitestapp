@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-04-02T23:12:02.374Z
+Generated at: 2026-04-07T13:25:45.433Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -16,12 +16,12 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 235 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 228 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 237 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
 | `src/app/api/databases/[[...path]]/route.ts` | 203 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 188 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 171 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 168 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 167 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 126 |
 | `src/app/api/kangur/[[...path]]/route.ts` | 62 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
@@ -65,11 +65,11 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 ## Recommended First Runtime Profiling Targets
 
 - `src/app/api/v2/integrations/[[...path]]/route.ts`
-- `src/app/api/agentcreator/[[...path]]/route.ts`
 - `src/app/api/ai-paths/[[...path]]/route.ts`
 - `src/app/api/databases/[[...path]]/route.ts`
-- `src/app/api/chatbot/[[...path]]/route.ts`
+- `src/app/api/agentcreator/[[...path]]/route.ts`
 - `src/app/api/v2/products/[[...path]]/route.ts`
+- `src/app/api/chatbot/[[...path]]/route.ts`
 - `src/app/api/image-studio/[[...path]]/route.ts`
 - `src/app/api/kangur/[[...path]]/route.ts`
 - `src/app/api/marketplace/[resource]/route.ts`

@@ -4,11 +4,6 @@ import { withKangurClientError } from '@/features/kangur/observability/client';
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import type {
-  KangurAuthMode,
-  KangurAuthError,
-  KangurAuthContextValue,
-  KangurAuthStateContextValue,
-  KangurAuthActionsContextValue,
   KangurAuthBootstrapSnapshot,
   KangurAuthRuntimeSetters,
 } from '@/shared/contracts/kangur-auth';

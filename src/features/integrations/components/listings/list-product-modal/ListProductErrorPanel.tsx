@@ -14,9 +14,25 @@ const isImageExportError = (error: string): boolean => {
 
 export function ListProductErrorPanel(): React.JSX.Element {
   const { isBaseComIntegration } = useListingSelection();
-  const { error, submitting, onRetryImageExport, authRequired, loggingIn, onTraderaLogin, onRetrySubmit } =
-    useListProductModalFormContext();
+  const {
+    error,
+    submitting,
+    onRetryImageExport,
+    authRequired,
+    authRequiredMarketplace,
+    loggingIn,
+    onMarketplaceLogin,
+    onRetrySubmit,
+  } = useListProductModalFormContext();
   const imageRetryPresets = useImageRetryPresets();
+  const loginButtonLabel =
+    authRequiredMarketplace === 'vinted'
+      ? 'Login and list on Vinted.pl'
+      : 'Login and list on Tradera';
+  const waitingLabel =
+    authRequiredMarketplace === 'vinted'
+      ? 'Waiting for Vinted login...'
+      : 'Waiting for login...';
 
   if (!error) {
     return <></>;
@@ -33,9 +49,9 @@ export function ListProductErrorPanel(): React.JSX.Element {
               variant='outline'
               size='sm'
               disabled={loggingIn || submitting}
-              onClick={onTraderaLogin}
+              onClick={onMarketplaceLogin}
             >
-              {loggingIn ? 'Waiting for login...' : 'Login and list on Tradera'}
+              {loggingIn ? waitingLabel : loginButtonLabel}
             </Button>
             <Button
               type='button'

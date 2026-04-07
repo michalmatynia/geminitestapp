@@ -20,7 +20,6 @@ import type { Catalog } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import {
-  toTrimmedString,
   DRAFT_SHIPPING_GROUP_ID,
 } from './shipping-group-utils';
 import {
@@ -29,6 +28,7 @@ import {
   normalizeShippingGroupRuleCategoryIds,
   normalizeShippingGroupRuleCurrencyCodes,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import {
   useCatalogCurrencyCodes,
   useShippingGroupSummaries,
@@ -169,7 +169,6 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
   const {
     conflictSummaryById: shippingGroupConflictSummaryById,
     redundantRuleSummaryById: shippingGroupRedundantRuleSummaryById,
-    ruleCoverageById: shippingGroupRuleCoverageById,
     effectiveRuleDisplayById: shippingGroupEffectiveRuleDisplayById,
     missingRuleSummaryById: shippingGroupMissingRuleSummaryById,
   } = useShippingGroupSummaries({

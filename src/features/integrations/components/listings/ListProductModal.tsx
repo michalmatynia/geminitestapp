@@ -52,9 +52,10 @@ function ListProductModalContent(): React.JSX.Element {
     exportLogs,
     submitting,
     authRequired,
+    authRequiredMarketplace,
     loggingIn,
     handleSubmit,
-    handleTraderaLogin,
+    handleMarketplaceLogin,
     handleImageRetry,
   } = useListProductForm(product.id);
 
@@ -100,9 +101,10 @@ function ListProductModalContent(): React.JSX.Element {
           submitting,
           onRetryImageExport: retryImageExport,
           authRequired,
+          authRequiredMarketplace,
           loggingIn,
-          onTraderaLogin: () => {
-            void handleTraderaLogin(onSuccess);
+          onMarketplaceLogin: () => {
+            void handleMarketplaceLogin(onSuccess);
           },
           onRetrySubmit: () => {
             void handleSubmit(onSuccess);

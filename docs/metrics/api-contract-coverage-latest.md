@@ -8,7 +8,7 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-04-07T13:06:00.246Z
+Generated at: 2026-04-07T13:16:36.697Z
 
 ## Summary
 

@@ -6,18 +6,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   toastMock,
   preflightTraderaQuickListSessionMock,
+  preflightVintedQuickListSessionMock,
+  ensureVintedBrowserSessionMock,
   createListingMutateAsyncMock,
   exportToBaseMutateAsyncMock,
   updateDefaultTraderaConnectionMutateAsyncMock,
+  updateDefaultVintedConnectionMutateAsyncMock,
   useListingSelectionMock,
   useListingBaseComSettingsMock,
   useListingTraderaSettingsMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
+  preflightVintedQuickListSessionMock: vi.fn(),
+  ensureVintedBrowserSessionMock: vi.fn(),
   createListingMutateAsyncMock: vi.fn(),
   exportToBaseMutateAsyncMock: vi.fn(),
   updateDefaultTraderaConnectionMutateAsyncMock: vi.fn(),
+  updateDefaultVintedConnectionMutateAsyncMock: vi.fn(),
   useListingSelectionMock: vi.fn(),
   useListingBaseComSettingsMock: vi.fn(),
   useListingTraderaSettingsMock: vi.fn(),
@@ -49,6 +55,10 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
     mutateAsync: updateDefaultTraderaConnectionMutateAsyncMock,
     isPending: false,
   }),
+  useUpdateDefaultVintedConnection: () => ({
+    mutateAsync: updateDefaultVintedConnectionMutateAsyncMock,
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
@@ -61,6 +71,22 @@ vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
       normalized.includes('manual verification') ||
       normalized.includes('captcha') ||
       normalized.includes('login requires') ||
+      normalized.includes('session expired')
+    );
+  },
+}));
+
+vi.mock('@/features/integrations/utils/vinted-browser-session', () => ({
+  preflightVintedQuickListSession: (...args: unknown[]) =>
+    preflightVintedQuickListSessionMock(...args) as Promise<unknown>,
+  ensureVintedBrowserSession: (...args: unknown[]) =>
+    ensureVintedBrowserSessionMock(...args) as Promise<unknown>,
+  isVintedBrowserAuthRequiredMessage: (value: string | null | undefined) => {
+    const normalized = value?.trim().toLowerCase() ?? '';
+    return (
+      normalized.includes('auth_required') ||
+      normalized.includes('manual verification') ||
+      normalized.includes('browser challenge') ||
       normalized.includes('session expired')
     );
   },
@@ -93,12 +119,23 @@ describe('useListProductForm', () => {
       response: { ok: true, sessionReady: true, steps: [] },
       ready: true,
     });
+    preflightVintedQuickListSessionMock.mockResolvedValue({
+      response: { ok: true, sessionReady: true, steps: [] },
+      ready: true,
+    });
+    ensureVintedBrowserSessionMock.mockResolvedValue({
+      response: { ok: true, sessionReady: true, steps: [{ step: 'Saving session', status: 'ok' }] },
+      savedSession: true,
+    });
     createListingMutateAsyncMock.mockResolvedValue({
       queue: { jobId: 'job-tradera-1' },
     });
     exportToBaseMutateAsyncMock.mockResolvedValue({});
     updateDefaultTraderaConnectionMutateAsyncMock.mockResolvedValue({
       connectionId: 'conn-tradera-1',
+    });
+    updateDefaultVintedConnectionMutateAsyncMock.mockResolvedValue({
+      connectionId: 'conn-vinted-1',
     });
   });
 
@@ -204,5 +241,94 @@ describe('useListProductForm', () => {
       'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
     );
     expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('runs fast Vinted quick preflight and persists the preferred connection for Vinted browser listings', async () => {
+    useListingSelectionMock.mockReturnValue({
+      selectedIntegrationId: 'integration-vinted-1',
+      selectedConnectionId: 'conn-vinted-1',
+      selectedIntegration: { id: 'integration-vinted-1', slug: 'vinted' },
+      isBaseComIntegration: false,
+      isTraderaIntegration: false,
+    });
+    createListingMutateAsyncMock.mockResolvedValue({
+      queue: { jobId: 'job-vinted-1' },
+    });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1'));
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(preflightVintedQuickListSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
+      productId: 'product-1',
+    });
+    expect(createListingMutateAsyncMock).toHaveBeenCalledWith({
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
+    });
+    expect(updateDefaultVintedConnectionMutateAsyncMock).toHaveBeenCalledWith({
+      connectionId: 'conn-vinted-1',
+    });
+    expect(toastMock).toHaveBeenCalledWith('Vinted listing queued (job job-vinted-1).', {
+      variant: 'success',
+    });
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  it('marks Vinted auth-required preflight failures and retries after a successful Vinted login refresh', async () => {
+    useListingSelectionMock.mockReturnValue({
+      selectedIntegrationId: 'integration-vinted-1',
+      selectedConnectionId: 'conn-vinted-1',
+      selectedIntegration: { id: 'integration-vinted-1', slug: 'vinted' },
+      isBaseComIntegration: false,
+      isTraderaIntegration: false,
+    });
+    preflightVintedQuickListSessionMock
+      .mockResolvedValueOnce({
+        response: { ok: true, sessionReady: false, steps: [] },
+        ready: false,
+      })
+      .mockResolvedValueOnce({
+        response: { ok: true, sessionReady: true, steps: [] },
+        ready: true,
+      });
+    createListingMutateAsyncMock.mockResolvedValue({
+      queue: { jobId: 'job-vinted-2' },
+    });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1'));
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(result.current.authRequired).toBe(true);
+    expect(result.current.authRequiredMarketplace).toBe('vinted');
+    expect(result.current.error).toBe(
+      'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.'
+    );
+
+    await act(async () => {
+      await result.current.handleMarketplaceLogin(onSuccess);
+    });
+
+    expect(ensureVintedBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
+    });
+    expect(toastMock).toHaveBeenCalledWith('Vinted login session refreshed.', {
+      variant: 'success',
+    });
+    expect(createListingMutateAsyncMock).toHaveBeenCalledWith({
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
+    });
+    expect(onSuccess).toHaveBeenCalled();
   });
 });

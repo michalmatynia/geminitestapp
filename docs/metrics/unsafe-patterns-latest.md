@@ -8,7 +8,7 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-04-07T13:05:49.805Z
+Generated at: 2026-04-07T13:08:03.508Z
 
 ## Summary
 

@@ -181,14 +181,6 @@ export const hasNodeOfType = (
   matcher: (node: NonNullable<PathConfig['nodes']>[number]) => boolean
 ): boolean => (config.nodes ?? []).some((node) => node.type === type && matcher(node));
 
-export const hasCanonicalGraphHash = (entry: AiPathTemplateRegistryEntry, graphHash: string): boolean => {
-  const normalizedHash = normalizeTextLower(graphHash);
-  if (!normalizedHash) return false;
-  return entry.starterLineage.canonicalGraphHashes.some(
-    (hash) => normalizeTextLower(hash) === normalizedHash
-  );
-};
-
 export const hasAliasMatch = (value: string, aliases: string[]): boolean => {
   const normalizedValue = normalizeTextLower(value);
   if (!normalizedValue) return false;

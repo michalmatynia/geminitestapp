@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
-import type { Catalog } from '@/shared/contracts/products/catalogs';
-import type { ProductPriceGroup } from '@/shared/contracts/products/price-groups';
+import type { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import {
-  buildCategoryPathLabelMap,
   buildShippingGroupRuleConflicts,
   formatCategoryRuleSummary,
   formatCurrencyRuleSummary,
@@ -15,14 +13,13 @@ import {
 import { matchesPriceGroupIdentifier } from '@/shared/lib/products/utils/price-group-identifiers';
 import { normalizeCurrencyCode } from '@/shared/lib/products/utils/priceCalculation';
 import {
-  DRAFT_SHIPPING_GROUP_ID,
   summarizeRuleDescendantCoverage,
   toTrimmedString,
 } from './shipping-group-utils';
 
 export const useCatalogCurrencyCodes = (
   catalogs: Catalog[],
-  priceGroups: ProductPriceGroup[]
+  priceGroups: PriceGroup[]
 ): Map<string, string[]> => {
   return useMemo(() => {
     const entries = new Map<string, string[]>();

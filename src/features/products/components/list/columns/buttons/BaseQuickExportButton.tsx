@@ -9,7 +9,14 @@ import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from
 import type { BaseProductLinkExistingPayload, BaseProductLinkExistingResponse, BaseProductSkuCheckPayload, BaseProductSkuCheckResponse } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { isBaseIntegrationSlug, useGenericExportToBaseMutation, createBaseRecoveryContext, fetchIntegrationsWithConnections } from '@/features/integrations/public';
+import {
+  isBaseIntegrationSlug,
+  useGenericExportToBaseMutation,
+  createBaseRecoveryContext,
+  fetchIntegrationsWithConnections,
+  fetchPreferredBaseConnection,
+  integrationSelectionQueryKeys,
+} from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import {
   subscribeToTrackedAiPathRun,
@@ -391,8 +398,7 @@ export function BaseQuickExportButton(props: {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       const [preferredConnection, defaultInventory, integrationsWithConnections] =
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        await Promise.all<[BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse, IntegrationWithConnections[]]>([
+        await Promise.all([
         fetchQueryV2<BaseDefaultConnectionPreferenceResponse>(queryClient, {
           queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
           queryFn: () => fetchPreferredBaseConnection(),
@@ -435,9 +441,7 @@ export function BaseQuickExportButton(props: {
             tags: ['integrations', 'with-connections', 'fetch'],
             description: 'Loads integrations with connections for one-click export fallback.',
           },
-        })().catch(() => {
-          return null;
-        }),
+        })().catch(() => [] as IntegrationWithConnections[]),
         ]);
 
       const preferredConnectionId = preferredConnection?.connectionId?.trim() || '';

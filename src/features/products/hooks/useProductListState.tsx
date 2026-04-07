@@ -98,6 +98,8 @@ const EMPTY_TRADERA_BADGE_IDS = new Set<string>();
 const EMPTY_TRADERA_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS = new Set<string>();
 const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES = new Map<string, string>();
+const EMPTY_VINTED_BADGE_IDS = new Set<string>();
+const EMPTY_VINTED_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_PRODUCT_TABLE_COLUMNS: ColumnDef<ProductWithImages>[] = [];
 
 const buildProductListDebugSnapshot = (args: ProductListDebugSnapshot): ProductListDebugSnapshot => args;
@@ -894,6 +896,8 @@ export function useProductListState(): ProductListContextType & {
     traderaBadgeStatuses: EMPTY_TRADERA_BADGE_STATUSES,
     playwrightProgrammableBadgeIds: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS,
     playwrightProgrammableBadgeStatuses: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES,
+    vintedBadgeIds: EMPTY_VINTED_BADGE_IDS,
+    vintedBadgeStatuses: EMPTY_VINTED_BADGE_STATUSES,
     queuedProductIds,
     productAiRunStatusByProductId,
     categoryNameById,

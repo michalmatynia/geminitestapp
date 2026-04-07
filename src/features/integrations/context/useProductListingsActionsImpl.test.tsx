@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   toastMock,
+  ensureVintedBrowserSessionMock,
   exportToBaseMutateAsyncMock,
   ensureTraderaBrowserSessionMock,
   preflightTraderaQuickListSessionMock,
@@ -12,6 +13,7 @@ const {
   syncTraderaMutateAsyncMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
+  ensureVintedBrowserSessionMock: vi.fn(),
   exportToBaseMutateAsyncMock: vi.fn(),
   ensureTraderaBrowserSessionMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
@@ -54,6 +56,22 @@ vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
   },
 }));
 
+vi.mock('@/features/integrations/utils/vinted-browser-session', () => ({
+  ensureVintedBrowserSession: (...args: unknown[]) =>
+    ensureVintedBrowserSessionMock(...args) as Promise<unknown>,
+  isVintedBrowserAuthRequiredMessage: (value: string | null | undefined) => {
+    const normalized = value?.trim().toLowerCase() ?? '';
+    return (
+      normalized.includes('auth_required') ||
+      normalized.includes('manual verification') ||
+      normalized.includes('captcha') ||
+      normalized.includes('login requires') ||
+      normalized.includes('session expired') ||
+      normalized.includes('browser challenge')
+    );
+  },
+}));
+
 import { useProductListingsActionsImpl } from './useProductListingsActionsImpl';
 
 const buildBaseParams = (overrides?: {
@@ -76,6 +94,7 @@ const buildBaseParams = (overrides?: {
   setListingToPurge: vi.fn(),
   setLogsOpen: vi.fn(),
   setOpeningTraderaLogin: vi.fn(),
+  setOpeningVintedLogin: vi.fn(),
   setRecoveryContext: vi.fn(),
   setRelistingBrowserMode: vi.fn(),
   setPurgingListing: vi.fn(),
@@ -89,6 +108,10 @@ describe('useProductListingsActionsImpl', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     ensureTraderaBrowserSessionMock.mockResolvedValue({
+      response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
+      savedSession: true,
+    });
+    ensureVintedBrowserSessionMock.mockResolvedValue({
       response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
       savedSession: true,
     });
@@ -561,6 +584,93 @@ describe('useProductListingsActionsImpl', () => {
       'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
     );
     expect(setRecoveryContext).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the Vinted session and clears Vinted recovery state after manual login succeeds', async () => {
+    const refetchListingsQuery = vi.fn().mockResolvedValue(undefined);
+    const onListingsUpdated = vi.fn();
+    const setRecoveryContext = vi.fn();
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams(),
+        refetchListingsQuery,
+        onListingsUpdated,
+        setRecoveryContext,
+      })
+    );
+
+    let success = false;
+    await act(async () => {
+      success = await result.current.handleOpenVintedLogin(
+        'recovery',
+        'integration-vinted-1',
+        'connection-vinted-1'
+      );
+    });
+
+    expect(success).toBe(true);
+    expect(ensureVintedBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-vinted-1',
+      connectionId: 'connection-vinted-1',
+    });
+    expect(toastMock).toHaveBeenCalledWith('Vinted login session refreshed.', {
+      variant: 'success',
+    });
+    expect(refetchListingsQuery).toHaveBeenCalled();
+    expect(onListingsUpdated).toHaveBeenCalled();
+    expect(setRecoveryContext).toHaveBeenCalledWith(expect.any(Function));
+    const clearRecovery = setRecoveryContext.mock.calls.at(-1)?.[0] as (
+      current: { integrationSlug?: string } | null
+    ) => unknown;
+    expect(clearRecovery({ integrationSlug: 'vinted' })).toBeNull();
+  });
+
+  it('stores Vinted recovery context and shows a toast for Vinted auth-required manual login failures', async () => {
+    const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
+    ensureVintedBrowserSessionMock.mockRejectedValue(
+      new Error(
+        'AUTH_REQUIRED: Stored Vinted session expired and Vinted requires manual verification.'
+      )
+    );
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams(),
+        setError,
+        setRecoveryContext,
+      })
+    );
+
+    let success = true;
+    await act(async () => {
+      success = await result.current.handleOpenVintedLogin(
+        'recovery',
+        'integration-vinted-1',
+        'connection-vinted-1'
+      );
+    });
+
+    expect(success).toBe(false);
+    expect(toastMock).toHaveBeenCalledWith(
+      'AUTH_REQUIRED: Stored Vinted session expired and Vinted requires manual verification.',
+      { variant: 'error' }
+    );
+    expect(setError).toHaveBeenNthCalledWith(1, null);
+    expect(setError).not.toHaveBeenCalledWith(
+      'AUTH_REQUIRED: Stored Vinted session expired and Vinted requires manual verification.'
+    );
+    expect(setRecoveryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'connection-vinted-1',
+        failureReason:
+          'AUTH_REQUIRED: Stored Vinted session expired and Vinted requires manual verification.',
+      })
+    );
   });
 
   it('clears Tradera recovery state after a queued relist succeeds', async () => {

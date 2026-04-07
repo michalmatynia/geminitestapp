@@ -6,7 +6,7 @@ export type KangurLessonTtsFailureStage =
 
 export class KangurLessonTtsGenerationError extends Error {
   readonly stage: KangurLessonTtsFailureStage;
-  readonly cause: unknown;
+  override readonly cause: unknown;
 
   constructor(stage: KangurLessonTtsFailureStage, cause: unknown) {
     super(cause instanceof Error ? cause.message : String(cause));

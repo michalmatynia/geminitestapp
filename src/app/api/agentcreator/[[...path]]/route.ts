@@ -1,20 +1,15 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import type { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type {
-  CatchAllRouteDefinition,
-  CatchAllOptionalRoutePatternToken as RoutePatternToken,
-  CatchAllRouteMethod as HttpMethod,
-  CatchAllRouteModule as RouteModule,
-  CatchAllRouteParams as Params,
-  CatchAllRoutePathParams as RouteParams,
+import {
+  type CatchAllRouteMethod as HttpMethod,
+  type CatchAllRoutePathParams as RouteParams,
+  getPathSegments,
+  handleCatchAllRequest,
 } from '@/shared/lib/api/catch-all-router';
-import { matchCatchAllPattern } from '@/shared/lib/api/catch-all-router';
-import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as agentIndex from '../agent/route-handler';
 import * as agentSnapshotById from '../agent/snapshots/[snapshotId]/route-handler';
@@ -37,12 +32,7 @@ import * as teachingCollectionDocuments from '../teaching/collections/[collectio
 import * as teachingCollectionDocumentById from '../teaching/collections/[collectionId]/documents/[documentId]/route-handler';
 import * as teachingCollectionSearch from '../teaching/collections/[collectionId]/search/route-handler';
 
-type RouteDefinition = CatchAllRouteDefinition<RoutePatternToken>;
-type RoutePattern = RoutePatternToken[];
-
-const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-
-const ROUTES: RouteDefinition[] = [
+const ROUTES = [
   { pattern: ['agent'], module: agentIndex },
   { pattern: ['agent', 'snapshots', { param: 'snapshotId' }], module: agentSnapshotById },
   { pattern: ['agent', { param: 'runId' }, 'assets', { param: 'file' }], module: agentRunAssets },
@@ -79,79 +69,17 @@ const ROUTES: RouteDefinition[] = [
   },
   { pattern: ['teaching', 'collections', { param: 'collectionId' }], module: teachingCollectionById },
 ];
-const matchPattern = (pattern: RoutePattern, segments: string[]): Params | null =>
-  matchCatchAllPattern(pattern, segments);
-
-const notFound = async (request: NextRequest, source: string): Promise<Response> =>
-  createErrorResponse(notFoundError('Not Found'), { request, source });
-const methodNotAllowed = async (
-  request: NextRequest,
-  allowed: HttpMethod[],
-  source: string
-): Promise<Response> => {
-  const response = await createErrorResponse(
-    methodNotAllowedError('Method not allowed', {
-      allowedMethods: allowed,
-    }),
-    { request, source }
-  );
-  response.headers.set('Allow', allowed.join(', '));
-  return response;
-};
-
-const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
-  HTTP_METHODS.filter((method) => typeof module[method] === 'function');
-
-const dispatch = async (
-  module: RouteModule,
-  method: HttpMethod,
-  request: NextRequest,
-  params: Params | undefined,
-  source: string
-): Promise<Response> => {
-  const handler = module[method];
-  if (typeof handler !== 'function') {
-    const allowed = getAllowedMethods(module);
-    return allowed.length > 0
-      ? methodNotAllowed(request, allowed, source)
-      : notFound(request, source);
-  }
-  return (handler as RouteModule[HttpMethod] & ((request: NextRequest, context: { params: Params | Promise<Params> }) => Promise<Response>))(
-    request,
-    { params: Promise.resolve(params ?? ({} as Params)) }
-  );
-};
-
-const getPathSegments = (request: NextRequest): string[] => {
-  const basePath = '/api/agentcreator';
-  const pathname = request.nextUrl.pathname;
-  if (!pathname.startsWith(basePath)) {
-    return [];
-  }
-  const remainder = pathname.slice(basePath.length).replace(/^\/+/, '');
-  return remainder ? remainder.split('/').filter(Boolean) : [];
-};
 
 const routeAgentCreator = (
   method: HttpMethod,
   request: NextRequest,
-  segments: string[]
-): Promise<Response> => {
-  const source = `agentcreator.[[...path]].${method}`;
-  if (segments.length === 0) {
-    return notFound(request, source);
-  }
-
-  for (const route of ROUTES) {
-    const params = matchPattern(route.pattern, segments);
-    if (!params) {
-      continue;
-    }
-    return dispatch(route.module, method, request, params, source);
-  }
-
-  return notFound(request, source);
-};
+): Promise<Response> => handleCatchAllRequest(
+  method,
+  request,
+  getPathSegments(request, '/api/agentcreator'),
+  ROUTES,
+  'agentcreator'
+);
 
 const ROUTER_OPTIONS = {
   successLogging: 'off',
@@ -160,28 +88,23 @@ const ROUTER_OPTIONS = {
   rateLimitKey: false,
 } as const;
 
-export const __testables = {
-  ROUTES,
-  matchPattern,
-};
-
 export const GET = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAgentCreator('GET', request, getPathSegments(request)),
+  (request: NextRequest) => routeAgentCreator('GET', request),
   { ...ROUTER_OPTIONS, source: 'agentcreator.[[...path]].GET', requireAuth: true }
 );
 export const POST = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAgentCreator('POST', request, getPathSegments(request)),
+  (request: NextRequest) => routeAgentCreator('POST', request),
   { ...ROUTER_OPTIONS, source: 'agentcreator.[[...path]].POST', requireAuth: true }
 );
 export const PUT = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAgentCreator('PUT', request, getPathSegments(request)),
+  (request: NextRequest) => routeAgentCreator('PUT', request),
   { ...ROUTER_OPTIONS, source: 'agentcreator.[[...path]].PUT', requireAuth: true }
 );
 export const PATCH = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAgentCreator('PATCH', request, getPathSegments(request)),
+  (request: NextRequest) => routeAgentCreator('PATCH', request),
   { ...ROUTER_OPTIONS, source: 'agentcreator.[[...path]].PATCH', requireAuth: true }
 );
 export const DELETE = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAgentCreator('DELETE', request, getPathSegments(request)),
+  (request: NextRequest) => routeAgentCreator('DELETE', request),
   { ...ROUTER_OPTIONS, source: 'agentcreator.[[...path]].DELETE', requireAuth: true }
 );

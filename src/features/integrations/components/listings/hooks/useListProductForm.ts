@@ -2,13 +2,17 @@
 
 import { useState } from 'react';
 
-import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   useListingBaseComSettings,
   useListingSelection,
   useListingTraderaSettings,
 } from '@/features/integrations/context/ListingSettingsContext';
 import { useUpdateDefaultTraderaConnection } from '@/features/integrations/hooks/useIntegrationMutations';
+import { useUpdateDefaultVintedConnection } from '@/features/integrations/hooks/useIntegrationMutations';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
@@ -20,6 +24,11 @@ import {
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
+import {
+  ensureVintedBrowserSession,
+  isVintedBrowserAuthRequiredMessage,
+  preflightVintedQuickListSession,
+} from '@/features/integrations/utils/vinted-browser-session';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -35,9 +44,10 @@ type UseListProductFormResult = {
   setLogsOpen: (value: boolean) => void;
   submitting: boolean;
   authRequired: boolean;
+  authRequiredMarketplace: 'tradera' | 'vinted' | null;
   loggingIn: boolean;
   handleSubmit: (onSuccess: () => void) => Promise<void>;
-  handleTraderaLogin: (onSuccess: () => void) => Promise<void>;
+  handleMarketplaceLogin: (onSuccess: () => void) => Promise<void>;
   handleImageRetry: (preset: ImageRetryPreset, onSuccess: () => void) => Promise<void>;
 };
 
@@ -46,6 +56,9 @@ export function useListProductForm(productId: string): UseListProductFormResult 
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
   const [authRequired, setAuthRequired] = useState(false);
+  const [authRequiredMarketplace, setAuthRequiredMarketplace] = useState<
+    'tradera' | 'vinted' | null
+  >(null);
   const [loggingIn, setLoggingIn] = useState(false);
   const { toast } = useToast();
 
@@ -69,11 +82,13 @@ export function useListProductForm(productId: string): UseListProductFormResult 
   const exportToBaseMutation = useExportToBaseMutation(productId);
   const createListingMutation = useCreateListingMutation(productId);
   const updateDefaultTraderaConnectionMutation = useUpdateDefaultTraderaConnection();
+  const updateDefaultVintedConnectionMutation = useUpdateDefaultVintedConnection();
 
   const submitting =
     exportToBaseMutation.isPending ||
     createListingMutation.isPending ||
-    updateDefaultTraderaConnectionMutation.isPending;
+    updateDefaultTraderaConnectionMutation.isPending ||
+    updateDefaultVintedConnectionMutation.isPending;
 
   const createExportRequestId = (): string =>
     `base-export-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -119,6 +134,8 @@ export function useListProductForm(productId: string): UseListProductFormResult 
 
     try {
       setError(null);
+      setAuthRequired(false);
+      setAuthRequiredMarketplace(null);
       setExportLogs([]);
       setLogsOpen(true);
 
@@ -140,12 +157,25 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       } else {
         const isTraderaBrowserIntegration =
           isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+        const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
         if (isTraderaBrowserIntegration && selectedConnectionId) {
           await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
             productId,
           });
+        }
+        if (isVintedBrowserIntegration && selectedConnectionId) {
+          const preflightResponse = await preflightVintedQuickListSession({
+            integrationId: selectedIntegrationId,
+            connectionId: selectedConnectionId,
+            productId,
+          });
+          if (!preflightResponse.ready) {
+            throw new Error(
+              'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.'
+            );
+          }
         }
 
         const response = await createListingMutation.mutateAsync({
@@ -190,6 +220,28 @@ export function useListProductForm(productId: string): UseListProductFormResult 
               : 'Tradera listing queued.',
             { variant: 'success' }
           );
+        } else if (isVintedIntegrationSlug(selectedIntegration?.slug) && selectedConnectionId) {
+          try {
+            await updateDefaultVintedConnectionMutation.mutateAsync({
+              connectionId: selectedConnectionId,
+            });
+          } catch (preferenceError: unknown) {
+            logClientCatch(preferenceError, {
+              source: 'ListProductModal',
+              action: 'persistDefaultVintedConnection',
+              productId,
+              integrationId: selectedIntegrationId,
+              connectionId: selectedConnectionId,
+              level: 'warn',
+            });
+          }
+          const queue = response.queue;
+          toast(
+            queue?.jobId
+              ? `Vinted listing queued (job ${queue.jobId}).`
+              : 'Vinted listing queued.',
+            { variant: 'success' }
+          );
         }
         onSuccess();
       }
@@ -201,8 +253,21 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         integrationId: selectedIntegrationId,
       });
       const errorMessage = err instanceof Error ? err.message : 'Failed to list product';
-      if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+      const isSelectedVintedIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
+      const isSelectedTraderaBrowserIntegration =
+        isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+      if (
+        isSelectedVintedIntegration &&
+        isVintedBrowserAuthRequiredMessage(errorMessage)
+      ) {
         setAuthRequired(true);
+        setAuthRequiredMarketplace('vinted');
+      } else if (
+        isSelectedTraderaBrowserIntegration &&
+        isTraderaBrowserAuthRequiredMessage(errorMessage)
+      ) {
+        setAuthRequired(true);
+        setAuthRequiredMarketplace('tradera');
       }
       setError(errorMessage);
     }
@@ -234,27 +299,56 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     }
   };
 
-  const handleTraderaLogin = async (onSuccess: () => void): Promise<void> => {
+  const handleMarketplaceLogin = async (onSuccess: () => void): Promise<void> => {
     if (!selectedIntegrationId || !selectedConnectionId) return;
+    const isTraderaBrowserIntegration =
+      isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+    const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
+    const marketplace =
+      authRequiredMarketplace ??
+      (isTraderaBrowserIntegration ? 'tradera' : isVintedBrowserIntegration ? 'vinted' : null);
+    if (!marketplace) return;
     try {
       setLoggingIn(true);
       setError(null);
-      await ensureTraderaBrowserSession({
-        integrationId: selectedIntegrationId,
-        connectionId: selectedConnectionId,
-      });
-      toast('Tradera login session refreshed.', { variant: 'success' });
+      if (marketplace === 'tradera') {
+        await ensureTraderaBrowserSession({
+          integrationId: selectedIntegrationId,
+          connectionId: selectedConnectionId,
+        });
+        toast('Tradera login session refreshed.', { variant: 'success' });
+      } else {
+        const response = await ensureVintedBrowserSession({
+          integrationId: selectedIntegrationId,
+          connectionId: selectedConnectionId,
+        });
+        if (!response.savedSession) {
+          setError(
+            'Vinted login session could not be saved. Complete login verification and retry.'
+          );
+          setAuthRequired(true);
+          setAuthRequiredMarketplace('vinted');
+          return;
+        }
+        toast('Vinted login session refreshed.', { variant: 'success' });
+      }
       setAuthRequired(false);
+      setAuthRequiredMarketplace(null);
       await handleSubmit(onSuccess);
     } catch (err: unknown) {
       logClientCatch(err, {
         source: 'ListProductModal',
-        action: 'traderaLogin',
+        action: marketplace === 'vinted' ? 'vintedLogin' : 'traderaLogin',
         productId,
         integrationId: selectedIntegrationId,
         connectionId: selectedConnectionId,
       });
-      const errorMessage = err instanceof Error ? err.message : 'Failed to open Tradera login';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : marketplace === 'vinted'
+            ? 'Failed to open Vinted login'
+            : 'Failed to open Tradera login';
       setError(errorMessage);
     } finally {
       setLoggingIn(false);
@@ -270,9 +364,10 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     setLogsOpen,
     submitting,
     authRequired,
+    authRequiredMarketplace,
     loggingIn,
     handleSubmit,
-    handleTraderaLogin,
+    handleMarketplaceLogin,
     handleImageRetry,
   };
 }

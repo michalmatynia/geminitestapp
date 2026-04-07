@@ -1,19 +1,15 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import type { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type {
-  CatchAllRouteDefinition as RouteDefinition,
-  CatchAllRouteMethod as HttpMethod,
-  CatchAllRouteModule as RouteModule,
-  CatchAllRouteParams as Params,
-  CatchAllRoutePathParams as RouteParams,
-  CatchAllRoutePatternToken as PatternToken,
+import {
+  type CatchAllRouteMethod as HttpMethod,
+  type CatchAllRoutePathParams as RouteParams,
+  getPathSegments,
+  handleCatchAllRequest,
 } from '@/shared/lib/api/catch-all-router';
-import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as dbAction from '../db-action/route-handler';
 import * as health from '../health/route-handler';
@@ -46,83 +42,7 @@ import * as triggerButtonsById from '../trigger-buttons/[id]/route-handler';
 import * as update from '../update/route-handler';
 import * as validationDocsSnapshot from '../validation/docs-snapshot/route-handler';
 
-const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-
-const notFound = async (request: NextRequest, source: string): Promise<Response> =>
-  createErrorResponse(notFoundError('Not Found'), { request, source });
-const methodNotAllowed = async (
-  request: NextRequest,
-  allowed: HttpMethod[],
-  source: string
-): Promise<Response> => {
-  const response = await createErrorResponse(methodNotAllowedError('Method not allowed', {
-    allowedMethods: allowed,
-  }), { request, source });
-  response.headers.set('Allow', allowed.join(', '));
-  return response;
-};
-
-const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
-  HTTP_METHODS.filter((method) => typeof module[method] === 'function');
-
-const dispatch = async (
-  module: RouteModule,
-  method: HttpMethod,
-  request: NextRequest,
-  params: Params | undefined,
-  source: string
-): Promise<Response> => {
-  const handler = module[method];
-  if (typeof handler !== 'function') {
-    const allowed = getAllowedMethods(module);
-    return allowed.length > 0
-      ? methodNotAllowed(request, allowed, source)
-      : notFound(request, source);
-  }
-  return (handler as RouteModule[HttpMethod] & ((request: NextRequest, context: { params: Params | Promise<Params> }) => Promise<Response>))(
-    request,
-    { params: Promise.resolve(params ?? ({} as Params)) }
-  );
-};
-
-const getPathSegments = (request: NextRequest): string[] => {
-  const basePath = '/api/ai-paths';
-  const pathname = request.nextUrl.pathname;
-  if (!pathname.startsWith(basePath)) {
-    return [];
-  }
-  const remainder = pathname.slice(basePath.length).replace(/^\/+/, '');
-  return remainder ? remainder.split('/').filter(Boolean) : [];
-};
-
-const param = (name: string): PatternToken => ({ param: name });
-
-const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
-  if (pattern.length !== segments.length) {
-    return null;
-  }
-  const params: Params = {};
-  for (let index = 0; index < pattern.length; index += 1) {
-    const token = pattern[index];
-    if (!token) {
-      return null;
-    }
-    const segment = segments[index];
-    if (!segment) {
-      return null;
-    }
-    if (typeof token === 'string') {
-      if (token !== segment) {
-        return null;
-      }
-      continue;
-    }
-    params[token.param] = segment;
-  }
-  return params;
-};
-
-const ROUTES: RouteDefinition[] = [
+const ROUTES = [
   { pattern: ['health'], module: health },
   { pattern: ['db-action'], module: dbAction },
   { pattern: ['update'], module: update },
@@ -131,21 +51,21 @@ const ROUTES: RouteDefinition[] = [
   { pattern: ['runs', 'queue-status'], module: runsQueueStatus },
   { pattern: ['runs', 'enqueue'], module: runsEnqueue },
   { pattern: ['runs', 'dead-letter', 'requeue'], module: runsDeadLetterRequeue },
-  { pattern: ['runs', param('runId'), 'stream'], module: runStream },
-  { pattern: ['runs', param('runId'), 'cancel'], module: runCancel },
-  { pattern: ['runs', param('runId'), 'resume'], module: runResume },
-  { pattern: ['runs', param('runId'), 'retry-node'], module: runRetryNode },
+  { pattern: ['runs', { param: 'runId' }, 'stream'], module: runStream },
+  { pattern: ['runs', { param: 'runId' }, 'cancel'], module: runCancel },
+  { pattern: ['runs', { param: 'runId' }, 'resume'], module: runResume },
+  { pattern: ['runs', { param: 'runId' }, 'retry-node'], module: runRetryNode },
   { pattern: ['runs'], module: runsIndex },
-  { pattern: ['runs', param('runId')], module: runById },
+  { pattern: ['runs', { param: 'runId' }], module: runById },
   { pattern: ['runtime-analytics', 'summary'], module: runtimeAnalyticsSummary },
   { pattern: ['runtime-analytics', 'insights'], module: runtimeAnalyticsInsights },
   { pattern: ['trigger-buttons', 'cleanup-fixtures'], module: triggerButtonsCleanup },
   { pattern: ['trigger-buttons', 'reorder'], module: triggerButtonsReorder },
   { pattern: ['trigger-buttons'], module: triggerButtons },
-  { pattern: ['trigger-buttons', param('id')], module: triggerButtonsById },
+  { pattern: ['trigger-buttons', { param: 'id' }], module: triggerButtonsById },
   { pattern: ['validation', 'docs-snapshot'], module: validationDocsSnapshot },
-  { pattern: ['playwright', param('runId'), 'artifacts', param('file')], module: playwrightArtifact },
-  { pattern: ['playwright', param('runId')], module: playwrightRun },
+  { pattern: ['playwright', { param: 'runId' }, 'artifacts', { param: 'file' }], module: playwrightArtifact },
+  { pattern: ['playwright', { param: 'runId' }], module: playwrightRun },
   { pattern: ['playwright'], module: playwright },
   { pattern: ['portable-engine', 'schema', 'diff'], module: portableEngineSchemaDiff },
   { pattern: ['portable-engine', 'schema'], module: portableEngineSchema },
@@ -158,22 +78,13 @@ const ROUTES: RouteDefinition[] = [
 const routeAiPaths = (
   method: HttpMethod,
   request: NextRequest,
-  segments: string[]
-): Promise<Response> => {
-  const source = `ai-paths.[[...path]].${method}`;
-  if (segments.length === 0) {
-    return notFound(request, source);
-  }
-  for (const route of ROUTES) {
-    const params = matchPattern(route.pattern, segments);
-    if (!params) {
-      continue;
-    }
-    return dispatch(route.module, method, request, params, source);
-  }
-
-  return notFound(request, source);
-};
+): Promise<Response> => handleCatchAllRequest(
+  method,
+  request,
+  getPathSegments(request, '/api/ai-paths'),
+  ROUTES,
+  'ai-paths'
+);
 
 const ROUTER_OPTIONS = {
   successLogging: 'off',
@@ -183,22 +94,22 @@ const ROUTER_OPTIONS = {
 } as const;
 
 export const GET = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAiPaths('GET', request, getPathSegments(request)),
+  (request: NextRequest) => routeAiPaths('GET', request),
   { ...ROUTER_OPTIONS, source: 'ai-paths.[[...path]].GET', requireAuth: true }
 );
 export const POST = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAiPaths('POST', request, getPathSegments(request)),
+  (request: NextRequest) => routeAiPaths('POST', request),
   { ...ROUTER_OPTIONS, source: 'ai-paths.[[...path]].POST', requireAuth: true }
 );
 export const PUT = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAiPaths('PUT', request, getPathSegments(request)),
+  (request: NextRequest) => routeAiPaths('PUT', request),
   { ...ROUTER_OPTIONS, source: 'ai-paths.[[...path]].PUT', requireAuth: true }
 );
 export const PATCH = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAiPaths('PATCH', request, getPathSegments(request)),
+  (request: NextRequest) => routeAiPaths('PATCH', request),
   { ...ROUTER_OPTIONS, source: 'ai-paths.[[...path]].PATCH', requireAuth: true }
 );
 export const DELETE = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) => routeAiPaths('DELETE', request, getPathSegments(request)),
+  (request: NextRequest) => routeAiPaths('DELETE', request),
   { ...ROUTER_OPTIONS, source: 'ai-paths.[[...path]].DELETE', requireAuth: true }
 );

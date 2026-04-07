@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 
-import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   useListingBaseComSettings,
   useListingSelection,
@@ -16,6 +19,10 @@ import {
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
+import {
+  isVintedBrowserAuthRequiredMessage,
+  preflightVintedQuickListSession,
+} from '@/features/integrations/utils/vinted-browser-session';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -90,12 +97,25 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
       } else {
         const isTraderaBrowserIntegration =
           isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+        const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
         if (isTraderaBrowserIntegration && selectedConnectionId) {
           await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
             productId: selectedProductId ?? undefined,
           });
+        }
+        if (isVintedBrowserIntegration && selectedConnectionId) {
+          const preflightResponse = await preflightVintedQuickListSession({
+            integrationId: selectedIntegrationId,
+            connectionId: selectedConnectionId,
+            productId: selectedProductId ?? undefined,
+          });
+          if (!preflightResponse.ready) {
+            throw new Error(
+              'Vinted login requires manual verification. Solve the browser challenge in the opened window and retry.'
+            );
+          }
         }
         await createListingMutation.mutateAsync({
           integrationId: selectedIntegrationId,
@@ -106,7 +126,18 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
     } catch (err: unknown) {
       logClientCatch(err, { source: 'SelectProductForListingModal', action: 'submit' });
       const errorMessage = err instanceof Error ? err.message : 'Failed to list product';
-      if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+      const isSelectedVintedIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
+      const isSelectedTraderaBrowserIntegration =
+        isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+      if (
+        isSelectedVintedIntegration &&
+        isVintedBrowserAuthRequiredMessage(errorMessage)
+      ) {
+        toast(errorMessage, { variant: 'error' });
+      } else if (
+        isSelectedTraderaBrowserIntegration &&
+        isTraderaBrowserAuthRequiredMessage(errorMessage)
+      ) {
         toast(errorMessage, { variant: 'error' });
       }
       setError(errorMessage);

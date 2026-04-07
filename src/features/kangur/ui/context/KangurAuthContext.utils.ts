@@ -10,10 +10,17 @@ import {
 import type { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import type { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
+import type {
+  KangurAuthBootstrapSnapshot,
+  KangurAuthRuntimeSetters,
+  KangurAuthError,
+} from '@/shared/contracts/kangur-auth';
+
 export type {
   KangurAuthBootstrapSnapshot,
   KangurAuthRuntimeSetters,
-} from '@/shared/contracts/kangur-auth';
+  KangurAuthError,
+};
 
 export type KangurAuthCheckAppStateOptions = {
   timeoutMs?: number | null;

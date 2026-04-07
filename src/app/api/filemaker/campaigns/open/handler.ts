@@ -31,7 +31,6 @@ const buildTransparentPixelResponse = (): Response =>
   /* safe */ new Response(TRANSPARENT_GIF, {
     status: 200,
     headers: {
-...
       'content-type': 'image/gif',
       'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       pragma: 'no-cache',

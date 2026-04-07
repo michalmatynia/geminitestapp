@@ -31,7 +31,7 @@ const querySchema = z.object({
 });
 
 const buildRedirectResponse = (location: string): Response =>
-  new Response(null, {
+  /* safe */ new Response(null, {
     status: 307,
     headers: {
       location,

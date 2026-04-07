@@ -1,5 +1,6 @@
 import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type { TraderaQueueHealthResponse } from '@/shared/contracts/jobs';
+export type { TraderaQueueHealthResponse };
 import { api } from '@/shared/lib/api-client';
 
 /**

@@ -6,12 +6,17 @@ import {
   TRADERA_INTEGRATION_SLUGS,
   isBaseIntegrationSlug,
   isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   matchesProductListingsIntegrationScope,
   normalizeProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
-import type { BaseDefaultConnectionPreferenceResponse, TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type {
+  BaseDefaultConnectionPreferenceResponse,
+  TraderaDefaultConnectionPreferenceResponse,
+  VintedDefaultConnectionPreferenceResponse,
+} from '@/shared/contracts/integrations/preferences';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -32,6 +37,7 @@ const matchesFilterIntegrationSlug = (
 const integrationSelectionKeys = {
   defaultConnection: QUERY_KEYS.integrations.selection.defaultConnection(),
   traderaDefaultConnection: QUERY_KEYS.integrations.selection.traderaDefaultConnection(),
+  vintedDefaultConnection: QUERY_KEYS.integrations.selection.vintedDefaultConnection(),
   // Reuse canonical integrations cache key to avoid duplicate fetches in modal flows.
   withConnections: QUERY_KEYS.integrations.withConnections(),
 } as const;
@@ -47,6 +53,13 @@ export const fetchPreferredTraderaConnection =
   async (): Promise<TraderaDefaultConnectionPreferenceResponse> => {
     return await api.get<TraderaDefaultConnectionPreferenceResponse>(
       '/api/v2/integrations/exports/tradera/default-connection'
+    );
+  };
+
+export const fetchPreferredVintedConnection =
+  async (): Promise<VintedDefaultConnectionPreferenceResponse> => {
+    return await api.get<VintedDefaultConnectionPreferenceResponse>(
+      '/api/v2/integrations/exports/vinted/default-connection'
     );
   };
 
@@ -145,16 +158,37 @@ export function useIntegrationSelection(
           tags: ['integrations', 'selection', 'list'],
         },
       },
+      {
+        queryKey: normalizeQueryKey(integrationSelectionKeys.vintedDefaultConnection),
+        queryFn: fetchPreferredVintedConnection,
+        staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+        gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        meta: {
+          source: 'integrations.hooks.useIntegrationSelection.preferredVintedConnection',
+          operation: 'detail',
+          resource: 'integrations.selection.preferred-vinted-connection',
+          description: 'Loads integrations selection preferred Vinted connection.',
+          domain: 'integrations',
+          tags: ['integrations', 'selection', 'preferred-vinted-connection'],
+        },
+      },
     ] as const,
   });
 
   const preferredConnectionQuery = results[0];
   const preferredTraderaConnectionQuery = results[1];
   const integrationsQuery = results[2];
+  const preferredVintedConnectionQuery = results[3];
   const preferredBaseConnectionData =
     (preferredConnectionQuery?.data as BaseDefaultConnectionPreferenceResponse | undefined) ?? null;
   const preferredTraderaConnectionData =
     (preferredTraderaConnectionQuery?.data as TraderaDefaultConnectionPreferenceResponse | undefined) ??
+    null;
+  const preferredVintedConnectionData =
+    (preferredVintedConnectionQuery?.data as VintedDefaultConnectionPreferenceResponse | undefined) ??
     null;
   const integrationsData = integrationsQuery?.data;
 
@@ -172,6 +206,7 @@ export function useIntegrationSelection(
 
   const preferredBaseConnectionId = preferredBaseConnectionData?.connectionId ?? null;
   const preferredTraderaConnectionId = preferredTraderaConnectionData?.connectionId ?? null;
+  const preferredVintedConnectionId = preferredVintedConnectionData?.connectionId ?? null;
 
   useEffect(() => {
     if (initializedRef.current || loading || integrations.length === 0) return;
@@ -264,6 +299,8 @@ export function useIntegrationSelection(
       ? preferredBaseConnectionId
       : isTraderaBrowserIntegrationSlug(integrationSlug)
         ? preferredTraderaConnectionId
+        : isVintedIntegrationSlug(integrationSlug)
+          ? preferredVintedConnectionId
         : null;
 
     const connectionIds =
@@ -296,6 +333,7 @@ export function useIntegrationSelection(
     integrations,
     preferredBaseConnectionId,
     preferredTraderaConnectionId,
+    preferredVintedConnectionId,
     selectedConnectionId,
     selectedIntegrationId,
   ]);

@@ -33,6 +33,12 @@ import {
   scheduleKangurLateAuthCheckSettlement,
   applyKangurResolvedAuthState,
 } from './KangurAuthContext.utils';
+import type {
+  KangurAuthMode,
+  KangurAuthContextValue,
+  KangurAuthStateContextValue,
+  KangurAuthActionsContextValue,
+} from '@/shared/contracts/kangur-auth';
 import {
   appendAuthModeParam,
   clearKangurAuthBootstrapCache,
@@ -42,39 +48,6 @@ import {
 } from '@/features/kangur/ui/context/kangur-auth-bootstrap-cache';
 
 const AUTH_CHECK_TIMEOUT_MS = 1_500;
-
-type KangurAuthContextValue = {
-  user: KangurUser | null;
-  isAuthenticated: boolean;
-  hasResolvedAuth: boolean;
-  canAccessParentAssignments: boolean;
-  isLoadingAuth: boolean;
-  isLoggingOut?: boolean;
-  isLoadingPublicSettings: boolean;
-  authError: KangurAuthError | null;
-  appPublicSettings: null;
-  logout: (shouldRedirect?: boolean) => void;
-  navigateToLogin: (options?: { authMode?: KangurAuthMode }) => void;
-  checkAppState: (options?: KangurAuthCheckAppStateOptions) => Promise<KangurUser | null>;
-  selectLearner: (learnerId: string) => Promise<void>;
-};
-
-type KangurAuthStateContextValue = Pick<
-  KangurAuthContextValue,
-  | 'user'
-  | 'isAuthenticated'
-  | 'hasResolvedAuth'
-  | 'canAccessParentAssignments'
-  | 'isLoadingAuth'
-  | 'isLoadingPublicSettings'
-  | 'authError'
-  | 'appPublicSettings'
->;
-
-type KangurAuthActionsContextValue = Pick<
-  KangurAuthContextValue,
-  'logout' | 'navigateToLogin' | 'checkAppState' | 'selectLearner'
->;
 
 const KangurAuthStateContext = createContext<KangurAuthStateContextValue | null>(null);
 const KangurAuthActionsContext = createContext<KangurAuthActionsContextValue | null>(null);

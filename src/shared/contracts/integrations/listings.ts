@@ -537,3 +537,61 @@ export type ProductListingsRecoveryContext =
     integrationId?: string | null | undefined;
     connectionId?: string | null | undefined;
   };
+
+/**
+ * Browser-based listing execution result
+ */
+export const browserListingResultSchema = z.object({
+  externalListingId: z.string().nullable(),
+  listingUrl: z.string().optional(),
+  completedAt: z.string().optional(),
+  simulated: z.boolean().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type BrowserListingResultDto = z.infer<typeof browserListingResultSchema>;
+export type BrowserListingResult = BrowserListingResultDto;
+
+/**
+ * Quick export feedback tracking
+ */
+export type QuickExportFeedbackStatus =
+  | 'processing'
+  | 'queued'
+  | 'completed'
+  | 'failed'
+  | 'auth_required';
+
+export type QuickExportFeedbackOptionsDto = {
+  runId?: string | null | undefined;
+  requestId?: string | null | undefined;
+  integrationId?: string | null | undefined;
+  connectionId?: string | null | undefined;
+  failureReason?: string | null | undefined;
+  listingId?: string | null | undefined;
+  listingUrl?: string | null | undefined;
+  externalListingId?: string | null | undefined;
+  completedAt?: number | null | undefined;
+  duplicateLinked?: boolean | null | undefined;
+  metadata?: Record<string, unknown> | undefined;
+};
+
+export type QuickExportFeedbackOptions = QuickExportFeedbackOptionsDto;
+
+export type PersistedQuickExportFeedbackDto = QuickExportFeedbackOptionsDto & {
+  productId: string;
+  status: QuickExportFeedbackStatus;
+  expiresAt: number;
+};
+
+export type PersistedQuickExportFeedback = PersistedQuickExportFeedbackDto;
+
+/**
+ * Canonical product image entry for listing
+ */
+export type CanonicalProductImageEntryDto = {
+  imageUrls: string[];
+  localCandidates: string[];
+};
+
+export type CanonicalProductImageEntry = CanonicalProductImageEntryDto;

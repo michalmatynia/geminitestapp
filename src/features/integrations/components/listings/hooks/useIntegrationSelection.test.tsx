@@ -176,4 +176,32 @@ describe('useIntegrationSelection', () => {
     });
     expect(result.current.selectedConnectionId).toBe('conn-tradera-2');
   });
+
+  it('prefers the Vinted default connection for Vinted integrations', async () => {
+    createMultiQueryV2Mock.mockReturnValue([
+      { data: { connectionId: 'conn-base-1' } },
+      { data: { connectionId: 'conn-tradera-2' } },
+      {
+        data: [
+          {
+            id: 'integration-vinted-1',
+            name: 'Vinted',
+            slug: 'vinted',
+            connections: [
+              { id: 'conn-vinted-1', name: 'Alpha', integrationId: 'integration-vinted-1' },
+              { id: 'conn-vinted-2', name: 'Zulu', integrationId: 'integration-vinted-1' },
+            ],
+          },
+        ],
+        isPending: false,
+      },
+      { data: { connectionId: 'conn-vinted-2' } },
+    ]);
+
+    const { result } = renderHook(() => useIntegrationSelection('integration-vinted-1'));
+
+    await waitFor(() => {
+      expect(result.current.selectedConnectionId).toBe('conn-vinted-2');
+    });
+  });
 });

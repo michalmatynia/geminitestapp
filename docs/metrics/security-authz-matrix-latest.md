@@ -8,15 +8,15 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-03-30T15:09:33.797Z
+Generated at: 2026-04-07T12:46:04.029Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 298
-- Route methods scanned: 215
+- Route files scanned: 305
+- Route methods scanned: 221
 - Public methods: 15
-- Protected methods: 199
+- Protected methods: 205
 - Signed ingress methods: 0
 - Actor-scoped methods: 1
 - Errors: 0
@@ -94,6 +94,12 @@ Generated at: 2026-03-30T15:09:33.797Z
 | chatbot/[[...path]] | PUT | protected | - |
 | chatbot/[[...path]] | PATCH | protected | - |
 | chatbot/[[...path]] | DELETE | protected | - |
+| chatbot/jobs/[jobId] | DELETE | protected | - |
+| chatbot/jobs/[jobId] | GET | protected | - |
+| chatbot/jobs/[jobId] | POST | protected | - |
+| chatbot/jobs | DELETE | protected | - |
+| chatbot/jobs | GET | protected | - |
+| chatbot/jobs | POST | protected | - |
 | client-errors | POST | public | - |
 | cms/css-ai/stream | POST | protected | - |
 | cms/domains/[id] | DELETE | protected | - |

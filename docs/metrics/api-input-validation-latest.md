@@ -8,14 +8,14 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-04-07T12:32:18.817Z
+Generated at: 2026-04-07T12:45:55.222Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 1095
-- Total handlers: 972
-- Validated handlers: 972
+- Files scanned: 1099
+- Total handlers: 976
+- Validated handlers: 976
 - **Coverage: 100%**
 - Errors: 0
 - Warnings: 0

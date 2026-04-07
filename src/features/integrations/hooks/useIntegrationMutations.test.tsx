@@ -22,7 +22,10 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-import { useUpdateDefaultTraderaConnection } from './useIntegrationMutations';
+import {
+  useUpdateDefaultTraderaConnection,
+  useUpdateDefaultVintedConnection,
+} from './useIntegrationMutations';
 
 describe('useIntegrationMutations', () => {
   beforeEach(() => {
@@ -47,6 +50,26 @@ describe('useIntegrationMutations', () => {
     );
     expect(config.invalidateKeys).toEqual([
       QUERY_KEYS.integrations.selection.traderaDefaultConnection(),
+    ]);
+  });
+
+  it('posts Vinted preferred connection updates to the dedicated endpoint', async () => {
+    apiPostMock.mockResolvedValue({ connectionId: 'conn-vinted-1' });
+    const { result } = renderHook(() => useUpdateDefaultVintedConnection());
+    const config = createUpdateMutationV2Mock.mock.calls[0]?.[0];
+
+    expect(result.current).toEqual({ kind: 'mutation' });
+    expect(config.mutationKey).toEqual(QUERY_KEYS.integrations.selection.vintedDefaultConnection());
+
+    await expect(config.mutationFn({ connectionId: 'conn-vinted-1' })).resolves.toEqual({
+      connectionId: 'conn-vinted-1',
+    });
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/exports/vinted/default-connection',
+      { connectionId: 'conn-vinted-1' }
+    );
+    expect(config.invalidateKeys).toEqual([
+      QUERY_KEYS.integrations.selection.vintedDefaultConnection(),
     ]);
   });
 });

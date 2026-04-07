@@ -108,6 +108,22 @@ export type TraderaDefaultConnectionPreferenceResponse = z.infer<
   typeof traderaDefaultConnectionPreferenceResponseSchema
 >;
 
+export const vintedDefaultConnectionPreferencePayloadSchema = z.object({
+  connectionId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type VintedDefaultConnectionPreferencePayload = z.infer<
+  typeof vintedDefaultConnectionPreferencePayloadSchema
+>;
+
+export const vintedDefaultConnectionPreferenceResponseSchema = z.object({
+  connectionId: z.string().nullable(),
+});
+
+export type VintedDefaultConnectionPreferenceResponse = z.infer<
+  typeof vintedDefaultConnectionPreferenceResponseSchema
+>;
+
 export const baseStockFallbackPreferencePayloadSchema = z.object({
   enabled: z.boolean(),
 });

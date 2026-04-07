@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-07T12:30:59.254Z",
+  "generatedAt": "2026-04-07T12:38:00.996Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -21,10 +21,10 @@
     "filesScanned": 9935,
     "exportedDeclarationsScanned": 5888,
     "candidateDeclarationsScanned": 5867,
-    "exactShapeClusters": 11,
-    "nearShapeClusters": 7,
-    "clustersAfterFilters": 18,
-    "declarationsInClusters": 44,
+    "exactShapeClusters": 10,
+    "nearShapeClusters": 5,
+    "clustersAfterFilters": 15,
+    "declarationsInClusters": 39,
     "highestRiskScore": 17
   },
   "clusters": [
@@ -82,6 +82,52 @@
           "path": "src/app/api/v2/products/validator-config/handler.helpers.ts",
           "line": 10,
           "domain": "app",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0005",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 16,
+      "declarationCount": 3,
+      "domains": [
+        "feature:integrations",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "36676e52f583",
+        "memberCount": 1,
+        "preview": "BrowserListingResultDto"
+      },
+      "declarations": [
+        {
+          "name": "TraderaBrowserListingResult",
+          "kind": "type",
+          "path": "src/features/integrations/services/tradera-listing/browser-types.ts",
+          "line": 3,
+          "domain": "feature:integrations",
+          "usageCount": 3
+        },
+        {
+          "name": "VintedBrowserListingResult",
+          "kind": "type",
+          "path": "src/features/integrations/services/vinted-listing/vinted-browser-listing.ts",
+          "line": 27,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "BrowserListingResult",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "line": 553,
+          "domain": "shared:contracts",
           "usageCount": 0
         }
       ],
@@ -182,7 +228,7 @@
       ]
     },
     {
-      "clusterId": "exact-0005",
+      "clusterId": "exact-0006",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 14,
@@ -228,8 +274,8 @@
       ]
     },
     {
-      "clusterId": "near-0003",
-      "clusterKind": "near-shape",
+      "clusterId": "exact-0010",
+      "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 13,
       "declarationCount": 2,
@@ -237,17 +283,17 @@
         "feature:ai"
       ],
       "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "13db6a14dec9",
-        "memberCount": 5,
-        "preview": "prop:activeStepId?:string | null; prop:log?:(level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; prop:model:string; prop:runId:string; prop:stepLabel?:string | null"
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "2463fe15c097",
+        "memberCount": 1,
+        "preview": "AgentLlmContext"
       },
       "declarations": [
         {
           "name": "LLMContext",
           "kind": "type",
           "path": "src/features/ai/agent-runtime/tools/llm/segments/shared.ts",
-          "line": 6,
+          "line": 7,
           "domain": "feature:ai",
           "usageCount": 4
         },
@@ -255,7 +301,7 @@
           "name": "ToolLlmContext",
           "kind": "type",
           "path": "src/features/ai/agent-runtime/tools/segments/types.ts",
-          "line": 10,
+          "line": 11,
           "domain": "feature:ai",
           "usageCount": 1
         }
@@ -265,7 +311,7 @@
       ]
     },
     {
-      "clusterId": "near-0006",
+      "clusterId": "near-0004",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 13,
@@ -393,117 +439,6 @@
       ]
     },
     {
-      "clusterId": "near-0005",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 11,
-      "declarationCount": 2,
-      "domains": [
-        "feature:integrations"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "959fdb4514a4",
-        "memberCount": 5,
-        "preview": "prop:completedAt?:string; prop:externalListingId:string | null; prop:listingUrl?:string; prop:metadata?:Record<string, unknown>; prop:simulated?:boolean"
-      },
-      "declarations": [
-        {
-          "name": "TraderaBrowserListingResult",
-          "kind": "type",
-          "path": "src/features/integrations/services/tradera-listing/browser-types.ts",
-          "line": 1,
-          "domain": "feature:integrations",
-          "usageCount": 3
-        },
-        {
-          "name": "VintedBrowserListingResult",
-          "kind": "type",
-          "path": "src/features/integrations/services/vinted-listing/vinted-browser-listing.ts",
-          "line": 26,
-          "domain": "feature:integrations",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0009",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 10,
-      "declarationCount": 2,
-      "domains": [
-        "feature:integrations"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "654ecdffc4b2",
-        "memberCount": 10,
-        "preview": "prop:completedAt?:number | null | undefined; prop:connectionId?:string | null | undefined; prop:duplicateLinked?:boolean | null | undefined; prop:externalListingId?:string | null | undefined; prop:failureReason?:string | null | undefined; prop:integrationId?:string | null | undefined; prop:listingId?:string | null | undefined; prop:listingUrl?:string | null | undefined"
-      },
-      "declarations": [
-        {
-          "name": "TraderaFeedbackOptions",
-          "kind": "type",
-          "path": "src/features/integrations/hooks/useTraderaQuickExportFeedback.ts",
-          "line": 37,
-          "domain": "feature:integrations",
-          "usageCount": 1
-        },
-        {
-          "name": "PersistTraderaQuickListFeedbackOptions",
-          "kind": "type",
-          "path": "src/features/integrations/utils/traderaQuickListFeedback.ts",
-          "line": 22,
-          "domain": "feature:integrations",
-          "usageCount": 1
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0010",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 10,
-      "declarationCount": 2,
-      "domains": [
-        "feature:integrations"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "33569a4cbe7c",
-        "memberCount": 9,
-        "preview": "prop:completedAt?:number | null | undefined; prop:connectionId?:string | null | undefined; prop:externalListingId?:string | null | undefined; prop:failureReason?:string | null | undefined; prop:integrationId?:string | null | undefined; prop:listingId?:string | null | undefined; prop:listingUrl?:string | null | undefined; prop:requestId?:string | null | undefined"
-      },
-      "declarations": [
-        {
-          "name": "VintedFeedbackOptions",
-          "kind": "type",
-          "path": "src/features/integrations/hooks/useVintedQuickExportFeedback.ts",
-          "line": 39,
-          "domain": "feature:integrations",
-          "usageCount": 1
-        },
-        {
-          "name": "PersistVintedQuickListFeedbackOptions",
-          "kind": "type",
-          "path": "src/features/integrations/utils/vintedQuickListFeedback.ts",
-          "line": 26,
-          "domain": "feature:integrations",
-          "usageCount": 1
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
       "clusterId": "near-0002",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
@@ -542,7 +477,7 @@
       ]
     },
     {
-      "clusterId": "exact-0006",
+      "clusterId": "exact-0007",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -579,7 +514,7 @@
       ]
     },
     {
-      "clusterId": "exact-0007",
+      "clusterId": "exact-0008",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -616,7 +551,7 @@
       ]
     },
     {
-      "clusterId": "exact-0008",
+      "clusterId": "exact-0009",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -653,44 +588,7 @@
       ]
     },
     {
-      "clusterId": "exact-0011",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "feature:integrations"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "70a7a713946e",
-        "memberCount": 2,
-        "preview": "prop:imageUrls:string[]; prop:localCandidates:string[]"
-      },
-      "declarations": [
-        {
-          "name": "TraderaCanonicalProductImageEntry",
-          "kind": "type",
-          "path": "src/features/integrations/services/tradera-listing/tradera-browser-images.helpers.ts",
-          "line": 39,
-          "domain": "feature:integrations",
-          "usageCount": 0
-        },
-        {
-          "name": "VintedCanonicalProductImageEntry",
-          "kind": "type",
-          "path": "src/features/integrations/services/vinted-listing/vinted-browser-images.helpers.ts",
-          "line": 39,
-          "domain": "feature:integrations",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0004",
+      "clusterId": "near-0003",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -727,7 +625,7 @@
       ]
     },
     {
-      "clusterId": "near-0007",
+      "clusterId": "near-0005",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,

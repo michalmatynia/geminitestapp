@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-26T13:49:35.019Z",
-  "durationMs": 4411,
+  "generatedAt": "2026-04-07T12:46:12.242Z",
+  "durationMs": 4493,
   "status": "passed",
   "summary": {
-    "queueCount": 19,
-    "queueInitModuleCount": 9,
+    "queueCount": 23,
+    "queueInitModuleCount": 10,
     "gatedQueueCount": 9,
-    "explicitStartCallCount": 14,
-    "repeatQueueModuleCount": 18,
+    "explicitStartCallCount": 15,
+    "repeatQueueModuleCount": 22,
     "errorCount": 0,
     "warningCount": 0
   },
@@ -20,20 +20,28 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/integrations.ts",
         "src/server/queues/kangur.ts",
-        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
       "startExports": [
         "startAgentQueue",
         "startAiInsightsQueue",
         "startAiPathRunQueue",
+        "startBaseExportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
         "startKangurSocialPipelineQueue",
         "startKangurSocialSchedulerQueue",
-        "startSystemLogAlertsQueue",
-        "startSystemLogAlertsWorker"
+        "startPlaywrightListingQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -44,20 +52,28 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/integrations.ts",
         "src/server/queues/kangur.ts",
-        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
       "startExports": [
         "startAgentQueue",
         "startAiInsightsQueue",
         "startAiPathRunQueue",
+        "startBaseExportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
         "startKangurSocialPipelineQueue",
         "startKangurSocialSchedulerQueue",
-        "startSystemLogAlertsQueue",
-        "startSystemLogAlertsWorker"
+        "startPlaywrightListingQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -68,20 +84,28 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/integrations.ts",
         "src/server/queues/kangur.ts",
-        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
       "startExports": [
         "startAgentQueue",
         "startAiInsightsQueue",
         "startAiPathRunQueue",
+        "startBaseExportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
         "startKangurSocialPipelineQueue",
         "startKangurSocialSchedulerQueue",
-        "startSystemLogAlertsQueue",
-        "startSystemLogAlertsWorker"
+        "startPlaywrightListingQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -97,11 +121,13 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
         "startProductSyncSchedulerQueue",
         "startTraderaListingQueue",
-        "startTraderaRelistSchedulerQueue"
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -117,11 +143,13 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
         "startProductSyncSchedulerQueue",
         "startTraderaListingQueue",
-        "startTraderaRelistSchedulerQueue"
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -145,20 +173,28 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/integrations.ts",
         "src/server/queues/kangur.ts",
-        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
       "startExports": [
         "startAgentQueue",
         "startAiInsightsQueue",
         "startAiPathRunQueue",
+        "startBaseExportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
         "startKangurSocialPipelineQueue",
         "startKangurSocialSchedulerQueue",
-        "startSystemLogAlertsQueue",
-        "startSystemLogAlertsWorker"
+        "startPlaywrightListingQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -175,6 +211,34 @@
       ]
     },
     {
+      "queueName": "filemaker-email-campaign",
+      "file": "src/features/filemaker/workers/filemakerEmailCampaignQueue.ts",
+      "gated": false,
+      "repeatManaged": true,
+      "explicitlyStarted": true,
+      "ownerModules": [
+        "src/server/queues/filemaker.ts"
+      ],
+      "startExports": [
+        "startFilemakerEmailCampaignQueue",
+        "startFilemakerEmailCampaignSchedulerQueue"
+      ]
+    },
+    {
+      "queueName": "filemaker-email-campaign-scheduler",
+      "file": "src/features/filemaker/workers/filemakerEmailCampaignSchedulerQueue.ts",
+      "gated": false,
+      "repeatManaged": true,
+      "explicitlyStarted": true,
+      "ownerModules": [
+        "src/server/queues/filemaker.ts"
+      ],
+      "startExports": [
+        "startFilemakerEmailCampaignQueue",
+        "startFilemakerEmailCampaignSchedulerQueue"
+      ]
+    },
+    {
       "queueName": "image-studio-run",
       "file": "src/features/ai/image-studio/workers/imageStudioRunQueue.ts",
       "gated": true,
@@ -182,20 +246,28 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/integrations.ts",
         "src/server/queues/kangur.ts",
-        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
       "startExports": [
         "startAgentQueue",
         "startAiInsightsQueue",
         "startAiPathRunQueue",
+        "startBaseExportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
         "startKangurSocialPipelineQueue",
         "startKangurSocialSchedulerQueue",
-        "startSystemLogAlertsQueue",
-        "startSystemLogAlertsWorker"
+        "startPlaywrightListingQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -206,25 +278,33 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/integrations.ts",
         "src/server/queues/kangur.ts",
-        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
       "startExports": [
         "startAgentQueue",
         "startAiInsightsQueue",
         "startAiPathRunQueue",
+        "startBaseExportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
         "startKangurSocialPipelineQueue",
         "startKangurSocialSchedulerQueue",
-        "startSystemLogAlertsQueue",
-        "startSystemLogAlertsWorker"
+        "startPlaywrightListingQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
       "queueName": "kangur-social-pipeline",
-      "file": "src/features/kangur/workers/kangurSocialPipelineQueue.ts",
+      "file": "src/features/kangur/social/workers/kangurSocialPipelineQueue.ts",
       "gated": false,
       "repeatManaged": true,
       "explicitlyStarted": true,
@@ -238,7 +318,7 @@
     },
     {
       "queueName": "kangur-social-scheduler",
-      "file": "src/features/kangur/workers/kangurSocialSchedulerQueue.ts",
+      "file": "src/features/kangur/social/workers/kangurSocialSchedulerQueue.ts",
       "gated": false,
       "repeatManaged": true,
       "explicitlyStarted": true,
@@ -248,6 +328,28 @@
       "startExports": [
         "startKangurSocialPipelineQueue",
         "startKangurSocialSchedulerQueue"
+      ]
+    },
+    {
+      "queueName": "playwright-programmable-listings",
+      "file": "src/features/integrations/workers/playwrightListingQueue.ts",
+      "gated": false,
+      "repeatManaged": true,
+      "explicitlyStarted": true,
+      "ownerModules": [
+        "src/server/queues/integrations.ts",
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
+      ],
+      "startExports": [
+        "startBaseExportQueue",
+        "startPlaywrightListingQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -332,11 +434,13 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
         "startProductSyncSchedulerQueue",
         "startTraderaListingQueue",
-        "startTraderaRelistSchedulerQueue"
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     },
     {
@@ -352,11 +456,35 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
         "startProductSyncSchedulerQueue",
         "startTraderaListingQueue",
-        "startTraderaRelistSchedulerQueue"
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
+      ]
+    },
+    {
+      "queueName": "vinted-listings",
+      "file": "src/features/integrations/workers/vintedListingQueue.ts",
+      "gated": false,
+      "repeatManaged": true,
+      "explicitlyStarted": true,
+      "ownerModules": [
+        "src/server/queues/integrations.ts",
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
+      ],
+      "startExports": [
+        "startBaseExportQueue",
+        "startPlaywrightListingQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue",
+        "startVintedListingQueue"
       ]
     }
   ],

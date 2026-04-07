@@ -217,6 +217,8 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.integrations.all, 'base', 'default-connection'] as const,
       traderaDefaultConnection: () =>
         [...QUERY_KEYS.integrations.all, 'tradera', 'default-connection'] as const,
+      vintedDefaultConnection: () =>
+        [...QUERY_KEYS.integrations.all, 'vinted', 'default-connection'] as const,
       withConnections: () => QUERY_KEYS.integrations.withConnections(),
     },
     marketplace: {

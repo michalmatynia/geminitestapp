@@ -1,4 +1,16 @@
-import type { BaseActiveTemplatePreferencePayload, BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferencePayload, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferencePayload, BaseDefaultInventoryPreferenceResponse, BaseSyncAllImagesResponse, TraderaDefaultConnectionPreferencePayload, TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type {
+  BaseActiveTemplatePreferencePayload,
+  BaseActiveTemplatePreferenceResponse,
+  BaseDefaultConnectionPreferencePayload,
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferencePayload,
+  BaseDefaultInventoryPreferenceResponse,
+  BaseSyncAllImagesResponse,
+  TraderaDefaultConnectionPreferencePayload,
+  TraderaDefaultConnectionPreferenceResponse,
+  VintedDefaultConnectionPreferencePayload,
+  VintedDefaultConnectionPreferenceResponse,
+} from '@/shared/contracts/integrations/preferences';
 import type { IntegrationAllegroApiRequest, IntegrationAllegroApiResponse, IntegrationBaseApiRequest, IntegrationBaseApiResponse, IntegrationDisconnectResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionActionTarget, IntegrationConnectionTestVariables, TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
 import type { Integration } from '@/shared/contracts/integrations/base';
@@ -338,5 +350,28 @@ export function useUpdateDefaultTraderaConnection() {
       description: 'Updates integrations exports Tradera default connection.',
     },
     invalidateKeys: [QUERY_KEYS.integrations.selection.traderaDefaultConnection()],
+  });
+}
+
+export function useUpdateDefaultVintedConnection() {
+  return createUpdateMutationV2<
+    VintedDefaultConnectionPreferenceResponse,
+    VintedDefaultConnectionPreferencePayload
+  >({
+    mutationFn: (variables) =>
+      api.post<VintedDefaultConnectionPreferenceResponse>(
+        '/api/v2/integrations/exports/vinted/default-connection',
+        variables
+      ),
+    mutationKey: QUERY_KEYS.integrations.selection.vintedDefaultConnection(),
+    meta: {
+      source: 'integrations.hooks.useUpdateDefaultVintedConnection',
+      operation: 'update',
+      resource: 'integrations.exports.vinted.default-connection',
+      domain: 'integrations',
+      tags: ['integrations', 'exports', 'vinted', 'default-connection'],
+      description: 'Updates integrations exports Vinted default connection.',
+    },
+    invalidateKeys: [QUERY_KEYS.integrations.selection.vintedDefaultConnection()],
   });
 }

@@ -13,6 +13,7 @@ import {
 
 const {
   toastMock,
+  apiPostMock,
   mutateAsyncMock,
   preflightVintedQuickListSessionMock,
   ensureVintedBrowserSessionMock,
@@ -22,6 +23,7 @@ const {
   logClientCatchMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
+  apiPostMock: vi.fn(),
   mutateAsyncMock: vi.fn(),
   preflightVintedQuickListSessionMock: vi.fn(),
   ensureVintedBrowserSessionMock: vi.fn(),
@@ -40,6 +42,16 @@ vi.mock('@/shared/ui/button', () => ({
 vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
+
+vi.mock('@/shared/lib/api-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/api-client')>();
+  return {
+    ...actual,
+    api: {
+      post: (...args: unknown[]) => apiPostMock(...args) as Promise<unknown>,
+    },
+  };
+});
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateProductListingsAndBadges: (...args: unknown[]) =>
@@ -160,6 +172,7 @@ describe('VintedQuickListButton', () => {
         jobId: 'job-vinted-1',
       },
     });
+    apiPostMock.mockResolvedValue({ connectionId: 'conn-vinted-1' });
     invalidateProductListingsAndBadgesMock.mockResolvedValue(undefined);
     invalidateProductsMock.mockResolvedValue(undefined);
   });
@@ -198,6 +211,10 @@ describe('VintedQuickListButton', () => {
     expect(prefetchListings).toHaveBeenCalledTimes(1);
     expect(invalidateProductListingsAndBadgesMock).toHaveBeenCalled();
     expect(invalidateProductsMock).toHaveBeenCalled();
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/exports/vinted/default-connection',
+      { connectionId: 'conn-vinted-1' }
+    );
     expect(window.sessionStorage.getItem('vinted-quick-list-feedback')).toContain(
       '"requestId":"job-vinted-1"'
     );
@@ -307,5 +324,33 @@ describe('VintedQuickListButton', () => {
       variant: 'error',
     });
     expect(logClientCatchMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the listing queued when persisting the preferred Vinted connection fails', async () => {
+    apiPostMock.mockRejectedValue(new Error('Failed to save default connection'));
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Vinted.pl' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalled();
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'One-click export to Vinted.pl' }).className
+    ).toContain('border-amber-400/70');
+    expect(toastMock).toHaveBeenCalledWith('Vinted listing queued (job job-vinted-1).', {
+      variant: 'success',
+    });
+    expect(logClientCatchMock).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        source: 'VintedQuickListButton',
+        action: 'persistPreferredConnection',
+        connectionId: 'conn-vinted-1',
+        level: 'warn',
+      })
+    );
   });
 });

@@ -8,16 +8,16 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-03-30T15:09:29.565Z
+Generated at: 2026-04-07T12:45:58.061Z
 
 ## Summary
 
 - Status: PASSED
-- Routes scanned: 307
-- Method exports scanned: 454
+- Routes scanned: 314
+- Method exports scanned: 463
 - Errors: 0
 - Warnings: 0
-- CSRF exemptions: 49
+- CSRF exemptions: 54
 
 ## Rule Breakdown
 
@@ -62,6 +62,8 @@ No route policy issues detected.
 | v2/integrations/connections/[id] | PUT | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/connections/[id] | DELETE | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/exports/base/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/exports/tradera/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/exports/vinted/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/images/sync-base/all | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/imports/base/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/imports/base/parameters | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
@@ -70,6 +72,7 @@ No route policy issues detected.
 | v2/integrations/imports/base/runs/[runId]/resume | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/imports/base/runs | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/imports/base/sample-product | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/playwright/test | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/product-listings | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/base/link-existing | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/base/sku-check | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
@@ -79,8 +82,10 @@ No route policy issues detected.
 | v2/integrations/products/[id]/listings/[listingId]/relist | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings/[listingId] | DELETE | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings/[listingId] | PATCH | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings/[listingId]/sync | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings/[listingId]/sync-base-images | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/tradera/link-existing | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 
 ## Notes
 

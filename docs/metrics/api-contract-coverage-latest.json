@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-30T15:09:34.339Z",
+  "generatedAt": "2026-04-07T12:46:04.745Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,10 +7,10 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeFileCount": 298,
-    "methodCount": 215,
-    "methodsWithTests": 206,
-    "mutationValidationCount": 37,
+    "routeFileCount": 305,
+    "methodCount": 221,
+    "methodsWithTests": 212,
+    "mutationValidationCount": 38,
     "queryValidationCount": 10
   },
   "routes": [
@@ -374,6 +374,7 @@
         "src/app/api/analytics/events/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/analytics/events/route.test.ts",
         "src/app/api/analytics/events/handler.test.ts"
       ]
     },
@@ -389,6 +390,7 @@
         "src/app/api/analytics/events/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/analytics/events/route.test.ts",
         "src/app/api/analytics/events/handler.test.ts"
       ]
     },
@@ -831,7 +833,9 @@
         "src/app/api/case-resolver/assets/extract-pdf/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/case-resolver/assets/extract-pdf/route.test.ts"
+        "src/app/api/case-resolver/assets/extract-pdf/route.test.ts",
+        "src/app/api/case-resolver/assets/extract-pdf/handler.helpers.test.ts",
+        "src/app/api/case-resolver/assets/extract-pdf/handler.test.ts"
       ]
     },
     {
@@ -1007,6 +1011,102 @@
       ],
       "testFiles": [
         "src/app/api/chatbot/[[...path]]/route.test.ts"
+      ]
+    },
+    {
+      "route": "chatbot/jobs/[jobId]",
+      "method": "DELETE",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/chatbot/jobs/[jobId]/route.ts",
+        "src/app/api/chatbot/jobs/[jobId]/route-handler.ts",
+        "src/app/api/chatbot/jobs/[jobId]/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/chatbot/jobs/[jobId]/handler.test.ts"
+      ]
+    },
+    {
+      "route": "chatbot/jobs/[jobId]",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/chatbot/jobs/[jobId]/route.ts",
+        "src/app/api/chatbot/jobs/[jobId]/route-handler.ts",
+        "src/app/api/chatbot/jobs/[jobId]/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/chatbot/jobs/[jobId]/handler.test.ts"
+      ]
+    },
+    {
+      "route": "chatbot/jobs/[jobId]",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/chatbot/jobs/[jobId]/route.ts",
+        "src/app/api/chatbot/jobs/[jobId]/route-handler.ts",
+        "src/app/api/chatbot/jobs/[jobId]/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/chatbot/jobs/[jobId]/handler.test.ts"
+      ]
+    },
+    {
+      "route": "chatbot/jobs",
+      "method": "DELETE",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/chatbot/jobs/route.ts",
+        "src/app/api/chatbot/jobs/route-handler.ts",
+        "src/app/api/chatbot/jobs/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/chatbot/jobs/handler.test.ts"
+      ]
+    },
+    {
+      "route": "chatbot/jobs",
+      "method": "GET",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/chatbot/jobs/route.ts",
+        "src/app/api/chatbot/jobs/route-handler.ts",
+        "src/app/api/chatbot/jobs/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/chatbot/jobs/handler.test.ts"
+      ]
+    },
+    {
+      "route": "chatbot/jobs",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/chatbot/jobs/route.ts",
+        "src/app/api/chatbot/jobs/route-handler.ts",
+        "src/app/api/chatbot/jobs/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/chatbot/jobs/handler.test.ts"
       ]
     },
     {
@@ -1857,7 +1957,9 @@
         "src/app/api/marketplace/categories/fetch/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/categories/fetch/route.test.ts"
+        "src/app/api/marketplace/categories/fetch/route.test.ts",
+        "src/app/api/marketplace/categories/fetch/handler.helpers.test.ts",
+        "src/app/api/marketplace/categories/fetch/handler.test.ts"
       ]
     },
     {
@@ -1872,6 +1974,7 @@
         "src/app/api/marketplace/mappings/[id]/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/marketplace/mappings/[id]/handler.helpers.test.ts",
         "src/app/api/marketplace/mappings/[id]/handler.test.ts"
       ]
     },
@@ -1887,6 +1990,7 @@
         "src/app/api/marketplace/mappings/[id]/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/marketplace/mappings/[id]/handler.helpers.test.ts",
         "src/app/api/marketplace/mappings/[id]/handler.test.ts"
       ]
     },
@@ -1902,6 +2006,7 @@
         "src/app/api/marketplace/mappings/[id]/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/marketplace/mappings/[id]/handler.helpers.test.ts",
         "src/app/api/marketplace/mappings/[id]/handler.test.ts"
       ]
     },
@@ -1932,7 +2037,9 @@
         "src/app/api/marketplace/mappings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/mappings/route.test.ts"
+        "src/app/api/marketplace/mappings/route.test.ts",
+        "src/app/api/marketplace/mappings/handler.helpers.test.ts",
+        "src/app/api/marketplace/mappings/handler.test.ts"
       ]
     },
     {
@@ -1947,7 +2054,9 @@
         "src/app/api/marketplace/mappings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/mappings/route.test.ts"
+        "src/app/api/marketplace/mappings/route.test.ts",
+        "src/app/api/marketplace/mappings/handler.helpers.test.ts",
+        "src/app/api/marketplace/mappings/handler.test.ts"
       ]
     },
     {
@@ -1977,7 +2086,9 @@
         "src/app/api/marketplace/producer-mappings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/producer-mappings/route.test.ts"
+        "src/app/api/marketplace/producer-mappings/route.test.ts",
+        "src/app/api/marketplace/producer-mappings/handler.helpers.test.ts",
+        "src/app/api/marketplace/producer-mappings/handler.test.ts"
       ]
     },
     {
@@ -1992,7 +2103,9 @@
         "src/app/api/marketplace/producer-mappings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/producer-mappings/route.test.ts"
+        "src/app/api/marketplace/producer-mappings/route.test.ts",
+        "src/app/api/marketplace/producer-mappings/handler.helpers.test.ts",
+        "src/app/api/marketplace/producer-mappings/handler.test.ts"
       ]
     },
     {
@@ -2007,7 +2120,9 @@
         "src/app/api/marketplace/producers/fetch/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/producers/fetch/route.test.ts"
+        "src/app/api/marketplace/producers/fetch/route.test.ts",
+        "src/app/api/marketplace/producers/fetch/handler.helpers.test.ts",
+        "src/app/api/marketplace/producers/fetch/handler.test.ts"
       ]
     },
     {
@@ -2037,7 +2152,9 @@
         "src/app/api/marketplace/tag-mappings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/tag-mappings/route.test.ts"
+        "src/app/api/marketplace/tag-mappings/route.test.ts",
+        "src/app/api/marketplace/tag-mappings/handler.helpers.test.ts",
+        "src/app/api/marketplace/tag-mappings/handler.test.ts"
       ]
     },
     {
@@ -2052,7 +2169,9 @@
         "src/app/api/marketplace/tag-mappings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/tag-mappings/route.test.ts"
+        "src/app/api/marketplace/tag-mappings/route.test.ts",
+        "src/app/api/marketplace/tag-mappings/handler.helpers.test.ts",
+        "src/app/api/marketplace/tag-mappings/handler.test.ts"
       ]
     },
     {
@@ -2067,7 +2186,9 @@
         "src/app/api/marketplace/tags/fetch/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/tags/fetch/route.test.ts"
+        "src/app/api/marketplace/tags/fetch/route.test.ts",
+        "src/app/api/marketplace/tags/fetch/handler.helpers.test.ts",
+        "src/app/api/marketplace/tags/fetch/handler.test.ts"
       ]
     },
     {
@@ -2644,7 +2765,8 @@
         "src/app/api/settings/migrate/backfill-keys/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/settings/migrate/backfill-keys/route.test.ts"
+        "src/app/api/settings/migrate/backfill-keys/route.test.ts",
+        "src/app/api/settings/migrate/backfill-keys/handler.test.ts"
       ]
     },
     {
@@ -2856,6 +2978,7 @@
         "src/app/api/system/upload-events/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/system/upload-events/handler.helpers.test.ts",
         "src/app/api/system/upload-events/handler.test.ts"
       ]
     },
@@ -3131,6 +3254,7 @@
         "src/app/api/v2/templates/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/v2/templates/handler.helpers.test.ts",
         "src/app/api/v2/templates/handler.test.ts"
       ]
     },
@@ -3146,6 +3270,7 @@
         "src/app/api/v2/templates/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/v2/templates/handler.helpers.test.ts",
         "src/app/api/v2/templates/handler.test.ts"
       ]
     },
@@ -3161,6 +3286,7 @@
         "src/app/api/v2/templates/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/v2/templates/handler.helpers.test.ts",
         "src/app/api/v2/templates/handler.test.ts"
       ]
     },
@@ -3176,11 +3302,12 @@
         "src/app/api/v2/templates/handler.ts"
       ],
       "testFiles": [
+        "src/app/api/v2/templates/handler.helpers.test.ts",
         "src/app/api/v2/templates/handler.test.ts"
       ]
     }
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 193
+  "durationMs": 214
 }

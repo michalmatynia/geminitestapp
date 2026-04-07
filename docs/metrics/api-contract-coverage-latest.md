@@ -8,15 +8,15 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-30T15:09:34.339Z
+Generated at: 2026-04-07T12:46:04.745Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 298
-- Route methods scanned: 215
-- Methods with adjacent tests: 206
-- Mutations with body validation: 37
+- Route files scanned: 305
+- Route methods scanned: 221
+- Methods with adjacent tests: 212
+- Mutations with body validation: 38
 - Query routes with validation: 10
 - Errors: 0
 - Warnings: 0
@@ -103,6 +103,12 @@ No API contract coverage gaps detected.
 | chatbot/[[...path]] | PUT | protected | yes | - | - |
 | chatbot/[[...path]] | PATCH | protected | yes | - | - |
 | chatbot/[[...path]] | DELETE | protected | yes | - | - |
+| chatbot/jobs/[jobId] | DELETE | protected | yes | - | - |
+| chatbot/jobs/[jobId] | GET | protected | yes | - | - |
+| chatbot/jobs/[jobId] | POST | protected | yes | - | - |
+| chatbot/jobs | DELETE | protected | yes | - | - |
+| chatbot/jobs | GET | protected | yes | - | - |
+| chatbot/jobs | POST | protected | yes | yes | - |
 | client-errors | POST | public | yes | yes | - |
 | cms/css-ai/stream | POST | protected | yes | yes | - |
 | cms/domains/[id] | DELETE | protected | yes | - | - |

@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-30T15:09:33.268Z",
-  "status": "warn",
+  "generatedAt": "2026-04-07T12:46:03.326Z",
+  "status": "passed",
   "summary": {
-    "total": 2,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 2,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "fileCount": 6673
+    "status": "passed",
+    "fileCount": 7090
   },
   "scope": {
     "root": "src",
@@ -20,41 +20,7 @@
       "src/shared/lib/security/csrf-client.ts"
     ]
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "dangerouslysetinnerhtml-review",
-      "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
-      "file": "src/features/kangur/ui/components/KangurAppLoader.tsx",
-      "line": 394,
-      "column": 14,
-      "snippet": "{{ __html: KANGUR_APP_LOADER_PULSE_KEYFRAMES }}",
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "document-cookie-review",
-      "message": "Direct document.cookie access should stay isolated to reviewed helpers/components.",
-      "file": "src/features/kangur/ui/components/KangurPrimaryNavigation.test-support.tsx",
-      "line": 554,
-      "column": 14,
-      "snippet": "document.cookie = 'NEXT_LOCALE=; Max-Age=0; Path=/'",
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "dangerouslysetinnerhtml-review",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "document-cookie-review",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 2911
+  "issues": [],
+  "rules": [],
+  "durationMs": 4201
 }

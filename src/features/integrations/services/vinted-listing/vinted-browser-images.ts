@@ -11,6 +11,8 @@ import {
   collectProductImageUrlCandidates,
 } from './vinted-browser-images.helpers';
 
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+
 export const MIN_VINTED_IMAGE_BYTES = 10_240;
 const VINTED_ORDERED_UPLOAD_DIR_PREFIX = 'vinted-upload-order-';
 
@@ -43,7 +45,7 @@ export const toAbsolutePublicFilePath = (value: string): string | null => {
 
   const publicPath = getPublicPathFromStoredPath(trimmed);
   if (!publicPath?.startsWith('/')) return null;
-  return path.join(process.cwd(), 'public', publicPath.replace(/^\/+/, ''));
+  return getDiskPathFromPublicPath(publicPath);
 };
 
 const validateLocalProductImagePath = async (candidate: string): Promise<string | null> => {

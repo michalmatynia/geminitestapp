@@ -1,39 +1,17 @@
-export type VintedQuickListFeedbackStatus =
-  | 'processing'
-  | 'queued'
-  | 'completed'
-  | 'failed'
-  | 'auth_required';
+import type {
+  QuickExportFeedbackStatus as VintedQuickListFeedbackStatus,
+  PersistedQuickExportFeedback as PersistedVintedQuickListFeedback,
+  QuickExportFeedbackOptions as PersistVintedQuickListFeedbackOptions,
+} from '@/shared/contracts/integrations/listings';
+
+export type {
+  VintedQuickListFeedbackStatus,
+  PersistedVintedQuickListFeedback,
+  PersistVintedQuickListFeedbackOptions,
+};
 
 export const VINTED_QUICK_LIST_FEEDBACK_EVENT_NAME =
   'integrations:vinted-quick-list-feedback-updated';
-
-export type PersistedVintedQuickListFeedback = {
-  productId: string;
-  status: VintedQuickListFeedbackStatus;
-  expiresAt: number;
-  failureReason?: string | null | undefined;
-  runId?: string | null | undefined;
-  requestId?: string | null | undefined;
-  integrationId?: string | null | undefined;
-  connectionId?: string | null | undefined;
-  listingId?: string | null | undefined;
-  listingUrl?: string | null | undefined;
-  externalListingId?: string | null | undefined;
-  completedAt?: number | null | undefined;
-};
-
-export type PersistVintedQuickListFeedbackOptions = {
-  runId?: string | null | undefined;
-  requestId?: string | null | undefined;
-  integrationId?: string | null | undefined;
-  connectionId?: string | null | undefined;
-  failureReason?: string | null | undefined;
-  listingId?: string | null | undefined;
-  listingUrl?: string | null | undefined;
-  externalListingId?: string | null | undefined;
-  completedAt?: number | null | undefined;
-};
 
 export const VINTED_QUICK_LIST_FEEDBACK_STORAGE_KEY = 'vinted-quick-list-feedback';
 

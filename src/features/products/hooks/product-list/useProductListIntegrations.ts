@@ -18,6 +18,7 @@ export function useProductListIntegrations() {
         fetchIntegrationsWithConnections,
         fetchPreferredBaseConnection,
         fetchPreferredTraderaConnection,
+        fetchPreferredVintedConnection,
         integrationSelectionQueryKeys,
       }) => {
         void prefetchQueryV2(queryClient, {
@@ -57,6 +58,19 @@ export function useProductListIntegrations() {
             domain: 'integrations',
             tags: ['integrations', 'tradera', 'default-connection', 'prefetch'],
             description: 'Loads integrations Tradera default connection.',
+          },
+        })();
+        void prefetchQueryV2(queryClient, {
+          queryKey: normalizeQueryKey(integrationSelectionQueryKeys.vintedDefaultConnection),
+          queryFn: fetchPreferredVintedConnection,
+          staleTime: 5 * 60 * 1000,
+          meta: {
+            source: 'products.hooks.useProductListIntegrations.prefetchVintedDefault',
+            operation: 'detail',
+            resource: 'integrations.vinted-default-connection',
+            domain: 'integrations',
+            tags: ['integrations', 'vinted', 'default-connection', 'prefetch'],
+            description: 'Loads integrations Vinted default connection.',
           },
         })();
       }

@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-07T12:32:18.470Z",
-  "status": "passed",
+  "generatedAt": "2026-04-07T12:45:54.889Z",
+  "status": "warn",
   "summary": {
-    "total": 0,
+    "total": 1,
     "errorCount": 0,
-    "warningCount": 0,
+    "warningCount": 1,
     "infoCount": 0,
-    "status": "passed",
-    "fileCount": 7086,
+    "status": "warn",
+    "fileCount": 7090,
     "featureCount": 11,
     "circularDependencyCount": 0
   },
@@ -69,7 +69,25 @@
     ]
   },
   "circularDependencies": [],
-  "issues": [],
-  "rules": [],
-  "durationMs": 431
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "deep-relative-import",
+      "errorCount": 0,
+      "warningCount": 1,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 480
 }

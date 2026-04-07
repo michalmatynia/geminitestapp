@@ -1,36 +1,17 @@
-export type TraderaQuickListFeedbackStatus = 'processing' | 'queued' | 'completed' | 'failed' | 'auth_required';
+import type {
+  QuickExportFeedbackStatus as TraderaQuickListFeedbackStatus,
+  PersistedQuickExportFeedback as PersistedTraderaQuickListFeedback,
+  QuickExportFeedbackOptions as PersistTraderaQuickListFeedbackOptions,
+} from '@/shared/contracts/integrations/listings';
+
+export type {
+  TraderaQuickListFeedbackStatus,
+  PersistedTraderaQuickListFeedback,
+  PersistTraderaQuickListFeedbackOptions,
+};
 
 export const TRADERA_QUICK_LIST_FEEDBACK_EVENT_NAME =
   'integrations:tradera-quick-list-feedback-updated';
-
-export type PersistedTraderaQuickListFeedback = {
-  productId: string;
-  status: TraderaQuickListFeedbackStatus;
-  expiresAt: number;
-  failureReason?: string | null | undefined;
-  runId?: string | null | undefined;
-  requestId?: string | null | undefined;
-  integrationId?: string | null | undefined;
-  connectionId?: string | null | undefined;
-  listingId?: string | null | undefined;
-  listingUrl?: string | null | undefined;
-  externalListingId?: string | null | undefined;
-  completedAt?: number | null | undefined;
-  duplicateLinked?: boolean | null | undefined;
-};
-
-export type PersistTraderaQuickListFeedbackOptions = {
-  runId?: string | null | undefined;
-  requestId?: string | null | undefined;
-  integrationId?: string | null | undefined;
-  connectionId?: string | null | undefined;
-  failureReason?: string | null | undefined;
-  listingId?: string | null | undefined;
-  listingUrl?: string | null | undefined;
-  externalListingId?: string | null | undefined;
-  completedAt?: number | null | undefined;
-  duplicateLinked?: boolean | null | undefined;
-};
 
 export const TRADERA_QUICK_LIST_FEEDBACK_STORAGE_KEY = 'tradera-quick-list-feedback';
 

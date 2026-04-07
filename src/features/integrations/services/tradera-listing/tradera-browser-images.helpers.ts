@@ -1,4 +1,5 @@
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { CanonicalProductImageEntryDto as TraderaCanonicalProductImageEntry } from '@/shared/contracts/integrations/listings';
 
 type ProductImageUrlField = 'publicUrl' | 'url' | 'filepath' | 'thumbnailUrl';
 type ProductLocalImageField = 'filepath' | 'publicUrl' | 'url';
@@ -34,11 +35,6 @@ const collectNormalizedCandidates = (
   const candidates = new Set<string>();
   values.forEach((value) => addNormalizedCandidate(candidates, value));
   return Array.from(candidates);
-};
-
-export type TraderaCanonicalProductImageEntry = {
-  imageUrls: string[];
-  localCandidates: string[];
 };
 
 export const collectCanonicalTraderaProductImageEntries = (

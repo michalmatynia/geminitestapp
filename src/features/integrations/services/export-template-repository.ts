@@ -69,6 +69,7 @@ const ACTIVE_TEMPLATE_KEY = 'base_export_active_template_id';
 const DEFAULT_INVENTORY_KEY = 'base_export_default_inventory_id';
 const DEFAULT_CONNECTION_KEY = 'base_export_default_connection_id';
 const TRADERA_DEFAULT_CONNECTION_KEY = 'tradera_export_default_connection_id';
+const VINTED_DEFAULT_CONNECTION_KEY = 'vinted_export_default_connection_id';
 const STOCK_FALLBACK_KEY = 'base_export_stock_fallback_enabled';
 const IMAGE_RETRY_PRESETS_KEY = 'base_export_image_retry_presets';
 const BASEHOST_MAPPING_KEYS = new Set(['images_basehost_all', 'image_basehost_all']);
@@ -209,6 +210,16 @@ const readTraderaDefaultConnectionValue = async (): Promise<string | null> => {
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
+const readVintedDefaultConnectionValue = async (): Promise<string | null> => {
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(VINTED_DEFAULT_CONNECTION_KEY) }, { key: VINTED_DEFAULT_CONNECTION_KEY }],
+    });
+  return typeof doc?.value === 'string' ? doc.value : null;
+};
+
 const readImageRetryPresetsValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
   const doc = await mongo
@@ -336,6 +347,29 @@ const writeTraderaDefaultConnectionValue = async (value: string): Promise<void> 
         $set: {
           value,
           key: TRADERA_DEFAULT_CONNECTION_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+};
+
+const writeVintedDefaultConnectionValue = async (value: string): Promise<void> => {
+  const mongo = await getMongoDb();
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .updateOne(
+      {
+        $or: [
+          { _id: toMongoId(VINTED_DEFAULT_CONNECTION_KEY) },
+          { key: VINTED_DEFAULT_CONNECTION_KEY },
+        ],
+      },
+      {
+        $set: {
+          value,
+          key: VINTED_DEFAULT_CONNECTION_KEY,
           updatedAt: new Date(),
         },
         $setOnInsert: { createdAt: new Date() },
@@ -578,6 +612,28 @@ export const getTraderaDefaultConnectionId = async (): Promise<string | null> =>
 
 export const setTraderaDefaultConnectionId = async (value: string | null): Promise<void> => {
   await writeTraderaDefaultConnectionValue(value?.trim() ? value.trim() : '');
+};
+
+export const getVintedDefaultConnectionId = async (): Promise<string | null> => {
+  try {
+    const value = await readVintedDefaultConnectionValue();
+    return value ? value : null;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    await logGuardFailure(
+      '[ExportTemplateRepository] Failed to read default Vinted connection, returning null',
+      error,
+      {
+        action: 'getVintedDefaultConnectionId',
+        fallbackValue: null,
+      }
+    );
+    return null;
+  }
+};
+
+export const setVintedDefaultConnectionId = async (value: string | null): Promise<void> => {
+  await writeVintedDefaultConnectionValue(value?.trim() ? value.trim() : '');
 };
 
 export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> => {

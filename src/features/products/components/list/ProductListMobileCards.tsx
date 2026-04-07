@@ -103,6 +103,17 @@ const TraderaStatusButton = dynamic(
   }
 );
 
+const VintedStatusButton = dynamic(
+  () =>
+    import('./columns/buttons/VintedStatusButton').then(
+      (mod: typeof import('./columns/buttons/VintedStatusButton')) => mod.VintedStatusButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const PlaywrightStatusButton = dynamic(
   () =>
     import('./columns/buttons/PlaywrightStatusButton').then(
@@ -470,6 +481,17 @@ const renderProductListMobileCard = ({
             prefetchListings={() => prefetchListings(product.id)}
             onOpenListings={(recoveryContext) =>
               onIntegrationsClick(product, recoveryContext, 'tradera')
+            }
+          />
+        )}
+
+        {showVintedBadge && (
+          <VintedStatusButton
+            productId={product.id}
+            status={vintedStatus}
+            prefetchListings={() => prefetchListings(product.id)}
+            onOpenListings={(recoveryContext) =>
+              onIntegrationsClick(product, recoveryContext, 'vinted')
             }
           />
         )}

@@ -5,6 +5,7 @@ import { Check } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
+  integrationSelectionQueryKeys,
   useCreateListingMutation,
   createVintedRecoveryContext,
   isVintedBrowserAuthRequiredMessage,
@@ -13,11 +14,12 @@ import {
 } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { ApiError } from '@/shared/lib/api-client';
+import { ApiError, api } from '@/shared/lib/api-client';
 import {
   invalidateProductListingsAndBadges,
   invalidateProducts,
 } from '@/shared/lib/query-invalidation';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
 
@@ -163,6 +165,26 @@ export function VintedQuickListButton(props: {
         listingId,
         requestId: queueJobId,
       });
+      try {
+        await api.post(
+          '/api/v2/integrations/exports/vinted/default-connection',
+          { connectionId: resolvedConnection.connection.id }
+        );
+        queryClient.setQueryData(
+          normalizeQueryKey(
+            integrationSelectionQueryKeys.vintedDefaultConnection
+          ),
+          { connectionId: resolvedConnection.connection.id }
+        );
+      } catch (error: unknown) {
+        logClientCatch(error, {
+          source: 'VintedQuickListButton',
+          action: 'persistPreferredConnection',
+          productId: product.id,
+          connectionId: resolvedConnection.connection.id,
+          level: 'warn',
+        });
+      }
 
       toast(
         response.queue?.jobId

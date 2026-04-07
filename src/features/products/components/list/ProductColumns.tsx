@@ -115,6 +115,18 @@ const TraderaStatusButton = dynamic(
     loading: () => null,
   }
 );
+
+const VintedStatusButton = dynamic(
+  () =>
+    import('./columns/buttons/VintedStatusButton').then(
+      (mod: typeof import('./columns/buttons/VintedStatusButton')) => mod.VintedStatusButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const PlaywrightStatusButton = dynamic(
   () =>
     import('./columns/buttons/PlaywrightStatusButton').then(
@@ -389,9 +401,13 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
               |
             </span>
             <Tooltip content={autoShippingTooltipLabel}>
-              <span className='max-w-[12rem] truncate' title={autoShippingTooltipLabel}>
+              <button
+                type='button'
+                className='max-w-[12rem] truncate text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1'
+                title={autoShippingTooltipLabel}
+              >
                 Auto ship: {autoShippingGroupLabel}
-              </span>
+              </button>
             </Tooltip>
           </>
         )}
@@ -401,12 +417,13 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
               |
             </span>
             <Tooltip content={shippingRuleConflictTooltip}>
-              <span
-                className='max-w-[12rem] truncate text-amber-300'
+              <button
+                type='button'
+                className='max-w-[12rem] truncate text-left text-amber-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1'
                 title={shippingRuleConflictTooltip}
               >
                 Ship conflict
-              </span>
+              </button>
             </Tooltip>
           </>
         )}
@@ -416,9 +433,13 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
               |
             </span>
             <Tooltip content={missingManualShippingTooltip}>
-              <span className='max-w-[12rem] truncate text-amber-300' title={missingManualShippingTooltip}>
+              <button
+                type='button'
+                className='max-w-[12rem] truncate text-left text-amber-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1'
+                title={missingManualShippingTooltip}
+              >
                 Ship missing
-              </span>
+              </button>
             </Tooltip>
           </>
         )}
@@ -644,6 +665,16 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
           prefetchListings={prefetchListings}
           onOpenListings={(recoveryContext): void =>
             handleClick(product, recoveryContext, 'tradera')
+          }
+        />
+      )}
+      {showVintedBadge && (
+        <VintedStatusButton
+          productId={product.id}
+          status={vintedStatus}
+          prefetchListings={prefetchListings}
+          onOpenListings={(recoveryContext): void =>
+            handleClick(product, recoveryContext, 'vinted')
           }
         />
       )}

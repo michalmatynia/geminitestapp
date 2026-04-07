@@ -8,16 +8,16 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-04-07T12:32:18.470Z
+Generated at: 2026-04-07T12:45:54.889Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 7086
+- Status: WARN
+- Files scanned: 7090
 - Features tracked: 11
 - Circular dependencies: 0
 - Errors: 0
-- Warnings: 0
+- Warnings: 1
 - Info: 0
 
 ## Feature Dependency Graph
@@ -40,10 +40,13 @@ Generated at: 2026-04-07T12:32:18.470Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| deep-relative-import | 0 | 1 | 0 |
 
 ## Issues
 
-No import boundary issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | deep-relative-import | src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts:2 | Deep relative import (3 levels up). Consider using path aliases. |
 
 ## Notes
 

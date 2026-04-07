@@ -60,8 +60,8 @@ export const runVintedListing = async (
 
     return {
       ok: true,
-      externalListingId: result.externalListingId,
-      listingUrl: result.listingUrl,
+      externalListingId: result.externalListingId ?? null,
+      listingUrl: result.listingUrl ?? null,
       error: null,
       errorCategory: null,
       metadata: result.metadata,

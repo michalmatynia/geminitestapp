@@ -21,7 +21,7 @@ import {
   resolveListingUrlFromListing,
   resolveTraderaRequestId,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ProductListingWithDetails, QuickExportFeedbackOptions as TraderaFeedbackOptions } from '@/shared/contracts/integrations/listings';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -34,18 +34,7 @@ import {
   normalizeMarketplaceStatus,
 } from '@/features/integrations/public';
 
-export type TraderaFeedbackOptions = {
-  completedAt?: number | null | undefined;
-  duplicateLinked?: boolean | null | undefined;
-  failureReason?: string | null | undefined;
-  runId?: string | null | undefined;
-  requestId?: string | null | undefined;
-  integrationId?: string | null | undefined;
-  connectionId?: string | null | undefined;
-  listingId?: string | null | undefined;
-  listingUrl?: string | null | undefined;
-  externalListingId?: string | null | undefined;
-};
+export type { TraderaFeedbackOptions };
 
 export const findTrackedTraderaListing = (
   listings: ProductListingWithDetails[],

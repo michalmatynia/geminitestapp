@@ -8,28 +8,24 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-04-02T21:14:54.167Z
+Generated at: 2026-04-07T12:51:38.709Z
 
 ## Summary
 
-- Status: WARN
-- Route files scanned: 302
-- Handler files scanned: 422
+- Status: PASSED
+- Route files scanned: 305
+- Handler files scanned: 428
 - Errors: 0
-- Warnings: 2
+- Warnings: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| raw-new-response | 0 | 2 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | raw-new-response | src/app/api/filemaker/campaigns/click/handler.ts:27 | Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse. |
-| WARN | raw-new-response | src/app/api/filemaker/campaigns/open/handler.ts:25 | Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse. |
+All API error sources are consistent.
 
 ## Notes
 

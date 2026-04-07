@@ -5,6 +5,7 @@ export {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
   fetchPreferredTraderaConnection,
+  fetchPreferredVintedConnection,
   integrationSelectionQueryKeys,
 } from './components/listings/hooks/useIntegrationSelection';
 export {

@@ -5,12 +5,14 @@ import { useCallback } from 'react';
 
 import {
   fetchIntegrationsWithConnections,
+  fetchPreferredVintedConnection,
   integrationSelectionQueryKeys,
 } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import { isVintedIntegrationSlug } from '@/features/integrations/constants/slugs';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type BasicVintedConnection = IntegrationWithConnections['connections'][number];
 
@@ -75,15 +77,43 @@ const resolveVintedBrowserConnection = (
   };
 };
 
-export function useVintedQuickExportConnection(_productId: string): {
+export function useVintedQuickExportConnection(productId: string): {
   resolveConnection: () => Promise<ResolvedVintedQuickListContext>;
 } {
   const queryClient = useQueryClient();
 
   const resolveConnection =
     useCallback(async (): Promise<ResolvedVintedQuickListContext> => {
-      // For now, we don't have a preferred connection for Vinted yet, but we'll scaffold it.
-      const preferredConnectionId: string | null = null;
+      let preferredConnectionId: string | null = null;
+      try {
+        const preferredConnection = await fetchQueryV2(queryClient, {
+          queryKey: normalizeQueryKey(
+            integrationSelectionQueryKeys.vintedDefaultConnection
+          ),
+          queryFn: fetchPreferredVintedConnection,
+          staleTime: 5 * 60 * 1000,
+          meta: {
+            source:
+              'products.components.VintedQuickListButton.resolvePreferredConnection',
+            operation: 'detail',
+            resource: 'integrations.vinted-default-connection',
+            domain: 'integrations',
+            tags: ['integrations', 'vinted', 'quick-list'],
+            description: 'Loads preferred Vinted connection for quick export.',
+          },
+        })();
+        preferredConnectionId =
+          typeof preferredConnection?.connectionId === 'string'
+            ? preferredConnection.connectionId
+            : null;
+      } catch (error: unknown) {
+        logClientCatch(error, {
+          source: 'VintedQuickListButton',
+          action: 'resolvePreferredConnection',
+          productId,
+          level: 'warn',
+        });
+      }
 
       const integrations = await fetchQueryV2(queryClient, {
         queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
@@ -100,7 +130,7 @@ export function useVintedQuickExportConnection(_productId: string): {
       })();
 
       return resolveVintedBrowserConnection(integrations, preferredConnectionId);
-    }, [queryClient]);
+    }, [productId, queryClient]);
 
   return { resolveConnection };
 }

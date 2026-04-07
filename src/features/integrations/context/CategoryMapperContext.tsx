@@ -28,7 +28,6 @@ import { buildCategoryTree } from '@/features/integrations/components/marketplac
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { createStrictContext } from './createStrictContext';

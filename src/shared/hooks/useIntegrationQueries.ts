@@ -1,5 +1,10 @@
 import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from '@/shared/contracts/integrations/import-export';
-import type { BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse, TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type {
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferenceResponse,
+  TraderaDefaultConnectionPreferenceResponse,
+  VintedDefaultConnectionPreferenceResponse,
+} from '@/shared/contracts/integrations/preferences';
 import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
@@ -119,6 +124,29 @@ export function useDefaultTraderaConnection(): SingleQuery<TraderaDefaultConnect
       queryKey,
       tags: ['integrations', 'tradera', 'connection'],
       description: 'Loads integrations default Tradera connection.',
+    },
+  });
+}
+
+export function useDefaultVintedConnection(): SingleQuery<VintedDefaultConnectionPreferenceResponse> {
+  const queryKey = integrationKeys.selection.vintedDefaultConnection();
+  const queryFn = async (): Promise<VintedDefaultConnectionPreferenceResponse> =>
+    api.get<VintedDefaultConnectionPreferenceResponse>(
+      '/api/v2/integrations/exports/vinted/default-connection'
+    );
+
+  return createSingleQueryV2({
+    id: 'default-vinted-connection',
+    queryKey,
+    queryFn,
+    meta: {
+      source: 'shared.hooks.useDefaultVintedConnection',
+      operation: 'detail',
+      resource: 'integrations.default-vinted-connection',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'vinted', 'connection'],
+      description: 'Loads integrations default Vinted connection.',
     },
   });
 }

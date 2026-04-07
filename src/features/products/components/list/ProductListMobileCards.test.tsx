@@ -7,8 +7,10 @@ const {
   baseQuickExportButtonMock,
   playwrightStatusButtonMock,
   traderaQuickListButtonMock,
+  vintedQuickListButtonMock,
   triggerButtonBarMock,
   traderaStatusButtonMock,
+  vintedStatusButtonMock,
   useProductListRowActionsContextMock,
   useProductListRowRuntimeMock,
   useProductListRowVisualsContextMock,
@@ -17,8 +19,10 @@ const {
   baseQuickExportButtonMock: vi.fn(),
   playwrightStatusButtonMock: vi.fn(),
   traderaQuickListButtonMock: vi.fn(),
+  vintedQuickListButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   traderaStatusButtonMock: vi.fn(),
+  vintedStatusButtonMock: vi.fn(),
   useProductListRowActionsContextMock: vi.fn(),
   useProductListRowRuntimeMock: vi.fn(),
   useProductListRowVisualsContextMock: vi.fn(),
@@ -61,9 +65,17 @@ vi.mock('next/dynamic', () => ({
         traderaQuickListButtonMock(props);
         return <button type='button'>T+</button>;
       }
+      if (loaderSource.includes('VintedQuickListButton')) {
+        vintedQuickListButtonMock(props);
+        return <button type='button'>V+</button>;
+      }
       if (loaderSource.includes('TraderaStatusButton')) {
         traderaStatusButtonMock(props);
         return <button type='button'>TR</button>;
+      }
+      if (loaderSource.includes('VintedStatusButton')) {
+        vintedStatusButtonMock(props);
+        return <button type='button'>VR</button>;
       }
       if (loaderSource.includes('PlaywrightStatusButton')) {
         playwrightStatusButtonMock(props);
@@ -325,6 +337,31 @@ describe('ProductListMobileCards', () => {
     render(<ProductListMobileCards />);
 
     expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'product-1',
+        status: 'auth_required',
+        prefetchListings: expect.any(Function),
+        onOpenListings: expect.any(Function),
+      })
+    );
+  });
+
+  it('passes productId into the mobile Vinted status button when the badge is visible', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: false,
+      traderaStatus: 'not_started',
+      showVintedBadge: true,
+      vintedStatus: 'auth_required',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(vintedStatusButtonMock).toHaveBeenCalledWith(
       expect.objectContaining({
         productId: 'product-1',
         status: 'auth_required',

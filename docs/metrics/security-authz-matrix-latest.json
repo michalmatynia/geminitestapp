@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-30T15:09:33.797Z",
+  "generatedAt": "2026-04-07T12:46:04.029Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,10 +7,10 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeFileCount": 298,
-    "methodCount": 215,
+    "routeFileCount": 305,
+    "methodCount": 221,
     "publicRouteCount": 15,
-    "protectedRouteCount": 199,
+    "protectedRouteCount": 205,
     "signedRouteCount": 0,
     "actorRouteCount": 1
   },
@@ -530,6 +530,48 @@
     {
       "route": "chatbot/[[...path]]",
       "method": "DELETE",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "chatbot/jobs/[jobId]",
+      "method": "DELETE",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "chatbot/jobs/[jobId]",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "chatbot/jobs/[jobId]",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "chatbot/jobs",
+      "method": "DELETE",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "chatbot/jobs",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "chatbot/jobs",
+      "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
@@ -1640,5 +1682,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 172
+  "durationMs": 189
 }

@@ -9,6 +9,8 @@ const {
   playwrightStatusButtonMock,
   traderaQuickListButtonMock,
   traderaStatusButtonMock,
+  vintedQuickListButtonMock,
+  vintedStatusButtonMock,
   triggerButtonBarMock,
   useProductListActionsContextMock,
   useProductListHeaderActionsContextMock,
@@ -20,6 +22,8 @@ const {
   playwrightStatusButtonMock: vi.fn(),
   traderaQuickListButtonMock: vi.fn(),
   traderaStatusButtonMock: vi.fn(),
+  vintedQuickListButtonMock: vi.fn(),
+  vintedStatusButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   useProductListActionsContextMock: vi.fn(),
   useProductListHeaderActionsContextMock: vi.fn(),
@@ -70,6 +74,13 @@ vi.mock('./columns/buttons/TraderaQuickListButton', () => ({
   },
 }));
 
+vi.mock('./columns/buttons/VintedQuickListButton', () => ({
+  VintedQuickListButton: (props: Record<string, unknown>) => {
+    vintedQuickListButtonMock(props);
+    return <button type='button'>V+</button>;
+  },
+}));
+
 vi.mock('./columns/buttons/PlaywrightStatusButton', () => ({
   PlaywrightStatusButton: (props: Record<string, unknown>) => {
     playwrightStatusButtonMock(props);
@@ -81,6 +92,13 @@ vi.mock('./columns/buttons/TraderaStatusButton', () => ({
   TraderaStatusButton: (props: Record<string, unknown>) => {
     traderaStatusButtonMock(props);
     return <button type='button'>TR</button>;
+  },
+}));
+
+vi.mock('./columns/buttons/VintedStatusButton', () => ({
+  VintedStatusButton: (props: Record<string, unknown>) => {
+    vintedStatusButtonMock(props);
+    return <button type='button'>VR</button>;
   },
 }));
 
@@ -253,6 +271,34 @@ describe('ProductColumns queued badge', () => {
 
     await waitFor(() => {
       expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          status: 'auth_required',
+          prefetchListings: expect.any(Function),
+          onOpenListings: expect.any(Function),
+        })
+      );
+    });
+  });
+
+  it('passes productId into the Vinted status button when the badge is visible', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showVintedBadge: true,
+        vintedStatus: 'auth_required',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(vintedStatusButtonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           productId: 'product-1',
           status: 'auth_required',

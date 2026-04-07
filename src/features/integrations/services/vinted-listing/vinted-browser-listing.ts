@@ -22,14 +22,9 @@ import { getProductRepository } from '@/shared/lib/products/services/product-rep
 import { createVintedBrowserTestUtils } from '@/app/api/v2/integrations/[id]/connections/[connectionId]/test/vinted-browser-test-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { resolveVintedProductImageUploadPlan } from './vinted-browser-images';
+import type { BrowserListingResultDto } from '@/shared/contracts/integrations/listings';
 
-export type VintedBrowserListingResult = {
-  externalListingId: string;
-  listingUrl: string;
-  completedAt: string;
-  metadata?: Record<string, unknown>;
-  simulated?: boolean;
-};
+export type VintedBrowserListingResult = BrowserListingResultDto;
 
 export const runVintedBrowserListing = async ({
   listing,

@@ -31,7 +31,6 @@ import {
   formatDateParam,
   parseMinDurationInput,
   parseStatusCodeInput,
-  systemLogFilterFields,
 } from '../utils/log-parsing';
 import {
   readSystemLogUrlState,
@@ -42,6 +41,7 @@ import type {
   SystemLogsActionsContextValue,
   SystemLogsStateContextValue,
 } from '@/shared/contracts/ui/observability-context';
+import { systemLogFilterFields } from '@/shared/contracts/ui/observability-context';
 
 const {
   Context: SystemLogsStateContext,

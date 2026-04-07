@@ -324,7 +324,7 @@ export type AgentToolLog = (
 export type AgentLlmContext = {
   model: string;
   runId: string;
-  log?: AgentToolLog;
+  log: AgentToolLog;
   activeStepId?: string | null;
   stepLabel?: string | null;
 };

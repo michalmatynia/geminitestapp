@@ -126,20 +126,21 @@ export function useTagMappings(connectionId: string): ListQuery<TagMappingWithDe
   });
 }
 
+import { useQuery } from '@tanstack/react-query';
+
 export function useMarketplaceBadgeStatus(
   productId: string,
   marketplace: string,
   enabled: boolean = true
 ): { status: string | null; isFetching: boolean } {
-  const { data, isFetching } = createListQueryV2<ProductListingWithDetails[]>({
+  const { data: listings, isFetching } = useQuery<ProductListingWithDetails[]>({
     queryKey: QUERY_KEYS.integrations.listings(productId),
     queryFn: () => api.get<ProductListingWithDetails[]>(`/api/v2/integrations/products/${productId}/listings`),
     enabled: enabled && !!productId,
     staleTime: 30000,
   });
 
-  const listings = Array.isArray(data) ? data : [];
-  const status = listings.find((l) => l.integration?.slug === marketplace)?.status ?? null;
+  const status = (listings ?? []).find((l) => l.integration?.slug === marketplace)?.status ?? null;
 
   return { status, isFetching };
 }

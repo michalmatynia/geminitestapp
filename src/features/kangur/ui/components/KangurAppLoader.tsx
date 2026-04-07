@@ -391,7 +391,7 @@ export function KangurAppLoader({
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: KANGUR_APP_LOADER_PULSE_KEYFRAMES }} />
+      <style dangerouslySetInnerHTML={{ __html: safeHtml(KANGUR_APP_LOADER_PULSE_KEYFRAMES) }} />
       <div
         aria-busy='true'
         aria-live='polite'

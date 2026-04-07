@@ -1,5 +1,5 @@
 import { normalizeTraderaListingFormUrl, type TraderaSystemSettings } from '@/features/integrations/constants/tradera';
-import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
+import { validatePlaywrightNodeScript } from '@/features/ai/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';

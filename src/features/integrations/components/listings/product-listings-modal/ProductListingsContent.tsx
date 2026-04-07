@@ -29,7 +29,7 @@ import { renderProductListingItem } from './ProductListingItem';
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
-import { SUCCESS_STATUSES, normalizeMarketplaceStatus } from '@/features/products/components/list/columns/product-column-utils';
+import { SUCCESS_STATUSES, normalizeMarketplaceStatus } from '@/features/integrations/public';
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};

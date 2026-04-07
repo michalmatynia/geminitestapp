@@ -92,7 +92,7 @@ export function TreeContextMenu({
           style={{ position: 'fixed', top: position.y, left: position.x }}
           role='menu'
         >
-          {items.map((item: any) => {
+          {items.map((item: TreeContextMenuItem) => {
             if (item.separator) {
               return <div key={item.id} className='-mx-1 my-1 h-px bg-foreground/10' />;
             }

@@ -8,14 +8,8 @@ import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from
 import type { BaseProductLinkExistingPayload, BaseProductLinkExistingResponse, BaseProductSkuCheckPayload, BaseProductSkuCheckResponse } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
-import {
-  fetchIntegrationsWithConnections,
-  fetchPreferredBaseConnection,
-  integrationSelectionQueryKeys,
-} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
-import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
-import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
-import { createBaseRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
+import { fetchIntegrationsWithConnections } from '@/shared/contracts/integrations/client';
+import { useIntegrationSelection, isBaseIntegrationSlug, useGenericExportToBaseMutation, createBaseRecoveryContext } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import {
   subscribeToTrackedAiPathRun,

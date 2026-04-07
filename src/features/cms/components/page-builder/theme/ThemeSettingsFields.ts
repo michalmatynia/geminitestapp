@@ -736,7 +736,7 @@ export const getFieldsForSection = (
           type: 'custom',
           helperText:
             'Default uses the darker public palette. Dark applies the global dark storefront palette.',
-          render: ({ value, onChange, disabled }: { value: any; onChange: any; disabled?: boolean }) =>
+          render: ({ value, onChange, disabled }: { value: boolean; onChange: (val: boolean) => void; disabled?: boolean }) =>
             React.createElement(SelectSimple, {
               value: value === true ? 'dark' : 'default',
               onValueChange: (nextValue: string) => onChange(nextValue === 'dark'),

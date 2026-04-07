@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 
-import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { useStudioProjects } from '@/features/ai/public';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { productStudioAuditResponseSchema, productStudioLinkResponseSchema, productStudioVariantsResponseSchema } from '@/shared/contracts/products/studio';

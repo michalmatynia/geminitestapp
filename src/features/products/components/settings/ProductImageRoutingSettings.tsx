@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { useStudioProjects } from '@/features/ai/public';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';

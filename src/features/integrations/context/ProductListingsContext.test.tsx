@@ -43,7 +43,7 @@ vi.mock('./useProductListingsActionsImpl', () => ({
 }));
 
 vi.mock(
-  '@/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportPolling',
+  '@/features/integrations/hooks/useTraderaQuickExportPolling',
   () => ({
     useTraderaQuickExportPolling: useTraderaQuickExportPollingMock,
   })

@@ -15,7 +15,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { Button } from '@/shared/ui/button';
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+const FileManager = dynamic(() => import('@/features/files/public').then(m => m.default || m.FileManager), {
   ssr: false,
 });
 

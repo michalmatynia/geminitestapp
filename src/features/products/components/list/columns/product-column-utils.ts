@@ -212,26 +212,21 @@ export const resolveEffectiveDefaultPriceGroupId = (
 
 export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>
   typeof product.importSource === 'string' && product.importSource.trim().length > 0;
+import {
+  SUCCESS_STATUSES,
+  PENDING_STATUSES,
+  PROCESSING_STATUSES,
+  FAILURE_STATUSES,
+  normalizeMarketplaceStatus,
+} from '@/features/integrations/public';
 
-export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();
-
-export const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
-export const PENDING_STATUSES = new Set([
-  'warning',
-  'pending',
-  'queued',
-  'queued_relist',
-]);
-export const PROCESSING_STATUSES = new Set([
-  'processing',
-  'in_progress',
-  'running',
-]);
-export const FAILURE_STATUSES = new Set([
-  'failed',
-  'error',
-  'removed',
-  'needs_login',
+export {
+  SUCCESS_STATUSES,
+  PENDING_STATUSES,
+  PROCESSING_STATUSES,
+  FAILURE_STATUSES,
+  normalizeMarketplaceStatus,
+};
   'auth_required',
 ]);
 

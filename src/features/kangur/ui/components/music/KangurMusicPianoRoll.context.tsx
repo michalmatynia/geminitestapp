@@ -161,7 +161,7 @@ export function KangurMusicPianoRollProvider<NoteId extends string>({
 }) {
   return (
     <KangurMusicPianoRollContext.Provider
-      value={value as unknown as KangurMusicPianoRollContextValue<string>}
+      value={value}
     >
       {children}
     </KangurMusicPianoRollContext.Provider>
@@ -173,5 +173,5 @@ export function useKangurMusicPianoRollContext<NoteId extends string = string>()
   if (!context) {
     throw new Error('useKangurMusicPianoRollContext must be used within a KangurMusicPianoRollProvider');
   }
-  return context as unknown as KangurMusicPianoRollContextValue<NoteId>;
+  return context as KangurMusicPianoRollContextValue<NoteId>;
 }

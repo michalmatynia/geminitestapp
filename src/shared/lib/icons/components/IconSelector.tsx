@@ -48,7 +48,7 @@ export function IconSelector(props: IconSelectorProps): React.JSX.Element {
 
   const gridItems = useMemo<IconGridItem[]>(
     () =>
-      items.map((item: any) => ({
+      items.map((item: IconLibraryItem) => ({
         id: item.id,
         label: item.label,
         item,
@@ -61,7 +61,7 @@ export function IconSelector(props: IconSelectorProps): React.JSX.Element {
       <GenericGridPicker<IconGridItem>
         items={gridItems}
         selectedId={value ?? undefined}
-        onSelect={(item: any) => {
+        onSelect={(item: IconGridItem) => {
           if (value === item.id && allowClear) {
             onChange(null);
           } else {

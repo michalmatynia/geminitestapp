@@ -2,8 +2,7 @@
 
 import React from 'react';
 
-import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
-import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { createTraderaRecoveryContext, readPersistedTraderaQuickListFeedback } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import { Button } from '@/shared/ui/button';
 

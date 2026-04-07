@@ -82,7 +82,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
         key: 'easing',
         label: 'Easing',
         type: 'custom',
-        render: ({ value, onChange: fieldChange }: { value: any; onChange: any }) => (
+        render: ({ value, onChange: fieldChange }: { value: string; onChange: (val: string) => void }) => (
           <div className='space-y-2'>
             <SettingsFieldsRenderer
               fields={[

@@ -6,6 +6,7 @@ import { loadSiteMessages } from '@/i18n/messages';
 import { cn } from '@/shared/utils/ui-utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
+import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 
 import type { Metadata, Viewport } from 'next';
 
@@ -61,9 +62,7 @@ export default async function RootLayout({
           />
         ) : null}
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <a href='#kangur-main-content' className='app-skip-link'>
-            {commonTranslations('skipToMainContent')}
-          </a>
+          <SkipToContentLink>{commonTranslations('skipToMainContent')}</SkipToContentLink>
           <RootClientShell>{children}</RootClientShell>
         </NextIntlClientProvider>
       </body>

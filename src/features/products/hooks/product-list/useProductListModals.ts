@@ -2,13 +2,13 @@
 
 import { useCallback, useState } from 'react';
 
-import { useIntegrationModalOperations } from '@/features/integrations/hooks/useIntegrationOperations';
 import {
+  useIntegrationModalOperations,
   isTraderaQuickExportRecoveryContext,
   resolveProductListingsIntegrationScope,
-} from '@/features/integrations/utils/product-listings-recovery';
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
-import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+  isTraderaIntegrationSlug,
+  readPersistedTraderaQuickListFeedback,
+} from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';

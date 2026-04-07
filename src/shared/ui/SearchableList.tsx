@@ -86,7 +86,7 @@ export function SearchableList<T>(props: SearchableListProps<T>): React.JSX.Elem
           {filteredItems.length === 0 ? (
             <div className='py-8 text-center text-xs text-gray-600 italic'>{emptyMessage}</div>
           ) : (
-            filteredItems.map((item: any) => {
+            filteredItems.map((item: T) => {
               const id = getId(item);
               const checked = selectedIds.includes(id);
               return (

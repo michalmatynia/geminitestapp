@@ -11,7 +11,7 @@ import {
   mergeProductListingsRecoveryContext,
   resolveProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
-import { useTraderaQuickExportPolling } from '@/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportPolling';
+import { useTraderaQuickExportPolling } from '@/features/integrations/hooks/useTraderaQuickExportPolling';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { PlaywrightRelistBrowserMode, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';

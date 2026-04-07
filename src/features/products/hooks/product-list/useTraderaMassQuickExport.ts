@@ -7,10 +7,10 @@ import {
   fetchIntegrationsWithConnections,
   fetchPreferredTraderaConnection,
   integrationSelectionQueryKeys,
-} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
-import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
-import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
-import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+  isTraderaBrowserIntegrationSlug,
+  DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+  persistTraderaQuickListFeedback,
+} from '@/features/integrations/public';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';

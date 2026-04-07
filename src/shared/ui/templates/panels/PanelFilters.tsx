@@ -4,6 +4,7 @@ import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 import { FilterField } from '@/shared/contracts/ui/panels';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Label } from '@/shared/ui/primitives.public';
 import { SelectSimple, SearchInput } from '@/shared/ui/forms-and-actions.public';
 import { Checkbox } from '@/shared/ui/checkbox';
@@ -295,7 +296,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
   switch (field.type) {
     case 'multi-select':
     case 'select': {
-      const options = (field.options ?? []).map((option: any) => ({
+      const options = (field.options ?? []).map((option: LabeledOptionDto<string | number>) => ({
         value: String(option.value),
         label: option.label,
       }));

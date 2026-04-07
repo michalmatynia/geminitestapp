@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { isMissingProductListingsError } from '@/features/integrations/hooks/useListingQueries';
+import { isMissingProductListingsError } from '@/features/integrations/public';
 import { loadProductIntegrationsAdapter } from '@/features/products/lib/product-integrations-adapter-loader';
 import { prefetchQueryV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-03T08:51:14.364Z",
+  "generatedAt": "2026-04-07T10:12:54.097Z",
   "status": "passed",
   "summary": {
     "total": 2,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 2,
     "status": "passed",
-    "fileCount": 6675
+    "fileCount": 7024
   },
   "scope": {
     "root": "src",
@@ -61,5 +61,5 @@
       "infoCount": 1
     }
   ],
-  "durationMs": 2264
+  "durationMs": 1371
 }

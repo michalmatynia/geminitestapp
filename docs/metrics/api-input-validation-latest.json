@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-30T15:09:27.321Z",
+  "generatedAt": "2026-04-07T10:12:55.121Z",
   "status": "warn",
   "summary": {
-    "total": 8,
+    "total": 9,
     "errorCount": 0,
-    "warningCount": 8,
+    "warningCount": 9,
     "infoCount": 0,
     "status": "warn",
-    "fileCount": 1000,
-    "totalHandlers": 949,
-    "validatedHandlers": 949,
+    "fileCount": 1093,
+    "totalHandlers": 972,
+    "validatedHandlers": 972,
     "coveragePercent": 100
   },
   "scope": {
@@ -32,6 +32,16 @@
       "message": "searchParams.get() used without Zod schema validation.",
       "file": "src/app/api/filemaker/campaigns/open/handler.ts",
       "line": 36,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "url-param-unvalidated",
+      "message": "Dynamic route param \"runId\" is used without Zod validation.",
+      "file": "src/app/api/filemaker/campaigns/runs/[runId]/cancel/handler.ts",
+      "line": null,
       "column": null,
       "snippet": null,
       "context": null
@@ -103,7 +113,13 @@
       "errorCount": 0,
       "warningCount": 8,
       "infoCount": 0
+    },
+    {
+      "ruleId": "url-param-unvalidated",
+      "errorCount": 0,
+      "warningCount": 1,
+      "infoCount": 0
     }
   ],
-  "durationMs": 75
+  "durationMs": 79
 }

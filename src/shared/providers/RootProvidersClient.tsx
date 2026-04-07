@@ -13,7 +13,6 @@ import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider'
 import { ThemeProvider } from '@/shared/providers/theme-provider';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { RouteAccessibilityAnnouncer } from '@/shared/ui/RouteAccessibilityAnnouncer';
-import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { ToastProvider } from '@/shared/ui/toast';
 
 const LazyCsrfProvider = lazy(() => import('@/shared/providers/CsrfProvider'));
@@ -35,7 +34,6 @@ export function RootProvidersClient({
 
   return (
     <>
-      <SkipToContentLink />
       <RouteAccessibilityAnnouncer />
       <ToastProvider>
         <QueryProvider>

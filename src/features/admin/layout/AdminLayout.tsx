@@ -346,9 +346,6 @@ function AdminLayoutContent({
           tabIndex={-1}
           className={`${mainClassName} focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
         >
-          <span tabIndex={0} className='sr-only focus:not-sr-only'>
-            Admin content start
-          </span>
           <QueryErrorBoundary>
             <div className='min-w-0 max-w-full'>
               {shouldMountNoteSettingsProvider ? (

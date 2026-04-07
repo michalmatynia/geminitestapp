@@ -21,6 +21,7 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { parseUserScript, safeStringify } from './playwright-node-runner.parser';
+export { validatePlaywrightNodeScript } from './playwright-node-runner.parser';
 export * from './playwright-node-runner.types';
 import type {
   PlaywrightNodeRunArtifact,

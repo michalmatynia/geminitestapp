@@ -13,6 +13,17 @@ import type { LocalExecutionArgs } from '../types';
 
 const evaluateGraphClientMock = vi.hoisted(() => vi.fn());
 
+vi.mock('@/shared/lib/ai-paths/core/runtime', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/shared/lib/ai-paths/core/runtime')>(
+      '@/shared/lib/ai-paths/core/runtime'
+    );
+  return {
+    ...actual,
+    evaluateGraphClient: evaluateGraphClientMock,
+  };
+});
+
 vi.mock('@/shared/lib/ai-paths', async () => {
   const actual =
     await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');

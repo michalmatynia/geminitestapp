@@ -11,6 +11,7 @@ import {
   normalizeShippingGroupRuleCategoryIds,
   normalizeShippingGroupRuleCurrencyCodes,
   buildShippingGroupRuleConflicts,
+  type ShippingGroupRuleConflict,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import type { useToast } from '@/shared/ui/toast';
@@ -46,7 +47,7 @@ export const useShippingGroupHandlers = ({
 }: {
   formData: ShippingGroupFormData;
   editingShippingGroup: ProductShippingGroup | null;
-  modalShippingGroupRuleConflicts: any[];
+  modalShippingGroupRuleConflicts: ShippingGroupRuleConflict[];
   modalCategoryLabelById: Map<string, string>;
   saveShippingGroupMutation: ShippingGroupSaveMutation;
   deleteShippingGroupMutation: ShippingGroupDeleteMutation;

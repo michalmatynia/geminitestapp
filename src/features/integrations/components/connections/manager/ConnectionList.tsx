@@ -51,7 +51,8 @@ export function ConnectionList(): React.JSX.Element {
         items={connections.map((connection: IntegrationConnection) => ({
           id: connection.id,
           title: connection.name,
-          subtitle: connection.username?.trim() || (isVinted ? 'Session-based browser login' : undefined),
+          subtitle:
+            connection.username?.trim() || (isVinted ? 'Session-based browser login' : undefined),
           description:
             editingConnectionId === connection.id ? (
               <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>

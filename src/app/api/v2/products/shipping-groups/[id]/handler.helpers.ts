@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { ProductShippingGroup, ProductShippingGroupUpdateInput } from '@/shared/contracts/products/shipping-groups';
 import { conflictError, validationError } from '@/shared/errors/app-error';
 import type { CatalogNameLookupDto } from '@/shared/contracts/base';

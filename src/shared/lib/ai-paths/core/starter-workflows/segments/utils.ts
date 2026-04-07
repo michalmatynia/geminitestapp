@@ -156,9 +156,7 @@ export const materializeSemanticAsset = (
     updatedAt?: string;
   } = {}
 ): PathConfig => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const config = deserializeSemanticCanvasToPathConfig(asset);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const repaired = {
     ...config,
     id: args.pathId ?? config.id,
@@ -170,7 +168,6 @@ export const materializeSemanticAsset = (
   };
   return {
     ...repaired,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     edges: sanitizeEdges(repaired.nodes ?? [], repaired.edges ?? []),
   };
 };
@@ -184,7 +181,7 @@ export const hasNodeOfType = (
 export const hasAliasMatch = (value: string, aliases: string[]): boolean => {
   const normalizedValue = normalizeTextLower(value);
   if (!normalizedValue) return false;
-  return aliases.some((alias) => normalizeTextLower(alias) === normalizedValue);
+  return aliases.some((alias) => normalizedValue === normalizeTextLower(alias));
 };
 
 export const hasAliasOrTriggerMatch = (

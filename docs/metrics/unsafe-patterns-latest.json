@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-07T13:08:03.508Z",
+  "generatedAt": "2026-04-07T13:41:47.959Z",
   "status": "passed",
   "summary": {
-    "total": 20,
+    "total": 10,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 20,
+    "infoCount": 10,
     "status": "passed",
     "fileCount": 7093
   },
@@ -17,18 +17,18 @@
   "trendCounters": {
     "doubleAssertionCount": 0,
     "anyCount": 3,
-    "eslintDisableCount": 16,
+    "eslintDisableCount": 6,
     "nonNullAssertionCount": 1,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {
-    "@typescript-eslint/no-unsafe-assignment": 10,
-    "@typescript-eslint/no-unsafe-call": 8,
-    "@typescript-eslint/no-unsafe-member-access": 6,
+    "@typescript-eslint/no-unsafe-assignment": 4,
+    "@typescript-eslint/no-unsafe-call": 2,
     "@typescript-eslint/no-unsafe-return": 2,
-    "@typescript-eslint/no-unsafe-argument": 2,
-    "@typescript-eslint/no-unnecessary-type-assertion": 2
+    "@typescript-eslint/no-unnecessary-type-assertion": 2,
+    "@typescript-eslint/no-unsafe-argument": 1,
+    "@typescript-eslint/no-unsafe-member-access": 1
   },
   "issues": [
     {
@@ -96,17 +96,7 @@
       "ruleId": "eslint-disable",
       "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call",
       "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
-      "line": 392,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access",
-      "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
-      "line": 394,
+      "line": 399,
       "column": null,
       "snippet": null,
       "context": null
@@ -116,97 +106,7 @@
       "ruleId": "explicit-any",
       "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
       "file": "src/features/products/components/settings/shipping-groups/ShippingGroupsContext.handlers.ts",
-      "line": 47,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts",
-      "line": 269,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts",
-      "line": 276,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts",
-      "line": 278,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts",
-      "line": 331,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts",
-      "line": 367,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts",
-      "line": 369,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/utils.ts",
-      "line": 159,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/utils.ts",
-      "line": 161,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/utils.ts",
-      "line": 173,
+      "line": 49,
       "column": null,
       "snippet": null,
       "context": null
@@ -237,7 +137,7 @@
       "ruleId": "eslint-disable",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 16
+      "infoCount": 6
     },
     {
       "ruleId": "explicit-any",
@@ -252,5 +152,5 @@
       "infoCount": 1
     }
   ],
-  "durationMs": 1394
+  "durationMs": 1436
 }

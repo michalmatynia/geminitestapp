@@ -19,7 +19,7 @@ import type { IntegrationConnectionRecord } from '@/shared/contracts/integration
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import { createVintedBrowserTestUtils } from '@/app/api/v2/integrations/[id]/connections/[connectionId]/test/vinted-browser-test-utils';
+import { createVintedBrowserTestUtils } from './vinted-browser-test-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { resolveVintedProductImageUploadPlan } from './vinted-browser-images';
 import type { BrowserListingResultDto } from '@/shared/contracts/integrations/listings';

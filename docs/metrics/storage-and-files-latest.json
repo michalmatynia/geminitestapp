@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T13:08:23.033Z",
+  "generatedAt": "2026-04-07T13:42:05.229Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -6798,12 +6798,6 @@
     },
     {
       "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/route.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/vinted-browser-test-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21198,6 +21192,12 @@
     },
     {
       "file": "src/features/integrations/services/vinted-listing/vinted-browser-listing.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/vinted-listing/vinted-browser-test-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -42445,5 +42445,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2781
+  "durationMs": 2534
 }

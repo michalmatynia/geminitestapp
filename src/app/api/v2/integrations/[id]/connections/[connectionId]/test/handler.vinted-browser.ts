@@ -11,7 +11,7 @@ import {
 import { type TestConnectionResponse, type TestLogEntry } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { createVintedBrowserTestUtils } from './vinted-browser-test-utils';
+import { createVintedBrowserTestUtils } from '@/features/integrations/services/vinted-listing/vinted-browser-test-utils';
 
 type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
 type Fail = (step: string, detail: string, status?: number) => Promise<never>;

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { Producer, ProducerUpdateInput } from '@/shared/contracts/products/producers';
 import { conflictError, validationError } from '@/shared/errors/app-error';
 import type { NameLookupDto } from '@/shared/contracts/base';

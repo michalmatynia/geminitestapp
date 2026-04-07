@@ -8,7 +8,7 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-04-07T13:08:11.886Z
+Generated at: 2026-04-07T13:41:55.489Z
 
 ## Summary
 

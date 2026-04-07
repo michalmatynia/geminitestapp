@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Catalog } from '@/shared/contracts/products/catalogs';

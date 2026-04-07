@@ -148,7 +148,7 @@ export type KangurMusicPianoRollContextValue<NoteId extends string = string> = {
   syncActiveSynthGestures: () => void;
 };
 
-const KangurMusicPianoRollContext = createContext<KangurMusicPianoRollContextValue<string> | null>(
+const KangurMusicPianoRollContext = createContext<KangurMusicPianoRollContextValue<any> | null>(
   null
 );
 
@@ -161,7 +161,7 @@ export function KangurMusicPianoRollProvider<NoteId extends string>({
 }) {
   return (
     <KangurMusicPianoRollContext.Provider
-      value={value as unknown as KangurMusicPianoRollContextValue<string>}
+      value={value}
     >
       {children}
     </KangurMusicPianoRollContext.Provider>
@@ -175,5 +175,5 @@ export function useKangurMusicPianoRollContext<NoteId extends string = string>()
   if (!context) {
     throw internalError('useKangurMusicPianoRollContext must be used within a KangurMusicPianoRollProvider');
   }
-  return context as unknown as KangurMusicPianoRollContextValue<NoteId>;
+  return context;
 }

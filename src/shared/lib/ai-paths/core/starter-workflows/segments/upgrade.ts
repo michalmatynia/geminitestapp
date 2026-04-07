@@ -2,12 +2,12 @@ import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine/portable-engine-resolvers';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import {
-  hasCanonicalGraphHash,
   hasParameterInferencePromptStructure,
   matchesLegacyStarterWorkflowRepairSignature,
 } from './legacy-repair';
 import {
   computeStarterWorkflowGraphHash,
+  hasCanonicalGraphHash,
   isDatabaseOperation,
   normalizeText,
   readStarterProvenance,

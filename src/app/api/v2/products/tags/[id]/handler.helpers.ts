@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { ProductTag, ProductTagUpdateInput } from '@/shared/contracts/products/tags';
 import { conflictError, validationError } from '@/shared/errors/app-error';
 import type { CatalogNameLookupDto } from '@/shared/contracts/base';

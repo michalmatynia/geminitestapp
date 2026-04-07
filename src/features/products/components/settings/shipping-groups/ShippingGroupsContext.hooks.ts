@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 import type { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';

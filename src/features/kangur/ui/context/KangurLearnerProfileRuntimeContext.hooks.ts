@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import type { KangurScoreRecord } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';

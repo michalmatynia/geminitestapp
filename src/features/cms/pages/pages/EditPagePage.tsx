@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, startTransition } from 'react';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import CmsEditorLayout from '@/features/cms/components/CmsEditorLayout';
@@ -34,7 +34,7 @@ export default function EditPagePageLoader(): React.JSX.Element {
         <div className='mx-auto flex w-full max-w-3xl flex-col gap-4 py-10'>
           <Alert variant='error'>Invalid page URL. Missing page id.</Alert>
           <div>
-            <Button variant='secondary' onClick={() => router.push('/admin/cms/pages')}>
+            <Button variant='secondary' onClick={() => startTransition(() => { router.push('/admin/cms/pages'); })}>
               Back to Pages
             </Button>
           </div>
@@ -54,7 +54,7 @@ export default function EditPagePageLoader(): React.JSX.Element {
         <div className='mx-auto flex w-full max-w-3xl flex-col gap-4 py-10'>
           <Alert variant='error'>{message}</Alert>
           <div className='flex gap-2'>
-            <Button variant='secondary' onClick={() => router.push('/admin/cms/pages')}>
+            <Button variant='secondary' onClick={() => startTransition(() => { router.push('/admin/cms/pages'); })}>
               Back to Pages
             </Button>
             <Button
@@ -200,7 +200,7 @@ function EditPageContent({
       id: pageId,
       input: validation.data,
     });
-    router.push('/admin/cms/pages');
+    startTransition(() => { router.push('/admin/cms/pages'); });
   };
 
   return (
@@ -219,7 +219,7 @@ function EditPageContent({
           actions={
             <FormActions
               onCancel={(): void => {
-                router.push('/admin/cms/pages');
+                startTransition(() => { router.push('/admin/cms/pages'); });
               }}
               cancelText='Back'
               onSave={(): void => {

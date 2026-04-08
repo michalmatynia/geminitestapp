@@ -3,7 +3,7 @@
 import { Eye, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, startTransition } from 'react';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
@@ -91,7 +91,7 @@ export default function PagesPage(): React.ReactNode {
   const handleCreatePage = (): void => {
     setIsMenuCollapsed(true);
     setIsProgrammaticallyCollapsed(true);
-    router.push('/admin/cms/pages/create');
+    startTransition(() => { router.push('/admin/cms/pages/create'); });
   };
 
   const handlePreview = (slug: string): void => {
@@ -201,7 +201,7 @@ export default function PagesPage(): React.ReactNode {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  router.push(`/admin/cms/builder?pageId=${row.original.id}`);
+                  startTransition(() => { router.push(`/admin/cms/builder?pageId=${row.original.id}`); });
                 }}
               >
                 Open in Builder
@@ -209,7 +209,7 @@ export default function PagesPage(): React.ReactNode {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  router.push(`/admin/cms/pages/${row.original.id}/edit`);
+                  startTransition(() => { router.push(`/admin/cms/pages/${row.original.id}/edit`); });
                 }}
               >
                 Edit Settings

@@ -23,6 +23,7 @@ import {
   normalizeRemovedTriggerContextModesInPathConfig,
 } from '../utils/legacy-trigger-context-mode';
 import { validateCanonicalPathNodeIdentities } from '../utils/node-identity';
+import { normalizeAiPathFolderPath } from '../utils/path-folders';
 import { stableStringify } from '../utils/runtime';
 
 export const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {
@@ -48,6 +49,7 @@ export const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
       ...meta,
       id,
       name: normalizedName,
+      folderPath: normalizeAiPathFolderPath(meta.folderPath),
       createdAt: normalizedCreatedAt,
       updatedAt: normalizedUpdatedAt,
     };

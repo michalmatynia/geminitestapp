@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -262,5 +262,25 @@ describe('TemplatesTabContent custom fields', () => {
         name: 'Checkbox: Market Exclusion -> Tradera',
       })
     ).not.toBeInTheDocument();
+  });
+
+  it('forces import scope when rendered inside the dedicated import page', () => {
+    mocks.useImportExportStateMock.mockReturnValue(buildState('export') as never);
+
+    render(<TemplatesTabContent scope='import' />);
+
+    expect(mocks.setTemplateScopeMock).toHaveBeenCalledWith('import');
+    expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create Export Copy' })).not.toBeInTheDocument();
+  });
+
+  it('passes the forced export scope into template actions', () => {
+    mocks.useImportExportStateMock.mockReturnValue(buildState('import') as never);
+
+    render(<TemplatesTabContent scope='export' />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'New' }));
+
+    expect(mocks.handleNewTemplateMock).toHaveBeenCalledWith('export');
   });
 });

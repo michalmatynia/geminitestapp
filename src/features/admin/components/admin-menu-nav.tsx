@@ -202,6 +202,7 @@ export const buildAdminNav = (handlers: {
             label: 'Orders Import',
             href: '/admin/products/orders-import',
           },
+          { id: 'commerce/products/import', label: 'Import', href: '/admin/products/import' },
           {
             id: 'commerce/products/preferences',
             label: 'Preferences',
@@ -251,7 +252,7 @@ export const buildAdminNav = (handlers: {
               },
               {
                 id: 'integrations/aggregators/base-com/import-export',
-                label: 'Import / Export',
+                label: 'Export',
                 href: '/admin/integrations/aggregators/base-com/import-export',
               },
             ],

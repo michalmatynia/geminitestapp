@@ -9,7 +9,7 @@ import {
   ExternalLink as ExternalLinkIcon,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, startTransition } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
@@ -256,7 +256,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
 
   const handleOpenInExploder = useCallback(
     (projectId: string): void => {
-      router.push(`/admin/prompt-exploder?projectId=${encodeURIComponent(projectId)}`);
+      startTransition(() => { router.push(`/admin/prompt-exploder?projectId=${encodeURIComponent(projectId)}`); });
     },
     [router]
   );
@@ -356,7 +356,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
             label: 'Back To Studio',
             icon: <ArrowLeft className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/prompt-exploder'),
+            onClick: () => startTransition(() => { router.push('/admin/prompt-exploder'); }),
           },
           {
             key: 'new',

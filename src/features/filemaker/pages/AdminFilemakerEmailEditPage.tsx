@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -168,7 +168,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
         value: JSON.stringify(toPersistedFilemakerDatabase(linkedDatabase)),
       });
       toast('Email updated.', { variant: 'success' });
-      router.push('/admin/filemaker/emails');
+      startTransition(() => { router.push('/admin/filemaker/emails'); });
     } catch (error: unknown) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to update email.', {
@@ -203,7 +203,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
           actions={
             <FormActions
               onCancel={(): void => {
-                router.push('/admin/filemaker/emails');
+                startTransition(() => { router.push('/admin/filemaker/emails'); });
               }}
               cancelText='Back to Emails'
             />
@@ -228,7 +228,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
         actions={
           <FormActions
             onCancel={(): void => {
-              router.push('/admin/filemaker/emails');
+              startTransition(() => { router.push('/admin/filemaker/emails'); });
             }}
             cancelText='Back to Emails'
             onSave={(): void => {

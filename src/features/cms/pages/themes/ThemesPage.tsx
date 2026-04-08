@@ -3,7 +3,7 @@
 import { Palette } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useMemo } from 'react';
+import React, { useMemo, startTransition } from 'react';
 
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/shared/contracts/cms';
@@ -104,7 +104,7 @@ export default function ThemesPage(): React.ReactNode {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  router.push(`/admin/cms/themes/${row.original.id}/edit`);
+                  startTransition(() => { router.push(`/admin/cms/themes/${row.original.id}/edit`); });
                 }}
               >
                 Edit
@@ -134,7 +134,7 @@ export default function ThemesPage(): React.ReactNode {
       description='Manage color palettes, typography and component style presets for your domains.'
       icon={<Palette className='size-4' />}
       headerActions={
-        <Button size='xs' className='h-8' onClick={() => router.push('/admin/cms/themes/create')}>
+        <Button size='xs' className='h-8' onClick={() => startTransition(() => { router.push('/admin/cms/themes/create'); })}>
           <Palette className='size-3.5 mr-2' />
           Create Theme
         </Button>
@@ -163,7 +163,7 @@ export default function ThemesPage(): React.ReactNode {
             description='Themes allow you to maintain a consistent visual language across your storefront.'
             action={
               <Button
-                onClick={() => router.push('/admin/cms/themes/create')}
+                onClick={() => startTransition(() => { router.push('/admin/cms/themes/create'); })}
                 variant='outline'
                 size='sm'
               >

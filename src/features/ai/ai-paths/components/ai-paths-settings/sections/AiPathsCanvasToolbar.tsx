@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
@@ -403,11 +403,11 @@ export function AiPathsCanvasToolbar(): React.JSX.Element | null {
             type='button'
             className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
             onClick={(): void => {
-              router.push(
-                `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
-                  'AI Paths'
-                )}`
-              );
+              startTransition(() => { router.push(
+                                `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
+                                  'AI Paths'
+                                )}`
+                              ); });
             }}
           >
               View logs

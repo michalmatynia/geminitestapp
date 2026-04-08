@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, startTransition } from 'react';
 
 import { useStudioProjects } from '@/features/ai/public';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
@@ -278,7 +278,7 @@ export function ProductStudioProvider({
       );
       const sourceSlotId = response.sourceSlot?.id;
       if (!sourceSlotId) throw internalError('Source slot not found.');
-      router.push(`/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`);
+      startTransition(() => { router.push(`/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`); });
     } catch (error) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to open.', { variant: 'error' });

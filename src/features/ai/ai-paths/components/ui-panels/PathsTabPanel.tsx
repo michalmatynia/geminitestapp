@@ -6,7 +6,7 @@ import React, { useMemo, useState } from 'react';
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { PATH_TEMPLATES } from '@/shared/lib/ai-paths/core/utils/path-templates';
 import { buildPortablePathPackage, resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
-import { createDefaultPathConfig, createPathId } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig, createPathId, normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { AppModal } from '@/shared/ui/feedback.public';
 import { Button, DropdownMenuItem, DropdownMenuSeparator, Textarea } from '@/shared/ui/primitives.public';
@@ -168,6 +168,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
         typeof importedPathConfig.name === 'string' && importedPathConfig.name.trim().length > 0
           ? importedPathConfig.name.trim()
           : `Imported Path ${graphPaths.length + 1}`;
+      const importedFolderPath = (importedPathConfig as { folderPath?: unknown }).folderPath;
       const nextConfig = sanitizePathConfig({
         ...baseConfig,
         ...importedPathConfig,
@@ -178,6 +179,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
       const nextMeta: PathMeta = {
         id: nextPathId,
         name: nextConfig.name,
+        folderPath: normalizeAiPathFolderPath(importedFolderPath),
         createdAt: now,
         updatedAt:
           typeof nextConfig.updatedAt === 'string' && nextConfig.updatedAt.trim().length > 0
@@ -239,6 +241,15 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
               {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
             </button>
           );
+        },
+      },
+      {
+        id: 'group',
+        header: 'Group',
+        cell: ({ row }) => {
+          const path = row.original;
+          const value = normalizeAiPathFolderPath(path.folderPath);
+          return <span className='text-xs text-gray-400'>{value || 'Root'}</span>;
         },
       },
       {

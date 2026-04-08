@@ -2,7 +2,7 @@
 
 import { FilterX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, startTransition } from 'react';
 
 import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
@@ -421,7 +421,7 @@ export function FilemakerMailSidebar({
                 onNewMailbox();
                 return;
               }
-              router.push('/admin/filemaker/mail');
+              startTransition(() => { router.push('/admin/filemaker/mail'); });
               return;
             }
             if (parsed?.kind === 'mail_search') {
@@ -429,13 +429,13 @@ export function FilemakerMailSidebar({
                 onSelectSearch();
                 return;
               }
-              router.push(
-                buildMailSelectionHref({
-                  panel: 'search',
-                  accountId: effectiveSearchAccountId,
-                  searchQuery,
-                })
-              );
+              startTransition(() => { router.push(
+                                buildMailSelectionHref({
+                                  panel: 'search',
+                                  accountId: effectiveSearchAccountId,
+                                  searchQuery,
+                                })
+                              ); });
               return;
             }
             if (parsed?.kind === 'mail_attention') {
@@ -443,7 +443,7 @@ export function FilemakerMailSidebar({
                 onSelectAttention();
                 return;
               }
-              router.push(buildMailSelectionHref({ panel: 'attention' }));
+              startTransition(() => { router.push(buildMailSelectionHref({ panel: 'attention' })); });
               return;
             }
             if (parsed?.kind === 'mail_attention_account') {
@@ -451,15 +451,15 @@ export function FilemakerMailSidebar({
                 onSelectAccountSettings(parsed.accountId);
                 return;
               }
-              router.push(
-                buildMailSelectionHref({
-                  accountId: parsed.accountId,
-                  panel: 'settings',
-                  recentMailboxFilter,
-                  recentUnreadOnly,
-                  recentQuery,
-                })
-              );
+              startTransition(() => { router.push(
+                                buildMailSelectionHref({
+                                  accountId: parsed.accountId,
+                                  panel: 'settings',
+                                  recentMailboxFilter,
+                                  recentUnreadOnly,
+                                  recentQuery,
+                                })
+                              ); });
               return;
             }
             if (parsed?.kind === 'mail_folder') {
@@ -470,29 +470,29 @@ export function FilemakerMailSidebar({
                 });
                 return;
               }
-              router.push(
-                buildMailSelectionHref({
-                  accountId: parsed.accountId,
-                  mailboxPath: parsed.mailboxPath,
-                  recentMailboxFilter,
-                  recentUnreadOnly,
-                  recentQuery,
-                })
-              );
+              startTransition(() => { router.push(
+                                buildMailSelectionHref({
+                                  accountId: parsed.accountId,
+                                  mailboxPath: parsed.mailboxPath,
+                                  recentMailboxFilter,
+                                  recentUnreadOnly,
+                                  recentQuery,
+                                })
+                              ); });
               return;
             }
             if (parsed?.kind === 'mail_account_compose') {
-              router.push(
-                buildComposeHref({
-                  accountId: parsed.accountId,
-                  originPanel,
-                  recentMailboxFilter,
-                  recentUnreadOnly,
-                  recentQuery,
-                  searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
-                  searchQuery,
-                })
-              );
+              startTransition(() => { router.push(
+                                buildComposeHref({
+                                  accountId: parsed.accountId,
+                                  originPanel,
+                                  recentMailboxFilter,
+                                  recentUnreadOnly,
+                                  recentQuery,
+                                  searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
+                                  searchQuery,
+                                })
+                              ); });
               return;
             }
             if (parsed?.kind === 'mail_account_sync') {
@@ -569,31 +569,31 @@ export function FilemakerMailSidebar({
               return;
             }
             if (parsed?.kind === 'mail_account_recent') {
-              router.push(
-                buildMailSelectionHref({
-                  accountId: parsed.accountId,
-                  panel: 'recent',
-                  recentMailboxFilter,
-                  recentUnreadOnly,
-                  recentQuery,
-                })
-              );
+              startTransition(() => { router.push(
+                                buildMailSelectionHref({
+                                  accountId: parsed.accountId,
+                                  panel: 'recent',
+                                  recentMailboxFilter,
+                                  recentUnreadOnly,
+                                  recentQuery,
+                                })
+                              ); });
               return;
             }
             if (parsed?.kind === 'mail_thread' || parsed?.kind === 'mail_recent_thread') {
-              router.push(
-                buildThreadHref({
-                  threadId: parsed.threadId,
-                  accountId: parsed.accountId,
-                  mailboxPath: parsed.mailboxPath,
-                  originPanel,
-                  recentMailboxFilter,
-                  recentUnreadOnly,
-                  recentQuery,
-                  searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
-                  searchQuery,
-                })
-              );
+              startTransition(() => { router.push(
+                                buildThreadHref({
+                                  threadId: parsed.threadId,
+                                  accountId: parsed.accountId,
+                                  mailboxPath: parsed.mailboxPath,
+                                  originPanel,
+                                  recentMailboxFilter,
+                                  recentUnreadOnly,
+                                  recentQuery,
+                                  searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
+                                  searchQuery,
+                                })
+                              ); });
               return;
             }
             if (parsed?.kind === 'mail_account_settings') {
@@ -601,15 +601,15 @@ export function FilemakerMailSidebar({
                 onSelectAccountSettings(parsed.accountId);
                 return;
               }
-              router.push(
-                buildMailSelectionHref({
-                  accountId: parsed.accountId,
-                  panel: 'settings',
-                  recentMailboxFilter,
-                  recentUnreadOnly,
-                  recentQuery,
-                })
-              );
+              startTransition(() => { router.push(
+                                buildMailSelectionHref({
+                                  accountId: parsed.accountId,
+                                  panel: 'settings',
+                                  recentMailboxFilter,
+                                  recentUnreadOnly,
+                                  recentQuery,
+                                })
+                              ); });
               return;
             }
             if (parsed?.kind === 'mail_account') {
@@ -617,15 +617,15 @@ export function FilemakerMailSidebar({
                 onSelectAccount(parsed.accountId);
                 return;
               }
-              router.push(
-                buildMailSelectionHref({
-                  accountId: parsed.accountId,
-                  panel: 'account',
-                  recentMailboxFilter,
-                  recentUnreadOnly,
-                  recentQuery,
-                })
-              );
+              startTransition(() => { router.push(
+                                buildMailSelectionHref({
+                                  accountId: parsed.accountId,
+                                  panel: 'account',
+                                  recentMailboxFilter,
+                                  recentUnreadOnly,
+                                  recentQuery,
+                                })
+                              ); });
             }
           }}
           className={cn(
@@ -719,15 +719,15 @@ export function FilemakerMailSidebar({
       recentQuery?: string;
     }): void => {
       if (!selectedAccountId) return;
-      router.replace(
-        buildMailSelectionHref({
-          accountId: selectedAccountId,
-          panel: 'recent',
-          recentMailboxFilter: input.recentMailboxFilter ?? recentMailboxFilter,
-          recentUnreadOnly: input.recentUnreadOnly ?? recentUnreadOnly,
-          recentQuery: input.recentQuery ?? recentQuery,
-        })
-      );
+      startTransition(() => { router.replace(
+                  buildMailSelectionHref({
+                    accountId: selectedAccountId,
+                    panel: 'recent',
+                    recentMailboxFilter: input.recentMailboxFilter ?? recentMailboxFilter,
+                    recentUnreadOnly: input.recentUnreadOnly ?? recentUnreadOnly,
+                    recentQuery: input.recentQuery ?? recentQuery,
+                  })
+                ); });
     },
     [recentMailboxFilter, recentQuery, recentUnreadOnly, router, selectedAccountId]
   );
@@ -756,7 +756,7 @@ export function FilemakerMailSidebar({
                     onNewMailbox();
                     return;
                   }
-                  router.push('/admin/filemaker/mail');
+                  startTransition(() => { router.push('/admin/filemaker/mail'); });
                 }}
               >
                 New Mailbox
@@ -766,18 +766,18 @@ export function FilemakerMailSidebar({
                 size='sm'
                 variant='outline'
                 onClick={(): void => {
-                  router.push(
-                    buildComposeHref({
-                      accountId: selectedAccountId,
-                      mailboxPath: selectedMailboxPath,
-                      originPanel,
-                      recentMailboxFilter,
-                      recentUnreadOnly,
-                      recentQuery,
-                      searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
-                      searchQuery,
-                    })
-                  );
+                  startTransition(() => { router.push(
+                                        buildComposeHref({
+                                          accountId: selectedAccountId,
+                                          mailboxPath: selectedMailboxPath,
+                                          originPanel,
+                                          recentMailboxFilter,
+                                          recentUnreadOnly,
+                                          recentQuery,
+                                          searchAccountId: isSearchContext && !effectiveSearchAccountId ? 'all' : null,
+                                          searchQuery,
+                                        })
+                                      ); });
                 }}
               >
                 <MailPlus className='mr-2 size-4' />
@@ -789,12 +789,12 @@ export function FilemakerMailSidebar({
                   size='sm'
                   variant='outline'
                   onClick={(): void => {
-                    router.push(
-                      buildMailSelectionHref({
-                        accountId: selectedAccountId,
-                        panel: 'recent',
-                      })
-                    );
+                    startTransition(() => { router.push(
+                                            buildMailSelectionHref({
+                                              accountId: selectedAccountId,
+                                              panel: 'recent',
+                                            })
+                                          ); });
                   }}
                 >
                   <FilterX className='mr-2 size-4' />
@@ -807,12 +807,12 @@ export function FilemakerMailSidebar({
                   size='sm'
                   variant='outline'
                   onClick={(): void => {
-                    router.push(
-                      buildMailSelectionHref({
-                        accountId: effectiveSearchAccountId,
-                        panel: 'search',
-                      })
-                    );
+                    startTransition(() => { router.push(
+                                            buildMailSelectionHref({
+                                              accountId: effectiveSearchAccountId,
+                                              panel: 'search',
+                                            })
+                                          ); });
                   }}
                 >
                   <FilterX className='mr-2 size-4' />

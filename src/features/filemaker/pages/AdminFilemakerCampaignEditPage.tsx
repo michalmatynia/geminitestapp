@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { FormActions } from '@/shared/ui/forms-and-actions.public';
@@ -62,7 +62,7 @@ function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
           actions={
             <FormActions
               onCancel={(): void => {
-                router.push('/admin/filemaker/campaigns');
+                startTransition(() => { router.push('/admin/filemaker/campaigns'); });
               }}
               cancelText='Back to Campaigns'
             />
@@ -87,7 +87,7 @@ function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
         actions={
           <FormActions
             onCancel={(): void => {
-              router.push('/admin/filemaker/campaigns');
+              startTransition(() => { router.push('/admin/filemaker/campaigns'); });
             }}
             cancelText='Back to Campaigns'
             onSave={(): void => {

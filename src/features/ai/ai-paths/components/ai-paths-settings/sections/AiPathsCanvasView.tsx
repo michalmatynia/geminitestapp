@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { AiPathsLiveLog } from './AiPathsLiveLog';
+import { AiPathsCanvasPathTree } from './AiPathsCanvasPathTree';
 import { AiPathsCanvasToolbar } from './AiPathsCanvasToolbar';
 import { AiPathsCanvasName } from './AiPathsCanvasName';
 import { CanvasBoard } from '../../canvas-board';
@@ -99,6 +100,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
           isFocusMode ? 'h-[calc(100vh-140px)]' : 'h-[800px]'
         }`}
       >
+        {!isFocusMode && (
+          <div className='w-[320px] flex-shrink-0'>
+            <AiPathsCanvasPathTree />
+          </div>
+        )}
         <div className='relative flex flex-1 flex-col overflow-hidden'>
           <div ref={canvasContainerRef} className='flex-1'>
             <CanvasBoard

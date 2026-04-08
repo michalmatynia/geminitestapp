@@ -258,7 +258,7 @@ export default function Menu(): React.ReactNode {
         // Synchronous fast path — redirect immediately to the stored session.
         event.preventDefault();
         setPendingHref('/admin/chatbot');
-        router.push(`/admin/chatbot?session=${storedSession}`);
+        startTransition(() => { router.push(`/admin/chatbot?session=${storedSession}`); });
         return;
       }
       // No stored session — let the Link navigate to /admin/chatbot immediately,
@@ -272,13 +272,13 @@ export default function Menu(): React.ReactNode {
           }
           if (latestId) {
             window.localStorage.setItem('chatbotSessionId', latestId);
-            router.replace(`/admin/chatbot?session=${latestId}`);
+            startTransition(() => { router.replace(`/admin/chatbot?session=${latestId}`); });
             return;
           }
           const created = await createChatbotSession({});
           if (created.sessionId) {
             window.localStorage.setItem('chatbotSessionId', created.sessionId);
-            router.replace(`/admin/chatbot?session=${created.sessionId}`);
+            startTransition(() => { router.replace(`/admin/chatbot?session=${created.sessionId}`); });
           }
         } catch (error) {
           logClientError(error);

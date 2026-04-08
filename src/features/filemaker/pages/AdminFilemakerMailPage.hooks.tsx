@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState, startTransition } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MailPlus, RefreshCcw, FilterX, Search, Mail } from 'lucide-react';
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -334,17 +334,17 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     ) {
       return;
     }
-    router.replace(
-      buildMailSelectionHref({
-        accountId: nextAccountId,
-        mailboxPath: nextMailboxPath,
-        panel: nextPanel,
-        recentMailboxFilter: nextRecentMailboxFilter,
-        recentUnreadOnly: nextRecentUnreadOnly,
-        recentQuery: nextRecentQuery,
-        searchQuery: nextSearchQuery,
-      })
-    );
+    startTransition(() => { router.replace(
+            buildMailSelectionHref({
+              accountId: nextAccountId,
+              mailboxPath: nextMailboxPath,
+              panel: nextPanel,
+              recentMailboxFilter: nextRecentMailboxFilter,
+              recentUnreadOnly: nextRecentUnreadOnly,
+              recentQuery: nextRecentQuery,
+              searchQuery: nextSearchQuery,
+            })
+          ); });
   }, [
     deepSearchQuery,
     isNavigationLoading,
@@ -474,17 +474,17 @@ export function useAdminFilemakerMailPageState(): MailPageState {
               size='sm'
               variant='outline'
               onClick={(): void => {
-                router.push(
-                  buildThreadHref({
-                    threadId: row.original.id,
-                    accountId: row.original.accountId,
-                    mailboxPath: row.original.mailboxPath,
-                    originPanel: isRecentPanel ? 'recent' : null,
-                    recentMailboxFilter: isRecentPanel ? recentMailboxFilter : null,
-                    recentUnreadOnly: isRecentPanel ? recentUnreadOnly : false,
-                    recentQuery: isRecentPanel ? query : null,
-                  })
-                );
+                startTransition(() => { router.push(
+                                    buildThreadHref({
+                                      threadId: row.original.id,
+                                      accountId: row.original.accountId,
+                                      mailboxPath: row.original.mailboxPath,
+                                      originPanel: isRecentPanel ? 'recent' : null,
+                                      recentMailboxFilter: isRecentPanel ? recentMailboxFilter : null,
+                                      recentUnreadOnly: isRecentPanel ? recentUnreadOnly : false,
+                                      recentQuery: isRecentPanel ? query : null,
+                                    })
+                                  ); });
               }}
             >
               Open Thread
@@ -523,16 +523,16 @@ export function useAdminFilemakerMailPageState(): MailPageState {
         label: 'Compose',
         icon: <MailPlus className='size-4' />,
         onClick: () =>
-          router.push(
-            buildComposeHref({
-              accountId: selectedAccountId,
-              mailboxPath: selectedFolder?.mailboxPath ?? null,
-              originPanel: isRecentPanel ? 'recent' : null,
-              recentMailboxFilter: isRecentPanel ? recentMailboxFilter : null,
-              recentUnreadOnly: isRecentPanel ? recentUnreadOnly : false,
-              recentQuery: isRecentPanel ? query : null,
-            })
-          ),
+          startTransition(() => { router.push(
+                        buildComposeHref({
+                          accountId: selectedAccountId,
+                          mailboxPath: selectedFolder?.mailboxPath ?? null,
+                          originPanel: isRecentPanel ? 'recent' : null,
+                          recentMailboxFilter: isRecentPanel ? recentMailboxFilter : null,
+                          recentUnreadOnly: isRecentPanel ? recentUnreadOnly : false,
+                          recentQuery: isRecentPanel ? query : null,
+                        })
+                      ); }),
       },
       ...(selectedAccount
         ? [

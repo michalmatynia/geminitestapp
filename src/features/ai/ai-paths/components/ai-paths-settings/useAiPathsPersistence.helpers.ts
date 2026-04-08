@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
 import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { AI_PATHS_HISTORY_RETENTION_DEFAULT, AI_PATHS_HISTORY_RETENTION_MAX, AI_PATHS_HISTORY_RETENTION_MIN, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT, stableStringify } from '@/shared/lib/ai-paths';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
 
 import type { RunEnqueuePayloadIssue as PathSavePayloadIssue } from './runtime/payload-validation';
 
@@ -314,6 +315,7 @@ const normalizeLoadedPathMeta = (
     ...meta,
     id,
     name: normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`,
+    folderPath: normalizeAiPathFolderPath(meta.folderPath),
     createdAt: normalizedCreatedAt.value,
     updatedAt: normalizedUpdatedAt.value,
     createdAtInferred: normalizedCreatedAt.inferred,

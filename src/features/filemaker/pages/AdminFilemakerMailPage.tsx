@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { startTransition } from 'react';
 
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import {
@@ -105,7 +105,7 @@ function AdminFilemakerMailPageContent(): React.JSX.Element {
             setDeepSearchQuery('');
             setDeepSearchResults(null);
           }}
-          onOpenThread={(href) => router.push(href)}
+          onOpenThread={(href) => startTransition(() => { router.push(href); })}
         />
       ) : selectedFolder || isRecentPanel ? (
         <MailThreadsSection />
@@ -122,7 +122,7 @@ function AdminFilemakerMailPageContent(): React.JSX.Element {
           handleSaveAccount={handleSaveAccount}
           isSavingAccount={isSavingAccount}
           onComposeFromAccount={(accountId) => {
-            router.push(buildComposeHref({ accountId }));
+            startTransition(() => { router.push(buildComposeHref({ accountId })); });
           }}
         />
       )}

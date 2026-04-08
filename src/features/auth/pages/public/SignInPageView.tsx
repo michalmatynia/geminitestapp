@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, startTransition } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { Link } from '@/i18n/navigation';
@@ -74,7 +74,7 @@ function SignInPageLoader(): React.JSX.Element {
           window.location.origin
         );
         if (navigationTarget?.kind === 'router') {
-          router.push(navigationTarget.href);
+          startTransition(() => { router.push(navigationTarget.href); });
         } else {
           window.location.assign(navigationTarget?.href ?? callbackUrl);
         }

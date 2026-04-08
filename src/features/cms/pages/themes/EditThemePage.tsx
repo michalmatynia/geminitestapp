@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, startTransition } from 'react';
 
 import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
@@ -41,7 +41,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
         customCss: validation.data.customCss ?? undefined,
       };
       await updateTheme.mutateAsync({ id, input });
-      router.push('/admin/cms/themes');
+      startTransition(() => { router.push('/admin/cms/themes'); });
     } catch (submitError: unknown) {
       logClientCatch(submitError, {
         source: 'EditThemePage',
@@ -68,7 +68,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
         initialData={themeFormInitialData}
         onSubmit={handleSubmit}
         isSaving={updateTheme.isPending}
-        onCancel={() => router.push('/admin/cms/themes')}
+        onCancel={() => startTransition(() => { router.push('/admin/cms/themes'); })}
         submitText='Save Changes'
       />
     </AdminCmsPageLayout>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, startTransition } from 'react';
 
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
@@ -86,7 +86,7 @@ export default function AddIntegrationPage(): React.JSX.Element {
         name: integration.name,
         slug: integration.slug,
       });
-      router.push('/admin/integrations');
+      startTransition(() => { router.push('/admin/integrations'); });
     } catch (error: unknown) {
       logClientCatch(error, {
         source: 'AddIntegrationPage',

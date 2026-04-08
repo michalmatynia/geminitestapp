@@ -2,7 +2,7 @@
 
 import { Folder, FolderOpen, PlusIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 
 import { createCaseResolverCasesMasterTreeAdapter } from '@/features/case-resolver/adapter';
 import {
@@ -400,7 +400,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const handleOpenCase = useCallback(
     (caseId: string): void => {
       primeCaseResolverNavigationWorkspace(workspace);
-      router.push(buildCaseResolverCaseHref(caseId));
+      startTransition(() => { router.push(buildCaseResolverCaseHref(caseId)); });
     },
     [router, workspace]
   );
@@ -448,7 +448,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const handleOpenFile = useCallback(
     (fileId: string): void => {
       primeCaseResolverNavigationWorkspace(workspace);
-      router.push(buildCaseResolverCaseHref(fileId));
+      startTransition(() => { router.push(buildCaseResolverCaseHref(fileId)); });
     },
     [router, workspace]
   );

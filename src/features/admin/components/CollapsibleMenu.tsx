@@ -3,7 +3,7 @@
 import * as Collapsible from '@radix-ui/react-collapsible';
 import { ChevronRightIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, startTransition } from 'react';
 
 import { useAdminLayoutState } from '@/features/admin/context/AdminLayoutContext';
 
@@ -30,7 +30,7 @@ export default function CollapsibleMenu({
       onOpenChange={(nextOpen: boolean) => {
         setIsOpen(nextOpen);
         if (nextOpen && href) {
-          router.push(href);
+          startTransition(() => { router.push(href); });
         }
       }}
     >

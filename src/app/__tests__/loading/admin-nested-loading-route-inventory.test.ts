@@ -72,6 +72,7 @@ const adminNestedRoutesWithDedicatedLoading = [
   'prompt-exploder/projects',
   'prompt-exploder/settings',
   'products/builder',
+  'products/import',
   'products/jobs',
   'products/orders-import',
   'products/preferences',

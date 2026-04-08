@@ -227,12 +227,14 @@ describe('normalizeLoadedPathMetas', () => {
       {
         id: ' path-a ',
         name: '  ',
+        folderPath: '/drafts//seo/',
         createdAt: '',
         updatedAt: '',
       } as unknown as import('@/shared/contracts/ai-paths').PathMeta,
       {
         id: 'path-a',
         name: 'Alpha',
+        folderPath: 'drafts/seo',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-02-01T00:00:00.000Z',
       } as unknown as import('@/shared/contracts/ai-paths').PathMeta,
@@ -249,6 +251,7 @@ describe('normalizeLoadedPathMetas', () => {
       expect.objectContaining({
         id: 'path-a',
         name: 'Alpha',
+        folderPath: 'drafts/seo',
         updatedAt: '2026-02-01T00:00:00.000Z',
       })
     );

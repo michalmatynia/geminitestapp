@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, startTransition } from 'react';
 
 import ProductForm from '@/features/products/components/ProductForm';
 import {
@@ -37,7 +37,7 @@ function EditProductForm(): React.JSX.Element {
       headerActions={
         <>
           <Button
-            onClick={() => router.push('/admin/products')}
+            onClick={() => startTransition(() => { router.push('/admin/products'); })}
             variant='outline'
             className='min-w-[100px] text-foreground'
             aria-label='Back to products'

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, startTransition } from 'react';
 
 import { useNotebookResource } from '@/features/notesapp/api/useNotebookResource';
 import {
@@ -214,7 +214,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                     onClick={(e) => {
                       e.stopPropagation();
                       updateSettings({ selectedNotebookId: nb.id });
-                      router.push('/admin/notes');
+                      startTransition(() => { router.push('/admin/notes'); });
                     }}
                   >
                     Open

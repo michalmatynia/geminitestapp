@@ -3,7 +3,7 @@
 import { GaugeIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { createContext, type JSX, useCallback, useContext, useState } from 'react';
+import { createContext, type JSX, useCallback, useContext, useState, startTransition } from 'react';
 
 import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor/page-coverage-manifest';
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
@@ -326,7 +326,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.set('range', nextRange);
       const query = nextParams.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      startTransition(() => { router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false }); });
     },
     [pathname, router, searchParams]
   );

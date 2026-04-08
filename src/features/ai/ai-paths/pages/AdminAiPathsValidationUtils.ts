@@ -11,6 +11,7 @@ import type {
 import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
 import {
   normalizeRemovedTriggerContextModesInDocument,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
@@ -199,6 +200,7 @@ export const parsePathIndex = (raw: string | undefined): PathMeta[] => {
       return {
         id,
         name,
+        folderPath: normalizeAiPathFolderPath(record['folderPath']),
         createdAt: normalizeIso(record['createdAt'], fallbackNow),
         updatedAt: normalizeIso(record['updatedAt'], fallbackNow),
       };

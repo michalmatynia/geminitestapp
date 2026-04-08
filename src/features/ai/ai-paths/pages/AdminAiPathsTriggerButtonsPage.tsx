@@ -2,7 +2,7 @@
 
 import { MousePointer2, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
@@ -496,7 +496,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           });
         });
       const params = new URLSearchParams({ pathId: normalizedPathId });
-      router.push(`/admin/ai-paths?${params.toString()}`);
+      startTransition(() => { router.push(`/admin/ai-paths?${params.toString()}`); });
     },
     [router]
   );

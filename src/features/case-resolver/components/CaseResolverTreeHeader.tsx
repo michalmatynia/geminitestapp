@@ -2,7 +2,7 @@
 
 import { FolderPlus, FilePlus, FileImage, FileCode2, ImagePlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useMemo } from 'react';
+import React, { useMemo, startTransition } from 'react';
 
 import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -387,7 +387,7 @@ export function CaseResolverTreeHeader({
             variant='outline'
             className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50'
             onClick={(): void => {
-              router.push('/admin/case-resolver/cases');
+              startTransition(() => { router.push('/admin/case-resolver/cases'); });
             }}
           >
             ALL CASES

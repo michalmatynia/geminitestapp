@@ -17,6 +17,7 @@ import {
   summarizeFilemakerEmailCampaignRunDeliveries,
 } from '../../settings';
 import { useCampaignEditContext } from '../AdminFilemakerCampaignEditPage.context';
+import { startTransition } from 'react';
 
 export const CampaignAnalyticsSection = () => {
   const { analytics } = useCampaignEditContext();
@@ -219,7 +220,7 @@ export const RecentRunsSection = () => {
                   size='sm'
                   variant='outline'
                   onClick={(): void => {
-                    router.push(`/admin/filemaker/campaigns/runs/${encodeURIComponent(run.id)}`);
+                    startTransition(() => { router.push(`/admin/filemaker/campaigns/runs/${encodeURIComponent(run.id)}`); });
                   }}
                 >
                   Open Run Monitor

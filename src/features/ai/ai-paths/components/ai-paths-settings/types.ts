@@ -1,5 +1,6 @@
 import type { Toast } from '@/shared/contracts/ui/base';
 import type { AiNode, Edge, NodeConfig, NodeDefinition, PathBlockedRunPolicy, ParserSampleState, PathConfig, PathExecutionMode, PathFlowIntensity, AiPathsValidationConfig, PathRunMode, PathDebugSnapshot, PathMeta, RuntimeState, UpdaterSampleState, AiPathRuntimeEvent, AiPathRuntimeNodeStatusMap, DbQueryPreset, DbNodePreset, ClusterPreset } from '@/shared/lib/ai-paths';
+import type { PathCreateOptions } from './useAiPathsSettingsPathActions';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 import type * as React from 'react';
@@ -19,9 +20,9 @@ export interface UseAiPathsSettingsStateReturn {
   autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error';
   autoSaveAt: string | null;
   saving: boolean;
-  handleCreatePath: () => void;
-  handleCreateFromTemplate: (templateId: string) => void;
-  handleDuplicatePath: (pathId?: string) => void;
+  handleCreatePath: (options?: PathCreateOptions) => void;
+  handleCreateFromTemplate: (templateId: string, options?: PathCreateOptions) => void;
+  handleDuplicatePath: (pathId?: string, options?: PathCreateOptions) => void;
   handleSave: (options?: {
     silent?: boolean | undefined;
     includeNodeConfig?: boolean | undefined;
@@ -33,6 +34,9 @@ export interface UseAiPathsSettingsStateReturn {
   }) => Promise<boolean>;
   handleReset: () => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
+  handleMovePathToFolder: (pathId: string, folderPath?: string | null) => Promise<void>;
+  handleMoveFolder: (folderPath: string, targetFolderPath?: string | null) => Promise<void>;
+  handleRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
   activePathId: string | null;
   activeTrigger: string;
   executionMode: PathExecutionMode;

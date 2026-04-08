@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { startTransition } from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -47,7 +47,7 @@ export function PlaywrightEngineLogoButton({
           onOpen();
           return;
         }
-        router.push(href ?? PLAYWRIGHT_SETTINGS_HREF);
+        startTransition(() => { router.push(href ?? PLAYWRIGHT_SETTINGS_HREF); });
       }}
       {...props}
     >

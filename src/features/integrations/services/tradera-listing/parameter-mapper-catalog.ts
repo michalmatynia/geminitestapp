@@ -125,6 +125,109 @@ const DEFAULT_TRADERA_PARAMETER_MAPPER_CATALOG_SCRIPT = String.raw`export defaul
     return normalized.replace(/^(select|choose|välj|velg)\s+/i, '').trim();
   };
 
+  // Returns true if the text looks like a placeholder (category not yet selected).
+  const isCategoryPlaceholderText = (text) => {
+    const normalized = normalizeWhitespace(text).toLowerCase();
+    if (!normalized) return true;
+    return (
+      /^(select|choose|välj|velg)\s/i.test(normalized) ||
+      normalized === 'category' ||
+      normalized === 'kategori' ||
+      normalized === 'select category' ||
+      normalized === 'choose category' ||
+      normalized === 'välj kategori'
+    );
+  };
+
+  // Find the button/combobox that acts as the category field trigger.
+  const findCategoryTriggerButton = async () => {
+    for (const fieldLabel of ['Category', 'Kategori']) {
+      const escaped = fieldLabel.replace(/"/g, '\\"');
+      const byLabel = page
+        .locator(
+          'xpath=//*[normalize-space(text())="' + escaped + '"]/following::*[self::button or @role="button" or @role="combobox"][1]'
+        )
+        .first();
+      const byLabelVisible = await byLabel.isVisible().catch(() => false);
+      if (byLabelVisible) return byLabel;
+    }
+    // Fallback: any visible trigger with placeholder-style category text
+    const candidates = page.locator('button[aria-haspopup], [role="combobox"]');
+    const count = await candidates.count().catch(() => 0);
+    for (let idx = 0; idx < count; idx += 1) {
+      const el = candidates.nth(idx);
+      const visible = await el.isVisible().catch(() => false);
+      if (!visible) continue;
+      const text = normalizeWhitespace(await el.innerText().catch(() => ''));
+      if (isCategoryPlaceholderText(text)) return el;
+    }
+    return null;
+  };
+
+  // If the category is not yet committed on the listing form (trigger shows a
+  // placeholder), navigate through the picker using the path segments from
+  // input.externalCategoryPath so that Tradera reveals category-specific extra
+  // fields before we scan.
+  const selectCategoryFromInput = async () => {
+    const pathStr =
+      typeof input?.externalCategoryPath === 'string' ? input.externalCategoryPath.trim() : '';
+    const nameStr =
+      typeof input?.externalCategoryName === 'string' ? input.externalCategoryName.trim() : '';
+    if (!pathStr && !nameStr) return;
+
+    const trigger = await findCategoryTriggerButton();
+    if (!trigger) return;
+
+    const triggerText = normalizeWhitespace(await trigger.innerText().catch(() => ''));
+    if (!isCategoryPlaceholderText(triggerText)) {
+      // Category already confirmed — give the form a moment to render extra fields.
+      await wait(600);
+      return;
+    }
+
+    // Category is unset — click the trigger to open the picker.
+    await trigger.click().catch(() => undefined);
+    await wait(900);
+
+    // Split the path into segments (e.g. "Jewelry & Gemstones > Necklaces > Pendants > Gem pendants")
+    const segments = pathStr
+      ? pathStr.split(/\s*[/>]\s*/).map((s) => normalizeWhitespace(s)).filter(Boolean)
+      : [nameStr];
+
+    const pickerRoot = page.locator('[data-test-category-chooser="true"]').first();
+
+    for (const segment of segments) {
+      const pickerVisible = await pickerRoot.isVisible().catch(() => false);
+      if (!pickerVisible) break;
+
+      const escapedSegment = segment.replace(/[.*+?^\$()|[\]{}\\]/g, '\\$&');
+
+      // Exact match inside picker
+      const exactOption = pickerRoot
+        .getByRole('menuitem', { name: new RegExp('^' + escapedSegment + '$', 'i') })
+        .first();
+      const exactVisible = await exactOption.isVisible().catch(() => false);
+      if (exactVisible) {
+        await exactOption.click().catch(() => undefined);
+        await wait(600);
+        continue;
+      }
+
+      // Partial match inside picker
+      const partialOption = pickerRoot
+        .getByRole('menuitem', { name: new RegExp(escapedSegment, 'i') })
+        .first();
+      const partialVisible = await partialOption.isVisible().catch(() => false);
+      if (partialVisible) {
+        await partialOption.click().catch(() => undefined);
+        await wait(600);
+      }
+    }
+
+    // Wait for the form to re-render with any category-specific extra fields.
+    await wait(1_200);
+  };
+
   const collectCandidateFields = async () =>
     page
       .locator(
@@ -282,6 +385,8 @@ const DEFAULT_TRADERA_PARAMETER_MAPPER_CATALOG_SCRIPT = String.raw`export defaul
     throw new Error('FAIL_AUTH_REQUIRED: Tradera login is required before fetching category field options.');
   }
 
+  await selectCategoryFromInput();
+
   const fields = await collectCandidateFields();
   const entries = [];
 
@@ -423,6 +528,8 @@ export const fetchAndStoreTraderaParameterMapperCatalog = async ({
     input: {
       startUrl: categoryUrl.toString(),
       externalCategoryId,
+      externalCategoryPath: category.path ?? null,
+      externalCategoryName: category.name,
     },
     connection,
     timeoutMs: 90_000,

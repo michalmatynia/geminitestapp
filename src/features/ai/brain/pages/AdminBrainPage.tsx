@@ -2,7 +2,7 @@
 
 import { Activity, Brain, KeyRound, Radar, Sparkles } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, startTransition } from 'react';
 
 
 import { BrainSettingsHeader } from '../components/BrainSettingsHeader';
@@ -154,7 +154,7 @@ function AdminBrainPageContent(): React.JSX.Element {
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.set('tab', value);
       const query = nextParams.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      startTransition(() => { router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false }); });
     },
     [pathname, router, searchParams, setActiveTab]
   );

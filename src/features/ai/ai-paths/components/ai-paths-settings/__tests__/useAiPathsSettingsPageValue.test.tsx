@@ -40,6 +40,11 @@ vi.mock('@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips', () => ({
   }),
 }));
 
+vi.mock('@/shared/lib/ai-paths/core/utils/data-contract-preflight', () => ({
+  evaluateDataContractPreflight: (...args: unknown[]) =>
+    mockState.evaluateDataContractPreflight(...args),
+}));
+
 vi.mock('@/shared/lib/ai-paths', () => ({
   evaluateDataContractPreflight: (...args: unknown[]) => mockState.evaluateDataContractPreflight(...args),
   evaluateAiPathsValidationPreflight: (...args: unknown[]) =>

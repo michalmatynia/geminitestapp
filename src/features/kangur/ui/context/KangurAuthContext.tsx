@@ -9,8 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
-} from 'react';
+  type ReactNode, startTransition } from 'react';
 
 import {
   withKangurClientError,
@@ -256,7 +255,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
         getKangurLoginHref(basePath, resolvedCallbackUrl),
         options?.authMode
       );
-      router.push(loginHref);
+      startTransition(() => { router.push(loginHref); });
     },
     [basePath, canonicalizePublicAlias, fallbackCallbackUrl, router, routing?.requestedPath, sanitizeManagedHref]
   );

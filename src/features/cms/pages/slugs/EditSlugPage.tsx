@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, startTransition } from 'react';
 
 import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
@@ -111,7 +111,7 @@ function EditSlugForm({
       const next = domainId
         ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}`
         : '/admin/cms/slugs';
-      router.push(next);
+      startTransition(() => { router.push(next); });
     } catch (err) {
       logClientError(err);
       setError(err instanceof Error ? err.message : 'Update failed.');

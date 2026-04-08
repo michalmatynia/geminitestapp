@@ -189,6 +189,7 @@ export type AiPathRunEventCreateInput = z.infer<typeof aiPathRunEventCreateInput
 export const pathMetaSchema = z.object({
   id: z.string(),
   name: z.string(),
+  folderPath: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

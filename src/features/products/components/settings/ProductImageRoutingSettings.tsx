@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, startTransition } from 'react';
 
 import { useStudioProjects } from '@/features/ai/public';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
@@ -269,7 +269,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     } else {
       params.set('tab', 'projects');
     }
-    router.push(`/admin/image-studio?${params.toString()}`);
+    startTransition(() => { router.push(`/admin/image-studio?${params.toString()}`); });
   };
 
   return (

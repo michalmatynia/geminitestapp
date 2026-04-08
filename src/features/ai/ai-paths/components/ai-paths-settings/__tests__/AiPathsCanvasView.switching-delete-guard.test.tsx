@@ -89,6 +89,10 @@ vi.mock('../sections/AiPathsLiveLog', () => ({
   AiPathsLiveLog: () => <div data-testid='live-log-panel' />,
 }));
 
+vi.mock('../sections/AiPathsCanvasPathTree', () => ({
+  AiPathsCanvasPathTree: () => <div data-testid='canvas-path-tree' />,
+}));
+
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
   fetchAiPathsSettingsByKeysCached: vi.fn(async () => []),
   invalidateAiPathsSettingsCache: vi.fn(),

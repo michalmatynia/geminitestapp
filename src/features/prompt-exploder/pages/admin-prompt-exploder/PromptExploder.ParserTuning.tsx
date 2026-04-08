@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
@@ -76,7 +76,7 @@ export function PromptExploderParserTuningProvider({
           settingsState.activeValidationRuleStack,
           settingsState.validatorPatternLists
         );
-        router.push(`/admin/validator?scope=${validatorScope}`);
+        startTransition(() => { router.push(`/admin/validator?scope=${validatorScope}`); });
       },
       isBusy: settingsState.isBusy,
     };

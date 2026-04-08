@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, startTransition } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -105,7 +105,7 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
               type='button'
               variant='outline'
               onClick={(): void => {
-                router.push('/admin/filemaker/campaigns');
+                startTransition(() => { router.push('/admin/filemaker/campaigns'); });
               }}
             >
               Back to Campaigns
@@ -143,7 +143,7 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
             type='button'
             variant='outline'
             onClick={(): void => {
-              router.push(`/admin/filemaker/campaigns/${encodeURIComponent(campaign.id)}`);
+              startTransition(() => { router.push(`/admin/filemaker/campaigns/${encodeURIComponent(campaign.id)}`); });
             }}
           >
             Back to Campaign

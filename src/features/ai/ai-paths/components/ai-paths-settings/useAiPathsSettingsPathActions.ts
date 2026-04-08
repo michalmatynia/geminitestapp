@@ -12,6 +12,11 @@ import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { PATH_TEMPLATES, buildPathConfigFromTemplate } from '@/shared/lib/ai-paths/core/utils/path-templates';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import { PATH_CONFIG_PREFIX, PATH_DEBUG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, DEFAULT_AI_PATHS_VALIDATION_CONFIG, createDefaultPathConfig, createPathId, createPathMeta, duplicatePathConfig, normalizeAiPathsValidationConfig, normalizeNodes, sanitizeEdges, triggers } from '@/shared/lib/ai-paths';
+import {
+  canMoveAiPathFolder,
+  normalizeAiPathFolderPath,
+  rebaseAiPathFolderPath,
+} from '@/shared/lib/ai-paths';
 import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import {
   deleteAiPathsSettings,
@@ -52,13 +57,20 @@ type UseAiPathsSettingsPathActionsInput = {
 
 const SWITCH_PATH_FETCH_TIMEOUT_MS = 25_000;
 
+export type PathCreateOptions = {
+  folderPath?: string | null;
+};
+
 export type UseAiPathsSettingsPathActionsReturn = {
   handleReset: () => void;
-  handleCreatePath: () => void;
-  handleCreateFromTemplate: (templateId: string) => void;
-  handleDuplicatePath: (pathId?: string) => void;
+  handleCreatePath: (options?: PathCreateOptions) => void;
+  handleCreateFromTemplate: (templateId: string, options?: PathCreateOptions) => void;
+  handleDuplicatePath: (pathId?: string, options?: PathCreateOptions) => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
   handleSwitchPath: (pathId: string) => void;
+  handleMovePathToFolder: (pathId: string, folderPath?: string | null) => Promise<void>;
+  handleMoveFolder: (folderPath: string, targetFolderPath?: string | null) => Promise<void>;
+  handleRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
 };
 
 export function useAiPathsSettingsPathActions(
@@ -392,10 +404,42 @@ export function useAiPathsSettingsPathActions(
     );
   }, [activePathId, applyPathConfigState, isPathLocked, setPathConfigs, toast]);
 
-  const handleCreatePath = useCallback((): void => {
+  const persistPathIndexChanges = useCallback(
+    async (nextPaths: PathMeta[]): Promise<void> => {
+      const persistPathId = activePathId ?? nextPaths[0]?.id ?? null;
+      if (persistPathId) {
+        const persistConfig = pathConfigs[persistPathId] ?? createDefaultPathConfig(persistPathId);
+        await persistPathSettings(nextPaths, persistPathId, persistConfig);
+        return;
+      }
+      await persistSettingsBulk([{ key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) }]);
+    },
+    [activePathId, pathConfigs, persistPathSettings, persistSettingsBulk]
+  );
+
+  const updatePathsWithPersistence = useCallback(
+    async (nextPaths: PathMeta[]): Promise<void> => {
+      setPaths(nextPaths);
+      try {
+        await persistPathIndexChanges(nextPaths);
+      } catch (error) {
+        logClientError(error);
+        reportAiPathsError(
+          error,
+          { action: 'persistPathGroupingIndex' },
+          'Failed to persist path grouping:'
+        );
+        toast('Failed to persist path grouping.', { variant: 'error' });
+      }
+    },
+    [persistPathIndexChanges, reportAiPathsError, setPaths, toast]
+  );
+
+  const handleCreatePath = useCallback((options?: PathCreateOptions): void => {
     const id = createPathId();
     const now = new Date().toISOString();
     const name = `New Path ${paths.length + 1}`;
+    const folderPath = normalizeAiPathFolderPath(options?.folderPath);
     const config: PathConfig = {
       id,
       version: STORAGE_VERSION,
@@ -425,6 +469,7 @@ export function useAiPathsSettingsPathActions(
     const meta: PathMeta = {
       id,
       name,
+      folderPath,
       createdAt: now,
       updatedAt: now,
     };
@@ -440,7 +485,7 @@ export function useAiPathsSettingsPathActions(
   }, [applyPathConfigState, paths.length, setActivePathId, setPathConfigs, setPaths]);
 
   const handleCreateFromTemplate = useCallback(
-    (templateId: string): void => {
+    (templateId: string, options?: PathCreateOptions): void => {
       const template = PATH_TEMPLATES.find((t) => t.templateId === templateId);
       if (!template) {
         toast(`Path template "${templateId}" not found.`, { variant: 'error' });
@@ -448,7 +493,9 @@ export function useAiPathsSettingsPathActions(
       }
       const id = createPathId();
       const config = buildPathConfigFromTemplate(id, template);
-      const meta = createPathMeta(config);
+      const meta = createPathMeta(config, {
+        folderPath: normalizeAiPathFolderPath(options?.folderPath),
+      });
       setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
       setPathConfigs(
         (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
@@ -464,7 +511,7 @@ export function useAiPathsSettingsPathActions(
   );
 
   const handleDuplicatePath = useCallback(
-    (pathId?: string): void => {
+    (pathId?: string, options?: PathCreateOptions): void => {
       const sourceId = pathId ?? activePathId;
       if (!sourceId) return;
 
@@ -484,6 +531,7 @@ export function useAiPathsSettingsPathActions(
       const duplicateMeta: PathMeta = {
         id: duplicateId,
         name: duplicateName,
+        folderPath: normalizeAiPathFolderPath(options?.folderPath ?? sourceMeta?.folderPath),
         createdAt: now,
         updatedAt: now,
       };
@@ -616,6 +664,69 @@ export function useAiPathsSettingsPathActions(
       setPaths,
       toast,
     ]
+  );
+
+  const handleMovePathToFolder = useCallback(
+    async (pathId: string, folderPath?: string | null): Promise<void> => {
+      const normalizedPathId = pathId.trim();
+      if (!normalizedPathId) return;
+      const normalizedFolderPath = normalizeAiPathFolderPath(folderPath);
+      const pathMeta = paths.find((path: PathMeta): boolean => path.id === normalizedPathId);
+      if (!pathMeta) return;
+      if (normalizeAiPathFolderPath(pathMeta.folderPath) === normalizedFolderPath) return;
+
+      const nextPaths = paths.map((path: PathMeta): PathMeta =>
+        path.id === normalizedPathId
+          ? {
+            ...path,
+            folderPath: normalizedFolderPath,
+          }
+          : path
+      );
+      await updatePathsWithPersistence(nextPaths);
+    },
+    [paths, updatePathsWithPersistence]
+  );
+
+  const handleMoveFolder = useCallback(
+    async (folderPath: string, targetFolderPath?: string | null): Promise<void> => {
+      const normalizedFolderPath = normalizeAiPathFolderPath(folderPath);
+      if (!normalizedFolderPath) return;
+      const normalizedTargetFolderPath = normalizeAiPathFolderPath(targetFolderPath);
+      if (!canMoveAiPathFolder(normalizedFolderPath, normalizedTargetFolderPath)) return;
+
+      let changed = false;
+      const nextPaths = paths.map((path: PathMeta): PathMeta => {
+        const currentFolderPath = normalizeAiPathFolderPath(path.folderPath);
+        const rebasedFolderPath = rebaseAiPathFolderPath(
+          currentFolderPath,
+          normalizedFolderPath,
+          normalizedTargetFolderPath
+        );
+        if (rebasedFolderPath === currentFolderPath) {
+          return path;
+        }
+        changed = true;
+        return {
+          ...path,
+          folderPath: rebasedFolderPath,
+        };
+      });
+      if (!changed) return;
+      await updatePathsWithPersistence(nextPaths);
+    },
+    [paths, updatePathsWithPersistence]
+  );
+
+  const handleRenameFolder = useCallback(
+    async (folderPath: string, nextFolderPath: string): Promise<void> => {
+      const normalizedFolderPath = normalizeAiPathFolderPath(folderPath);
+      const normalizedNextFolderPath = normalizeAiPathFolderPath(nextFolderPath);
+      if (!normalizedFolderPath || !normalizedNextFolderPath) return;
+      if (!canMoveAiPathFolder(normalizedFolderPath, normalizedNextFolderPath)) return;
+      await handleMoveFolder(normalizedFolderPath, normalizedNextFolderPath);
+    },
+    [handleMoveFolder]
   );
 
   const handleSwitchPath = useCallback(
@@ -787,5 +898,8 @@ export function useAiPathsSettingsPathActions(
     handleDuplicatePath,
     handleDeletePath,
     handleSwitchPath,
+    handleMovePathToFolder,
+    handleMoveFolder,
+    handleRenameFolder,
   };
 }

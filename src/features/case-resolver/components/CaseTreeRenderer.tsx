@@ -13,7 +13,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { startTransition } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
@@ -100,7 +100,7 @@ export function CaseTreeRenderer({
   };
 
   const handleViewCase = (caseId: string): void => {
-    router.push(buildCaseResolverCaseHref(caseId));
+    startTransition(() => { router.push(buildCaseResolverCaseHref(caseId)); });
   };
 
   const handleCopyCaseId = async (caseId: string): Promise<void> => {

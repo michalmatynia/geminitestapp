@@ -61,6 +61,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: note',
     folderHint: 'Example: folder',
   },
+  ai_paths: {
+    title: 'AI Paths',
+    description: 'Controls grouped path navigation and drag/drop behavior in AI Paths canvas.',
+    fileHint: 'Example: path',
+    folderHint: 'Example: path_group',
+  },
   image_studio: {
     title: 'Image Studio',
     description: 'Controls folder/card nesting and placeholders in Image Studio.',
@@ -199,6 +205,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Folder tree updated.',
+  },
+  ai_paths: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'AI paths grouping updated.',
   },
   image_studio: {
     notifySuccess: false,

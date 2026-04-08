@@ -32,6 +32,7 @@ export type {
 
 export const folderTreeInstanceValues = [
   'notes',
+  'ai_paths',
   'image_studio',
   'product_categories',
   'cms_page_builder',

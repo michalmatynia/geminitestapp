@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, startTransition } from 'react';
 
 import {
   parseValidatorPatternLists,
@@ -70,7 +70,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set('list', listId);
     const nextQuery = nextParams.toString();
-    router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+    startTransition(() => { router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false }); });
   };
 
   const handleSelectView = (view: GlobalValidatorView): void => {
@@ -81,7 +81,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       nextParams.set('view', view);
     }
     const nextQuery = nextParams.toString();
-    router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+    startTransition(() => { router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false }); });
   };
 
   const renderScopePanel = (scope: ValidatorScope): React.JSX.Element => {

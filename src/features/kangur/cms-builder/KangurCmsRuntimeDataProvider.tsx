@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, startTransition } from 'react';
 import type { TranslationValues } from 'use-intl';
 import { BADGES, getCurrentLevel, getNextLevel } from '@kangur/core';
 
@@ -206,7 +206,7 @@ export function KangurCmsRuntimeDataProvider({
         href,
         pageKey,
       });
-      router.push(href);
+      startTransition(() => { router.push(href); });
     },
     [routeTransition, router]
   );

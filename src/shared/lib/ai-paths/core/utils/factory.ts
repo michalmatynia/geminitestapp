@@ -13,6 +13,7 @@ import {
   DEFAULT_AI_PATHS_VALIDATION_CONFIG,
   normalizeAiPathsValidationConfig,
 } from '../validation-engine';
+import { normalizeAiPathFolderPath } from './path-folders';
 
 export const createPathId = (): string => `path_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -200,7 +201,10 @@ export const createDefaultPathConfig = (id: string): PathConfig => {
   return config;
 };
 
-export const createPathMeta = (config: PathConfig): PathMeta => {
+export const createPathMeta = (
+  config: PathConfig,
+  options?: { folderPath?: string | null | undefined }
+): PathMeta => {
   const fallbackName = `Path ${config.id.slice(0, 6)}`;
   const resolvedName =
     typeof config.name === 'string' && config.name.trim().length > 0
@@ -209,6 +213,7 @@ export const createPathMeta = (config: PathConfig): PathMeta => {
   return {
     id: config.id,
     name: resolvedName,
+    folderPath: normalizeAiPathFolderPath(options?.folderPath),
     createdAt: config.updatedAt,
     updatedAt: config.updatedAt,
   };

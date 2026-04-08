@@ -113,11 +113,11 @@ export interface ImportExportContextType {
   handleSaveDefaultBaseConnection: () => Promise<void>;
   handleSaveExportSettings: () => Promise<void>;
   handleClearInventory: () => Promise<void>;
-  handleNewTemplate: () => void;
-  handleDuplicateTemplate: () => Promise<void>;
+  handleNewTemplate: (scope?: 'import' | 'export') => void;
+  handleDuplicateTemplate: (scope?: 'import' | 'export') => Promise<void>;
   handleCreateExportFromImportTemplate: () => Promise<void>;
-  handleSaveTemplate: () => Promise<void>;
-  handleDeleteTemplate: () => Promise<void>;
+  handleSaveTemplate: (scope?: 'import' | 'export') => Promise<void>;
+  handleDeleteTemplate: (scope?: 'import' | 'export') => Promise<void>;
   applyTemplate: (template: Template, scope: 'import' | 'export') => void;
 
   importing: boolean;

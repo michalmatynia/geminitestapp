@@ -2,7 +2,7 @@
 
 import { ArrowLeft, SendHorizonal } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
@@ -126,19 +126,19 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       return;
     }
 
-    router.replace(
-      buildComposeHref({
-        accountId: accountIdFromRoute,
-        forwardThreadId,
-        mailboxPath: mailboxPathFromRoute,
-        originPanel,
-        recentMailboxFilter,
-        recentUnreadOnly,
-        recentQuery,
-        searchAccountId,
-        searchQuery,
-      })
-    );
+    startTransition(() => { router.replace(
+            buildComposeHref({
+              accountId: accountIdFromRoute,
+              forwardThreadId,
+              mailboxPath: mailboxPathFromRoute,
+              originPanel,
+              recentMailboxFilter,
+              recentUnreadOnly,
+              recentQuery,
+              searchAccountId,
+              searchQuery,
+            })
+          ); });
   }, [
     accountIdFromRoute,
     forwardThreadId,
@@ -245,19 +245,19 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       });
       toast('Email sent.', { variant: 'success' });
       const preserveRouteContext = !accountIdFromRoute || accountIdFromRoute === accountId;
-      router.push(
-        buildThreadHref({
-          threadId: result.message.threadId,
-          accountId,
-          mailboxPath: preserveRouteContext ? mailboxPathFromRoute : null,
-          originPanel: preserveRouteContext ? originPanel : null,
-          recentMailboxFilter: preserveRouteContext ? recentMailboxFilter : null,
-          recentUnreadOnly: preserveRouteContext ? recentUnreadOnly : false,
-          recentQuery: preserveRouteContext ? recentQuery : null,
-          searchAccountId: preserveRouteContext && isGlobalSearchContext ? 'all' : null,
-          searchQuery: preserveRouteContext ? searchQuery : null,
-        })
-      );
+      startTransition(() => { router.push(
+                buildThreadHref({
+                  threadId: result.message.threadId,
+                  accountId,
+                  mailboxPath: preserveRouteContext ? mailboxPathFromRoute : null,
+                  originPanel: preserveRouteContext ? originPanel : null,
+                  recentMailboxFilter: preserveRouteContext ? recentMailboxFilter : null,
+                  recentUnreadOnly: preserveRouteContext ? recentUnreadOnly : false,
+                  recentQuery: preserveRouteContext ? recentQuery : null,
+                  searchAccountId: preserveRouteContext && isGlobalSearchContext ? 'all' : null,
+                  searchQuery: preserveRouteContext ? searchQuery : null,
+                })
+              ); });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to send email.', {
         variant: 'error',
@@ -297,7 +297,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
               label: backLabel,
               icon: <ArrowLeft className='size-4' />,
               variant: 'outline',
-              onClick: () => router.push(backHref),
+              onClick: () => startTransition(() => { router.push(backHref); }),
             },
             {
               key: 'send',

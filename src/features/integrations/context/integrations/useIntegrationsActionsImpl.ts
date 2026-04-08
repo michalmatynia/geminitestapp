@@ -149,6 +149,7 @@ export function useIntegrationsActionsImpl(args: {
     const isTraderaBrowserIntegration =
       isTraderaIntegration && !isTraderaApiIntegration;
     const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
+    const isBrowserIntegration = isTraderaBrowserIntegration || isVintedIntegration;
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -185,6 +186,7 @@ export function useIntegrationsActionsImpl(args: {
         ? { username: normalizedUsername }
         : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
+      ...(isBrowserIntegration ? { playwrightBrowser: formData.playwrightBrowser } : {}),
       ...(isTraderaIntegration
         ? {
           ...(isTraderaBrowserIntegration

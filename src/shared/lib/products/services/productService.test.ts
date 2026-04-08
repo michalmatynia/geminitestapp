@@ -1,17 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import { ActivityTypes } from '@/shared/constants/observability';
 
 const {
   repositoryMock,
   shippingGroupRepositoryMock,
   categoryRepositoryMock,
+  customFieldRepositoryMock,
   imageRepositoryMock,
   getProductRepositoryMock,
   getProductDataProviderMock,
   getShippingGroupRepositoryMock,
   getCategoryRepositoryMock,
+  getCustomFieldRepositoryMock,
   uploadFileMock,
   deleteFileFromStorageMock,
   getImageFileRepositoryMock,
@@ -54,6 +57,9 @@ const {
   categoryRepositoryMock: {
     listCategories: vi.fn(),
   },
+  customFieldRepositoryMock: {
+    listCustomFields: vi.fn(),
+  },
   imageRepositoryMock: {
     getImageFileById: vi.fn(),
     deleteImageFile: vi.fn(),
@@ -62,6 +68,7 @@ const {
   getProductDataProviderMock: vi.fn(),
   getShippingGroupRepositoryMock: vi.fn(),
   getCategoryRepositoryMock: vi.fn(),
+  getCustomFieldRepositoryMock: vi.fn(),
   uploadFileMock: vi.fn(),
   deleteFileFromStorageMock: vi.fn(),
   getImageFileRepositoryMock: vi.fn(),
@@ -88,6 +95,10 @@ vi.mock('@/shared/lib/products/services/shipping-group-repository', () => ({
 
 vi.mock('@/shared/lib/products/services/category-repository', () => ({
   getCategoryRepository: getCategoryRepositoryMock,
+}));
+
+vi.mock('@/shared/lib/products/services/custom-field-repository', () => ({
+  getCustomFieldRepository: getCustomFieldRepositoryMock,
 }));
 
 vi.mock('@/shared/lib/products/validations', () => ({
@@ -152,6 +163,7 @@ const createProductRecord = (overrides: Partial<ProductWithImages> = {}): Produc
     producers: [],
     images: [],
     catalogs: [],
+    customFields: [],
     parameters: [{ parameterId: 'param-1', value: 'value-1' }],
     imageLinks: [],
     imageBase64s: [],
@@ -169,6 +181,7 @@ describe('productService parameter normalization', () => {
     getProductRepositoryMock.mockResolvedValue(repositoryMock);
     getShippingGroupRepositoryMock.mockResolvedValue(shippingGroupRepositoryMock);
     getCategoryRepositoryMock.mockResolvedValue(categoryRepositoryMock);
+    getCustomFieldRepositoryMock.mockResolvedValue(customFieldRepositoryMock);
     getImageFileRepositoryMock.mockResolvedValue(imageRepositoryMock);
     logActivityMock.mockResolvedValue(undefined);
 
@@ -208,6 +221,23 @@ describe('productService parameter normalization', () => {
     shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([]);
     shippingGroupRepositoryMock.getShippingGroupById.mockResolvedValue(null);
     categoryRepositoryMock.listCategories.mockResolvedValue([]);
+    customFieldRepositoryMock.listCustomFields.mockResolvedValue([
+      {
+        id: 'notes',
+        name: 'Notes',
+        type: 'text',
+        options: [],
+      },
+      {
+        id: 'flags',
+        name: 'Flags',
+        type: 'checkbox_set',
+        options: [
+          { id: 'gift-ready', label: 'Gift Ready' },
+          { id: 'fragile', label: 'Fragile' },
+        ],
+      },
+    ] satisfies Partial<ProductCustomFieldDefinition>[]);
     imageRepositoryMock.getImageFileById.mockResolvedValue({
       id: 'image-file-1',
       filepath: '/uploads/product-1.png',
@@ -340,7 +370,7 @@ describe('productService parameter normalization', () => {
     expect(logWarningMock).not.toHaveBeenCalled();
   });
 
-  it('defaults create payload parameters to an empty array when omitted', async () => {
+  it('defaults create payload custom fields and parameters to empty arrays when omitted', async () => {
     validateProductCreateMock.mockResolvedValue({
       success: true,
       data: {
@@ -353,7 +383,93 @@ describe('productService parameter normalization', () => {
     expect(repositoryMock.createProduct).toHaveBeenCalledTimes(1);
     const [createPayload] = repositoryMock.createProduct.mock.calls[0] as [Record<string, unknown>];
 
-    expect(createPayload).toEqual(expect.objectContaining({ sku: 'SKU-NEW', parameters: [] }));
+    expect(createPayload).toEqual(
+      expect.objectContaining({ sku: 'SKU-NEW', customFields: [], parameters: [] })
+    );
+  });
+
+  it('normalizes custom fields when update payload includes them', async () => {
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: {
+        customFields: [
+          {
+            fieldId: '  notes  ',
+            textValue: '  Handle with care  ',
+          },
+          {
+            fieldId: 'flags',
+            selectedOptionIds: ['gift-ready', 'gift-ready', ' fragile '],
+          },
+        ],
+      },
+    });
+
+    await productService.updateProduct('product-1', {
+      customFields: [
+        { fieldId: 'notes', textValue: 'Handle with care' },
+        { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'fragile'] },
+      ],
+    });
+
+    expect(repositoryMock.updateProduct).toHaveBeenCalledTimes(1);
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'notes', textValue: 'Handle with care' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'fragile'] },
+        ],
+      })
+    );
+  });
+
+  it('filters unknown custom fields and stale checkbox option ids before update', async () => {
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: {
+        customFields: [
+          {
+            fieldId: 'notes',
+            textValue: '  Keep me  ',
+          },
+          {
+            fieldId: 'flags',
+            selectedOptionIds: ['gift-ready', 'missing-option'],
+          },
+          {
+            fieldId: 'deleted-field',
+            textValue: 'drop me',
+          },
+        ],
+      },
+    });
+
+    await productService.updateProduct('product-1', {
+      customFields: [
+        { fieldId: 'notes', textValue: 'Keep me' },
+        { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'missing-option'] },
+        { fieldId: 'deleted-field', textValue: 'drop me' },
+      ],
+    });
+
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'notes', textValue: 'Keep me' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready'] },
+        ],
+      })
+    );
   });
 
   it('filters invalid entries during bulk create and normalizes payloads', async () => {
@@ -386,8 +502,8 @@ describe('productService parameter normalization', () => {
 
     expect(created).toBe(2);
     expect(repositoryMock.bulkCreateProducts).toHaveBeenCalledWith([
-      { sku: 'SKU-1', parameters: [], imageFileIds: undefined },
-      { sku: 'SKU-2', parameters: [], imageFileIds: ['img-1'] },
+      { sku: 'SKU-1', customFields: [], parameters: [], imageFileIds: undefined },
+      { sku: 'SKU-2', customFields: [], parameters: [], imageFileIds: ['img-1'] },
     ]);
   });
 

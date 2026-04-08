@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
+import { productCustomFieldValueSchema } from './custom-fields';
 import {
-  productCustomFieldValueSchema,
   productImportSourceSchema,
   productParameterValueSchema,
   productSchema,

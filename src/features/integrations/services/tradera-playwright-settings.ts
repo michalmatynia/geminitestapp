@@ -78,6 +78,7 @@ const normalizeStorageState = (state: PlaywrightStorageState): PersistedStorageS
 });
 
 export type TraderaPlaywrightRuntimeSettings = {
+  browser: 'auto' | 'brave' | 'chrome' | 'chromium';
   headless: boolean;
   slowMo: number;
   timeout: number;
@@ -150,7 +151,15 @@ const findPersonaSettings = (raw: unknown, personaId: string): Record<string, un
 export const resolveConnectionPlaywrightSettings = async (
   connection: IntegrationConnectionRecord
 ): Promise<TraderaPlaywrightRuntimeSettings> => {
+  const rawBrowser = (connection as Record<string, unknown>)['playwrightBrowser'] as
+    | string
+    | undefined;
+  const browser: TraderaPlaywrightRuntimeSettings['browser'] =
+    rawBrowser === 'brave' || rawBrowser === 'chrome' || rawBrowser === 'chromium'
+      ? rawBrowser
+      : 'auto';
   const base: TraderaPlaywrightRuntimeSettings = {
+    browser,
     headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
     slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
     timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
@@ -192,7 +201,12 @@ export const resolveConnectionPlaywrightSettings = async (
 
   const personaProxyPassword = toTrimmedString(personaSettings['proxyPassword'], '');
 
+  const personaBrowser = toTrimmedString(personaSettings['browser'], '');
   return {
+    browser:
+      personaBrowser === 'brave' || personaBrowser === 'chrome' || personaBrowser === 'chromium'
+        ? personaBrowser
+        : base.browser,
     headless: toBoolean(personaSettings['headless'], base.headless),
     slowMo: toFiniteNumber(personaSettings['slowMo'], base.slowMo, 0),
     timeout: toFiniteNumber(personaSettings['timeout'], base.timeout, 1000),

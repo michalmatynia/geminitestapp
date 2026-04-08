@@ -85,6 +85,7 @@ describe('runTraderaBrowserListingStandard', () => {
     vi.clearAllMocks();
     parsePersistedStorageStateMock.mockReturnValue(null);
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
+      browser: 'chromium',
       headless: true,
       slowMo: 0,
       timeout: 30_000,

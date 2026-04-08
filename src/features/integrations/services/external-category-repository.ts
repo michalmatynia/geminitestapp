@@ -157,32 +157,38 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
       const db = await getMongoDb();
       const collection = db.collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION);
 
+      // Use bulkWrite for significantly better performance on large category sets
+      const BULK_BATCH_SIZE = 500;
       let count = 0;
-      for (const input of syncInputs) {
-        await collection.updateOne(
-          {
-            connectionId: input.connectionId,
-            externalId: input.externalId,
-          },
-          {
-            $set: {
-              name: input.name,
-              parentExternalId: input.parentExternalId ?? null,
-              path: input.path ?? null,
-              depth: input.depth,
-              isLeaf: input.isLeaf,
-              metadata: input.metadata ?? null,
-              fetchedAt: now,
-              updatedAt: now,
+      for (let i = 0; i < syncInputs.length; i += BULK_BATCH_SIZE) {
+        const batch = syncInputs.slice(i, i + BULK_BATCH_SIZE);
+        const operations = batch.map((input) => ({
+          updateOne: {
+            filter: {
+              connectionId: input.connectionId,
+              externalId: input.externalId,
             },
-            $setOnInsert: {
-              _id: randomUUID(),
-              createdAt: now,
+            update: {
+              $set: {
+                name: input.name,
+                parentExternalId: input.parentExternalId ?? null,
+                path: input.path ?? null,
+                depth: input.depth,
+                isLeaf: input.isLeaf,
+                metadata: input.metadata ?? null,
+                fetchedAt: now,
+                updatedAt: now,
+              },
+              $setOnInsert: {
+                _id: randomUUID(),
+                createdAt: now,
+              },
             },
+            upsert: true,
           },
-          { upsert: true }
-        );
-        count++;
+        }));
+        await collection.bulkWrite(operations, { ordered: false });
+        count += batch.length;
       }
 
       // Remove stale categories that were not part of this fetch

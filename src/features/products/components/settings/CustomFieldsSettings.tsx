@@ -241,9 +241,7 @@ export function CustomFieldsSettings(props: CustomFieldsSettingsProps): React.JS
               isLoading={loading}
               onEdit={(item) => openEditModal(item.original)}
               onDelete={(item) => handleDelete(item.original)}
-              searchPlaceholder='Search custom fields...'
-              emptyTitle='No matching custom fields'
-              emptyDescription='Try a different search term or create a new field.'
+              emptyMessage='No custom fields found.'
             />
           )}
         </div>
@@ -251,7 +249,7 @@ export function CustomFieldsSettings(props: CustomFieldsSettingsProps): React.JS
 
       <FormModal
         open={showModal}
-        onOpenChange={setShowModal}
+        onClose={() => setShowModal(false)}
         title={editingCustomField ? 'Edit Custom Field' : 'Create Custom Field'}
         onSave={() => {
           void handleSave();
@@ -259,7 +257,7 @@ export function CustomFieldsSettings(props: CustomFieldsSettingsProps): React.JS
         saveText={editingCustomField ? 'Save Changes' : 'Create Field'}
       >
         <div className='space-y-4'>
-          <FormField label='Field Title' htmlFor='custom-field-name'>
+          <FormField label='Field Title' id='custom-field-name'>
             <Input
               id='custom-field-name'
               value={formData.name}
@@ -270,7 +268,7 @@ export function CustomFieldsSettings(props: CustomFieldsSettingsProps): React.JS
             />
           </FormField>
 
-          <FormField label='Field Type' htmlFor='custom-field-type'>
+          <FormField label='Field Type' id='custom-field-type'>
             <SelectSimple
               value={formData.type}
               onValueChange={(value) =>
@@ -288,7 +286,7 @@ export function CustomFieldsSettings(props: CustomFieldsSettingsProps): React.JS
           {formData.type === 'checkbox_set' && (
             <FormField
               label='Checkbox Names'
-              hint='Enter one checkbox name per line. Order is preserved in the product form.'
+              description='Enter one checkbox name per line. Order is preserved in the product form.'
             >
               <Textarea
                 value={formData.optionsInput}

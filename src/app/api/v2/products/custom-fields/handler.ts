@@ -4,16 +4,11 @@ import { z } from 'zod';
 import { CachedProductService, getCustomFieldRepository } from '@/features/products/server';
 import {
   createProductCustomFieldDefinitionSchema,
-  productCustomFieldDefinitionSchema,
+  productCustomFieldOptionInputSchema,
   productCustomFieldTypeSchema,
 } from '@/shared/contracts/products/custom-fields';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError } from '@/shared/errors/app-error';
-
-const customFieldOptionInputSchema = z.object({
-  id: z.string().trim().min(1).optional(),
-  label: z.string().trim().min(1, 'Option label is required'),
-});
 
 const withCheckboxOptionValidation = <TSchema extends z.ZodTypeAny>(schema: TSchema): TSchema =>
   schema.superRefine((value: unknown, ctx: z.RefinementCtx) => {
@@ -53,7 +48,7 @@ export const querySchema = z.object({
 export const productCustomFieldCreateSchema = withCheckboxOptionValidation(
   createProductCustomFieldDefinitionSchema.extend({
     type: productCustomFieldTypeSchema.default('text'),
-    options: z.array(customFieldOptionInputSchema).default([]),
+    options: z.array(productCustomFieldOptionInputSchema).default([]),
   })
 );
 

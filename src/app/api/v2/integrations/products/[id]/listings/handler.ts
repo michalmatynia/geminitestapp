@@ -15,6 +15,10 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { listCanonicalBaseProductListings } from '@/features/integrations/services/base-listing-canonicalization';
 import { resolvePersistedTraderaLinkedTarget } from '@/features/integrations/services/tradera-listing/utils';
 import {
+  resolveRequestedVintedBrowserMode,
+  resolveRequestedVintedBrowserPreference,
+} from '@/features/integrations/services/vinted-listing/vinted-browser-runtime';
+import {
   enqueuePlaywrightListingJob,
   enqueueTraderaListingJob,
   enqueueVintedListingJob,
@@ -34,6 +38,11 @@ const requireProductId = (productId: string | null | undefined): string => {
   }
   return productId;
 };
+
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 
 /**
  * GET /api/v2/integrations/products/[id]/listings
@@ -210,14 +219,44 @@ export async function POST_handler(
     if (isVintedIntegrationSlug(integration.slug)) {
       initializeQueues();
       const enqueuedAt = new Date().toISOString();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const requestedBrowserMode = resolveRequestedVintedBrowserMode({
+        requestedBrowserMode: undefined,
+        source: 'api',
+        connection,
+      });
+      const requestedBrowserPreference = resolveRequestedVintedBrowserPreference({
+        requestedBrowserPreference: undefined,
+        source: 'api',
+        connection,
+      });
       const jobId = await enqueueVintedListingJob({
         listingId: listing.id,
         action: 'list',
         source: 'api',
+        browserMode: requestedBrowserMode,
+        browserPreference: requestedBrowserPreference,
+      });
+      const queuedMarketplaceData = {
+        ...toRecord(listing.marketplaceData),
+        marketplace: 'vinted',
+        source: 'manual-listing',
+        vinted: {
+          ...toRecord(toRecord(listing.marketplaceData)['vinted']),
+          pendingExecution: {
+            action: 'list',
+            requestedBrowserMode,
+            requestedBrowserPreference,
+            requestId: jobId,
+            queuedAt: enqueuedAt,
+          },
+        },
+      };
+      await listingRepo.updateListing(listing.id, {
+        marketplaceData: queuedMarketplaceData,
       });
       const response: ProductListingCreateResponse = {
         ...listing,
+        marketplaceData: queuedMarketplaceData,
         queued: true,
         queue: {
           name: 'vinted-listings',
@@ -231,7 +270,6 @@ export async function POST_handler(
     if (isPlaywrightProgrammableSlug(integration.slug)) {
       initializeQueues();
       const enqueuedAt = new Date().toISOString();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const jobId = await enqueuePlaywrightListingJob({
         listingId: listing.id,
         action: 'list',

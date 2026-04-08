@@ -3,6 +3,8 @@
 import React from 'react';
 
 import {
+  isBrowserAutomationIntegrationSlug,
+  isPlaywrightProgrammableSlug,
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
@@ -18,6 +20,13 @@ import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layou
 const TRADERA_BROWSER_MODE_OPTIONS = [
   { value: 'builtin', label: 'Built-in form automation' },
   { value: 'scripted', label: 'Playwright script' },
+] as const;
+
+const PLAYWRIGHT_BROWSER_OPTIONS = [
+  { value: 'auto', label: 'Auto (Brave → Chrome → Chromium)' },
+  { value: 'brave', label: 'Brave' },
+  { value: 'chrome', label: 'Chrome' },
+  { value: 'chromium', label: 'Chromium (bundled)' },
 ] as const;
 
 type ConnectionFormFieldsProps = {
@@ -47,6 +56,9 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isBaselinker = integrationSlug === 'baselinker';
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
   const isVinted = isVintedIntegrationSlug(integrationSlug);
+  const showBrowserSelector =
+    isBrowserAutomationIntegrationSlug(integrationSlug) ||
+    isPlaywrightProgrammableSlug(integrationSlug);
 
   const connectionNamePlaceholder = isAllegro
     ? 'Integration name (e.g. Allegro Main)'
@@ -165,6 +177,26 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           }
          aria-label={passwordPlaceholder} title={passwordPlaceholder}/>
       </FormField>
+      {showBrowserSelector && (
+        <FormField label='Browser' description='Which browser to use for Playwright automation'>
+          <SelectSimple
+            id={`${idPrefix}-playwrightBrowser`}
+            value={form.playwrightBrowser}
+            onValueChange={(nextValue): void =>
+              setForm((prev) => ({
+                ...prev,
+                playwrightBrowser:
+                  nextValue === 'brave' || nextValue === 'chrome' || nextValue === 'chromium'
+                    ? nextValue
+                    : 'auto',
+              }))
+            }
+            options={[...PLAYWRIGHT_BROWSER_OPTIONS]}
+            ariaLabel='Browser'
+            placeholder='Browser'
+          />
+        </FormField>
+      )}
       {isTradera && (
         <>
           {isTraderaBrowser && (

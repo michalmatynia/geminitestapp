@@ -53,6 +53,11 @@ const ProductFormParameters = dynamic(() => import('./form/ProductFormParameters
   loading: DeferredTabPlaceholder,
 });
 
+const ProductFormCustomFields = dynamic(() => import('./form/ProductFormCustomFields'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
 const ProductFormImportInfo = dynamic(() => import('./form/ProductFormImportInfo'), {
   ssr: false,
   loading: DeferredTabPlaceholder,
@@ -99,7 +104,6 @@ const PRODUCT_FORM_TAB_SET = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS
 const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
   if (typeof value !== 'string') return 'general';
   const trimmed = value.trim();
-  if (trimmed === 'custom-fields') return 'parameters';
   if (!PRODUCT_FORM_TAB_SET.has(trimmed)) return 'general';
   return trimmed as ProductDraftOpenFormTab;
 };
@@ -308,9 +312,10 @@ export default function ProductForm({
             }}
             className='w-full'
           >
-            <TabsList className='grid w-full grid-cols-4 md:grid-cols-8' aria-label='Product form tabs'>
+            <TabsList className='grid w-full grid-cols-3 md:grid-cols-9' aria-label='Product form tabs'>
               <TabsTrigger value='general'>General</TabsTrigger>
               <TabsTrigger value='other'>Other</TabsTrigger>
+              <TabsTrigger value='custom-fields'>Custom Fields</TabsTrigger>
               <TabsTrigger value='parameters'>Parameters</TabsTrigger>
               <TabsTrigger value='images'>Images</TabsTrigger>
               <TabsTrigger value='studio'>Studio</TabsTrigger>
@@ -326,6 +331,9 @@ export default function ProductForm({
             {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}
             <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
               <ProductFormOther />
+            </TabsContent>
+            <TabsContent value='custom-fields' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('custom-fields') && <ProductFormCustomFields />}
             </TabsContent>
             <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('parameters') && <ProductFormParameters />}

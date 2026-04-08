@@ -1,4 +1,4 @@
-import { chromium, devices, type BrowserContextOptions } from 'playwright';
+import { devices, type BrowserContextOptions } from 'playwright';
 import { normalizeTraderaListingFormUrl, TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 import { encryptSecret } from '@/features/integrations/server';
 import {
@@ -8,6 +8,7 @@ import {
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { BrowserListingResultDto, ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
+import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { getIntegrationRepository } from '../integration-repository';
 import {
@@ -57,7 +58,7 @@ export const runTraderaBrowserListingStandard = async ({
   const deviceProfile =
     emulateDevice && deviceName && devices[deviceName] ? devices[deviceName] : null;
 
-  const browser = await chromium.launch({
+  const { browser } = await launchPlaywrightBrowser(playwrightSettings.browser, {
     headless: effectiveHeadless,
     slowMo: playwrightSettings.slowMo,
     ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer

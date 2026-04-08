@@ -67,3 +67,63 @@ describe('mongoProductWriteImpl.duplicateProduct', () => {
     );
   });
 });
+
+describe('mongoProductWriteImpl custom fields persistence', () => {
+  it('stores normalized custom fields on create', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const collection = {
+      insertOne,
+    };
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        customFields: [
+          { fieldId: '  notes  ', textValue: '  Handle with care  ' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', ' gift-ready ', 'fragile'] },
+        ],
+      } as any,
+      async () => collection as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'notes', textValue: 'Handle with care' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'fragile'] },
+        ],
+      })
+    );
+  });
+
+  it('stores normalized custom fields on update', async () => {
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+    const collection = {
+      findOneAndUpdate,
+    };
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        customFields: [
+          { fieldId: 'notes', textValue: 'Updated notes' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'gift-ready'] },
+        ],
+      } as any,
+      async () => collection as any
+    );
+
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          customFields: [
+            { fieldId: 'notes', textValue: 'Updated notes' },
+            { fieldId: 'flags', selectedOptionIds: ['gift-ready'] },
+          ],
+        }),
+      }),
+      expect.anything()
+    );
+  });
+});

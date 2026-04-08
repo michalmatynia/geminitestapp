@@ -186,6 +186,7 @@ describe('integration connection test handler', () => {
     parsePersistedStorageStateMock.mockReturnValue({ cookies: [], origins: [] });
 
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
+      browser: 'chromium',
       headless: true,
       slowMo: 77,
       timeout: 11_111,

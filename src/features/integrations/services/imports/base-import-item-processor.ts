@@ -16,6 +16,10 @@ import type { ProductListingRepository } from '@/shared/contracts/integrations/r
 import { defaultBaseImportParameterImportSettings, normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
 import { type ImportTemplateParameterImport } from '@/shared/contracts/integrations/templates';
 import type { ParameterRepository } from '@/shared/contracts/products/drafts';
+import type {
+  ProductCustomFieldDefinition,
+  ProductCustomFieldValue,
+} from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductRecord, ProductWithImages, ProductParameterValue } from '@/shared/contracts/products/product';
 import type { CreateProduct as ProductCreateInput, UpdateProduct as ProductUpdateInput } from '@/shared/contracts/products/io';
@@ -25,6 +29,7 @@ import { getImageFileRepository } from '@/shared/lib/files/services/image-file-r
 import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
 import { listingHasBaseImportProvenance } from '@/features/integrations/services/imports/base-import-provenance';
 
@@ -417,10 +422,12 @@ export const pickMappedSku = (mapped: NormalizedMappedProduct): string | null =>
 export const normalizeMappedProduct = (
   record: BaseProductRecord,
   mappings: Array<{ sourceKey: string; targetField: string }>,
-  preferredCurrencies: string[]
+  preferredCurrencies: string[],
+  customFieldDefinitions?: ProductCustomFieldDefinition[]
 ): NormalizedMappedProduct => {
   const mapped = mapBaseProduct(record, mappings, {
     preferredPriceCurrencies: preferredCurrencies,
+    customFieldDefinitions,
   }) as NormalizedMappedProduct;
 
   const sku = pickMappedSku(mapped);
@@ -476,6 +483,20 @@ const mergeParameterValues = (
   return Array.from(byParameterId.values());
 };
 
+const mergeCustomFieldValues = (
+  base: ProductCustomFieldValue[],
+  overrides: ProductCustomFieldValue[]
+): ProductCustomFieldValue[] => {
+  const byFieldId = new Map<string, ProductCustomFieldValue>();
+  normalizeProductCustomFieldValues(base).forEach((entry: ProductCustomFieldValue) => {
+    byFieldId.set(entry.fieldId, entry);
+  });
+  normalizeProductCustomFieldValues(overrides).forEach((entry: ProductCustomFieldValue) => {
+    byFieldId.set(entry.fieldId, entry);
+  });
+  return Array.from(byFieldId.values());
+};
+
 type ParameterImportSummary = BaseParameterImportSummary;
 
 type ParameterImportResult = {
@@ -504,6 +525,7 @@ export const importSingleItem = async (input: {
   mode: BaseImportMode;
   allowDuplicateSku: boolean;
   parameterImportSettings?: ImportTemplateParameterImport;
+  customFieldDefinitions?: ProductCustomFieldDefinition[];
   catalogLanguageCodes?: string[];
   defaultLanguageCode?: string | null;
   prefetchedParameters?: ProductParameter[];
@@ -518,9 +540,11 @@ export const importSingleItem = async (input: {
   const mapped = normalizeMappedProduct(
     input.raw,
     input.templateMappings,
-    input.preferredPriceCurrencies
+    input.preferredPriceCurrencies,
+    input.customFieldDefinitions
   );
   const templateMappedParameterValues = normalizeParameterValues(mapped.parameters);
+  const templateMappedCustomFieldValues = normalizeProductCustomFieldValues(mapped.customFields);
   const mappedProducerIds = resolveProducerIds(mapped.producerIds, input.lookups);
   const mappedTagIds = resolveTagIds(mapped.tagIds, input.lookups);
   const imageUrls = (mapped.imageLinks ?? []).slice(0, MAX_IMAGES_PER_PRODUCT);
@@ -615,6 +639,12 @@ export const importSingleItem = async (input: {
       templateMappedParameterValues
     );
     mapped.parameters = resolvedParameterValues.length > 0 ? resolvedParameterValues : undefined;
+    const resolvedCustomFieldValues = mergeCustomFieldValues(
+      Array.isArray(decision.target.customFields) ? decision.target.customFields : [],
+      templateMappedCustomFieldValues
+    );
+    mapped.customFields =
+      templateMappedCustomFieldValues.length > 0 ? resolvedCustomFieldValues : undefined;
 
     const updateData: ProductUpdateInput = {
       baseProductId: mappedBaseProductId ?? decision.target.baseProductId ?? null,
@@ -634,6 +664,9 @@ export const importSingleItem = async (input: {
       sizeWidth: mapped.sizeWidth,
       length: mapped.length,
       imageLinks: imageUrls,
+      ...(templateMappedCustomFieldValues.length > 0
+        ? { customFields: resolvedCustomFieldValues }
+        : {}),
       ...(resolvedParameterValues.length > 0 ? { parameters: resolvedParameterValues } : {}),
     };
 
@@ -795,11 +828,18 @@ export const importSingleItem = async (input: {
     parameterImportResult.applied ? parameterImportResult.parameters : [],
     templateMappedParameterValues
   );
+  const resolvedCustomFieldValues = normalizeProductCustomFieldValues(mapped.customFields);
   if (resolvedParameterValues.length > 0) {
     createData.parameters = resolvedParameterValues;
     mapped.parameters = resolvedParameterValues;
   } else {
     mapped.parameters = undefined;
+  }
+  if (resolvedCustomFieldValues.length > 0) {
+    createData.customFields = resolvedCustomFieldValues;
+    mapped.customFields = resolvedCustomFieldValues;
+  } else {
+    mapped.customFields = undefined;
   }
 
   const validationResult = await validateProductCreate(createData);

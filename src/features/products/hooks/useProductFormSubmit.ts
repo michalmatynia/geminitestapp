@@ -3,10 +3,12 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 
 import type { ProductWithImages, ProductParameterValue, ResolvedProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductCustomFieldValue } from '@/shared/contracts/products/custom-fields';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductImageSlot } from '@/shared/contracts/products/drafts';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 import {
   mergeProductParameterValue,
   normalizeParameterValuesByLanguage,
@@ -33,6 +35,7 @@ export interface UseProductFormSubmitProps {
   selectedTagIds: string[];
   selectedProducerIds: string[];
   selectedNoteIds: string[];
+  customFieldValues: ProductCustomFieldValue[];
   parameterValues: ProductParameterValue[];
   studioProjectId: string | null;
   refreshImages: (savedProduct: ProductWithImages) => void;
@@ -90,6 +93,10 @@ export const normalizeProductParametersForSubmission = (
     ).values()
   );
 
+export const normalizeProductCustomFieldsForSubmission = (
+  customFieldValues: ProductCustomFieldValue[]
+): ProductCustomFieldValue[] => normalizeProductCustomFieldValues(customFieldValues);
+
 type BuildProductFormDataInput = {
   data: ProductFormData;
   imageSlots: (ProductImageSlot | null)[];
@@ -100,6 +107,7 @@ type BuildProductFormDataInput = {
   selectedTagIds: string[];
   selectedProducerIds: string[];
   selectedNoteIds: string[];
+  customFieldValues: ProductCustomFieldValue[];
   parameterValues: ProductParameterValue[];
   studioProjectId: string | null;
 };
@@ -115,6 +123,7 @@ function buildFormData(input: BuildProductFormDataInput): FormData {
     selectedTagIds,
     selectedProducerIds,
     selectedNoteIds,
+    customFieldValues,
     parameterValues,
     studioProjectId,
   } = input;
@@ -177,6 +186,9 @@ function buildFormData(input: BuildProductFormDataInput): FormData {
     formData.append('noteIds', '');
   }
 
+  const normalizedCustomFields = normalizeProductCustomFieldsForSubmission(customFieldValues);
+  formData.append('customFields', JSON.stringify(normalizedCustomFields));
+
   const normalizedParameters = normalizeProductParametersForSubmission(parameterValues);
   formData.append('parameters', JSON.stringify(normalizedParameters));
 
@@ -199,6 +211,7 @@ export function useProductFormSubmit(
     selectedTagIds,
     selectedProducerIds,
     selectedNoteIds,
+    customFieldValues,
     parameterValues,
     studioProjectId,
     refreshImages,
@@ -273,6 +286,7 @@ export function useProductFormSubmit(
             selectedTagIds,
             selectedProducerIds,
             selectedNoteIds,
+            customFieldValues,
             parameterValues,
             studioProjectId,
           });
@@ -355,6 +369,7 @@ export function useProductFormSubmit(
       selectedTagIds,
       selectedProducerIds,
       selectedNoteIds,
+      customFieldValues,
       parameterValues,
       studioProjectId,
       toast,

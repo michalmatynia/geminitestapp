@@ -658,6 +658,100 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('title, description')).toBeInTheDocument();
   });
 
+  it('shows Vinted execution metadata including Brave/headed runtime details', () => {
+    useProductListingsUIStateMock.mockReturnValue({
+      historyOpenByListing: { 'listing-vinted-1': true },
+      setHistoryOpenByListing: vi.fn(),
+    });
+
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-vinted-1',
+            status: 'queued',
+            externalListingId: null,
+            inventoryId: null,
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: 'Vinted publish verification failed.',
+            exportHistory: [
+              {
+                exportedAt: '2026-04-02T11:45:00.000Z',
+                status: 'failed',
+                requestId: 'job-vinted-1',
+                fields: ['browser_mode:headed'],
+              },
+            ],
+            integration: {
+              name: 'Vinted',
+              slug: 'vinted',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Vinted Browser',
+            },
+            marketplaceData: {
+              listingUrl: 'https://www.vinted.pl/items/123456-example',
+              vinted: {
+                pendingExecution: {
+                  action: 'list',
+                  requestedBrowserMode: 'headed',
+                  requestedBrowserPreference: 'brave',
+                  requestId: 'job-vinted-queued-1',
+                  queuedAt: '2026-04-02T11:30:00.000Z',
+                },
+                lastExecution: {
+                  executedAt: '2026-04-02T11:45:00.000Z',
+                  requestId: 'job-vinted-1',
+                  errorCategory: 'FORM',
+                  metadata: {
+                    browserMode: 'headed',
+                    requestedBrowserMode: 'headed',
+                    browserPreference: 'brave',
+                    requestedBrowserPreference: 'brave',
+                    browserLabel: 'Brave',
+                    publishVerified: false,
+                    rawResult: {
+                      finalUrl: 'https://www.vinted.pl/items/new',
+                      stage: 'publish_verify',
+                    },
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Pending execution:')).toBeInTheDocument();
+    expect(screen.getByText('Pending browser mode:')).toBeInTheDocument();
+    expect(screen.getByText('Pending browser:')).toBeInTheDocument();
+    expect(screen.getByText('Pending queue job:')).toBeInTheDocument();
+    expect(screen.getByText('Last execution:')).toBeInTheDocument();
+    expect(screen.getAllByText('Browser mode:').length).toBeGreaterThan(1);
+    expect(screen.getAllByText('headed').length).toBeGreaterThan(1);
+    expect(screen.getByText('Browser:')).toBeInTheDocument();
+    expect(screen.getAllByText('Brave').length).toBeGreaterThan(0);
+    expect(screen.getByText('Queue job:')).toBeInTheDocument();
+    expect(screen.getAllByText('job-vinted-1').length).toBeGreaterThan(0);
+    expect(screen.getByText('Publish verified:')).toBeInTheDocument();
+    expect(screen.getByText('No')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.vinted.pl/items/123456-example'
+    );
+    expect(screen.getByText('Error category:')).toBeInTheDocument();
+    expect(screen.getByText('FORM')).toBeInTheDocument();
+    expect(screen.getByText('Vinted run result')).toBeInTheDocument();
+    expect(screen.getByText(/publish_verify/)).toBeInTheDocument();
+    expect(screen.getByText('Request ID:')).toBeInTheDocument();
+  });
+
   it('falls back to requested Playwright browser mode when the run never reports an effective mode', () => {
     useProductListingsUIStateMock.mockReturnValue({
       historyOpenByListing: { 'listing-1': true },

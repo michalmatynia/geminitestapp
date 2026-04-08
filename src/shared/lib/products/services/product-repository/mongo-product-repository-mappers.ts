@@ -7,6 +7,7 @@ import {
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 
 import type { WithId } from 'mongodb';
 
@@ -461,6 +462,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     catalogId,
     category,
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
+    customFields: normalizeProductCustomFieldValues(doc.customFields),
     parameters: normalizeParameterValues(doc.parameters),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
@@ -535,6 +537,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     catalogId,
     category,
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
+    customFields: normalizeProductCustomFieldValues(doc.customFields),
     parameters: normalizeParameterValues(doc.parameters),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],

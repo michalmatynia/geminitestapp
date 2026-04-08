@@ -7,6 +7,7 @@ import { ProductRecord, ProductWithImages } from '@/shared/contracts/products/pr
 
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import {
+  normalizeProductCustomFieldValues,
   buildProductIdFilter,
   normalizeProductParameterValues,
 } from '../mongo-product-repository.helpers';
@@ -56,6 +57,7 @@ export const mongoProductWriteImpl = {
       catalogs: [],
       tags: [],
       producers: [],
+      customFields: normalizeProductCustomFieldValues(data.customFields),
       parameters: normalizeProductParameterValues(data.parameters),
       imageLinks: data.imageLinks || [],
       imageBase64s: data.imageBase64s || [],
@@ -126,6 +128,9 @@ export const mongoProductWriteImpl = {
     }
     if (data.shippingGroupId !== undefined) {
       set['shippingGroupId'] = data.shippingGroupId;
+    }
+    if (data.customFields !== undefined) {
+      set['customFields'] = normalizeProductCustomFieldValues(data.customFields);
     }
     if (data.parameters !== undefined)
       set['parameters'] = normalizeProductParameterValues(data.parameters);

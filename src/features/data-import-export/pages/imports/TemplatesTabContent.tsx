@@ -5,6 +5,7 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
+  buildProductCustomFieldTargetOptions,
   PRODUCT_FIELDS,
   EXPORT_PARAMETER_KEYS,
   PRODUCT_PARAMETER_TARGET_PATTERN,
@@ -18,6 +19,7 @@ import {
 } from '@/features/data-import-export/context/ImportExportContext';
 import {
   useProductParameters,
+  useProductCustomFields,
   useProductSimpleParameters,
 } from '@/features/data-import-export/hooks/useImportQueries';
 import type { TemplateMapping } from '@/shared/contracts/integrations/import-export';
@@ -99,6 +101,7 @@ export function TemplatesTabContent(): React.JSX.Element {
     setExportImagesAsBase64,
     catalogId,
   } = useImportExportState();
+  const isImportTemplateScope = templateScope === 'import';
   const {
     handleNewTemplate,
     handleDuplicateTemplate,
@@ -116,6 +119,7 @@ export function TemplatesTabContent(): React.JSX.Element {
 
   const customParameterTargetsQuery = useProductParameters(catalogId || null);
   const simpleParameterTargetsQuery = useProductSimpleParameters(catalogId || null);
+  const customFieldTargetsQuery = useProductCustomFields();
   const customParameterTargetFields = React.useMemo((): Array<LabeledOptionDto<string>> => {
     const parameters = customParameterTargetsQuery.data ?? [];
     const seen = new Set<string>();
@@ -146,21 +150,30 @@ export function TemplatesTabContent(): React.JSX.Element {
       })
       .filter((entry): entry is LabeledOptionDto<string> => entry !== null);
   }, [simpleParameterTargetsQuery.data]);
+  const customFieldTargetFields = React.useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      buildProductCustomFieldTargetOptions(customFieldTargetsQuery.data ?? []),
+    [customFieldTargetsQuery.data]
+  );
   const templateTargetFieldOptions = React.useMemo((): Array<LabeledOptionDto<string>> => {
     const seen = new Set<string>();
     return [
       ...PRODUCT_FIELDS,
       ...customParameterTargetFields,
       ...simpleParameterTargetFields,
+      ...(isImportTemplateScope ? customFieldTargetFields : []),
     ].filter((entry): boolean => {
       const normalizedValue = entry.value.trim().toLowerCase();
       if (!normalizedValue || seen.has(normalizedValue)) return false;
       seen.add(normalizedValue);
       return true;
     });
-  }, [customParameterTargetFields, simpleParameterTargetFields]);
-
-  const isImportTemplateScope = templateScope === 'import';
+  }, [
+    customFieldTargetFields,
+    customParameterTargetFields,
+    isImportTemplateScope,
+    simpleParameterTargetFields,
+  ]);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
   const currentActiveTemplateId = isImportTemplateScope

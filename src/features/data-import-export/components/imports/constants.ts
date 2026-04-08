@@ -1,5 +1,10 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ExportParameterDoc } from '@/shared/contracts/integrations/import-export';
+import {
+  buildProductCustomFieldOptionTargetValue,
+  buildProductCustomFieldTargetValue,
+} from '@/shared/contracts/integrations/import-template-targets';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 
 export const PRODUCT_FIELDS = [
   { value: 'sku', label: 'SKU' },
@@ -57,6 +62,45 @@ export const PRODUCT_FIELDS = [
 export const PRODUCT_PARAMETER_TARGET_PREFIX = 'parameter:' as const;
 export const PRODUCT_PARAMETER_TARGET_PATTERN = `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>`;
 export const PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN = `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>|<language_code>`;
+
+export const buildProductCustomFieldTargetOptions = (
+  customFields: ProductCustomFieldDefinition[]
+): Array<LabeledOptionDto<string>> => {
+  const seen = new Set<string>();
+  const options: Array<LabeledOptionDto<string>> = [];
+
+  customFields.forEach((customField: ProductCustomFieldDefinition) => {
+    const fieldId = customField.id.trim();
+    if (!fieldId) return;
+
+    if (customField.type === 'checkbox_set') {
+      customField.options.forEach((option) => {
+        const optionId = option.id.trim();
+        if (!optionId) return;
+        const value = buildProductCustomFieldOptionTargetValue(fieldId, optionId);
+        const normalizedValue = value.trim().toLowerCase();
+        if (seen.has(normalizedValue)) return;
+        seen.add(normalizedValue);
+        options.push({
+          value,
+          label: `Checkbox: ${customField.name} -> ${option.label}`,
+        });
+      });
+      return;
+    }
+
+    const value = buildProductCustomFieldTargetValue(fieldId);
+    const normalizedValue = value.trim().toLowerCase();
+    if (seen.has(normalizedValue)) return;
+    seen.add(normalizedValue);
+    options.push({
+      value,
+      label: `Custom field: ${customField.name}`,
+    });
+  });
+
+  return options;
+};
 
 export const IMAGE_SLOT_KEYS = Array.from(
   { length: 15 },

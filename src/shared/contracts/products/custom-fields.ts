@@ -13,6 +13,12 @@ export const productCustomFieldOptionSchema = z.object({
 
 export type ProductCustomFieldOption = z.infer<typeof productCustomFieldOptionSchema>;
 
+export const productCustomFieldOptionInputSchema = productCustomFieldOptionSchema.extend({
+  id: z.string().optional(),
+});
+
+export type ProductCustomFieldOptionInput = z.infer<typeof productCustomFieldOptionInputSchema>;
+
 export const productCustomFieldDefinitionSchema = namedDtoSchema.extend({
   type: productCustomFieldTypeSchema,
   options: z.array(productCustomFieldOptionSchema).default([]),
@@ -20,11 +26,16 @@ export const productCustomFieldDefinitionSchema = namedDtoSchema.extend({
 
 export type ProductCustomFieldDefinition = z.infer<typeof productCustomFieldDefinitionSchema>;
 
-export const createProductCustomFieldDefinitionSchema = productCustomFieldDefinitionSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const createProductCustomFieldDefinitionSchema = namedDtoSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    type: productCustomFieldTypeSchema,
+    options: z.array(productCustomFieldOptionInputSchema).default([]),
+  });
 
 export type ProductCustomFieldDefinitionCreateInput = z.infer<
   typeof createProductCustomFieldDefinitionSchema

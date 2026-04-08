@@ -23,12 +23,17 @@ import {
   type ParsedProductImageSequenceEntry,
 } from '@/shared/lib/products/services/product-service-form-utils';
 import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
+import { getCustomFieldRepository } from '@/shared/lib/products/services/custom-field-repository';
 import { getShippingGroupRepository } from '@/shared/lib/products/services/shipping-group-repository';
 import {
   resolveEffectiveShippingGroup,
   resolveProductPrimaryCatalogId,
 } from '@/shared/lib/products/utils/effective-shipping-group';
 import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
+import {
+  filterProductCustomFieldValuesByDefinitions,
+  normalizeProductCustomFieldValues,
+} from '@/shared/lib/products/utils/custom-field-values';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { withRetry } from '@/shared/utils/retry';
@@ -148,11 +153,15 @@ const normalizeCreateProductPayloadForStorage = <TData extends Record<string, un
   data: TData
 ): TData => {
   const payload = data as TData & {
+    customFields?: unknown[] | null;
     parameters?: ProductParameterValue[] | null;
     imageFileIds?: string[] | null;
   };
   return {
     ...(payload as TData),
+    customFields: Array.isArray(payload.customFields)
+      ? normalizeProductCustomFieldValues(payload.customFields)
+      : [],
     parameters: Array.isArray(payload.parameters) ? payload.parameters : [],
     imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
   } as TData;
@@ -162,11 +171,15 @@ const normalizeUpdateProductPayloadForStorage = <TData extends Record<string, un
   data: TData
 ): TData => {
   const payload = data as TData & {
+    customFields?: unknown[] | null;
     parameters?: ProductParameterValue[] | null;
     imageFileIds?: string[] | null;
   };
   return {
     ...(payload as TData),
+    ...(Array.isArray(payload.customFields)
+      ? { customFields: normalizeProductCustomFieldValues(payload.customFields) }
+      : {}),
     ...(Array.isArray(payload.parameters) ? { parameters: payload.parameters } : {}),
     imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
   } as TData;
@@ -356,6 +369,24 @@ const applyProductRelations = async (
     await Promise.all(tasks);
   }
 };
+
+const sanitizeCustomFieldsForStorage = async <TData extends Record<string, unknown>>(
+  provider: ProductDbProvider,
+  data: TData
+): Promise<TData> => {
+  if (!Object.prototype.hasOwnProperty.call(data, 'customFields')) {
+    return data;
+  }
+
+  const repository = await getCustomFieldRepository(provider);
+  const definitions = await repository.listCustomFields({});
+
+  return {
+    ...data,
+    customFields: filterProductCustomFieldValuesByDefinitions(data['customFields'], definitions),
+  } as TData;
+};
+
 const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
 
 type ProductQueryTimings = Record<string, number | null | undefined>;
@@ -471,7 +502,10 @@ async function createProduct(
     });
   }
 
-  const normalized = normalizeCreateProductPayloadForStorage(validation.data);
+  const normalized = await sanitizeCustomFieldsForStorage(
+    provider,
+    normalizeCreateProductPayloadForStorage(validation.data)
+  );
 
   const product = await productRepository.createProduct(normalized);
   if (!product) {
@@ -534,7 +568,12 @@ async function bulkCreateProducts(
   for (const item of data) {
     const validation = await validateProductCreate(item);
     if (validation.success) {
-      validatedData.push(normalizeCreateProductPayloadForStorage(validation.data));
+      validatedData.push(
+        await sanitizeCustomFieldsForStorage(
+          provider,
+          normalizeCreateProductPayloadForStorage(validation.data)
+        )
+      );
     }
   }
 
@@ -572,7 +611,10 @@ async function updateProduct(
   const normalized = await preserveExistingParametersOnImplicitClear({
     id,
     existing,
-    normalized: normalizeUpdateProductPayloadForStorage(validation.data),
+    normalized: await sanitizeCustomFieldsForStorage(
+      provider,
+      normalizeUpdateProductPayloadForStorage(validation.data)
+    ),
     rawInput: data,
   });
 

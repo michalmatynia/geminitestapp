@@ -4,6 +4,7 @@ import type { BaseImportRunDetailResponse, BaseImportRunResumePayload, BaseImpor
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { IntegrationTemplate as Template } from '@/shared/contracts/integrations';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
 import type { DeleteResponse } from '@/shared/contracts/ui/api';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
@@ -105,6 +106,26 @@ export function useProductSimpleParameters(
       queryKey,
       tags: ['import-export', 'products', 'simple-parameters'],
       description: 'Loads products metadata simple parameters for import export.'},
+  });
+}
+
+export function useProductCustomFields(): ListQuery<ProductCustomFieldDefinition> {
+  const queryKey = productMetadataKeys.customFields();
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductCustomFieldDefinition[]> =>
+      await api.get<ProductCustomFieldDefinition[]>('/api/v2/products/custom-fields', {
+        cache: 'no-store',
+      }),
+    meta: {
+      source: 'importExport.hooks.useProductCustomFields',
+      operation: 'list',
+      resource: 'products.metadata.custom-fields',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'products', 'custom-fields'],
+      description: 'Loads products metadata custom fields for import export.',
+    },
   });
 }
 

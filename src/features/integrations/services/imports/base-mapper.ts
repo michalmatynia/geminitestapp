@@ -2,7 +2,16 @@ import { randomUUID } from 'crypto';
 
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import type { IntegrationTemplateMapping as TemplateMapping } from '@/shared/contracts/integrations';
+import { parseProductCustomFieldTarget } from '@/shared/contracts/integrations/import-template-targets';
+import type {
+  ProductCustomFieldDefinition,
+  ProductCustomFieldValue,
+} from '@/shared/contracts/products/custom-fields';
 import type { ProductCreateInput } from '@/shared/contracts/products/io';
+import {
+  normalizeProductCustomFieldSelectedOptionIds,
+  normalizeProductCustomFieldValues,
+} from '@/shared/lib/products/utils/custom-field-values';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -492,6 +501,42 @@ const normalizeTagIds = (value: unknown): string[] => {
   return Array.from(unique);
 };
 
+const toCheckboxValue = (value: unknown): boolean => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return Number.isFinite(value) && value !== 0;
+  if (Array.isArray(value)) return value.some((entry: unknown) => toCheckboxValue(entry));
+  if (typeof value !== 'string') return false;
+
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  if (['0', 'false', 'no', 'off', 'unchecked', 'null', 'none'].includes(normalized)) {
+    return false;
+  }
+  return true;
+};
+
+const mergeCheckboxOptionSelection = (
+  customFieldValuesById: Map<string, ProductCustomFieldValue>,
+  fieldId: string,
+  optionId: string,
+  selected: boolean
+): void => {
+  const existing = customFieldValuesById.get(fieldId);
+  const nextSelectedOptionIds = new Set(
+    normalizeProductCustomFieldSelectedOptionIds(existing?.selectedOptionIds)
+  );
+  if (selected) {
+    nextSelectedOptionIds.add(optionId);
+  } else {
+    nextSelectedOptionIds.delete(optionId);
+  }
+
+  customFieldValuesById.set(fieldId, {
+    fieldId,
+    selectedOptionIds: Array.from(nextSelectedOptionIds),
+  });
+};
+
 const getByPath = (record: BaseProductRecord, path: string[]): unknown => {
   let current: unknown = record;
   for (const key of path) {
@@ -542,11 +587,162 @@ const collectTemplateParameterBuckets = (record: BaseProductRecord): unknown[] =
   return buckets;
 };
 
+const normalizeLookupKey = (value: string): string => value.trim().toLowerCase();
+
+const findObjectEntryByNormalizedKey = (
+  record: Record<string, unknown>,
+  key: string
+): [string, unknown] | null => {
+  if (key in record) {
+    return [key, record[key]];
+  }
+  const normalizedKey = normalizeLookupKey(key);
+  return (
+    Object.entries(record).find(
+      ([candidateKey]: [string, unknown]) => normalizeLookupKey(candidateKey) === normalizedKey
+    ) ?? null
+  );
+};
+
+const extractOptionValueFromArray = (entries: unknown[], optionKey: string): unknown => {
+  const normalizedOptionKey = normalizeLookupKey(optionKey);
+
+  for (const entry of entries) {
+    const scalar = toTrimmedString(entry);
+    if (scalar && normalizeLookupKey(scalar) === normalizedOptionKey) {
+      return true;
+    }
+
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+
+    const record = entry as Record<string, unknown>;
+    const optionName = toTrimmedString(
+      record['name'] ??
+        record['parameter'] ??
+        record['code'] ??
+        record['label'] ??
+        record['title'] ??
+        record['value'] ??
+        record['text']
+    );
+    if (!optionName || normalizeLookupKey(optionName) !== normalizedOptionKey) continue;
+
+    const explicitState =
+      record['selected'] ??
+      record['checked'] ??
+      record['active'] ??
+      record['enabled'] ??
+      record['is_selected'] ??
+      record['isSelected'];
+    if (explicitState !== undefined) {
+      return explicitState;
+    }
+
+    return true;
+  }
+
+  return null;
+};
+
+const resolveCompoundParameterValue = (
+  record: Record<string, unknown>,
+  sourceKey: string
+): unknown => {
+  const pathSegments = sourceKey
+    .split('.')
+    .map((segment: string) => segment.trim())
+    .filter((segment: string): boolean => segment.length > 0);
+  if (pathSegments.length < 2) return null;
+
+  const headSegment = pathSegments[0];
+  if (!headSegment) return null;
+  const tailSegments = pathSegments.slice(1);
+  const normalizedHeadSegment = normalizeLookupKey(headSegment);
+  const name = toTrimmedString(
+    record['name'] ?? record['parameter'] ?? record['code'] ?? record['label'] ?? record['title']
+  );
+  const id = toTrimmedString(
+    record['id'] ?? record['parameter_id'] ?? record['param_id'] ?? record['attribute_id']
+  );
+  const headMatches =
+    (name && normalizeLookupKey(name) === normalizedHeadSegment) ||
+    (id && normalizeLookupKey(id) === normalizedHeadSegment);
+  if (!headMatches) return null;
+
+  const nestedCandidates = [
+    record['value'],
+    record['values'],
+    record['options'],
+    record['items'],
+    record['children'],
+    record['data'],
+  ];
+
+  for (const candidate of nestedCandidates) {
+    const resolved = resolveValueByNormalizedPath(candidate, tailSegments);
+    if (resolved !== null && resolved !== undefined) {
+      return resolved;
+    }
+  }
+
+  return null;
+};
+
+const resolveValueByNormalizedPath = (value: unknown, pathSegments: string[]): unknown => {
+  if (value === null || value === undefined) return null;
+  if (pathSegments.length === 0) return value;
+  const currentSegment = pathSegments[0];
+  if (!currentSegment) return null;
+
+  if (Array.isArray(value)) {
+    if (pathSegments.length === 1) {
+      return extractOptionValueFromArray(value, currentSegment);
+    }
+
+    for (const entry of value) {
+      const resolved = resolveValueByNormalizedPath(entry, pathSegments);
+      if (resolved !== null && resolved !== undefined) {
+        return resolved;
+      }
+    }
+
+    return null;
+  }
+
+  if (typeof value !== 'object') {
+    if (pathSegments.length !== 1) return null;
+    const scalar = toTrimmedString(value);
+    if (!scalar) return null;
+    return normalizeLookupKey(scalar) === normalizeLookupKey(currentSegment) ? true : null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const directEntry = findObjectEntryByNormalizedKey(record, currentSegment);
+  if (directEntry) {
+    return resolveValueByNormalizedPath(directEntry[1], pathSegments.slice(1));
+  }
+
+  if (pathSegments.length > 1) {
+    const compoundValue = resolveCompoundParameterValue(record, pathSegments.join('.'));
+    if (compoundValue !== null && compoundValue !== undefined) {
+      return compoundValue;
+    }
+  }
+
+  return null;
+};
+
 const findParameterValue = (params: unknown, sourceKey: string): unknown => {
   if (!params) return null;
   const normalizedSourceKey = sourceKey.trim().toLowerCase();
   if (!normalizedSourceKey) return null;
   const getFromParameterRecord = (record: Record<string, unknown>): unknown => {
+    if (sourceKey.includes('.')) {
+      const compoundValue = resolveCompoundParameterValue(record, sourceKey);
+      if (compoundValue !== null && compoundValue !== undefined) {
+        return compoundValue;
+      }
+    }
     const name = toTrimmedString(
       record['name'] ?? record['parameter'] ?? record['code'] ?? record['label'] ?? record['title']
     );
@@ -578,6 +774,18 @@ const findParameterValue = (params: unknown, sourceKey: string): unknown => {
   }
   if (typeof params === 'object') {
     const record = params as Record<string, unknown>;
+    if (sourceKey.includes('.')) {
+      const byPath = resolveValueByNormalizedPath(
+        record,
+        sourceKey
+          .split('.')
+          .map((segment: string) => segment.trim())
+          .filter((segment: string): boolean => segment.length > 0)
+      );
+      if (byPath !== null && byPath !== undefined) {
+        return byPath;
+      }
+    }
     if (sourceKey in record) return record[sourceKey];
     const byNormalizedKey = Object.entries(record).find(
       ([key]: [string, unknown]) => key.trim().toLowerCase() === normalizedSourceKey
@@ -644,18 +852,132 @@ const resolveTemplateValue = (record: BaseProductRecord, sourceKey: string): unk
   return null;
 };
 
+const buildSourceKeyCandidates = (label: string, parentLabel?: string): string[] => {
+  const trimmedLabel = label.trim();
+  if (!trimmedLabel) return [];
+
+  const baseVariants = Array.from(
+    new Set(
+      [
+        trimmedLabel,
+        trimmedLabel.toLowerCase(),
+        trimmedLabel.replace(/\s+/g, '_'),
+        trimmedLabel.replace(/\s+/g, '_').toLowerCase(),
+        trimmedLabel.replace(/\s+/g, '-'),
+        trimmedLabel.replace(/\s+/g, '-').toLowerCase(),
+        trimmedLabel.replace(/\s+/g, ''),
+        trimmedLabel.replace(/\s+/g, '').toLowerCase(),
+      ].filter((candidate): candidate is string => candidate.length > 0)
+    )
+  );
+
+  const parentVariants = parentLabel ? buildSourceKeyCandidates(parentLabel) : [];
+  return Array.from(
+    new Set([
+      ...baseVariants,
+      ...parentVariants.flatMap((parentVariant) =>
+        baseVariants.flatMap((baseVariant) => [
+          `${parentVariant}.${baseVariant}`,
+          `${parentVariant}_${baseVariant}`,
+          `${parentVariant}-${baseVariant}`,
+        ])
+      ),
+    ])
+  );
+};
+
+const resolveAutoTemplateValue = (
+  record: BaseProductRecord,
+  label: string,
+  parentLabel?: string
+): unknown => {
+  const candidates = buildSourceKeyCandidates(label, parentLabel);
+  for (const candidate of candidates) {
+    const value = resolveTemplateValue(record, candidate);
+    if (value !== null && value !== undefined) {
+      return value;
+    }
+  }
+  return null;
+};
+
+const autoExtractCustomFieldValues = (
+  record: BaseProductRecord,
+  customFieldDefinitions: ProductCustomFieldDefinition[] | undefined
+): ProductCustomFieldValue[] => {
+  if (!Array.isArray(customFieldDefinitions) || customFieldDefinitions.length === 0) {
+    return [];
+  }
+
+  const customFieldValuesById = new Map<string, ProductCustomFieldValue>();
+
+  customFieldDefinitions.forEach((customField: ProductCustomFieldDefinition) => {
+    const fieldId = customField.id.trim();
+    const fieldName = customField.name.trim();
+    if (!fieldId || !fieldName) return;
+
+    if (customField.type === 'checkbox_set') {
+      let matchedAnyOption = false;
+      customField.options.forEach((option) => {
+        const optionId = option.id.trim();
+        const optionLabel = option.label.trim();
+        if (!optionId || !optionLabel) return;
+
+        const rawValue = resolveAutoTemplateValue(record, optionLabel, fieldName);
+        if (rawValue === null || rawValue === undefined) return;
+
+        matchedAnyOption = true;
+        mergeCheckboxOptionSelection(
+          customFieldValuesById,
+          fieldId,
+          optionId,
+          toCheckboxValue(rawValue)
+        );
+      });
+
+      if (!matchedAnyOption) return;
+      if (!customFieldValuesById.has(fieldId)) {
+        customFieldValuesById.set(fieldId, {
+          fieldId,
+          selectedOptionIds: [],
+        });
+      }
+      return;
+    }
+
+    const rawValue = resolveAutoTemplateValue(record, fieldName);
+    if (rawValue === null || rawValue === undefined) return;
+
+    const textValue = toStringValue(rawValue);
+    if (textValue === null) return;
+
+    customFieldValuesById.set(fieldId, {
+      fieldId,
+      textValue,
+    });
+  });
+
+  return normalizeProductCustomFieldValues(Array.from(customFieldValuesById.values()));
+};
+
 const applyTemplateMappings = (
   record: BaseProductRecord,
   mapped: ProductCreateInput,
   mappings: TemplateMapping[]
 ): void => {
   const parameterValuesById = new Map<string, { parameterId: string; value: string }>();
+  const customFieldValuesById = new Map<string, ProductCustomFieldValue>();
   if (Array.isArray(mapped.parameters)) {
     mapped.parameters.forEach((entry) => {
       const parameterId = toTrimmedString(entry?.parameterId);
       const value = toTrimmedString(entry?.value);
       if (!parameterId || !value) return;
       parameterValuesById.set(parameterId, { parameterId, value });
+    });
+  }
+  if (Array.isArray(mapped.customFields)) {
+    normalizeProductCustomFieldValues(mapped.customFields).forEach((entry: ProductCustomFieldValue) => {
+      customFieldValuesById.set(entry.fieldId, entry);
     });
   }
 
@@ -677,6 +999,26 @@ const applyTemplateMappings = (
       const tagIds = normalizeTagIds(rawValue);
       if (tagIds.length > 0) {
         (mapped as ProductCreateInput & { tagIds?: string[] }).tagIds = tagIds;
+      }
+      continue;
+    }
+    const customFieldTarget = parseProductCustomFieldTarget(targetField);
+    if (customFieldTarget) {
+      if (customFieldTarget.optionId) {
+        mergeCheckboxOptionSelection(
+          customFieldValuesById,
+          customFieldTarget.fieldId,
+          customFieldTarget.optionId,
+          toCheckboxValue(rawValue)
+        );
+      } else {
+        const textValue = toStringValue(rawValue);
+        if (textValue !== null) {
+          customFieldValuesById.set(customFieldTarget.fieldId, {
+            fieldId: customFieldTarget.fieldId,
+            textValue,
+          });
+        }
       }
       continue;
     }
@@ -730,6 +1072,9 @@ const applyTemplateMappings = (
   if (parameterValuesById.size > 0) {
     mapped.parameters = Array.from(parameterValuesById.values());
   }
+  if (customFieldValuesById.size > 0) {
+    mapped.customFields = normalizeProductCustomFieldValues(Array.from(customFieldValuesById.values()));
+  }
 };
 
 export function mapBaseProduct(
@@ -737,6 +1082,7 @@ export function mapBaseProduct(
   mappings: TemplateMapping[] = [],
   options?: {
     preferredPriceCurrencies?: string[];
+    customFieldDefinitions?: ProductCustomFieldDefinition[];
   }
 ): ProductCreateInput {
   // Extend this mapper as new Base.com fields are needed.
@@ -851,6 +1197,13 @@ export function mapBaseProduct(
   if (autoProducerIds.length > 0) extendedResult.producerIds = autoProducerIds;
   const autoTagIds = autoExtractTagIds(record);
   if (autoTagIds.length > 0) extendedResult.tagIds = autoTagIds;
+  const autoCustomFieldValues = autoExtractCustomFieldValues(
+    record,
+    options?.customFieldDefinitions
+  );
+  if (autoCustomFieldValues.length > 0) {
+    extendedResult.customFields = autoCustomFieldValues;
+  }
 
   applyTemplateMappings(record, result, mappings);
 

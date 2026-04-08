@@ -54,6 +54,7 @@ type IntegrationConnectionDocument = {
   playwrightProxyServer?: string;
   playwrightProxyUsername?: string;
   playwrightProxyPassword?: string | null;
+  playwrightBrowser?: string;
   playwrightEmulateDevice?: boolean;
   playwrightDeviceName?: string;
   playwrightPersonaId?: string | null;

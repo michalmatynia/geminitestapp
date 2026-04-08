@@ -75,6 +75,7 @@ describe('useProductFormSubmit', () => {
         selectedTagIds: [],
         selectedProducerIds: [],
         selectedNoteIds: [],
+        customFieldValues: [],
         parameterValues: [],
         studioProjectId: null,
         refreshImages,

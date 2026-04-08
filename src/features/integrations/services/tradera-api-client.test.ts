@@ -22,6 +22,45 @@ describe('parseTraderaCategoriesXml', () => {
     ]);
   });
 
+  it('does not corrupt parent chain when a Category tag has no Id or Name', () => {
+    const xml = `
+      <Categories>
+        <Category Id="1" Name="Collectibles">
+          <Category>
+            <Category Id="2" Name="Pins"></Category>
+          </Category>
+          <Category Id="3" Name="Keychains"></Category>
+        </Category>
+        <Category Id="4" Name="Movies"></Category>
+      </Categories>
+    `;
+
+    // The nameless Category is skipped, but its closing tag should not pop the wrong parent.
+    // Category 2 inherits from the nearest valid ancestor (1), Category 3 is still a child of 1.
+    expect(parseTraderaCategoriesXml(xml)).toEqual([
+      { id: '1', name: 'Collectibles', parentId: null },
+      { id: '2', name: 'Pins', parentId: '1' },
+      { id: '3', name: 'Keychains', parentId: '1' },
+      { id: '4', name: 'Movies', parentId: null },
+    ]);
+  });
+
+  it('skips nil self-closing categories without breaking the tree', () => {
+    const xml = `
+      <Categories>
+        <Category Id="1" Name="Root">
+          <Category xsi:nil="true"/>
+          <Category Id="2" Name="Child"></Category>
+        </Category>
+      </Categories>
+    `;
+
+    expect(parseTraderaCategoriesXml(xml)).toEqual([
+      { id: '1', name: 'Root', parentId: null },
+      { id: '2', name: 'Child', parentId: '1' },
+    ]);
+  });
+
   it('preserves three-level Tradera category branches', () => {
     const xml = `
       <Categories>

@@ -9,6 +9,8 @@ const {
   listProductListingsByProductIdAcrossProvidersMock,
   createListingMock,
   enqueueTraderaListingJobMock,
+  enqueueVintedListingJobMock,
+  updateListingMock,
   initializeQueuesMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
@@ -19,6 +21,8 @@ const {
   listProductListingsByProductIdAcrossProvidersMock: vi.fn(),
   createListingMock: vi.fn(),
   enqueueTraderaListingJobMock: vi.fn(),
+  enqueueVintedListingJobMock: vi.fn(),
+  updateListingMock: vi.fn(),
   initializeQueuesMock: vi.fn(),
 }));
 
@@ -32,6 +36,7 @@ vi.mock('@/features/products/server', () => ({
 vi.mock('@/features/integrations/server', () => ({
   getProductListingRepository: async () => ({
     createListing: (...args: unknown[]) => createListingMock(...args),
+    updateListing: (...args: unknown[]) => updateListingMock(...args),
   }),
   listingExistsAcrossProviders: (...args: unknown[]) =>
     listingExistsAcrossProvidersMock(...args),
@@ -47,6 +52,8 @@ vi.mock('@/features/integrations/server', () => ({
 vi.mock('@/features/jobs/server', () => ({
   enqueueTraderaListingJob: (...args: unknown[]) =>
     enqueueTraderaListingJobMock(...args),
+  enqueueVintedListingJob: (...args: unknown[]) =>
+    enqueueVintedListingJobMock(...args),
   enqueuePlaywrightListingJob: vi.fn(),
   initializeQueues: (...args: unknown[]) => initializeQueuesMock(...args),
 }));
@@ -86,6 +93,7 @@ describe('integration product listings handler', () => {
       status: 'queued',
     });
     enqueueTraderaListingJobMock.mockResolvedValue('job-tradera-1');
+    enqueueVintedListingJobMock.mockResolvedValue('job-vinted-1');
   });
 
   it('initializes queues before enqueueing a Tradera listing job', async () => {
@@ -172,5 +180,88 @@ describe('integration product listings handler', () => {
     });
     expect(createListingMock).not.toHaveBeenCalled();
     expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
+  });
+
+  it('records pending Vinted runtime metadata when queueing a listing job', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        integrationId: 'integration-vinted-1',
+        connectionId: 'connection-vinted-1',
+      },
+    });
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-vinted-1',
+      slug: 'vinted',
+    });
+    getConnectionByIdAndIntegrationMock.mockResolvedValue({
+      id: 'connection-vinted-1',
+      integrationId: 'integration-vinted-1',
+      playwrightHeadless: true,
+      playwrightBrowser: 'auto',
+    });
+    createListingMock.mockResolvedValue({
+      id: 'listing-vinted-1',
+      productId: 'product-1',
+      integrationId: 'integration-vinted-1',
+      connectionId: 'connection-vinted-1',
+      status: 'queued',
+      marketplaceData: {
+        marketplace: 'vinted',
+        source: 'manual-listing',
+      },
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(initializeQueuesMock).toHaveBeenCalledTimes(1);
+    expect(enqueueVintedListingJobMock).toHaveBeenCalledWith({
+      listingId: 'listing-vinted-1',
+      action: 'list',
+      source: 'api',
+      browserMode: 'headed',
+      browserPreference: 'brave',
+    });
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-vinted-1',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          marketplace: 'vinted',
+          vinted: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              action: 'list',
+              requestedBrowserMode: 'headed',
+              requestedBrowserPreference: 'brave',
+              requestId: 'job-vinted-1',
+            }),
+          }),
+        }),
+      })
+    );
+    expect(payload).toMatchObject({
+      id: 'listing-vinted-1',
+      queued: true,
+      marketplaceData: {
+        marketplace: 'vinted',
+        vinted: {
+          pendingExecution: {
+            action: 'list',
+            requestedBrowserMode: 'headed',
+            requestedBrowserPreference: 'brave',
+            requestId: 'job-vinted-1',
+          },
+        },
+      },
+      queue: {
+        name: 'vinted-listings',
+        jobId: 'job-vinted-1',
+      },
+    });
   });
 });

@@ -43,7 +43,7 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   const [exportWarehouseId, setExportWarehouseId] = useState('');
   const [catalogId, setCatalogId] = useState('');
   const [limit, setLimit] = useState('all');
-  const [imageMode, setImageMode] = useState<'links' | 'download'>('links');
+  const [imageMode, setImageMode] = useState<'links' | 'download'>('download');
   const [importMode, setImportMode] = useState<BaseImportMode>('upsert_on_base_id');
   const [importDryRun, setImportDryRun] = useState(false);
   const [lastResult, setLastResult] = useState<ImportResponse | null>(null);

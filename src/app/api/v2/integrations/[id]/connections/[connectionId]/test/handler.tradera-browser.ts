@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { chromium, devices, type BrowserContextOptions } from 'playwright';
+import { devices, type BrowserContextOptions } from 'playwright';
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
   normalizeTraderaListingFormUrl,
@@ -27,6 +27,7 @@ import {
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { type IntegrationConnectionRecord, type IntegrationRepository, type TestConnectionResponse, type TestLogEntry } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
+import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import type { Browser, BrowserContext, Page } from 'playwright';
 
 const QUICKLIST_AUTH_REQUIRED_DETAIL =
@@ -114,7 +115,7 @@ export async function handleTraderaBrowserTest(
     const deviceProfile =
       emulateDevice && deviceName && devices[deviceName] ? devices[deviceName] : null;
 
-    browser = await chromium.launch({
+    const launchResult = await launchPlaywrightBrowser(playwrightSettings.browser, {
       headless: effectiveHeadless,
       slowMo: quicklistPreflightMode ? 0 : playwrightSettings.slowMo,
       ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
@@ -131,6 +132,11 @@ export async function handleTraderaBrowserTest(
         }
         : {}),
     });
+    browser = launchResult.browser;
+    for (const msg of launchResult.fallbackMessages) {
+      pushStep('Browser selection', 'ok', msg);
+    }
+    pushStep('Browser selection', 'ok', `Using ${launchResult.label}.`);
 
     const deviceContextOptions: BrowserContextOptions = deviceProfile
       ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)

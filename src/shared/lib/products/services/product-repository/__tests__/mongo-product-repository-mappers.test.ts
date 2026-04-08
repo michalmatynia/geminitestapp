@@ -119,6 +119,38 @@ describe('mongo product repository mappers', () => {
     ]);
   });
 
+  it('normalizes custom field values from the stored product payload', () => {
+    const result = toProductResponse(asProductDocument({
+      _id: 'product-custom-fields-1',
+      id: 'product-custom-fields-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: false,
+      customFields: [
+        {
+          fieldId: '  notes  ',
+          textValue: '  Handle with care  ',
+        },
+        {
+          fieldId: 'flags',
+          selectedOptionIds: ['gift-ready', 'gift-ready', ' fragile '],
+        },
+      ],
+    }));
+
+    expect(result.customFields).toEqual([
+      {
+        fieldId: 'notes',
+        textValue: 'Handle with care',
+      },
+      {
+        fieldId: 'flags',
+        selectedOptionIds: ['gift-ready', 'fragile'],
+      },
+    ]);
+  });
+
   it('rejects legacy nested localized objects', () => {
     expect(() =>
       toProductResponse(asProductDocument({

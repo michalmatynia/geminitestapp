@@ -173,6 +173,7 @@ describe('handleVintedBrowserTest', () => {
     });
     encryptSecretMock.mockImplementation((value: string) => `encrypted:${value}`);
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
+      browser: 'auto',
       headless: true,
       slowMo: 0,
       timeout: 15_000,
@@ -318,9 +319,9 @@ describe('handleVintedBrowserTest', () => {
         (step) => step.step === 'Saving session' && step.status === 'ok'
       )
     ).toBe(true);
+    // In manual mode, Brave or Chrome is used depending on whether Brave is installed
     expect(chromiumLaunchMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        channel: 'chrome',
         headless: false,
       })
     );
@@ -426,10 +427,12 @@ describe('handleVintedBrowserTest', () => {
     ).toBe(true);
   });
 
-  it('falls back to Playwright Chromium when the Chrome channel is unavailable', async () => {
+  it('falls back to Playwright Chromium when preferred browsers are unavailable', async () => {
     const harness = buildHarness({ initialPhase: 'auth', transitionAfterWaits: 1 });
+    // Reject all preferred browsers (Brave if found + Chrome), then resolve with fallback
     chromiumLaunchMock
-      .mockRejectedValueOnce(new Error('Chrome channel missing'))
+      .mockRejectedValueOnce(new Error('Browser unavailable'))
+      .mockRejectedValueOnce(new Error('Browser unavailable'))
       .mockResolvedValue(harness.browser);
 
     const steps: Array<{ step: string; status: string; detail: string }> = [];
@@ -459,24 +462,13 @@ describe('handleVintedBrowserTest', () => {
     expect((await response.json()) as { ok: boolean }).toEqual(
       expect.objectContaining({ ok: true })
     );
-    expect(chromiumLaunchMock).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        channel: 'chrome',
-      })
-    );
-    expect(chromiumLaunchMock).toHaveBeenNthCalledWith(
-      2,
-      expect.not.objectContaining({
-        channel: expect.anything(),
-      })
-    );
+    // Should have fallback messages about unavailable browsers, then final Chromium selection
     expect(
       steps.some(
         (step) =>
-          step.step === 'Manual browser profile' &&
+          step.step === 'Browser selection' &&
           step.status === 'ok' &&
-          step.detail.includes('Falling back to Playwright Chromium')
+          step.detail.includes('Chromium (bundled)')
       )
     ).toBe(true);
   });

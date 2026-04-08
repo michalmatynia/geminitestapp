@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
-import { chromium, devices } from 'playwright';
+import { devices } from 'playwright';
 
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import {
@@ -8,6 +8,7 @@ import {
   type PersistedStorageState,
 } from '@/features/integrations/services/tradera-playwright-settings';
 import { type TestLogEntry } from '@/shared/contracts/integrations';
+import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createVintedBrowserTestUtils } from '@/features/integrations/services/vinted-listing/vinted-browser-test-utils';
 import {
@@ -24,7 +25,6 @@ type Fail = (step: string, detail: string, status?: number) => Promise<never>;
 
 const VINTED_GOOGLE_SIGN_IN_BLOCKED_MESSAGE =
   'AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.';
-const MANUAL_VINTED_BROWSER_CHANNEL = 'chrome';
 const MANUAL_VINTED_DEVICE_NAME = 'Desktop Chrome';
 
 export const handleVintedBrowserTest = async (
@@ -121,10 +121,9 @@ export const handleVintedBrowserTest = async (
   let page: Page | null = null;
 
   try {
-    const buildLaunchOptions = (channel?: string) => ({
+    const baseLaunchOptions = {
       headless,
       slowMo,
-      ...(channel ? { channel } : {}),
       ...(proxyEnabled && proxyServer
         ? {
           proxy: {
@@ -134,40 +133,24 @@ export const handleVintedBrowserTest = async (
           },
         }
         : {}),
-    });
+    };
 
     pushStep(
       'Launching Playwright',
       'pending',
-      `Starting Chromium (headless=${headless ? 'on' : 'off'})`
+      `Starting browser (headless=${headless ? 'on' : 'off'})`
     );
-    if (manualMode) {
-      pushStep(
-        'Manual browser profile',
-        'pending',
-        'Trying Chrome channel for manual Vinted authentication.'
-      );
-      try {
-        browser = await chromium.launch(buildLaunchOptions(MANUAL_VINTED_BROWSER_CHANNEL));
-        pushStep(
-          'Manual browser profile',
-          'ok',
-          'Using Chrome channel for manual Vinted authentication.'
-        );
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        pushStep(
-          'Manual browser profile',
-          'ok',
-          `Chrome channel unavailable (${message}). Falling back to Playwright Chromium.`
-        );
-      }
-    }
 
-    if (!browser) {
-      browser = await chromium.launch(buildLaunchOptions());
+    const browserPreference = manualMode && resolvedPlaywrightSettings.browser === 'chromium'
+      ? 'auto' as const
+      : resolvedPlaywrightSettings.browser;
+    const launchResult = await launchPlaywrightBrowser(browserPreference, baseLaunchOptions);
+    browser = launchResult.browser;
+
+    for (const msg of launchResult.fallbackMessages) {
+      pushStep('Browser selection', 'ok', msg);
     }
+    pushStep('Browser selection', 'ok', `Using ${launchResult.label}.`);
 
     const contextOptions: BrowserContextOptions = {
       ...deviceContextOptions,
@@ -179,31 +162,41 @@ export const handleVintedBrowserTest = async (
     context.setDefaultTimeout(defaultTimeout);
     context.setDefaultNavigationTimeout(navigationTimeout);
     page = await context.newPage();
+    const activePage = page;
 
     const {
-      safeGoto,
       acceptCookieConsent,
       humanizedPause,
       failWithDebug,
     } = createVintedBrowserTestUtils({
-      page,
+      page: activePage,
       connectionId: connection.id,
       fail,
     });
+    /** Navigate to a Vinted URL, tolerating ERR_ABORTED which happens during Vinted's redirect chain (GDPR, locale, OAuth). */
+    const safeVintedGoto = async (url: string, stepName: string): Promise<void> => {
+      try {
+        await activePage.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '';
+        if (message.includes('net::ERR_ABORTED')) {
+          // Vinted redirects during navigation (consent, locale detection, etc.) — wait for the page to settle
+          pushStep(stepName, 'pending', 'Redirect detected, waiting for page to settle...');
+          await activePage
+            .waitForLoadState('domcontentloaded', { timeout: 15000 })
+            .catch(() => undefined);
+        } else {
+          void ErrorSystem.captureException(error);
+          return await fail(stepName, `Failed to navigate to ${url}: ${message}`);
+        }
+      }
+    };
     const openVintedListingForm = async (stepName: string): Promise<void> => {
-      await safeGoto(
-        VINTED_LISTING_FORM_URL,
-        { waitUntil: 'domcontentloaded', timeout: 30000 },
-        stepName
-      );
+      await safeVintedGoto(VINTED_LISTING_FORM_URL, stepName);
       await acceptCookieConsent();
     };
     const openVintedAuthEntry = async (stepName: string): Promise<void> => {
-      await safeGoto(
-        VINTED_AUTH_ENTRY_URL,
-        { waitUntil: 'domcontentloaded', timeout: 30000 },
-        stepName
-      );
+      await safeVintedGoto(VINTED_AUTH_ENTRY_URL, stepName);
       await acceptCookieConsent();
     };
 

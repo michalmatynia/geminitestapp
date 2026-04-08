@@ -1,4 +1,3 @@
-import { chromium } from 'playwright';
 import {
   VINTED_LISTING_FORM_URL,
   VINTED_TITLE_SELECTORS,
@@ -14,19 +13,30 @@ import {
   VINTED_DROPDOWN_OPTION_SELECTORS,
   VINTED_ITEM_URL_PATTERN,
 } from './config';
+import { devices } from 'playwright';
+import type { BrowserContextOptions } from 'playwright';
 import {
+  parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
-import { decryptSecret, encryptSecret, getIntegrationRepository } from '@/features/integrations/server';
+import { encryptSecret, getIntegrationRepository } from '@/features/integrations/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
+import {
+  launchPlaywrightBrowser,
+  type PlaywrightBrowserPreference,
+} from '@/shared/lib/playwright/browser-launch';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { createVintedBrowserTestUtils } from './vinted-browser-test-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { resolveVintedProductImageUploadPlan } from './vinted-browser-images';
 import type { BrowserListingResultDto } from '@/shared/contracts/integrations/listings';
 import { readVintedAuthState } from './vinted-browser-auth';
+import {
+  resolveEffectiveBrowserPreferenceFromLabel,
+  resolveEffectiveVintedBrowserMode,
+} from './vinted-browser-runtime';
 
 /** Extract Vinted numeric item ID from a URL, e.g. /items/1234567890-item-name → "1234567890" */
 const extractVintedItemId = (url: string): string | null => {
@@ -144,40 +154,68 @@ const fillBrandAutocomplete = async (
 export const runVintedBrowserListing = async ({
   listing,
   connection,
-  source: _source,
+  source,
+  browserMode,
+  browserPreference,
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
+  browserMode: PlaywrightRelistBrowserMode;
+  browserPreference: PlaywrightBrowserPreference;
 }): Promise<BrowserListingResultDto> => {
-
   // 1. Resolve storage state
-  let storedState = null;
-  if (connection.playwrightStorageState) {
-    try {
-      const raw = decryptSecret(connection.playwrightStorageState);
-      storedState = JSON.parse(raw);
-    } catch (e) {
-      void ErrorSystem.captureException(e);
-    }
-  }
+  const storedState = parsePersistedStorageState(connection.playwrightStorageState);
 
   const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
-  const effectiveHeadless = playwrightSettings.headless;
-  const browser = await chromium.launch({
+  const effectiveBrowserMode = resolveEffectiveVintedBrowserMode({
+    requestedBrowserMode: browserMode,
+    connectionHeadless: playwrightSettings.headless,
+  });
+  const effectiveHeadless = effectiveBrowserMode === 'headless';
+  const configuredDeviceName = playwrightSettings.deviceName?.trim();
+  const deviceProfile =
+    playwrightSettings.emulateDevice && configuredDeviceName && devices[configuredDeviceName]
+      ? devices[configuredDeviceName]
+      : null;
+  const deviceContextOptions: BrowserContextOptions = deviceProfile
+    ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
+    : {};
+  const launchOptions = {
     headless: effectiveHeadless,
     slowMo: playwrightSettings.slowMo,
+    ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
+      ? {
+          proxy: {
+            server: playwrightSettings.proxyServer,
+            ...(playwrightSettings.proxyUsername
+              ? { username: playwrightSettings.proxyUsername }
+              : {}),
+            ...(playwrightSettings.proxyPassword
+              ? { password: playwrightSettings.proxyPassword }
+              : {}),
+          },
+        }
+      : {}),
+  };
+  const launchResult = await launchPlaywrightBrowser(browserPreference, launchOptions);
+  const { browser } = launchResult;
+  const effectiveBrowserPreference = resolveEffectiveBrowserPreferenceFromLabel({
+    launchLabel: launchResult.label,
+    requestedBrowserPreference: browserPreference,
   });
 
   const context = await browser.newContext({
+    ...deviceContextOptions,
     ...(storedState ? { storageState: storedState } : {}),
-    viewport: { width: 1280, height: 720 },
+    ...(!deviceProfile ? { viewport: { width: 1280, height: 720 } } : {}),
   });
+  context.setDefaultTimeout(playwrightSettings.timeout);
+  context.setDefaultNavigationTimeout(playwrightSettings.navigationTimeout);
 
   const page = await context.newPage();
   const {
-    safeGoto,
     acceptCookieConsent,
     safeIsVisible,
   } = createVintedBrowserTestUtils({
@@ -188,7 +226,17 @@ export const runVintedBrowserListing = async ({
 
   try {
     // 2. Navigate to listing form and verify auth
-    await safeGoto(VINTED_LISTING_FORM_URL, { waitUntil: 'domcontentloaded', timeout: 30000 }, 'Open Vinted Sell Form');
+    try {
+      await page.goto(VINTED_LISTING_FORM_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    } catch (navError) {
+      const navMessage = navError instanceof Error ? navError.message : '';
+      if (navMessage.includes('net::ERR_ABORTED')) {
+        // Vinted redirects during navigation (consent, locale detection) — wait for the page to settle
+        await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
+      } else {
+        throw internalError(`Open Vinted Sell Form: Failed to navigate: ${navMessage}`);
+      }
+    }
     await acceptCookieConsent();
 
     const authState = await readVintedAuthState(page);
@@ -282,7 +330,7 @@ export const runVintedBrowserListing = async ({
       try {
         await page.waitForFunction(
           (sel) => {
-            const btn = document.querySelector(sel) as HTMLButtonElement | null;
+            const btn = document.querySelector<HTMLButtonElement>(sel);
             return btn !== null && !btn.disabled;
           },
           selector,
@@ -296,16 +344,47 @@ export const runVintedBrowserListing = async ({
 
     await submitButton.click();
 
-    // 9. Wait for navigation to the created listing page
-    await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => undefined);
+    // 9. Wait for the real listing page. Do not fabricate success from a stale draft URL.
+    await page
+      .waitForURL(
+        (url) => VINTED_ITEM_URL_PATTERN.test(`${url.pathname}${url.search}${url.hash}`),
+        { timeout: 45000 }
+      )
+      .catch(() => undefined);
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
 
-    const finalUrl = page.url();
+    const finalUrl = page.url().trim();
     const itemId = extractVintedItemId(finalUrl);
+    if (!itemId) {
+      const authState = await readVintedAuthState(page);
+      if (!authState.loggedIn) {
+        throw internalError('AUTH_REQUIRED: Vinted session expired during publish. Please refresh the session.', {
+          requestedBrowserMode: browserMode,
+          browserMode: effectiveBrowserMode,
+          requestedBrowserPreference: browserPreference,
+          browserPreference: effectiveBrowserPreference,
+          browserLabel: launchResult.label,
+          fallbackMessages: launchResult.fallbackMessages,
+          currentUrl: finalUrl || authState.currentUrl,
+          authState,
+          publishVerified: false,
+        });
+      }
+
+      throw internalError('Vinted publish verification failed: listing URL was not confirmed after submit.', {
+        requestedBrowserMode: browserMode,
+        browserMode: effectiveBrowserMode,
+        requestedBrowserPreference: browserPreference,
+        browserPreference: effectiveBrowserPreference,
+        browserLabel: launchResult.label,
+        fallbackMessages: launchResult.fallbackMessages,
+        currentUrl: finalUrl,
+        publishVerified: false,
+      });
+    }
     const completedAt = new Date().toISOString();
-    const externalListingId = itemId ?? `vinted-${Date.now()}`;
-    const listingUrl = itemId
-      ? finalUrl
-      : `https://www.vinted.pl/items/${externalListingId}`;
+    const externalListingId = itemId;
+    const listingUrl = finalUrl;
 
     // 10. Save refreshed session
     const nextStorageState = await context.storageState();
@@ -321,12 +400,23 @@ export const runVintedBrowserListing = async ({
       completedAt,
       metadata: {
         mode: 'standard',
-        browserMode: effectiveHeadless ? 'headless' : 'headed',
+        browserMode: effectiveBrowserMode,
+        requestedBrowserMode: browserMode,
+        browserPreference: effectiveBrowserPreference,
+        requestedBrowserPreference: browserPreference,
+        browserLabel: launchResult.label,
+        fallbackMessages: launchResult.fallbackMessages,
         listingFormUrl: VINTED_LISTING_FORM_URL,
-        itemIdExtracted: Boolean(itemId),
+        currentUrl: finalUrl,
+        itemIdExtracted: true,
+        publishVerified: true,
+        rawResult: {
+          finalUrl,
+          itemId,
+          source,
+        },
       },
     };
-
   } finally {
     await context.close().catch(() => undefined);
     await browser.close().catch(() => undefined);

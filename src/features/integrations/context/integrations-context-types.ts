@@ -21,6 +21,7 @@ export const createEmptyConnectionForm = (): ConnectionFormState => ({
   name: '',
   username: '',
   password: '',
+  playwrightBrowser: 'auto',
   traderaBrowserMode: 'builtin',
   playwrightListingScript: '',
   traderaDefaultTemplateId: '',

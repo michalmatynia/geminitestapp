@@ -26,15 +26,26 @@ import {
 import { ProductFormImageProvider, useProductFormImages } from './ProductFormImageContext';
 import { ProductFormMetadataProvider, useProductFormMetadata } from './ProductFormMetadataContext';
 import {
+  ProductFormCustomFieldProvider,
+  useProductFormCustomFields,
+} from './ProductFormCustomFieldContext';
+import {
   ProductFormParameterProvider,
   useProductFormParameters,
 } from './ProductFormParameterContext';
 import { ProductFormStudioProvider, useProductFormStudio } from './ProductFormStudioContext';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 
 type ComparableParameterValue = {
   parameterId: string;
   value: string;
   valuesByLanguage?: Record<string, string>;
+};
+
+type ComparableCustomFieldValue = {
+  fieldId: string;
+  textValue?: string | null;
+  selectedOptionIds?: string[];
 };
 
 type NonFormComparableState = {
@@ -43,6 +54,7 @@ type NonFormComparableState = {
   selectedTagIds: string[];
   selectedProducerIds: string[];
   selectedNoteIds: string[];
+  customFieldValues: ComparableCustomFieldValue[];
   parameterValues: ComparableParameterValue[];
   imageSlots: string[];
   imageLinks: string[];
@@ -87,6 +99,19 @@ const normalizeComparableParameterValues = (
     })
     .filter((entry: ComparableParameterValue): boolean => entry.parameterId.length > 0);
 };
+
+const normalizeComparableCustomFieldValues = (
+  input: ComparableCustomFieldValue[]
+): ComparableCustomFieldValue[] =>
+  normalizeProductCustomFieldValues(input).map(
+    (entry: ComparableCustomFieldValue): ComparableCustomFieldValue => ({
+      fieldId: entry.fieldId,
+      ...(typeof entry.textValue === 'string' ? { textValue: entry.textValue } : {}),
+      ...(Array.isArray(entry.selectedOptionIds)
+        ? { selectedOptionIds: entry.selectedOptionIds }
+        : {}),
+    })
+  );
 
 const toComparableImageSlot = (slot: unknown): string => {
   if (!slot || typeof slot !== 'object') return '';
@@ -186,6 +211,7 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
   const { selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds } =
     useProductFormMetadata();
   const { imageSlots, imageLinks, imageBase64s, refreshImagesFromProduct } = useProductFormImages();
+  const { customFieldValues } = useProductFormCustomFields();
   const { parameterValues } = useProductFormParameters();
   const { studioProjectId } = useProductFormStudio();
 
@@ -207,6 +233,7 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
       selectedTagIds,
       selectedProducerIds,
       selectedNoteIds,
+      customFieldValues,
       parameterValues,
       studioProjectId,
       refreshImages: refreshImagesFromProduct,
@@ -254,6 +281,7 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
       selectedTagIds: normalizeComparableStringList(selectedTagIds),
       selectedProducerIds: normalizeComparableStringList(selectedProducerIds),
       selectedNoteIds: normalizeComparableStringList(selectedNoteIds),
+      customFieldValues: normalizeComparableCustomFieldValues(customFieldValues),
       parameterValues: normalizeComparableParameterValues(parameterValues),
       imageSlots: imageSlots.map(toComparableImageSlot),
       imageLinks: imageLinks.map((value: string) => normalizeComparableString(value)),
@@ -264,6 +292,7 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
     imageBase64s,
     imageLinks,
     imageSlots,
+    customFieldValues,
     parameterValues,
     selectedCatalogIds,
     selectedCategoryId,
@@ -457,21 +486,37 @@ function ProductFormSubProvidersInner(props: { children: React.ReactNode }) {
       initialCatalogId={initialCatalogId}
       onInteraction={onInteraction}
     >
-      <ProductFormParameterProviderWrapper onInteraction={onInteraction}>
-        <ProductFormStudioProvider product={product}>
-          <ProductFormImageProvider
-            product={product}
-            draft={draft}
-            uploading={uploading}
-            uploadError={uploadError}
-            uploadSuccess={uploadSuccess}
-            onInteraction={onInteraction}
-          >
-            <ProductFormSubmitController>{children}</ProductFormSubmitController>
-          </ProductFormImageProvider>
-        </ProductFormStudioProvider>
-      </ProductFormParameterProviderWrapper>
+      <ProductFormCustomFieldProviderWrapper onInteraction={onInteraction}>
+        <ProductFormParameterProviderWrapper onInteraction={onInteraction}>
+          <ProductFormStudioProvider product={product}>
+            <ProductFormImageProvider
+              product={product}
+              draft={draft}
+              uploading={uploading}
+              uploadError={uploadError}
+              uploadSuccess={uploadSuccess}
+              onInteraction={onInteraction}
+            >
+              <ProductFormSubmitController>{children}</ProductFormSubmitController>
+            </ProductFormImageProvider>
+          </ProductFormStudioProvider>
+        </ProductFormParameterProviderWrapper>
+      </ProductFormCustomFieldProviderWrapper>
     </ProductFormMetadataProvider>
+  );
+}
+
+function ProductFormCustomFieldProviderWrapper(props: {
+  children: React.ReactNode;
+  onInteraction: () => void;
+}) {
+  const { children, onInteraction } = props;
+
+  const { product, draft } = useProductFormProviderConfigContext();
+  return (
+    <ProductFormCustomFieldProvider product={product} draft={draft} onInteraction={onInteraction}>
+      {children}
+    </ProductFormCustomFieldProvider>
   );
 }
 

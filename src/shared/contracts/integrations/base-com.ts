@@ -206,7 +206,7 @@ export const baseImportRunStartPayloadSchema = z.object({
   catalogId: z.string().trim().min(1),
   templateId: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().optional(),
-  imageMode: z.enum(['links', 'download']).default('links'),
+  imageMode: z.enum(['links', 'download']).default('download'),
   uniqueOnly: z.boolean().default(true),
   allowDuplicateSku: z.boolean().default(false),
   selectedIds: z.array(z.string().trim().min(1)).optional(),

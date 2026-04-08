@@ -33,6 +33,7 @@ import {
   resolveCatalogLanguageContext,
   resolvePriceGroupContext,
 } from '@/features/integrations/services/imports/base-import-service-context';
+import { ensureBaseMarketplaceExclusionCustomField } from '@/features/integrations/services/imports/base-import-custom-fields';
 import {
   BASE_IMPORT_HEARTBEAT_EVERY_ITEMS,
   BASE_IMPORT_LEASE_MS,
@@ -51,9 +52,11 @@ import type { BaseImportRunDetailResponse, BaseImportItemRecord, BaseImportItemS
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
 import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
+import { getCustomFieldRepository } from '@/shared/lib/products/services/custom-field-repository';
 import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
@@ -476,6 +479,9 @@ export const processBaseImportRun = async (
     const lookups = await resolveProducerAndTagLookups(connection.connectionId);
     const productRepository = await getProductRepository();
     const parameterRepository = await getParameterRepository();
+    const customFieldRepository = await getCustomFieldRepository();
+    let customFieldDefinitions: ProductCustomFieldDefinition[] =
+      await customFieldRepository.listCustomFields({});
 
     // Performance optimization: pre-fetch catalog context once per run
     const [prefetchedParameters, prefetchedLinks] = await Promise.all([
@@ -539,6 +545,12 @@ export const processBaseImportRun = async (
         run.params.inventoryId,
         dueItems.map((item: BaseImportItemRecord): string => item.itemId)
       );
+      customFieldDefinitions = await ensureBaseMarketplaceExclusionCustomField({
+        repository: customFieldRepository,
+        existingDefinitions: customFieldDefinitions,
+        records: Array.from(detailsMap.values()),
+        persist: !run.params.dryRun,
+      });
 
       // Performance optimization: batch pre-fetch existing products
       const batchBaseProductIds: string[] = [];
@@ -549,7 +561,8 @@ export const processBaseImportRun = async (
         const mapped = normalizeMappedProduct(
           raw,
           templateMappings,
-          pricingContext.preferredCurrencies
+          pricingContext.preferredCurrencies,
+          customFieldDefinitions
         );
         const baseId =
           mapped.baseProductId?.trim() ||
@@ -655,6 +668,7 @@ export const processBaseImportRun = async (
             targetCatalogId: targetCatalog.id,
             defaultPriceGroupId: pricingContext.defaultPriceGroupId,
             preferredPriceCurrencies: pricingContext.preferredCurrencies,
+            customFieldDefinitions,
             lookups,
             templateMappings,
             productRepository,

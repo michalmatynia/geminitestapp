@@ -26,6 +26,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightProxyServer: z.string().nullable().optional(),
   playwrightProxyUsername: z.string().nullable().optional(),
   playwrightProxyPassword: z.string().nullable().optional(),
+  playwrightBrowser: z.enum(['auto', 'brave', 'chrome', 'chromium']).nullable().optional(),
   playwrightEmulateDevice: z.boolean().optional(),
   playwrightDeviceName: z.string().nullable().optional(),
   allegroAccessToken: z.string().nullable().optional(),
@@ -107,6 +108,7 @@ export type ConnectionFormState = {
   name: string;
   username: string;
   password: string;
+  playwrightBrowser: 'auto' | 'brave' | 'chrome' | 'chromium';
   traderaBrowserMode: 'builtin' | 'scripted';
   playwrightListingScript: string;
   traderaDefaultTemplateId: string;

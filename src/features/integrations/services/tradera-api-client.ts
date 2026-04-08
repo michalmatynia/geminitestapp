@@ -318,9 +318,11 @@ const extractAttribute = (attributes: string, name: string): string | null => {
 export const parseTraderaCategoriesXml = (xml: string): BaseCategory[] => {
   const categories: BaseCategory[] = [];
   const parentStack: string[] = [];
+  // Use a fresh regex per call to avoid shared lastIndex state
+  const categoryTagRegex = /<(\/?)(?:\w+:)?Category\b([^>]*?)(\/?)>/gi;
 
   let match: RegExpExecArray | null;
-  while ((match = CATEGORY_TAG_REGEX.exec(xml))) {
+  while ((match = categoryTagRegex.exec(xml))) {
     const isClosing = Boolean(match[1]);
     const attributes = match[2] ?? '';
     const selfClosing = Boolean(match[3]) || /\b(?:\w+:)?nil\s*=\s*"true"/i.test(attributes);
@@ -337,13 +339,17 @@ export const parseTraderaCategoriesXml = (xml: string): BaseCategory[] => {
     const id = normalizeText(extractAttribute(attributes, 'Id'));
     const name = normalizeText(extractAttribute(attributes, 'Name'));
     if (!id || !name) {
+      // Opening tag without valid Id/Name — push the current parent as a pass-through
+      // so children inherit from the nearest valid ancestor and the closing tag pops correctly.
+      parentStack.push(parentStack[parentStack.length - 1] ?? '');
       continue;
     }
 
+    const parentId = parentStack[parentStack.length - 1] ?? null;
     categories.push({
       id,
       name,
-      parentId: parentStack[parentStack.length - 1] ?? null,
+      parentId: parentId || null,
     });
     parentStack.push(id);
   }

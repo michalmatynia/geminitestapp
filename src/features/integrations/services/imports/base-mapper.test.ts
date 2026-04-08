@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import {
+  baseMarketExclusionFlatFeatureRecord,
+  baseMarketExclusionGroupedOptionObjectsRecord,
+  baseMarketExclusionGroupedValuesRecord,
+  baseMarketExclusionNestedFeatureRecord,
+} from './base-import-fixtures';
 import { mapBaseProduct } from './base-mapper';
 
 describe('mapBaseProduct', () => {
@@ -194,6 +200,230 @@ describe('mapBaseProduct', () => {
 
       expect(result.imageLinks).toContain('https://example.com/img1.jpg');
       expect(result.imageLinks).toContain('https://example.com/img2.jpg');
+    });
+  });
+
+  describe('custom field mapping', () => {
+    it('auto-maps checkbox-set options from matching Base source labels', () => {
+      const result = mapBaseProduct(
+        baseMarketExclusionFlatFeatureRecord,
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'market-exclusion',
+              name: 'Market Exclusion',
+              type: 'checkbox_set',
+              options: [
+                { id: 'tradera', label: 'Tradera' },
+                { id: 'vinted', label: 'Vinted' },
+              ],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: ['tradera'] },
+      ]);
+    });
+
+    it('auto-maps checkbox-set options from grouped parent features', () => {
+      const result = mapBaseProduct(
+        baseMarketExclusionNestedFeatureRecord,
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'market-exclusion',
+              name: 'Market Exclusion',
+              type: 'checkbox_set',
+              options: [
+                { id: 'tradera', label: 'Tradera' },
+                { id: 'willhaben', label: 'Willhaben' },
+                { id: 'vinted', label: 'Vinted' },
+              ],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: ['tradera', 'willhaben'] },
+      ]);
+    });
+
+    it('auto-maps checkbox-set options from grouped selected values arrays', () => {
+      const result = mapBaseProduct(
+        baseMarketExclusionGroupedValuesRecord,
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'market-exclusion',
+              name: 'Market Exclusion',
+              type: 'checkbox_set',
+              options: [
+                { id: 'tradera', label: 'Tradera' },
+                { id: 'willhaben', label: 'Willhaben' },
+                { id: 'vinted', label: 'Vinted' },
+              ],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: ['tradera', 'willhaben'] },
+      ]);
+    });
+
+    it('auto-maps checkbox-set options from grouped option objects with explicit state', () => {
+      const result = mapBaseProduct(
+        baseMarketExclusionGroupedOptionObjectsRecord,
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'market-exclusion',
+              name: 'Market Exclusion',
+              type: 'checkbox_set',
+              options: [
+                { id: 'tradera', label: 'Tradera' },
+                { id: 'willhaben', label: 'Willhaben' },
+                { id: 'vinted', label: 'Vinted' },
+              ],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: ['tradera', 'willhaben'] },
+      ]);
+    });
+
+    it('maps text custom fields from template mappings', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          custom_note: 'Handle with care',
+        },
+        [{ sourceKey: 'custom_note', targetField: 'custom_field:notes' }]
+      );
+
+      expect(result.customFields).toEqual([{ fieldId: 'notes', textValue: 'Handle with care' }]);
+    });
+
+    it('maps checkbox-set options from truthy template values', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          tradera_excluded: '1',
+          vinted_excluded: 'false',
+        },
+        [
+          {
+            sourceKey: 'tradera_excluded',
+            targetField: 'custom_field_option:market-exclusion:tradera',
+          },
+          {
+            sourceKey: 'vinted_excluded',
+            targetField: 'custom_field_option:market-exclusion:vinted',
+          },
+        ]
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: ['tradera'] },
+      ]);
+    });
+
+    it('maps grouped checkbox options from explicit dotted template mappings', () => {
+      const result = mapBaseProduct(
+        baseMarketExclusionNestedFeatureRecord,
+        [
+          {
+            sourceKey: 'Market Exclusion.Tradera',
+            targetField: 'custom_field_option:market-exclusion:tradera',
+          },
+          {
+            sourceKey: 'Market Exclusion.Willhaben',
+            targetField: 'custom_field_option:market-exclusion:willhaben',
+          },
+          {
+            sourceKey: 'Market Exclusion.Vinted',
+            targetField: 'custom_field_option:market-exclusion:vinted',
+          },
+        ]
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: ['tradera', 'willhaben'] },
+      ]);
+    });
+
+    it('lets explicit checkbox mappings override auto-detected options', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          Tradera: '1',
+          tradera_excluded: '0',
+        },
+        [
+          {
+            sourceKey: 'tradera_excluded',
+            targetField: 'custom_field_option:market-exclusion:tradera',
+          },
+        ],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'market-exclusion',
+              name: 'Market Exclusion',
+              type: 'checkbox_set',
+              options: [{ id: 'tradera', label: 'Tradera' }],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: [] },
+      ]);
+    });
+
+    it('keeps an empty checkbox-set entry when all mapped options are falsey', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          tradera_excluded: '0',
+        },
+        [
+          {
+            sourceKey: 'tradera_excluded',
+            targetField: 'custom_field_option:market-exclusion:tradera',
+          },
+        ]
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: [] },
+      ]);
     });
   });
 });

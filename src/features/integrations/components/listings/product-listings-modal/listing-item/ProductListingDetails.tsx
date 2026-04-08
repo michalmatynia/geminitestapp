@@ -6,6 +6,7 @@ import React from 'react';
 import {
   PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   useProductListingsData,
@@ -216,6 +217,50 @@ const resolvePlaywrightExecutionSummary = (
   };
 };
 
+const resolveVintedExecutionSummary = (
+  marketplaceData: Record<string, unknown> | null | undefined
+): {
+  executedAt: string | null;
+  browserMode: string | null;
+  requestedBrowserMode: string | null;
+  browserPreference: string | null;
+  requestedBrowserPreference: string | null;
+  browserLabel: string | null;
+  pendingBrowserMode: string | null;
+  pendingBrowserPreference: string | null;
+  pendingRequestId: string | null;
+  pendingQueuedAt: string | null;
+  errorCategory: string | null;
+  requestId: string | null;
+  publishVerified: boolean | null;
+  listingUrl: string | null;
+  rawResult: unknown;
+} => {
+  const marketplaceRecord = toRecord(marketplaceData);
+  const vintedData = toRecord(marketplaceRecord['vinted']);
+  const lastExecution = toRecord(vintedData['lastExecution']);
+  const pendingExecution = toRecord(vintedData['pendingExecution']);
+  const metadata = toRecord(lastExecution['metadata']);
+
+  return {
+    executedAt: readString(lastExecution['executedAt']),
+    browserMode: readString(metadata['browserMode']),
+    requestedBrowserMode: readString(metadata['requestedBrowserMode']),
+    browserPreference: readString(metadata['browserPreference']),
+    requestedBrowserPreference: readString(metadata['requestedBrowserPreference']),
+    browserLabel: readString(metadata['browserLabel']),
+    pendingBrowserMode: readString(pendingExecution['requestedBrowserMode']),
+    pendingBrowserPreference: readString(pendingExecution['requestedBrowserPreference']),
+    pendingRequestId: readString(pendingExecution['requestId']),
+    pendingQueuedAt: readString(pendingExecution['queuedAt']),
+    errorCategory: readString(lastExecution['errorCategory']) ?? readString(vintedData['lastErrorCategory']),
+    requestId: readString(lastExecution['requestId']),
+    publishVerified: readBoolean(metadata['publishVerified']),
+    listingUrl: readString(marketplaceRecord['listingUrl']),
+    rawResult: metadata['rawResult'] ?? null,
+  };
+};
+
 type ProductListingDetailsProps = ProductListingWithDetailsProps;
 
 export function ProductListingDetails(props: ProductListingDetailsProps): React.JSX.Element {
@@ -229,9 +274,11 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
   const isTraderaListing = TRADERA_INTEGRATION_SLUGS.has(
     normalizeIntegrationSlug(listing.integration.slug)
   );
+  const isVintedListing = isVintedIntegrationSlug(listing.integration.slug);
   const isPlaywrightListing =
     normalizeIntegrationSlug(listing.integration.slug) === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG;
   const traderaExecution = resolveTraderaExecutionSummary(listing.marketplaceData);
+  const vintedExecution = resolveVintedExecutionSummary(listing.marketplaceData);
   const playwrightExecution = resolvePlaywrightExecutionSummary(listing.marketplaceData);
   const traderaUsesCustomConnectionScript =
     isTraderaListing &&
@@ -640,6 +687,97 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isVintedListing && vintedExecution.pendingQueuedAt ? (
+            <MetadataItem
+              label='Pending execution'
+              value={formatTimestamp(vintedExecution.pendingQueuedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.pendingBrowserMode ? (
+            <MetadataItem
+              label='Pending browser mode'
+              value={vintedExecution.pendingBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.pendingBrowserPreference ? (
+            <MetadataItem
+              label='Pending browser'
+              value={vintedExecution.pendingBrowserPreference}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.pendingRequestId ? (
+            <MetadataItem
+              label='Pending queue job'
+              value={vintedExecution.pendingRequestId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.executedAt ? (
+            <MetadataItem
+              label='Last execution'
+              value={formatTimestamp(vintedExecution.executedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && (vintedExecution.browserMode || vintedExecution.requestedBrowserMode) ? (
+            <MetadataItem
+              label='Browser mode'
+              value={vintedExecution.browserMode ?? vintedExecution.requestedBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing &&
+          (vintedExecution.browserLabel ||
+            vintedExecution.browserPreference ||
+            vintedExecution.requestedBrowserPreference) ? (
+            <MetadataItem
+              label='Browser'
+              value={
+                vintedExecution.browserLabel ??
+                vintedExecution.browserPreference ??
+                vintedExecution.requestedBrowserPreference
+              }
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.requestId ? (
+            <MetadataItem
+              label='Queue job'
+              value={vintedExecution.requestId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.publishVerified !== null ? (
+            <MetadataItem
+              label='Publish verified'
+              value={vintedExecution.publishVerified ? 'Yes' : 'No'}
+              valueClassName={vintedExecution.publishVerified ? 'text-emerald-400' : 'text-rose-400'}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.listingUrl ? (
+            <MetadataItem
+              label='Listing URL'
+              value={(
+                <ExternalLink href={vintedExecution.listingUrl} className='text-sky-400 hover:text-sky-300'>
+                  Open listing
+                </ExternalLink>
+              )}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.errorCategory ? (
+            <MetadataItem
+              label='Error category'
+              value={vintedExecution.errorCategory}
+              variant='minimal'
+            />
+          ) : null}
           {isPlaywrightListing && playwrightExecution.pendingQueuedAt ? (
             <MetadataItem
               label='Pending relist'
@@ -754,6 +892,16 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
           />
         </div>
       ) : null}
+      {isVintedListing && vintedExecution.rawResult ? (
+        <div className='mt-4'>
+          <JsonViewer
+            title='Vinted run result'
+            data={vintedExecution.rawResult}
+            maxHeight={220}
+            className='bg-white/5'
+          />
+        </div>
+      ) : null}
 
       {listing.exportHistory && listing.exportHistory.length > 0 ? (
         <Card variant='glass' padding='none' className='mt-4 bg-white/5 overflow-hidden'>
@@ -814,7 +962,7 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
                         value={formatListValue(event.warehouseId)}
                         variant='subtle'
                       />
-                      {(isPlaywrightListing || isTraderaListing) && historyBrowserMode && (
+                      {(isPlaywrightListing || isTraderaListing || isVintedListing) && historyBrowserMode && (
                         <MetadataItem
                           label='Browser mode'
                           value={historyBrowserMode}

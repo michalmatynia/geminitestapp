@@ -50,7 +50,9 @@ export const enqueueVintedListingJob = async (
   data: VintedListingJobInput
 ): Promise<string> => {
   const dedupeBucket = Math.floor(Date.now() / 30_000);
-  const jobId = `${data.action}:${data.listingId}:${dedupeBucket}`;
+  const browserMode = data.browserMode ?? 'connection_default';
+  const browserPreference = data.browserPreference ?? 'auto';
+  const jobId = `${data.action}:${data.listingId}:${browserMode}:${browserPreference}:${dedupeBucket}`;
   const queuedJobId = await queue.enqueue(data, {
     jobId,
   });

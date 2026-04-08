@@ -87,38 +87,62 @@ export async function POST_handler(
   const externalCategoryRepo = getExternalCategoryRepository();
   const fetchedCategoryStats = buildMarketplaceCategoryStats(categoriesWithFetchMetadata);
 
-  if (context.mode === 'tradera') {
+  if (context.mode === 'tradera' || context.mode === 'tradera-api') {
     const existingCategories = await externalCategoryRepo.listByConnection(connectionId);
-    const existingCategoryStats = buildMarketplaceCategoryStats(
-      existingCategories.map((category: ExternalCategory) => ({
-        id: category.externalId,
-        name: category.name,
-        parentId: category.parentExternalId,
-        metadata: category.metadata ?? undefined,
-      }))
-    );
 
-    if (
-      shouldRejectShallowTraderaPublicSync({
-        existingTotal: existingCategories.length,
-        existingMaxDepth: existingCategoryStats.maxDepth,
-        existingWithParentCount: existingCategoryStats.withParentCount,
-        fetchedTotal: categoriesWithFetchMetadata.length,
-        fetchedMaxDepth: fetchedCategoryStats.maxDepth,
-        fetchedWithParentCount: fetchedCategoryStats.withParentCount,
-      })
-    ) {
-      throw unprocessableEntityError(
-        'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
-        {
-          connectionId,
-          sourceName: context.responseSourceName,
-          existingTotal: existingCategories.length,
-          existingMaxDepth: existingCategoryStats.maxDepth,
-          fetchedTotal: categoriesWithFetchMetadata.length,
-          fetchedMaxDepth: fetchedCategoryStats.maxDepth,
-        }
+    if (existingCategories.length > 0) {
+      const existingCategoryStats = buildMarketplaceCategoryStats(
+        existingCategories.map((category: ExternalCategory) => ({
+          id: category.externalId,
+          name: category.name,
+          parentId: category.parentExternalId,
+          metadata: category.metadata ?? undefined,
+        }))
       );
+
+      if (context.mode === 'tradera') {
+        if (
+          shouldRejectShallowTraderaPublicSync({
+            existingTotal: existingCategories.length,
+            existingMaxDepth: existingCategoryStats.maxDepth,
+            existingWithParentCount: existingCategoryStats.withParentCount,
+            fetchedTotal: categoriesWithFetchMetadata.length,
+            fetchedMaxDepth: fetchedCategoryStats.maxDepth,
+            fetchedWithParentCount: fetchedCategoryStats.withParentCount,
+          })
+        ) {
+          throw unprocessableEntityError(
+            'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+            {
+              connectionId,
+              sourceName: context.responseSourceName,
+              existingTotal: existingCategories.length,
+              existingMaxDepth: existingCategoryStats.maxDepth,
+              fetchedTotal: categoriesWithFetchMetadata.length,
+              fetchedMaxDepth: fetchedCategoryStats.maxDepth,
+            }
+          );
+        }
+      }
+
+      // Protect against partial SOAP API responses — reject if fetched count drops below 50% of existing
+      if (
+        context.mode === 'tradera-api' &&
+        existingCategories.length >= 50 &&
+        categoriesWithFetchMetadata.length < existingCategories.length * 0.5
+      ) {
+        throw unprocessableEntityError(
+          `Tradera SOAP API returned ${categoriesWithFetchMetadata.length} categories, significantly fewer than the ${existingCategories.length} already stored. This may indicate a partial API response. Existing categories were kept. Retry the fetch.`,
+          {
+            connectionId,
+            sourceName: context.responseSourceName,
+            existingTotal: existingCategories.length,
+            existingMaxDepth: existingCategoryStats.maxDepth,
+            fetchedTotal: categoriesWithFetchMetadata.length,
+            fetchedMaxDepth: fetchedCategoryStats.maxDepth,
+          }
+        );
+      }
     }
   }
 

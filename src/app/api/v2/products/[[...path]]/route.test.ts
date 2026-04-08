@@ -47,4 +47,35 @@ describe('v2 products catch-all route module', () => {
     expect(shippingGroupsIndex).toBeLessThan(genericProductIdIndex);
     expect(shippingGroupsByIdIndex).toBeLessThan(genericProductIdIndex);
   });
+
+  it('registers custom-fields routes before the generic product id route', () => {
+    expect(routeSource).toContain(
+      "import * as productsCustomFields from '../custom-fields/route-handler';"
+    );
+    expect(routeSource).toContain(
+      "import * as productsCustomFieldsId from '../custom-fields/[id]/route-handler';"
+    );
+    expect(routeSource).toContain(
+      "{ pattern: ['custom-fields'], module: productsCustomFields },"
+    );
+    expect(routeSource).toContain(
+      "{ pattern: ['custom-fields', param('id')], module: productsCustomFieldsId },"
+    );
+
+    const customFieldsIndex = routeSource.indexOf(
+      "{ pattern: ['custom-fields'], module: productsCustomFields },"
+    );
+    const customFieldsByIdIndex = routeSource.indexOf(
+      "{ pattern: ['custom-fields', param('id')], module: productsCustomFieldsId },"
+    );
+    const genericProductIdIndex = routeSource.indexOf(
+      "{ pattern: [param('id')], module: productIdRoute },"
+    );
+
+    expect(customFieldsIndex).toBeGreaterThan(-1);
+    expect(customFieldsByIdIndex).toBeGreaterThan(-1);
+    expect(genericProductIdIndex).toBeGreaterThan(-1);
+    expect(customFieldsIndex).toBeLessThan(genericProductIdIndex);
+    expect(customFieldsByIdIndex).toBeLessThan(genericProductIdIndex);
+  });
 });

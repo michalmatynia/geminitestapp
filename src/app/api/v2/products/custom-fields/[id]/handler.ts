@@ -2,20 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService, getCustomFieldRepository } from '@/features/products/server';
-import { productCustomFieldTypeSchema } from '@/shared/contracts/products/custom-fields';
+import {
+  productCustomFieldOptionInputSchema,
+  productCustomFieldTypeSchema,
+} from '@/shared/contracts/products/custom-fields';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
-
-const customFieldOptionInputSchema = z.object({
-  id: z.string().trim().min(1).optional(),
-  label: z.string().trim().min(1, 'Option label is required'),
-});
 
 export const productCustomFieldUpdateSchema = z
   .object({
     name: z.string().trim().min(1).optional(),
     type: productCustomFieldTypeSchema.optional(),
-    options: z.array(customFieldOptionInputSchema).optional(),
+    options: z.array(productCustomFieldOptionInputSchema).optional(),
   })
   .superRefine((value, ctx) => {
     if (value.type !== 'checkbox_set') return;

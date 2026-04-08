@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { cacheLife } from 'next/cache';
 import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
@@ -8,13 +7,17 @@ import { JSX } from 'react';
 import { renderCmsPage } from '@/app/(frontend)/cms/render';
 import {
   buildSlugMetadata,
+  loadPublishedSlugRenderDataCached,
   loadSlugRenderData,
+  resolvePublishedSlugToPageCached,
   resolveSlugToPage,
 } from '@/app/(frontend)/cms/slug-page-data';
 import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
+import { resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getKangurPublicLaunchHref } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchRoute, requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
 import type { Metadata } from 'next';
 
@@ -45,9 +48,6 @@ export const generateCmsSlugRouteMetadata = async ({
   locale,
   slug,
 }: CmsSlugMetadataOptions): Promise<Metadata> => {
-  'use cache';
-  cacheLife('hours');
-
   const resolvedLocale = resolveSlugLocale(locale);
   const routeTranslations = resolvedLocale
     ? await getTranslations({ locale: resolvedLocale, namespace: 'Routes' })
@@ -62,7 +62,15 @@ export const generateCmsSlugRouteMetadata = async ({
     };
   }
 
-  const page = await resolveSlugToPage(slug, resolvedLocale ? { locale: resolvedLocale } : undefined);
+  const domain = await resolveCmsDomainFromHeaders(await readOptionalRequestHeaders());
+  const page =
+    (await resolvePublishedSlugToPageCached(domain.id, slug, {
+      locale: resolvedLocale,
+    })) ??
+    (await resolveSlugToPage(slug, {
+      locale: resolvedLocale,
+      domainId: domain.id,
+    }));
   if (!page) {
     return { title: routeTranslations('pageNotFoundTitle') };
   }
@@ -75,9 +83,6 @@ export const renderCmsSlugRoute = async ({
   slug,
   searchParams,
 }: CmsSlugRouteOptions): Promise<JSX.Element | null> => {
-  'use cache';
-  cacheLife('hours');
-
   const resolvedLocale = resolveSlugLocale(locale);
 
   if (await isKangurFrontPageSelected()) {
@@ -93,14 +98,28 @@ export const renderCmsSlugRoute = async ({
     );
   }
 
-  const page = await resolveSlugToPage(slug, resolvedLocale ? { locale: resolvedLocale } : undefined);
+  const domain = await resolveCmsDomainFromHeaders(await readOptionalRequestHeaders());
+  const page =
+    (await resolvePublishedSlugToPageCached(domain.id, slug, {
+      locale: resolvedLocale,
+    })) ??
+    (await resolveSlugToPage(slug, {
+      locale: resolvedLocale,
+      domainId: domain.id,
+    }));
   if (!page) {
     notFound();
   }
 
-  const renderData = await loadSlugRenderData(
-    page,
-    resolvedLocale ? { locale: resolvedLocale } : undefined
-  );
+  const renderData =
+    (page.status === 'published'
+      ? await loadPublishedSlugRenderDataCached(page.id, domain.id, {
+          locale: resolvedLocale,
+        })
+      : null) ??
+    (await loadSlugRenderData(page, {
+      locale: resolvedLocale,
+      domainId: domain.id,
+    }));
   return renderCmsPage(renderData);
 };

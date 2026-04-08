@@ -1,6 +1,11 @@
 'use client';
 
-import { QueryClientContext, QueryClientProvider, type QueryClient } from '@tanstack/react-query';
+import {
+  QueryClientContext,
+  QueryClientProvider,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 
 import { useQueryBatching } from '@/shared/hooks/query/useQueryBatching';
@@ -123,6 +128,19 @@ function DeferredQueryPersistence(): null {
 }
 
 function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const initialSettings = (window as unknown as { __LITE_SETTINGS__?: unknown[] }).__LITE_SETTINGS__;
+    if (Array.isArray(initialSettings) && initialSettings.length > 0) {
+      const queryKey = QUERY_KEYS.settings.scope('lite');
+      if (!queryClient.getQueryData(queryKey)) {
+        queryClient.setQueryData(queryKey, initialSettings);
+      }
+    }
+  }, [queryClient]);
+
   useGlobalQueryErrorHandler({
     showToast: true,
     logErrors: false,

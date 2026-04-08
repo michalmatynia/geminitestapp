@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';

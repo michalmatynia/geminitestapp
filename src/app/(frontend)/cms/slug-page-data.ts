@@ -12,6 +12,7 @@ import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Metadata } from 'next';
@@ -34,6 +35,7 @@ export type SlugRenderData = {
 
 type SlugResolutionOptions = {
   locale?: string;
+  domainId?: string;
 };
 
 const normalizeRendererComponent = (
@@ -75,9 +77,8 @@ export async function resolveSlugToPage(
   const slugValue = slugSegments.join('/');
   try {
     const cmsRepository = await getCmsRepository();
-    const hdrs = await readOptionalRequestHeaders();
-    const domain = await resolveCmsDomainFromHeaders(hdrs);
-    const domainSlug = await getSlugForDomainByValue(domain.id, slugValue, cmsRepository, {
+    const domainId = options?.domainId ?? (await resolveCmsDomainFromHeaders(await readOptionalRequestHeaders())).id;
+    const domainSlug = await getSlugForDomainByValue(domainId, slugValue, cmsRepository, {
       locale: options?.locale,
     });
     if (!domainSlug) return null;
@@ -98,6 +99,31 @@ export async function resolveSlugToPage(
     });
     return null;
   }
+}
+
+export async function resolvePublishedSlugToPageCached(
+  domainId: string,
+  slugSegments: string[],
+  options?: Pick<SlugResolutionOptions, 'locale'>
+): Promise<Page | null> {
+  'use cache';
+  applyCacheLife('hours');
+
+  const slugValue = slugSegments.join('/');
+  const cmsRepository = await getCmsRepository();
+  const domainSlug = await getSlugForDomainByValue(domainId, slugValue, cmsRepository, {
+    locale: options?.locale,
+  });
+  if (!domainSlug) {
+    return null;
+  }
+
+  const page = await cmsRepository.getPageBySlug(slugValue, { locale: options?.locale });
+  if (!page || page.status !== 'published') {
+    return null;
+  }
+
+  return page;
 }
 
 export const buildSlugMetadata = (page: Page): Metadata => {
@@ -129,18 +155,43 @@ export const loadSlugRenderData = async (
   page: Page,
   options?: SlugResolutionOptions
 ): Promise<SlugRenderData> => {
+  const domainId =
+    options?.domainId ?? (await resolveCmsDomainFromHeaders(await readOptionalRequestHeaders())).id;
+  return buildSlugRenderDataForDomain(page, domainId, options?.locale ?? page.locale ?? undefined);
+};
+
+export const loadPublishedSlugRenderDataCached = async (
+  pageId: string,
+  domainId: string,
+  options?: Pick<SlugResolutionOptions, 'locale'>
+): Promise<SlugRenderData | null> => {
+  'use cache';
+  applyCacheLife('hours');
+
+  const cmsRepository = await getCmsRepository();
+  const page = await cmsRepository.getPageById(pageId);
+  if (!page || page.status !== 'published') {
+    return null;
+  }
+
+  return buildSlugRenderDataForDomain(page, domainId, options?.locale ?? page.locale ?? undefined);
+};
+
+const buildSlugRenderDataForDomain = async (
+  page: Page,
+  domainId: string,
+  locale?: string
+): Promise<SlugRenderData> => {
   let theme: CmsTheme | null = null;
   if (page.themeId) {
     const cmsRepository = await getCmsRepository();
     theme = await cmsRepository.getThemeById(page.themeId);
   }
 
-  const hdrs = await readOptionalRequestHeaders();
-  const domain = await resolveCmsDomainFromHeaders(hdrs);
   const themeSettings = await getCmsThemeSettings();
   const menuSettings = await getCmsMenuSettings(
-    domain.id,
-    options?.locale ?? page.locale ?? undefined
+    domainId,
+    locale
   );
   const colorSchemes = buildColorSchemeMap(themeSettings);
   const layout = { fullWidth: Boolean(themeSettings.fullWidth) };

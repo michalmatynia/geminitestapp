@@ -1,12 +1,13 @@
 import * as Collapsible from '@radix-ui/react-collapsible';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
+import { memo } from 'react';
 
 import type { ActivityLog } from '@/shared/contracts/system';
 import { Button } from '@/shared/ui/primitives.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
-export function QuickAccessPanel(): React.JSX.Element {
+export const QuickAccessPanel = memo(function QuickAccessPanel(): React.JSX.Element {
   return (
     <div className='rounded-lg bg-gray-950 p-6'>
       <h2 className='text-xl font-bold mb-3'>Quick Access</h2>
@@ -17,9 +18,9 @@ export function QuickAccessPanel(): React.JSX.Element {
       </div>
     </div>
   );
-}
+});
 
-export function SystemHealthPanel({
+export const SystemHealthPanel = memo(function SystemHealthPanel({
   isLoading,
   errorMessage,
   isHealthy,
@@ -42,9 +43,9 @@ export function SystemHealthPanel({
       ) : null}
     </div>
   );
-}
+});
 
-export function RecentActivityPanel({
+export const RecentActivityPanel = memo(function RecentActivityPanel({
   isOpen,
   onOpenChange,
   isLoading,
@@ -96,4 +97,4 @@ export function RecentActivityPanel({
       </Collapsible.Content>
     </Collapsible.Root>
   );
-}
+});

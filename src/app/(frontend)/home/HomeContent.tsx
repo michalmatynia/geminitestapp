@@ -6,6 +6,7 @@ import type { Slug } from '@/shared/contracts/cms';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 
 import { canPreviewDrafts } from './home-helpers';
 import { normalizeHomeProducts } from './home-product-normalize';
@@ -18,6 +19,117 @@ type HomeContentProps = {
   locale?: string;
 };
 
+type HomeContentClientProps = React.ComponentProps<typeof HomeContentClient>;
+type CmsHomeContentClientProps = Extract<HomeContentClientProps, { variant: 'cms' }>;
+type FallbackHomeContentClientProps = Extract<HomeContentClientProps, { variant: 'fallback' }>;
+
+const buildCmsHomeClientProps = ({
+  defaultSlug,
+  menuSettings,
+  themeSettings,
+  showMenu,
+  rendererComponents,
+  hasCmsContent,
+}: {
+  defaultSlug: string;
+  menuSettings: Awaited<ReturnType<typeof getCmsMenuSettings>>;
+  themeSettings: Awaited<ReturnType<typeof getCmsThemeSettings>>;
+  showMenu: boolean;
+  rendererComponents: CmsHomeContentClientProps['rendererComponents'];
+  hasCmsContent: boolean;
+}): CmsHomeContentClientProps => ({
+  variant: 'cms',
+  menu: menuSettings,
+  theme: themeSettings,
+  colorSchemes: buildColorSchemeMap(themeSettings),
+  showMenu,
+  hasCmsContent,
+  defaultSlug,
+  rendererComponents,
+});
+
+const buildFallbackHomeClientProps = ({
+  menuSettings,
+  themeSettings,
+  products,
+}: {
+  menuSettings: Awaited<ReturnType<typeof getCmsMenuSettings>>;
+  themeSettings: Awaited<ReturnType<typeof getCmsThemeSettings>>;
+  products: ReturnType<typeof normalizeHomeProducts>;
+}): FallbackHomeContentClientProps => ({
+  variant: 'fallback',
+  menu: menuSettings,
+  theme: themeSettings,
+  colorSchemes: buildColorSchemeMap(themeSettings),
+  showMenu: Boolean(menuSettings.showMenu),
+  showFallbackHeader: !menuSettings.showMenu,
+  products,
+  appearanceTone: {
+    background: themeSettings.backgroundColor,
+    text: themeSettings.textColor,
+    border: themeSettings.borderColor,
+    accent: themeSettings.accentColor || themeSettings.primaryColor || themeSettings.textColor,
+  },
+});
+
+const getPublishedHomeCmsClientPropsCached = async ({
+  domainId,
+  defaultSlug,
+  locale,
+}: {
+  domainId: string;
+  defaultSlug: string;
+  locale?: string;
+}): Promise<HomeContentClientProps | null> => {
+  'use cache';
+  applyCacheLife('swr300');
+
+  const [cmsRepository, themeSettings, menuSettings] = await Promise.all([
+    getCmsRepository(),
+    getCmsThemeSettings(),
+    getCmsMenuSettings(domainId, locale),
+  ]);
+  const cmsPage = await cmsRepository.getPageBySlug(defaultSlug, { locale });
+  if (!cmsPage || cmsPage.status !== 'published') {
+    return null;
+  }
+
+  return buildCmsHomeClientProps({
+    defaultSlug,
+    menuSettings,
+    themeSettings,
+    showMenu: cmsPage.showMenu !== false,
+    hasCmsContent: cmsPage.components.length > 0,
+    rendererComponents: [...cmsPage.components].sort((left, right) => left.order - right.order),
+  });
+};
+
+const getFallbackHomeClientPropsCached = async ({
+  domainId,
+  locale,
+}: {
+  domainId: string;
+  locale?: string;
+}): Promise<HomeContentClientProps> => {
+  'use cache';
+  applyCacheLife('swr300');
+
+  const [themeSettings, menuSettings] = await Promise.all([
+    getCmsThemeSettings(),
+    getCmsMenuSettings(domainId, locale),
+  ]);
+  const hasDatabase = typeof process.env['MONGODB_URI'] === 'string';
+  const productsRaw = hasDatabase
+    ? await productService.getProducts({ page: 1, pageSize: 20 })
+    : null;
+
+  return buildFallbackHomeClientProps({
+    menuSettings,
+    themeSettings,
+    products: productsRaw ? normalizeHomeProducts(productsRaw) : [],
+  });
+};
+
 export async function HomeContent({
   domainId,
   slugs,
@@ -25,16 +137,26 @@ export async function HomeContent({
   locale,
 }: HomeContentProps): Promise<React.JSX.Element> {
   const resolvedLocale = normalizeSiteLocale(locale);
-  const [cmsRepository, themeSettings, menuSettings] = await Promise.all([
-    withTiming('cmsRepository', getCmsRepository),
-    withTiming('cmsTheme', () => getCmsThemeSettings()),
-    withTiming('cmsMenu', () => getCmsMenuSettings(domainId, resolvedLocale)),
-  ]);
 
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
-  const colorSchemes = buildColorSchemeMap(themeSettings);
 
   if (defaultSlug) {
+    const publishedHomeProps = await withTiming('publishedHomeCmsData', () =>
+      getPublishedHomeCmsClientPropsCached({
+        domainId,
+        defaultSlug: defaultSlug.slug,
+        locale: resolvedLocale,
+      })
+    );
+    if (publishedHomeProps) {
+      return <HomeContentClient {...publishedHomeProps} />;
+    }
+
+    const [cmsRepository, themeSettings, menuSettings] = await Promise.all([
+      withTiming('cmsRepository', getCmsRepository),
+      withTiming('cmsTheme', () => getCmsThemeSettings()),
+      withTiming('cmsMenu', () => getCmsMenuSettings(domainId, resolvedLocale)),
+    ]);
     const cmsPage = await withTiming('cmsPageBySlug', () =>
       cmsRepository.getPageBySlug(defaultSlug.slug, { locale: resolvedLocale })
     );
@@ -45,54 +167,30 @@ export async function HomeContent({
       allowDrafts = await withTiming('canPreviewDrafts', () => canPreviewDrafts(session));
     }
 
-    const hasCmsContent = Boolean(
-      cmsPage && (allowDrafts || cmsPage.status === 'published') && cmsPage.components.length > 0
-    );
-
-    const rendererComponents = [...(cmsPage?.components ?? [])].sort(
-      (left, right) => left.order - right.order
-    );
-
-    const showMenu = cmsPage?.showMenu !== false;
-
     return (
       <HomeContentClient
-        variant='cms'
-        menu={menuSettings}
-        theme={themeSettings}
-        colorSchemes={colorSchemes}
-        showMenu={showMenu}
-        hasCmsContent={hasCmsContent}
-        defaultSlug={defaultSlug.slug}
-        rendererComponents={rendererComponents}
+        {...buildCmsHomeClientProps({
+          defaultSlug: defaultSlug.slug,
+          menuSettings,
+          themeSettings,
+          showMenu: cmsPage?.showMenu !== false,
+          hasCmsContent: Boolean(
+            cmsPage && (allowDrafts || cmsPage.status === 'published') && cmsPage.components.length > 0
+          ),
+          rendererComponents: [...(cmsPage?.components ?? [])].sort(
+            (left, right) => left.order - right.order
+          ),
+        })}
       />
     );
   }
 
-  const hasDatabase = typeof process.env['MONGODB_URI'] === 'string';
-
-  const productsRaw = hasDatabase
-    ? await withTiming('products', () => productService.getProducts({ page: 1, pageSize: 20 }))
-    : null;
-  const products = productsRaw ? normalizeHomeProducts(productsRaw) : [];
-
-  const showFallbackHeader = !menuSettings.showMenu;
-
-  return (
-    <HomeContentClient
-      variant='fallback'
-      menu={menuSettings}
-      theme={themeSettings}
-      colorSchemes={colorSchemes}
-      showMenu={Boolean(menuSettings.showMenu)}
-      showFallbackHeader={showFallbackHeader}
-      products={products}
-      appearanceTone={{
-        background: themeSettings.backgroundColor,
-        text: themeSettings.textColor,
-        border: themeSettings.borderColor,
-        accent: themeSettings.accentColor || themeSettings.primaryColor || themeSettings.textColor,
-      }}
-    />
+  const fallbackHomeProps = await withTiming('fallbackHomeData', () =>
+    getFallbackHomeClientPropsCached({
+      domainId,
+      locale: resolvedLocale,
+    })
   );
+
+  return <HomeContentClient {...fallbackHomeProps} />;
 }

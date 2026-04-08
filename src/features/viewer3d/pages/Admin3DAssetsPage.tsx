@@ -16,6 +16,7 @@ import { Asset3DEditModal } from '../components/Asset3DEditModalImpl';
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
 import { Asset3DUploader } from '../components/Asset3DUploader';
 import { Admin3DAssetsProvider, useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
+import { formatAssetDate } from '../utils/formatAssetDate';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -28,14 +29,6 @@ const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-};
-
-const formatDate = (date: Date | string): string => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 };
 
 function Admin3DAssetsContent(): React.JSX.Element {
@@ -150,7 +143,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
         header: 'Date',
         cell: ({ row }) => (
           <span className='text-xs text-muted-foreground'>
-            {row.original.createdAt ? formatDate(row.original.createdAt) : ''}
+            {row.original.createdAt ? formatAssetDate(row.original.createdAt) : ''}
           </span>
         ),
       },

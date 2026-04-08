@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 
 import { RootClientShell } from './_providers/RootClientShell';
 import { loadSiteMessages } from '@/i18n/messages';
+import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { cn } from '@/shared/utils/ui-utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
@@ -57,8 +58,11 @@ export default async function RootLayout({
       ? `self.__LITE_SETTINGS__=${JSON.stringify(liteSettings).replace(/</g, '\\u003c')}`
       : null;
 
+  const fontSetId =
+    liteSettings.find((s) => s.key === APP_FONT_SET_SETTING_KEY)?.value || 'system';
+
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} data-app-font-set={fontSetId} suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
         {sanitizedLiteSettingsScript ? (
           <script

@@ -3,7 +3,7 @@
 import { StarIcon } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import { usePathname } from 'next/navigation';
-import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, startTransition, memo } from 'react';
 
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
@@ -155,7 +155,7 @@ const scheduleDeferredAdminMenuSettingsHydration = (
   };
 };
 
-export default function Menu(): React.ReactNode {
+export default memo(function Menu(): React.ReactNode {
   const { isMenuCollapsed } = useAdminLayoutState();
   const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   const router = useRouter();
@@ -224,19 +224,6 @@ export default function Menu(): React.ReactNode {
       setMenuSettingsReady(true);
     });
   }, [menuSettingsReady]);
-
-  useEffect(() => {
-    if (hasPrefetchedPopularRoutesRef.current) return;
-    if (typeof window === 'undefined') return;
-
-    hasPrefetchedPopularRoutesRef.current = true;
-    return scheduleDeferredAdminMenuSettingsHydration(window, () => {
-      POPULAR_ADMIN_PREFETCH_HREFS.forEach((href: string) => {
-        if (isActiveHref(pathname, href, false)) return;
-        router.prefetch(href);
-      });
-    });
-  }, [pathname, router]);
 
   useEffect(() => {
     if (hasPrefetchedPopularRoutesRef.current) return;
@@ -543,4 +530,4 @@ export default function Menu(): React.ReactNode {
       />
     </nav>
   );
-}
+});

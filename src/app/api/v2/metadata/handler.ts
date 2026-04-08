@@ -10,6 +10,7 @@ import { paginationQuerySchema, type PaginationQuery } from '@/shared/contracts/
 import { type CurrencyCreateInput } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
@@ -137,14 +138,25 @@ export async function GET_intl_handler(
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  const provider = await getInternationalizationProvider();
   const query = (ctx.query ?? paginationQuerySchema.parse({})) as PaginationQuery;
   const { page, pageSize } = query;
+  return NextResponse.json(await loadMetadataPageCached(type, page, pageSize));
+}
+
+async function loadMetadataPageCached(
+  type: string,
+  page: number,
+  pageSize: number
+) {
+  'use cache';
+  applyCacheLife('swr86400');
+
   const skip = (page - 1) * pageSize;
+  const provider = await getInternationalizationProvider();
 
   if (type === 'currencies') {
     const repo = await getCurrencyRepository(provider);
-    return NextResponse.json(await repo.listCurrencies({ skip, limit: pageSize }));
+    return repo.listCurrencies({ skip, limit: pageSize });
   }
 
   if (type === 'countries') {
@@ -156,7 +168,7 @@ export async function GET_intl_handler(
       .skip(skip)
       .limit(pageSize)
       .toArray()) as MongoCountryDoc[];
-    return NextResponse.json(countries.map(mapMongoCountry));
+    return countries.map(mapMongoCountry);
   }
 
   if (type === 'languages') {
@@ -177,8 +189,8 @@ export async function GET_intl_handler(
         return [mapped.id, mapped] as const;
       })
     );
-    return NextResponse.json(
-      languageDocs.map((language: MongoLanguageDoc) => mapMongoLanguage(language, countriesById))
+    return languageDocs.map((language: MongoLanguageDoc) =>
+      mapMongoLanguage(language, countriesById)
     );
   }
 

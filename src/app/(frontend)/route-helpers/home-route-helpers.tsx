@@ -7,6 +7,7 @@ import { getCmsRepository, getSlugsForDomain, isDomainZoningEnabled, resolveCmsD
 import { getKangurPublicLaunchHref } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
 import { HomeContent } from '../home/HomeContent';
@@ -27,6 +28,20 @@ const localizePublicPath = (pathname: string, locale?: string): string => {
 
 const resolveHomeLocale = (locale?: string | null): string | undefined =>
   typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
+
+const getHomeSlugsForDomainCached = async ({
+  domainId,
+  locale,
+}: {
+  domainId: string;
+  locale?: string;
+}) => {
+  'use cache';
+  applyCacheLife('swr300');
+
+  const cmsRepository = await getCmsRepository();
+  return getSlugsForDomain(domainId, cmsRepository, locale ? { locale } : undefined);
+};
 
 export const renderHomeRoute = async ({
   locale,
@@ -52,14 +67,14 @@ export const renderHomeRoute = async ({
     redirect(localizePublicPath(getKangurPublicLaunchHref(kangurLaunchRoute ?? undefined), resolvedLocale));
   }
 
-  const [cmsRepository, zoningEnabled] = await Promise.all([
-    withTiming('cmsRepository', getCmsRepository),
-    isDomainZoningEnabled(),
-  ]);
+  const zoningEnabled = await isDomainZoningEnabled();
   const hdrs = zoningEnabled ? await withTiming('headers', readOptionalRequestHeaders) : null;
   const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));
   const slugs = await withTiming('cmsSlugs', () =>
-    getSlugsForDomain(domain.id, cmsRepository, resolvedLocale ? { locale: resolvedLocale } : undefined)
+    getHomeSlugsForDomainCached({
+      domainId: domain.id,
+      locale: resolvedLocale,
+    })
   );
 
   const content = await withTiming('homeContent', () =>

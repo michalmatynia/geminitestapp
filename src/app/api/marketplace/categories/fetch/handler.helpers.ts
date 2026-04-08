@@ -10,11 +10,80 @@ import { resolveTraderaPublicApiCredentials } from '@/features/integrations/serv
 import { fetchTraderaCategoriesForConnection } from '@/features/integrations/services/tradera-listing/categories';
 import type { BaseCategory } from '@/shared/contracts/integrations/listings';
 import type { IntegrationConnectionRecord, IntegrationLookupRepository } from '@/shared/contracts/integrations/repositories';
-import type { MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
+import type {
+  MarketplaceCategoryStats,
+  MarketplaceConnectionRequest,
+  MarketplaceFetchResponse,
+} from '@/shared/contracts/integrations/marketplace';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera', 'tradera-api']);
+
+const normalizeParentId = (value: string | null | undefined): string | null => {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  if (!candidate || candidate === '0' || candidate.toLowerCase() === 'null') {
+    return null;
+  }
+  return candidate;
+};
+
+const calculateCategoryDepth = (
+  categoryId: string,
+  categoriesById: Map<string, BaseCategory>,
+  cache: Map<string, number>,
+  trail: Set<string> = new Set()
+): number => {
+  if (cache.has(categoryId)) {
+    return cache.get(categoryId) ?? 0;
+  }
+  if (trail.has(categoryId)) {
+    return 0;
+  }
+
+  trail.add(categoryId);
+  const category = categoriesById.get(categoryId);
+  const parentId = normalizeParentId(category?.parentId ?? null);
+  const depth = parentId ? calculateCategoryDepth(parentId, categoriesById, cache, trail) + 1 : 0;
+  trail.delete(categoryId);
+  cache.set(categoryId, depth);
+  return depth;
+};
+
+export const buildMarketplaceCategoryStats = (
+  categories: BaseCategory[]
+): MarketplaceCategoryStats => {
+  const categoriesById = new Map<string, BaseCategory>();
+  for (const category of categories) {
+    categoriesById.set(category.id, category);
+  }
+
+  const depthCache = new Map<string, number>();
+  const depthHistogram: Record<string, number> = {};
+  let rootCount = 0;
+  let withParentCount = 0;
+  let maxDepth = 0;
+
+  for (const category of categories) {
+    const parentId = normalizeParentId(category.parentId);
+    if (parentId) {
+      withParentCount += 1;
+    } else {
+      rootCount += 1;
+    }
+
+    const depth = calculateCategoryDepth(category.id, categoriesById, depthCache);
+    maxDepth = Math.max(maxDepth, depth);
+    depthHistogram[String(depth)] = (depthHistogram[String(depth)] ?? 0) + 1;
+  }
+
+  return {
+    rootCount,
+    withParentCount,
+    maxDepth,
+    depthHistogram,
+  };
+};
 
 export type MarketplaceCategoryFetchContext =
   | {
@@ -22,6 +91,7 @@ export type MarketplaceCategoryFetchContext =
       connection: IntegrationConnectionRecord;
       inventoryId: string | null;
       sourceName: 'Base.com';
+      responseSourceName: 'Base.com';
       token: string;
       mode: 'base';
     }
@@ -29,12 +99,14 @@ export type MarketplaceCategoryFetchContext =
       connectionId: string;
       connection: IntegrationConnectionRecord;
       sourceName: 'Tradera';
+      responseSourceName: 'Tradera public taxonomy pages';
       mode: 'tradera';
     }
   | {
       connectionId: string;
       connection: IntegrationConnectionRecord;
       sourceName: 'Tradera';
+      responseSourceName: 'Tradera SOAP API';
       apiCredentials: TraderaPublicApiCredentials;
       mode: 'tradera-api';
     };
@@ -82,6 +154,7 @@ export const resolveMarketplaceCategoryFetchContext = async (
       connection,
       inventoryId: connection.baseLastInventoryId ?? null,
       sourceName: 'Base.com',
+      responseSourceName: 'Base.com',
       token: tokenResolution.token,
       mode: 'base',
     };
@@ -96,6 +169,7 @@ export const resolveMarketplaceCategoryFetchContext = async (
         connectionId,
         connection,
         sourceName: 'Tradera',
+        responseSourceName: 'Tradera SOAP API',
         apiCredentials,
         mode: 'tradera-api',
       };
@@ -105,6 +179,7 @@ export const resolveMarketplaceCategoryFetchContext = async (
         connectionId,
         connection,
         sourceName: 'Tradera',
+        responseSourceName: 'Tradera public taxonomy pages',
         mode: 'tradera',
       };
     }
@@ -135,14 +210,24 @@ export const buildEmptyMarketplaceCategoryFetchResponse = (
   fetched: 0,
   total: 0,
   message: `No categories found in ${sourceName}.`,
+  source: sourceName,
+  categoryStats: {
+    rootCount: 0,
+    withParentCount: 0,
+    maxDepth: 0,
+    depthHistogram: {},
+  },
 });
 
 export const buildMarketplaceCategoryFetchResponse = (
   sourceName: string,
   syncedCount: number,
-  total: number
+  total: number,
+  categoryStats: MarketplaceCategoryStats
 ): MarketplaceFetchResponse => ({
   fetched: syncedCount,
   total,
-  message: `Successfully synced ${syncedCount} categories from ${sourceName}`,
+  message: `Successfully synced ${syncedCount} categories from ${sourceName} (roots: ${categoryStats.rootCount}, max depth: ${categoryStats.maxDepth}).`,
+  source: sourceName,
+  categoryStats,
 });

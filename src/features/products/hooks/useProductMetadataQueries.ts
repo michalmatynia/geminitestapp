@@ -3,6 +3,7 @@ import { type UseQueryResult } from '@tanstack/react-query';
 import { getLanguages } from '@/features/internationalization/public';
 import type { Language } from '@/shared/contracts/internationalization';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import type { Producer } from '@/shared/contracts/products/producers';
 import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
@@ -271,6 +272,30 @@ export function useParameters(
       queryKey,
       tags: ['products', 'metadata', 'parameters'],
       description: 'Loads products metadata parameters.'},
+  });
+}
+
+export function useCustomFields(
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCustomFieldDefinition> {
+  const queryKey = productMetadataKeys.customFields();
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductCustomFieldDefinition[]> =>
+      await api.get<ProductCustomFieldDefinition[]>('/api/v2/products/custom-fields', {
+        cache: 'no-store',
+      }),
+    enabled: options?.enabled ?? true,
+    ...STABLE_METADATA_QUERY_OPTIONS,
+    meta: {
+      source: 'products.hooks.useCustomFields',
+      operation: 'list',
+      resource: 'products.metadata.custom-fields',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'metadata', 'custom-fields'],
+      description: 'Loads products metadata custom fields.',
+    },
   });
 }
 

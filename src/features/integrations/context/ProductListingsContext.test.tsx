@@ -320,4 +320,37 @@ describe('ProductListingsProvider', () => {
     );
     expect(screen.getByTestId('run-id')).toHaveTextContent('run-vinted-feedback');
   });
+
+  it('ignores stale Vinted quicklist feedback when the modal is explicitly scoped to Tradera', () => {
+    act(() => {
+      persistVintedQuickListFeedback('product-1', 'failed', {
+        runId: 'run-vinted-feedback',
+        requestId: 'job-vinted-feedback',
+        integrationId: 'integration-vinted-feedback',
+        connectionId: 'conn-vinted-feedback',
+        failureReason: 'Session expired.',
+      });
+    });
+
+    render(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+        filterIntegrationSlug='tradera'
+      >
+        <RecoveryContextSummary />
+      </ProductListingsProvider>
+    );
+
+    expect(screen.getByTestId('filter-integration-slug')).toHaveTextContent('tradera');
+    expect(screen.getByTestId('integration-id')).toHaveTextContent('none');
+    expect(screen.getByTestId('connection-id')).toHaveTextContent('none');
+    expect(screen.getByTestId('run-id')).toHaveTextContent('none');
+  });
 });

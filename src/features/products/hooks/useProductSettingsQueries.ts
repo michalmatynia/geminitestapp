@@ -15,6 +15,7 @@ import {
   type ProductShippingGroupCreateInput,
   type ProductShippingGroupUpdateInput,
 } from '@/shared/contracts/products/shipping-groups';
+import { type ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import {
   type ProductParameter,
   type ProductSimpleParameter,
@@ -45,6 +46,7 @@ import {
 import {
   invalidateCatalogScopedData,
   invalidatePriceGroups,
+  invalidateProductCustomFields,
   invalidateProductSettingsCatalogs,
   invalidateValidatorConfig,
 } from '@/shared/lib/query-invalidation';
@@ -146,6 +148,27 @@ export function useShippingGroups(
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductShippingGroup> {
   return useMetadataShippingGroups(catalogId ?? undefined, options);
+}
+
+export function useCustomFields(
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCustomFieldDefinition> {
+  const queryKey = productSettingsKeys.customFields();
+  return createListQueryV2({
+    queryKey,
+    queryFn: api.getCustomFields,
+    enabled: options?.enabled ?? true,
+    ...STABLE_SETTINGS_QUERY_OPTIONS,
+    meta: {
+      source: 'products.hooks.useCustomFieldsSettings',
+      operation: 'list',
+      resource: 'products.settings.custom-fields',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'settings', 'custom-fields'],
+      description: 'Loads products settings custom fields.',
+    },
+  });
 }
 
 export function useParameters(
@@ -536,6 +559,50 @@ export function useDeleteTagMutation(): UpdateMutation<
       description: 'Deletes products settings tags.'},
     invalidate: async (queryClient, _data, variables) => {
       await invalidateCatalogScopedData(queryClient, variables.catalogId);
+    },
+  });
+}
+
+export function useSaveCustomFieldMutation(): SaveMutation<
+  ProductCustomFieldDefinition,
+  { id: string | undefined; data: Partial<ProductCustomFieldDefinition> }
+> {
+  const mutationKey = productSettingsKeys.customFields();
+  return createMutationV2({
+    mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductCustomFieldDefinition> }) =>
+      id ? api.updateCustomField(id, data) : api.createCustomField(data),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSaveCustomFieldMutation',
+      operation: 'action',
+      resource: 'products.settings.custom-fields',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'custom-fields', 'save'],
+      description: 'Runs products settings custom fields.',
+    },
+    invalidate: async (queryClient) => {
+      await invalidateProductCustomFields(queryClient);
+    },
+  });
+}
+
+export function useDeleteCustomFieldMutation(): UpdateMutation<void, { id: string }> {
+  const mutationKey = productSettingsKeys.customFields();
+  return createDeleteMutationV2({
+    mutationFn: ({ id }: { id: string }) => api.deleteCustomField(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteCustomFieldMutation',
+      operation: 'delete',
+      resource: 'products.settings.custom-fields',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'custom-fields', 'delete'],
+      description: 'Deletes products settings custom fields.',
+    },
+    invalidate: async (queryClient) => {
+      await invalidateProductCustomFields(queryClient);
     },
   });
 }

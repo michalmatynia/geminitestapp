@@ -43,29 +43,34 @@ const isTestConnectionResponse = (value: unknown): value is TestConnectionRespon
 const describeManualVerificationFailure = (
   response: TestConnectionResponse
 ): string | null => {
-  const relevantStep =
-    response.steps.find(
-      (step) =>
-        step.step === 'Captcha required' &&
-        (step.status === 'pending' || step.status === 'failed') &&
-        step.detail?.trim()
-    ) ??
-    response.steps.find(
-      (step) =>
-        (step.status === 'failed' || step.status === 'pending') &&
-        step.detail?.trim()
-    );
+  // First, look for any explicit failure from the end (most recent)
+  const reversedSteps = [...response.steps].reverse();
+  const failedStep = reversedSteps.find(
+    (step) => step.status === 'failed' && step.detail?.trim()
+  );
 
-  if (!relevantStep?.detail?.trim()) {
-    return null;
+  if (failedStep) {
+    const detail = failedStep.detail!.trim();
+    if (failedStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
+      return 'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+    }
+    return detail;
   }
 
-  const detail = relevantStep.detail.trim();
-  if (relevantStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
-    return 'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+  // Fallback to any pending step that might be holding us up (also from the end)
+  const pendingStep = reversedSteps.find(
+    (step) => step.status === 'pending' && step.detail?.trim()
+  );
+
+  if (pendingStep) {
+    const detail = pendingStep.detail!.trim();
+    if (pendingStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
+      return 'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+    }
+    return detail;
   }
 
-  return detail;
+  return null;
 };
 
 export const ensureTraderaBrowserSession = async (params: {

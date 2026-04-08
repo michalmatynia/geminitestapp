@@ -98,4 +98,30 @@ describe('tradera-playwright-settings', () => {
 
     expect(parsePersistedStorageState('encrypted-state')).toBeNull();
   });
+
+  it('falls back to parsing plaintext JSON storage state from older saved sessions', () => {
+    decryptSecretMock.mockImplementation(() => {
+      throw new Error('not encrypted');
+    });
+
+    const parsed = parsePersistedStorageState(
+      JSON.stringify({
+        cookies: [
+          {
+            name: 'session',
+            value: 'abc',
+            sameSite: 'Lax',
+          },
+        ],
+        origins: [],
+      })
+    );
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.cookies[0]).toMatchObject({
+      name: 'session',
+      value: 'abc',
+      sameSite: 'Lax',
+    });
+  });
 });

@@ -24,6 +24,7 @@ describe('CategoryMapperNameCell', () => {
       <CategoryMapperNameCell
         name='Algebra'
         path={null}
+        statusHint={null}
         depth={2}
         canExpand
         isExpanded={false}
@@ -47,6 +48,7 @@ describe('CategoryMapperNameCell', () => {
       <CategoryMapperNameCell
         name='Geometry'
         path={null}
+        statusHint={null}
         depth={1}
         canExpand
         isExpanded
@@ -66,6 +68,7 @@ describe('CategoryMapperNameCell', () => {
       <CategoryMapperNameCell
         name='Pins'
         path='Collectibles > Pins'
+        statusHint={null}
         depth={0}
         canExpand={false}
         isExpanded={false}
@@ -77,5 +80,25 @@ describe('CategoryMapperNameCell', () => {
 
     expect(screen.getByText('Pins')).toBeInTheDocument();
     expect(screen.getByText('Collectibles > Pins')).toBeInTheDocument();
+  });
+
+  it('renders an optional status hint for rows that should not be mapped directly', () => {
+    render(
+      <CategoryMapperNameCell
+        name='Pins & needles'
+        path='Collectibles > Pins & needles'
+        statusHint='Parent category, choose a leaf child instead'
+        depth={0}
+        canExpand={false}
+        isExpanded={false}
+        onToggleExpand={vi.fn()}
+        isMapped={false}
+        hasPendingChange={false}
+      />
+    );
+
+    expect(
+      screen.getByText('Parent category, choose a leaf child instead')
+    ).toBeInTheDocument();
   });
 });

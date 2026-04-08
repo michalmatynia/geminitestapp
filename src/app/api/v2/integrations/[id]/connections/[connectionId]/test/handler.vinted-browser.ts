@@ -14,7 +14,10 @@ import {
   readVintedAuthState,
   waitForVintedManualLogin,
 } from '@/features/integrations/services/vinted-listing/vinted-browser-auth';
-import { VINTED_LISTING_FORM_URL } from '@/features/integrations/services/vinted-listing/config';
+import {
+  VINTED_AUTH_ENTRY_URL,
+  VINTED_LISTING_FORM_URL,
+} from '@/features/integrations/services/vinted-listing/config';
 
 type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
 type Fail = (step: string, detail: string, status?: number) => Promise<never>;
@@ -195,6 +198,14 @@ export const handleVintedBrowserTest = async (
       );
       await acceptCookieConsent();
     };
+    const openVintedAuthEntry = async (stepName: string): Promise<void> => {
+      await safeGoto(
+        VINTED_AUTH_ENTRY_URL,
+        { waitUntil: 'domcontentloaded', timeout: 30000 },
+        stepName
+      );
+      await acceptCookieConsent();
+    };
 
     let sessionReused = false;
     if (storedState) {
@@ -229,22 +240,23 @@ export const handleVintedBrowserTest = async (
     if (!sessionReused) {
       if (manualMode) {
         pushStep('Manual login', 'pending', 'Complete Vinted login in the opened browser window.');
-        await openVintedListingForm('Vinted Login');
+        await openVintedAuthEntry('Vinted Login');
         pushStep(
           'Manual login',
           'pending',
-          `Waiting up to ${Math.round(manualLoginTimeoutMs / 1000)}s for login completion...`
+          `Waiting up to ${Math.round(manualLoginTimeoutMs / 1000)}s for login completion. If Google blocks sign-in, use Vinted.pl email/password instead.`
         );
 
         const authState = await waitForVintedManualLogin(page, manualLoginTimeoutMs);
-        if (authState?.googleBlockDetected) {
-          return failWithDebug(
-            'Manual login',
-            VINTED_GOOGLE_SIGN_IN_BLOCKED_MESSAGE,
-            409
-          );
-        }
         if (!authState) {
+          const finalManualState = await readVintedAuthState(page);
+          if (finalManualState.googleBlockDetected) {
+            return failWithDebug(
+              'Manual login',
+              VINTED_GOOGLE_SIGN_IN_BLOCKED_MESSAGE,
+              409
+            );
+          }
           return failWithDebug(
             'Manual login',
             `Manual login timed out after ${Math.round(manualLoginTimeoutMs / 1000)}s.`

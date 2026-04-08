@@ -27,7 +27,7 @@ const VINTED_AUTH_URL_HINTS = [
   '/member/register',
 ] as const;
 
-const VINTED_LOGGED_IN_URL_HINTS = ['/settings', '/items/new'] as const;
+const VINTED_LOGGED_IN_URL_HINTS = ['/settings'] as const;
 const GOOGLE_AUTH_URL_HINT = 'accounts.google.com';
 const GOOGLE_BLOCK_TEXT_HINTS = [
   'this browser or app may not be secure',
@@ -80,13 +80,17 @@ export const readVintedAuthState = async (page: Page): Promise<VintedAuthState> 
   const googleBlockDetected = googleAuthPageDetected
     ? isGoogleBlockText(await page.locator('body').innerText().catch(() => ''))
     : false;
+  const transientListingRoute = normalizedUrl.includes('/items/new') && !sellFormVisible;
+  const hasLoggedInSignal =
+    successVisible ||
+    sellFormVisible ||
+    VINTED_LOGGED_IN_URL_HINTS.some((hint) => normalizedUrl.includes(hint));
   const loggedIn =
     !authRouteDetected &&
     !googleBlockDetected &&
     !loginFormVisible &&
-    (successVisible ||
-      sellFormVisible ||
-      VINTED_LOGGED_IN_URL_HINTS.some((hint) => normalizedUrl.includes(hint)));
+    !transientListingRoute &&
+    hasLoggedInSignal;
 
   return {
     currentUrl,
@@ -105,11 +109,17 @@ export const waitForVintedManualLogin = async (
   timeoutMs: number
 ): Promise<VintedAuthState | null> => {
   const deadline = Date.now() + timeoutMs;
+  let stableLoggedInPolls = 0;
 
   while (Date.now() < deadline) {
     const authState = await readVintedAuthState(page);
-    if (authState.loggedIn || authState.googleBlockDetected) {
-      return authState;
+    if (authState.loggedIn) {
+      stableLoggedInPolls += 1;
+      if (stableLoggedInPolls >= 2) {
+        return authState;
+      }
+    } else {
+      stableLoggedInPolls = 0;
     }
     await page.waitForTimeout(1000).catch(() => undefined);
   }

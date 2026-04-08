@@ -81,7 +81,7 @@ vi.mock('../components/MetricsTab', () => ({
   MetricsTab: () => <div>MetricsTab</div>,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Tabs: ({
     value,
     onValueChange,

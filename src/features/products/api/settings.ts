@@ -15,6 +15,7 @@ import {
   type ProductShippingGroupCreateInput,
   type ProductShippingGroupUpdateInput,
 } from '@/shared/contracts/products/shipping-groups';
+import { type ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import { type ProductParameter } from '@/shared/contracts/products/parameters';
 import { type ProductTag } from '@/shared/contracts/products/tags';
 import {
@@ -183,6 +184,29 @@ export async function updateShippingGroup(
 
 export async function deleteShippingGroup(id: string): Promise<void> {
   return api.delete(`/api/v2/products/shipping-groups/${id}`);
+}
+
+export async function getCustomFields(): Promise<ProductCustomFieldDefinition[]> {
+  return api.get<ProductCustomFieldDefinition[]>('/api/v2/products/custom-fields', {
+    cache: 'no-store',
+  });
+}
+
+export async function createCustomField(
+  data: Partial<ProductCustomFieldDefinition>
+): Promise<ProductCustomFieldDefinition> {
+  return api.post<ProductCustomFieldDefinition>('/api/v2/products/custom-fields', data);
+}
+
+export async function updateCustomField(
+  id: string,
+  data: Partial<ProductCustomFieldDefinition>
+): Promise<ProductCustomFieldDefinition> {
+  return api.put<ProductCustomFieldDefinition>(`/api/v2/products/custom-fields/${id}`, data);
+}
+
+export async function deleteCustomField(id: string): Promise<void> {
+  return api.delete(`/api/v2/products/custom-fields/${id}`);
 }
 
 export async function getParameters(catalogId: string | null): Promise<ProductParameter[]> {

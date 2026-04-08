@@ -393,6 +393,7 @@ export const baseCategorySchema = z.object({
   id: z.string(),
   name: z.string(),
   parentId: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type BaseCategory = z.infer<typeof baseCategorySchema>;

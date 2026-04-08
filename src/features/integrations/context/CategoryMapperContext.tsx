@@ -26,8 +26,10 @@ import {
 } from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
 import { buildCategoryTree } from '@/features/integrations/components/marketplaces/category-mapper/category-table/utils';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { createStrictContext } from './createStrictContext';
@@ -57,17 +59,79 @@ export const { Context: DataContext, useValue: useCategoryMapperData } =
     errorMessage: 'useCategoryMapperData must be used within CategoryMapperProvider',
   });
 
+type CategoryMapperFetchWarning = {
+  message: string;
+  sourceName: string | null;
+  existingTotal: number | null;
+  existingMaxDepth: number | null;
+  fetchedTotal: number | null;
+  fetchedMaxDepth: number | null;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+
+const readFiniteNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+const extractTraderaFetchWarning = (error: unknown): CategoryMapperFetchWarning | null => {
+  if (!(error instanceof ApiError)) {
+    return null;
+  }
+
+  const payload = isRecord(error.payload) ? error.payload : null;
+  const meta = payload && isRecord(payload['meta']) ? payload['meta'] : null;
+  const code = typeof payload?.['code'] === 'string' ? payload['code'] : null;
+  const sourceName = typeof meta?.['sourceName'] === 'string' ? meta['sourceName'].trim() : '';
+  const existingMaxDepth = readFiniteNumber(meta?.['existingMaxDepth']);
+  const fetchedMaxDepth = readFiniteNumber(meta?.['fetchedMaxDepth']);
+
+  if (
+    code !== 'UNPROCESSABLE_ENTITY' ||
+    sourceName !== 'Tradera public taxonomy pages' ||
+    existingMaxDepth === null ||
+    fetchedMaxDepth === null ||
+    existingMaxDepth <= fetchedMaxDepth
+  ) {
+    return null;
+  }
+
+  return {
+    message: error.message,
+    sourceName,
+    existingTotal: readFiniteNumber(meta?.['existingTotal']),
+    existingMaxDepth,
+    fetchedTotal: readFiniteNumber(meta?.['fetchedTotal']),
+    fetchedMaxDepth,
+  };
+};
+
 export interface CategoryMapperUIState {
   pendingMappings: Map<string, string | null>;
   expandedIds: Set<string>;
   toggleExpand: (categoryId: string) => void;
+  lastFetchResult: MarketplaceFetchResponse | null;
+  lastFetchWarning: CategoryMapperFetchWarning | null;
   staleMappings: Array<{
     externalCategoryId: string;
     externalCategoryName: string;
     externalCategoryPath: string | null;
     internalCategoryLabel: string | null;
   }>;
-  stats: { total: number; mapped: number; unmapped: number; pending: number; stale: number };
+  nonLeafMappings: Array<{
+    externalCategoryId: string;
+    externalCategoryName: string;
+    externalCategoryPath: string | null;
+    internalCategoryLabel: string | null;
+  }>;
+  stats: {
+    total: number;
+    mapped: number;
+    unmapped: number;
+    pending: number;
+    stale: number;
+    nonLeaf: number;
+  };
 }
 export const { Context: UIStateContext, useValue: useCategoryMapperUIState } =
   createStrictContext<CategoryMapperUIState>({
@@ -134,6 +198,16 @@ export function CategoryMapperProvider({
     () => externalCategoriesQuery.data ?? [],
     [externalCategoriesQuery.data]
   );
+  const externalCategoriesByExternalId = useMemo(
+    () =>
+      new Map(
+        externalCategories.map((category: ExternalCategory): [string, ExternalCategory] => [
+          category.externalId,
+          category,
+        ])
+      ),
+    [externalCategories]
+  );
   const externalCategoriesLoading = externalCategoriesQuery.isLoading;
   const externalIds = useMemo(
     () =>
@@ -155,7 +229,17 @@ export function CategoryMapperProvider({
 
   const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [lastFetchResult, setLastFetchResult] = useState<MarketplaceFetchResponse | null>(null);
+  const [lastFetchWarning, setLastFetchWarning] = useState<CategoryMapperFetchWarning | null>(null);
   const hasInitializedExpansion = useRef(false);
+  const normalizedIntegrationSlug = (integrationSlug ?? '').trim().toLowerCase();
+  const isTraderaConnection =
+    normalizedIntegrationSlug === 'tradera' || normalizedIntegrationSlug === 'tradera-api';
+
+  useEffect(() => {
+    setLastFetchResult(null);
+    setLastFetchWarning(null);
+  }, [connectionId]);
 
   // Initialize expansion state
   useEffect(() => {
@@ -191,8 +275,11 @@ export function CategoryMapperProvider({
   const handleFetchExternalCategories = useCallback(async (): Promise<void> => {
     try {
       const result = await fetchMutation.mutateAsync({ connectionId });
+      setLastFetchResult(result);
+      setLastFetchWarning(null);
       toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
+      setLastFetchWarning(extractTraderaFetchWarning(error));
       logClientCatch(error, {
         source: 'CategoryMapper',
         action: 'fetchExternalCategories',
@@ -244,8 +331,12 @@ export function CategoryMapperProvider({
       return;
     }
 
+    const autoMatchEligibleExternalCategories = isTraderaConnection
+      ? externalCategories.filter((category: ExternalCategory) => category.isLeaf !== false)
+      : externalCategories;
+
     const result = autoMatchCategoryMappingsByName({
-      externalCategories,
+      externalCategories: autoMatchEligibleExternalCategories,
       internalCategories,
       pendingMappings,
       getCurrentMapping: getMappingForExternal,
@@ -268,6 +359,7 @@ export function CategoryMapperProvider({
     externalCategories,
     getMappingForExternal,
     internalCategories,
+    isTraderaConnection,
     pendingMappings,
     selectedCatalogId,
     toast,
@@ -277,6 +369,26 @@ export function CategoryMapperProvider({
     if (pendingMappings.size === 0 || !selectedCatalogId) {
       toast('No changes to save', { variant: 'info' });
       return;
+    }
+
+    if (isTraderaConnection) {
+      const invalidNonLeafMapping = Array.from(pendingMappings.entries()).find(
+        ([externalCategoryId, internalCategoryId]: [string, string | null]) => {
+          if (!internalCategoryId) return false;
+          return externalCategoriesByExternalId.get(externalCategoryId)?.isLeaf === false;
+        }
+      );
+
+      if (invalidNonLeafMapping) {
+        const [externalCategoryId] = invalidNonLeafMapping;
+        const category = externalCategoriesByExternalId.get(externalCategoryId) ?? null;
+        const categoryLabel = category?.path?.trim() || category?.name?.trim() || externalCategoryId;
+        toast(
+          `Tradera mappings must target the deepest category. "${categoryLabel}" still has child categories. Choose a leaf Tradera category and save again.`,
+          { variant: 'error' }
+        );
+        return;
+      }
     }
 
     try {
@@ -321,25 +433,6 @@ export function CategoryMapperProvider({
 
   const categoryTree = useMemo(() => buildCategoryTree(externalCategories), [externalCategories]);
 
-  const stats = useMemo((): { total: number; mapped: number; unmapped: number; pending: number; stale: number } => {
-    const staleMappings = mappings.filter((mapping: CategoryMappingWithDetails): boolean => {
-      if (!mapping.isActive) return false;
-      const externalCategoryId = mapping.externalCategoryId.trim();
-      if (!externalCategoryId) return false;
-      return (
-        !externalIds.has(externalCategoryId) ||
-        isMissingExternalCategoryName(mapping.externalCategory?.name)
-      );
-    });
-    const total = externalCategories.length;
-    const mapped = externalCategories.filter(
-      (c: ExternalCategory) => getMappingForExternal(c.externalId) !== null
-    ).length;
-    const unmapped = Math.max(0, total - mapped);
-    const pending = pendingMappings.size;
-    return { total, mapped, unmapped, pending, stale: staleMappings.length };
-  }, [externalCategories, externalIds, getMappingForExternal, mappings, pendingMappings.size]);
-
   const staleMappings = useMemo(
     (): Array<{
       externalCategoryId: string;
@@ -368,6 +461,62 @@ export function CategoryMapperProvider({
         })),
     [externalIds, mappings]
   );
+
+  const nonLeafMappings = useMemo(
+    (): Array<{
+      externalCategoryId: string;
+      externalCategoryName: string;
+      externalCategoryPath: string | null;
+      internalCategoryLabel: string | null;
+    }> => {
+      if (!isTraderaConnection) {
+        return [];
+      }
+
+      return mappings
+        .filter((mapping: CategoryMappingWithDetails): boolean => {
+          if (!mapping.isActive) return false;
+          const externalCategoryId = mapping.externalCategoryId.trim();
+          if (!externalCategoryId || !externalIds.has(externalCategoryId)) return false;
+          if (isMissingExternalCategoryName(mapping.externalCategory?.name)) return false;
+          return mapping.externalCategory?.isLeaf === false;
+        })
+        .map((mapping: CategoryMappingWithDetails) => ({
+          externalCategoryId: mapping.externalCategoryId,
+          externalCategoryName:
+            mapping.externalCategory?.name?.trim() || mapping.externalCategoryId,
+          externalCategoryPath:
+            mapping.externalCategory?.path?.trim() || null,
+          internalCategoryLabel:
+            mapping.internalCategory?.name?.trim() || mapping.internalCategoryId || null,
+        }));
+    },
+    [externalIds, isTraderaConnection, mappings]
+  );
+
+  const stats = useMemo((): {
+    total: number;
+    mapped: number;
+    unmapped: number;
+    pending: number;
+    stale: number;
+    nonLeaf: number;
+  } => {
+    const total = externalCategories.length;
+    const mapped = externalCategories.filter(
+      (c: ExternalCategory) => getMappingForExternal(c.externalId) !== null
+    ).length;
+    const unmapped = Math.max(0, total - mapped);
+    const pending = pendingMappings.size;
+    return {
+      total,
+      mapped,
+      unmapped,
+      pending,
+      stale: staleMappings.length,
+      nonLeaf: nonLeafMappings.length,
+    };
+  }, [externalCategories, getMappingForExternal, nonLeafMappings.length, pendingMappings.size, staleMappings.length]);
 
   const configValue = useMemo<CategoryMapperConfig>(
     () => ({
@@ -416,10 +565,22 @@ export function CategoryMapperProvider({
       pendingMappings,
       expandedIds,
       toggleExpand,
+      lastFetchResult,
+      lastFetchWarning,
       staleMappings,
+      nonLeafMappings,
       stats,
     }),
-    [pendingMappings, expandedIds, toggleExpand, staleMappings, stats]
+    [
+      pendingMappings,
+      expandedIds,
+      toggleExpand,
+      lastFetchResult,
+      lastFetchWarning,
+      staleMappings,
+      nonLeafMappings,
+      stats,
+    ]
   );
 
   const actionsValue = useMemo<CategoryMapperActions>(

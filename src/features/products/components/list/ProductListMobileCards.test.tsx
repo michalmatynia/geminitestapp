@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -63,10 +63,16 @@ vi.mock('next/dynamic', () => ({
       }
       if (loaderSource.includes('TraderaQuickListButton')) {
         traderaQuickListButtonMock(props);
+        if (props.showTraderaBadge) {
+          return null;
+        }
         return <button type='button'>T+</button>;
       }
       if (loaderSource.includes('VintedQuickListButton')) {
         vintedQuickListButtonMock(props);
+        if (props.showVintedBadge) {
+          return null;
+        }
         return <button type='button'>V+</button>;
       }
       if (loaderSource.includes('TraderaStatusButton')) {
@@ -267,6 +273,50 @@ describe('ProductListMobileCards', () => {
         onOpenIntegrations: expect.any(Function),
       })
     );
+  });
+
+  it('keeps the mobile integrations button order stable when quick-list buttons are visible', () => {
+    render(<ProductListMobileCards />);
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Mobile integrations button row was not found.');
+    }
+
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'T+',
+      'V+',
+    ]);
+  });
+
+  it('keeps the mobile integrations button order stable when Tradera and Vinted badges replace quick-list buttons', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: true,
+      traderaStatus: 'auth_required',
+      showVintedBadge: true,
+      vintedStatus: 'auth_required',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Mobile integrations button row was not found.');
+    }
+
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'TR',
+      'VR',
+    ]);
   });
 
   it('scopes mobile Base quick export recovery to the Base listings modal', () => {

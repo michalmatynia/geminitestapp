@@ -9,6 +9,7 @@ const {
   updateConnectionMock,
   decryptSecretMock,
   encryptSecretMock,
+  parsePersistedStorageStateMock,
   resolveConnectionPlaywrightSettingsMock,
   validateTraderaQuickListProductConfigMock,
   chromiumLaunchMock,
@@ -33,6 +34,7 @@ const {
   updateConnectionMock: vi.fn(),
   decryptSecretMock: vi.fn(),
   encryptSecretMock: vi.fn(),
+  parsePersistedStorageStateMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
   validateTraderaQuickListProductConfigMock: vi.fn(),
   chromiumLaunchMock: vi.fn(),
@@ -98,6 +100,7 @@ vi.mock('@/features/integrations/services/tradera-listing/preflight', () => ({
 }));
 
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
+  parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
   resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
     resolveConnectionPlaywrightSettingsMock(...args),
 }));
@@ -180,6 +183,7 @@ describe('integration connection test handler', () => {
     });
 
     encryptSecretMock.mockImplementation((value: string) => `encrypted:${value}`);
+    parsePersistedStorageStateMock.mockReturnValue({ cookies: [], origins: [] });
 
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
       headless: true,

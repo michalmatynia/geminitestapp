@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-04-07T11:43:13.139Z",
-    "scannedFileCount": 2527,
+    "generatedAt": "2026-04-07T16:03:38.438Z",
+    "scannedFileCount": 2540,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1845
+        "count": 1858
       },
       {
         "family": "Page",
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 1954
+        "count": 1967
       },
       {
         "domain": "app",
@@ -7795,7 +7795,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 161,
+      "lines": 163,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -7814,7 +7814,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 194,
+      "lines": 196,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -9127,7 +9127,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 817,
+      "lines": 819,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -20515,7 +20515,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Sidebar",
-      "lines": 987,
+      "lines": 917,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20530,7 +20530,8 @@
         "../mail-master-tree",
         "../mail-ui-helpers",
         "./FilemakerMailSidebar.helpers",
-        "../types"
+        "../types",
+        "./FilemakerMailSidebar.hooks"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 3,
@@ -21393,7 +21394,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 430,
+      "lines": 432,
       "useClient": false,
       "imports": [
         "react",
@@ -21510,7 +21511,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "List",
-      "lines": 153,
+      "lines": 162,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21534,7 +21535,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 260,
+      "lines": 303,
       "useClient": false,
       "imports": [
         "react",
@@ -21554,7 +21555,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 177,
+      "lines": 180,
       "useClient": true,
       "imports": [
         "react",
@@ -21608,11 +21609,12 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 117,
+      "lines": 121,
       "useClient": true,
       "imports": [
         "next/link",
         "react",
+        "@/features/integrations/constants/slugs",
         "@/features/integrations/context/IntegrationsContext",
         "@/shared/contracts/base",
         "@/shared/contracts/playwright",
@@ -21742,7 +21744,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 52,
+      "lines": 53,
       "useClient": false,
       "imports": [
         "react",
@@ -21762,7 +21764,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 44,
+      "lines": 45,
       "useClient": true,
       "imports": [
         "react",
@@ -21780,7 +21782,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 110,
+      "lines": 142,
       "useClient": false,
       "imports": [
         "react",
@@ -21800,7 +21802,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 218,
+      "lines": 301,
       "useClient": true,
       "imports": [
         "react",
@@ -21816,7 +21818,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": null,
+      "propsSignature": "onOpenSessionModal|sessionMeta",
       "thinReExportWrapper": false
     },
     {
@@ -21888,7 +21890,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 116,
+      "lines": 133,
       "useClient": false,
       "imports": [
         "react",
@@ -21909,7 +21911,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 405,
+      "lines": 423,
       "useClient": true,
       "imports": [
         "react",
@@ -21928,12 +21930,32 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/integrations/components/connections/manager/ConnectionList.test.tsx",
+      "basename": "ConnectionList.test.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 139,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./ConnectionList"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/integrations/components/connections/manager/ConnectionList.tsx",
       "basename": "ConnectionList.tsx",
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "List",
-      "lines": 118,
+      "lines": 125,
       "useClient": true,
       "imports": [
         "react",
@@ -21952,15 +21974,36 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/integrations/components/connections/manager/ConnectionTestLog.test.tsx",
+      "basename": "ConnectionTestLog.test.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 118,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./ConnectionTestLog"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/integrations/components/connections/manager/ConnectionTestLog.tsx",
       "basename": "ConnectionTestLog.tsx",
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 59,
+      "lines": 58,
       "useClient": true,
       "imports": [
         "react",
+        "@/features/integrations/constants/slugs",
         "@/features/integrations/context/IntegrationsContext",
         "@/shared/contracts/integrations/session-testing",
         "@/shared/ui/data-display.public",
@@ -22141,17 +22184,38 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/integrations/components/listings/IntegrationAccountSummary.test.tsx",
+      "basename": "IntegrationAccountSummary.test.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 45,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./IntegrationAccountSummary"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/integrations/components/listings/IntegrationAccountSummary.tsx",
       "basename": "IntegrationAccountSummary.tsx",
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 36,
+      "lines": 42,
       "useClient": false,
       "imports": [
         "react",
         "@/features/integrations/context/ListingSettingsContext",
-        "@/shared/contracts/integrations/domain"
+        "@/shared/contracts/integrations/domain",
+        "./product-listings-labels"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -22323,7 +22387,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 222,
+      "lines": 274,
       "useClient": false,
       "imports": [
         "react",
@@ -22343,7 +22407,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 165,
+      "lines": 171,
       "useClient": true,
       "imports": [
         "react",
@@ -22415,7 +22479,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 133,
+      "lines": 289,
       "useClient": false,
       "imports": [
         "react",
@@ -22435,7 +22499,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 119,
+      "lines": 177,
       "useClient": true,
       "imports": [
         "react",
@@ -22704,7 +22768,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 180,
+      "lines": 208,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -22724,7 +22788,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 209,
+      "lines": 337,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -22738,12 +22802,31 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/integrations/components/listings/hooks/useMassListForm.test.tsx",
+      "basename": "useMassListForm.test.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 361,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "./useMassListForm"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/integrations/components/listings/hooks/useProductSelectionForm.test.tsx",
       "basename": "useProductSelectionForm.test.tsx",
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 162,
+      "lines": 254,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -22762,7 +22845,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 133,
+      "lines": 163,
       "useClient": false,
       "imports": [
         "react",
@@ -22782,7 +22865,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 100,
+      "lines": 104,
       "useClient": true,
       "imports": [
         "react",
@@ -22805,7 +22888,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Panel",
-      "lines": 82,
+      "lines": 98,
       "useClient": false,
       "imports": [
         "react",
@@ -22828,7 +22911,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 23,
+      "lines": 24,
       "useClient": true,
       "imports": [
         "@/shared/contracts/integrations/base",
@@ -22864,16 +22947,17 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Panel",
-      "lines": 34,
+      "lines": 38,
       "useClient": false,
       "imports": [
         "react",
-        "@/shared/ui/navigation-and-layout.public"
+        "@/shared/ui/navigation-and-layout.public",
+        "@/shared/contracts/base"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "current|errors|total",
+      "propsSignature": "current|errors|paused|total",
       "thinReExportWrapper": false
     },
     {
@@ -22996,13 +23080,14 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 808,
+      "lines": 1027,
       "useClient": false,
       "imports": [
         "react",
         "@testing-library/react",
         "vitest",
         "@/features/integrations/utils/traderaQuickListFeedback",
+        "@/features/integrations/utils/vintedQuickListFeedback",
         "./context/ProductListingsViewContext",
         "./ProductListingsContent"
       ],
@@ -23018,23 +23103,30 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 242,
+      "lines": 414,
       "useClient": true,
       "imports": [
         "react",
         "@/features/integrations/constants/slugs",
         "@/features/integrations/hooks/useTraderaQuickListFeedback",
+        "@/features/integrations/hooks/useVintedQuickListFeedback",
         "@/features/integrations/context/ProductListingsContext",
         "@/features/integrations/utils/product-listings-recovery",
+        "@/features/integrations/utils/vinted-browser-messages",
         "@/features/integrations/utils/traderaQuickListFeedback",
         "@/features/integrations/utils/tradera-listing-client-utils",
+        "@/features/integrations/utils/vintedQuickListFeedback",
+        "@/features/integrations/utils/vinted-listing-client-utils",
         "@/shared/contracts/integrations/listings",
         "./context/ProductListingsViewContext",
         "./ProductListingItem",
         "./ProductListingsScopedStatusPanel",
         "./TraderaQuickExportRecoveryBanner",
         "./TraderaQuickExportSuccessBanner",
-        "@/features/integrations/public"
+        "./VintedQuickExportRecoveryBanner",
+        "./VintedQuickExportSuccessBanner",
+        "@/features/integrations/public",
+        "@/features/integrations/hooks/useVintedQuickExportFeedback"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23048,13 +23140,14 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 375,
+      "lines": 452,
       "useClient": false,
       "imports": [
         "react",
         "@testing-library/react",
         "vitest",
         "@/features/integrations/utils/traderaQuickListFeedback",
+        "@/features/integrations/utils/vintedQuickListFeedback",
         "./context/ProductListingsViewContext",
         "./ProductListingsEmpty"
       ],
@@ -23070,20 +23163,24 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 113,
+      "lines": 172,
       "useClient": false,
       "imports": [
         "react",
         "@/features/integrations/constants/slugs",
         "@/features/integrations/hooks/useTraderaQuickListFeedback",
+        "@/features/integrations/hooks/useVintedQuickListFeedback",
         "@/features/integrations/context/ProductListingsContext",
         "@/features/integrations/utils/product-listings-recovery",
+        "@/features/integrations/utils/vinted-browser-messages",
         "@/shared/ui/navigation-and-layout.public",
         "./BaseQuickExportFailureBanner",
         "./context/ProductListingsViewContext",
         "./ProductListingsScopedStatusPanel",
         "./TraderaQuickExportRecoveryBanner",
-        "./TraderaQuickExportSuccessBanner"
+        "./TraderaQuickExportSuccessBanner",
+        "./VintedQuickExportRecoveryBanner",
+        "./VintedQuickExportSuccessBanner"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
@@ -23177,7 +23274,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 178,
+      "lines": 291,
       "useClient": false,
       "imports": [
         "react",
@@ -23198,7 +23295,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Panel",
-      "lines": 83,
+      "lines": 89,
       "useClient": true,
       "imports": [
         "react",
@@ -23341,6 +23438,106 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.test.tsx",
+      "basename": "VintedQuickExportRecoveryBanner.test.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 109,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./VintedQuickExportRecoveryBanner"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx",
+      "basename": "VintedQuickExportRecoveryBanner.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 152,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/integrations/utils/vinted-browser-messages",
+        "@/shared/ui/primitives.public",
+        "./VintedRecoveryContinueButton"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportSuccessBanner.tsx",
+      "basename": "VintedQuickExportSuccessBanner.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 130,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/integrations/utils/vintedQuickListFeedback",
+        "@/features/integrations/utils/vinted-listing-client-utils",
+        "@/shared/contracts/integrations/listings",
+        "@/shared/ui/primitives.public",
+        "@/shared/ui/forms-and-actions.public"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 2,
+      "tokenSet": {},
+      "propsSignature": "feedback|listing|mode|variant",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.test.tsx",
+      "basename": "VintedRecoveryContinueButton.test.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 63,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./VintedRecoveryContinueButton"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.tsx",
+      "basename": "VintedRecoveryContinueButton.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 42,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@/features/integrations/context/ProductListingsContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "connectionId|integrationId|size",
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/integrations/components/listings/product-listings-modal/context/ProductListingsModalViewContext.tsx",
       "basename": "ProductListingsModalViewContext.tsx",
       "domain": "feature",
@@ -23429,7 +23626,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 696,
+      "lines": 730,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -23448,7 +23645,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 860,
+      "lines": 865,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -23460,6 +23657,7 @@
         "@/shared/ui/primitives.public",
         "@/shared/ui/navigation-and-layout.public",
         "@/shared/ui/forms-and-actions.public",
+        "../../product-listings-labels",
         "./types"
       ],
       "templateImports": 0,
@@ -23914,12 +24112,13 @@
       "domain": "feature",
       "scope": "feature:internationalization",
       "family": "Unknown",
-      "lines": 109,
+      "lines": 103,
       "useClient": false,
       "imports": [
         "@/shared/contracts/internationalization",
         "@/shared/contracts/ui/settings",
         "@/shared/ui/navigation-and-layout.public",
+        "@/shared/contracts/base",
         "../shared/renderSelectionChecklistGrid"
       ],
       "templateImports": 0,
@@ -28884,7 +29083,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 350,
+      "lines": 352,
       "useClient": true,
       "imports": [
         "react",
@@ -28892,7 +29091,8 @@
         "./CalendarInteractiveGame.hooks",
         "./CalendarInteractiveGame.types",
         "@/features/kangur/ui/types",
-        "./CalendarInteractiveGame.utils"
+        "./CalendarInteractiveGame.utils",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -33035,7 +33235,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 146,
+      "lines": 148,
       "useClient": true,
       "imports": [
         "react",
@@ -33046,7 +33246,8 @@
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
         "@/features/kangur/ui/hooks/useKangurPageContent",
         "@/shared/lib/i18n/site-locale",
-        "./KangurAiTutorGuidedCallout.utils"
+        "./KangurAiTutorGuidedCallout.utils",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -39917,7 +40118,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 152,
+      "lines": 154,
       "useClient": true,
       "imports": [
         "react",
@@ -39927,7 +40128,8 @@
         "../ai-tutor-widget/KangurAiTutorWidget.state",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
         "@/shared/lib/i18n/site-locale",
-        "./KangurAiTutorGuided.state"
+        "./KangurAiTutorGuided.state",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -40968,12 +41170,13 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 30,
+      "lines": 32,
       "useClient": true,
       "imports": [
         "react",
         "./KangurAssignmentManager.hooks",
-        "./KangurAssignmentManager.types"
+        "./KangurAssignmentManager.types",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -44181,13 +44384,14 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 178,
+      "lines": 180,
       "useClient": true,
       "imports": [
         "react",
         "./music-theory",
         "./useKangurMusicSynth",
-        "./KangurMusicPianoRoll.types"
+        "./KangurMusicPianoRoll.types",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -44746,11 +44950,12 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 26,
+      "lines": 28,
       "useClient": true,
       "imports": [
         "react",
-        "./monitoring-widget/MonitoringWidget.hooks"
+        "./monitoring-widget/MonitoringWidget.hooks",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -44764,11 +44969,12 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 26,
+      "lines": 28,
       "useClient": true,
       "imports": [
         "react",
-        "./ProgressWidget.hooks"
+        "./ProgressWidget.hooks",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -44802,7 +45008,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 461,
+      "lines": 463,
       "useClient": true,
       "imports": [
         "react",
@@ -44819,7 +45025,8 @@
         "./KangurPrimaryNavigation.types",
         "@/features/kangur/ui/types",
         "@/features/kangur/ui/components/KangurChoiceDialog",
-        "@/features/kangur/shared/contracts/kangur"
+        "@/features/kangur/shared/contracts/kangur",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
@@ -46261,7 +46468,7 @@
       "domain": "feature",
       "scope": "feature:playwright",
       "family": "Modal",
-      "lines": 124,
+      "lines": 125,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -47584,7 +47791,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1038,
+      "lines": 1084,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -47607,7 +47814,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 814,
+      "lines": 845,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -47642,6 +47849,7 @@
         "./columns/buttons/TraderaQuickListButton",
         "./columns/buttons/VintedQuickListButton",
         "./columns/buttons/TraderaStatusButton",
+        "./columns/buttons/VintedStatusButton",
         "./columns/buttons/PlaywrightStatusButton",
         "./TraderaLinkModal"
       ],
@@ -47761,7 +47969,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 500,
+      "lines": 537,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -47783,7 +47991,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 663,
+      "lines": 685,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -47812,6 +48020,7 @@
         "./columns/buttons/TraderaQuickListButton",
         "./columns/buttons/VintedQuickListButton",
         "./columns/buttons/TraderaStatusButton",
+        "./columns/buttons/VintedStatusButton",
         "./columns/buttons/PlaywrightStatusButton"
       ],
       "templateImports": 0,
@@ -47821,12 +48030,33 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/products/components/list/ProductSelectionActions.test.tsx",
+      "basename": "ProductSelectionActions.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 194,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./ProductSelectionActions",
+        "@/features/products/context/ProductListContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/products/components/list/ProductSelectionActions.tsx",
       "basename": "ProductSelectionActions.tsx",
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 614,
+      "lines": 636,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -47835,6 +48065,7 @@
         "@/features/products/context/ProductListContext",
         "@/features/products/hooks/useProductsMutations",
         "@/features/products/hooks/product-list/useTraderaMassQuickExport",
+        "@/features/products/hooks/product-list/useVintedMassQuickExport",
         "@/shared/contracts/products/filters",
         "@/shared/contracts/products/product",
         "@/shared/ui/ActionMenu",
@@ -48074,7 +48305,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 834,
+      "lines": 838,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -48186,7 +48417,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 96,
+      "lines": 98,
       "useClient": false,
       "imports": [
         "react",
@@ -48223,12 +48454,38 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/products/components/list/columns/buttons/VintedQuickListButton.test.tsx",
+      "basename": "VintedQuickListButton.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 391,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "@tanstack/react-query",
+        "vitest",
+        "@/shared/contracts/products/product",
+        "@/shared/lib/api-client",
+        "./BaseQuickExportButton.test-support",
+        "./VintedQuickListButton",
+        "@/shared/utils/observability/client-error-logger",
+        "@/features/integrations/public"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/products/components/list/columns/buttons/VintedQuickListButton.tsx",
       "basename": "VintedQuickListButton.tsx",
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 298,
+      "lines": 343,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -48237,7 +48494,9 @@
         "@/features/integrations/public",
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
+        "@/shared/lib/api-client",
         "@/shared/lib/query-invalidation",
+        "@/shared/lib/query-key-utils",
         "@/shared/ui/button",
         "@/shared/ui/toast",
         "@/shared/utils/ui-utils",
@@ -48246,6 +48505,48 @@
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 2,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/list/columns/buttons/VintedStatusButton.test.tsx",
+      "basename": "VintedStatusButton.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 98,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./VintedStatusButton"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/list/columns/buttons/VintedStatusButton.tsx",
+      "basename": "VintedStatusButton.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 70,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/integrations/public",
+        "@/shared/contracts/integrations/listings",
+        "@/shared/ui/button",
+        "@/shared/utils/ui-utils",
+        "../product-column-utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": null,
       "thinReExportWrapper": false
@@ -48485,7 +48786,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Settings",
-      "lines": 866,
+      "lines": 863,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -48494,9 +48795,7 @@
         "@/features/products/hooks/useProductSettingsQueries",
         "@/shared/contracts/base",
         "@/shared/contracts/products/catalogs",
-        "@/shared/contracts/products/categories",
         "@/shared/contracts/products/shipping-groups",
-        "@/shared/lib/api-client",
         "@/shared/lib/products/utils/shipping-group-rule-conflicts",
         "@/shared/ui/alert",
         "@/shared/ui/button",
@@ -48928,7 +49227,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 916,
+      "lines": 475,
       "useClient": true,
       "imports": [
         "react",
@@ -48942,9 +49241,11 @@
         "@/shared/contracts/products/shipping-groups",
         "./shipping-group-utils",
         "@/shared/lib/products/utils/shipping-group-rule-conflicts",
-        "@/shared/lib/products/utils/price-group-identifiers",
-        "@/shared/lib/products/utils/priceCalculation",
-        "@/shared/utils/observability/client-error-logger"
+        "@/shared/utils/observability/client-error-logger",
+        "./ShippingGroupsContext.hooks",
+        "./ShippingGroupsContext.handlers",
+        "./ShippingGroupsContext.state",
+        "@/shared/errors/app-error"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,

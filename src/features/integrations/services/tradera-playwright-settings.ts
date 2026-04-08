@@ -16,6 +16,16 @@ export type PersistedStorageState = NonNullable<
   Exclude<BrowserContextOptions['storageState'], string>
 >;
 
+const tryParsePersistedStorageState = (raw: string): PersistedStorageState | null => {
+  try {
+    const parsed = playwrightStorageStateSchema.safeParse(JSON.parse(raw));
+    if (parsed.success) return normalizeStorageState(parsed.data);
+  } catch {
+    return null;
+  }
+  return null;
+};
+
 const toPlaywrightSameSite = (
   value: PlaywrightStorageState['cookies'][number]['sameSite']
 ): PersistedStorageState['cookies'][number]['sameSite'] => {
@@ -92,13 +102,21 @@ export const parsePersistedStorageState = (
   encryptedValue: string | null | undefined
 ): PersistedStorageState | null => {
   if (!encryptedValue) return null;
+  let decryptError: unknown = null;
   try {
     const raw = decryptSecret(encryptedValue);
-    const parsed = playwrightStorageStateSchema.safeParse(JSON.parse(raw));
-    if (parsed.success) return normalizeStorageState(parsed.data);
+    const parsed = tryParsePersistedStorageState(raw);
+    if (parsed) return parsed;
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    return null;
+    decryptError = error;
+  }
+
+  // Backward compatibility for sessions that were accidentally stored as plain JSON.
+  const plaintextParsed = tryParsePersistedStorageState(encryptedValue);
+  if (plaintextParsed) return plaintextParsed;
+
+  if (decryptError) {
+    void ErrorSystem.captureException(decryptError);
   }
   return null;
 };

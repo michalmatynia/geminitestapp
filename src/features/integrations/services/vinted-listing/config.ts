@@ -1,5 +1,5 @@
 export const VINTED_LOGIN_SUCCESS_SELECTORS = [
-  'button[aria-label*="Profil"], button[aria-label*="Profile"], .c-header__item--user',
+  'button[aria-label*="Profil"], button[aria-label*="Profile"]',
   'a[href*="/settings"]',
   'button:has-text("Wyloguj")',
   'button:has-text("Log out")',
@@ -121,3 +121,5 @@ export const VINTED_SUBMIT_SELECTORS = [
 export const VINTED_ITEM_URL_PATTERN = /\/items\/(\d+)/;
 
 export const VINTED_LISTING_FORM_URL = 'https://www.vinted.pl/items/new';
+export const VINTED_AUTH_ENTRY_URL =
+  'https://www.vinted.pl/member/signup/select_type?ref_url=%2Fitems%2Fnew';

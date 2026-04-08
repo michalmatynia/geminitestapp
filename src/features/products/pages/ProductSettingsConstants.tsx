@@ -2,6 +2,7 @@ export const settingSections = [
   'Categories',
   'Shipping Groups',
   'Tags',
+  'Custom Fields',
   'Parameters',
   'Price Groups',
   'Catalogs',

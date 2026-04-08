@@ -74,22 +74,43 @@ vi.mock('@/features/admin/components/AdminValidatorSettings', () => ({
   ValidatorSettings: () => <div data-testid='validator-settings'>validator-settings</div>,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/admin.public', () => ({
   AdminSectionBreadcrumbs: ({
     current,
   }: {
     current: string;
   }) => <div data-testid='validator-breadcrumbs'>{current}</div>,
+  formatAdminAiEyebrow: (value: string) => value,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   Badge: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Button: ({
     children,
+    asChild,
   }: {
     children?: React.ReactNode;
-  }) => <div>{children}</div>,
+    asChild?: boolean;
+  }) => asChild ? <>{children}</> : <button type='button'>{children}</button>,
   ClientOnly: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  formatAdminAiEyebrow: (value: string) => value,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   ListPanel: MockListPanel,
+}));
+
+vi.mock('@/shared/ui/admin-title-breadcrumb-header', () => ({
+  AdminTitleBreadcrumbHeader: ({ title, breadcrumb, actions }: { title: React.ReactNode, breadcrumb: React.ReactNode, actions?: React.ReactNode }) => (
+    <div>
+      {title}
+      {breadcrumb}
+      {actions}
+    </div>
+  ),
 }));
 
 import { AdminGlobalValidatorPage } from './AdminGlobalValidatorPage';

@@ -18,6 +18,7 @@ import {
 import {
   findVisibleLocator,
   includesAnyHint,
+  isLocatorVisible,
   readVisibleLocatorText,
 } from './utils';
 
@@ -34,25 +35,17 @@ export type TraderaAuthState = {
 export const acceptTraderaCookies = async (page: Page): Promise<void> => {
   for (const selector of TRADERA_COOKIE_ACCEPT_SELECTORS) {
     const locator = page.locator(selector).first();
-    const visible = await locator.isVisible().catch(() => false);
+    const visible = await isLocatorVisible(locator);
     if (!visible) continue;
-    await locator.click().catch(() => undefined);
-    await page.waitForTimeout(500).catch(() => undefined);
+    await locator.click?.().catch(() => undefined);
+    await page.waitForTimeout?.(500);
     return;
   }
 };
 
 export const readTraderaAuthState = async (page: Page): Promise<TraderaAuthState> => {
-  const successVisible = await page
-    .locator(LOGIN_SUCCESS_SELECTOR)
-    .first()
-    .isVisible()
-    .catch(() => false);
-  const loginFormVisible = await page
-    .locator(LOGIN_FORM_SELECTOR)
-    .first()
-    .isVisible()
-    .catch(() => false);
+  const successVisible = await isLocatorVisible(page.locator(LOGIN_SUCCESS_SELECTOR).first());
+  const loginFormVisible = await isLocatorVisible(page.locator(LOGIN_FORM_SELECTOR).first());
   const currentUrl = page.url().trim();
   const normalizedUrl = currentUrl.toLowerCase();
   const errorText = await readVisibleLocatorText(page, TRADERA_AUTH_ERROR_SELECTORS);

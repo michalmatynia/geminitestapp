@@ -1,5 +1,6 @@
 import { chromium, devices, type BrowserContextOptions } from 'playwright';
 import { normalizeTraderaListingFormUrl, TraderaSystemSettings } from '@/features/integrations/constants/tradera';
+import { encryptSecret } from '@/features/integrations/server';
 import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
@@ -168,7 +169,7 @@ export const runTraderaBrowserListingStandard = async ({
     const integrationRepository = await getIntegrationRepository();
     const completedAt = new Date().toISOString();
     await integrationRepository.updateConnection(connection.id, {
-      playwrightStorageState: JSON.stringify(nextStorageState),
+      playwrightStorageState: encryptSecret(JSON.stringify(nextStorageState)),
       playwrightStorageStateUpdatedAt: completedAt,
     });
 

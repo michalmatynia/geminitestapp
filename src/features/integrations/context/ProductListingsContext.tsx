@@ -2,6 +2,10 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 
+import {
+  isTraderaIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
@@ -10,6 +14,7 @@ import {
   createTraderaRecoveryContext,
   createVintedRecoveryContext,
   mergeProductListingsRecoveryContext,
+  normalizeProductListingsIntegrationScope,
   resolveProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
 import { useTraderaQuickExportPolling } from '@/features/integrations/hooks/useTraderaQuickExportPolling';
@@ -229,8 +234,28 @@ export function ProductListingsProvider({
     vintedQuickListFeedback,
     setVintedQuickListFeedbackStatus
   );
+  const explicitFilterScope = normalizeProductListingsIntegrationScope(filterIntegrationSlug);
+  const incomingRecoveryScope = normalizeProductListingsIntegrationScope(
+    recoveryContext?.integrationSlug
+  );
+  const allowTraderaRecoveryHydration =
+    explicitFilterScope !== null
+      ? isTraderaIntegrationSlug(explicitFilterScope)
+      : incomingRecoveryScope !== null
+        ? isTraderaIntegrationSlug(incomingRecoveryScope)
+        : true;
+  const allowVintedRecoveryHydration =
+    explicitFilterScope !== null
+      ? isVintedIntegrationSlug(explicitFilterScope)
+      : incomingRecoveryScope !== null
+        ? isVintedIntegrationSlug(incomingRecoveryScope)
+        : true;
 
   useEffect(() => {
+    if (!allowTraderaRecoveryHydration) {
+      return;
+    }
+
     if (!traderaQuickListFeedback) {
       return;
     }
@@ -272,6 +297,7 @@ export function ProductListingsProvider({
       });
     }
   }, [
+    allowTraderaRecoveryHydration,
     traderaQuickListFeedback,
     traderaQuickListFeedback?.connectionId,
     traderaQuickListFeedback?.failureReason,
@@ -282,6 +308,10 @@ export function ProductListingsProvider({
   ]);
 
   useEffect(() => {
+    if (!allowVintedRecoveryHydration) {
+      return;
+    }
+
     if (!vintedQuickListFeedback) {
       return;
     }
@@ -323,6 +353,7 @@ export function ProductListingsProvider({
       });
     }
   }, [
+    allowVintedRecoveryHydration,
     vintedQuickListFeedback,
     vintedQuickListFeedback?.connectionId,
     vintedQuickListFeedback?.failureReason,

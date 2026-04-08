@@ -10,6 +10,7 @@ import {
   routerReplaceMock,
   searchParamsGetMock,
   setupAdminFilemakerMailPagesTest,
+  renderWithProviders,
   toastMock,
 } from './AdminFilemakerMailPages.test-support';
 
@@ -41,7 +42,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailComposePage />);
+    renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await screen.findByText(/Sending from:/);
     expect(

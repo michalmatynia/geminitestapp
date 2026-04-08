@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from '../base';
 import { imageFileRecordSchema } from '../files';
 import { catalogSchema } from './catalogs';
+import { productCustomFieldValueSchema } from './custom-fields';
 import { priceGroupSchema } from './catalogs';
 import { productCategorySchema } from './categories';
 import { producerSchema } from './producers';
@@ -180,6 +181,7 @@ export const productSchema = dtoBaseSchema.extend({
   producers: z.array(productProducerRelationSchema).optional(),
   images: z.array(productImageSchema).optional(),
   catalogs: z.array(productCatalogSchema).optional(),
+  customFields: z.array(productCustomFieldValueSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
   imageLinks: z.array(z.string()).optional(),
   imageBase64s: z.array(z.string()).optional(),

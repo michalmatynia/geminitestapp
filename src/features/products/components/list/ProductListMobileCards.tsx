@@ -449,6 +449,16 @@ const renderProductListMobileCard = ({
           showTraderaBadge={showTraderaBadge}
           traderaStatus={traderaStatus}
         />
+        {showTraderaBadge && (
+          <TraderaStatusButton
+            productId={product.id}
+            status={traderaStatus}
+            prefetchListings={() => prefetchListings(product.id)}
+            onOpenListings={(recoveryContext) =>
+              onIntegrationsClick(product, recoveryContext, 'tradera')
+            }
+          />
+        )}
         <VintedQuickListButton
           product={product}
           prefetchListings={() => prefetchListings(product.id)}
@@ -458,6 +468,16 @@ const renderProductListMobileCard = ({
           showVintedBadge={showVintedBadge}
           vintedStatus={vintedStatus}
         />
+        {showVintedBadge && (
+          <VintedStatusButton
+            productId={product.id}
+            status={vintedStatus}
+            prefetchListings={() => prefetchListings(product.id)}
+            onOpenListings={(recoveryContext) =>
+              onIntegrationsClick(product, recoveryContext, 'vinted')
+            }
+          />
+        )}
 
         {triggerButtonsReady ? (
           <TriggerButtonBar
@@ -473,28 +493,6 @@ const renderProductListMobileCard = ({
             className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
           />
         ) : null}
-
-        {showTraderaBadge && (
-          <TraderaStatusButton
-            productId={product.id}
-            status={traderaStatus}
-            prefetchListings={() => prefetchListings(product.id)}
-            onOpenListings={(recoveryContext) =>
-              onIntegrationsClick(product, recoveryContext, 'tradera')
-            }
-          />
-        )}
-
-        {showVintedBadge && (
-          <VintedStatusButton
-            productId={product.id}
-            status={vintedStatus}
-            prefetchListings={() => prefetchListings(product.id)}
-            onOpenListings={(recoveryContext) =>
-              onIntegrationsClick(product, recoveryContext, 'vinted')
-            }
-          />
-        )}
 
         {showPlaywrightProgrammableBadge && (
           <PlaywrightStatusButton

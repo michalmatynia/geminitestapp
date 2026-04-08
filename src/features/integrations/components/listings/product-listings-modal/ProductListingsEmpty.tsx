@@ -1,6 +1,9 @@
 import React from 'react';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  isTraderaIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
 import {
@@ -58,6 +61,8 @@ export function ProductListingsEmpty(): React.JSX.Element {
   const { recoveryContext } = useProductListingsModals();
   const isFailedBaseQuickExportRecovery = isBaseQuickExportRecoveryContext(recoveryContext);
   const isVintedQuickExportRecovery = isVintedQuickExportRecoveryContext(recoveryContext);
+  const isScopedToTradera = isTraderaIntegrationSlug(filterIntegrationSlug);
+  const isScopedToVinted = isVintedIntegrationSlug(filterIntegrationSlug);
   const {
     isRecovery: isTraderaQuickExportRecovery,
     requestId: recoveryRequestId,
@@ -66,23 +71,29 @@ export function ProductListingsEmpty(): React.JSX.Element {
   } = resolveTraderaRecoveryTarget({
     recoveryContext,
   });
+  const shouldUseTraderaRecovery =
+    isTraderaQuickExportRecovery && !isScopedToVinted;
+  const shouldUseVintedRecovery =
+    isVintedQuickExportRecovery && !isScopedToTradera;
   const recoveryStatus = (recoveryContext?.status ?? '').trim().toLowerCase();
   const recoveryFailureReason =
     recoveryContext && 'failureReason' in recoveryContext
       ? recoveryContext.failureReason ?? null
       : null;
   const canOpenTraderaRecoveryLogin =
+    shouldUseTraderaRecovery &&
     Boolean(recoveryIntegrationId && recoveryConnectionId) &&
     (recoveryStatus === 'auth_required' ||
       recoveryStatus === 'needs_login' ||
       hasTraderaAuthSignal(recoveryFailureReason));
-  const vintedRecoveryIntegrationId = isVintedQuickExportRecovery
+  const vintedRecoveryIntegrationId = shouldUseVintedRecovery
     ? recoveryContext?.integrationId ?? null
     : null;
-  const vintedRecoveryConnectionId = isVintedQuickExportRecovery
+  const vintedRecoveryConnectionId = shouldUseVintedRecovery
     ? recoveryContext?.connectionId ?? null
     : null;
   const canOpenVintedRecoveryLogin =
+    shouldUseVintedRecovery &&
     Boolean(vintedRecoveryIntegrationId && vintedRecoveryConnectionId) &&
     (recoveryStatus === 'auth_required' ||
       recoveryStatus === 'needs_login' ||
@@ -90,12 +101,12 @@ export function ProductListingsEmpty(): React.JSX.Element {
   const { feedback: persistedQuickListFeedback } = useTraderaQuickListFeedback(product.id);
   const { feedback: persistedVintedQuickListFeedback } = useVintedQuickListFeedback(product.id);
   const shouldShowQuickListSuccessBanner = Boolean(
-    !isTraderaQuickExportRecovery &&
+    !shouldUseTraderaRecovery &&
       persistedQuickListFeedback?.status === 'completed' &&
       isTraderaIntegrationSlug(filterIntegrationSlug)
   );
   const shouldShowVintedQuickListSuccessBanner = Boolean(
-    !isVintedQuickExportRecovery &&
+    !shouldUseVintedRecovery &&
       persistedVintedQuickListFeedback?.status === 'completed' &&
       filterIntegrationSlug === 'vinted'
   );
@@ -122,7 +133,7 @@ export function ProductListingsEmpty(): React.JSX.Element {
           runId={recoveryContext?.runId}
         />
       )}
-      {isTraderaQuickExportRecovery && (
+      {shouldUseTraderaRecovery && (
         <TraderaQuickExportRecoveryBanner
           mode='empty'
           variant='full'
@@ -134,7 +145,7 @@ export function ProductListingsEmpty(): React.JSX.Element {
           connectionId={recoveryConnectionId}
         />
       )}
-      {isVintedQuickExportRecovery && (
+      {shouldUseVintedRecovery && (
         <VintedQuickExportRecoveryBanner
           mode='empty'
           variant='full'
@@ -158,8 +169,8 @@ export function ProductListingsEmpty(): React.JSX.Element {
           title='No listings found'
           description={
             isFailedBaseQuickExportRecovery ||
-            isTraderaQuickExportRecovery ||
-            isVintedQuickExportRecovery
+            shouldUseTraderaRecovery ||
+            shouldUseVintedRecovery
               ? undefined
               : resolveProductListingsEmptyDescription(recoveryContext)
           }

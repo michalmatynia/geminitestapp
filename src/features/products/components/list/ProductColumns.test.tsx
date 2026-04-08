@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -70,6 +70,9 @@ vi.mock('./columns/buttons/BaseQuickExportButton', () => ({
 vi.mock('./columns/buttons/TraderaQuickListButton', () => ({
   TraderaQuickListButton: (props: Record<string, unknown>) => {
     traderaQuickListButtonMock(props);
+    if (props.showTraderaBadge) {
+      return null;
+    }
     return <button type='button'>T+</button>;
   },
 }));
@@ -77,6 +80,9 @@ vi.mock('./columns/buttons/TraderaQuickListButton', () => ({
 vi.mock('./columns/buttons/VintedQuickListButton', () => ({
   VintedQuickListButton: (props: Record<string, unknown>) => {
     vintedQuickListButtonMock(props);
+    if (props.showVintedBadge) {
+      return null;
+    }
     return <button type='button'>V+</button>;
   },
 }));
@@ -185,6 +191,70 @@ describe('ProductColumns queued badge', () => {
         })
       );
     });
+  });
+
+  it('keeps the integrations button order stable when quick-list buttons are visible', async () => {
+    const product = createProduct();
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'T+' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'V+' })).toBeInTheDocument();
+    });
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Integrations button row was not found.');
+    }
+
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'T+',
+      'V+',
+    ]);
+  });
+
+  it('keeps the integrations button order stable when Tradera and Vinted badges replace quick-list buttons', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showTraderaBadge: true,
+        traderaStatus: 'auth_required',
+        showVintedBadge: true,
+        vintedStatus: 'auth_required',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'TR' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'VR' })).toBeInTheDocument();
+    });
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Integrations button row was not found.');
+    }
+
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'TR',
+      'VR',
+    ]);
   });
 
   it('scopes Base quick export recovery to the Base listings modal', async () => {

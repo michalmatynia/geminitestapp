@@ -1,13 +1,13 @@
 {
   "summary": {
-    "generatedAt": "2026-04-07T11:43:12.358Z",
-    "scannedSourceFiles": 7048,
-    "scannedJsxFiles": 2493,
-    "componentCount": 4340,
+    "generatedAt": "2026-04-07T16:03:37.828Z",
+    "scannedSourceFiles": 7086,
+    "scannedJsxFiles": 2497,
+    "componentCount": 4350,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 294,
-    "resolvedTransitionCount": 1228,
-    "depth2CandidateChainCount": 1228,
+    "componentsWithAnyForwarding": 296,
+    "resolvedTransitionCount": 1232,
+    "depth2CandidateChainCount": 1232,
     "candidateChainCount": 230,
     "highPriorityChainCount": 66,
     "unknownSpreadForwardingCount": 12,
@@ -19,12 +19,12 @@
         "count": 248
       },
       {
-        "scope": "shared-ui",
+        "scope": "feature:integrations",
         "count": 9
       },
       {
-        "scope": "feature:integrations",
-        "count": 7
+        "scope": "shared-ui",
+        "count": 9
       },
       {
         "scope": "feature:filemaker",
@@ -7291,7 +7291,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -7317,7 +7317,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -7343,7 +7343,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -7369,7 +7369,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 835
+          "line": 765
         }
       ]
     },
@@ -7395,7 +7395,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 835
+          "line": 765
         }
       ]
     },
@@ -7421,7 +7421,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 835
+          "line": 765
         }
       ]
     },
@@ -7447,7 +7447,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "value",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 896
+          "line": 826
         }
       ]
     },
@@ -7473,7 +7473,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "onValueChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 896
+          "line": 826
         }
       ]
     },
@@ -7499,7 +7499,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "value",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 909
+          "line": 839
         }
       ]
     },
@@ -7525,7 +7525,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "onChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 909
+          "line": 839
         }
       ]
     },
@@ -7551,7 +7551,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "checked",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 926
+          "line": 856
         }
       ]
     },
@@ -7577,7 +7577,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "onCheckedChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 926
+          "line": 856
         }
       ]
     },
@@ -11087,7 +11087,7 @@
           "sourceProp": "onNewMailbox",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -11113,7 +11113,7 @@
           "sourceProp": "selectedAccountId",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -11139,7 +11139,7 @@
           "sourceProp": "selectedMailboxPath",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -11165,7 +11165,7 @@
           "sourceProp": "originPanel",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -11191,7 +11191,7 @@
           "sourceProp": "searchQuery",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -11217,7 +11217,7 @@
           "sourceProp": "onRecentMailboxFilterChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -11243,7 +11243,7 @@
           "sourceProp": "onRecentQueryChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -11269,7 +11269,7 @@
           "sourceProp": "onRecentUnreadOnlyChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 808
+          "line": 738
         }
       ]
     },
@@ -11295,7 +11295,7 @@
           "sourceProp": "onNewMailbox",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 821
+          "line": 751
         }
       ]
     },
@@ -11321,7 +11321,7 @@
           "sourceProp": "selectedAccountId",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 835
+          "line": 765
         }
       ]
     },
@@ -11347,7 +11347,7 @@
           "sourceProp": "selectedMailboxPath",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 835
+          "line": 765
         }
       ]
     },
@@ -11373,7 +11373,7 @@
           "sourceProp": "originPanel",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 835
+          "line": 765
         }
       ]
     },
@@ -11399,7 +11399,7 @@
           "sourceProp": "searchQuery",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 835
+          "line": 765
         }
       ]
     },
@@ -11425,7 +11425,7 @@
           "sourceProp": "onRecentMailboxFilterChange",
           "targetProp": "onValueChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 896
+          "line": 826
         }
       ]
     },
@@ -11451,7 +11451,7 @@
           "sourceProp": "onRecentQueryChange",
           "targetProp": "onChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 909
+          "line": 839
         }
       ]
     },
@@ -11477,7 +11477,7 @@
           "sourceProp": "onRecentUnreadOnlyChange",
           "targetProp": "onCheckedChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 926
+          "line": 856
         }
       ]
     },
@@ -16782,6 +16782,58 @@
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/pages/mail-page-sections/MailboxesAttentionSection.tsx",
           "line": 72
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx#BrowserSessionCard",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx#BrowserSessionCard",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onOpenSessionModal",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx#BrowserSessionCard",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onOpenSessionModal",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx",
+          "line": 100
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx#BrowserSessionCard",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx#BrowserSessionCard",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "sessionMeta",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx#BrowserSessionCard",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "sessionMeta",
+          "targetProp": "disabled",
+          "relativePath": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx",
+          "line": 100
         }
       ]
     },
@@ -28386,6 +28438,58 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx#VintedQuickExportRecoveryBanner",
+      "sinkComponentId": "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.tsx#VintedRecoveryContinueButton",
+      "componentPath": [
+        "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx#VintedQuickExportRecoveryBanner",
+        "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.tsx#VintedRecoveryContinueButton"
+      ],
+      "propPath": [
+        "integrationId",
+        "integrationId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx#VintedQuickExportRecoveryBanner",
+          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.tsx#VintedRecoveryContinueButton",
+          "sourceProp": "integrationId",
+          "targetProp": "integrationId",
+          "relativePath": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx",
+          "line": 108
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx#VintedQuickExportRecoveryBanner",
+      "sinkComponentId": "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.tsx#VintedRecoveryContinueButton",
+      "componentPath": [
+        "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx#VintedQuickExportRecoveryBanner",
+        "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.tsx#VintedRecoveryContinueButton"
+      ],
+      "propPath": [
+        "connectionId",
+        "connectionId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx#VintedQuickExportRecoveryBanner",
+          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/VintedRecoveryContinueButton.tsx#VintedRecoveryContinueButton",
+          "sourceProp": "connectionId",
+          "targetProp": "connectionId",
+          "relativePath": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx",
+          "line": 108
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/integrations/pages/CategoryMapperPage.tsx#CategoryMapperPage",
       "sinkComponentId": "src/features/integrations/context/CategoryMapperPageContext.tsx#CategoryMapperPageProvider",
       "componentPath": [
@@ -37980,6 +38084,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx#BrowserSessionCard",
+      "name": "BrowserSessionCard",
+      "relativePath": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/integrations/components/listings/IntegrationSelectionLoadingState.tsx#IntegrationSelectionLoadingState",
       "name": "IntegrationSelectionLoadingState",
       "relativePath": "src/features/integrations/components/listings/IntegrationSelectionLoadingState.tsx",
@@ -38001,6 +38114,15 @@
       "componentId": "src/features/integrations/components/listings/product-listings-modal/TraderaQuickExportRecoveryBanner.tsx#TraderaQuickExportRecoveryBanner",
       "name": "TraderaQuickExportRecoveryBanner",
       "relativePath": "src/features/integrations/components/listings/product-listings-modal/TraderaQuickExportRecoveryBanner.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx#VintedQuickExportRecoveryBanner",
+      "name": "VintedQuickExportRecoveryBanner",
+      "relativePath": "src/features/integrations/components/listings/product-listings-modal/VintedQuickExportRecoveryBanner.tsx",
       "feature": "feature:integrations",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,

@@ -289,6 +289,15 @@ export const invalidateProductMetadata = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.all });
 };
 
+export const invalidateProductCustomFields = async (
+  queryClient: QueryClient
+): Promise<void> => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.customFields() }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.customFields() }),
+  ]);
+};
+
 export const invalidateProductValidatorLatestSource = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({
     queryKey: QUERY_KEYS.products.validatorLatestProductSource(),

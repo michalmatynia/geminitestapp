@@ -6,6 +6,7 @@ const {
   routerPushMock,
   routerReplaceMock,
   searchParamsGetMock,
+  usePathnameMock,
   routeParamsMock,
   toastMock,
   fetchMock,
@@ -13,6 +14,7 @@ const {
   routerPushMock: vi.fn(),
   routerReplaceMock: vi.fn(),
   searchParamsGetMock: vi.fn<(key: string) => string | null>(),
+  usePathnameMock: vi.fn(() => '/'),
   routeParamsMock: { threadId: 'thread-1' as string | string[] | undefined },
   toastMock: vi.fn(),
   fetchMock: vi.fn(),
@@ -27,6 +29,7 @@ vi.mock('next/navigation', () => ({
     get: searchParamsGetMock,
   }),
   useParams: () => routeParamsMock,
+  usePathname: usePathnameMock,
 }));
 
 vi.mock('@/shared/lib/document-editor/components/DocumentWysiwygEditor', () => ({
@@ -133,7 +136,7 @@ vi.mock('@/shared/lib/foldertree/public', () => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -149,6 +152,55 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  Checkbox: ({
+    checked,
+    onCheckedChange,
+    id,
+  }: {
+    checked?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
+    id?: string;
+  }) => (
+    <input
+      id={id}
+      type='checkbox'
+      checked={checked}
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
+    />
+  ),
+  Input: ({
+    value,
+    onChange,
+    placeholder,
+    type = 'text',
+    id,
+    'aria-label': ariaLabel,
+  }: {
+    value?: string;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
+    placeholder?: string;
+    type?: string;
+    id?: string;
+    'aria-label'?: string;
+  }) => (
+    <input
+      id={id}
+      aria-label={ariaLabel}
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+    />
+  ),
+  ClientOnly: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  useToast: () => ({
+    toast: toastMock,
+  }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
     children,
@@ -201,27 +253,6 @@ vi.mock('@/shared/ui', () => ({
       placeholder={placeholder}
     />
   ),
-  PanelHeader: ({
-    title,
-    description,
-    actions = [],
-  }: {
-    title: string;
-    description?: string;
-    actions?: Array<{ key: string; label: string; onClick: () => void }>;
-  }) => (
-    <header>
-      <h1>{title}</h1>
-      {description ? <p>{description}</p> : null}
-      <div>
-        {actions.map((action) => (
-          <button key={action.key} type='button' onClick={action.onClick}>
-            {action.label}
-          </button>
-        ))}
-      </div>
-    </header>
-  ),
   SelectSimple: ({
     value,
     onValueChange,
@@ -248,41 +279,45 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
-  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-  Checkbox: ({
-    checked,
-    onCheckedChange,
-    id,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  PanelHeader: ({
+    title,
+    description,
+    actions = [],
   }: {
-    checked?: boolean;
-    onCheckedChange?: (checked: boolean) => void;
-    id?: string;
+    title: string;
+    description?: string;
+    actions?: Array<{ key: string; label: string; onClick: () => void }>;
   }) => (
-    <input
-      id={id}
-      type='checkbox'
-      checked={checked}
-      onChange={(event) => onCheckedChange?.(event.target.checked)}
-    />
+    <header>
+      <h1>{title}</h1>
+      {description ? <p>{description}</p> : null}
+      <div>
+        {actions.map((action) => (
+          <button key={action.key} type='button' onClick={action.onClick}>
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </header>
   ),
-  ActionMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuItem: ({
+  ListPanel: ({
+    header,
+    filters,
     children,
-    onSelect,
   }: {
-    children: React.ReactNode;
-    onSelect?: (event: Event) => void;
+    header?: React.ReactNode;
+    filters?: React.ReactNode;
+    children?: React.ReactNode;
   }) => (
-    <button
-      type='button'
-      onClick={() => onSelect?.({ preventDefault() {} } as Event)}
-    >
+    <div data-testid='list-panel'>
+      {header}
+      {filters}
       {children}
-    </button>
+    </div>
   ),
-  useToast: () => ({
-    toast: toastMock,
-  }),
 }));
 
 vi.mock('@/features/filemaker/components/shared/FilemakerEntityTablePage', () => ({
@@ -389,6 +424,9 @@ const mockFolders = [
   },
 ];
 
+import { render, screen } from '@testing-library/react';
+import { ToastProvider } from '@/shared/ui/primitives.public';
+
 const setupAdminFilemakerMailPagesTest = (): void => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -396,6 +434,14 @@ const setupAdminFilemakerMailPagesTest = (): void => {
     routeParamsMock.threadId = 'thread-1';
     vi.stubGlobal('fetch', fetchMock);
   });
+};
+
+const renderWithProviders = (ui: React.ReactNode) => {
+  return render(
+    <ToastProvider>
+      {ui}
+    </ToastProvider>
+  );
 };
 
 export {
@@ -408,5 +454,6 @@ export {
   routerReplaceMock,
   searchParamsGetMock,
   setupAdminFilemakerMailPagesTest,
+  renderWithProviders,
   toastMock,
 };

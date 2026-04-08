@@ -10,6 +10,12 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 export const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 
+type LocatorLike = {
+  count?: () => Promise<number>;
+  isVisible?: () => Promise<boolean>;
+  innerText?: () => Promise<string>;
+};
+
 export const classifyTraderaFailure = (message: string): TraderaFailureCategory => {
   const normalized = message.trim().toLowerCase();
   if (
@@ -118,8 +124,7 @@ HTML: ${htmlPath}`;
 export const findVisibleLocator = async (page: Page, selectors: string[]) => {
   for (const selector of selectors) {
     const locator = page.locator(selector).first();
-    if ((await locator.count()) === 0) continue;
-    if (await locator.isVisible().catch(() => false)) return locator;
+    if (await isLocatorVisible(locator)) return locator;
   }
   return null;
 };
@@ -187,11 +192,31 @@ export const includesAnyHint = (value: string, hints: readonly string[]): boolea
   return hints.some((hint) => normalized.includes(hint));
 };
 
+export const isLocatorVisible = async (locator: LocatorLike | null | undefined): Promise<boolean> => {
+  if (!locator) return false;
+
+  if (typeof locator.count === 'function') {
+    try {
+      if ((await locator.count()) === 0) return false;
+    } catch {
+      return false;
+    }
+  }
+
+  if (typeof locator.isVisible !== 'function') return false;
+
+  try {
+    return await locator.isVisible();
+  } catch {
+    return false;
+  }
+};
+
 export const readVisibleLocatorText = async (page: Page, selectors: readonly string[]): Promise<string> => {
   for (const selector of selectors) {
     const locator = page.locator(selector).first();
-    const visible = await locator.isVisible().catch(() => false);
-    if (!visible) continue;
+    const visible = await isLocatorVisible(locator);
+    if (!visible || typeof locator.innerText !== 'function') continue;
     const text = await locator.innerText().catch(() => '');
     if (text.trim()) {
       return text.trim();

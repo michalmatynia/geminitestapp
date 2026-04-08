@@ -150,6 +150,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
         path: buildCategoryPath(cat.id, categoriesById),
         depth: calculateDepth(cat.id, categoriesById),
         isLeaf: isLeafCategory(cat.id, categories),
+        metadata: cat.metadata ?? undefined,
       }));
 
       await ensureMongoExternalCategoryIndexes();

@@ -4,6 +4,7 @@ const {
   chromiumLaunchMock,
   parsePersistedStorageStateMock,
   resolveConnectionPlaywrightSettingsMock,
+  encryptSecretMock,
   getProductByIdMock,
   resolveTraderaListingPriceForProductMock,
   ensureLoggedInMock,
@@ -17,6 +18,7 @@ const {
   chromiumLaunchMock: vi.fn(),
   parsePersistedStorageStateMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
+  encryptSecretMock: vi.fn(),
   getProductByIdMock: vi.fn(),
   resolveTraderaListingPriceForProductMock: vi.fn(),
   ensureLoggedInMock: vi.fn(),
@@ -39,6 +41,10 @@ vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
   parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
   resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
     resolveConnectionPlaywrightSettingsMock(...args),
+}));
+
+vi.mock('@/features/integrations/server', () => ({
+  encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
@@ -90,6 +96,7 @@ describe('runTraderaBrowserListingStandard', () => {
       proxyUsername: null,
       proxyPassword: null,
     });
+    encryptSecretMock.mockImplementation((value: string) => `encrypted:${value}`);
     getProductByIdMock.mockResolvedValue({
       id: 'product-1',
       sku: 'KEYCHA1266',
@@ -188,7 +195,7 @@ describe('runTraderaBrowserListingStandard', () => {
     );
     expect(priceFillMock).toHaveBeenCalledWith('55');
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
-      playwrightStorageState: JSON.stringify({ cookies: [], origins: [] }),
+      playwrightStorageState: 'encrypted:{"cookies":[],"origins":[]}',
       playwrightStorageStateUpdatedAt: expect.any(String),
     });
     expect(result).toEqual({

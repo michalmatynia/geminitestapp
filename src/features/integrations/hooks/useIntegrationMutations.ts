@@ -130,11 +130,18 @@ export function useTestConnection() {
       integrationId,
       connectionId,
       type = 'test',
-      ...rest
+      body,
+      timeoutMs,
     }): Promise<TestConnectionResponse> =>
       api.post<TestConnectionResponse>(
         `/api/v2/integrations/${integrationId}/connections/${connectionId}/${type}`,
-        { integrationId, connectionId, type, ...rest }
+        {
+          integrationId,
+          connectionId,
+          type,
+          ...(body ?? {}),
+        },
+        ...(typeof timeoutMs === 'number' ? [{ timeout: timeoutMs }] : [])
       ),
     mutationKey,
     meta: {

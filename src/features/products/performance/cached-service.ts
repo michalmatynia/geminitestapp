@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { UnknownRecordDto } from '@/shared/contracts/base';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductWithImages, ProductRecord } from '@/shared/contracts/products/product';
 import type { ProductFilters } from '@/shared/contracts/products/drafts';
@@ -297,6 +298,21 @@ export class CachedProductService {
       }
     );
 
+  static listCustomFields: () => Promise<ProductCustomFieldDefinition[]> = withQueryCache(
+    async () => {
+      const primaryProvider = await getProductDataProvider();
+      const repository = await import('@/shared/lib/products/services/custom-field-repository').then(
+        (m) => m.getCustomFieldRepository(primaryProvider)
+      );
+      return repository.listCustomFields({});
+    },
+    {
+      keyGenerator: () => 'custom-fields:list',
+      ttl: 300000,
+      tags: () => ['custom-fields:list'],
+    }
+  );
+
   // Get category tree with caching
   static getCategoryTree: (catalogId: string) => Promise<unknown[]> = withQueryCache(
     async (catalogId: string) => {
@@ -326,6 +342,8 @@ export class CachedProductService {
     ProductCacheHelpers.invalidateAll();
     queryCache.invalidateByTag('categories:list');
     queryCache.invalidateByPattern(/^categories:/);
+    queryCache.invalidateByTag('custom-fields:list');
+    queryCache.invalidateByPattern(/^custom-fields:/);
     queryCache.invalidateByTag('parameters:list');
     queryCache.invalidateByPattern(/^parameters:/);
   }

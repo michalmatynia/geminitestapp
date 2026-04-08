@@ -35,26 +35,80 @@ vi.mock('next/navigation', () => ({
   useSearchParams: mocks.useSearchParamsMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/admin.public', () => ({
   AdminSectionBreadcrumbs: ({
     current,
   }: {
     current: string;
   }) => <div>breadcrumbs:{current}</div>,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
     disabled,
+    className,
   }: {
     children?: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
+    className?: string;
   }) => (
-    <button type='button' onClick={onClick} disabled={disabled}>
+    <button type='button' onClick={onClick} disabled={disabled} className={className}>
       {children}
     </button>
   ),
   Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Tabs: ({
+    value,
+    onValueChange,
+    children,
+  }: {
+    value: string;
+    onValueChange?: (value: string) => void;
+    children?: React.ReactNode;
+  }) => (
+    <TabsTestContext.Provider value={{ value, onValueChange }}>
+      <div>{children}</div>
+    </TabsTestContext.Provider>
+  ),
+  TabsList: ({
+    children,
+  }: {
+    children?: React.ReactNode;
+  }) => <div>{children}</div>,
+  TabsTrigger: ({
+    value,
+    children,
+  }: {
+    value: string;
+    children?: React.ReactNode;
+  }) => {
+    const runtime = React.useContext(TabsTestContext);
+    return (
+      <button
+        type='button'
+        aria-pressed={runtime?.value === value}
+        onClick={() => runtime?.onValueChange?.(value)}
+      >
+        {children}
+      </button>
+    );
+  },
+  TabsContent: ({
+    value,
+    children,
+  }: {
+    value: string;
+    children?: React.ReactNode;
+  }) => {
+    const runtime = React.useContext(TabsTestContext);
+    return runtime?.value === value ? <div>{children}</div> : null;
+  },
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   CopyButton: ({
     children,
     value,
@@ -68,49 +122,6 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  ListPanel: ({
-    header,
-    filters,
-    children,
-  }: {
-    header?: React.ReactNode;
-    filters?: React.ReactNode;
-    children?: React.ReactNode;
-  }) => (
-    <div data-testid='list-panel'>
-      {header}
-      {filters}
-      {children}
-    </div>
-  ),
-  Pagination: (props: {
-    page: number;
-    totalPages?: number;
-    onPageChange: (page: number) => void;
-  }) => {
-    const { page, totalPages, onPageChange } = props;
-    return (
-      <div>
-        <button
-          type='button'
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
-        >
-          Previous page
-        </button>
-        <button
-          type='button'
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= (totalPages ?? 1)}
-        >
-          Next page
-        </button>
-        <span>
-          pagination:{page}/{totalPages ?? 1}
-        </span>
-      </div>
-    );
-  },
   RefreshButton: ({
     onRefresh,
     isRefreshing,
@@ -176,51 +187,51 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
-  Tabs: ({
-    value,
-    onValueChange,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  ListPanel: ({
+    header,
+    filters,
     children,
   }: {
-    value: string;
-    onValueChange?: (value: string) => void;
+    header?: React.ReactNode;
+    filters?: React.ReactNode;
     children?: React.ReactNode;
   }) => (
-    <TabsTestContext.Provider value={{ value, onValueChange }}>
-      <div>{children}</div>
-    </TabsTestContext.Provider>
+    <div data-testid='list-panel'>
+      {header}
+      {filters}
+      {children}
+    </div>
   ),
-  TabsList: ({
-    children,
-  }: {
-    children?: React.ReactNode;
-  }) => <div>{children}</div>,
-  TabsTrigger: ({
-    value,
-    children,
-  }: {
-    value: string;
-    children?: React.ReactNode;
+  Pagination: (props: {
+    page: number;
+    totalPages?: number;
+    onPageChange: (page: number) => void;
   }) => {
-    const runtime = React.useContext(TabsTestContext);
+    const { page, totalPages, onPageChange } = props;
     return (
-      <button
-        type='button'
-        aria-pressed={runtime?.value === value}
-        onClick={() => runtime?.onValueChange?.(value)}
-      >
-        {children}
-      </button>
+      <div>
+        <button
+          type='button'
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+        >
+          Previous page
+        </button>
+        <button
+          type='button'
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= (totalPages ?? 1)}
+        >
+          Next page
+        </button>
+        <span>
+          pagination:{page}/{totalPages ?? 1}
+        </span>
+      </div>
     );
-  },
-  TabsContent: ({
-    value,
-    children,
-  }: {
-    value: string;
-    children?: React.ReactNode;
-  }) => {
-    const runtime = React.useContext(TabsTestContext);
-    return runtime?.value === value ? <div>{children}</div> : null;
   },
   UI_GRID_ROOMY_CLASSNAME: 'grid gap-6',
 }));

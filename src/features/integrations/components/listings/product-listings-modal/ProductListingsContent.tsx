@@ -2,7 +2,10 @@
 
 import React from 'react';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  isTraderaIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
 import {
@@ -142,6 +145,8 @@ export function ProductListingsContent(): React.JSX.Element {
     useProductListingsViewContext();
   const { recoveryContext, setRecoveryContext } = useProductListingsModals();
   const isVintedQuickExportRecovery = isVintedQuickExportRecoveryContext(recoveryContext);
+  const isScopedToTradera = isTraderaIntegrationSlug(filterIntegrationSlug);
+  const isScopedToVinted = isVintedIntegrationSlug(filterIntegrationSlug);
   const {
     isRecovery: isTraderaQuickExportRecovery,
     requestId: recoveryRequestId,
@@ -151,7 +156,11 @@ export function ProductListingsContent(): React.JSX.Element {
   } = resolveTraderaRecoveryTarget({
     recoveryContext,
   });
-  const fallbackRecoveryListing = isTraderaQuickExportRecovery
+  const shouldUseTraderaRecovery =
+    isTraderaQuickExportRecovery && !isScopedToVinted;
+  const shouldUseVintedRecovery =
+    isVintedQuickExportRecovery && !isScopedToTradera;
+  const fallbackRecoveryListing = shouldUseTraderaRecovery
     ? findTraderaRecoveryListing(filteredListings, recoveryRequestId, recoveryRunId)
     : null;
   const fallbackRecoveryMetadata = fallbackRecoveryListing
@@ -174,7 +183,7 @@ export function ProductListingsContent(): React.JSX.Element {
     .toLowerCase();
   const fallbackRecoveryError = readString(fallbackRecoveryLastExecution['error']);
   const fallbackRecoveryFailureReason = fallbackRecoveryListing?.failureReason ?? null;
-  const fallbackVintedRecoveryListing = isVintedQuickExportRecovery
+  const fallbackVintedRecoveryListing = shouldUseVintedRecovery
     ? findFallbackVintedRecoveryListing(filteredListings, recoveryContext)
     : null;
   const vintedRecoveryIntegrationId =
@@ -226,17 +235,17 @@ export function ProductListingsContent(): React.JSX.Element {
         ? 'active'
         : displayListings[0]?.status ?? 'Unknown';
   const shouldShowQuickListSuccessBanner = Boolean(
-    !isTraderaQuickExportRecovery &&
+    !shouldUseTraderaRecovery &&
       persistedQuickListFeedback?.status === 'completed' &&
       (isTraderaIntegrationSlug(filterIntegrationSlug) || trackedSuccessListing)
   );
   const shouldShowVintedQuickListSuccessBanner = Boolean(
-    !isVintedQuickExportRecovery &&
+    !shouldUseVintedRecovery &&
       persistedVintedQuickListFeedback?.status === 'completed' &&
       (filterIntegrationSlug === 'vinted' || trackedVintedSuccessListing)
   );
   const recoveryNeedsManualLogin =
-    isTraderaQuickExportRecovery &&
+    shouldUseTraderaRecovery &&
     ((recoveryContext?.status ?? '').trim().toLowerCase() === 'auth_required' ||
       (recoveryContext?.status ?? '').trim().toLowerCase() === 'needs_login' ||
       (fallbackRecoveryListing?.status ?? '').trim().toLowerCase() === 'auth_required' ||
@@ -251,6 +260,7 @@ export function ProductListingsContent(): React.JSX.Element {
     recoveryContext?.status ?? fallbackVintedRecoveryListing?.status ?? ''
   );
   const canOpenVintedRecoveryLogin = Boolean(
+    shouldUseVintedRecovery &&
     vintedRecoveryIntegrationId &&
       vintedRecoveryConnectionId &&
       (vintedRecoveryStatus === 'auth_required' ||
@@ -259,7 +269,7 @@ export function ProductListingsContent(): React.JSX.Element {
   );
 
   React.useEffect(() => {
-    if (!isTraderaQuickExportRecovery || !fallbackRecoveryListing) return;
+    if (!shouldUseTraderaRecovery || !fallbackRecoveryListing) return;
 
     const nextRecoveryContext: Extract<ProductListingsRecoveryContext, { integrationSlug: 'tradera' }> =
       createTraderaRecoveryContext({
@@ -298,7 +308,7 @@ export function ProductListingsContent(): React.JSX.Element {
     fallbackRecoveryListing,
     fallbackRecoveryMetadata?.requestId,
     fallbackRecoveryMetadata?.runId,
-    isTraderaQuickExportRecovery,
+    shouldUseTraderaRecovery,
     product.id,
     recoveryContext?.source,
     recoveryContext?.status,
@@ -308,7 +318,7 @@ export function ProductListingsContent(): React.JSX.Element {
   ]);
 
   React.useEffect(() => {
-    if (!isVintedQuickExportRecovery || !fallbackVintedRecoveryListing) return;
+    if (!shouldUseVintedRecovery || !fallbackVintedRecoveryListing) return;
 
     const nextRecoveryContext: Extract<ProductListingsRecoveryContext, { integrationSlug: 'vinted' }> =
       createVintedRecoveryContext({
@@ -349,7 +359,7 @@ export function ProductListingsContent(): React.JSX.Element {
     );
   }, [
     fallbackVintedRecoveryListing,
-    isVintedQuickExportRecovery,
+    shouldUseVintedRecovery,
     product.id,
     recoveryContext,
     setRecoveryContext,
@@ -371,7 +381,7 @@ export function ProductListingsContent(): React.JSX.Element {
           listing={trackedVintedSuccessListing}
         />
       ) : null}
-      {isTraderaQuickExportRecovery && (
+      {shouldUseTraderaRecovery && (
         <TraderaQuickExportRecoveryBanner
           mode='content'
           status={recoveryContext?.status}
@@ -383,7 +393,7 @@ export function ProductListingsContent(): React.JSX.Element {
           connectionId={recoveryConnectionId}
         />
       )}
-      {isVintedQuickExportRecovery && (
+      {shouldUseVintedRecovery && (
         <VintedQuickExportRecoveryBanner
           mode='content'
           status={recoveryContext?.status}

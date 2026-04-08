@@ -8,6 +8,8 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
+import { assertCategoryMappingsCanBeSaved } from './validation';
+
 const querySchema = z.object({
   connectionId: optionalTrimmedQueryString(),
   catalogId: optionalTrimmedQueryString(),
@@ -64,6 +66,11 @@ export async function POST_handler(
       'connectionId, externalCategoryId, internalCategoryId, and catalogId are required'
     );
   }
+
+  await assertCategoryMappingsCanBeSaved({
+    connectionId,
+    mappings: [{ externalCategoryId, internalCategoryId }],
+  });
 
   const repo = getCategoryMappingRepository();
 

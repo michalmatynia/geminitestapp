@@ -33,7 +33,7 @@ vi.mock('../components/AssignmentEditor', () => ({
   ),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Input: ({
     value,
     onChange,
@@ -48,6 +48,21 @@ vi.mock('@/shared/ui', () => ({
   }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
     <textarea value={value} onChange={onChange} {...props} />
   ),
+  CollapsibleSection: ({
+    title,
+    children,
+  }: {
+    title: React.ReactNode;
+    children: React.ReactNode;
+  }) => (
+    <div>
+      <div>{title}</div>
+      {children}
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({
     title,
     description,
@@ -74,41 +89,6 @@ vi.mock('@/shared/ui', () => ({
       <span>{label}</span>
       {children}
     </label>
-  ),
-  SimpleSettingsList: ({
-    items,
-    renderActions,
-    renderCustomContent,
-  }: {
-    items: Array<{
-      id: string;
-      title: string;
-      description: string;
-      original: unknown;
-    }>;
-    renderActions: (item: {
-      id: string;
-      title: string;
-      description: string;
-      original: unknown;
-    }) => React.ReactNode;
-    renderCustomContent: (item: {
-      id: string;
-      title: string;
-      description: string;
-      original: unknown;
-    }) => React.ReactNode;
-  }) => (
-    <div>
-      {items.map((item) => (
-        <div key={item.id}>
-          <div>{item.title}</div>
-          <div>{item.description}</div>
-          {renderActions(item)}
-          {renderCustomContent(item)}
-        </div>
-      ))}
-    </div>
   ),
   ToggleRow: ({
     label,
@@ -149,31 +129,47 @@ vi.mock('@/shared/ui', () => ({
       {enabled ? enabledLabel : disabledLabel}
     </button>
   ),
-  CollapsibleSection: ({
-    title,
-    children,
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
+  SimpleSettingsList: ({
+    items,
+    renderActions,
+    renderCustomContent,
   }: {
-    title: React.ReactNode;
-    children: React.ReactNode;
+    items: Array<{
+      id: string;
+      title: string;
+      description: string;
+      original: unknown;
+    }>;
+    renderActions: (item: {
+      id: string;
+      title: string;
+      description: string;
+      original: unknown;
+    }) => React.ReactNode;
+    renderCustomContent: (item: {
+      id: string;
+      title: string;
+      description: string;
+      original: unknown;
+    }) => React.ReactNode;
   }) => (
     <div>
-      <div>{title}</div>
-      {children}
+      {items.map((item) => (
+        <div key={item.id}>
+          <div>{item.title}</div>
+          <div>{item.description}</div>
+          {renderActions(item)}
+          {renderCustomContent(item)}
+        </div>
+      ))}
     </div>
   ),
-  Label: ({
-    children,
-    htmlFor,
-    className,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-    className?: string;
-  }) => (
-    <label htmlFor={htmlFor} className={className}>
-      {children}
-    </label>
-  ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   UI_GRID_RELAXED_CLASSNAME: 'grid',
 }));
 

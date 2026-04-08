@@ -6,6 +6,8 @@ import { type MarketplaceBulkUpsertResponse } from '@/shared/contracts/integrati
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
+import { assertCategoryMappingsCanBeSaved } from '../validation';
+
 /**
  * POST /api/marketplace/mappings/bulk
  * Creates or updates multiple category mappings at once.
@@ -21,6 +23,11 @@ export async function POST_handler(
     return parsed.response;
   }
   const { connectionId, catalogId, mappings } = parsed.data;
+
+  await assertCategoryMappingsCanBeSaved({
+    connectionId,
+    mappings,
+  });
 
   const repo = getCategoryMappingRepository();
   const upsertedCount = await repo.bulkUpsert(connectionId, catalogId, mappings);

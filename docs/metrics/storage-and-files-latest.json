@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T15:29:33.058Z",
+  "generatedAt": "2026-04-07T16:03:21.615Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 7075,
+    "fileCount": 7078,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -11903,6 +11903,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/ai-paths/services/playwright-node-runner.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/ai-paths/services/playwright-node-runner.parser.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -18659,6 +18665,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/filemaker/components/FilemakerMailSidebar.hooks.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21102,6 +21114,12 @@
     },
     {
       "file": "src/features/integrations/services/tradera-listing/script-partials/part-5.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/tradera-listing/script-partials/part-5b.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -42493,5 +42511,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2724
+  "durationMs": 2738
 }

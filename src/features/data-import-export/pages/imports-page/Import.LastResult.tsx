@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { namedDtoSchema } from '../base';
 import type { LabeledOptionDto } from '../base';
+import { productCustomFieldValueSchema, type ProductCustomFieldDefinitionCreateInput, type ProductCustomFieldDefinitionUpdateInput } from './custom-fields';
 import { productImportSourceSchema, productParameterValueSchema } from './product';
 
 import type { ImageFileRecord } from '../files';
@@ -24,6 +25,7 @@ import type {
 } from './parameters';
 import type { Producer } from './producers';
 import type { ProductRecord, ProductWithImages, ProductImageRecord } from './product';
+import type { ProductCustomFieldDefinition } from './custom-fields';
 import type { AppProviderValue as DraftProvider } from '../system';
 import type {
   ProductTagFilters,
@@ -53,6 +55,7 @@ import type { ProductValidationSemanticTransition } from '@/shared/lib/products/
 export const productDraftOpenFormTabSchema = z.enum([
   'general',
   'other',
+  'custom-fields',
   'parameters',
   'images',
   'studio',
@@ -66,6 +69,7 @@ export type ProductDraftOpenFormTab = z.infer<typeof productDraftOpenFormTabSche
 export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS: ProductDraftOpenFormTab[] = [
   'general',
   'other',
+  'custom-fields',
   'parameters',
   'images',
   'studio',
@@ -100,6 +104,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   shippingGroupId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   producerIds: z.array(z.string()).optional(),
+  customFields: z.array(productCustomFieldValueSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
   defaultPriceGroupId: z.string().nullable().optional(),
   active: z.boolean().optional(),
@@ -168,6 +173,13 @@ export type ParameterFilters = {
 };
 export type ParameterCreateInput = ProductParameterCreateInput;
 export type ParameterUpdateInput = ProductParameterUpdateInput;
+export type CustomFieldFilters = {
+  search?: string;
+  skip?: number;
+  limit?: number;
+};
+export type CustomFieldCreateInput = ProductCustomFieldDefinitionCreateInput;
+export type CustomFieldUpdateInput = ProductCustomFieldDefinitionUpdateInput;
 
 export type ParameterRepository = {
   listParameters(filters: ParameterFilters): Promise<ProductParameter[]>;
@@ -177,6 +189,15 @@ export type ParameterRepository = {
   updateParameter(id: string, data: ParameterUpdateInput): Promise<ProductParameter>;
   deleteParameter(id: string): Promise<void>;
   findByName(catalogId: string, name_en: string): Promise<ProductParameter | null>;
+};
+
+export type CustomFieldRepository = {
+  listCustomFields(filters: CustomFieldFilters): Promise<ProductCustomFieldDefinition[]>;
+  getCustomFieldById(id: string): Promise<ProductCustomFieldDefinition | null>;
+  createCustomField(data: CustomFieldCreateInput): Promise<ProductCustomFieldDefinition>;
+  updateCustomField(id: string, data: CustomFieldUpdateInput): Promise<ProductCustomFieldDefinition>;
+  deleteCustomField(id: string): Promise<void>;
+  findByName(name: string): Promise<ProductCustomFieldDefinition | null>;
 };
 
 export type ProducerFilters = {

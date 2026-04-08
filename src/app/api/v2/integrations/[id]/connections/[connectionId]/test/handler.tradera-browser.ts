@@ -11,6 +11,9 @@ import {
   readTraderaAuthState,
 } from '@/features/integrations/services/tradera-listing/tradera-browser-auth';
 import {
+  validateTraderaQuickListProductConfig,
+} from '@/features/integrations/services/tradera-listing/preflight';
+import {
   LOGIN_BUTTON_SELECTORS,
   PASSWORD_SELECTORS,
   TITLE_SELECTORS,
@@ -21,16 +24,17 @@ import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { type IntegrationConnectionRecord, type IntegrationRepository, type TestConnectionResponse, type TestLogEntry } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 import type { Browser, BrowserContext, Page } from 'playwright';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const QUICKLIST_AUTH_REQUIRED_DETAIL =
   'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.';
 const TRADERA_LISTING_FORM_URL = normalizeTraderaListingFormUrl(
   DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl
 );
+const SESSION_CHECK_URL = 'https://www.tradera.com/en/my/listings?tab=active';
 
 type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
 type Fail = (step: string, detail: string, status?: number) => Promise<never>;
@@ -41,6 +45,7 @@ export async function handleTraderaBrowserTest(
   repo: ConnectionUpdateRepository,
   mode: 'manual' | 'manual_session_refresh' | 'quicklist_preflight' | 'auto',
   manualLoginTimeoutMs: number,
+  productId: string | null,
   steps: TestLogEntry[],
   pushStep: PushStep,
   fail: Fail
@@ -48,6 +53,15 @@ export async function handleTraderaBrowserTest(
   const manualMode = mode === 'manual';
   const manualSessionRefreshMode = mode === 'manual_session_refresh';
   const quicklistPreflightMode = mode === 'quicklist_preflight';
+
+  // In quicklist preflight mode, validate the product config before launching the browser.
+  if (quicklistPreflightMode && productId) {
+    const productRepo = await getProductRepository();
+    const product = await productRepo.getProductById(productId);
+    if (product) {
+      await validateTraderaQuickListProductConfig({ product, connection });
+    }
+  }
 
   // Decrypt to ensure credentials are readable with the configured key.
   pushStep(
@@ -78,15 +92,10 @@ export async function handleTraderaBrowserTest(
 
   if (connection.playwrightStorageState) {
     pushStep('Loading session', 'pending', 'Loading stored Playwright session');
-    try {
-      const storedState = parsePersistedStorageState(connection.playwrightStorageState);
-      if (storedState) {
-        pushStep('Loading session', 'ok', 'Stored session loaded successfully');
-      } else {
-        pushStep('Loading session', 'ok', 'Stored session was empty or invalid (skipped)');
-      }
-    } catch (error) {
-      void ErrorSystem.captureException(error);
+    const storedState = parsePersistedStorageState(connection.playwrightStorageState);
+    if (storedState) {
+      pushStep('Loading session', 'ok', 'Stored session loaded successfully');
+    } else {
       pushStep('Loading session', 'ok', 'Stored session was corrupt or invalid (skipped)');
     }
   }
@@ -107,7 +116,7 @@ export async function handleTraderaBrowserTest(
 
     browser = await chromium.launch({
       headless: effectiveHeadless,
-      slowMo: manualMode || manualSessionRefreshMode ? 250 : playwrightSettings.slowMo,
+      slowMo: quicklistPreflightMode ? 0 : playwrightSettings.slowMo,
       ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
         ? {
           proxy: {
@@ -127,13 +136,11 @@ export async function handleTraderaBrowserTest(
       ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
       : {};
 
+    const resolvedStorageState =
+      parsePersistedStorageState(connection.playwrightStorageState) ?? undefined;
     context = await browser.newContext({
       ...deviceContextOptions,
-      ...(connection.playwrightStorageState
-        ? {
-            storageState: parsePersistedStorageState(connection.playwrightStorageState) ?? undefined,
-          }
-        : {}),
+      ...(resolvedStorageState ? { storageState: resolvedStorageState } : {}),
     });
     context.setDefaultTimeout(playwrightSettings.timeout);
     context.setDefaultNavigationTimeout(playwrightSettings.navigationTimeout);
@@ -221,53 +228,89 @@ export async function handleTraderaBrowserTest(
       await activePage.waitForTimeout(1500).catch(() => undefined);
       await acceptCookies();
     };
-    const isListingFormVisible = async (): Promise<boolean> =>
-      (await findVisibleLocator(activePage, TITLE_SELECTORS)) !== null;
+    const isListingFormVisible = async (): Promise<boolean> => {
+      for (const selector of TITLE_SELECTORS) {
+        const locator = activePage.locator(selector).first();
+        if (await utils.safeIsVisible(locator, 'Listing form field')) return true;
+      }
+      return false;
+    };
 
     pushStep('Launching browser', 'ok', 'Browser ready');
 
     if (quicklistPreflightMode) {
+      // Auth check only — no listing form navigation or session save needed for preflight.
       pushStep('Preflight validation', 'pending', 'Checking active listing session');
+      await utils.safeGoto(
+        SESSION_CHECK_URL,
+        { waitUntil: 'domcontentloaded', timeout: 30_000 },
+        'Session check'
+      );
+      await acceptCookies();
+
       const isSessionActive = await isUserLoggedIn();
       if (!isSessionActive) {
         pushStep('Preflight validation', 'failed', 'Stored session expired');
         throw internalError(QUICKLIST_AUTH_REQUIRED_DETAIL);
       }
       pushStep('Preflight validation', 'ok', 'Stored session active');
+
+      const response: TestConnectionResponse = {
+        ok: true,
+        message: 'Tradera session is active.',
+        steps,
+        sessionReady: true,
+      };
+      return NextResponse.json(response);
     } else if (manualMode || manualSessionRefreshMode) {
-      pushStep(
-        manualSessionRefreshMode ? 'Session refresh' : 'Manual login',
-        'pending',
-        manualSessionRefreshMode
-          ? 'Navigating to session dashboard...'
-          : 'Navigating to login page...'
-      );
-      await page.goto(
-        manualSessionRefreshMode ? 'https://www.tradera.com/en/my/' : 'https://www.tradera.com/login',
-        {
-          waitUntil: 'domcontentloaded',
-          timeout: 60_000,
-        }
+      const stepLabel = manualSessionRefreshMode ? 'Session refresh' : 'Manual login';
+      pushStep(stepLabel, 'pending', 'Checking current session status...');
+
+      await utils.safeGoto(
+        SESSION_CHECK_URL,
+        { waitUntil: 'domcontentloaded', timeout: 30_000 },
+        'Session check'
       );
       await acceptCookies();
 
-      pushStep(
-        manualSessionRefreshMode ? 'Session refresh' : 'Manual login',
-        'pending',
-        `Waiting up to ${Math.round(manualLoginTimeoutMs / 1000)}s for user action...`
-      );
-
-      const success = await waitForManualLogin(manualLoginTimeoutMs);
-      if (!success) {
-        return fail(
-          manualSessionRefreshMode ? 'Session refresh' : 'Manual login',
-          `Manual action timed out after ${Math.round(manualLoginTimeoutMs / 1000)}s.`
+      const sessionAlreadyActive = await isUserLoggedIn();
+      if (!sessionAlreadyActive) {
+        pushStep(
+          stepLabel,
+          'pending',
+          manualSessionRefreshMode
+            ? 'Session expired — navigating to Tradera dashboard...'
+            : 'Session expired — navigating to login page...'
         );
+        await activePage.goto(
+          manualSessionRefreshMode
+            ? 'https://www.tradera.com/en/my/'
+            : 'https://www.tradera.com/login',
+          {
+            waitUntil: 'domcontentloaded',
+            timeout: 60_000,
+          }
+        );
+        await acceptCookies();
+
+        pushStep(
+          stepLabel,
+          'pending',
+          `Waiting up to ${Math.round(manualLoginTimeoutMs / 1000)}s for user action...`
+        );
+
+        const success = await waitForManualLogin(manualLoginTimeoutMs);
+        if (!success) {
+          return fail(
+            stepLabel,
+            `Manual action timed out after ${Math.round(manualLoginTimeoutMs / 1000)}s.`
+          );
+        }
       }
-      pushStep(manualSessionRefreshMode ? 'Session refresh' : 'Manual login', 'ok', 'Success');
+      pushStep(stepLabel, 'ok', sessionAlreadyActive ? 'Session already active' : 'Success');
     } else {
       pushStep('Authentication', 'pending', `Attempting login as ${resolvedLoginUsername}...`);
-      await page.goto('https://www.tradera.com/login', {
+      await activePage.goto('https://www.tradera.com/login', {
         waitUntil: 'domcontentloaded',
         timeout: 60_000,
       });
@@ -300,10 +343,11 @@ export async function handleTraderaBrowserTest(
     }
 
     pushStep('Accessing listing form', 'pending', 'Navigating to quick-list form');
-    await page.goto(TRADERA_LISTING_FORM_URL, {
-      waitUntil: 'domcontentloaded',
-      timeout: 60_000,
-    });
+    await utils.safeGoto(
+      TRADERA_LISTING_FORM_URL,
+      { waitUntil: 'domcontentloaded', timeout: 30_000 },
+      'Sell page check'
+    );
     await acceptCookies();
 
     const formVisible = await isListingFormVisible();
@@ -320,7 +364,7 @@ export async function handleTraderaBrowserTest(
     pushStep('Accessing listing form', 'ok', 'Listing form accessible');
 
     pushStep('Saving session', 'pending', 'Capturing cookies and local storage');
-    const newState = await context.storageState();
+    const newState = await activePage.context().storageState();
     const encryptedState = encryptSecret(JSON.stringify(newState));
     await repo.updateConnection(connection.id, {
       playwrightStorageState: encryptedState,
@@ -334,11 +378,12 @@ export async function handleTraderaBrowserTest(
         ? 'Tradera session refreshed successfully.'
         : 'Tradera browser connection test successful.',
       steps,
+      sessionReady: true,
     };
     return NextResponse.json(response);
   } catch (error: unknown) {
     if (manualMode || manualSessionRefreshMode) {
-      await page?.waitForTimeout(2000).catch(() => undefined);
+      await page?.waitForTimeout?.(2000);
     }
 
     const errorMsg = error instanceof Error ? error.message : String(error);

@@ -21,6 +21,26 @@ describe('parseTraderaCategoriesXml', () => {
       { id: '4', name: 'Movies', parentId: null },
     ]);
   });
+
+  it('preserves three-level Tradera category branches', () => {
+    const xml = `
+      <Categories>
+        <Category Id="49" Name="Collectibles">
+          <Category Id="2929" Name="Pins &amp; needles">
+            <Category Id="292904" Name="Other pins &amp; needles"></Category>
+            <Category Id="292903" Name="Sports"></Category>
+          </Category>
+        </Category>
+      </Categories>
+    `;
+
+    expect(parseTraderaCategoriesXml(xml)).toEqual([
+      { id: '49', name: 'Collectibles', parentId: null },
+      { id: '2929', name: 'Pins & needles', parentId: '49' },
+      { id: '292904', name: 'Other pins & needles', parentId: '2929' },
+      { id: '292903', name: 'Sports', parentId: '2929' },
+    ]);
+  });
 });
 
 describe('getTraderaCategories', () => {

@@ -17,6 +17,8 @@ import * as productsCount from '../count/route-handler';
 import * as productsPaged from '../paged/route-handler';
 import * as productsIds from '../ids/route-handler';
 import * as productsSimpleParameters from '../simple-parameters/route-handler';
+import * as productsCustomFields from '../custom-fields/route-handler';
+import * as productsCustomFieldsId from '../custom-fields/[id]/route-handler';
 import * as productsParameters from '../parameters/route-handler';
 import * as productsParametersId from '../parameters/[id]/route-handler';
 import * as productsProducers from '../producers/route-handler';
@@ -82,6 +84,8 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['paged'], module: productsPaged },
   { pattern: ['ids'], module: productsIds },
   { pattern: ['simple-parameters'], module: productsSimpleParameters },
+  { pattern: ['custom-fields'], module: productsCustomFields },
+  { pattern: ['custom-fields', param('id')], module: productsCustomFieldsId },
   { pattern: ['parameters'], module: productsParameters },
   { pattern: ['parameters', param('id')], module: productsParametersId },
   { pattern: ['producers'], module: productsProducers },

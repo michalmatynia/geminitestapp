@@ -37,7 +37,7 @@ vi.mock('../components/BrainRoutingTree', () => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CollapsibleSection: ({
     title,
@@ -80,6 +80,14 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </label>
   ),
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  StatusBadge: ({ label }: { label?: string }) => <span>{label ?? ''}</span>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     value,
     onValueChange,
@@ -103,8 +111,6 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
-  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
-  StatusBadge: ({ label }: { label?: string }) => <span>{label ?? ''}</span>,
   StatusToggle: ({
     enabled,
     onToggle,

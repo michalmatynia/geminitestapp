@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+  productCustomFieldValueSchema,
   productImportSourceSchema,
   productParameterValueSchema,
   productSchema,
@@ -92,6 +93,26 @@ const optionalParameterValuesFromFormSchema = z.preprocess((value: unknown): unk
   }
 }, z.array(productParameterValueSchema).optional());
 
+const optionalCustomFieldValuesFromFormSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'contracts.products.io',
+      action: 'optionalCustomFieldValuesFromFormSchema',
+      valueLength: trimmed.length,
+    });
+    return value;
+  }
+}, z.array(productCustomFieldValueSchema).optional());
+
 export const productCreateInputSchema = z.object({
   id: z.string().nullable().optional(),
   baseProductId: z.string().nullable().optional(),
@@ -130,6 +151,7 @@ export const productCreateInputSchema = z.object({
   imageFileIds: optionalStringArrayFromFormSchema,
   imageBase64s: optionalStringArrayFromFormSchema,
 
+  customFields: optionalCustomFieldValuesFromFormSchema,
   parameters: optionalParameterValuesFromFormSchema,
 });
 

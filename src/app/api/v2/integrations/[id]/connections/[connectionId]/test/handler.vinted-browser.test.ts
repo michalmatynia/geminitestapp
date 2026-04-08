@@ -40,7 +40,10 @@ vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
     resolveConnectionPlaywrightSettingsMock(...args),
 }));
 
-import { VINTED_LISTING_FORM_URL } from '@/features/integrations/services/vinted-listing/config';
+import {
+  VINTED_AUTH_ENTRY_URL,
+  VINTED_LISTING_FORM_URL,
+} from '@/features/integrations/services/vinted-listing/config';
 
 import { handleVintedBrowserTest } from './handler.vinted-browser';
 
@@ -90,20 +93,24 @@ const buildHarness = ({
     return false;
   };
 
-  const page = {
-    goto: vi.fn(async (url: string) => {
-      if (url === VINTED_LISTING_FORM_URL) {
-        currentUrl =
-          phase === 'logged_in'
-            ? VINTED_LISTING_FORM_URL
-            : phase === 'google_blocked'
+    const page = {
+      goto: vi.fn(async (url: string) => {
+        if (url === VINTED_LISTING_FORM_URL) {
+          currentUrl =
+            phase === 'logged_in'
+              ? VINTED_LISTING_FORM_URL
+              : phase === 'google_blocked'
               ? GOOGLE_BLOCKED_URL
               : AUTH_REDIRECT_URL;
+          return null;
+        }
+        if (url === VINTED_AUTH_ENTRY_URL) {
+          currentUrl = phase === 'google_blocked' ? GOOGLE_BLOCKED_URL : AUTH_REDIRECT_URL;
+          return null;
+        }
+        currentUrl = url;
         return null;
-      }
-      currentUrl = url;
-      return null;
-    }),
+      }),
     waitForTimeout: vi.fn(async (timeoutMs: number) => {
       mockNow += timeoutMs;
       waitCount += 1;
@@ -317,6 +324,13 @@ describe('handleVintedBrowserTest', () => {
         headless: false,
       })
     );
+    expect(harness.page.goto).toHaveBeenCalledWith(
+      VINTED_AUTH_ENTRY_URL,
+      expect.objectContaining({
+        timeout: 30000,
+        waitUntil: 'domcontentloaded',
+      })
+    );
     expect(harness.browser.newContext).toHaveBeenCalledWith(
       expect.objectContaining({
         userAgent: 'desktop-chrome-ua',
@@ -362,7 +376,7 @@ describe('handleVintedBrowserTest', () => {
     ).toBe(true);
   });
 
-  it('fails early with Google-specific guidance when Google blocks sign-in in the automated browser', async () => {
+  it('keeps manual mode open until timeout, then returns Google-specific guidance if Google remains blocked', async () => {
     buildHarness({ initialPhase: 'google_blocked', transitionAfterWaits: null });
 
     const steps: Array<{ step: string; status: string; detail: string }> = [];
@@ -384,7 +398,7 @@ describe('handleVintedBrowserTest', () => {
         },
         true,
         false,
-        5_000,
+        2_000,
         steps,
         pushStep,
         fail
@@ -396,7 +410,18 @@ describe('handleVintedBrowserTest', () => {
     expect(updateConnectionMock).not.toHaveBeenCalled();
     expect(
       steps.some(
-        (step) => step.step === 'Manual login' && step.status === 'failed'
+        (step) =>
+          step.step === 'Manual login' &&
+          step.status === 'pending' &&
+          step.detail.includes('use Vinted.pl email/password instead')
+      )
+    ).toBe(true);
+    expect(
+      steps.some(
+        (step) =>
+          step.step === 'Manual login' &&
+          step.status === 'failed' &&
+          step.detail.includes('Google sign-in is blocked')
       )
     ).toBe(true);
   });

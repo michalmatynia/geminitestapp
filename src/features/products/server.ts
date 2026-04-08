@@ -7,6 +7,7 @@ import { CachedProductService } from './performance/cached-service';
 export { parseJsonBody, parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 export { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 export { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
+export { getCustomFieldRepository } from '@/shared/lib/products/services/custom-field-repository';
 export { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
 export { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 export { getShippingGroupRepository } from '@/shared/lib/products/services/shipping-group-repository';

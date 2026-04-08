@@ -8,17 +8,17 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-04-07T11:43:12.358Z
+Generated at: 2026-04-07T16:03:37.828Z
 
 ## Snapshot
 
-- Scanned source files: 7048
-- JSX files scanned: 2493
-- Components detected: 4340
+- Scanned source files: 7086
+- JSX files scanned: 2497
+- Components detected: 4350
 - Components forwarding parent props (hotspot threshold): 120
-- Components forwarding parent props (any): 294
-- Resolved forwarded transitions: 1228
-- Candidate chains (depth >= 2): 1228
+- Components forwarding parent props (any): 296
+- Resolved forwarded transitions: 1232
+- Candidate chains (depth >= 2): 1232
 - Candidate chains (depth >= 3): 230
 - High-priority chains (depth >= 4): 66
 - Unknown spread forwarding edges: 12
@@ -29,8 +29,8 @@ Generated at: 2026-04-07T11:43:12.358Z
 | Feature Scope | Forwarding Components |
 | --- | ---: |
 | `feature:kangur` | 248 |
+| `feature:integrations` | 9 |
 | `shared-ui` | 9 |
-| `feature:integrations` | 7 |
 | `feature:filemaker` | 6 |
 | `feature:admin` | 4 |
 | `feature:products` | 4 |

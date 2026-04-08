@@ -1023,4 +1023,32 @@ describe('ProductListingsContent', () => {
       'conn-vinted-1'
     );
   });
+
+  it('suppresses Vinted recovery UI when the listings view is explicitly scoped to Tradera', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        requestId: 'job-vinted-1',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+
+    render(
+      <ProductListingsViewProvider value={baseViewContextValue}>
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(
+      screen.queryByText(/Vinted\.pl quick export requires recovery/i)
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Vinted.pl' })).toBeNull();
+    expect(screen.getByText('Tradera status: auth_required')).toBeInTheDocument();
+  });
 });

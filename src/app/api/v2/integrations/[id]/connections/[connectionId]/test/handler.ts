@@ -45,9 +45,11 @@ export async function postTestConnectionHandler(
   const mode =
     requestBody.mode === 'manual'
       ? 'manual'
-      : requestBody.mode === 'quicklist_preflight'
-        ? 'quicklist_preflight'
-        : 'auto';
+      : requestBody.mode === 'manual_session_refresh'
+        ? 'manual_session_refresh'
+        : requestBody.mode === 'quicklist_preflight'
+          ? 'quicklist_preflight'
+          : 'auto';
   const manualMode = mode === 'manual';
   const quicklistPreflightMode = mode === 'quicklist_preflight';
   const rawManualTimeout = requestBody.manualTimeoutMs;
@@ -132,6 +134,7 @@ export async function postTestConnectionHandler(
       repo,
       mode as any,
       manualLoginTimeoutMs,
+      requestBody.productId ?? null,
       steps,
       pushStep,
       fail

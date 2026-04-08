@@ -8,6 +8,7 @@ const {
   toastMock,
   useCatalogsMock,
   useCategoriesMock,
+  useCustomFieldsMock,
   useDeleteCatalogMutationMock,
   useDeletePriceGroupMutationMock,
   useParametersMock,
@@ -20,6 +21,7 @@ const {
   toastMock: vi.fn(),
   useCatalogsMock: vi.fn(),
   useCategoriesMock: vi.fn(),
+  useCustomFieldsMock: vi.fn(),
   useDeleteCatalogMutationMock: vi.fn(),
   useDeletePriceGroupMutationMock: vi.fn(),
   useParametersMock: vi.fn(),
@@ -37,6 +39,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   useCatalogs: (...args: unknown[]) => useCatalogsMock(...args),
   useCategories: (...args: unknown[]) => useCategoriesMock(...args),
+  useCustomFields: (...args: unknown[]) => useCustomFieldsMock(...args),
   useDeleteCatalogMutation: () => useDeleteCatalogMutationMock(),
   useDeletePriceGroupMutation: () => useDeletePriceGroupMutationMock(),
   useParameters: (...args: unknown[]) => useParametersMock(...args),
@@ -56,6 +59,10 @@ vi.mock('@/features/products/components/settings/CategoriesSettings', () => ({
 
 vi.mock('@/features/products/components/settings/TagsSettings', () => ({
   TagsSettings: () => <div data-testid='tags-settings' />,
+}));
+
+vi.mock('@/features/products/components/settings/CustomFieldsSettings', () => ({
+  CustomFieldsSettings: () => <div data-testid='custom-fields-settings' />,
 }));
 
 vi.mock('@/features/products/components/settings/ShippingGroupsSettings', () => ({
@@ -169,6 +176,7 @@ describe('ProductSettingsPage metadata gating', () => {
     useCategoriesMock.mockReturnValue(buildQueryResult());
     useShippingGroupsMock.mockReturnValue(buildQueryResult());
     useTagsMock.mockReturnValue(buildQueryResult());
+    useCustomFieldsMock.mockReturnValue(buildQueryResult());
     useParametersMock.mockReturnValue(buildQueryResult());
     useUpdatePriceGroupMutationMock.mockReturnValue({
       mutateAsync: vi.fn(),
@@ -195,6 +203,7 @@ describe('ProductSettingsPage metadata gating', () => {
     expect(usePriceGroupsMock).toHaveBeenLastCalledWith({ enabled: false });
     expect(useShippingGroupsMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(useTagsMock).toHaveBeenLastCalledWith(null, { enabled: false });
+    expect(useCustomFieldsMock).toHaveBeenLastCalledWith({ enabled: false });
     expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('categories-settings')).toBeInTheDocument();
     expect(screen.queryByTestId('catalog-modal')).not.toBeInTheDocument();
@@ -229,6 +238,18 @@ describe('ProductSettingsPage metadata gating', () => {
     expect(useCategoriesMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
     expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
     expect(screen.getByTestId('shipping-groups-settings')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Custom Fields' }));
+
+    await waitFor(() => {
+      expect(useCustomFieldsMock).toHaveBeenLastCalledWith({ enabled: true });
+    });
+
+    expect(useShippingGroupsMock).toHaveBeenLastCalledWith('catalog-default', {
+      enabled: false,
+    });
+    expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
+    expect(screen.getByTestId('custom-fields-settings')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Price Groups' }));
 

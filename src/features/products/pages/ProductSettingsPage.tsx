@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
+import { CustomFieldsSettings } from '@/features/products/components/settings/CustomFieldsSettings';
 import { CatalogModal } from '@/features/products/components/settings/modals/catalog-modal/CatalogModal';
 import { PriceGroupModal } from '@/features/products/components/settings/modals/price-group-modal/PriceGroupModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
@@ -19,6 +20,7 @@ import { ValidatorSettings } from '@/features/products/components/settings/Valid
 import {
   useCatalogs,
   useCategories,
+  useCustomFields,
   useDeleteCatalogMutation,
   useDeletePriceGroupMutation,
   useParameters,
@@ -89,6 +91,7 @@ export function ProductSettingsPage({
   const isCategoriesSectionActive = activeSection === 'Categories';
   const isShippingGroupsSectionActive = activeSection === 'Shipping Groups';
   const isTagsSectionActive = activeSection === 'Tags';
+  const isCustomFieldsSectionActive = activeSection === 'Custom Fields';
   const isParametersSectionActive = activeSection === 'Parameters';
   const isPriceGroupsSectionActive = activeSection === 'Price Groups';
   const isCatalogsSectionActive = activeSection === 'Catalogs';
@@ -133,6 +136,11 @@ export function ProductSettingsPage({
     isLoading: loadingTags,
     refetch: refetchTags,
   } = useTags(selectedTagCatalogId, { enabled: isTagsSectionActive });
+  const {
+    data: productCustomFields = [],
+    isLoading: loadingCustomFields,
+    refetch: refetchCustomFields,
+  } = useCustomFields({ enabled: isCustomFieldsSectionActive });
   const {
     data: productParameters = [],
     isLoading: loadingParameters,
@@ -367,6 +375,15 @@ export function ProductSettingsPage({
               {activeSection === 'Categories' && <CategoriesSettings />}
               {activeSection === 'Shipping Groups' && <ShippingGroupsSettings />}
               {activeSection === 'Tags' && <TagsSettings />}
+              {activeSection === 'Custom Fields' && (
+                <CustomFieldsSettings
+                  loading={loadingCustomFields}
+                  customFields={productCustomFields}
+                  onRefresh={(): void => {
+                    void refetchCustomFields();
+                  }}
+                />
+              )}
               {activeSection === 'Parameters' && (
                 <ParametersSettings
                   loading={loadingParameters}

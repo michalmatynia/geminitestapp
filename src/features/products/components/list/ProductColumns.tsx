@@ -635,6 +635,16 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         showTraderaBadge={showTraderaBadge}
         traderaStatus={traderaStatus}
       />
+      {showTraderaBadge && (
+        <TraderaStatusButton
+          productId={product.id}
+          status={traderaStatus}
+          prefetchListings={prefetchListings}
+          onOpenListings={(recoveryContext): void =>
+            handleClick(product, recoveryContext, 'tradera')
+          }
+        />
+      )}
       <VintedQuickListButton
         product={product}
         prefetchListings={prefetchListings}
@@ -644,6 +654,16 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         showVintedBadge={showVintedBadge}
         vintedStatus={vintedStatus}
       />
+      {showVintedBadge && (
+        <VintedStatusButton
+          productId={product.id}
+          status={vintedStatus}
+          prefetchListings={prefetchListings}
+          onOpenListings={(recoveryContext): void =>
+            handleClick(product, recoveryContext, 'vinted')
+          }
+        />
+      )}
       {triggerButtonsReady ? (
         <TriggerButtonBar
           location='product_row'
@@ -658,26 +678,6 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
           className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
         />
       ) : null}
-      {showTraderaBadge && (
-        <TraderaStatusButton
-          productId={product.id}
-          status={traderaStatus}
-          prefetchListings={prefetchListings}
-          onOpenListings={(recoveryContext): void =>
-            handleClick(product, recoveryContext, 'tradera')
-          }
-        />
-      )}
-      {showVintedBadge && (
-        <VintedStatusButton
-          productId={product.id}
-          status={vintedStatus}
-          prefetchListings={prefetchListings}
-          onOpenListings={(recoveryContext): void =>
-            handleClick(product, recoveryContext, 'vinted')
-          }
-        />
-      )}
       {showPlaywrightProgrammableBadge && (
         <PlaywrightStatusButton
           status={playwrightProgrammableStatus}

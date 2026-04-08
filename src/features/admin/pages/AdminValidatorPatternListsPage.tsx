@@ -2,7 +2,8 @@
 
 import { ArrowLeft, Plus, Save } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';

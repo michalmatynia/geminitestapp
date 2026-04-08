@@ -631,6 +631,7 @@ export const PART_1 = String.raw`export default async function run({
     requestedListingAction === 'relist' || requestedListingAction === 'sync'
       ? requestedListingAction
       : 'list';
+  const syncSkipImages = listingAction === 'sync' && input?.syncSkipImages === true;
   const existingExternalListingId = toText(input?.existingExternalListingId);
   const existingListingUrl = toText(input?.existingListingUrl);
   const rawDescriptionEn = toText(input?.rawDescriptionEn);

@@ -2,7 +2,7 @@
 
 import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useEffect } from 'react';
 
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';

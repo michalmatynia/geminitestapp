@@ -2,7 +2,7 @@
 
 import { AppWindow, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React, { memo, useCallback, useMemo, useRef, startTransition } from 'react';
 
 import { Tooltip, Button } from '@/shared/ui/primitives.public';

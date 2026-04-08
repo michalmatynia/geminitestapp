@@ -333,7 +333,13 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
             Manage and rename your AI paths, then open them for editing.
           </div>
           <div className='flex items-center gap-2'>
-            <Button variant='outline' size='sm' onClick={handleCreatePath}>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => {
+                handleCreatePath();
+              }}
+            >
               New Path
             </Button>
             <ActionMenu

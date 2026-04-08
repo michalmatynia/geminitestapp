@@ -113,6 +113,7 @@ const resolveTraderaExecutionSummary = (
   imageUrlCount: number | null;
   imageSettleState: unknown;
   rawResult: unknown;
+  lastSyncedAt: string | null;
 } => {
   const marketplaceRecord = toRecord(marketplaceData);
   const traderaData = toRecord(marketplaceRecord['tradera']);
@@ -176,6 +177,7 @@ const resolveTraderaExecutionSummary = (
     imageUrlCount: readNumber(metadata['imageUrlCount']),
     imageSettleState: metadata['imageSettleState'] ?? null,
     rawResult: metadata['rawResult'] ?? null,
+    lastSyncedAt: readString(traderaData['lastSyncedAt']),
   };
 };
 
@@ -388,6 +390,13 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Last execution'
               value={formatTimestamp(traderaExecution.executedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.lastSyncedAt ? (
+            <MetadataItem
+              label='Last synced'
+              value={formatTimestamp(traderaExecution.lastSyncedAt)}
               variant='minimal'
             />
           ) : null}

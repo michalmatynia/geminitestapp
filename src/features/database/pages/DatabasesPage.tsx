@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 
 import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
 import { Button, Alert } from '@/shared/ui/primitives.public';

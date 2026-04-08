@@ -12,7 +12,7 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
 
 const LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS = parsePositiveInt(
   process.env['LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS'],
-  process.env['NODE_ENV'] === 'development' ? 75 : 250
+  process.env['NODE_ENV'] === 'development' ? 50 : 150
 );
 
 const waitForLiteSettingsPrewarm = async (): Promise<void> => {

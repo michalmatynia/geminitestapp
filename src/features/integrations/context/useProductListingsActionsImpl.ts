@@ -360,6 +360,8 @@ export const useProductListingsActionsImpl = ({
         integrationId?: string | null;
         connectionId?: string | null;
         skipSessionPreflight?: boolean;
+        browserMode?: PlaywrightRelistBrowserMode;
+        skipImages?: boolean;
       }
     ) => {
       const listing = listings.find((item) => item.id === listingId);
@@ -381,7 +383,11 @@ export const useProductListingsActionsImpl = ({
           });
         }
 
-        const response = await syncTraderaMutation.mutateAsync({ listingId });
+        const response = await syncTraderaMutation.mutateAsync({
+          listingId,
+          ...(options?.browserMode ? { browserMode: options.browserMode } : {}),
+          ...(options?.skipImages ? { skipImages: true } : {}),
+        });
         const queueJobId = response.queue?.jobId;
         toast(
           queueJobId

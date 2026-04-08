@@ -174,7 +174,7 @@ const handler =
   typeof auth === 'function'
     ? auth(
       (request: AuthenticatedProxyRequest): Response =>
-        resolveAdminRedirectResponse(request) ?? baseProxy(request, buildAdminRequestHeaders(request) ?? undefined)
+        baseProxy(request, buildAdminRequestHeaders(request) ?? undefined)
     )
     : null;
 

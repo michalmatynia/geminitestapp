@@ -2,7 +2,7 @@
 
 import { Eye, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useMemo, useState, startTransition } from 'react';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';

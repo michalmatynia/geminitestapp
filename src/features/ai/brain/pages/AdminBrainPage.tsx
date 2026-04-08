@@ -1,7 +1,8 @@
 'use client';
 
 import { Activity, Brain, KeyRound, Radar, Sparkles } from 'lucide-react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, startTransition } from 'react';
 
 

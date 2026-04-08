@@ -97,7 +97,7 @@ const parseNumber = (value: string | undefined, fallback: number): number => {
 
 const AUTH_ACCESS_CACHE_TTL_MS = parseNumber(
   process.env['AUTH_ACCESS_CACHE_TTL_MS'] ?? process.env['AUTH_TOKEN_REFRESH_TTL_MS'],
-  60_000
+  300_000
 );
 
 const accessCache = new Map<string, { value: AuthUserAccess; ts: number }>();

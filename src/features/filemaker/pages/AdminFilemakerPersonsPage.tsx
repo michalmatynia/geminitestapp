@@ -1,7 +1,7 @@
 'use client';
 
 import { Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

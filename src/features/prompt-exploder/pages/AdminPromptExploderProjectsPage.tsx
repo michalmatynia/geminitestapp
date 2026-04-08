@@ -8,7 +8,7 @@ import {
   Library,
   ExternalLink as ExternalLinkIcon,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React, { useMemo, useState, useCallback, startTransition } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';

@@ -291,7 +291,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
           const tokenMeta = token as JWT & { authRefreshedAt?: number };
           const now = Date.now();
           const refreshTtlMs = Number.parseInt(
-            process.env['AUTH_TOKEN_REFRESH_TTL_MS'] ?? '60000',
+            process.env['AUTH_TOKEN_REFRESH_TTL_MS'] ?? '300000',
             10
           );
           const lastRefresh =

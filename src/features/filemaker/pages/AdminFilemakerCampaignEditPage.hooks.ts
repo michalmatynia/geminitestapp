@@ -1,6 +1,7 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';

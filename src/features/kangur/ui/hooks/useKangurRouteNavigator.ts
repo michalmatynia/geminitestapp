@@ -1,8 +1,9 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname } from 'next/navigation';
+import { startTransition, useCallback, useMemo } from 'react';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -492,8 +493,10 @@ export function useKangurRouteNavigator(): {
       }
 
       const performReplace = (): void => {
-        router.replace(resolvedHref, {
-          scroll: options.scroll ?? false,
+        startTransition(() => {
+          router.replace(resolvedHref, {
+            scroll: options.scroll ?? false,
+          });
         });
       };
       if (scheduleManagedNavigation(transitionResult.acknowledgeMs, performReplace)) {

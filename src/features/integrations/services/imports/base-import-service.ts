@@ -33,7 +33,10 @@ import {
   resolveCatalogLanguageContext,
   resolvePriceGroupContext,
 } from '@/features/integrations/services/imports/base-import-service-context';
-import { ensureBaseMarketplaceExclusionCustomField } from '@/features/integrations/services/imports/base-import-custom-fields';
+import {
+  ensureBaseMarketplaceExclusionCustomField,
+  ensureBaseTextCustomFields,
+} from '@/features/integrations/services/imports/base-import-custom-fields';
 import {
   BASE_IMPORT_HEARTBEAT_EVERY_ITEMS,
   BASE_IMPORT_LEASE_MS,
@@ -613,6 +616,14 @@ export const processBaseImportRun = async (
         repository: customFieldRepository,
         existingDefinitions: customFieldDefinitions,
         records: Array.from(detailsMap.values()),
+        persist: !run.params.dryRun,
+      });
+      customFieldDefinitions = await ensureBaseTextCustomFields({
+        repository: customFieldRepository,
+        existingDefinitions: customFieldDefinitions,
+        records: Array.from(detailsMap.values()),
+        existingParameters: prefetchedParameters,
+        includeFeatureBuckets: !templateParameterImportSettings.enabled,
         persist: !run.params.dryRun,
       });
       const seededCustomFieldNames = collectSeededCustomFieldNames(

@@ -136,6 +136,10 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     !isSyncingCurrentListing &&
     isPersistedTraderaQueueState &&
     persistedTraderaPendingAction === 'sync';
+  const isQueuedTraderaSyncHeaded =
+    isQueuedTraderaSync && persistedTraderaPendingBrowserMode === 'headed';
+  const isQueuedTraderaSyncHeadless =
+    isQueuedTraderaSync && persistedTraderaPendingBrowserMode === 'headless';
   const syncRetryPreferred = persistedTraderaPendingAction === 'sync' || traderaLastExecutionAction === 'sync';
   const isQueuedTraderaHeadless =
     !isRelistingCurrentListing &&
@@ -283,6 +287,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                         skipSessionPreflight: true,
                         integrationId: listing.integrationId,
                         connectionId: listing.connectionId,
+                        browserMode: 'headed',
                       });
                     } else {
                       await handleRelistTradera(listing.id, {
@@ -303,24 +308,86 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
             </Button>
           )}
           {isTraderaBrowserListing && (
-            <Button
-              type='button'
+            <ActionMenu
+              trigger={
+                isQueuedTraderaSyncHeaded
+                  ? 'Queued headed sync'
+                  : isQueuedTraderaSyncHeadless
+                    ? 'Queued headless sync'
+                    : isQueuedTraderaSync
+                      ? 'Queued sync'
+                      : isSyncingCurrentListing
+                        ? 'Queuing sync...'
+                        : 'Sync with Tradera'
+              }
               variant='outline'
               size='sm'
-              onClick={(): void => {
-                void handleSyncTradera(listing.id, {
-                  integrationId: listing.integrationId,
-                  connectionId: listing.connectionId,
-                });
-              }}
               disabled={isSyncingCurrentListing || isPersistedTraderaQueueState}
+              triggerClassName='px-3 py-1.5 h-auto w-auto'
+              align='start'
             >
-              {isQueuedTraderaSync
-                ? 'Queued sync'
-                : isSyncingCurrentListing
-                  ? 'Queuing sync...'
-                  : 'Sync with Tradera'}
-            </Button>
+              <DropdownMenuItem
+                onSelect={(): void => {
+                  void handleSyncTradera(listing.id, {
+                    integrationId: listing.integrationId,
+                    connectionId: listing.connectionId,
+                  });
+                }}
+                className='text-gray-200 focus:bg-card/60'
+              >
+                <div className='flex flex-col'>
+                  <span className='text-sm'>Sync (default)</span>
+                  <span className='text-xs text-gray-400'>Use connection default browser mode.</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(): void => {
+                  void handleSyncTradera(listing.id, {
+                    integrationId: listing.integrationId,
+                    connectionId: listing.connectionId,
+                    browserMode: 'headed',
+                  });
+                }}
+                className='text-gray-200 focus:bg-card/60'
+              >
+                <div className='flex flex-col'>
+                  <span className='text-sm'>Sync headed</span>
+                  <span className='text-xs text-gray-400'>Opens a visible browser window.</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(): void => {
+                  void handleSyncTradera(listing.id, {
+                    integrationId: listing.integrationId,
+                    connectionId: listing.connectionId,
+                    browserMode: 'headless',
+                  });
+                }}
+                className='text-gray-200 focus:bg-card/60'
+              >
+                <div className='flex flex-col'>
+                  <span className='text-sm'>Sync headless</span>
+                  <span className='text-xs text-gray-400'>Runs silently in the background.</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(): void => {
+                  void handleSyncTradera(listing.id, {
+                    integrationId: listing.integrationId,
+                    connectionId: listing.connectionId,
+                    skipImages: true,
+                  });
+                }}
+                className='text-gray-200 focus:bg-card/60'
+              >
+                <div className='flex flex-col'>
+                  <span className='text-sm'>Sync fields only</span>
+                  <span className='text-xs text-gray-400'>
+                    Updates title, price and description. Keeps existing Tradera images.
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            </ActionMenu>
           )}
           <Button
             type='button'

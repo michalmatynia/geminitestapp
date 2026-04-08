@@ -65,7 +65,7 @@ export const PART_5B = String.raw`
     });
 
     await applyCategorySelection();
-    if (categoryStrategy === 'top_suggested') {
+    if (categoryStrategy === 'top_suggested' && selectedCategorySource !== 'preserved') {
       await fillCategoryExtraDropdowns();
     }
     await applyConfiguredExtraFieldSelections();

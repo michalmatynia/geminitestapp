@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams } from 'next/navigation';
 import React, { useMemo, useState, startTransition } from 'react';
 
 import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';

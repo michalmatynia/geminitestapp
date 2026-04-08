@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, startTransition } from 'react';
 
 import { useStudioProjects } from '@/features/ai/public';

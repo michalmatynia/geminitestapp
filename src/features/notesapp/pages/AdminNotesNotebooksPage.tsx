@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useEffect, useState, useMemo, useCallback, startTransition } from 'react';
 
 import { useNotebookResource } from '@/features/notesapp/api/useNotebookResource';

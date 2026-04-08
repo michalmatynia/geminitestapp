@@ -235,12 +235,14 @@ export type ProductListingRelistResponse = z.infer<typeof productListingRelistRe
 
 export const productListingSyncPayloadSchema = z.object({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  skipImages: z.boolean().optional(),
 });
 
 export type ProductListingSyncPayload = z.infer<typeof productListingSyncPayloadSchema>;
 
 export const productListingSyncVariablesSchema = productListingActionSchema.extend({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  skipImages: z.boolean().optional(),
 });
 
 export type ProductListingSyncVariables = z.infer<typeof productListingSyncVariablesSchema>;

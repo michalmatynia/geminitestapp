@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React from 'react';
 
 import { useRunHistoryActions } from '@/features/ai/ai-paths/context';

@@ -1,6 +1,7 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegments } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams, useSelectedLayoutSegments } from 'next/navigation';
 import { startTransition, useEffect, useMemo, useState } from 'react';
 
 import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';

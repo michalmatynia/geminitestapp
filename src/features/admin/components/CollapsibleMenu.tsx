@@ -2,7 +2,7 @@
 
 import * as Collapsible from '@radix-ui/react-collapsible';
 import { ChevronRightIcon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useState, startTransition } from 'react';
 
 import { useAdminLayoutState } from '@/features/admin/context/AdminLayoutContext';

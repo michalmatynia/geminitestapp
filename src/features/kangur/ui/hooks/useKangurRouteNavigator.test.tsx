@@ -44,6 +44,9 @@ vi.mock('next-auth/react', async (importOriginal) => {
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   useRouter: () => ({
     back: vi.fn(),
     prefetch: routerPrefetchMock,

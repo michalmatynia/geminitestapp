@@ -1,7 +1,7 @@
 'use client';
 
 import React, { startTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 
 import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
 import { FormSection, SelectSimple, StatusToggle } from '@/shared/ui/forms-and-actions.public';

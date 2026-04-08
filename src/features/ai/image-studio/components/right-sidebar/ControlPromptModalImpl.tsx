@@ -1,7 +1,7 @@
 'use client';
 
 import { Play, Sparkles, Workflow } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React, { useState, useCallback, startTransition } from 'react';
 
 import {

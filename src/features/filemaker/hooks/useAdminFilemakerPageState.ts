@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useCountries } from '@/shared/hooks/use-i18n-queries';

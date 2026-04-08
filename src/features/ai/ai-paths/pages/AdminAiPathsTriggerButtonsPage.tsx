@@ -1,7 +1,7 @@
 'use client';
 
 import { MousePointer2, Plus, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';

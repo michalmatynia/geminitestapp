@@ -672,11 +672,12 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
   const listingQueryKey = getProductListingsQueryKey(productId);
 
   return createCreateMutationV2({
-    mutationFn: ({ listingId, browserMode }: ProductListingSyncVariables) =>
+    mutationFn: ({ listingId, browserMode, skipImages }: ProductListingSyncVariables) =>
       api.post<ProductListingSyncResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/sync`,
         {
           ...(browserMode ? { browserMode } : {}),
+          ...(skipImages ? { skipImages } : {}),
         }
       ),
     mutationKey: getProductListingsQueryKey(productId),

@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useMemo, useState, startTransition } from 'react';
 
 import ProductForm from '@/features/products/components/ProductForm';

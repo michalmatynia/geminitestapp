@@ -84,7 +84,9 @@ export const PART_5 = String.raw`
       required: true,
     });
     await dismissVisibleShippingDialogIfPresent();
-    await clearDraftImagesIfPresent();
+    if (!syncSkipImages) {
+      await clearDraftImagesIfPresent();
+    }
     emitStage('draft_cleared');
 
     const waitForImagePreviewCountToReach = async (targetCount, timeoutMs = 30_000) => {
@@ -247,39 +249,49 @@ export const PART_5 = String.raw`
       throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload could not be dispatched.');
     };
 
-    const initialUploadFiles = await resolveUploadFiles();
-    const initialUploadSource =
-      Array.isArray(initialUploadFiles) &&
-      initialUploadFiles.length > 0 &&
-      initialUploadFiles.every((value) => typeof value === 'string')
-        ? 'local'
-        : 'downloaded';
     let imageUploadResult;
 
-    try {
-      imageUploadResult = await performImageUpload(initialUploadFiles, initialUploadSource);
-    } catch (error) {
-      const canRetryWithDownloadedImages =
-        initialUploadSource === 'local' && imageUrls.length > 0;
-      if (!canRetryWithDownloadedImages) {
-        throw error;
+    if (syncSkipImages) {
+      // Sync with image skip — leave existing Tradera listing images in place and
+      // only update text/price/category fields. This is significantly faster than
+      // clearing and re-uploading all images on every sync.
+      imageUploadResult = { imageCount: 0, uploadSource: 'preserved' };
+      log?.('tradera.quicklist.image.skipped', { reason: 'sync-skip-images' });
+      emitStage('images_preserved', { reason: 'sync-skip-images' });
+    } else {
+      const initialUploadFiles = await resolveUploadFiles();
+      const initialUploadSource =
+        Array.isArray(initialUploadFiles) &&
+        initialUploadFiles.length > 0 &&
+        initialUploadFiles.every((value) => typeof value === 'string')
+          ? 'local'
+          : 'downloaded';
+
+      try {
+        imageUploadResult = await performImageUpload(initialUploadFiles, initialUploadSource);
+      } catch (error) {
+        const canRetryWithDownloadedImages =
+          initialUploadSource === 'local' && imageUrls.length > 0;
+        if (!canRetryWithDownloadedImages) {
+          throw error;
+        }
+
+        log?.('tradera.quicklist.image.retry_download', {
+          reason: error instanceof Error ? error.message : String(error),
+          initialUploadSource,
+          imageUrlCount: imageUrls.length,
+        });
+
+        await clearDraftImagesIfPresent().catch(() => undefined);
+        const fallbackUploadFiles = await downloadImages();
+        imageUploadResult = await performImageUpload(fallbackUploadFiles, 'downloaded');
       }
 
-      log?.('tradera.quicklist.image.retry_download', {
-        reason: error instanceof Error ? error.message : String(error),
-        initialUploadSource,
-        imageUrlCount: imageUrls.length,
+      emitStage('images_uploaded', {
+        imageCount: imageUploadResult?.imageCount ?? null,
+        uploadSource: imageUploadResult?.uploadSource ?? null,
       });
-
-      await clearDraftImagesIfPresent().catch(() => undefined);
-      const fallbackUploadFiles = await downloadImages();
-      imageUploadResult = await performImageUpload(fallbackUploadFiles, 'downloaded');
     }
-
-    emitStage('images_uploaded', {
-      imageCount: imageUploadResult?.imageCount ?? null,
-      uploadSource: imageUploadResult?.uploadSource ?? null,
-    });
 
     const clickResidualContinueButton = async (button) => {
       await button.scrollIntoViewIfNeeded().catch(() => undefined);

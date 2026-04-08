@@ -2,7 +2,8 @@
 
 import { GaugeIcon } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { createContext, type JSX, useCallback, useContext, useState, startTransition } from 'react';
 
 import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor/page-coverage-manifest';

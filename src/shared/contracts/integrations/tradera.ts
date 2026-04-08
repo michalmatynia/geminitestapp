@@ -64,6 +64,7 @@ export const traderaListingJobInputSchema = z.object({
   source: z.enum(['manual', 'scheduler', 'api']).optional(),
   jobId: z.string().optional(),
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  syncSkipImages: z.boolean().optional(),
 });
 
 export type TraderaListingJobInput = z.infer<typeof traderaListingJobInputSchema>;

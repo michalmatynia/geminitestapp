@@ -327,6 +327,97 @@ describe('mapBaseProduct', () => {
       expect(result.customFields).toEqual([{ fieldId: 'notes', textValue: 'Handle with care' }]);
     });
 
+    it('auto-maps text custom fields from localized Base text fields', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          text_fields: {
+            'shipping_notes|pl': 'Keep flat',
+          },
+        },
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'shipping-notes',
+              name: 'Shipping Notes',
+              type: 'text',
+              options: [],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'shipping-notes', textValue: 'Keep flat' },
+      ]);
+    });
+
+    it('auto-maps text custom fields from Base feature buckets', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          text_fields: {
+            features: {
+              Material: 'Cotton',
+            },
+          },
+        },
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'material-field',
+              name: 'Material',
+              type: 'text',
+              options: [],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'material-field', textValue: 'Cotton' },
+      ]);
+    });
+
+    it('auto-maps text custom fields from localized Base feature buckets', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          text_fields: {
+            'features|pl': {
+              Material: 'Cotton',
+            },
+          },
+        },
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'material-field',
+              name: 'Material',
+              type: 'text',
+              options: [],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'material-field', textValue: 'Cotton' },
+      ]);
+    });
+
     it('maps checkbox-set options from truthy template values', () => {
       const result = mapBaseProduct(
         {

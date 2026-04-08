@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React, { startTransition } from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';

@@ -9,7 +9,8 @@ import {
   AI_BRAIN_CONTEXT_ROOT_IDS,
 } from '@/shared/lib/ai-brain/context-registry/workspace';
 import { useRegisterContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(),

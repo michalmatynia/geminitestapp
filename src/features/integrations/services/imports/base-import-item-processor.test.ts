@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   mapBaseProductMock: vi.fn(),
+  collectCustomFieldImportDiagnosticsMock: vi.fn(),
   applyBaseParameterImportMock: vi.fn(),
   emitProductCacheInvalidationMock: vi.fn(),
   findProductListingByProductAndConnectionAcrossProvidersMock: vi.fn(),
@@ -13,13 +14,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/features/integrations/services/imports/base-mapper', () => ({
   mapBaseProduct: (...args: unknown[]) => mocks.mapBaseProductMock(...args),
-  collectCustomFieldImportDiagnostics: () => ({
-    mergedCustomFields: [],
-    autoMatchedFieldNames: [],
-    explicitMappedFieldNames: [],
-    skippedFieldNames: [],
-    overriddenFieldNames: [],
-  }),
+  collectCustomFieldImportDiagnostics: (...args: unknown[]) =>
+    mocks.collectCustomFieldImportDiagnosticsMock(...args),
 }));
 
 vi.mock('@/features/integrations/services/imports/parameter-import/apply', () => ({
@@ -156,6 +152,13 @@ describe('importSingleItem custom fields', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mocks.collectCustomFieldImportDiagnosticsMock.mockReturnValue({
+      mergedCustomFields: [],
+      autoMatchedFieldNames: [],
+      explicitMappedFieldNames: [],
+      skippedFieldNames: [],
+      overriddenFieldNames: [],
+    });
     mocks.applyBaseParameterImportMock.mockResolvedValue(defaultParameterImportResult);
     mocks.validateProductCreateMock.mockImplementation(async (data: unknown) => ({
       success: true,
@@ -225,6 +228,49 @@ describe('importSingleItem custom fields', () => {
         status: 'imported',
         action: 'imported',
         importedProductId: 'product-1',
+      })
+    );
+  });
+
+  it('reports seeded generic Base custom fields in item metadata when they are auto-matched', async () => {
+    mocks.mapBaseProductMock.mockReturnValue({
+      sku: 'SKU-1',
+      baseProductId: 'base-1',
+      customFields: [{ fieldId: 'notes', textValue: 'Handle with care' }],
+      producerIds: [],
+      tagIds: [],
+      imageLinks: [],
+    });
+    mocks.collectCustomFieldImportDiagnosticsMock.mockReturnValue({
+      mergedCustomFields: [{ fieldId: 'notes', textValue: 'Handle with care' }],
+      autoMatchedFieldNames: ['Custom Note'],
+      explicitMappedFieldNames: [],
+      skippedFieldNames: [],
+      overriddenFieldNames: [],
+    });
+
+    const productRepository = buildProductRepository({
+      createProduct: vi.fn().mockResolvedValue({ id: 'product-1', sku: 'SKU-1' }),
+    });
+
+    const result = await importSingleItem(
+      buildInput({
+        productRepository,
+        customFieldImportSeededFieldNames: ['Custom Note', 'Unused Field'],
+      })
+    );
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        metadata: {
+          customFieldImport: {
+            seededFieldNames: ['Custom Note'],
+            autoMatchedFieldNames: ['Custom Note'],
+            explicitMappedFieldNames: [],
+            skippedFieldNames: [],
+            overriddenFieldNames: [],
+          },
+        },
       })
     );
   });

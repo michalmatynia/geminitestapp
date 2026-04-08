@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { startTransition, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
 import type {
   DatabaseEngineStatus,
@@ -96,7 +97,9 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     (view: DatabaseEngineWorkspaceView) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set('view', view);
-      router.push(`${pathname}?${params.toString()}`);
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`);
+      });
     },
     [pathname, router, searchParams]
   );

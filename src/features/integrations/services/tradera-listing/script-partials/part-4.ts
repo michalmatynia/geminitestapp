@@ -489,6 +489,17 @@ export const PART_4 = String.raw`);
         )
         .filter({ hasText: new RegExp('^' + escapedTriggerPattern + '\$', 'i') })
         .first();
+
+      // During sync, skip dropdowns that are locked/disabled — they cannot be changed.
+      if (listingAction === 'sync' && (await isControlDisabled(triggerLocator))) {
+        log?.('tradera.quicklist.category_extra_field.skipped', {
+          iteration,
+          triggerText: unsetTrigger,
+          reason: 'disabled-on-sync',
+        });
+        break;
+      }
+
       await humanClick(triggerLocator).catch(async () => {
         // Fall back: DOM click by text match
         await page

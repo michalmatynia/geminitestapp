@@ -2,7 +2,8 @@
 
 import { Link2 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useMemo, useState, useCallback, startTransition } from 'react';
 
 import { AttachSlugModal } from '@/features/cms/components/slugs/AttachSlugModal';

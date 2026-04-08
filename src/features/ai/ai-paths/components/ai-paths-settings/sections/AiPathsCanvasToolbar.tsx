@@ -1,7 +1,7 @@
 'use client';
 
 import React, { startTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { Button } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { useSelectionState, useSelectionActions } from '@/features/ai/ai-paths/context';

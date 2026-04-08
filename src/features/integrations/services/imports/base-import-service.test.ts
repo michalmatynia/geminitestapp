@@ -188,7 +188,7 @@ const buildItem = () => ({
   parameterImportSummary: null,
 });
 
-const buildCreatedCustomField = (
+const buildCustomField = (
   overrides: Partial<ProductCustomFieldDefinition> = {}
 ): ProductCustomFieldDefinition => ({
   id: 'field-created',
@@ -207,7 +207,7 @@ const buildCreatedCustomField = (
   ...overrides,
 });
 
-describe('processBaseImportRun market exclusion custom fields', () => {
+describe('processBaseImportRun custom fields', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -222,7 +222,14 @@ describe('processBaseImportRun market exclusion custom fields', () => {
     const customFieldRepository = {
       listCustomFields: vi.fn().mockResolvedValue([]),
       getCustomFieldById: vi.fn(),
-      createCustomField: vi.fn().mockImplementation(async () => buildCreatedCustomField()),
+      createCustomField: vi.fn().mockImplementation(async (data) =>
+        buildCustomField({
+          id: data.type === 'checkbox_set' ? 'field-market-exclusion' : 'field-custom-note',
+          name: data.name,
+          type: data.type,
+          options: data.options ?? [],
+        })
+      ),
       updateCustomField: vi.fn(),
       deleteCustomField: vi.fn(),
       findByName: vi.fn(),
@@ -289,6 +296,7 @@ describe('processBaseImportRun market exclusion custom fields', () => {
             base_product_id: 'base-1',
             text_fields: {
               Tradera: '1',
+              custom_note: 'Handle with care',
             },
           },
         ],
@@ -329,12 +337,12 @@ describe('processBaseImportRun market exclusion custom fields', () => {
     });
   });
 
-  it('persists the seeded market exclusion field for live imports and passes it into item processing', async () => {
+  it('persists seeded Base custom fields for live imports and passes them into item processing', async () => {
     const result = await processBaseImportRun('run-live');
 
     const customFieldRepository = await mocks.getCustomFieldRepositoryMock.mock.results[0]?.value;
 
-    expect(customFieldRepository.createCustomField).toHaveBeenCalledWith({
+    expect(customFieldRepository.createCustomField).toHaveBeenNthCalledWith(1, {
       name: 'Market Exclusion',
       type: 'checkbox_set',
       options: [
@@ -346,14 +354,23 @@ describe('processBaseImportRun market exclusion custom fields', () => {
         { id: 'market-exclusion-vinted', label: 'Vinted' },
       ],
     });
+    expect(customFieldRepository.createCustomField).toHaveBeenNthCalledWith(2, {
+      name: 'Custom Note',
+      type: 'text',
+      options: [],
+    });
     expect(mocks.normalizeMappedProductMock).toHaveBeenCalledWith(
       expect.objectContaining({ base_product_id: 'base-1' }),
       [],
       ['EUR'],
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'field-created',
+          id: 'field-market-exclusion',
           name: 'Market Exclusion',
+        }),
+        expect.objectContaining({
+          id: 'field-custom-note',
+          name: 'Custom Note',
         }),
       ])
     );
@@ -362,17 +379,24 @@ describe('processBaseImportRun market exclusion custom fields', () => {
         dryRun: false,
         customFieldDefinitions: expect.arrayContaining([
           expect.objectContaining({
-            id: 'field-created',
+            id: 'field-market-exclusion',
             name: 'Market Exclusion',
           }),
+          expect.objectContaining({
+            id: 'field-custom-note',
+            name: 'Custom Note',
+          }),
         ]),
-        customFieldImportSeededFieldNames: ['Market Exclusion'],
+        customFieldImportSeededFieldNames: expect.arrayContaining([
+          'Custom Note',
+          'Market Exclusion',
+        ]),
       })
     );
     expect(result.status).toBe('completed');
   });
 
-  it('simulates the market exclusion field during dry runs without persisting settings', async () => {
+  it('simulates seeded Base custom fields during dry runs without persisting settings', async () => {
     const result = await processBaseImportRun('run-dry');
 
     const customFieldRepository = await mocks.getCustomFieldRepositoryMock.mock.results[0]?.value;
@@ -387,6 +411,10 @@ describe('processBaseImportRun market exclusion custom fields', () => {
           id: 'base-market-exclusion',
           name: 'Market Exclusion',
         }),
+        expect.objectContaining({
+          id: 'base-text-custom-field-customnote',
+          name: 'Custom Note',
+        }),
       ])
     );
     expect(mocks.importSingleItemMock).toHaveBeenCalledWith(
@@ -397,10 +425,92 @@ describe('processBaseImportRun market exclusion custom fields', () => {
             id: 'base-market-exclusion',
             name: 'Market Exclusion',
           }),
+          expect.objectContaining({
+            id: 'base-text-custom-field-customnote',
+            name: 'Custom Note',
+          }),
         ]),
-        customFieldImportSeededFieldNames: ['Market Exclusion'],
+        customFieldImportSeededFieldNames: expect.arrayContaining([
+          'Custom Note',
+          'Market Exclusion',
+        ]),
       })
     );
     expect(result.status).toBe('completed');
+  });
+
+  it('creates custom fields from Base feature buckets when parameter import is disabled', async () => {
+    mocks.fetchDetailsMapMock.mockResolvedValue(
+      new Map([
+        [
+          'base-1',
+          {
+            id: 'base-1',
+            base_product_id: 'base-1',
+            text_fields: {
+              features: {
+                Material: 'Cotton',
+              },
+            },
+          },
+        ],
+      ])
+    );
+
+    await processBaseImportRun('run-live');
+
+    const customFieldRepository = await mocks.getCustomFieldRepositoryMock.mock.results[0]?.value;
+
+    expect(customFieldRepository.createCustomField).toHaveBeenCalledTimes(1);
+    expect(customFieldRepository.createCustomField).toHaveBeenCalledWith({
+      name: 'Material',
+      type: 'text',
+      options: [],
+    });
+  });
+
+  it('does not create custom fields from Base feature buckets when parameter import is enabled', async () => {
+    mocks.getImportTemplateMock.mockResolvedValue({
+      id: 'template-1',
+      name: 'Import Template',
+      mappings: [],
+      parameterImport: {
+        enabled: true,
+        mode: 'all',
+        languageScope: 'catalog_languages',
+        createMissingParameters: false,
+        overwriteExistingValues: false,
+        matchBy: 'base_id_then_name',
+      },
+    });
+    mocks.fetchDetailsMapMock.mockResolvedValue(
+      new Map([
+        [
+          'base-1',
+          {
+            id: 'base-1',
+            base_product_id: 'base-1',
+            text_fields: {
+              features: {
+                Material: 'Cotton',
+              },
+            },
+          },
+        ],
+      ])
+    );
+    mocks.getBaseImportRunMock.mockImplementation(async () => ({
+      ...buildRun(false),
+      params: {
+        ...buildRun(false).params,
+        templateId: 'template-1',
+      },
+    }));
+
+    await processBaseImportRun('run-live');
+
+    const customFieldRepository = await mocks.getCustomFieldRepositoryMock.mock.results[0]?.value;
+
+    expect(customFieldRepository.createCustomField).not.toHaveBeenCalled();
   });
 });

@@ -35,16 +35,23 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }): Promise<JSX.Element> {
-  let initialMenuCollapsed = false;
-  let hasInitialMenuPreference = false;
+  const requestHeadersPromise = readOptionalRequestHeaders();
+  const cookiesPromise = readOptionalRequestCookies();
+  const serverSessionPromise = readOptionalServerAuthSession();
+
+  const [requestHeaders, cookieStore] = await Promise.all([
+    requestHeadersPromise,
+    cookiesPromise,
+  ]);
+
   let session: Awaited<ReturnType<typeof readOptionalServerAuthSession>> = null;
   let canReadAdminSettings = false;
+
   try {
-    const requestHeaders = await readOptionalRequestHeaders();
     session = parseAdminLayoutSessionHeaderValue(requestHeaders?.get(ADMIN_LAYOUT_SESSION_HEADER));
 
     if (!session?.user?.id) {
-      session = await readOptionalServerAuthSession();
+      session = await serverSessionPromise;
     }
   } catch (error) {
     void ErrorSystem.captureException(error, {
@@ -58,12 +65,17 @@ export default async function Layout({
   if (!session?.user?.id) {
     redirect('/auth/signin');
   }
+
   canReadAdminSettings =
     session.user.isElevated || session.user.permissions?.includes('settings.manage') === true;
+
+  let initialMenuCollapsed = false;
+  let hasInitialMenuPreference = false;
+
   try {
-    const cookieValue = await readAdminMenuCollapsedCookie();
-    if (cookieValue !== null) {
-      initialMenuCollapsed = cookieValue;
+    const cookieValue = cookieStore?.get(ADMIN_MENU_COLLAPSED_COOKIE_KEY)?.value;
+    if (cookieValue !== undefined) {
+      initialMenuCollapsed = cookieValue === '1' || cookieValue === 'true';
       hasInitialMenuPreference = true;
     }
   } catch (error) {
@@ -73,6 +85,7 @@ export default async function Layout({
       action: 'loadAdminLayoutCookieState',
     });
   }
+
   const shouldEnableAdminSettingsStore = canReadAdminSettings || isPlaywrightRuntime;
   return (
     <>

@@ -117,6 +117,8 @@ export interface ProductListingsActions {
       integrationId?: string | null;
       connectionId?: string | null;
       skipSessionPreflight?: boolean;
+      browserMode?: PlaywrightRelistBrowserMode;
+      skipImages?: boolean;
     }
   ) => Promise<void>;
   handleRelistTradera: (

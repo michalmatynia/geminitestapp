@@ -40,12 +40,18 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>): Promise<React.JSX.Element> {
-  const locale = await getLocale();
-  const [commonTranslations, liteSettings, messages] = await Promise.all([
-    getTranslations('Common'),
-    getLiteSettingsForHydration(),
-    loadSiteMessages(locale),
+  const localePromise = getLocale();
+  const commonTranslationsPromise = getTranslations('Common');
+  const liteSettingsPromise = getLiteSettingsForHydration();
+
+  const [locale, commonTranslations, liteSettings] = await Promise.all([
+    localePromise,
+    commonTranslationsPromise,
+    liteSettingsPromise,
   ]);
+
+  const messages = await loadSiteMessages(locale);
+
   const sanitizedLiteSettingsScript =
     liteSettings.length > 0
       ? `self.__LITE_SETTINGS__=${JSON.stringify(liteSettings).replace(/</g, '\\u003c')}`

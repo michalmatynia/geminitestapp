@@ -1,7 +1,8 @@
 'use client';
 
 import { ArrowLeft, Eye, EyeOff, Forward, Reply, Trash2 } from 'lucide-react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';

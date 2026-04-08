@@ -1,7 +1,8 @@
 'use client';
 
 import { StarIcon } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname } from 'next/navigation';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 
 import {

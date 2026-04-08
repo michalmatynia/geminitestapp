@@ -14,6 +14,7 @@ export const runTraderaBrowserListing = async ({
   source,
   action,
   browserMode,
+  syncSkipImages,
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
@@ -21,6 +22,7 @@ export const runTraderaBrowserListing = async ({
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
+  syncSkipImages?: boolean;
 }): Promise<BrowserListingResultDto> => {
   // Relist relies on the managed quicklist flow for duplicate detection before creating a new listing.
   if (
@@ -36,6 +38,7 @@ export const runTraderaBrowserListing = async ({
       source,
       action,
       browserMode,
+      syncSkipImages,
     });
   }
 

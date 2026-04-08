@@ -79,6 +79,7 @@ export async function POST_handler(
     action: 'sync',
     source: 'manual',
     ...(payload.browserMode ? { browserMode: payload.browserMode } : {}),
+    ...(payload.skipImages ? { syncSkipImages: true } : {}),
   });
   const enqueuedAt = new Date().toISOString();
   const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);

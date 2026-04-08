@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useDeferredValue, useEffect, useMemo, useState, startTransition } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MailPlus, RefreshCcw, FilterX, Search, Mail } from 'lucide-react';

@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useSearchParams } from 'next/navigation';
 import { useMemo, useState, startTransition } from 'react';
 
 import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';

@@ -1,7 +1,7 @@
 'use client';
 
 import { Folder, FolderOpen, PlusIcon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 
 import { createCaseResolverCasesMasterTreeAdapter } from '@/features/case-resolver/adapter';

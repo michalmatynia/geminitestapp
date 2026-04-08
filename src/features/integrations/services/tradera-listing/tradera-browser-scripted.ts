@@ -241,12 +241,14 @@ export const buildTraderaScriptInput = async ({
   systemSettings,
   connection,
   action,
+  syncSkipImages,
 }: {
   product: ProductWithImages;
   listing: ProductListing;
   systemSettings: TraderaSystemSettings;
   connection: IntegrationConnectionRecord;
   action: 'list' | 'relist' | 'sync';
+  syncSkipImages?: boolean;
 }): Promise<Record<string, unknown>> => {
   const title =
     product.name_en || product.name_pl || product.name_de || product.sku || `Listing ${listing.productId}`;
@@ -322,6 +324,7 @@ export const buildTraderaScriptInput = async ({
     integrationId: listing.integrationId,
     connectionId: listing.connectionId,
     listingAction: action,
+    syncSkipImages: action === 'sync' && syncSkipImages === true,
     existingExternalListingId: listing.externalListingId ?? null,
     existingListingUrl,
     baseProductId: product.baseProductId ?? product.id,
@@ -619,6 +622,7 @@ export const runTraderaBrowserListingScripted = async ({
   systemSettings,
   action,
   browserMode,
+  syncSkipImages,
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
@@ -626,6 +630,7 @@ export const runTraderaBrowserListingScripted = async ({
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
+  syncSkipImages?: boolean;
 }): Promise<BrowserListingResultDto> => {
   const productRepository = await getProductRepository();
   const product = await productRepository.getProductById(listing.productId);
@@ -639,6 +644,7 @@ export const runTraderaBrowserListingScripted = async ({
     systemSettings,
     connection,
     action,
+    syncSkipImages,
   });
   const { script, scriptSource, scriptValidationError } = await resolveManagedTraderaScript({
     connection,

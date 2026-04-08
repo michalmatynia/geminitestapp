@@ -1,7 +1,7 @@
 'use client';
 
 import { FolderPlus, FilePlus, FileImage, FileCode2, ImagePlus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React, { useMemo, startTransition } from 'react';
 
 import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';

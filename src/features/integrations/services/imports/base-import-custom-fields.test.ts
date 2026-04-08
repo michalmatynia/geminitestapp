@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ensureBaseMarketplaceExclusionCustomField } from './base-import-custom-fields';
+import {
+  ensureBaseMarketplaceExclusionCustomField,
+  ensureBaseTextCustomFields,
+} from './base-import-custom-fields';
 
 import type { CustomFieldRepository } from '@/shared/contracts/products/drafts';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
@@ -24,6 +27,246 @@ const buildDefinition = (
   createdAt: '2026-04-08T00:00:00.000Z',
   updatedAt: '2026-04-08T00:00:00.000Z',
   ...overrides,
+});
+
+describe('ensureBaseTextCustomFields', () => {
+  it('creates missing text custom fields from direct Base text fields and skips reserved buckets', async () => {
+    const repository = buildRepository();
+    vi.mocked(repository.createCustomField).mockImplementation(async (data) =>
+      buildDefinition({
+        id: `${data.name.toLowerCase().replace(/\s+/g, '-')}-id`,
+        name: data.name,
+        type: data.type,
+        options: data.options ?? [],
+      })
+    );
+
+    const definitions = await ensureBaseTextCustomFields({
+      repository,
+      existingDefinitions: [],
+      records: [
+        {
+          text_fields: {
+            name: 'Product title',
+            description: 'Product description',
+            custom_note: 'Handle with care',
+            'shipping_notes|pl': 'Ostroznie',
+            Tradera: '1',
+            features: {
+              Material: 'Cotton',
+            },
+          },
+        },
+      ],
+    });
+
+    expect(repository.createCustomField).toHaveBeenNthCalledWith(1, {
+      name: 'Custom Note',
+      type: 'text',
+      options: [],
+    });
+    expect(repository.createCustomField).toHaveBeenNthCalledWith(2, {
+      name: 'Shipping Notes',
+      type: 'text',
+      options: [],
+    });
+    expect(definitions).toEqual([
+      expect.objectContaining({
+        id: 'custom-note-id',
+        name: 'Custom Note',
+        type: 'text',
+      }),
+      expect.objectContaining({
+        id: 'shipping-notes-id',
+        name: 'Shipping Notes',
+        type: 'text',
+      }),
+    ]);
+  });
+
+  it('simulates text custom fields during dry runs without persisting settings', async () => {
+    const repository = buildRepository();
+
+    const definitions = await ensureBaseTextCustomFields({
+      repository,
+      existingDefinitions: [],
+      records: [{ text_fields: { custom_note: 'Handle with care' } }],
+      persist: false,
+    });
+
+    expect(repository.createCustomField).not.toHaveBeenCalled();
+    expect(definitions).toEqual([
+      expect.objectContaining({
+        id: 'base-text-custom-field-customnote',
+        name: 'Custom Note',
+        type: 'text',
+      }),
+    ]);
+  });
+
+  it('reuses existing definitions matched by normalized name', async () => {
+    const repository = buildRepository();
+    const existingDefinition = buildDefinition({
+      id: 'shipping-notes',
+      name: 'Shipping Notes',
+      type: 'text',
+      options: [],
+    });
+
+    const definitions = await ensureBaseTextCustomFields({
+      repository,
+      existingDefinitions: [existingDefinition],
+      records: [{ text_fields: { 'shipping_notes|en': 'Keep flat' } }],
+    });
+
+    expect(repository.createCustomField).not.toHaveBeenCalled();
+    expect(definitions).toEqual([existingDefinition]);
+  });
+
+  it('creates missing text custom fields from feature buckets when enabled', async () => {
+    const repository = buildRepository();
+    vi.mocked(repository.createCustomField).mockImplementation(async (data) =>
+      buildDefinition({
+        id: `${data.name.toLowerCase().replace(/\s+/g, '-')}-id`,
+        name: data.name,
+        type: data.type,
+        options: data.options ?? [],
+      })
+    );
+
+    const definitions = await ensureBaseTextCustomFields({
+      repository,
+      existingDefinitions: [],
+      records: [
+        {
+          text_fields: {
+            features: {
+              Material: 'Cotton',
+              'Care Notes': 'Dry clean only',
+            },
+          },
+        },
+      ],
+      includeFeatureBuckets: true,
+    });
+
+    expect(repository.createCustomField).toHaveBeenNthCalledWith(1, {
+      name: 'Care Notes',
+      type: 'text',
+      options: [],
+    });
+    expect(repository.createCustomField).toHaveBeenNthCalledWith(2, {
+      name: 'Material',
+      type: 'text',
+      options: [],
+    });
+    expect(definitions).toEqual([
+      expect.objectContaining({
+        id: 'care-notes-id',
+        name: 'Care Notes',
+        type: 'text',
+      }),
+      expect.objectContaining({
+        id: 'material-id',
+        name: 'Material',
+        type: 'text',
+      }),
+    ]);
+  });
+
+  it('creates missing text custom fields from localized feature buckets when enabled', async () => {
+    const repository = buildRepository();
+    vi.mocked(repository.createCustomField).mockImplementation(async (data) =>
+      buildDefinition({
+        id: `${data.name.toLowerCase().replace(/\s+/g, '-')}-id`,
+        name: data.name,
+        type: data.type,
+        options: data.options ?? [],
+      })
+    );
+
+    const definitions = await ensureBaseTextCustomFields({
+      repository,
+      existingDefinitions: [],
+      records: [
+        {
+          text_fields: {
+            'features|pl': {
+              Material: 'Cotton',
+            },
+          },
+        },
+      ],
+      includeFeatureBuckets: true,
+    });
+
+    expect(repository.createCustomField).toHaveBeenCalledWith({
+      name: 'Material',
+      type: 'text',
+      options: [],
+    });
+    expect(definitions).toEqual([
+      expect.objectContaining({
+        id: 'material-id',
+        name: 'Material',
+        type: 'text',
+      }),
+    ]);
+  });
+
+  it('skips feature bucket names that already exist as product parameters', async () => {
+    const repository = buildRepository();
+    vi.mocked(repository.createCustomField).mockImplementation(async (data) =>
+      buildDefinition({
+        id: `${data.name.toLowerCase().replace(/\s+/g, '-')}-id`,
+        name: data.name,
+        type: data.type,
+        options: data.options ?? [],
+      })
+    );
+
+    const definitions = await ensureBaseTextCustomFields({
+      repository,
+      existingDefinitions: [],
+      existingParameters: [
+        {
+          id: 'parameter-material',
+          catalogId: 'catalog-1',
+          name_en: 'Material',
+          name_pl: null,
+          name_de: null,
+          selectorType: 'text',
+          optionLabels: [],
+          createdAt: '2026-04-08T00:00:00.000Z',
+          updatedAt: '2026-04-08T00:00:00.000Z',
+        },
+      ],
+      records: [
+        {
+          text_fields: {
+            features: {
+              Material: 'Cotton',
+              Finish: 'Matte',
+            },
+          },
+        },
+      ],
+      includeFeatureBuckets: true,
+    });
+
+    expect(repository.createCustomField).toHaveBeenCalledTimes(1);
+    expect(repository.createCustomField).toHaveBeenCalledWith({
+      name: 'Finish',
+      type: 'text',
+      options: [],
+    });
+    expect(definitions).toEqual([
+      expect.objectContaining({
+        name: 'Finish',
+        type: 'text',
+      }),
+    ]);
+  });
 });
 
 describe('ensureBaseMarketplaceExclusionCustomField', () => {

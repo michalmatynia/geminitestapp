@@ -597,7 +597,15 @@ const collectTemplateParameterBuckets = (record: BaseProductRecord): unknown[] =
   return buckets;
 };
 
-const normalizeLookupKey = (value: string): string => value.trim().toLowerCase();
+const normalizeLookupKey = (value: string): string => {
+  const trimmed = value.trim();
+  const separatorIndex = trimmed.indexOf('|');
+  const scopedKey =
+    separatorIndex > 0 && /^[a-z0-9_-]{2,10}$/i.test(trimmed.slice(separatorIndex + 1))
+      ? trimmed.slice(0, separatorIndex)
+      : trimmed;
+  return scopedKey.trim().toLowerCase();
+};
 
 const findObjectEntryByNormalizedKey = (
   record: Record<string, unknown>,
@@ -744,7 +752,7 @@ const resolveValueByNormalizedPath = (value: unknown, pathSegments: string[]): u
 
 const findParameterValue = (params: unknown, sourceKey: string): unknown => {
   if (!params) return null;
-  const normalizedSourceKey = sourceKey.trim().toLowerCase();
+  const normalizedSourceKey = normalizeLookupKey(sourceKey);
   if (!normalizedSourceKey) return null;
   const getFromParameterRecord = (record: Record<string, unknown>): unknown => {
     if (sourceKey.includes('.')) {
@@ -760,8 +768,8 @@ const findParameterValue = (params: unknown, sourceKey: string): unknown => {
       record['id'] ?? record['parameter_id'] ?? record['param_id'] ?? record['attribute_id']
     );
     if (
-      name?.trim().toLowerCase() === normalizedSourceKey ||
-      id?.trim().toLowerCase() === normalizedSourceKey
+      (name && normalizeLookupKey(name) === normalizedSourceKey) ||
+      (id && normalizeLookupKey(id) === normalizedSourceKey)
     ) {
       return (
         record['value'] ??
@@ -798,7 +806,7 @@ const findParameterValue = (params: unknown, sourceKey: string): unknown => {
     }
     if (sourceKey in record) return record[sourceKey];
     const byNormalizedKey = Object.entries(record).find(
-      ([key]: [string, unknown]) => key.trim().toLowerCase() === normalizedSourceKey
+      ([key]: [string, unknown]) => normalizeLookupKey(key) === normalizedSourceKey
     );
     if (byNormalizedKey) {
       return byNormalizedKey[1];

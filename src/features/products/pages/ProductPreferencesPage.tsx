@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useEffect, useState, useMemo, startTransition } from 'react';
 
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';

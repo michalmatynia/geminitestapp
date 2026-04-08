@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname } from 'next/navigation';
 import { useCallback } from 'react';
 
 const PRODUCT_EDITOR_QUERY_KEYS = [

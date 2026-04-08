@@ -12,7 +12,7 @@ import {
   Star,
   Copy,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React, { startTransition } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';

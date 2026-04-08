@@ -2,7 +2,8 @@
 
 import React, { startTransition } from 'react';
 import { RefreshCcw, Settings2 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useSearchParams } from 'next/navigation';
 
 import { AdminAiEyebrow } from '@/shared/ui/admin.public';
 import { Alert, Button } from '@/shared/ui/primitives.public';

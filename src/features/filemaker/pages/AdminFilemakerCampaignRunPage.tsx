@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, startTransition } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams } from 'next/navigation';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';

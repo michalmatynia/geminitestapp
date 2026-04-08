@@ -342,14 +342,16 @@ export const runTraderaListing = async (
       };
     }
 
-    const result = await runTraderaBrowserListing({
+    const browserListingInput = {
       listing,
       connection,
       systemSettings,
       source,
       action,
       browserMode: requestedBrowserMode,
-    });
+      syncSkipImages: input.syncSkipImages ?? false,
+    };
+    const result = await runTraderaBrowserListing(browserListingInput);
 
     const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
     const expiresAt = resolveExpiry(settings.durationHours);

@@ -62,6 +62,8 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   traderaApiUserId: z.number().nullable().optional(),
   traderaApiToken: z.string().nullable().optional(),
   traderaApiSandbox: z.boolean().optional(),
+  traderaParameterMapperRulesJson: z.string().nullable().optional(),
+  traderaParameterMapperCatalogJson: z.string().nullable().optional(),
   hasTraderaApiAppKey: z.boolean().optional(),
   hasTraderaApiToken: z.boolean().optional(),
   traderaApiTokenUpdatedAt: z.string().nullable().optional(),

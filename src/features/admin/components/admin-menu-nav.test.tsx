@@ -74,4 +74,21 @@ describe('buildAdminNav', () => {
 
     expect(item).not.toBeNull();
   });
+
+  it('includes the Tradera parameter mapping entry', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const item = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'integrations/marketplaces/tradera/parameter-mapping' &&
+        entry.label === 'Parameter Mapping' &&
+        entry.href === '/admin/integrations/marketplaces/tradera/parameter-mapping'
+    );
+
+    expect(item).not.toBeNull();
+  });
 });

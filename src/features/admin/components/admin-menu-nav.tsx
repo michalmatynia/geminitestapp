@@ -310,6 +310,11 @@ export const buildAdminNav = (handlers: {
                 label: 'Category Mapping',
                 href: '/admin/integrations/marketplaces/category-mapper?marketplace=tradera',
               },
+              {
+                id: 'integrations/marketplaces/tradera/parameter-mapping',
+                label: 'Parameter Mapping',
+                href: '/admin/integrations/marketplaces/tradera/parameter-mapping',
+              },
             ],
           },
           {

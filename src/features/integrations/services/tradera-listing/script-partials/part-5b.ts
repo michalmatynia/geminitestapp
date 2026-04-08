@@ -68,6 +68,7 @@ export const PART_5B = String.raw`
     if (categoryStrategy === 'top_suggested') {
       await fillCategoryExtraDropdowns();
     }
+    await applyConfiguredExtraFieldSelections();
     emitStage('category_selected', {
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,

@@ -49,6 +49,8 @@ export const CONNECTION_DEFAULTS = {
   traderaApiUserId: 0,
   traderaApiToken: '',
   traderaApiTokenUpdatedAt: null,
+  traderaParameterMapperRulesJson: null,
+  traderaParameterMapperCatalogJson: null,
 };
 
 export const toDocumentIdCandidates = (id: string): Array<string | ObjectId> => {
@@ -311,6 +313,12 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     traderaApiUserId: (d['traderaApiUserId'] as number) ?? CONNECTION_DEFAULTS.traderaApiUserId,
     traderaApiToken: (d['traderaApiToken'] as string) ?? CONNECTION_DEFAULTS.traderaApiToken,
     traderaApiTokenUpdatedAt: toIsoStringOrNull(d['traderaApiTokenUpdatedAt']),
+    traderaParameterMapperRulesJson:
+      (d['traderaParameterMapperRulesJson'] as string) ??
+      CONNECTION_DEFAULTS.traderaParameterMapperRulesJson,
+    traderaParameterMapperCatalogJson:
+      (d['traderaParameterMapperCatalogJson'] as string) ??
+      CONNECTION_DEFAULTS.traderaParameterMapperCatalogJson,
     createdAt: toRequiredIsoString(d['createdAt']),
     updatedAt: toIsoStringOrNull(d['updatedAt']),
   };

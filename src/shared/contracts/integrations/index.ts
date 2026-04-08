@@ -70,3 +70,4 @@ export * from './producers';
 export * from './repositories';
 export * from './session-testing';
 export * from './tradera';
+export * from './tradera-parameter-mapper';

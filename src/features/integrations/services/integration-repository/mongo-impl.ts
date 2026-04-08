@@ -92,6 +92,8 @@ type IntegrationConnectionDocument = {
   traderaApiUserId?: number;
   traderaApiToken?: string;
   traderaApiTokenUpdatedAt?: Date | null;
+  traderaParameterMapperRulesJson?: string | null;
+  traderaParameterMapperCatalogJson?: string | null;
   createdAt: Date;
   updatedAt: Date | null;
 };

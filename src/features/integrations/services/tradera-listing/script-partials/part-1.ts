@@ -673,6 +673,18 @@ export const PART_1 = String.raw`export default async function run({
       ? mappedCategorySegments.join(' > ')
       : toText(input?.traderaCategory?.path) || toText(input?.traderaCategory?.name);
   const mappedCategoryExternalId = toText(input?.traderaCategory?.externalId);
+  const configuredExtraFieldSelections = Array.isArray(input?.traderaExtraFieldSelections)
+    ? input.traderaExtraFieldSelections
+        .map((entry) => ({
+          fieldLabel: toText(entry?.fieldLabel),
+          fieldKey: toText(entry?.fieldKey),
+          optionLabel: toText(entry?.optionLabel),
+          parameterId: toText(entry?.parameterId),
+          parameterName: toText(entry?.parameterName),
+          sourceValue: toText(entry?.sourceValue),
+        }))
+        .filter((entry) => entry.fieldLabel && entry.optionLabel)
+    : [];
   let selectedCategoryPath = null;
   let selectedCategorySource = null;
   const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);

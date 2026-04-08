@@ -30,6 +30,8 @@ const createConnectionSchema = z
     traderaApiUserId: z.number().int().positive().optional(),
     traderaApiToken: z.string().trim().min(1).optional(),
     traderaApiSandbox: z.boolean().optional(),
+    traderaParameterMapperRulesJson: z.string().trim().nullable().optional(),
+    traderaParameterMapperCatalogJson: z.string().trim().nullable().optional(),
   })
   .strict();
 
@@ -107,6 +109,8 @@ export async function GET_handler(
     traderaApiPublicKey: connection.traderaApiPublicKey ?? null,
     traderaApiUserId: connection.traderaApiUserId ?? null,
     traderaApiSandbox: connection.traderaApiSandbox ?? false,
+    traderaParameterMapperRulesJson: connection.traderaParameterMapperRulesJson ?? null,
+    traderaParameterMapperCatalogJson: connection.traderaParameterMapperCatalogJson ?? null,
     hasTraderaApiAppKey: Boolean(connection.traderaApiAppKey),
     hasTraderaApiToken: Boolean(connection.traderaApiToken),
     traderaApiTokenUpdatedAt: connection.traderaApiTokenUpdatedAt ?? null,
@@ -226,6 +230,18 @@ export async function POST_handler(
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }
       : {}),
+    ...(typeof data.traderaParameterMapperRulesJson === 'string' ||
+    data.traderaParameterMapperRulesJson === null
+      ? {
+          traderaParameterMapperRulesJson: data.traderaParameterMapperRulesJson ?? null,
+        }
+      : {}),
+    ...(typeof data.traderaParameterMapperCatalogJson === 'string' ||
+    data.traderaParameterMapperCatalogJson === null
+      ? {
+          traderaParameterMapperCatalogJson: data.traderaParameterMapperCatalogJson ?? null,
+        }
+      : {}),
   });
 
   return NextResponse.json({
@@ -277,6 +293,8 @@ export async function POST_handler(
     traderaApiPublicKey: created.traderaApiPublicKey ?? null,
     traderaApiUserId: created.traderaApiUserId ?? null,
     traderaApiSandbox: created.traderaApiSandbox ?? false,
+    traderaParameterMapperRulesJson: created.traderaParameterMapperRulesJson ?? null,
+    traderaParameterMapperCatalogJson: created.traderaParameterMapperCatalogJson ?? null,
     hasTraderaApiAppKey: Boolean(created.traderaApiAppKey),
     hasTraderaApiToken: Boolean(created.traderaApiToken),
     traderaApiTokenUpdatedAt: created.traderaApiTokenUpdatedAt ?? null,

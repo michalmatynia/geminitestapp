@@ -4,6 +4,7 @@ export { default as ConnectionsPage } from './pages/ConnectionsPage';
 export { default as MarketplacesPage } from './pages/marketplaces/MarketplacesPage';
 export { default as PlaywrightIntegrationPage } from './pages/marketplaces/PlaywrightIntegrationPage';
 export { default as TraderaSettingsPage } from './pages/marketplaces/TraderaSettingsPage';
+export { default as TraderaParameterMappingPage } from './pages/marketplaces/tradera/TraderaParameterMappingPage';
 export { default as AllegroConnectionsPage } from './pages/marketplaces/allegro/AllegroConnectionsPage';
 export { default as AllegroListingManagementPage } from './pages/marketplaces/allegro/AllegroListingManagementPage';
 export { default as AllegroListingTemplatesPage } from './pages/marketplaces/allegro/AllegroListingTemplatesPage';

@@ -52,6 +52,8 @@ const connectionSchema = z.object({
   traderaApiUserId: z.number().int().positive().optional(),
   traderaApiToken: z.string().trim().optional(),
   traderaApiSandbox: z.boolean().optional(),
+  traderaParameterMapperRulesJson: z.string().trim().nullable().optional(),
+  traderaParameterMapperCatalogJson: z.string().trim().nullable().optional(),
 });
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
@@ -250,6 +252,18 @@ export async function PUT_handler(
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }
       : {}),
+    ...(typeof data.traderaParameterMapperRulesJson === 'string' ||
+    data.traderaParameterMapperRulesJson === null
+      ? {
+          traderaParameterMapperRulesJson: data.traderaParameterMapperRulesJson ?? null,
+        }
+      : {}),
+    ...(typeof data.traderaParameterMapperCatalogJson === 'string' ||
+    data.traderaParameterMapperCatalogJson === null
+      ? {
+          traderaParameterMapperCatalogJson: data.traderaParameterMapperCatalogJson ?? null,
+        }
+      : {}),
   });
 
   return NextResponse.json({
@@ -300,6 +314,8 @@ export async function PUT_handler(
     traderaApiPublicKey: connection.traderaApiPublicKey ?? null,
     traderaApiUserId: connection.traderaApiUserId ?? null,
     traderaApiSandbox: connection.traderaApiSandbox ?? false,
+    traderaParameterMapperRulesJson: connection.traderaParameterMapperRulesJson ?? null,
+    traderaParameterMapperCatalogJson: connection.traderaParameterMapperCatalogJson ?? null,
     hasTraderaApiAppKey: Boolean(connection.traderaApiAppKey),
     hasTraderaApiToken: Boolean(connection.traderaApiToken),
     traderaApiTokenUpdatedAt: connection.traderaApiTokenUpdatedAt ?? null,

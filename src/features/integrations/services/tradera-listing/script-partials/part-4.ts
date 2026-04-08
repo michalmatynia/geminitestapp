@@ -534,6 +534,17 @@ export const PART_4 = String.raw`);
   };
 
   const applyCategorySelection = async () => {
+    const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);
+    if (listingAction === 'sync' && categoryTrigger && (await isControlDisabled(categoryTrigger))) {
+      selectedCategoryPath = (await readCurrentSelectedCategoryPath()) || 'Unknown (locked)';
+      selectedCategorySource = 'preserved';
+      log?.('tradera.quicklist.category.skipped', {
+        reason: 'disabled-on-sync',
+        preservedPath: selectedCategoryPath,
+      });
+      return;
+    }
+
     if (categoryStrategy === 'top_suggested') {
       await chooseTopSuggestedCategory();
       return;
@@ -626,6 +637,88 @@ export const PART_4 = String.raw`);
     }
 
     return false;
+  };
+
+  const findDynamicFieldTrigger = async (fieldLabel) => {
+    const escapedLabel = fieldLabel.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+    const trigger = page
+      .locator(
+        'button[aria-haspopup], button[aria-haspopup="listbox"], button[aria-haspopup="true"], [role="combobox"]'
+      )
+      .filter({ hasText: new RegExp(escapedLabel, 'i') })
+      .first();
+    const visible = await trigger.isVisible().catch(() => false);
+    if (visible) {
+      return trigger;
+    }
+
+    return findFieldTriggerByLabels([fieldLabel]);
+  };
+
+  const applyConfiguredExtraFieldSelections = async () => {
+    if (!Array.isArray(configuredExtraFieldSelections) || configuredExtraFieldSelections.length === 0) {
+      return false;
+    }
+
+    let modified = false;
+
+    for (const selection of configuredExtraFieldSelections) {
+      const fieldLabel = normalizeWhitespace(selection?.fieldLabel || '');
+      const optionLabel = normalizeWhitespace(selection?.optionLabel || '');
+      if (!fieldLabel || !optionLabel) {
+        continue;
+      }
+
+      const trigger = await findDynamicFieldTrigger(fieldLabel);
+      if (!trigger) {
+        throw new Error(
+          'FAIL_EXTRA_FIELD_SET: Required Tradera field "' +
+            fieldLabel +
+            '" was not available for option "' +
+            optionLabel +
+            '".'
+        );
+      }
+
+      if (listingAction === 'sync' && (await isControlDisabled(trigger))) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: selection?.fieldKey || fieldLabel,
+          reason: 'disabled-on-sync',
+          option: optionLabel,
+        });
+        continue;
+      }
+
+      await humanClick(trigger).catch(() => undefined);
+      await wait(400);
+
+      const selected = await clickMenuItemByName(optionLabel);
+      if (!selected) {
+        await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+          () => undefined
+        );
+        throw new Error(
+          'FAIL_EXTRA_FIELD_SET: Required Tradera option "' +
+            optionLabel +
+            '" for field "' +
+            fieldLabel +
+            '" was not found.'
+        );
+      }
+
+      log?.('tradera.quicklist.field.selected', {
+        field: selection?.fieldKey || fieldLabel,
+        fieldLabel,
+        option: optionLabel,
+        parameterId: selection?.parameterId || null,
+        parameterName: selection?.parameterName || null,
+        sourceValue: selection?.sourceValue || null,
+      });
+      modified = true;
+      await wait(300);
+    }
+
+    return modified;
   };
 
   const firstVisibleWithin = async (root, selectors) => {

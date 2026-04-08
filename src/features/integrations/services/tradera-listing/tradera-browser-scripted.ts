@@ -5,6 +5,7 @@ import type { BrowserListingResultDto, PlaywrightRelistBrowserMode, ProductListi
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
+import { getParameterRepository } from '@/features/products/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import { getIntegrationRepository } from '../integration-repository';
@@ -34,6 +35,11 @@ import {
   usesLegacyDefaultTraderaQuickListScript,
   usesStaleManagedDefaultTraderaQuickListScript,
 } from './managed-script';
+import {
+  parseTraderaParameterMapperCatalogJson,
+  parseTraderaParameterMapperRulesJson,
+  resolveTraderaParameterMapperSelections,
+} from './parameter-mapper';
 
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 30_000;
 export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
@@ -282,6 +288,20 @@ export const buildTraderaScriptInput = async ({
     });
   const shippingGroup = shippingGroupResolution.shippingGroup;
   const mappedCategory = categoryMapping.mapping;
+  const parameterRepository = await getParameterRepository();
+  const catalogId = toTrimmedString(product.catalogId);
+  const parameterDefinitions = catalogId
+    ? await parameterRepository.listParameters({ catalogId })
+    : [];
+  const traderaParameterMapperSelections = resolveTraderaParameterMapperSelections({
+    product,
+    mappedCategory,
+    rules: parseTraderaParameterMapperRulesJson(connection.traderaParameterMapperRulesJson),
+    catalogEntries: parseTraderaParameterMapperCatalogJson(
+      connection.traderaParameterMapperCatalogJson
+    ),
+    parameters: parameterDefinitions,
+  });
   const existingListingUrl = resolveExistingListingUrl(listing);
 
   return {
@@ -334,6 +354,18 @@ export const buildTraderaScriptInput = async ({
             internalCategoryId: mappedCategory.internalCategoryId,
             catalogId: mappedCategory.catalogId,
           },
+        }
+      : {}),
+    ...(traderaParameterMapperSelections.length > 0
+      ? {
+          traderaExtraFieldSelections: traderaParameterMapperSelections.map((selection) => ({
+            fieldLabel: selection.fieldLabel,
+            fieldKey: selection.fieldKey,
+            optionLabel: selection.optionLabel,
+            parameterId: selection.parameterId,
+            parameterName: selection.parameterName,
+            sourceValue: selection.sourceValue,
+          })),
         }
       : {}),
     traderaCategoryMapping: {

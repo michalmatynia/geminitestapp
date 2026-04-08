@@ -241,6 +241,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       onPageSizeChange={setPageSize}
       pageSizeOptions={[...PRODUCT_PAGE_SIZE_OPTIONS]}
       showPageSize
+      showPageJump
       showLabels={false}
       variant='compact'
     />

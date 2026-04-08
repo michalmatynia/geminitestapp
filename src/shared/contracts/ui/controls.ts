@@ -76,6 +76,7 @@ export interface PaginationProps {
   isLoading?: boolean;
   className?: string;
   showLabels?: boolean;
+  showPageJump?: boolean;
   variant?: 'default' | 'compact' | 'panel';
 }
 
@@ -91,6 +92,7 @@ export interface PaginationContextValue {
   showInfo: boolean;
   isLoading: boolean;
   showLabels: boolean;
+  showPageJump: boolean;
   variant: 'default' | 'compact' | 'panel';
   startItem: number;
   endItem: number;

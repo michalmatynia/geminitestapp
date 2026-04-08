@@ -198,6 +198,11 @@ export function proxy(
     return resolvePublicLocaleResponse(request) ?? baseProxy(request);
   }
 
+  const fastRedirect = resolveAdminRedirectResponse(request);
+  if (fastRedirect) {
+    return fastRedirect;
+  }
+
   if (!handler || typeof handler !== 'function') {
     return baseProxy(request);
   }

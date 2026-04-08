@@ -76,7 +76,11 @@ vi.mock('@/shared/ui/FocusModeTogglePortal', () => ({
 }));
 
 vi.mock('@/shared/ui/pagination', () => ({
-  Pagination: () => <div>Pagination</div>,
+  Pagination: ({ showPageJump }: { showPageJump?: boolean }) => (
+    <div data-testid='pagination' data-show-page-jump={String(showPageJump)}>
+      Pagination
+    </div>
+  ),
 }));
 
 vi.mock('@/shared/ui/select-simple', () => ({
@@ -210,7 +214,10 @@ describe('ProductListHeader', () => {
     expect(
       within(desktopControlsRow).getByRole('button', { name: 'Create new product' })
     ).toBeInTheDocument();
-    expect(within(desktopControlsRow).getByText('Pagination')).toBeInTheDocument();
+    expect(within(desktopControlsRow).getByTestId('pagination')).toHaveAttribute(
+      'data-show-page-jump',
+      'true'
+    );
   });
 
   it('renders desktop filters on a dedicated row below the pagination and selectors', () => {
@@ -238,7 +245,10 @@ describe('ProductListHeader', () => {
       'mt-1'
     );
     expect(within(desktopControlsRow).getByRole('button', { name: 'Create new product' })).toBeInTheDocument();
-    expect(within(desktopControlsRow).getByText('Pagination')).toBeInTheDocument();
+    expect(within(desktopControlsRow).getByTestId('pagination')).toHaveAttribute(
+      'data-show-page-jump',
+      'true'
+    );
     expect(
       within(desktopControlsRow).getByLabelText('Select product name language')
     ).toBeInTheDocument();

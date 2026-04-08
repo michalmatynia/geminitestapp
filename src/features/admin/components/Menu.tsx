@@ -2,7 +2,7 @@
 
 import { StarIcon } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
@@ -291,7 +291,9 @@ export default function Menu(): React.ReactNode {
   const handleCreatePageClick = useCallback((): void => {
     setIsMenuCollapsed(true);
     setIsProgrammaticallyCollapsed(true);
-    router.push('/admin/cms/pages/create');
+    startTransition(() => {
+      router.push('/admin/cms/pages/create');
+    });
   }, [router, setIsMenuCollapsed, setIsProgrammaticallyCollapsed]);
 
   const settingsStore = useSettingsStore();

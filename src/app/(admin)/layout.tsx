@@ -75,17 +75,15 @@ export default async function Layout({
   }
   const shouldEnableAdminSettingsStore = canReadAdminSettings || isPlaywrightRuntime;
   return (
-    <AdminLayout
-      session={session}
-      initialMenuCollapsed={initialMenuCollapsed}
-      hasInitialMenuPreference={hasInitialMenuPreference}
-      canReadAdminSettings={shouldEnableAdminSettingsStore}
-    >
-      {children}
-    </AdminLayout>
-  );
-}
-hildren}
+    <>
+      <NextTopLoader showSpinner={false} color='#38bdf8' />
+      <AdminLayout
+        session={session}
+        initialMenuCollapsed={initialMenuCollapsed}
+        hasInitialMenuPreference={hasInitialMenuPreference}
+        canReadAdminSettings={shouldEnableAdminSettingsStore}
+      >
+        {children}
       </AdminLayout>
     </>
   );

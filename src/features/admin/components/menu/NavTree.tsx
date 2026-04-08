@@ -3,7 +3,7 @@
 import { AppWindow, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { memo, useCallback, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useMemo, useRef, startTransition } from 'react';
 
 import { Tooltip, Button } from '@/shared/ui/primitives.public';
 import { TreeContextMenu } from '@/shared/ui/data-display.public';
@@ -460,7 +460,9 @@ export const NavTree = memo(function NavTree({
   const handleNavigateHrefLocal = useCallback(
     (href: string): void => {
       onSetPendingHrefProp?.(href);
-      router.push(href);
+      startTransition(() => {
+        router.push(href);
+      });
     },
     [router, onSetPendingHrefProp]
   );

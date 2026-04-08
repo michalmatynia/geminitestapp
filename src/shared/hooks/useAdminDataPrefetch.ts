@@ -4,7 +4,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { getProductsWithCount } from '@/features/products/api/products';
+import { loadProductColumns } from '@/features/products/components/list/product-columns-loader';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 /**
@@ -19,12 +21,38 @@ export function useAdminDataPrefetch() {
     const filters = { page: 1, pageSize: 20 };
     const queryKey = [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
 
+    // Prefetch JS chunk for columns
+    void loadProductColumns();
+
+    // Prefetch Metadata (Catalogs & Price Groups)
+    void prefetchQueryV2(queryClient, {
+      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.catalogs()),
+      queryFn: async (): Promise<unknown> => await fetch('/api/v2/products/entities/catalogs').then((r) => r.json()),
+      staleTime: 1000 * 60 * 5,
+      meta: {
+        source: 'useAdminDataPrefetch.products.metadata.catalogs',
+        operation: 'list',
+        resource: 'products.metadata.catalogs',
+        domain: 'products',
+      },
+    })();
+
+    void prefetchQueryV2(queryClient, {
+      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.priceGroups()),
+      queryFn: async (): Promise<unknown> => await fetch('/api/v2/products/metadata/price-groups').then((r) => r.json()),
+      staleTime: 1000 * 60 * 5,
+      meta: {
+        source: 'useAdminDataPrefetch.products.metadata.priceGroups',
+        operation: 'list',
+        resource: 'products.metadata.price-groups',
+        domain: 'products',
+      },
+    })();
+
     void prefetchQueryV2(queryClient, {
       queryKey,
       queryFn: async (context) => {
         const data = await getProductsWithCount(filters, context.signal);
-        // We don't need to parse it here, the factory meta will handle it if we used the standard hook,
-        // but here we just want to prime the cache with raw data that the component will then parse.
         return { items: data.products, total: data.total };
       },
       staleTime: 60_000,

@@ -168,9 +168,8 @@ export const querySchema = z.object({
 });
 
 export const prewarmLiteSettingsServerCache = async (): Promise<void> => {
-  const now = Date.now();
   const currentCache = getLiteSettingsCache();
-  if (currentCache && now - currentCache.ts <= LITE_SETTINGS_CACHE_TTL_MS) {
+  if (currentCache) {
     return;
   }
 

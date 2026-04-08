@@ -122,6 +122,7 @@ const ensureFileCopy = async (sourcePath, targetPath) => {
 
 const nextConfig = {
   reactStrictMode: true,
+  reactCompiler: true,
   cacheComponents: true,
   cacheLife: {
     swr60: {

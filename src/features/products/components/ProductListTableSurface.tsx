@@ -9,7 +9,6 @@ import {
   useProductListTableContext,
 } from '@/features/products/context/ProductListContext';
 import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
-import { logProductListDebug } from '@/features/products/lib/product-list-observability';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { Alert } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
@@ -103,29 +102,16 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
       const tableElement = desktopTableRef.current;
       if (!mainElement || !tableElement) return;
 
+      const mainRect = mainElement.getBoundingClientRect();
+      const tableRect = tableElement.getBoundingClientRect();
+      
       const availableHeight = Math.floor(
-        mainElement.getBoundingClientRect().bottom -
-          tableElement.getBoundingClientRect().top -
-          PRODUCT_LIST_BOTTOM_GAP
+        mainRect.bottom - tableRect.top - PRODUCT_LIST_BOTTOM_GAP
       );
       const nextMaxHeight = Math.max(0, availableHeight);
+      
       setResolvedTableMaxHeight((currentValue) => {
         if (currentValue === nextMaxHeight) return currentValue;
-
-        logProductListDebug(
-          'table-max-height-change',
-          {
-            previous: currentValue ?? null,
-            next: nextMaxHeight,
-            availableHeight,
-            dataCount: tableProps.data.length,
-            isLoading: tableProps.isLoading,
-          },
-          {
-            dedupeKey: 'table-max-height-change',
-            throttleMs: 250,
-          }
-        );
         return nextMaxHeight;
       });
     } catch (error) {
@@ -135,63 +121,39 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
         level: 'warn',
       });
     }
-  }, [tableProps.data.length, tableProps.isLoading]);
+  }, []);
 
   useEffect(() => {
     const mainElement = document.getElementById('app-content');
     if (!mainElement || typeof ResizeObserver === 'undefined') return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      try {
+    let throttleTimer: number | null = null;
+    const throttledUpdate = () => {
+      if (throttleTimer) return;
+      throttleTimer = window.setTimeout(() => {
         updateTableMaxHeight();
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'ProductListTableSurface',
-          action: 'resizeObserverUpdateTableMaxHeight',
-          level: 'warn',
-        });
-      }
-    });
+        throttleTimer = null;
+      }, 100);
+    };
+
+    const resizeObserver = new ResizeObserver(throttledUpdate);
     resizeObserver.observe(mainElement);
     if (desktopTableRef.current) {
       resizeObserver.observe(desktopTableRef.current);
     }
 
-    window.addEventListener('resize', updateTableMaxHeight);
+    window.addEventListener('resize', throttledUpdate);
     updateTableMaxHeight();
 
     return (): void => {
+      if (throttleTimer) window.clearTimeout(throttleTimer);
       resizeObserver.disconnect();
-      window.removeEventListener('resize', updateTableMaxHeight);
+      window.removeEventListener('resize', throttledUpdate);
     };
   }, [updateTableMaxHeight]);
 
   useEffect(() => {
-    logProductListDebug(
-      'table-layout-raf-scheduled',
-      {
-        dataCount: tableProps.data.length,
-        isLoading: tableProps.isLoading,
-        resolvedTableMaxHeight:
-          typeof resolvedTableMaxHeight === 'number' ? resolvedTableMaxHeight : null,
-      },
-      {
-        dedupeKey: 'table-layout-raf-scheduled',
-        throttleMs: 500,
-      }
-    );
-    const frameId = window.requestAnimationFrame(() => {
-      try {
-        updateTableMaxHeight();
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'ProductListTableSurface',
-          action: 'animationFrameUpdateTableMaxHeight',
-          level: 'warn',
-        });
-      }
-    });
-
+    const frameId = window.requestAnimationFrame(updateTableMaxHeight);
     return (): void => {
       window.cancelAnimationFrame(frameId);
     };

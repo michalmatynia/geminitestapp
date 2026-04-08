@@ -1,14 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { ChevronLeftIcon, Menu as MenuIcon, X as CloseIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { SessionProvider } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
 import { AdminFavoritesRuntimeProvider } from '@/features/admin/components/AdminFavoritesRuntimeProvider';
 import Menu from '@/features/admin/components/Menu';
-import { UserNav } from '@/features/admin/components/UserNav';
 import {
   AdminLayoutProvider,
   useAdminLayoutActions,
@@ -23,6 +22,19 @@ import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { Session } from 'next-auth';
+
+const UserNav = dynamic(
+  () => import('@/features/admin/components/UserNav').then((mod) => mod.UserNav),
+  { ssr: false }
+);
+
+const AiInsightsNotificationsDrawer = dynamic(
+  () =>
+    import('@/features/admin/components/AiInsightsNotificationsDrawer').then(
+      (mod) => mod.AiInsightsNotificationsDrawer
+    ),
+  { ssr: false }
+);
 
 const ADMIN_MENU_COLLAPSED_STORAGE_KEY = 'adminMenuCollapsed';
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';

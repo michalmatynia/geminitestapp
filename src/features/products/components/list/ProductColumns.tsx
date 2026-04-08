@@ -291,7 +291,7 @@ const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Image
 
 const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCell({ row }) {
   const product: ProductWithImages = row.original;
-  const { onProductNameClick } = useProductListRowActionsContext();
+  const { onProductNameClick, onPrefetchProductDetail } = useProductListRowActionsContext();
   const { productNameKey, categoryNameById } = useProductListRowVisualsContext();
   const { productAiRunFeedback } = useProductListRowRuntime(
     product.id,
@@ -344,7 +344,10 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
     : 'Manual shipping group is missing';
 
   return (
-    <div className='min-w-0 cursor-text select-text'>
+    <div
+      className='min-w-0 cursor-text select-text'
+      onMouseEnter={() => onPrefetchProductDetail?.(product.id)}
+    >
       <button
         type='button'
         title={nameValue || '—'}

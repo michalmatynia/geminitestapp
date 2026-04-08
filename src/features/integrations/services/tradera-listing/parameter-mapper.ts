@@ -1,6 +1,8 @@
 import {
   traderaParameterMapperCatalogPayloadSchema,
   traderaParameterMapperRulesPayloadSchema,
+  type TraderaParameterMapperCatalogPayload,
+  type TraderaParameterMapperCategoryFetch,
   type TraderaParameterMapperCatalogEntry,
   type TraderaParameterMapperRule,
   type TraderaResolvedParameterMapperSelection,
@@ -35,6 +37,17 @@ const compareCatalogEntries = (
   );
   if (byPath !== 0) return byPath;
   return left.fieldLabel.localeCompare(right.fieldLabel);
+};
+
+const compareCategoryFetches = (
+  left: TraderaParameterMapperCategoryFetch,
+  right: TraderaParameterMapperCategoryFetch
+): number => {
+  const byPath = (left.externalCategoryPath ?? left.externalCategoryName).localeCompare(
+    right.externalCategoryPath ?? right.externalCategoryName
+  );
+  if (byPath !== 0) return byPath;
+  return left.externalCategoryId.localeCompare(right.externalCategoryId);
 };
 
 const parseJsonPayload = <T>(
@@ -96,22 +109,63 @@ export const parseTraderaParameterMapperCatalogJson = (
   parseJsonPayload(rawValue, traderaParameterMapperCatalogPayloadSchema, {
     version: 1 as const,
     entries: [],
+    categoryFetches: [],
   }).entries
     .slice()
     .sort(compareCatalogEntries);
 
+export const parseTraderaParameterMapperCatalogPayload = (
+  rawValue: string | null | undefined
+): TraderaParameterMapperCatalogPayload => {
+  const payload = parseJsonPayload(rawValue, traderaParameterMapperCatalogPayloadSchema, {
+    version: 1 as const,
+    entries: [],
+    categoryFetches: [],
+  });
+
+  return {
+    version: 1,
+    entries: payload.entries.slice().sort(compareCatalogEntries),
+    categoryFetches: payload.categoryFetches.slice().sort(compareCategoryFetches),
+  };
+};
+
+export const parseTraderaParameterMapperCategoryFetchesJson = (
+  rawValue: string | null | undefined
+): TraderaParameterMapperCategoryFetch[] =>
+  parseTraderaParameterMapperCatalogPayload(rawValue).categoryFetches;
+
 export const serializeTraderaParameterMapperCatalog = (
-  entries: TraderaParameterMapperCatalogEntry[]
+  entries: TraderaParameterMapperCatalogEntry[],
+  categoryFetches: TraderaParameterMapperCategoryFetch[] = []
 ): string | null => {
-  if (!Array.isArray(entries) || entries.length === 0) {
+  if (
+    (!Array.isArray(entries) || entries.length === 0) &&
+    (!Array.isArray(categoryFetches) || categoryFetches.length === 0)
+  ) {
     return null;
   }
 
   return JSON.stringify({
     version: 1,
     entries: entries.slice().sort(compareCatalogEntries),
+    categoryFetches: categoryFetches.slice().sort(compareCategoryFetches),
   });
 };
+
+export const replaceTraderaParameterMapperCategoryFetchForCategory = ({
+  existingCategoryFetches,
+  nextCategoryFetch,
+}: {
+  existingCategoryFetches: TraderaParameterMapperCategoryFetch[];
+  nextCategoryFetch: TraderaParameterMapperCategoryFetch;
+}): TraderaParameterMapperCategoryFetch[] =>
+  [
+    ...existingCategoryFetches.filter(
+      (entry) => entry.externalCategoryId.trim() !== nextCategoryFetch.externalCategoryId.trim()
+    ),
+    nextCategoryFetch,
+  ].sort(compareCategoryFetches);
 
 export const replaceTraderaParameterMapperCatalogEntriesForCategory = ({
   existingEntries,

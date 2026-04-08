@@ -288,20 +288,32 @@ export const buildTraderaScriptInput = async ({
     });
   const shippingGroup = shippingGroupResolution.shippingGroup;
   const mappedCategory = categoryMapping.mapping;
-  const parameterRepository = await getParameterRepository();
+  const parameterMapperCategory =
+    connection.traderaCategoryStrategy === 'top_suggested' ? null : mappedCategory;
+  const parameterMapperRules = parseTraderaParameterMapperRulesJson(
+    connection.traderaParameterMapperRulesJson
+  );
+  const parameterMapperCatalogEntries = parseTraderaParameterMapperCatalogJson(
+    connection.traderaParameterMapperCatalogJson
+  );
+  const shouldResolveParameterMapperSelections = Boolean(
+    parameterMapperCategory &&
+      parameterMapperRules.length > 0 &&
+      parameterMapperCatalogEntries.length > 0
+  );
   const catalogId = toTrimmedString(product.catalogId);
-  const parameterDefinitions = catalogId
-    ? await parameterRepository.listParameters({ catalogId })
+  const parameterDefinitions = shouldResolveParameterMapperSelections && catalogId
+    ? await (await getParameterRepository()).listParameters({ catalogId })
     : [];
-  const traderaParameterMapperSelections = resolveTraderaParameterMapperSelections({
-    product,
-    mappedCategory,
-    rules: parseTraderaParameterMapperRulesJson(connection.traderaParameterMapperRulesJson),
-    catalogEntries: parseTraderaParameterMapperCatalogJson(
-      connection.traderaParameterMapperCatalogJson
-    ),
-    parameters: parameterDefinitions,
-  });
+  const traderaParameterMapperSelections = shouldResolveParameterMapperSelections
+    ? resolveTraderaParameterMapperSelections({
+        product,
+        mappedCategory: parameterMapperCategory,
+        rules: parameterMapperRules,
+        catalogEntries: parameterMapperCatalogEntries,
+        parameters: parameterDefinitions,
+      })
+    : [];
   const existingListingUrl = resolveExistingListingUrl(listing);
 
   return {

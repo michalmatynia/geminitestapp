@@ -44,6 +44,7 @@ const migratedRouteHandlerPaths = [
   'products/[id]/listings/[listingId]/relist/route-handler.ts',
   'products/[id]/listings/[listingId]/sync/route-handler.ts',
   'products/[id]/listings/[listingId]/sync-base-images/route-handler.ts',
+  'tradera/parameter-mapper/catalog/fetch/route-handler.ts',
 ] as const;
 
 const removedLegacyAliasRoutes = [

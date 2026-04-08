@@ -17,6 +17,19 @@ export type TraderaParameterMapperCatalogEntry = z.infer<
   typeof traderaParameterMapperCatalogEntrySchema
 >;
 
+export const traderaParameterMapperCategoryFetchSchema = z.object({
+  externalCategoryId: z.string().trim().min(1),
+  externalCategoryName: z.string().trim().min(1),
+  externalCategoryPath: z.string().trim().nullable().optional(),
+  fetchedAt: z.string().trim().min(1),
+  fieldCount: z.number().int().min(0),
+  runId: z.string().trim().nullable().optional(),
+});
+
+export type TraderaParameterMapperCategoryFetch = z.infer<
+  typeof traderaParameterMapperCategoryFetchSchema
+>;
+
 export const traderaParameterMapperRuleSchema = z.object({
   id: z.string().trim().min(1),
   externalCategoryId: z.string().trim().min(1),
@@ -39,6 +52,7 @@ export type TraderaParameterMapperRule = z.infer<typeof traderaParameterMapperRu
 export const traderaParameterMapperCatalogPayloadSchema = z.object({
   version: z.literal(1).default(1),
   entries: z.array(traderaParameterMapperCatalogEntrySchema).default([]),
+  categoryFetches: z.array(traderaParameterMapperCategoryFetchSchema).default([]),
 });
 
 export type TraderaParameterMapperCatalogPayload = z.infer<

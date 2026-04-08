@@ -15,6 +15,7 @@ const {
   resolveTraderaShippingGroupResolutionForProductMock,
   resolveTraderaListingPriceForProductMock,
   resolveConnectionPlaywrightSettingsMock,
+  listParametersMock,
 } = vi.hoisted(() => ({
   getProductByIdMock: vi.fn(),
   runPlaywrightListingScriptMock: vi.fn(),
@@ -29,6 +30,7 @@ const {
   resolveTraderaShippingGroupResolutionForProductMock: vi.fn(),
   resolveTraderaListingPriceForProductMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
+  listParametersMock: vi.fn(),
 }));
 
 vi.mock('node:fs/promises', () => ({
@@ -51,6 +53,12 @@ vi.mock('@/features/integrations/server', () => ({
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
   getProductRepository: async () => ({
     getProductById: getProductByIdMock,
+  }),
+}));
+
+vi.mock('@/features/products/server', () => ({
+  getParameterRepository: async () => ({
+    listParameters: (...args: unknown[]) => listParametersMock(...args),
   }),
 }));
 
@@ -433,6 +441,9 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('following::*[(self::button or self::a or @role="button" or @role="link" or @role="menu" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu")][1]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const AUTOFILL_PENDING_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const configuredExtraFieldSelections = Array.isArray(input?.traderaExtraFieldSelections)'
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const existingListingUrl = toText(input?.existingListingUrl);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const configuredDeliveryPriceEur = toNumber(input?.traderaShipping?.shippingPriceEur);');
@@ -636,6 +647,26 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("emitStage('listing_format_selected'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("emitStage('listing_attributes_selected'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("emitStage('delivery_configured'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizeFieldLookupKey = (value) =>');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const resolveDynamicFieldTriggerTextByKey = async (requiredFieldKey) =>'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findDynamicFieldTrigger = async (selection) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const readDynamicFieldTriggerText = async (trigger) =>');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const fieldKey = normalizeFieldLookupKey(selection?.fieldKey || fieldLabel);'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const triggerText = await resolveDynamicFieldTriggerTextByKey(fieldKey);'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "reason: 'already-matched'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const applyConfiguredExtraFieldSelections = async () => {'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_EXTRA_FIELD_SET: Required Tradera field "');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_EXTRA_FIELD_SET: Required Tradera option "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await trySelectOptionalFieldValue({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const FIXED_PRICE_INPUT_SELECTORS = [');
@@ -666,6 +697,11 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     );
     expect(
       DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyCategorySelection();')
+    ).toBeLessThan(
+      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyConfiguredExtraFieldSelections();')
+    );
+    expect(
+      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyConfiguredExtraFieldSelections();')
     ).toBeLessThan(
       DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyDeliverySelection();')
     );
@@ -893,6 +929,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       loadedPriceGroupIds: ['price-group-pln', 'price-group-eur'],
       matchedTargetPriceGroupIds: ['price-group-eur'],
     });
+    listParametersMock.mockResolvedValue([]);
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
       headless: true,
       slowMo: 85,
@@ -1046,6 +1083,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         }),
       })
     );
+    expect(listParametersMock).not.toHaveBeenCalled();
     expect(result).toEqual({
       externalListingId: 'listing-123',
       listingUrl: 'https://www.tradera.com/item/123',
@@ -1103,6 +1141,142 @@ describe('runTraderaBrowserListing scripted mode', () => {
         matchingShippingGroupIds: ['shipping-group-1'],
       },
     });
+  });
+
+  it('injects resolved Tradera extra field selections into the scripted listing input', async () => {
+    getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      sku: 'SKU-1',
+      baseProductId: 'BASE-1',
+      categoryId: 'internal-category-1',
+      catalogId: 'catalog-1',
+      catalogs: [{ catalogId: 'catalog-1' }],
+      name_en: 'Example title',
+      description_en: 'Example description',
+      price: 123,
+      imageLinks: ['https://cdn.example.com/a.jpg'],
+      images: [
+        {
+          imageFile: {
+            filepath: '/uploads/products/SKU-1/example.png',
+          },
+        },
+      ],
+      parameters: [{ parameterId: 'param-metal', value: 'Metal' }],
+    });
+    listParametersMock.mockResolvedValue([
+      {
+        id: 'param-metal',
+        catalogId: 'catalog-1',
+        name: 'Metal',
+        name_en: 'Metal',
+        name_pl: null,
+        name_de: null,
+        selectorType: 'select',
+        optionLabels: ['Metal'],
+      },
+    ]);
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-parameter-mapper',
+      externalListingId: 'listing-parameter-mapper',
+      listingUrl: 'https://www.tradera.com/item/parameter-mapper',
+      publishVerified: true,
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: { listingUrl: 'https://www.tradera.com/item/parameter-mapper' },
+    });
+
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-parameter-mapper',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+        traderaParameterMapperRulesJson: JSON.stringify({
+          version: 1,
+          rules: [
+            {
+              id: 'rule-1',
+              externalCategoryId: '101',
+              externalCategoryName: 'Pins',
+              externalCategoryPath: 'Collectibles > Pins',
+              fieldLabel: 'Jewellery Material',
+              fieldKey: 'jewellerymaterial',
+              parameterId: 'param-metal',
+              parameterName: 'Metal',
+              parameterCatalogId: 'catalog-1',
+              sourceValue: 'Metal',
+              targetOptionLabel: '24K',
+              isActive: true,
+              createdAt: '2026-04-08T10:00:00.000Z',
+              updatedAt: '2026-04-08T10:05:00.000Z',
+            },
+          ],
+        }),
+        traderaParameterMapperCatalogJson: JSON.stringify({
+          version: 1,
+          entries: [
+            {
+              id: '101:jewellerymaterial',
+              externalCategoryId: '101',
+              externalCategoryName: 'Pins',
+              externalCategoryPath: 'Collectibles > Pins',
+              fieldLabel: 'Jewellery Material',
+              fieldKey: 'jewellerymaterial',
+              optionLabels: ['18K', '24K'],
+              source: 'playwright',
+              fetchedAt: '2026-04-08T10:00:00.000Z',
+              runId: 'run-catalog-1',
+            },
+          ],
+        }),
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    expect(listParametersMock).toHaveBeenCalledWith({ catalogId: 'catalog-1' });
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          traderaExtraFieldSelections: [
+            {
+              fieldLabel: 'Jewellery Material',
+              fieldKey: 'jewellerymaterial',
+              optionLabel: '24K',
+              parameterId: 'param-metal',
+              parameterName: 'Metal',
+              sourceValue: 'Metal',
+            },
+          ],
+        }),
+      })
+    );
   });
 
   it('does not use Polish-only names in Tradera duplicate search input', async () => {
@@ -1949,6 +2123,137 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categorySource: 'autofill',
       },
     });
+  });
+
+  it('does not inject Tradera extra field selections when category strategy is top_suggested', async () => {
+    getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      sku: 'SKU-1',
+      baseProductId: 'BASE-1',
+      categoryId: 'internal-category-1',
+      catalogId: 'catalog-1',
+      catalogs: [{ catalogId: 'catalog-1' }],
+      name_en: 'Example title',
+      description_en: 'Example description',
+      price: 123,
+      imageLinks: ['https://cdn.example.com/a.jpg'],
+      images: [
+        {
+          imageFile: {
+            filepath: '/uploads/products/SKU-1/example.png',
+          },
+        },
+      ],
+      parameters: [{ parameterId: 'param-metal', value: 'Metal' }],
+    });
+    listParametersMock.mockResolvedValue([
+      {
+        id: 'param-metal',
+        catalogId: 'catalog-1',
+        name: 'Metal',
+        name_en: 'Metal',
+        name_pl: null,
+        name_de: null,
+        selectorType: 'select',
+        optionLabels: ['Metal'],
+      },
+    ]);
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-top-suggested',
+      externalListingId: 'listing-top-suggested',
+      listingUrl: 'https://www.tradera.com/item/top-suggested',
+      publishVerified: true,
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: { listingUrl: 'https://www.tradera.com/item/top-suggested' },
+    });
+
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-top-suggested',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        traderaCategoryStrategy: 'top_suggested',
+        playwrightListingScript: 'export default async function run() {}',
+        traderaParameterMapperRulesJson: JSON.stringify({
+          version: 1,
+          rules: [
+            {
+              id: 'rule-1',
+              externalCategoryId: '101',
+              externalCategoryName: 'Pins',
+              externalCategoryPath: 'Collectibles > Pins',
+              fieldLabel: 'Jewellery Material',
+              fieldKey: 'jewellerymaterial',
+              parameterId: 'param-metal',
+              parameterName: 'Metal',
+              parameterCatalogId: 'catalog-1',
+              sourceValue: 'Metal',
+              targetOptionLabel: '24K',
+              isActive: true,
+              createdAt: '2026-04-08T10:00:00.000Z',
+              updatedAt: '2026-04-08T10:05:00.000Z',
+            },
+          ],
+        }),
+        traderaParameterMapperCatalogJson: JSON.stringify({
+          version: 1,
+          entries: [
+            {
+              id: '101:jewellerymaterial',
+              externalCategoryId: '101',
+              externalCategoryName: 'Pins',
+              externalCategoryPath: 'Collectibles > Pins',
+              fieldLabel: 'Jewellery Material',
+              fieldKey: 'jewellerymaterial',
+              optionLabels: ['18K', '24K'],
+              source: 'playwright',
+              fetchedAt: '2026-04-08T10:00:00.000Z',
+              runId: 'run-catalog-1',
+            },
+          ],
+        }),
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    const playwrightInput = runPlaywrightListingScriptMock.mock.calls[0]?.[0]?.input as
+      | Record<string, unknown>
+      | undefined;
+
+    expect(playwrightInput).toBeDefined();
+    expect(playwrightInput).toMatchObject({
+      categoryStrategy: 'top_suggested',
+    });
+    expect(listParametersMock).not.toHaveBeenCalled();
+    expect(playwrightInput).not.toHaveProperty('traderaCategory');
+    expect(playwrightInput).not.toHaveProperty('traderaExtraFieldSelections');
   });
 
   it('fails before launching the scripted runner when Tradera shipping price is missing', async () => {

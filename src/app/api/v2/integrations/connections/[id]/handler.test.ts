@@ -121,6 +121,56 @@ describe('integration connection by-id handler', () => {
     });
   });
 
+  it('persists Tradera parameter mapper payloads and returns them in the response', async () => {
+    const rulesJson = JSON.stringify({
+      version: 1,
+      rules: [{ id: 'rule-1', fieldLabel: 'Jewellery Material' }],
+    });
+    const catalogJson = JSON.stringify({
+      version: 1,
+      entries: [{ id: 'cat-jewellery:jewellerymaterial', fieldLabel: 'Jewellery Material' }],
+    });
+
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Tradera browser',
+        traderaParameterMapperRulesJson: rulesJson,
+        traderaParameterMapperCatalogJson: catalogJson,
+      },
+    });
+    updateConnectionMock.mockResolvedValue({
+      id: 'conn-tradera-1',
+      integrationId: 'integration-tradera-1',
+      name: 'Tradera browser',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
+    });
+
+    const response = await PUT_handler(
+      new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
+        method: 'PUT',
+      }) as never,
+      {} as never,
+      { id: 'conn-tradera-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(updateConnectionMock).toHaveBeenCalledWith('conn-tradera-1', {
+      name: 'Tradera browser',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
+    });
+    expect(payload).toMatchObject({
+      id: 'conn-tradera-1',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
+    });
+  });
+
   it('normalizes the managed Tradera default script to runtime fallback on update', async () => {
     parseJsonBodyMock.mockResolvedValue({
       ok: true,

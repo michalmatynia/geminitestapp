@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ResolvedTraderaCategoryMapping } from '@/features/integrations/services/tradera-listing/category-mapping';
 import type {
+  TraderaParameterMapperCategoryFetch,
   TraderaParameterMapperCatalogEntry,
   TraderaParameterMapperRule,
 } from '@/shared/contracts/integrations/tradera-parameter-mapper';
@@ -11,8 +12,10 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   buildTraderaParameterMapperCatalogEntryId,
   buildTraderaParameterMapperFieldKey,
+  parseTraderaParameterMapperCategoryFetchesJson,
   parseTraderaParameterMapperCatalogJson,
   parseTraderaParameterMapperRulesJson,
+  replaceTraderaParameterMapperCategoryFetchForCategory,
   replaceTraderaParameterMapperCatalogEntriesForCategory,
   resolveTraderaParameterMapperSelections,
   serializeTraderaParameterMapperCatalog,
@@ -69,6 +72,17 @@ const buildRule = (
   };
 };
 
+const buildCategoryFetch = (
+  overrides: Partial<TraderaParameterMapperCategoryFetch> = {}
+): TraderaParameterMapperCategoryFetch => ({
+  externalCategoryId: overrides.externalCategoryId ?? 'cat-jewellery',
+  externalCategoryName: overrides.externalCategoryName ?? 'Jewellery',
+  externalCategoryPath: overrides.externalCategoryPath ?? 'Accessories > Jewellery',
+  fetchedAt: overrides.fetchedAt ?? '2026-04-08T10:00:00.000Z',
+  fieldCount: overrides.fieldCount ?? 1,
+  runId: overrides.runId ?? 'run-1',
+});
+
 describe('tradera parameter mapper helpers', () => {
   it('serializes and parses rule and catalog payloads in updated order', () => {
     const rules = [
@@ -86,19 +100,39 @@ describe('tradera parameter mapper helpers', () => {
       }),
       buildCatalogEntry(),
     ];
+    const categoryFetches = [
+      buildCategoryFetch({
+        externalCategoryId: 'cat-b',
+        externalCategoryName: 'Watches',
+        externalCategoryPath: 'Accessories > Watches',
+        fieldCount: 0,
+      }),
+      buildCategoryFetch(),
+    ];
 
     expect(parseTraderaParameterMapperRulesJson(serializeTraderaParameterMapperRules(rules))).toEqual([
       expect.objectContaining({ id: 'rule-newer' }),
       expect.objectContaining({ id: 'rule-older' }),
     ]);
     expect(
-      parseTraderaParameterMapperCatalogJson(serializeTraderaParameterMapperCatalog(catalogEntries))
+      parseTraderaParameterMapperCatalogJson(
+        serializeTraderaParameterMapperCatalog(catalogEntries, categoryFetches)
+      )
     ).toEqual([
       expect.objectContaining({ externalCategoryId: 'cat-jewellery' }),
       expect.objectContaining({ externalCategoryId: 'cat-b' }),
     ]);
+    expect(
+      parseTraderaParameterMapperCategoryFetchesJson(
+        serializeTraderaParameterMapperCatalog(catalogEntries, categoryFetches)
+      )
+    ).toEqual([
+      expect.objectContaining({ externalCategoryId: 'cat-jewellery', fieldCount: 1 }),
+      expect.objectContaining({ externalCategoryId: 'cat-b', fieldCount: 0 }),
+    ]);
     expect(serializeTraderaParameterMapperRules([])).toBeNull();
     expect(serializeTraderaParameterMapperCatalog([])).toBeNull();
+    expect(serializeTraderaParameterMapperCatalog([], categoryFetches)).toEqual(expect.any(String));
   });
 
   it('replaces stored catalog entries only for the requested Tradera category', () => {
@@ -136,6 +170,37 @@ describe('tradera parameter mapper helpers', () => {
     ).toEqual([
       expect.objectContaining({ externalCategoryId: 'cat-jewellery', fieldLabel: 'Stone Type' }),
       expect.objectContaining({ externalCategoryId: 'cat-watches', fieldLabel: 'Condition' }),
+    ]);
+  });
+
+  it('replaces category fetch metadata only for the requested Tradera category', () => {
+    const existingCategoryFetches = [
+      buildCategoryFetch({
+        externalCategoryId: 'cat-jewellery',
+        externalCategoryName: 'Jewellery',
+        fieldCount: 2,
+      }),
+      buildCategoryFetch({
+        externalCategoryId: 'cat-watches',
+        externalCategoryName: 'Watches',
+        externalCategoryPath: 'Accessories > Watches',
+        fieldCount: 0,
+      }),
+    ];
+
+    expect(
+      replaceTraderaParameterMapperCategoryFetchForCategory({
+        existingCategoryFetches,
+        nextCategoryFetch: buildCategoryFetch({
+          externalCategoryId: 'cat-jewellery',
+          externalCategoryName: 'Jewellery',
+          fieldCount: 1,
+          fetchedAt: '2026-04-08T12:00:00.000Z',
+        }),
+      })
+    ).toEqual([
+      expect.objectContaining({ externalCategoryId: 'cat-jewellery', fieldCount: 1 }),
+      expect.objectContaining({ externalCategoryId: 'cat-watches', fieldCount: 0 }),
     ]);
   });
 

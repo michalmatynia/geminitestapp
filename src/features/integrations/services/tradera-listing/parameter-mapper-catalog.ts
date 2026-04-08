@@ -14,13 +14,27 @@ import { runPlaywrightListingScript } from '../playwright-listing/runner';
 import {
   buildTraderaParameterMapperCatalogEntryId,
   buildTraderaParameterMapperFieldKey,
+  parseTraderaParameterMapperCatalogPayload,
   parseTraderaParameterMapperCatalogJson,
+  replaceTraderaParameterMapperCategoryFetchForCategory,
   replaceTraderaParameterMapperCatalogEntriesForCategory,
   serializeTraderaParameterMapperCatalog,
 } from './parameter-mapper';
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
+
+const IGNORED_TRADERA_PARAMETER_MAPPER_FIELD_KEYS = new Set([
+  'category',
+  'condition',
+  'department',
+  'listingformat',
+  'annonsformat',
+  'delivery',
+  'leverans',
+  'shipping',
+  'frakt',
+]);
 
 const DEFAULT_TRADERA_PARAMETER_MAPPER_CATALOG_SCRIPT = String.raw`export default async function run({
   page,
@@ -43,7 +57,17 @@ const DEFAULT_TRADERA_PARAMETER_MAPPER_CATALOG_SCRIPT = String.raw`export defaul
     'button:has-text("Tillåt alla cookies")',
   ];
 
-  const SKIP_FIELD_LABELS = ['condition', 'department', 'category'];
+  const SKIP_FIELD_LABELS = [
+    'condition',
+    'department',
+    'category',
+    'listing format',
+    'annonsformat',
+    'delivery',
+    'leverans',
+    'shipping',
+    'frakt',
+  ];
 
   const normalizeWhitespace = (value) =>
     typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
@@ -315,7 +339,12 @@ const toCatalogEntries = ({
     const fieldLabel = toTrimmedString(record['fieldLabel']);
     const fieldKey =
       buildTraderaParameterMapperFieldKey(toTrimmedString(record['fieldKey']) || fieldLabel) || '';
-    if (!fieldLabel || !fieldKey || seen.has(fieldKey)) {
+    if (
+      !fieldLabel ||
+      !fieldKey ||
+      seen.has(fieldKey) ||
+      IGNORED_TRADERA_PARAMETER_MAPPER_FIELD_KEYS.has(fieldKey)
+    ) {
       continue;
     }
 
@@ -409,6 +438,9 @@ export const fetchAndStoreTraderaParameterMapperCatalog = async ({
     runId: runResult.runId,
   });
 
+  const existingCatalogPayload = parseTraderaParameterMapperCatalogPayload(
+    connection.traderaParameterMapperCatalogJson
+  );
   const existingEntries = parseTraderaParameterMapperCatalogJson(
     connection.traderaParameterMapperCatalogJson
   );
@@ -417,9 +449,23 @@ export const fetchAndStoreTraderaParameterMapperCatalog = async ({
     externalCategoryId,
     nextEntries,
   });
+  const updatedCategoryFetches = replaceTraderaParameterMapperCategoryFetchForCategory({
+    existingCategoryFetches: existingCatalogPayload.categoryFetches,
+    nextCategoryFetch: {
+      externalCategoryId,
+      externalCategoryName: category.name,
+      externalCategoryPath: category.path ?? null,
+      fetchedAt,
+      fieldCount: nextEntries.length,
+      runId: runResult.runId,
+    },
+  });
 
   await integrationRepository.updateConnection(connectionId, {
-    traderaParameterMapperCatalogJson: serializeTraderaParameterMapperCatalog(updatedEntries),
+    traderaParameterMapperCatalogJson: serializeTraderaParameterMapperCatalog(
+      updatedEntries,
+      updatedCategoryFetches
+    ),
   });
 
   const categoryLabel = toTrimmedString(category.path) || category.name;

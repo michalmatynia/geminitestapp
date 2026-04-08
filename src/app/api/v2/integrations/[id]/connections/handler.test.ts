@@ -85,6 +85,8 @@ describe('integration connections handler', () => {
         traderaApiAppKey: null,
         traderaApiToken: null,
         traderaApiTokenUpdatedAt: null,
+        traderaParameterMapperRulesJson: '{"version":1,"rules":[]}',
+        traderaParameterMapperCatalogJson: '{"version":1,"entries":[]}',
       },
     ]);
     getIntegrationByIdMock.mockResolvedValue({
@@ -171,6 +173,8 @@ describe('integration connections handler', () => {
         traderaBrowserMode: 'scripted',
         playwrightListingScript: 'export default async function run() {}',
         hasPlaywrightListingScript: true,
+        traderaParameterMapperRulesJson: '{"version":1,"rules":[]}',
+        traderaParameterMapperCatalogJson: '{"version":1,"entries":[]}',
       }),
     ]);
   });
@@ -198,6 +202,61 @@ describe('integration connections handler', () => {
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,
+    });
+  });
+
+  it('persists Tradera parameter mapper payloads when creating a connection', async () => {
+    const rulesJson = JSON.stringify({
+      version: 1,
+      rules: [{ id: 'rule-1', fieldLabel: 'Jewellery Material' }],
+    });
+    const catalogJson = JSON.stringify({
+      version: 1,
+      entries: [{ id: 'cat-jewellery:jewellerymaterial', fieldLabel: 'Jewellery Material' }],
+    });
+
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Tradera browser',
+        username: 'seller@example.com',
+        password: 'secret',
+        traderaParameterMapperRulesJson: rulesJson,
+        traderaParameterMapperCatalogJson: catalogJson,
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-tradera-1',
+      integrationId: 'integration-tradera-1',
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections', {
+        method: 'POST',
+      }) as never,
+      {} as never,
+      { id: 'integration-tradera-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-tradera-1', {
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      password: 'enc:secret',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
+    });
+    expect(payload).toMatchObject({
+      id: 'conn-tradera-1',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
     });
   });
 

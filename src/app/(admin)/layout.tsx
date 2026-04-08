@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import NextTopLoader from 'nextjs-toploader';
 
 import { AdminLayout } from '@/features/admin/public';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
@@ -82,5 +83,10 @@ export default async function Layout({
     >
       {children}
     </AdminLayout>
+  );
+}
+hildren}
+      </AdminLayout>
+    </>
   );
 }

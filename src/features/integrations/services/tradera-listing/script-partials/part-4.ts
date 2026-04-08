@@ -639,21 +639,120 @@ export const PART_4 = String.raw`);
     return false;
   };
 
-  const findDynamicFieldTrigger = async (fieldLabel) => {
-    const escapedLabel = fieldLabel.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
-    const trigger = page
+  const normalizeFieldLookupKey = (value) =>
+    normalizeWhitespace(value)
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '');
+
+  const resolveDynamicFieldTriggerTextByKey = async (requiredFieldKey) =>
+    page
       .locator(
         'button[aria-haspopup], button[aria-haspopup="listbox"], button[aria-haspopup="true"], [role="combobox"]'
       )
-      .filter({ hasText: new RegExp(escapedLabel, 'i') })
-      .first();
-    const visible = await trigger.isVisible().catch(() => false);
-    if (visible) {
-      return trigger;
+      .evaluateAll((elements, { requiredFieldKey }) => {
+        const normalizeWhitespaceLocal = (value) =>
+          String(value || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const normalizeFieldLookupKeyLocal = (value) =>
+          normalizeWhitespaceLocal(value)
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '');
+        const deriveDynamicFieldLabelLocal = (triggerText) =>
+          normalizeWhitespaceLocal(triggerText).replace(/^(select|choose|välj|velg)\s+/i, '').trim();
+
+        for (const element of elements) {
+          if (element.closest('[data-test-category-chooser="true"]')) continue;
+          const rect = element.getBoundingClientRect();
+          const style = window.getComputedStyle(element);
+          const visible =
+            (rect.width > 0 || rect.height > 0) &&
+            style.visibility !== 'hidden' &&
+            style.display !== 'none';
+          if (!visible) continue;
+
+          const triggerText = normalizeWhitespaceLocal(
+            element.getAttribute('aria-label') ||
+              element.getAttribute('title') ||
+              element.textContent ||
+              ''
+          );
+          if (!triggerText) continue;
+
+          const fieldLabel = deriveDynamicFieldLabelLocal(triggerText);
+          if (
+            normalizeFieldLookupKeyLocal(fieldLabel) === requiredFieldKey ||
+            normalizeFieldLookupKeyLocal(triggerText) === requiredFieldKey
+          ) {
+            return triggerText;
+          }
+        }
+
+        return null;
+      }, { requiredFieldKey })
+      .catch(() => null);
+
+  const findDynamicFieldTrigger = async (selection) => {
+    const fieldLabel = normalizeWhitespace(selection?.fieldLabel || '');
+    const fieldKey = normalizeFieldLookupKey(selection?.fieldKey || fieldLabel);
+    if (!fieldLabel && !fieldKey) {
+      return null;
     }
 
-    return findFieldTriggerByLabels([fieldLabel]);
+    if (fieldLabel) {
+      const escapedLabel = fieldLabel.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+      const trigger = page
+        .locator(
+          'button[aria-haspopup], button[aria-haspopup="listbox"], button[aria-haspopup="true"], [role="combobox"]'
+        )
+        .filter({ hasText: new RegExp(escapedLabel, 'i') })
+        .first();
+      const visible = await trigger.isVisible().catch(() => false);
+      if (visible) {
+        return trigger;
+      }
+    }
+
+    const labelTrigger = fieldLabel ? await findFieldTriggerByLabels([fieldLabel]) : null;
+    if (labelTrigger) {
+      return labelTrigger;
+    }
+
+    if (!fieldKey) {
+      return null;
+    }
+
+    const triggerText = await resolveDynamicFieldTriggerTextByKey(fieldKey);
+    if (!triggerText) {
+      return null;
+    }
+
+    const escapedTriggerText = triggerText.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+    const fieldKeyTrigger = page
+      .locator(
+        'button[aria-haspopup], button[aria-haspopup="listbox"], button[aria-haspopup="true"], [role="combobox"]'
+      )
+      .filter({ hasText: new RegExp('^' + escapedTriggerText + '$', 'i') })
+      .first();
+    const fieldKeyVisible = await fieldKeyTrigger.isVisible().catch(() => false);
+    return fieldKeyVisible ? fieldKeyTrigger : null;
   };
+
+  const readDynamicFieldTriggerText = async (trigger) =>
+    normalizeWhitespace(
+      (await trigger
+        .evaluate((element) =>
+          element.getAttribute('aria-label') ||
+          element.getAttribute('title') ||
+          element.textContent ||
+          ''
+        )
+        .catch(() => '')) || ''
+    );
 
   const applyConfiguredExtraFieldSelections = async () => {
     if (!Array.isArray(configuredExtraFieldSelections) || configuredExtraFieldSelections.length === 0) {
@@ -669,7 +768,7 @@ export const PART_4 = String.raw`);
         continue;
       }
 
-      const trigger = await findDynamicFieldTrigger(fieldLabel);
+      const trigger = await findDynamicFieldTrigger(selection);
       if (!trigger) {
         throw new Error(
           'FAIL_EXTRA_FIELD_SET: Required Tradera field "' +
@@ -684,6 +783,25 @@ export const PART_4 = String.raw`);
         log?.('tradera.quicklist.field.skipped', {
           field: selection?.fieldKey || fieldLabel,
           reason: 'disabled-on-sync',
+          option: optionLabel,
+        });
+        continue;
+      }
+
+      const triggerText = await readDynamicFieldTriggerText(trigger);
+      const normalizedTriggerText = normalizeWhitespace(triggerText).toLowerCase();
+      const normalizedOptionLabel = optionLabel.toLowerCase();
+      if (
+        normalizedTriggerText &&
+        normalizedTriggerText.includes(normalizedOptionLabel) &&
+        !normalizedTriggerText.startsWith('select ') &&
+        !normalizedTriggerText.startsWith('choose ') &&
+        !normalizedTriggerText.startsWith('välj ') &&
+        !normalizedTriggerText.startsWith('velg ')
+      ) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: selection?.fieldKey || fieldLabel,
+          reason: 'already-matched',
           option: optionLabel,
         });
         continue;

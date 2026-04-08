@@ -59,7 +59,11 @@ export async function POST_handler(
   const connectionId = requireMarketplaceConnectionId(body);
 
   const integrationRepo = await getIntegrationRepository();
-  const context = await resolveMarketplaceCategoryFetchContext(integrationRepo, connectionId);
+  const context = await resolveMarketplaceCategoryFetchContext(
+    integrationRepo,
+    connectionId,
+    body.categoryFetchMethod
+  );
   const categories = await fetchMarketplaceCategories(context).catch((error: unknown) => {
     if (isAppError(error)) {
       throw error;

@@ -23,6 +23,7 @@ export const createEmptyConnectionForm = (): ConnectionFormState => ({
   password: '',
   playwrightBrowser: 'auto',
   traderaBrowserMode: 'builtin',
+  traderaCategoryStrategy: 'mapper',
   playwrightListingScript: '',
   traderaDefaultTemplateId: '',
   traderaDefaultDurationHours: 72,

@@ -7,12 +7,14 @@ const {
   fetchTraderaCategoriesForConnectionMock,
   resolveBaseConnectionTokenMock,
   getTraderaCategoriesMock,
+  getTraderaSubCategoriesMock,
   resolveTraderaPublicApiCredentialsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
   fetchTraderaCategoriesForConnectionMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
   getTraderaCategoriesMock: vi.fn(),
+  getTraderaSubCategoriesMock: vi.fn(),
   resolveTraderaPublicApiCredentialsMock: vi.fn(),
 }));
 
@@ -27,6 +29,7 @@ vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
 
 vi.mock('@/features/integrations/services/tradera-api-client', () => ({
   getTraderaCategories: getTraderaCategoriesMock,
+  getTraderaSubCategories: getTraderaSubCategoriesMock,
 }));
 
 vi.mock('@/features/integrations/services/tradera-listing/api', () => ({
@@ -68,6 +71,7 @@ const createIntegration = (overrides: Partial<IntegrationRecord> = {}): Integrat
 describe('marketplace categories fetch helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getTraderaSubCategoriesMock.mockResolvedValue([]);
     resolveBaseConnectionTokenMock.mockReturnValue({
       token: 'base-token',
       source: 'baseApiToken',

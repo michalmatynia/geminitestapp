@@ -51,6 +51,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   baseTokenUpdatedAt: z.string().nullable().optional(),
   baseLastInventoryId: z.string().nullable().optional(),
   traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
+  traderaCategoryStrategy: z.enum(['mapper', 'top_suggested']).nullable().optional(),
   traderaDefaultTemplateId: z.string().nullable().optional(),
   traderaDefaultDurationHours: z.number().optional(),
   traderaAutoRelistEnabled: z.boolean().optional(),
@@ -110,6 +111,7 @@ export type ConnectionFormState = {
   password: string;
   playwrightBrowser: 'auto' | 'brave' | 'chrome' | 'chromium';
   traderaBrowserMode: 'builtin' | 'scripted';
+  traderaCategoryStrategy: 'mapper' | 'top_suggested';
   playwrightListingScript: string;
   traderaDefaultTemplateId: string;
   traderaDefaultDurationHours: number;

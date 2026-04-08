@@ -33,6 +33,6 @@ describe('marketplace connection list query helpers', () => {
         },
         'Invalid marketplace producers query.'
       )
-    ).toThrow('connectionId is required');
+    ).toThrow('Invalid marketplace producers query.');
   });
 });

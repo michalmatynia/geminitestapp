@@ -1,9 +1,14 @@
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import { getTraderaSubCategories, type TraderaPublicApiCredentials } from '../tradera-api-client';
 import { getCategoryMappingRepository } from '../category-mapping-repository';
+
+// Re-export so callers don't need to import from two places
+export type { TraderaPublicApiCredentials };
 
 export type ResolvedTraderaCategoryMapping = {
   externalCategoryId: string;
@@ -351,4 +356,103 @@ export const resolveTraderaCategoryMappingForProduct = async ({
   product: ProductWithImages;
 }): Promise<ResolvedTraderaCategoryMapping | null> => {
   return (await resolveTraderaCategoryMappingResolutionForProduct({ connectionId, product })).mapping;
+};
+
+export type LeafCategoryResolution = {
+  /** The resolved external category ID (may be the original if already a leaf or no leaf found) */
+  resolvedExternalCategoryId: string;
+  /** True when a deeper leaf was found and the original category was a non-leaf parent */
+  autoResolved: boolean;
+  /** The name of the resolved category */
+  resolvedName: string | null;
+  /** The full path of the resolved category */
+  resolvedPath: string | null;
+  /** The original non-leaf category ID, if auto-resolution occurred */
+  originalExternalCategoryId: string | null;
+};
+
+/**
+ * When a resolved category is a non-leaf (it has child categories), automatically
+ * selects the first available leaf descendant.
+ *
+ * Resolution order:
+ * 1. Local DB leaf descendants (sorted alphabetically by path)
+ * 2. On-demand SOAP GetSubCategories call (if credentials provided)
+ * 3. Original category unchanged (best-effort fallback)
+ */
+export const resolveToLeafCategory = async ({
+  connectionId,
+  externalCategoryId,
+  externalCategoryRepo,
+  credentials,
+}: {
+  connectionId: string;
+  externalCategoryId: string;
+  externalCategoryRepo: ExternalCategoryRepository;
+  credentials?: TraderaPublicApiCredentials;
+}): Promise<LeafCategoryResolution> => {
+  const noChange: LeafCategoryResolution = {
+    resolvedExternalCategoryId: externalCategoryId,
+    autoResolved: false,
+    resolvedName: null,
+    resolvedPath: null,
+    originalExternalCategoryId: null,
+  };
+
+  // Check if this category is stored and whether it's a leaf
+  const category = await externalCategoryRepo.getByExternalId(connectionId, externalCategoryId);
+  if (!category) return noChange;
+  if (category.isLeaf !== false) {
+    // Already a leaf (or isLeaf is true/undefined) — no resolution needed
+    return {
+      ...noChange,
+      resolvedName: category.name,
+      resolvedPath: category.path,
+    };
+  }
+
+  // Non-leaf: try local leaf descendants first
+  const leafDescendants = await externalCategoryRepo.getLeafDescendants(connectionId, externalCategoryId);
+  if (leafDescendants.length > 0) {
+    const first = leafDescendants[0]!;
+    return {
+      resolvedExternalCategoryId: first.externalId,
+      autoResolved: true,
+      resolvedName: first.name,
+      resolvedPath: first.path,
+      originalExternalCategoryId: externalCategoryId,
+    };
+  }
+
+  // No local leaves — try on-demand SOAP fetch
+  if (credentials) {
+    try {
+      const subcategories = await getTraderaSubCategories(externalCategoryId, credentials);
+      if (subcategories.length > 0) {
+        subcategories.sort((a, b) => a.name.localeCompare(b.name));
+        const first = subcategories[0]!;
+        return {
+          resolvedExternalCategoryId: first.id,
+          autoResolved: true,
+          resolvedName: first.name,
+          resolvedPath: null,
+          originalExternalCategoryId: externalCategoryId,
+        };
+      }
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'tradera-category-mapping',
+        action: 'resolveToLeafCategory.onDemandSoap',
+        connectionId,
+        externalCategoryId,
+      });
+    }
+  }
+
+  // Best-effort fallback — use original non-leaf
+  return {
+    ...noChange,
+    resolvedName: category.name,
+    resolvedPath: category.path,
+  };
 };

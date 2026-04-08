@@ -4,8 +4,8 @@ import {
   resumeBaseImportRun,
   toStartResponse,
   updateBaseImportRunQueueJob,
+  dispatchBaseImportRunJob,
 } from '@/features/integrations/server';
-import { enqueueBaseImportRunJob } from '@/features/integrations/server';
 import type { BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
 import { baseImportRunResumePayloadSchema } from '@/shared/contracts/integrations/base-com';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -25,12 +25,12 @@ export async function POST_handler(
 
   const statuses = parsed.data.statuses ?? ['failed', 'pending'];
   const resumed = await resumeBaseImportRun(params.runId, statuses);
-  const queueJobId = await enqueueBaseImportRunJob({
+  const { dispatchMode, queueJobId } = await dispatchBaseImportRunJob({
     runId: resumed.id,
     reason: 'resume',
     statuses: ['pending'],
   });
-  const responseRun = await updateBaseImportRunQueueJob(resumed.id, queueJobId);
+  const responseRun = await updateBaseImportRunQueueJob(resumed.id, queueJobId, dispatchMode);
 
   const response: BaseImportStartResponse = toStartResponse(responseRun);
   return NextResponse.json(response, {

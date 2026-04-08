@@ -228,6 +228,33 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
       return record ? toMongoRecord(record) : null;
     },
 
+    async getLeafDescendants(connectionId: string, externalId: string): Promise<ExternalCategory[]> {
+      await ensureMongoExternalCategoryIndexes();
+      const db = await getMongoDb();
+
+      // First find the target category to get its path
+      const target = await db
+        .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+        .findOne({ connectionId, externalId });
+      if (!target) return [];
+
+      const targetPath = target.path ?? target.name;
+
+      // Find all leaf descendants: categories whose path starts with "targetPath > "
+      // and are marked as leaves (no children)
+      const records = await db
+        .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+        .find({
+          connectionId,
+          isLeaf: true,
+          path: { $regex: `^${targetPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} > ` },
+        })
+        .sort({ path: 1 })
+        .toArray();
+
+      return records.map((record) => toMongoRecord(record));
+    },
+
     async deleteByConnection(connectionId: string): Promise<number> {
       await ensureMongoExternalCategoryIndexes();
       const db = await getMongoDb();

@@ -39,6 +39,8 @@ export function CategoryMapperTable(): React.JSX.Element {
     staleMappings,
     nonLeafMappings,
     stats,
+    categoryFetchMethod,
+    setCategoryFetchMethod,
   } = useCategoryMapperUIState();
   const {
     getMappingForExternal,
@@ -205,6 +207,8 @@ export function CategoryMapperTable(): React.JSX.Element {
           onSave={() => void handleSave()}
           isSaving={isSavePending}
           pendingCount={pendingCount}
+          categoryFetchMethod={isTraderaConnection ? categoryFetchMethod : undefined}
+          onCategoryFetchMethodChange={isTraderaConnection ? setCategoryFetchMethod : undefined}
         />
       }
       filters={

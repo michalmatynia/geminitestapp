@@ -192,6 +192,7 @@ export function useIntegrationsActionsImpl(args: {
           ...(isTraderaBrowserIntegration
             ? {
               traderaBrowserMode: formData.traderaBrowserMode,
+              traderaCategoryStrategy: formData.traderaCategoryStrategy,
               playwrightListingScript: formData.playwrightListingScript.trim() || null,
             }
             : {}),

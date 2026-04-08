@@ -36,6 +36,7 @@ type IntegrationConnectionDocument = {
   username: string;
   password: string;
   traderaBrowserMode?: 'builtin' | 'scripted';
+  traderaCategoryStrategy?: 'mapper' | 'top_suggested';
   playwrightStorageState?: string | null;
   playwrightStorageStateUpdatedAt?: Date | null;
   playwrightHeadless?: boolean;

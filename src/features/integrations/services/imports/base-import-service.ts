@@ -276,12 +276,14 @@ export const toStartResponse = (run: BaseImportRunRecord): BaseImportStartRespon
   status: run.status,
   ...(run.preflight !== undefined ? { preflight: run.preflight ?? null } : {}),
   queueJobId: run.queueJobId ?? null,
+  dispatchMode: run.dispatchMode ?? null,
   summaryMessage: run.summaryMessage ?? null,
 });
 
 export const updateBaseImportRunQueueJob = async (
   runId: string,
-  queueJobId: string | null
+  queueJobId: string | null,
+  dispatchMode?: 'queued' | 'inline' | null
 ): Promise<BaseImportRunRecord> => {
   const run = await getBaseImportRun(runId);
   if (!run) {
@@ -290,6 +292,7 @@ export const updateBaseImportRunQueueJob = async (
   const normalizedQueueJobId = queueJobId?.trim() || null;
   return updateBaseImportRun(runId, {
     queueJobId: normalizedQueueJobId,
+    ...(dispatchMode != null ? { dispatchMode } : {}),
   });
 };
 

@@ -334,7 +334,77 @@ export const PART_4 = String.raw`);
     return true;
   };
 
+  const chooseTopSuggestedCategory = async () => {
+    // Use whatever Tradera AI autofilled first (fastest path)
+    const preselectedPath = await readCurrentSelectedCategoryPath();
+    if (preselectedPath) {
+      selectedCategoryPath = preselectedPath;
+      selectedCategorySource = 'topSuggested';
+      log?.('tradera.quicklist.category.top_suggested_preselected', {
+        selectedPath: selectedCategoryPath,
+      });
+      return;
+    }
+
+    // Open the picker and click the first visible suggestion, then follow any
+    // cascading sub-dropdowns that Tradera opens after each selection.
+    await ensureCategoryPickerOpen('top-suggested');
+    const initialOptions = await readVisibleCategoryMenuOptions();
+    if (initialOptions.length === 0) {
+      log?.('tradera.quicklist.category.top_suggested_no_options', { optionCount: 0 });
+      await chooseFallbackCategory();
+      return;
+    }
+
+    let currentOptions = initialOptions;
+    let lastClickedOption = null;
+    const MAX_CASCADE_DEPTH = 8;
+
+    for (let depth = 0; depth <= MAX_CASCADE_DEPTH; depth += 1) {
+      const topOption = currentOptions[0];
+      const clicked = await clickCategoryPickerOptionByName(topOption);
+      if (!clicked) {
+        log?.('tradera.quicklist.category.top_suggested_click_failed', {
+          depth,
+          option: topOption,
+        });
+        break;
+      }
+
+      log?.('tradera.quicklist.category.top_suggested_click', {
+        depth,
+        chosenOption: topOption,
+        totalOptions: currentOptions.length,
+      });
+      lastClickedOption = topOption;
+
+      // Wait to see if a new sub-level appeared or the picker closed (leaf selected).
+      // waitForCategoryPickerUpdate returns options.length === 0 when the picker
+      // closes after a leaf selection, so that's our exit condition.
+      const updateResult = await waitForCategoryPickerUpdate(topOption, currentOptions, 4_000);
+      if (!updateResult.updated || updateResult.options.length === 0) {
+        break;
+      }
+
+      // New sub-options appeared — cascade into the next level.
+      currentOptions = updateResult.options;
+    }
+
+    await wait(600);
+    const confirmedPath = await readCurrentSelectedCategoryPath();
+    selectedCategoryPath = confirmedPath ?? lastClickedOption;
+    selectedCategorySource = 'topSuggested';
+    log?.('tradera.quicklist.category.top_suggested_done', {
+      selectedPath: selectedCategoryPath,
+    });
+  };
+
   const applyCategorySelection = async () => {
+    if (categoryStrategy === 'top_suggested') {
+      await chooseTopSuggestedCategory();
+      return;
+    }
+
     if (mappedCategorySegments.length > 0) {
       const mappedCategoryApplied = await chooseMappedCategory(mappedCategorySegments);
       if (mappedCategoryApplied) {

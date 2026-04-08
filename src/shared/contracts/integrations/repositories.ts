@@ -78,6 +78,12 @@ export type ExternalCategoryRepository = {
     connectionId: string,
     externalId: string
   ) => Promise<ExternalCategory | null>;
+  /**
+   * Returns all leaf descendants of the given external category ID.
+   * Traverses the stored tree via the path field to find all categories
+   * that are descended from this category and have no children.
+   */
+  getLeafDescendants: (connectionId: string, externalId: string) => Promise<ExternalCategory[]>;
   deleteByConnection: (connectionId: string) => Promise<number>;
 };
 

@@ -4,6 +4,7 @@ import {
 } from '@/features/integrations/server';
 import {
   getTraderaCategories,
+  getTraderaSubCategories,
   type TraderaPublicApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
 import { resolveTraderaPublicApiCredentials } from '@/features/integrations/services/tradera-listing/api';
@@ -14,6 +15,7 @@ import type {
   MarketplaceCategoryStats,
   MarketplaceConnectionRequest,
   MarketplaceFetchResponse,
+  TraderaCategoryFetchMethod,
 } from '@/shared/contracts/integrations/marketplace';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -122,7 +124,8 @@ export const requireMarketplaceConnectionId = (
 
 export const resolveMarketplaceCategoryFetchContext = async (
   integrationRepo: IntegrationLookupRepository,
-  connectionId: string
+  connectionId: string,
+  categoryFetchMethod?: TraderaCategoryFetchMethod
 ): Promise<MarketplaceCategoryFetchContext> => {
   const connection = await integrationRepo.getConnectionById(connectionId);
   if (!connection) {
@@ -161,31 +164,103 @@ export const resolveMarketplaceCategoryFetchContext = async (
   }
 
   if (TRADERA_MARKETPLACE_SLUGS.has(integrationSlug)) {
-    // Prefer the SOAP API when the connection has API credentials (appId + appKey).
-    // The API is faster and not subject to changes in the public categories page structure.
-    try {
-      const apiCredentials = resolveTraderaPublicApiCredentials(connection);
-      return {
-        connectionId,
-        connection,
-        sourceName: 'Tradera',
-        responseSourceName: 'Tradera SOAP API',
-        apiCredentials,
-        mode: 'tradera-api',
-      };
-    } catch {
-      // No API credentials — fall back to Playwright browser scrape.
-      return {
-        connectionId,
-        connection,
-        sourceName: 'Tradera',
-        responseSourceName: 'Tradera public taxonomy pages',
-        mode: 'tradera',
-      };
+    // If 'playwright' is explicitly requested, skip SOAP and use the scraper.
+    if (categoryFetchMethod !== 'playwright') {
+      // Try SOAP API when credentials are present (or when explicitly requested via 'soap').
+      try {
+        const apiCredentials = resolveTraderaPublicApiCredentials(connection);
+        return {
+          connectionId,
+          connection,
+          sourceName: 'Tradera',
+          responseSourceName: 'Tradera SOAP API',
+          apiCredentials,
+          mode: 'tradera-api',
+        };
+      } catch {
+        if (categoryFetchMethod === 'soap') {
+          // Credentials are required when SOAP is explicitly selected
+          throw badRequestError(
+            'Tradera SOAP API is not configured for this connection. Add Tradera App ID and App Key in the connection settings, or switch to the public taxonomy pages fetch method.'
+          );
+        }
+        // No credentials and no explicit method — fall back to Playwright
+      }
     }
+
+    return {
+      connectionId,
+      connection,
+      sourceName: 'Tradera',
+      responseSourceName: 'Tradera public taxonomy pages',
+      mode: 'tradera',
+    };
   }
 
   throw badRequestError(`${integration.name} is not yet supported for category fetch`);
+};
+
+const SUBCATEGORY_EXPAND_CONCURRENCY = 10;
+const SUBCATEGORY_EXPAND_MAX_CATEGORIES = 300;
+
+/**
+ * Expands the deepest level of the category tree by fetching subcategories for
+ * all categories at the maximum depth returned by GetCategories.
+ *
+ * GetCategories only returns 2-3 levels; some leaf categories (e.g. "Other pins & needles")
+ * only exist one level deeper and are required when creating a Tradera listing.
+ */
+const expandTraderaSubcategories = async (
+  categories: BaseCategory[],
+  credentials: TraderaPublicApiCredentials
+): Promise<BaseCategory[]> => {
+  if (categories.length === 0) return categories;
+
+  // Find the maximum depth in the returned set
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const depthCache = new Map<string, number>();
+  const getDepth = (id: string): number => {
+    if (depthCache.has(id)) return depthCache.get(id)!;
+    const cat = categoriesById.get(id);
+    const parentId = cat?.parentId;
+    const depth = parentId ? getDepth(parentId) + 1 : 0;
+    depthCache.set(id, depth);
+    return depth;
+  };
+
+  let maxDepth = 0;
+  for (const cat of categories) {
+    maxDepth = Math.max(maxDepth, getDepth(cat.id));
+  }
+
+  // Categories at max depth are potential parents of unexpanded leaves
+  const deepestCategoryIds = categories
+    .filter((c) => getDepth(c.id) === maxDepth)
+    .slice(0, SUBCATEGORY_EXPAND_MAX_CATEGORIES)
+    .map((c) => c.id);
+
+  if (deepestCategoryIds.length === 0) return categories;
+
+  // Fetch subcategories in batches of SUBCATEGORY_EXPAND_CONCURRENCY
+  const newCategories: BaseCategory[] = [];
+  for (let i = 0; i < deepestCategoryIds.length; i += SUBCATEGORY_EXPAND_CONCURRENCY) {
+    const batch = deepestCategoryIds.slice(i, i + SUBCATEGORY_EXPAND_CONCURRENCY);
+    const results = await Promise.allSettled(
+      batch.map((id) => getTraderaSubCategories(id, credentials))
+    );
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        newCategories.push(...result.value);
+      }
+    }
+  }
+
+  if (newCategories.length === 0) return categories;
+
+  // Merge, deduplicating by id
+  const existingIds = new Set(categories.map((c) => c.id));
+  const uniqueNew = newCategories.filter((c) => !existingIds.has(c.id));
+  return [...categories, ...uniqueNew];
 };
 
 export const fetchMarketplaceCategories = async (
@@ -198,7 +273,8 @@ export const fetchMarketplaceCategories = async (
   }
 
   if (context.mode === 'tradera-api') {
-    return getTraderaCategories(context.apiCredentials);
+    const categories = await getTraderaCategories(context.apiCredentials);
+    return expandTraderaSubcategories(categories, context.apiCredentials);
   }
 
   return fetchTraderaCategoriesForConnection(context.connection);

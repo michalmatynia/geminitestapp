@@ -662,6 +662,7 @@ export const PART_1 = String.raw`export default async function run({
   const width = toNumber(input?.width);
   const length = toNumber(input?.length);
   const height = toNumber(input?.height);
+  const categoryStrategy = toText(input?.categoryStrategy) === 'top_suggested' ? 'top_suggested' : 'mapper';
   const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)
     ? input.traderaCategory.segments
         .map((value) => toText(value))

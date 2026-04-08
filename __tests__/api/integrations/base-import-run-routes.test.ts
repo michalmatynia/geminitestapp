@@ -11,7 +11,7 @@ const resumeBaseImportRunMock = vi.hoisted(() => vi.fn());
 const updateBaseImportRunQueueJobMock = vi.hoisted(() => vi.fn());
 const cancelBaseImportRunMock = vi.hoisted(() => vi.fn());
 const toStartResponseMock = vi.hoisted(() => vi.fn());
-const enqueueBaseImportRunJobMock = vi.hoisted(() => vi.fn());
+const dispatchBaseImportRunJobMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/integrations/services/imports/base-import-service', () => ({
   getBaseImportRunDetailOrThrow: getBaseImportRunDetailOrThrowMock,
@@ -22,7 +22,7 @@ vi.mock('@/features/integrations/services/imports/base-import-service', () => ({
 }));
 
 vi.mock('@/features/integrations/workers/baseImportQueue', () => ({
-  enqueueBaseImportRunJob: enqueueBaseImportRunJobMock,
+  dispatchBaseImportRunJob: dispatchBaseImportRunJobMock,
 }));
 
 import { POST as cancelPost } from '@/app/api/v2/integrations/imports/base/runs/[runId]/cancel/route';
@@ -110,11 +110,12 @@ describe('base import run routes', () => {
       queueJobId: null,
       summaryMessage: null,
     });
-    enqueueBaseImportRunJobMock.mockResolvedValue('queue-resume-1');
+    dispatchBaseImportRunJobMock.mockResolvedValue({ dispatchMode: 'queued', queueJobId: 'queue-resume-1' });
     updateBaseImportRunQueueJobMock.mockResolvedValue({
       id: 'run-resume-1',
       status: 'queued',
       queueJobId: 'queue-resume-1',
+      dispatchMode: 'queued',
       summaryMessage: 'Resume queued for 2 product(s).',
     });
 
@@ -126,12 +127,12 @@ describe('base import run routes', () => {
 
     expect(response.status).toBe(200);
     expect(resumeBaseImportRunMock).toHaveBeenCalledWith('run-resume-1', ['failed', 'pending']);
-    expect(enqueueBaseImportRunJobMock).toHaveBeenCalledWith({
+    expect(dispatchBaseImportRunJobMock).toHaveBeenCalledWith({
       runId: 'run-resume-1',
       reason: 'resume',
       statuses: ['pending'],
     });
-    expect(updateBaseImportRunQueueJobMock).toHaveBeenCalledWith('run-resume-1', 'queue-resume-1');
+    expect(updateBaseImportRunQueueJobMock).toHaveBeenCalledWith('run-resume-1', 'queue-resume-1', 'queued');
     expect(payload).toMatchObject({
       runId: 'run-resume-1',
       status: 'queued',

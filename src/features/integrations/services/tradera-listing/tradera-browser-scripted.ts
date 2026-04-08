@@ -322,7 +322,9 @@ export const buildTraderaScriptInput = async ({
     traderaConfig: {
       listingFormUrl: normalizeTraderaListingFormUrl(systemSettings.listingFormUrl),
     },
-    ...(mappedCategory
+    categoryStrategy: connection.traderaCategoryStrategy === 'top_suggested' ? 'top_suggested' : 'mapper',
+    // Only pass traderaCategory when using the mapper strategy — top_suggested ignores it
+    ...(mappedCategory && connection.traderaCategoryStrategy !== 'top_suggested'
       ? {
           traderaCategory: {
             externalId: mappedCategory.externalCategoryId,

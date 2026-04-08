@@ -241,7 +241,9 @@ export const createImportExportRuntimeActions = ({
       const queuedLike = res.status === 'queued' || res.status === 'running';
       setPollImportRun(queuedLike);
       if (queuedLike) {
-        toast(importDryRun ? 'Dry-run queued.' : 'Import queued.', {
+        const isInline = res.dispatchMode === 'inline';
+        const label = importDryRun ? 'Dry-run' : 'Import';
+        toast(isInline ? `${label} running (inline).` : `${label} queued.`, {
           variant: 'success',
         });
       } else if (res.status === 'completed' || res.status === 'partial_success') {
@@ -271,7 +273,10 @@ export const createImportExportRuntimeActions = ({
       });
       setLastResult(resumed);
       setPollImportRun(true);
-      toast('Import resume queued.', { variant: 'success' });
+      const resumeLabel = resumed.dispatchMode === 'inline'
+        ? 'Import resume running (inline).'
+        : 'Import resume queued.';
+      toast(resumeLabel, { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to resume import run.';

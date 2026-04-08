@@ -26,7 +26,7 @@ import {
 } from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
 import { buildCategoryTree } from '@/features/integrations/components/marketplaces/category-mapper/category-table/utils';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
-import type { MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
+import type { MarketplaceFetchResponse, TraderaCategoryFetchMethod } from '@/shared/contracts/integrations/marketplace';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import { ApiError } from '@/shared/lib/api-client';
@@ -112,6 +112,9 @@ export interface CategoryMapperUIState {
   toggleExpand: (categoryId: string) => void;
   lastFetchResult: MarketplaceFetchResponse | null;
   lastFetchWarning: CategoryMapperFetchWarning | null;
+  /** Tradera only: which fetch method to use. Defaults to 'playwright'. */
+  categoryFetchMethod: TraderaCategoryFetchMethod;
+  setCategoryFetchMethod: (method: TraderaCategoryFetchMethod) => void;
   staleMappings: Array<{
     externalCategoryId: string;
     externalCategoryName: string;
@@ -231,6 +234,7 @@ export function CategoryMapperProvider({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [lastFetchResult, setLastFetchResult] = useState<MarketplaceFetchResponse | null>(null);
   const [lastFetchWarning, setLastFetchWarning] = useState<CategoryMapperFetchWarning | null>(null);
+  const [categoryFetchMethod, setCategoryFetchMethod] = useState<TraderaCategoryFetchMethod>('playwright');
   const hasInitializedExpansion = useRef(false);
   const normalizedIntegrationSlug = (integrationSlug ?? '').trim().toLowerCase();
   const isTraderaConnection =
@@ -274,7 +278,10 @@ export function CategoryMapperProvider({
 
   const handleFetchExternalCategories = useCallback(async (): Promise<void> => {
     try {
-      const result = await fetchMutation.mutateAsync({ connectionId });
+      const result = await fetchMutation.mutateAsync({
+        connectionId,
+        ...(isTraderaConnection ? { categoryFetchMethod } : {}),
+      });
       setLastFetchResult(result);
       setLastFetchWarning(null);
       toast(result.message, { variant: 'success' });
@@ -289,7 +296,7 @@ export function CategoryMapperProvider({
       const message = error instanceof Error ? error.message : 'Failed to fetch categories';
       toast(message, { variant: 'error' });
     }
-  }, [connectionId, fetchMutation, integrationId, toast]);
+  }, [categoryFetchMethod, connectionId, fetchMutation, integrationId, isTraderaConnection, toast]);
 
   const getMappingForExternal = useCallback(
     (externalCategoryId: string): string | null => {
@@ -567,6 +574,8 @@ export function CategoryMapperProvider({
       toggleExpand,
       lastFetchResult,
       lastFetchWarning,
+      categoryFetchMethod,
+      setCategoryFetchMethod,
       staleMappings,
       nonLeafMappings,
       stats,
@@ -577,6 +586,7 @@ export function CategoryMapperProvider({
       toggleExpand,
       lastFetchResult,
       lastFetchWarning,
+      categoryFetchMethod,
       staleMappings,
       nonLeafMappings,
       stats,

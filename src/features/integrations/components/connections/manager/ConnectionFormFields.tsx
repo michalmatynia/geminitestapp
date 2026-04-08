@@ -17,6 +17,11 @@ import { Button, Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
+const TRADERA_CATEGORY_STRATEGY_OPTIONS = [
+  { value: 'mapper', label: 'Category mapper (with Other fallback)' },
+  { value: 'top_suggested', label: 'Top suggested by Tradera' },
+] as const;
+
 const TRADERA_BROWSER_MODE_OPTIONS = [
   { value: 'builtin', label: 'Built-in form automation' },
   { value: 'scripted', label: 'Playwright script' },
@@ -214,6 +219,24 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                   options={[...TRADERA_BROWSER_MODE_OPTIONS]}
                   ariaLabel='Browser automation mode'
                   placeholder='Browser automation mode'
+                />
+              </FormField>
+              <FormField
+                label='Category selection strategy'
+                description='How Tradera category is chosen when listing a product'
+              >
+                <SelectSimple
+                  id={`${idPrefix}-traderaCategoryStrategy`}
+                  value={form.traderaCategoryStrategy}
+                  onValueChange={(nextValue): void =>
+                    setForm((prev) => ({
+                      ...prev,
+                      traderaCategoryStrategy: nextValue === 'top_suggested' ? 'top_suggested' : 'mapper',
+                    }))
+                  }
+                  options={[...TRADERA_CATEGORY_STRATEGY_OPTIONS]}
+                  ariaLabel='Category selection strategy'
+                  placeholder='Category selection strategy'
                 />
               </FormField>
               {form.traderaBrowserMode === 'scripted' && (

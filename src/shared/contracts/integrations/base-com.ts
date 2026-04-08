@@ -259,12 +259,16 @@ export const baseImportPreflightSchema = z.object({
 });
 export type BaseImportPreflight = z.infer<typeof baseImportPreflightSchema>;
 
+export const baseImportDispatchModeSchema = z.enum(['queued', 'inline']);
+export type BaseImportDispatchMode = z.infer<typeof baseImportDispatchModeSchema>;
+
 export const baseImportRunRecordSchema = z.object({
   id: z.string(),
   status: baseImportRunStatusSchema,
   params: baseImportRunParamsSchema,
   idempotencyKey: z.string().nullable().optional(),
   queueJobId: z.string().nullable().optional(),
+  dispatchMode: baseImportDispatchModeSchema.nullable().optional(),
   lockOwnerId: z.string().nullable().optional(),
   lockToken: z.string().nullable().optional(),
   lockExpiresAt: z.string().nullable().optional(),
@@ -321,6 +325,7 @@ export const baseImportStartResponseSchema = z.object({
   status: baseImportRunStatusSchema,
   preflight: baseImportPreflightSchema.nullable().optional(),
   queueJobId: z.string().nullable(),
+  dispatchMode: baseImportDispatchModeSchema.nullable(),
   summaryMessage: z.string().nullable(),
 });
 export type BaseImportStartResponse = z.infer<typeof baseImportStartResponseSchema>;

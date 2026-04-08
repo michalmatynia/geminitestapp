@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { enqueueBaseImportRunJob } from '@/features/integrations/workers/baseImportQueue';
+import { dispatchBaseImportRunJob } from '@/features/integrations/workers/baseImportQueue';
 import type { BaseImportRunRecord, BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
 
 import {
@@ -19,12 +19,12 @@ export const startBaseImportRun = async (
     return run;
   }
 
-  const queueJobId = await enqueueBaseImportRunJob({
+  const { dispatchMode, queueJobId } = await dispatchBaseImportRunJob({
     runId: run.id,
     reason: 'start',
     statuses: ['pending'],
   });
-  return updateBaseImportRunQueueJob(run.id, queueJobId);
+  return updateBaseImportRunQueueJob(run.id, queueJobId, dispatchMode);
 };
 
 export const startBaseImportRunResponse = async (

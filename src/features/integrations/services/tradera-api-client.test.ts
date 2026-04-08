@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { addTraderaShopItem, getTraderaCategories, parseTraderaCategoriesXml } from './tradera-api-client';
+import { addTraderaShopItem, getTraderaCategories, getTraderaSubCategories, parseTraderaCategoriesXml } from './tradera-api-client';
 
 describe('parseTraderaCategoriesXml', () => {
   it('parses nested Tradera category xml into flat category records', () => {
@@ -128,6 +128,78 @@ describe('getTraderaCategories', () => {
       { id: '10', name: 'Collectibles', parentId: null },
       { id: '11', name: 'Pins', parentId: '10' },
     ]);
+  });
+});
+
+describe('getTraderaSubCategories', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('fetches subcategories and injects the parentCategoryId', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetSubCategoriesResponse xmlns="http://api.tradera.com">
+      <GetSubCategoriesResult>
+        <Categories>
+          <Category Id="292904" Name="Other pins &amp; needles"></Category>
+          <Category Id="292903" Name="Sports"></Category>
+        </Categories>
+      </GetSubCategoriesResult>
+    </GetSubCategoriesResponse>
+  </soap:Body>
+</soap:Envelope>`,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await getTraderaSubCategories('2929', {
+      appId: 123,
+      appKey: 'secret-key',
+      sandbox: false,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.tradera.com/v3/publicservice.asmx',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          SOAPAction: 'http://api.tradera.com/GetSubCategories',
+        }),
+      })
+    );
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toContain('<categoryId>2929</categoryId>');
+    expect(result).toEqual([
+      { id: '292904', name: 'Other pins & needles', parentId: '2929' },
+      { id: '292903', name: 'Sports', parentId: '2929' },
+    ]);
+  });
+
+  it('returns an empty array when no subcategories are found', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetSubCategoriesResponse xmlns="http://api.tradera.com">
+      <GetSubCategoriesResult>
+        <Categories></Categories>
+      </GetSubCategoriesResult>
+    </GetSubCategoriesResponse>
+  </soap:Body>
+</soap:Envelope>`,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await getTraderaSubCategories(2929, {
+      appId: 123,
+      appKey: 'secret-key',
+      sandbox: false,
+    });
+
+    expect(result).toEqual([]);
   });
 });
 

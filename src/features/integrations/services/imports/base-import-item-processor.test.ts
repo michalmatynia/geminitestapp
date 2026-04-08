@@ -13,6 +13,13 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/features/integrations/services/imports/base-mapper', () => ({
   mapBaseProduct: (...args: unknown[]) => mocks.mapBaseProductMock(...args),
+  collectCustomFieldImportDiagnostics: () => ({
+    mergedCustomFields: [],
+    autoMatchedFieldNames: [],
+    explicitMappedFieldNames: [],
+    skippedFieldNames: [],
+    overriddenFieldNames: [],
+  }),
 }));
 
 vi.mock('@/features/integrations/services/imports/parameter-import/apply', () => ({

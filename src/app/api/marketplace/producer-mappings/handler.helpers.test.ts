@@ -29,7 +29,7 @@ describe('marketplace producer mappings helpers', () => {
       connectionId: 'conn-1',
     });
     expect(() => parseMarketplaceProducerMappingsQuery({ connectionId: '' })).toThrow(
-      'connectionId is required'
+      'Invalid marketplace producer mappings query.'
     );
   });
 

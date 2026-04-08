@@ -29,6 +29,18 @@ vi.mock('@/features/integrations/services/tradera-api-client', () => ({
 vi.mock('./category-mapping', () => ({
   resolveTraderaCategoryMappingResolutionForProduct: (...args: unknown[]) =>
     resolveTraderaCategoryMappingResolutionForProductMock(...args),
+  // Pass-through: category is already a leaf, no auto-resolution
+  resolveToLeafCategory: async ({ externalCategoryId }: { externalCategoryId: string }) => ({
+    resolvedExternalCategoryId: externalCategoryId,
+    autoResolved: false,
+    resolvedName: null,
+    resolvedPath: null,
+    originalExternalCategoryId: null,
+  }),
+}));
+
+vi.mock('@/features/integrations/services/external-category-repository', () => ({
+  getExternalCategoryRepository: () => ({}),
 }));
 
 vi.mock('./shipping-group', () => ({
@@ -95,6 +107,8 @@ describe('resolveTraderaApiCategoryId', () => {
       categoryMappingReason: null,
       categoryMatchScope: null,
       categoryInternalCategoryId: null,
+      categoryLeafAutoResolved: false,
+      categoryLeafOriginalExternalId: null,
     });
   });
 
@@ -128,6 +142,8 @@ describe('resolveTraderaApiCategoryId', () => {
       categoryMappingReason: 'mapped',
       categoryMatchScope: 'catalog_match',
       categoryInternalCategoryId: 'internal-category-1',
+      categoryLeafAutoResolved: false,
+      categoryLeafOriginalExternalId: null,
     });
   });
 });

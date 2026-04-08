@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { processBaseImportRun } from '@/features/integrations/server';
-import type { BaseImportItemStatus } from '@/shared/contracts/integrations/base-com';
+import type { BaseImportDispatchMode, BaseImportItemStatus } from '@/shared/contracts/integrations/base-com';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -72,4 +72,24 @@ export const enqueueBaseImportRunJob = async (data: BaseImportQueueJobData): Pro
   });
 
   return queuedJobId;
+};
+
+export type BaseImportDispatchResult = {
+  dispatchMode: BaseImportDispatchMode;
+  queueJobId: string;
+};
+
+/**
+ * Dispatches a Base import run job and reports whether it was submitted to the
+ * Redis queue or executed inline (Redis unavailable). Inline jobs start in the
+ * background immediately; both paths return without waiting for the run to finish.
+ */
+export const dispatchBaseImportRunJob = async (
+  data: BaseImportQueueJobData
+): Promise<BaseImportDispatchResult> => {
+  const queueJobId = await enqueueBaseImportRunJob(data);
+  const dispatchMode: BaseImportDispatchMode = queueJobId.startsWith('inline-')
+    ? 'inline'
+    : 'queued';
+  return { dispatchMode, queueJobId };
 };

@@ -307,8 +307,6 @@ export const getTraderaUserInfo = async (
   };
 };
 
-const CATEGORY_TAG_REGEX = /<(\/?)(?:\w+:)?Category\b([^>]*?)(\/?)>/gi;
-
 const extractAttribute = (attributes: string, name: string): string | null => {
   const match = attributes.match(new RegExp(`\\b${name}\\s*=\\s*"([^"]*)"`, 'i'));
   if (!match?.[1]) return null;
@@ -369,6 +367,30 @@ export const getTraderaCategories = async (
 
   const categoryXml = extractFirstTagValue(response, 'GetCategoriesResult') ?? response;
   return parseTraderaCategoriesXml(categoryXml);
+};
+
+/**
+ * Fetches direct subcategories of a given parent category from the Tradera SOAP API.
+ * The returned categories have their parentId set to the given parentCategoryId.
+ * Used to expand the category tree one level deeper than GetCategories returns.
+ */
+export const getTraderaSubCategories = async (
+  parentCategoryId: string | number,
+  credentials: TraderaPublicApiCredentials
+): Promise<BaseCategory[]> => {
+  const response = await callTraderaSoap({
+    service: 'public',
+    method: 'GetSubCategories',
+    bodyXml: `<categoryId>${Number(parentCategoryId)}</categoryId>`,
+    credentials,
+  });
+  const categoryXml = extractFirstTagValue(response, 'GetSubCategoriesResult') ?? response;
+  const subcategories = parseTraderaCategoriesXml(categoryXml);
+  // GetSubCategories returns categories without parent context — inject the parent ID
+  return subcategories.map((cat) => ({
+    ...cat,
+    parentId: String(parentCategoryId),
+  }));
 };
 
 type NormalizedTraderaShopItemInput = {

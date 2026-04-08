@@ -7,6 +7,7 @@ export const toConnectionFormState = (connection: IntegrationConnection): Connec
   password: '',
   playwrightBrowser: connection.playwrightBrowser ?? 'auto',
   traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
+  traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
   playwrightListingScript: connection.playwrightListingScript ?? '',
   traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? '',
   traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,

@@ -56,6 +56,9 @@ export const PART_5B = String.raw`
     });
 
     await applyCategorySelection();
+    if (categoryStrategy === 'top_suggested') {
+      await fillCategoryExtraDropdowns();
+    }
     emitStage('category_selected', {
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,

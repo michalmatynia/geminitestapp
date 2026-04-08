@@ -403,7 +403,7 @@ export const PART_4D = String.raw`
     await ensureImageStepSellPageReady('draft image cleanup');
     let removedCount = 0;
 
-    for (let attempt = 0; attempt < 12; attempt += 1) {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
       let removedInAttempt = false;
 
       for (const selector of DRAFT_IMAGE_REMOVE_SELECTORS) {

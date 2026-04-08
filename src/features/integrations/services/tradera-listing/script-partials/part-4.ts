@@ -235,7 +235,7 @@ export const PART_4 = String.raw`);
     }
 
     const currentSelectedPath = await readCurrentSelectedCategoryPath();
-    if (categoryPathMatches(currentSelectedPath, segments)) {
+    if (listingAction !== 'sync' && categoryPathMatches(currentSelectedPath, segments)) {
       selectedCategoryPath = segments.join(' > ');
       selectedCategorySource = 'categoryMapper';
       log?.('tradera.quicklist.category.mapped_already_selected', {
@@ -399,6 +399,140 @@ export const PART_4 = String.raw`);
     });
   };
 
+  // Read the first visible option text from any open dropdown/listbox on the page
+  // (not restricted to the category picker container).
+  const readFirstVisiblePageDropdownOption = async () => {
+    const optionText = await page
+      .locator('[role="option"], [role="menuitem"], [role="menuitemradio"]')
+      .evaluateAll((elements) => {
+        for (const element of elements) {
+          if (element.closest('[data-test-category-chooser="true"]')) continue;
+          const rect = element.getBoundingClientRect();
+          const style = window.getComputedStyle(element);
+          const visible =
+            rect.width > 0 &&
+            rect.height > 0 &&
+            style.visibility !== 'hidden' &&
+            style.display !== 'none';
+          if (!visible) continue;
+          const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+          if (text) return text;
+        }
+        return null;
+      })
+      .catch(() => null);
+    return optionText ?? null;
+  };
+
+  // After category selection Tradera may show category-specific required dropdowns
+  // (e.g. "Jewelry material"). Scan for any visible dropdown triggers that are still
+  // in placeholder/unset state and fill each one with the first available option.
+  const fillCategoryExtraDropdowns = async () => {
+    // Wait for the form to settle after category confirmation.
+    await wait(800);
+
+    // Heuristic: an unset dropdown trigger contains text that matches "Select <noun>"
+    // or the Swedish equivalent "Välj <noun>".
+    const isUnsetDropdownText = (text) => /^(select|choose|välj|velg)\s/i.test(text.trim());
+
+    // Fields that are intentionally handled later by trySelectOptionalFieldValue —
+    // skip them here so we don't double-click.
+    const skipFieldLabels = [
+      ...CONDITION_FIELD_LABELS,
+      ...DEPARTMENT_FIELD_LABELS,
+      ...CATEGORY_FIELD_LABELS,
+    ].map((l) => normalizeWhitespace(l).toLowerCase());
+
+    const MAX_FIELDS = 10;
+
+    for (let iteration = 0; iteration < MAX_FIELDS; iteration += 1) {
+      // Collect all visible combobox/button[aria-haspopup] elements outside the
+      // category picker that look like unset dropdown triggers.
+      const unsetTrigger = await page
+        .locator(
+          'button[aria-haspopup], button[aria-haspopup="listbox"], button[aria-haspopup="true"], [role="combobox"]'
+        )
+        .evaluateAll((elements) => {
+          for (const element of elements) {
+            if (element.closest('[data-test-category-chooser="true"]')) continue;
+            const rect = element.getBoundingClientRect();
+            const style = window.getComputedStyle(element);
+            const visible =
+              rect.width > 0 &&
+              rect.height > 0 &&
+              style.visibility !== 'hidden' &&
+              style.display !== 'none';
+            if (!visible) continue;
+            const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+            return text || null;
+          }
+          return null;
+        })
+        .catch(() => null);
+
+      if (!unsetTrigger || !isUnsetDropdownText(unsetTrigger)) break;
+
+      // Skip condition / department / category — handled elsewhere.
+      const normalizedTrigger = normalizeWhitespace(unsetTrigger).toLowerCase();
+      if (skipFieldLabels.some((label) => normalizedTrigger.includes(label))) break;
+
+      log?.('tradera.quicklist.category_extra_field.detected', {
+        iteration,
+        triggerText: unsetTrigger,
+      });
+
+      // Click the trigger to open the dropdown.
+      const escapedTriggerPattern = unsetTrigger.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+      const triggerLocator = page
+        .locator(
+          'button[aria-haspopup], button[aria-haspopup="listbox"], button[aria-haspopup="true"], [role="combobox"]'
+        )
+        .filter({ hasText: new RegExp('^' + escapedTriggerPattern + '\$', 'i') })
+        .first();
+      await humanClick(triggerLocator).catch(async () => {
+        // Fall back: DOM click by text match
+        await page
+          .evaluate((text) => {
+            const candidates = document.querySelectorAll(
+              'button[aria-haspopup], [role="combobox"]'
+            );
+            for (const el of candidates) {
+              if (el.closest('[data-test-category-chooser="true"]')) continue;
+              if ((el.textContent || '').replace(/\s+/g, ' ').trim() === text) {
+                if (el instanceof HTMLElement) el.click();
+                return true;
+              }
+            }
+            return false;
+          }, unsetTrigger)
+          .catch(() => undefined);
+      });
+      await wait(500);
+
+      // Read the first option from the dropdown that just opened.
+      const firstOption = await readFirstVisiblePageDropdownOption();
+      if (firstOption) {
+        const optionClicked = await clickMenuItemByName(firstOption);
+        log?.('tradera.quicklist.category_extra_field.filled', {
+          iteration,
+          triggerText: unsetTrigger,
+          chosenOption: firstOption,
+          optionClicked,
+        });
+        await wait(400);
+      } else {
+        // No options visible — close the dropdown and stop.
+        await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(() => undefined);
+        await wait(200);
+        log?.('tradera.quicklist.category_extra_field.no_options', {
+          iteration,
+          triggerText: unsetTrigger,
+        });
+        break;
+      }
+    }
+  };
+
   const applyCategorySelection = async () => {
     if (categoryStrategy === 'top_suggested') {
       await chooseTopSuggestedCategory();
@@ -421,7 +555,7 @@ export const PART_4 = String.raw`);
     }
 
     const currentSelectedPath = await readCurrentSelectedCategoryPath();
-    if (currentSelectedPath) {
+    if (listingAction !== 'sync' && currentSelectedPath) {
       selectedCategoryPath = currentSelectedPath;
       selectedCategorySource = 'autofill';
       log?.('tradera.quicklist.category.autofill_preserved', {

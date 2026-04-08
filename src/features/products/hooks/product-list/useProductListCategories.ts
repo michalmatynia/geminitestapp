@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useMemo } from 'react';
 
@@ -15,6 +16,10 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+// This category lookup hook mixes derived maps with a query-backed fallback.
+// Opt out of React Compiler memoization to keep the products list hook graph
+// stable in development.
 
 const PRODUCT_CATEGORY_BATCH_TIMEOUT_MS = 60_000;
 

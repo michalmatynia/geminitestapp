@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-07T15:29:01.267Z",
+  "generatedAt": "2026-04-08T19:04:19.948Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -18,13 +18,13 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 9964,
-    "exportedDeclarationsScanned": 5875,
-    "candidateDeclarationsScanned": 5854,
-    "exactShapeClusters": 1,
+    "filesScanned": 10035,
+    "exportedDeclarationsScanned": 5923,
+    "candidateDeclarationsScanned": 5902,
+    "exactShapeClusters": 4,
     "nearShapeClusters": 3,
-    "clustersAfterFilters": 4,
-    "declarationsInClusters": 11,
+    "clustersAfterFilters": 7,
+    "declarationsInClusters": 18,
     "highestRiskScore": 17
   },
   "clusters": [
@@ -83,6 +83,126 @@
           "line": 10,
           "domain": "app",
           "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 3,
+      "domains": [
+        "feature:internationalization",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "d2a8fe8b3537",
+        "memberCount": 1,
+        "preview": "CodeNameDto"
+      },
+      "declarations": [
+        {
+          "name": "CountryFormState",
+          "kind": "type",
+          "path": "src/features/internationalization/components/country-modal/CountryModal.helpers.tsx",
+          "line": 8,
+          "domain": "feature:internationalization",
+          "usageCount": 1
+        },
+        {
+          "name": "CountryCodeOption",
+          "kind": "type",
+          "path": "src/features/internationalization/components/country-modal/CountryModal.helpers.tsx",
+          "line": 9,
+          "domain": "feature:internationalization",
+          "usageCount": 0
+        },
+        {
+          "name": "CodeName",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 62,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "2463fe15c097",
+        "memberCount": 1,
+        "preview": "AgentLlmContext"
+      },
+      "declarations": [
+        {
+          "name": "LLMContext",
+          "kind": "type",
+          "path": "src/features/ai/agent-runtime/tools/llm/segments/shared.ts",
+          "line": 7,
+          "domain": "feature:ai",
+          "usageCount": 4
+        },
+        {
+          "name": "ToolLlmContext",
+          "kind": "type",
+          "path": "src/features/ai/agent-runtime/tools/segments/types.ts",
+          "line": 11,
+          "domain": "feature:ai",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0004",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "0510fd54775b",
+        "memberCount": 1,
+        "preview": "BaseFilters"
+      },
+      "declarations": [
+        {
+          "name": "CustomFieldFilters",
+          "kind": "type",
+          "path": "src/shared/contracts/products/drafts.ts",
+          "line": 179,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "ProducerFilters",
+          "kind": "type",
+          "path": "src/shared/contracts/products/drafts.ts",
+          "line": 202,
+          "domain": "shared:contracts",
+          "usageCount": 1
         }
       ],
       "notes": [

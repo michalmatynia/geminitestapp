@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -16,6 +17,10 @@ import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { refetchProductsAndCounts } from './productCache';
+
+// This hook layers a large local-state surface over TanStack Query. Keep it on
+// the plain hook runtime to avoid React Compiler dev mismatches on
+// /admin/products while we stabilize the products page stack.
 
 const isValidAdvancedFilterPayload = (payload: string): boolean => {
   try {

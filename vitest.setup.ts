@@ -350,6 +350,17 @@ vi.mock('use-intl', () => {
 vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn(async () => vi.fn((key: string) => key)),
 }));
+// Mock useToast
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
+  return {
+    ...actual,
+    useToast: vi.fn(() => ({
+      toast: vi.fn(),
+      dismiss: vi.fn(),
+    })),
+  };
+});
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -359,6 +370,7 @@ vi.mock('next/navigation', () => ({
     replace: vi.fn(),
     prefetch: vi.fn(),
     back: vi.fn(),
+    refresh: vi.fn(),
   })),
   useSearchParams: vi.fn(() => new URLSearchParams()),
   useParams: vi.fn(() => ({})),
@@ -368,6 +380,14 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
   permanentRedirect: vi.fn(),
 }));
+
+// Mock nextjs-toploader/app to use the same useRouter as next/navigation
+vi.mock('nextjs-toploader/app', async () => {
+  const nextNav = await vi.importMock<typeof import('next/navigation')>('next/navigation');
+  return {
+    useRouter: nextNav.useRouter,
+  };
+});
 
 // Mock next/server (for NextRequest/NextResponse in API routes)
 vi.mock('next/server', () => {

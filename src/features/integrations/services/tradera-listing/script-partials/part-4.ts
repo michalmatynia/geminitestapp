@@ -349,7 +349,19 @@ export const PART_4 = String.raw`);
     // Open the picker and click the first visible suggestion, then follow any
     // cascading sub-dropdowns that Tradera opens after each selection.
     await ensureCategoryPickerOpen('top-suggested');
-    const initialOptions = await readVisibleCategoryMenuOptions();
+
+    // Tradera AI-suggested categories may take a moment to render after the picker
+    // opens. Poll until options appear (up to 6 s) before declaring no options.
+    let initialOptions = await readVisibleCategoryMenuOptions();
+    if (initialOptions.length === 0) {
+      const optionWaitDeadline = Date.now() + 6_000;
+      while (Date.now() < optionWaitDeadline) {
+        await wait(400);
+        initialOptions = await readVisibleCategoryMenuOptions();
+        if (initialOptions.length > 0) break;
+      }
+    }
+
     if (initialOptions.length === 0) {
       log?.('tradera.quicklist.category.top_suggested_no_options', { optionCount: 0 });
       await chooseFallbackCategory();

@@ -185,7 +185,6 @@ const nextConfig = {
     // Turbopack is more stable in this repo when it resolves packages normally
     // instead of rewriting import graphs through optimizePackageImports.
     ...(isTurbopack ? {} : { optimizePackageImports }),
-    ppr: 'incremental',
     staleTimes: {
       dynamic: 60,
       static: 300,

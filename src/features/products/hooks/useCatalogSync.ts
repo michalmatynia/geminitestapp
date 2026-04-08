@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -11,6 +12,10 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { UseProductsOptions } from './useProductsQuery';
+
+// This hook composes deferred runtime state with multi-query metadata loading.
+// Opt out of React Compiler memoization to keep the admin products page on a
+// stable dev hook path.
 
 type LanguageOption = {
   value: 'name_en' | 'name_pl' | 'name_de';

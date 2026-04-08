@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import {
   ProfilerOnRenderCallback,
@@ -10,6 +11,10 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
+
+// This hook composes a large products runtime with query wrappers, URL-sync
+// helpers, and edit hydration. Opt out of React Compiler memoization here to
+// avoid dev-only hook-order mismatches in the compiled admin products page.
 
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
 import { loadProductColumns } from '@/features/products/components/list/product-columns-loader';
@@ -204,12 +209,7 @@ export function useProductListState(): ProductListContextType & {
   const { toast } = useToast();
   const { imageExternalBaseUrl } = useProductSettings();
 
-  const useQueuedAiRunProductIdsHook =
-    queuedProductOps.useQueuedAiRunProductIds ?? queuedProductOps.useQueuedProductIds;
-
-  const queuedProductIds = useQueuedAiRunProductIdsHook
-    ? useQueuedAiRunProductIdsHook()
-    : new Set<string>();
+  const queuedProductIds = queuedProductOps.useQueuedAiRunProductIds();
 
   useProductSync({ enabled: rowRuntimeReady });
   const productAiRunStatusByProductId = useProductAiPathsRunSync({

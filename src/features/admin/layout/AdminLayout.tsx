@@ -21,8 +21,9 @@ import { api } from '@/shared/lib/api-client';
 import { setClientCookie } from '@/shared/lib/browser/client-cookies';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
+import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
-import { Button } from '@/shared/ui/primitives.public';
+import { Button, ToastProvider } from '@/shared/ui/primitives.public';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
@@ -418,15 +419,19 @@ export function AdminLayout({
 
   return (
     <SessionProvider session={session} refetchOnWindowFocus={false}>
-      <SettingsStoreProvider mode='admin' canReadAdminSettings={canReadAdminSettings}>
-        <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
-          <AdminFavoritesRuntimeProvider>
-            <AdminLayoutContent hasInitialMenuPreference={hasInitialMenuPreference}>
-              {children}
-            </AdminLayoutContent>
-          </AdminFavoritesRuntimeProvider>
-        </AdminLayoutProvider>
-      </SettingsStoreProvider>
+      <QueryProvider>
+        <SettingsStoreProvider mode='admin' canReadAdminSettings={canReadAdminSettings}>
+          <ToastProvider>
+            <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
+              <AdminFavoritesRuntimeProvider>
+                <AdminLayoutContent hasInitialMenuPreference={hasInitialMenuPreference}>
+                  {children}
+                </AdminLayoutContent>
+              </AdminFavoritesRuntimeProvider>
+            </AdminLayoutProvider>
+          </ToastProvider>
+        </SettingsStoreProvider>
+      </QueryProvider>
     </SessionProvider>
   );
 }

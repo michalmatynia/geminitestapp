@@ -1,7 +1,13 @@
 'use client';
+'use no memo';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+
+// React Compiler currently produces unstable dev hook layouts for this
+// TanStack Query + URL-sync hydration stack during Fast Refresh. Keep the
+// edit-hydration path on the plain runtime path until the compiler issue is
+// resolved upstream.
 
 import { preloadProductFormChunk } from '@/features/products/components/product-form-preload';
 import {

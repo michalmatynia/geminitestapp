@@ -190,8 +190,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
   const toastDedupeWindowMs = config.toastDedupeWindowMs ?? DEFAULT_TOAST_DEDUPE_WINDOW_MS;
   const onError = config.onError;
 
-  // Only use toast on client side
-  const toast = typeof window !== 'undefined' ? useToast().toast : null;
+  const { toast } = useToast();
 
   useEffect((): (() => void) => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
@@ -337,7 +336,7 @@ export function useResilientQuery<TData>(
     domain?: TanstackFactoryDomain;
   }
 ): UseQueryResult<TData, Error> {
-  const toast = typeof window !== 'undefined' ? useToast().toast : null;
+  const { toast } = useToast();
   const domain = options?.domain ?? 'global';
 
   const query = createListQueryV2<unknown, TData>({

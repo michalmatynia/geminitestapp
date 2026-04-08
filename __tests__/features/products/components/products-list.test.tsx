@@ -15,6 +15,7 @@ import {
   ProductListProvider,
   type ProductListContextType,
 } from '@/features/products/context/ProductListContext';
+import { ProductImagePreviewProvider } from '@/features/products/context/ProductImagePreviewContext';
 import { server } from '@/mocks/server';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { DataTable } from '@/shared/ui/data-display.public';
@@ -45,6 +46,13 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
   permanentRedirect: vi.fn(),
   redirect: vi.fn(),
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: pushMock,
+    refresh: vi.fn(),
+  }),
 }));
 
 vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
@@ -241,19 +249,21 @@ const renderProductTable = (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <ProductListProvider value={contextValue}>
-          <DataTable
-            columns={contextValue.tableColumns}
-            data={contextValue.data}
-            getRowId={contextValue.getRowId}
-            rowSelection={contextValue.rowSelection}
-            onRowSelectionChange={contextValue.setRowSelection}
-            isLoading={contextValue.isLoading}
-            skeletonRows={contextValue.skeletonRows}
-            getRowClassName={contextValue.getRowClassName}
-            maxHeight={contextValue.maxHeight}
-            stickyHeader={contextValue.stickyHeader}
-            meta={{ currencyCode: contextValue.currencyCode }}
-          />
+          <ProductImagePreviewProvider>
+            <DataTable
+              columns={contextValue.tableColumns}
+              data={contextValue.data}
+              getRowId={contextValue.getRowId}
+              rowSelection={contextValue.rowSelection}
+              onRowSelectionChange={contextValue.setRowSelection}
+              isLoading={contextValue.isLoading}
+              skeletonRows={contextValue.skeletonRows}
+              getRowClassName={contextValue.getRowClassName}
+              maxHeight={contextValue.maxHeight}
+              stickyHeader={contextValue.stickyHeader}
+              meta={{ currencyCode: contextValue.currencyCode }}
+            />
+          </ProductImagePreviewProvider>
         </ProductListProvider>
       </ToastProvider>
     </QueryClientProvider>

@@ -165,19 +165,17 @@ export type CategoryRepository = {
   isDescendant(categoryId: string, targetId: string): Promise<boolean>;
 };
 
-export type ParameterFilters = {
+export type BaseFilters = {
   search?: string;
-  catalogId?: string;
   skip?: number;
   limit?: number;
+};
+
+export type ParameterFilters = BaseFilters & {
+  catalogId?: string;
 };
 export type ParameterCreateInput = ProductParameterCreateInput;
 export type ParameterUpdateInput = ProductParameterUpdateInput;
-export type CustomFieldFilters = {
-  search?: string;
-  skip?: number;
-  limit?: number;
-};
 export type CustomFieldCreateInput = ProductCustomFieldDefinitionCreateInput;
 export type CustomFieldUpdateInput = ProductCustomFieldDefinitionUpdateInput;
 
@@ -192,7 +190,7 @@ export type ParameterRepository = {
 };
 
 export type CustomFieldRepository = {
-  listCustomFields(filters: CustomFieldFilters): Promise<ProductCustomFieldDefinition[]>;
+  listCustomFields(filters: BaseFilters): Promise<ProductCustomFieldDefinition[]>;
   getCustomFieldById(id: string): Promise<ProductCustomFieldDefinition | null>;
   createCustomField(data: CustomFieldCreateInput): Promise<ProductCustomFieldDefinition>;
   updateCustomField(id: string, data: CustomFieldUpdateInput): Promise<ProductCustomFieldDefinition>;
@@ -200,14 +198,8 @@ export type CustomFieldRepository = {
   findByName(name: string): Promise<ProductCustomFieldDefinition | null>;
 };
 
-export type ProducerFilters = {
-  search?: string;
-  skip?: number;
-  limit?: number;
-};
-
 export type ProducerRepository = {
-  listProducers(filters: ProducerFilters): Promise<Producer[]>;
+  listProducers(filters: BaseFilters): Promise<Producer[]>;
   getProducerById(id: string): Promise<Producer | null>;
   createProducer(data: { name: string; website?: string | null }): Promise<Producer>;
   updateProducer(id: string, data: { name?: string; website?: string | null }): Promise<Producer>;

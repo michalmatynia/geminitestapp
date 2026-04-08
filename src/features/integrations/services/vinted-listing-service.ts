@@ -33,6 +33,16 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 const classifyVintedFailure = (message: string): string => {
   const lower = message.toLowerCase();
   if (
+    lower.includes('mapping required') ||
+    lower.includes('could not be selected in the listing form') ||
+    lower.includes('category mapping') ||
+    lower.includes('condition mapping') ||
+    lower.includes('size mapping') ||
+    lower.includes('brand mapping')
+  ) {
+    return 'MAPPING';
+  }
+  if (
     lower.includes('publish verification') ||
     lower.includes('submit button') ||
     lower.includes('required field')

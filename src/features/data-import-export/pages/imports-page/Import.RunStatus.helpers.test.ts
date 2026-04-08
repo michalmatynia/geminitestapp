@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import type { BaseImportItemRecord, BaseImportRunParameterImportSummary } from '@/shared/contracts/integrations/base-com';
 
 import {
+  buildCustomFieldImportSummaryFromItems,
   buildParameterImportSummaryFromItems,
   compareImportItemsByLatestCompletion,
+  formatCustomFieldImportHistory,
+  getCustomFieldImportHistoryItems,
   getImportRunErrorItems,
   getParameterSyncHistoryItems,
   hasRetryableImportItems,
@@ -129,5 +132,98 @@ describe('Import.RunStatus.helpers', () => {
       'new',
       'middle',
     ]);
+  });
+
+  it('aggregates unique custom-field import diagnostics from item metadata', () => {
+    expect(
+      buildCustomFieldImportSummaryFromItems([
+        createItem({
+          id: 'item-1',
+          metadata: {
+            customFieldImport: {
+              seededFieldNames: ['Market Exclusion'],
+              autoMatchedFieldNames: ['Market Exclusion'],
+              explicitMappedFieldNames: ['Notes'],
+              skippedFieldNames: [],
+              overriddenFieldNames: [],
+            },
+          },
+        }),
+        createItem({
+          id: 'item-2',
+          metadata: {
+            customFieldImport: {
+              seededFieldNames: ['Market Exclusion'],
+              autoMatchedFieldNames: ['Market Exclusion', 'Shipping Notes'],
+              explicitMappedFieldNames: ['Notes'],
+              skippedFieldNames: ['Warnings'],
+              overriddenFieldNames: ['Market Exclusion'],
+            },
+          },
+        }),
+        createItem({
+          id: 'item-3',
+          metadata: {
+            customFieldImport: {
+              seededFieldNames: ['   ', 42],
+              autoMatchedFieldNames: null,
+            },
+          } as unknown as BaseImportItemRecord['metadata'],
+        }),
+      ])
+    ).toEqual({
+      itemsApplied: 2,
+      seeded: 1,
+      autoMatched: 2,
+      explicitMapped: 1,
+      skipped: 1,
+      overridden: 1,
+    });
+  });
+
+  it('sorts and formats recent custom-field import history entries', () => {
+    const items = [
+      createItem({
+        id: 'item-old',
+        itemId: 'old',
+        finishedAt: '2026-01-01T00:00:00.000Z',
+        metadata: {
+          customFieldImport: {
+            seededFieldNames: [],
+            autoMatchedFieldNames: ['Market Exclusion'],
+            explicitMappedFieldNames: [],
+            skippedFieldNames: [],
+            overriddenFieldNames: [],
+          },
+        },
+      }),
+      createItem({
+        id: 'item-new',
+        itemId: 'new',
+        finishedAt: '2026-01-03T00:00:00.000Z',
+        metadata: {
+          customFieldImport: {
+            seededFieldNames: ['Market Exclusion'],
+            autoMatchedFieldNames: ['Market Exclusion'],
+            explicitMappedFieldNames: ['Notes'],
+            skippedFieldNames: ['Warnings'],
+            overriddenFieldNames: ['Market Exclusion'],
+          },
+        },
+      }),
+      createItem({
+        id: 'item-none',
+        itemId: 'none',
+      }),
+    ];
+
+    expect(getCustomFieldImportHistoryItems(items, 2).map((item: BaseImportItemRecord) => item.itemId)).toEqual([
+      'new',
+      'old',
+    ]);
+    expect(formatCustomFieldImportHistory(items[1]!)).toBe(
+      'seeded: Market Exclusion · auto: Market Exclusion · explicit: Notes · skipped: Warnings · overridden: Market Exclusion'
+    );
+    expect(formatCustomFieldImportHistory(items[2]!)).toBeNull();
   });
 });

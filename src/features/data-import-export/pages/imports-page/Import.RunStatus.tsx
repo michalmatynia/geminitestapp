@@ -10,7 +10,10 @@ import {
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { BaseImportItemRecord } from '@/shared/contracts/integrations/base-com';
 import {
+  buildCustomFieldImportSummaryFromItems,
+  formatCustomFieldImportHistory,
   getImportRunErrorItems,
+  getCustomFieldImportHistoryItems,
   getParameterSyncHistoryItems,
   hasRetryableImportItems,
   resolveImportRunParameterImportSummary,
@@ -43,6 +46,16 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
 
   const parameterSyncHistoryItems = React.useMemo(
     (): BaseImportItemRecord[] => getParameterSyncHistoryItems(activeRunItems),
+    [activeRunItems]
+  );
+
+  const activeRunCustomFieldImportSummary = React.useMemo(
+    () => buildCustomFieldImportSummaryFromItems(activeRunItems),
+    [activeRunItems]
+  );
+
+  const customFieldImportHistoryItems = React.useMemo(
+    (): BaseImportItemRecord[] => getCustomFieldImportHistoryItems(activeRunItems),
     [activeRunItems]
   );
 
@@ -124,6 +137,42 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
                   {item.parameterImportSummary?.written ?? 0}
                 </p>
               ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {activeRunCustomFieldImportSummary ? (
+        <div className='mt-3 rounded-md border border-border/60 bg-gray-950/30 p-3'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <p className='text-[11px] font-semibold uppercase tracking-wider text-gray-300'>
+              Custom field import
+            </p>
+            <span className='text-[11px] text-gray-400'>
+              Items with activity: {activeRunCustomFieldImportSummary.itemsApplied}
+            </span>
+          </div>
+          <p className='mt-1 text-xs text-gray-300'>
+            Seeded fields {activeRunCustomFieldImportSummary.seeded} · Auto-matched fields{' '}
+            {activeRunCustomFieldImportSummary.autoMatched} · Explicitly mapped fields{' '}
+            {activeRunCustomFieldImportSummary.explicitMapped} · Skipped fields{' '}
+            {activeRunCustomFieldImportSummary.skipped} · Overridden fields{' '}
+            {activeRunCustomFieldImportSummary.overridden}
+          </p>
+          {customFieldImportHistoryItems.length > 0 ? (
+            <div className='mt-2 space-y-1'>
+              {customFieldImportHistoryItems.map((item: BaseImportItemRecord) => {
+                const history = formatCustomFieldImportHistory(item);
+                if (!history) return null;
+                return (
+                  <p
+                    key={`${item.itemId}-${item.attempt}-custom-field-import`}
+                    className='text-[11px] text-gray-400 font-mono truncate'
+                  >
+                    {item.itemId}
+                    {item.sku ? ` (${item.sku})` : ''} · {history}
+                  </p>
+                );
+              })}
             </div>
           ) : null}
         </div>

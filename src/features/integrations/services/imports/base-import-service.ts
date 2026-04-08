@@ -78,6 +78,66 @@ const BASE_IMPORT_TERMINAL_STATUSES = new Set([
 
 const BASE_IMPORT_RESUME_DEFAULT_STATUSES: BaseImportItemStatus[] = ['failed', 'pending'];
 
+const normalizeCustomFieldName = (value: string): string => value.trim().toLowerCase();
+
+const collectCustomFieldOptionKeys = (
+  definition: ProductCustomFieldDefinition
+): Set<string> => {
+  if (definition.type !== 'checkbox_set') {
+    return new Set<string>();
+  }
+  return new Set(
+    definition.options
+      .map((option) => option.label.trim().toLowerCase())
+      .filter((label: string): boolean => label.length > 0)
+  );
+};
+
+const collectSeededCustomFieldNames = (
+  previousDefinitions: ProductCustomFieldDefinition[],
+  nextDefinitions: ProductCustomFieldDefinition[]
+): string[] => {
+  const previousByName = new Map<string, ProductCustomFieldDefinition>();
+  previousDefinitions.forEach((definition: ProductCustomFieldDefinition) => {
+    const normalizedName = normalizeCustomFieldName(definition.name);
+    if (!normalizedName) return;
+    previousByName.set(normalizedName, definition);
+  });
+
+  const seededNames = new Set<string>();
+  nextDefinitions.forEach((definition: ProductCustomFieldDefinition) => {
+    const normalizedName = normalizeCustomFieldName(definition.name);
+    const displayName = definition.name.trim();
+    if (!normalizedName || !displayName) return;
+
+    const previousDefinition = previousByName.get(normalizedName);
+    if (!previousDefinition) {
+      seededNames.add(displayName);
+      return;
+    }
+
+    if (previousDefinition.type !== definition.type) {
+      seededNames.add(displayName);
+      return;
+    }
+
+    if (definition.type !== 'checkbox_set' || previousDefinition.type !== 'checkbox_set') {
+      return;
+    }
+
+    const previousOptionKeys = collectCustomFieldOptionKeys(previousDefinition);
+    const hasNewOption = definition.options.some((option) => {
+      const normalizedOptionLabel = option.label.trim().toLowerCase();
+      return normalizedOptionLabel.length > 0 && !previousOptionKeys.has(normalizedOptionLabel);
+    });
+    if (hasNewOption) {
+      seededNames.add(displayName);
+    }
+  });
+
+  return Array.from(seededNames).sort((left: string, right: string) => left.localeCompare(right));
+};
+
 export const prepareBaseImportRun = async (
   input: StartBaseImportRunInput
 ): Promise<BaseImportRunRecord> => {
@@ -545,12 +605,17 @@ export const processBaseImportRun = async (
         run.params.inventoryId,
         dueItems.map((item: BaseImportItemRecord): string => item.itemId)
       );
+      const previousCustomFieldDefinitions = customFieldDefinitions;
       customFieldDefinitions = await ensureBaseMarketplaceExclusionCustomField({
         repository: customFieldRepository,
         existingDefinitions: customFieldDefinitions,
         records: Array.from(detailsMap.values()),
         persist: !run.params.dryRun,
       });
+      const seededCustomFieldNames = collectSeededCustomFieldNames(
+        previousCustomFieldDefinitions,
+        customFieldDefinitions
+      );
 
       // Performance optimization: batch pre-fetch existing products
       const batchBaseProductIds: string[] = [];
@@ -669,6 +734,7 @@ export const processBaseImportRun = async (
             defaultPriceGroupId: pricingContext.defaultPriceGroupId,
             preferredPriceCurrencies: pricingContext.preferredCurrencies,
             customFieldDefinitions,
+            customFieldImportSeededFieldNames: seededCustomFieldNames,
             lookups,
             templateMappings,
             productRepository,
@@ -702,6 +768,7 @@ export const processBaseImportRun = async (
                 importedProductId: result.importedProductId ?? null,
                 payloadSnapshot: result.payloadSnapshot ?? null,
                 parameterImportSummary: result.parameterImportSummary ?? null,
+                ...(result.metadata ? { metadata: result.metadata } : {}),
                 errorCode: result.errorCode ?? null,
                 errorClass: result.errorClass ?? 'transient',
                 errorMessage: result.errorMessage ?? 'Retry scheduled.',

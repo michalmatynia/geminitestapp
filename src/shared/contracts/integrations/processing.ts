@@ -25,6 +25,7 @@ export type ProcessItemResult = {
   retryable?: boolean | null;
   nextRetryAt?: string | null;
   lastErrorAt?: string | null;
+  metadata?: Record<string, unknown>;
   payloadSnapshot?: ProductCreateInput | null;
   parameterImportSummary?: BaseImportParameterImportSummary | null;
 };

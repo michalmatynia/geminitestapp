@@ -17,6 +17,38 @@ const escapeCsv = (value: unknown): string => {
   return raw;
 };
 
+type CustomFieldImportMetadata = {
+  seededFieldNames?: string[];
+  autoMatchedFieldNames?: string[];
+  explicitMappedFieldNames?: string[];
+  skippedFieldNames?: string[];
+  overriddenFieldNames?: string[];
+};
+
+const readStringList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry: unknown): entry is string => typeof entry === 'string')
+    .map((entry: string): string => entry.trim())
+    .filter((entry: string): boolean => entry.length > 0);
+};
+
+const readCustomFieldImportMetadata = (value: unknown): CustomFieldImportMetadata => {
+  if (!value || typeof value !== 'object') {
+    return {};
+  }
+  const record = value as Record<string, unknown>;
+  return {
+    seededFieldNames: readStringList(record['seededFieldNames']),
+    autoMatchedFieldNames: readStringList(record['autoMatchedFieldNames']),
+    explicitMappedFieldNames: readStringList(record['explicitMappedFieldNames']),
+    skippedFieldNames: readStringList(record['skippedFieldNames']),
+    overriddenFieldNames: readStringList(record['overriddenFieldNames']),
+  };
+};
+
+const stringifyStringList = (value: string[] | undefined): string => (value ?? []).join('; ');
+
 const buildCsv = (detail: BaseImportRunDetailResponse): string => {
   const header = [
     'itemId',
@@ -32,12 +64,22 @@ const buildCsv = (detail: BaseImportRunDetailResponse): string => {
     'parameterResolved',
     'parameterCreated',
     'parameterWritten',
+    'customFieldSeeded',
+    'customFieldAutoMatched',
+    'customFieldExplicitMapped',
+    'customFieldSkipped',
+    'customFieldOverridden',
     'startedAt',
     'finishedAt',
   ];
 
-  const rows = detail.items.map((item) =>
-    [
+  const rows = detail.items.map((item) => {
+    const customFieldImport = readCustomFieldImportMetadata(
+      item.metadata && typeof item.metadata === 'object'
+        ? (item.metadata as Record<string, unknown>)['customFieldImport']
+        : null
+    );
+    return [
       item.itemId,
       item.status,
       item.action,
@@ -51,12 +93,17 @@ const buildCsv = (detail: BaseImportRunDetailResponse): string => {
       item.parameterImportSummary?.resolved ?? '',
       item.parameterImportSummary?.created ?? '',
       item.parameterImportSummary?.written ?? '',
+      stringifyStringList(customFieldImport.seededFieldNames),
+      stringifyStringList(customFieldImport.autoMatchedFieldNames),
+      stringifyStringList(customFieldImport.explicitMappedFieldNames),
+      stringifyStringList(customFieldImport.skippedFieldNames),
+      stringifyStringList(customFieldImport.overriddenFieldNames),
       item.startedAt ?? '',
       item.finishedAt ?? '',
     ]
       .map((cell) => escapeCsv(cell))
-      .join(',')
-  );
+      .join(',');
+  });
 
   return `${header.join(',')}\n${rows.join('\n')}`;
 };

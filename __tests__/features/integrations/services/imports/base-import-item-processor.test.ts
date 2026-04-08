@@ -274,4 +274,44 @@ describe('base import item processor', () => {
       })
     );
   });
+
+  it('attaches custom-field import metadata to dry-run results', async () => {
+    const result = await importSingleItem({
+      ...createBaseInput(),
+      run: { id: 'run-1', params: { dryRun: true } } as never,
+      raw: {
+        product_id: 'base-1',
+        sku: 'SKU-1',
+        Tradera: '1',
+      } as never,
+      productRepository: {
+        findProductByBaseId: vi.fn(async () => null),
+        getProductBySku: vi.fn(async () => null),
+      } as never,
+      dryRun: true,
+      customFieldDefinitions: [
+        {
+          id: 'market-exclusion',
+          name: 'Market Exclusion',
+          type: 'checkbox_set',
+          options: [{ id: 'tradera', label: 'Tradera' }],
+          createdAt: '2026-04-08T00:00:00.000Z',
+          updatedAt: '2026-04-08T00:00:00.000Z',
+        },
+      ],
+      customFieldImportSeededFieldNames: ['Market Exclusion', 'Notes'],
+    });
+
+    expect(result.status).toBe('imported');
+    expect(result.action).toBe('dry_run');
+    expect(result.metadata).toEqual({
+      customFieldImport: {
+        seededFieldNames: ['Market Exclusion'],
+        autoMatchedFieldNames: ['Market Exclusion'],
+        explicitMappedFieldNames: [],
+        skippedFieldNames: [],
+        overriddenFieldNames: [],
+      },
+    });
+  });
 });

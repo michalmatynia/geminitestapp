@@ -14,6 +14,16 @@ import {
 } from '@/shared/lib/products/utils/custom-field-values';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+export type BaseCustomFieldImportDiagnostics = {
+  autoMatchedFieldIds: string[];
+  autoMatchedFieldNames: string[];
+  explicitMappedFieldIds: string[];
+  explicitMappedFieldNames: string[];
+  skippedFieldIds: string[];
+  skippedFieldNames: string[];
+  overriddenFieldIds: string[];
+  overriddenFieldNames: string[];
+};
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value === 'string') {
@@ -958,6 +968,121 @@ const autoExtractCustomFieldValues = (
   });
 
   return normalizeProductCustomFieldValues(Array.from(customFieldValuesById.values()));
+};
+
+const normalizeCustomFieldValueForComparison = (
+  value: ProductCustomFieldValue | undefined
+): ProductCustomFieldValue | null => {
+  if (!value) return null;
+  return normalizeProductCustomFieldValues([value])[0] ?? null;
+};
+
+const serializeNormalizedCustomFieldValue = (
+  value: ProductCustomFieldValue | undefined
+): string => JSON.stringify(normalizeCustomFieldValueForComparison(value));
+
+const sortUniqueStrings = (values: Iterable<string>): string[] =>
+  Array.from(new Set(Array.from(values).filter((value: string): boolean => value.trim().length > 0))).sort(
+    (left: string, right: string) => left.localeCompare(right)
+  );
+
+const createCustomFieldNameResolver = (
+  customFieldDefinitions: ProductCustomFieldDefinition[] | undefined
+): ((fieldId: string) => string) => {
+  const fieldNameById = new Map<string, string>();
+  (customFieldDefinitions ?? []).forEach((customField: ProductCustomFieldDefinition) => {
+    const fieldId = customField.id.trim();
+    const fieldName = customField.name.trim();
+    if (!fieldId || !fieldName) return;
+    fieldNameById.set(fieldId, fieldName);
+  });
+
+  return (fieldId: string): string => fieldNameById.get(fieldId) ?? fieldId;
+};
+
+export const collectCustomFieldImportDiagnostics = (
+  record: BaseProductRecord,
+  mappings: TemplateMapping[] = [],
+  customFieldDefinitions?: ProductCustomFieldDefinition[]
+): BaseCustomFieldImportDiagnostics => {
+  const resolveFieldName = createCustomFieldNameResolver(customFieldDefinitions);
+  const autoMatchedValues = autoExtractCustomFieldValues(record, customFieldDefinitions);
+  const autoMatchedByFieldId = new Map<string, ProductCustomFieldValue>();
+  autoMatchedValues.forEach((value: ProductCustomFieldValue) => {
+    autoMatchedByFieldId.set(value.fieldId, value);
+  });
+
+  const mergedByFieldId = new Map<string, ProductCustomFieldValue>(autoMatchedByFieldId);
+  const explicitMappedFieldIds = new Set<string>();
+  const skippedFieldIds = new Set<string>();
+
+  for (const mapping of mappings) {
+    const sourceKey = mapping.sourceKey.trim();
+    const targetField = mapping.targetField.trim();
+    if (!sourceKey || !targetField) continue;
+
+    const customFieldTarget = parseProductCustomFieldTarget(targetField);
+    if (!customFieldTarget) continue;
+
+    const fieldId = customFieldTarget.fieldId.trim();
+    if (!fieldId) continue;
+
+    const rawValue = resolveTemplateValue(record, sourceKey);
+    if (rawValue === null || rawValue === undefined) {
+      skippedFieldIds.add(fieldId);
+      continue;
+    }
+
+    explicitMappedFieldIds.add(fieldId);
+    if (customFieldTarget.optionId) {
+      mergeCheckboxOptionSelection(
+        mergedByFieldId,
+        fieldId,
+        customFieldTarget.optionId,
+        toCheckboxValue(rawValue)
+      );
+      continue;
+    }
+
+    const textValue = toStringValue(rawValue);
+    if (textValue === null) {
+      skippedFieldIds.add(fieldId);
+      continue;
+    }
+    mergedByFieldId.set(fieldId, {
+      fieldId,
+      textValue,
+    });
+  }
+
+  const overriddenFieldIds = new Set<string>();
+  explicitMappedFieldIds.forEach((fieldId: string) => {
+    if (!autoMatchedByFieldId.has(fieldId)) return;
+    if (
+      serializeNormalizedCustomFieldValue(autoMatchedByFieldId.get(fieldId)) !==
+      serializeNormalizedCustomFieldValue(mergedByFieldId.get(fieldId))
+    ) {
+      overriddenFieldIds.add(fieldId);
+    }
+  });
+
+  const skippedOnlyFieldIds = Array.from(skippedFieldIds).filter(
+    (fieldId: string): boolean => !explicitMappedFieldIds.has(fieldId)
+  );
+  const autoMatchedFieldIds = autoMatchedValues.map((value: ProductCustomFieldValue) => value.fieldId);
+  const explicitMappedFieldIdList = Array.from(explicitMappedFieldIds);
+  const overriddenFieldIdList = Array.from(overriddenFieldIds);
+
+  return {
+    autoMatchedFieldIds: sortUniqueStrings(autoMatchedFieldIds),
+    autoMatchedFieldNames: sortUniqueStrings(autoMatchedFieldIds.map(resolveFieldName)),
+    explicitMappedFieldIds: sortUniqueStrings(explicitMappedFieldIdList),
+    explicitMappedFieldNames: sortUniqueStrings(explicitMappedFieldIdList.map(resolveFieldName)),
+    skippedFieldIds: sortUniqueStrings(skippedOnlyFieldIds),
+    skippedFieldNames: sortUniqueStrings(skippedOnlyFieldIds.map(resolveFieldName)),
+    overriddenFieldIds: sortUniqueStrings(overriddenFieldIdList),
+    overriddenFieldNames: sortUniqueStrings(overriddenFieldIdList.map(resolveFieldName)),
+  };
 };
 
 const applyTemplateMappings = (

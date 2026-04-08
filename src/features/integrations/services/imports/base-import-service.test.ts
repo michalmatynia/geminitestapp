@@ -366,6 +366,7 @@ describe('processBaseImportRun market exclusion custom fields', () => {
             name: 'Market Exclusion',
           }),
         ]),
+        customFieldImportSeededFieldNames: ['Market Exclusion'],
       })
     );
     expect(result.status).toBe('completed');
@@ -397,6 +398,7 @@ describe('processBaseImportRun market exclusion custom fields', () => {
             name: 'Market Exclusion',
           }),
         ]),
+        customFieldImportSeededFieldNames: ['Market Exclusion'],
       })
     );
     expect(result.status).toBe('completed');

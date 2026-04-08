@@ -230,4 +230,54 @@ describe('base import run routes', () => {
       totalPages: 1,
     });
   });
+
+  it('report route includes custom-field import diagnostics in csv output', async () => {
+    getBaseImportRunDetailOrThrowMock.mockResolvedValue({
+      run: {
+        id: 'run-report-csv-1',
+        status: 'completed',
+      },
+      items: [
+        {
+          itemId: '1001',
+          status: 'updated',
+          action: 'updated',
+          attempt: 1,
+          metadata: {
+            customFieldImport: {
+              seededFieldNames: ['Market Exclusion'],
+              autoMatchedFieldNames: ['Market Exclusion'],
+              explicitMappedFieldNames: ['Market Exclusion'],
+              skippedFieldNames: ['Notes'],
+              overriddenFieldNames: ['Market Exclusion'],
+            },
+          },
+        },
+      ],
+      pagination: {
+        page: 1,
+        pageSize: 1000,
+        totalItems: 1,
+        totalPages: 1,
+      },
+    });
+
+    const response = await reportGet(
+      new NextRequest(
+        'http://localhost/api/v2/integrations/imports/base/runs/run-report-csv-1/report?format=csv'
+      ),
+      { params: Promise.resolve({ runId: 'run-report-csv-1' }) }
+    );
+    const csv = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toContain('text/csv');
+    expect(csv).toContain('customFieldSeeded');
+    expect(csv).toContain('customFieldAutoMatched');
+    expect(csv).toContain('customFieldExplicitMapped');
+    expect(csv).toContain('customFieldSkipped');
+    expect(csv).toContain('customFieldOverridden');
+    expect(csv).toContain('Market Exclusion');
+    expect(csv).toContain('Notes');
+  });
 });

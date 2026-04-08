@@ -6,7 +6,10 @@ import {
   baseMarketExclusionGroupedValuesRecord,
   baseMarketExclusionNestedFeatureRecord,
 } from './base-import-fixtures';
-import { mapBaseProduct } from './base-mapper';
+import {
+  collectCustomFieldImportDiagnostics,
+  mapBaseProduct,
+} from './base-mapper';
 
 describe('mapBaseProduct', () => {
   describe('auto-extraction of producers and tags', () => {
@@ -424,6 +427,67 @@ describe('mapBaseProduct', () => {
       expect(result.customFields).toEqual([
         { fieldId: 'market-exclusion', selectedOptionIds: [] },
       ]);
+    });
+
+    it('collects override diagnostics when explicit mappings change auto-matched checkbox values', () => {
+      const diagnostics = collectCustomFieldImportDiagnostics(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          Tradera: '1',
+          tradera_excluded: '0',
+        },
+        [
+          {
+            sourceKey: 'tradera_excluded',
+            targetField: 'custom_field_option:market-exclusion:tradera',
+          },
+        ],
+        [
+          {
+            id: 'market-exclusion',
+            name: 'Market Exclusion',
+            type: 'checkbox_set',
+            options: [{ id: 'tradera', label: 'Tradera' }],
+            createdAt: '2026-04-08T00:00:00.000Z',
+            updatedAt: '2026-04-08T00:00:00.000Z',
+          },
+        ]
+      );
+
+      expect(diagnostics.autoMatchedFieldNames).toEqual(['Market Exclusion']);
+      expect(diagnostics.explicitMappedFieldNames).toEqual(['Market Exclusion']);
+      expect(diagnostics.overriddenFieldNames).toEqual(['Market Exclusion']);
+      expect(diagnostics.skippedFieldNames).toEqual([]);
+    });
+
+    it('collects skipped diagnostics when explicit custom-field mappings have no source value', () => {
+      const diagnostics = collectCustomFieldImportDiagnostics(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+        },
+        [
+          {
+            sourceKey: 'custom_note',
+            targetField: 'custom_field:notes',
+          },
+        ],
+        [
+          {
+            id: 'notes',
+            name: 'Notes',
+            type: 'text',
+            createdAt: '2026-04-08T00:00:00.000Z',
+            updatedAt: '2026-04-08T00:00:00.000Z',
+          },
+        ]
+      );
+
+      expect(diagnostics.autoMatchedFieldNames).toEqual([]);
+      expect(diagnostics.explicitMappedFieldNames).toEqual([]);
+      expect(diagnostics.overriddenFieldNames).toEqual([]);
+      expect(diagnostics.skippedFieldNames).toEqual(['Notes']);
     });
   });
 });

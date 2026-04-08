@@ -271,4 +271,48 @@ describe('vinted-listing-service', () => {
       })
     );
   });
+
+  it('classifies deterministic Vinted mapping failures separately from generic form errors', async () => {
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+      },
+    });
+    runVintedBrowserListingMock.mockRejectedValue(
+      internalError(
+        'Vinted category mapping required: set a Vinted Category custom field or parameter, or assign an internal product category.',
+        {
+          fieldName: 'category',
+          diagnostics: {
+            availableCustomFields: ['Market Exclusion'],
+            availableParameters: ['Condition'],
+            productCategoryPath: 'Women > Dresses',
+            producerNames: ['COS'],
+          },
+        }
+      )
+    );
+
+    const result = await runVintedListing({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'api',
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorCategory: 'MAPPING',
+      metadata: expect.objectContaining({
+        fieldName: 'category',
+        diagnostics: expect.objectContaining({
+          productCategoryPath: 'Women > Dresses',
+        }),
+        requestedBrowserMode: 'headed',
+        requestedBrowserPreference: 'brave',
+      }),
+    });
+  });
 });

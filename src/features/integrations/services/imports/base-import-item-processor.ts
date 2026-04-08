@@ -1,7 +1,10 @@
 import path from 'path';
 
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
-import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
+import {
+  collectCustomFieldImportDiagnostics,
+  mapBaseProduct,
+} from '@/features/integrations/services/imports/base-mapper';
 import { applyBaseParameterImport } from '@/features/integrations/services/imports/parameter-import/apply';
 import { emitProductCacheInvalidation } from '@/shared/events/products';
 import {
@@ -499,10 +502,59 @@ const mergeCustomFieldValues = (
 
 type ParameterImportSummary = BaseParameterImportSummary;
 
+type CustomFieldImportMetadata = {
+  seededFieldNames: string[];
+  autoMatchedFieldNames: string[];
+  explicitMappedFieldNames: string[];
+  skippedFieldNames: string[];
+  overriddenFieldNames: string[];
+};
+
 type ParameterImportResult = {
   applied: boolean;
   parameters: ProductParameterValue[];
   summary: ParameterImportSummary;
+};
+
+const buildCustomFieldImportMetadata = (input: {
+  seededFieldNames?: string[];
+  autoMatchedFieldNames?: string[];
+  explicitMappedFieldNames?: string[];
+  skippedFieldNames?: string[];
+  overriddenFieldNames?: string[];
+}): CustomFieldImportMetadata | null => {
+  const normalize = (values: string[] | undefined): string[] =>
+    Array.from(
+      new Set(
+        (values ?? [])
+          .map((value: string): string => value.trim())
+          .filter((value: string): boolean => value.length > 0)
+      )
+    ).sort((left: string, right: string) => left.localeCompare(right));
+
+  const seededFieldNames = normalize(input.seededFieldNames);
+  const autoMatchedFieldNames = normalize(input.autoMatchedFieldNames);
+  const explicitMappedFieldNames = normalize(input.explicitMappedFieldNames);
+  const skippedFieldNames = normalize(input.skippedFieldNames);
+  const overriddenFieldNames = normalize(input.overriddenFieldNames);
+
+  if (
+    seededFieldNames.length === 0 &&
+    autoMatchedFieldNames.length === 0 &&
+    explicitMappedFieldNames.length === 0 &&
+    skippedFieldNames.length === 0 &&
+    overriddenFieldNames.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    seededFieldNames,
+    autoMatchedFieldNames,
+    explicitMappedFieldNames,
+    skippedFieldNames,
+    overriddenFieldNames,
+  };
 };
 
 export const importSingleItem = async (input: {
@@ -526,6 +578,7 @@ export const importSingleItem = async (input: {
   allowDuplicateSku: boolean;
   parameterImportSettings?: ImportTemplateParameterImport;
   customFieldDefinitions?: ProductCustomFieldDefinition[];
+  customFieldImportSeededFieldNames?: string[];
   catalogLanguageCodes?: string[];
   defaultLanguageCode?: string | null;
   prefetchedParameters?: ProductParameter[];
@@ -545,6 +598,29 @@ export const importSingleItem = async (input: {
   );
   const templateMappedParameterValues = normalizeParameterValues(mapped.parameters);
   const templateMappedCustomFieldValues = normalizeProductCustomFieldValues(mapped.customFields);
+  const customFieldDiagnostics = collectCustomFieldImportDiagnostics(
+    input.raw,
+    input.templateMappings,
+    input.customFieldDefinitions
+  );
+  const touchedCustomFieldNames = new Set<string>([
+    ...customFieldDiagnostics.autoMatchedFieldNames,
+    ...customFieldDiagnostics.explicitMappedFieldNames,
+    ...customFieldDiagnostics.skippedFieldNames,
+    ...customFieldDiagnostics.overriddenFieldNames,
+  ]);
+  const customFieldImportMetadata = buildCustomFieldImportMetadata({
+    seededFieldNames: (input.customFieldImportSeededFieldNames ?? []).filter((fieldName: string) =>
+      touchedCustomFieldNames.has(fieldName)
+    ),
+    autoMatchedFieldNames: customFieldDiagnostics.autoMatchedFieldNames,
+    explicitMappedFieldNames: customFieldDiagnostics.explicitMappedFieldNames,
+    skippedFieldNames: customFieldDiagnostics.skippedFieldNames,
+    overriddenFieldNames: customFieldDiagnostics.overriddenFieldNames,
+  });
+  const resultMetadata = customFieldImportMetadata
+    ? { metadata: { customFieldImport: customFieldImportMetadata } }
+    : {};
   const mappedProducerIds = resolveProducerIds(mapped.producerIds, input.lookups);
   const mappedTagIds = resolveTagIds(mapped.tagIds, input.lookups);
   const imageUrls = (mapped.imageLinks ?? []).slice(0, MAX_IMAGES_PER_PRODUCT);
@@ -577,6 +653,7 @@ export const importSingleItem = async (input: {
   if (decision.type === 'skip') {
     const classified = classifyByErrorCode(decision.code);
     return {
+      ...resultMetadata,
       status: 'skipped',
       action: input.dryRun ? 'dry_run' : 'skipped',
       baseProductId: mappedBaseProductId,
@@ -592,6 +669,7 @@ export const importSingleItem = async (input: {
   if (decision.type === 'fail') {
     const classified = classifyByErrorCode(decision.code);
     return {
+      ...resultMetadata,
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
@@ -675,6 +753,7 @@ export const importSingleItem = async (input: {
       if (skuOwner && skuOwner.id !== decision.target.id) {
         const classified = classifyByErrorCode('DUPLICATE_SKU');
         return {
+          ...resultMetadata,
           status: 'skipped',
           action: input.dryRun ? 'dry_run' : 'skipped',
           baseProductId: mappedBaseProductId,
@@ -693,6 +772,7 @@ export const importSingleItem = async (input: {
     if (!validationResult.success) {
       const classified = classifyByErrorCode('VALIDATION_ERROR');
       return {
+        ...resultMetadata,
         status: 'failed',
         action: 'failed',
         baseProductId: mappedBaseProductId,
@@ -708,6 +788,7 @@ export const importSingleItem = async (input: {
 
     if (input.dryRun) {
       return {
+        ...resultMetadata,
         status: 'updated',
         action: 'dry_run',
         importedProductId: decision.target.id,
@@ -762,6 +843,7 @@ export const importSingleItem = async (input: {
     emitProductCacheInvalidation();
 
     return {
+      ...resultMetadata,
       status: 'updated',
       action: 'updated',
       importedProductId: updated.id,
@@ -776,6 +858,7 @@ export const importSingleItem = async (input: {
   if (!skuForCreate) {
     const classified = classifyByErrorCode('MISSING_SKU');
     return {
+      ...resultMetadata,
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
@@ -846,6 +929,7 @@ export const importSingleItem = async (input: {
   if (!validationResult.success) {
     const classified = classifyByErrorCode('VALIDATION_ERROR');
     return {
+      ...resultMetadata,
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
@@ -861,6 +945,7 @@ export const importSingleItem = async (input: {
 
   if (input.dryRun) {
     return {
+      ...resultMetadata,
       status: 'imported',
       action: 'dry_run',
       baseProductId: mappedBaseProductId,
@@ -933,6 +1018,7 @@ export const importSingleItem = async (input: {
   emitProductCacheInvalidation();
 
   return {
+    ...resultMetadata,
     status: 'imported',
     action: 'imported',
     importedProductId: created.id,

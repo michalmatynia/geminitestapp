@@ -54,6 +54,13 @@ export const VINTED_CATEGORY_SELECTORS = [
   'div[class*="CategorySelect"]',
 ];
 
+export const VINTED_CATEGORY_OPTION_SELECTORS = [
+  '[data-testid="category-item"]',
+  '.c-category-select__item',
+  '[class*="category"] li',
+  '[role="option"]',
+];
+
 // Vinted uses text input + autocomplete for brand selection
 export const VINTED_BRAND_INPUT_SELECTORS = [
   'input[data-testid="brand-input"]',

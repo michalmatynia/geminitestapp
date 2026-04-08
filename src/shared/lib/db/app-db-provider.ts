@@ -74,7 +74,7 @@ export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> =
 };
 
 let resolvedProviderCache: { value: AppDbProvider; ts: number } | null = null;
-const RESOLVED_PROVIDER_TTL_MS = 10000; // 10 seconds
+const RESOLVED_PROVIDER_TTL_MS = 60000; // 60 seconds
 
 export const getAppDbProvider = async (): Promise<AppDbProvider> => {
   const now = Date.now();

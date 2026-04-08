@@ -2,8 +2,6 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 
 import { GET_handler } from './handler';
 
-export const runtime = 'nodejs';
-
 export const GET = apiHandler(GET_handler, {
   source: 'settings.cache.GET',
   requireAuth: true,

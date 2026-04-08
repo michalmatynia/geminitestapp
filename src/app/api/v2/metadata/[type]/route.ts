@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-export const revalidate = 86400;
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { paginationQuerySchema } from '@/shared/contracts/base';

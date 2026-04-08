@@ -1421,6 +1421,188 @@ describe('runTraderaBrowserListing scripted mode', () => {
     );
   });
 
+  it('sets syncSkipImages=true in script input when syncSkipImages is passed for a sync action', async () => {
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-sync-skip-images',
+      listingUrl: 'https://www.tradera.com/item/external-existing',
+      publishVerified: true,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        stage: 'sync_verified',
+        listingUrl: 'https://www.tradera.com/item/external-existing',
+      },
+    });
+
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+        externalListingId: 'external-existing',
+        marketplaceData: {
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+        },
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'sync',
+      browserMode: 'headed',
+      syncSkipImages: true,
+    });
+
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          listingAction: 'sync',
+          syncSkipImages: true,
+        }),
+      })
+    );
+  });
+
+  it('sets syncSkipImages=false in script input when syncSkipImages is not set for a sync action', async () => {
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-sync-with-images',
+      listingUrl: 'https://www.tradera.com/item/external-existing',
+      publishVerified: true,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        stage: 'sync_verified',
+        listingUrl: 'https://www.tradera.com/item/external-existing',
+      },
+    });
+
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+        externalListingId: 'external-existing',
+        marketplaceData: {
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+        },
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'sync',
+      browserMode: 'headed',
+    });
+
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          listingAction: 'sync',
+          syncSkipImages: false,
+        }),
+      })
+    );
+  });
+
+  it('forces syncSkipImages=false in script input when syncSkipImages=true is passed for a non-sync action', async () => {
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-list-no-skip',
+      externalListingId: 'new-listing-id',
+      listingUrl: 'https://www.tradera.com/item/new-listing-id',
+      publishVerified: true,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: { listingUrl: 'https://www.tradera.com/item/new-listing-id' },
+    });
+
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+      syncSkipImages: true,
+    });
+
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          listingAction: 'list',
+          syncSkipImages: false,
+        }),
+      })
+    );
+  });
+
   it('passes an inherited mapped category into quicklist input when only a parent category is mapped', async () => {
     getProductByIdMock.mockResolvedValue({
       id: 'product-1',

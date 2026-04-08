@@ -7,8 +7,6 @@ import {
 
 import type { Metadata } from 'next';
 
-export const revalidate = 3600; // Hourly revalidation for CMS slug pages
-
 interface SlugPageProps {
   params: Promise<{ slug: string[] }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

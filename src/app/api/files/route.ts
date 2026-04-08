@@ -1,6 +1,3 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const revalidate = 300;
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 

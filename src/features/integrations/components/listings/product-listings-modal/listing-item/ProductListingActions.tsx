@@ -125,6 +125,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const persistedTraderaPendingBrowserMode = readString(
     traderaPendingExecution['requestedBrowserMode']
   );
+  const persistedTraderaPendingSkipImages = traderaPendingExecution['skipImages'] === true;
   const persistedTraderaPendingAction = (readString(traderaPendingExecution['action']) ?? '').trim().toLowerCase();
   const isPersistedTraderaQueueState =
     isTraderaBrowserListing &&
@@ -137,9 +138,11 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     isPersistedTraderaQueueState &&
     persistedTraderaPendingAction === 'sync';
   const isQueuedTraderaSyncHeaded =
-    isQueuedTraderaSync && persistedTraderaPendingBrowserMode === 'headed';
+    isQueuedTraderaSync && persistedTraderaPendingBrowserMode === 'headed' && !persistedTraderaPendingSkipImages;
   const isQueuedTraderaSyncHeadless =
-    isQueuedTraderaSync && persistedTraderaPendingBrowserMode === 'headless';
+    isQueuedTraderaSync && persistedTraderaPendingBrowserMode === 'headless' && !persistedTraderaPendingSkipImages;
+  const isQueuedTraderaSyncFieldsOnly =
+    isQueuedTraderaSync && persistedTraderaPendingSkipImages;
   const syncRetryPreferred = persistedTraderaPendingAction === 'sync' || traderaLastExecutionAction === 'sync';
   const isQueuedTraderaHeadless =
     !isRelistingCurrentListing &&
@@ -310,15 +313,17 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
           {isTraderaBrowserListing && (
             <ActionMenu
               trigger={
-                isQueuedTraderaSyncHeaded
-                  ? 'Queued headed sync'
-                  : isQueuedTraderaSyncHeadless
-                    ? 'Queued headless sync'
-                    : isQueuedTraderaSync
-                      ? 'Queued sync'
-                      : isSyncingCurrentListing
-                        ? 'Queuing sync...'
-                        : 'Sync with Tradera'
+                isQueuedTraderaSyncFieldsOnly
+                  ? 'Queued fields-only sync'
+                  : isQueuedTraderaSyncHeaded
+                    ? 'Queued headed sync'
+                    : isQueuedTraderaSyncHeadless
+                      ? 'Queued headless sync'
+                      : isQueuedTraderaSync
+                        ? 'Queued sync'
+                        : isSyncingCurrentListing
+                          ? 'Queuing sync...'
+                          : 'Sync with Tradera'
               }
               variant='outline'
               size='sm'

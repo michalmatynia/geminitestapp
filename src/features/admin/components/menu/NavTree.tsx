@@ -6,6 +6,7 @@ import { useRouter } from 'nextjs-toploader/app';
 import React, { memo, useCallback, useMemo, useRef, startTransition } from 'react';
 
 import { Tooltip, Button } from '@/shared/ui/primitives.public';
+import { useAdminDataPrefetch } from '@/shared/hooks/useAdminDataPrefetch';
 import { TreeContextMenu } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -466,13 +467,15 @@ export const NavTree = memo(function NavTree({
     },
     [router, onSetPendingHrefProp]
   );
+  const { prefetchByHref } = useAdminDataPrefetch();
   const handlePrefetchHrefLocal = useCallback(
     (href: string): void => {
       if (prefetchedHrefSetRef.current.has(href)) return;
       prefetchedHrefSetRef.current.add(href);
       router.prefetch(href);
+      prefetchByHref(href);
     },
-    [router]
+    [router, prefetchByHref]
   );
   const handleNavigateHref = onNavigateHrefProp ?? handleNavigateHrefLocal;
   const handlePrefetchHref = onPrefetchHrefProp ?? handlePrefetchHrefLocal;

@@ -25,8 +25,8 @@ type QueryProviderProps = {
 
 const isDevelopment = process.env['NODE_ENV'] === 'development';
 const enableAdvancedRuntime =
-  isDevelopment && process.env['NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME'] === 'true';
-const enableWarmup = process.env['NEXT_PUBLIC_QUERY_WARMUP'] === 'true';
+  process.env['NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME'] === 'true' || !isDevelopment;
+const enableWarmup = process.env['NEXT_PUBLIC_QUERY_WARMUP'] === 'true' || !isDevelopment;
 
 let browserQueryClient: QueryClient | null = null;
 

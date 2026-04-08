@@ -28,7 +28,7 @@ const readPositiveIntegerEnv = (key: string, fallback: number): number => {
   return parsed;
 };
 
-const CACHE_TTL_MS = readPositiveIntegerEnv('DATABASE_ENGINE_POLICY_CACHE_TTL_MS', 5 * 60_000);
+const CACHE_TTL_MS = readPositiveIntegerEnv('DATABASE_ENGINE_POLICY_CACHE_TTL_MS', 10 * 60_000);
 
 type CachedValue<T> = { value: T; ts: number };
 

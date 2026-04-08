@@ -7,8 +7,6 @@ import {
 
 import type { Metadata } from 'next';
 
-export const revalidate = 3600;
-
 type LocalizedSlugPageProps = {
   params: Promise<{ locale: string; slug: string[] }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

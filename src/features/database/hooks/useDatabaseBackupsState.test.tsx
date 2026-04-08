@@ -6,6 +6,7 @@ import { useDatabaseBackupsState } from './useDatabaseBackupsState';
 const mocks = vi.hoisted(() => ({
   routerPush: vi.fn(),
   toast: vi.fn(),
+  settingsMap: new Map<string, string>(),
   settingsRefetch: vi.fn(),
   updateSettingMutateAsync: vi.fn(),
   createBackupMutateAsync: vi.fn(),
@@ -20,7 +21,7 @@ vi.mock('nextjs-toploader/app', () => ({
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: () => ({
-    data: new Map<string, string>(),
+    data: mocks.settingsMap,
     isPending: false,
     refetch: mocks.settingsRefetch,
   }),
@@ -59,6 +60,7 @@ describe('useDatabaseBackupsState', () => {
   beforeEach(() => {
     mocks.routerPush.mockReset();
     mocks.toast.mockReset();
+    mocks.settingsMap = new Map<string, string>();
     mocks.settingsRefetch.mockReset();
     mocks.updateSettingMutateAsync.mockReset();
     mocks.createBackupMutateAsync.mockReset();

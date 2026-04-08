@@ -122,6 +122,7 @@ const ensureFileCopy = async (sourcePath, targetPath) => {
 
 const nextConfig = {
   reactStrictMode: true,
+  cacheComponents: true,
   devIndicators: false,
   ...(isDev
     ? {
@@ -166,7 +167,6 @@ const nextConfig = {
     // Turbopack is more stable in this repo when it resolves packages normally
     // instead of rewriting import graphs through optimizePackageImports.
     ...(isTurbopack ? {} : { optimizePackageImports }),
-    ppr: 'incremental',
   },
   serverExternalPackages: [
     'bcryptjs',

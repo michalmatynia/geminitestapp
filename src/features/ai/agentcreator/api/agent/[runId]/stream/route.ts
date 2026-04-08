@@ -9,8 +9,6 @@ import {
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-export const runtime = 'nodejs';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 async function GET_handler(

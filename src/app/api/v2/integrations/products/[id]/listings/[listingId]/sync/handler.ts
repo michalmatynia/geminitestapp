@@ -95,6 +95,7 @@ export async function POST_handler(
           requestedBrowserMode: payload.browserMode ?? 'connection_default',
           requestId: jobId,
           queuedAt: enqueuedAt,
+          ...(payload.skipImages ? { skipImages: true } : {}),
         },
       },
     },

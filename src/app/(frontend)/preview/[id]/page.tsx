@@ -9,8 +9,6 @@ import { isAdminSession, loadPreviewRenderData } from '../preview-page-data';
 
 import type { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
-
 interface PreviewPageProps {
   params: Promise<{ id: string }>;
 }

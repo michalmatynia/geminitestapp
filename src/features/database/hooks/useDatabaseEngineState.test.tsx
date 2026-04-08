@@ -6,6 +6,7 @@ import { useDatabaseEngineState } from './useDatabaseEngineState';
 const mocks = vi.hoisted(() => ({
   routerPush: vi.fn(),
   toast: vi.fn(),
+  settingsMap: new Map<string, string>(),
   updateSettingsBulkMutateAsync: vi.fn(),
   searchParams: 'view=engine&foo=bar',
   pathname: '/admin/databases/engine',
@@ -28,7 +29,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: () => ({
-    data: new Map<string, string>(),
+    data: mocks.settingsMap,
     isPending: false,
   }),
   useUpdateSettingsBulk: () => ({
@@ -80,6 +81,7 @@ describe('useDatabaseEngineState', () => {
   beforeEach(() => {
     mocks.routerPush.mockReset();
     mocks.toast.mockReset();
+    mocks.settingsMap = new Map<string, string>();
     mocks.updateSettingsBulkMutateAsync.mockReset();
     mocks.searchParams = 'view=engine&foo=bar';
     mocks.pathname = '/admin/databases/engine';

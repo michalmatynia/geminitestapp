@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cacheLife } from 'next/cache';
 import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
@@ -44,6 +45,9 @@ export const generateCmsSlugRouteMetadata = async ({
   locale,
   slug,
 }: CmsSlugMetadataOptions): Promise<Metadata> => {
+  'use cache';
+  cacheLife('hours');
+
   const resolvedLocale = resolveSlugLocale(locale);
   const routeTranslations = resolvedLocale
     ? await getTranslations({ locale: resolvedLocale, namespace: 'Routes' })
@@ -71,6 +75,9 @@ export const renderCmsSlugRoute = async ({
   slug,
   searchParams,
 }: CmsSlugRouteOptions): Promise<JSX.Element | null> => {
+  'use cache';
+  cacheLife('hours');
+
   const resolvedLocale = resolveSlugLocale(locale);
 
   if (await isKangurFrontPageSelected()) {

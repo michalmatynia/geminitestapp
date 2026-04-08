@@ -6,8 +6,6 @@ import { NextResponse } from 'next/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-export const runtime = 'nodejs';
-
 const getContentType = (filename: string) => {
   if (filename.endsWith('.png')) return 'image/png';
   if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) return 'image/jpeg';

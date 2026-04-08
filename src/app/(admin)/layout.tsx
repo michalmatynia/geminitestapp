@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import NextTopLoader from 'nextjs-toploader';
 
-import { AdminLayout } from '@/features/admin/public';
+import { AdminLayout, AdminRouteLoading } from '@/features/admin/public';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { ADMIN_LAYOUT_SESSION_HEADER, parseAdminLayoutSessionHeaderValue } from '@/shared/lib/auth/admin-layout-session';
 import { readOptionalRequestCookies } from '@/shared/lib/request/optional-cookies';
@@ -23,8 +24,6 @@ export default async function Layout({
 }): Promise<JSX.Element> {
   const requestHeadersPromise = readOptionalRequestHeaders();
   const cookiesPromise = readOptionalRequestCookies();
-  const serverSessionPromise = readOptionalServerAuthSession();
-
   const [requestHeaders, cookieStore] = await Promise.all([
     requestHeadersPromise,
     cookiesPromise,
@@ -37,8 +36,8 @@ export default async function Layout({
     session = parseAdminLayoutSessionHeaderValue(requestHeaders?.get(ADMIN_LAYOUT_SESSION_HEADER));
 
     if (!session?.user?.id) {
-      // Header missing or invalid, now we must wait for the full auth check
-      session = await serverSessionPromise;
+      // Header missing or invalid, now we must perform the full auth check (hits DB/Redis)
+      session = await readOptionalServerAuthSession();
     }
   } catch (error) {
     void ErrorSystem.captureException(error, {
@@ -83,7 +82,9 @@ export default async function Layout({
         hasInitialMenuPreference={hasInitialMenuPreference}
         canReadAdminSettings={shouldEnableAdminSettingsStore}
       >
-        {children}
+        <Suspense fallback={<AdminRouteLoading />}>
+          {children}
+        </Suspense>
       </AdminLayout>
     </>
   );

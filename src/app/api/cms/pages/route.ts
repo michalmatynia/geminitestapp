@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-export const revalidate = 300;
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 

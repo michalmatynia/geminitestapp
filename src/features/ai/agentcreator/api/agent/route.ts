@@ -26,8 +26,6 @@ import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-export const dynamic = 'force-dynamic';
-
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 type AgentRunListRecord = Pick<

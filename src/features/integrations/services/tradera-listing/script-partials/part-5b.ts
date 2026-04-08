@@ -4,6 +4,15 @@ export const PART_5B = String.raw`
           continue;
         }
 
+        if (listingAction === 'sync' && (await isControlDisabled(inputField))) {
+          log?.('tradera.quicklist.field.skipped', {
+            field: attr.key,
+            reason: 'disabled-on-sync',
+            context,
+          });
+          continue;
+        }
+
         const expectedValue = String(attr.value);
         const currentValue = String(await readFieldValue(inputField)).trim();
         if (currentValue === expectedValue) continue;

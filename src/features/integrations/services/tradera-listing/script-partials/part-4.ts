@@ -590,6 +590,11 @@ export const PART_4 = String.raw`);
       return false;
     }
 
+    if (listingAction === 'sync' && (await isControlDisabled(trigger))) {
+      log?.('tradera.quicklist.field.skipped', { field: fieldKey, reason: 'disabled-on-sync' });
+      return false;
+    }
+
     await humanClick(trigger).catch(() => undefined);
     await wait(400);
 

@@ -378,19 +378,34 @@ export const PART_5 = String.raw`
         );
       }
 
-      await setAndVerifyFieldValue({
-        locator: titleInput,
-        value: title,
-        fieldKey: 'title',
-        errorPrefix: 'FAIL_PUBLISH_VALIDATION',
-      });
-      await setAndVerifyFieldValue({
-        locator: descriptionInput,
-        value: description,
-        fieldKey: 'description',
-        errorPrefix: 'FAIL_PUBLISH_VALIDATION',
-        inputMethod: 'paste',
-      });
+      if (listingAction === 'sync' && (await isControlDisabled(titleInput))) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: 'title',
+          reason: 'disabled-on-sync',
+        });
+      } else {
+        await setAndVerifyFieldValue({
+          locator: titleInput,
+          value: title,
+          fieldKey: 'title',
+          errorPrefix: 'FAIL_PUBLISH_VALIDATION',
+        });
+      }
+
+      if (listingAction === 'sync' && (await isControlDisabled(descriptionInput))) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: 'description',
+          reason: 'disabled-on-sync',
+        });
+      } else {
+        await setAndVerifyFieldValue({
+          locator: descriptionInput,
+          value: description,
+          fieldKey: 'description',
+          errorPrefix: 'FAIL_PUBLISH_VALIDATION',
+          inputMethod: 'paste',
+        });
+      }
     };
 
     const fillPriceField = async ({ required = true, context = 'unknown' } = {}) => {
@@ -408,6 +423,15 @@ export const PART_5 = String.raw`
         throw new Error(
           'FAIL_PRICE_SET: Tradera price input was not found (' + context + ').'
         );
+      }
+
+      if (listingAction === 'sync' && (await isControlDisabled(priceInput))) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: 'price',
+          reason: 'disabled-on-sync',
+          context,
+        });
+        return false;
       }
 
       const expectedPriceValue = normalizePriceValue(String(price));
@@ -458,6 +482,15 @@ export const PART_5 = String.raw`
         );
       }
 
+      if (listingAction === 'sync' && (await isControlDisabled(quantityInput))) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: 'quantity',
+          reason: 'disabled-on-sync',
+          context,
+        });
+        return false;
+      }
+
       const expectedQuantityValue = String(quantity);
       const currentQuantityValue = String(await readFieldValue(quantityInput));
       if (currentQuantityValue === expectedQuantityValue) {
@@ -506,6 +539,15 @@ export const PART_5 = String.raw`
         );
       }
 
+      if (listingAction === 'sync' && (await isControlDisabled(eanInput))) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: 'ean',
+          reason: 'disabled-on-sync',
+          context,
+        });
+        return false;
+      }
+
       const expectedEanValue = eanValue;
       const currentEanValue = normalizeWhitespace(await readFieldValue(eanInput));
       if (currentEanValue === expectedEanValue) {
@@ -552,6 +594,15 @@ export const PART_5 = String.raw`
         throw new Error(
           'FAIL_BRAND_SET: Tradera brand input was not found (' + context + ').'
         );
+      }
+
+      if (listingAction === 'sync' && (await isControlDisabled(brandInput))) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: 'brand',
+          reason: 'disabled-on-sync',
+          context,
+        });
+        return false;
       }
 
       const expectedBrandValue = brandValue;

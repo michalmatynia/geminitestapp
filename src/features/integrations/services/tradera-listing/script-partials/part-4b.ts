@@ -164,6 +164,14 @@ export const PART_4B = String.raw`
         continue;
       }
 
+      if (listingAction === 'sync' && (await isControlDisabled(listingFormatTrigger))) {
+        log?.('tradera.quicklist.listing_format.skipped', {
+          attempt,
+          reason: 'disabled-on-sync',
+        });
+        return;
+      }
+
       await humanClick(listingFormatTrigger);
       await wait(400);
 

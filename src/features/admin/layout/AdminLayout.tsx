@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { ChevronLeftIcon, Menu as MenuIcon, X as CloseIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -13,13 +14,21 @@ import {
   useAdminLayoutActions,
   useAdminLayoutState,
 } from '@/features/admin/context/AdminLayoutContext';
-import { useUpdateUserPreferences, useUserPreferences } from '@/shared/hooks/useUserPreferences';
+import type { UserPreferences, UserPreferencesResponse } from '@/shared/contracts/auth';
+import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { api } from '@/shared/lib/api-client';
 import { setClientCookie } from '@/shared/lib/browser/client-cookies';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { Button } from '@/shared/ui/primitives.public';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  normalizeUserPreferencesResponse,
+  normalizeUserPreferencesUpdatePayload,
+  userPreferencesUpdateSchema,
+} from '@/shared/validations/user-preferences';
 
 import type { Session } from 'next-auth';
 
@@ -92,7 +101,7 @@ function AdminLayoutContent({
     enabled:
       hasResolvedLocalMenuPreference && shouldLoadRemoteMenuPreference && remoteMenuPreferenceReady,
   });
-  const updatePreferencesMutation = useUpdateUserPreferences();
+  const queryClient = useQueryClient();
 
   const persistMenuCollapsedFallbacks = useCallback((collapsed: boolean): void => {
     if (typeof window === 'undefined') return;
@@ -118,12 +127,24 @@ function AdminLayoutContent({
     async (collapsed: boolean): Promise<void> => {
       persistMenuCollapsedFallbacks(collapsed);
       try {
-        await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
+        const validation = userPreferencesUpdateSchema.safeParse({
+          adminMenuCollapsed: collapsed,
+        });
+        if (!validation.success) {
+          throw new Error('Invalid user preferences payload.');
+        }
+
+        const payload = normalizeUserPreferencesUpdatePayload(validation.data);
+        const response = await api.patch<UserPreferencesResponse>('/api/user/preferences', payload);
+        queryClient.setQueryData(
+          QUERY_KEYS.userPreferences.all,
+          normalizeUserPreferencesResponse(response) as UserPreferences
+        );
       } catch (error) {
         logClientCatch(error, { source: 'AdminLayout', action: 'persistMenuCollapsed' });
       }
     },
-    [persistMenuCollapsedFallbacks, updatePreferencesMutation]
+    [persistMenuCollapsedFallbacks, queryClient]
   );
 
   useEffect(() => {

@@ -1,4 +1,3 @@
-import { NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
@@ -8,6 +7,7 @@ import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { cn } from '@/shared/utils/ui-utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
+import { AppIntlProvider } from '@/shared/providers/AppIntlProvider';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 
 import type { Metadata, Viewport } from 'next';
@@ -72,12 +72,12 @@ export default async function RootLayout({
             }}
           />
         ) : null}
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <AppIntlProvider locale={locale} messages={messages}>
           <SkipToContentLink>{skipToMainContentLabel}</SkipToContentLink>
           <Suspense fallback={<main id='kangur-main-content' className='min-h-screen' />}>
             <RootClientShell>{children}</RootClientShell>
           </Suspense>
-        </NextIntlClientProvider>
+        </AppIntlProvider>
       </body>
     </html>
   );

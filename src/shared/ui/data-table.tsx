@@ -253,8 +253,8 @@ const resolvedAriaDescription =
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 48, // Default row height estimation
-    overscan: 10,
+    estimateSize: () => 52, // Default row height estimation
+    overscan: 5,
     enabled: enableVirtualization,
   });
 

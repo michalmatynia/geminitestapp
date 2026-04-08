@@ -9,6 +9,7 @@ import {
 import { updateCatalogSchema } from '@/shared/contracts/products/catalogs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
 export async function GET_products_entities_handler(
@@ -16,6 +17,7 @@ export async function GET_products_entities_handler(
   ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
+  applyCacheLife('swr300');
   const { type } = params;
 
   if (type === 'catalogs') {

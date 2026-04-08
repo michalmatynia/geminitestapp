@@ -20,6 +20,7 @@ import type {
   MongoPriceGroupDoc,
 } from '@/shared/lib/db/services/database-sync-types';
 import { listSimpleParameters } from '@/shared/lib/products/services/simple-parameter-service';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 
 export const querySchema = paginationQuerySchema.extend({
   catalogId: optionalTrimmedQueryString(),
@@ -181,6 +182,7 @@ export async function GET_products_metadata_handler(
   _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
+  applyCacheLife('swr300');
   const { type } = params;
   const query = (_ctx.query ?? paginationQuerySchema.parse({})) as PaginationQuery & {
     catalogId?: string;

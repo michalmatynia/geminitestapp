@@ -9,18 +9,18 @@ const {
   getLiteSettingsForHydrationMock,
   loadSiteMessagesMock,
   getTranslationsMock,
-  nextIntlClientProviderMock,
+  appIntlProviderMock,
   rootClientShellMock,
 } = vi.hoisted(() => ({
   getLiteSettingsForHydrationMock: vi.fn(),
   loadSiteMessagesMock: vi.fn(),
   getTranslationsMock: vi.fn(),
-  nextIntlClientProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
+  appIntlProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   rootClientShellMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
 }));
 
-vi.mock('next-intl', () => ({
-  NextIntlClientProvider: nextIntlClientProviderMock,
+vi.mock('@/shared/providers/AppIntlProvider', () => ({
+  AppIntlProvider: appIntlProviderMock,
 }));
 
 vi.mock('next-intl/server', () => ({
@@ -64,7 +64,7 @@ describe('RootLayout', () => {
       (child) => isValidElement(child) && child.type === 'script'
     ) as ReactElement<{ dangerouslySetInnerHTML?: { __html?: string } }> | undefined;
     const intlProvider = bodyChildren.find(
-      (child) => isValidElement(child) && child.type === nextIntlClientProviderMock
+      (child) => isValidElement(child) && child.type === appIntlProviderMock
     ) as ReactElement<{ locale?: string; messages?: unknown }> | undefined;
 
     expect(getLiteSettingsForHydrationMock).toHaveBeenCalledTimes(1);

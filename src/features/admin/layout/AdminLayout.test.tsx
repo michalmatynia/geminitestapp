@@ -1,14 +1,16 @@
 // @vitest-environment jsdom
 
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const settingsStoreProviderPropsMock = vi.fn();
-const mutateAsyncMock = vi.fn();
 const adminFavoritesRuntimeProviderPropsMock = vi.fn();
 const noteSettingsProviderPropsMock = vi.fn();
 const useUserPreferencesMock = vi.fn();
 const aiInsightsDrawerRenderMock = vi.fn();
+const apiPatchMock = vi.fn();
+const queryClientSetQueryDataMock = vi.fn();
 let pathnameMock = '/admin/products';
 let adminLayoutStateMock = {
   isMenuCollapsed: false,
@@ -16,6 +18,17 @@ let adminLayoutStateMock = {
   isProgrammaticallyCollapsed: false,
   aiDrawerOpen: false,
 };
+let adminLayoutActionsMock = {
+  setIsMenuCollapsed: vi.fn(),
+  setIsMenuHidden: vi.fn(),
+  setIsProgrammaticallyCollapsed: vi.fn(),
+};
+
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({
+    setQueryData: queryClientSetQueryDataMock,
+  }),
+}));
 
 vi.mock('next/navigation', () => ({
   usePathname: () => pathnameMock,
@@ -62,16 +75,17 @@ vi.mock('@/features/admin/context/AdminLayoutContext', () => ({
     initialMenuCollapsed?: boolean;
   }) => <>{children}</>,
   useAdminLayoutState: () => adminLayoutStateMock,
-  useAdminLayoutActions: () => ({
-    setIsMenuCollapsed: vi.fn(),
-    setIsMenuHidden: vi.fn(),
-    setIsProgrammaticallyCollapsed: vi.fn(),
-  }),
+  useAdminLayoutActions: () => adminLayoutActionsMock,
 }));
 
 vi.mock('@/shared/hooks/useUserPreferences', () => ({
   useUserPreferences: (...args: unknown[]) => useUserPreferencesMock(...args),
-  useUpdateUserPreferences: () => ({ mutateAsync: mutateAsyncMock }),
+}));
+
+vi.mock('@/shared/lib/api-client', () => ({
+  api: {
+    patch: (...args: unknown[]) => apiPatchMock(...args),
+  },
 }));
 
 vi.mock('@/shared/lib/browser/client-cookies', () => ({
@@ -83,12 +97,6 @@ vi.mock('@/shared/providers/NoteSettingsProvider', () => ({
     noteSettingsProviderPropsMock({ mounted: true });
     return <>{children}</>;
   },
-}));
-
-vi.mock('@/shared/providers/QueryProvider', () => ({
-  QueryProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid='query-provider'>{children}</div>
-  ),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -105,7 +113,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props
@@ -138,12 +146,18 @@ describe('AdminLayout', () => {
       isProgrammaticallyCollapsed: false,
       aiDrawerOpen: false,
     };
+    adminLayoutActionsMock = {
+      setIsMenuCollapsed: vi.fn(),
+      setIsMenuHidden: vi.fn(),
+      setIsProgrammaticallyCollapsed: vi.fn(),
+    };
     settingsStoreProviderPropsMock.mockClear();
-    mutateAsyncMock.mockReset();
-    mutateAsyncMock.mockResolvedValue(undefined);
     adminFavoritesRuntimeProviderPropsMock.mockClear();
     noteSettingsProviderPropsMock.mockClear();
     aiInsightsDrawerRenderMock.mockClear();
+    apiPatchMock.mockReset();
+    apiPatchMock.mockResolvedValue({ adminMenuCollapsed: true });
+    queryClientSetQueryDataMock.mockClear();
     useUserPreferencesMock.mockReset();
     useUserPreferencesMock.mockReturnValue({ data: null });
     window.localStorage.clear();
@@ -154,16 +168,13 @@ describe('AdminLayout', () => {
     vi.useRealTimers();
   });
 
-  it('mounts the admin settings store under QueryProvider', () => {
+  it('mounts the admin settings store around the admin runtime', () => {
     render(
       <AdminLayout canReadAdminSettings={false}>
         <div data-testid='content'>content</div>
       </AdminLayout>
     );
 
-    expect(screen.getByTestId('query-provider')).toContainElement(
-      screen.getByTestId('settings-store-provider')
-    );
     expect(screen.getByTestId('settings-store-provider')).toContainElement(
       screen.getByTestId('admin-favorites-runtime-provider')
     );
@@ -227,28 +238,25 @@ describe('AdminLayout', () => {
     ).toBe(true);
   });
 
-  it('mounts the AI insights drawer only when the drawer is open', () => {
-    const { rerender } = render(
+  it('persists the collapse preference without using the shared mutation hook', async () => {
+    render(
       <AdminLayout>
         <div data-testid='content'>content</div>
       </AdminLayout>
     );
 
-    expect(aiInsightsDrawerRenderMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('ai-insights-drawer')).not.toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Collapse admin sidebar' }));
+      await Promise.resolve();
+    });
 
-    adminLayoutStateMock = {
-      ...adminLayoutStateMock,
-      aiDrawerOpen: true,
-    };
-
-    rerender(
-      <AdminLayout>
-        <div data-testid='content'>content</div>
-      </AdminLayout>
-    );
-
-    expect(aiInsightsDrawerRenderMock).toHaveBeenCalledWith({ mounted: true });
-    expect(screen.getByTestId('ai-insights-drawer')).toBeInTheDocument();
+    expect(adminLayoutActionsMock.setIsMenuCollapsed).toHaveBeenCalledWith(true);
+    expect(adminLayoutActionsMock.setIsProgrammaticallyCollapsed).toHaveBeenCalledWith(false);
+    expect(apiPatchMock).toHaveBeenCalledWith('/api/user/preferences', {
+      adminMenuCollapsed: true,
+    });
+    expect(queryClientSetQueryDataMock).toHaveBeenCalledWith(QUERY_KEYS.userPreferences.all, {
+      adminMenuCollapsed: true,
+    });
   });
 });

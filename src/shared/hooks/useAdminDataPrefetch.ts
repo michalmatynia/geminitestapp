@@ -102,7 +102,7 @@ export function useAdminDataPrefetch() {
       prefetchDashboard();
     } else if (href === '/admin/integrations') {
       void prefetchQueryV2(queryClient, {
-        queryKey: QUERY_KEYS.integrations.lists(),
+        queryKey: normalizeQueryKey(QUERY_KEYS.integrations.lists()),
         queryFn: async (): Promise<unknown> => await fetch('/api/v2/integrations').then((r) => r.json()),
         staleTime: 60_000,
         meta: {
@@ -112,7 +112,7 @@ export function useAdminDataPrefetch() {
           domain: 'integrations',
         },
       })();
-    } else if (href === '/admin/cms') {
+    } else if (href === '/admin/cms' || href === '/admin/cms/pages') {
       void prefetchQueryV2(queryClient, {
         queryKey: QUERY_KEYS.cms.pages.all,
         queryFn: async (): Promise<unknown> => await fetch('/api/v2/cms/pages').then((r) => r.json()),
@@ -124,13 +124,53 @@ export function useAdminDataPrefetch() {
           domain: 'cms',
         },
       })();
+    } else if (href === '/admin/image-studio') {
+      void prefetchQueryV2(queryClient, {
+        queryKey: ['image-studio', 'projects'],
+        queryFn: async (): Promise<unknown> => await fetch('/api/v2/image-studio/projects').then((r) => r.json()),
+        staleTime: 60_000,
+        meta: {
+          source: 'useAdminDataPrefetch.image-studio',
+          operation: 'list',
+          resource: 'image-studio.projects',
+          domain: 'ai',
+        },
+      })();
+    } else if (href === '/admin/ai-paths') {
+      void prefetchQueryV2(queryClient, {
+        queryKey: ['ai-paths', 'list'],
+        queryFn: async (): Promise<unknown> => await fetch('/api/v2/ai-paths').then((r) => r.json()),
+        staleTime: 60_000,
+        meta: {
+          source: 'useAdminDataPrefetch.ai-paths',
+          operation: 'list',
+          resource: 'ai-paths',
+          domain: 'ai',
+        },
+      })();
     }
     // Add more prefetch targets as needed
   }, [prefetchDashboard, prefetchProducts, queryClient]);
+
+  const warmup = useCallback(() => {
+    // Background warmup for data that's used across many pages
+    void prefetchQueryV2(queryClient, {
+      queryKey: QUERY_KEYS.settings.scope('lite'),
+      queryFn: async (): Promise<unknown> => await fetch('/api/settings/lite').then((r) => r.json()),
+      staleTime: 1000 * 60 * 10,
+      meta: {
+        source: 'useAdminDataPrefetch.warmup.lite-settings',
+        operation: 'list',
+        resource: 'settings.lite',
+        domain: 'global',
+      },
+    })();
+  }, [queryClient]);
 
   return {
     prefetchProducts,
     prefetchDashboard,
     prefetchByHref,
+    warmup,
   };
 }

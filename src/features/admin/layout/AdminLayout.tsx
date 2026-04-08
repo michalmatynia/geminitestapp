@@ -16,6 +16,7 @@ import {
 } from '@/features/admin/context/AdminLayoutContext';
 import type { UserPreferences, UserPreferencesResponse } from '@/shared/contracts/auth';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { useAdminDataPrefetch } from '@/shared/hooks/useAdminDataPrefetch';
 import { api } from '@/shared/lib/api-client';
 import { setClientCookie } from '@/shared/lib/browser/client-cookies';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -408,6 +409,12 @@ export function AdminLayout({
   canReadAdminSettings?: boolean;
 }): React.ReactNode {
   const menuCollapsedDefault = initialMenuCollapsed;
+  const { warmup } = useAdminDataPrefetch();
+
+  useEffect(() => {
+    // Proactively warm up shared caches in the background
+    warmup();
+  }, [warmup]);
 
   return (
     <SessionProvider session={session} refetchOnWindowFocus={false}>

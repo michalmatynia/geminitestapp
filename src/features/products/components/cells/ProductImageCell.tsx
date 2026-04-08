@@ -68,6 +68,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
           placeholder='blur'
           blurDataURL={BLUR_PLACEHOLDER}
           className='rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80'
+          quality={75}
         />
       </div>
     </div>

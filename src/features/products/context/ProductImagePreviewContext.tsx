@@ -114,7 +114,7 @@ export const ProductImagePreviewProvider = ({ children }: { children: React.Reac
                 placeholder='blur'
                 blurDataURL={BLUR_PLACEHOLDER}
                 className='rounded-lg object-cover'
-                quality={90}
+                quality={80}
               />
             </div>
           </div>

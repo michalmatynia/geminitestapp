@@ -1,7 +1,12 @@
 'use client';
+'use no memo';
 
 import { type UseMutationResult } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
+
+// React Compiler currently miscompiles this hook stack in dev when it wraps
+// TanStack Query + offline mutation helpers, producing useMemoCache size
+// mismatches during Fast Refresh. Keep this hook on the plain runtime path.
 
 import {
   type UserPreferencesResponse,

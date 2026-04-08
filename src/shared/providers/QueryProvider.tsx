@@ -52,7 +52,7 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
   const { optimizeCache } = useSmartCache();
   const { warmFrequentlyAccessedData } = useCacheWarming();
   const { cleanupStaleQueries, optimizeQueryPriorities } = useQueryLifecycle();
-  useQueryBatching({ maxBatchSize: 5, batchDelay: 100 });
+  useQueryBatching({ maxBatchSize: 10, batchDelay: 50 });
 
   useEffect((): (() => void) => {
     const optimizeInterval = safeSetInterval(

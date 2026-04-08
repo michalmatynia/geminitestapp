@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import {
   useQueryClient,
@@ -7,6 +8,10 @@ import {
   type UseMutationResult,
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
+
+// This hook delegates into query factory wrappers that use TanStack Query
+// hooks internally. Opt out of React Compiler memoization here to avoid dev
+// runtime cache-size mismatches in compiled hook paths.
 
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';

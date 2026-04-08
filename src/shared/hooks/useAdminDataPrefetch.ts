@@ -100,9 +100,33 @@ export function useAdminDataPrefetch() {
       prefetchProducts();
     } else if (href === '/admin') {
       prefetchDashboard();
+    } else if (href === '/admin/integrations') {
+      void prefetchQueryV2(queryClient, {
+        queryKey: QUERY_KEYS.integrations.lists(),
+        queryFn: async (): Promise<unknown> => await fetch('/api/v2/integrations').then((r) => r.json()),
+        staleTime: 60_000,
+        meta: {
+          source: 'useAdminDataPrefetch.integrations',
+          operation: 'list',
+          resource: 'integrations',
+          domain: 'integrations',
+        },
+      })();
+    } else if (href === '/admin/cms') {
+      void prefetchQueryV2(queryClient, {
+        queryKey: QUERY_KEYS.cms.pages.all,
+        queryFn: async (): Promise<unknown> => await fetch('/api/v2/cms/pages').then((r) => r.json()),
+        staleTime: 60_000,
+        meta: {
+          source: 'useAdminDataPrefetch.cms',
+          operation: 'list',
+          resource: 'cms.pages',
+          domain: 'cms',
+        },
+      })();
     }
     // Add more prefetch targets as needed
-  }, [prefetchDashboard, prefetchProducts]);
+  }, [prefetchDashboard, prefetchProducts, queryClient]);
 
   return {
     prefetchProducts,

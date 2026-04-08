@@ -23,15 +23,13 @@ const LazyUrlGuardProvider = lazy(() =>
 const KANGUR_CAPTURE_MODE_QUERY_PARAM = 'kangurCapture';
 const KANGUR_CAPTURE_MODE_SOCIAL_BATCH = 'social-batch';
 
-export function RootProvidersClient({
+function RootProviderFrame({
   children,
+  isSyntheticKangurCapture,
 }: {
   children: React.ReactNode;
+  isSyntheticKangurCapture: boolean;
 }): React.JSX.Element {
-  const searchParams = useSearchParams();
-  const isSyntheticKangurCapture =
-    searchParams?.get(KANGUR_CAPTURE_MODE_QUERY_PARAM) === KANGUR_CAPTURE_MODE_SOCIAL_BATCH;
-
   return (
     <>
       <RouteAccessibilityAnnouncer />
@@ -72,5 +70,29 @@ export function RootProvidersClient({
         </QueryProvider>
       </ToastProvider>
     </>
+  );
+}
+
+function SearchParamAwareRootProviders({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const isSyntheticKangurCapture =
+    searchParams?.get(KANGUR_CAPTURE_MODE_QUERY_PARAM) === KANGUR_CAPTURE_MODE_SOCIAL_BATCH;
+
+  return <RootProviderFrame isSyntheticKangurCapture={isSyntheticKangurCapture}>{children}</RootProviderFrame>;
+}
+
+export function RootProvidersClient({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <Suspense fallback={<RootProviderFrame isSyntheticKangurCapture={false}>{children}</RootProviderFrame>}>
+      <SearchParamAwareRootProviders>{children}</SearchParamAwareRootProviders>
+    </Suspense>
   );
 }

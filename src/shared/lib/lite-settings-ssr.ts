@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { prewarmLiteSettingsServerCache } from '@/app/api/settings/lite/handler';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { cloneLiteSettings, getLiteSettingsCache } from '@/shared/lib/settings-lite-server-cache';
 
 import type { SettingRecord } from '@/shared/contracts/settings';
@@ -46,6 +47,9 @@ const waitForLiteSettingsPrewarm = async (): Promise<void> => {
  * /api/settings/lite round-trip on first load.
  */
 export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
+  'use cache';
+  applyCacheLife('swr60');
+
   try {
     await waitForLiteSettingsPrewarm();
     const cache = getLiteSettingsCache();

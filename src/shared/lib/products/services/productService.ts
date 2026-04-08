@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cache } from 'react';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type {
   ImageFileRepository,
@@ -437,17 +438,19 @@ async function getProducts(
   }
 }
 
-async function getProductById(
-  id: string,
-  options?: { provider?: ProductDbProvider }
-): Promise<ProductWithImages | null> {
-  const provider = options?.provider ?? (await getProductDataProvider());
-  const productRepository = await resolveProductRepository(provider);
-  const product = await productRepository.getProductById(id);
-  if (!product) return null;
-  const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups([product], provider);
-  return enrichedProduct ?? null;
-}
+const getProductById = cache(
+  async (
+    id: string,
+    options?: { provider?: ProductDbProvider }
+  ): Promise<ProductWithImages | null> => {
+    const provider = options?.provider ?? (await getProductDataProvider());
+    const productRepository = await resolveProductRepository(provider);
+    const product = await productRepository.getProductById(id);
+    if (!product) return null;
+    const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups([product], provider);
+    return enrichedProduct ?? null;
+  }
+);
 
 async function getProductBySku(
   sku: string,

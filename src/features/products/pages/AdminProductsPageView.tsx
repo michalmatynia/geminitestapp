@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 
 import { ProductListPanel } from '@/features/products/components/ProductListPanel';
+import { ProductImagePreviewProvider } from '@/features/products/context/ProductImagePreviewContext';
 import { ProductListProvider } from '@/features/products/context/ProductListContext';
 import { useProductListState } from '@/features/products/hooks/useProductListState';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
@@ -68,8 +69,10 @@ function AdminProductsPageContent(): React.JSX.Element {
         />
       ) : null}
       <ProductListProvider value={state}>
-        <ProductListPanel />
-        {shouldRenderProductModals ? <ProductModals /> : null}
+        <ProductImagePreviewProvider>
+          <ProductListPanel />
+          {shouldRenderProductModals ? <ProductModals /> : null}
+        </ProductImagePreviewProvider>
       </ProductListProvider>
     </>
   );

@@ -6,14 +6,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactElement, ReactNode } from 'react';
 
 const {
-  getLocaleMock,
   getLiteSettingsForHydrationMock,
   loadSiteMessagesMock,
   getTranslationsMock,
   nextIntlClientProviderMock,
   rootClientShellMock,
 } = vi.hoisted(() => ({
-  getLocaleMock: vi.fn(),
   getLiteSettingsForHydrationMock: vi.fn(),
   loadSiteMessagesMock: vi.fn(),
   getTranslationsMock: vi.fn(),
@@ -26,7 +24,6 @@ vi.mock('next-intl', () => ({
 }));
 
 vi.mock('next-intl/server', () => ({
-  getLocale: getLocaleMock,
   getTranslations: getTranslationsMock,
 }));
 
@@ -45,7 +42,6 @@ vi.mock('@/i18n/messages', () => ({
 describe('RootLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getLocaleMock.mockResolvedValue('en');
     getTranslationsMock.mockResolvedValue((key: string) => key);
     getLiteSettingsForHydrationMock.mockResolvedValue([
       { key: 'observability.infoEnabled', value: 'true' },
@@ -72,8 +68,8 @@ describe('RootLayout', () => {
     ) as ReactElement<{ locale?: string; messages?: unknown }> | undefined;
 
     expect(getLiteSettingsForHydrationMock).toHaveBeenCalledTimes(1);
-    expect(loadSiteMessagesMock).toHaveBeenCalledWith('en');
-    expect(intlProvider?.props.locale).toBe('en');
+    expect(loadSiteMessagesMock).toHaveBeenCalledWith('pl');
+    expect(intlProvider?.props.locale).toBe('pl');
     expect(intlProvider?.props.messages).toEqual(
       expect.objectContaining({
         Common: expect.objectContaining({

@@ -1,5 +1,6 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import { RootClientShell } from './_providers/RootClientShell';
 import { loadSiteMessages } from '@/i18n/messages';
@@ -41,17 +42,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>): Promise<React.JSX.Element> {
-  const localePromise = getLocale();
-  const commonTranslationsPromise = getTranslations('Common');
+  const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
+  const messagesPromise = loadSiteMessages(locale);
   const liteSettingsPromise = getLiteSettingsForHydration();
 
-  const [locale, commonTranslations, liteSettings] = await Promise.all([
-    localePromise,
-    commonTranslationsPromise,
-    liteSettingsPromise,
-  ]);
-
-  const messages = await loadSiteMessages(locale);
+  const [messages, liteSettings] = await Promise.all([messagesPromise, liteSettingsPromise]);
 
   const sanitizedLiteSettingsScript =
     liteSettings.length > 0
@@ -60,6 +55,12 @@ export default async function RootLayout({
 
   const fontSetId =
     liteSettings.find((s) => s.key === APP_FONT_SET_SETTING_KEY)?.value || 'system';
+  const skipToMainContentLabel =
+    typeof messages['Common'] === 'object' &&
+    messages['Common'] !== null &&
+    typeof messages['Common']['skipToMainContent'] === 'string'
+      ? messages['Common']['skipToMainContent']
+      : 'Skip to main content';
 
   return (
     <html lang={locale} data-app-font-set={fontSetId} suppressHydrationWarning>
@@ -72,8 +73,10 @@ export default async function RootLayout({
           />
         ) : null}
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <SkipToContentLink>{commonTranslations('skipToMainContent')}</SkipToContentLink>
-          <RootClientShell>{children}</RootClientShell>
+          <SkipToContentLink>{skipToMainContentLabel}</SkipToContentLink>
+          <Suspense fallback={<main id='kangur-main-content' className='min-h-screen' />}>
+            <RootClientShell>{children}</RootClientShell>
+          </Suspense>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -16,20 +16,6 @@ const isPlaywrightRuntime = Boolean(
   process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] || process.env['PLAYWRIGHT_RUNTIME_AGENT_ID']
 );
 
-const readAdminMenuCollapsedCookie = async (): Promise<boolean | null> => {
-  const cookieStore = await readOptionalRequestCookies();
-  const cookieValue = cookieStore?.get(ADMIN_MENU_COLLAPSED_COOKIE_KEY)?.value;
-
-  if (cookieValue === '1' || cookieValue === 'true') {
-    return true;
-  }
-  if (cookieValue === '0' || cookieValue === 'false') {
-    return false;
-  }
-
-  return null;
-};
-
 export default async function Layout({
   children,
 }: {
@@ -51,6 +37,7 @@ export default async function Layout({
     session = parseAdminLayoutSessionHeaderValue(requestHeaders?.get(ADMIN_LAYOUT_SESSION_HEADER));
 
     if (!session?.user?.id) {
+      // Header missing or invalid, now we must wait for the full auth check
       session = await serverSessionPromise;
     }
   } catch (error) {

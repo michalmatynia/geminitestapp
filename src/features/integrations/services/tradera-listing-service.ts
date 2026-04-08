@@ -96,7 +96,7 @@ const buildTraderaMarketplaceData = ({
       ...traderaData,
       lastErrorCategory: result.ok ? null : result.errorCategory,
       pendingExecution: null,
-      ...(action === 'sync'
+      ...(action === 'sync' && result.ok
         ? {
             lastSyncedAt: executedAt.toISOString(),
           }

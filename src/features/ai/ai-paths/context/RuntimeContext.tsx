@@ -24,6 +24,7 @@ import {
   type RuntimeActions,
   type RuntimeControlHandlers,
   type RuntimeDataState,
+  type RuntimeStateData,
   type RuntimeNodeConfigHandlers,
   type RuntimeProviderProps,
   type RuntimeRunStatus,
@@ -63,10 +64,10 @@ export function RuntimeProvider({
   const [pathDebugSnapshots, setPathDebugSnapshotsInternal] = useState<
     Record<string, PathDebugSnapshot>
   >({});
-  const [{ currentRunId, lastError, lastRunAt, runtimeRunStatus }, dispatchStatus] = useReducer(
-    runtimeStatusReducer,
-    INITIAL_RUNTIME_STATUS_STATE
-  );
+  const [
+    { currentRunId, lastError, lastRunAt, runtimeRunStatus },
+    dispatchStatus,
+  ] = useReducer(runtimeStatusReducer, INITIAL_RUNTIME_STATUS_STATE);
   const [nodeDurations, setNodeDurationsInternal] = useState<Record<string, number>>({});
   const [parserSampleLoading, setParserSampleLoadingInternal] = useState(false);
   const [updaterSampleLoading, setUpdaterSampleLoadingInternal] = useState(false);

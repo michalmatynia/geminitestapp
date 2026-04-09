@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 const mocks = vi.hoisted(() => ({
@@ -77,6 +79,10 @@ describe('AdminFavoriteBreadcrumbRow', () => {
     });
     vi.mocked(usePathname).mockReturnValue('/');
     vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams());
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
   });
 
   it('adds the provided item id to admin favorites', async () => {
@@ -191,5 +197,59 @@ describe('AdminFavoriteBreadcrumbRow', () => {
         value: JSON.stringify(['ai/agent-creator/runs']),
       });
     });
+  });
+
+  it('hydrates without a mismatch when favorites are only available on the client', async () => {
+    mocks.useSettingsStoreMock.mockReturnValue({
+      map: new Map<string, string>(),
+      get: () => undefined,
+      refetch: vi.fn(),
+    });
+
+    const serverMarkup = renderToString(
+      <AdminFavoriteBreadcrumbRow itemId='system/logs' itemLabel='Observation Post'>
+        <div>breadcrumbs</div>
+      </AdminFavoriteBreadcrumbRow>
+    );
+
+    mocks.useSettingsStoreMock.mockReturnValue({
+      map: new Map<string, string>([['admin_menu_favorites', JSON.stringify(['system/logs'])]]),
+      get: (key: string) =>
+        key === 'admin_menu_favorites' ? JSON.stringify(['system/logs']) : undefined,
+      refetch: vi.fn(),
+    });
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    container.innerHTML = serverMarkup;
+
+    const recoverableErrors: string[] = [];
+    let root: ReturnType<typeof hydrateRoot> | null = null;
+
+    await act(async () => {
+      root = hydrateRoot(
+        container,
+        <AdminFavoriteBreadcrumbRow itemId='system/logs' itemLabel='Observation Post'>
+          <div>breadcrumbs</div>
+        </AdminFavoriteBreadcrumbRow>,
+        {
+          onRecoverableError: (error) => {
+            recoverableErrors.push(error.message);
+          },
+        }
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(recoverableErrors).toEqual([]);
+    expect(
+      screen.getByRole('button', { name: 'Remove Observation Post from admin favorites' })
+    ).toHaveAttribute('aria-pressed', 'true');
+
+    await act(async () => {
+      root?.unmount();
+    });
+    container.remove();
   });
 });

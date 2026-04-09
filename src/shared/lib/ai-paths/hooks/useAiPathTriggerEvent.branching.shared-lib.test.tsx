@@ -363,4 +363,69 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
       { timeoutMs: 90_000 }
     );
   });
+
+  it('warns product trigger surfaces when the saved path still relies on the AI Brain default model', async () => {
+    const starter = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!starter) throw new Error('Missing starter_product_name_normalize template');
+
+    const selectedConfig = materializeStarterWorkflowPathConfig(starter, {
+      pathId: 'path_name_normalize_v1',
+      seededDefault: false,
+    });
+    selectedConfig.nodes = selectedConfig.nodes.map((node) =>
+      node.type === 'trigger'
+        ? {
+            ...node,
+            config: {
+              ...node.config,
+              trigger: {
+                ...node.config?.trigger,
+                event: baseArgs.triggerEventId,
+              },
+            },
+          }
+        : node
+    );
+
+    resolveTriggerSelectionMock.mockResolvedValue({
+      triggerCandidates: [selectedConfig],
+      activeTriggerCandidates: [selectedConfig],
+      selectedConfig,
+      uiState: null,
+      missingPreferredPathId: null,
+    });
+    enqueueAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        runId: 'run-1',
+      },
+    });
+
+    const { result } = renderHook(() => useAiPathTriggerEvent(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.fireAiPathTriggerEvent({
+        ...baseArgs,
+        source: {
+          location: 'product_modal',
+          tab: 'product',
+        },
+      });
+    });
+
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.stringContaining('still relies on AI Brain default'),
+      {
+        variant: 'info',
+      }
+    );
+    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathId: 'path_name_normalize_v1',
+      }),
+      { timeoutMs: 90_000 }
+    );
+  });
 });

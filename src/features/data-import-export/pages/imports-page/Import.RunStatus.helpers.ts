@@ -1,5 +1,6 @@
 import type {
   BaseImportItemRecord,
+  BaseImportRunRecord,
   BaseImportParameterImportSummary,
   BaseImportRunParameterImportSummary,
 } from '@/shared/contracts/integrations/base-com';
@@ -273,4 +274,50 @@ export const formatCustomFieldImportHistory = (item: BaseImportItemRecord): stri
   append('overridden', metadata.overriddenFieldNames);
 
   return segments.length > 0 ? segments.join(' · ') : null;
+};
+
+export type ImportRunDispatchDiagnostics = {
+  tone: 'info' | 'warning' | 'error';
+  title: string;
+  details: string[];
+};
+
+export const resolveImportRunDispatchDiagnostics = (
+  run: BaseImportRunRecord | null
+): ImportRunDispatchDiagnostics | null => {
+  if (!run) {
+    return null;
+  }
+
+  if (run.preflight && !run.preflight.ok) {
+    return {
+      tone: 'error',
+      title: 'Dispatch stopped at preflight',
+      details: [
+        'This run did not reach the runtime queue because the preflight check failed.',
+        ...run.preflight.issues.map((issue) => issue.message),
+      ],
+    };
+  }
+
+  if (run.dispatchMode == null && (run.stats?.total ?? 0) === 0 && run.status === 'completed') {
+    return {
+      tone: 'warning',
+      title: 'No products matched the current import filters',
+      details: ['Nothing was queued because item resolution returned zero import candidates.'],
+    };
+  }
+
+  if (run.dispatchMode === 'inline') {
+    return {
+      tone: 'warning',
+      title: 'This run used inline fallback instead of BullMQ',
+      details: [
+        'Base imports use the separate base-import runtime queue.',
+        'This run executed inline because Redis queueing was unavailable or enqueueing failed.',
+      ],
+    };
+  }
+
+  return null;
 };

@@ -28,11 +28,14 @@ const {
   captureExceptionMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/features/integrations/services/product-listing-repository', () => ({
   findProductListingByIdAcrossProviders: (...args: unknown[]) =>
     findProductListingByIdAcrossProvidersMock(...args) as Promise<unknown>,
   listProductListingsByProductIdAcrossProviders: (...args: unknown[]) =>
     listProductListingsByProductIdAcrossProvidersMock(...args) as Promise<unknown>,
+}));
+
+vi.mock('@/features/integrations/services/integration-repository', () => ({
   getIntegrationRepository: async () => ({
     getConnectionById: getConnectionByIdMock,
     getIntegrationById: getIntegrationByIdMock,

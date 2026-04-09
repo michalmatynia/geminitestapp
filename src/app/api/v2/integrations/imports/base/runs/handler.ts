@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { initializeQueues } from '@/features/jobs/server';
 import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';
 import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
 import type { BaseImportRunsListQuery, BaseImportRunsResponse, BaseImportRunStartPayload, BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
@@ -32,6 +33,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   if (!rawConnectionId) {
     throw badRequestError('Base.com connection is required.');
   }
+
+  initializeQueues();
 
   const data = ctx.body as BaseImportRunStartPayload;
   const response: BaseImportStartResponse = await startBaseImportRunResponse({

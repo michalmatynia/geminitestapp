@@ -18,9 +18,9 @@ import {
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import {
-  ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
+  refreshTraderaBrowserSession,
 } from '@/features/integrations/utils/tradera-browser-session';
 import {
   ensureVintedBrowserSession,
@@ -455,7 +455,7 @@ export const useProductListingsActionsImpl = ({
       try {
         setOpeningTraderaLogin(listingId);
         setError(null);
-        const response = await ensureTraderaBrowserSession({
+        const response = await refreshTraderaBrowserSession({
           integrationId,
           connectionId,
         });

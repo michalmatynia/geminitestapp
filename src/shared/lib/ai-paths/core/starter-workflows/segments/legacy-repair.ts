@@ -34,6 +34,53 @@ const matchesLegacyTranslationRepairSignature = (config: PathConfig): boolean =>
   return hasTranslationRepairDatabaseUpdateTemplate(config);
 };
 
+const hasNormalizeProductNamePromptStructure = (config: PathConfig): boolean =>
+  (config.nodes ?? []).some((node) => {
+    if (node.type !== 'prompt') return false;
+    const prompt = toRecord(toRecord(node.config)?.['prompt']);
+    const template = normalizeText(prompt?.['template']);
+    return (
+      template.includes('{{title}}') &&
+      template.includes('{{content_en}}') &&
+      template.includes('normalizedName') &&
+      template.includes('validationError')
+    );
+  });
+
+const hasNormalizeProductNameLegacyDatabaseUpdate = (config: PathConfig): boolean =>
+  hasNodeOfType(config, 'database', (node) => {
+    const database = toRecord(toRecord(node.config)?.['database']);
+    if (normalizeText(database?.['operation']).toLowerCase() !== 'update') {
+      return false;
+    }
+
+    const updateTemplate = normalizeText(database?.['updateTemplate']);
+    if (updateTemplate.includes('"name_en"') || updateTemplate.includes("'name_en'")) {
+      return true;
+    }
+
+    const mappings = Array.isArray(database?.['mappings'])
+      ? (database?.['mappings'] as Array<unknown>)
+      : [];
+    return mappings.some((entry) => normalizeText(toRecord(entry)?.['targetPath']) === 'name_en');
+  });
+
+const matchesLegacyNormalizeProductNameRepairSignature = (config: PathConfig): boolean => {
+  if (
+    !hasAliasOrTriggerMatch(
+      config,
+      ['Normalize Product Name'],
+      ['Product Modal - Normalize']
+    )
+  ) {
+    return false;
+  }
+
+  if (!hasNormalizeProductNamePromptStructure(config)) return false;
+
+  return hasNormalizeProductNameLegacyDatabaseUpdate(config);
+};
+
 export const hasParameterInferencePromptStructure = (config: PathConfig): boolean =>
   (config.nodes ?? []).some((node) => {
     if (node.type !== 'prompt') return false;
@@ -101,6 +148,8 @@ export const matchesLegacyStarterWorkflowRepairSignature = (
       return matchesLegacyTranslationRepairSignature(config);
     case 'parameter_inference':
       return matchesLegacyParameterInferenceRepairSignature(config);
+    case 'product_name_normalize':
+      return matchesLegacyNormalizeProductNameRepairSignature(config);
     default:
       return false;
   }

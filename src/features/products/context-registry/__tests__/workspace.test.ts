@@ -56,11 +56,16 @@ describe('buildProductLeafCategoriesContextBundle', () => {
     expect(document?.entityType).toBe('product_editor_leaf_categories');
     expect(document?.facts?.['leafCategoryCount']).toBe(2);
     expect(document?.facts?.['categoryOutputPolicy']).toBe('final_leaf_segment_only');
+    expect(document?.facts?.['categorySpecificityPolicy']).toBe(
+      'prefer_most_specific_terminal_leaf'
+    );
     expect(section?.text).toContain('"Pins"');
     expect(section?.text).toContain('"Brooches"');
     expect(section?.text).toContain('"leafName": "Pins"');
+    expect(section?.text).toContain('"terminalLeafLabel": "Pins"');
     expect(section?.text).toContain('"hierarchyPath": "Jewelry > Pins"');
     expect(section?.text).toContain('"pathSegments": [');
+    expect(section?.text).toContain('"ancestorSegments": [');
     expect(section?.text).not.toContain('"leafName": "Jewelry"');
   });
 });

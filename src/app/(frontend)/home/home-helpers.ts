@@ -64,14 +64,76 @@ const shouldReadFrontPageSettingFromStorage = (
 const isDevelopmentEnvironment = (env: NodeJS.ProcessEnv = process.env): boolean =>
   env['NODE_ENV'] === 'development';
 
-let frontPageSettingRetryBlockedUntil = 0;
 let lastKnownFrontPageSetting: FrontPageSelectableApp | null = null;
 let lastKnownFrontPageSettingSource: Exclude<FrontPageSelectionSource, 'disabled'> = 'none';
 let lastKnownFrontPageSettingFallbackReason: string | null = null;
 let hasResolvedFrontPageSettingSnapshot = false;
-let frontPageSettingSnapshotReadAt = 0;
-let lastLoggedFrontPageSelectionKey: string | null = null;
-let lastLoggedFrontPageSelectionAt = 0;
+let frontPageSettingSnapshotIsFresh = false;
+let frontPageSettingSnapshotExpiryTimer: ReturnType<typeof setTimeout> | null = null;
+let frontPageSettingRetryBlocked = false;
+let frontPageSettingRetryCooldownTimer: ReturnType<typeof setTimeout> | null = null;
+const frontPageSelectionRecoveryLogCooldownKeys = new Set<string>();
+const frontPageSelectionRecoveryLogCooldownTimers = new Map<
+  string,
+  ReturnType<typeof setTimeout>
+>();
+
+const clearFrontPageSettingSnapshotExpiryTimer = (): void => {
+  if (frontPageSettingSnapshotExpiryTimer) {
+    clearTimeout(frontPageSettingSnapshotExpiryTimer);
+    frontPageSettingSnapshotExpiryTimer = null;
+  }
+};
+
+const scheduleFrontPageSettingSnapshotExpiry = (): void => {
+  clearFrontPageSettingSnapshotExpiryTimer();
+  frontPageSettingSnapshotIsFresh = true;
+
+  if (isDevelopmentEnvironment()) {
+    return;
+  }
+
+  frontPageSettingSnapshotExpiryTimer = setTimeout(() => {
+    frontPageSettingSnapshotIsFresh = false;
+    frontPageSettingSnapshotExpiryTimer = null;
+  }, FRONT_PAGE_SETTING_CACHE_TTL_MS);
+  frontPageSettingSnapshotExpiryTimer.unref?.();
+};
+
+const clearFrontPageSettingRetryCooldown = (): void => {
+  frontPageSettingRetryBlocked = false;
+  if (frontPageSettingRetryCooldownTimer) {
+    clearTimeout(frontPageSettingRetryCooldownTimer);
+    frontPageSettingRetryCooldownTimer = null;
+  }
+};
+
+const startFrontPageSettingRetryCooldown = (): void => {
+  clearFrontPageSettingRetryCooldown();
+  frontPageSettingRetryBlocked = true;
+  frontPageSettingRetryCooldownTimer = setTimeout(() => {
+    frontPageSettingRetryBlocked = false;
+    frontPageSettingRetryCooldownTimer = null;
+  }, FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS);
+  frontPageSettingRetryCooldownTimer.unref?.();
+};
+
+const scheduleFrontPageSelectionRecoveryLogCooldown = (key: string): void => {
+  const existingTimer = frontPageSelectionRecoveryLogCooldownTimers.get(key);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+  }
+
+  frontPageSelectionRecoveryLogCooldownKeys.add(key);
+
+  const timer = setTimeout(() => {
+    frontPageSelectionRecoveryLogCooldownKeys.delete(key);
+    frontPageSelectionRecoveryLogCooldownTimers.delete(key);
+  }, FRONT_PAGE_SELECTION_LOG_TTL_MS);
+
+  timer.unref?.();
+  frontPageSelectionRecoveryLogCooldownTimers.set(key, timer);
+};
 
 const commitFrontPageSettingSnapshot = (
   value: string | null | undefined,
@@ -82,8 +144,8 @@ const commitFrontPageSettingSnapshot = (
   lastKnownFrontPageSettingSource = normalizedSetting ? source : 'none';
   lastKnownFrontPageSettingFallbackReason = null;
   hasResolvedFrontPageSettingSnapshot = true;
-  frontPageSettingSnapshotReadAt = Date.now();
-  frontPageSettingRetryBlockedUntil = 0;
+  scheduleFrontPageSettingSnapshotExpiry();
+  clearFrontPageSettingRetryCooldown();
   return normalizedSetting;
 };
 
@@ -168,16 +230,11 @@ const readDevelopmentFrontPageSettingSnapshot = async (): Promise<FrontPageSelec
 };
 
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
-  const now = Date.now();
-
   if (hasResolvedFrontPageSettingSnapshot && isDevelopmentEnvironment()) {
     return lastKnownFrontPageSetting;
   }
 
-  if (
-    hasResolvedFrontPageSettingSnapshot &&
-    now - frontPageSettingSnapshotReadAt < FRONT_PAGE_SETTING_CACHE_TTL_MS
-  ) {
+  if (hasResolvedFrontPageSettingSnapshot && frontPageSettingSnapshotIsFresh) {
     return lastKnownFrontPageSetting;
   }
 
@@ -195,7 +252,7 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
     return readPersistedFrontPageFallback('storage-unavailable');
   }
 
-  if (now < frontPageSettingRetryBlockedUntil) {
+  if (frontPageSettingRetryBlocked) {
     return readPersistedFrontPageFallback('transient-mongo-cooldown');
   }
 
@@ -219,7 +276,7 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
     );
   } catch (error) {
     if (isTransientMongoConnectionError(error)) {
-      frontPageSettingRetryBlockedUntil = Date.now() + FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS;
+      startFrontPageSettingRetryCooldown();
       return readPersistedFrontPageFallback('transient-mongo-error');
     }
 
@@ -248,17 +305,9 @@ const logFrontPageSelectionRecovery = async (
     resolution.setting ?? 'null',
     resolution.publicOwner,
   ].join('|');
-  const now = Date.now();
-
-  if (
-    lastLoggedFrontPageSelectionKey === key &&
-    now - lastLoggedFrontPageSelectionAt < FRONT_PAGE_SELECTION_LOG_TTL_MS
-  ) {
+  if (frontPageSelectionRecoveryLogCooldownKeys.has(key)) {
     return;
   }
-
-  lastLoggedFrontPageSelectionKey = key;
-  lastLoggedFrontPageSelectionAt = now;
 
   const level = resolution.setting ? 'warn' : 'error';
   const message = resolution.setting
@@ -280,6 +329,7 @@ const logFrontPageSelectionRecovery = async (
       redirectPath: resolution.redirectPath,
     },
   });
+  scheduleFrontPageSelectionRecoveryLogCooldown(key);
 };
 
 export const resolveFrontPageSelection = async (): Promise<FrontPageSelectionResolution> => {

@@ -134,6 +134,42 @@ describe('ProductColumns queued badge', () => {
     ({ getProductColumns } = await import('./ProductColumns'));
   });
 
+  it('uses a pointer cursor for product-list selection checkboxes', () => {
+    const selectColumn = getProductColumns().find((column) => column.id === 'select');
+    if (
+      !selectColumn ||
+      typeof selectColumn.header !== 'function' ||
+      typeof selectColumn.cell !== 'function'
+    ) {
+      throw new Error('Select column was not found.');
+    }
+
+    const header = selectColumn.header({
+      table: {
+        getIsAllPageRowsSelected: () => false,
+        getIsSomePageRowsSelected: () => false,
+        toggleAllPageRowsSelected: vi.fn(),
+      } as never,
+    });
+    const cell = selectColumn.cell({
+      row: {
+        original: createProduct(),
+        getIsSelected: () => false,
+        toggleSelected: vi.fn(),
+      } as never,
+    });
+
+    render(
+      <>
+        {header}
+        {cell}
+      </>
+    );
+
+    expect(screen.getByLabelText('Select all').className).toContain('cursor-pointer');
+    expect(screen.getByLabelText('Select row').className).toContain('cursor-pointer');
+  });
+
   it('renders the queued badge when the product id is currently queued', () => {
     const product = createProduct();
     setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);

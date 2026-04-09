@@ -16,15 +16,11 @@ vi.mock('@tanstack/react-query', async () => {
   };
 });
 
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
-  return {
-    ...actual,
-    useToast: () => ({
-      toast: toastMock,
-    }),
-  };
-});
+vi.mock('@/shared/ui/primitives.public', () => ({
+  useToast: () => ({
+    toast: toastMock,
+  }),
+}));
 
 import {
   resolveCurrentActivePathId,

@@ -56,6 +56,9 @@ export interface ServerExecutionArgs {
   setCurrentRunId?: (id: string | null) => void;
   /** Opens the run detail panel for the given run ID (injected from RunHistoryContext) */
   openRunDetail?: (runId: string) => void;
+  nodeConfigDirty?: boolean | undefined;
+  nodeConfigDraft?: AiNode | null | undefined;
+  persistPendingNodeConfigBeforeRun?: (() => Promise<boolean>) | undefined;
 }
 
 /**
@@ -121,6 +124,9 @@ export interface LocalExecutionArgs {
     context: Record<string, unknown>,
     fallbackMessage?: string
   ) => void;
+  nodeConfigDirty?: boolean | undefined;
+  nodeConfigDraft?: AiNode | null | undefined;
+  persistPendingNodeConfigBeforeRun?: (() => Promise<boolean>) | undefined;
   toast: UiToastFn;
   stopServerRunStream: () => void;
   runServerStream: (
@@ -146,6 +152,9 @@ export interface UseAiPathsRuntimeArgs {
   isPathActive: boolean;
   nodes: AiNode[];
   edges: Edge[];
+  nodeConfigDirty?: boolean | undefined;
+  nodeConfigDraft?: AiNode | null | undefined;
+  persistPendingNodeConfigBeforeRun?: (() => Promise<boolean>) | undefined;
   onCanonicalEdgesDetected?: (edges: Edge[]) => void;
   reportAiPathsError: (
     error: unknown,

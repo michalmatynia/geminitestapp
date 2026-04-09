@@ -1,10 +1,11 @@
-import type { BaseImportMode, BaseImportRunResumePayload, BaseImportRunStartPayload, BaseImportPreflightIssue } from '@/shared/contracts/integrations/base-com';
+import type { BaseImportMode, BaseImportRunResumePayload, BaseImportRunStartPayload } from '@/shared/contracts/integrations/base-com';
 import type { ImportResponse } from '@/shared/contracts/integrations/import-export';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { Toast } from '@/shared/contracts/ui/base';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { buildImportResultToast } from '@/features/data-import-export/utils/import-run-feedback';
 
 type RefetchResult<TData = unknown> = {
   data?: TData;
@@ -240,20 +241,11 @@ export const createImportExportRuntimeActions = ({
       setActiveImportRunId(res.runId);
       const queuedLike = res.status === 'queued' || res.status === 'running';
       setPollImportRun(queuedLike);
-      if (queuedLike) {
-        const isInline = res.dispatchMode === 'inline';
-        const label = importDryRun ? 'Dry-run' : 'Import';
-        toast(isInline ? `${label} running (inline).` : `${label} queued.`, {
-          variant: 'success',
-        });
-      } else if (res.status === 'completed' || res.status === 'partial_success') {
-        toast(res.summaryMessage || 'Import completed.', { variant: 'success' });
-      } else if (res.status === 'failed') {
-        const preflightErrors = (res.preflight?.issues ?? [])
-          .filter((issue: BaseImportPreflightIssue) => issue.severity === 'error')
-          .map((issue: BaseImportPreflightIssue) => issue.message);
-        toast(preflightErrors[0] || res.summaryMessage || 'Import failed.', { variant: 'error' });
-      }
+      const importToast = buildImportResultToast(res, {
+        kind: 'import',
+        dryRun: importDryRun,
+      });
+      toast(importToast.message, importToast.toast);
     } catch (error: unknown) {
       logClientError(error);
       const message = error instanceof Error ? error.message : 'Import failed';
@@ -273,10 +265,8 @@ export const createImportExportRuntimeActions = ({
       });
       setLastResult(resumed);
       setPollImportRun(true);
-      const resumeLabel = resumed.dispatchMode === 'inline'
-        ? 'Import resume running (inline).'
-        : 'Import resume queued.';
-      toast(resumeLabel, { variant: 'success' });
+      const resumeToast = buildImportResultToast(resumed, { kind: 'resume' });
+      toast(resumeToast.message, resumeToast.toast);
     } catch (error: unknown) {
       logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to resume import run.';

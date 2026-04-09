@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { enqueuePlaywrightNodeRun } from '@/features/ai/server';
+import { enqueuePlaywrightNodeRun } from '@/features/ai/ai-paths/services/playwright-node-runner';
 import { TRADERA_PUBLIC_CATEGORIES_URL } from '@/features/integrations/constants/tradera';
 import { DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT } from '@/features/integrations/services/tradera-listing/category-scrape-script';
 import {

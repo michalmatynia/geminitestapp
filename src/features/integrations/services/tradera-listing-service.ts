@@ -22,9 +22,9 @@ export * from './tradera-listing/api';
 import { isTraderaApiIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   findProductListingByIdAcrossProviders,
-  getIntegrationRepository,
   listProductListingsByProductIdAcrossProviders,
-} from '@/features/integrations/server';
+} from '@/features/integrations/services/product-listing-repository';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import {
   loadTraderaSystemSettings,
   toTruthyBoolean,

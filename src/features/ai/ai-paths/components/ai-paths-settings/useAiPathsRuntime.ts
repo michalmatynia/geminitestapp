@@ -73,7 +73,21 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const state = useAiPathsRuntimeState();
 
   // Memos
-  const normalizedNodes = useMemo((): AiNode[] => normalizeNodes(args.nodes), [args.nodes]);
+  const runtimeNodes = useMemo((): AiNode[] => {
+    if (!args.nodeConfigDirty || !args.nodeConfigDraft) {
+      return args.nodes;
+    }
+    let appliedDraft = false;
+    const nextNodes = args.nodes.map((node: AiNode): AiNode => {
+      if (node.id !== args.nodeConfigDraft?.id) {
+        return node;
+      }
+      appliedDraft = true;
+      return args.nodeConfigDraft;
+    });
+    return appliedDraft ? nextNodes : args.nodes;
+  }, [args.nodeConfigDirty, args.nodeConfigDraft, args.nodes]);
+  const normalizedNodes = useMemo((): AiNode[] => normalizeNodes(runtimeNodes), [runtimeNodes]);
   const sanitizedEdges = useMemo(
     (): Edge[] => sanitizeEdges(normalizedNodes, args.edges),
     [args.edges, normalizedNodes]

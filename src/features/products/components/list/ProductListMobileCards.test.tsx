@@ -250,6 +250,12 @@ describe('ProductListMobileCards', () => {
     );
   });
 
+  it('uses a pointer cursor for mobile product-list selection checkboxes', () => {
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByLabelText('Select Keychain').className).toContain('cursor-pointer');
+  });
+
   it('passes Tradera badge runtime into the mobile quick export button', () => {
     useProductListRowRuntimeMock.mockReturnValue({
       showMarketplaceBadge: true,

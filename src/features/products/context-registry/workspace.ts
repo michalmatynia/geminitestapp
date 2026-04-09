@@ -158,8 +158,10 @@ const buildLeafCategoryRows = (
   id: string;
   name: string;
   leafName: string;
+  terminalLeafLabel: string;
   hierarchyPath: string;
   pathSegments: string[];
+  ancestorSegments: string[];
   catalogId: string;
   catalogName: string | null;
 }> => {
@@ -176,8 +178,10 @@ const buildLeafCategoryRows = (
       id: entry.id,
       name: entry.leafName,
       leafName: entry.leafName,
+      terminalLeafLabel: entry.leafName,
       hierarchyPath: entry.hierarchyPath,
       pathSegments: entry.pathSegments,
+      ancestorSegments: entry.pathSegments.slice(0, -1),
       catalogId: entry.catalogId,
       catalogName: catalogNameById.get(entry.catalogId) || null,
     }));
@@ -471,13 +475,14 @@ const buildProductLeafCategoriesRuntimeDocument = (
       leafCategoryCount: leafCategories.length,
       categorySelectionPolicy: 'leaf_only_exact_name_or_full_hierarchy_match',
       categoryOutputPolicy: 'final_leaf_segment_only',
+      categorySpecificityPolicy: 'prefer_most_specific_terminal_leaf',
     },
     sections: [
       {
         kind: 'text',
         title: 'Leaf category options',
         summary:
-          'Resolved category vocabulary for AI tasks. Match against the hierarchy when needed, but output only the final leaf label as the category value.',
+          'Resolved category vocabulary for AI tasks. Match against the hierarchy when needed, but output only the final terminal leaf label as the category value. If a hierarchy ends with a more specific leaf, never collapse it to an ancestor segment.',
         text: JSON.stringify(
           {
             selectedCatalogIds: input.selectedCatalogIds,

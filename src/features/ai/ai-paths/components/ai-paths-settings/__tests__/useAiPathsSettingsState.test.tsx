@@ -13,6 +13,16 @@ const mockState = vi.hoisted(() => ({
     selectedNodeId: 'node-1',
     configOpen: true,
     nodeConfigDirty: true,
+    nodeConfigDraft: {
+      id: 'node-1',
+      type: 'model',
+      title: 'Model Node',
+      config: {
+        model: {
+          modelId: 'gemma',
+        },
+      },
+    },
   },
   selectionActions: {
     setNodeConfigDirty: vi.fn(),
@@ -172,7 +182,7 @@ const mockState = vi.hoisted(() => ({
     autoSaveStatus: 'saving',
     autoSaveAt: '2026-03-19T10:05:00.000Z',
     saving: true,
-    handleSave: vi.fn(),
+    handleSave: vi.fn(async () => true),
     persistActivePathPreference: vi.fn(),
     persistPathSettings: vi.fn(),
     persistSettingsBulk: vi.fn(),
@@ -412,6 +422,23 @@ describe('useAiPathsSettingsState', () => {
     mockState.canvasArgs.length = 0;
     mockState.runHistoryCalls.length = 0;
     mockState.paletteHookArgs.length = 0;
+    mockState.selectionState = {
+      ...mockState.selectionState,
+      selectedNodeId: 'node-1',
+      configOpen: true,
+      nodeConfigDirty: true,
+      nodeConfigDraft: {
+        id: 'node-1',
+        type: 'model',
+        title: 'Model Node',
+        config: {
+          model: {
+            modelId: 'gemma',
+          },
+        },
+      },
+    };
+    mockState.persistence.handleSave = vi.fn(async () => true);
   });
 
   afterEach(() => {
@@ -461,6 +488,10 @@ describe('useAiPathsSettingsState', () => {
       mockState.runtimeMgmt.pruneRuntimeInputs
     );
     expect(mockState.runtimeArgs[0]?.runtimeKernelConfig).toEqual({ engine: 'node' });
+    expect(mockState.runtimeArgs[0]?.nodeConfigDirty).toBe(true);
+    expect(mockState.runtimeArgs[0]?.nodeConfigDraft).toEqual(
+      mockState.selectionState.nodeConfigDraft
+    );
     expect(mockState.persistenceArgs[0]?.normalizeTriggerLabel('Product Modal - Context Grabber')).toBe(
       'Product Modal - Context Filter'
     );
@@ -495,11 +526,19 @@ describe('useAiPathsSettingsState', () => {
       result.current.incrementLoadNonce();
       result.current.updateActivePathMeta('Renamed Path');
       await result.current.persistPathSettings([], 'path-1', { id: 'config-1' } as never);
+      const persistedNodeConfig = await mockState.runtimeArgs[0]?.persistPendingNodeConfigBeforeRun?.();
+      expect(persistedNodeConfig).toBe(true);
     });
     expect(mockState.persistenceActions.incrementLoadNonce).toHaveBeenCalledTimes(1);
     expect(mockState.graphActions.setPathName).toHaveBeenCalledWith('Renamed Path');
     expect(mockState.persistence.persistPathSettings).toHaveBeenCalledWith([], 'path-1', {
       id: 'config-1',
+    });
+    expect(mockState.persistence.handleSave).toHaveBeenCalledWith({
+      silent: true,
+      includeNodeConfig: true,
+      force: true,
+      nodeOverride: mockState.selectionState.nodeConfigDraft,
     });
 
     expect(mockState.persistenceActions.setOperationHandlers).toHaveBeenCalledWith({

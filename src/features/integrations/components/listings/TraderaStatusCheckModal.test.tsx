@@ -18,12 +18,16 @@ vi.mock('@tanstack/react-query', () => ({
   }),
 }));
 
-vi.mock('@/shared/lib/api-client', () => ({
-  api: {
-    get: (...args: unknown[]) => apiGetMock(...args),
-    post: (...args: unknown[]) => apiPostMock(...args),
-  },
-}));
+vi.mock('@/shared/lib/api-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/api-client')>();
+  return {
+    ...actual,
+    api: {
+      get: (...args: unknown[]) => apiGetMock(...args),
+      post: (...args: unknown[]) => apiPostMock(...args),
+    },
+  };
+});
 
 vi.mock('@/shared/ui/app-modal', () => ({
   AppModal: ({
@@ -70,6 +74,17 @@ vi.mock('@/shared/ui/toast', () => ({
 
 import { TraderaStatusCheckModal } from './TraderaStatusCheckModal';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+const buildTraderaPreflightResponse = () => ({
+  ok: true,
+  sessionReady: true,
+  steps: [{ step: 'Preflight validation', status: 'ok' }],
+});
+
+const buildTraderaSessionRefreshResponse = () => ({
+  ok: true,
+  steps: [{ step: 'Saving session', status: 'ok' }],
+});
 
 const makeListing = (overrides: Record<string, unknown>) => ({
   id: 'listing-default',
@@ -149,30 +164,38 @@ describe('TraderaStatusCheckModal', () => {
       return Promise.resolve([]);
     });
 
-    apiPostMock.mockResolvedValue({
-      total: 2,
-      queued: 1,
-      alreadyQueued: 1,
-      skipped: 0,
-      failed: 0,
-      results: [
-        {
-          productId: 'product-1',
-          listingId: 'listing-browser-1',
-          status: 'queued',
-          queue: {
-            name: 'tradera-listings',
-            jobId: 'job-1',
-            enqueuedAt: '2026-04-01T12:01:00.000Z',
-          },
-        },
-        {
-          productId: 'product-3',
-          listingId: 'listing-browser-3',
-          status: 'already_queued',
-          message: 'Live status check already queued for this listing.',
-        },
-      ],
+    apiPostMock.mockImplementation((url: string) => {
+      if (url.includes('/connections/')) {
+        return Promise.resolve(buildTraderaPreflightResponse());
+      }
+      if (url === '/api/v2/integrations/product-listings/tradera-status-check') {
+        return Promise.resolve({
+          total: 2,
+          queued: 1,
+          alreadyQueued: 1,
+          skipped: 0,
+          failed: 0,
+          results: [
+            {
+              productId: 'product-1',
+              listingId: 'listing-browser-1',
+              status: 'queued',
+              queue: {
+                name: 'tradera-listings',
+                jobId: 'job-1',
+                enqueuedAt: '2026-04-01T12:01:00.000Z',
+              },
+            },
+            {
+              productId: 'product-3',
+              listingId: 'listing-browser-3',
+              status: 'already_queued',
+              message: 'Live status check already queued for this listing.',
+            },
+          ],
+        });
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
     });
 
     render(
@@ -231,20 +254,28 @@ describe('TraderaStatusCheckModal', () => {
         productId: 'product-1',
       }),
     ]);
-    apiPostMock.mockResolvedValue({
-      total: 1,
-      queued: 0,
-      alreadyQueued: 0,
-      skipped: 1,
-      failed: 0,
-      results: [
-        {
-          productId: 'product-1',
-          listingId: 'listing-browser-1',
-          status: 'skipped',
-          message: 'No Tradera browser listing available for live status check.',
-        },
-      ],
+    apiPostMock.mockImplementation((url: string) => {
+      if (url.includes('/connections/')) {
+        return Promise.resolve(buildTraderaPreflightResponse());
+      }
+      if (url === '/api/v2/integrations/product-listings/tradera-status-check') {
+        return Promise.resolve({
+          total: 1,
+          queued: 0,
+          alreadyQueued: 0,
+          skipped: 1,
+          failed: 0,
+          results: [
+            {
+              productId: 'product-1',
+              listingId: 'listing-browser-1',
+              status: 'skipped',
+              message: 'No Tradera browser listing available for live status check.',
+            },
+          ],
+        });
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
     });
 
     render(
@@ -277,14 +308,25 @@ describe('TraderaStatusCheckModal', () => {
         productId: 'product-1',
       }),
     ]);
-    apiPostMock.mockResolvedValue({
-      queued: true,
-      listingId: 'listing-browser-1',
-      queue: {
-        name: 'tradera-listings',
-        jobId: 'job-1',
-        enqueuedAt: '2026-04-01T12:01:00.000Z',
-      },
+    apiPostMock.mockImplementation((url: string) => {
+      if (url.includes('/connections/')) {
+        return Promise.resolve(buildTraderaPreflightResponse());
+      }
+      if (
+        url ===
+        '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
+      ) {
+        return Promise.resolve({
+          queued: true,
+          listingId: 'listing-browser-1',
+          queue: {
+            name: 'tradera-listings',
+            jobId: 'job-1',
+            enqueuedAt: '2026-04-01T12:01:00.000Z',
+          },
+        });
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
     });
 
     render(
@@ -314,6 +356,123 @@ describe('TraderaStatusCheckModal', () => {
         queryKey: QUERY_KEYS.integrations.productListingsBadges(),
       });
     });
+  });
+
+  it('requires a Tradera login refresh before queueing a live check when preflight reports auth_required', async () => {
+    apiGetMock
+      .mockResolvedValueOnce([
+        makeListing({
+          id: 'listing-browser-1',
+          productId: 'product-1',
+        }),
+      ])
+      .mockResolvedValueOnce([
+        makeListing({
+          id: 'listing-browser-1',
+          productId: 'product-1',
+        }),
+      ]);
+    apiPostMock.mockImplementation((url: string, body?: Record<string, unknown>) => {
+      if (url.includes('/connections/') && url.endsWith('/test')) {
+        if (body?.mode === 'manual_session_refresh') {
+          return Promise.resolve(buildTraderaSessionRefreshResponse());
+        }
+        return Promise.reject(
+          new Error(
+            'AUTH_REQUIRED: Stored Tradera session expired or is missing. Login to Tradera and retry the live check.'
+          )
+        );
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
+    });
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+    fireEvent.click(screen.getByRole('button', { name: 'Check Live' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'AUTH_REQUIRED: Stored Tradera session expired or is missing. Login to Tradera and retry the live check.'
+        )
+      ).toBeInTheDocument();
+    });
+    expect(
+      apiPostMock
+        .mock.calls.map(([url]) => url)
+        .filter(
+          (url) =>
+            url ===
+            '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
+        )
+    ).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Login to Tradera' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/integration-tradera-browser/connections/connection-1/test',
+        {
+          mode: 'manual_session_refresh',
+          manualTimeoutMs: 240000,
+        },
+        {
+          timeout: 270000,
+        }
+      );
+    });
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith('Tradera login session refreshed.', {
+        variant: 'success',
+      });
+    });
+  });
+
+  it('marks batch live checks as needing login when preflight fails before queueing', async () => {
+    apiGetMock.mockResolvedValue([
+      makeListing({
+        id: 'listing-browser-1',
+        productId: 'product-1',
+      }),
+    ]);
+    apiPostMock.mockRejectedValue(
+      new Error(
+        'AUTH_REQUIRED: Stored Tradera session expired or is missing. Login to Tradera and retry the live check.'
+      )
+    );
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+    fireEvent.click(screen.getByRole('button', { name: 'Check All Live' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith('Tradera live checks: 1 need login.', {
+        variant: 'warning',
+      });
+    });
+    expect(
+      apiPostMock
+        .mock.calls.map(([url]) => url)
+        .filter((url) => url === '/api/v2/integrations/product-listings/tradera-status-check')
+    ).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Login to Tradera' })).toBeInTheDocument();
   });
 
   it('updates the modal row immediately when the refreshed listing already has the new check result', async () => {
@@ -360,14 +519,25 @@ describe('TraderaStatusCheckModal', () => {
         }),
       ]);
 
-    apiPostMock.mockResolvedValue({
-      queued: true,
-      listingId: 'listing-browser-1',
-      queue: {
-        name: 'tradera-listings',
-        jobId: 'job-1',
-        enqueuedAt: '2026-04-01T12:01:00.000Z',
-      },
+    apiPostMock.mockImplementation((url: string) => {
+      if (url.includes('/connections/')) {
+        return Promise.resolve(buildTraderaPreflightResponse());
+      }
+      if (
+        url ===
+        '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
+      ) {
+        return Promise.resolve({
+          queued: true,
+          listingId: 'listing-browser-1',
+          queue: {
+            name: 'tradera-listings',
+            jobId: 'job-1',
+            enqueuedAt: '2026-04-01T12:01:00.000Z',
+          },
+        });
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
     });
 
     render(
@@ -450,14 +620,25 @@ describe('TraderaStatusCheckModal', () => {
         }),
       ]);
 
-    apiPostMock.mockResolvedValue({
-      queued: true,
-      listingId: 'listing-browser-1',
-      queue: {
-        name: 'tradera-listings',
-        jobId: 'job-1',
-        enqueuedAt: '2026-04-01T12:01:00.000Z',
-      },
+    apiPostMock.mockImplementation((url: string) => {
+      if (url.includes('/connections/')) {
+        return Promise.resolve(buildTraderaPreflightResponse());
+      }
+      if (
+        url ===
+        '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
+      ) {
+        return Promise.resolve({
+          queued: true,
+          listingId: 'listing-browser-1',
+          queue: {
+            name: 'tradera-listings',
+            jobId: 'job-1',
+            enqueuedAt: '2026-04-01T12:01:00.000Z',
+          },
+        });
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
     });
 
     render(

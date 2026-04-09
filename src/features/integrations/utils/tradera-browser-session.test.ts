@@ -18,6 +18,7 @@ import {
   TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS,
   TRADERA_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS,
   ensureTraderaBrowserSession,
+  refreshTraderaBrowserSession,
   hasSavedTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
   isTraderaBrowserSessionReady,
@@ -72,6 +73,30 @@ describe('tradera-browser-session', () => {
         timeout: TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS,
       }
     );
+  });
+
+  it('posts the manual session refresh request with the default timeout', async () => {
+    apiPostMock.mockResolvedValue({
+      ok: true,
+      steps: [{ step: 'Saving session', status: 'ok' }],
+    });
+
+    const result = await refreshTraderaBrowserSession({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/integration-tradera-1/connections/conn-tradera-1/test',
+      {
+        mode: 'manual_session_refresh',
+        manualTimeoutMs: TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
+      },
+      {
+        timeout: TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS,
+      }
+    );
+    expect(result.savedSession).toBe(true);
   });
 
   it('posts quicklist preflight with a dedicated fast mode and reports ready state', async () => {

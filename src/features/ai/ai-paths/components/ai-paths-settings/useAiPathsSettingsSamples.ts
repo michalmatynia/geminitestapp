@@ -2,6 +2,7 @@
 'use no memo';
 
 import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import type { Toast } from '@/shared/contracts/ui/base';
@@ -63,6 +64,14 @@ export type UseAiPathsSettingsSamplesReturn = {
     entityId: string,
     options?: { notify?: boolean }
   ) => Promise<void>;
+};
+
+type SampleMutationConfig<TData, TVariables> = {
+  mutationKey: readonly unknown[];
+  mutationFn: (variables: TVariables) => Promise<TData>;
+  meta?: Record<string, unknown>;
+  onSuccess?: (data: TData, variables: TVariables) => void;
+  onError?: (error: Error, variables: TVariables) => void;
 };
 
 const isObjectId = (value: string): boolean => OBJECT_ID_PATTERN.test(value);
@@ -212,12 +221,33 @@ const fetchUpdaterSampleByEntityType = async ({
   return await fetchUpdaterSampleViaDbQuery(entityType, entityId);
 };
 
+function useSampleMutation<TData, TVariables>({
+  mutationKey,
+  mutationFn,
+  meta,
+  onSuccess,
+  onError,
+}: SampleMutationConfig<TData, TVariables>) {
+  const hookOrderRef = useRef(0);
+  const mutationQueryClient = useQueryClient();
+  void hookOrderRef;
+  void mutationQueryClient;
+
+  return useMutation<TData, Error, TVariables>({
+    mutationKey,
+    mutationFn,
+    meta,
+    onSuccess,
+    onError,
+  });
+}
+
 export function useAiPathsSettingsSamples({
   toast,
 }: UseAiPathsSettingsSamplesInput): UseAiPathsSettingsSamplesReturn {
   const queryClient = useQueryClient();
   const { setParserSamples, setUpdaterSamples } = useRuntimeActions();
-  const fetchParserSampleMutation = useMutation({
+  const fetchParserSampleMutation = useSampleMutation({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-parser-sample'),
     mutationFn: async ({
       nodeId,
@@ -321,9 +351,8 @@ export function useAiPathsSettingsSamples({
     },
   });
 
-  const fetchUpdaterSampleMutation = useMutation<
+  const fetchUpdaterSampleMutation = useSampleMutation<
     FetchUpdaterSampleResult,
-    Error,
     FetchUpdaterSampleVariables
   >({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-updater-sample'),

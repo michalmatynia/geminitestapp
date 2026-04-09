@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { initializeQueues } from '@/features/jobs/server';
 import {
   resumeBaseImportRun,
   toStartResponse,
@@ -24,6 +25,7 @@ export async function POST_handler(
   }
 
   const statuses = parsed.data.statuses ?? ['failed', 'pending'];
+  initializeQueues();
   const resumed = await resumeBaseImportRun(params.runId, statuses);
   const { dispatchMode, queueJobId } = await dispatchBaseImportRunJob({
     runId: resumed.id,

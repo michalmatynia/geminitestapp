@@ -99,10 +99,224 @@ describe('starter workflow registry', () => {
 
     expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
     expect(hasNodeId(config, 'node-update-name-normalize')).toBe(true);
+    expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
     expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
     expect(databaseNode?.config?.database?.updateTemplate).not.toContain('"name_en"');
     expectSuccessfulStrictRunPreflight(report);
+  });
+
+  it('fully replaces stale default normalize graphs with random node ids so dry-run database updates take effect', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_name_normalize_v1',
+        seededDefault: true,
+      }
+    );
+
+    const randomIdConfig: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).map((node, index) => ({
+        ...node,
+        id: `node-normalize-random-${index + 1}`,
+      })),
+      edges: (canonical.edges ?? []).map((edge, index) => {
+        const fromIndex = (canonical.nodes ?? []).findIndex((node) => node.id === edge.from);
+        const toIndex = (canonical.nodes ?? []).findIndex((node) => node.id === edge.to);
+        return {
+          ...edge,
+          id: `edge-normalize-random-${index + 1}`,
+          from: fromIndex >= 0 ? `node-normalize-random-${fromIndex + 1}` : edge.from,
+          to: toIndex >= 0 ? `node-normalize-random-${toIndex + 1}` : edge.to,
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 3,
+          seededDefault: true,
+        },
+      },
+    };
+
+    const upgraded = upgradeStarterWorkflowPathConfig(randomIdConfig);
+    const databaseNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-update-name-normalize'
+    );
+    const report = evaluateStrictRunPreflight(upgraded.config);
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(hasNodeId(upgraded.config, 'node-update-name-normalize')).toBe(true);
+    expect(databaseNode?.config?.database?.dryRun).toBe(true);
+    expectSuccessfulStrictRunPreflight(report);
+  });
+
+  it('fully replaces legacy normalize graphs with random node ids and no starter provenance', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_name_normalize_v1',
+        seededDefault: true,
+      }
+    );
+
+    const legacyRandomIdConfig: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).map((node, index) => {
+        const randomId = `node-normalize-legacy-${index + 1}`;
+        if (node.type !== 'database') {
+          return {
+            ...node,
+            id: randomId,
+          };
+        }
+
+        return {
+          ...node,
+          id: randomId,
+          config: {
+            ...node.config,
+            database: {
+              ...node.config?.database,
+              dryRun: false,
+              updatePayloadMode: 'custom',
+              updateTemplate:
+                '{\n  "$set": {\n    "name_en": "{{result}}"\n  },\n  "$unset": {\n    "__noop__": ""\n  }\n}',
+            },
+          },
+        };
+      }),
+      edges: (canonical.edges ?? []).map((edge, index) => {
+        const fromIndex = (canonical.nodes ?? []).findIndex((node) => node.id === edge.from);
+        const toIndex = (canonical.nodes ?? []).findIndex((node) => node.id === edge.to);
+        return {
+          ...edge,
+          id: `edge-normalize-legacy-${index + 1}`,
+          from: fromIndex >= 0 ? `node-normalize-legacy-${fromIndex + 1}` : edge.from,
+          to: toIndex >= 0 ? `node-normalize-legacy-${toIndex + 1}` : edge.to,
+        };
+      }),
+      extensions: undefined,
+    };
+
+    const upgraded = upgradeStarterWorkflowPathConfig(legacyRandomIdConfig);
+    const promptNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-prompt-name-normalize'
+    );
+    const databaseNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-update-name-normalize'
+    );
+    const promptTemplate =
+      typeof promptNode?.config?.prompt?.template === 'string'
+        ? promptNode.config.prompt.template
+        : '';
+
+    expect(upgraded.resolution?.matchedBy).toBe('legacy_alias');
+    expect(upgraded.changed).toBe(true);
+    expect(hasNodeId(upgraded.config, 'node-prompt-name-normalize')).toBe(true);
+    expect(databaseNode?.config?.database?.dryRun).toBe(true);
+    expect(promptTemplate).toContain('Always prefer the most specific terminal leaf from the hierarchy.');
+  });
+
+  it('fully replaces partially-upgraded default normalize graphs whose provenance is current but node ids never migrated', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_name_normalize_v1',
+        seededDefault: true,
+      }
+    );
+
+    const partiallyUpgraded: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).map((node, index) => ({
+        ...node,
+        id: `node-normalize-current-${index + 1}`,
+      })),
+      edges: (canonical.edges ?? []).map((edge, index) => {
+        const fromIndex = (canonical.nodes ?? []).findIndex((node) => node.id === edge.from);
+        const toIndex = (canonical.nodes ?? []).findIndex((node) => node.id === edge.to);
+        return {
+          ...edge,
+          id: `edge-normalize-current-${index + 1}`,
+          from: fromIndex >= 0 ? `node-normalize-current-${fromIndex + 1}` : edge.from,
+          to: toIndex >= 0 ? `node-normalize-current-${toIndex + 1}` : edge.to,
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 5,
+          seededDefault: true,
+        },
+      },
+    };
+
+    const upgraded = upgradeStarterWorkflowPathConfig(partiallyUpgraded);
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(hasNodeId(upgraded.config, 'node-prompt-name-normalize')).toBe(true);
+    expect(hasNodeId(upgraded.config, 'node-update-name-normalize')).toBe(true);
+  });
+
+  it('upgrades stale normalize prompts to require the most specific terminal leaf category', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_name_normalize_v1',
+        seededDefault: true,
+      }
+    );
+
+    const staleConfig: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).map((node) => {
+        if (node.id !== 'node-prompt-name-normalize') return node;
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            prompt: {
+              ...node.config?.prompt,
+              template:
+                'You normalize English ecommerce product names into a strict parameterized format.\n' +
+                'Use only evidence from the current product fields, images, and the Context Registry bundle supplied in the system context.\n' +
+                'The Context Registry contains the authoritative leaf-category vocabulary for the active catalog selection. Some entries may include the full category hierarchy for disambiguation. Use that hierarchy only to identify the correct category. The final category field and normalizedName MUST use only the final leaf label, never the full hierarchy string, never a parent category, and never an invented category.\n',
+            },
+          },
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 4,
+          seededDefault: true,
+        },
+      },
+    };
+
+    const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
+    const promptNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-prompt-name-normalize'
+    );
+    const promptTemplate =
+      typeof promptNode?.config?.prompt?.template === 'string'
+        ? promptNode.config.prompt.template
+        : '';
+
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(upgraded.changed).toBe(true);
+    expect(promptTemplate).toContain('Always prefer the most specific terminal leaf from the hierarchy.');
+    expect(promptTemplate).toContain('If a hierarchy ends with \\"Movie Keychain\\" or \\"Gaming Keychain\\"');
+    expect(promptTemplate).toContain(
+      'If a generic hierarchy segment and a more specific terminal leaf are both possible, choose the terminal leaf.'
+    );
   });
 
   it('does not materialize starter workflows with embedded model selections', () => {

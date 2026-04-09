@@ -1,4 +1,4 @@
-import { validatePlaywrightNodeScript } from '@/features/ai/server';
+import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
 import {
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,

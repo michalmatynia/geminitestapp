@@ -12,6 +12,11 @@ import {
   isTraderaStatusCheckPending,
   selectPreferredTraderaListingForStatusCheck,
 } from '@/features/integrations/utils/tradera-status-check';
+import {
+  isTraderaBrowserAuthRequiredMessage,
+  preflightTraderaQuickListSession,
+  refreshTraderaBrowserSession,
+} from '@/features/integrations/utils/tradera-browser-session';
 import { resolveTraderaExecutionStepsFromMarketplaceData } from '@/features/integrations/utils/tradera-execution-steps';
 import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import type {
@@ -47,6 +52,12 @@ type RefreshRowResult = {
   row: ListingRow;
   completed: boolean;
   pending: boolean;
+};
+
+type TraderaSessionTarget = {
+  productId: string;
+  integrationId: string;
+  connectionId: string;
 };
 
 type ListingRow = {
@@ -97,6 +108,43 @@ function resolveListingUrl(listing: ProductListingWithDetails): string | null {
     if (typeof directUrl === 'string' && directUrl.startsWith('http')) return directUrl;
   }
   return null;
+}
+
+function resolveDisplayedTraderaFailureReason(
+  listing: ProductListingWithDetails | null | undefined
+): string | null {
+  if (!listing) {
+    return null;
+  }
+
+  const traderaExecution = resolveTraderaExecutionStepsFromMarketplaceData(
+    listing.marketplaceData
+  );
+  if (traderaExecution.action === 'check_status') {
+    return traderaExecution.error;
+  }
+
+  return typeof listing.failureReason === 'string' && listing.failureReason.trim().length > 0
+    ? listing.failureReason.trim()
+    : null;
+}
+
+function resolveTraderaSessionTarget(
+  row: ListingRow | null | undefined
+): TraderaSessionTarget | null {
+  const listing = row?.listing;
+  if (!listing || !isTraderaBrowserIntegrationSlug(listing.integration?.slug)) {
+    return null;
+  }
+  if (!listing.integrationId || !listing.connectionId) {
+    return null;
+  }
+
+  return {
+    productId: row.productId,
+    integrationId: listing.integrationId,
+    connectionId: listing.connectionId,
+  };
 }
 
 const RELIST_ELIGIBLE_STATUSES = new Set(['ended', 'unsold', 'failed', 'removed']);
@@ -206,10 +254,14 @@ function ListingRowView({
   row,
   onRelist,
   onLiveCheck,
+  onRefreshSession,
+  isRefreshingSession,
 }: {
   row: ListingRow;
   onRelist: (productId: string, listingId: string) => void;
   onLiveCheck: (productId: string, listingId: string) => void;
+  onRefreshSession: (productId: string) => void;
+  isRefreshingSession: boolean;
 }) {
   const { productId, productName, listing, error, relistState, relistError, liveCheckState, liveCheckError } = row;
   const status = listing?.status ?? '';
@@ -223,6 +275,11 @@ function ListingRowView({
   const traderaExecution = listing
     ? resolveTraderaExecutionStepsFromMarketplaceData(listing.marketplaceData)
     : { action: null, steps: [], ok: null, error: null };
+  const displayedFailureReason = resolveDisplayedTraderaFailureReason(listing);
+  const requiresSessionRefresh =
+    supportsLiveCheck &&
+    (isTraderaBrowserAuthRequiredMessage(liveCheckError ?? displayedFailureReason) ||
+      status.toLowerCase() === 'auth_required');
 
   return (
     <div className='border border-border/40 rounded-lg p-4 space-y-3 bg-card/30'>
@@ -299,10 +356,10 @@ function ListingRowView({
               <StalenessWarning lastStatusCheckAt={listing.lastStatusCheckAt} />
             </span>
 
-            {listing.failureReason && (
+            {displayedFailureReason && (
               <>
                 <span className='text-muted-foreground'>Failure reason</span>
-                <span className='text-destructive/80 break-words'>{listing.failureReason}</span>
+                <span className='text-destructive/80 break-words'>{displayedFailureReason}</span>
               </>
             )}
           </div>
@@ -348,7 +405,7 @@ function ListingRowView({
                 variant='outline'
                 size='sm'
                 className='h-7 gap-1.5 px-2 text-xs'
-                disabled={isLiveCheckRunning}
+                disabled={isLiveCheckRunning || isRefreshingSession}
                 onClick={() => {
                   if (listing.id) onLiveCheck(productId, listing.id);
                 }}
@@ -364,7 +421,23 @@ function ListingRowView({
                     ? 'Checking…'
                     : liveCheckState === 'done'
                       ? 'Checked'
-                      : 'Check Live'}
+                    : 'Check Live'}
+              </Button>
+            )}
+            {supportsLiveCheck && requiresSessionRefresh && (
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-7 gap-1.5 border-amber-400/50 px-2 text-xs text-amber-100 hover:bg-amber-500/10 hover:text-amber-50'
+                disabled={isRefreshingSession}
+                onClick={() => onRefreshSession(productId)}
+              >
+                {isRefreshingSession ? (
+                  <Loader2 className='h-3 w-3 animate-spin' />
+                ) : (
+                  <RefreshCw className='h-3 w-3' />
+                )}
+                {isRefreshingSession ? 'Waiting for login...' : 'Login to Tradera'}
               </Button>
             )}
             {hasListingId && !supportsLiveCheck && (
@@ -398,6 +471,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
   const [rows, setRows] = useState<ListingRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [isBatchChecking, setIsBatchChecking] = useState(false);
+  const [refreshingSessionProductId, setRefreshingSessionProductId] = useState<string | null>(null);
   const pollTimersRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
   const pollDeadlinesRef = useRef<Map<string, number>>(new Map());
   const liveCheckBaselinesRef = useRef<Map<string, LiveCheckBaseline>>(new Map());
@@ -662,10 +736,135 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     });
   }, [rows, startPollingForLiveCheck]);
 
+  const verifyLiveCheckSession = useCallback(
+    async (
+      target: TraderaSessionTarget
+    ): Promise<{ ready: boolean; authRequired: boolean; message: string | null }> => {
+      try {
+        const result = await preflightTraderaQuickListSession({
+          integrationId: target.integrationId,
+          connectionId: target.connectionId,
+        });
+        if (result.ready) {
+          return { ready: true, authRequired: false, message: null };
+        }
+        return {
+          ready: false,
+          authRequired: true,
+          message:
+            'Stored Tradera session expired or is missing. Login to Tradera and retry the live check.',
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to verify the Tradera browser session.';
+        return {
+          ready: false,
+          authRequired: isTraderaBrowserAuthRequiredMessage(message),
+          message,
+        };
+      }
+    },
+    []
+  );
+
+  const handleRefreshSession = useCallback(
+    async (productId: string) => {
+      const row = rows.find((candidate) => candidate.productId === productId);
+      const target = resolveTraderaSessionTarget(row);
+      if (!target) {
+        toast('Tradera browser connection not available for session refresh.', {
+          variant: 'error',
+        });
+        return;
+      }
+
+      try {
+        setRefreshingSessionProductId(productId);
+        setRows((prev) =>
+          prev.map((candidate) =>
+            candidate.productId === productId
+              ? { ...candidate, liveCheckError: null }
+              : candidate
+          )
+        );
+
+        const response = await refreshTraderaBrowserSession({
+          integrationId: target.integrationId,
+          connectionId: target.connectionId,
+        });
+        toast(
+          response.savedSession
+            ? 'Tradera login session refreshed.'
+            : 'Tradera manual login completed.',
+          { variant: 'success' }
+        );
+
+        setRows((prev) =>
+          prev.map((candidate) =>
+            candidate.productId === productId
+              ? { ...candidate, liveCheckState: 'idle', liveCheckError: null }
+              : candidate
+          )
+        );
+        invalidateStatusViews(productId);
+        await refreshRow(productId).catch(() => undefined);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to refresh the Tradera browser session.';
+        setRows((prev) =>
+          prev.map((candidate) =>
+            candidate.productId === productId
+              ? {
+                  ...candidate,
+                  liveCheckState: 'error',
+                  liveCheckError: message,
+                }
+              : candidate
+          )
+        );
+        toast(message, {
+          variant: isTraderaBrowserAuthRequiredMessage(message) ? 'warning' : 'error',
+        });
+      } finally {
+        setRefreshingSessionProductId(null);
+      }
+    },
+    [invalidateStatusViews, refreshRow, rows, toast]
+  );
+
   const handleLiveCheck = useCallback(
     async (productId: string, listingId: string) => {
       const row = rows.find((r) => r.productId === productId);
+      const target = resolveTraderaSessionTarget(row);
       const baseline = buildLiveCheckBaseline(row?.listing);
+
+      if (target) {
+        const sessionCheck = await verifyLiveCheckSession(target);
+        if (!sessionCheck.ready) {
+          const message =
+            sessionCheck.message ??
+            'Stored Tradera session expired or is missing. Login to Tradera and retry the live check.';
+          setRows((prev) =>
+            prev.map((candidate) =>
+              candidate.productId === productId
+                ? {
+                    ...candidate,
+                    liveCheckState: sessionCheck.authRequired ? 'idle' : 'error',
+                    liveCheckError: message,
+                  }
+                : candidate
+            )
+          );
+          toast(message, {
+            variant: sessionCheck.authRequired ? 'warning' : 'error',
+          });
+          return;
+        }
+      }
 
       setRows((prev) =>
         prev.map((r) =>
@@ -711,7 +910,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         );
       }
     },
-    [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck]
+    [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck, toast, verifyLiveCheckSession]
   );
 
   const handleCheckAllLive = useCallback(async () => {
@@ -732,21 +931,122 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     const baselineByProductId = new Map(
       eligibleRows.map((row) => [row.productId, buildLiveCheckBaseline(row.listing)])
     );
+    const sessionTargets = new Map<
+      string,
+      {
+        integrationId: string;
+        connectionId: string;
+        productIds: string[];
+      }
+    >();
+
+    eligibleRows.forEach((row) => {
+      const target = resolveTraderaSessionTarget(row);
+      if (!target) {
+        return;
+      }
+
+      const key = `${target.integrationId}:${target.connectionId}`;
+      const existing = sessionTargets.get(key);
+      if (existing) {
+        existing.productIds.push(target.productId);
+        return;
+      }
+
+      sessionTargets.set(key, {
+        integrationId: target.integrationId,
+        connectionId: target.connectionId,
+        productIds: [target.productId],
+      });
+    });
 
     setIsBatchChecking(true);
     setRows((prev) =>
       prev.map((row) =>
         eligibleProductIdSet.has(row.productId)
-          ? { ...row, liveCheckState: 'queued', liveCheckError: null }
+          ? { ...row, liveCheckState: 'idle', liveCheckError: null }
           : row
       )
     );
 
     try {
+      const blockedByProductId = new Map<
+        string,
+        { message: string; authRequired: boolean }
+      >();
+
+      for (const target of sessionTargets.values()) {
+        const sessionCheck = await verifyLiveCheckSession({
+          productId: target.productIds[0] ?? '',
+          integrationId: target.integrationId,
+          connectionId: target.connectionId,
+        });
+        if (sessionCheck.ready) {
+          continue;
+        }
+        const message =
+          sessionCheck.message ??
+          'Stored Tradera session expired or is missing. Login to Tradera and retry the live check.';
+        target.productIds.forEach((productId) => {
+          blockedByProductId.set(productId, {
+            message,
+            authRequired: sessionCheck.authRequired,
+          });
+        });
+      }
+
+      if (blockedByProductId.size > 0) {
+        setRows((prev) =>
+          prev.map((row) => {
+            const blocked = blockedByProductId.get(row.productId);
+            if (!blocked) {
+              return row;
+            }
+            return {
+              ...row,
+              liveCheckState: blocked.authRequired ? 'idle' : 'error',
+              liveCheckError: blocked.message,
+            };
+          })
+        );
+      }
+
+      const queueableProductIds = eligibleProductIds.filter(
+        (productId) => !blockedByProductId.has(productId)
+      );
+      const queueableProductIdSet = new Set(queueableProductIds);
+      const authRequiredCount = Array.from(blockedByProductId.values()).filter(
+        (entry) => entry.authRequired
+      ).length;
+      const preflightFailedCount = blockedByProductId.size - authRequiredCount;
+
+      if (queueableProductIds.length === 0) {
+        const summaryParts = [
+          authRequiredCount > 0 && `${authRequiredCount} need login`,
+          preflightFailedCount > 0 && `${preflightFailedCount} preflight failed`,
+        ].filter(Boolean);
+
+        toast(
+          summaryParts.length > 0
+            ? `Tradera live checks: ${summaryParts.join(', ')}.`
+            : 'No Tradera browser listings were eligible for live check.',
+          { variant: 'warning' }
+        );
+        return;
+      }
+
+      setRows((prev) =>
+        prev.map((row) =>
+          queueableProductIdSet.has(row.productId)
+            ? { ...row, liveCheckState: 'queued', liveCheckError: null }
+            : row
+        )
+      );
+
       const response = await api.post<TraderaListingStatusCheckBatchResponse>(
         '/api/v2/integrations/product-listings/tradera-status-check',
         {
-          productIds: eligibleProductIds,
+          productIds: queueableProductIds,
         }
       );
       const resultByProductId = new Map(
@@ -807,13 +1107,18 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         response.alreadyQueued > 0 && `${response.alreadyQueued} already queued`,
         response.skipped > 0 && `${response.skipped} skipped`,
         response.failed > 0 && `${response.failed} failed`,
+        authRequiredCount > 0 && `${authRequiredCount} need login`,
+        preflightFailedCount > 0 && `${preflightFailedCount} preflight failed`,
       ].filter(Boolean);
 
       toast(
         summaryParts.length > 0
           ? `Tradera live checks: ${summaryParts.join(', ')}.`
           : 'No Tradera browser listings were eligible for live check.',
-        { variant: response.failed > 0 ? 'warning' : 'success' }
+        {
+          variant:
+            response.failed > 0 || blockedByProductId.size > 0 ? 'warning' : 'success',
+        }
       );
     } catch (err) {
       const message =
@@ -833,7 +1138,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     } finally {
       setIsBatchChecking(false);
     }
-  }, [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck, toast]);
+  }, [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck, toast, verifyLiveCheckSession]);
 
   // Summary counts
   const totalWithListing = rows.filter((r) => r.listing !== null).length;
@@ -914,6 +1219,8 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
               row={row}
               onRelist={(pid, lid) => void handleRelist(pid, lid)}
               onLiveCheck={(pid, lid) => void handleLiveCheck(pid, lid)}
+              onRefreshSession={(productId) => void handleRefreshSession(productId)}
+              isRefreshingSession={refreshingSessionProductId === row.productId}
             />
           ))}
           {rows.length === 0 && !loading && (

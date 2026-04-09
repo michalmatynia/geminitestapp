@@ -2,7 +2,7 @@ import 'server-only';
 
 import { existsSync } from 'fs';
 
-import { enqueuePlaywrightNodeRun } from '@/features/ai/server';
+import { enqueuePlaywrightNodeRun } from '@/features/ai/ai-paths/services/playwright-node-runner';
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';

@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -58,7 +59,7 @@ export function useAiPathsSettingsState({
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const { setPathName: setPathNameAction } = useGraphActions();
-  const { selectedNodeId, configOpen, nodeConfigDirty } = useSelectionState();
+  const { selectedNodeId, configOpen, nodeConfigDirty, nodeConfigDraft } = useSelectionState();
   const { setNodeConfigDirty: setNodeConfigDirtyAction } = useSelectionActions();
   const { loading, loadNonce, isPathSwitching } = usePersistenceState();
   const { setOperationHandlers, incrementLoadNonce: incrementLoadNonceAction } =
@@ -355,6 +356,41 @@ export function useAiPathsSettingsState({
     const raw = activeConfig.extensions['runtimeKernel'];
     return isObjectRecord(raw) ? raw : undefined;
   }, [activePathId, pathConfigs]);
+  const persistPendingNodeConfigBeforeRun = useCallback(async (): Promise<boolean> => {
+    if (!nodeConfigDirty) {
+      return true;
+    }
+    if (isPathLocked) {
+      toast('This path is locked. Unlock it to save node settings.', { variant: 'info' });
+      return false;
+    }
+
+    const nodeOverride = nodeConfigDraft ?? undefined;
+    const savedWithNodeOverride = await handleSave({
+      silent: true,
+      includeNodeConfig: true,
+      force: true,
+      nodeOverride,
+    });
+    if (savedWithNodeOverride) {
+      return true;
+    }
+
+    const savedWithFallback = await handleSave({
+      silent: true,
+      includeNodeConfig: true,
+      force: true,
+    });
+    if (savedWithFallback) {
+      return true;
+    }
+
+    return handleSave({
+      includeNodeConfig: true,
+      force: true,
+      nodeOverride,
+    });
+  }, [handleSave, isPathLocked, nodeConfigDirty, nodeConfigDraft, toast]);
 
   const runtime = useAiPathsRuntime({
     activePathId,
@@ -372,6 +408,9 @@ export function useAiPathsSettingsState({
     isPathActive,
     nodes,
     edges,
+    nodeConfigDirty,
+    nodeConfigDraft,
+    persistPendingNodeConfigBeforeRun,
     onCanonicalEdgesDetected: handleCanonicalEdgesDetected,
     reportAiPathsError,
     toast,

@@ -287,6 +287,7 @@ const renderProductListMobileCard = ({
           checked={isSelected}
           onCheckedChange={(checked): void => toggleSelection(product.id, Boolean(checked))}
           aria-label={`Select ${nameValue || 'product'}`}
+          className='cursor-pointer'
         />
 
         <div className='shrink-0'>

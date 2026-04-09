@@ -33,6 +33,27 @@ const isGenericSizeSegment = (value: string): boolean => {
   return /^x(?:\s*(?:cm|mm|m|in|inch|inches))?$/.test(normalized);
 };
 
+const resolveMatchingLeafNamesForNonTerminalSegment = (
+  entries: ReturnType<typeof buildLeafCategoryHierarchyEntries>,
+  rawCategoryValue: string
+): string[] => {
+  const normalizedCategoryValue = normalizeComparable(rawCategoryValue);
+  if (!normalizedCategoryValue) return [];
+
+  return Array.from(
+    new Set(
+      entries
+        .filter((entry) =>
+          entry.pathSegments
+            .slice(0, -1)
+            .map((segment) => normalizeComparable(segment))
+            .includes(normalizedCategoryValue)
+        )
+        .map((entry) => entry.leafName)
+    )
+  );
+};
+
 const resolveLeafCategoryMatch = (
   categories: ProductCategory[],
   rawCategoryValue: string
@@ -41,7 +62,7 @@ const resolveLeafCategoryMatch = (
       canonicalCategoryName: string;
     }
   | {
-      error: 'missing' | 'ambiguous';
+      error: 'missing' | 'ambiguous' | 'too_generic';
     } => {
   const entries = buildLeafCategoryHierarchyEntries(categories);
   const entriesByHierarchyPath = new Map<string, string>();
@@ -70,6 +91,12 @@ const resolveLeafCategoryMatch = (
     }
   }
 
+  if (resolveMatchingLeafNamesForNonTerminalSegment(entries, rawCategoryValue).length > 0) {
+    return {
+      error: 'too_generic',
+    };
+  }
+
   const normalizedLeafInput =
     normalizedHierarchyInput.split(' > ').filter(Boolean).pop() ?? normalizeComparable(rawCategoryValue);
   const leafMatches = entriesByLeafName.get(normalizedLeafInput) ?? [];
@@ -92,6 +119,7 @@ const resolveLeafCategoryMatch = (
 export const validateNormalizedProductName = (args: {
   normalizedName: string;
   categories: ProductCategory[];
+  categoryHint?: string | null;
 }): ValidateNormalizedProductNameResult => {
   const structuredValue = normalizeStructuredProductName(args.normalizedName);
   const parsed = parseStructuredProductName(structuredValue);
@@ -127,13 +155,35 @@ export const validateNormalizedProductName = (args: {
     };
   }
 
-  const categoryMatch = resolveLeafCategoryMatch(args.categories, parsed.category);
-  if ('error' in categoryMatch) {
+  const categoryCandidates = [
+    typeof args.categoryHint === 'string' ? args.categoryHint.trim() : '',
+    parsed.category,
+  ].filter((value, index, values): value is string => value.length > 0 && values.indexOf(value) === index);
+
+  const categoryMatches = categoryCandidates.map((value) => resolveLeafCategoryMatch(args.categories, value));
+  const categoryMatch = categoryMatches.find(
+    (value): value is { canonicalCategoryName: string } => 'canonicalCategoryName' in value
+  );
+
+  if (!categoryMatch) {
+    const categoryError = categoryMatches.some(
+      (value): value is { error: 'ambiguous' } => 'error' in value && value.error === 'ambiguous'
+    )
+      ? 'ambiguous'
+      : categoryMatches.some(
+            (value): value is { error: 'too_generic' } =>
+              'error' in value && value.error === 'too_generic'
+          )
+        ? 'too_generic'
+        : 'missing';
+
     return {
       isValid: false,
       error:
-        categoryMatch.error === 'ambiguous'
+        categoryError === 'ambiguous'
           ? 'Normalize failed: category leaf is ambiguous. Return the full category hierarchy so the final leaf can be resolved uniquely.'
+          : categoryError === 'too_generic'
+            ? 'Normalize failed: category is too generic. Return the most specific terminal leaf category or the full hierarchy so the final leaf can be resolved.'
           : 'Normalize failed: category must match one of the available leaf categories.',
     };
   }

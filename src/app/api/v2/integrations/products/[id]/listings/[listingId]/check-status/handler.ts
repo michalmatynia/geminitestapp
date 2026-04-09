@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { assertTraderaBrowserSessionReady } from '@/app/api/v2/integrations/_shared/tradera-browser-session-preflight';
 import {
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -60,6 +61,12 @@ export async function POST_handler(
     };
     return NextResponse.json(response);
   }
+
+  await assertTraderaBrowserSessionReady({
+    integrationRepository,
+    integrationId: resolved.listing.integrationId,
+    connectionId: resolved.listing.connectionId,
+  });
 
   initializeQueues();
   const jobId = await enqueueTraderaListingJob({

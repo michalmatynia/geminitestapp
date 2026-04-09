@@ -364,16 +364,39 @@ export const upgradeStarterWorkflowPathConfig = (
         provenance?.templateVersion < resolution.entry.starterLineage.templateVersion &&
         (config.id === resolution.entry.seedPolicy?.defaultPathId ||
           resolution.entry.starterLineage.starterKey === 'parameter_inference' ||
+          resolution.entry.starterLineage.starterKey === 'product_name_normalize' ||
           resolution.entry.starterLineage.starterKey === 'description_inference_lite' ||
           resolution.entry.starterLineage.starterKey === 'translation_en_pl')
     );
 
   const overlaySource = selectStarterOverlaySource(config, latest);
   const latestNodeCount = (overlaySource.nodes ?? []).length;
+  const nodeIdOverlap = countNodeIdOverlap(config, overlaySource);
   const shouldReplaceGraphCompletely =
-    resolution.entry.starterLineage.starterKey === 'parameter_inference' &&
-    hasParameterInferencePromptStructure(config) &&
-    countNodeIdOverlap(config, overlaySource) < latestNodeCount;
+    (
+      resolution.entry.starterLineage.starterKey === 'parameter_inference' &&
+      hasParameterInferencePromptStructure(config) &&
+      nodeIdOverlap < latestNodeCount
+    ) ||
+    (
+      resolution.entry.starterLineage.starterKey === 'product_name_normalize' &&
+      (
+        resolution.matchedBy === 'legacy_alias' ||
+        (
+          provenance?.starterKey === resolution.entry.starterLineage.starterKey &&
+          config.id === resolution.entry.seedPolicy?.defaultPathId &&
+          (
+            provenance?.templateVersion < resolution.entry.starterLineage.templateVersion ||
+            (
+              provenance?.seededDefault === true &&
+              provenance?.templateVersion === resolution.entry.starterLineage.templateVersion &&
+              nodeIdOverlap === 0
+            )
+          )
+        )
+      ) &&
+      nodeIdOverlap < latestNodeCount
+    );
 
   if (!safeToOverlay && !shouldReplaceGraphCompletely) {
     return { config, changed: false, resolution };

@@ -255,7 +255,7 @@ export function StructuredProductNameField(): React.JSX.Element {
     return `/admin/products/title-terms?catalogId=${encodeURIComponent(normalizedCatalogId)}`;
   }, [primaryCatalogId]);
 
-  const blurTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const blurTimeoutRef = useRef<number | null>(null);
   const [activeStage, setActiveStage] = useState<TitleSegmentStage | null>(null);
   const [segmentQuery, setSegmentQuery] = useState('');
   const [segmentBounds, setSegmentBounds] = useState<{ start: number; end: number } | null>(null);

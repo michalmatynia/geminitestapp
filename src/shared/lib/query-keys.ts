@@ -486,6 +486,10 @@ export const QUERY_KEYS = {
     all: ['jobs'] as const,
     lists: () => [...QUERY_KEYS.jobs.all, 'list'] as const,
     integrations: () => [...QUERY_KEYS.jobs.lists(), 'integrations'] as const,
+    baseImportRuns: (limit: number | null = null) =>
+      [...QUERY_KEYS.jobs.integrations(), 'base-import-runs', limit] as const,
+    baseImportQueueHealth: () =>
+      [...QUERY_KEYS.jobs.integrations(), 'base-import-queue-health'] as const,
     traderaQueueHealth: () => [...QUERY_KEYS.jobs.integrations(), 'tradera-queue-health'] as const,
     productAi: (scope: string) => [...QUERY_KEYS.jobs.lists(), 'product-ai', scope] as const,
     chatbot: (scope: string) => [...QUERY_KEYS.jobs.lists(), 'chatbot', scope] as const,

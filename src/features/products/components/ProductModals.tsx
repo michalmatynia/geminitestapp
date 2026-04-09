@@ -196,6 +196,7 @@ function ProductFormModalBody(props: {
           const validation = validateNormalizedProductName({
             normalizedName: normalizeResult.normalizedName,
             categories,
+            categoryHint: normalizeResult.category,
           });
           if (!validation.isValid) {
             setNormalizeNameError(validation.error);

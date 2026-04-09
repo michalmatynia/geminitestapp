@@ -9,6 +9,7 @@ const {
   brainAssignmentMock,
   brainModelOptionsMock,
   aiJobsEnqueueMock,
+  localExecutionArgsMock,
 } = vi.hoisted(() => ({
   runtimeContextState: {
     runtimeState: {
@@ -45,6 +46,7 @@ const {
   brainAssignmentMock: vi.fn(),
   brainModelOptionsMock: vi.fn(),
   aiJobsEnqueueMock: vi.fn(),
+  localExecutionArgsMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
@@ -110,10 +112,13 @@ vi.mock('../runtime/useAiPathsRuntimeState', () => ({
 }));
 
 vi.mock('../runtime/useAiPathsLocalExecution', () => ({
-  useAiPathsLocalExecution: () => ({
-    runGraphForTrigger: vi.fn(),
-    runLocalLoop: vi.fn(),
-  }),
+  useAiPathsLocalExecution: (args: unknown) => {
+    localExecutionArgsMock(args);
+    return {
+      runGraphForTrigger: vi.fn(),
+      runLocalLoop: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('../runtime/useAiPathsSimulation', () => ({
@@ -245,5 +250,37 @@ describe('useAiPathsRuntime handleSendToAi', () => {
     );
     expect(aiJobsEnqueueMock).not.toHaveBeenCalled();
     expect(runtimeActionsMock.setSendingToAi).not.toHaveBeenCalled();
+  });
+
+  it('overlays a pending node config draft into runtime execution args', () => {
+    const args = buildArgs();
+    args.nodeConfigDirty = true;
+    args.nodeConfigDraft = {
+      ...args.nodes[1],
+      config: {
+        model: {
+          ...args.nodes[1]?.config?.model,
+          modelId: 'gemma',
+        },
+      },
+    };
+
+    renderHook(() => useAiPathsRuntime(args));
+
+    expect(localExecutionArgsMock).toHaveBeenCalled();
+    expect(localExecutionArgsMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        normalizedNodes: expect.arrayContaining([
+          expect.objectContaining({
+            id: 'model-node',
+            config: expect.objectContaining({
+              model: expect.objectContaining({
+                modelId: 'gemma',
+              }),
+            }),
+          }),
+        ]),
+      })
+    );
   });
 });

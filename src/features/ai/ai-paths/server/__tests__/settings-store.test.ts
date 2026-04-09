@@ -157,6 +157,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       typeof (normalizeModelNode['config'] as Record<string, unknown>)['model'] === 'object'
         ? ((normalizeModelNode['config'] as Record<string, unknown>)['model'] as Record<string, unknown>)
         : null;
+    expect(normalizeDatabaseConfig?.['dryRun']).toBe(true);
     expect(normalizeDatabaseConfig?.['updatePayloadMode']).toBe('custom');
     expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"__noop__": ""');
     expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).not.toContain('"name_en"');

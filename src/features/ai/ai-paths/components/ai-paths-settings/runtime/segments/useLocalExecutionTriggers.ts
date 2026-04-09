@@ -201,6 +201,10 @@ export function useLocalExecutionTriggers(
         args.toast('This path is deactivated. Activate it to run.', { variant: 'info' });
         return;
       }
+      const pendingNodeConfigPersisted = await args.persistPendingNodeConfigBeforeRun?.();
+      if (pendingNodeConfigPersisted === false) {
+        return;
+      }
       const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
       const triggerContextArgs = {
         triggerNode,

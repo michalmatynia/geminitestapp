@@ -52,6 +52,37 @@ const AMBIGUOUS_LEAF_CATEGORIES: ProductCategory[] = [
   },
 ];
 
+const SPECIFIC_KEYCHAIN_CATEGORIES: ProductCategory[] = [
+  {
+    id: 'parent-accessories',
+    name: 'Accessories',
+    color: null,
+    parentId: null,
+    catalogId: 'catalog-a',
+  },
+  {
+    id: 'parent-keychains',
+    name: 'Keychains',
+    color: null,
+    parentId: 'parent-accessories',
+    catalogId: 'catalog-a',
+  },
+  {
+    id: 'leaf-movie-keychain',
+    name: 'Movie Keychain',
+    color: null,
+    parentId: 'parent-keychains',
+    catalogId: 'catalog-a',
+  },
+  {
+    id: 'leaf-gaming-keychain',
+    name: 'Gaming Keychain',
+    color: null,
+    parentId: 'parent-keychains',
+    catalogId: 'catalog-a',
+  },
+];
+
 describe('validateNormalizedProductName', () => {
   it('accepts a valid five-part normalized title and canonicalizes the leaf category name', () => {
     expect(
@@ -110,7 +141,8 @@ describe('validateNormalizedProductName', () => {
       })
     ).toEqual({
       isValid: false,
-      error: 'Normalize failed: category must match one of the available leaf categories.',
+      error:
+        'Normalize failed: category is too generic. Return the most specific terminal leaf category or the full hierarchy so the final leaf can be resolved.',
     });
   });
 
@@ -136,6 +168,32 @@ describe('validateNormalizedProductName', () => {
     ).toEqual({
       isValid: true,
       normalizedName: 'Collectible Badge | 4 cm | Metal | Badges | Retro Gaming',
+    });
+  });
+
+  it('rejects generic hierarchy segments when the context registry exposes more specific terminal leaves', () => {
+    expect(
+      validateNormalizedProductName({
+        normalizedName: 'Collectible Charm | 4 cm | Metal | Keychains | Retro Gaming',
+        categories: SPECIFIC_KEYCHAIN_CATEGORIES,
+      })
+    ).toEqual({
+      isValid: false,
+      error:
+        'Normalize failed: category is too generic. Return the most specific terminal leaf category or the full hierarchy so the final leaf can be resolved.',
+    });
+  });
+
+  it('uses a more specific category hint hierarchy to rewrite a generic normalized category to the terminal leaf', () => {
+    expect(
+      validateNormalizedProductName({
+        normalizedName: 'Collectible Charm | 4 cm | Metal | Keychains | Retro Gaming',
+        categoryHint: 'Accessories > Keychains > Gaming Keychain',
+        categories: SPECIFIC_KEYCHAIN_CATEGORIES,
+      })
+    ).toEqual({
+      isValid: true,
+      normalizedName: 'Collectible Charm | 4 cm | Metal | Gaming Keychain | Retro Gaming',
     });
   });
 });

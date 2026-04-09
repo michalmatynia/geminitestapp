@@ -790,6 +790,133 @@ describe('ProductModals', () => {
       expect(setNormalizeNameError).toHaveBeenCalledWith(null);
     });
 
+    it('prefers a more specific category hierarchy hint when the normalized title still uses a generic parent segment', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-1',
+        },
+        draft: { id: 'draft-1', name: 'Draft 1' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductFormMetadataMock.mockReturnValue({
+        categories: [
+          {
+            id: 'parent-accessories',
+            name: 'Accessories',
+            color: null,
+            parentId: null,
+            catalogId: 'catalog-a',
+          },
+          {
+            id: 'parent-keychains',
+            name: 'Keychains',
+            color: null,
+            parentId: 'parent-accessories',
+            catalogId: 'catalog-a',
+          },
+          {
+            id: 'leaf-movie-keychain',
+            name: 'Movie Keychain',
+            color: null,
+            parentId: 'parent-keychains',
+            catalogId: 'catalog-a',
+          },
+          {
+            id: 'leaf-gaming-keychain',
+            name: 'Gaming Keychain',
+            color: null,
+            parentId: 'parent-keychains',
+            catalogId: 'catalog-a',
+          },
+        ],
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-1', name: 'Draft 1' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      getAiPathRunMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Normalized Name | 4 cm | Metal | Keychains | Gaming',
+                  category: 'Accessories > Keychains > Gaming Keychain',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-specific-keychain-leaf',
+          entityId: 'transient-product-1',
+          entityType: 'product',
+        });
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-specific-keychain-leaf',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Normalized Name | 4 cm | Metal | Gaming Keychain | Gaming',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
     it('reports an inline normalize error when the AI result is still placeholder shaped', async () => {
       const setValue = vi.fn();
       const setNormalizeNameError = vi.fn();

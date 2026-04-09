@@ -7,16 +7,16 @@ const {
   toastMock,
   ensureVintedBrowserSessionMock,
   exportToBaseMutateAsyncMock,
-  ensureTraderaBrowserSessionMock,
   preflightTraderaQuickListSessionMock,
+  refreshTraderaBrowserSessionMock,
   relistTraderaMutateAsyncMock,
   syncTraderaMutateAsyncMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   ensureVintedBrowserSessionMock: vi.fn(),
   exportToBaseMutateAsyncMock: vi.fn(),
-  ensureTraderaBrowserSessionMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
+  refreshTraderaBrowserSessionMock: vi.fn(),
   relistTraderaMutateAsyncMock: vi.fn(),
   syncTraderaMutateAsyncMock: vi.fn(),
 }));
@@ -40,10 +40,10 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
-  ensureTraderaBrowserSession: (...args: unknown[]) =>
-    ensureTraderaBrowserSessionMock(...args) as Promise<unknown>,
   preflightTraderaQuickListSession: (...args: unknown[]) =>
     preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
+  refreshTraderaBrowserSession: (...args: unknown[]) =>
+    refreshTraderaBrowserSessionMock(...args) as Promise<unknown>,
   isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
     const normalized = value?.trim().toLowerCase() ?? '';
     return (
@@ -109,7 +109,7 @@ const buildBaseParams = (overrides?: {
 describe('useProductListingsActionsImpl', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    ensureTraderaBrowserSessionMock.mockResolvedValue({
+    refreshTraderaBrowserSessionMock.mockResolvedValue({
       response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
       savedSession: true,
     });
@@ -553,7 +553,7 @@ describe('useProductListingsActionsImpl', () => {
   it('shows a toast for Tradera auth-required manual login failures', async () => {
     const setError = vi.fn();
     const setRecoveryContext = vi.fn();
-    ensureTraderaBrowserSessionMock.mockRejectedValue(
+    refreshTraderaBrowserSessionMock.mockRejectedValue(
       new Error(
         'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
       )

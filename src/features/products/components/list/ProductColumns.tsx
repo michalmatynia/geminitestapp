@@ -743,6 +743,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
           table.toggleAllPageRowsSelected(!!checked)
         }
         aria-label='Select all'
+        className='cursor-pointer'
       />
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
@@ -752,6 +753,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
           row.toggleSelected(!!checked)
         }
         aria-label='Select row'
+        className='cursor-pointer'
       />
     ),
     enableSorting: false,

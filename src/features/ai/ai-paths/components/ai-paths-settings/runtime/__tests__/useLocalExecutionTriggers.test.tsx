@@ -135,10 +135,14 @@ const createArgs = ({
   normalizedNodes,
   sanitizedEdges,
   executionMode = 'local',
+  persistPendingNodeConfigBeforeRun = vi.fn(async () => true),
 }: {
   normalizedNodes: AiNode[];
   sanitizedEdges: Edge[];
   executionMode?: LocalExecutionArgs['executionMode'];
+  persistPendingNodeConfigBeforeRun?: NonNullable<
+    LocalExecutionArgs['persistPendingNodeConfigBeforeRun']
+  >;
 }): {
   args: LocalExecutionArgs;
   runtimeStateRef: { current: RuntimeState };
@@ -215,6 +219,9 @@ const createArgs = ({
     hasPendingIteratorAdvance: vi.fn(() => false),
     fetchEntityByType,
     reportAiPathsError: vi.fn(),
+    nodeConfigDirty: false,
+    nodeConfigDraft: null,
+    persistPendingNodeConfigBeforeRun,
     toast,
     stopServerRunStream: vi.fn(),
     runServerStream,
@@ -344,6 +351,66 @@ describe('useLocalExecutionTriggers', () => {
       expect.stringContaining('Canvas run blocked'),
       expect.anything()
     );
+  });
+
+  it('persists pending node config before entering the run loop', async () => {
+    const triggerNode = buildTriggerNode();
+    const callOrder: string[] = [];
+    const persistPendingNodeConfigBeforeRun = vi.fn(async () => {
+      callOrder.push('persist');
+      return true;
+    });
+    const { args, runtimeStateRef } = createArgs({
+      normalizedNodes: [triggerNode],
+      sanitizedEdges: [],
+      executionMode: 'local',
+      persistPendingNodeConfigBeforeRun,
+    });
+    const runLocalLoop = vi.fn(async () => {
+      callOrder.push('run');
+      return {
+        status: 'completed' as const,
+        state: runtimeStateRef.current,
+      };
+    });
+    const finalizeLocalRunOutcome = vi.fn();
+
+    const { result } = renderHook(() =>
+      useLocalExecutionTriggers(args, { runLocalLoop }, { finalizeLocalRunOutcome })
+    );
+
+    await act(async () => {
+      await result.current.runGraphForTrigger(triggerNode);
+    });
+
+    expect(persistPendingNodeConfigBeforeRun).toHaveBeenCalledTimes(1);
+    expect(runLocalLoop).toHaveBeenCalledTimes(1);
+    expect(callOrder).toEqual(['persist', 'run']);
+  });
+
+  it('aborts the run when pending node config persistence fails', async () => {
+    const triggerNode = buildTriggerNode();
+    const persistPendingNodeConfigBeforeRun = vi.fn(async () => false);
+    const { args } = createArgs({
+      normalizedNodes: [triggerNode],
+      sanitizedEdges: [],
+      executionMode: 'local',
+      persistPendingNodeConfigBeforeRun,
+    });
+    const runLocalLoop = vi.fn();
+    const finalizeLocalRunOutcome = vi.fn();
+
+    const { result } = renderHook(() =>
+      useLocalExecutionTriggers(args, { runLocalLoop }, { finalizeLocalRunOutcome })
+    );
+
+    await act(async () => {
+      await result.current.runGraphForTrigger(triggerNode);
+    });
+
+    expect(persistPendingNodeConfigBeforeRun).toHaveBeenCalledTimes(1);
+    expect(runLocalLoop).not.toHaveBeenCalled();
+    expect(finalizeLocalRunOutcome).not.toHaveBeenCalled();
   });
 
   it('blocks a fetcher-first graph without entity context instead of entering execution', async () => {

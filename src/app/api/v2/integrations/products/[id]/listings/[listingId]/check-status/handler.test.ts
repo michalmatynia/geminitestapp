@@ -5,12 +5,14 @@ const {
   getIntegrationByIdMock,
   enqueueTraderaListingJobMock,
   initializeQueuesMock,
+  assertTraderaBrowserSessionReadyMock,
   updateListingMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   enqueueTraderaListingJobMock: vi.fn(),
   initializeQueuesMock: vi.fn(),
+  assertTraderaBrowserSessionReadyMock: vi.fn(),
   updateListingMock: vi.fn(),
 }));
 
@@ -28,6 +30,11 @@ vi.mock('@/features/jobs/server', () => ({
   initializeQueues: (...args: unknown[]) => initializeQueuesMock(...args),
 }));
 
+vi.mock('@/app/api/v2/integrations/_shared/tradera-browser-session-preflight', () => ({
+  assertTraderaBrowserSessionReady: (...args: unknown[]) =>
+    assertTraderaBrowserSessionReadyMock(...args),
+}));
+
 import { POST_handler } from './handler';
 
 describe('integration listing check-status handler', () => {
@@ -38,6 +45,7 @@ describe('integration listing check-status handler', () => {
         id: 'listing-1',
         productId: 'product-1',
         integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
         status: 'active',
         marketplaceData: null,
       },
@@ -49,6 +57,7 @@ describe('integration listing check-status handler', () => {
       id: 'integration-tradera-1',
       slug: 'tradera',
     });
+    assertTraderaBrowserSessionReadyMock.mockResolvedValue(undefined);
     enqueueTraderaListingJobMock.mockResolvedValue('job-tradera-check-1');
     updateListingMock.mockResolvedValue(undefined);
   });
@@ -69,6 +78,11 @@ describe('integration listing check-status handler', () => {
     const payload = await response.json();
 
     expect(initializeQueuesMock).toHaveBeenCalledTimes(1);
+    expect(assertTraderaBrowserSessionReadyMock).toHaveBeenCalledWith({
+      integrationRepository: expect.any(Object),
+      integrationId: 'integration-tradera-1',
+      connectionId: 'connection-tradera-1',
+    });
     expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
       listingId: 'listing-1',
       action: 'check_status',
@@ -105,6 +119,7 @@ describe('integration listing check-status handler', () => {
         id: 'listing-1',
         productId: 'product-1',
         integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
         status: 'queued', // stuck from a previous list job — must NOT block check_status
         marketplaceData: null,
       },
@@ -139,6 +154,7 @@ describe('integration listing check-status handler', () => {
         id: 'listing-1',
         productId: 'product-1',
         integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
         status: 'active',
         marketplaceData: {
           tradera: {
@@ -180,6 +196,7 @@ describe('integration listing check-status handler', () => {
         id: 'listing-1',
         productId: 'product-1',
         integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
         status: 'active',
         marketplaceData: {
           tradera: {
@@ -215,6 +232,53 @@ describe('integration listing check-status handler', () => {
       listingId: 'listing-1',
       status: 'active',
     });
+    expect(initializeQueuesMock).not.toHaveBeenCalled();
+    expect(assertTraderaBrowserSessionReadyMock).not.toHaveBeenCalled();
+    expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
+    expect(updateListingMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses to queue a live check when the Tradera browser session is stale', async () => {
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        status: 'active',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListing: (...args: unknown[]) => updateListingMock(...args),
+      },
+    });
+    assertTraderaBrowserSessionReadyMock.mockRejectedValue(
+      Object.assign(
+        new Error(
+          'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.'
+        ),
+        { httpStatus: 401, code: 'UNAUTHORIZED' }
+      )
+    );
+
+    await expect(
+      POST_handler(
+        new Request('http://localhost/api', {
+          method: 'POST',
+          body: JSON.stringify({}),
+          headers: {
+            'content-type': 'application/json',
+          },
+        }) as never,
+        {} as never,
+        { id: 'product-1', listingId: 'listing-1' }
+      )
+    ).rejects.toMatchObject({
+      message:
+        'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.',
+      httpStatus: 401,
+    });
+
     expect(initializeQueuesMock).not.toHaveBeenCalled();
     expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
     expect(updateListingMock).not.toHaveBeenCalled();

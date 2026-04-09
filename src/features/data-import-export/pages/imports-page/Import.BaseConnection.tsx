@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
+import { useBaseImportQueueHealth } from '@/shared/lib/jobs/hooks/useJobQueries';
 import { Button, Card } from '@/shared/ui/primitives.public';
-import { FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { FormField, FormSection, Hint, RefreshButton, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -24,6 +26,7 @@ import {
 } from './ImportsPage.Constants';
 
 export function ImportBaseConnectionSection(): React.JSX.Element {
+  const baseImportQueueHealthQuery = useBaseImportQueueHealth();
   const {
     inventories,
     isFetchingInventories: loadingInventories,
@@ -31,6 +34,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     loadingCatalogs,
     importTemplates,
     loadingImportTemplates,
+    activeImportRunId,
     isBaseConnected,
     baseConnections,
   } = useImportExportData();
@@ -103,6 +107,80 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     [importTemplates]
   );
   const canSaveImportSettings = !saveImportSettings || hasUnsavedImportSettingsChanges;
+  const baseImportQueueHealth = baseImportQueueHealthQuery.data ?? null;
+  const baseImportQueue = baseImportQueueHealth?.queues.baseImport ?? null;
+  const baseImportRuntimeMode = baseImportQueueHealthQuery.isLoading
+    ? 'Scanning...'
+    : (baseImportQueueHealth?.mode ?? 'Unknown');
+  const baseImportWorkerStatus = baseImportQueueHealthQuery.isLoading
+    ? 'Checking'
+    : baseImportQueueHealth?.mode === 'inline'
+      ? 'Inline'
+      : baseImportQueue?.running
+        ? 'Running'
+        : 'Offline';
+  const runtimeQueueWarning = React.useMemo(() => {
+    if (baseImportQueueHealthQuery.isLoading) return null;
+
+    if (baseImportQueueHealth?.mode === 'inline') {
+      return {
+        title: 'Runtime queue is in inline fallback mode',
+        message:
+          'New imports will run inline and will not appear as BullMQ runtime jobs until Redis queueing is available again.',
+      };
+    }
+
+    if (baseImportQueueHealth?.redisAvailable && !baseImportQueue?.running) {
+      return {
+        title: 'Base import worker is offline',
+        message:
+          'Redis is available, but the base-import worker is not running. New imports may queue without being processed until the worker is restored.',
+      };
+    }
+
+    return null;
+  }, [
+    baseImportQueue?.running,
+    baseImportQueueHealth?.mode,
+    baseImportQueueHealth?.redisAvailable,
+    baseImportQueueHealthQuery.isLoading,
+  ]);
+  const runImportButtonConfig = React.useMemo(() => {
+    if (baseImportQueueHealthQuery.isLoading) {
+      return {
+        label: 'Run import',
+        variant: 'default' as const,
+        hint: 'Checking runtime queue health before the next dispatch.',
+      };
+    }
+
+    if (baseImportQueueHealth?.mode === 'inline') {
+      return {
+        label: 'Run import inline',
+        variant: 'warning' as const,
+        hint: 'Redis queueing is unavailable. The next import will run inline instead of appearing as a BullMQ runtime job.',
+      };
+    }
+
+    if (baseImportQueueHealth?.redisAvailable && !baseImportQueue?.running) {
+      return {
+        label: 'Queue import anyway',
+        variant: 'warning' as const,
+        hint: 'The base-import worker is offline. The next import may queue successfully but will not process until the worker is restored.',
+      };
+    }
+
+    return {
+      label: 'Run import',
+      variant: 'default' as const,
+      hint: 'The next import will be submitted to the base-import runtime queue.',
+    };
+  }, [
+    baseImportQueue?.running,
+    baseImportQueueHealth?.mode,
+    baseImportQueueHealth?.redisAvailable,
+    baseImportQueueHealthQuery.isLoading,
+  ]);
 
   return (
     <FormSection
@@ -329,15 +407,114 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               </Button>
               <Button
                 size='sm'
+                variant={runImportButtonConfig.variant}
                 onClick={(): void => {
                   void handleImport();
                 }}
                 loading={importing}
                 loadingText='Importing...'
               >
-                Run import
+                {runImportButtonConfig.label}
               </Button>
             </div>
+          </div>
+          <p className='mt-3 text-xs text-gray-400'>{runImportButtonConfig.hint}</p>
+          {runtimeQueueWarning ? (
+            <Card variant='warning' padding='sm' className='mt-4'>
+              <p className='text-xs font-semibold uppercase tracking-wider text-amber-200'>
+                {runtimeQueueWarning.title}
+              </p>
+              <p className='mt-1 text-xs text-amber-100/90'>{runtimeQueueWarning.message}</p>
+            </Card>
+          ) : null}
+          <div className='mt-4 grid gap-3 md:grid-cols-3'>
+            <FormSection
+              title='Runtime Queue'
+              variant='subtle-compact'
+              className='p-3'
+              actions={
+                <div className='flex items-center gap-2'>
+                  <RefreshButton
+                    onRefresh={(): void => {
+                      void baseImportQueueHealthQuery.refetch();
+                    }}
+                    isRefreshing={Boolean(baseImportQueueHealthQuery.isFetching)}
+                    label='Refresh'
+                    size='sm'
+                    variant='ghost'
+                  />
+                  <Link
+                    href='/api/v2/integrations/queues/base-import'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    <Button variant='outline' size='sm'>
+                      Inspect runtime
+                    </Button>
+                  </Link>
+                  <Link
+                    href={
+                      activeImportRunId
+                        ? `/admin/ai-paths/queue?tab=product-imports&query=${encodeURIComponent(activeImportRunId)}`
+                        : '/admin/ai-paths/queue?tab=product-imports'
+                    }
+                  >
+                    <Button variant='outline' size='sm'>
+                      View Import Jobs
+                    </Button>
+                  </Link>
+                </div>
+              }
+            >
+              <div className='flex items-center justify-between'>
+                <Hint size='xxs' uppercase className='font-bold text-gray-500'>
+                  Delivery
+                </Hint>
+                <StatusBadge
+                  status={baseImportQueueHealth?.redisAvailable ? 'Redis Up' : 'No Redis'}
+                  variant={baseImportQueueHealth?.redisAvailable ? 'success' : 'warning'}
+                  className='text-[9px]'
+                />
+              </div>
+              <div className='mt-2 text-xs font-medium text-gray-300'>{baseImportRuntimeMode}</div>
+              <Hint className='mt-2 text-[11px] text-gray-500'>
+                Base imports run on the separate <code>base-import</code> runtime queue.
+              </Hint>
+            </FormSection>
+            <FormSection title='Worker Status' variant='subtle-compact' className='p-3'>
+              <div className='flex items-center justify-between'>
+                <Hint size='xxs' uppercase className='font-bold text-gray-500'>
+                  Service
+                </Hint>
+                <StatusBadge
+                  status={baseImportWorkerStatus}
+                  variant={
+                    baseImportWorkerStatus === 'Running'
+                      ? 'success'
+                      : baseImportWorkerStatus === 'Inline'
+                        ? 'warning'
+                        : 'error'
+                  }
+                  className='text-[9px]'
+                />
+              </div>
+              <div className='mt-2 text-xs text-gray-400'>
+                Waiting {baseImportQueue?.waitingCount ?? 0} | Active {baseImportQueue?.activeCount ?? 0}
+              </div>
+            </FormSection>
+            <FormSection title='Failures' variant='subtle-compact' className='p-3'>
+              <div className='flex items-center justify-between'>
+                <Hint size='xxs' uppercase className='font-bold text-gray-500'>
+                  Queue state
+                </Hint>
+                <div className='text-xs font-medium text-rose-300'>
+                  {baseImportQueue?.failedCount ?? 0} failed
+                </div>
+              </div>
+              <div className='mt-2 text-xs text-gray-400'>
+                Completed {baseImportQueue?.completedCount ?? 0}
+              </div>
+            </FormSection>
           </div>
           <div className='mt-3 space-y-2'>
             <ToggleRow

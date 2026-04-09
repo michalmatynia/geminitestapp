@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   useImportExportActionsMock: vi.fn(),
   useImportExportDataMock: vi.fn(),
   useImportExportStateMock: vi.fn(),
+  useBaseImportQueueHealthMock: vi.fn(),
   setImportDryRunMock: vi.fn(),
   setAllowDuplicateSkuMock: vi.fn(),
   setInventoryIdMock: vi.fn(),
@@ -33,6 +34,22 @@ vi.mock('@/features/data-import-export/context/ImportExportContext', () => ({
   useImportExportActions: () => mocks.useImportExportActionsMock(),
   useImportExportData: () => mocks.useImportExportDataMock(),
   useImportExportState: () => mocks.useImportExportStateMock(),
+}));
+
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.PropsWithChildren<{ href: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock('@/shared/lib/jobs/hooks/useJobQueries', () => ({
+  useBaseImportQueueHealth: () => mocks.useBaseImportQueueHealthMock(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -89,7 +106,24 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
       {children}
     </div>
   ),
-  Hint: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
+  Hint: ({
+    children,
+    uppercase: _uppercase,
+    ...props
+  }: React.HTMLAttributes<HTMLDivElement> & { uppercase?: boolean }) => <div {...props}>{children}</div>,
+  RefreshButton: ({
+    onRefresh,
+    isRefreshing: _isRefreshing,
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    onRefresh: () => void;
+    isRefreshing?: boolean;
+  }) => (
+    <button type='button' onClick={onRefresh} {...props}>
+      {children ?? 'Refresh'}
+    </button>
+  ),
   SelectSimple: ({
     value,
     onValueChange,
@@ -179,6 +213,7 @@ const buildData = (overrides: Record<string, unknown> = {}) => ({
   loadingCatalogs: false,
   importTemplates: [],
   loadingImportTemplates: false,
+  activeImportRunId: '',
   isBaseConnected: true,
   baseConnections: [],
   ...overrides,
@@ -201,6 +236,25 @@ describe('ImportBaseConnectionSection', () => {
     mocks.useImportExportDataMock.mockReturnValue(buildData());
     mocks.useImportExportStateMock.mockReturnValue(buildState());
     mocks.useImportExportActionsMock.mockReturnValue(buildActions());
+    mocks.useBaseImportQueueHealthMock.mockReturnValue({
+      data: {
+        ok: true,
+        mode: 'bullmq',
+        redisAvailable: true,
+        queues: {
+          baseImport: {
+            waitingCount: 4,
+            activeCount: 1,
+            completedCount: 8,
+            failedCount: 2,
+            running: true,
+          },
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
   });
 
   it('renders the save import settings buttons and saved-state message', () => {
@@ -219,6 +273,9 @@ describe('ImportBaseConnectionSection', () => {
     );
     expect(screen.getByRole('button', { name: 'Clear Saved' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Run import' })).toBeInTheDocument();
+    expect(
+      screen.getByText('The next import will be submitted to the base-import runtime queue.')
+    ).toBeInTheDocument();
     expect(
       screen.getByText('Saved import settings exist. You have unsaved changes.')
     ).toBeInTheDocument();
@@ -259,5 +316,139 @@ describe('ImportBaseConnectionSection', () => {
 
     expect(mocks.handleSaveImportSettingsMock).toHaveBeenCalledTimes(1);
     expect(mocks.handleClearSavedImportSettingsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows base-import runtime queue health directly in the import options card', () => {
+    render(<ImportBaseConnectionSection />);
+
+    expect(
+      screen.getByText((content) => content.includes('Base imports run on the separate'))
+    ).toBeInTheDocument();
+    expect(screen.getByText('bullmq')).toBeInTheDocument();
+    expect(screen.getByText('Running')).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes('Waiting 4 | Active 1'))).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes('2 failed'))).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes('Completed 8'))).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Inspect runtime' })).toHaveAttribute(
+      'href',
+      '/api/v2/integrations/queues/base-import'
+    );
+    expect(screen.getByRole('link', { name: 'View Import Jobs' })).toHaveAttribute(
+      'href',
+      '/admin/ai-paths/queue?tab=product-imports'
+    );
+  });
+
+  it('links the runtime queue card directly to the active import run in Job Queue', () => {
+    mocks.useImportExportDataMock.mockReturnValue(
+      buildData({
+        activeImportRunId: 'run-42',
+      })
+    );
+
+    render(<ImportBaseConnectionSection />);
+
+    expect(screen.getByRole('link', { name: 'View Import Jobs' })).toHaveAttribute(
+      'href',
+      '/admin/ai-paths/queue?tab=product-imports&query=run-42'
+    );
+  });
+
+  it('allows manually refreshing base-import runtime queue health', () => {
+    const refetchMock = vi.fn();
+    mocks.useBaseImportQueueHealthMock.mockReturnValue({
+      data: {
+        ok: true,
+        mode: 'bullmq',
+        redisAvailable: true,
+        queues: {
+          baseImport: {
+            waitingCount: 0,
+            activeCount: 0,
+            completedCount: 0,
+            failedCount: 0,
+            running: true,
+          },
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+      refetch: refetchMock,
+    });
+
+    render(<ImportBaseConnectionSection />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    expect(refetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('warns when base imports will fall back to inline runtime execution', () => {
+    mocks.useBaseImportQueueHealthMock.mockReturnValue({
+      data: {
+        ok: true,
+        mode: 'inline',
+        redisAvailable: false,
+        queues: {
+          baseImport: null,
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+
+    render(<ImportBaseConnectionSection />);
+
+    expect(screen.getByRole('button', { name: 'Run import inline' })).toHaveAttribute(
+      'variant',
+      'warning'
+    );
+    expect(
+      screen.getByText(
+        'Redis queueing is unavailable. The next import will run inline instead of appearing as a BullMQ runtime job.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Runtime queue is in inline fallback mode')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'New imports will run inline and will not appear as BullMQ runtime jobs until Redis queueing is available again.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('warns when the worker is offline but Redis is still available', () => {
+    mocks.useBaseImportQueueHealthMock.mockReturnValue({
+      data: {
+        ok: false,
+        mode: 'bullmq',
+        redisAvailable: true,
+        queues: {
+          baseImport: {
+            waitingCount: 3,
+            activeCount: 0,
+            completedCount: 0,
+            failedCount: 0,
+            running: false,
+          },
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+
+    render(<ImportBaseConnectionSection />);
+
+    expect(screen.getByRole('button', { name: 'Queue import anyway' })).toHaveAttribute(
+      'variant',
+      'warning'
+    );
+    expect(
+      screen.getByText(
+        'The base-import worker is offline. The next import may queue successfully but will not process until the worker is restored.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Base import worker is offline')).toBeInTheDocument();
   });
 });

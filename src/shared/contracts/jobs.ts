@@ -127,6 +127,21 @@ export const traderaQueueHealthResponseSchema = z.object({
 export type TraderaQueueHealthResponseDto = z.infer<typeof traderaQueueHealthResponseSchema>;
 export type TraderaQueueHealthResponse = TraderaQueueHealthResponseDto;
 
+export const baseImportQueueHealthResponseSchema = z.object({
+  ok: z.boolean(),
+  mode: z.enum(['bullmq', 'inline']),
+  redisAvailable: z.boolean(),
+  timestamp: z.string(),
+  queues: z.object({
+    baseImport: queueHealthStatusSchema.nullable(),
+  }),
+});
+
+export type BaseImportQueueHealthResponseDto = z.infer<
+  typeof baseImportQueueHealthResponseSchema
+>;
+export type BaseImportQueueHealthResponse = BaseImportQueueHealthResponseDto;
+
 /**
  * Product AI Job DTOs
  */

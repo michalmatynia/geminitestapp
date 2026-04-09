@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';

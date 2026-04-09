@@ -12,7 +12,7 @@ const {
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/server', () => ({
+vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
   enqueuePlaywrightNodeRun: (...args: unknown[]) => enqueuePlaywrightNodeRunMock(...args),
 }));
 

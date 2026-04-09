@@ -16,6 +16,7 @@ import {
   getCustomFieldImportHistoryItems,
   getParameterSyncHistoryItems,
   hasRetryableImportItems,
+  resolveImportRunDispatchDiagnostics,
   resolveImportRunParameterImportSummary,
 } from './Import.RunStatus.helpers';
 
@@ -52,6 +53,11 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
   const activeRunCustomFieldImportSummary = React.useMemo(
     () => buildCustomFieldImportSummaryFromItems(activeRunItems),
     [activeRunItems]
+  );
+
+  const activeRunDispatchDiagnostics = React.useMemo(
+    () => resolveImportRunDispatchDiagnostics(activeRun),
+    [activeRun]
   );
 
   const customFieldImportHistoryItems = React.useMemo(
@@ -105,6 +111,53 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
           {activeRunStats.updated} · Skipped {activeRunStats.skipped} · Failed{' '}
           {activeRunStats.failed} · Pending {activeRunStats.pending}
         </p>
+      ) : null}
+      <div className='mt-2 space-y-1 text-xs text-gray-400'>
+        <p>
+          Dispatch mode:{' '}
+          <span className='font-mono text-gray-200'>
+            {activeRun.dispatchMode === 'queued'
+              ? 'queued (base-import runtime queue)'
+              : activeRun.dispatchMode === 'inline'
+                ? 'inline fallback'
+                : 'not dispatched'}
+          </span>
+        </p>
+        <p>
+          Queue job:{' '}
+          <span className='font-mono text-gray-200'>{activeRun.queueJobId || 'not assigned'}</span>
+        </p>
+        {activeRun.dispatchMode === 'inline' ? (
+          <p className='text-amber-300'>
+            This run is not visible in the AI Paths queue. Base imports use the separate
+            `base-import` runtime queue and can fall back to inline processing when Redis queueing
+            is unavailable.
+          </p>
+        ) : null}
+      </div>
+      {activeRunDispatchDiagnostics ? (
+        <div
+          className={
+            activeRunDispatchDiagnostics.tone === 'error'
+              ? 'mt-3 rounded-md border border-rose-500/30 bg-rose-950/20 p-3'
+              : 'mt-3 rounded-md border border-amber-500/30 bg-amber-950/20 p-3'
+          }
+        >
+          <p
+            className={
+              activeRunDispatchDiagnostics.tone === 'error'
+                ? 'text-[11px] font-semibold uppercase tracking-wider text-rose-200'
+                : 'text-[11px] font-semibold uppercase tracking-wider text-amber-200'
+            }
+          >
+            {activeRunDispatchDiagnostics.title}
+          </p>
+          <div className='mt-2 space-y-1 text-xs text-gray-300'>
+            {activeRunDispatchDiagnostics.details.map((detail: string) => (
+              <p key={detail}>{detail}</p>
+            ))}
+          </div>
+        </div>
       ) : null}
       {activeRunParameterImportSummary ? (
         <div className='mt-3 rounded-md border border-border/60 bg-gray-950/30 p-3'>

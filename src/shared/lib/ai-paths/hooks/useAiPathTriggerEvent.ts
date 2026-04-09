@@ -51,6 +51,52 @@ import {
 } from './trigger-event-utils';
 
 const TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
+const PRODUCT_SAVED_CONFIG_WARNING_LOCATIONS = new Set([
+  'product_form_footer',
+  'product_form_header',
+  'product_list',
+  'product_list_header',
+  'product_list_item',
+  'product_modal',
+  'product_row',
+]);
+
+const resolveSavedDefaultModelWarning = (args: {
+  entityType: FireAiPathTriggerEventArgs['entityType'];
+  source?: FireAiPathTriggerEventArgs['source'];
+  selectedConfig: PathConfig;
+}): string | null => {
+  if (args.entityType !== 'product') {
+    return null;
+  }
+
+  const location =
+    typeof args.source?.location === 'string' ? args.source.location.trim().toLowerCase() : '';
+  if (!location || !PRODUCT_SAVED_CONFIG_WARNING_LOCATIONS.has(location)) {
+    return null;
+  }
+
+  const modelNodesUsingBrainDefault = args.selectedConfig.nodes.filter((node: AiNode): boolean => {
+    if (node.type !== 'model') {
+      return false;
+    }
+    const modelId =
+      typeof node.config?.model?.modelId === 'string' ? node.config.model.modelId.trim() : '';
+    return modelId.length === 0;
+  });
+
+  if (modelNodesUsingBrainDefault.length === 0) {
+    return null;
+  }
+
+  if (modelNodesUsingBrainDefault.length === 1) {
+    const modelNode = modelNodesUsingBrainDefault[0];
+    const nodeLabel = modelNode?.title?.trim() || modelNode?.id || 'model node';
+    return `This run uses the saved AI Path config. Saved model node "${nodeLabel}" still relies on AI Brain default. Save an explicit model in AI Paths if you want this trigger to use Gemma consistently.`;
+  }
+
+  return `This run uses the saved AI Path config. ${modelNodesUsingBrainDefault.length} saved model nodes still rely on AI Brain default. Save explicit models in AI Paths if you want this trigger to avoid the default model consistently.`;
+};
 
 export const resolveCurrentActivePathId = (args: {
   preferredActivePathId: string | null;
@@ -280,6 +326,15 @@ export function useAiPathTriggerEvent(): {
             node: null,
           });
           return;
+        }
+
+        const savedDefaultModelWarning = resolveSavedDefaultModelWarning({
+          entityType: args.entityType,
+          source: args.source,
+          selectedConfig,
+        });
+        if (savedDefaultModelWarning) {
+          toast(savedDefaultModelWarning, { variant: 'info' });
         }
 
         const preflightStartedAt = performance.now();

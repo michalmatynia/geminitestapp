@@ -44,6 +44,11 @@ export function AdminFavoriteBreadcrumbRow(
   const settingsStore = useSettingsStore();
   const { toast } = useOptionalToast();
   const { favoritesKey, resolveCandidate } = useAdminFavorites();
+  const [hasMounted, setHasMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const resolvedCandidate = React.useMemo(
     () =>
@@ -57,8 +62,9 @@ export function AdminFavoriteBreadcrumbRow(
   );
 
   const storedFavoriteIds = React.useMemo(
-    () => (favoritesKey ? normalizeFavoriteIds(settingsStore.get(favoritesKey)) : []),
-    [settingsStore.map, favoritesKey]
+    () =>
+      hasMounted && favoritesKey ? normalizeFavoriteIds(settingsStore.get(favoritesKey)) : [],
+    [hasMounted, settingsStore.map, favoritesKey]
   );
 
   const [optimisticFavoriteIds, setOptimisticFavoriteIds] = React.useState<string[] | null>(null);

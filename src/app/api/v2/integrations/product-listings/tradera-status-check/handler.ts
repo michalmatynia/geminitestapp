@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { assertTraderaBrowserSessionReady } from '@/app/api/v2/integrations/_shared/tradera-browser-session-preflight';
 import {
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -98,11 +99,47 @@ export async function POST_handler(
     queueCandidates.push({ productId, listing: selectedListing });
   }
 
-  if (queueCandidates.length > 0) {
+  const preflightReadyCandidates: typeof queueCandidates = [];
+  const preflightFailureByConnectionKey = new Map<string, string>();
+
+  for (const candidate of queueCandidates) {
+    const connectionKey = `${candidate.listing.integrationId}:${candidate.listing.connectionId}`;
+    let failureMessage = preflightFailureByConnectionKey.get(connectionKey) ?? null;
+
+    if (!failureMessage) {
+      try {
+        await assertTraderaBrowserSessionReady({
+          integrationRepository,
+          integrationId: candidate.listing.integrationId,
+          connectionId: candidate.listing.connectionId,
+        });
+      } catch (error) {
+        failureMessage =
+          error instanceof Error
+            ? error.message
+            : 'Tradera browser session preflight failed.';
+        preflightFailureByConnectionKey.set(connectionKey, failureMessage);
+      }
+    }
+
+    if (failureMessage) {
+      resultByProductId.set(candidate.productId, {
+        productId: candidate.productId,
+        listingId: candidate.listing.id,
+        status: 'error',
+        message: failureMessage,
+      });
+      continue;
+    }
+
+    preflightReadyCandidates.push(candidate);
+  }
+
+  if (preflightReadyCandidates.length > 0) {
     initializeQueues();
   }
 
-  for (const candidate of queueCandidates) {
+  for (const candidate of preflightReadyCandidates) {
     try {
       const jobId = await enqueueTraderaListingJob({
         listingId: candidate.listing.id,

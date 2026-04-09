@@ -78,7 +78,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'product_name_normalize',
-      templateVersion: 3,
+      templateVersion: 5,
       canonicalGraphHashes: PRODUCT_NAME_NORMALIZE_ADDITIONAL_GRAPH_HASHES,
     },
   },

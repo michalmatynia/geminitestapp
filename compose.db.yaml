@@ -6,7 +6,7 @@ services:
     ports:
       - '${MONGODB_PORT:-27017}:27017'
     volumes:
-      - mongodb_local:/data/db
+      - ./mongo/local-data:/data/db
 
   neo4j:
     image: neo4j:5-community
@@ -19,5 +19,4 @@ services:
       - neo4j_local:/data
 
 volumes:
-  mongodb_local:
   neo4j_local:

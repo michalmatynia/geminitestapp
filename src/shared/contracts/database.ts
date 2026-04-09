@@ -473,6 +473,37 @@ export type DatabaseEngineSetMongoSourceResponse = z.infer<
   typeof databaseEngineSetMongoSourceResponseSchema
 >;
 
+export const databaseEngineMongoSyncDirectionSchema = z.enum([
+  'cloud_to_local',
+  'local_to_cloud',
+]);
+
+export type DatabaseEngineMongoSyncDirection = z.infer<
+  typeof databaseEngineMongoSyncDirectionSchema
+>;
+
+export const databaseEngineMongoSyncRequestSchema = z.object({
+  direction: databaseEngineMongoSyncDirectionSchema,
+});
+
+export type DatabaseEngineMongoSyncRequest = z.infer<
+  typeof databaseEngineMongoSyncRequestSchema
+>;
+
+export const databaseEngineMongoSyncResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  direction: databaseEngineMongoSyncDirectionSchema,
+  source: mongoSourceSchema,
+  target: mongoSourceSchema,
+  archivePath: z.string().nullable(),
+  logPath: z.string().nullable(),
+});
+
+export type DatabaseEngineMongoSyncResponse = z.infer<
+  typeof databaseEngineMongoSyncResponseSchema
+>;
+
 export type CollectionCopyResult = DatabaseSyncCollectionResult;
 
 export const databaseEngineBackupRunNowRequestSchema = z.object({

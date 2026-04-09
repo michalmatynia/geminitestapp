@@ -1,6 +1,13 @@
 'use client';
 
-import { SaveIcon, SlidersHorizontalIcon, ArchiveIcon, ClipboardListIcon } from 'lucide-react';
+import {
+  SaveIcon,
+  SlidersHorizontalIcon,
+  ArchiveIcon,
+  ClipboardListIcon,
+  CloudIcon,
+  HardDriveIcon,
+} from 'lucide-react';
 import React, { useMemo, Suspense } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -40,10 +47,17 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
     rows,
     isLoading,
     engineStatus,
+    mongoSourceState,
     operationsJobs,
     redisOverview,
+    isSwitchingMongoSource,
   } = useDatabaseEngineStateContext();
-  const { updatePolicy, updateCollectionRoute } = useDatabaseEngineActionsContext();
+  const { updatePolicy, updateCollectionRoute, switchMongoSource } =
+    useDatabaseEngineActionsContext();
+  const activeMongoSource = mongoSourceState?.activeSource ?? null;
+  const mongoSources = mongoSourceState
+    ? [mongoSourceState.local, mongoSourceState.cloud]
+    : [];
 
   const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(
     () => [
@@ -120,6 +134,98 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
+        <FormSection title='Mongo Source' className='lg:col-span-2 p-6'>
+          <div className='space-y-4'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <StatusBadge
+                status={
+                  activeMongoSource
+                    ? `Active source: ${activeMongoSource}`
+                    : 'No MongoDB source configured'
+                }
+                variant={activeMongoSource ? 'active' : 'error'}
+                size='sm'
+                className='font-medium capitalize'
+              />
+              <Badge variant='outline' className='border-white/10 text-gray-300'>
+                Source file: {mongoSourceState?.sourceFilePath ?? 'Not available'}
+              </Badge>
+              {!mongoSourceState?.canSwitch ? (
+                <Badge variant='outline' className='border-amber-400/30 text-amber-200'>
+                  Configure both local and cloud URIs to enable one-click switching.
+                </Badge>
+              ) : null}
+            </div>
+
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+              {mongoSources.map((entry) => {
+                const isLocal = entry.source === 'local';
+                return (
+                  <Card
+                    key={entry.source}
+                    className='space-y-3 border-border/60 bg-card/35 p-4'
+                  >
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='space-y-1'>
+                        <div className='flex items-center gap-2'>
+                          {isLocal ? (
+                            <HardDriveIcon className='size-4 text-sky-200' />
+                          ) : (
+                            <CloudIcon className='size-4 text-sky-200' />
+                          )}
+                          <h3 className='text-sm font-semibold capitalize text-white'>
+                            {entry.source} MongoDB
+                          </h3>
+                        </div>
+                        <p className='text-xs text-muted-foreground'>
+                          {entry.configured
+                            ? entry.maskedUri || 'Configured MongoDB target'
+                            : 'Not configured'}
+                        </p>
+                      </div>
+                      <StatusBadge
+                        status={entry.isActive ? 'Active' : entry.configured ? 'Available' : 'Missing'}
+                        variant={
+                          entry.isActive
+                            ? 'active'
+                            : entry.configured
+                              ? 'success'
+                              : 'error'
+                        }
+                        size='sm'
+                      />
+                    </div>
+
+                    <div className='space-y-1 text-xs text-muted-foreground'>
+                      <p>Database: {entry.dbName ?? 'Not configured'}</p>
+                      <p>{entry.usesLegacyEnv ? 'Using legacy MONGODB_URI fallback.' : 'Using dedicated source env.'}</p>
+                    </div>
+
+                    <Button
+                      type='button'
+                      size='sm'
+                      className='w-full'
+                      variant={entry.isActive ? 'secondary' : 'outline'}
+                      disabled={
+                        !entry.configured || entry.isActive || isSwitchingMongoSource
+                      }
+                      onClick={() => {
+                        void switchMongoSource(entry.source);
+                      }}
+                    >
+                      {entry.isActive
+                        ? 'Currently Active'
+                        : isSwitchingMongoSource
+                          ? 'Switching...'
+                          : `Switch to ${entry.source}`}
+                    </Button>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </FormSection>
+
         <FormSection title='Engine Policy' className='lg:col-span-2 p-6'>
           <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             <ToggleRow
@@ -173,6 +279,17 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
               value={
                 <StatusBadge
                   status={engineStatus?.providers.mongodbConfigured ? 'success' : 'error'}
+                />
+              }
+              className='flex items-center justify-between'
+            />
+            <MetadataItem
+              variant='minimal'
+              label='Mongo Source'
+              value={
+                <StatusBadge
+                  status={activeMongoSource ? activeMongoSource : 'missing'}
+                  variant={activeMongoSource ? 'active' : 'error'}
                 />
               }
               className='flex items-center justify-between'

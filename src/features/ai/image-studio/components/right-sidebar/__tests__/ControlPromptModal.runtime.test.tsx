@@ -39,7 +39,7 @@ function getSlotsStateMock() {
   };
 }
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/primitives.public', async () => {
   const shared = await import('./rightSidebarRuntimeMockComponents');
   return {
     Button: shared.MockButton,

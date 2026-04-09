@@ -46,7 +46,7 @@ vi.mock('../hooks/useClusterPresetsActions', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props

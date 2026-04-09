@@ -42,7 +42,7 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainAssignment', () => ({
   useBrainAssignment: useBrainAssignmentMock,
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/primitives.public', async () => {
   const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
   return {
     ...actual,

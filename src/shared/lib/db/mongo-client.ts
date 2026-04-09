@@ -6,10 +6,7 @@ import type { Db } from 'mongodb';
 import type { MongoClient } from 'mongodb';
 import type { MongoClientOptions } from 'mongodb';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
-import {
-  applyActiveMongoSourceEnv,
-  type __testOnly as MongoSourceTestOnly,
-} from '@/shared/lib/db/mongo-source';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import type { MongoSource } from '@/shared/contracts/database';
 
 

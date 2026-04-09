@@ -35,7 +35,7 @@ function getSlotsStateMock() {
   };
 }
 
-vi.mock('@/shared/ui', async (importOriginal) => {
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,

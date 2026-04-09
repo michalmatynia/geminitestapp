@@ -8,6 +8,7 @@ import type {
   DatabaseEngineStatus,
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
+  DatabaseEngineMongoSourceState,
   RedisOverview,
   DatabaseEngineProviderPreview,
   DatabaseEngineWorkspaceView,
@@ -41,7 +42,9 @@ import {
 import {
   useDatabaseBackupSchedulerStatus,
   useDatabaseEngineOperationsJobs,
+  useDatabaseEngineMongoSource,
   useDatabaseEngineProviderPreview,
+  useSetDatabaseEngineMongoSourceMutation,
   useDatabaseEngineStatus,
   useAllCollectionsSchema,
   useRedisOverview,
@@ -56,6 +59,7 @@ export interface UseDatabaseEngineStateReturn {
   backupSchedulerStatus: DatabaseEngineBackupSchedulerStatus | undefined;
   operationsJobs: DatabaseEngineOperationsJobs | undefined;
   providerPreview: DatabaseEngineProviderPreview | undefined;
+  mongoSourceState: DatabaseEngineMongoSourceState | undefined;
   redisOverview: RedisOverview | undefined;
   activeView: DatabaseEngineWorkspaceView;
   setActiveView: (view: DatabaseEngineWorkspaceView) => void;
@@ -72,10 +76,12 @@ export interface UseDatabaseEngineStateReturn {
   updateCollectionRoute: (collection: string, provider: string) => void;
   updateBackupSchedule: (updates: Partial<DatabaseEngineBackupSchedule>) => void;
   updateOperationControls: (updates: Partial<DatabaseEngineOperationControls>) => void;
+  switchMongoSource: (source: 'local' | 'cloud') => Promise<void>;
   saveSettings: () => Promise<void>;
   isDirty: boolean;
   refetchAll: () => void;
   validationErrors: string[];
+  isSwitchingMongoSource: boolean;
 }
 
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
@@ -87,6 +93,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const engineStatusQuery = useDatabaseEngineStatus();
   const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
   const operationsJobsQuery = useDatabaseEngineOperationsJobs(30);
+  const mongoSourceQuery = useDatabaseEngineMongoSource();
   const providerPreviewQuery = useDatabaseEngineProviderPreview();
   const redisOverviewQuery = useRedisOverview();
   const schemaQuery = useAllCollectionsSchema();
@@ -107,6 +114,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const { data: settingsMap, isPending: settingsLoading } = useSettingsMap({ scope: 'all' });
 
   const updateSettingsBulk = useUpdateSettingsBulk();
+  const setMongoSourceMutation = useSetDatabaseEngineMongoSourceMutation();
 
   const [policy, setPolicy] = useState<DatabaseEnginePolicy>(DEFAULT_DATABASE_ENGINE_POLICY);
   const [serviceRouteMap, setServiceRouteMap] = useState<Record<string, string>>({});
@@ -261,6 +269,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     engineStatus: engineStatusQuery.data,
     backupSchedulerStatus: backupSchedulerStatusQuery.data,
     operationsJobs: operationsJobsQuery.data,
+    mongoSourceState: mongoSourceQuery.data,
     providerPreview: providerPreviewQuery.data,
     redisOverview: redisOverviewQuery.data,
     activeView,
@@ -270,6 +279,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       engineStatusQuery.isPending ||
       backupSchedulerStatusQuery.isPending ||
       operationsJobsQuery.isPending ||
+      mongoSourceQuery.isPending ||
       settingsLoading,
     isSaving: updateSettingsBulk.isPending,
     policy,
@@ -313,16 +323,29 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       setOperationControls((prev) => ({ ...prev, ...updates }));
       setIsDirty(true);
     },
+    switchMongoSource: async (source) => {
+      try {
+        const response = await setMongoSourceMutation.mutateAsync(source);
+        toast(response.message || `MongoDB source switched to ${source}.`, {
+          variant: 'success',
+        });
+      } catch (error) {
+        logClientError(error);
+        toast(`Failed to switch MongoDB source to ${source}.`, { variant: 'error' });
+      }
+    },
     saveSettings: handleSave,
     isDirty,
     refetchAll: () => {
       void engineStatusQuery.refetch();
       void backupSchedulerStatusQuery.refetch();
       void operationsJobsQuery.refetch();
+      void mongoSourceQuery.refetch();
       void providerPreviewQuery.refetch();
       void schemaQuery.refetch();
       void redisOverviewQuery.refetch();
     },
     validationErrors,
+    isSwitchingMongoSource: setMongoSourceMutation.isPending,
   };
 }

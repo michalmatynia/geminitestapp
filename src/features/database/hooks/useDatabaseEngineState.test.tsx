@@ -8,11 +8,13 @@ const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
   settingsMap: new Map<string, string>(),
   updateSettingsBulkMutateAsync: vi.fn(),
+  setMongoSourceMutateAsync: vi.fn(),
   searchParams: 'view=engine&foo=bar',
   pathname: '/admin/databases/engine',
   engineStatusRefetch: vi.fn(),
   backupSchedulerStatusRefetch: vi.fn(),
   operationsJobsRefetch: vi.fn(),
+  mongoSourceRefetch: vi.fn(),
   providerPreviewRefetch: vi.fn(),
   schemaRefetch: vi.fn(),
   redisOverviewRefetch: vi.fn(),
@@ -60,10 +62,19 @@ vi.mock('./useDatabaseQueries', () => ({
     isPending: false,
     refetch: mocks.operationsJobsRefetch,
   }),
+  useDatabaseEngineMongoSource: () => ({
+    data: undefined,
+    isPending: false,
+    refetch: mocks.mongoSourceRefetch,
+  }),
   useDatabaseEngineProviderPreview: () => ({
     data: undefined,
     isPending: false,
     refetch: mocks.providerPreviewRefetch,
+  }),
+  useSetDatabaseEngineMongoSourceMutation: () => ({
+    isPending: false,
+    mutateAsync: mocks.setMongoSourceMutateAsync,
   }),
   useAllCollectionsSchema: () => ({
     data: { collections: [] },
@@ -83,11 +94,13 @@ describe('useDatabaseEngineState', () => {
     mocks.toast.mockReset();
     mocks.settingsMap = new Map<string, string>();
     mocks.updateSettingsBulkMutateAsync.mockReset();
+    mocks.setMongoSourceMutateAsync.mockReset();
     mocks.searchParams = 'view=engine&foo=bar';
     mocks.pathname = '/admin/databases/engine';
     mocks.engineStatusRefetch.mockReset();
     mocks.backupSchedulerStatusRefetch.mockReset();
     mocks.operationsJobsRefetch.mockReset();
+    mocks.mongoSourceRefetch.mockReset();
     mocks.providerPreviewRefetch.mockReset();
     mocks.schemaRefetch.mockReset();
     mocks.redisOverviewRefetch.mockReset();
@@ -101,5 +114,23 @@ describe('useDatabaseEngineState', () => {
     });
 
     expect(mocks.routerPush).toHaveBeenCalledWith('/admin/databases/engine?view=crud&foo=bar');
+  });
+
+  it('switches the active Mongo source through the dedicated mutation', async () => {
+    mocks.setMongoSourceMutateAsync.mockResolvedValue({
+      success: true,
+      message: 'MongoDB source switched to local.',
+    });
+
+    const { result } = renderHook(() => useDatabaseEngineState());
+
+    await act(async () => {
+      await result.current.switchMongoSource('local');
+    });
+
+    expect(mocks.setMongoSourceMutateAsync).toHaveBeenCalledWith('local');
+    expect(mocks.toast).toHaveBeenCalledWith('MongoDB source switched to local.', {
+      variant: 'success',
+    });
   });
 });

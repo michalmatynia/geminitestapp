@@ -5,6 +5,8 @@ import type {
   DatabaseBackupResponse,
   DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
   DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
+  DatabaseEngineMongoSyncDirection,
+  DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
   DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
   DatabaseEngineSetMongoSourceResponse as DatabaseEngineSetMongoSourceResponsePayload,
@@ -56,6 +58,7 @@ import {
   restoreDatabaseBackup,
   restoreJsonBackup,
   setDatabaseEngineMongoSource,
+  syncDatabaseEngineMongoSource,
   uploadDatabaseBackup,
 } from '../api';
 
@@ -438,6 +441,32 @@ export function useSetDatabaseEngineMongoSourceMutation(): MutationResult<
       dbKeys.engineMongoSource(),
       dbKeys.engineStatus(),
       dbKeys.engineProviderPreview({ collections: [] }),
+      dbKeys.schema({ provider: 'all', includeCounts: true }),
+    ],
+  });
+}
+
+export function useSyncDatabaseEngineMongoSourceMutation(): MutationResult<
+  DatabaseEngineMongoSyncResponsePayload,
+  DatabaseEngineMongoSyncDirection
+> {
+  const mutationKey = dbKeys.all;
+  return createMutationV2({
+    mutationFn: (direction: DatabaseEngineMongoSyncDirection) =>
+      syncDatabaseEngineMongoSource(direction),
+    mutationKey,
+    meta: {
+      source: 'database.hooks.useSyncDatabaseEngineMongoSourceMutation',
+      operation: 'action',
+      resource: 'system.databases.engine-mongo-sync',
+      domain: 'database',
+      mutationKey,
+      tags: ['database', 'engine', 'mongo-source', 'sync'],
+      description: 'Synchronizes local and cloud MongoDB sources.',
+    },
+    invalidateKeys: [
+      dbKeys.engineMongoSource(),
+      dbKeys.engineStatus(),
       dbKeys.schema({ provider: 'all', includeCounts: true }),
     ],
   });

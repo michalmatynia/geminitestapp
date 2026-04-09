@@ -23,6 +23,9 @@ export const analyzeEnvContract = ({
   const issues = [];
   const nodeEnv = normalizeString(env['NODE_ENV']) || 'development';
   const mongoUri = normalizeString(env['MONGODB_URI']);
+  const mongoLocalUri = normalizeString(env['MONGODB_LOCAL_URI']);
+  const mongoCloudUri = normalizeString(env['MONGODB_CLOUD_URI']);
+  const mongoActiveSourceDefault = normalizeString(env['MONGODB_ACTIVE_SOURCE_DEFAULT']).toLowerCase();
   const appDbProvider = normalizeString(env['APP_DB_PROVIDER']).toLowerCase();
   const authSecret = normalizeString(env['AUTH_SECRET']);
   const nextAuthSecret = normalizeString(env['NEXTAUTH_SECRET']);
@@ -31,12 +34,13 @@ export const analyzeEnvContract = ({
   const enableRateLimits = normalizeString(env['ENABLE_RATE_LIMITS']).toLowerCase();
   const disableRateLimits = normalizeString(env['DISABLE_RATE_LIMITS']).toLowerCase();
 
-  if (!hasValue(mongoUri)) {
+  if (!hasValue(mongoUri) && !hasValue(mongoLocalUri) && !hasValue(mongoCloudUri)) {
     issues.push(
       createIssue({
         severity: 'error',
         ruleId: 'database-provider-missing',
-        message: 'No database provider is configured. Set MONGODB_URI.',
+        message:
+          'No MongoDB source is configured. Set MONGODB_URI or one of MONGODB_LOCAL_URI / MONGODB_CLOUD_URI.',
       })
     );
   }
@@ -51,12 +55,18 @@ export const analyzeEnvContract = ({
     );
   }
 
-  if (appDbProvider === 'mongodb' && !hasValue(mongoUri)) {
+  if (
+    appDbProvider === 'mongodb' &&
+    !hasValue(mongoUri) &&
+    !hasValue(mongoLocalUri) &&
+    !hasValue(mongoCloudUri)
+  ) {
     issues.push(
       createIssue({
         severity: 'error',
         ruleId: 'app-db-provider-mongodb-missing-url',
-        message: 'APP_DB_PROVIDER=mongodb requires MONGODB_URI.',
+        message:
+          'APP_DB_PROVIDER=mongodb requires MONGODB_URI or one of MONGODB_LOCAL_URI / MONGODB_CLOUD_URI.',
       })
     );
   }
@@ -67,6 +77,40 @@ export const analyzeEnvContract = ({
         severity: 'error',
         ruleId: 'mongodb-uri-invalid',
         message: 'MONGODB_URI is not a valid URL.',
+      })
+    );
+  }
+
+  if (hasValue(mongoLocalUri) && !parseUrl(mongoLocalUri).ok) {
+    issues.push(
+      createIssue({
+        severity: 'error',
+        ruleId: 'mongodb-local-uri-invalid',
+        message: 'MONGODB_LOCAL_URI is not a valid URL.',
+      })
+    );
+  }
+
+  if (hasValue(mongoCloudUri) && !parseUrl(mongoCloudUri).ok) {
+    issues.push(
+      createIssue({
+        severity: 'error',
+        ruleId: 'mongodb-cloud-uri-invalid',
+        message: 'MONGODB_CLOUD_URI is not a valid URL.',
+      })
+    );
+  }
+
+  if (
+    hasValue(mongoActiveSourceDefault) &&
+    mongoActiveSourceDefault !== 'local' &&
+    mongoActiveSourceDefault !== 'cloud'
+  ) {
+    issues.push(
+      createIssue({
+        severity: 'error',
+        ruleId: 'mongodb-active-source-default-invalid',
+        message: 'MONGODB_ACTIVE_SOURCE_DEFAULT must be "local" or "cloud".',
       })
     );
   }
@@ -203,6 +247,11 @@ export const analyzeEnvContract = ({
     environment: {
       nodeEnv,
       hasMongoUri: hasValue(mongoUri),
+      hasMongoLocalUri: hasValue(mongoLocalUri),
+      hasMongoCloudUri: hasValue(mongoCloudUri),
+      mongoActiveSourceDefault: hasValue(mongoActiveSourceDefault)
+        ? mongoActiveSourceDefault
+        : null,
       appDbProvider: appDbProvider || null,
       hasAuthSecret: hasValue(authSecret),
       hasNextAuthSecret: hasValue(nextAuthSecret),

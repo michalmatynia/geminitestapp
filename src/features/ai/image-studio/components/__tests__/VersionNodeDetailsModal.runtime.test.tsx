@@ -8,7 +8,7 @@ import { VersionNodeDetailsModalRuntimeProvider } from '../VersionNodeDetailsMod
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { VersionNode } from '@/features/ai/image-studio/utils/version-graph';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Hint: ({
     children,
     className,

@@ -42,7 +42,7 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toastMock }),
 }));
 
-vi.mock('@/shared/ui', () => ({}));
+vi.mock('@/shared/ui/primitives.public', () => ({}));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
   createListQueryV2:

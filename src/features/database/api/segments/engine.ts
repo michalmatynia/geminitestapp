@@ -2,6 +2,8 @@ import {
   DatabaseEngineBackupRunNowResponse,
   DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
   DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
+  DatabaseEngineMongoSyncDirection,
+  DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
   DatabaseEngineBackupSchedulerTickResponse,
   DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
@@ -31,6 +33,13 @@ export const setDatabaseEngineMongoSource = async (
 ): Promise<DatabaseEngineSetMongoSourceResponsePayload> =>
   api.post<DatabaseEngineSetMongoSourceResponsePayload>('/api/databases/engine/source', {
     source,
+  });
+
+export const syncDatabaseEngineMongoSource = async (
+  direction: DatabaseEngineMongoSyncDirection
+): Promise<DatabaseEngineMongoSyncResponsePayload> =>
+  api.post<DatabaseEngineMongoSyncResponsePayload>('/api/databases/engine/source/sync', {
+    direction,
   });
 
 export const getProviderDiagnostics = async (): Promise<ProviderDiagnosticsResponse> =>

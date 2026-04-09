@@ -13,7 +13,7 @@ vi.mock('../../hooks/useImageStudioRuns', () => ({
   useImageStudioRuns: () => mockState.hookValue,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props

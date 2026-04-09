@@ -14,6 +14,8 @@ const {
   isPrimaryProviderConfiguredMock,
   isRedisProviderConfiguredMock,
   getMongoDbMock,
+  applyActiveMongoSourceEnvMock,
+  getMongoSourceStateMock,
   getIntegrationDataProviderMock,
   getProductDataProviderMock,
   captureExceptionMock,
@@ -28,6 +30,30 @@ const {
   isPrimaryProviderConfiguredMock: vi.fn(),
   isRedisProviderConfiguredMock: vi.fn(),
   getMongoDbMock: vi.fn(),
+  applyActiveMongoSourceEnvMock: vi.fn(async () => undefined),
+  getMongoSourceStateMock: vi.fn(async () => ({
+    timestamp: '2026-04-09T00:00:00.000Z',
+    activeSource: 'local',
+    defaultSource: 'local',
+    sourceFilePath: '/tmp/mongo-source.json',
+    local: {
+      source: 'local',
+      configured: true,
+      dbName: 'app',
+      maskedUri: 'mongodb://localhost:27017/app',
+      isActive: true,
+      usesLegacyEnv: false,
+    },
+    cloud: {
+      source: 'cloud',
+      configured: false,
+      dbName: null,
+      maskedUri: null,
+      isActive: false,
+      usesLegacyEnv: false,
+    },
+    canSwitch: false,
+  })),
   getIntegrationDataProviderMock: vi.fn(),
   getProductDataProviderMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -58,6 +84,11 @@ vi.mock('@/shared/lib/db/database-engine-policy', () => ({
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
+}));
+
+vi.mock('@/shared/lib/db/mongo-source', () => ({
+  applyActiveMongoSourceEnv: applyActiveMongoSourceEnvMock,
+  getMongoSourceState: getMongoSourceStateMock,
 }));
 
 vi.mock('@/shared/lib/integrations/services/integration-provider', () => ({

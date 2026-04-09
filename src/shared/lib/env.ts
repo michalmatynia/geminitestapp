@@ -30,8 +30,13 @@ const envSchema = z.object({
   // Core
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   MONGODB_URI: z.string().url().optional(),
+  MONGODB_LOCAL_URI: z.string().url().optional(),
+  MONGODB_CLOUD_URI: z.string().url().optional(),
   REDIS_URL: z.string().url().optional(),
   MONGODB_DB: z.string().default('app'),
+  MONGODB_LOCAL_DB: z.string().default('app'),
+  MONGODB_CLOUD_DB: z.string().default('app'),
+  MONGODB_ACTIVE_SOURCE_DEFAULT: z.enum(['local', 'cloud']).optional(),
   APP_DB_PROVIDER: z.enum(['mongodb']).optional(),
 
   // Auth
@@ -125,7 +130,9 @@ export const env = getEnv();
  * Validates that at least one primary database is configured.
  */
 export function validateDatabaseConfig() {
-  if (!env.MONGODB_URI) {
-    throw new Error('MONGODB_URI must be configured.');
+  if (!env.MONGODB_URI && !env.MONGODB_LOCAL_URI && !env.MONGODB_CLOUD_URI) {
+    throw new Error(
+      'MongoDB must be configured. Set MONGODB_URI or one of MONGODB_LOCAL_URI / MONGODB_CLOUD_URI.'
+    );
   }
 }

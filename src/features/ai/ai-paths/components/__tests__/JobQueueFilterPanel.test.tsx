@@ -21,7 +21,7 @@ vi.mock('../JobQueueContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   FilterPanel: (props: Record<string, unknown>) => {
     mockState.filterPanelProps = props;
     return <div data-testid='filter-panel' />;

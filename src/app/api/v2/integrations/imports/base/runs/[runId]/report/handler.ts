@@ -76,7 +76,7 @@ const buildCsv = (detail: BaseImportRunDetailResponse): string => {
   const rows = detail.items.map((item) => {
     const customFieldImport = readCustomFieldImportMetadata(
       item.metadata && typeof item.metadata === 'object'
-        ? (item.metadata as Record<string, unknown>)['customFieldImport']
+        ? item.metadata['customFieldImport']
         : null
     );
     return [

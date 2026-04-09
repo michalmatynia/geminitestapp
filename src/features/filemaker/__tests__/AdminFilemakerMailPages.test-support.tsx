@@ -32,6 +32,18 @@ vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: routerPushMock,
+    replace: routerReplaceMock,
+  }),
+  useSearchParams: () => ({
+    get: searchParamsGetMock,
+  }),
+  useParams: () => routeParamsMock,
+  usePathname: usePathnameMock,
+}));
+
 vi.mock('@/shared/lib/document-editor/components/DocumentWysiwygEditor', () => ({
   DocumentWysiwygEditor: ({
     value,

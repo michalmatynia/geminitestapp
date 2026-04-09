@@ -21,7 +21,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSettingsBulk: mocks.useUpdateSettingsBulkMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -35,6 +35,19 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+  Textarea: ({
+    value,
+    onChange,
+  }: {
+    value?: string;
+    onChange?: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  }) => <textarea value={value} onChange={onChange} />,
+  useToast: () => ({
+    toast: mocks.toastMock,
+  }),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
     children,
@@ -59,13 +72,6 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </section>
   ),
-  Textarea: ({
-    value,
-    onChange,
-  }: {
-    value?: string;
-    onChange?: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  }) => <textarea value={value} onChange={onChange} />,
   ToggleRow: ({
     label,
     checked,
@@ -85,10 +91,10 @@ vi.mock('@/shared/ui', () => ({
       />
     </label>
   ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   UI_GRID_ROOMY_CLASSNAME: 'grid gap-6',
-  useToast: () => ({
-    toast: mocks.toastMock,
-  }),
 }));
 
 import { ObservationPostSettingsPanel } from './SystemLogs.Settings';

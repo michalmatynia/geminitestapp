@@ -16,6 +16,12 @@ vi.mock('next/navigation', () => ({
   redirect: redirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  notFound: notFoundMock,
+  permanentRedirect: redirectMock,
+  redirect: redirectMock,
+}));
+
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
   readOptionalServerAuthSession: authMock,

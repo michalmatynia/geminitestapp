@@ -36,6 +36,11 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: vi.fn(),
+  useSearchParams: vi.fn(),
+}));
+
 vi.mock('@/shared/ui/toast', () => ({
   useOptionalToast: () => ({
     toast: mocks.toastMock,

@@ -20,6 +20,15 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: (): string => pathnameState.value,
+  useRouter: () => ({
+    push: routerPushMock,
+    replace: routerReplaceMock,
+    prefetch: routerPrefetchMock,
+  }),
+}));
+
 vi.mock('@/features/admin/context/AdminLayoutContext', () => ({
   useAdminLayoutState: () => ({
     isMenuCollapsed: false,

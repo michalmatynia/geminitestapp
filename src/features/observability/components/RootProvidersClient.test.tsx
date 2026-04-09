@@ -12,6 +12,11 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => searchParamsRef.current,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => '/',
+  useSearchParams: () => searchParamsRef.current,
+}));
+
 vi.mock('next-auth/react', () => ({
   SessionProvider: ({
     children,

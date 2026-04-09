@@ -11,25 +11,33 @@ const mocks = vi.hoisted(() => ({
     activeSource: 'local',
     defaultSource: 'local',
     sourceFilePath: '/tmp/mongo-source.json',
-    local: {
-      source: 'local',
-      configured: true,
-      dbName: 'app_local',
-      maskedUri: 'mongodb://localhost:27017/app_local',
-      isActive: true,
-      usesLegacyEnv: false,
-    },
-    cloud: {
-      source: 'cloud',
-      configured: true,
-      dbName: 'app_cloud',
-      maskedUri: 'mongodb+srv://cluster.example/app_cloud',
-      isActive: false,
-      usesLegacyEnv: false,
-    },
+    lastSync: null,
+      local: {
+        source: 'local',
+        configured: true,
+        dbName: 'app_local',
+        maskedUri: 'mongodb://localhost:27017/app_local',
+        isActive: true,
+        usesLegacyEnv: false,
+        reachable: true,
+        healthError: null,
+      },
+      cloud: {
+        source: 'cloud',
+        configured: true,
+        dbName: 'app_cloud',
+        maskedUri: 'mongodb+srv://cluster.example/app_cloud',
+        isActive: false,
+        usesLegacyEnv: false,
+        reachable: true,
+        healthError: null,
+      },
     canSwitch: true,
+    canSync: true,
+    syncIssue: null,
   })),
   setActiveMongoSource: vi.fn(async () => undefined),
+  invalidateMongoClientCache: vi.fn(async () => undefined),
   invalidateAppDbProviderCache: vi.fn(),
   invalidateCollectionProviderMapCache: vi.fn(),
   invalidateDatabaseEnginePolicyCache: vi.fn(),
@@ -45,6 +53,10 @@ vi.mock('@/shared/lib/db/mongo-source', () => ({
   applyActiveMongoSourceEnv: mocks.applyActiveMongoSourceEnv,
   getMongoSourceState: mocks.getMongoSourceState,
   setActiveMongoSource: mocks.setActiveMongoSource,
+}));
+
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  invalidateMongoClientCache: mocks.invalidateMongoClientCache,
 }));
 
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
@@ -98,6 +110,7 @@ describe('databases engine source handler', () => {
     const data = await response.json();
 
     expect(mocks.setActiveMongoSource).toHaveBeenCalledWith('cloud');
+    expect(mocks.invalidateMongoClientCache).toHaveBeenCalled();
     expect(mocks.invalidateAppDbProviderCache).toHaveBeenCalled();
     expect(mocks.invalidateCollectionProviderMapCache).toHaveBeenCalled();
     expect(mocks.invalidateDatabaseEnginePolicyCache).toHaveBeenCalled();

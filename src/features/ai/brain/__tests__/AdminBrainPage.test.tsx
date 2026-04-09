@@ -18,6 +18,12 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: vi.fn(),
+  useRouter: vi.fn(),
+  useSearchParams: vi.fn(),
+}));
+
 vi.mock('../context/BrainContext', () => ({
   BrainProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid='brain-provider'>{children}</div>

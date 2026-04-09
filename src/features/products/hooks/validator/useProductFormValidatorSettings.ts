@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, type SetStateAction } from 'react';
+import { useCallback, useRef, useState, type SetStateAction } from 'react';
 import {
   useProductValidatorConfig,
   useUpdateValidatorSettingsMutation,
@@ -29,7 +29,12 @@ export function useProductFormValidatorSettings() {
   const [validatorInitialized, setValidatorInitialized] = useState<boolean>(
     () => typeof configEnabledByDefault === 'boolean'
   );
-  const [validatorManuallyChanged, setValidatorManuallyChanged] = useState(false);
+  const [validatorManuallyChanged, setValidatorManuallyChangedState] = useState(false);
+  const validatorManuallyChangedRef = useRef(false);
+  const setValidatorManuallyChanged = useCallback((changed: boolean) => {
+    validatorManuallyChangedRef.current = changed;
+    setValidatorManuallyChangedState(changed);
+  }, []);
   const updateValidatorSettingsMutation = useUpdateValidatorSettingsMutation();
 
   const setValidatorEnabled = useCallback(
@@ -91,6 +96,7 @@ export function useProductFormValidatorSettings() {
     validatorInitialized,
     setValidatorInitialized,
     validatorManuallyChanged,
+    validatorManuallyChangedRef,
     setValidatorManuallyChanged,
     setValidatorEnabled,
     setFormatterEnabled,

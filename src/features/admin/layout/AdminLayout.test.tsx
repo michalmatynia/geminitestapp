@@ -34,6 +34,10 @@ vi.mock('next/navigation', () => ({
   usePathname: () => pathnameMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => pathnameMock,
+}));
+
 vi.mock('next-auth/react', () => ({
   SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSession: () => ({ data: null, status: 'unauthenticated' }),

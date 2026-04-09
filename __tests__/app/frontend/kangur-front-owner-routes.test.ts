@@ -37,6 +37,12 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: redirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  notFound: notFoundMock,
+  redirect: redirectMock,
+  permanentRedirect: redirectMock,
+}));
+
 vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn(async () => vi.fn((key) => {
     if (key === 'loginTitle') return 'StudiQ Login';

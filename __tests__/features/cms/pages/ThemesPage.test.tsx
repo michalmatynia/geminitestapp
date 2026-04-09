@@ -33,6 +33,12 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: vi.fn(),
+  usePathname: vi.fn(() => '/admin/cms/themes'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
+
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });

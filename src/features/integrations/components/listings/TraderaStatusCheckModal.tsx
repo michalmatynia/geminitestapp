@@ -4,6 +4,7 @@ import { Activity, ExternalLink, Loader2, RefreshCw, RotateCcw, TriangleAlert } 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
@@ -417,7 +418,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
   const stopPolling = useCallback((productId: string) => {
     const timer = pollTimersRef.current.get(productId);
     if (timer !== undefined) {
-      clearInterval(timer);
+      safeClearInterval(timer);
       pollTimersRef.current.delete(productId);
     }
     pollDeadlinesRef.current.delete(productId);
@@ -429,7 +430,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
       pollDeadlinesRef.current.set(productId, deadline);
       prevCheckAtRef.current.set(productId, originalCheckAt);
 
-      const timer = setInterval(async () => {
+      const timer = safeSetInterval(async () => {
         if (Date.now() > (pollDeadlinesRef.current.get(productId) ?? 0)) {
           stopPolling(productId);
           setRows((prev) =>

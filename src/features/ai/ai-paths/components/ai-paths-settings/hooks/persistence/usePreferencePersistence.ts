@@ -90,11 +90,63 @@ export function usePreferencePersistence(
     []
   );
 
+  const resolveUiState = useCallback(
+    (settings: AiPathsSettingRecord[]): AiPathsUiState | null => {
+      try {
+        const uiStateItem = settings.find((setting) => setting.key === AI_PATHS_UI_STATE_KEY);
+        if (!uiStateItem?.value) return null;
+
+        const parsed = JSON.parse(uiStateItem.value) as Partial<AiPathsUiState>;
+        const expandedGroups = Array.isArray(parsed.expandedGroups)
+          ? Array.from(
+              new Set(
+                parsed.expandedGroups
+                  .filter((group): group is string => typeof group === 'string')
+                  .map((group) => group.trim())
+                  .filter((group) => group.length > 0)
+              )
+            ).sort()
+          : undefined;
+        const activePathId =
+          parsed.activePathId === null
+            ? null
+            : typeof parsed.activePathId === 'string'
+              ? (parsed.activePathId.trim() || null)
+              : undefined;
+        const paletteCollapsed =
+          typeof parsed.paletteCollapsed === 'boolean' ? parsed.paletteCollapsed : undefined;
+        const pathTreeVisible =
+          typeof parsed.pathTreeVisible === 'boolean' ? parsed.pathTreeVisible : undefined;
+
+        if (
+          activePathId === undefined &&
+          expandedGroups === undefined &&
+          paletteCollapsed === undefined &&
+          pathTreeVisible === undefined
+        ) {
+          return null;
+        }
+
+        return {
+          ...(activePathId !== undefined ? { activePathId } : {}),
+          ...(expandedGroups !== undefined ? { expandedGroups } : {}),
+          ...(paletteCollapsed !== undefined ? { paletteCollapsed } : {}),
+          ...(pathTreeVisible !== undefined ? { pathTreeVisible } : {}),
+        };
+      } catch (error) {
+        logClientError(error);
+        return null;
+      }
+    },
+    []
+  );
+
   return {
     persistUiState,
     persistUserPreferences,
     persistActivePathPreference,
     resolveUserPreferences,
+    resolveUiState,
     lastUiStatePayloadRef,
     lastUserPrefsActivePathIdRef,
   };

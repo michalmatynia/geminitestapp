@@ -178,6 +178,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: mocks.routerPush,
+  }),
+}));
+
 describe('ControlPromptModal runtime path', () => {
   beforeEach(() => {
     vi.clearAllMocks();

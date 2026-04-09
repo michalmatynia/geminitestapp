@@ -22,9 +22,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const {
     activeTab,
     isFocusMode,
+    isPathTreeVisible,
     onFocusModeChange,
     renderActions,
     confirmNodeSwitch,
+    setIsPathTreeVisible,
     setPathSettingsModalOpen,
     diagnosticsReady,
     dataContractReport,
@@ -42,7 +44,10 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
 
   const [secondaryPanelsReady, setSecondaryPanelsReady] = React.useState(false);
   const [isInspectorVisible, setIsInspectorVisible] = React.useState(true);
-  const [isPathTreeVisible, setIsPathTreeVisible] = React.useState(true);
+  const pathTreeVisible = isPathTreeVisible !== false;
+  const setPathTreeVisible =
+    setIsPathTreeVisible ??
+    ((_: React.SetStateAction<boolean>): void => undefined);
 
   React.useEffect(() => {
     if (activeTab !== 'canvas') {
@@ -84,12 +89,12 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
             <div className='flex w-full items-start'>
               <AiPathsCanvasToolbar
                 isInspectorVisible={isInspectorVisible}
-                isPathTreeVisible={isPathTreeVisible}
+                isPathTreeVisible={pathTreeVisible}
                 onToggleInspector={() => {
                   setIsInspectorVisible((current) => !current);
                 }}
                 onTogglePathTree={() => {
-                  setIsPathTreeVisible((current) => !current);
+                  setPathTreeVisible((current) => !current);
                 }}
               />
             </div>
@@ -110,7 +115,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
           isFocusMode ? 'h-[calc(100vh-140px)]' : 'h-[800px]'
         }`}
       >
-        {!isFocusMode && isPathTreeVisible && (
+        {!isFocusMode && pathTreeVisible && (
           <div className='w-[280px] flex-shrink-0 border-r border-border/50 bg-card/35 xl:w-[312px]'>
             <AiPathsCanvasPathTree />
           </div>

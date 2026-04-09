@@ -4,12 +4,18 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 import type {
+  DatabaseEngineMongoLastSync,
   DatabaseEngineMongoSyncDirection,
   DatabaseEngineMongoSyncResponse,
   MongoSource,
 } from '@/shared/contracts/database';
-import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
-import { resolveMongoSourceConfig } from '@/shared/lib/db/mongo-source';
+import { configurationError, forbiddenError, operationFailedError } from '@/shared/errors/app-error';
+import {
+  getMongoSourceState,
+  getMongoSyncIssue,
+  recordMongoSourceSync,
+  resolveMongoSourceConfig,
+} from '@/shared/lib/db/mongo-source';
 import {
   execFileAsync,
   getMongoDumpCommand,
@@ -43,10 +49,25 @@ export async function syncMongoSources(
     throw forbiddenError('MongoDB source sync is disabled in production.');
   }
 
+  const mongoSourceState = await getMongoSourceState();
+  if (mongoSourceState.syncIssue) {
+    throw configurationError(mongoSourceState.syncIssue);
+  }
+  if (!mongoSourceState.canSync) {
+    throw configurationError(
+      'MongoDB source sync requires both local and cloud MongoDB targets to be configured and reachable.'
+    );
+  }
+
   const { source, target } = resolveSyncEndpoints(direction);
   const sourceConfig = await resolveMongoSourceConfig(source);
   const targetConfig = await resolveMongoSourceConfig(target);
+  const syncIssue = getMongoSyncIssue(sourceConfig, targetConfig);
+  if (syncIssue) {
+    throw configurationError(syncIssue);
+  }
   const timestamp = Date.now();
+  const syncedAt = new Date(timestamp).toISOString();
   const { archivePath, logPath } = buildArchivePaths(direction, timestamp);
 
   await fs.mkdir(mongoRuntimeDir, { recursive: true });
@@ -90,14 +111,20 @@ export async function syncMongoSources(
       'utf8'
     );
 
-    return {
-      success: true,
-      message: `MongoDB sync completed: ${source} -> ${target}.`,
+    const syncSnapshot: DatabaseEngineMongoLastSync = {
       direction,
       source,
       target,
+      syncedAt,
       archivePath,
       logPath,
+    };
+    await recordMongoSourceSync(syncSnapshot);
+
+    return {
+      success: true,
+      message: `MongoDB sync completed: ${source} -> ${target}.`,
+      ...syncSnapshot,
     };
   } catch (error) {
     throw operationFailedError(

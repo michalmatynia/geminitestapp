@@ -55,16 +55,20 @@ export function useAiPathsPersistence(
   const {
     activePathId,
     expandedPaletteGroups,
+    setExpandedPaletteGroups,
     normalizeTriggerLabel,
     loadNonce,
     loading,
     paletteCollapsed,
+    setPaletteCollapsed,
     pathConfigs,
     reportAiPathsError,
     toast,
     isPathLocked,
     isPathActive,
+    isPathTreeVisible,
     paths,
+    setIsPathTreeVisible,
   } = args;
   const {
     setNodes,
@@ -194,6 +198,25 @@ export function useAiPathsPersistence(
         const baseSettings = await fetchAiPathsSettingsByKeysCached(baseKeys, { timeoutMs: 8_000 });
         const stageADurationMs = Date.now() - stageAStartedAt;
         const userPrefs = prefs.resolveUserPreferences(baseSettings);
+        const uiState = prefs.resolveUiState(baseSettings);
+
+        if (uiState?.expandedGroups) {
+          setExpandedPaletteGroups(new Set(uiState.expandedGroups));
+        }
+        if (typeof uiState?.paletteCollapsed === 'boolean') {
+          setPaletteCollapsed(uiState.paletteCollapsed);
+        }
+        if (typeof uiState?.pathTreeVisible === 'boolean') {
+          setIsPathTreeVisible(uiState.pathTreeVisible);
+        }
+
+        if (uiState) {
+          prefs.lastUiStatePayloadRef.current = stableStringify({
+            expandedGroups: uiState.expandedGroups ?? Array.from(expandedPaletteGroups).sort(),
+            paletteCollapsed: uiState.paletteCollapsed ?? paletteCollapsed,
+            pathTreeVisible: uiState.pathTreeVisible ?? isPathTreeVisible,
+          });
+        }
 
         const pathIndexItem = baseSettings.find((s) => s.key === PATH_INDEX_KEY);
         let rawPaths: PathMeta[] = [];
@@ -367,6 +390,7 @@ export function useAiPathsPersistence(
     const uiState: AiPathsUiState = {
       expandedGroups,
       paletteCollapsed,
+      pathTreeVisible: isPathTreeVisible,
     };
     const payloadKey = stableStringify(uiState);
     if (payloadKey === prefs.lastUiStatePayloadRef.current) return;
@@ -398,7 +422,7 @@ export function useAiPathsPersistence(
       }
     }, 200);
     return (): void => clearTimeout(timeout);
-  }, [activePathId, expandedPaletteGroups, paletteCollapsed, uiStateLoaded, prefs]);
+  }, [activePathId, expandedPaletteGroups, isPathTreeVisible, paletteCollapsed, uiStateLoaded, prefs]);
 
   const handleSave = useCallback(
     async (options?: PathSaveOptions): Promise<boolean> => {

@@ -145,19 +145,13 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
       listingJobs,
       listingJobsLoading: listingJobsQuery.isLoading,
       listingJobsRefreshing: listingJobsQuery.isFetching,
-      listingJobsError: (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion
-        listingJobsQuery.error instanceof Error ? listingJobsQuery.error : null
-      ) as Error | null,
+      listingJobsError: listingJobsQuery.error instanceof Error ? listingJobsQuery.error : null,
       traderaQueueHealth: traderaQueueHealthQuery.data ?? null,
       traderaQueueHealthLoading: traderaQueueHealthQuery.isLoading,
       chatbotJobs,
       chatbotJobsLoading: chatbotJobsQuery.isLoading,
       chatbotJobsRefreshing: chatbotJobsQuery.isFetching,
-      chatbotJobsError: (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion
-        chatbotJobsQuery.error instanceof Error ? chatbotJobsQuery.error : null
-      ) as Error | null,
+      chatbotJobsError: chatbotJobsQuery.error instanceof Error ? chatbotJobsQuery.error : null,
       isClearingChatbotJobs: clearChatbotMutation.isPending,
       query,
       page,

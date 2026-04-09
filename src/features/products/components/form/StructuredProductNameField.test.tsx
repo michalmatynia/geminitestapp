@@ -258,4 +258,46 @@ describe('StructuredProductNameField', () => {
       );
     });
   });
+
+  it('allows removing letters from the lore segment without reverting', async () => {
+    renderField({
+      initialName: 'Scout Regiment | 4 cm | Metal | Anime Pin | Lore',
+      selectedCategoryId: 'child',
+    });
+    const input = screen.getByLabelText('English Name');
+
+    // Simulate deleting "Lore" character by character via change events
+    fireEvent.change(input, {
+      target: { value: 'Scout Regiment | 4 cm | Metal | Anime Pin | Lor' },
+    });
+    await waitFor(() => {
+      expect((input as HTMLInputElement).value).toBe(
+        'Scout Regiment | 4 cm | Metal | Anime Pin | Lor'
+      );
+    });
+
+    fireEvent.change(input, {
+      target: { value: 'Scout Regiment | 4 cm | Metal | Anime Pin | ' },
+    });
+    await waitFor(() => {
+      expect((input as HTMLInputElement).value).toBe(
+        'Scout Regiment | 4 cm | Metal | Anime Pin | '
+      );
+    });
+  });
+
+  it('opens dropdown on empty lore segment click showing a hint', async () => {
+    renderField({
+      initialName: 'Scout Regiment | 4 cm | Metal | Anime Pin | ',
+      selectedCategoryId: 'child',
+    });
+    const input = screen.getByLabelText('English Name');
+
+    // Simulate clicking into the lore segment (position after last pipe+space)
+    const value = 'Scout Regiment | 4 cm | Metal | Anime Pin | ';
+    input.setSelectionRange(value.length, value.length);
+    fireEvent.keyUp(input, { key: 'ArrowRight' });
+
+    expect(await screen.findByText('Theme')).toBeInTheDocument();
+  });
 });

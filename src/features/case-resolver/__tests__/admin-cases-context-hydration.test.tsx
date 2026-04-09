@@ -44,6 +44,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(''),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => new URLSearchParams(''),
+}));
+
 vi.mock('@/shared/hooks/useUserPreferences', () => ({
   useUserPreferences: () => userPreferencesQueryMock,
   useUpdateUserPreferences: () => ({

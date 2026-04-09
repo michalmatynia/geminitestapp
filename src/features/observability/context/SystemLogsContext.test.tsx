@@ -16,6 +16,12 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => '/admin/system-logs',
+  useRouter: () => ({ replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock('@/features/observability/hooks/useLogMutations', () => ({
   useClearLogsMutation: () => ({ mutateAsync: vi.fn() }),
   useRebuildIndexesMutation: () => ({ mutateAsync: vi.fn() }),

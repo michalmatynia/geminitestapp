@@ -63,7 +63,7 @@ export const extractTraderaCategoryPageChildren = ({
     const element = node as Element;
     const text = toLowerText(element.textContent || '');
     if (!text || !includesStopText(text, stopSet)) return false;
-    const tag = (element.tagName || '').toLowerCase();
+    const tag = element.tagName?.toLowerCase() ?? '';
     return (
       tag === 'button' ||
       tag === 'label' ||

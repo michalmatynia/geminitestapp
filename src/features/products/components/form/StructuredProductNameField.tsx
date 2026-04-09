@@ -189,6 +189,7 @@ export function StructuredProductNameField(): React.JSX.Element {
   const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
   const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
 
+  const blurTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
   const [activeStage, setActiveStage] = useState<TitleSegmentStage | null>(null);
   const [segmentQuery, setSegmentQuery] = useState('');
   const [segmentBounds, setSegmentBounds] = useState<{ start: number; end: number } | null>(null);
@@ -280,6 +281,17 @@ export function StructuredProductNameField(): React.JSX.Element {
           description: 'Use custom value',
         },
         ...baseSuggestions,
+      ];
+    }
+
+    if (!normalizedQuery && baseSuggestions.length === 0) {
+      return [
+        {
+          value: '',
+          label: 'Type to enter a custom value',
+          description: `No ${TITLE_SEGMENT_LABELS[activeStage as TitleSegmentStage].toLowerCase()} terms configured`,
+          disabled: true,
+        },
       ];
     }
 
@@ -407,9 +419,19 @@ export function StructuredProductNameField(): React.JSX.Element {
             });
             syncSuggestionContext(nextValue, event.target.selectionStart);
           }}
-          onClick={(event) =>
-            syncSuggestionContext(event.currentTarget.value, event.currentTarget.selectionStart)
-          }
+          onFocus={() => {
+            if (blurTimeoutRef.current !== null) {
+              clearTimeout(blurTimeoutRef.current);
+              blurTimeoutRef.current = null;
+            }
+          }}
+          onClick={(event) => {
+            if (blurTimeoutRef.current !== null) {
+              clearTimeout(blurTimeoutRef.current);
+              blurTimeoutRef.current = null;
+            }
+            syncSuggestionContext(event.currentTarget.value, event.currentTarget.selectionStart);
+          }}
           onKeyUp={(event) =>
             syncSuggestionContext(event.currentTarget.value, event.currentTarget.selectionStart)
           }
@@ -447,17 +469,25 @@ export function StructuredProductNameField(): React.JSX.Element {
             }
           }}
           onBlur={() => {
-            window.setTimeout(() => {
+            blurTimeoutRef.current = window.setTimeout(() => {
+              blurTimeoutRef.current = null;
               setActiveStage(null);
               setSegmentBounds(null);
               setSegmentQuery('');
             }, 120);
           }}
           placeholder='Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan'
+          autoComplete='off'
+          autoCorrect='off'
+          autoCapitalize='off'
+          spellCheck={false}
           className={cn(error && 'border-red-500/60')}
         />
         {dropdownOpen && segmentBounds ? (
-          <div className='absolute z-30 mt-2 w-full rounded-lg border border-border/60 bg-card/95 p-2 shadow-xl backdrop-blur'>
+          <div
+            className='absolute z-30 mt-2 w-full rounded-lg border border-border/60 bg-card/95 p-2 shadow-xl backdrop-blur'
+            onMouseDown={(event) => event.preventDefault()}
+          >
             <div className='mb-2 flex items-center justify-between gap-2 px-2 text-[10px] uppercase tracking-[0.18em] text-gray-400'>
               <span>{TITLE_SEGMENT_LABELS[activeStage as TitleSegmentStage]}</span>
               <span>{loadingTerms ? 'Loading...' : 'Suggestions'}</span>

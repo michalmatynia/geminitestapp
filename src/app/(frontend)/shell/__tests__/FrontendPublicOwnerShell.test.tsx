@@ -28,6 +28,13 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: usePathnameMock,
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
   FrontendPublicOwnerKangurShell: ({
     initialAppearance,

@@ -8,10 +8,12 @@ export const GET = apiHandler(GET_handler, {
   rateLimitKey: disableSettingsRateLimit ? false : 'api',
   querySchema,
   requireAuth: true,
+  resolveSessionUser: false,
 });
 
 export const POST = apiHandler(POST_handler, {
   source: 'settings.POST',
   rateLimitKey: disableSettingsRateLimit ? false : 'write',
   requireAuth: true,
+  resolveSessionUser: false,
 });

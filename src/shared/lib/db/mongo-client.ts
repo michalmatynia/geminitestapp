@@ -210,6 +210,44 @@ const getMongoClientPromiseByKeyStore = (): Map<string, Promise<MongoClient>> =>
   return globalForMongo.__mongoClientPromiseByKey;
 };
 
+const closeMongoClientSafely = async (
+  client: MongoClient,
+  context: 'cached-client' | 'pending-client'
+): Promise<void> => {
+  try {
+    await client.close();
+  } catch (error) {
+    void reportRuntimeCatch(error, {
+      source: 'db.mongo-client',
+      action: 'invalidateMongoClientCache',
+      context,
+    });
+  }
+};
+
+export async function invalidateMongoClientCache(): Promise<void> {
+  const clientByKey = getMongoClientByKeyStore();
+  const clientPromiseByKey = getMongoClientPromiseByKeyStore();
+  const cachedClients = new Set<MongoClient>(clientByKey.values());
+  const pendingClientPromises = [...clientPromiseByKey.values()];
+
+  clientByKey.clear();
+  clientPromiseByKey.clear();
+
+  await Promise.allSettled(
+    [...cachedClients].map((client) => closeMongoClientSafely(client, 'cached-client'))
+  );
+
+  pendingClientPromises.forEach((clientPromise) => {
+    void clientPromise
+      .then(async (client) => {
+        if (cachedClients.has(client)) return;
+        await closeMongoClientSafely(client, 'pending-client');
+      })
+      .catch(() => undefined);
+  });
+}
+
 export async function getMongoClient(preferredSource?: MongoSource): Promise<MongoClient> {
   const sourceConfig = await applyActiveMongoSourceEnv(preferredSource);
   const uri = getMongoUri();

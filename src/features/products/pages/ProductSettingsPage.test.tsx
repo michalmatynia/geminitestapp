@@ -36,6 +36,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => useSearchParamsMock(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => useSearchParamsMock(),
+}));
+
 vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   useCatalogs: (...args: unknown[]) => useCatalogsMock(...args),
   useCategories: (...args: unknown[]) => useCategoriesMock(...args),

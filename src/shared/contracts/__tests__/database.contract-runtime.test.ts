@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { databasePreviewRequestSchema, databaseTypeSchema } from '@/shared/contracts/database';
+import {
+  databaseEngineMongoSourceStateSchema,
+  databasePreviewRequestSchema,
+  databaseTypeSchema,
+} from '@/shared/contracts/database';
 
 describe('database contract runtime', () => {
   it('parses valid database types', () => {
@@ -25,5 +29,48 @@ describe('database contract runtime', () => {
         mode: 'full',
       })
     ).toThrow();
+  });
+
+  it('parses mongo source state runtime payloads', () => {
+    const parsed = databaseEngineMongoSourceStateSchema.parse({
+      timestamp: '2026-04-09T06:00:00.000Z',
+      activeSource: 'local',
+      defaultSource: 'local',
+      sourceFilePath: '.env.local',
+      lastSync: {
+        direction: 'cloud_to_local',
+        source: 'cloud',
+        target: 'local',
+        syncedAt: '2026-04-09T05:50:00.000Z',
+        archivePath: '/tmp/dump.archive',
+        logPath: '/tmp/restore-log.json',
+      },
+      local: {
+        source: 'local',
+        configured: true,
+        dbName: 'app',
+        maskedUri: 'mongodb://127.0.0.1:27017/app',
+        isActive: true,
+        usesLegacyEnv: false,
+        reachable: true,
+        healthError: null,
+      },
+      cloud: {
+        source: 'cloud',
+        configured: true,
+        dbName: 'app',
+        maskedUri: 'mongodb+srv://***',
+        isActive: false,
+        usesLegacyEnv: false,
+        reachable: false,
+        healthError: 'timed out',
+      },
+      canSwitch: true,
+      canSync: true,
+      syncIssue: null,
+    });
+
+    expect(parsed.lastSync?.direction).toBe('cloud_to_local');
+    expect(parsed.local.isActive).toBe(true);
   });
 });

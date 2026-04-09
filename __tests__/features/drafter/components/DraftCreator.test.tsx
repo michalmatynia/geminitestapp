@@ -15,6 +15,16 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useParams: () => ({ id: '1' }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
 // Mock useToast
 vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();

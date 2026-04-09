@@ -20,6 +20,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => useSearchParamsMock(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => useSearchParamsMock(),
+}));
+
 vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: toastMock,

@@ -76,6 +76,7 @@ export function useAiPathsSettingsState({
   const { runtimeState, parserSamples, updaterSamples, pathDebugSnapshots, lastRunAt, lastError } =
     useRuntimeState();
   const [triggerButtonsReady, setTriggerButtonsReady] = useState(false);
+  const [isPathTreeVisible, setIsPathTreeVisible] = useState(true);
 
   useEffect(() => {
     if (activeTab !== 'canvas') {
@@ -229,6 +230,7 @@ export function useAiPathsSettingsState({
     presetsJson,
     setPresetsJson,
     expandedPaletteGroups,
+    setExpandedPaletteGroups,
     paletteCollapsed,
     setPaletteCollapsed,
     togglePaletteGroup,
@@ -271,13 +273,16 @@ export function useAiPathsSettingsState({
     activeTrigger,
     edges,
     expandedPaletteGroups,
+    setExpandedPaletteGroups,
     isPathActive,
     isPathLocked,
+    isPathTreeVisible,
     lastRunAt,
     loadNonce,
     loading,
     nodes,
     paletteCollapsed,
+    setPaletteCollapsed,
     parserSamples,
     pathConfigs,
     pathDescription,
@@ -288,6 +293,7 @@ export function useAiPathsSettingsState({
     blockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
     selectedNodeId,
+    setIsPathTreeVisible,
     runtimeState,
     updaterSamples,
     executionMode,
@@ -578,6 +584,8 @@ export function useAiPathsSettingsState({
     paletteCollapsed,
     setPaletteCollapsed,
     expandedPaletteGroups,
+    isPathTreeVisible,
+    setIsPathTreeVisible,
     togglePaletteGroup,
     // Presets
     clusterPresets,

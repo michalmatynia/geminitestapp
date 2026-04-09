@@ -53,6 +53,12 @@ vi.mock('next/navigation', () => ({
   useSearchParams: mocks.useSearchParamsMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: mocks.usePathnameMock,
+  useRouter: mocks.useRouterMock,
+  useSearchParams: mocks.useSearchParamsMock,
+}));
+
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: () => mocks.settingsMapMock,
   useUpdateSetting: () => ({

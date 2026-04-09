@@ -113,6 +113,8 @@ export interface UseAiPathsSettingsStateReturn {
   paletteCollapsed: boolean;
   setPaletteCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   expandedPaletteGroups: Set<string>;
+  isPathTreeVisible: boolean;
+  setIsPathTreeVisible: React.Dispatch<React.SetStateAction<boolean>>;
   togglePaletteGroup: (group: string) => void;
   handleDragStart: (e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
   selectedNode: AiNode | null;

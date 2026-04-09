@@ -8,6 +8,10 @@ vi.mock('next/navigation', () => ({
   redirect: redirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  redirect: redirectMock,
+}));
+
 import AiApiSettingsPage from '@/app/(admin)/admin/settings/ai/page';
 import AdminBrainSettingsPage from '@/app/(admin)/admin/settings/brain/page';
 

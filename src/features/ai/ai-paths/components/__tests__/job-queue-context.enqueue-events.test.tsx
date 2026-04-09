@@ -38,6 +38,10 @@ vi.mock('next/navigation', () => ({
   usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
+}));
+
 vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toastMock }),
 }));

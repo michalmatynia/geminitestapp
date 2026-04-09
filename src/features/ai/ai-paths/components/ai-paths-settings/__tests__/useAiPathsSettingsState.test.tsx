@@ -157,6 +157,7 @@ const mockState = vi.hoisted(() => ({
     presetsJson: '{"ok":true}',
     setPresetsJson: vi.fn(),
     expandedPaletteGroups: new Set(['group-a']),
+    setExpandedPaletteGroups: vi.fn(),
     paletteCollapsed: false,
     setPaletteCollapsed: vi.fn(),
     togglePaletteGroup: vi.fn(),

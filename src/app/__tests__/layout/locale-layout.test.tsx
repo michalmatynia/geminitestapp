@@ -34,6 +34,10 @@ vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  notFound: notFoundMock,
+}));
+
 vi.mock('@/i18n/messages', () => ({
   loadSiteMessages: loadSiteMessagesMock,
 }));

@@ -26,6 +26,17 @@ const graphActionsMock = {
   setPathConfigs: setPathConfigsMock,
 };
 
+const applyBooleanStateUpdate = (
+  key: 'isPathTreeVisible',
+  next: boolean | ((current: boolean) => boolean)
+): void => {
+  const current = Boolean(pageContextMock[key]);
+  pageContextMock = {
+    ...pageContextMock,
+    [key]: typeof next === 'function' ? next(current) : next,
+  };
+};
+
 const openRuntimeKernelDrawer = (): void => {
   fireEvent.click(screen.getByRole('button', { name: 'Runtime Kernel' }));
 };
@@ -35,6 +46,13 @@ const openViewOptionsMenu = (): void => {
 };
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/admin/ai-paths',
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   usePathname: () => '/admin/ai-paths',
   useRouter: () => ({
     push: routerPushMock,
@@ -212,17 +230,27 @@ describe('AiPathsCanvasView switch guard', () => {
   });
 
   it('toggles the master folder tree from the canvas toolbar', async () => {
-    pageContextMock = buildCanvasPageContext();
+    const setIsPathTreeVisibleMock = vi.fn(
+      (next: boolean | ((current: boolean) => boolean)): void => {
+        applyBooleanStateUpdate('isPathTreeVisible', next);
+      }
+    );
+    pageContextMock = buildCanvasPageContext({
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
+    });
 
-    render(<AiPathsCanvasView />);
+    const { rerender } = render(<AiPathsCanvasView />);
 
     expect(screen.getByTestId('canvas-path-tree')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Hide Folder Tree' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hide Path Groups' }));
+    rerender(<AiPathsCanvasView />);
     expect(screen.queryByTestId('canvas-path-tree')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show Folder Tree' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show Path Groups' }));
+    rerender(<AiPathsCanvasView />);
     expect(screen.getByTestId('canvas-path-tree')).toBeInTheDocument();
+    expect(setIsPathTreeVisibleMock).toHaveBeenCalledTimes(2);
   });
 
   it('toggles the inspector sidebar from the toolbar menu', async () => {

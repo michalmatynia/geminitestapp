@@ -22,6 +22,11 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useParams: () => ({ id: 'page-1' }),
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock('@/features/cms/components/CmsDomainSelector', () => ({
   CmsDomainSelector: () => null,
 }));

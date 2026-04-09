@@ -34,6 +34,17 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '',
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  useSearchParams: () => ({
+    get: vi.fn(),
+  }),
+  usePathname: () => '',
+}));
+
 const mockProduct: ProductWithImages = {
   id: '1',
   name: { en: 'Test Product' },

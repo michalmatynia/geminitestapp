@@ -37,6 +37,12 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: permanentRedirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  notFound: notFoundMock,
+  redirect: redirectMock,
+  permanentRedirect: permanentRedirectMock,
+}));
+
 vi.mock('next-intl/server', () => ({
   getTranslations: getTranslationsMock,
 }));

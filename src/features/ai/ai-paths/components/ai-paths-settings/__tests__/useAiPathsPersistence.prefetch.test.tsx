@@ -55,6 +55,9 @@ const setParserSamplesMock = vi.fn();
 const setUpdaterSamplesMock = vi.fn();
 const setLastRunAtMock = vi.fn();
 const setLoadingPersistenceMock = vi.fn();
+const setExpandedPaletteGroupsMock = vi.fn();
+const setPaletteCollapsedMock = vi.fn();
+const setIsPathTreeVisibleMock = vi.fn();
 const selectionActionsMock = {
   selectNode: selectNodeMock,
   setConfigOpen: setConfigOpenSelectionMock,
@@ -71,6 +74,7 @@ const persistenceActionsMock = {
 
 const preferenceMock = {
   resolveUserPreferences: vi.fn(() => null),
+  resolveUiState: vi.fn(() => null),
   persistActivePathPreference: vi.fn(async () => undefined),
   persistUiState: vi.fn(async () => undefined),
   persistUserPreferences: vi.fn(async () => undefined),
@@ -214,6 +218,10 @@ describe('useAiPathsPersistence idle prefetch', () => {
     setUpdaterSamplesMock.mockReset();
     setLastRunAtMock.mockReset();
     setLoadingPersistenceMock.mockReset();
+    setExpandedPaletteGroupsMock.mockReset();
+    setPaletteCollapsedMock.mockReset();
+    setIsPathTreeVisibleMock.mockReset();
+    preferenceMock.resolveUiState.mockReset().mockReturnValue(null);
   });
 
   it('does not request removed legacy validation key during hydration', async () => {
@@ -246,13 +254,16 @@ describe('useAiPathsPersistence idle prefetch', () => {
       activeTrigger: activeConfig.trigger,
       edges: activeConfig.edges,
       expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
       isPathActive: true,
       isPathLocked: false,
+      isPathTreeVisible: true,
       lastRunAt: null,
       loadNonce: 0,
       loading: false,
       nodes: activeConfig.nodes,
       paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
       parserSamples: {},
       pathConfigs: { [activePathId]: activeConfig },
       pathDescription: activeConfig.description,
@@ -265,6 +276,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
       runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
@@ -284,6 +296,79 @@ describe('useAiPathsPersistence idle prefetch', () => {
 
     expect(requestedKeys).not.toContain('ai_paths_validation_v1');
     expect(requestedKeys).toContain('ai_paths_ui_state');
+  });
+
+  it('hydrates persisted canvas UI state before marking the view ready', async () => {
+    const activePathId = 'path_active';
+    const activeConfig = createDefaultPathConfig(activePathId);
+    preferenceMock.resolveUiState.mockReturnValue({
+      expandedGroups: ['Ops', 'Templates'],
+      paletteCollapsed: true,
+      pathTreeVisible: false,
+    });
+
+    mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
+            value: JSON.stringify(activeConfig),
+          },
+        ];
+      }
+      if (keys.includes(PATH_INDEX_KEY)) {
+        return [
+          {
+            key: PATH_INDEX_KEY,
+            value: JSON.stringify([buildPathMeta(activeConfig)]),
+          },
+        ];
+      }
+      return [];
+    });
+
+    const args: UseAiPathsPersistenceArgs = {
+      activePathId,
+      activeTrigger: activeConfig.trigger,
+      edges: activeConfig.edges,
+      expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
+      isPathActive: true,
+      isPathLocked: false,
+      isPathTreeVisible: true,
+      lastRunAt: null,
+      loadNonce: 0,
+      loading: false,
+      nodes: activeConfig.nodes,
+      paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
+      parserSamples: {},
+      pathConfigs: { [activePathId]: activeConfig },
+      pathDescription: activeConfig.description,
+      pathName: activeConfig.name,
+      paths: [buildPathMeta(activeConfig)],
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'manual',
+      strictFlowMode: true,
+      blockedRunPolicy: 'fail_run',
+      aiPathsValidation: { enabled: true },
+      selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
+      runtimeState: emptyRuntimeState(),
+      updaterSamples: {},
+      normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+    };
+
+    renderHook(() => useAiPathsPersistence(args));
+
+    await waitFor(() => {
+      expect(setExpandedPaletteGroupsMock).toHaveBeenCalledWith(new Set(['Ops', 'Templates']));
+      expect(setPaletteCollapsedMock).toHaveBeenCalledWith(true);
+      expect(setIsPathTreeVisibleMock).toHaveBeenCalledWith(false);
+    });
   });
 
   it('prefetches non-active path configs after initial hydration', async () => {
@@ -320,13 +405,16 @@ describe('useAiPathsPersistence idle prefetch', () => {
       activeTrigger: activeConfig.trigger,
       edges: activeConfig.edges,
       expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
       isPathActive: true,
       isPathLocked: false,
+      isPathTreeVisible: true,
       lastRunAt: null,
       loadNonce: 0,
       loading: false,
       nodes: activeConfig.nodes,
       paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
       parserSamples: {},
       pathConfigs: pathConfigsState,
       pathDescription: activeConfig.description,
@@ -339,6 +427,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
       runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
@@ -397,13 +486,16 @@ describe('useAiPathsPersistence idle prefetch', () => {
       activeTrigger: activeConfig.trigger,
       edges: activeConfig.edges,
       expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
       isPathActive: true,
       isPathLocked: false,
+      isPathTreeVisible: true,
       lastRunAt: null,
       loadNonce: 0,
       loading: false,
       nodes: activeConfig.nodes,
       paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
       parserSamples: {},
       pathConfigs: pathConfigsState,
       pathDescription: activeConfig.description,
@@ -416,6 +508,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
       runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
@@ -497,13 +590,16 @@ describe('useAiPathsPersistence idle prefetch', () => {
       activeTrigger: activeConfig.trigger,
       edges: activeConfig.edges,
       expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
       isPathActive: true,
       isPathLocked: false,
+      isPathTreeVisible: true,
       lastRunAt: null,
       loadNonce: 0,
       loading: false,
       nodes: activeConfig.nodes,
       paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
       parserSamples: {},
       pathConfigs: pathConfigsState,
       pathDescription: activeConfig.description,
@@ -516,6 +612,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
       runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',

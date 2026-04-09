@@ -94,6 +94,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
+}));
+
 vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
   useCaseResolverPageState: () => pageStateContext,
   useCaseResolverPageActions: () => pageActionsContext,

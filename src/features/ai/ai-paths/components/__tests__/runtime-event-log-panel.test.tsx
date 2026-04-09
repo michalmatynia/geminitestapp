@@ -41,6 +41,23 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={className}>{children}</div>
   ),
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  StatusBadge: ({
+    status,
+    variant,
+    hideLabel,
+  }: {
+    status: React.ReactNode;
+    variant?: string;
+    hideLabel?: boolean;
+  }): React.JSX.Element => (
+    <span>{hideLabel ? `dot:${variant ?? 'none'}` : `${String(status)}:${variant ?? 'none'}`}</span>
+  ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     ariaLabel,
     options,
@@ -66,17 +83,6 @@ vi.mock('@/shared/ui/primitives.public', () => ({
         </option>
       ))}
     </select>
-  ),
-  StatusBadge: ({
-    status,
-    variant,
-    hideLabel,
-  }: {
-    status: React.ReactNode;
-    variant?: string;
-    hideLabel?: boolean;
-  }): React.JSX.Element => (
-    <span>{hideLabel ? `dot:${variant ?? 'none'}` : `${String(status)}:${variant ?? 'none'}`}</span>
   ),
 }));
 

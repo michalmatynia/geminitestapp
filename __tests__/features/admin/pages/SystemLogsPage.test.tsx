@@ -36,6 +36,16 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => '/'),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
+}));
+
 // Mock SystemLogsContext
 vi.mock('@/features/observability/context/SystemLogsContext', async (importOriginal) => {
   const actual = await importOriginal();

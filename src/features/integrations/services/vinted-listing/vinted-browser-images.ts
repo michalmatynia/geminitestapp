@@ -56,6 +56,7 @@ const validateLocalProductImagePath = async (candidate: string): Promise<string 
       return candidate;
     }
   } catch {
+    // ignore
   }
   return null;
 };
@@ -97,6 +98,7 @@ const resolveOrderedUploadExtension = (sourcePath: string, sourceUrl: string | n
         return remoteExtension;
       }
     } catch {
+      // ignore
     }
   }
   return '.jpg';

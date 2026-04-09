@@ -35,6 +35,14 @@ vi.mock('next/navigation', () => ({
   useSearchParams: mocks.useSearchParamsMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: mocks.usePathnameMock,
+  useRouter: () => ({
+    replace: mocks.replaceMock,
+  }),
+  useSearchParams: mocks.useSearchParamsMock,
+}));
+
 vi.mock('@/shared/ui/admin.public', () => ({
   AdminSectionBreadcrumbs: ({
     current,

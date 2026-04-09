@@ -43,6 +43,7 @@ const COLLECTION_PROVIDER_OPTIONS = [
 function DatabaseEngineSettingsTab(): React.JSX.Element {
   const {
     policy,
+    operationControls,
     collectionRouteMap,
     rows,
     isLoading,
@@ -51,13 +52,21 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
     operationsJobs,
     redisOverview,
     isSwitchingMongoSource,
+    isSyncingMongoSources,
   } = useDatabaseEngineStateContext();
-  const { updatePolicy, updateCollectionRoute, switchMongoSource } =
-    useDatabaseEngineActionsContext();
+  const {
+    updatePolicy,
+    updateCollectionRoute,
+    updateOperationControls,
+    switchMongoSource,
+    syncMongoSources,
+  } = useDatabaseEngineActionsContext();
   const activeMongoSource = mongoSourceState?.activeSource ?? null;
+  const lastMongoSync = mongoSourceState?.lastSync ?? null;
   const mongoSources = mongoSourceState
     ? [mongoSourceState.local, mongoSourceState.cloud]
     : [];
+  const manualFullSyncEnabled = operationControls.allowManualFullSync;
 
   const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(
     () => [
@@ -155,11 +164,97 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
                   Configure both local and cloud URIs to enable one-click switching.
                 </Badge>
               ) : null}
+              {!manualFullSyncEnabled ? (
+                <Badge variant='outline' className='border-amber-400/30 text-amber-200'>
+                  Manual full sync is disabled by Database Engine controls.
+                </Badge>
+              ) : null}
+              {mongoSourceState?.syncIssue ? (
+                <Badge variant='outline' className='border-amber-400/30 text-amber-200'>
+                  {mongoSourceState.syncIssue}
+                </Badge>
+              ) : null}
+              {mongoSourceState?.canSync && manualFullSyncEnabled ? (
+                <>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8'
+                    disabled={isSyncingMongoSources}
+                    onClick={() => {
+                      void syncMongoSources('cloud_to_local');
+                    }}
+                  >
+                    {isSyncingMongoSources ? 'Syncing...' : 'Pull Cloud -> Local'}
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8'
+                    disabled={isSyncingMongoSources}
+                    onClick={() => {
+                      void syncMongoSources('local_to_cloud');
+                    }}
+                  >
+                    {isSyncingMongoSources ? 'Syncing...' : 'Push Local -> Cloud'}
+                  </Button>
+                </>
+              ) : null}
             </div>
 
             <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+              <Card className='space-y-3 border-border/60 bg-card/25 p-4 md:col-span-2'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <StatusBadge
+                    status={
+                      lastMongoSync
+                        ? `Last sync: ${lastMongoSync.source} -> ${lastMongoSync.target}`
+                        : 'No sync recorded yet'
+                    }
+                    variant={lastMongoSync ? 'success' : 'neutral'}
+                    size='sm'
+                  />
+                  {lastMongoSync ? (
+                    <Badge variant='outline' className='border-white/10 text-gray-300'>
+                      Synced at: {lastMongoSync.syncedAt}
+                    </Badge>
+                  ) : null}
+                </div>
+                {lastMongoSync ? (
+                  <div className='space-y-1 text-xs text-muted-foreground'>
+                    <p>Direction: {lastMongoSync.direction}</p>
+                    <p>Archive: {lastMongoSync.archivePath ?? 'Not retained'}</p>
+                    <p>Log: {lastMongoSync.logPath ?? 'Not available'}</p>
+                  </div>
+                ) : (
+                  <p className='text-xs text-muted-foreground'>
+                    Run a cloud/local sync to persist the latest archive and log reference here.
+                  </p>
+                )}
+              </Card>
+
               {mongoSources.map((entry) => {
                 const isLocal = entry.source === 'local';
+                const connectionStatus = !entry.configured
+                  ? 'Missing'
+                  : entry.reachable === false
+                    ? 'Unreachable'
+                    : entry.isActive
+                      ? 'Active'
+                      : entry.reachable === true
+                        ? 'Reachable'
+                        : 'Available';
+                const connectionVariant = !entry.configured
+                  ? 'error'
+                  : entry.reachable === false
+                    ? 'error'
+                    : entry.isActive
+                      ? 'active'
+                      : entry.reachable === true
+                        ? 'success'
+                        : 'neutral';
                 return (
                   <Card
                     key={entry.source}
@@ -184,14 +279,8 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
                         </p>
                       </div>
                       <StatusBadge
-                        status={entry.isActive ? 'Active' : entry.configured ? 'Available' : 'Missing'}
-                        variant={
-                          entry.isActive
-                            ? 'active'
-                            : entry.configured
-                              ? 'success'
-                              : 'error'
-                        }
+                        status={connectionStatus}
+                        variant={connectionVariant}
                         size='sm'
                       />
                     </div>
@@ -199,6 +288,10 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
                     <div className='space-y-1 text-xs text-muted-foreground'>
                       <p>Database: {entry.dbName ?? 'Not configured'}</p>
                       <p>{entry.usesLegacyEnv ? 'Using legacy MONGODB_URI fallback.' : 'Using dedicated source env.'}</p>
+                      {entry.reachable === true ? <p>Connection: Reachable</p> : null}
+                      {entry.reachable === false ? (
+                        <p>Connection error: {entry.healthError ?? 'Unable to reach MongoDB target.'}</p>
+                      ) : null}
                     </div>
 
                     <Button
@@ -222,6 +315,87 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
                   </Card>
                 );
               })}
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection title='Manual Operation Controls' className='p-6'>
+          <div className='space-y-4'>
+            <p className='text-xs text-muted-foreground'>
+              These gates control which admin-triggered database operations are allowed from the
+              UI and API.
+            </p>
+            <div className='space-y-3'>
+              <ToggleRow
+                id='database-engine-allow-manual-full-sync'
+                label='Manual Full Sync'
+                description='Allow full MongoDB source copy jobs between local and cloud.'
+                checked={operationControls.allowManualFullSync}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualFullSync: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-manual-collection-sync'
+                label='Manual Collection Sync'
+                description='Allow collection-level copy and sync operations.'
+                checked={operationControls.allowManualCollectionSync}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualCollectionSync: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-manual-backfill'
+                label='Manual Backfill'
+                description='Allow one-off settings and metadata backfill jobs.'
+                checked={operationControls.allowManualBackfill}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualBackfill: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-manual-backup-run-now'
+                label='Manual Backup Run Now'
+                description='Allow administrators to trigger backups immediately.'
+                checked={operationControls.allowManualBackupRunNow}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualBackupRunNow: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-manual-backup-maintenance'
+                label='Manual Backup Maintenance'
+                description='Allow restore, upload, and delete actions in Backup Center.'
+                checked={operationControls.allowManualBackupMaintenance}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualBackupMaintenance: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-backup-scheduler-tick'
+                label='Backup Scheduler Tick'
+                description='Allow manual scheduler ticks and due-check operations.'
+                checked={operationControls.allowBackupSchedulerTick}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowBackupSchedulerTick: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-operation-job-cancellation'
+                label='Operation Job Cancellation'
+                description='Allow administrators to cancel running database jobs.'
+                checked={operationControls.allowOperationJobCancellation}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowOperationJobCancellation: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
             </div>
           </div>
         </FormSection>

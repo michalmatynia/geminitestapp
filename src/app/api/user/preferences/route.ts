@@ -10,9 +10,16 @@ import {
 export const GET = apiHandler(getUserPreferencesHandler, {
   source: 'user.preferences.GET',
   querySchema: getQuerySchema,
+  resolveSessionUser: false,
 });
 
-export const PATCH = apiHandler(patchUserPreferencesHandler, { source: 'user.preferences.PATCH' });
+export const PATCH = apiHandler(patchUserPreferencesHandler, {
+  source: 'user.preferences.PATCH',
+  resolveSessionUser: false,
+});
 
 // POST handler for sendBeacon (used during page unload to save AI Paths settings)
-export const POST = apiHandler(patchUserPreferencesHandler, { source: 'user.preferences.POST' });
+export const POST = apiHandler(patchUserPreferencesHandler, {
+  source: 'user.preferences.POST',
+  resolveSessionUser: false,
+});

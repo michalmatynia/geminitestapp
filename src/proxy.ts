@@ -71,6 +71,8 @@ const isSafePageMethod = (request: NextRequest): boolean =>
 const isDefaultLocaleBypassPath = (pathname: string): boolean => {
   return (
     pathname === '/' ||
+    pathname === '/auth' ||
+    pathname.startsWith('/auth/') ||
     pathname === '/login' ||
     pathname === '/kangur' ||
     pathname.startsWith('/kangur/') ||
@@ -173,8 +175,14 @@ const buildAdminRequestHeaders = (request: AuthenticatedProxyRequest): Headers |
 const handler =
   typeof auth === 'function'
     ? auth(
-      (request: AuthenticatedProxyRequest): Response =>
-        baseProxy(request, buildAdminRequestHeaders(request) ?? undefined)
+      (request: AuthenticatedProxyRequest): Response => {
+        const fastRedirect = resolveAdminRedirectResponse(request);
+        if (fastRedirect) {
+          return fastRedirect;
+        }
+
+        return baseProxy(request, buildAdminRequestHeaders(request) ?? undefined);
+      }
     )
     : null;
 
@@ -198,13 +206,8 @@ export function proxy(
     return resolvePublicLocaleResponse(request) ?? baseProxy(request);
   }
 
-  const fastRedirect = resolveAdminRedirectResponse(request);
-  if (fastRedirect) {
-    return fastRedirect;
-  }
-
   if (!handler || typeof handler !== 'function') {
-    return baseProxy(request);
+    return resolveAdminRedirectResponse(request) ?? baseProxy(request);
   }
   const result = handler(request, resolvedContext);
   if (result instanceof Promise) {

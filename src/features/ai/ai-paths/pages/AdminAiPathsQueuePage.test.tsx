@@ -37,6 +37,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: mocks.useSearchParamsMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: mocks.useSearchParamsMock,
+}));
+
 vi.mock('@/shared/ui', () => ({
   AdminAiPathsBreadcrumbs: () => <div>ai-paths-breadcrumbs</div>,
   Badge: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,

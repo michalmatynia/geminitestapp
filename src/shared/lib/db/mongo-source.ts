@@ -4,7 +4,12 @@ import { readFileSync } from 'fs';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import type { DatabaseEngineMongoSourceState, MongoSource } from '@/shared/contracts/database';
+import type {
+  DatabaseEngineMongoLastSync,
+  DatabaseEngineMongoSourceState,
+  MongoSource,
+} from '@/shared/contracts/database';
+import { databaseEngineMongoLastSyncSchema } from '@/shared/contracts/database';
 import { configurationError } from '@/shared/errors/app-error';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
@@ -27,11 +32,22 @@ type MongoSourceConfig = {
   usesLegacyEnv: boolean;
 };
 
+type MongoSourceReachability = {
+  reachable: boolean | null;
+  healthError: string | null;
+};
+
 const normalizeMongoSource = (value: unknown): MongoSource | null =>
   value === 'local' || value === 'cloud' ? value : null;
 
 const getMongoSourceFilePath = (): string =>
   process.env[MONGODB_ACTIVE_SOURCE_FILE_ENV]?.trim() || DEFAULT_MONGODB_SOURCE_FILE_PATH;
+
+const getMongoSourceLastSyncFilePath = (): string => {
+  const sourceFilePath = getMongoSourceFilePath();
+  const parsed = path.parse(sourceFilePath);
+  return path.join(parsed.dir, `${parsed.name}.last-sync.json`);
+};
 
 const getExplicitMongoUri = (source: MongoSource): string => {
   const key = source === 'local' ? 'MONGODB_LOCAL_URI' : 'MONGODB_CLOUD_URI';
@@ -65,8 +81,46 @@ const maskMongoUri = (uri: string | null): string | null => {
     const search = parsed.search || '';
     return `${protocol}//${authPrefix}${parsed.host}${pathname}${search}`;
   } catch {
-    return uri.replace(/\/\/([^@/]+)@/, '//***@');
+  return uri.replace(/\/\/([^@/]+)@/, '//***@');
   }
+};
+
+const normalizeMongoSyncComparisonUri = (uri: string | null): string | null => {
+  if (!uri) return null;
+  return uri.trim().replace(/\/\/([^@/]+)@/, '//');
+};
+
+export const getMongoSyncIssue = (
+  sourceConfig: { source: MongoSource; configured: boolean; uri: string | null; dbName: string | null },
+  targetConfig: { source: MongoSource; configured: boolean; uri: string | null; dbName: string | null }
+): string | null => {
+  if (!sourceConfig.configured || !targetConfig.configured) return null;
+
+  const normalizedSourceUri = normalizeMongoSyncComparisonUri(sourceConfig.uri);
+  const normalizedTargetUri = normalizeMongoSyncComparisonUri(targetConfig.uri);
+  if (!normalizedSourceUri || !normalizedTargetUri) return null;
+
+  const sourceDbName = sourceConfig.dbName?.trim() ?? '';
+  const targetDbName = targetConfig.dbName?.trim() ?? '';
+  if (!sourceDbName || !targetDbName) return null;
+
+  if (normalizedSourceUri === normalizedTargetUri && sourceDbName === targetDbName) {
+    return `MongoDB source sync is disabled because "${sourceConfig.source}" and "${targetConfig.source}" point to the same URI and database.`;
+  }
+  return null;
+};
+
+const getMongoSyncReachabilityIssue = (
+  config: MongoSourceConfig,
+  reachability: MongoSourceReachability
+): string | null => {
+  if (!config.configured || reachability.reachable !== false) return null;
+  return `MongoDB source sync is disabled because "${config.source}" is unreachable: ${reachability.healthError ?? 'Unable to reach MongoDB target.'}`;
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  return String(error);
 };
 
 const getMongoSourceConfig = (source: MongoSource): MongoSourceConfig => {
@@ -129,6 +183,44 @@ const readStoredMongoSource = async (): Promise<MongoSource | null> => {
     return normalizeMongoSource(parsed?.source);
   } catch {
     return null;
+  }
+};
+
+const readMongoSourceLastSync = async (): Promise<DatabaseEngineMongoLastSync | null> => {
+  try {
+    const raw = await fs.readFile(getMongoSourceLastSyncFilePath(), 'utf8');
+    const parsed: unknown = JSON.parse(raw);
+    const result = databaseEngineMongoLastSyncSchema.safeParse(parsed);
+    return result.success ? result.data : null;
+  } catch {
+    return null;
+  }
+};
+
+const probeMongoSourceReachability = async (
+  source: MongoSource
+): Promise<MongoSourceReachability> => {
+  const config = getMongoSourceConfig(source);
+  if (!config.configured || !config.uri || !config.dbName) {
+    return {
+      reachable: null,
+      healthError: null,
+    };
+  }
+
+  try {
+    const { getMongoDb } = await import('@/shared/lib/db/mongo-client');
+    const mongoDb = await getMongoDb(source);
+    await mongoDb.admin().command({ ping: 1 });
+    return {
+      reachable: true,
+      healthError: null,
+    };
+  } catch (error) {
+    return {
+      reachable: false,
+      healthError: getErrorMessage(error),
+    };
   }
 };
 
@@ -228,14 +320,26 @@ export const setActiveMongoSource = async (source: MongoSource): Promise<void> =
 export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceState> => {
   const activeSource = await getActiveMongoSource();
   const defaultSource = resolveDefaultMongoSource();
+  const lastSync = await readMongoSourceLastSync();
   const local = getMongoSourceConfig('local');
   const cloud = getMongoSourceConfig('cloud');
+  const localReachability = await probeMongoSourceReachability('local');
+  const cloudReachability = await probeMongoSourceReachability('cloud');
+  const syncIssue =
+    getMongoSyncIssue(local, cloud) ??
+    getMongoSyncReachabilityIssue(local, localReachability) ??
+    getMongoSyncReachabilityIssue(cloud, cloudReachability);
+  const sourceToRestore = activeSource ?? defaultSource;
+  if (sourceToRestore) {
+    await applyActiveMongoSourceEnv(sourceToRestore);
+  }
 
   return {
     timestamp: new Date().toISOString(),
     activeSource,
     defaultSource,
     sourceFilePath: getMongoSourceFilePath(),
+    lastSync,
     local: {
       source: 'local',
       configured: local.configured,
@@ -243,6 +347,8 @@ export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceSt
       maskedUri: maskMongoUri(local.uri),
       isActive: activeSource === 'local',
       usesLegacyEnv: local.usesLegacyEnv,
+      reachable: localReachability.reachable,
+      healthError: localReachability.healthError,
     },
     cloud: {
       source: 'cloud',
@@ -251,8 +357,17 @@ export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceSt
       maskedUri: maskMongoUri(cloud.uri),
       isActive: activeSource === 'cloud',
       usesLegacyEnv: cloud.usesLegacyEnv,
+      reachable: cloudReachability.reachable,
+      healthError: cloudReachability.healthError,
     },
     canSwitch: local.configured && cloud.configured,
+    canSync:
+      local.configured &&
+      cloud.configured &&
+      localReachability.reachable === true &&
+      cloudReachability.reachable === true &&
+      !syncIssue,
+    syncIssue,
   };
 };
 
@@ -268,12 +383,23 @@ export const ensureMongoSourceAvailable = async (): Promise<void> => {
   }
 };
 
+export const recordMongoSourceSync = async (
+  lastSync: DatabaseEngineMongoLastSync
+): Promise<void> => {
+  const filePath = getMongoSourceLastSyncFilePath();
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(lastSync, null, 2) + '\n', 'utf8');
+};
+
 export const __testOnly = {
   getMongoSourceConfig,
   getMongoSourceFilePath,
+  getMongoSourceLastSyncFilePath,
   isLikelyLocalMongoUri,
   maskMongoUri,
   normalizeMongoSource,
   resolveConfiguredMongoSource,
   resolveDefaultMongoSource,
+  normalizeMongoSyncComparisonUri,
+  probeMongoSourceReachability,
 };

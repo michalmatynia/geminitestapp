@@ -148,7 +148,7 @@ export type KangurMusicPianoRollContextValue<NoteId extends string = string> = {
   syncActiveSynthGestures: () => void;
 };
 
-const KangurMusicPianoRollContext = createContext<KangurMusicPianoRollContextValue<any> | null>(
+const KangurMusicPianoRollContext = createContext<KangurMusicPianoRollContextValue<string> | null>(
   null
 );
 

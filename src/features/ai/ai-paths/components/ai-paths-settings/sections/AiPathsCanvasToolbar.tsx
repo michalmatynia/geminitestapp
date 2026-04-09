@@ -185,9 +185,9 @@ export function AiPathsCanvasToolbar({
               className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
               onClick={onTogglePathTree}
               aria-pressed={isPathTreeVisible}
-              title={isPathTreeVisible ? 'Hide the master folder tree' : 'Show the master folder tree'}
+              title={isPathTreeVisible ? 'Hide path groups' : 'Show path groups'}
             >
-              {isPathTreeVisible ? 'Hide Folder Tree' : 'Show Folder Tree'}
+              {isPathTreeVisible ? 'Hide Path Groups' : 'Show Path Groups'}
             </Button>
 
             <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>

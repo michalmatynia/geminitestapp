@@ -25,6 +25,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: mockState.routerPush,
+  }),
+}));
+
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useRunHistoryActions: () => ({
     setRunHistoryNodeId: mockState.setRunHistoryNodeId,
@@ -161,6 +167,8 @@ const createState = (
     paletteCollapsed: false,
     setPaletteCollapsed: vi.fn(),
     expandedPaletteGroups: new Set<string>(),
+    isPathTreeVisible: true,
+    setIsPathTreeVisible: vi.fn(),
     togglePaletteGroup: vi.fn(),
     handleDragStart: vi.fn(),
     selectedNode: null,

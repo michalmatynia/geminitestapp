@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   settingsMap: new Map<string, string>(),
   updateSettingsBulkMutateAsync: vi.fn(),
   setMongoSourceMutateAsync: vi.fn(),
+  syncMongoSourcesMutateAsync: vi.fn(),
   searchParams: 'view=engine&foo=bar',
   pathname: '/admin/databases/engine',
   engineStatusRefetch: vi.fn(),
@@ -76,6 +77,10 @@ vi.mock('./useDatabaseQueries', () => ({
     isPending: false,
     mutateAsync: mocks.setMongoSourceMutateAsync,
   }),
+  useSyncDatabaseEngineMongoSourceMutation: () => ({
+    isPending: false,
+    mutateAsync: mocks.syncMongoSourcesMutateAsync,
+  }),
   useAllCollectionsSchema: () => ({
     data: { collections: [] },
     isPending: false,
@@ -95,6 +100,7 @@ describe('useDatabaseEngineState', () => {
     mocks.settingsMap = new Map<string, string>();
     mocks.updateSettingsBulkMutateAsync.mockReset();
     mocks.setMongoSourceMutateAsync.mockReset();
+    mocks.syncMongoSourcesMutateAsync.mockReset();
     mocks.searchParams = 'view=engine&foo=bar';
     mocks.pathname = '/admin/databases/engine';
     mocks.engineStatusRefetch.mockReset();
@@ -130,6 +136,24 @@ describe('useDatabaseEngineState', () => {
 
     expect(mocks.setMongoSourceMutateAsync).toHaveBeenCalledWith('local');
     expect(mocks.toast).toHaveBeenCalledWith('MongoDB source switched to local.', {
+      variant: 'success',
+    });
+  });
+
+  it('runs manual Mongo source sync through the dedicated mutation', async () => {
+    mocks.syncMongoSourcesMutateAsync.mockResolvedValue({
+      success: true,
+      message: 'MongoDB sync completed: cloud -> local.',
+    });
+
+    const { result } = renderHook(() => useDatabaseEngineState());
+
+    await act(async () => {
+      await result.current.syncMongoSources('cloud_to_local');
+    });
+
+    expect(mocks.syncMongoSourcesMutateAsync).toHaveBeenCalledWith('cloud_to_local');
+    expect(mocks.toast).toHaveBeenCalledWith('MongoDB sync completed: cloud -> local.', {
       variant: 'success',
     });
   });

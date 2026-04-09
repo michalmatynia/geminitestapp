@@ -23,6 +23,11 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: permanentRedirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  redirect: redirectMock,
+  permanentRedirect: permanentRedirectMock,
+}));
+
 vi.mock('next/headers', () => ({
   headers: vi.fn(async () => new Headers()),
 }));

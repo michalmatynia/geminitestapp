@@ -178,7 +178,7 @@ export const handleVintedBrowserTest = async (
       failWithDebug,
     } = createVintedBrowserTestUtils({
       page: activePage,
-      connectionId: connection.id,
+      connectionId: (connection as any).id as string,
       fail,
     });
     /** Navigate to a Vinted URL, tolerating ERR_ABORTED which happens during Vinted's redirect chain (GDPR, locale, OAuth). */
@@ -221,7 +221,7 @@ export const handleVintedBrowserTest = async (
         } else {
           pushStep('Reusing session', 'failed', 'Session invalid or expired');
         }
-      } catch (error) {
+      } catch (_error) {
         pushStep('Reusing session', 'failed', 'Failed to check session');
       }
     }
@@ -305,12 +305,12 @@ export const handleVintedBrowserTest = async (
     pushStep('Saving session', 'pending', 'Storing Vinted Playwright session');
     try {
       const storageStateResult = await page.context().storageState();
-      await repo.updateConnection(connection.id, {
+      await (repo as any).updateConnection((connection as any).id as string, {
         playwrightStorageState: encryptSecret(JSON.stringify(storageStateResult)),
         playwrightStorageStateUpdatedAt: new Date(),
       });
       pushStep('Saving session', 'ok', 'Session stored for reuse');
-    } catch (error) {
+    } catch (_error) {
       pushStep('Saving session', 'failed', 'Failed to store session');
     }
   } finally {

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type {
-  DatabaseEngineSetMongoSourceRequest,
-  DatabaseEngineSetMongoSourceResponse,
-} from '@/shared/contracts/database';
+import type { DatabaseEngineSetMongoSourceResponse } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
@@ -16,13 +13,15 @@ import {
   getMongoSourceState,
   setActiveMongoSource,
 } from '@/shared/lib/db/mongo-source';
+import { invalidateMongoClientCache } from '@/shared/lib/db/mongo-client';
 import { invalidateAppDbProviderCache } from '@/shared/lib/db/app-db-provider';
 import { invalidateCollectionProviderMapCache } from '@/shared/lib/db/collection-provider-map';
 import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 
-const clearMongoSourceDependentCaches = (): void => {
+const clearMongoSourceDependentCaches = async (): Promise<void> => {
+  await invalidateMongoClientCache();
   invalidateAppDbProviderCache();
   invalidateCollectionProviderMapCache();
   invalidateDatabaseEnginePolicyCache();
@@ -56,12 +55,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return parsed.response;
   }
 
-  const body = databaseEngineSetMongoSourceRequestSchema.parse(
-    parsed.data
-  ) as DatabaseEngineSetMongoSourceRequest;
+  const body = databaseEngineSetMongoSourceRequestSchema.parse(parsed.data);
 
   await setActiveMongoSource(body.source);
-  clearMongoSourceDependentCaches();
+  await clearMongoSourceDependentCaches();
 
   const state = await getMongoSourceState();
   const payload: DatabaseEngineSetMongoSourceResponse = {

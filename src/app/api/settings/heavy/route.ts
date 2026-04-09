@@ -7,4 +7,5 @@ export const GET = apiHandler(GET_heavy_handler, {
   source: 'settings.heavy.GET',
   rateLimitKey: disableSettingsRateLimit ? false : 'api',
   requireAuth: true,
+  resolveSessionUser: false,
 });

@@ -45,6 +45,7 @@ import {
   useDatabaseEngineMongoSource,
   useDatabaseEngineProviderPreview,
   useSetDatabaseEngineMongoSourceMutation,
+  useSyncDatabaseEngineMongoSourceMutation,
   useDatabaseEngineStatus,
   useAllCollectionsSchema,
   useRedisOverview,
@@ -77,11 +78,13 @@ export interface UseDatabaseEngineStateReturn {
   updateBackupSchedule: (updates: Partial<DatabaseEngineBackupSchedule>) => void;
   updateOperationControls: (updates: Partial<DatabaseEngineOperationControls>) => void;
   switchMongoSource: (source: 'local' | 'cloud') => Promise<void>;
+  syncMongoSources: (direction: 'cloud_to_local' | 'local_to_cloud') => Promise<void>;
   saveSettings: () => Promise<void>;
   isDirty: boolean;
   refetchAll: () => void;
   validationErrors: string[];
   isSwitchingMongoSource: boolean;
+  isSyncingMongoSources: boolean;
 }
 
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
@@ -115,6 +118,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
 
   const updateSettingsBulk = useUpdateSettingsBulk();
   const setMongoSourceMutation = useSetDatabaseEngineMongoSourceMutation();
+  const syncMongoSourcesMutation = useSyncDatabaseEngineMongoSourceMutation();
 
   const [policy, setPolicy] = useState<DatabaseEnginePolicy>(DEFAULT_DATABASE_ENGINE_POLICY);
   const [serviceRouteMap, setServiceRouteMap] = useState<Record<string, string>>({});
@@ -334,6 +338,15 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
         toast(`Failed to switch MongoDB source to ${source}.`, { variant: 'error' });
       }
     },
+    syncMongoSources: async (direction) => {
+      try {
+        const response = await syncMongoSourcesMutation.mutateAsync(direction);
+        toast(response.message, { variant: 'success' });
+      } catch (error) {
+        logClientError(error);
+        toast('Failed to synchronize MongoDB sources.', { variant: 'error' });
+      }
+    },
     saveSettings: handleSave,
     isDirty,
     refetchAll: () => {
@@ -347,5 +360,6 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     },
     validationErrors,
     isSwitchingMongoSource: setMongoSourceMutation.isPending,
+    isSyncingMongoSources: syncMongoSourcesMutation.isPending,
   };
 }

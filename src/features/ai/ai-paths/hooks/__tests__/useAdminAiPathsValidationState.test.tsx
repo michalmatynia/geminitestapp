@@ -23,6 +23,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: mocks.useSearchParamsMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: mocks.useSearchParamsMock,
+}));
+
 vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
   useAiPathsSettingsQuery: mocks.useAiPathsSettingsQueryMock,
 }));

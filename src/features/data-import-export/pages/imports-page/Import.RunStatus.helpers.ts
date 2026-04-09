@@ -52,7 +52,7 @@ const getItemCustomFieldImportMetadata = (
     return null;
   }
 
-  const rawCustomFieldImport = (metadata as Record<string, unknown>)['customFieldImport'];
+  const rawCustomFieldImport = metadata['customFieldImport'];
   if (!rawCustomFieldImport || typeof rawCustomFieldImport !== 'object') {
     return null;
   }

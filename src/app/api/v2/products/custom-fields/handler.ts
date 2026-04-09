@@ -22,7 +22,7 @@ const withCheckboxOptionValidation = <TSchema extends z.ZodTypeAny>(schema: TSch
         message: 'Checkbox sets require at least one checkbox option.',
       });
     }
-  }) as TSchema;
+  });
 
 const freshQuerySchema = z.preprocess(
   (value: unknown) => {

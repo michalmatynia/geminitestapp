@@ -15,6 +15,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => ({
+    get: () => null,
+  }),
+}));
+
 vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
   useIntegrations: () => ({
     data: [{ id: 'integration-tradera', slug: 'tradera', name: 'Tradera' }],

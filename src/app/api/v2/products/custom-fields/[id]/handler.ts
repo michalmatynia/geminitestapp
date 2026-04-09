@@ -17,7 +17,7 @@ export const productCustomFieldUpdateSchema = z
   })
   .superRefine((value, ctx) => {
     if (value.type !== 'checkbox_set') return;
-    if (value.options !== undefined && value.options.length === 0) {
+    if (value.options?.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['options'],

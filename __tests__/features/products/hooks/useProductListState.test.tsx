@@ -38,6 +38,17 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => ({ get: () => null }),
+  usePathname: () => '/',
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+}));
+
 vi.mock('@/features/drafter/hooks/useDraftQueries', () => ({
   useDraftQueries: () => ({ data: [] }),
   draftKeys: {

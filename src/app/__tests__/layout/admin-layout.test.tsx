@@ -26,6 +26,10 @@ vi.mock('next/navigation', () => ({
   redirect: redirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  redirect: redirectMock,
+}));
+
 vi.mock('@/features/admin/public', () => ({
   AdminLayout: adminLayoutMock,
 }));

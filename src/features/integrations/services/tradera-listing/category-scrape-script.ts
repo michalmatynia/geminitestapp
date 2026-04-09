@@ -59,9 +59,9 @@ export const extractTraderaCategoryPageChildren = ({
   };
 
   const isStopNode = (node: Node | null, stopSet: Set<string>): boolean => {
-    if (!node || node.nodeType !== Node.ELEMENT_NODE) return false;
+    if (node?.nodeType !== Node.ELEMENT_NODE) return false;
     const element = node as Element;
-    const text = toLowerText(element.textContent || '');
+    const text = toLowerText(element.textContent ?? '');
     if (!text || !includesStopText(text, stopSet)) return false;
     const tag = element.tagName?.toLowerCase() ?? '';
     return (

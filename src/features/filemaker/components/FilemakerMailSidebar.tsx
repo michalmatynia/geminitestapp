@@ -28,6 +28,7 @@ import {
   toFilemakerMailSearchNodeId,
   toFilemakerMailThreadNodeId,
 } from '../mail-master-tree';
+import type { FilemakerMailFolderRole } from '@/shared/contracts/filemaker-mail';
 import {
   buildFilemakerMailSelectionHref as buildMailSelectionHref,
   fetchFilemakerMailJson as fetchJson,
@@ -54,7 +55,6 @@ import {
 
 import type {
   FilemakerMailAccount,
-  FilemakerMailFolderRole,
 } from '../types';
 import { useFilemakerMailData } from './FilemakerMailSidebar.hooks';
 
@@ -162,7 +162,7 @@ export function FilemakerMailSidebar({
   );
   const recentMailboxOptions = useMemo(
     () => {
-      const rolesByMailboxPath = new Map<string, any>();
+      const rolesByMailboxPath = new Map<string, FilemakerMailFolderRole>();
       recentThreads.forEach((thread) => {
         if (!rolesByMailboxPath.has(thread.mailboxPath)) {
           rolesByMailboxPath.set(thread.mailboxPath, thread.mailboxRole);

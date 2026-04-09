@@ -228,4 +228,46 @@ describe('ProductFormGeneral structured name editing', () => {
       expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
     });
   });
+
+  it('preserves a shortened lore segment while the formatter is already enabled', async () => {
+    const validationState = {
+      validationInstanceScope: 'product_create',
+      validatorEnabled: true,
+      formatterEnabled: true,
+      validatorPatterns: [
+        createPattern({
+          regex: 'Lore$',
+          target: 'name',
+          replacementAutoApply: true,
+          replacementValue: 'Attack On Titan',
+          replacementFields: ['name_en'],
+        }),
+      ],
+      latestProductValues: null,
+    };
+    useProductValidationStateMock.mockImplementation(() => validationState);
+
+    renderProductFormGeneral('Scout Regiment | 4 cm | Metal | Anime Pin | Lore');
+    const nameInput = screen.getByLabelText('English Name');
+
+    await act(async () => {
+      nameInput.focus();
+    });
+
+    fireEvent.change(nameInput, {
+      target: { value: 'Scout Regiment | 4 cm | Metal | Anime Pin | Lo' },
+    });
+
+    await waitFor(() => {
+      expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Lo');
+    });
+
+    await act(async () => {
+      nameInput.blur();
+    });
+
+    await waitFor(() => {
+      expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Lo');
+    });
+  });
 });

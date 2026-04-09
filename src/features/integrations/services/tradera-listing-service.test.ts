@@ -9,6 +9,7 @@ const {
   getIntegrationByIdMock,
   loadTraderaSystemSettingsMock,
   runTraderaBrowserListingMock,
+  runTraderaBrowserCheckStatusMock,
   runTraderaApiListingMock,
   resolveEffectiveListingSettingsMock,
   buildRelistPolicyMock,
@@ -20,6 +21,7 @@ const {
   getIntegrationByIdMock: vi.fn(),
   loadTraderaSystemSettingsMock: vi.fn(),
   runTraderaBrowserListingMock: vi.fn(),
+  runTraderaBrowserCheckStatusMock: vi.fn(),
   runTraderaApiListingMock: vi.fn(),
   resolveEffectiveListingSettingsMock: vi.fn(),
   buildRelistPolicyMock: vi.fn(),
@@ -47,6 +49,8 @@ vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
 vi.mock('./tradera-listing/browser', () => ({
   runTraderaBrowserListing: (...args: unknown[]) =>
     runTraderaBrowserListingMock(...args) as Promise<unknown>,
+  runTraderaBrowserCheckStatus: (...args: unknown[]) =>
+    runTraderaBrowserCheckStatusMock(...args) as Promise<unknown>,
 }));
 
 vi.mock('./tradera-listing/api', () => ({
@@ -343,6 +347,114 @@ describe('processTraderaListingJob', () => {
         requestId: 'job-tradera-1',
       })
     );
+  });
+
+  it('persists the resolved Tradera status after a live status check', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-check-status',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'active',
+        externalListingId: 'external-1',
+        marketplaceData: {
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/1',
+          tradera: {
+            pendingExecution: {
+              action: 'check_status',
+              requestId: 'job-check-status',
+            },
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserCheckStatusMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.tradera.com/item/1',
+      metadata: {
+        checkedStatus: 'ended',
+        requestedBrowserMode: 'headed',
+        runId: 'run-check-status',
+        executionSteps: [
+          {
+            id: 'open_listing',
+            label: 'Open listing page',
+            status: 'success',
+            message: 'Listing page opened successfully.',
+          },
+          {
+            id: 'detect_status',
+            label: 'Detect listing status',
+            status: 'success',
+            message: 'Resolved listing status as ended.',
+          },
+        ],
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-check-status',
+      action: 'check_status',
+      source: 'manual',
+      jobId: 'job-check-status',
+    });
+
+    expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        browserMode: 'headed',
+      })
+    );
+    expect(runTraderaBrowserListingMock).not.toHaveBeenCalled();
+    expect(updateListingStatusMock).toHaveBeenCalledWith(
+      'listing-check-status',
+      'ended'
+    );
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-check-status',
+      expect.objectContaining({
+        status: 'ended',
+        lastStatusCheckAt: expect.any(Date),
+        marketplaceData: expect.objectContaining({
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/1',
+          externalListingId: 'external-1',
+          tradera: expect.objectContaining({
+            pendingExecution: null,
+            lastStatusCheckAt: expect.any(String),
+            lastExecution: expect.objectContaining({
+              requestId: 'job-check-status',
+              action: 'check_status',
+              ok: true,
+              metadata: expect.objectContaining({
+                checkedStatus: 'ended',
+                runId: 'run-check-status',
+                executionSteps: [
+                  expect.objectContaining({
+                    id: 'open_listing',
+                    status: 'success',
+                  }),
+                  expect.objectContaining({
+                    id: 'detect_status',
+                    status: 'success',
+                  }),
+                ],
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).not.toHaveBeenCalled();
   });
 
   it('persists AppError metadata on failure', async () => {

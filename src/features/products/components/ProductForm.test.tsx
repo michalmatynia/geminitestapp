@@ -39,6 +39,10 @@ vi.mock('@/features/products/context-registry/workspace', () => ({
     nodes: [],
     edges: [],
   }),
+  buildProductLeafCategoriesContextBundle: () => ({
+    nodes: [],
+    edges: [],
+  }),
 }));
 
 vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
@@ -118,6 +122,11 @@ describe('ProductForm', () => {
         openProductFormTab: 'marketplace-copy',
       },
       ConfirmationModal: () => <div data-testid='confirmation-modal' />,
+      methods: {
+        getValues: vi.fn(() => ''),
+        getFieldState: vi.fn(() => ({ isDirty: false })),
+        setValue: vi.fn(),
+      },
     });
 
     render(<ProductForm submitButtonText='Save' validatorSessionKey='validator-session-1' />);
@@ -177,6 +186,42 @@ describe('ProductForm', () => {
     expect(setValue).toHaveBeenCalledWith(
       'name_en',
       'Name | X cm | Metal | Pins | Lore',
+      expect.objectContaining({
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: true,
+      })
+    );
+  });
+
+  it('keeps the categoryId form value synchronized with the selected metadata category', () => {
+    const setValue = vi.fn();
+
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn().mockResolvedValue(undefined),
+      product: undefined,
+      draft: null,
+      ConfirmationModal: () => <div data-testid='confirmation-modal' />,
+      methods: {
+        getValues: vi.fn((field: string) => (field === 'categoryId' ? '' : '')),
+        getFieldState: vi.fn(() => ({ isDirty: false })),
+        setValue,
+      },
+    });
+
+    useProductFormMetadataStateMock.mockReturnValue({
+      categories: [{ id: 'category-1', name: 'Pins' }],
+      selectedCatalogIds: [],
+      selectedCategoryId: 'category-1',
+      selectedTagIds: [],
+      selectedProducerIds: [],
+    });
+
+    render(<ProductForm submitButtonText='Save' validatorSessionKey='validator-session-4' />);
+
+    expect(setValue).toHaveBeenCalledWith(
+      'categoryId',
+      'category-1',
       expect.objectContaining({
         shouldDirty: false,
         shouldTouch: false,

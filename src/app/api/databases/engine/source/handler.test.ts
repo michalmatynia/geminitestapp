@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET_handler, POST_handler } from './handler';
+import { GET_handler } from './handler';
 
 const mocks = vi.hoisted(() => ({
   assertDatabaseEngineManageAccess: vi.fn(async () => undefined),
@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
     timestamp: '2026-04-09T00:00:00.000Z',
     activeSource: 'local',
     defaultSource: 'local',
-    sourceFilePath: '/tmp/mongo-source.json',
     lastSync: null,
       local: {
         source: 'local',
@@ -36,13 +35,6 @@ const mocks = vi.hoisted(() => ({
     canSync: true,
     syncIssue: null,
   })),
-  setActiveMongoSource: vi.fn(async () => undefined),
-  invalidateMongoClientCache: vi.fn(async () => undefined),
-  invalidateAppDbProviderCache: vi.fn(),
-  invalidateCollectionProviderMapCache: vi.fn(),
-  invalidateDatabaseEnginePolicyCache: vi.fn(),
-  clearSettingsCache: vi.fn(),
-  clearLiteSettingsServerCache: vi.fn(),
 }));
 
 vi.mock('@/features/database/server', () => ({
@@ -52,31 +44,6 @@ vi.mock('@/features/database/server', () => ({
 vi.mock('@/shared/lib/db/mongo-source', () => ({
   applyActiveMongoSourceEnv: mocks.applyActiveMongoSourceEnv,
   getMongoSourceState: mocks.getMongoSourceState,
-  setActiveMongoSource: mocks.setActiveMongoSource,
-}));
-
-vi.mock('@/shared/lib/db/mongo-client', () => ({
-  invalidateMongoClientCache: mocks.invalidateMongoClientCache,
-}));
-
-vi.mock('@/shared/lib/db/app-db-provider', () => ({
-  invalidateAppDbProviderCache: mocks.invalidateAppDbProviderCache,
-}));
-
-vi.mock('@/shared/lib/db/collection-provider-map', () => ({
-  invalidateCollectionProviderMapCache: mocks.invalidateCollectionProviderMapCache,
-}));
-
-vi.mock('@/shared/lib/db/database-engine-policy', () => ({
-  invalidateDatabaseEnginePolicyCache: mocks.invalidateDatabaseEnginePolicyCache,
-}));
-
-vi.mock('@/shared/lib/settings-cache', () => ({
-  clearSettingsCache: mocks.clearSettingsCache,
-}));
-
-vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
-  clearLiteSettingsServerCache: mocks.clearLiteSettingsServerCache,
 }));
 
 describe('databases engine source handler', () => {
@@ -97,26 +64,5 @@ describe('databases engine source handler', () => {
     expect(mocks.applyActiveMongoSourceEnv).toHaveBeenCalled();
     expect(data.activeSource).toBe('local');
     expect(data.canSwitch).toBe(true);
-  });
-
-  it('switches the active Mongo source and clears dependent caches', async () => {
-    const response = await POST_handler(
-      new NextRequest('http://localhost/api/databases/engine/source', {
-        method: 'POST',
-        body: JSON.stringify({ source: 'cloud' }),
-      }),
-      mockContext
-    );
-    const data = await response.json();
-
-    expect(mocks.setActiveMongoSource).toHaveBeenCalledWith('cloud');
-    expect(mocks.invalidateMongoClientCache).toHaveBeenCalled();
-    expect(mocks.invalidateAppDbProviderCache).toHaveBeenCalled();
-    expect(mocks.invalidateCollectionProviderMapCache).toHaveBeenCalled();
-    expect(mocks.invalidateDatabaseEnginePolicyCache).toHaveBeenCalled();
-    expect(mocks.clearSettingsCache).toHaveBeenCalled();
-    expect(mocks.clearLiteSettingsServerCache).toHaveBeenCalled();
-    expect(data.success).toBe(true);
-    expect(data.message).toContain('switched to');
   });
 });

@@ -47,6 +47,7 @@ export type PlaywrightListingResult = {
   personaId: string | null;
   executionSettings: PlaywrightExecutionSettingsSummary;
   rawResult: Record<string, unknown>;
+  logs?: string[];
 };
 
 export type PlaywrightImportResult = {
@@ -258,6 +259,7 @@ export const runPlaywrightListingScript = async ({
       rawResult: Object.keys(resultValue).length > 0 ? resultValue : null,
       latestStage: extractStringField(resultValue, 'stage'),
       latestStageUrl: extractStringField(resultValue, 'currentUrl') ?? finalUrl,
+      logs: Array.isArray(run.logs) ? run.logs : [],
       failureArtifacts: (Array.isArray(run.artifacts) ? run.artifacts : []).map((artifact) => ({
         name: artifact.name,
         path: artifact.path,
@@ -280,6 +282,7 @@ export const runPlaywrightListingScript = async ({
     personaId: personaId ?? null,
     executionSettings: buildExecutionSettingsSummary(effectiveSettings),
     rawResult: resultValue,
+    logs: Array.isArray(run.logs) ? run.logs : [],
   };
 };
 

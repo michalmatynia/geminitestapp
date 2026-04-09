@@ -129,6 +129,28 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       )
     ).toBe(true);
 
+    const normalizeConfigRecord = seeded.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
+    );
+    if (!normalizeConfigRecord) throw new Error('Expected normalize config record');
+    const normalizeConfig = JSON.parse(normalizeConfigRecord.value) as Record<string, unknown>;
+    const normalizeNodes = Array.isArray(normalizeConfig['nodes'])
+      ? (normalizeConfig['nodes'] as Array<Record<string, unknown>>)
+      : [];
+    const normalizeDatabaseNode = normalizeNodes.find(
+      (node) => node['id'] === 'node-update-name-normalize'
+    );
+    const normalizeDatabaseConfig =
+      normalizeDatabaseNode?.['config'] &&
+      typeof normalizeDatabaseNode['config'] === 'object' &&
+      (normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] &&
+      typeof (normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] === 'object'
+        ? ((normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] as Record<string, unknown>)
+        : null;
+    expect(normalizeDatabaseConfig?.['updatePayloadMode']).toBe('custom');
+    expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"name_en": {{result}}');
+    expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"__noop__": ""');
+
     const triggerButtonsRecord = seeded.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
     );
@@ -297,5 +319,191 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       triggerButtons.some((button) => button['id'] === '0ef40981-7ac6-416e-9205-7200289f851c')
     ).toBe(false);
     expect(triggerButtons.some((button) => button['id'] === 'btn-custom-param')).toBe(true);
+  });
+
+  it('upgrades a legacy unbound normalize button in place instead of duplicating it', () => {
+    const legacyNormalizeButton = {
+      id: 'cf9974ae-1fb3-4e61-8a30-8df8af63744f',
+      name: 'Normalize',
+      iconId: null,
+      pathId: null,
+      enabled: true,
+      locations: ['product_modal'],
+      mode: 'execute_path',
+      display: 'icon_label',
+      createdAt: '2026-04-08T23:00:00.000Z',
+      updatedAt: '2026-04-08T23:00:00.000Z',
+      sortIndex: 3,
+    };
+
+    const upgraded = ensureStarterWorkflowDefaults([
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: '[]',
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: JSON.stringify([legacyNormalizeButton]),
+      },
+    ]);
+
+    const triggerButtonsRecord = upgraded.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    const normalizeButtons = triggerButtons.filter((button) => button['name'] === 'Normalize');
+
+    expect(normalizeButtons).toHaveLength(1);
+    expect(normalizeButtons[0]).toEqual(
+      expect.objectContaining({
+        id: '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27',
+        pathId: 'path_name_normalize_v1',
+        locations: ['product_modal'],
+      })
+    );
+  });
+
+  it('inherits normalize starter model selection from the active description trigger path when normalize has no explicit modelId', () => {
+    const seeded = ensureStarterWorkflowDefaults([
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: '[]',
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: '[]',
+      },
+    ]).nextRecords;
+
+    const descriptionButton = {
+      id: 'f5af953f-632d-4704-adec-cc7e58aa68c6',
+      name: 'Description',
+      iconId: null,
+      pathId: null,
+      enabled: true,
+      locations: ['product_modal'],
+      mode: 'execute_path',
+      display: 'icon_label',
+      createdAt: '2026-04-09T08:00:00.000Z',
+      updatedAt: '2026-04-09T08:00:00.000Z',
+      sortIndex: 2,
+    };
+
+    const records = seeded.map((record) => {
+      if (record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`) {
+        const parsed = JSON.parse(record.value) as Record<string, unknown>;
+        const nodes = Array.isArray(parsed['nodes']) ? (parsed['nodes'] as Array<Record<string, unknown>>) : [];
+        const nextNodes = nodes.map((node) => {
+          if (node['type'] !== 'model') return node;
+          const config =
+            node['config'] && typeof node['config'] === 'object'
+              ? { ...(node['config'] as Record<string, unknown>) }
+              : {};
+          const model =
+            config['model'] && typeof config['model'] === 'object'
+              ? { ...(config['model'] as Record<string, unknown>) }
+              : {};
+          delete model['modelId'];
+          return {
+            ...node,
+            config: {
+              ...config,
+              model,
+            },
+          };
+        });
+        return {
+          ...record,
+          value: JSON.stringify({
+            ...parsed,
+            nodes: nextNodes,
+          }),
+        };
+      }
+      if (record.key === AI_PATHS_TRIGGER_BUTTONS_KEY) {
+        return {
+          ...record,
+          value: JSON.stringify([descriptionButton]),
+        };
+      }
+      return record;
+    });
+
+    records.push({
+      key: `${AI_PATHS_CONFIG_KEY_PREFIX}path_72l57d`,
+      value: JSON.stringify({
+        id: 'path_72l57d',
+        version: 1,
+        trigger: 'manual',
+        name: 'Description v4 Hybrid human AI',
+        description: 'Mock description path',
+        createdAt: '2026-04-09T08:00:00.000Z',
+        updatedAt: '2026-04-09T08:00:00.000Z',
+        isActive: true,
+        nodes: [
+          {
+            id: 'node-description-trigger',
+            type: 'trigger',
+            title: 'Trigger: Description',
+            position: { x: 0, y: 0 },
+            inputs: [],
+            outputs: ['trigger'],
+            config: {
+              trigger: {
+                event: descriptionButton.id,
+                contextMode: 'trigger_only',
+              },
+            },
+            connections: {
+              incoming: [],
+              outgoing: [],
+            },
+          },
+          {
+            id: 'node-description-model',
+            type: 'model',
+            title: 'Model',
+            position: { x: 200, y: 0 },
+            inputs: ['input'],
+            outputs: ['result'],
+            config: {
+              model: {
+                modelId: 'gpt-oss:120b-cloud',
+                temperature: 1,
+                maxTokens: 800,
+                vision: true,
+                waitForResult: true,
+              },
+            },
+            connections: {
+              incoming: [],
+              outgoing: [],
+            },
+          },
+        ],
+        edges: [],
+      }),
+    });
+
+    const refreshed = ensureStarterWorkflowDefaults(records);
+    const normalizeRecord = refreshed.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
+    );
+    if (!normalizeRecord) throw new Error('Expected normalize config record');
+
+    const parsed = JSON.parse(normalizeRecord.value) as Record<string, unknown>;
+    const nodes = Array.isArray(parsed['nodes']) ? (parsed['nodes'] as Array<Record<string, unknown>>) : [];
+    const normalizeModelNode = nodes.find((node) => node['type'] === 'model');
+    const modelConfig =
+      normalizeModelNode?.['config'] &&
+      typeof normalizeModelNode['config'] === 'object' &&
+      (normalizeModelNode['config'] as Record<string, unknown>)['model'] &&
+      typeof (normalizeModelNode['config'] as Record<string, unknown>)['model'] === 'object'
+        ? ((normalizeModelNode['config'] as Record<string, unknown>)['model'] as Record<string, unknown>)
+        : null;
+
+    expect(modelConfig?.['modelId']).toBe('gpt-oss:120b-cloud');
   });
 });

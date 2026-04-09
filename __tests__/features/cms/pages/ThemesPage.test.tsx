@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useRouter } from 'next/navigation';
+import { useRouter as useNextRouter } from 'next/navigation';
+import { useRouter as useToploaderRouter } from 'nextjs-toploader/app';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
@@ -48,7 +49,9 @@ describe('ThemesPage Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useRouter as any).mockReturnValue({ push: mockPush });
+    const router = { push: mockPush };
+    (useNextRouter as any).mockReturnValue(router);
+    (useToploaderRouter as any).mockReturnValue(router);
     (useDeleteTheme as any).mockReturnValue({ mutateAsync: vi.fn() });
   });
 

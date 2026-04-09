@@ -119,7 +119,7 @@ export async function resolvePublishedSlugToPageCached(
   }
 
   const page = await cmsRepository.getPageBySlug(slugValue, { locale: options?.locale });
-  if (!page || page.status !== 'published') {
+  if (page?.status !== 'published') {
     return null;
   }
 
@@ -170,7 +170,7 @@ export const loadPublishedSlugRenderDataCached = async (
 
   const cmsRepository = await getCmsRepository();
   const page = await cmsRepository.getPageById(pageId);
-  if (!page || page.status !== 'published') {
+  if (page?.status !== 'published') {
     return null;
   }
 

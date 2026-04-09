@@ -208,10 +208,9 @@ export async function fetchBaseProductById(
       if (products.length > 0) return products[0] ?? null;
       // Some endpoints wrap single product directly rather than in an array
       if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-        const record = payload as Record<string, unknown>;
         const directId =
-          toStringId(record['product_id']) ?? toStringId(record['id']) ?? toStringId(record['base_product_id']);
-        if (directId) return record as BaseProductRecord;
+          toStringId(payload['product_id']) ?? toStringId(payload['id']) ?? toStringId(payload['base_product_id']);
+        if (directId) return payload;
       }
     } catch (error) {
       logClientError(error);

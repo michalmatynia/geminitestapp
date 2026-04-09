@@ -135,4 +135,10 @@ export function validateDatabaseConfig() {
       'MongoDB must be configured. Set MONGODB_URI or one of MONGODB_LOCAL_URI / MONGODB_CLOUD_URI.'
     );
   }
+
+  if (env.MONGODB_LOCAL_URI && env.MONGODB_CLOUD_URI && !env.MONGODB_ACTIVE_SOURCE_DEFAULT) {
+    throw new Error(
+      'Split MongoDB configuration requires MONGODB_ACTIVE_SOURCE_DEFAULT to be set to "local" or "cloud".'
+    );
+  }
 }

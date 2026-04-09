@@ -36,7 +36,6 @@ describe('database contract runtime', () => {
       timestamp: '2026-04-09T06:00:00.000Z',
       activeSource: 'local',
       defaultSource: 'local',
-      sourceFilePath: '.env.local',
       lastSync: {
         direction: 'cloud_to_local',
         source: 'cloud',

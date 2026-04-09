@@ -257,6 +257,69 @@ export const productListingSyncResponseSchema = z.object({
 
 export type ProductListingSyncResponse = z.infer<typeof productListingSyncResponseSchema>;
 
+export const traderaExecutionStepStatusSchema = z.enum([
+  'pending',
+  'running',
+  'success',
+  'error',
+  'skipped',
+]);
+
+export type TraderaExecutionStepStatus = z.infer<typeof traderaExecutionStepStatusSchema>;
+
+export const traderaExecutionStepSchema = z.object({
+  id: z.string().trim().min(1),
+  label: z.string().trim().min(1),
+  status: traderaExecutionStepStatusSchema,
+  message: z.string().nullable().optional(),
+});
+
+export type TraderaExecutionStep = z.infer<typeof traderaExecutionStepSchema>;
+
+export const traderaListingStatusCheckBatchPayloadSchema = z.object({
+  productIds: z.array(z.string().trim().min(1)).min(1).max(250),
+});
+
+export type TraderaListingStatusCheckBatchPayload = z.infer<
+  typeof traderaListingStatusCheckBatchPayloadSchema
+>;
+
+export const traderaListingStatusCheckBatchItemStatusSchema = z.enum([
+  'queued',
+  'already_queued',
+  'skipped',
+  'error',
+]);
+
+export type TraderaListingStatusCheckBatchItemStatus = z.infer<
+  typeof traderaListingStatusCheckBatchItemStatusSchema
+>;
+
+export const traderaListingStatusCheckBatchItemSchema = z.object({
+  productId: z.string(),
+  listingId: z.string().nullable(),
+  status: traderaListingStatusCheckBatchItemStatusSchema,
+  message: z.string().nullable().optional(),
+  queue: productListingQueueJobSchema.optional(),
+});
+
+export type TraderaListingStatusCheckBatchItem = z.infer<
+  typeof traderaListingStatusCheckBatchItemSchema
+>;
+
+export const traderaListingStatusCheckBatchResponseSchema = z.object({
+  total: z.number().int().nonnegative(),
+  queued: z.number().int().nonnegative(),
+  alreadyQueued: z.number().int().nonnegative(),
+  skipped: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  results: z.array(traderaListingStatusCheckBatchItemSchema),
+});
+
+export type TraderaListingStatusCheckBatchResponse = z.infer<
+  typeof traderaListingStatusCheckBatchResponseSchema
+>;
+
 export const baseProductSkuCheckPayloadSchema = z.object({
   connectionId: z.string().trim().min(1),
   inventoryId: z.string().trim().min(1),

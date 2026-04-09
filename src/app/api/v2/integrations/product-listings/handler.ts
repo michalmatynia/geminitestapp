@@ -13,6 +13,7 @@ import {
   applyCanonicalBaseBadgeFallback,
   isCanonicalBaseIntegrationSlug,
 } from '@/features/integrations/services/base-listing-canonicalization';
+import { resolvePendingTraderaExecutionAction } from '@/features/integrations/utils/tradera-status-check';
 import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -155,6 +156,7 @@ const buildPayload = async (
   };
 
   const byProduct = new Map<string, MarketplaceBadgeEntry>();
+  const productsWithPendingTraderaStatusCheck = new Set<string>();
   const candidateMetaByKey = new Map<
     string,
     {
@@ -170,8 +172,15 @@ const buildPayload = async (
       integrationMarketplaceById.get(listing.integrationId) ??
       inferMarketplaceFromListingMetadata(
         (listing as { marketplaceData?: unknown }).marketplaceData
-      );
+    );
     if (!marketplace) continue;
+
+    if (
+      marketplace === 'tradera' &&
+      resolvePendingTraderaExecutionAction(listing.marketplaceData) === 'check_status'
+    ) {
+      productsWithPendingTraderaStatusCheck.add(listing.productId);
+    }
 
     const normalizedStatus = normalizeStatus(listing.status);
     const candidateKey = `${listing.productId}:${marketplace}`;
@@ -225,6 +234,12 @@ const buildPayload = async (
   }
 
   const payload = Object.fromEntries(byProduct.entries()) as ListingBadgesPayload;
+  productsWithPendingTraderaStatusCheck.forEach((productId) => {
+    payload[productId] = {
+      ...(payload[productId] ?? {}),
+      tradera: 'processing',
+    };
+  });
   const canonicalPayload = await applyCanonicalBaseBadgeFallback(
     payload,
     normalizedRequestedProductIds

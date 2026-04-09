@@ -34,6 +34,12 @@ const renderTemplateToken = (sourcePort: string, sourcePath: string): string => 
   return normalizedPath ? `{{${normalizedPort}.${normalizedPath}}}` : `{{${normalizedPort}}}`;
 };
 
+const shouldEmitUnquotedTemplateToken = (targetPath: string, sourcePath: string): boolean => {
+  const normalizedTargetPath = normalizeText(targetPath).toLowerCase();
+  const normalizedSourcePath = normalizeText(sourcePath).toLowerCase();
+  return normalizedTargetPath === 'parameters' || normalizedSourcePath === 'parameters';
+};
+
 const deriveCustomUpdateTemplateFromMappings = (value: unknown): string | null => {
   if (!Array.isArray(value)) return null;
   const assignments = value
@@ -52,9 +58,18 @@ const deriveCustomUpdateTemplateFromMappings = (value: unknown): string | null =
   if (Object.keys(assignments).length === 0) return null;
   const lines = Object.entries(assignments).map(
     ([targetPath, token]) =>
-      `    "${targetPath}": ${token.startsWith('{{') ? token : JSON.stringify(token)}`
+      `    "${targetPath}": ${
+        shouldEmitUnquotedTemplateToken(targetPath, '')
+          ? token
+          : JSON.stringify(token)
+      }`
   );
-  return `{\n  "$set": {\n${lines.join(',\n')}\n  }\n}`;
+  return (
+    '{\n' +
+    `  "$set": {\n${lines.join(',\n')}\n  },\n` +
+    '  "$unset": {\n    "__noop__": ""\n  }\n' +
+    '}'
+  );
 };
 
 const buildIncomingPortMap = (config: PathConfig): Map<string, Set<string>> => {

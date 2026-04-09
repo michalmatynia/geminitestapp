@@ -22,6 +22,10 @@ import {
   extractExternalListingId,
   buildCanonicalTraderaListingUrl,
 } from './utils';
+import {
+  buildTraderaQuicklistExecutionSteps,
+  resolveTraderaCheckStatusExecutionStepsFromResult,
+} from '@/features/integrations/utils/tradera-execution-steps';
 import { resolveTraderaListingPriceForProduct } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
 import { buildTraderaListingDescription } from './description';
@@ -422,6 +426,7 @@ const buildSuccessMetadata = ({
   result,
   script,
   scriptInput,
+  action,
   browserMode,
   systemSettings,
   scriptSource,
@@ -431,6 +436,7 @@ const buildSuccessMetadata = ({
   result: Awaited<ReturnType<typeof runPlaywrightListingScript>>;
   script: string;
   scriptInput: Record<string, unknown>;
+  action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
   systemSettings: TraderaSystemSettings;
   scriptSource:
@@ -563,6 +569,15 @@ const buildSuccessMetadata = ({
     ...(typeof duplicateCandidateCount === 'number'
       ? {
           duplicateCandidateCount,
+        }
+      : {}),
+    ...(Array.isArray(result.logs) && result.logs.length > 0
+      ? {
+          executionSteps: buildTraderaQuicklistExecutionSteps({
+            action,
+            rawResult: result.rawResult,
+            logs: result.logs,
+          }),
         }
       : {}),
     imageInputSource: imageDiagnostics.imageInputSource,
@@ -719,6 +734,7 @@ export const runTraderaBrowserListingScripted = async ({
         result,
         script,
         scriptInput,
+        action,
         browserMode,
         systemSettings,
         scriptSource,
@@ -748,10 +764,40 @@ export const runTraderaBrowserListingScripted = async ({
 
     const imageSettleState =
       error instanceof Error ? parseImageSettleState(error.message) : null;
+    const rawMetadata =
+      error instanceof Error && 'meta' in error
+        ? toRecord((error as Error & { meta?: unknown }).meta)
+        : {};
+    const rawResult = toRecord(rawMetadata['rawResult']);
+    const rawLogs = Array.isArray(rawMetadata['logs'])
+      ? rawMetadata['logs'].filter((entry): entry is string => typeof entry === 'string')
+      : [];
+    const executionSteps = buildTraderaQuicklistExecutionSteps({
+      action,
+      rawResult,
+      logs: rawLogs,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
+    const sanitizedMetadata = {
+      ...rawMetadata,
+      ...(rawLogs.length > 0
+        ? {
+            logTail:
+              rawMetadata['logTail'] ??
+              rawLogs.slice(-12),
+          }
+        : {}),
+      ...(executionSteps.length > 0
+        ? {
+            executionSteps,
+          }
+        : {}),
+    };
+    delete sanitizedMetadata['logs'];
 
     if (isAppError(error)) {
       error.meta = {
-        ...error.meta,
+        ...sanitizedMetadata,
         scriptMode: 'scripted',
         scriptSource,
         ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
@@ -770,7 +816,7 @@ export const runTraderaBrowserListingScripted = async ({
     if (error instanceof Error) {
       const metadataCarrier = error as Error & { meta?: Record<string, unknown> };
       metadataCarrier.meta = {
-        ...(metadataCarrier.meta ?? {}),
+        ...sanitizedMetadata,
         scriptMode: 'scripted',
         scriptSource,
         ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
@@ -862,6 +908,7 @@ export const runTraderaBrowserCheckStatus = async ({
       : null;
   const checkStatusError =
     typeof result.rawResult['error'] === 'string' ? result.rawResult['error'] : null;
+  const executionSteps = resolveTraderaCheckStatusExecutionStepsFromResult(result.rawResult);
 
   return {
     externalListingId: result.externalListingId ?? listing.externalListingId ?? null,
@@ -871,6 +918,11 @@ export const runTraderaBrowserCheckStatus = async ({
       checkStatusError,
       requestedBrowserMode: browserMode,
       runId: result.runId,
+      ...(executionSteps.length > 0
+        ? {
+            executionSteps,
+          }
+        : {}),
     },
   };
 };

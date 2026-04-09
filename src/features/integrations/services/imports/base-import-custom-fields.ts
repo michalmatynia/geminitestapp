@@ -421,7 +421,7 @@ export const ensureBaseMarketplaceExclusionCustomField = async (input: {
     nextOptions.length !== existing.options.length ||
     nextOptions.some((option, index) => {
       const current = existing.options[index];
-      return !current || current.id !== option.id || current.label !== option.label;
+      return current?.id !== option.id || current?.label !== option.label;
     });
 
   if (!optionsChanged) {

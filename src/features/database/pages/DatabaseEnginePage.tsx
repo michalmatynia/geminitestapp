@@ -51,14 +51,12 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
     mongoSourceState,
     operationsJobs,
     redisOverview,
-    isSwitchingMongoSource,
     isSyncingMongoSources,
   } = useDatabaseEngineStateContext();
   const {
     updatePolicy,
     updateCollectionRoute,
     updateOperationControls,
-    switchMongoSource,
     syncMongoSources,
   } = useDatabaseEngineActionsContext();
   const activeMongoSource = mongoSourceState?.activeSource ?? null;
@@ -67,6 +65,27 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
     ? [mongoSourceState.local, mongoSourceState.cloud]
     : [];
   const manualFullSyncEnabled = operationControls.allowManualFullSync;
+  const nextMongoSource =
+    activeMongoSource === 'local'
+      ? 'cloud'
+      : activeMongoSource === 'cloud'
+        ? 'local'
+        : null;
+  const activeMongoSourceLabel =
+    activeMongoSource === 'local'
+      ? 'Local Database'
+      : activeMongoSource === 'cloud'
+        ? 'Cloud Database'
+        : 'No active MongoDB source';
+  const localMongoUriExample = mongoSourceState?.local.maskedUri ?? 'mongodb://localhost:27017/app_local';
+  const localMongoDbExample = mongoSourceState?.local.dbName ?? 'app_local';
+  const cloudMongoUriExample =
+    mongoSourceState?.cloud.maskedUri ?? 'mongodb+srv://cluster.example/app_cloud';
+  const cloudMongoDbExample = mongoSourceState?.cloud.dbName ?? 'app_cloud';
+  const mongoSourceTip =
+    nextMongoSource !== null
+      ? `To switch, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource} in .env and restart the server.`
+      : 'Add MONGODB_ACTIVE_SOURCE_DEFAULT=local or MONGODB_ACTIVE_SOURCE_DEFAULT=cloud to .env, then restart the server.';
 
   const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(
     () => [
@@ -145,6 +164,58 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
       <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
         <FormSection title='Mongo Source' className='lg:col-span-2 p-6'>
           <div className='space-y-4'>
+            <Card className='border-border/60 bg-card/35 p-4'>
+              <div className='flex flex-wrap items-start justify-between gap-4'>
+                <div className='space-y-2'>
+                  <div className='flex items-center gap-2'>
+                    {activeMongoSource === 'cloud' ? (
+                      <CloudIcon className='size-4 text-sky-200' />
+                    ) : (
+                      <HardDriveIcon className='size-4 text-sky-200' />
+                    )}
+                    <p className='text-xs uppercase tracking-[0.24em] text-muted-foreground'>
+                      Current Database
+                    </p>
+                  </div>
+                  <p className='text-lg font-semibold text-white'>{activeMongoSourceLabel}</p>
+                  <p className='text-sm text-muted-foreground'>{mongoSourceTip}</p>
+                </div>
+                <StatusBadge
+                  status={
+                    activeMongoSource
+                      ? `Connected to ${activeMongoSourceLabel}`
+                      : 'No MongoDB source configured'
+                  }
+                  variant={activeMongoSource ? 'active' : 'error'}
+                  size='sm'
+                />
+              </div>
+            </Card>
+
+            <Card className='border-border/60 bg-card/25 p-4'>
+              <div className='space-y-3'>
+                <div>
+                  <p className='text-xs uppercase tracking-[0.24em] text-muted-foreground'>
+                    .env Example
+                  </p>
+                  <p className='text-sm text-muted-foreground'>
+                    Keep both targets in `.env`, then change only
+                    {' '}`MONGODB_ACTIVE_SOURCE_DEFAULT` and restart.
+                  </p>
+                </div>
+                <pre className='overflow-x-auto rounded-md border border-white/10 bg-black/20 p-3 font-mono text-xs text-gray-200'>
+{`MONGODB_LOCAL_URI=${localMongoUriExample}
+MONGODB_LOCAL_DB=${localMongoDbExample}
+MONGODB_CLOUD_URI=${cloudMongoUriExample}
+MONGODB_CLOUD_DB=${cloudMongoDbExample}
+MONGODB_ACTIVE_SOURCE_DEFAULT=${activeMongoSource ?? 'local'}
+
+# To switch:
+MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
+                </pre>
+              </div>
+            </Card>
+
             <div className='flex flex-wrap items-center gap-2'>
               <StatusBadge
                 status={
@@ -157,11 +228,15 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
                 className='font-medium capitalize'
               />
               <Badge variant='outline' className='border-white/10 text-gray-300'>
-                Source file: {mongoSourceState?.sourceFilePath ?? 'Not available'}
+                Controlled by `.env`: MONGODB_ACTIVE_SOURCE_DEFAULT
+              </Badge>
+              <Badge variant='outline' className='border-white/10 text-gray-300'>
+                Restart required after `.env` changes
               </Badge>
               {!mongoSourceState?.canSwitch ? (
                 <Badge variant='outline' className='border-amber-400/30 text-amber-200'>
-                  Configure both local and cloud URIs to enable one-click switching.
+                  Configure both local and cloud URIs and set MONGODB_ACTIVE_SOURCE_DEFAULT in
+                  `.env` to use dual-source mode.
                 </Badge>
               ) : null}
               {!manualFullSyncEnabled ? (
@@ -287,31 +362,25 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
 
                     <div className='space-y-1 text-xs text-muted-foreground'>
                       <p>Database: {entry.dbName ?? 'Not configured'}</p>
-                      <p>{entry.usesLegacyEnv ? 'Using legacy MONGODB_URI fallback.' : 'Using dedicated source env.'}</p>
+                      <p>
+                        {entry.usesLegacyEnv
+                          ? 'Using legacy MONGODB_URI fallback.'
+                          : 'Using dedicated source env.'}
+                      </p>
                       {entry.reachable === true ? <p>Connection: Reachable</p> : null}
                       {entry.reachable === false ? (
-                        <p>Connection error: {entry.healthError ?? 'Unable to reach MongoDB target.'}</p>
+                        <p>
+                          Connection error:{' '}
+                          {entry.healthError ?? 'Unable to reach MongoDB target.'}
+                        </p>
                       ) : null}
                     </div>
 
-                    <Button
-                      type='button'
-                      size='sm'
-                      className='w-full'
-                      variant={entry.isActive ? 'secondary' : 'outline'}
-                      disabled={
-                        !entry.configured || entry.isActive || isSwitchingMongoSource
-                      }
-                      onClick={() => {
-                        void switchMongoSource(entry.source);
-                      }}
-                    >
+                    <div className='rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-muted-foreground'>
                       {entry.isActive
-                        ? 'Currently Active'
-                        : isSwitchingMongoSource
-                          ? 'Switching...'
-                          : `Switch to ${entry.source}`}
-                    </Button>
+                        ? 'This target is active for the current server process.'
+                        : `To activate this target, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=${entry.source} in .env and restart the server.`}
+                    </div>
                   </Card>
                 );
               })}

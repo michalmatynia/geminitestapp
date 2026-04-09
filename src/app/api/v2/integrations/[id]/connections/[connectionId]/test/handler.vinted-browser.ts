@@ -68,8 +68,8 @@ export const handleVintedBrowserTest = async (
       } else {
         pushStep('Loading session', 'failed', 'Stored session has invalid shape');
       }
-    } catch (error) {
-      void ErrorSystem.captureException(error);
+    } catch (_error) {
+      void ErrorSystem.captureException(_error);
       pushStep('Loading session', 'failed', 'Failed to load session');
     }
   }
@@ -78,8 +78,8 @@ export const handleVintedBrowserTest = async (
   let resolvedPlaywrightSettings;
   try {
     resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettings(connection);
-  } catch (error) {
-    void ErrorSystem.captureException(error);
+  } catch (_error) {
+    void ErrorSystem.captureException(_error);
     return fail('Loading Playwright settings', 'Failed to resolve Playwright settings');
   }
   pushStep('Loading Playwright settings', 'ok', 'Resolved browser runtime settings');
@@ -178,7 +178,7 @@ export const handleVintedBrowserTest = async (
       failWithDebug,
     } = createVintedBrowserTestUtils({
       page: activePage,
-      connectionId: (connection as any).id as string,
+      connectionId: connection.id,
       fail,
     });
     /** Navigate to a Vinted URL, tolerating ERR_ABORTED which happens during Vinted's redirect chain (GDPR, locale, OAuth). */
@@ -305,7 +305,7 @@ export const handleVintedBrowserTest = async (
     pushStep('Saving session', 'pending', 'Storing Vinted Playwright session');
     try {
       const storageStateResult = await page.context().storageState();
-      await (repo as any).updateConnection((connection as any).id as string, {
+      await repo.updateConnection(connection.id, {
         playwrightStorageState: encryptSecret(JSON.stringify(storageStateResult)),
         playwrightStorageStateUpdatedAt: new Date(),
       });

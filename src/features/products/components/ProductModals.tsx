@@ -118,7 +118,6 @@ function ProductFormModalBody(props: {
   const { product, draft, getValues } = useProductFormCore();
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
   const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
-  const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-form';
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
     return buildTriggeredProductEntityJson({
@@ -160,7 +159,6 @@ function ProductFormModalBody(props: {
         <FileManager onSelectFile={handleMultiFileSelect} />
       ) : (
         <ProductForm
-          key={formInstanceKey}
           submitButtonText={submitButtonText}
           validatorSessionKey={validatorSessionKey}
           {...(validationInstanceScopeOverride ? { validationInstanceScopeOverride } : {})}
@@ -466,9 +464,7 @@ export function ProductModals(): React.JSX.Element {
   const showEditSkeleton = false;
   const isEditOpen = Boolean(editingProduct);
 
-  const createProviderKey = createDraft
-    ? ['create', createDraft.id, createDraft.updatedAt ?? ''].join(':')
-    : 'create';
+  const createProviderKey = createDraft ? ['create', createDraft.id].join(':') : 'create';
   // Include hydration state in the key so the form remounts with full data
   // (list-level data may lack descriptions, etc.)
   const editProviderKey = editingProduct

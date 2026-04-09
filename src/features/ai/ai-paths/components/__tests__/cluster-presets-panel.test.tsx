@@ -66,6 +66,9 @@ vi.mock('@/shared/ui/primitives.public', () => ({
     <textarea {...props} />
   ),
   Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
   SimpleSettingsList: ({
     items,
     emptyMessage,

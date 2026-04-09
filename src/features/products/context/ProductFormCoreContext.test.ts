@@ -139,6 +139,15 @@ function DescriptionProbe(): React.JSX.Element {
   );
 }
 
+function NameProbe(): React.JSX.Element {
+  const { methods } = useProductFormCoreState();
+  const name = useWatch({
+    control: methods.control,
+    name: 'name_en',
+  });
+  return createElement('div', { 'data-testid': 'name-en' }, name ?? 'missing');
+}
+
 function DirtyDescriptionProbe(): React.JSX.Element {
   const { methods } = useProductFormCoreState();
   const description = useWatch({
@@ -163,6 +172,31 @@ function DirtyDescriptionProbe(): React.JSX.Element {
       { 'data-testid': 'description-en' },
       description ?? 'missing'
     )
+  );
+}
+
+function DirtyNameProbe(): React.JSX.Element {
+  const { methods } = useProductFormCoreState();
+  const name = useWatch({
+    control: methods.control,
+    name: 'name_en',
+  });
+  return createElement(
+    'div',
+    null,
+    createElement(
+      'button',
+      {
+        type: 'button',
+        onClick: () => {
+          methods.setValue('name_en', 'Scout Regiment | 4 cm | Metal | Anime Pin | Lo', {
+            shouldDirty: true,
+          });
+        },
+      },
+      'Dirty name'
+    ),
+    createElement('div', { 'data-testid': 'name-en' }, name ?? 'missing')
   );
 }
 
@@ -250,6 +284,86 @@ describe('ProductFormCoreProvider', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('description-en')).toHaveTextContent('Local draft');
+    });
+  });
+
+  it('keeps dirty english product names when a draft refreshes with the same saved values', async () => {
+    const baseDraft = createDraft({
+      name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Lore',
+      updatedAt: '2026-03-27T10:00:00.000Z',
+    });
+
+    const { rerender } = render(
+      createElement(
+        ProductFormCoreProvider,
+        { draft: baseDraft },
+        createElement(DirtyNameProbe)
+      )
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dirty name' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('name-en')).toHaveTextContent(
+        'Scout Regiment | 4 cm | Metal | Anime Pin | Lo'
+      );
+    });
+
+    rerender(
+      createElement(
+        ProductFormCoreProvider,
+        {
+          draft: {
+            ...baseDraft,
+            updatedAt: '2026-03-27T11:00:00.000Z',
+          },
+        },
+        createElement(DirtyNameProbe)
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('name-en')).toHaveTextContent(
+        'Scout Regiment | 4 cm | Metal | Anime Pin | Lo'
+      );
+    });
+  });
+
+  it('refreshes non-dirty english product names when the draft content actually changes', async () => {
+    const { rerender } = render(
+      createElement(
+        ProductFormCoreProvider,
+        {
+          draft: createDraft({
+            name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Lore',
+            updatedAt: '2026-03-27T10:00:00.000Z',
+          }),
+        },
+        createElement(NameProbe)
+      )
+    );
+
+    expect(screen.getByTestId('name-en')).toHaveTextContent(
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Lore'
+    );
+
+    rerender(
+      createElement(
+        ProductFormCoreProvider,
+        {
+          draft: createDraft({
+            name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+            updatedAt: '2026-03-27T11:00:00.000Z',
+          }),
+        },
+        createElement(NameProbe)
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('name-en')).toHaveTextContent(
+        'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan'
+      );
     });
   });
 });

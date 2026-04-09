@@ -35,6 +35,14 @@ vi.mock('@/shared/ui/primitives.public', () => ({
       {children}
     </div>
   ),
+  Alert: ({
+    children,
+  }: {
+    children: React.ReactNode;
+  }): React.JSX.Element => <div data-testid='alert'>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: ({
     status,
     variant,
@@ -42,11 +50,6 @@ vi.mock('@/shared/ui/primitives.public', () => ({
     status: React.ReactNode;
     variant?: string;
   }): React.JSX.Element => <span>{`${String(status)}:${variant ?? 'none'}`}</span>,
-  Alert: ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }): React.JSX.Element => <div data-testid='alert'>{children}</div>,
 }));
 
 import { RunTimeline } from '../run-timeline';

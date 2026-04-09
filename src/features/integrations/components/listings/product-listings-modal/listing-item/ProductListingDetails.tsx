@@ -12,11 +12,16 @@ import {
   useProductListingsData,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
+import type {
+  ProductListingExportEvent,
+  TraderaExecutionStep,
+} from '@/shared/contracts/integrations/listings';
 import { StatusBadge, JsonViewer } from '@/shared/ui/data-display.public';
 import { Card, Button } from '@/shared/ui/primitives.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { Hint, ExternalLink } from '@/shared/ui/forms-and-actions.public';
+import { resolveTraderaExecutionStepsFromMarketplaceData } from '@/features/integrations/utils/tradera-execution-steps';
+import { TraderaExecutionSteps } from '@/features/integrations/components/listings/TraderaExecutionSteps';
 
 import { resolveIntegrationDisplayName } from '../../product-listings-labels';
 import type { ProductListingWithDetailsProps } from './types';
@@ -114,6 +119,8 @@ const resolveTraderaExecutionSummary = (
   imageSettleState: unknown;
   rawResult: unknown;
   lastSyncedAt: string | null;
+  lastAction: string | null;
+  executionSteps: TraderaExecutionStep[];
 } => {
   const marketplaceRecord = toRecord(marketplaceData);
   const traderaData = toRecord(marketplaceRecord['tradera']);
@@ -121,6 +128,7 @@ const resolveTraderaExecutionSummary = (
   const pendingExecution = toRecord(traderaData['pendingExecution']);
   const metadata = toRecord(lastExecution['metadata']);
   const playwrightSettings = toRecord(metadata['playwrightSettings']);
+  const traderaExecutionTrace = resolveTraderaExecutionStepsFromMarketplaceData(marketplaceData);
 
   return {
     executedAt: readString(lastExecution['executedAt']),
@@ -178,6 +186,8 @@ const resolveTraderaExecutionSummary = (
     imageSettleState: metadata['imageSettleState'] ?? null,
     rawResult: metadata['rawResult'] ?? null,
     lastSyncedAt: readString(traderaData['lastSyncedAt']),
+    lastAction: traderaExecutionTrace.action,
+    executionSteps: traderaExecutionTrace.steps,
   };
 };
 
@@ -863,6 +873,19 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
           )}
         </div>
       </div>
+
+      {isTraderaListing && traderaExecution.executionSteps.length > 0 ? (
+        <div className='mt-4'>
+          <TraderaExecutionSteps
+            title={
+              traderaExecution.lastAction === 'check_status'
+                ? 'Status check steps'
+                : 'Execution steps'
+            }
+            steps={traderaExecution.executionSteps}
+          />
+        </div>
+      ) : null}
 
       {isTraderaListing && traderaExecution.rawResult ? (
         <div className='mt-4'>

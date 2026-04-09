@@ -312,6 +312,24 @@ export default function ProductForm({
   );
 
   useEffect(() => {
+    const currentCategoryValue = methods.getValues('categoryId');
+    const normalizedCurrentCategoryId =
+      typeof currentCategoryValue === 'string' ? currentCategoryValue.trim() : '';
+    const normalizedSelectedCategoryId =
+      typeof selectedCategoryId === 'string' ? selectedCategoryId.trim() : '';
+
+    if (normalizedCurrentCategoryId === normalizedSelectedCategoryId) {
+      return;
+    }
+
+    methods.setValue('categoryId', normalizedSelectedCategoryId, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  }, [methods, selectedCategoryId]);
+
+  useEffect(() => {
     if (product || !draft?.id || !selectedCategoryId) return;
 
     const category = categories.find((entry) => entry.id === selectedCategoryId);

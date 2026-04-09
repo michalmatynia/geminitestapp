@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { readFileSync } from 'fs';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -13,14 +12,8 @@ import { databaseEngineMongoLastSyncSchema } from '@/shared/contracts/database';
 import { configurationError } from '@/shared/errors/app-error';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
-const MONGODB_ACTIVE_SOURCE_FILE_ENV = 'MONGODB_ACTIVE_SOURCE_FILE';
 const MONGODB_ACTIVE_SOURCE_DEFAULT_ENV = 'MONGODB_ACTIVE_SOURCE_DEFAULT';
-const DEFAULT_MONGODB_SOURCE_FILE_PATH = path.join(
-  process.cwd(),
-  'mongo',
-  'runtime',
-  'active-source.json'
-);
+const DEFAULT_MONGODB_LAST_SYNC_FILE_PATH = path.join(process.cwd(), 'mongo', 'runtime', 'last-sync.json');
 const INITIAL_MONGODB_URI = process.env['MONGODB_URI']?.trim() ?? '';
 const INITIAL_MONGODB_DB = process.env['MONGODB_DB']?.trim() ?? 'app';
 
@@ -40,14 +33,7 @@ type MongoSourceReachability = {
 const normalizeMongoSource = (value: unknown): MongoSource | null =>
   value === 'local' || value === 'cloud' ? value : null;
 
-const getMongoSourceFilePath = (): string =>
-  process.env[MONGODB_ACTIVE_SOURCE_FILE_ENV]?.trim() || DEFAULT_MONGODB_SOURCE_FILE_PATH;
-
-const getMongoSourceLastSyncFilePath = (): string => {
-  const sourceFilePath = getMongoSourceFilePath();
-  const parsed = path.parse(sourceFilePath);
-  return path.join(parsed.dir, `${parsed.name}.last-sync.json`);
-};
+const getMongoSourceLastSyncFilePath = (): string => DEFAULT_MONGODB_LAST_SYNC_FILE_PATH;
 
 const getExplicitMongoUri = (source: MongoSource): string => {
   const key = source === 'local' ? 'MONGODB_LOCAL_URI' : 'MONGODB_CLOUD_URI';
@@ -166,26 +152,6 @@ const getMongoSourceConfig = (source: MongoSource): MongoSourceConfig => {
   };
 };
 
-const readStoredMongoSourceSync = (): MongoSource | null => {
-  try {
-    const raw = readFileSync(getMongoSourceFilePath(), 'utf8');
-    const parsed = JSON.parse(raw) as { source?: unknown } | null;
-    return normalizeMongoSource(parsed?.source);
-  } catch {
-    return null;
-  }
-};
-
-const readStoredMongoSource = async (): Promise<MongoSource | null> => {
-  try {
-    const raw = await fs.readFile(getMongoSourceFilePath(), 'utf8');
-    const parsed = JSON.parse(raw) as { source?: unknown } | null;
-    return normalizeMongoSource(parsed?.source);
-  } catch {
-    return null;
-  }
-};
-
 const readMongoSourceLastSync = async (): Promise<DatabaseEngineMongoLastSync | null> => {
   try {
     const raw = await fs.readFile(getMongoSourceLastSyncFilePath(), 'utf8');
@@ -253,13 +219,10 @@ const applyMongoSourceEnvSnapshot = (source: MongoSource | null): void => {
   process.env['MONGODB_ACTIVE_SOURCE'] = source;
 };
 
-const bootSource = resolveConfiguredMongoSource(readStoredMongoSourceSync()) ?? resolveDefaultMongoSource();
+const bootSource = resolveDefaultMongoSource();
 applyMongoSourceEnvSnapshot(bootSource);
 
 export const getActiveMongoSource = async (): Promise<MongoSource | null> => {
-  const storedSource = await readStoredMongoSource();
-  const resolvedStoredSource = resolveConfiguredMongoSource(storedSource);
-  if (resolvedStoredSource) return resolvedStoredSource;
   return resolveDefaultMongoSource();
 };
 
@@ -291,32 +254,6 @@ export const applyActiveMongoSourceEnv = async (preferredSource?: MongoSource): 
   return config;
 };
 
-export const setActiveMongoSource = async (source: MongoSource): Promise<void> => {
-  const config = getMongoSourceConfig(source);
-  if (!config.configured || !config.uri || !config.dbName) {
-    throw configurationError(
-      `MongoDB source "${source}" is not configured. Set the corresponding URI and database name.`
-    );
-  }
-
-  const filePath = getMongoSourceFilePath();
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(
-    filePath,
-    JSON.stringify(
-      {
-        source,
-        updatedAt: new Date().toISOString(),
-      },
-      null,
-      2
-    ) + '\n',
-    'utf8'
-  );
-
-  await applyActiveMongoSourceEnv(source);
-};
-
 export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceState> => {
   const activeSource = await getActiveMongoSource();
   const defaultSource = resolveDefaultMongoSource();
@@ -338,7 +275,6 @@ export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceSt
     timestamp: new Date().toISOString(),
     activeSource,
     defaultSource,
-    sourceFilePath: getMongoSourceFilePath(),
     lastSync,
     local: {
       source: 'local',
@@ -393,7 +329,6 @@ export const recordMongoSourceSync = async (
 
 export const __testOnly = {
   getMongoSourceConfig,
-  getMongoSourceFilePath,
   getMongoSourceLastSyncFilePath,
   isLikelyLocalMongoUri,
   maskMongoUri,

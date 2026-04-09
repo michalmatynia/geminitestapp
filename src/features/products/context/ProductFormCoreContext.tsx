@@ -183,6 +183,9 @@ export function ProductFormCoreProvider({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const hasAppliedInitialDefaultsRef = useRef(false);
+  const latestDefaultValuesRef = useRef(defaultValues);
+
+  latestDefaultValuesRef.current = defaultValues;
 
   useEffect(() => {
     if (!hasAppliedInitialDefaultsRef.current) {
@@ -190,10 +193,10 @@ export function ProductFormCoreProvider({
       return;
     }
 
-    methods.reset(defaultValues, {
+    methods.reset(latestDefaultValuesRef.current, {
       keepDirtyValues: true,
     });
-  }, [defaultValues, defaultValuesSignature, methods]);
+  }, [defaultValuesSignature, methods]);
 
   const updateHandleSubmit = useCallback((fn: (e?: BaseSyntheticEvent) => Promise<void>): void => {
     setHandleSubmitFn(() => fn);

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   executeTraderaMassExportMock,
   executeVintedMassExportMock,
+  traderaStatusCheckModalMock,
   useBulkConvertImagesToBase64Mock,
   useProductListFiltersContextMock,
   useProductListSelectionContextMock,
@@ -13,6 +14,7 @@ const {
 } = vi.hoisted(() => ({
   executeTraderaMassExportMock: vi.fn(),
   executeVintedMassExportMock: vi.fn(),
+  traderaStatusCheckModalMock: vi.fn(),
   useBulkConvertImagesToBase64Mock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
   useProductListSelectionContextMock: vi.fn(),
@@ -40,6 +42,13 @@ vi.mock('@/features/products/hooks/product-list/useTraderaMassQuickExport', () =
 
 vi.mock('@/features/products/hooks/product-list/useVintedMassQuickExport', () => ({
   useVintedMassQuickExport: () => useVintedMassQuickExportMock(),
+}));
+
+vi.mock('@/features/integrations/components/listings/TraderaStatusCheckModal', () => ({
+  TraderaStatusCheckModal: (props: unknown) => {
+    traderaStatusCheckModalMock(props);
+    return null;
+  },
 }));
 
 vi.mock('@/shared/ui/selection-bar', () => ({
@@ -189,5 +198,19 @@ describe('ProductSelectionActions', () => {
     render(<ProductSelectionActions />);
 
     expect(screen.getByRole('button', { name: 'Quick Export to Vinted' })).toBeDisabled();
+  });
+
+  it('opens the Tradera status check modal with the selected products', () => {
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check Tradera Listing Status' }));
+
+    expect(traderaStatusCheckModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+        productIds: ['product-1', 'product-2'],
+        products: [{ id: 'product-1' }, { id: 'product-2' }],
+      })
+    );
   });
 });

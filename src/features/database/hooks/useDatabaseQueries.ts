@@ -9,11 +9,9 @@ import type {
   DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
   DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
-  DatabaseEngineSetMongoSourceResponse as DatabaseEngineSetMongoSourceResponsePayload,
   DatabaseEngineStatus as DatabaseEngineStatusResponse,
   DatabaseRestoreResponse,
   MultiSchemaResponse,
-  MongoSource,
   RedisOverview as RedisOverviewResponse,
   CrudRequest,
   CrudResult,
@@ -57,7 +55,6 @@ import {
   fetchRedisOverview,
   restoreDatabaseBackup,
   restoreJsonBackup,
-  setDatabaseEngineMongoSource,
   syncDatabaseEngineMongoSource,
   uploadDatabaseBackup,
 } from '../api';
@@ -417,32 +414,6 @@ export function useDatabaseEngineProviderPreview(
 
       tags: ['database', 'engine', 'provider-preview'],
       description: 'Polls system databases engine provider preview.'},
-  });
-}
-
-export function useSetDatabaseEngineMongoSourceMutation(): MutationResult<
-  DatabaseEngineSetMongoSourceResponsePayload,
-  MongoSource
-> {
-  const mutationKey = dbKeys.all;
-  return createUpdateMutationV2({
-    mutationFn: (source: MongoSource) => setDatabaseEngineMongoSource(source),
-    mutationKey,
-    meta: {
-      source: 'database.hooks.useSetDatabaseEngineMongoSourceMutation',
-      operation: 'update',
-      resource: 'system.databases.engine-mongo-source',
-      domain: 'database',
-      mutationKey,
-      tags: ['database', 'engine', 'mongo-source', 'update'],
-      description: 'Switches the active MongoDB source.',
-    },
-    invalidateKeys: [
-      dbKeys.engineMongoSource(),
-      dbKeys.engineStatus(),
-      dbKeys.engineProviderPreview({ collections: [] }),
-      dbKeys.schema({ provider: 'all', includeCounts: true }),
-    ],
   });
 }
 

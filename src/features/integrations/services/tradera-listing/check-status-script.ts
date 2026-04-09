@@ -14,9 +14,43 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
 }) {
   const listingUrl = input?.listingUrl;
   const externalListingId = input?.externalListingId ?? null;
+  const executionSteps = [
+    {
+      id: 'open_listing',
+      label: 'Open listing page',
+      status: 'pending',
+      message: null,
+    },
+    {
+      id: 'accept_cookies',
+      label: 'Handle cookie consent',
+      status: 'pending',
+      message: null,
+    },
+    {
+      id: 'detect_status',
+      label: 'Detect listing status',
+      status: 'pending',
+      message: null,
+    },
+  ];
+  const updateStep = (id, status, message) => {
+    const step = executionSteps.find((candidate) => candidate.id === id);
+    if (!step) return;
+    step.status = status;
+    step.message = typeof message === 'string' && message.trim() ? message.trim() : null;
+  };
 
   if (!listingUrl) {
-    emit('result', { publishVerified: false, status: 'unknown', error: 'No listing URL provided' });
+    updateStep('open_listing', 'error', 'No listing URL was provided.');
+    updateStep('accept_cookies', 'skipped', 'Skipped because the listing page could not be opened.');
+    updateStep('detect_status', 'skipped', 'Skipped because the listing page could not be opened.');
+    emit('result', {
+      publishVerified: false,
+      status: 'unknown',
+      error: 'No listing URL provided',
+      executionSteps,
+    });
     return;
   }
 
@@ -31,18 +65,33 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
   ];
 
   const acceptCookies = async () => {
+    let accepted = false;
     for (const sel of COOKIE_SELECTORS) {
       try {
         const btn = page.locator(sel).first();
         if (await btn.isVisible({ timeout: 1000 }).catch(() => false)) {
           await btn.click({ timeout: 2000 }).catch(() => undefined);
+          accepted = true;
           break;
         }
       } catch { /* ignore */ }
     }
+    updateStep(
+      'accept_cookies',
+      'success',
+      accepted
+        ? 'Accepted the visible cookie consent prompt.'
+        : 'No blocking cookie consent prompt was detected.'
+    );
+    if (log) {
+      log('tradera.check_status.cookies_handled', {
+        accepted,
+      });
+    }
   };
 
   try {
+    if (log) log('tradera.check_status.start', { listingUrl, externalListingId });
     const response = await page.goto(listingUrl, {
       waitUntil: 'domcontentloaded',
       timeout: 30000,
@@ -50,9 +99,31 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
 
     const finalUrl = page.url();
     const statusCode = response?.status() ?? 200;
+    updateStep('open_listing', 'success', 'Listing page opened successfully.');
+    if (log) {
+      log('tradera.check_status.page_loaded', {
+        finalUrl,
+        statusCode,
+      });
+    }
 
     if (statusCode === 404) {
-      emit('result', { publishVerified: false, listingUrl: finalUrl, externalListingId, status: 'removed' });
+      updateStep('accept_cookies', 'skipped', 'Skipped because Tradera returned 404.');
+      updateStep('detect_status', 'success', 'Tradera returned 404, so the listing was treated as removed.');
+      if (log) {
+        log('tradera.check_status.status_detected', {
+          status: 'removed',
+          reason: 'http-404',
+          finalUrl,
+        });
+      }
+      emit('result', {
+        publishVerified: false,
+        listingUrl: finalUrl,
+        externalListingId,
+        status: 'removed',
+        executionSteps,
+      });
       return;
     }
 
@@ -116,17 +187,40 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
       status = 'ended';
     }
 
-    if (log) log('info', '[check-status] url=' + finalUrl + ' status=' + status);
+    updateStep('detect_status', 'success', 'Resolved listing status as ' + status + '.');
+    if (log) {
+      log('tradera.check_status.status_detected', {
+        status,
+        finalUrl,
+      });
+      log('info', '[check-status] url=' + finalUrl + ' status=' + status);
+    }
 
     emit('result', {
       publishVerified: false,
       listingUrl: finalUrl,
       externalListingId,
       status,
+      executionSteps,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (log) log('error', '[check-status] error: ' + msg);
-    emit('result', { publishVerified: false, status: 'unknown', error: msg });
+    if (executionSteps[0]?.status === 'pending') {
+      updateStep('open_listing', 'error', msg);
+      updateStep('accept_cookies', 'skipped', 'Skipped because the listing page could not be opened.');
+      updateStep('detect_status', 'skipped', 'Skipped because the listing page could not be opened.');
+    } else {
+      if (executionSteps[1]?.status === 'pending') {
+        updateStep('accept_cookies', 'error', msg);
+      }
+      if (executionSteps[2]?.status === 'pending') {
+        updateStep('detect_status', 'error', msg);
+      }
+    }
+    if (log) {
+      log('tradera.check_status.failed', { error: msg });
+      log('error', '[check-status] error: ' + msg);
+    }
+    emit('result', { publishVerified: false, status: 'unknown', error: msg, executionSteps });
   }
 }`;

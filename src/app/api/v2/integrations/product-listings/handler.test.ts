@@ -116,4 +116,42 @@ describe('integration product listings handler', () => {
       },
     });
   });
+
+  it('surfaces processing while a Tradera live status check is pending', async () => {
+    getListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-active',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+        marketplaceData: {
+          tradera: {
+            pendingExecution: {
+              action: 'check_status',
+              requestId: 'job-check-1',
+              queuedAt: '2026-04-02T18:00:00.000Z',
+            },
+          },
+        },
+      },
+    ]);
+
+    const response = await GET_handler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
+      ),
+      {
+        query: { productIds: ['product-1'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        tradera: 'processing',
+      },
+    });
+  });
 });

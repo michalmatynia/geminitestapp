@@ -86,6 +86,10 @@ vi.mock('@/features/products/context/ProductFormImageContext', () => ({
   }),
 }));
 
+vi.mock('@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource', () => ({
+  ProductLeafCategoriesContextRegistrySource: () => null,
+}));
+
 vi.mock('@/features/products/hooks/editingProductHydration', () => ({
   isEditingProductHydrated: vi.fn((p) => p?._isHydrated),
   markEditingProductHydrated: vi.fn((p) => ({ ...p, _isHydrated: true, description: 'full description' })),
@@ -554,6 +558,64 @@ describe('ProductModals', () => {
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
           editingProduct: markEditingProductHydrated(product),
+        })
+      );
+      rerender(<ProductModals />);
+
+      const secondSessionId = productFormProviderPropsMock.mock.calls[1][0].validatorSessionKey;
+      expect(firstSessionId).toBe(secondSessionId);
+    });
+
+    it('keeps the same create-from-draft provider instance after the draft refreshes updatedAt', () => {
+      const draft = { id: 'draft-1', name: 'Draft 1', updatedAt: '2026-03-27T10:00:00Z' };
+
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: draft,
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      const { rerender } = render(<ProductModals />);
+
+      const firstInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
+
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { ...draft, updatedAt: '2026-03-27T11:00:00Z' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      rerender(<ProductModals />);
+
+      const secondInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
+      expect(firstInstanceId).toBe(secondInstanceId);
+    });
+
+    it('keeps the same validator session while the create-from-draft source refreshes updatedAt', () => {
+      const draft = { id: 'draft-1', name: 'Draft 1', updatedAt: '2026-03-27T10:00:00Z' };
+
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: draft,
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      const { rerender } = render(<ProductModals />);
+
+      const firstSessionId = productFormProviderPropsMock.mock.calls[0][0].validatorSessionKey;
+
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { ...draft, updatedAt: '2026-03-27T11:00:00Z' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         })
       );
       rerender(<ProductModals />);

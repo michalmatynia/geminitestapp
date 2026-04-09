@@ -1,6 +1,8 @@
 /**
  * @vitest-environment node
  */
+import path from 'path';
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -23,7 +25,6 @@ const ORIGINAL_ENV = {
   MONGODB_CLOUD_URI: process.env['MONGODB_CLOUD_URI'],
   MONGODB_CLOUD_DB: process.env['MONGODB_CLOUD_DB'],
   MONGODB_ACTIVE_SOURCE_DEFAULT: process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'],
-  MONGODB_ACTIVE_SOURCE_FILE: process.env['MONGODB_ACTIVE_SOURCE_FILE'],
 };
 
 describe('mongo-source', () => {
@@ -41,7 +42,6 @@ describe('mongo-source', () => {
     process.env['MONGODB_CLOUD_URI'] = 'mongodb+srv://cluster.example/app_cloud';
     process.env['MONGODB_CLOUD_DB'] = 'app_cloud';
     process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
-    process.env['MONGODB_ACTIVE_SOURCE_FILE'] = '/tmp/geminitestapp-mongo-source-test.json';
   });
 
   afterEach(async () => {
@@ -54,8 +54,9 @@ describe('mongo-source', () => {
     });
 
     const { promises: fs } = await import('fs');
-    await fs.unlink('/tmp/geminitestapp-mongo-source-test.json').catch(() => undefined);
-    await fs.unlink('/tmp/geminitestapp-mongo-source-test.last-sync.json').catch(() => undefined);
+    await fs
+      .unlink(path.join(process.cwd(), 'mongo', 'runtime', 'last-sync.json'))
+      .catch(() => undefined);
   });
 
   it('resolves explicit local and cloud MongoDB sources', async () => {
@@ -78,10 +79,10 @@ describe('mongo-source', () => {
     expect(mocks.getMongoDb).not.toHaveBeenCalled();
   });
 
-  it('persists and applies the selected active Mongo source', async () => {
-    const module = await import('./mongo-source');
+  it('applies the env-selected active Mongo source', async () => {
+    process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
 
-    await module.setActiveMongoSource('cloud');
+    const module = await import('./mongo-source');
     const state = await module.getMongoSourceState();
 
     expect(process.env['MONGODB_URI']).toBe('mongodb+srv://cluster.example/app_cloud');

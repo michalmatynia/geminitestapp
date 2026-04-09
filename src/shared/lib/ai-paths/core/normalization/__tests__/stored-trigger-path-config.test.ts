@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import {
+  getStarterWorkflowTemplateById,
+  materializeStarterWorkflowPathConfig,
+} from '@/shared/lib/ai-paths/core/starter-workflows';
 
 const { mockResolvePortablePathInput } = vi.hoisted(() => ({
   mockResolvePortablePathInput: vi.fn(),
@@ -106,5 +110,55 @@ describe('materializeStoredTriggerPathConfig', () => {
     });
 
     expect(resolved.config.uiState?.selectedNodeId).toBeNull();
+  });
+
+  it('repairs legacy database mapping updates that still use custom payload mode without an update template', async () => {
+    const actualPortableEngine = await vi.importActual<
+      typeof import('@/shared/lib/ai-paths/portable-engine')
+    >('@/shared/lib/ai-paths/portable-engine');
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) {
+      throw new Error('Expected starter_product_name_normalize template');
+    }
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path-repair-db-mapping-mode',
+      seededDefault: true,
+    });
+    const legacyNodes = (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database' || node.title !== 'Database Query') {
+        return node;
+      }
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...node.config?.database,
+            updatePayloadMode: 'mapping',
+            updateTemplate: '',
+          },
+        },
+      };
+    });
+    const rawConfig = JSON.stringify({
+      ...config,
+      nodes: legacyNodes,
+    });
+
+    mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: config.id,
+      rawConfig,
+      fallbackName: config.name,
+    });
+
+    const databaseNode = resolved.config.nodes.find(
+      (node) => node.type === 'database' && node.title === 'Database Query'
+    );
+    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"name_en": {{result}}');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
+    expect(resolved.changed).toBe(true);
   });
 });

@@ -141,6 +141,20 @@ describe('ProductListingDetails', () => {
                       status: 'publish_failed',
                       step: 'verify-active-listing',
                     },
+                    executionSteps: [
+                      {
+                        id: 'auth',
+                        label: 'Validate Tradera session',
+                        status: 'success',
+                        message: 'Stored Tradera session was accepted.',
+                      },
+                      {
+                        id: 'publish',
+                        label: 'Publish and verify listing',
+                        status: 'error',
+                        message: 'FAIL_PUBLISH_VALIDATION: Publish action is disabled.',
+                      },
+                    ],
                   },
                 },
               },
@@ -216,9 +230,9 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('Actual image upload source:')).toBeInTheDocument();
     expect(screen.getByText('downloaded')).toBeInTheDocument();
     expect(screen.getByText('Local image files:')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
     expect(screen.getByText('Image URLs:')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0);
     expect(screen.getByText('Listing URL:')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
       'href',
@@ -226,6 +240,12 @@ describe('ProductListingDetails', () => {
     );
     expect(screen.getByText('Error category:')).toBeInTheDocument();
     expect(screen.getByText('AUTH')).toBeInTheDocument();
+    expect(screen.getByText('Execution steps')).toBeInTheDocument();
+    expect(screen.getByText('Validate Tradera session')).toBeInTheDocument();
+    expect(screen.getByText('Publish and verify listing')).toBeInTheDocument();
+    expect(
+      screen.getByText('FAIL_PUBLISH_VALIDATION: Publish action is disabled.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Tradera run result')).toBeInTheDocument();
     expect(screen.getByText(/publish_failed/)).toBeInTheDocument();
     expect(screen.getByText('Tradera failure diagnostics')).toBeInTheDocument();

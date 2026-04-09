@@ -74,6 +74,25 @@ const hasEquivalentStarterTriggerButton = (
     return (button.locations ?? []).some((location) => preset.locations.includes(location));
   });
 
+const normalizeTriggerButtonName = (value: string | null | undefined): string =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const findLegacyStarterTriggerButtonUpgradeIndex = (
+  buttons: AiTriggerButtonRecord[],
+  preset: StarterWorkflowTriggerPreset
+): number =>
+  buttons.findIndex((button) => {
+    const normalizedPathId =
+      typeof button.pathId === 'string' ? button.pathId.trim() : '';
+    if (normalizedPathId.length > 0) {
+      return false;
+    }
+    if (normalizeTriggerButtonName(button.name) !== normalizeTriggerButtonName(preset.name)) {
+      return false;
+    }
+    return (button.locations ?? []).some((location) => preset.locations.includes(location));
+  });
+
 const parsePathConfigRecord = (value: string): PathConfig | null => {
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -83,6 +102,144 @@ const parsePathConfigRecord = (value: string): PathConfig | null => {
     void ErrorSystem.captureException(error);
     return null;
   }
+};
+
+const findPathConfigRecord = (
+  records: AiPathsSettingRecord[],
+  pathId: string
+): { record: AiPathsSettingRecord; config: PathConfig } | null => {
+  const record = records.find((candidate) => candidate.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${pathId}`);
+  if (!record) return null;
+  const config = parsePathConfigRecord(record.value);
+  if (!config) return null;
+  return { record, config };
+};
+
+const extractExplicitModelSelection = (
+  config: PathConfig
+): { model: Record<string, unknown>; provider?: unknown } | null => {
+  const modelNode = (config.nodes ?? []).find((node) => {
+    if (node.type !== 'model') return false;
+    const modelId =
+      typeof node.config?.model?.['modelId'] === 'string'
+        ? node.config.model['modelId'].trim()
+        : '';
+    return modelId.length > 0;
+  });
+  if (!(modelNode?.config?.model && typeof modelNode.config.model === 'object')) {
+    return null;
+  }
+  return {
+    model: { ...(modelNode.config.model as Record<string, unknown>) },
+    ...(modelNode.config?.provider !== undefined ? { provider: modelNode.config.provider } : {}),
+  };
+};
+
+const resolveDescriptionModelSeed = (
+  records: AiPathsSettingRecord[],
+  buttons: AiTriggerButtonRecord[]
+): { pathId: string; model: Record<string, unknown>; provider?: unknown } | null => {
+  const descriptionButtons = buttons.filter(
+    (button) => normalizeTriggerButtonName(button.name) === 'description'
+  );
+
+  for (const button of descriptionButtons) {
+    const configuredPathId =
+      typeof button.pathId === 'string' ? button.pathId.trim() : '';
+    if (!configuredPathId) continue;
+    const configRecord = findPathConfigRecord(records, configuredPathId);
+    const selection = configRecord ? extractExplicitModelSelection(configRecord.config) : null;
+    if (configRecord && selection) {
+      return {
+        pathId: configRecord.config.id,
+        ...selection,
+      };
+    }
+  }
+
+  const configRecords = records
+    .filter((record) => record.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX))
+    .map((record) => ({ record, config: parsePathConfigRecord(record.value) }))
+    .filter((entry): entry is { record: AiPathsSettingRecord; config: PathConfig } => Boolean(entry.config));
+
+  for (const button of descriptionButtons) {
+    for (const entry of configRecords) {
+      const matchesTrigger = (entry.config.nodes ?? []).some((node) => {
+        if (node.type !== 'trigger') return false;
+        return node.config?.trigger?.event === button.id;
+      });
+      if (!matchesTrigger) continue;
+      const selection = extractExplicitModelSelection(entry.config);
+      if (!selection) continue;
+      return {
+        pathId: entry.config.id,
+        ...selection,
+      };
+    }
+  }
+
+  for (const entry of configRecords) {
+    const normalizedName = typeof entry.config.name === 'string' ? entry.config.name.trim() : '';
+    if (!/description/i.test(normalizedName)) continue;
+    const selection = extractExplicitModelSelection(entry.config);
+    if (!selection) continue;
+    return {
+      pathId: entry.config.id,
+      ...selection,
+    };
+  }
+
+  return null;
+};
+
+const inheritNormalizeStarterModelSelection = (args: {
+  records: AiPathsSettingRecord[];
+  buttons: AiTriggerButtonRecord[];
+  metas: ParsedPathMeta[];
+}): boolean => {
+  const normalizeRecord = findPathConfigRecord(args.records, 'path_name_normalize_v1');
+  if (!normalizeRecord) return false;
+
+  const normalizeNodes = normalizeRecord.config.nodes ?? [];
+  const normalizeModelNode = normalizeNodes.find((node) => node.type === 'model');
+  const normalizedExistingModelId =
+    typeof normalizeModelNode?.config?.model?.['modelId'] === 'string'
+      ? normalizeModelNode.config.model['modelId'].trim()
+      : '';
+  if (!normalizeModelNode || normalizedExistingModelId.length > 0) {
+    return false;
+  }
+
+  const descriptionSeed = resolveDescriptionModelSeed(args.records, args.buttons);
+  if (!descriptionSeed) return false;
+
+  normalizeModelNode.config = {
+    ...(normalizeModelNode.config ?? {}),
+    model: { ...descriptionSeed.model },
+    ...(descriptionSeed.provider !== undefined ? { provider: descriptionSeed.provider } : {}),
+  };
+  normalizeRecord.config.updatedAt = new Date().toISOString();
+  normalizeRecord.record.value = JSON.stringify(normalizeRecord.config);
+
+  const meta = parsePathConfigMeta('path_name_normalize_v1', normalizeRecord.record.value);
+  if (meta) {
+    const metaId = meta.id;
+    let metaIndex = -1;
+    for (let index = 0; index < args.metas.length; index += 1) {
+      const entry = args.metas[index] as { id?: unknown };
+      if (typeof entry.id === 'string' && entry.id === metaId) {
+        metaIndex = index;
+        break;
+      }
+    }
+    if (metaIndex >= 0) {
+      args.metas[metaIndex] = meta;
+    } else {
+      args.metas.push(meta);
+    }
+  }
+
+  return true;
 };
 
 const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | null => {
@@ -293,10 +450,41 @@ export const ensureStarterWorkflowDefaults = (
 
     (entry.triggerButtonPresets ?? []).forEach((preset) => {
       if (hasEquivalentStarterTriggerButton(nextButtons, preset)) return;
+      const legacyUpgradeIndex = findLegacyStarterTriggerButtonUpgradeIndex(nextButtons, preset);
+      if (legacyUpgradeIndex >= 0) {
+        const existingButton = nextButtons[legacyUpgradeIndex];
+        nextButtons[legacyUpgradeIndex] = {
+          ...existingButton,
+          id: preset.id,
+          name: preset.name,
+          pathId: preset.pathId,
+          enabled: existingButton?.enabled ?? (preset.enabled ?? true),
+          locations: [...preset.locations],
+          mode: preset.mode ?? existingButton?.mode ?? 'click',
+          display: preset.display ?? existingButton?.display ?? {
+            label: preset.name,
+            showLabel: true,
+          },
+          updatedAt: now,
+          sortIndex: existingButton?.sortIndex ?? preset.sortIndex ?? 0,
+        };
+        affectedCount += 1;
+        return;
+      }
       nextButtons.push(toTriggerButtonRecord(preset, now));
       affectedCount += 1;
     });
   });
+
+  if (
+    inheritNormalizeStarterModelSelection({
+      records: nextRecords,
+      buttons: nextButtons,
+      metas: nextMetas,
+    })
+  ) {
+    affectedCount += 1;
+  }
 
   indexEntry.value = JSON.stringify(nextMetas);
   triggerButtonsEntry.value = serializeAiTriggerButtonsRaw(nextButtons);

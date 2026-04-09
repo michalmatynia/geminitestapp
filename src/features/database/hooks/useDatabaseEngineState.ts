@@ -44,7 +44,6 @@ import {
   useDatabaseEngineOperationsJobs,
   useDatabaseEngineMongoSource,
   useDatabaseEngineProviderPreview,
-  useSetDatabaseEngineMongoSourceMutation,
   useSyncDatabaseEngineMongoSourceMutation,
   useDatabaseEngineStatus,
   useAllCollectionsSchema,
@@ -77,13 +76,11 @@ export interface UseDatabaseEngineStateReturn {
   updateCollectionRoute: (collection: string, provider: string) => void;
   updateBackupSchedule: (updates: Partial<DatabaseEngineBackupSchedule>) => void;
   updateOperationControls: (updates: Partial<DatabaseEngineOperationControls>) => void;
-  switchMongoSource: (source: 'local' | 'cloud') => Promise<void>;
   syncMongoSources: (direction: 'cloud_to_local' | 'local_to_cloud') => Promise<void>;
   saveSettings: () => Promise<void>;
   isDirty: boolean;
   refetchAll: () => void;
   validationErrors: string[];
-  isSwitchingMongoSource: boolean;
   isSyncingMongoSources: boolean;
 }
 
@@ -117,7 +114,6 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const { data: settingsMap, isPending: settingsLoading } = useSettingsMap({ scope: 'all' });
 
   const updateSettingsBulk = useUpdateSettingsBulk();
-  const setMongoSourceMutation = useSetDatabaseEngineMongoSourceMutation();
   const syncMongoSourcesMutation = useSyncDatabaseEngineMongoSourceMutation();
 
   const [policy, setPolicy] = useState<DatabaseEnginePolicy>(DEFAULT_DATABASE_ENGINE_POLICY);
@@ -327,17 +323,6 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       setOperationControls((prev) => ({ ...prev, ...updates }));
       setIsDirty(true);
     },
-    switchMongoSource: async (source) => {
-      try {
-        const response = await setMongoSourceMutation.mutateAsync(source);
-        toast(response.message || `MongoDB source switched to ${source}.`, {
-          variant: 'success',
-        });
-      } catch (error) {
-        logClientError(error);
-        toast(`Failed to switch MongoDB source to ${source}.`, { variant: 'error' });
-      }
-    },
     syncMongoSources: async (direction) => {
       try {
         const response = await syncMongoSourcesMutation.mutateAsync(direction);
@@ -359,7 +344,6 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       void redisOverviewQuery.refetch();
     },
     validationErrors,
-    isSwitchingMongoSource: setMongoSourceMutation.isPending,
     isSyncingMongoSources: syncMongoSourcesMutation.isPending,
   };
 }

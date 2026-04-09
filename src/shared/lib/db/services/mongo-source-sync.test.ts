@@ -9,7 +9,6 @@ const mocks = vi.hoisted(() => ({
     timestamp: '2026-04-09T04:00:00.000Z',
     activeSource: 'local',
     defaultSource: 'local',
-    sourceFilePath: '/tmp/mongo-source.json',
     lastSync: null,
     local: {
       source: 'local',
@@ -69,7 +68,6 @@ describe('mongo-source-sync', () => {
       timestamp: '2026-04-09T04:00:00.000Z',
       activeSource: 'local',
       defaultSource: 'local',
-      sourceFilePath: '/tmp/mongo-source.json',
       lastSync: null,
       local: {
         source: 'local',
@@ -152,7 +150,6 @@ describe('mongo-source-sync', () => {
       timestamp: '2026-04-09T04:00:00.000Z',
       activeSource: 'local',
       defaultSource: 'local',
-      sourceFilePath: '/tmp/mongo-source.json',
       lastSync: null,
       local: {
         source: 'local',

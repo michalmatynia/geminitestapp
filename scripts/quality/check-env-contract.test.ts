@@ -24,6 +24,24 @@ describe('analyzeEnvContract', () => {
     expect(report.issues).toEqual([]);
   });
 
+  it('fails when split MongoDB sources are configured without an active env source', () => {
+    const report = analyzeEnvContract({
+      env: {
+        NODE_ENV: 'development',
+        MONGODB_LOCAL_URI: 'mongodb://localhost:27017/app_local',
+        MONGODB_CLOUD_URI: 'mongodb+srv://cluster.example/app_cloud',
+      },
+    });
+
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: 'mongodb-active-source-default-missing',
+        }),
+      ])
+    );
+  });
+
   it('fails when production auth secret is missing', () => {
     const report = analyzeEnvContract({
       env: {

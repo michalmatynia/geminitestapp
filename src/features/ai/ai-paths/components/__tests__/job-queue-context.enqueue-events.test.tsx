@@ -46,8 +46,6 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toastMock }),
 }));
 
-vi.mock('@/shared/ui/primitives.public', () => ({}));
-
 vi.mock('@/shared/lib/query-factories-v2', () => ({
   createListQueryV2:
     mocks.createListQueryV2Mock as typeof import('@/shared/lib/query-factories-v2').createListQueryV2,

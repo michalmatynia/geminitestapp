@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
   settingsMap: new Map<string, string>(),
   updateSettingsBulkMutateAsync: vi.fn(),
-  setMongoSourceMutateAsync: vi.fn(),
   syncMongoSourcesMutateAsync: vi.fn(),
   searchParams: 'view=engine&foo=bar',
   pathname: '/admin/databases/engine',
@@ -73,10 +72,6 @@ vi.mock('./useDatabaseQueries', () => ({
     isPending: false,
     refetch: mocks.providerPreviewRefetch,
   }),
-  useSetDatabaseEngineMongoSourceMutation: () => ({
-    isPending: false,
-    mutateAsync: mocks.setMongoSourceMutateAsync,
-  }),
   useSyncDatabaseEngineMongoSourceMutation: () => ({
     isPending: false,
     mutateAsync: mocks.syncMongoSourcesMutateAsync,
@@ -99,7 +94,6 @@ describe('useDatabaseEngineState', () => {
     mocks.toast.mockReset();
     mocks.settingsMap = new Map<string, string>();
     mocks.updateSettingsBulkMutateAsync.mockReset();
-    mocks.setMongoSourceMutateAsync.mockReset();
     mocks.syncMongoSourcesMutateAsync.mockReset();
     mocks.searchParams = 'view=engine&foo=bar';
     mocks.pathname = '/admin/databases/engine';
@@ -120,24 +114,6 @@ describe('useDatabaseEngineState', () => {
     });
 
     expect(mocks.routerPush).toHaveBeenCalledWith('/admin/databases/engine?view=crud&foo=bar');
-  });
-
-  it('switches the active Mongo source through the dedicated mutation', async () => {
-    mocks.setMongoSourceMutateAsync.mockResolvedValue({
-      success: true,
-      message: 'MongoDB source switched to local.',
-    });
-
-    const { result } = renderHook(() => useDatabaseEngineState());
-
-    await act(async () => {
-      await result.current.switchMongoSource('local');
-    });
-
-    expect(mocks.setMongoSourceMutateAsync).toHaveBeenCalledWith('local');
-    expect(mocks.toast).toHaveBeenCalledWith('MongoDB source switched to local.', {
-      variant: 'success',
-    });
   });
 
   it('runs manual Mongo source sync through the dedicated mutation', async () => {

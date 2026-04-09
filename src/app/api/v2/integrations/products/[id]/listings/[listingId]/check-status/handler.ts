@@ -8,6 +8,10 @@ import {
   getIntegrationRepository,
 } from '@/features/integrations/server';
 import {
+  buildQueuedTraderaStatusCheckMarketplaceData,
+  isTraderaStatusCheckPending,
+} from '@/features/integrations/utils/tradera-status-check';
+import {
   enqueueTraderaListingJob,
   initializeQueues,
 } from '@/features/jobs/server';
@@ -15,9 +19,6 @@ import { productListingSyncPayloadSchema } from '@/shared/contracts/integrations
 import { type ProductListingSyncResponse } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-
-const toRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
 export async function POST_handler(
   req: NextRequest,
@@ -50,8 +51,7 @@ export async function POST_handler(
     throw badRequestError('Live status check is only supported for Tradera browser listings');
   }
 
-  const normalizedStatus = (resolved.listing.status ?? '').trim().toLowerCase();
-  if (normalizedStatus === 'running' || normalizedStatus === 'queued') {
+  if (isTraderaStatusCheckPending(resolved.listing)) {
     const response: ProductListingSyncResponse = {
       queued: true,
       alreadyQueued: true,
@@ -69,22 +69,13 @@ export async function POST_handler(
     ...(payload.browserMode ? { browserMode: payload.browserMode } : {}),
   });
   const enqueuedAt = new Date().toISOString();
-  const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);
-  const previousTraderaData = toRecord(previousMarketplaceData['tradera']);
   await resolved.repository.updateListing(listingId, {
-    marketplaceData: {
-      ...previousMarketplaceData,
-      marketplace: 'tradera',
-      tradera: {
-        ...previousTraderaData,
-        pendingExecution: {
-          action: 'check_status',
-          requestedBrowserMode: payload.browserMode ?? 'connection_default',
-          requestId: jobId,
-          queuedAt: enqueuedAt,
-        },
-      },
-    },
+    marketplaceData: buildQueuedTraderaStatusCheckMarketplaceData({
+      existingMarketplaceData: resolved.listing.marketplaceData,
+      requestId: jobId,
+      queuedAt: enqueuedAt,
+      requestedBrowserMode: payload.browserMode,
+    }),
   });
 
   const response: ProductListingSyncResponse = {

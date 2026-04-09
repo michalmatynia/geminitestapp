@@ -35,7 +35,6 @@ const {
     timestamp: '2026-04-09T00:00:00.000Z',
     activeSource: 'local',
     defaultSource: 'local',
-    sourceFilePath: '/tmp/mongo-source.json',
     lastSync: null,
       local: {
         source: 'local',

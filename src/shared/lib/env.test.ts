@@ -44,6 +44,19 @@ describe('env', () => {
     expect(reportRuntimeCatchMock).not.toHaveBeenCalled();
   });
 
+  it('requires an active source env when both local and cloud MongoDB targets are configured', async () => {
+    const { validateDatabaseConfig } = await loadEnvModule({
+      NODE_ENV: 'test',
+      MONGODB_LOCAL_URI: 'https://local.example.com',
+      MONGODB_CLOUD_URI: 'https://cloud.example.com',
+      NEXT_PUBLIC_APP_URL: 'https://app.example.com',
+    });
+
+    expect(() => validateDatabaseConfig()).toThrow(
+      'Split MongoDB configuration requires MONGODB_ACTIVE_SOURCE_DEFAULT to be set to "local" or "cloud".'
+    );
+  });
+
   it('throws immediately in production when critical environment values are invalid', async () => {
     await expect(
       loadEnvModule({

@@ -96,6 +96,103 @@ export const repairLegacyTriggerProviderAliases = (
     : { config, changed: false };
 };
 
+const renderLegacyUpdateTemplateToken = (sourcePort: string, sourcePath: string): string => {
+  const normalizedPort = normalizeOptionalText(sourcePort) ?? 'value';
+  const normalizedPath = normalizeOptionalText(sourcePath);
+  return normalizedPath ? `{{${normalizedPort}.${normalizedPath}}}` : `{{${normalizedPort}}}`;
+};
+
+const deriveLegacyCustomUpdateTemplateFromMappings = (value: unknown): string | null => {
+  if (!Array.isArray(value)) return null;
+  const assignments = value
+    .map((entry: unknown): Record<string, unknown> | null => toObjectRecord(entry))
+    .filter((entry): entry is Record<string, unknown> => Boolean(entry))
+    .reduce<Record<string, string>>((acc, entry) => {
+      const targetPath = normalizeOptionalText(entry['targetPath']);
+      if (!targetPath) return acc;
+      acc[targetPath] = renderLegacyUpdateTemplateToken(
+        String(entry['sourcePort'] ?? ''),
+        String(entry['sourcePath'] ?? '')
+      );
+      return acc;
+    }, {});
+
+  if (Object.keys(assignments).length === 0) return null;
+  const lines = Object.entries(assignments).map(
+    ([targetPath, token]) =>
+      `    "${targetPath}": ${token.startsWith('{{') ? token : JSON.stringify(token)}`
+  );
+  return (
+    '{\n' +
+    `  "$set": {\n${lines.join(',\n')}\n  },\n` +
+    '  "$unset": {\n    "__noop__": ""\n  }\n' +
+    '}'
+  );
+};
+
+const repairLegacyUpdateTemplateFromMappings = (
+  config: PathConfig
+): { config: PathConfig; changed: boolean } => {
+  if (!Array.isArray(config.nodes) || config.nodes.length === 0) {
+    return { config, changed: false };
+  }
+
+  let changed = false;
+  const nextNodes = config.nodes.map((node: AiNode): AiNode => {
+    if (node.type !== 'database') {
+      return node;
+    }
+
+    const databaseConfig =
+      node.config?.database && typeof node.config.database === 'object'
+        ? node.config.database
+        : null;
+    const operation =
+      typeof databaseConfig?.operation === 'string'
+        ? databaseConfig.operation.trim().toLowerCase()
+        : '';
+    const hasMappings = Array.isArray(databaseConfig?.mappings) && databaseConfig.mappings.length > 0;
+    const updateTemplate =
+      typeof databaseConfig?.updateTemplate === 'string'
+        ? databaseConfig.updateTemplate.trim()
+        : '';
+    const derivedTemplate = deriveLegacyCustomUpdateTemplateFromMappings(databaseConfig?.mappings);
+
+    if (
+      !databaseConfig ||
+      operation !== 'update' ||
+      !hasMappings ||
+      updateTemplate.length > 0 ||
+      !derivedTemplate
+    ) {
+      return node;
+    }
+
+    changed = true;
+    return {
+      ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...databaseConfig,
+            updatePayloadMode: 'custom',
+            updateTemplate: derivedTemplate,
+          },
+        },
+      };
+  });
+
+  return changed
+    ? {
+        config: {
+          ...config,
+          nodes: nextNodes,
+        },
+        changed: true,
+      }
+    : { config, changed: false };
+};
+
 const createStoredPathConfigFallback = (pathId: string): PathConfig => {
   const baseConfig = createDefaultPathConfig(pathId);
   return {
@@ -366,7 +463,12 @@ export const materializeStoredTriggerPathConfig = (args: {
     const triggerPreflightBaseConfig = rawStarterUpgrade?.config ?? rawParsedConfig;
     const providerAliasRepair =
       triggerPreflightBaseConfig ? repairLegacyTriggerProviderAliases(triggerPreflightBaseConfig) : null;
-    const configForResolution = providerAliasRepair?.config ?? rawStarterUpgrade?.config ?? parsedConfig;
+    const updateTemplateRepair =
+      providerAliasRepair?.config
+        ? repairLegacyUpdateTemplateFromMappings(providerAliasRepair.config)
+        : null;
+    const configForResolution =
+      updateTemplateRepair?.config ?? providerAliasRepair?.config ?? rawStarterUpgrade?.config ?? parsedConfig;
 
     const resolvedConfig = resolvePortablePathInput(configForResolution, {
       repairIdentities: true,

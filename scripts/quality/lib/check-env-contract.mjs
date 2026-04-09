@@ -115,6 +115,21 @@ export const analyzeEnvContract = ({
     );
   }
 
+  if (
+    hasValue(mongoLocalUri) &&
+    hasValue(mongoCloudUri) &&
+    !hasValue(mongoActiveSourceDefault)
+  ) {
+    issues.push(
+      createIssue({
+        severity: 'error',
+        ruleId: 'mongodb-active-source-default-missing',
+        message:
+          'Split MongoDB configuration requires MONGODB_ACTIVE_SOURCE_DEFAULT to be set to "local" or "cloud".',
+      })
+    );
+  }
+
   if (nodeEnv === 'production' && !hasValue(authSecret) && !hasValue(nextAuthSecret)) {
     issues.push(
       createIssue({

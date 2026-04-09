@@ -1,8 +1,8 @@
 'use client';
 
 import { ChevronRight } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useController, useFormContext } from 'react-hook-form';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
@@ -24,6 +24,11 @@ type SuggestionOption = {
   categoryId?: string;
 };
 
+type SuggestionOverlayMetrics = {
+  left: number;
+  width: number;
+};
+
 const TITLE_SEGMENT_LABELS: Record<TitleSegmentStage, string> = {
   1: 'Size',
   2: 'Material',
@@ -32,8 +37,54 @@ const TITLE_SEGMENT_LABELS: Record<TitleSegmentStage, string> = {
 };
 
 const CATEGORY_STAGE = 3;
+const SUGGESTION_ROW_HEIGHT = 36;
+const SUGGESTION_OVERLAY_PADDING = 6;
+const SUGGESTION_VISIBLE_ROWS = 5;
+const SUGGESTION_PREFERRED_BELOW_ROWS = 3;
+const SUGGESTION_MIN_WIDTH = 164;
+const SUGGESTION_MAX_WIDTH = 320;
 
 const normalizeSegmentValue = (value: string): string => value.trim().replace(/\s+/g, ' ');
+
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
+
+const sortSuggestionOptions = (options: SuggestionOption[]): SuggestionOption[] =>
+  [...options].sort((left, right) =>
+    left.label.localeCompare(right.label, undefined, {
+      sensitivity: 'base',
+    })
+  );
+
+const getSuggestionPanelClassName = (side: 'above' | 'below'): string =>
+  cn(
+    'pointer-events-auto absolute -translate-x-1/2 overflow-hidden rounded-xl border border-border/70 bg-card/95 shadow-2xl backdrop-blur',
+    'transform-gpu will-change-transform transition-[opacity,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
+    'motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 motion-safe:ease-out',
+    side === 'above'
+      ? 'motion-safe:slide-in-from-bottom-2'
+      : 'motion-safe:slide-in-from-top-2'
+  );
+
+const getSuggestionOptionClassName = (isDisabled: boolean, isHighlighted: boolean): string =>
+  cn(
+    'group mx-1 flex h-9 items-center justify-between gap-2 rounded-lg border border-transparent px-3 text-left text-sm',
+    'transition-[background-color,border-color,color,transform,box-shadow,opacity] duration-200 ease-out motion-reduce:transition-none',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
+    isDisabled
+      ? 'cursor-not-allowed opacity-50'
+      : isHighlighted
+        ? 'cursor-pointer border-foreground/10 bg-foreground/12 font-medium text-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]'
+        : 'cursor-pointer text-muted-foreground hover:translate-x-0.5 hover:border-foreground/10 hover:bg-foreground/6 hover:text-foreground hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
+  );
+
+const getSuggestionChevronClassName = (isHighlighted: boolean): string =>
+  cn(
+    'size-4 shrink-0 transition-[color,transform] duration-200 ease-out motion-reduce:transition-none',
+    isHighlighted
+      ? 'translate-x-0.5 text-foreground'
+      : 'text-gray-500 group-hover:translate-x-0.5 group-hover:text-foreground'
+  );
 
 const resolveStageType = (stage: TitleSegmentStage): ProductTitleTermType =>
   (stage === 1 ? 'size' : stage === 2 ? 'material' : 'theme');
@@ -174,8 +225,15 @@ const resolveUniqueLeafCategorySuggestion = (
 
 export function StructuredProductNameField(): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const measurementCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previousSelectedCategoryIdRef = useRef<string | null>(null);
-  const { watch, setValue } = useFormContext<ProductFormData>();
+  const listboxId = useId();
+  const { control, getValues, setValue } = useFormContext<ProductFormData>();
+  const { field } = useController<ProductFormData>({
+    control,
+    name: 'name_en',
+    defaultValue: '',
+  });
   const { errors } = useProductFormCore();
   const formMetadata = useProductFormMetadata() as Partial<ReturnType<typeof useProductFormMetadata>>;
   const selectedCatalogIds = formMetadata.selectedCatalogIds ?? [];
@@ -184,7 +242,7 @@ export function StructuredProductNameField(): React.JSX.Element {
   const setCategoryId = formMetadata.setCategoryId ?? (() => {});
   const primaryCatalogId = selectedCatalogIds[0];
 
-  const nameValue = watch('name_en') ?? '';
+  const nameValue = typeof field.value === 'string' ? field.value : '';
   const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
   const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
   const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
@@ -194,6 +252,7 @@ export function StructuredProductNameField(): React.JSX.Element {
   const [segmentQuery, setSegmentQuery] = useState('');
   const [segmentBounds, setSegmentBounds] = useState<{ start: number; end: number } | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [overlayMetrics, setOverlayMetrics] = useState<SuggestionOverlayMetrics | null>(null);
 
   const error = errors.name_en?.message;
 
@@ -207,6 +266,23 @@ export function StructuredProductNameField(): React.JSX.Element {
     [categorySuggestions, selectedCategoryId]
   );
 
+  const syncMappedCategoryField = (nextCategoryId: string | null): void => {
+    const normalizedNextCategoryId = typeof nextCategoryId === 'string' ? nextCategoryId.trim() : '';
+    const currentCategoryValue = getValues('categoryId');
+    const normalizedCurrentCategoryId =
+      typeof currentCategoryValue === 'string' ? currentCategoryValue.trim() : '';
+
+    if (normalizedCurrentCategoryId === normalizedNextCategoryId) {
+      return;
+    }
+
+    setValue('categoryId', normalizedNextCategoryId, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  };
+
   useEffect(() => {
     const previousSelectedCategoryId = previousSelectedCategoryIdRef.current;
     const selectedCategoryChanged = previousSelectedCategoryId !== selectedCategoryId;
@@ -216,11 +292,13 @@ export function StructuredProductNameField(): React.JSX.Element {
     if (!categorySegment) {
       if (selectedCategoryId && !selectedCategoryChanged) {
         setCategoryId(null);
+        syncMappedCategoryField(null);
       }
       return;
     }
 
     if (selectedCategoryOption?.value === categorySegment) {
+      syncMappedCategoryField(selectedCategoryId);
       return;
     }
 
@@ -230,22 +308,35 @@ export function StructuredProductNameField(): React.JSX.Element {
       const matchedCategoryId = exactLeafMatch.categoryId;
       if (matchedCategoryId?.trim() && matchedCategoryId !== selectedCategoryId) {
         setCategoryId(matchedCategoryId);
+        syncMappedCategoryField(matchedCategoryId);
       }
       return;
     }
 
     if (selectedCategoryId && !selectedCategoryChanged) {
       setCategoryId(null);
+      syncMappedCategoryField(null);
     }
-  }, [categorySuggestions, nameValue, selectedCategoryId, selectedCategoryOption, setCategoryId]);
+  }, [
+    categorySuggestions,
+    getValues,
+    nameValue,
+    selectedCategoryId,
+    selectedCategoryOption,
+    setCategoryId,
+    setValue,
+  ]);
 
   const suggestions = useMemo((): SuggestionOption[] => {
     if (!activeStage) return [];
 
+    const normalizedQuery = normalizeSegmentValue(segmentQuery);
+    if (!normalizedQuery) return [];
+
     if (activeStage === CATEGORY_STAGE) {
-      const normalizedQuery = segmentQuery.toLowerCase();
+      const normalizedQueryLower = normalizedQuery.toLowerCase();
       return categorySuggestions.filter((option) =>
-        normalizedQuery ? option.label.toLowerCase().includes(normalizedQuery) : true
+        option.label.toLowerCase().includes(normalizedQueryLower)
       );
     }
 
@@ -261,41 +352,11 @@ export function StructuredProductNameField(): React.JSX.Element {
         (term): SuggestionOption => ({
           value: term.name_en,
           label: term.name_en,
-          description: term.name_pl ?? undefined,
+          description: term.name_pl && term.name_pl !== term.name_en ? term.name_pl : undefined,
         })
       )
-      .filter((option) =>
-        segmentQuery ? option.label.toLowerCase().includes(segmentQuery.toLowerCase()) : true
-      );
-
-    const normalizedQuery = normalizeSegmentValue(segmentQuery);
-    const exactMatchExists = baseSuggestions.some(
-      (option) => option.value.toLowerCase() === normalizedQuery.toLowerCase()
-    );
-
-    if (normalizedQuery && !exactMatchExists) {
-      return [
-        {
-          value: normalizedQuery,
-          label: normalizedQuery,
-          description: 'Use custom value',
-        },
-        ...baseSuggestions,
-      ];
-    }
-
-    if (!normalizedQuery && baseSuggestions.length === 0) {
-      return [
-        {
-          value: '',
-          label: 'Type to enter a custom value',
-          description: `No ${TITLE_SEGMENT_LABELS[activeStage as TitleSegmentStage].toLowerCase()} terms configured`,
-          disabled: true,
-        },
-      ];
-    }
-
-    return baseSuggestions;
+      .filter((option) => option.label.toLowerCase().includes(normalizedQuery.toLowerCase()));
+    return sortSuggestionOptions(baseSuggestions);
   }, [
     activeStage,
     categorySuggestions,
@@ -304,6 +365,51 @@ export function StructuredProductNameField(): React.JSX.Element {
     sizeTermsQuery.data,
     themeTermsQuery.data,
   ]);
+
+  const visibleSuggestionWindow = useMemo(() => {
+    if (suggestions.length === 0) {
+      return {
+        above: [] as Array<{ option: SuggestionOption; index: number }>,
+        below: [] as Array<{ option: SuggestionOption; index: number }>,
+      };
+    }
+
+    const maxVisibleSuggestions = Math.min(suggestions.length, SUGGESTION_VISIBLE_ROWS);
+    let belowCount = Math.min(
+      suggestions.length - highlightedIndex,
+      SUGGESTION_PREFERRED_BELOW_ROWS
+    );
+    let aboveCount = Math.min(highlightedIndex, maxVisibleSuggestions - belowCount);
+    let remainingSlots = maxVisibleSuggestions - (aboveCount + belowCount);
+
+    if (remainingSlots > 0) {
+      const additionalBelowCount = Math.min(
+        remainingSlots,
+        suggestions.length - highlightedIndex - belowCount
+      );
+      belowCount += additionalBelowCount;
+      remainingSlots -= additionalBelowCount;
+    }
+
+    if (remainingSlots > 0) {
+      const additionalAboveCount = Math.min(remainingSlots, highlightedIndex - aboveCount);
+      aboveCount += additionalAboveCount;
+    }
+
+    const aboveStartIndex = highlightedIndex - aboveCount;
+    const belowEndIndex = highlightedIndex + belowCount;
+
+    return {
+      above: suggestions.slice(aboveStartIndex, highlightedIndex).map((option, offset) => ({
+        option,
+        index: aboveStartIndex + offset,
+      })),
+      below: suggestions.slice(highlightedIndex, belowEndIndex).map((option, offset) => ({
+        option,
+        index: highlightedIndex + offset,
+      })),
+    };
+  }, [highlightedIndex, suggestions]);
 
   useEffect(() => {
     if (suggestions.length === 0) {
@@ -338,10 +444,22 @@ export function StructuredProductNameField(): React.JSX.Element {
       return;
     }
     const bounds = resolveSegmentBounds(value, caret);
-    setActiveStage(stage as TitleSegmentStage);
-    setSegmentBounds({ start: bounds.start, end: bounds.end });
-    setSegmentQuery(bounds.text);
-    setHighlightedIndex(0);
+    const nextStage = stage as TitleSegmentStage;
+    const nextBounds = { start: bounds.start, end: bounds.end };
+    const nextQuery = bounds.text;
+
+    setActiveStage(nextStage);
+    setSegmentBounds(nextBounds);
+    setSegmentQuery(nextQuery);
+
+    const stageChanged = activeStage !== nextStage;
+    const boundsChanged =
+      segmentBounds?.start !== nextBounds.start || segmentBounds?.end !== nextBounds.end;
+    const queryChanged = segmentQuery !== nextQuery;
+
+    if (stageChanged || boundsChanged || queryChanged) {
+      setHighlightedIndex(0);
+    }
   };
 
   const applySuggestion = (option: SuggestionOption): void => {
@@ -353,7 +471,9 @@ export function StructuredProductNameField(): React.JSX.Element {
       shouldValidate: true,
     });
     if (activeStage === CATEGORY_STAGE) {
-      setCategoryId(option.categoryId ?? null);
+      const nextCategoryId = option.categoryId ?? null;
+      setCategoryId(nextCategoryId);
+      syncMappedCategoryField(nextCategoryId);
     }
     setTimeout(() => {
       const input = inputRef.current;
@@ -395,8 +515,113 @@ export function StructuredProductNameField(): React.JSX.Element {
     previousSelectedCategoryIdRef.current = selectedCategoryId;
   }, [selectedCategoryId]);
 
-  const loadingTerms =
-    sizeTermsQuery.isLoading || materialTermsQuery.isLoading || themeTermsQuery.isLoading;
+  useLayoutEffect(() => {
+    if (!dropdownOpen || !segmentBounds) {
+      setOverlayMetrics(null);
+      return;
+    }
+
+    const input = inputRef.current;
+    if (!input) {
+      setOverlayMetrics(null);
+      return;
+    }
+
+    const measureTextWidth = (value: string): number => {
+      if (/jsdom/i.test(window.navigator.userAgent)) {
+        return value.length * 8;
+      }
+
+      const canvas = measurementCanvasRef.current ?? document.createElement('canvas');
+      measurementCanvasRef.current = canvas;
+      const context = canvas.getContext('2d');
+      if (!context) {
+        return value.length * 8;
+      }
+
+      const styles = window.getComputedStyle(input);
+      context.font =
+        styles.font ||
+        `${styles.fontStyle} ${styles.fontVariant} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+      const measuredValue = value.length > 0 ? value : ' ';
+      const baseWidth = context.measureText(measuredValue).width;
+      const letterSpacing = Number.parseFloat(styles.letterSpacing);
+
+      if (Number.isFinite(letterSpacing)) {
+        return baseWidth + Math.max(0, measuredValue.length - 1) * letterSpacing;
+      }
+
+      return baseWidth;
+    };
+
+    const updateOverlayMetrics = (): void => {
+      const styles = window.getComputedStyle(input);
+      const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0;
+      const prefixText = nameValue.slice(0, segmentBounds.start);
+      const rawSegmentText = nameValue.slice(segmentBounds.start, segmentBounds.end);
+      const segmentText = rawSegmentText || ` ${segmentQuery}`;
+      const prefixWidth = measureTextWidth(prefixText);
+      const segmentWidth = Math.max(measureTextWidth(segmentText), 28);
+      const widestSuggestionWidth = suggestions.reduce(
+        (currentMax, option) => Math.max(currentMax, measureTextWidth(option.label)),
+        segmentWidth
+      );
+      const maxOverlayWidth = Math.max(
+        Math.min(SUGGESTION_MAX_WIDTH, input.clientWidth - 8),
+        SUGGESTION_MIN_WIDTH
+      );
+      const desiredWidth = clampNumber(
+        Math.max(segmentWidth + 72, widestSuggestionWidth + 56),
+        SUGGESTION_MIN_WIDTH,
+        maxOverlayWidth
+      );
+      const rawCenter = paddingLeft + prefixWidth + segmentWidth / 2 - input.scrollLeft;
+      const clampedCenter = clampNumber(
+        rawCenter,
+        desiredWidth / 2 + 4,
+        input.clientWidth - desiredWidth / 2 - 4
+      );
+      const nextMetrics = {
+        left: clampedCenter,
+        width: desiredWidth,
+      };
+
+      setOverlayMetrics((currentMetrics) => {
+        if (
+          currentMetrics &&
+          currentMetrics?.left === nextMetrics.left &&
+          currentMetrics.width === nextMetrics.width
+        ) {
+          return currentMetrics;
+        }
+
+        return nextMetrics;
+      });
+    };
+
+    updateOverlayMetrics();
+    input.addEventListener('scroll', updateOverlayMetrics);
+    window.addEventListener('resize', updateOverlayMetrics);
+
+    return () => {
+      input.removeEventListener('scroll', updateOverlayMetrics);
+      window.removeEventListener('resize', updateOverlayMetrics);
+    };
+  }, [dropdownOpen, nameValue, segmentBounds, segmentQuery, suggestions]);
+
+  const overlayStageLabel = activeStage ? TITLE_SEGMENT_LABELS[activeStage] : null;
+  const activeDescendantId =
+    dropdownOpen && suggestions[highlightedIndex] ? `${listboxId}-option-${highlightedIndex}` : undefined;
+  const aboveSuggestions = visibleSuggestionWindow.above;
+  const belowSuggestions = visibleSuggestionWindow.below;
+  const topPanelHeight =
+    aboveSuggestions.length > 0
+      ? aboveSuggestions.length * SUGGESTION_ROW_HEIGHT + SUGGESTION_OVERLAY_PADDING * 2
+      : 0;
+  const bottomPanelHeight =
+    belowSuggestions.length > 0
+      ? belowSuggestions.length * SUGGESTION_ROW_HEIGHT + SUGGESTION_OVERLAY_PADDING * 2
+      : 0;
 
   return (
     <FormField
@@ -407,16 +632,16 @@ export function StructuredProductNameField(): React.JSX.Element {
     >
       <div className='relative'>
         <Input
-          ref={inputRef}
+          ref={(node) => {
+            inputRef.current = node;
+            field.ref(node);
+          }}
           id='name_en'
+          name={field.name}
           value={nameValue}
           onChange={(event) => {
             const nextValue = event.target.value;
-            setValue('name_en', nextValue, {
-              shouldDirty: true,
-              shouldTouch: true,
-              shouldValidate: true,
-            });
+            field.onChange(event);
             syncSuggestionContext(nextValue, event.target.selectionStart);
           }}
           onFocus={() => {
@@ -469,6 +694,7 @@ export function StructuredProductNameField(): React.JSX.Element {
             }
           }}
           onBlur={() => {
+            field.onBlur();
             blurTimeoutRef.current = window.setTimeout(() => {
               blurTimeoutRef.current = null;
               setActiveStage(null);
@@ -480,47 +706,127 @@ export function StructuredProductNameField(): React.JSX.Element {
           autoComplete='off'
           autoCorrect='off'
           autoCapitalize='off'
+          aria-autocomplete='list'
+          aria-controls={dropdownOpen ? listboxId : undefined}
+          aria-expanded={dropdownOpen}
+          aria-haspopup='listbox'
+          aria-activedescendant={activeDescendantId}
           spellCheck={false}
           className={cn(error && 'border-red-500/60')}
         />
-        {dropdownOpen && segmentBounds ? (
+        {dropdownOpen && segmentBounds && overlayMetrics ? (
           <div
-            className='absolute z-30 mt-2 w-full rounded-lg border border-border/60 bg-card/95 p-2 shadow-xl backdrop-blur'
-            onMouseDown={(event) => event.preventDefault()}
+            id={listboxId}
+            role='listbox'
+            aria-label={`${overlayStageLabel ?? 'Title'} suggestions`}
+            className='pointer-events-none absolute inset-0 z-30 overflow-visible'
           >
-            <div className='mb-2 flex items-center justify-between gap-2 px-2 text-[10px] uppercase tracking-[0.18em] text-gray-400'>
-              <span>{TITLE_SEGMENT_LABELS[activeStage as TitleSegmentStage]}</span>
-              <span>{loadingTerms ? 'Loading...' : 'Suggestions'}</span>
-            </div>
-            <div className='max-h-64 space-y-1 overflow-y-auto'>
-              {suggestions.map((option, index) => (
-                <button
-                  key={`${option.label}-${index}`}
-                  type='button'
-                  disabled={option.disabled}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applySuggestion(option)}
-                  className={cn(
-                    'flex w-full items-start justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors',
-                    option.disabled
-                      ? 'cursor-not-allowed opacity-50'
-                      : index === highlightedIndex
-                        ? 'bg-foreground/10'
-                        : 'hover:bg-foreground/6'
-                  )}
-                >
-                  <span className='min-w-0'>
-                    <span className='block truncate text-gray-100'>{option.label}</span>
-                    {option.description && (
-                      <span className='block text-[11px] text-muted-foreground'>
-                        {option.description}
+            {aboveSuggestions.length > 0 ? (
+              <div
+                className={getSuggestionPanelClassName('above')}
+                style={{
+                  left: overlayMetrics.left,
+                  bottom: 'calc(100% + 8px)',
+                  width: overlayMetrics.width,
+                  height: topPanelHeight,
+                }}
+                onMouseDown={(event) => event.preventDefault()}
+              >
+                <div className='pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-card via-card/80 to-transparent' />
+                <div className='pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-card via-card/80 to-transparent' />
+                <div className='py-[6px]'>
+                  {aboveSuggestions.map(({ option, index }) => (
+                    <button
+                      id={`${listboxId}-option-${index}`}
+                      key={`${option.label}-${index}`}
+                      type='button'
+                      role='option'
+                      disabled={option.disabled}
+                      aria-selected={index === highlightedIndex}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onMouseEnter={() => {
+                        if (!option.disabled) {
+                          setHighlightedIndex(index);
+                        }
+                      }}
+                      onClick={() => applySuggestion(option)}
+                      className={getSuggestionOptionClassName(
+                        Boolean(option.disabled),
+                        index === highlightedIndex
+                      )}
+                      aria-disabled={option.disabled || undefined}
+                    >
+                      <span className='min-w-0'>
+                        <span className='block truncate'>{option.label}</span>
+                        {option.description && (
+                          <span className='block text-[11px] text-muted-foreground'>
+                            {option.description}
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </span>
-                  {!option.disabled && <ChevronRight className='mt-0.5 size-4 shrink-0 text-gray-500' />}
-                </button>
-              ))}
-            </div>
+                      {!option.disabled && (
+                        <ChevronRight
+                          className={getSuggestionChevronClassName(index === highlightedIndex)}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {belowSuggestions.length > 0 ? (
+              <div
+                className={getSuggestionPanelClassName('below')}
+                style={{
+                  left: overlayMetrics.left,
+                  top: 'calc(100% + 8px)',
+                  width: overlayMetrics.width,
+                  height: bottomPanelHeight,
+                }}
+                onMouseDown={(event) => event.preventDefault()}
+              >
+                <div className='pointer-events-none absolute inset-x-2 top-0 z-10 h-9 rounded-lg border border-foreground/12 bg-foreground/10 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]' />
+                <div className='pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-card via-card/80 to-transparent' />
+                <div className='py-[6px]'>
+                  {belowSuggestions.map(({ option, index }) => (
+                    <button
+                      id={`${listboxId}-option-${index}`}
+                      key={`${option.label}-${index}`}
+                      type='button'
+                      role='option'
+                      disabled={option.disabled}
+                      aria-selected={index === highlightedIndex}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onMouseEnter={() => {
+                        if (!option.disabled) {
+                          setHighlightedIndex(index);
+                        }
+                      }}
+                      onClick={() => applySuggestion(option)}
+                      className={getSuggestionOptionClassName(
+                        Boolean(option.disabled),
+                        index === highlightedIndex
+                      )}
+                      aria-disabled={option.disabled || undefined}
+                    >
+                      <span className='min-w-0'>
+                        <span className='block truncate'>{option.label}</span>
+                        {option.description && (
+                          <span className='block text-[11px] text-muted-foreground'>
+                            {option.description}
+                          </span>
+                        )}
+                      </span>
+                      {!option.disabled && (
+                        <ChevronRight
+                          className={getSuggestionChevronClassName(index === highlightedIndex)}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

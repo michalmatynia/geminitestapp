@@ -49,7 +49,6 @@ const mocks = vi.hoisted(() => ({
       timestamp: '2026-04-09T04:00:00.000Z',
       activeSource: 'local',
       defaultSource: 'local',
-      sourceFilePath: '/tmp/mongo-source.json',
       lastSync: {
         direction: 'cloud_to_local',
         source: 'cloud',
@@ -93,14 +92,12 @@ const mocks = vi.hoisted(() => ({
       ],
     },
     redisOverview: null,
-    isSwitchingMongoSource: false,
     isSyncingMongoSources: false,
   },
   actions: {
     updatePolicy: vi.fn(),
     updateCollectionRoute: vi.fn(),
     updateOperationControls: vi.fn(),
-    switchMongoSource: vi.fn(),
     syncMongoSources: vi.fn(),
     setActiveView: vi.fn(),
     saveSettings: vi.fn(),
@@ -150,7 +147,6 @@ const createState = () => ({
     timestamp: '2026-04-09T04:00:00.000Z',
     activeSource: 'local' as const,
     defaultSource: 'local' as const,
-    sourceFilePath: '/tmp/mongo-source.json',
     lastSync: {
       direction: 'cloud_to_local' as const,
       source: 'cloud' as const,
@@ -194,7 +190,6 @@ const createState = () => ({
     ],
   },
   redisOverview: null,
-  isSwitchingMongoSource: false,
   isSyncingMongoSources: false,
 });
 
@@ -363,18 +358,39 @@ describe('DatabaseEnginePage', () => {
     mocks.actions.updatePolicy.mockReset();
     mocks.actions.updateCollectionRoute.mockReset();
     mocks.actions.updateOperationControls.mockReset();
-    mocks.actions.switchMongoSource.mockReset();
     mocks.actions.syncMongoSources.mockReset();
     mocks.actions.setActiveView.mockReset();
     mocks.actions.saveSettings.mockReset();
     mocks.actions.refetchAll.mockReset();
   });
 
-  it('renders Mongo source details and allows switching to cloud', () => {
+  it('renders Mongo source details and explains env-managed switching', () => {
     render(<DatabaseEnginePage />);
 
     expect(screen.getByRole('heading', { name: 'Mongo Source' })).toBeInTheDocument();
-    expect(screen.getByText('Source file: /tmp/mongo-source.json')).toBeInTheDocument();
+    expect(screen.getByText('Current Database')).toBeInTheDocument();
+    expect(screen.getByText('Local Database')).toBeInTheDocument();
+    expect(screen.getByText('.env Example')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Keep both targets in `.env`, then change only `MONGODB_ACTIVE_SOURCE_DEFAULT` and restart.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText(/MONGODB_LOCAL_URI=mongodb:\/\/localhost:27017\/app_local/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/MONGODB_CLOUD_URI=mongodb\+srv:\/\/cluster\.example\/app_cloud/)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/MONGODB_ACTIVE_SOURCE_DEFAULT=local/)).toBeInTheDocument();
+    expect(screen.getByText(/# To switch:\s*MONGODB_ACTIVE_SOURCE_DEFAULT=cloud/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'To switch, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=cloud in .env and restart the server.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Controlled by `.env`: MONGODB_ACTIVE_SOURCE_DEFAULT')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Restart required after `.env` changes')).toBeInTheDocument();
     expect(screen.getByText('Synced at: 2026-04-09T04:30:00.000Z')).toBeInTheDocument();
     expect(screen.getByText('Direction: cloud_to_local')).toBeInTheDocument();
     expect(screen.getByText('Archive: /tmp/mongo-sync.archive')).toBeInTheDocument();
@@ -382,10 +398,12 @@ describe('DatabaseEnginePage', () => {
     expect(screen.getAllByText('Connection: Reachable')).toHaveLength(2);
     expect(screen.getByText('mongodb://localhost:27017/app_local')).toBeInTheDocument();
     expect(screen.getByText('mongodb+srv://cluster.example/app_cloud')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Switch to cloud' }));
-
-    expect(mocks.actions.switchMongoSource).toHaveBeenCalledWith('cloud');
+    expect(
+      screen.getByText(
+        'To activate this target, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=cloud in .env and restart the server.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Switch to cloud' })).not.toBeInTheDocument();
   });
 
   it('runs manual Mongo sync actions from the header controls', () => {
@@ -426,7 +444,9 @@ describe('DatabaseEnginePage', () => {
     render(<DatabaseEnginePage />);
 
     expect(
-      screen.getByText('Configure both local and cloud URIs to enable one-click switching.')
+      screen.getByText(
+        'Configure both local and cloud URIs and set MONGODB_ACTIVE_SOURCE_DEFAULT in `.env` to use dual-source mode.'
+      )
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pull Cloud -> Local' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Push Local -> Cloud' })).not.toBeInTheDocument();

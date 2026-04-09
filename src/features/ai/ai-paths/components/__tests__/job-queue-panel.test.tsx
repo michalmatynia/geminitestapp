@@ -65,7 +65,7 @@ vi.mock('../job-queue-overview', () => ({
   },
 }));
 
-vi.mock('@/shared/ui/primitives.public', () => ({
+vi.mock('@/shared/ui/templates.public', () => ({
   ConfirmModal: (props: Record<string, unknown>) => {
     mockState.confirmModalProps.push(props);
     return <div data-testid={`confirm-modal-${mockState.confirmModalProps.length - 1}`} />;

@@ -443,14 +443,6 @@ export type DatabaseEngineMongoSourceEntry = z.infer<
   typeof databaseEngineMongoSourceEntrySchema
 >;
 
-export const databaseEngineSetMongoSourceRequestSchema = z.object({
-  source: mongoSourceSchema,
-});
-
-export type DatabaseEngineSetMongoSourceRequest = z.infer<
-  typeof databaseEngineSetMongoSourceRequestSchema
->;
-
 export const databaseEngineMongoSyncDirectionSchema = z.enum([
   'cloud_to_local',
   'local_to_cloud',
@@ -477,7 +469,6 @@ export const databaseEngineMongoSourceStateSchema = z.object({
   timestamp: z.string(),
   activeSource: mongoSourceSchema.nullable(),
   defaultSource: mongoSourceSchema.nullable(),
-  sourceFilePath: z.string(),
   lastSync: databaseEngineMongoLastSyncSchema.nullable(),
   local: databaseEngineMongoSourceEntrySchema,
   cloud: databaseEngineMongoSourceEntrySchema,
@@ -488,16 +479,6 @@ export const databaseEngineMongoSourceStateSchema = z.object({
 
 export type DatabaseEngineMongoSourceState = z.infer<
   typeof databaseEngineMongoSourceStateSchema
->;
-
-export const databaseEngineSetMongoSourceResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  state: databaseEngineMongoSourceStateSchema,
-});
-
-export type DatabaseEngineSetMongoSourceResponse = z.infer<
-  typeof databaseEngineSetMongoSourceResponseSchema
 >;
 
 export const databaseEngineMongoSyncRequestSchema = z.object({

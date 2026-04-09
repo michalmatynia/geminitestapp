@@ -90,7 +90,7 @@ const getPublishedHomeCmsClientPropsCached = async ({
     getCmsMenuSettings(domainId, locale),
   ]);
   const cmsPage = await cmsRepository.getPageBySlug(defaultSlug, { locale });
-  if (!cmsPage || cmsPage.status !== 'published') {
+  if (cmsPage?.status !== 'published') {
     return null;
   }
 

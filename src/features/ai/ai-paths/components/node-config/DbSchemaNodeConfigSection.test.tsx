@@ -82,72 +82,82 @@ vi.mock('../AiPathConfigContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
-  ...(() => {
-    const React = require('react') as typeof import('react');
-    return {
-      Button: ({
-        children,
-        ...props
-      }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-        <button {...props}>{children}</button>
-      ),
-      Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
-      Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
-      Label: ({ children }: { children: React.ReactNode }): React.JSX.Element => <label>{children}</label>,
-      Pagination: (props: {
-        page: number;
-        totalPages: number;
-        pageSize: number;
-        onPageChange: (page: number) => void;
-      }): React.JSX.Element => {
-        const { onPageChange } = props;
-        return (
-          <button type='button' onClick={() => onPageChange(2)}>
-            Page 2
-          </button>
-        );
-      },
-      SearchInput: ({
-        onClear,
-        ...props
-      }: React.InputHTMLAttributes<HTMLInputElement> & { onClear?: () => void }): React.JSX.Element => (
-        <div>
-          <input {...props} />
-          <button type='button' onClick={onClear}>
-            Clear Search
-          </button>
-        </div>
-      ),
-      SelectSimple: ({
-        ariaLabel,
-        onValueChange,
-        options,
-        value,
-        placeholder,
-      }: {
-        ariaLabel?: string;
-        onValueChange?: (value: string) => void;
-        options: Array<{ value: string; label: string }>;
-        value?: string;
-        placeholder?: string;
-      }): React.JSX.Element => (
-        <select
-          aria-label={ariaLabel}
-          value={value ?? ''}
-          onChange={(event) => onValueChange?.(event.target.value)}
-        >
-          <option value=''>{placeholder ?? 'Select'}</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ),
-    };
-  })(),
-}));
+vi.mock('@/shared/ui/primitives.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    Button: ({
+      children,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
+      <button {...props}>{children}</button>
+    ),
+    Label: ({ children }: { children: React.ReactNode }): React.JSX.Element => <label>{children}</label>,
+    Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+  };
+});
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+    SearchInput: ({
+      onClear,
+      ...props
+    }: React.InputHTMLAttributes<HTMLInputElement> & { onClear?: () => void }): React.JSX.Element => (
+      <div>
+        <input {...props} />
+        <button type='button' onClick={onClear}>
+          Clear Search
+        </button>
+      </div>
+    ),
+    SelectSimple: ({
+      ariaLabel,
+      onValueChange,
+      options,
+      value,
+      placeholder,
+    }: {
+      ariaLabel?: string;
+      onValueChange?: (value: string) => void;
+      options: Array<{ value: string; label: string }>;
+      value?: string;
+      placeholder?: string;
+    }): React.JSX.Element => (
+      <select
+        aria-label={ariaLabel}
+        value={value ?? ''}
+        onChange={(event) => onValueChange?.(event.target.value)}
+      >
+        <option value=''>{placeholder ?? 'Select'}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    ),
+  };
+});
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    Pagination: (props: {
+      page: number;
+      totalPages: number;
+      pageSize: number;
+      onPageChange: (page: number) => void;
+    }): React.JSX.Element => {
+      const { onPageChange } = props;
+      return (
+        <button type='button' onClick={() => onPageChange(2)}>
+          Page 2
+        </button>
+      );
+    },
+  };
+});
 
 import { DbSchemaNodeConfigSection } from './DbSchemaNodeConfigSection';
 

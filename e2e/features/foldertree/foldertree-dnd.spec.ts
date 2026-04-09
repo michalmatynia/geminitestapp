@@ -9,6 +9,19 @@ type SettingsRecord = {
   value: string;
 };
 
+type AiPathIndexRecord = {
+  id: string;
+  name: string;
+  folderPath: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type SettingsWriteItem = {
+  key: string;
+  value: string;
+};
+
 const E2E_ADMIN_EMAIL =
   process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'] ??
   process.env['E2E_ADMIN_EMAIL'] ??
@@ -239,6 +252,129 @@ async function ensureAdminSession(page: Page): Promise<void> {
   await page.locator('input[type="password"]').first().fill(E2E_ADMIN_PASSWORD);
   await page.locator('form button[type="submit"]').first().click();
   await page.waitForURL(/\/(en\/)?admin(\/.*)?(\?.*)?$/);
+}
+
+const readRequestedKeys = (requestUrl: string): string[] => {
+  const url = new URL(requestUrl);
+  const raw = url.searchParams.getAll('keys');
+  if (raw.length === 0) return [];
+  return raw
+    .flatMap((entry) => entry.split(','))
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+};
+
+async function mockAiPathsWorkspace(
+  page: Page,
+  initialIndex: AiPathIndexRecord[]
+): Promise<{ getSettingsWritePayload: () => SettingsWriteItem[] | null }> {
+  const settings = new Map<string, string>([
+    [PATH_INDEX_KEY, JSON.stringify(initialIndex)],
+    ['ai_paths_trigger_buttons', '[]'],
+    ['ai_paths_history_retention_passes', '0'],
+    ['ai_paths_history_retention_options_max', '25'],
+  ]);
+
+  initialIndex.forEach((entry) => {
+    settings.set(
+      `${PATH_CONFIG_PREFIX}${entry.id}`,
+      JSON.stringify({
+        ...createDefaultPathConfig(entry.id),
+        id: entry.id,
+        name: entry.name,
+        updatedAt: entry.updatedAt,
+      })
+    );
+  });
+
+  let settingsWritePayload: SettingsWriteItem[] | null = null;
+
+  await page.route(/\/api\/ai-paths\/settings(\?.*)?$/, async (route) => {
+    const request = route.request();
+    if (request.method() === 'GET') {
+      const requestedKeys = readRequestedKeys(request.url());
+      const payload =
+        requestedKeys.length > 0
+          ? requestedKeys
+              .map((key) => {
+                const value = settings.get(key);
+                return typeof value === 'string' ? { key, value } : null;
+              })
+              .filter((entry): entry is SettingsWriteItem => entry !== null)
+          : Array.from(settings.entries()).map(([key, value]) => ({ key, value }));
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify(payload),
+      });
+      return;
+    }
+
+    if (request.method() === 'POST') {
+      const body = JSON.parse(request.postData() || '{}') as {
+        items?: Array<{ key?: unknown; value?: unknown }>;
+        key?: unknown;
+        value?: unknown;
+      };
+      const items = Array.isArray(body.items)
+        ? body.items.filter(
+            (
+              item
+            ): item is SettingsWriteItem =>
+              typeof item?.key === 'string' && typeof item?.value === 'string'
+          )
+        : typeof body.key === 'string' && typeof body.value === 'string'
+          ? [{ key: body.key, value: body.value }]
+          : [];
+      settingsWritePayload = items;
+      items.forEach((item) => {
+        settings.set(item.key, item.value);
+      });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify(items),
+      });
+      return;
+    }
+
+    await route.fallback();
+  });
+
+  await page.route(/\/api\/ai-paths\/trigger-buttons(\?.*)?$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify([]),
+    });
+  });
+
+  await page.route(/\/api\/ai-paths\/runs(\?.*)?$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify({ runs: [], total: 0 }),
+    });
+  });
+
+  await page.route(/\/api\/ai-paths\/runtime-analytics\/summary(\?.*)?$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Cache-Control': 'no-store' },
+      body: JSON.stringify({
+        summary: buildEmptyAiPathRuntimeAnalyticsSummary(),
+      }),
+    });
+  });
+
+  return {
+    getSettingsWritePayload: () => settingsWritePayload,
+  };
 }
 
 const buildEmptyAiPathRuntimeAnalyticsSummary = () => {
@@ -797,132 +933,12 @@ test.describe('Master Folder Tree drag and drop', () => {
         updatedAt: now,
       },
     ];
-    const settings = new Map<string, string>([
-      [PATH_INDEX_KEY, JSON.stringify(initialIndex)],
-      [
-        `${PATH_CONFIG_PREFIX}${rootPathId}`,
-        JSON.stringify({
-          ...createDefaultPathConfig(rootPathId),
-          id: rootPathId,
-          name: 'Root Path',
-          updatedAt: now,
-        }),
-      ],
-      [
-        `${PATH_CONFIG_PREFIX}${folderedPathId}`,
-        JSON.stringify({
-          ...createDefaultPathConfig(folderedPathId),
-          id: folderedPathId,
-          name: 'Foldered Path',
-          updatedAt: now,
-        }),
-      ],
-      ['ai_paths_trigger_buttons', '[]'],
-      ['ai_paths_history_retention_passes', '0'],
-      ['ai_paths_history_retention_options_max', '25'],
-    ]);
-    let settingsWritePayload: Array<{ key: string; value: string }> | null = null;
-
-    const readRequestedKeys = (requestUrl: string): string[] => {
-      const url = new URL(requestUrl);
-      const raw = url.searchParams.getAll('keys');
-      if (raw.length === 0) return [];
-      return raw
-        .flatMap((entry) => entry.split(','))
-        .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0);
-    };
-
-    await page.route(/\/api\/ai-paths\/settings(\?.*)?$/, async (route) => {
-      const request = route.request();
-      if (request.method() === 'GET') {
-        const requestedKeys = readRequestedKeys(request.url());
-        const payload =
-          requestedKeys.length > 0
-            ? requestedKeys
-                .map((key) => {
-                  const value = settings.get(key);
-                  return typeof value === 'string' ? { key, value } : null;
-                })
-                .filter((entry): entry is { key: string; value: string } => entry !== null)
-            : Array.from(settings.entries()).map(([key, value]) => ({ key, value }));
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          headers: { 'Cache-Control': 'no-store' },
-          body: JSON.stringify(payload),
-        });
-        return;
-      }
-
-      if (request.method() === 'POST') {
-        const body = JSON.parse(request.postData() || '{}') as {
-          items?: Array<{ key?: unknown; value?: unknown }>;
-          key?: unknown;
-          value?: unknown;
-        };
-        const items = Array.isArray(body.items)
-          ? body.items
-              .filter(
-                (
-                  item
-                ): item is {
-                  key: string;
-                  value: string;
-                } => typeof item?.key === 'string' && typeof item?.value === 'string'
-              )
-          : typeof body.key === 'string' && typeof body.value === 'string'
-            ? [{ key: body.key, value: body.value }]
-            : [];
-        settingsWritePayload = items;
-        items.forEach((item) => {
-          settings.set(item.key, item.value);
-        });
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          headers: { 'Cache-Control': 'no-store' },
-          body: JSON.stringify(items),
-        });
-        return;
-      }
-
-      await route.fallback();
-    });
-
-    await page.route(/\/api\/ai-paths\/trigger-buttons(\?.*)?$/, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify([]),
-      });
-    });
-
-    await page.route(/\/api\/ai-paths\/runs(\?.*)?$/, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify({ runs: [], total: 0 }),
-      });
-    });
-
-    await page.route(/\/api\/ai-paths\/runtime-analytics\/summary(\?.*)?$/, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify({
-          summary: buildEmptyAiPathRuntimeAnalyticsSummary(),
-        }),
-      });
-    });
+    const { getSettingsWritePayload } = await mockAiPathsWorkspace(page, initialIndex);
 
     await mockAuthAndSettings(page);
     await ensureSharedAdminSession(page, '/admin/ai-paths');
 
-    await expect(page.getByText('Path Groups')).toBeVisible();
+    await expect(page.getByText('Path Groups', { exact: true })).toBeVisible();
     const sourcePath = page.locator(`[data-master-tree-node-id="ai-path:${rootPathId}"]`).first();
     const targetFolder = page.locator('[data-master-tree-node-id="ai-path-folder:drafts"]').first();
     await expect(sourcePath).toBeVisible();
@@ -930,9 +946,71 @@ test.describe('Master Folder Tree drag and drop', () => {
 
     await dragAndDrop(page, sourcePath, targetFolder);
 
-    await expect.poll(() => settingsWritePayload, { timeout: 10_000 }).not.toBeNull();
+    await expect.poll(getSettingsWritePayload, { timeout: 10_000 }).not.toBeNull();
 
-    const pathIndexEntry = settingsWritePayload?.find((item) => item.key === PATH_INDEX_KEY) ?? null;
+    const pathIndexEntry = getSettingsWritePayload()?.find((item) => item.key === PATH_INDEX_KEY) ?? null;
+    expect(pathIndexEntry).not.toBeNull();
+    const persistedIndex = JSON.parse(pathIndexEntry?.value ?? '[]') as Array<{
+      id: string;
+      folderPath?: string;
+    }>;
+
+    expect(persistedIndex).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: rootPathId,
+          folderPath: 'drafts',
+        }),
+        expect.objectContaining({
+          id: folderedPathId,
+          folderPath: 'drafts',
+        }),
+      ])
+    );
+  });
+
+  test('AI Paths Paths tab: dragging a path into a folder persists path index folder metadata', async ({
+    page,
+  }) => {
+    const now = new Date().toISOString();
+    const rootPathId = 'path_e2e_paths_tab_root_drag';
+    const folderedPathId = 'path_e2e_paths_tab_folder_drag';
+    const initialIndex: AiPathIndexRecord[] = [
+      {
+        id: rootPathId,
+        name: 'Paths Tab Root Path',
+        folderPath: '',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: folderedPathId,
+        name: 'Paths Tab Foldered Path',
+        folderPath: 'drafts',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+    const { getSettingsWritePayload } = await mockAiPathsWorkspace(page, initialIndex);
+
+    await mockAuthAndSettings(page);
+    await ensureSharedAdminSession(page, '/admin/ai-paths');
+
+    await page.getByRole('button', { name: 'Paths', exact: true }).click();
+    await expect(
+      page.getByText('Browse, group, and reorganize AI paths with nested folders.')
+    ).toBeVisible();
+
+    const sourcePath = page.locator(`[data-master-tree-node-id="ai-path:${rootPathId}"]`).first();
+    const targetFolder = page.locator('[data-master-tree-node-id="ai-path-folder:drafts"]').first();
+    await expect(sourcePath).toBeVisible();
+    await expect(targetFolder).toBeVisible();
+
+    await dragAndDrop(page, sourcePath, targetFolder);
+
+    await expect.poll(getSettingsWritePayload, { timeout: 10_000 }).not.toBeNull();
+
+    const pathIndexEntry = getSettingsWritePayload()?.find((item) => item.key === PATH_INDEX_KEY) ?? null;
     expect(pathIndexEntry).not.toBeNull();
     const persistedIndex = JSON.parse(pathIndexEntry?.value ?? '[]') as Array<{
       id: string;

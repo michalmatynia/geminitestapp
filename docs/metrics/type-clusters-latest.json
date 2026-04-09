@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-08T19:04:19.948Z",
+  "generatedAt": "2026-04-09T01:47:47.847Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -18,9 +18,9 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10035,
-    "exportedDeclarationsScanned": 5923,
-    "candidateDeclarationsScanned": 5902,
+    "filesScanned": 10072,
+    "exportedDeclarationsScanned": 5936,
+    "candidateDeclarationsScanned": 5915,
     "exactShapeClusters": 4,
     "nearShapeClusters": 3,
     "clustersAfterFilters": 7,
@@ -192,7 +192,7 @@
           "name": "CustomFieldFilters",
           "kind": "type",
           "path": "src/shared/contracts/products/drafts.ts",
-          "line": 179,
+          "line": 185,
           "domain": "shared:contracts",
           "usageCount": 1
         },
@@ -200,7 +200,7 @@
           "name": "ProducerFilters",
           "kind": "type",
           "path": "src/shared/contracts/products/drafts.ts",
-          "line": 202,
+          "line": 186,
           "domain": "shared:contracts",
           "usageCount": 1
         }

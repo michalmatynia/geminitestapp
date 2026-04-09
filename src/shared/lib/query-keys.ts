@@ -428,6 +428,7 @@ export const QUERY_KEYS = {
       redisOverview: (params: Record<string, unknown>) =>
         [...QUERY_KEYS.system.databases.all, 'redis-overview', params] as const,
       engineStatus: () => [...QUERY_KEYS.system.databases.all, 'engine-status'] as const,
+      engineMongoSource: () => [...QUERY_KEYS.system.databases.all, 'engine-mongo-source'] as const,
       engineBackupSchedulerStatus: () =>
         [...QUERY_KEYS.system.databases.all, 'engine-backup-scheduler-status'] as const,
       engineOperationsJobs: (params: Record<string, unknown>) =>

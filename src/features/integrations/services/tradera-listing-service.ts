@@ -516,6 +516,15 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
     return;
   }
 
+  // check_status failure: do not overwrite the listing status — just record the error metadata
+  if (action === 'check_status') {
+    await resolved.repository.updateListing(input.listingId, {
+      lastStatusCheckAt: now,
+      marketplaceData,
+    });
+    throw new Error(result.error ?? 'Tradera live status check failed.');
+  }
+
   const failureStatus = resolveFailureListingStatus(result.errorCategory);
   await resolved.repository.updateListingStatus(input.listingId, failureStatus);
   await resolved.repository.updateListing(input.listingId, {

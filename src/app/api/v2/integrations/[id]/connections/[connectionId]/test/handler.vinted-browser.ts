@@ -20,16 +20,23 @@ import {
   VINTED_LISTING_FORM_URL,
 } from '@/features/integrations/services/vinted-listing/config';
 
+import {
+  type IntegrationConnectionRecord,
+  type IntegrationRepository,
+} from '@/shared/contracts/integrations/repositories';
+
 type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
 type Fail = (step: string, detail: string, status?: number) => Promise<never>;
+
+type ConnectionUpdateRepository = Pick<IntegrationRepository, 'updateConnection'>;
 
 const VINTED_GOOGLE_SIGN_IN_BLOCKED_MESSAGE =
   'AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.';
 const MANUAL_VINTED_DEVICE_NAME = 'Desktop Chrome';
 
 export const handleVintedBrowserTest = async (
-  connection: any, // IntegrationConnectionRecord
-  repo: any, // IntegrationRepository
+  connection: IntegrationConnectionRecord,
+  repo: ConnectionUpdateRepository,
   manualMode: boolean,
   quicklistPreflightMode: boolean,
   manualLoginTimeoutMs: number,
@@ -45,10 +52,11 @@ export const handleVintedBrowserTest = async (
   }
 
   let storedState: PersistedStorageState | null = null;
-  if (connection.playwrightStorageState) {
+  const playwrightStorageState = connection.playwrightStorageState;
+  if (playwrightStorageState) {
     pushStep('Loading session', 'pending', 'Loading stored Playwright session');
     try {
-      const raw = decryptSecret(connection.playwrightStorageState);
+      const raw = decryptSecret(playwrightStorageState);
       const parsed = JSON.parse(raw) as unknown;
       if (
         parsed &&

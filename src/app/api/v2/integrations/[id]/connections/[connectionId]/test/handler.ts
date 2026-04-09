@@ -42,7 +42,7 @@ export async function postTestConnectionHandler(
     requestBody = parsedBody.data;
   }
 
-  const mode =
+  const mode: 'manual' | 'manual_session_refresh' | 'quicklist_preflight' | 'auto' =
     requestBody.mode === 'manual'
       ? 'manual'
       : requestBody.mode === 'manual_session_refresh'
@@ -132,7 +132,7 @@ export async function postTestConnectionHandler(
     return handleTraderaBrowserTest(
       connection,
       repo,
-      mode as any,
+      mode,
       manualLoginTimeoutMs,
       requestBody.productId ?? null,
       steps,

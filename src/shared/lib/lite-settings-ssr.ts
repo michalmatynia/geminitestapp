@@ -51,6 +51,16 @@ export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
   applyCacheLife('swr60');
 
   try {
+    const currentCache = getLiteSettingsCache();
+    if (currentCache) {
+      return cloneLiteSettings(currentCache.data);
+    }
+
+    if (process.env['NODE_ENV'] === 'development') {
+      void prewarmLiteSettingsServerCache().catch(() => {});
+      return [];
+    }
+
     await waitForLiteSettingsPrewarm();
     const cache = getLiteSettingsCache();
     return cache ? cloneLiteSettings(cache.data) : [];

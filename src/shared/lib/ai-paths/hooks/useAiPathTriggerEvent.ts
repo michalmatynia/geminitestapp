@@ -13,6 +13,7 @@ import {
   mergeEnqueuedAiPathRunForCache,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths/api/client';
+import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { resolveHistoryRetentionPasses } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
@@ -71,6 +72,7 @@ export function useAiPathTriggerEvent(): {
   } {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
 
   const resolvePreferredActivePathId = useCallback((): string | null => {
     const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
@@ -384,6 +386,7 @@ export function useAiPathTriggerEvent(): {
                 },
               },
             },
+            ...(pageContextRegistry ? { contextRegistry: pageContextRegistry } : {}),
           },
           { timeoutMs: TRIGGER_ENQUEUE_TIMEOUT_MS }
         );
@@ -603,7 +606,7 @@ export function useAiPathTriggerEvent(): {
         });
       }
     },
-    [queryClient, toast, resolvePreferredActivePathId]
+    [pageContextRegistry, queryClient, toast, resolvePreferredActivePathId]
   );
 
   return { fireAiPathTriggerEvent };

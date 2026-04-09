@@ -1,4 +1,5 @@
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 
 import { normalizeDatabaseEngineBackupSchedule } from './database-engine-backup-schedule';
 import {
@@ -132,6 +133,7 @@ const parseOperationControls = (raw: unknown): DatabaseEngineOperationControls =
   normalizeDatabaseEngineOperationControls(raw);
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();

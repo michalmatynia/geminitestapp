@@ -162,6 +162,9 @@ export type DatabaseEngineProvider = z.infer<typeof databaseEngineProviderSchema
 export const databaseEnginePrimaryProviderSchema = z.literal('mongodb');
 export type DatabaseEnginePrimaryProvider = z.infer<typeof databaseEnginePrimaryProviderSchema>;
 
+export const mongoSourceSchema = z.enum(['local', 'cloud']);
+export type MongoSource = z.infer<typeof mongoSourceSchema>;
+
 export const databaseEngineServiceSchema = z.enum([
   'app',
   'auth',
@@ -425,6 +428,51 @@ export const databaseEngineProviderPreviewSchema = z.object({
 
 export type DatabaseEngineProviderPreview = z.infer<typeof databaseEngineProviderPreviewSchema>;
 
+export const databaseEngineMongoSourceEntrySchema = z.object({
+  source: mongoSourceSchema,
+  configured: z.boolean(),
+  dbName: z.string().nullable(),
+  maskedUri: z.string().nullable(),
+  isActive: z.boolean(),
+  usesLegacyEnv: z.boolean(),
+});
+
+export type DatabaseEngineMongoSourceEntry = z.infer<
+  typeof databaseEngineMongoSourceEntrySchema
+>;
+
+export const databaseEngineMongoSourceStateSchema = z.object({
+  timestamp: z.string(),
+  activeSource: mongoSourceSchema.nullable(),
+  defaultSource: mongoSourceSchema.nullable(),
+  sourceFilePath: z.string(),
+  local: databaseEngineMongoSourceEntrySchema,
+  cloud: databaseEngineMongoSourceEntrySchema,
+  canSwitch: z.boolean(),
+});
+
+export type DatabaseEngineMongoSourceState = z.infer<
+  typeof databaseEngineMongoSourceStateSchema
+>;
+
+export const databaseEngineSetMongoSourceRequestSchema = z.object({
+  source: mongoSourceSchema,
+});
+
+export type DatabaseEngineSetMongoSourceRequest = z.infer<
+  typeof databaseEngineSetMongoSourceRequestSchema
+>;
+
+export const databaseEngineSetMongoSourceResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  state: databaseEngineMongoSourceStateSchema,
+});
+
+export type DatabaseEngineSetMongoSourceResponse = z.infer<
+  typeof databaseEngineSetMongoSourceResponseSchema
+>;
+
 export type CollectionCopyResult = DatabaseSyncCollectionResult;
 
 export const databaseEngineBackupRunNowRequestSchema = z.object({
@@ -542,6 +590,7 @@ export const databaseEngineStatusSchema = z.object({
     mongodbConfigured: z.boolean(),
     redisConfigured: z.boolean(),
   }),
+  mongoSource: databaseEngineMongoSourceStateSchema,
   serviceRouteMap: z.record(z.string(), z.string()),
   collectionRouteMap: z.record(z.string(), z.string()),
   services: z.array(databaseEngineServiceStatusSchema),

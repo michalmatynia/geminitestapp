@@ -8,6 +8,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
+import { ProductLeafCategoriesContextRegistrySource } from '@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource';
+import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
 import {
   useProductListHeaderActionsContext,
   useProductListModalsContext,
@@ -27,6 +29,7 @@ import { Button } from '@/shared/ui/button';
 import { FormModal } from '@/shared/ui/FormModal';
 import { IntegrationSelector } from '@/shared/ui/integration-selector';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
 
 import { loadProductForm } from './product-form-preload';
 
@@ -126,7 +129,12 @@ function ProductFormModalBody(props: {
   }, [getValues, product, draft]);
 
   return (
-    <>
+    <ContextRegistryPageProvider
+      pageId='admin:product-editor-modal'
+      title='Product Editor Modal'
+      rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}
+    >
+      <ProductLeafCategoriesContextRegistrySource sourceId='product-modal-leaf-categories' />
       <div className='mb-3 flex flex-wrap items-center gap-2'>
         <TriggerButtonBar
           location='product_modal'
@@ -158,7 +166,7 @@ function ProductFormModalBody(props: {
           {...(validationInstanceScopeOverride ? { validationInstanceScopeOverride } : {})}
         />
       )}
-    </>
+    </ContextRegistryPageProvider>
   );
 }
 

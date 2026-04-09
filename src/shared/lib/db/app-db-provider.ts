@@ -1,6 +1,7 @@
 import type { AppProviderValue as AppDbProvider } from '@/shared/contracts/system';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 
 import {
   getDatabaseEnginePolicy,
@@ -33,6 +34,7 @@ const normalizeProvider = (value?: string | null): AppDbProvider | null => {
 };
 
 const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();
@@ -61,6 +63,7 @@ export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> =
     return providerInflight;
   }
   providerInflight = (async (): Promise<AppDbProvider | null> => {
+    await applyActiveMongoSourceEnv();
     if (process.env['APP_DB_PROVIDER']) {
       const envProvider = normalizeProvider(process.env['APP_DB_PROVIDER']);
       if (envProvider) return envProvider;
@@ -77,6 +80,7 @@ let resolvedProviderCache: { value: AppDbProvider; ts: number } | null = null;
 const RESOLVED_PROVIDER_TTL_MS = 60000; // 60 seconds
 
 export const getAppDbProvider = async (): Promise<AppDbProvider> => {
+  await applyActiveMongoSourceEnv();
   const now = Date.now();
   if (resolvedProviderCache && now - resolvedProviderCache.ts < RESOLVED_PROVIDER_TTL_MS) {
     return resolvedProviderCache.value;

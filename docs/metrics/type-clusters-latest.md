@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-08'
+last_reviewed: '2026-04-09'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,14 +8,14 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-04-08T19:04:19.948Z
+Generated at: 2026-04-09T01:47:47.847Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 10035
-- Exported declarations scanned: 5923
-- Candidate declarations scanned: 5902
+- Files scanned: 10072
+- Exported declarations scanned: 5936
+- Candidate declarations scanned: 5915
 - Exact-shape clusters: 4
 - Near-shape clusters: 3
 - Clusters after filters: 7

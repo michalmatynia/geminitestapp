@@ -270,7 +270,13 @@ export const buildTraderaScriptInput = async ({
   const imageUploadPlan = await resolveTraderaProductImageUploadPlan(product);
   const imageUrls = imageUploadPlan.imageUrls.map((url) => toAbsoluteUrl(url, appBaseUrl));
   const localImagePaths = imageUploadPlan.localImagePaths;
-  const duplicateSearchTerms = buildDuplicateSearchTerms([title]);
+  // Duplicate search only uses English names — Tradera is a Swedish/English marketplace
+  // and Polish-only terms return no results, causing spurious duplicate detection failures.
+  const englishTitle =
+    typeof product.name_en === 'string' && product.name_en.trim()
+      ? product.name_en.trim()
+      : null;
+  const duplicateSearchTerms = buildDuplicateSearchTerms(englishTitle ? [englishTitle] : []);
   const priceResolution = await resolveTraderaListingPriceForProduct({
     product,
     targetCurrencyCode: 'EUR',

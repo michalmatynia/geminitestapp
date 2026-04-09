@@ -32,7 +32,6 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     palette,
   } = useAiPathsSettingsPageContext();
   const canvasContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const isRightSidebarCollapsed = false;
   const setIsFocusMode = onFocusModeChange ?? (() => undefined);
 
   const openPathSettings = setPathSettingsModalOpen ?? (() => undefined);
@@ -40,8 +39,10 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const validationDiagnosticsReady = diagnosticsReady !== false;
   const nodeDiagnosticsById = validationDiagnosticsReady ? dataContractReport?.byNodeId ?? {} : {};
   const focusDataContractNode = setDataContractInspectorNodeId ?? (() => undefined);
-  
+
   const [secondaryPanelsReady, setSecondaryPanelsReady] = React.useState(false);
+  const [isInspectorVisible, setIsInspectorVisible] = React.useState(true);
+  const [isPathTreeVisible, setIsPathTreeVisible] = React.useState(true);
 
   React.useEffect(() => {
     if (activeTab !== 'canvas') {
@@ -76,12 +77,21 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   if (activeTab !== 'canvas') return null;
 
   return (
-    <div className={isFocusMode ? 'h-full space-y-0' : 'space-y-6'}>
+    <div className={isFocusMode ? 'h-full space-y-0' : 'space-y-4'}>
       {!isFocusMode && typeof document !== 'undefined' && renderActions
         ? createPortal(
           renderActions(
             <div className='flex w-full items-start'>
-              <AiPathsCanvasToolbar />
+              <AiPathsCanvasToolbar
+                isInspectorVisible={isInspectorVisible}
+                isPathTreeVisible={isPathTreeVisible}
+                onToggleInspector={() => {
+                  setIsInspectorVisible((current) => !current);
+                }}
+                onTogglePathTree={() => {
+                  setIsPathTreeVisible((current) => !current);
+                }}
+              />
             </div>
           ),
           document.getElementById('ai-paths-actions') ?? document.body
@@ -96,16 +106,16 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         : null}
 
       <div
-        className={`flex overflow-hidden rounded-xl border border-border/60 bg-card/25 shadow-2xl ${
+        className={`flex overflow-hidden rounded-2xl border border-border/60 bg-card/20 shadow-xl ${
           isFocusMode ? 'h-[calc(100vh-140px)]' : 'h-[800px]'
         }`}
       >
-        {!isFocusMode && (
-          <div className='w-[320px] flex-shrink-0'>
+        {!isFocusMode && isPathTreeVisible && (
+          <div className='w-[280px] flex-shrink-0 border-r border-border/50 bg-card/35 xl:w-[312px]'>
             <AiPathsCanvasPathTree />
           </div>
         )}
-        <div className='relative flex flex-1 flex-col overflow-hidden'>
+        <div className='relative flex min-w-0 flex-1 flex-col overflow-hidden bg-background/10'>
           <div ref={canvasContainerRef} className='flex-1'>
             <CanvasBoard
               confirmNodeSwitch={confirmNodeSwitchSafe}
@@ -129,8 +139,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
           )}
         </div>
 
-        {!isRightSidebarCollapsed && (
-          <div className='w-[400px] flex-shrink-0 border-l border-border/60'>
+        {isInspectorVisible && (
+          <div className='w-[340px] flex-shrink-0 border-l border-border/60 bg-card/30 xl:w-[376px]'>
             <div className='h-full space-y-4 overflow-y-auto p-4'>
               <CanvasSidebar palette={palette} />
               {secondaryPanelsReady ? (

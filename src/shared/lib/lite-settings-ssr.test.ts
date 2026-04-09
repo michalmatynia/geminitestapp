@@ -5,6 +5,7 @@ import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
 const prewarmLiteSettingsServerCacheMock = vi.hoisted(() => vi.fn());
 const cloneLiteSettingsMock = vi.hoisted(() => vi.fn());
 const getLiteSettingsCacheMock = vi.hoisted(() => vi.fn());
+const originalNodeEnv = process.env['NODE_ENV'];
 
 vi.mock('server-only', () => ({}));
 
@@ -19,6 +20,7 @@ vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
 
 describe('lite-settings-ssr', () => {
   beforeEach(() => {
+    process.env['NODE_ENV'] = 'test';
     vi.useRealTimers();
     prewarmLiteSettingsServerCacheMock.mockReset();
     cloneLiteSettingsMock.mockReset();
@@ -36,7 +38,7 @@ describe('lite-settings-ssr', () => {
 
     const result = await getLiteSettingsForHydration();
 
-    expect(prewarmLiteSettingsServerCacheMock).toHaveBeenCalledTimes(1);
+    expect(prewarmLiteSettingsServerCacheMock).not.toHaveBeenCalled();
     expect(getLiteSettingsCacheMock).toHaveBeenCalledTimes(1);
     expect(cloneLiteSettingsMock).toHaveBeenCalledWith(rows);
     expect(result).toEqual([{ key: 'feature.enabled', value: 'true' }]);
@@ -57,6 +59,19 @@ describe('lite-settings-ssr', () => {
     await expect(getLiteSettingsForHydration()).resolves.toEqual([]);
   });
 
+  it('returns immediately in development on a cold cache miss and prewarms in the background', async () => {
+    process.env['NODE_ENV'] = 'development';
+    getLiteSettingsCacheMock.mockReturnValue(null);
+    prewarmLiteSettingsServerCacheMock.mockImplementation(
+      () => new Promise<void>(() => undefined)
+    );
+
+    await expect(getLiteSettingsForHydration()).resolves.toEqual([]);
+
+    expect(prewarmLiteSettingsServerCacheMock).toHaveBeenCalledTimes(1);
+    expect(cloneLiteSettingsMock).not.toHaveBeenCalled();
+  });
+
   it('does not block hydration indefinitely when prewarm is slow', async () => {
     vi.useFakeTimers();
     prewarmLiteSettingsServerCacheMock.mockImplementation(
@@ -70,5 +85,13 @@ describe('lite-settings-ssr', () => {
 
     await expect(hydrationPromise).resolves.toEqual([]);
     expect(prewarmLiteSettingsServerCacheMock).toHaveBeenCalledTimes(1);
+  });
+
+  afterEach(() => {
+    if (typeof originalNodeEnv === 'string') {
+      process.env['NODE_ENV'] = originalNodeEnv;
+    } else {
+      delete process.env['NODE_ENV'];
+    }
   });
 });

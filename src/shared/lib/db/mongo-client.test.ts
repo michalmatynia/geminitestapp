@@ -9,11 +9,13 @@ describe('mongo-client defaults', () => {
   const originalNodeEnv = process.env['NODE_ENV'];
   const originalServerSelectionTimeout = process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'];
   const originalConnectTimeout = process.env['MONGODB_CONNECT_TIMEOUT_MS'];
+  const originalMongoUri = process.env['MONGODB_URI'];
 
   beforeEach(() => {
     vi.resetModules();
     delete process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'];
     delete process.env['MONGODB_CONNECT_TIMEOUT_MS'];
+    process.env['MONGODB_URI'] = 'mongodb://127.0.0.1:27017/app';
   });
 
   afterAll(() => {
@@ -34,6 +36,12 @@ describe('mongo-client defaults', () => {
     } else {
       process.env['MONGODB_CONNECT_TIMEOUT_MS'] = originalConnectTimeout;
     }
+
+    if (originalMongoUri === undefined) {
+      delete process.env['MONGODB_URI'];
+    } else {
+      process.env['MONGODB_URI'] = originalMongoUri;
+    }
   });
 
   it('uses stable fallback timeouts in development', async () => {
@@ -44,6 +52,7 @@ describe('mongo-client defaults', () => {
 
     expect(options.serverSelectionTimeoutMS).toBe(5000);
     expect(options.connectTimeoutMS).toBe(5000);
+    expect(options.directConnection).toBe(true);
   });
 
   it('preserves explicit timeout overrides', async () => {
@@ -56,5 +65,17 @@ describe('mongo-client defaults', () => {
 
     expect(options.serverSelectionTimeoutMS).toBe(2500);
     expect(options.connectTimeoutMS).toBe(3500);
+    expect(options.directConnection).toBe(true);
+  });
+
+  it('enables directConnection only for single-node localhost uris', async () => {
+    const { __testOnly } = await import('./mongo-client');
+
+    expect(__testOnly.isSingleNodeLocalMongoUri('mongodb://127.0.0.1:27017/app')).toBe(true);
+    expect(__testOnly.isSingleNodeLocalMongoUri('mongodb://localhost:27017/app')).toBe(true);
+    expect(__testOnly.isSingleNodeLocalMongoUri('mongodb://localhost:27017/app?replicaSet=rs0')).toBe(
+      false
+    );
+    expect(__testOnly.isSingleNodeLocalMongoUri('mongodb+srv://cluster.example/app')).toBe(false);
   });
 });

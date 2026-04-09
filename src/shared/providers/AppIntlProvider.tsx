@@ -9,5 +9,13 @@ type AppIntlProviderProps = Omit<ComponentProps<typeof NextIntlClientProvider>, 
 };
 
 export function AppIntlProvider({ locale, ...props }: AppIntlProviderProps): React.JSX.Element {
-  return <NextIntlClientProvider locale={locale} {...props} />;
+  const defaultTimeZone = process.env['NEXT_INTL_TIME_ZONE']?.trim() || 'Europe/Warsaw';
+
+  return (
+    <NextIntlClientProvider
+      locale={locale}
+      timeZone={props.timeZone ?? defaultTimeZone}
+      {...props}
+    />
+  );
 }

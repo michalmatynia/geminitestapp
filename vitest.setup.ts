@@ -2,6 +2,15 @@ import 'dotenv/config';
 import '@testing-library/jest-dom/vitest';
 import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import React from 'react';
+
+// Mock React.startTransition to be synchronous in tests
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    startTransition: (scope: () => void) => scope(),
+  };
+});
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { server } from './src/mocks/server';
 
@@ -368,41 +377,45 @@ vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
 });
 
 // Mock data-display components
-vi.mock('@/shared/ui/data-display.public', () => ({
-  Badge: (props: any) => {
-    const {
-      children,
-      variant,
-      className,
-      'data-variant': dataVariant,
-      'data-testid': dataTestId,
-    } = props;
-    return React.createElement(
-      'div',
-      {
+vi.mock('@/shared/ui/data-display.public', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    Badge: (props: any) => {
+      const {
+        children,
+        variant,
         className,
-        'data-testid': dataTestId || 'badge',
-        'data-variant': dataVariant || variant,
-      },
-      children
-    );
-  },
-  StatusBadge: (props: any) => {
-    const { status, label, className, variant, size } = props;
-    return React.createElement(
-      'div',
-      {
-        className,
-        'data-testid': 'status-badge',
-        'data-status': status,
-        'data-variant': variant,
-        'data-size': size,
-        'data-class-name': className,
-      },
-      label || status
-    );
-  },
-}));
+        'data-variant': dataVariant,
+        'data-testid': dataTestId,
+      } = props;
+      return React.createElement(
+        'div',
+        {
+          className,
+          'data-testid': dataTestId || 'badge',
+          'data-variant': dataVariant || variant,
+        },
+        children
+      );
+    },
+    StatusBadge: (props: any) => {
+      const { status, label, className, variant, size } = props;
+      return React.createElement(
+        'div',
+        {
+          className,
+          'data-testid': 'status-badge',
+          'data-status': status,
+          'data-variant': variant,
+          'data-size': size,
+          'data-class-name': className,
+        },
+        label || status
+      );
+    },
+  };
+});
 
 // Mock forms-and-actions components
 vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {

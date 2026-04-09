@@ -6,12 +6,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   loadTriggerSettingsDataMock,
   resolveTriggerSelectionMock,
+  enqueueAiPathRunMock,
+  listAiPathRunsMock,
+  resolveAiPathRunFromEnqueueResponseDataMock,
   logClientCatchMock,
+  pageContextRegistryMock,
   toastMock,
 } = vi.hoisted(() => ({
   loadTriggerSettingsDataMock: vi.fn(),
   resolveTriggerSelectionMock: vi.fn(),
+  enqueueAiPathRunMock: vi.fn(),
+  listAiPathRunsMock: vi.fn(),
+  resolveAiPathRunFromEnqueueResponseDataMock: vi.fn(),
   logClientCatchMock: vi.fn(),
+  pageContextRegistryMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -35,11 +43,16 @@ vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-selection', async () => {
   };
 });
 
+vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
+  useOptionalContextRegistryPageEnvelope: () => pageContextRegistryMock(),
+}));
+
 vi.mock('@/shared/lib/ai-paths/api/client', () => ({
-  enqueueAiPathRun: vi.fn(),
-  listAiPathRuns: vi.fn(),
+  enqueueAiPathRun: (...args: unknown[]) => enqueueAiPathRunMock(...args),
+  listAiPathRuns: (...args: unknown[]) => listAiPathRunsMock(...args),
   mergeEnqueuedAiPathRunForCache: vi.fn(),
-  resolveAiPathRunFromEnqueueResponseData: vi.fn(),
+  resolveAiPathRunFromEnqueueResponseData: (...args: unknown[]) =>
+    resolveAiPathRunFromEnqueueResponseDataMock(...args),
 }));
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
@@ -53,7 +66,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
   updateAiPathsSetting: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: toastMock,
   }),
@@ -65,6 +78,10 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 }));
 
 import { useAiPathTriggerEvent } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+import {
+  getStarterWorkflowTemplateById,
+  materializeStarterWorkflowPathConfig,
+} from '@/shared/lib/ai-paths/core/starter-workflows';
 
 const createWrapper = (): ((props: PropsWithChildren) => ReactElement) => {
   const queryClient = new QueryClient({
@@ -90,11 +107,21 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
   beforeEach(() => {
     loadTriggerSettingsDataMock.mockReset();
     resolveTriggerSelectionMock.mockReset();
+    enqueueAiPathRunMock.mockReset();
+    listAiPathRunsMock.mockReset();
+    resolveAiPathRunFromEnqueueResponseDataMock.mockReset();
     logClientCatchMock.mockReset();
+    pageContextRegistryMock.mockReset();
     toastMock.mockReset();
     loadTriggerSettingsDataMock.mockResolvedValue({
       settingsData: [],
       mode: 'full',
+    });
+    pageContextRegistryMock.mockReturnValue(null);
+    listAiPathRunsMock.mockResolvedValue({ ok: false, error: 'not-used' });
+    resolveAiPathRunFromEnqueueResponseDataMock.mockReturnValue({
+      runId: 'run-1',
+      runRecord: null,
     });
   });
 
@@ -248,6 +275,92 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
         status: 'error',
         error: 'ambiguous_path_selection',
       })
+    );
+  });
+
+  it('forwards page context registry data when enqueueing a trigger run', async () => {
+    const starter = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!starter) throw new Error('Missing starter_parameter_inference template');
+
+    const selectedConfig = materializeStarterWorkflowPathConfig(starter, {
+      pathId: 'path_context_registry_forwarding',
+      seededDefault: false,
+    });
+    selectedConfig.nodes = selectedConfig.nodes.map((node) =>
+      node.type === 'trigger'
+        ? {
+            ...node,
+            config: {
+              ...node.config,
+              trigger: {
+                ...node.config?.trigger,
+                event: baseArgs.triggerEventId,
+              },
+            },
+          }
+        : node
+    );
+
+    const contextRegistry = {
+      refs: [],
+      engineVersion: 'registry:test',
+      resolved: {
+        refs: [],
+        nodes: [],
+        documents: [
+          {
+            id: 'runtime:product-editor:leaf-categories:test',
+            kind: 'runtime_document' as const,
+            entityType: 'product_editor_leaf_categories',
+            title: 'Product leaf categories',
+            summary: 'Leaf categories',
+            status: null,
+            tags: ['products'],
+            relatedNodeIds: [],
+            sections: [
+              {
+                kind: 'text' as const,
+                title: 'Leaf category options',
+                text: '[{\"id\":\"cat-1\",\"name\":\"Pins\"}]',
+              },
+            ],
+            provenance: { source: 'test' },
+          },
+        ],
+        truncated: false,
+        engineVersion: 'registry:test',
+      },
+    };
+
+    resolveTriggerSelectionMock.mockResolvedValue({
+      triggerCandidates: [selectedConfig],
+      activeTriggerCandidates: [selectedConfig],
+      selectedConfig,
+      uiState: null,
+      missingPreferredPathId: null,
+    });
+    pageContextRegistryMock.mockReturnValue(contextRegistry);
+    enqueueAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        runId: 'run-1',
+      },
+    });
+
+    const { result } = renderHook(() => useAiPathTriggerEvent(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.fireAiPathTriggerEvent(baseArgs);
+    });
+
+    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathId: 'path_context_registry_forwarding',
+        contextRegistry,
+      }),
+      { timeoutMs: 90_000 }
     );
   });
 });

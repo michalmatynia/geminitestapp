@@ -2,6 +2,7 @@ import 'server-only';
 
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 
 import { getAppDbProvider, type AppDbProvider } from './app-db-provider';
 import {
@@ -47,6 +48,7 @@ const findCollectionRoute = (
 };
 
 const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEngineProvider>> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return {};
   try {
     const mongo = await getMongoDb();

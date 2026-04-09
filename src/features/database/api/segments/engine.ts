@@ -1,11 +1,14 @@
 import {
   DatabaseEngineBackupRunNowResponse,
   DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
   DatabaseEngineBackupSchedulerTickResponse,
   DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
+  DatabaseEngineSetMongoSourceResponse as DatabaseEngineSetMongoSourceResponsePayload,
   DatabaseEngineStatus as DatabaseEngineStatusResponse,
   MultiSchemaResponse,
+  MongoSource,
   RedisOverview as RedisOverviewResponse,
   SettingsBackfillResult,
 } from '@/shared/contracts/database';
@@ -18,6 +21,17 @@ export const getDatabaseStatus = async (): Promise<DatabaseEngineStatusResponse>
 export const fetchDatabaseEngineStatus = getDatabaseStatus;
 
 export const getDatabaseEngineStatus = getDatabaseStatus;
+
+export const getDatabaseEngineMongoSource =
+  async (): Promise<DatabaseEngineMongoSourceStateResponse> =>
+    api.get<DatabaseEngineMongoSourceStateResponse>('/api/databases/engine/source');
+
+export const setDatabaseEngineMongoSource = async (
+  source: MongoSource
+): Promise<DatabaseEngineSetMongoSourceResponsePayload> =>
+  api.post<DatabaseEngineSetMongoSourceResponsePayload>('/api/databases/engine/source', {
+    source,
+  });
 
 export const getProviderDiagnostics = async (): Promise<ProviderDiagnosticsResponse> =>
   api.get<ProviderDiagnosticsResponse>('/api/settings/providers');

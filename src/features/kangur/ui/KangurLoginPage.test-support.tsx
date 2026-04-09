@@ -52,6 +52,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: useRouterMock,
+}));
+
 vi.mock('next-auth/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next-auth/react')>();
   return {

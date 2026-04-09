@@ -82,6 +82,21 @@ describe('starter workflow registry', () => {
     expect(report.dependencyReport?.errors ?? 0).toBe(0);
   });
 
+  it('materializes a runnable Normalize Product Name starter graph', () => {
+    const config = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_product_name_normalize_runtime',
+        seededDefault: false,
+      }
+    );
+    const report = evaluateStrictRunPreflight(config);
+
+    expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(hasNodeId(config, 'node-update-name-normalize')).toBe(true);
+    expectSuccessfulStrictRunPreflight(report);
+  });
+
   it('does not resolve starter graphs with legacy edge alias fields', () => {
     const canonical = materializeStarterWorkflowPathConfig(
       getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),

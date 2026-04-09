@@ -5,6 +5,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
+import { __testOnly as mongoSourceTestOnly } from '@/shared/lib/db/mongo-source';
 
 export const backupsDir = path.join(process.cwd(), 'mongo', 'backups');
 
@@ -13,6 +14,7 @@ export const ensureBackupsDir = async (): Promise<void> => {
 };
 
 export const getMongoConnectionUrl = (): string => {
+  void mongoSourceTestOnly;
   const mongoUri = process.env['MONGODB_URI'];
   if (!mongoUri) {
     throw configurationError('MONGODB_URI is not set.');

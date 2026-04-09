@@ -120,6 +120,11 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     ).toBe(true);
     expect(
       seeded.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
+      )
+    ).toBe(true);
+    expect(
+      seeded.nextRecords.some(
         (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
       )
     ).toBe(true);
@@ -131,6 +136,9 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
     expect(
       triggerButtons.some((button) => button['id'] === '0ef40981-7ac6-416e-9205-7200289f851c')
+    ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')
     ).toBe(true);
     expect(
       triggerButtons.some((button) => button['id'] === '5f36f340-3d89-4f6f-a08f-2387f380b90b')

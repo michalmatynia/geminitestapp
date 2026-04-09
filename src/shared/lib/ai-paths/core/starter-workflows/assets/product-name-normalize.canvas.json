@@ -1,0 +1,684 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_name_normalize_v1",
+    "version": 1,
+    "name": "Normalize Product Name",
+    "description": "Normalize the English product name from title, description, images, and leaf-category context.",
+    "trigger": "Product Modal - Normalize",
+    "updatedAt": "2026-04-09T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-trigger-name-normalize",
+      "type": "trigger",
+      "title": "Trigger: Normalize",
+      "description": "User trigger button for semantic product-name normalization.",
+      "position": {
+        "x": 24,
+        "y": 480
+      },
+      "inputs": [],
+      "outputs": ["trigger", "triggerName"],
+      "config": {
+        "trigger": {
+          "event": "7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27",
+          "contextMode": "trigger_only"
+        }
+      },
+      "connections": {
+        "incoming": [],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-00",
+            "fromNodeId": "node-trigger-name-normalize",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-name-normalize",
+            "toPort": "trigger"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-fetcher-name-normalize",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve product trigger context and entity identity.",
+      "position": {
+        "x": 220,
+        "y": 480
+      },
+      "inputs": ["trigger", "context", "meta", "entityId", "entityType"],
+      "outputs": ["context", "meta", "entityId", "entityType"],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "product",
+          "entityId": "",
+          "productId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-00",
+            "fromNodeId": "node-trigger-name-normalize",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-name-normalize",
+            "toPort": "trigger"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-01",
+            "fromNodeId": "node-fetcher-name-normalize",
+            "fromPort": "context",
+            "toNodeId": "node-parser-name-normalize",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-name-normalize-09",
+            "fromNodeId": "node-fetcher-name-normalize",
+            "fromPort": "entityId",
+            "toNodeId": "node-update-name-normalize",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-name-normalize-10",
+            "fromNodeId": "node-fetcher-name-normalize",
+            "fromPort": "entityType",
+            "toNodeId": "node-update-name-normalize",
+            "toPort": "entityType"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-parser-name-normalize",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract the current English title, description, catalog, category, and images.",
+      "position": {
+        "x": 470,
+        "y": 480
+      },
+      "inputs": ["entityJson", "context"],
+      "outputs": ["bundle", "images"],
+      "config": {
+        "parser": {
+          "mappings": {
+            "productId": "",
+            "catalogId": "$.catalogs[0].catalogId",
+            "categoryId": "$.categoryId",
+            "title": "$.name_en",
+            "content_en": "$.description_en",
+            "images": ""
+          },
+          "outputMode": "bundle",
+          "presetId": "product_core"
+        },
+        "notes": {
+          "text": "Use the live product payload as the primary evidence source."
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-01",
+            "fromNodeId": "node-fetcher-name-normalize",
+            "fromPort": "context",
+            "toNodeId": "node-parser-name-normalize",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-02",
+            "fromNodeId": "node-parser-name-normalize",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-name-normalize",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-name-normalize-03",
+            "fromNodeId": "node-parser-name-normalize",
+            "fromPort": "images",
+            "toNodeId": "node-prompt-name-normalize",
+            "toPort": "images"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-prompt-name-normalize",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Build the semantic normalization prompt for the product name.",
+      "position": {
+        "x": 900,
+        "y": 320
+      },
+      "inputs": ["bundle", "images"],
+      "outputs": ["prompt", "images"],
+      "config": {
+        "prompt": {
+          "template": "You normalize English ecommerce product names.\\nUse only evidence from the current product fields, images, and the Context Registry bundle supplied in the system context.\\nThe Context Registry contains the authoritative leaf-category vocabulary for the active catalog selection. Choose category ONLY from that leaf-category list. Never use parent categories and never invent category names that are not present in that list.\\n\\nCurrent English title: \\\"{{title}}\\\"\\nCurrent English description: \\\"{{content_en}}\\\"\\nProduct JSON: {{bundle}}\\n\\nReturn ONLY valid JSON object with this exact schema:\\n{\"title\":\"\",\"size\":\"\",\"material\":\"\",\"category\":\"\",\"theme\":\"\",\"normalizedName\":\"\",\"confidence\":0.0}\\n\\nRules:\\n1. normalizedName MUST exactly equal \\\"<title> | <size> | <material> | <category> | <theme>\\\".\\n2. Every field except confidence must be a non-empty English string.\\n3. category MUST exactly match one leaf category name from the Context Registry bundle.\\n4. Use concise normalized values with no markdown and no extra commentary.\\n5. If size, material, or theme cannot be inferred confidently, use \\\"Unknown\\\" for that field.\\n6. confidence must be a number between 0 and 1.\\n7. Output JSON only."
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-02",
+            "fromNodeId": "node-parser-name-normalize",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-name-normalize",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-name-normalize-03",
+            "fromNodeId": "node-parser-name-normalize",
+            "fromPort": "images",
+            "toNodeId": "node-prompt-name-normalize",
+            "toPort": "images"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-04",
+            "fromNodeId": "node-prompt-name-normalize",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-name-normalize",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-name-normalize-05",
+            "fromNodeId": "node-prompt-name-normalize",
+            "fromPort": "images",
+            "toNodeId": "node-model-name-normalize",
+            "toPort": "images"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-model-name-normalize",
+      "type": "model",
+      "title": "Model",
+      "description": "Run a single vision-capable model pass for semantic name normalization.",
+      "position": {
+        "x": 1310,
+        "y": 480
+      },
+      "inputs": ["prompt", "images", "context"],
+      "outputs": ["result", "jobId"],
+      "config": {
+        "model": {
+          "temperature": 0.1,
+          "maxTokens": 900,
+          "vision": true,
+          "waitForResult": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-04",
+            "fromNodeId": "node-prompt-name-normalize",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-name-normalize",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-name-normalize-05",
+            "fromNodeId": "node-prompt-name-normalize",
+            "fromPort": "images",
+            "toNodeId": "node-model-name-normalize",
+            "toPort": "images"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-06",
+            "fromNodeId": "node-model-name-normalize",
+            "fromPort": "result",
+            "toNodeId": "node-regex-name-normalize",
+            "toPort": "value"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-regex-name-normalize",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Extract the normalization JSON object from the model response.",
+      "position": {
+        "x": 1690,
+        "y": 480
+      },
+      "inputs": ["value", "prompt", "regexCallback"],
+      "outputs": ["grouped", "matches", "value", "aiPrompt"],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-06",
+            "fromNodeId": "node-model-name-normalize",
+            "fromPort": "result",
+            "toNodeId": "node-regex-name-normalize",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-07",
+            "fromNodeId": "node-regex-name-normalize",
+            "fromPort": "value",
+            "toNodeId": "node-mapper-name-normalize",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-name-normalize-11",
+            "fromNodeId": "node-regex-name-normalize",
+            "fromPort": "value",
+            "toNodeId": "node-view-name-normalize",
+            "toPort": "bundle"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-mapper-name-normalize",
+      "type": "mapper",
+      "title": "JSON Mapper",
+      "description": "Extract the normalized name and confidence from the parsed JSON object.",
+      "position": {
+        "x": 2050,
+        "y": 480
+      },
+      "inputs": ["context", "result", "bundle", "value"],
+      "outputs": ["result", "value", "bundle"],
+      "config": {
+        "mapper": {
+          "outputs": ["result", "value", "bundle"],
+          "mappings": {
+            "result": "value.normalizedName",
+            "value": "value.confidence",
+            "bundle": "value"
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-07",
+            "fromNodeId": "node-regex-name-normalize",
+            "fromPort": "value",
+            "toNodeId": "node-mapper-name-normalize",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-08",
+            "fromNodeId": "node-mapper-name-normalize",
+            "fromPort": "result",
+            "toNodeId": "node-update-name-normalize",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-name-normalize-12",
+            "fromNodeId": "node-mapper-name-normalize",
+            "fromPort": "result",
+            "toNodeId": "node-view-name-normalize",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-name-normalize-13",
+            "fromNodeId": "node-mapper-name-normalize",
+            "fromPort": "value",
+            "toNodeId": "node-view-name-normalize",
+            "toPort": "value"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-update-name-normalize",
+      "type": "database",
+      "title": "Database Query",
+      "description": "Update product name_en with the normalized product name.",
+      "position": {
+        "x": 2420,
+        "y": 480
+      },
+      "inputs": [
+        "entityId",
+        "entityType",
+        "productId",
+        "context",
+        "query",
+        "value",
+        "bundle",
+        "result",
+        "content_en",
+        "queryCallback",
+        "schema",
+        "aiQuery"
+      ],
+      "outputs": ["result", "bundle", "content_en", "aiPrompt"],
+      "config": {
+        "database": {
+          "operation": "update",
+          "entityType": "product",
+          "idField": "entityId",
+          "mode": "replace",
+          "updateStrategy": "one",
+          "useMongoActions": true,
+          "actionCategory": "update",
+          "action": "updateOne",
+          "mappings": [
+            {
+              "targetPath": "name_en",
+              "sourcePort": "result"
+            }
+          ],
+          "query": {
+            "provider": "auto",
+            "collection": "products",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "_id",
+            "idType": "string",
+            "queryTemplate": "{\n  \"id\": \"{{entityId}}\"\n}",
+            "limit": 1,
+            "sort": "",
+            "projection": "",
+            "single": true
+          },
+          "writeSource": "bundle",
+          "writeSourcePath": "",
+          "dryRun": false,
+          "distinctField": "",
+          "updateTemplate": "",
+          "skipEmpty": true,
+          "trimStrings": true,
+          "aiPrompt": "",
+          "validationRuleIds": [],
+          "writeOutcomePolicy": {
+            "onZeroAffected": "pass"
+          }
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-08",
+            "fromNodeId": "node-mapper-name-normalize",
+            "fromPort": "result",
+            "toNodeId": "node-update-name-normalize",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-name-normalize-09",
+            "fromNodeId": "node-fetcher-name-normalize",
+            "fromPort": "entityId",
+            "toNodeId": "node-update-name-normalize",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-name-normalize-10",
+            "fromNodeId": "node-fetcher-name-normalize",
+            "fromPort": "entityType",
+            "toNodeId": "node-update-name-normalize",
+            "toPort": "entityType"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-14",
+            "fromNodeId": "node-update-name-normalize",
+            "fromPort": "result",
+            "toNodeId": "node-view-name-normalize",
+            "toPort": "meta"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-view-name-normalize",
+      "type": "viewer",
+      "title": "Result Viewer",
+      "description": "Inspect the normalized name payload, confidence, and database write result.",
+      "position": {
+        "x": 2790,
+        "y": 480
+      },
+      "inputs": [
+        "result",
+        "value",
+        "bundle",
+        "valid",
+        "errors",
+        "context",
+        "meta",
+        "trigger",
+        "triggerName",
+        "entityId",
+        "entityType",
+        "entityJson",
+        "name_en",
+        "prompt"
+      ],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "result": "",
+            "value": "",
+            "bundle": "",
+            "meta": ""
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-11",
+            "fromNodeId": "node-regex-name-normalize",
+            "fromPort": "value",
+            "toNodeId": "node-view-name-normalize",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-name-normalize-12",
+            "fromNodeId": "node-mapper-name-normalize",
+            "fromPort": "result",
+            "toNodeId": "node-view-name-normalize",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-name-normalize-13",
+            "fromNodeId": "node-mapper-name-normalize",
+            "fromPort": "value",
+            "toNodeId": "node-view-name-normalize",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-name-normalize-14",
+            "fromNodeId": "node-update-name-normalize",
+            "fromPort": "result",
+            "toNodeId": "node-view-name-normalize",
+            "toPort": "meta"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-name-normalize-00",
+      "fromNodeId": "node-trigger-name-normalize",
+      "toNodeId": "node-fetcher-name-normalize",
+      "fromPort": "trigger",
+      "toPort": "trigger"
+    },
+    {
+      "id": "edge-name-normalize-01",
+      "fromNodeId": "node-fetcher-name-normalize",
+      "toNodeId": "node-parser-name-normalize",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-name-normalize-02",
+      "fromNodeId": "node-parser-name-normalize",
+      "toNodeId": "node-prompt-name-normalize",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-name-normalize-03",
+      "fromNodeId": "node-parser-name-normalize",
+      "toNodeId": "node-prompt-name-normalize",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-name-normalize-04",
+      "fromNodeId": "node-prompt-name-normalize",
+      "toNodeId": "node-model-name-normalize",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-name-normalize-05",
+      "fromNodeId": "node-prompt-name-normalize",
+      "toNodeId": "node-model-name-normalize",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-name-normalize-06",
+      "fromNodeId": "node-model-name-normalize",
+      "toNodeId": "node-regex-name-normalize",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-name-normalize-07",
+      "fromNodeId": "node-regex-name-normalize",
+      "toNodeId": "node-mapper-name-normalize",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-name-normalize-08",
+      "fromNodeId": "node-mapper-name-normalize",
+      "toNodeId": "node-update-name-normalize",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-name-normalize-09",
+      "fromNodeId": "node-fetcher-name-normalize",
+      "toNodeId": "node-update-name-normalize",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-name-normalize-10",
+      "fromNodeId": "node-fetcher-name-normalize",
+      "toNodeId": "node-update-name-normalize",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-name-normalize-11",
+      "fromNodeId": "node-regex-name-normalize",
+      "toNodeId": "node-view-name-normalize",
+      "fromPort": "value",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-name-normalize-12",
+      "fromNodeId": "node-mapper-name-normalize",
+      "toNodeId": "node-view-name-normalize",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-name-normalize-13",
+      "fromNodeId": "node-mapper-name-normalize",
+      "toNodeId": "node-view-name-normalize",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-name-normalize-14",
+      "fromNodeId": "node-update-name-normalize",
+      "toNodeId": "node-view-name-normalize",
+      "fromPort": "result",
+      "toPort": "meta"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {}
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-04-09T00:00:00.000Z",
+    "pathId": "path_name_normalize_v1"
+  }
+}

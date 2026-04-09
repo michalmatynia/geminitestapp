@@ -4,12 +4,16 @@ import type {
   ProductStudioRunStatus,
   ProductStudioVariantsResponse,
 } from '@/features/products/context/ProductStudioContext.types';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type {
   ContextRegistryRef,
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
+import type {
+  ProductCategory as ProductCategoryContract,
+} from '@/shared/contracts/products/categories';
 import type { ProductValidationDenyBehavior, ProductValidationInstanceScope } from '@/shared/contracts/products/validation';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
@@ -42,6 +46,11 @@ export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_PROVIDER_ID = 'product-edi
 export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_ENTITY_TYPE = 'product_editor_workspace_state';
 export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_REF_PREFIX =
   'runtime:product-editor:workspace:';
+export const PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_PROVIDER_ID = 'product-editor-local';
+export const PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_ENTITY_TYPE =
+  'product_editor_leaf_categories';
+export const PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_REF_PREFIX =
+  'runtime:product-editor:leaf-categories:';
 
 interface BuildProductEditorWorkspaceContextBundleInput {
   productId: string | null;
@@ -80,6 +89,12 @@ interface BuildProductStudioWorkspaceContextBundleInput {
   auditEntries: ProductStudioAuditEntry[];
 }
 
+interface BuildProductLeafCategoriesContextBundleInput {
+  categories: ProductCategoryContract[];
+  catalogs: CatalogRecord[];
+  selectedCatalogIds: string[];
+}
+
 const encodeSegment = (value: string): string => encodeURIComponent(value.trim());
 
 const createProductEditorWorkspaceRef = ({
@@ -104,6 +119,15 @@ const createProductStudioWorkspaceRef = (productId: string): ContextRegistryRef 
   entityType: PRODUCT_EDITOR_CONTEXT_RUNTIME_ENTITY_TYPE,
 });
 
+const createProductLeafCategoriesWorkspaceRef = (selectedCatalogIds: string[]): ContextRegistryRef => ({
+  id: `${PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_REF_PREFIX}${encodeSegment(
+    selectedCatalogIds.length > 0 ? selectedCatalogIds.join('|') : 'all'
+  )}`,
+  kind: 'runtime_document',
+  providerId: PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_PROVIDER_ID,
+  entityType: PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_ENTITY_TYPE,
+});
+
 const summarizeImageSlot = (slot: ProductImageSlotPreview): Record<string, unknown> => ({
   index: slot.index,
   label: slot.label,
@@ -124,6 +148,44 @@ const summarizeAuditEntry = (entry: ProductStudioAuditEntry): Record<string, unk
   warningCount: entry.warnings.length,
   errorMessage: entry.errorMessage,
 });
+
+const buildLeafCategoryRows = (
+  categories: ProductCategoryContract[],
+  catalogs: CatalogRecord[],
+  selectedCatalogIds: string[]
+): Array<{
+  id: string;
+  name: string;
+  catalogId: string;
+  catalogName: string | null;
+}> => {
+  const catalogFilter = new Set(
+    selectedCatalogIds.map((catalogId) => catalogId.trim()).filter((catalogId) => catalogId.length > 0)
+  );
+  const catalogNameById = new Map(
+    catalogs.map((catalog) => [catalog.id, typeof catalog.name === 'string' ? catalog.name.trim() : ''])
+  );
+  const parentIds = new Set(
+    categories
+      .map((category) => (typeof category.parentId === 'string' ? category.parentId.trim() : ''))
+      .filter((parentId) => parentId.length > 0)
+  );
+
+  return categories
+    .filter((category) => {
+      const categoryId = category.id.trim();
+      if (!categoryId) return false;
+      if (catalogFilter.size > 0 && !catalogFilter.has(category.catalogId)) return false;
+      return !parentIds.has(categoryId);
+    })
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      catalogId: category.catalogId,
+      catalogName: catalogNameById.get(category.catalogId) || null,
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
+};
 
 const buildProductEditorWorkspaceSections = (
   input: BuildProductEditorWorkspaceContextBundleInput
@@ -383,6 +445,60 @@ export const buildProductStudioWorkspaceContextBundle = (
   };
 };
 
+const buildProductLeafCategoriesRuntimeDocument = (
+  input: BuildProductLeafCategoriesContextBundleInput
+): ContextRuntimeDocument => {
+  const runtimeRef = createProductLeafCategoriesWorkspaceRef(input.selectedCatalogIds);
+  const leafCategories = buildLeafCategoryRows(
+    input.categories,
+    input.catalogs,
+    input.selectedCatalogIds
+  );
+  const selectedCatalogNames = input.selectedCatalogIds
+    .map((catalogId) => input.catalogs.find((catalog) => catalog.id === catalogId)?.name?.trim() || null)
+    .filter((catalogName): catalogName is string => Boolean(catalogName));
+
+  return {
+    id: runtimeRef.id,
+    kind: 'runtime_document',
+    entityType: PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_ENTITY_TYPE,
+    title: 'Product leaf categories',
+    summary:
+      'Leaf-only product category vocabulary for the current product editor catalog selection. ' +
+      'Use category names exactly as listed here and never use parent categories.',
+    status: null,
+    tags: ['products', 'taxonomy', 'categories', 'leaf-categories', 'editor'],
+    relatedNodeIds: [],
+    facts: {
+      selectedCatalogIds: input.selectedCatalogIds,
+      selectedCatalogNames,
+      leafCategoryCount: leafCategories.length,
+      categorySelectionPolicy: 'leaf_only_exact_name_match',
+    },
+    sections: [
+      {
+        kind: 'text',
+        title: 'Leaf category options',
+        summary:
+          'Resolved category vocabulary for AI tasks. Choose one category name from this list only.',
+        text: JSON.stringify(
+          {
+            selectedCatalogIds: input.selectedCatalogIds,
+            selectedCatalogNames,
+            leafCategories,
+          },
+          null,
+          2
+        ),
+      },
+    ],
+    provenance: {
+      source: 'products.product-editor.taxonomy.client-state',
+      persisted: false,
+    },
+  };
+};
+
 export const buildProductEditorWorkspaceContextBundle = (
   input: BuildProductEditorWorkspaceContextBundleInput
 ): ContextRegistryResolutionBundle => {
@@ -395,6 +511,18 @@ export const buildProductEditorWorkspaceContextBundle = (
     refs: [runtimeRef],
     nodes: [],
     documents: [buildProductEditorWorkspaceRuntimeDocument(input)],
+    truncated: false,
+    engineVersion: PAGE_CONTEXT_ENGINE_VERSION,
+  };
+};
+
+export const buildProductLeafCategoriesContextBundle = (
+  input: BuildProductLeafCategoriesContextBundleInput
+): ContextRegistryResolutionBundle => {
+  return {
+    refs: [],
+    nodes: [],
+    documents: [buildProductLeafCategoriesRuntimeDocument(input)],
     truncated: false,
     engineVersion: PAGE_CONTEXT_ENGINE_VERSION,
   };

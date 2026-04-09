@@ -23,6 +23,7 @@ import {
   buildProductEditorWorkspaceContextBundle,
   PRODUCT_EDITOR_CONTEXT_ROOT_IDS,
 } from '@/features/products/context-registry/workspace';
+import { ProductLeafCategoriesContextRegistrySource } from '@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource';
 import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
 import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import type { ProductValidationDenyBehavior } from '@/shared/contracts/products/validation';
@@ -388,6 +389,7 @@ export default function ProductForm({
           }}
         >
           <ProductFormContextRegistrySource activeTab={activeTab} mountedTabs={mountedTabs} />
+          <ProductLeafCategoriesContextRegistrySource sourceId='product-editor-leaf-categories' />
           <Tabs
             value={activeTab}
             onValueChange={(value: string): void => {

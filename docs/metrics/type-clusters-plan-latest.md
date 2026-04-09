@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-08'
+last_reviewed: '2026-04-09'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Type Cluster Consolidation Plan
 
-Generated at: 2026-04-08T19:04:19.948Z
+Generated at: 2026-04-09T01:47:47.847Z
 
 ## Prioritized Worklist
 

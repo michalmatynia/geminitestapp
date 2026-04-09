@@ -4,6 +4,7 @@ import descriptionInferenceLiteAsset from '../assets/description-inference-lite.
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
 import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
+import productNameNormalizeAsset from '../assets/product-name-normalize.canvas.json';
 import translationEnPlAsset from '../assets/translation-en-pl.canvas.json';
 import {
   buildTriggerDisplay,
@@ -45,6 +46,37 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       starterKey: 'parameter_inference',
       templateVersion: 16,
       canonicalGraphHashes: PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES,
+    },
+  },
+  {
+    templateId: 'starter_product_name_normalize',
+    name: 'Normalize Product Name',
+    description:
+      'Normalize the English product name from title, description, images, and leaf-category context.',
+    semanticAsset: productNameNormalizeAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: 'path_name_normalize_v1',
+      isActive: true,
+      isLocked: false,
+      sortOrder: 25,
+    },
+    triggerButtonPresets: [
+      {
+        id: '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27',
+        name: 'Normalize',
+        pathId: 'path_name_normalize_v1',
+        locations: ['product_modal'],
+        display: buildTriggerDisplay('Normalize'),
+        enabled: true,
+        mode: 'click',
+        sortIndex: 25,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'product_name_normalize',
+      templateVersion: 1,
+      canonicalGraphHashes: [],
     },
   },
   {

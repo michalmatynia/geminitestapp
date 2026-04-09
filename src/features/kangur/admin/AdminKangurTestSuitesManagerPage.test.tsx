@@ -85,6 +85,7 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/shared/ui')>();
   return {
     ...actual,
+    TreeRow: (props: any) => <div data-testid='tree-row'>{props.children}</div>,
     useToast: () => ({ toast: toastMock }),
   };
 });

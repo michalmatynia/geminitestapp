@@ -26,6 +26,14 @@ const graphActionsMock = {
   setPathConfigs: setPathConfigsMock,
 };
 
+const openRuntimeKernelDrawer = (): void => {
+  fireEvent.click(screen.getByRole('button', { name: 'Runtime Kernel' }));
+};
+
+const openViewOptionsMenu = (): void => {
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Open canvas view options' }));
+};
+
 vi.mock('next/navigation', () => ({
   usePathname: () => '/admin/ai-paths',
   useRouter: () => ({
@@ -109,6 +117,7 @@ describe('AiPathsCanvasView switch guard', () => {
     pageContextMock = buildCanvasPageContext();
 
     render(<AiPathsCanvasView />);
+    openRuntimeKernelDrawer();
 
     await waitFor(() => {
       expect(screen.getAllByText('Strict Native: On (fixed)').length).toBeGreaterThan(0);
@@ -137,6 +146,7 @@ describe('AiPathsCanvasView switch guard', () => {
     });
 
     render(<AiPathsCanvasView />);
+    openRuntimeKernelDrawer();
 
     await waitFor(() => {
       expect(screen.getAllByText('Strict Native: On (fixed)').length).toBe(2);
@@ -160,6 +170,7 @@ describe('AiPathsCanvasView switch guard', () => {
     });
 
     render(<AiPathsCanvasView />);
+    openRuntimeKernelDrawer();
 
     await waitFor(() => {
       expect(screen.getByText('Runtime Kernel Path')).toBeInTheDocument();
@@ -175,11 +186,59 @@ describe('AiPathsCanvasView switch guard', () => {
 
     render(<AiPathsCanvasView />);
     await waitFor(() => {
-      expect(screen.getByText('Runtime Kernel Global')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Runtime Kernel' })).toBeInTheDocument();
     });
 
     expect(screen.getByText('Switching path...')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove Selected' })).toBeDisabled();
+  });
+
+  it('renders the path masthead with runtime and structure context', async () => {
+    pageContextMock = buildCanvasPageContext({
+      autoSaveLabel: 'Saved',
+      lastRunAt: '2026-03-05T10:30:00.000Z',
+      nodes: [{ id: 'node-a' }, { id: 'node-b' }],
+      edges: [{ id: 'edge-a' }],
+      runtimeRunStatus: 'running',
+    });
+
+    render(<AiPathsCanvasView />);
+
+    expect(screen.getByText('Active Path')).toBeInTheDocument();
+    expect(screen.getByText('Switch Path')).toBeInTheDocument();
+    expect(screen.getByText('Runtime running')).toBeInTheDocument();
+    expect(screen.getByText('2 nodes')).toBeInTheDocument();
+    expect(screen.getByText('1 connection')).toBeInTheDocument();
+  });
+
+  it('toggles the master folder tree from the canvas toolbar', async () => {
+    pageContextMock = buildCanvasPageContext();
+
+    render(<AiPathsCanvasView />);
+
+    expect(screen.getByTestId('canvas-path-tree')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide Folder Tree' }));
+    expect(screen.queryByTestId('canvas-path-tree')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show Folder Tree' }));
+    expect(screen.getByTestId('canvas-path-tree')).toBeInTheDocument();
+  });
+
+  it('toggles the inspector sidebar from the toolbar menu', async () => {
+    pageContextMock = buildCanvasPageContext();
+
+    render(<AiPathsCanvasView />);
+
+    expect(screen.getByTestId('canvas-sidebar')).toBeInTheDocument();
+
+    openViewOptionsMenu();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Hide Inspector' }));
+    expect(screen.queryByTestId('canvas-sidebar')).not.toBeInTheDocument();
+
+    openViewOptionsMenu();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Show Inspector' }));
+    expect(screen.getByTestId('canvas-sidebar')).toBeInTheDocument();
   });
 
   it('persists path runtime-kernel config through path settings', async () => {
@@ -198,6 +257,7 @@ describe('AiPathsCanvasView switch guard', () => {
     });
 
     render(<AiPathsCanvasView />);
+    openRuntimeKernelDrawer();
 
     fireEvent.change(screen.getByPlaceholderText('path kernel nodes: template, parser'), {
       target: { value: 'template, parser' },

@@ -204,6 +204,19 @@ describe('mapBaseProduct', () => {
       expect(result.imageLinks).toContain('https://example.com/img1.jpg');
       expect(result.imageLinks).toContain('https://example.com/img2.jpg');
     });
+
+    it('normalizes legacy four-segment English names into structured product titles', () => {
+      const record = {
+        product_id: 'p1',
+        name_en: 'Sword | Foam | 90 cm | Diablo',
+        category_name_en: 'Movie Pin',
+        sku: 'SKU-1',
+      };
+
+      const result = mapBaseProduct(record, []);
+
+      expect(result.name_en).toBe('Sword | 90 cm | Foam | Movie Pin | Diablo');
+    });
   });
 
   describe('custom field mapping', () => {

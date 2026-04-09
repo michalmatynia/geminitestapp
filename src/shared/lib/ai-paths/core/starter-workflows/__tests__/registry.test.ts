@@ -264,6 +264,104 @@ describe('starter workflow registry', () => {
     expect(hasNodeId(upgraded.config, 'node-update-name-normalize')).toBe(true);
   });
 
+  it('preserves an explicit Normalize model selection while overlaying stale starter assets', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_name_normalize_v1',
+        seededDefault: true,
+      }
+    );
+
+    const staleConfig: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).map((node) => {
+        if (node.id !== 'node-model-name-normalize') return node;
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            model: {
+              ...node.config?.model,
+              modelId: 'ollama:gemma3',
+            },
+          },
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 4,
+          seededDefault: true,
+        },
+      },
+    };
+
+    const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
+    const modelNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-model-name-normalize'
+    );
+
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
+  });
+
+  it('preserves an explicit Normalize model selection while fully replacing legacy random-id graphs', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_name_normalize_v1',
+        seededDefault: true,
+      }
+    );
+
+    const legacyRandomIdConfig: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).map((node, index) => {
+        const randomId = `node-normalize-model-legacy-${index + 1}`;
+        if (node.type !== 'model') {
+          return {
+            ...node,
+            id: randomId,
+          };
+        }
+        return {
+          ...node,
+          id: randomId,
+          config: {
+            ...node.config,
+            model: {
+              ...node.config?.model,
+              modelId: 'ollama:gemma3',
+            },
+          },
+        };
+      }),
+      edges: (canonical.edges ?? []).map((edge, index) => {
+        const fromIndex = (canonical.nodes ?? []).findIndex((node) => node.id === edge.from);
+        const toIndex = (canonical.nodes ?? []).findIndex((node) => node.id === edge.to);
+        return {
+          ...edge,
+          id: `edge-normalize-model-legacy-${index + 1}`,
+          from: fromIndex >= 0 ? `node-normalize-model-legacy-${fromIndex + 1}` : edge.from,
+          to: toIndex >= 0 ? `node-normalize-model-legacy-${toIndex + 1}` : edge.to,
+        };
+      }),
+      extensions: undefined,
+    };
+
+    const upgraded = upgradeStarterWorkflowPathConfig(legacyRandomIdConfig);
+    const modelNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-model-name-normalize'
+    );
+
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.resolution?.matchedBy).toBe('legacy_alias');
+    expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
+  });
+
   it('upgrades stale normalize prompts to require the most specific terminal leaf category', () => {
     const canonical = materializeStarterWorkflowPathConfig(
       getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),

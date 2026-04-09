@@ -12,6 +12,12 @@ import {
   normalizeProductCustomFieldSelectedOptionIds,
   normalizeProductCustomFieldValues,
 } from '@/shared/lib/products/utils/custom-field-values';
+import {
+  composeStructuredProductName,
+  normalizeStructuredProductName,
+  parseStructuredProductName,
+  splitStructuredProductName,
+} from '@/shared/lib/products/title-terms';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type BaseCustomFieldImportDiagnostics = {
@@ -34,6 +40,101 @@ const toTrimmedString = (value: unknown): string | null => {
     return String(value);
   }
   return null;
+};
+
+const STRUCTURED_IMPORT_FALLBACK_CATEGORY = 'Collectible';
+const STRUCTURED_IMPORT_CATEGORY_KEYS = [
+  'category_en',
+  'category_name_en',
+  'category_name',
+  'product_type_en',
+  'product_type',
+  'type_en',
+  'type',
+  'group_name_en',
+  'group_name',
+];
+const STRUCTURED_IMPORT_CATEGORY_PATHS = [
+  ['category', 'name_en'],
+  ['category', 'name'],
+  ['categoryPath', 'leaf'],
+  ['group', 'name_en'],
+  ['group', 'name'],
+] as const;
+
+const looksLikeStructuredSizeSegment = (value: string): boolean => {
+  const normalized = value.trim().toLowerCase();
+  if (!/\d/.test(normalized)) {
+    return false;
+  }
+  return (
+    /\b(mm|cm|m|km|in|inch|inches|ft|g|kg|lb|lbs|oz|ml|l|pcs?|pc)\b/.test(normalized) ||
+    /\d+\s?[x×]\s?\d+/.test(normalized)
+  );
+};
+
+const normalizeStructuredImportCategory = (value: string): string => {
+  const leaf = value
+    .split(/>|\/|›|»/)
+    .map((segment: string): string => segment.trim())
+    .filter((segment: string): boolean => segment.length > 0)
+    .at(-1);
+  return leaf ?? value.trim();
+};
+
+const resolveStructuredImportCategory = (record: BaseProductRecord): string | null => {
+  const direct =
+    pickString(record, STRUCTURED_IMPORT_CATEGORY_KEYS) ??
+    pickNestedString(
+      record,
+      STRUCTURED_IMPORT_CATEGORY_PATHS.map((path) => [...path])
+    );
+  if (!direct) {
+    return null;
+  }
+  const normalized = normalizeStructuredImportCategory(direct);
+  return normalized || null;
+};
+
+const normalizeImportedStructuredName = (
+  record: BaseProductRecord,
+  value: string | null
+): string | null => {
+  if (!value) {
+    return value;
+  }
+
+  const normalized = normalizeStructuredProductName(value);
+  if (parseStructuredProductName(normalized)) {
+    return normalized;
+  }
+
+  const segments = splitStructuredProductName(normalized).filter(
+    (segment: string): boolean => segment.length > 0
+  );
+  if (segments.length !== 4) {
+    return normalized;
+  }
+
+  const [baseName = '', second = '', third = '', theme = ''] = segments;
+  if (!baseName || !theme) {
+    return normalized;
+  }
+
+  let size = second;
+  let material = third;
+  if (looksLikeStructuredSizeSegment(third) && !looksLikeStructuredSizeSegment(second)) {
+    size = third;
+    material = second;
+  }
+
+  return composeStructuredProductName({
+    baseName,
+    size,
+    material,
+    category: resolveStructuredImportCategory(record) ?? STRUCTURED_IMPORT_FALLBACK_CATEGORY,
+    theme,
+  });
 };
 
 const normalizeCurrencyCode = (value: unknown): string | null => {
@@ -1339,7 +1440,7 @@ export function mapBaseProduct(
 
   const mapped: ProductCreateInput = {
     baseProductId: baseProductId ?? undefined,
-    name_en: nameEn ?? undefined,
+    name_en: normalizeImportedStructuredName(record, nameEn) ?? undefined,
     name_pl: namePl ?? undefined,
     name_de: nameDe ?? undefined,
     description_en: descriptionEn ?? undefined,

@@ -354,6 +354,59 @@ describe('loadPathConfigsFromSettings', () => {
     );
   });
 
+  it('preserves an explicit Normalize model selection while loading stored trigger configs', async () => {
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) {
+      throw new Error('Expected starter_product_name_normalize template');
+    }
+    const pathId = 'path_name_normalize_v1';
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId,
+      seededDefault: true,
+    });
+    const data: Array<{ key: string; value: string }> = [
+      { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: config.name }]) },
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: JSON.stringify({
+          ...config,
+          nodes: (config.nodes ?? []).map((node) => {
+            if (node.id !== 'node-model-name-normalize') return node;
+            return {
+              ...node,
+              config: {
+                ...node.config,
+                model: {
+                  ...node.config?.model,
+                  modelId: 'ollama:gemma3',
+                },
+              },
+            };
+          }),
+          extensions: {
+            aiPathsStarter: {
+              starterKey: 'product_name_normalize',
+              templateId: 'starter_product_name_normalize',
+              templateVersion: 4,
+              seededDefault: true,
+            },
+          },
+        }),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+    const modelNode = loaded.configs[pathId]?.nodes.find(
+      (node) => node.id === 'node-model-name-normalize'
+    );
+
+    expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${pathId}`,
+      expect.stringContaining('"modelId":"ollama:gemma3"')
+    );
+  });
+
   it('loads partial stored configs without inheriting stale default node references', async () => {
     const pathId = 'path-partial-stored-trigger';
     const data: Array<{ key: string; value: string }> = [

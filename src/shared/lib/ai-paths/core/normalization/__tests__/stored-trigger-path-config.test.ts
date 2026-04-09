@@ -213,6 +213,56 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.changed).toBe(true);
   });
 
+  it('preserves an explicit Normalize model selection while materializing stale starter configs', async () => {
+    const actualPortableEngine = await vi.importActual<
+      typeof import('@/shared/lib/ai-paths/portable-engine')
+    >('@/shared/lib/ai-paths/portable-engine');
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) {
+      throw new Error('Expected starter_product_name_normalize template');
+    }
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path_name_normalize_v1',
+      seededDefault: true,
+    });
+    const rawConfig = JSON.stringify({
+      ...config,
+      nodes: (config.nodes ?? []).map((node) => {
+        if (node.id !== 'node-model-name-normalize') return node;
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            model: {
+              ...node.config?.model,
+              modelId: 'ollama:gemma3',
+            },
+          },
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 4,
+          seededDefault: true,
+        },
+      },
+    });
+
+    mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: 'path_name_normalize_v1',
+      rawConfig,
+      fallbackName: config.name,
+    });
+
+    const modelNode = resolved.config.nodes.find((node) => node.id === 'node-model-name-normalize');
+    expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
+    expect(resolved.changed).toBe(true);
+  });
+
   it('fully replaces stale default normalize starter graphs with random node ids so the database node becomes dry-run', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')

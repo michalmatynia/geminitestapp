@@ -183,6 +183,31 @@ const classifyByErrorCode = (
   return { errorClass: 'permanent', retryable: false };
 };
 
+const formatProductValidationFailure = (
+  label: string,
+  errors:
+    | Array<{
+        field: string;
+        message: string;
+      }>
+    | undefined
+): string => {
+  const details = (errors ?? [])
+    .map((error) => {
+      const field = error.field?.trim() || 'root';
+      const message = error.message?.trim() || 'Invalid value.';
+      return `${field}: ${message}`;
+    })
+    .filter((detail) => detail.length > 0)
+    .slice(0, 3);
+
+  if (details.length === 0) {
+    return `Validation failed for ${label}.`;
+  }
+
+  return `Validation failed for ${label}. ${details.join(' | ')}`;
+};
+
 const DOWNLOAD_MAX_ATTEMPTS = 3;
 const DOWNLOAD_RETRY_DELAY_MS = 1000;
 
@@ -823,7 +848,10 @@ export const importSingleItem = async (input: {
         errorCode: 'VALIDATION_ERROR',
         errorClass: classified.errorClass,
         retryable: classified.retryable,
-        errorMessage: `Validation failed for ${mappedSku ?? mappedBaseProductId ?? input.item.itemId}.`,
+        errorMessage: formatProductValidationFailure(
+          mappedSku ?? mappedBaseProductId ?? input.item.itemId,
+          validationResult.errors
+        ),
         payloadSnapshot: mapped,
         parameterImportSummary,
       };
@@ -991,7 +1019,7 @@ export const importSingleItem = async (input: {
       errorCode: 'VALIDATION_ERROR',
       errorClass: classified.errorClass,
       retryable: classified.retryable,
-      errorMessage: `Validation failed for ${skuForCreate}.`,
+      errorMessage: formatProductValidationFailure(skuForCreate, validationResult.errors),
       payloadSnapshot: mapped,
       parameterImportSummary,
     };

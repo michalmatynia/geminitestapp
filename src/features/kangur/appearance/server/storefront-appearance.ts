@@ -44,12 +44,13 @@ const KANGUR_STOREFRONT_INITIAL_STATE_DEPENDENCY_KEYS = new Set<string>([
 ]);
 
 type KangurStorefrontInitialStateCacheEntry = {
-  expiresAt: number;
   value: KangurStorefrontInitialState;
 };
 
 let kangurStorefrontInitialStateCacheEntry: KangurStorefrontInitialStateCacheEntry | null = null;
 let kangurStorefrontInitialStateInFlight: Promise<KangurStorefrontInitialState> | null = null;
+let kangurStorefrontInitialStateCacheIsFresh = false;
+let kangurStorefrontInitialStateCacheExpiryTimer: ReturnType<typeof setTimeout> | null = null;
 
 const normalizeKangurStorefrontAppearanceLoadError = (error: unknown): Error => {
   if (error instanceof Error) {
@@ -77,9 +78,28 @@ const normalizeKangurStorefrontAppearanceLoadError = (error: unknown): Error => 
   return normalizedError;
 };
 
+const clearKangurStorefrontInitialStateCacheExpiryTimer = (): void => {
+  if (kangurStorefrontInitialStateCacheExpiryTimer) {
+    clearTimeout(kangurStorefrontInitialStateCacheExpiryTimer);
+    kangurStorefrontInitialStateCacheExpiryTimer = null;
+  }
+};
+
+const scheduleKangurStorefrontInitialStateHotCacheExpiry = (): void => {
+  clearKangurStorefrontInitialStateCacheExpiryTimer();
+  kangurStorefrontInitialStateCacheIsFresh = true;
+  kangurStorefrontInitialStateCacheExpiryTimer = setTimeout(() => {
+    kangurStorefrontInitialStateCacheIsFresh = false;
+    kangurStorefrontInitialStateCacheExpiryTimer = null;
+  }, KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS);
+  kangurStorefrontInitialStateCacheExpiryTimer.unref?.();
+};
+
 const clearKangurStorefrontInitialStateHotCache = (): void => {
+  clearKangurStorefrontInitialStateCacheExpiryTimer();
   kangurStorefrontInitialStateCacheEntry = null;
   kangurStorefrontInitialStateInFlight = null;
+  kangurStorefrontInitialStateCacheIsFresh = false;
 };
 
 export const isKangurStorefrontInitialStateDependencyKey = (key: string): boolean =>
@@ -137,10 +157,9 @@ const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefro
 };
 
 const getKangurStorefrontInitialStateHotCached = async (): Promise<KangurStorefrontInitialState> => {
-  const now = Date.now();
   if (
     kangurStorefrontInitialStateCacheEntry &&
-    kangurStorefrontInitialStateCacheEntry.expiresAt > now
+    kangurStorefrontInitialStateCacheIsFresh
   ) {
     return kangurStorefrontInitialStateCacheEntry.value;
   }
@@ -153,8 +172,8 @@ const getKangurStorefrontInitialStateHotCached = async (): Promise<KangurStorefr
     .then((value) => {
       kangurStorefrontInitialStateCacheEntry = {
         value,
-        expiresAt: Date.now() + KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS,
       };
+      scheduleKangurStorefrontInitialStateHotCacheExpiry();
       return value;
     })
     .finally(() => {

@@ -1,4 +1,4 @@
-import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine/portable-engine-resolvers';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import {
@@ -90,6 +90,98 @@ const buildIncomingPortMap = (config: PathConfig): Map<string, Set<string>> => {
     map.set(toNodeId, ports);
   });
   return map;
+};
+
+type ExplicitModelSelection = {
+  modelId: string;
+  nodeId: string;
+  title: string;
+};
+
+const collectExplicitModelSelections = (config: PathConfig): ExplicitModelSelection[] =>
+  (config.nodes ?? []).reduce<ExplicitModelSelection[]>((acc, node: AiNode) => {
+    if (node.type !== 'model') return acc;
+    const modelId = normalizeText(node.config?.model?.modelId);
+    if (!modelId) return acc;
+    acc.push({
+      modelId,
+      nodeId: node.id,
+      title: normalizeText(node.title),
+    });
+    return acc;
+  }, []);
+
+const applyExplicitModelIdToNode = (node: AiNode, modelId: string): AiNode => {
+  const currentConfig = toRecord(node.config);
+  const currentModel = toRecord(currentConfig?.['model']);
+  const currentModelId = normalizeText(currentModel?.['modelId']);
+  if (currentModelId === modelId) {
+    return node;
+  }
+  return {
+    ...node,
+    config: {
+      ...(currentConfig ?? {}),
+      model: {
+        ...(currentModel ?? {}),
+        modelId,
+      },
+    },
+  };
+};
+
+const preserveExplicitModelSelections = (current: PathConfig, next: PathConfig): PathConfig => {
+  const explicitSelections = collectExplicitModelSelections(current);
+  if (explicitSelections.length === 0 || !Array.isArray(next.nodes) || next.nodes.length === 0) {
+    return next;
+  }
+
+  const selectionByNodeId = new Map(
+    explicitSelections.map((selection) => [selection.nodeId, selection] as const)
+  );
+  const selectionsByTitle = explicitSelections.reduce<Map<string, ExplicitModelSelection[]>>(
+    (acc, selection) => {
+      const title = selection.title;
+      if (!title) return acc;
+      const existing = acc.get(title) ?? [];
+      existing.push(selection);
+      acc.set(title, existing);
+      return acc;
+    },
+    new Map<string, ExplicitModelSelection[]>()
+  );
+  const nextModelNodes = next.nodes.filter((node: AiNode): boolean => node.type === 'model');
+
+  let changed = false;
+  const nextNodes = next.nodes.map((node: AiNode): AiNode => {
+    if (node.type !== 'model') {
+      return node;
+    }
+    const existingModelId = normalizeText(node.config?.model?.modelId);
+    if (existingModelId) {
+      return node;
+    }
+
+    const byId = selectionByNodeId.get(node.id) ?? null;
+    const byTitleCandidates = selectionsByTitle.get(normalizeText(node.title)) ?? [];
+    const byTitle = byTitleCandidates.length === 1 ? byTitleCandidates[0] ?? null : null;
+    const fallbackSingle =
+      explicitSelections.length === 1 && nextModelNodes.length === 1 ? explicitSelections[0] ?? null : null;
+    const preservedModelId = byId?.modelId ?? byTitle?.modelId ?? fallbackSingle?.modelId ?? '';
+    if (!preservedModelId) {
+      return node;
+    }
+
+    changed = true;
+    return applyExplicitModelIdToNode(node, preservedModelId);
+  });
+
+  return changed
+    ? {
+        ...next,
+        nodes: nextNodes,
+      }
+    : next;
 };
 
 const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): PathConfig => {
@@ -250,16 +342,18 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
       : {}),
   } as PathConfig;
 
-  if (!nodeChanged && !edgeChanged && JSON.stringify(nextConfig) === JSON.stringify(current)) {
+  const preservedConfig = preserveExplicitModelSelections(current, nextConfig);
+
+  if (!nodeChanged && !edgeChanged && JSON.stringify(preservedConfig) === JSON.stringify(current)) {
     return current;
   }
-  return nextConfig;
+  return preservedConfig;
 };
 
 const buildStarterGraphReplacement = (current: PathConfig, latest: PathConfig): PathConfig => {
   const currentExtensions = toRecord(current.extensions);
   const latestExtensions = toRecord(latest.extensions);
-  return {
+  return preserveExplicitModelSelections(current, {
     ...latest,
     id: current.id,
     name: normalizeText(current.name) || latest.name,
@@ -276,7 +370,7 @@ const buildStarterGraphReplacement = (current: PathConfig, latest: PathConfig): 
         },
       }
       : {}),
-  };
+  });
 };
 
 const countNodeIdOverlap = (left: PathConfig, right: PathConfig): number => {

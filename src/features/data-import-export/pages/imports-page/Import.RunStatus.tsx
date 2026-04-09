@@ -56,7 +56,12 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
   );
 
   const activeRunDispatchDiagnostics = React.useMemo(
-    () => resolveImportRunDispatchDiagnostics(activeRun),
+    () => {
+      if (!activeRun) {
+        return null;
+      }
+      return resolveImportRunDispatchDiagnostics(activeRun);
+    },
     [activeRun]
   );
 

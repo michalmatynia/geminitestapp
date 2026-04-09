@@ -71,7 +71,10 @@ vi.mock('./Import.RunStatus.helpers', () => ({
     dispatchMode?: 'queued' | 'inline' | null;
     stats?: { total?: number } | null;
     status?: string;
-  }) => {
+  } | null) => {
+    if (!run) {
+      return null;
+    }
     if (run.preflight && !run.preflight.ok) {
       return {
         tone: 'error' as const,
@@ -248,5 +251,19 @@ describe('ImportRunStatusSection', () => {
     expect(
       screen.getByText('Nothing was queued because item resolution returned zero import candidates.')
     ).toBeInTheDocument();
+  });
+
+  it('does not crash when the active run detail has not loaded yet', () => {
+    mocks.useImportExportDataMock.mockReturnValue({
+      activeImportRun: {
+        run: null,
+        items: [],
+      },
+      loadingImportRun: true,
+    });
+
+    const { container } = render(<ImportRunStatusSection />);
+
+    expect(container).toBeEmptyDOMElement();
   });
 });

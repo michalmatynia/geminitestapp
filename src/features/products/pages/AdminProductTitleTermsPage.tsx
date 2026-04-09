@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { BookType, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   useCatalogs,
@@ -53,12 +54,33 @@ const ALL_FILTER_VALUE = 'all';
 const resolveTitleTermTypeLabel = (value: ProductTitleTermType): string =>
   TITLE_TERM_TYPE_LABELS.get(value) ?? value;
 
+const resolveInitialCatalogFilter = (value: string | null): string => {
+  const normalizedValue = value?.trim() ?? '';
+  return normalizedValue || ALL_FILTER_VALUE;
+};
+
+const resolveInitialTypeFilter = (value: string | null): string => {
+  if (value === 'size' || value === 'material' || value === 'theme') {
+    return value;
+  }
+  return ALL_FILTER_VALUE;
+};
+
 export function AdminProductTitleTermsPage(): React.JSX.Element {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
+  const searchParams = useSearchParams();
   const catalogsQuery = useCatalogs();
-  const [catalogFilter, setCatalogFilter] = useState<string>(ALL_FILTER_VALUE);
-  const [typeFilter, setTypeFilter] = useState<string>(ALL_FILTER_VALUE);
+  const initialCatalogFilter = useMemo(
+    () => resolveInitialCatalogFilter(searchParams.get('catalogId')),
+    [searchParams]
+  );
+  const initialTypeFilter = useMemo(
+    () => resolveInitialTypeFilter(searchParams.get('type')),
+    [searchParams]
+  );
+  const [catalogFilter, setCatalogFilter] = useState<string>(initialCatalogFilter);
+  const [typeFilter, setTypeFilter] = useState<string>(initialTypeFilter);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ProductTitleTerm | null>(null);
@@ -68,6 +90,14 @@ export function AdminProductTitleTermsPage(): React.JSX.Element {
     name_en: '',
     name_pl: '',
   });
+
+  useEffect(() => {
+    setCatalogFilter(initialCatalogFilter);
+  }, [initialCatalogFilter]);
+
+  useEffect(() => {
+    setTypeFilter(initialTypeFilter);
+  }, [initialTypeFilter]);
 
   const selectedCatalogId = catalogFilter !== ALL_FILTER_VALUE ? catalogFilter : undefined;
   const selectedType =

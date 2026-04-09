@@ -3,6 +3,10 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getParameterRepository } from '@/features/products/server';
+import {
+  PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES,
+  productParameterLinkedTitleTermTypeSchema,
+} from '@/shared/contracts/products/parameters';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 
@@ -22,6 +26,9 @@ const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<(typeof SELECTOR_TYPES)[number]
   'dropdown',
   'checklist',
 ]);
+const LINKABLE_SELECTOR_TYPES = new Set<(typeof SELECTOR_TYPES)[number]>(
+  PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES
+);
 
 const normalizeOptionLabels = (input: unknown): string[] => {
   if (!Array.isArray(input)) return [];
@@ -44,6 +51,7 @@ export const productParameterUpdateSchema = z.object({
   catalogId: z.string().min(1).optional(),
   selectorType: selectorTypeSchema.optional(),
   optionLabels: z.array(z.string()).optional(),
+  linkedTitleTermType: productParameterLinkedTitleTermTypeSchema.optional(),
 });
 
 /**
@@ -72,11 +80,22 @@ export async function PUT_handler(
     data.optionLabels !== undefined
       ? normalizeOptionLabels(data.optionLabels)
       : current.optionLabels;
+  const nextLinkedTitleTermType =
+    data.linkedTitleTermType !== undefined
+      ? data.linkedTitleTermType
+      : current.linkedTitleTermType ?? null;
 
   if (SELECTOR_TYPES_REQUIRING_OPTIONS.has(nextSelectorType) && nextOptionLabels.length === 0) {
     throw conflictError('Selector type requires at least one option label.', {
       selectorType: nextSelectorType,
       parameterId: id,
+    });
+  }
+  if (nextLinkedTitleTermType && !LINKABLE_SELECTOR_TYPES.has(nextSelectorType)) {
+    throw conflictError('Only text and textarea parameters can sync from English Title terms.', {
+      selectorType: nextSelectorType,
+      parameterId: id,
+      linkedTitleTermType: nextLinkedTitleTermType,
     });
   }
 
@@ -96,6 +115,9 @@ export async function PUT_handler(
     ...(data.name_de !== undefined && { name_de: data.name_de }),
     ...(data.selectorType !== undefined && { selectorType: data.selectorType }),
     ...(data.optionLabels !== undefined && { optionLabels: nextOptionLabels }),
+    ...(data.linkedTitleTermType !== undefined && {
+      linkedTitleTermType: data.linkedTitleTermType,
+    }),
   });
 
   CachedProductService.invalidateAll();

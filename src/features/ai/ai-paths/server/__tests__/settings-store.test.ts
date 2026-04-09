@@ -148,7 +148,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
         ? ((normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] as Record<string, unknown>)
         : null;
     expect(normalizeDatabaseConfig?.['updatePayloadMode']).toBe('custom');
-    expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"name_en": {{result}}');
+    expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"name_en": "{{result}}"');
     expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"__noop__": ""');
 
     const triggerButtonsRecord = seeded.nextRecords.find(

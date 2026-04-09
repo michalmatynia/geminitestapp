@@ -84,6 +84,7 @@ describe('products/parameters handler', () => {
       name_en: 'Material',
       selectorType: 'text',
       optionLabels: [],
+      linkedTitleTermType: 'material',
     });
 
     const response = await POST_handler(
@@ -94,12 +95,17 @@ describe('products/parameters handler', () => {
           catalogId: 'catalog-1',
           selectorType: 'text',
           optionLabels: [],
+          linkedTitleTermType: 'material',
         },
       } as ApiHandlerContext
     );
 
     expect(response.status).toBe(201);
-    expect(createParameterMock).toHaveBeenCalled();
+    expect(createParameterMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        linkedTitleTermType: 'material',
+      })
+    );
     expect(invalidateAllMock).toHaveBeenCalledTimes(1);
   });
 });

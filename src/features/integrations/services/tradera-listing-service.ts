@@ -427,10 +427,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
   const result = await runTraderaListing(input);
   const resolved = await findProductListingByIdAcrossProviders(input.listingId);
   if (!resolved) {
-    if (!result.ok) {
-      throw new Error(result.error ?? `Listing not found: ${input.listingId}`);
-    }
-    return;
+    throw new Error(result.error ?? `Listing not found after job execution: ${input.listingId}`);
   }
 
   const now = new Date();
@@ -482,7 +479,6 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
           ? result.metadata['checkedStatus'].trim()
           : null;
       const statusToWrite = checkedStatus ?? resolved.listing.status ?? 'unknown';
-      await resolved.repository.updateListingStatus(input.listingId, statusToWrite);
       await resolved.repository.updateListing(input.listingId, {
         status: statusToWrite,
         lastStatusCheckAt: now,
@@ -491,7 +487,6 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       return;
     }
 
-    await resolved.repository.updateListingStatus(input.listingId, 'active');
     await resolved.repository.updateListing(input.listingId, {
       status: 'active',
       externalListingId: persistedExternalListingId,
@@ -526,7 +521,6 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
   }
 
   const failureStatus = resolveFailureListingStatus(result.errorCategory);
-  await resolved.repository.updateListingStatus(input.listingId, failureStatus);
   await resolved.repository.updateListing(input.listingId, {
     status: failureStatus,
     lastStatusCheckAt: now,

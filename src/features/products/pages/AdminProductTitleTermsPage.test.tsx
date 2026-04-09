@@ -11,6 +11,7 @@ const {
   useTitleTermsMock,
   useSaveTitleTermMutationMock,
   useDeleteTitleTermMutationMock,
+  useSearchParamsMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   confirmMock: vi.fn(),
@@ -18,6 +19,7 @@ const {
   useTitleTermsMock: vi.fn(),
   useSaveTitleTermMutationMock: vi.fn(),
   useDeleteTitleTermMutationMock: vi.fn(),
+  useSearchParamsMock: vi.fn(),
 }));
 
 vi.mock('next/link', () => ({
@@ -28,6 +30,10 @@ vi.mock('next/link', () => ({
     children?: React.ReactNode;
     href: string;
   }) => <a href={href}>{children}</a>,
+}));
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => useSearchParamsMock(),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
@@ -206,6 +212,7 @@ const titleTerms = [
 describe('AdminProductTitleTermsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
 
     useCatalogsMock.mockReturnValue(
       buildQueryResult({
@@ -252,6 +259,18 @@ describe('AdminProductTitleTermsPage', () => {
       expect(useTitleTermsMock).toHaveBeenLastCalledWith('catalog-b', undefined, {
         allowWithoutCatalog: true,
       });
+    });
+    expect(screen.queryByText('4 cm')).not.toBeInTheDocument();
+    expect(screen.getByText('Metal')).toBeInTheDocument();
+  });
+
+  it('hydrates the initial catalog filter from the page query string', () => {
+    useSearchParamsMock.mockReturnValue(new URLSearchParams('catalogId=catalog-b'));
+
+    render(<AdminProductTitleTermsPage />);
+
+    expect(useTitleTermsMock).toHaveBeenLastCalledWith('catalog-b', undefined, {
+      allowWithoutCatalog: true,
     });
     expect(screen.queryByText('4 cm')).not.toBeInTheDocument();
     expect(screen.getByText('Metal')).toBeInTheDocument();

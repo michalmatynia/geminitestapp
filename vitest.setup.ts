@@ -367,11 +367,13 @@ vi.mock('@/shared/ui/client-only', () => ({
 // Mock useToast
 vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
+  const toastMock = vi.fn();
+  const dismissMock = vi.fn();
   return {
     ...actual,
     useToast: vi.fn(() => ({
-      toast: vi.fn(),
-      dismiss: vi.fn(),
+      toast: toastMock,
+      dismiss: dismissMock,
     })),
   };
 });
@@ -423,15 +425,16 @@ vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
   return {
     ...actual,
     SelectSimple: (props: any) => {
-      const { value, onValueChange, options, ariaLabel, disabled } = props;
+      const { value, onValueChange, options, ariaLabel, disabled, placeholder } = props;
       return React.createElement(
         'select',
         {
           'aria-label': ariaLabel,
-          value,
+          value: value ?? '',
           disabled,
           onChange: (e: any) => onValueChange?.(e.target.value),
         },
+        placeholder && React.createElement('option', { value: '', disabled: true }, placeholder),
         options?.map((opt: any) =>
           React.createElement('option', { key: opt.value, value: opt.value }, opt.label)
         )

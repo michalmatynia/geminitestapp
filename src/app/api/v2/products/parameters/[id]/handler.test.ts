@@ -54,6 +54,7 @@ describe('products/parameters/[id] handler', () => {
       name_en: 'Material',
       name_pl: null,
       name_de: null,
+      linkedTitleTermType: 'material',
     });
     findByNameMock.mockResolvedValue(null);
     updateParameterMock.mockResolvedValue({
@@ -64,6 +65,7 @@ describe('products/parameters/[id] handler', () => {
       name_en: 'Materiał updated',
       name_pl: null,
       name_de: null,
+      linkedTitleTermType: 'material',
     });
 
     const response = await PUT_handler(
@@ -71,13 +73,17 @@ describe('products/parameters/[id] handler', () => {
       {
         body: {
           name_en: 'Materiał updated',
+          linkedTitleTermType: 'theme',
         },
       } as ApiHandlerContext,
       { id: 'param-1' }
     );
 
     expect(response.status).toBe(200);
-    expect(updateParameterMock).toHaveBeenCalledWith('param-1', { name_en: 'Materiał updated' });
+    expect(updateParameterMock).toHaveBeenCalledWith('param-1', {
+      name_en: 'Materiał updated',
+      linkedTitleTermType: 'theme',
+    });
     expect(invalidateAllMock).toHaveBeenCalledTimes(1);
   });
 

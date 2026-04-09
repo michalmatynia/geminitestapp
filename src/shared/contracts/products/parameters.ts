@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { namedDtoSchema } from '../base';
+import { productTitleTermTypeSchema } from './title-terms';
 
 /**
  * Product Parameter Contract
@@ -17,6 +18,16 @@ export const productParameterSelectorTypeSchema = z.enum([
 
 export type ProductParameterSelectorType = z.infer<typeof productParameterSelectorTypeSchema>;
 
+export const PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES = ['text', 'textarea'] as const satisfies readonly ProductParameterSelectorType[];
+
+export const productParameterLinkedTitleTermTypeSchema = productTitleTermTypeSchema
+  .nullable()
+  .default(null);
+
+export type ProductParameterLinkedTitleTermType = z.infer<
+  typeof productParameterLinkedTitleTermTypeSchema
+>;
+
 export const productParameterSchema = namedDtoSchema.extend({
   catalogId: z.string(),
   name_en: z.string(),
@@ -24,6 +35,7 @@ export const productParameterSchema = namedDtoSchema.extend({
   name_de: z.string().nullable(),
   selectorType: productParameterSelectorTypeSchema,
   optionLabels: z.array(z.string()),
+  linkedTitleTermType: productParameterLinkedTitleTermTypeSchema,
 });
 
 export type ProductParameter = z.infer<typeof productParameterSchema>;
@@ -51,6 +63,7 @@ export const productSimpleParameterSchema = z.object({
   name_en: z.string().nullable().optional(),
   name_pl: z.string().nullable().optional(),
   name_de: z.string().nullable().optional(),
+  linkedTitleTermType: productParameterLinkedTitleTermTypeSchema.optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });

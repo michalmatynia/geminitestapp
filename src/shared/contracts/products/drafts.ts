@@ -182,9 +182,6 @@ export type BaseFilters = {
   limit?: number;
 };
 
-export type CustomFieldFilters = BaseFilters;
-export type ProducerFilters = BaseFilters;
-
 export type ParameterFilters = BaseFilters & {
   catalogId?: string;
 };

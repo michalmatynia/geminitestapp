@@ -99,6 +99,81 @@ describe('integration listing check-status handler', () => {
     });
   });
 
+  it('queues a check_status even when the listing status is queued from a prior list/relist job', async () => {
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'queued', // stuck from a previous list job — must NOT block check_status
+        marketplaceData: null,
+      },
+      repository: {
+        updateListing: (...args: unknown[]) => updateListingMock(...args),
+      },
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api', {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'content-type': 'application/json' },
+      }) as never,
+      {} as never,
+      { id: 'product-1', listingId: 'listing-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toMatchObject({ queued: true, listingId: 'listing-1' });
+    expect(payload.alreadyQueued).toBeUndefined();
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'check_status' })
+    );
+  });
+
+  it('re-queues check_status when the pendingExecution is stale (older than 5 min)', async () => {
+    const staleQueuedAt = new Date(Date.now() - 6 * 60 * 1000).toISOString(); // 6 min ago
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'active',
+        marketplaceData: {
+          tradera: {
+            pendingExecution: {
+              action: 'check_status',
+              requestId: 'job-stale',
+              queuedAt: staleQueuedAt,
+            },
+          },
+        },
+      },
+      repository: {
+        updateListing: (...args: unknown[]) => updateListingMock(...args),
+      },
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api', {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'content-type': 'application/json' },
+      }) as never,
+      {} as never,
+      { id: 'product-1', listingId: 'listing-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toMatchObject({ queued: true, listingId: 'listing-1' });
+    expect(payload.alreadyQueued).toBeUndefined();
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'check_status' })
+    );
+  });
+
   it('treats a pending Tradera check-status execution as already queued', async () => {
     findProductListingByIdAcrossProvidersMock.mockResolvedValue({
       listing: {

@@ -157,7 +157,58 @@ describe('materializeStoredTriggerPathConfig', () => {
       (node) => node.type === 'database' && node.title === 'Database Query'
     );
     expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
-    expect(databaseNode?.config?.database?.updateTemplate).toContain('"name_en": {{result}}');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"name_en": "{{result}}"');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
+    expect(resolved.changed).toBe(true);
+  });
+
+  it('repairs legacy generated custom update templates that still use unquoted string tokens', async () => {
+    const actualPortableEngine = await vi.importActual<
+      typeof import('@/shared/lib/ai-paths/portable-engine')
+    >('@/shared/lib/ai-paths/portable-engine');
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) {
+      throw new Error('Expected starter_product_name_normalize template');
+    }
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path-repair-db-custom-template',
+      seededDefault: true,
+    });
+    const legacyNodes = (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database' || node.title !== 'Database Query') {
+        return node;
+      }
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...node.config?.database,
+            updatePayloadMode: 'custom',
+            updateTemplate:
+              '{\n  "$set": {\n    "name_en": {{result}}\n  },\n  "$unset": {\n    "__noop__": ""\n  }\n}',
+          },
+        },
+      };
+    });
+    const rawConfig = JSON.stringify({
+      ...config,
+      nodes: legacyNodes,
+    });
+
+    mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: config.id,
+      rawConfig,
+      fallbackName: config.name,
+    });
+
+    const databaseNode = resolved.config.nodes.find(
+      (node) => node.type === 'database' && node.title === 'Database Query'
+    );
+    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"name_en": "{{result}}"');
     expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
     expect(resolved.changed).toBe(true);
   });

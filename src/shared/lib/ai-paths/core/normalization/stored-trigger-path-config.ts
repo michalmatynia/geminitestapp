@@ -102,25 +102,43 @@ const renderLegacyUpdateTemplateToken = (sourcePort: string, sourcePath: string)
   return normalizedPath ? `{{${normalizedPort}.${normalizedPath}}}` : `{{${normalizedPort}}}`;
 };
 
-const deriveLegacyCustomUpdateTemplateFromMappings = (value: unknown): string | null => {
+const shouldEmitUnquotedLegacyTemplateToken = (targetPath: string, sourcePath: string): boolean => {
+  const normalizedTargetPath = normalizeOptionalText(targetPath)?.toLowerCase() ?? '';
+  const normalizedSourcePath = normalizeOptionalText(sourcePath)?.toLowerCase() ?? '';
+  return normalizedTargetPath === 'parameters' || normalizedSourcePath === 'parameters';
+};
+
+const buildLegacyCustomUpdateTemplateFromMappings = (
+  value: unknown,
+  options: { quoteScalars: boolean }
+): string | null => {
   if (!Array.isArray(value)) return null;
   const assignments = value
     .map((entry: unknown): Record<string, unknown> | null => toObjectRecord(entry))
     .filter((entry): entry is Record<string, unknown> => Boolean(entry))
-    .reduce<Record<string, string>>((acc, entry) => {
+    .reduce<Array<{ targetPath: string; sourcePath: string; token: string }>>((acc, entry) => {
       const targetPath = normalizeOptionalText(entry['targetPath']);
       if (!targetPath) return acc;
-      acc[targetPath] = renderLegacyUpdateTemplateToken(
-        String(entry['sourcePort'] ?? ''),
-        String(entry['sourcePath'] ?? '')
-      );
+      const sourcePath = String(entry['sourcePath'] ?? '');
+      acc.push({
+        targetPath,
+        sourcePath,
+        token: renderLegacyUpdateTemplateToken(
+          String(entry['sourcePort'] ?? ''),
+          sourcePath
+        ),
+      });
       return acc;
-    }, {});
+    }, []);
 
-  if (Object.keys(assignments).length === 0) return null;
-  const lines = Object.entries(assignments).map(
-    ([targetPath, token]) =>
-      `    "${targetPath}": ${token.startsWith('{{') ? token : JSON.stringify(token)}`
+  if (assignments.length === 0) return null;
+  const lines = assignments.map(
+    ({ targetPath, sourcePath, token }) =>
+      `    "${targetPath}": ${
+        !options.quoteScalars || shouldEmitUnquotedLegacyTemplateToken(targetPath, sourcePath)
+          ? token
+          : JSON.stringify(token)
+      }`
   );
   return (
     '{\n' +
@@ -129,6 +147,12 @@ const deriveLegacyCustomUpdateTemplateFromMappings = (value: unknown): string | 
     '}'
   );
 };
+
+const deriveLegacyCustomUpdateTemplateFromMappings = (value: unknown): string | null =>
+  buildLegacyCustomUpdateTemplateFromMappings(value, { quoteScalars: true });
+
+const deriveLegacyUnquotedCustomUpdateTemplateFromMappings = (value: unknown): string | null =>
+  buildLegacyCustomUpdateTemplateFromMappings(value, { quoteScalars: false });
 
 const repairLegacyUpdateTemplateFromMappings = (
   config: PathConfig
@@ -157,12 +181,21 @@ const repairLegacyUpdateTemplateFromMappings = (
         ? databaseConfig.updateTemplate.trim()
         : '';
     const derivedTemplate = deriveLegacyCustomUpdateTemplateFromMappings(databaseConfig?.mappings);
+    const legacyUnquotedTemplate = deriveLegacyUnquotedCustomUpdateTemplateFromMappings(
+      databaseConfig?.mappings
+    );
+    const needsLegacyTemplateRepair =
+      updateTemplate.length > 0 &&
+      legacyUnquotedTemplate !== null &&
+      updateTemplate === legacyUnquotedTemplate &&
+      derivedTemplate !== null &&
+      derivedTemplate !== updateTemplate;
 
     if (
       !databaseConfig ||
       operation !== 'update' ||
       !hasMappings ||
-      updateTemplate.length > 0 ||
+      (!needsLegacyTemplateRepair && updateTemplate.length > 0) ||
       !derivedTemplate
     ) {
       return node;

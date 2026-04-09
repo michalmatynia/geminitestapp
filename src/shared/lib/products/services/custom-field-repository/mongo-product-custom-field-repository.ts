@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 
 import type {
   CustomFieldCreateInput,
-  CustomFieldFilters,
+  BaseFilters,
   CustomFieldRepository,
   CustomFieldUpdateInput,
 } from '@/shared/contracts/products/drafts';
@@ -94,7 +94,7 @@ const buildCustomFieldIdFilter = (id: string): Filter<ProductCustomFieldDoc> => 
 };
 
 export const mongoProductCustomFieldRepository: CustomFieldRepository = {
-  async listCustomFields(filters: CustomFieldFilters): Promise<ProductCustomFieldDefinition[]> {
+  async listCustomFields(filters: BaseFilters): Promise<ProductCustomFieldDefinition[]> {
     const db = await getMongoDb();
     const query: Filter<ProductCustomFieldDoc> = {};
 

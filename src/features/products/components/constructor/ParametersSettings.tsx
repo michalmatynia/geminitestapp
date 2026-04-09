@@ -9,7 +9,11 @@ import {
   useDeleteParameterMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import {
+  PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES,
+  type ProductParameter,
+  type ProductParameterLinkedTitleTermType,
+} from '@/shared/contracts/products/parameters';
 import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { FormSection, FormField } from '@/shared/ui/form-section';
@@ -41,6 +45,7 @@ type ParameterFormData = {
   catalogId: string;
   selectorType: ParameterSelectorType;
   optionLabelsInput: string;
+  linkedTitleTermType: ProductParameterLinkedTitleTermType;
 };
 
 const SELECTOR_TYPE_OPTIONS: Array<LabeledOptionDto<ParameterSelectorType>> = [
@@ -59,6 +64,22 @@ const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<ParameterSelectorType>([
   'dropdown',
   'checklist',
 ]);
+const LINKABLE_SELECTOR_TYPES = new Set<ParameterSelectorType>(
+  PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES
+);
+const LINKED_TITLE_TERM_OPTIONS: Array<LabeledOptionDto<string>> = [
+  { value: '', label: 'No English Title sync' },
+  { value: 'size', label: 'Size term' },
+  { value: 'material', label: 'Material term' },
+  { value: 'theme', label: 'Theme term' },
+];
+
+const getLinkedTitleTermLabel = (
+  value: ProductParameterLinkedTitleTermType
+): string | null => {
+  if (!value) return null;
+  return LINKED_TITLE_TERM_OPTIONS.find((option) => option.value === value)?.label ?? value;
+};
 
 const normalizeOptionLabels = (input: string): string[] => {
   const seen = new Set<string>();
@@ -94,6 +115,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
     catalogId: '',
     selectorType: 'text',
     optionLabelsInput: '',
+    linkedTitleTermType: null,
   });
   const [parameterToDelete, setParameterToDelete] = useState<ProductParameter | null>(null);
 
@@ -113,6 +135,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
       catalogId: selectedCatalogId,
       selectorType: 'text',
       optionLabelsInput: '',
+      linkedTitleTermType: null,
     });
     setShowModal(true);
   };
@@ -126,6 +149,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
       catalogId: parameter.catalogId,
       selectorType: parameter.selectorType ?? 'text',
       optionLabelsInput: optionLabelsToMultiline(parameter.optionLabels),
+      linkedTitleTermType: parameter.linkedTitleTermType ?? null,
     });
     setShowModal(true);
   };
@@ -147,6 +171,15 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
       });
       return;
     }
+    if (
+      formData.linkedTitleTermType &&
+      !LINKABLE_SELECTOR_TYPES.has(formData.selectorType)
+    ) {
+      toast('Only text and textarea parameters can sync from English Title terms.', {
+        variant: 'error',
+      });
+      return;
+    }
 
     try {
       const payload = {
@@ -156,6 +189,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
         catalogId: formData.catalogId,
         selectorType: formData.selectorType,
         optionLabels,
+        linkedTitleTermType: formData.linkedTitleTermType,
       };
 
       await saveParameterMutation.mutateAsync({
@@ -201,6 +235,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
     (catalog: CatalogRecord): boolean => catalog.id === selectedCatalogId
   );
   const selectorNeedsOptions = SELECTOR_TYPES_REQUIRING_OPTIONS.has(formData.selectorType);
+  const selectorSupportsLinking = LINKABLE_SELECTOR_TYPES.has(formData.selectorType);
   const catalogOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () =>
       catalogs.map((catalog: CatalogRecord) => ({
@@ -249,6 +284,9 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
                     <div className='flex flex-wrap gap-x-3 gap-y-1'>
                       {parameter.optionLabels.length > 0 && (
                         <span>Options: {parameter.optionLabels.length}</span>
+                      )}
+                      {parameter.linkedTitleTermType && (
+                        <span>Synced: {getLinkedTitleTermLabel(parameter.linkedTitleTermType)}</span>
                       )}
                       {parameter.name_pl && <span>PL: {parameter.name_pl}</span>}
                       {parameter.name_de && <span>DE: {parameter.name_de}</span>}
@@ -344,12 +382,38 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
                   setFormData((prev: ParameterFormData) => ({
                     ...prev,
                     selectorType: value as ParameterSelectorType,
+                    linkedTitleTermType: LINKABLE_SELECTOR_TYPES.has(
+                      value as ParameterSelectorType
+                    )
+                      ? prev.linkedTitleTermType
+                      : null,
                   }))
                 }
                 options={SELECTOR_TYPE_OPTIONS}
                 placeholder='Select selector type'
                 triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
                ariaLabel='Select selector type' title='Select selector type'/>
+            </FormField>
+            <FormField label='Linked English Title Term'>
+              <SelectSimple
+                size='sm'
+                value={formData.linkedTitleTermType ?? ''}
+                onValueChange={(value: string): void =>
+                  setFormData((prev: ParameterFormData) => ({
+                    ...prev,
+                    linkedTitleTermType:
+                      value === '' ? null : (value as ProductParameterLinkedTitleTermType),
+                  }))
+                }
+                options={LINKED_TITLE_TERM_OPTIONS}
+                placeholder='No English Title sync'
+                disabled={!selectorSupportsLinking}
+                triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
+               ariaLabel='Linked English Title term' title='Linked English Title term'/>
+              <p className='mt-1 text-xs text-gray-500'>
+                Automatically maps this parameter from the structured English Title. Available
+                for Text Field and Textarea parameters only.
+              </p>
             </FormField>
             {selectorNeedsOptions && (
               <FormField label='Option Labels'>

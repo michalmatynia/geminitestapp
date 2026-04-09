@@ -73,19 +73,26 @@ export const resolvePendingTraderaExecutionAction = (
   return normalizeStatus(readString(pendingExecution['action']));
 };
 
+const PENDING_CHECK_STATUS_STALE_MS = 5 * 60 * 1000; // 5 min — well above the 60 s Playwright timeout
+
 export const isTraderaStatusCheckPending = <
   T extends TraderaPendingListingCandidate,
 >(
   listing: T | null | undefined
 ): boolean => {
-  const normalizedStatus = normalizeStatus(listing?.status);
-  if (normalizedStatus === 'running' || normalizedStatus === 'queued') {
-    return true;
+  if (resolvePendingTraderaExecutionAction(listing?.marketplaceData) !== 'check_status') {
+    return false;
   }
-  return (
-    resolvePendingTraderaExecutionAction(listing?.marketplaceData) ===
-    'check_status'
-  );
+  // Treat the pending record as stale if it has been waiting longer than the max job duration.
+  // This self-heals listings whose BullMQ job was lost (e.g. worker restart before processing).
+  const traderaData = toRecord(toRecord(listing?.marketplaceData)['tradera']);
+  const pendingExecution = toRecord(traderaData['pendingExecution']);
+  const queuedAt = readString(pendingExecution['queuedAt']);
+  if (queuedAt) {
+    const ageMs = Date.now() - new Date(queuedAt).getTime();
+    if (ageMs >= PENDING_CHECK_STATUS_STALE_MS) return false;
+  }
+  return true;
 };
 
 export const buildQueuedTraderaStatusCheckMarketplaceData = ({

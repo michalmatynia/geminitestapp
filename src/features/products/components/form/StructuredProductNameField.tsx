@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
+import { BookType, ChevronRight } from 'lucide-react';
 import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
@@ -10,6 +10,7 @@ import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueri
 import { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductTitleTermType } from '@/shared/contracts/products/title-terms';
+import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-section';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/ui-utils';
@@ -246,6 +247,13 @@ export function StructuredProductNameField(): React.JSX.Element {
   const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
   const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
   const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
+  const titleTermsHref = useMemo(() => {
+    const normalizedCatalogId = typeof primaryCatalogId === 'string' ? primaryCatalogId.trim() : '';
+    if (!normalizedCatalogId) {
+      return '/admin/products/title-terms';
+    }
+    return `/admin/products/title-terms?catalogId=${encodeURIComponent(normalizedCatalogId)}`;
+  }, [primaryCatalogId]);
 
   const blurTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
   const [activeStage, setActiveStage] = useState<TitleSegmentStage | null>(null);
@@ -629,6 +637,14 @@ export function StructuredProductNameField(): React.JSX.Element {
       error={typeof error === 'string' ? error : undefined}
       description='Format: <name> | <size> | <material> | <category> | <lore or theme>'
       id='name_en'
+      actions={
+        <Button size='xs' variant='outline' asChild>
+          <a href={titleTermsHref} target='_blank' rel='noreferrer'>
+            <BookType className='size-3.5' />
+            <span>Open Title Terms</span>
+          </a>
+        </Button>
+      }
     >
       <div className='relative'>
         <Input

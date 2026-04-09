@@ -187,6 +187,18 @@ describe('StructuredProductNameField', () => {
     expect(within(listbox).getByText('Metal')).toBeInTheDocument();
   });
 
+  it('renders a title-terms shortcut next to English Name for the active catalog', () => {
+    renderField();
+
+    const titleTermsLink = screen.getByRole('link', { name: /open title terms/i });
+
+    expect(titleTermsLink).toHaveAttribute(
+      'href',
+      '/admin/products/title-terms?catalogId=catalog-a'
+    );
+    expect(titleTermsLink).toHaveAttribute('target', '_blank');
+  });
+
   it('sorts matching non-category suggestions alphabetically before rendering the split window', async () => {
     renderField({
       sizeTerms: ['8 cm', '2 cm', '6 cm', '4 cm'],

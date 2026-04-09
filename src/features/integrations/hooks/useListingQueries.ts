@@ -26,6 +26,7 @@ export function useProductListings(productId: string): ListQuery<ProductListingW
     queryFn: () => fetchProductListings(productId),
     enabled: Boolean(productId),
     staleTime: PRODUCT_LISTINGS_STALE_TIME_MS,
+    refetchOnMount: 'always',
     refetchInterval: (
       query: Query<
         ProductListingWithDetails[],

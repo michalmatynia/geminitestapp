@@ -1,16 +1,20 @@
 import { act, renderHook } from '@testing-library/react';
-import { createElement, type ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { FormProvider, useForm } from 'react-hook-form';
+import React, { useMemo, type ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
-const { useParametersMock } = vi.hoisted(() => ({
+const { useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
   useParametersMock: vi.fn(),
+  useTitleTermsMock: vi.fn(),
 }));
 
 vi.mock('../hooks/useProductMetadataQueries', () => ({
   useParameters: useParametersMock,
+  useTitleTerms: useTitleTermsMock,
 }));
 
 import {
@@ -18,6 +22,63 @@ import {
   resolvePrimaryParameterValue,
   useProductFormParameters,
 } from './ProductFormParameterContext';
+import { ProductFormCoreStateContext } from './ProductFormCoreContext';
+
+const createWrapper = ({
+  product,
+  selectedCatalogIds = ['catalog-1'],
+  onInteraction,
+  defaultNameEn = '',
+}: {
+  product?: ProductWithImages;
+  selectedCatalogIds?: string[];
+  onInteraction?: () => void;
+  defaultNameEn?: string;
+}) =>
+  function Wrapper({ children }: { children: ReactNode }) {
+    const methods = useForm<ProductFormData>({
+      defaultValues: {
+        name_en: defaultNameEn,
+      } as ProductFormData,
+    });
+    const coreState = useMemo(
+      () =>
+        ({
+          register: methods.register,
+          hasUnsavedChanges: false,
+          errors: {},
+          getValues: methods.getValues,
+          selectedNoteIds: [],
+          generationError: null,
+          product,
+          draft: null,
+          ConfirmationModal: () => null,
+          methods,
+          uploading: false,
+          uploadError: null,
+          uploadSuccess: false,
+        }),
+      [methods, product]
+    );
+
+    return React.createElement(
+      FormProvider,
+      methods,
+      React.createElement(
+        ProductFormCoreStateContext.Provider,
+        { value: coreState },
+        React.createElement(
+          ProductFormParameterProvider,
+          {
+            product,
+            selectedCatalogIds,
+            onInteraction,
+          },
+          children
+        )
+      )
+    );
+  };
 
 describe('resolvePrimaryParameterValue', () => {
   it('prefers the explicit default locale when it exists', () => {
@@ -32,10 +93,13 @@ describe('resolvePrimaryParameterValue', () => {
 
   it('keeps a direct value only when it still matches a localized entry', () => {
     expect(
-      resolvePrimaryParameterValue({
-        en: 'English',
-        pl: 'Polski',
-      }, 'English')
+      resolvePrimaryParameterValue(
+        {
+          en: 'English',
+          pl: 'Polski',
+        },
+        'English'
+      )
     ).toBe('English');
 
     expect(
@@ -52,6 +116,13 @@ describe('resolvePrimaryParameterValue', () => {
 });
 
 describe('ProductFormParameterProvider', () => {
+  beforeEach(() => {
+    useTitleTermsMock.mockImplementation(() => ({
+      data: [],
+      isLoading: false,
+    }));
+  });
+
   it('removes a parameter row from local state and tracks interaction', () => {
     useParametersMock.mockReturnValue({
       data: [
@@ -69,17 +140,7 @@ describe('ProductFormParameterProvider', () => {
       ],
     } as Partial<ProductWithImages> as ProductWithImages;
 
-    const wrapper = ({ children }: { children: ReactNode }) =>
-      createElement(
-        ProductFormParameterProvider,
-        {
-          product,
-          selectedCatalogIds: ['catalog-1'],
-          onInteraction,
-        },
-        children
-      );
-
+    const wrapper = createWrapper({ product, onInteraction });
     const { result } = renderHook(() => useProductFormParameters(), { wrapper });
 
     act(() => {
@@ -106,16 +167,7 @@ describe('ProductFormParameterProvider', () => {
       ],
     } as Partial<ProductWithImages> as ProductWithImages;
 
-    const wrapper = ({ children }: { children: ReactNode }) =>
-      createElement(
-        ProductFormParameterProvider,
-        {
-          product,
-          selectedCatalogIds: ['catalog-1'],
-        },
-        children
-      );
-
+    const wrapper = createWrapper({ product });
     const { result } = renderHook(() => useProductFormParameters(), { wrapper });
 
     act(() => {
@@ -147,16 +199,7 @@ describe('ProductFormParameterProvider', () => {
       ],
     } as Partial<ProductWithImages> as ProductWithImages;
 
-    const wrapper = ({ children }: { children: ReactNode }) =>
-      createElement(
-        ProductFormParameterProvider,
-        {
-          product,
-          selectedCatalogIds: ['catalog-1'],
-        },
-        children
-      );
-
+    const wrapper = createWrapper({ product });
     const { result } = renderHook(() => useProductFormParameters(), { wrapper });
 
     act(() => {
@@ -190,16 +233,7 @@ describe('ProductFormParameterProvider', () => {
       ],
     } as Partial<ProductWithImages> as ProductWithImages;
 
-    const wrapper = ({ children }: { children: ReactNode }) =>
-      createElement(
-        ProductFormParameterProvider,
-        {
-          product,
-          selectedCatalogIds: ['catalog-1'],
-        },
-        children
-      );
-
+    const wrapper = createWrapper({ product });
     const { result } = renderHook(() => useProductFormParameters(), { wrapper });
 
     expect(result.current.parameterValues).toEqual([
@@ -220,16 +254,49 @@ describe('ProductFormParameterProvider', () => {
       parameters: [],
     } as Partial<ProductWithImages> as ProductWithImages;
 
-    const wrapper = ({ children }: { children: ReactNode }) =>
-      createElement(
-        ProductFormParameterProvider,
-        {
-          product,
-          selectedCatalogIds: ['catalog-1'],
-        },
-        children
+    const wrapper = ({ children }: { children: ReactNode }) => {
+      const methods = useForm<ProductFormData>({
+        defaultValues: {
+          name_en: '',
+        } as ProductFormData,
+      });
+      const coreState = useMemo(
+        () =>
+          ({
+            register: methods.register,
+            hasUnsavedChanges: false,
+            errors: {},
+            getValues: methods.getValues,
+            selectedNoteIds: [],
+            generationError: null,
+            product,
+            draft: null,
+            ConfirmationModal: () => null,
+            methods,
+            uploading: false,
+            uploadError: null,
+            uploadSuccess: false,
+          }),
+        [methods, product]
       );
 
+      return React.createElement(
+        FormProvider,
+        methods,
+        React.createElement(
+          ProductFormCoreStateContext.Provider,
+          { value: coreState },
+          React.createElement(
+            ProductFormParameterProvider,
+            {
+              product,
+              selectedCatalogIds: ['catalog-1'],
+            },
+            children
+          )
+        )
+      );
+    };
     const { result, rerender } = renderHook(() => useProductFormParameters(), { wrapper });
 
     expect(result.current.parameterValues).toEqual([]);
@@ -268,16 +335,49 @@ describe('ProductFormParameterProvider', () => {
       ],
     } as Partial<ProductWithImages> as ProductWithImages;
 
-    const wrapper = ({ children }: { children: ReactNode }) =>
-      createElement(
-        ProductFormParameterProvider,
-        {
-          product,
-          selectedCatalogIds: ['catalog-1'],
-        },
-        children
+    const wrapper = ({ children }: { children: ReactNode }) => {
+      const methods = useForm<ProductFormData>({
+        defaultValues: {
+          name_en: '',
+        } as ProductFormData,
+      });
+      const coreState = useMemo(
+        () =>
+          ({
+            register: methods.register,
+            hasUnsavedChanges: false,
+            errors: {},
+            getValues: methods.getValues,
+            selectedNoteIds: [],
+            generationError: null,
+            product,
+            draft: null,
+            ConfirmationModal: () => null,
+            methods,
+            uploading: false,
+            uploadError: null,
+            uploadSuccess: false,
+          }),
+        [methods, product]
       );
 
+      return React.createElement(
+        FormProvider,
+        methods,
+        React.createElement(
+          ProductFormCoreStateContext.Provider,
+          { value: coreState },
+          React.createElement(
+            ProductFormParameterProvider,
+            {
+              product,
+              selectedCatalogIds: ['catalog-1'],
+            },
+            children
+          )
+        )
+      );
+    };
     const { result, rerender } = renderHook(() => useProductFormParameters(), { wrapper });
 
     act(() => {
@@ -299,6 +399,51 @@ describe('ProductFormParameterProvider', () => {
       {
         parameterId: 'param-1',
         value: 'Local draft',
+      },
+    ]);
+  });
+
+  it('auto-maps linked title terms into parameter values from English Name', () => {
+    useParametersMock.mockReturnValue({
+      data: [
+        {
+          id: 'param-material',
+          name_en: 'Material',
+          selectorType: 'text',
+          linkedTitleTermType: 'material',
+        },
+      ] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+    useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({
+      data:
+        type === 'material'
+          ? [
+              {
+                id: 'term-metal',
+                catalogId: 'catalog-1',
+                type: 'material',
+                name_en: 'Metal',
+                name_pl: 'Metal PL',
+              },
+            ]
+          : [],
+      isLoading: false,
+    }));
+
+    const wrapper = createWrapper({
+      defaultNameEn: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+    });
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-material',
+        value: 'Metal',
+        valuesByLanguage: {
+          en: 'Metal',
+          pl: 'Metal PL',
+        },
       },
     ]);
   });

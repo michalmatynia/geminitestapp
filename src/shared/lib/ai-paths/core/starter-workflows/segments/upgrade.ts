@@ -45,21 +45,26 @@ const deriveCustomUpdateTemplateFromMappings = (value: unknown): string | null =
   const assignments = value
     .map((entry: unknown) => toRecord(entry))
     .filter((entry): entry is Record<string, unknown> => Boolean(entry))
-    .reduce<Record<string, string>>((acc, entry) => {
+    .reduce<Array<{ targetPath: string; sourcePath: string; token: string }>>((acc, entry) => {
       const targetPath = normalizeText(entry['targetPath']);
       if (!targetPath) return acc;
-      acc[targetPath] = renderTemplateToken(
-        normalizeText(entry['sourcePort']) || 'value',
-        normalizeText(entry['sourcePath'])
-      );
+      const sourcePath = normalizeText(entry['sourcePath']);
+      acc.push({
+        targetPath,
+        sourcePath,
+        token: renderTemplateToken(
+          normalizeText(entry['sourcePort']) || 'value',
+          sourcePath
+        ),
+      });
       return acc;
-    }, {});
+    }, []);
 
-  if (Object.keys(assignments).length === 0) return null;
-  const lines = Object.entries(assignments).map(
-    ([targetPath, token]) =>
+  if (assignments.length === 0) return null;
+  const lines = assignments.map(
+    ({ targetPath, sourcePath, token }) =>
       `    "${targetPath}": ${
-        shouldEmitUnquotedTemplateToken(targetPath, '')
+        shouldEmitUnquotedTemplateToken(targetPath, sourcePath)
           ? token
           : JSON.stringify(token)
       }`

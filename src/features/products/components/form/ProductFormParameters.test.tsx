@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
@@ -13,12 +13,14 @@ import {
 } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductFormParameterProvider } from '@/features/products/context/ProductFormParameterContext';
 
-const { useParametersMock } = vi.hoisted(() => ({
+const { useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
   useParametersMock: vi.fn(),
+  useTitleTermsMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useParameters: useParametersMock,
+  useTitleTerms: useTitleTermsMock,
 }));
 
 vi.mock('lucide-react', () => ({
@@ -270,8 +272,13 @@ const textParameter = {
   selectorType: 'text',
 } as Partial<ProductParameter> as ProductParameter;
 
-const createProduct = (
-  parameters: NonNullable<ProductWithImages['parameters']>
+const createProduct = ({
+  parameters,
+  nameEn = 'Product 1',
+}: {
+  parameters: NonNullable<ProductWithImages['parameters']>;
+  nameEn?: string;
+}
 ): ProductWithImages =>
   ({
     id: 'product-1',
@@ -281,9 +288,9 @@ const createProduct = (
     ean: null,
     gtin: null,
     asin: null,
-    name: { en: 'Product 1', pl: null, de: null },
+    name: { en: nameEn, pl: null, de: null },
     description: { en: '', pl: null, de: null },
-    name_en: 'Product 1',
+    name_en: nameEn,
     name_pl: null,
     name_de: null,
     description_en: null,
@@ -313,16 +320,24 @@ const createProduct = (
     updatedAt: '2026-01-01T00:00:00.000Z',
   }) as ProductWithImages;
 
-function renderParameters(parameters: NonNullable<ProductWithImages['parameters']>) {
+function renderParameters({
+  parameters,
+  parameterDefinitions = [textParameter],
+  nameEn = 'Product 1',
+}: {
+  parameters: NonNullable<ProductWithImages['parameters']>;
+  parameterDefinitions?: ProductParameter[];
+  nameEn?: string;
+}) {
   useParametersMock.mockReturnValue({
-    data: [textParameter],
+    data: parameterDefinitions,
     isLoading: false,
   });
 
   return render(
     <ProductFormMetadataContext.Provider value={metadataValue}>
       <ProductFormParameterProvider
-        product={createProduct(parameters)}
+        product={createProduct({ parameters, nameEn })}
         selectedCatalogIds={['catalog-1']}
       >
         <ProductFormParameters />
@@ -332,15 +347,24 @@ function renderParameters(parameters: NonNullable<ProductWithImages['parameters'
 }
 
 describe('ProductFormParameters', () => {
+  beforeEach(() => {
+    useTitleTermsMock.mockImplementation(() => ({
+      data: [],
+      isLoading: false,
+    }));
+  });
+
   it('keeps Polish separate when English is cleared in the UI', async () => {
     const user = userEvent.setup();
-    renderParameters([
-      {
-        parameterId: 'condition',
-        value: 'Used',
-        valuesByLanguage: { en: 'Used', pl: 'Uzywany' },
-      },
-    ]);
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: { en: 'Used', pl: 'Uzywany' },
+        },
+      ],
+    });
 
     const englishInput = screen.getByPlaceholderText('Value (English)');
     expect(englishInput).toHaveValue('Used');
@@ -360,18 +384,58 @@ describe('ProductFormParameters', () => {
 
   it('does not backfill the English field from a Polish-only localized value', async () => {
     const user = userEvent.setup();
-    renderParameters([
-      {
-        parameterId: 'condition',
-        value: 'Uzywany',
-        valuesByLanguage: { pl: 'Uzywany' },
-      },
-    ]);
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Uzywany',
+          valuesByLanguage: { pl: 'Uzywany' },
+        },
+      ],
+    });
 
     expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('');
 
     await user.click(screen.getByRole('tab', { name: 'Polish' }));
 
     expect(screen.getByPlaceholderText('Value (Polish)')).toHaveValue('Uzywany');
+  });
+
+  it('renders linked parameters as synced read-only values from English Title terms', () => {
+    const linkedMaterialParameter = {
+      id: 'material',
+      name_en: 'Material',
+      name_pl: 'Materiał',
+      selectorType: 'text',
+      linkedTitleTermType: 'material',
+    } as Partial<ProductParameter> as ProductParameter;
+
+    useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({
+      data:
+        type === 'material'
+          ? [
+              {
+                id: 'term-metal',
+                catalogId: 'catalog-1',
+                type: 'material',
+                name_en: 'Metal',
+                name_pl: 'Metal PL',
+              },
+            ]
+          : [],
+      isLoading: false,
+    }));
+
+    renderParameters({
+      parameters: [],
+      parameterDefinitions: [linkedMaterialParameter],
+      nameEn: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+    });
+
+    expect(screen.getByText('Synced from English Title')).toBeInTheDocument();
+    expect(screen.getByText('Material term')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Metal');
+    expect(screen.getByPlaceholderText('Value (English)')).toBeDisabled();
+    expect(screen.getByLabelText('Remove parameter')).toBeDisabled();
   });
 });

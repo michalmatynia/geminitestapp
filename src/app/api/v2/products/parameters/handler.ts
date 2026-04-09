@@ -3,6 +3,10 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getParameterRepository } from '@/features/products/server';
+import {
+  PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES,
+  productParameterLinkedTitleTermTypeSchema,
+} from '@/shared/contracts/products/parameters';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import {
@@ -26,6 +30,9 @@ const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<(typeof SELECTOR_TYPES)[number]
   'dropdown',
   'checklist',
 ]);
+const LINKABLE_SELECTOR_TYPES = new Set<(typeof SELECTOR_TYPES)[number]>(
+  PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES
+);
 
 const freshQuerySchema = z.preprocess(
   (value: unknown) => {
@@ -78,6 +85,7 @@ export const productParameterCreateSchema = z
     catalogId: z.string().min(1, 'Catalog ID is required'),
     selectorType: selectorTypeSchema.default('text'),
     optionLabels: z.array(z.string()).optional().default([]),
+    linkedTitleTermType: productParameterLinkedTitleTermTypeSchema.optional(),
   })
   .superRefine((value, ctx) => {
     const normalizedOptionLabels = normalizeOptionLabels(value.optionLabels);
@@ -89,6 +97,13 @@ export const productParameterCreateSchema = z
         code: z.ZodIssueCode.custom,
         path: ['optionLabels'],
         message: 'At least one option label is required for this selector type.',
+      });
+    }
+    if (value.linkedTitleTermType && !LINKABLE_SELECTOR_TYPES.has(value.selectorType)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['linkedTitleTermType'],
+        message: 'Only text and textarea parameters can sync from English Title terms.',
       });
     }
   });
@@ -146,6 +161,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     catalogId,
     selectorType: data.selectorType,
     optionLabels: normalizeOptionLabels(data.optionLabels),
+    linkedTitleTermType: data.linkedTitleTermType ?? null,
   });
 
   CachedProductService.invalidateAll();

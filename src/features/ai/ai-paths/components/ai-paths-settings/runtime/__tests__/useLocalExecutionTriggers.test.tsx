@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 
-const { evaluateRunPreflightMock, evaluateLocalExecutionSecurityMock } = vi.hoisted(() => ({
+const { evaluateRunPreflightMock, evaluateLocalExecutionSecurityMock, brainModelOptionsMock } = vi.hoisted(() => ({
   evaluateRunPreflightMock: vi.fn(),
   evaluateLocalExecutionSecurityMock: vi.fn(),
+  brainModelOptionsMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-paths', async () => {
@@ -19,6 +20,10 @@ vi.mock('@/shared/lib/ai-paths', async () => {
 
 vi.mock('../local-execution-security', () => ({
   evaluateLocalExecutionSecurity: evaluateLocalExecutionSecurityMock,
+}));
+
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => brainModelOptionsMock(),
 }));
 
 import { useLocalExecutionTriggers } from '../segments/useLocalExecutionTriggers';
@@ -232,6 +237,21 @@ describe('useLocalExecutionTriggers', () => {
     vi.clearAllMocks();
     evaluateRunPreflightMock.mockReturnValue(buildPreflightResult());
     evaluateLocalExecutionSecurityMock.mockReturnValue([]);
+    brainModelOptionsMock.mockReturnValue({
+      models: [],
+      descriptors: {},
+      isLoading: false,
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: '',
+        agentId: '',
+        notes: null,
+      },
+      effectiveModelId: '',
+      sourceWarnings: [],
+      refresh: vi.fn(),
+    });
   });
 
   it('hydrates connected simulation context before running a local fetcher-first graph', async () => {
@@ -492,6 +512,97 @@ describe('useLocalExecutionTriggers', () => {
     );
     expect(toast).toHaveBeenCalledWith(
       'Validation blocked run (score 25). Fix validation findings in Path Settings.',
+      { variant: 'error' }
+    );
+  });
+
+  it('blocks local runs when a vision-enabled model resolves to a text-only Brain model', async () => {
+    const triggerNode = buildTriggerNode();
+    const modelNode = buildNode({
+      id: 'model-1',
+      type: 'model',
+      title: 'Normalize Model',
+      inputs: ['prompt', 'images'],
+      outputs: ['result'],
+      config: {
+        model: {
+          modelId: '',
+          temperature: 0.1,
+          maxTokens: 800,
+          vision: true,
+          waitForResult: true,
+        },
+      },
+    });
+    const { args, appendRuntimeEvent, setNodeStatus, toast } = createArgs({
+      normalizedNodes: [triggerNode, modelNode],
+      sanitizedEdges: [],
+      executionMode: 'local',
+    });
+    const runLocalLoop = vi.fn();
+    const finalizeLocalRunOutcome = vi.fn();
+
+    brainModelOptionsMock.mockReturnValue({
+      models: ['brain-default-text'],
+      descriptors: {
+        'brain-default-text': {
+          id: 'brain-default-text',
+          family: 'chat',
+          modality: 'text',
+          vendor: 'openai',
+          supportsStreaming: true,
+          supportsJsonMode: true,
+        },
+      },
+      isLoading: false,
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'brain-default-text',
+        agentId: '',
+        notes: null,
+      },
+      effectiveModelId: 'brain-default-text',
+      sourceWarnings: [],
+      refresh: vi.fn(),
+    });
+
+    const { result } = renderHook(() =>
+      useLocalExecutionTriggers(args, { runLocalLoop }, { finalizeLocalRunOutcome })
+    );
+
+    await act(async () => {
+      await result.current.runGraphForTrigger(triggerNode);
+    });
+
+    expect(runLocalLoop).not.toHaveBeenCalled();
+    expect(appendRuntimeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'run_blocked',
+        metadata: expect.objectContaining({
+          modelCapability: expect.objectContaining({
+            issues: [
+              expect.objectContaining({
+                nodeId: 'model-1',
+                modelId: 'brain-default-text',
+                modality: 'text',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+    expect(setNodeStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'blocked',
+        metadata: expect.objectContaining({
+          modelCapabilityBlocked: true,
+          issueCount: 1,
+        }),
+      })
+    );
+    expect(toast).toHaveBeenCalledWith(
+      'Model node "Normalize Model" has Accepts Images enabled but effective AI Brain model "brain-default-text" is text. Choose a multimodal model or disable image input for this node.',
       { variant: 'error' }
     );
   });

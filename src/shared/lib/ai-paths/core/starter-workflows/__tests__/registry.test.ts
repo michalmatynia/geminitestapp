@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import {
+  STARTER_WORKFLOW_REGISTRY,
+  materializeStarterWorkflowRecoveryBundle,
   materializeStarterWorkflowPathConfig,
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
@@ -101,6 +103,33 @@ describe('starter workflow registry', () => {
     expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
     expect(databaseNode?.config?.database?.updateTemplate).not.toContain('"name_en"');
     expectSuccessfulStrictRunPreflight(report);
+  });
+
+  it('does not materialize starter workflows with embedded model selections', () => {
+    STARTER_WORKFLOW_REGISTRY.forEach((entry) => {
+      const config = materializeStarterWorkflowPathConfig(entry, {
+        pathId: entry.seedPolicy?.defaultPathId ?? `${entry.templateId}_runtime_check`,
+        seededDefault: false,
+      });
+      const modelNodes = config.nodes.filter((node) => node.type === 'model');
+
+      modelNodes.forEach((node) => {
+        const configuredModelId =
+          typeof node.config?.model?.modelId === 'string' ? node.config.model.modelId.trim() : '';
+        expect(
+          configuredModelId,
+          `Starter workflow ${entry.templateId} should not hardcode modelId on node ${node.id}`
+        ).toBe('');
+      });
+    });
+  });
+
+  it('materializes a static recovery bundle that includes canonical non-auto-seeded workflows', () => {
+    const bundle = materializeStarterWorkflowRecoveryBundle('static_recovery');
+
+    expect(bundle.pathConfigs.some((config) => config.id === 'path_descv3lite')).toBe(true);
+    expect(bundle.pathConfigs.some((config) => config.id === 'path_96708d')).toBe(true);
+    expect(bundle.triggerButtons.some((button) => button.id === '4c07d35b-ea92-4d1f-b86b-c586359f68de')).toBe(true);
   });
 
   it('does not resolve starter graphs with legacy edge alias fields', () => {

@@ -18,7 +18,6 @@ import {
   IMAGE_MODE_OPTIONS,
   IMPORT_MODE_OPTIONS,
   LIMIT_OPTIONS,
-  NO_CATALOG_OPTION,
   NO_TEMPLATE_OPTION,
   isImageMode,
   isImportMode,
@@ -86,13 +85,11 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     [inventories]
   );
   const catalogOptions = React.useMemo(
-    (): Array<LabeledOptionDto<string>> => [
-      NO_CATALOG_OPTION,
-      ...catalogs.map((cat: CatalogOption) => ({
+    (): Array<LabeledOptionDto<string>> =>
+      catalogs.map((cat: CatalogOption) => ({
         value: cat.id,
         label: `${cat.name}${cat.isDefault ? ' (Default)' : ''}`,
       })),
-    ],
     [catalogs]
   );
   const templateOptions = React.useMemo(
@@ -219,14 +216,20 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
         </div>
 
         <div className={cn(UI_GRID_ROOMY_CLASSNAME, 'md:grid-cols-2')}>
-          <FormField label='Catalog' description='Optional catalog override for import.'>
+          <FormField label='Catalog' description='Required target catalog for imported products.'>
             <SelectSimple
               size='sm'
               value={catalogId}
-              onValueChange={(v: string): void => setCatalogId(v === '__none__' ? '' : v)}
+              onValueChange={setCatalogId}
               options={catalogOptions}
-              disabled={loadingCatalogs}
-              placeholder={loadingCatalogs ? 'Loading catalogs...' : 'Select catalog'}
+              disabled={loadingCatalogs || catalogOptions.length === 0}
+              placeholder={
+                loadingCatalogs
+                  ? 'Loading catalogs...'
+                  : catalogOptions.length === 0
+                    ? 'No catalogs available'
+                    : 'Select catalog'
+              }
             />
           </FormField>
           <FormField label='Import template' description='Optional mapping template for import.'>

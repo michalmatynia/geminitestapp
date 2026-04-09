@@ -438,7 +438,7 @@ export default function ProductForm({
                     className='group min-w-12 justify-start gap-2 rounded-lg px-3 py-2'
                   >
                     <Icon className='h-4 w-4 shrink-0' />
-                    <span className='max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-150 ease-out group-hover:max-w-40 group-hover:opacity-100 group-focus-visible:max-w-40 group-focus-visible:opacity-100'>
+                    <span className='whitespace-nowrap text-sm leading-none opacity-90 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100'>
                       {tab.label}
                     </span>
                   </TabsTrigger>

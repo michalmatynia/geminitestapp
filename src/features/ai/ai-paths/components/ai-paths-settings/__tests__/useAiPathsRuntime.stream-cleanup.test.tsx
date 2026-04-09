@@ -52,6 +52,24 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainAssignment', () => ({
   }),
 }));
 
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => ({
+    models: [],
+    descriptors: {},
+    isLoading: false,
+    assignment: {
+      enabled: false,
+      provider: 'model',
+      modelId: '',
+      agentId: '',
+      notes: null,
+    },
+    effectiveModelId: '',
+    sourceWarnings: [],
+    refresh: vi.fn(),
+  }),
+}));
+
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphActions: () => graphActionsMock,
 }));

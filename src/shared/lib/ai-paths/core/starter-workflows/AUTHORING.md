@@ -10,6 +10,8 @@ Rules:
   - optional `seedPolicy`
   - optional trigger button presets
   - starter lineage metadata
+- If a workflow must be recoverable after AI Paths settings loss, give it a canonical `defaultPathId`
+  plus `seedPolicy.restoreOnStaticRecovery: true`.
 - Use the shared semantic materializer path. Do not build workflow graphs in TypeScript.
 - Do not add workflow-specific server seed modules (`settings-store-<workflow>.ts`).
 - Do not add workflow-specific runtime sanitizers or upgrader hooks keyed by workflow id/name.

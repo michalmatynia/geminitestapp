@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -132,10 +132,14 @@ describe('ProductForm', () => {
     render(<ProductForm submitButtonText='Save' validatorSessionKey='validator-session-1' />);
 
     const marketplaceCopyTab = screen.getByRole('tab', { name: 'Marketplace Copy' });
+    const marketplaceCopyLabel = within(marketplaceCopyTab).getByText('Marketplace Copy');
 
     expect(marketplaceCopyTab).toHaveAttribute('title', 'Marketplace Copy');
+    expect(marketplaceCopyTab).toHaveClass('cursor-pointer');
     expect(marketplaceCopyTab.querySelector('svg')).not.toBeNull();
     expect(marketplaceCopyTab).toHaveAttribute('data-state', 'active');
+    expect(marketplaceCopyLabel.className).not.toContain('max-w-0');
+    expect(marketplaceCopyLabel.className).not.toContain('opacity-0');
     expect(screen.getAllByTestId('dynamic-tab-stub').length).toBeGreaterThan(0);
   });
 

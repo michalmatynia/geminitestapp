@@ -26,6 +26,7 @@ const EMPTY_TRIGGER_IDS = new Set<string>();
 
 type CanvasSvgNodeProps = {
   node: AiNode;
+  modelCapabilityBlocked?: boolean;
 };
 
 const resolveNodePortHistoryValue = ({
@@ -155,6 +156,40 @@ function CanvasSvgNodeModelSelectionBadge({
         style={{ userSelect: 'none' }}
       >
         {modelSelectionLabel}
+      </text>
+    </g>
+  );
+}
+
+function CanvasSvgNodeModelCapabilityBadge({
+  visible,
+}: {
+  visible: boolean;
+}): React.JSX.Element | null {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <g transform='translate(10 40)' data-node-model-capability-badge='true' pointerEvents='none'>
+      <rect
+        width={78}
+        height={14}
+        rx={4}
+        fill='rgba(244, 63, 94, 0.16)'
+        stroke='rgba(244, 63, 94, 0.55)'
+        strokeWidth='0.75'
+      />
+      <text
+        x={39}
+        y={10}
+        textAnchor='middle'
+        fill='#fecdd3'
+        fontSize='8'
+        fontWeight='600'
+        style={{ userSelect: 'none' }}
+      >
+        IMAGE BLOCKED
       </text>
     </g>
   );
@@ -364,6 +399,7 @@ function CanvasSvgNodePulseOverlays({
 
 export const CanvasSvgNode = React.memo(function CanvasSvgNode({
   node,
+  modelCapabilityBlocked = false,
 }: CanvasSvgNodeProps): React.JSX.Element {
   const ui = useCanvasBoardUI();
   const {
@@ -618,6 +654,9 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
         nodeId={node.id}
         usesBrainDefaultModel={usesBrainDefaultModel}
         visible={node.type === 'model' && showModelSelectionBadge}
+      />
+      <CanvasSvgNodeModelCapabilityBadge
+        visible={node.type === 'model' && showModelSelectionBadge && modelCapabilityBlocked}
       />
 
       {showNodeId && (

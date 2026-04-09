@@ -25,7 +25,6 @@ describe('starter workflow guardrails', () => {
   it('does not keep workflow-specific settings-store modules', () => {
     const serverDir = join(process.cwd(), 'src', 'features', 'ai', 'ai-paths', 'server');
     const allowed = new Set([
-      'settings-store-cache.ts',
       'settings-store.constants.ts',
       'settings-store.helpers.ts',
       'settings-store.parsing.ts',

@@ -22,6 +22,8 @@ export { useRunHistoryState, useRunHistoryActions } from './RunHistoryContext';
 
 // Consumer Hooks - Graph
 export {
+  useGraphDataState,
+  usePathMetadataState,
   useGraphState,
   useGraphActions,
 } from './GraphContext';
@@ -33,7 +35,14 @@ export {
 } from './GraphContext.selectors';
 
 // Consumer Hooks - Runtime
-export { useRuntimeState, useRuntimeActions, useNodeRuntime } from './RuntimeContext';
+export {
+  useRuntimeState,
+  useRuntimeStatusState,
+  useRuntimeDataState,
+  useRuntimeUiState,
+  useRuntimeActions,
+  useNodeRuntime,
+} from './RuntimeContext';
 
 // Consumer Hooks - Persistence
 export { usePersistenceState, usePersistenceActions } from './PersistenceContext';
@@ -73,20 +82,25 @@ export type {
 // Types - Graph
 export type {
   GraphActions,
+  GraphDataState,
   GraphMutationMeta,
   GraphMutationReason,
   GraphMutationRecord,
+  PathMetadataState,
   GraphState,
 } from './GraphContext';
 
 // Types - Runtime
 export type {
+  RuntimeDataState,
   RuntimeStateData,
   RuntimeActions,
   LastErrorInfo,
+  RuntimeStatusState,
   RuntimeRunStatus,
   RuntimeControlHandlers,
   RuntimeNodeConfigHandlers,
+  RuntimeUiState,
 } from './RuntimeContext';
 
 // Types - Persistence

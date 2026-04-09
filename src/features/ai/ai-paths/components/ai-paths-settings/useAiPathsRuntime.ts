@@ -3,10 +3,19 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import { useRuntimeActions, useRuntimeState } from '@/features/ai/ai-paths/context/RuntimeContext';
+import {
+  useRuntimeActions,
+  useRuntimeDataState,
+  useRuntimeUiState,
+} from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
+import {
+  buildVisionModelCapabilityErrorMessage,
+  collectVisionModelCapabilityIssues,
+} from '@/shared/lib/ai-paths/core/utils/model-capability-preflight';
 import {
   buildGraphModelJobPayload,
   buildQueuedGraphModelJobEnqueueRequest,
@@ -26,20 +35,24 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
-  const runtimeContextState = useRuntimeState();
+  const runtimeDataState = useRuntimeDataState();
+  const runtimeUiState = useRuntimeUiState();
   const runtimeContextActions = useRuntimeActions();
   const setRuntimeState = runtimeContextActions.setRuntimeState;
   const setLastRunAt = runtimeContextActions.setLastRunAt;
-  const parserSamples = runtimeContextState.parserSamples;
-  const updaterSamples = runtimeContextState.updaterSamples;
-  const sendingToAi = runtimeContextState.sendingToAi;
+  const parserSamples = runtimeDataState.parserSamples;
+  const updaterSamples = runtimeDataState.updaterSamples;
+  const sendingToAi = runtimeUiState.sendingToAi;
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const brainAssignment = useBrainAssignment({
     capability: 'ai_paths.model',
   });
+  const brainModelOptions = useBrainModelOptions({
+    capability: 'ai_paths.model',
+  });
 
   // Shared refs
-  const runtimeStateRef = useRef<RuntimeState>(runtimeContextState.runtimeState);
+  const runtimeStateRef = useRef<RuntimeState>(runtimeDataState.runtimeState);
   const runInFlightRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const pauseRequestedRef = useRef(false);
@@ -154,8 +167,8 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
 
   // Effect to sync refs
   useEffect(() => {
-    runtimeStateRef.current = runtimeContextState.runtimeState;
-  }, [runtimeContextState.runtimeState]);
+    runtimeStateRef.current = runtimeDataState.runtimeState;
+  }, [runtimeDataState.runtimeState]);
 
   useEffect(() => {
     runtimeContextActions.setRuntimeRunStatus(state.runStatus);
@@ -275,6 +288,17 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       args.toast('Configure AI Paths in AI Brain first.', { variant: 'error' });
       return;
     }
+    const modelCapabilityIssues = collectVisionModelCapabilityIssues({
+      nodes: [aiNode],
+      defaultModelId: aiModelId,
+      descriptors: brainModelOptions.descriptors,
+    });
+    if (modelCapabilityIssues.length > 0) {
+      args.toast(buildVisionModelCapabilityErrorMessage(modelCapabilityIssues[0]!), {
+        variant: 'error',
+      });
+      return;
+    }
 
     runtimeContextActions.setSendingToAi(true);
     let directJobId: string | null = null;
@@ -348,6 +372,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   }, [
     args,
     brainAssignment,
+    brainModelOptions.descriptors,
     contextRegistry,
     resolvePreviewModelNode,
     runtimeContextActions,

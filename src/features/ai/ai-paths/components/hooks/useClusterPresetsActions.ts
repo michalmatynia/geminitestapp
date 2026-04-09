@@ -9,7 +9,11 @@ import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-clien
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { useCanvasActions, useCanvasRefs, useCanvasState } from '../../context/CanvasContext';
-import { useGraphActions, useGraphState } from '../../context/GraphContext';
+import {
+  useGraphActions,
+  useGraphDataState,
+  usePathMetadataState,
+} from '../../context/GraphContext';
 import { usePresetsActions, usePresetsState } from '../../context/PresetsContext';
 import { useSelectionActions, useSelectionState } from '../../context/SelectionContext';
 import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
@@ -21,7 +25,8 @@ export function useClusterPresetsActions() {
   const { confirm, ConfirmationModal } = useConfirm();
   const { clusterPresets, presetDraft, editingPresetId } = usePresetsState();
   const presetsActions = usePresetsActions();
-  const { nodes, edges, isPathLocked } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
+  const { isPathLocked } = usePathMetadataState();
   const { setNodes, setEdges } = useGraphActions();
   const { selectedNodeId } = useSelectionState();
   const { selectEdge, selectNode } = useSelectionActions();

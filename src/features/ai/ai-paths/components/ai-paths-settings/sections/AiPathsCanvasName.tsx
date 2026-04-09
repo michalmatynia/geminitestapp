@@ -4,22 +4,21 @@ import React from 'react';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import {
+  useAiPathsSettingsPageCanvasInteractionsContext,
+  useAiPathsSettingsPagePathActionsContext,
+  useAiPathsSettingsPagePersistenceContext,
+  useAiPathsSettingsPageRuntimeContext,
+} from '../AiPathsSettingsPageContext';
 
 export function AiPathsCanvasName(): React.JSX.Element | null {
   const {
     activePathId,
-    autoSaveLabel,
-    autoSaveVariant,
     isPathActive,
     isPathLocked,
-    lastRunAt,
     isPathNameEditing,
-    nodes,
-    edges,
     paths,
     renameDraft,
-    runtimeRunStatus,
     setRenameDraft,
     commitPathNameEdit,
     cancelPathNameEdit,
@@ -27,7 +26,10 @@ export function AiPathsCanvasName(): React.JSX.Element | null {
     pathName,
     pathSwitchOptions,
     handleSwitchPath,
-  } = useAiPathsSettingsPageContext();
+  } = useAiPathsSettingsPagePathActionsContext();
+  const { autoSaveLabel, autoSaveVariant } = useAiPathsSettingsPagePersistenceContext();
+  const { nodes, edges } = useAiPathsSettingsPageCanvasInteractionsContext();
+  const { lastRunAt, runtimeRunStatus } = useAiPathsSettingsPageRuntimeContext();
 
   const activePath = activePathId ?? null;
   const switchPath = handleSwitchPath ?? (() => undefined);

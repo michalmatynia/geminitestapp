@@ -53,7 +53,8 @@ vi.mock('@/shared/utils/drag-drop', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
-  useGraphState: () => mockState.graphState,
+  useGraphDataState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphActions: () => graphActionsMock,
   useRuntimeActions: () => ({
     setRuntimeState: mockState.setRuntimeState,

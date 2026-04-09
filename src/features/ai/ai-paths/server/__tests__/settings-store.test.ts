@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { __testOnly } from '@/features/ai/ai-paths/server/settings-store';
 import {
+  countPendingStaticStarterWorkflowBundle,
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
+  restoreStaticStarterWorkflowBundle,
 } from '@/features/ai/ai-paths/server/starter-workflows-settings';
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
@@ -158,7 +160,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     expect(normalizeDatabaseConfig?.['updatePayloadMode']).toBe('custom');
     expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"__noop__": ""');
     expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).not.toContain('"name_en"');
-    expect(normalizeModelConfig?.['modelId']).toBe('ollama:gemma4');
+    expect(normalizeModelConfig?.['modelId']).toBeUndefined();
 
     const triggerButtonsRecord = seeded.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
@@ -173,6 +175,38 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     ).toBe(true);
     expect(
       triggerButtons.some((button) => button['id'] === '5f36f340-3d89-4f6f-a08f-2387f380b90b')
+    ).toBe(true);
+  });
+
+  it('restores the broader static recovery bundle from semantic workflow assets', () => {
+    const initial = [
+      { key: AI_PATHS_INDEX_KEY, value: '[]' },
+      { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
+    ];
+
+    expect(countPendingStaticStarterWorkflowBundle(initial)).toBeGreaterThan(
+      countPendingStarterWorkflowDefaults(initial)
+    );
+
+    const restored = restoreStaticStarterWorkflowBundle(initial);
+
+    expect(restored.affectedCount).toBeGreaterThan(0);
+    expect(
+      restored.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_descv3lite`
+      )
+    ).toBe(true);
+    expect(
+      restored.nextRecords.some((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`)
+    ).toBe(true);
+
+    const triggerButtonsRecord = restored.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    expect(
+      triggerButtons.some((button) => button['id'] === '4c07d35b-ea92-4d1f-b86b-c586359f68de')
     ).toBe(true);
   });
 
@@ -374,7 +408,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     );
   });
 
-  it('inherits normalize starter model selection from the active description trigger path when normalize has no explicit modelId', () => {
+  it('does not inherit normalize starter model selection from other starter paths', () => {
     const seeded = ensureStarterWorkflowDefaults([
       {
         key: AI_PATHS_INDEX_KEY,
@@ -513,10 +547,10 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
         ? ((normalizeModelNode['config'] as Record<string, unknown>)['model'] as Record<string, unknown>)
         : null;
 
-    expect(modelConfig?.['modelId']).toBe('gpt-oss:120b-cloud');
+    expect(modelConfig?.['modelId']).toBeUndefined();
   });
 
-  it('refreshes the default normalize starter config from the legacy gemma3 node override to gemma4', () => {
+  it('does not rewrite a legacy normalize node override during default seeding', () => {
     const seeded = ensureStarterWorkflowDefaults([
       {
         key: AI_PATHS_INDEX_KEY,
@@ -592,6 +626,6 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
         ? ((normalizeModelNode['config'] as Record<string, unknown>)['model'] as Record<string, unknown>)
         : null;
 
-    expect(modelConfig?.['modelId']).toBe('ollama:gemma4');
+    expect(modelConfig?.['modelId']).toBe('ollama:gemma3');
   });
 });

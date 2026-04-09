@@ -4,6 +4,8 @@ import React from 'react';
 
 import type { AiNode } from '@/shared/lib/ai-paths';
 import { NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { collectVisionModelCapabilityIssues } from '@/shared/lib/ai-paths/core/utils/model-capability-preflight';
 
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { CanvasSvgNode } from './CanvasSvgNode';
@@ -15,6 +17,9 @@ export function CanvasSvgNodeLayer({
 }): React.JSX.Element {
   const ui = useCanvasBoardUI();
   const { nodes, view, viewportSize, selectedNodeIdSet } = ui;
+  const brainModelOptions = useBrainModelOptions({
+    capability: 'ai_paths.model',
+  });
 
   const worldViewport = React.useMemo(() => {
     if (!viewportSize) return null;
@@ -75,11 +80,25 @@ export function CanvasSvgNodeLayer({
     });
   }, [nodes, selectedNodeIdSet, worldViewport]);
 
+  const modelCapabilityBlockedNodeIds = React.useMemo((): Set<string> => {
+    return new Set(
+      collectVisionModelCapabilityIssues({
+        nodes,
+        defaultModelId: brainModelOptions.effectiveModelId,
+        descriptors: brainModelOptions.descriptors,
+      }).map((issue) => issue.nodeId)
+    );
+  }, [brainModelOptions.descriptors, brainModelOptions.effectiveModelId, nodes]);
+
   return (
     <>
       {renderNodes.map(
         (node: AiNode): React.JSX.Element => (
-          <CanvasSvgNode key={node.id} node={node} />
+          <CanvasSvgNode
+            key={node.id}
+            node={node}
+            modelCapabilityBlocked={modelCapabilityBlockedNodeIds.has(node.id)}
+          />
         )
       )}
     </>

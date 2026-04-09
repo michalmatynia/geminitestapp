@@ -15,24 +15,32 @@ import { ClusterPresetsPanel } from '../../cluster-presets-panel';
 import { GraphModelDebugPanel } from '../../graph-model-debug-panel';
 import { RunHistoryPanel } from '../../run-history-panel';
 import { RuntimeEventLogPanel } from '../../runtime-event-log-panel';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import {
+  useAiPathsSettingsPageCanvasInteractionsContext,
+  useAiPathsSettingsPageDiagnosticsContext,
+  useAiPathsSettingsPageWorkspaceContext,
+} from '../AiPathsSettingsPageContext';
 import { AiPathsRuntimeAnalysis } from '../panels/AiPathsRuntimeAnalysis';
 
 export function AiPathsCanvasView(): React.JSX.Element | null {
   const {
     activeTab,
     isFocusMode,
-    isPathTreeVisible,
     onFocusModeChange,
     renderActions,
-    confirmNodeSwitch,
-    setIsPathTreeVisible,
     setPathSettingsModalOpen,
+  } = useAiPathsSettingsPageWorkspaceContext();
+  const {
+    confirmNodeSwitch,
+    isPathTreeVisible,
+    setIsPathTreeVisible,
+    palette,
+  } = useAiPathsSettingsPageCanvasInteractionsContext();
+  const {
     diagnosticsReady,
     dataContractReport,
     setDataContractInspectorNodeId,
-    palette,
-  } = useAiPathsSettingsPageContext();
+  } = useAiPathsSettingsPageDiagnosticsContext();
   const canvasContainerRef = React.useRef<HTMLDivElement | null>(null);
   const setIsFocusMode = onFocusModeChange ?? (() => undefined);
 

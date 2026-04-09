@@ -57,13 +57,17 @@ export const handleExecutionCompletion = async (
 
   let finalStatus: AiPathRunStatus = 'completed';
   let finalError = null;
+  const failedNodeDiagnostics = collectFailedNodeDiagnostics(nodes, accOutputs);
 
   if (runtimeHaltReason === 'failed') {
     finalStatus = 'failed';
-    finalError = buildFailedRunFailureMessage(collectFailedNodeDiagnostics(nodes, accOutputs));
+    finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
   } else if (runtimeHaltReason === 'max_iterations') {
     finalStatus = 'failed';
     finalError = 'Maximum iteration limit reached.';
+  } else if (runtimeHaltReason === 'blocked' && failedNodeDiagnostics.length > 0) {
+    finalStatus = 'failed';
+    finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
   } else if (
     runtimeHaltReason === 'blocked' &&
     shouldFailBlockedRun({
@@ -81,12 +85,9 @@ export const handleExecutionCompletion = async (
     finalStatus = 'completed';
   }
 
-  if (finalStatus === 'completed') {
-    const failedNodeDiagnostics = collectFailedNodeDiagnostics(nodes, accOutputs);
-    if (failedNodeDiagnostics.length > 0) {
-      finalStatus = 'failed';
-      finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
-    }
+  if (finalStatus === 'completed' && failedNodeDiagnostics.length > 0) {
+    finalStatus = 'failed';
+    finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
   }
 
   const finishedAt = new Date().toISOString();

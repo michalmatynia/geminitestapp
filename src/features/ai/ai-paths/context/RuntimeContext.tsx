@@ -9,22 +9,30 @@ import {
   INITIAL_RUNTIME_STATE,
   MAX_RUNTIME_EVENTS,
   RuntimeActionsContext,
+  RuntimeDataStateContext,
   RuntimeStateContext,
+  RuntimeStatusStateContext,
+  RuntimeUiStateContext,
   type RuntimeActions,
   type RuntimeControlHandlers,
+  type RuntimeDataState,
   type RuntimeNodeConfigHandlers,
   type RuntimeProviderProps,
   type RuntimeRunStatus,
-  type RuntimeStateData,
+  type RuntimeStatusState,
+  type RuntimeUiState,
 } from './RuntimeContext.shared';
 
 export type {
   LastErrorInfo,
   RuntimeActions,
+  RuntimeDataState,
   RuntimeStateData,
   RuntimeRunStatus,
   RuntimeControlHandlers,
   RuntimeNodeConfigHandlers,
+  RuntimeStatusState,
+  RuntimeUiState,
 } from './RuntimeContext.shared';
 
 export function RuntimeProvider({
@@ -431,48 +439,78 @@ export function RuntimeProvider({
     ]
   );
 
-  const state = useMemo<RuntimeStateData>(
+  const statusState = useMemo<RuntimeStatusState>(
     () => ({
-      runtimeState,
       runtimeNodeStatuses,
-      runtimeEvents,
-      parserSamples,
-      updaterSamples,
-      pathDebugSnapshots,
       lastRunAt,
       lastError,
       runtimeRunStatus,
       currentRunId,
+    }),
+    [currentRunId, lastError, lastRunAt, runtimeNodeStatuses, runtimeRunStatus]
+  );
+
+  const dataState = useMemo<RuntimeDataState>(
+    () => ({
+      runtimeState,
+      runtimeEvents,
+      parserSamples,
+      updaterSamples,
+      pathDebugSnapshots,
       nodeDurations,
-      parserSampleLoading,
-      updaterSampleLoading,
-      sendingToAi,
       eventsOverflowed,
     }),
     [
-      currentRunId,
       eventsOverflowed,
-      lastError,
-      lastRunAt,
       nodeDurations,
       parserSamples,
-      parserSampleLoading,
       pathDebugSnapshots,
       runtimeEvents,
-      runtimeNodeStatuses,
-      runtimeRunStatus,
       runtimeState,
-      sendingToAi,
       updaterSamples,
+    ]
+  );
+
+  const uiState = useMemo<RuntimeUiState>(
+    () => ({
+      parserSampleLoading,
       updaterSampleLoading,
+      sendingToAi,
+    }),
+    [parserSampleLoading, sendingToAi, updaterSampleLoading]
+  );
+
+  const state = useMemo<RuntimeStateData>(
+    () => ({
+      ...statusState,
+      ...dataState,
+      ...uiState,
+    }),
+    [
+      dataState,
+      statusState,
+      uiState,
     ]
   );
 
   return (
     <RuntimeActionsContext.Provider value={actions}>
-      <RuntimeStateContext.Provider value={state}>{children}</RuntimeStateContext.Provider>
+      <RuntimeStatusStateContext.Provider value={statusState}>
+        <RuntimeDataStateContext.Provider value={dataState}>
+          <RuntimeUiStateContext.Provider value={uiState}>
+            <RuntimeStateContext.Provider value={state}>{children}</RuntimeStateContext.Provider>
+          </RuntimeUiStateContext.Provider>
+        </RuntimeDataStateContext.Provider>
+      </RuntimeStatusStateContext.Provider>
     </RuntimeActionsContext.Provider>
   );
 }
 
-export { useNodeRuntime, useRuntimeActions, useRuntimeState } from './RuntimeContext.hooks';
+export {
+  useNodeRuntime,
+  useRuntimeActions,
+  useRuntimeDataState,
+  useRuntimeState,
+  useRuntimeStatusState,
+  useRuntimeUiState,
+} from './RuntimeContext.hooks';

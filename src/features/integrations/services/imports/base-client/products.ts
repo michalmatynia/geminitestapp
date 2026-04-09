@@ -1,9 +1,12 @@
 import { BaseProductRecord, BaseApiResponse } from '@/shared/contracts/integrations/base-api';
+import { isAppError } from '@/shared/errors/app-error';
 
 import { callBaseApi } from './core';
 import { extractProductIds, extractProducts, toStringId } from '../base-client-parsers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const isUnknownMethodError = (error: unknown): boolean =>
+  isAppError(error) && error.meta?.['errorCode'] === 'ERROR_UNKNOWN_METHOD';
 
 export async function fetchBaseProductIds(token: string, inventoryId: string): Promise<string[]> {
   const candidates = [
@@ -16,6 +19,7 @@ export async function fetchBaseProductIds(token: string, inventoryId: string): P
       paramKey: 'storage_id',
     },
   ];
+  let lastError: Error | null = null;
 
   for (const candidate of candidates) {
     try {
@@ -24,11 +28,19 @@ export async function fetchBaseProductIds(token: string, inventoryId: string): P
       });
       const ids = extractProductIds(payload);
       if (ids.length > 0) return ids;
-    } catch (error) {
+    } catch (error: unknown) {
       logClientError(error);
-    
-      // Continue to next candidate
+      const resolvedError = error instanceof Error ? error : new Error('Base API error.');
+      if (isAppError(error) && error.expected && !isUnknownMethodError(error)) {
+        throw resolvedError;
+      }
+      if (!isUnknownMethodError(error) || lastError === null) {
+        lastError = resolvedError;
+      }
     }
+  }
+  if (lastError) {
+    throw lastError;
   }
   return [];
 }
@@ -64,6 +76,7 @@ export async function fetchBaseProductDetails(
     const batch = chunks.slice(i, i + CONCURRENCY);
     const chunkResults = await Promise.all(
       batch.map(async (chunk) => {
+        let lastError: Error | null = null;
         for (const candidate of candidates) {
           try {
             const payload = await callBaseApi(token, candidate.method, {
@@ -72,11 +85,19 @@ export async function fetchBaseProductDetails(
             });
             const products = extractProducts(payload);
             if (products.length > 0) return products;
-          } catch (error) {
+          } catch (error: unknown) {
             logClientError(error);
-          
-            // Continue
+            const resolvedError = error instanceof Error ? error : new Error('Base API error.');
+            if (isAppError(error) && error.expected && !isUnknownMethodError(error)) {
+              throw resolvedError;
+            }
+            if (!isUnknownMethodError(error) || lastError === null) {
+              lastError = resolvedError;
+            }
           }
+        }
+        if (lastError) {
+          throw lastError;
         }
         return [];
       })

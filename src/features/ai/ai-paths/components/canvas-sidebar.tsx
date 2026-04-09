@@ -12,14 +12,16 @@ import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 import {
-  useGraphState,
+  useGraphDataState,
+  usePathMetadataState,
   usePersistenceActions,
   usePresetsState,
   usePresetsActions,
   useRunHistoryActions,
   useSelectionState,
   useSelectionActions,
-  useRuntimeState,
+  useRuntimeDataState,
+  useRuntimeStatusState,
   useRuntimeActions,
 } from '../context';
 import {
@@ -114,9 +116,11 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
   const sourceConnectorDataId = React.useId();
   const targetConnectorDataId = React.useId();
   // --- Context Hooks ---
-  const { nodes, edges, executionMode } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
+  const { executionMode } = usePathMetadataState();
   const { savePathConfig } = usePersistenceActions();
-  const { runtimeRunStatus, runtimeState } = useRuntimeState();
+  const { runtimeRunStatus } = useRuntimeStatusState();
+  const { runtimeState } = useRuntimeDataState();
   const { handoffRun } = useRunHistoryActions();
   const {
     fireTrigger,

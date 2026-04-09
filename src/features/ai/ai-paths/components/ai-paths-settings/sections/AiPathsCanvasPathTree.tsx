@@ -3,7 +3,10 @@
 import React from 'react';
 
 import { AiPathsMasterTreePanel } from '../AiPathsMasterTreePanel';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import {
+  useAiPathsSettingsPagePathActionsContext,
+  useAiPathsSettingsPageWorkspaceContext,
+} from '../AiPathsSettingsPageContext';
 
 export function AiPathsCanvasPathTree(): React.JSX.Element {
   const {
@@ -16,8 +19,8 @@ export function AiPathsCanvasPathTree(): React.JSX.Element {
     handleRenameFolder,
     handleSwitchPath,
     paths,
-    toast,
-  } = useAiPathsSettingsPageContext();
+  } = useAiPathsSettingsPagePathActionsContext();
+  const { toast } = useAiPathsSettingsPageWorkspaceContext();
 
   return (
     <AiPathsMasterTreePanel

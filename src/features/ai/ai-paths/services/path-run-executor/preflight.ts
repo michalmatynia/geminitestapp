@@ -5,7 +5,13 @@ import {
   AiPathRunRecord,
   AiPathRunRepository,
 } from '@/shared/contracts/ai-paths';
+import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
+import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/segments/api';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
+import {
+  buildVisionModelCapabilityErrorMessage,
+  collectVisionModelCapabilityIssues,
+} from '@/shared/lib/ai-paths/core/utils/model-capability-preflight';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
 
@@ -56,6 +62,13 @@ export async function runExecutorPreflight(input: {
   const compileReport = runPreflight.compileReport;
   const validationReport = runPreflight.validationReport;
   const dataContractReport = runPreflight.dataContractReport;
+  const assignment = await getBrainAssignmentForCapability('ai_paths.model');
+  const catalog = await listBrainModels();
+  const visionModelCapabilityIssues = collectVisionModelCapabilityIssues({
+    nodes,
+    defaultModelId: assignment.provider === 'model' ? assignment.modelId.trim() : '',
+    descriptors: catalog.descriptors ?? {},
+  });
 
   if (runPreflight.shouldBlock) {
     const blockedMessageByReason: Record<string, string> = {
@@ -92,6 +105,22 @@ export async function runExecutorPreflight(input: {
       },
     });
     throw new Error(runPreflight.blockMessage ?? blockedEventMessage);
+  }
+
+  if (visionModelCapabilityIssues.length > 0) {
+    await repo.createRunEvent({
+      runId: run.id,
+      level: 'error',
+      message: 'Run blocked by AI Brain model capability preflight.',
+      metadata: {
+        modelCapability: {
+          issues: visionModelCapabilityIssues,
+        },
+        runStartedAt,
+        traceId,
+      },
+    });
+    throw new Error(buildVisionModelCapabilityErrorMessage(visionModelCapabilityIssues[0]!));
   }
 
   if (nodeValidationEnabled && compileReport.warnings > 0) {

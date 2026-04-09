@@ -285,7 +285,6 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     const imageParts = await buildImageParts(imageUrls, isOpenAi);
     content.push(...imageParts);
   }
-
   const messages = [
     { role: 'system' as const, content: systemMessage },
     { role: 'user' as const, content },

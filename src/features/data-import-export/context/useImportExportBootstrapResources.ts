@@ -94,11 +94,12 @@ export function useImportExportBootstrapResources({
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (catalogsData.length > 0 && !catalogId && !hasInitializedCatalog.current) {
+    if (catalogsData.length > 0 && !catalogId) {
       const defaultCatalog = catalogsData.find((catalog: CatalogOption) => catalog.isDefault);
-      if (defaultCatalog) {
+      const fallbackCatalog = defaultCatalog ?? catalogsData[0];
+      if (fallbackCatalog) {
         timer = setTimeout(() => {
-          setCatalogId(defaultCatalog.id);
+          setCatalogId(fallbackCatalog.id);
           hasInitializedCatalog.current = true;
         }, 0);
       }

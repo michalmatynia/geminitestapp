@@ -21,7 +21,7 @@ import type { Point2d } from '@/shared/contracts/geometry';
 import { NODE_WIDTH, getPortOffsetY } from '@/shared/lib/ai-paths';
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 
-import { useGraphState } from '../GraphContext';
+import { useGraphDataState } from '../GraphContext';
 
 export type EdgeRoutingMode = 'bezier' | 'orthogonal';
 
@@ -319,7 +319,7 @@ function computeEdgePaths(
  * @returns Array of edge paths with SVG path data
  */
 export function useEdgePaths(routingMode: EdgeRoutingMode = 'bezier'): EdgePath[] {
-  const { nodes, edges } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
   const cacheRef = useRef<Map<string, { signature: string; value: EdgePath }>>(new Map());
 
   return useMemo(() => {

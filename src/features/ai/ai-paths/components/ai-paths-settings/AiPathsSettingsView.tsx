@@ -1,11 +1,13 @@
 import React from 'react';
 
-import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/lib/documentation/DocumentationTooltipEnhancer';
 
-import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
+import {
+  useAiPathsSettingsPageDiagnosticsContext,
+  useAiPathsSettingsPageWorkspaceContext,
+} from './AiPathsSettingsPageContext';
 import { usePersistenceState } from '../../context';
 import { AiPathsCanvasView } from './sections/AiPathsCanvasView';
 import { AiPathsDialogs } from './sections/AiPathsDialogs';
@@ -14,10 +16,10 @@ import { AiPathsListView } from './sections/AiPathsListView';
 
 
 export function AiPathsSettingsView(): React.JSX.Element {
-  const { activeTab, isFocusMode } = useAiPathsSettingsPageContext();
+  const { activeTab, isFocusMode } = useAiPathsSettingsPageWorkspaceContext();
   const { loading } = usePersistenceState();
 
-  const { docsTooltipsEnabled } = useAiPathsDocsTooltips();
+  const { docsTooltipsEnabled } = useAiPathsSettingsPageDiagnosticsContext();
 
   if (loading) {
     return <LoadingState message='Loading AI Paths...' className='py-12' />;

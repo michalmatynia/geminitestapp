@@ -10,7 +10,7 @@ import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { AppModal } from '@/shared/ui/feedback.public';
 import { Button, DropdownMenuItem, Textarea } from '@/shared/ui/primitives.public';
 
-import { useGraphActions, useGraphState } from '../../context';
+import { useGraphActions, usePathMetadataState } from '../../context';
 import { sanitizePathConfig } from '../AiPathsSettingsUtils';
 import { AiPathsMasterTreePanel } from '../ai-paths-settings/AiPathsMasterTreePanel';
 import { usePathsTabPanelActions } from '../hooks/usePathsTabPanelActions';
@@ -37,7 +37,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
     reportAiPathsError,
     ConfirmationModal,
   } = usePathsTabPanelActions();
-  const { paths: graphPaths, pathConfigs, activePathId } = useGraphState();
+  const { paths: graphPaths, pathConfigs, activePathId } = usePathMetadataState();
   const { setPaths, setPathConfigs } = useGraphActions();
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importPayload, setImportPayload] = useState('');

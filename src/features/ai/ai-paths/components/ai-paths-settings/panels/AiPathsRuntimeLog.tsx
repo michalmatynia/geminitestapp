@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { useRuntimeState } from '@/features/ai/ai-paths/context';
+import { useRuntimeDataState } from '@/features/ai/ai-paths/context';
 
 import { AiPathsRuntimeEventLog } from '../AiPathsRuntimeEventLog';
 
 export function AiPathsRuntimeLog(): React.JSX.Element {
-  const { runtimeEvents, eventsOverflowed } = useRuntimeState();
+  const { runtimeEvents, eventsOverflowed } = useRuntimeDataState();
 
   return (
     <AiPathsRuntimeEventLog

@@ -6,11 +6,6 @@ export const BASE_CONNECTION_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
   label: 'Select a connection...',
 };
 
-export const NO_CATALOG_OPTION: LabeledOptionDto<string> = {
-  value: '__none__',
-  label: '— No catalog —',
-};
-
 export const NO_TEMPLATE_OPTION: LabeledOptionDto<string> = {
   value: '__none__',
   label: 'No template',

@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { Edge, PathConfig } from '@/shared/contracts/ai-paths';
 
+import {
+  getStarterWorkflowTemplateById,
+  materializeStarterWorkflowPathConfig,
+} from '@/shared/lib/ai-paths/core/starter-workflows';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import {
   deserializeSemanticCanvasToPathConfig,
@@ -125,6 +129,35 @@ describe('semantic grammar canvas serialization', () => {
     if (Object.prototype.hasOwnProperty.call(firstEdge, 'targetHandle')) {
       expect(firstEdge['targetHandle']).toBe(firstEdge['toPort']);
     }
+  });
+
+  it('preserves node-selected model config through semantic round-trip without injecting defaults', () => {
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) throw new Error('Missing starter_product_name_normalize template');
+    const original = materializeStarterWorkflowPathConfig(
+      template,
+      {
+        pathId: 'path_semantic_model_selection',
+        seededDefault: false,
+      }
+    );
+    const modelNode = original.nodes.find((node) => node.type === 'model');
+    if (!modelNode) throw new Error('Expected model node');
+    modelNode.config = {
+      ...(modelNode.config ?? {}),
+      model: {
+        ...(modelNode.config?.model ?? {}),
+        modelId: 'gpt-4.1-mini',
+        vision: true,
+      },
+    };
+
+    const semantic = serializePathConfigToSemanticCanvas(original);
+    const deserialized = deserializeSemanticCanvasToPathConfig(semantic);
+    const roundTrippedModelNode = deserialized.nodes.find((node) => node.id === modelNode.id);
+
+    expect(roundTrippedModelNode?.config?.model?.modelId).toBe('gpt-4.1-mini');
+    expect(roundTrippedModelNode?.config?.model?.vision).toBe(true);
   });
 });
 

@@ -2,80 +2,90 @@
 
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
+import {
+  useGraphActions,
+  useGraphDataState,
+  usePathMetadataState,
+} from '@/features/ai/ai-paths/context/GraphContext';
 
 export function useCoreSettingsState() {
-  const graphState = useGraphState();
+  const graphDataState = useGraphDataState();
+  const pathMetadataState = usePathMetadataState();
   const graphActions = useGraphActions();
 
   const setActivePathId = useCallback<Dispatch<SetStateAction<string | null>>>(
     (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.activePathId) : next;
+      const resolved =
+        typeof next === 'function' ? next(pathMetadataState.activePathId) : next;
       graphActions.setActivePathId(resolved ?? null);
     },
-    [graphActions, graphState.activePathId]
+    [graphActions, pathMetadataState.activePathId]
   );
 
   const setIsPathLocked = useCallback<Dispatch<SetStateAction<boolean>>>(
     (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.isPathLocked) : next;
+      const resolved =
+        typeof next === 'function' ? next(pathMetadataState.isPathLocked) : next;
       graphActions.setIsPathLocked(Boolean(resolved));
     },
-    [graphActions, graphState.isPathLocked]
+    [graphActions, pathMetadataState.isPathLocked]
   );
 
   const setIsPathActive = useCallback<Dispatch<SetStateAction<boolean>>>(
     (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.isPathActive) : next;
+      const resolved =
+        typeof next === 'function' ? next(pathMetadataState.isPathActive) : next;
       graphActions.setIsPathActive(Boolean(resolved));
     },
-    [graphActions, graphState.isPathActive]
+    [graphActions, pathMetadataState.isPathActive]
   );
 
   const setPathName = useCallback<Dispatch<SetStateAction<string>>>(
     (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.pathName) : next;
+      const resolved = typeof next === 'function' ? next(pathMetadataState.pathName) : next;
       graphActions.setPathName(resolved);
     },
-    [graphActions, graphState.pathName]
+    [graphActions, pathMetadataState.pathName]
   );
 
   const setPathDescription = useCallback<Dispatch<SetStateAction<string>>>(
     (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.pathDescription) : next;
+      const resolved =
+        typeof next === 'function' ? next(pathMetadataState.pathDescription) : next;
       graphActions.setPathDescription(resolved);
     },
-    [graphActions, graphState.pathDescription]
+    [graphActions, pathMetadataState.pathDescription]
   );
 
   const setActiveTrigger = useCallback<Dispatch<SetStateAction<string>>>(
     (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.activeTrigger) : next;
+      const resolved =
+        typeof next === 'function' ? next(pathMetadataState.activeTrigger) : next;
       graphActions.setActiveTrigger(resolved);
     },
-    [graphActions, graphState.activeTrigger]
+    [graphActions, pathMetadataState.activeTrigger]
   );
 
   return {
-    nodes: graphState.nodes,
+    nodes: graphDataState.nodes,
     setNodes: graphActions.setNodes,
-    edges: graphState.edges,
+    edges: graphDataState.edges,
     setEdges: graphActions.setEdges,
-    paths: graphState.paths,
+    paths: pathMetadataState.paths,
     setPaths: graphActions.setPaths,
-    pathConfigs: graphState.pathConfigs,
+    pathConfigs: pathMetadataState.pathConfigs,
     setPathConfigs: graphActions.setPathConfigs,
-    activePathId: graphState.activePathId,
+    activePathId: pathMetadataState.activePathId,
     setActivePathId,
-    isPathLocked: graphState.isPathLocked,
+    isPathLocked: pathMetadataState.isPathLocked,
     setIsPathLocked,
-    isPathActive: graphState.isPathActive,
+    isPathActive: pathMetadataState.isPathActive,
     setIsPathActive,
-    pathName: graphState.pathName,
+    pathName: pathMetadataState.pathName,
     setPathName,
-    pathDescription: graphState.pathDescription,
+    pathDescription: pathMetadataState.pathDescription,
     setPathDescription,
-    activeTrigger: graphState.activeTrigger,
+    activeTrigger: pathMetadataState.activeTrigger,
     setActiveTrigger,
   };
 }

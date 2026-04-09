@@ -6,8 +6,19 @@ import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { Drawer } from '@/shared/ui/navigation-and-layout.public';
 import { Button, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
-import { useSelectionState, useSelectionActions } from '@/features/ai/ai-paths/context';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import {
+  usePersistenceState,
+  useSelectionState,
+  useSelectionActions,
+} from '@/features/ai/ai-paths/context';
+import {
+  useAiPathsSettingsPageCanvasInteractionsContext,
+  useAiPathsSettingsPageDiagnosticsContext,
+  useAiPathsSettingsPagePathActionsContext,
+  useAiPathsSettingsPagePersistenceContext,
+  useAiPathsSettingsPageRuntimeContext,
+  useAiPathsSettingsPageWorkspaceContext,
+} from '../AiPathsSettingsPageContext';
 
 import { AiPathsRuntimeKernelSettings } from './AiPathsRuntimeKernelSettings';
 
@@ -27,10 +38,26 @@ export function AiPathsCanvasToolbar({
   const router = useRouter();
   const [runtimeKernelDrawerOpen, setRuntimeKernelDrawerOpen] = React.useState(false);
   const {
+    setPathSettingsModalOpen,
+    toast,
+  } = useAiPathsSettingsPageWorkspaceContext();
+  const {
     activePathId,
+    handleTogglePathLock,
+    isPathLocked,
+    isPathActive,
+    handleTogglePathActive,
+  } = useAiPathsSettingsPagePathActionsContext();
+  const { handleDeleteSelectedNode } = useAiPathsSettingsPageCanvasInteractionsContext();
+  const {
     savePathConfig,
     saving,
-    setPathSettingsModalOpen,
+    persistLastError,
+    incrementLoadNonce,
+    handleClearConnectorData,
+    handleClearHistory,
+  } = useAiPathsSettingsPagePersistenceContext();
+  const {
     diagnosticsReady,
     nodeValidationEnabled: nodeValidationEnabledFromContext,
     updateAiPathsValidation,
@@ -38,22 +65,11 @@ export function AiPathsCanvasToolbar({
     handleOpenNodeValidator,
     docsTooltipsEnabled,
     setDocsTooltipsEnabled,
-    handleTogglePathLock,
-    isPathLocked,
     handleRunNodeValidationCheck,
-    toast,
-    isPathSwitching,
-    persistLastError,
-    incrementLoadNonce,
-    handleClearConnectorData,
-    handleClearHistory,
-    handleDeleteSelectedNode,
-    isPathActive,
-    handleTogglePathActive,
     selectionScopeMode,
     setSelectionScopeMode,
-    lastError,
-  } = useAiPathsSettingsPageContext();
+  } = useAiPathsSettingsPageDiagnosticsContext();
+  const { lastError } = useAiPathsSettingsPageRuntimeContext();
 
   const {
     selectionToolMode,
@@ -62,6 +78,7 @@ export function AiPathsCanvasToolbar({
     selectedEdgeId: selectedEdgeIdCtx,
   } = useSelectionState();
   const { setSelectionToolMode } = useSelectionActions();
+  const { isPathSwitching } = usePersistenceState();
 
   const notify = toast ?? (() => undefined);
   const savePath = savePathConfig ?? (async (): Promise<boolean> => false);

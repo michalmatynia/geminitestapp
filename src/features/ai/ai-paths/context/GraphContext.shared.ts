@@ -46,9 +46,14 @@ export interface GraphLoadPayload {
   isPathActive?: boolean | undefined;
 }
 
-export interface GraphState {
+export interface GraphDataState {
   nodes: AiNode[];
   edges: Edge[];
+  graphRevision: number;
+  lastMutation: GraphMutationRecord | null;
+}
+
+export interface PathMetadataState {
   paths: PathMeta[];
   pathConfigs: Record<string, PathConfig>;
   activePathId: string | null;
@@ -65,9 +70,9 @@ export interface GraphState {
   historyRetentionOptionsMax: number;
   isPathLocked: boolean;
   isPathActive: boolean;
-  graphRevision: number;
-  lastMutation: GraphMutationRecord | null;
 }
+
+export type GraphState = GraphDataState & PathMetadataState;
 
 export interface GraphActions {
   setNodes: (

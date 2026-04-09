@@ -1,7 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode, RuntimeState } from '@/shared/lib/ai-paths';
+
+const { useBrainModelOptionsMock } = vi.hoisted(() => ({
+  useBrainModelOptionsMock: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: useBrainModelOptionsMock,
+}));
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
 import { CanvasSvgNodeLayer } from '../canvas-svg-node-layer';
@@ -113,6 +121,18 @@ const buildFetcherNode = (): AiNode =>
   }) as AiNode;
 
 describe('Canvas model selection badge', () => {
+  beforeEach(() => {
+    useBrainModelOptionsMock.mockReturnValue({
+      models: [],
+      descriptors: {},
+      isLoading: false,
+      assignment: { enabled: true },
+      effectiveModelId: '',
+      sourceWarnings: [],
+      refresh: vi.fn(),
+    });
+  });
+
   it('shows NODE MODEL when a model node has an explicit model selection', () => {
     const node = buildModelNode('gpt-4o-mini');
     const { container } = render(
@@ -226,5 +246,46 @@ describe('Canvas model selection badge', () => {
 
     expect(screen.getByText('Skipped')).toBeTruthy();
     expect(container.querySelector('.ai-paths-node-halo')).toBeFalsy();
+  });
+
+  it('renders IMAGE BLOCKED badge when a vision node resolves to a text-only Brain model', () => {
+    const node = ({
+      ...buildModelNode(),
+      config: {
+        model: {
+          temperature: 0.7,
+          maxTokens: 800,
+          systemPrompt: '',
+          vision: true,
+          waitForResult: true,
+        },
+      },
+    }) as AiNode;
+
+    useBrainModelOptionsMock.mockReturnValue({
+      models: ['brain-default-text'],
+      descriptors: {
+        'brain-default-text': {
+          id: 'brain-default-text',
+          modality: 'text',
+        },
+      },
+      isLoading: false,
+      assignment: { enabled: true },
+      effectiveModelId: 'brain-default-text',
+      sourceWarnings: [],
+      refresh: vi.fn(),
+    });
+
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider value={buildContextValue(node)}>
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    expect(screen.getByText('IMAGE BLOCKED')).toBeTruthy();
+    expect(container.querySelector('[data-node-model-capability-badge="true"]')).toBeTruthy();
   });
 });

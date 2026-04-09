@@ -7,7 +7,8 @@ import {
   useGraphActions,
   usePersistenceActions,
   usePersistenceState,
-  useRuntimeState,
+  useRuntimeDataState,
+  useRuntimeStatusState,
   useRuntimeActions,
   useSelectionActions,
   useSelectionState,
@@ -73,8 +74,9 @@ export function useAiPathsSettingsState({
     setParserSamples: setParserSamplesAction,
     setUpdaterSamples: setUpdaterSamplesAction,
   } = useRuntimeActions();
-  const { runtimeState, parserSamples, updaterSamples, pathDebugSnapshots, lastRunAt, lastError } =
-    useRuntimeState();
+  const { runtimeState, parserSamples, updaterSamples, pathDebugSnapshots } =
+    useRuntimeDataState();
+  const { lastRunAt, lastError } = useRuntimeStatusState();
   const [triggerButtonsReady, setTriggerButtonsReady] = useState(false);
   const [isPathTreeVisible, setIsPathTreeVisible] = useState(true);
 

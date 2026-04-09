@@ -30,6 +30,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 20,
+      restoreOnStaticRecovery: true,
     },
     triggerButtonPresets: [
       {
@@ -61,6 +62,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 25,
+      restoreOnStaticRecovery: true,
     },
     triggerButtonPresets: [
       {
@@ -92,6 +94,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 30,
+      restoreOnStaticRecovery: true,
     },
     triggerButtonPresets: [
       {
@@ -122,6 +125,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 40,
+      restoreOnStaticRecovery: true,
     },
     triggerButtonPresets: [
       {
@@ -152,6 +156,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 50,
+      restoreOnStaticRecovery: true,
     },
     starterLineage: {
       starterKey: 'translation_en_pl',

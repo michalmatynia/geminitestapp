@@ -560,7 +560,7 @@ const resolveCheckboxOptionId = (
 ): string => {
   if (!definitions) return optionIdOrLabel;
   const definition = definitions.find((d) => d.id === fieldId);
-  if (!definition || definition.type !== 'checkbox_set') return optionIdOrLabel;
+  if (definition?.type !== 'checkbox_set') return optionIdOrLabel;
 
   // Direct ID match — already canonical, no-op
   if (definition.options.some((o) => o.id === optionIdOrLabel)) return optionIdOrLabel;

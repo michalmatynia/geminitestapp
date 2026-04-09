@@ -5,8 +5,11 @@ import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/n
 import {
   computeStarterWorkflowGraphHash,
   getAutoSeedStarterWorkflowEntries,
+  getStaticRecoveryStarterWorkflowEntries,
   materializeStarterWorkflowPathConfig,
+  materializeStarterWorkflowRecoveryBundle,
   resolveStarterWorkflowForPathConfig,
+  type AiPathTemplateRegistryEntry,
   type StarterWorkflowTriggerPreset,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 
@@ -15,14 +18,8 @@ import {
   AI_PATHS_INDEX_KEY,
   AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsSettingRecord,
-  type ParsedPathMeta,
 } from './settings-store.constants';
-import {
-  parsePathConfigFlags,
-  parsePathConfigMeta,
-  parsePathMetas,
-  parseTriggerButtons,
-} from './settings-store.parsing';
+import { parsePathConfigFlags, parsePathConfigMeta, parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -103,154 +100,6 @@ const parsePathConfigRecord = (value: string): PathConfig | null => {
     void ErrorSystem.captureException(error);
     return null;
   }
-};
-
-const upsertPathMeta = (metas: ParsedPathMeta[], meta: ParsedPathMeta): void => {
-  const existingIndex = metas.findIndex((entry) => entry.id === meta.id);
-  if (existingIndex >= 0) {
-    metas[existingIndex] = meta;
-    return;
-  }
-  metas.push(meta);
-};
-
-const findPathConfigRecord = (
-  records: AiPathsSettingRecord[],
-  pathId: string
-): { record: AiPathsSettingRecord; config: PathConfig } | null => {
-  const record = records.find((candidate) => candidate.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${pathId}`);
-  if (!record) return null;
-  const config = parsePathConfigRecord(record.value);
-  if (!config) return null;
-  return { record, config };
-};
-
-const extractExplicitModelSelection = (
-  config: PathConfig
-): { model: Record<string, unknown>; provider?: unknown } | null => {
-  const modelNode = (config.nodes ?? []).find((node) => {
-    if (node.type !== 'model') return false;
-    const modelId =
-      typeof node.config?.model?.['modelId'] === 'string'
-        ? node.config.model['modelId'].trim()
-        : '';
-    return modelId.length > 0;
-  });
-  if (!(modelNode?.config?.model && typeof modelNode.config.model === 'object')) {
-    return null;
-  }
-  return {
-    model: { ...(modelNode.config.model as Record<string, unknown>) },
-    ...(modelNode.config?.provider !== undefined ? { provider: modelNode.config.provider } : {}),
-  };
-};
-
-const resolveDescriptionModelSeed = (
-  records: AiPathsSettingRecord[],
-  buttons: AiTriggerButtonRecord[]
-): { pathId: string; model: Record<string, unknown>; provider?: unknown } | null => {
-  const descriptionButtons = buttons.filter(
-    (button) => normalizeTriggerButtonName(button.name) === 'description'
-  );
-
-  for (const button of descriptionButtons) {
-    const configuredPathId =
-      typeof button.pathId === 'string' ? button.pathId.trim() : '';
-    if (!configuredPathId) continue;
-    const configRecord = findPathConfigRecord(records, configuredPathId);
-    const selection = configRecord ? extractExplicitModelSelection(configRecord.config) : null;
-    if (configRecord && selection) {
-      return {
-        pathId: configRecord.config.id,
-        ...selection,
-      };
-    }
-  }
-
-  const configRecords = records
-    .filter((record) => record.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX))
-    .map((record) => ({ record, config: parsePathConfigRecord(record.value) }))
-    .filter((entry): entry is { record: AiPathsSettingRecord; config: PathConfig } => Boolean(entry.config));
-
-  for (const button of descriptionButtons) {
-    for (const entry of configRecords) {
-      const matchesTrigger = (entry.config.nodes ?? []).some((node) => {
-        if (node.type !== 'trigger') return false;
-        return node.config?.trigger?.event === button.id;
-      });
-      if (!matchesTrigger) continue;
-      const selection = extractExplicitModelSelection(entry.config);
-      if (!selection) continue;
-      return {
-        pathId: entry.config.id,
-        ...selection,
-      };
-    }
-  }
-
-  for (const entry of configRecords) {
-    const normalizedName = typeof entry.config.name === 'string' ? entry.config.name.trim() : '';
-    if (!/description/i.test(normalizedName)) continue;
-    const selection = extractExplicitModelSelection(entry.config);
-    if (!selection) continue;
-    return {
-      pathId: entry.config.id,
-      ...selection,
-    };
-  }
-
-  return null;
-};
-
-const inheritNormalizeStarterModelSelection = (args: {
-  records: AiPathsSettingRecord[];
-  buttons: AiTriggerButtonRecord[];
-  metas: ParsedPathMeta[];
-}): boolean => {
-  const normalizeRecord = findPathConfigRecord(args.records, 'path_name_normalize_v1');
-  if (!normalizeRecord) return false;
-
-  const normalizeNodes = normalizeRecord.config.nodes ?? [];
-  const normalizeModelNode = normalizeNodes.find((node) => node.type === 'model');
-  const normalizedExistingModelId =
-    typeof normalizeModelNode?.config?.model?.['modelId'] === 'string'
-      ? normalizeModelNode.config.model['modelId'].trim()
-      : '';
-  if (!normalizeModelNode || normalizedExistingModelId.length > 0) {
-    return false;
-  }
-
-  const descriptionSeed = resolveDescriptionModelSeed(args.records, args.buttons);
-  if (!descriptionSeed) return false;
-
-  normalizeModelNode.config = {
-    ...(normalizeModelNode.config ?? {}),
-    model: { ...descriptionSeed.model },
-    ...(descriptionSeed.provider !== undefined ? { provider: descriptionSeed.provider } : {}),
-  };
-  normalizeRecord.config.updatedAt = new Date().toISOString();
-  normalizeRecord.record.value = JSON.stringify(normalizeRecord.config);
-
-  const meta = parsePathConfigMeta('path_name_normalize_v1', normalizeRecord.record.value);
-  if (meta) upsertPathMeta(args.metas, meta);
-
-  return true;
-};
-
-const refreshNormalizeStarterWorkflowConfig = (args: {
-  records: AiPathsSettingRecord[];
-  metas: ParsedPathMeta[];
-}): boolean => {
-  const normalizeRecord = findPathConfigRecord(args.records, 'path_name_normalize_v1');
-  if (!normalizeRecord) return false;
-
-  const refreshed = buildRefreshedStarterWorkflowConfig(normalizeRecord.config);
-  if (!refreshed) return false;
-
-  normalizeRecord.record.value = JSON.stringify(refreshed);
-  const meta = parsePathConfigMeta('path_name_normalize_v1', normalizeRecord.record.value);
-  if (meta) upsertPathMeta(args.metas, meta);
-  return true;
 };
 
 const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | null => {
@@ -350,36 +199,17 @@ const tryRepairBrokenSeededStarterConfig = (args: {
 };
 
 export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecord[]): number => {
-  if (records.length === 0) return getAutoSeedStarterWorkflowEntries().length;
-
-  const indexEntry = records.find((record) => record.key === AI_PATHS_INDEX_KEY);
-  const metas = parsePathMetas(indexEntry?.value);
-  const triggerButtons = parseTriggerButtons(
-    records.find((record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY)?.value
-  );
-
-  return getAutoSeedStarterWorkflowEntries().reduce((count, entry) => {
-    const defaultPathId = entry.seedPolicy?.defaultPathId;
-    if (!defaultPathId) return count;
-    const configKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${defaultPathId}`;
-    const existingConfig = records.find((record) => record.key === configKey);
-    const hasConfig = Boolean(existingConfig);
-    const hasIndexMeta = metas.some((meta) => meta.id === defaultPathId);
-    const shouldSeedButtons = shouldSeedStarterTriggerButtons(
-      existingConfig?.value,
-      entry.seedPolicy?.isActive
-    );
-    const missingButtons = shouldSeedButtons
-      ? (entry.triggerButtonPresets ?? []).some(
-        (preset) => !hasEquivalentStarterTriggerButton(triggerButtons, preset)
-      )
-      : false;
-    return count + Number(!hasConfig) + Number(!hasIndexMeta) + Number(missingButtons);
-  }, 0);
+  return ensureStarterWorkflowEntries(records, getAutoSeedStarterWorkflowEntries()).affectedCount;
 };
 
-export const ensureStarterWorkflowDefaults = (
+export const countPendingStaticStarterWorkflowBundle = (
   records: AiPathsSettingRecord[]
+): number =>
+  ensureStarterWorkflowEntries(records, getStaticRecoveryStarterWorkflowEntries()).affectedCount;
+
+const ensureStarterWorkflowEntries = (
+  records: AiPathsSettingRecord[],
+  entries: AiPathTemplateRegistryEntry[]
 ): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } => {
   const now = new Date().toISOString();
   const nextRecords = records.map((record) => ({ ...record }));
@@ -413,8 +243,19 @@ export const ensureStarterWorkflowDefaults = (
     )
   );
   const nextButtons = parseTriggerButtons(triggerButtonsEntry.value);
+  const bundleScope = entries.every((entry) => entry.seedPolicy?.autoSeed === true)
+    ? 'auto_seed'
+    : 'static_recovery';
+  const bundle = materializeStarterWorkflowRecoveryBundle(bundleScope);
+  const bundleConfigByPathId = new Map(
+    bundle.pathConfigs.map((config) => [config.id, config] as const)
+  );
+  const bundleMetaByPathId = new Map(bundle.pathMetas.map((meta) => [meta.id, meta] as const));
+  const bundleTriggerButtonsById = new Map(
+    bundle.triggerButtons.map((button) => [button.id, button] as const)
+  );
 
-  getAutoSeedStarterWorkflowEntries().forEach((entry) => {
+  entries.forEach((entry) => {
     const defaultPathId = entry.seedPolicy?.defaultPathId;
     if (!defaultPathId) return;
 
@@ -423,29 +264,32 @@ export const ensureStarterWorkflowDefaults = (
     const hasConfig = Boolean(existingConfig);
     let currentConfigRaw = existingConfig?.value;
     if (!hasConfig) {
-      const raw = JSON.stringify(
-        materializeStarterWorkflowPathConfig(entry, {
-          pathId: defaultPathId,
-          seededDefault: true,
-        })
-      );
+      const canonicalConfig = bundleConfigByPathId.get(defaultPathId);
+      if (!canonicalConfig) return;
+      const raw = JSON.stringify(canonicalConfig);
       nextRecords.push({ key: configKey, value: raw });
       currentConfigRaw = raw;
       affectedCount += 1;
-      const meta = parsePathConfigMeta(defaultPathId, raw);
+      const meta = bundleMetaByPathId.get(defaultPathId) ?? parsePathConfigMeta(defaultPathId, raw);
       if (meta && !nextMetas.some((current) => current.id === meta.id)) {
         nextMetas.push(meta);
         affectedCount += 1;
       }
     } else if (existingConfig) {
       if (!nextMetas.some((meta) => meta.id === defaultPathId)) {
-        const meta = parsePathConfigMeta(defaultPathId, existingConfig.value);
+        const meta =
+          parsePathConfigMeta(defaultPathId, existingConfig.value) ??
+          bundleMetaByPathId.get(defaultPathId) ??
+          null;
         if (meta) {
           nextMetas.push(meta);
           affectedCount += 1;
         }
       } else {
-        const meta = parsePathConfigMeta(defaultPathId, existingConfig.value);
+        const meta =
+          parsePathConfigMeta(defaultPathId, existingConfig.value) ??
+          bundleMetaByPathId.get(defaultPathId) ??
+          null;
         if (meta) {
           const index = nextMetas.findIndex((current) => current.id === defaultPathId);
           if (index >= 0) {
@@ -482,29 +326,27 @@ export const ensureStarterWorkflowDefaults = (
         affectedCount += 1;
         return;
       }
-      nextButtons.push(toTriggerButtonRecord(preset, now));
+      nextButtons.push(
+        bundleTriggerButtonsById.get(preset.id) ?? toTriggerButtonRecord(preset, now)
+      );
       affectedCount += 1;
     });
   });
-
-  if (refreshNormalizeStarterWorkflowConfig({ records: nextRecords, metas: nextMetas })) {
-    affectedCount += 1;
-  }
-
-  if (
-    inheritNormalizeStarterModelSelection({
-      records: nextRecords,
-      buttons: nextButtons,
-      metas: nextMetas,
-    })
-  ) {
-    affectedCount += 1;
-  }
 
   indexEntry.value = JSON.stringify(nextMetas);
   triggerButtonsEntry.value = serializeAiTriggerButtonsRaw(nextButtons);
   return { nextRecords, affectedCount };
 };
+
+export const ensureStarterWorkflowDefaults = (
+  records: AiPathsSettingRecord[]
+): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } =>
+  ensureStarterWorkflowEntries(records, getAutoSeedStarterWorkflowEntries());
+
+export const restoreStaticStarterWorkflowBundle = (
+  records: AiPathsSettingRecord[]
+): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } =>
+  ensureStarterWorkflowEntries(records, getStaticRecoveryStarterWorkflowEntries());
 
 export const countPendingStarterWorkflowConfigRefreshes = (
   records: AiPathsSettingRecord[]

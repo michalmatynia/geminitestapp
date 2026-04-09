@@ -134,6 +134,12 @@ STATE MANAGEMENT
 › run refactor  improvement of a  table‑driven router
     (pattern → handler) to replace the long if chain. Prepare a plan
 
+Add granular error boundaries
+
+Admin speedup
+split barrel into domain │ Large       │ High — permanent fix   │
+  │  sub-barrels
+  
 UI: LAYOUT
 - make mobile responsive
 

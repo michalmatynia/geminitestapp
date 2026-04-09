@@ -29,26 +29,39 @@ import {
 
 import type {
   GraphActions,
+  GraphDataState,
   GraphMutationMeta,
   GraphMutationReason,
   GraphMutationRecord,
+  PathMetadataState,
   GraphProviderProps,
   GraphState,
 } from './GraphContext.shared';
 
 export type {
   GraphActions,
+  GraphDataState,
   GraphMutationMeta,
   GraphMutationReason,
   GraphMutationRecord,
+  PathMetadataState,
   GraphState,
 } from './GraphContext.shared';
 
 const {
-  Context: GraphStateContext,
-  useStrictContext: useGraphState,
-} = createStrictContext<GraphState>({
-  hookName: 'useGraphState',
+  Context: GraphDataStateContext,
+  useStrictContext: useGraphDataState,
+} = createStrictContext<GraphDataState>({
+  hookName: 'useGraphDataState',
+  providerName: 'a GraphProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: PathMetadataStateContext,
+  useStrictContext: usePathMetadataState,
+} = createStrictContext<PathMetadataState>({
+  hookName: 'usePathMetadataState',
   providerName: 'a GraphProvider',
   errorFactory: internalError,
 });
@@ -62,7 +75,16 @@ const {
   errorFactory: internalError,
 });
 
-export { useGraphState, useGraphActions };
+const {
+  Context: GraphStateContext,
+  useStrictContext: useGraphState,
+} = createStrictContext<GraphState>({
+  hookName: 'useGraphState',
+  providerName: 'a GraphProvider',
+  errorFactory: internalError,
+});
+
+export { useGraphDataState, usePathMetadataState, useGraphState, useGraphActions };
 
 export function GraphProvider({
   children,
@@ -415,32 +437,18 @@ export function GraphProvider({
     ]
   );
 
-  const state = useMemo<GraphState>(
+  const graphDataState = useMemo<GraphDataState>(
     () => ({
       nodes,
       edges,
-      paths,
-      pathConfigs,
-      activePathId,
-      pathName,
-      pathDescription,
-      activeTrigger,
-      executionMode,
-      flowIntensity,
-      runMode,
-      strictFlowMode,
-      blockedRunPolicy,
-      aiPathsValidation,
-      historyRetentionPasses,
-      historyRetentionOptionsMax,
-      isPathLocked,
-      isPathActive,
       graphRevision,
       lastMutation,
     }),
-    [
-      nodes,
-      edges,
+    [nodes, edges, graphRevision, lastMutation]
+  );
+
+  const pathMetadataState = useMemo<PathMetadataState>(
+    () => ({
       paths,
       pathConfigs,
       activePathId,
@@ -457,14 +465,42 @@ export function GraphProvider({
       historyRetentionOptionsMax,
       isPathLocked,
       isPathActive,
-      graphRevision,
-      lastMutation,
+    }),
+    [
+      paths,
+      pathConfigs,
+      activePathId,
+      pathName,
+      pathDescription,
+      activeTrigger,
+      executionMode,
+      flowIntensity,
+      runMode,
+      strictFlowMode,
+      blockedRunPolicy,
+      aiPathsValidation,
+      historyRetentionPasses,
+      historyRetentionOptionsMax,
+      isPathLocked,
+      isPathActive,
     ]
+  );
+
+  const state = useMemo<GraphState>(
+    () => ({
+      ...graphDataState,
+      ...pathMetadataState,
+    }),
+    [graphDataState, pathMetadataState]
   );
 
   return (
     <GraphActionsContext.Provider value={actions}>
-      <GraphStateContext.Provider value={state}>{children}</GraphStateContext.Provider>
+      <PathMetadataStateContext.Provider value={pathMetadataState}>
+        <GraphDataStateContext.Provider value={graphDataState}>
+          <GraphStateContext.Provider value={state}>{children}</GraphStateContext.Provider>
+        </GraphDataStateContext.Provider>
+      </PathMetadataStateContext.Provider>
     </GraphActionsContext.Provider>
   );
 }

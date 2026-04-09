@@ -27,10 +27,12 @@ import {
 } from './settings-store.constants';
 import { parsePathMetas } from './settings-store.parsing';
 import {
+  countPendingStaticStarterWorkflowBundle,
   countPendingStarterWorkflowConfigRefreshes,
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
   refreshStarterWorkflowConfigs,
+  restoreStaticStarterWorkflowBundle,
 } from './starter-workflows-settings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -298,8 +300,21 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
+  const staticRecoveryCount = countPendingStaticStarterWorkflowBundle(records);
+  if (staticRecoveryCount > 0) {
+    actions.push({
+      id: 'restore_static_recovery_bundle',
+      title: 'Restore Static Recovery Bundle',
+      description:
+        'Recreate canonical AI Paths, index entries, and trigger buttons from semantic workflow assets stored in static code.',
+      blocking: false,
+      status: 'pending',
+      affectedRecords: staticRecoveryCount,
+    });
+  }
+
   const starterDefaultsCount = countPendingStarterWorkflowDefaults(records);
-  if (starterDefaultsCount > 0) {
+  if (starterDefaultsCount > 0 && staticRecoveryCount === 0) {
     actions.push({
       id: 'ensure_starter_workflow_defaults',
       title: 'Ensure Starter Workflow Defaults',
@@ -387,6 +402,13 @@ export const runMaintenanceAction = (args: {
       break;
     }
 
+    case 'restore_static_recovery_bundle': {
+      const result = restoreStaticStarterWorkflowBundle(args.records);
+      nextRecords.push(...result.nextRecords);
+      affectedCount = result.affectedCount;
+      break;
+    }
+
     case 'refresh_starter_workflow_configs': {
       const result = refreshStarterWorkflowConfigs(args.records);
       nextRecords.push(...result.nextRecords);
@@ -445,6 +467,7 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
     [
       'compact_oversized_configs',
       'repair_path_index',
+      'restore_static_recovery_bundle',
       'ensure_starter_workflow_defaults',
       'refresh_starter_workflow_configs',
       RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,

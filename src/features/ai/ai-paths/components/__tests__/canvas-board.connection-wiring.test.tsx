@@ -7,6 +7,18 @@ import { AiPathsProvider, useGraphState } from '@/features/ai/ai-paths/context';
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { ToastProvider } from '@/shared/ui/toast';
 
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => ({
+    assignment: { enabled: false },
+    effectiveModelId: '',
+    descriptors: {},
+    models: [],
+    isLoading: false,
+    sourceWarnings: [],
+    refresh: vi.fn(),
+  }),
+}));
+
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({
     id: patch.id ?? 'node',

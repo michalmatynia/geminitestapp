@@ -330,7 +330,7 @@ describe('useImportExportRuntime', () => {
     expect(result.current.stateValue.hasUnsavedImportSettingsChanges).toBe(true);
   });
 
-  it('clears stale persisted ids when saved resources are no longer available', async () => {
+  it('clears stale persisted ids and falls back to the first available catalog', async () => {
     window.localStorage.setItem(
       'product-import-runtime.v1',
       JSON.stringify({
@@ -357,13 +357,20 @@ describe('useImportExportRuntime', () => {
 
     mocks.useImportExportRuntimeResourcesMock.mockImplementation(
       ({
+        catalogId,
         setBaseConnections,
+        setCatalogId,
       }: {
+        catalogId: string;
         setBaseConnections: (connections: Array<{ id: string; name: string }>) => void;
+        setCatalogId: (catalogId: string) => void;
       }) => {
       useEffect(() => {
         setBaseConnections([{ id: 'conn-1', name: 'Conn 1' }]);
-      }, [setBaseConnections]);
+        if (!catalogId) {
+          setCatalogId('catalog-1');
+        }
+      }, [catalogId, setBaseConnections, setCatalogId]);
 
       return createRuntimeResourcesMock({
         catalogsData: [{ id: 'catalog-1', name: 'Catalog 1', isDefault: false }],
@@ -386,7 +393,7 @@ describe('useImportExportRuntime', () => {
     await waitFor(() => {
       expect(result.current.stateValue.selectedBaseConnectionId).toBe('');
       expect(result.current.stateValue.inventoryId).toBe('');
-      expect(result.current.stateValue.catalogId).toBe('');
+      expect(result.current.stateValue.catalogId).toBe('catalog-1');
       expect(result.current.stateValue.importTemplateId).toBe('');
       expect(result.current.stateValue.importListEnabled).toBe(false);
     });

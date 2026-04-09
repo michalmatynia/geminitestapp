@@ -36,8 +36,6 @@ import {
 } from './useCanvasInteractions.connections';
 import { useEdgePaths, type EdgePath, type EdgeRoutingMode } from './useEdgePaths';
 import { useSelectionState, useSelectionActions } from './useSelection';
-import { useGraphState, useGraphActions } from '../GraphContext';
-import { useRuntimeActions } from '../RuntimeContext';
 import {
   type MarqueeSelectionState,
   type TouchLongPressIndicatorState,
@@ -56,8 +54,12 @@ import {
   useCanvasInteractionsTouch,
   type UseCanvasInteractionsTouchValue,
 } from './useCanvasInteractions.touch';
-
-
+import {
+  useGraphActions,
+  useGraphDataState,
+  usePathMetadataState,
+} from '../GraphContext';
+import { useRuntimeActions } from '../RuntimeContext';
 
 /**
  * Hook that manages all canvas-related interactions (pan, drag, connect, drop)
@@ -87,7 +89,8 @@ export function useCanvasInteractions(args?: {
   const { viewportRef } = useCanvasRefs();
 
   // Context: Graph
-  const { nodes, edges, activePathId, isPathLocked } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
+  const { activePathId, isPathLocked } = usePathMetadataState();
   const { setNodes, setEdges } = useGraphActions();
 
   // Context: Runtime

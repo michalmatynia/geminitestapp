@@ -15,7 +15,11 @@ import {
 import { Button } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import {
+  useAiPathsSettingsPagePathActionsContext,
+  useAiPathsSettingsPagePersistenceContext,
+  useAiPathsSettingsPageWorkspaceContext,
+} from '../AiPathsSettingsPageContext';
 import { useGraphActions } from '@/features/ai/ai-paths/context';
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
@@ -56,9 +60,9 @@ export function AiPathsRuntimeKernelSettings(): React.JSX.Element {
     activePathId,
     pathConfigs,
     paths,
-    persistPathSettings,
-    toast,
-  } = useAiPathsSettingsPageContext();
+  } = useAiPathsSettingsPagePathActionsContext();
+  const { persistPathSettings } = useAiPathsSettingsPagePersistenceContext();
+  const { toast } = useAiPathsSettingsPageWorkspaceContext();
   const { setPathConfigs, setPaths } = useGraphActions();
   const notify = toast ?? (() => undefined);
   const activePath = activePathId ?? null;

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { processBaseImportRun } from '@/features/integrations/server';
 import type { BaseImportDispatchMode, BaseImportItemStatus } from '@/shared/contracts/integrations/base-com';
-import { createManagedQueue } from '@/shared/lib/queue';
+import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type BaseImportQueueJobData = {
@@ -79,6 +79,36 @@ export type BaseImportDispatchResult = {
   queueJobId: string;
 };
 
+const startInlineBaseImportRunInBackground = (
+  data: BaseImportQueueJobData,
+  queueJobId: string,
+  reason: 'redis_unavailable' | 'enqueue_failed'
+): void => {
+  void processBaseImportRun(data.runId, {
+    jobId: queueJobId,
+    ...(Array.isArray(data.statuses) ? { allowedStatuses: data.statuses } : {}),
+  })
+    .then(async () => {
+      await ErrorSystem.logInfo('Base import job completed', {
+        service: 'base-import-queue',
+        runId: data.runId,
+        reason: data.reason,
+        jobId: queueJobId,
+        dispatchReason: reason,
+      });
+    })
+    .catch(async (error: unknown) => {
+      await ErrorSystem.captureException(error, {
+        service: 'base-import-queue',
+        runId: data.runId,
+        reason: data.reason,
+        jobId: queueJobId,
+        action: 'inline-background-failed',
+        dispatchReason: reason,
+      });
+    });
+};
+
 /**
  * Dispatches a Base import run job and reports whether it was submitted to the
  * Redis queue or executed inline (Redis unavailable). Inline jobs start in the
@@ -87,9 +117,39 @@ export type BaseImportDispatchResult = {
 export const dispatchBaseImportRunJob = async (
   data: BaseImportQueueJobData
 ): Promise<BaseImportDispatchResult> => {
-  const queueJobId = await enqueueBaseImportRunJob(data);
-  const dispatchMode: BaseImportDispatchMode = queueJobId.startsWith('inline-')
-    ? 'inline'
-    : 'queued';
-  return { dispatchMode, queueJobId };
+  if (!isRedisAvailable()) {
+    const queueJobId = `inline-${Date.now()}`;
+    await ErrorSystem.logInfo('Base import redis unavailable, running inline in background', {
+      service: 'base-import-queue',
+      runId: data.runId,
+      reason: data.reason,
+      jobId: queueJobId,
+      statuses: data.statuses ?? ['pending'],
+    });
+    startInlineBaseImportRunInBackground(data, queueJobId, 'redis_unavailable');
+    return { dispatchMode: 'inline', queueJobId };
+  }
+
+  try {
+    const queueJobId = await enqueueBaseImportRunJob(data);
+    return { dispatchMode: 'queued', queueJobId };
+  } catch (error: unknown) {
+    void ErrorSystem.captureException(error, {
+      service: 'base-import-queue',
+      runId: data.runId,
+      reason: data.reason,
+      action: 'enqueue-failed',
+    });
+    const queueJobId = `inline-${Date.now()}`;
+    await ErrorSystem.logInfo('Base import enqueue failed, running inline in background', {
+      service: 'base-import-queue',
+      runId: data.runId,
+      reason: data.reason,
+      jobId: queueJobId,
+      statuses: data.statuses ?? ['pending'],
+      error: error instanceof Error ? error.message : String(error),
+    });
+    startInlineBaseImportRunInBackground(data, queueJobId, 'enqueue_failed');
+    return { dispatchMode: 'inline', queueJobId };
+  }
 };

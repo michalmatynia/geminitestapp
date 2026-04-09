@@ -6,7 +6,7 @@ import type { PathConfig, PathFlowIntensity } from '@/shared/contracts/ai-paths'
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui/primitives.public';
 
-import { useGraphActions, useGraphState } from '../../context';
+import { useGraphActions, usePathMetadataState } from '../../context';
 
 type PathExecutionMode = 'local' | 'server';
 type PathRunMode = 'manual' | 'automatic' | 'step';
@@ -27,7 +27,7 @@ export interface PathConfigHandlers {
  */
 export function usePathConfigHandlers(): PathConfigHandlers {
   const { toast } = useToast();
-  const { activePathId, isPathLocked } = useGraphState();
+  const { activePathId, isPathLocked } = usePathMetadataState();
   const { setExecutionMode, setFlowIntensity, setRunMode, setPathConfigs } = useGraphActions();
 
   const handleExecutionModeChange = useCallback(

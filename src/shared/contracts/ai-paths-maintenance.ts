@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'compact_oversized_configs',
   'repair_path_index',
+  'restore_static_recovery_bundle',
   'ensure_starter_workflow_defaults',
   'refresh_starter_workflow_configs',
   'normalize_runtime_kernel_settings',

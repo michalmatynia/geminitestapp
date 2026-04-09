@@ -28,7 +28,11 @@ import {
   upsertMongoAiPathsSettings,
   ensureMongoIndexes,
 } from './settings-store.repository';
-import { ensureStarterWorkflowDefaults } from './starter-workflows-settings';
+import {
+  ensureStarterWorkflowDefaults,
+  restoreStaticStarterWorkflowBundle,
+} from './starter-workflows-settings';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
   process.env['AI_PATHS_MONGO_OP_TIMEOUT_MS'],
@@ -53,6 +57,10 @@ const serverSettingsByKeysCache = new Map<
 >();
 const serverSettingsByKeysInflight = new Map<string, Promise<AiPathsSettingRecord[]>>();
 const SERVER_SETTINGS_BY_KEYS_CACHE_MAX = 200;
+const AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED = parseBooleanEnv(
+  process.env['AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED'],
+  true
+);
 
 const normalizeServerSettingsKeys = (keys: string[]): string[] =>
   Array.from(new Set(keys.filter(isAiPathsKey))).sort();
@@ -79,12 +87,49 @@ const invalidateServerSettingsCache = (): void => {
   serverSettingsByKeysInflight.clear();
 };
 
+const createStaticRecoverySnapshotSeed = (): AiPathsSettingRecord[] => [
+  { key: AI_PATHS_INDEX_KEY, value: '[]' },
+  { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
+];
+
+const filterSettingsByKeys = (
+  records: AiPathsSettingRecord[],
+  keys: string[]
+): AiPathsSettingRecord[] => {
+  const allowedKeys = new Set(keys);
+  return records.filter((record) => allowedKeys.has(record.key));
+};
+
+const readAiPathsSettingsFromStaticRecovery = (
+  keys?: string[]
+): AiPathsSettingRecord[] => {
+  const restored = restoreStaticStarterWorkflowBundle(createStaticRecoverySnapshotSeed()).nextRecords;
+  if (!keys || keys.length === 0) {
+    return restored;
+  }
+  return filterSettingsByKeys(restored, normalizeServerSettingsKeys(keys));
+};
+
+const readAiPathsSettingsWithStaticFallback = async (
+  reader: () => Promise<AiPathsSettingRecord[]>,
+  keys?: string[]
+): Promise<AiPathsSettingRecord[]> => {
+  if (!AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED) {
+    return await reader();
+  }
+
+  try {
+    return await reader();
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return readAiPathsSettingsFromStaticRecovery(keys);
+  }
+};
+
 export async function getAiPathsSettings(
   keys?: string[],
   options?: { bypassCache?: boolean }
 ): Promise<AiPathsSettingRecord[]> {
-  assertMongoConfigured();
-
   if (!keys || keys.length === 0) {
     // Return server-side cache if fresh and not bypassed
     if (
@@ -100,6 +145,7 @@ export async function getAiPathsSettings(
     }
 
     const fetchAll = async (): Promise<AiPathsSettingRecord[]> => {
+      assertMongoConfigured();
       // Fetch index and then all configs
       const indexRecord = await fetchMongoAiPathsSettings(
         [AI_PATHS_INDEX_KEY],
@@ -115,7 +161,7 @@ export async function getAiPathsSettings(
       return getAiPathsSettings(allKeys, options);
     };
 
-    const promise = fetchAll()
+    const promise = readAiPathsSettingsWithStaticFallback(fetchAll)
       .then((records) => {
         serverSettingsCache = { records, cachedAt: Date.now() };
         return records;
@@ -142,8 +188,10 @@ export async function getAiPathsSettings(
       return await inflight;
     }
 
-    const fetchByKeys = fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS)
-      .then((records) => {
+    const fetchByKeys = readAiPathsSettingsWithStaticFallback(async () => {
+      assertMongoConfigured();
+      return await fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
+    }, normalizedKeys).then((records) => {
         serverSettingsByKeysCache.set(keysetCacheKey, {
           records,
           cachedAt: Date.now(),
@@ -168,20 +216,7 @@ export async function getAiPathsSetting(key: string): Promise<string | null> {
 }
 
 export async function getAllAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
-  assertMongoConfigured();
-  // We don't have a 'fetchAll' in mongo wrapper yet, but we can fetch index and then all configs
-
-  const indexRecord = await fetchMongoAiPathsSettings(
-    [AI_PATHS_INDEX_KEY],
-    AI_PATHS_MONGO_OP_TIMEOUT_MS
-  );
-  if (!indexRecord.length) return [];
-  const metas = parsePathMetas(indexRecord[0]?.value);
-  const configKeys = metas.map((m) => `${AI_PATHS_CONFIG_KEY_PREFIX}${m.id}`);
-  const triggerButtonsKey = AI_PATHS_TRIGGER_BUTTONS_KEY;
-
-  const allKeys = [AI_PATHS_INDEX_KEY, triggerButtonsKey, ...configKeys];
-  return getAiPathsSettings(allKeys);
+  return await getAiPathsSettings();
 }
 
 export const listAiPathsSettings = getAiPathsSettings;
@@ -300,6 +335,7 @@ export const applyAiPathsSettingsMaintenance = async (
 export const __testOnly = {
   maybeAutoApplyDefaultSeedsOnRead,
   preservePathConfigFlagsOnSeed,
+  readAiPathsSettingsFromStaticRecovery,
   resolveAutoApplyDefaultSeedsOnRead: (value: string | undefined): boolean =>
     parseBooleanEnv(value, false),
 };

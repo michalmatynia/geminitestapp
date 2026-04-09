@@ -1,9 +1,9 @@
-import { useRuntimeState } from '@/features/ai/ai-paths/context';
+import { useRuntimeDataState } from '@/features/ai/ai-paths/context';
 import { JsonViewer } from '@/shared/ui/data-display.public';
 
 
 export function GraphModelDebugPanel(): React.JSX.Element {
-  const { runtimeState: payload } = useRuntimeState();
+  const { runtimeState: payload } = useRuntimeDataState();
 
   return (
     <div className='space-y-2'>

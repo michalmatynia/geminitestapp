@@ -3,7 +3,11 @@
 import React, { useMemo, useCallback } from 'react';
 
 import { useSelectionActions, useSelectionState, useRuntimeActions } from '@/features/ai/ai-paths/context';
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
+import {
+  useGraphActions,
+  useGraphDataState,
+  usePathMetadataState,
+} from '@/features/ai/ai-paths/context/GraphContext';
 import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import type { AiNode } from '@/shared/lib/ai-paths';
 import { Button, Input, Alert } from '@/shared/ui/primitives.public';
@@ -29,7 +33,8 @@ const applySimulationEntityId = (node: AiNode, entityId: string): AiNode => ({
 });
 
 export function SimulationDialog(): React.JSX.Element | null {
-  const { nodes, isPathLocked } = useGraphState();
+  const { nodes } = useGraphDataState();
+  const { isPathLocked } = usePathMetadataState();
   const { runSimulation: handleRunSimulation } = useRuntimeActions();
   const { simulationOpenNodeId } = useSelectionState();
   const { setSimulationOpenNodeId } = useSelectionActions();

@@ -7,7 +7,10 @@ import {
   useCanvasRefs,
   useCanvasState,
 } from '@/features/ai/ai-paths/context/CanvasContext';
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
+import {
+  useGraphActions,
+  useGraphDataState,
+} from '@/features/ai/ai-paths/context/GraphContext';
 import {
   computeEdgeSelectionDeleteResult,
   computeNodeSelectionDeleteResult,
@@ -121,7 +124,7 @@ export function useAiPathsCanvasInteractions(
 
   const { selectedEdgeId, selectedNodeIds: selectedNodeIdsCtx } = useSelectionState();
   const { selectEdge, selectNode } = useSelectionActions();
-  const { nodes: graphNodes, edges: graphEdges } = useGraphState();
+  const { nodes: graphNodes, edges: graphEdges } = useGraphDataState();
   const { setNodes: setGraphNodes, setEdges: setGraphEdges } = useGraphActions();
 
   const notifyLocked = useCallback((): void => {

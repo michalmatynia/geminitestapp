@@ -2,7 +2,10 @@
 
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
+import {
+  useGraphActions,
+  usePathMetadataState,
+} from '@/features/ai/ai-paths/context/GraphContext';
 import type { AiPathsValidationConfig, PathBlockedRunPolicy, PathExecutionMode, PathFlowIntensity, PathRunMode } from '@/shared/lib/ai-paths';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths';
 
@@ -26,7 +29,7 @@ const useResolvedGraphSettingSetter = <T,>(
   );
 
 export function useExecutionSettingsState() {
-  const graphState = useGraphState();
+  const graphState = usePathMetadataState();
   const graphActions = useGraphActions();
 
   const setExecutionMode = useResolvedGraphSettingSetter<PathExecutionMode>(

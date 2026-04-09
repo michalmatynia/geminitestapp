@@ -9,7 +9,11 @@ import {
   logClientError,
 } from '@/shared/utils/observability/client-error-logger';
 
-import { useGraphState, useRuntimeActions } from '../../context';
+import {
+  useGraphDataState,
+  usePathMetadataState,
+  useRuntimeActions,
+} from '../../context';
 
 type LastErrorPayload = { message: string; time: string; pathId?: string | null } | null;
 
@@ -36,7 +40,8 @@ export interface AiPathsErrorReporting {
 export function useAiPathsErrorReporting(
   activeTab: 'canvas' | 'paths' | 'docs'
 ): AiPathsErrorReporting {
-  const { activePathId, pathName, nodes, edges } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
+  const { activePathId, pathName } = usePathMetadataState();
   const { setLastError } = useRuntimeActions();
 
   const persistLastError = useCallback(async (payload: LastErrorPayload): Promise<void> => {

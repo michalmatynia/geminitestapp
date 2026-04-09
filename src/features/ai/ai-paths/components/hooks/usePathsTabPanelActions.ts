@@ -2,7 +2,7 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { triggers } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui/primitives.public';
 
-import { useGraphState } from '../../context';
+import { usePathMetadataState } from '../../context';
 import { usePersistenceActions } from '../../context/PersistenceContext';
 import { useAiPathsErrorReporting } from '../ai-paths-settings/useAiPathsErrorReporting';
 import { useAiPathsSettingsPathActions } from '../ai-paths-settings/useAiPathsSettingsPathActions';
@@ -16,7 +16,7 @@ function normalizeTriggerLabel(value?: string | null): string {
 export function usePathsTabPanelActions() {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
-  const { activePathId, isPathLocked, pathConfigs, paths } = useGraphState();
+  const { activePathId, isPathLocked, pathConfigs, paths } = usePathMetadataState();
   const {
     persistPathSettings,
     persistSettingsBulk,

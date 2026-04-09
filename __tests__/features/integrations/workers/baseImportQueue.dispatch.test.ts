@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock processBaseImportRun so the queue processor never tries to actually run
-vi.mock('@/features/integrations/server', () => ({
-  processBaseImportRun: vi.fn().mockResolvedValue(undefined),
-}));
+const processBaseImportRunMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const isRedisAvailableMock = vi.hoisted(() => vi.fn(() => true));
 
 // Mock the ErrorSystem to avoid real logging
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: { logInfo: vi.fn().mockResolvedValue(undefined), captureException: vi.fn().mockResolvedValue(undefined) },
+}));
+
+// Mock processBaseImportRun so the queue processor never tries to actually run
+vi.mock('@/features/integrations/server', () => ({
+  processBaseImportRun: (...args: unknown[]) => processBaseImportRunMock(...args),
 }));
 
 const enqueueMock = vi.hoisted(() => vi.fn());
@@ -21,6 +24,7 @@ vi.mock('@/shared/lib/queue', () => ({
     processInline: vi.fn(),
     getQueue: vi.fn().mockReturnValue(null),
   }),
+  isRedisAvailable: () => isRedisAvailableMock(),
   registerQueue: vi.fn(),
 }));
 
@@ -34,6 +38,7 @@ import { dispatchBaseImportRunJob } from '@/features/integrations/workers/baseIm
 describe('dispatchBaseImportRunJob', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isRedisAvailableMock.mockReturnValue(true);
   });
 
   it('returns dispatchMode queued when enqueue returns a BullMQ job id', async () => {
@@ -50,7 +55,8 @@ describe('dispatchBaseImportRunJob', () => {
   });
 
   it('returns dispatchMode inline when enqueue returns an inline- prefixed id', async () => {
-    enqueueMock.mockResolvedValue('inline-1714000000000');
+    isRedisAvailableMock.mockReturnValue(false);
+    vi.spyOn(Date, 'now').mockReturnValue(1714000000000);
 
     const result = await dispatchBaseImportRunJob({
       runId: 'run-2',
@@ -60,6 +66,11 @@ describe('dispatchBaseImportRunJob', () => {
 
     expect(result.dispatchMode).toBe('inline');
     expect(result.queueJobId).toBe('inline-1714000000000');
+    expect(enqueueMock).not.toHaveBeenCalled();
+    expect(processBaseImportRunMock).toHaveBeenCalledWith('run-2', {
+      jobId: 'inline-1714000000000',
+      allowedStatuses: ['pending'],
+    });
   });
 
   it('passes job data fields through to queue enqueue', async () => {
@@ -76,5 +87,25 @@ describe('dispatchBaseImportRunJob', () => {
       expect.objectContaining({ runId: 'run-3', reason: 'resume' }),
       expect.objectContaining({ jobId: expect.stringContaining('run-3') })
     );
+  });
+
+  it('falls back to inline background processing when queue enqueue fails', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1715000000000);
+    enqueueMock.mockRejectedValue(new Error('redis enqueue failed'));
+
+    const result = await dispatchBaseImportRunJob({
+      runId: 'run-4',
+      reason: 'start',
+      statuses: ['pending'],
+    });
+
+    expect(result).toEqual({
+      dispatchMode: 'inline',
+      queueJobId: 'inline-1715000000000',
+    });
+    expect(processBaseImportRunMock).toHaveBeenCalledWith('run-4', {
+      jobId: 'inline-1715000000000',
+      allowedStatuses: ['pending'],
+    });
   });
 });

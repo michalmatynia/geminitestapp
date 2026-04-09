@@ -240,7 +240,6 @@
       "outputs": ["result", "jobId"],
       "config": {
         "model": {
-          "modelId": "ollama:gemma4",
           "temperature": 0.1,
           "maxTokens": 900,
           "vision": true,

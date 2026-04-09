@@ -9,11 +9,13 @@ import type { AiNode, DbNodePreset, DbQueryPreset, Edge, NodeConfig, ParserSampl
 import { useToast } from '@/shared/ui/primitives.public';
 
 import {
-  useGraphState,
+  useGraphDataState,
+  usePathMetadataState,
   usePresetsActions,
   usePresetsState,
   useRuntimeActions,
-  useRuntimeState,
+  useRuntimeDataState,
+  useRuntimeUiState,
   useSelectionActions,
   useSelectionState,
   usePersistenceActions,
@@ -136,8 +138,10 @@ const useAiPathConfigDefaults = () => {
   const { toast } = useToast();
   const { selectedNodeId, configOpen } = useSelectionState();
   const selectionActions = useSelectionActions();
-  const graphState = useGraphState();
-  const runtimeState = useRuntimeState();
+  const graphDataState = useGraphDataState();
+  const pathMetadataState = usePathMetadataState();
+  const runtimeDataState = useRuntimeDataState();
+  const runtimeUiState = useRuntimeUiState();
   const runtimeActions = useRuntimeActions();
   const presetsState = usePresetsState();
   const presetsActions = usePresetsActions();
@@ -146,19 +150,19 @@ const useAiPathConfigDefaults = () => {
 
   const handleClearNodeHistory = useCallback(
     async (nodeId: string): Promise<void> => {
-      if (!graphState.activePathId) return;
-      if (graphState.isPathLocked) {
+      if (!pathMetadataState.activePathId) return;
+      if (pathMetadataState.isPathLocked) {
         toast('This path is locked. Unlock it to clear history.', { variant: 'info' });
         return;
       }
-      const currentHistory = runtimeState.runtimeState.history ?? {};
+      const currentHistory = runtimeDataState.runtimeState.history ?? {};
       if (!currentHistory[nodeId] || currentHistory[nodeId].length === 0) {
         toast('No history recorded for this node yet.', { variant: 'info' });
         return;
       }
       const { [nodeId]: _removed, ...restHistory } = currentHistory;
       const nextRuntimeState: RuntimeState = {
-        ...runtimeState.runtimeState,
+        ...runtimeDataState.runtimeState,
         history: Object.keys(restHistory).length > 0 ? restHistory : undefined,
       };
       runtimeActions.setRuntimeState(nextRuntimeState);
@@ -170,9 +174,9 @@ const useAiPathConfigDefaults = () => {
       }
     },
     [
-      graphState.activePathId,
-      graphState.isPathLocked,
-      runtimeState.runtimeState,
+      pathMetadataState.activePathId,
+      pathMetadataState.isPathLocked,
+      runtimeDataState.runtimeState,
       runtimeActions,
       savePathConfig,
       toast,
@@ -182,17 +186,17 @@ const useAiPathConfigDefaults = () => {
   const selectedNode = useMemo(
     () =>
       selectedNodeId
-        ? (graphState.nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null)
+        ? (graphDataState.nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null)
         : null,
-    [graphState.nodes, selectedNodeId]
+    [graphDataState.nodes, selectedNodeId]
   );
 
   const pathDebugSnapshot = useMemo(
     () =>
-      graphState.activePathId
-        ? (runtimeState.pathDebugSnapshots[graphState.activePathId] ?? null)
+      pathMetadataState.activePathId
+        ? (runtimeDataState.pathDebugSnapshots[pathMetadataState.activePathId] ?? null)
         : null,
-    [graphState.activePathId, runtimeState.pathDebugSnapshots]
+    [pathMetadataState.activePathId, runtimeDataState.pathDebugSnapshots]
   );
 
   const selectionValue = useMemo<AiPathSelectionData>(
@@ -207,23 +211,28 @@ const useAiPathConfigDefaults = () => {
 
   const graphValue = useMemo<AiPathGraphData>(
     () => ({
-      nodes: graphState.nodes,
-      edges: graphState.edges,
-      activePathId: graphState.activePathId,
-      isPathLocked: graphState.isPathLocked,
+      nodes: graphDataState.nodes,
+      edges: graphDataState.edges,
+      activePathId: pathMetadataState.activePathId,
+      isPathLocked: pathMetadataState.isPathLocked,
     }),
-    [graphState.nodes, graphState.edges, graphState.activePathId, graphState.isPathLocked]
+    [
+      graphDataState.edges,
+      graphDataState.nodes,
+      pathMetadataState.activePathId,
+      pathMetadataState.isPathLocked,
+    ]
   );
 
   const runtimeValue = useMemo<AiPathRuntimeData>(
     () => ({
-      parserSamples: runtimeState.parserSamples,
+      parserSamples: runtimeDataState.parserSamples,
       setParserSamples: runtimeActions.setParserSamples,
-      parserSampleLoading: runtimeState.parserSampleLoading,
-      updaterSamples: runtimeState.updaterSamples,
+      parserSampleLoading: runtimeUiState.parserSampleLoading,
+      updaterSamples: runtimeDataState.updaterSamples,
       setUpdaterSamples: runtimeActions.setUpdaterSamples,
-      updaterSampleLoading: runtimeState.updaterSampleLoading,
-      runtimeState: runtimeState.runtimeState,
+      updaterSampleLoading: runtimeUiState.updaterSampleLoading,
+      runtimeState: runtimeDataState.runtimeState,
       pathDebugSnapshot,
       handleFetchParserSample: runtimeActions.fetchParserSample,
       handleFetchUpdaterSample: runtimeActions.fetchUpdaterSample,
@@ -231,9 +240,9 @@ const useAiPathConfigDefaults = () => {
       clearRuntimeForNode: runtimeActions.clearNodeRuntime,
       clearNodeCache: runtimeActions.clearNodeRuntime,
       onSendToAi: runtimeActions.sendToAi,
-      sendingToAi: runtimeState.sendingToAi,
+      sendingToAi: runtimeUiState.sendingToAi,
     }),
-    [runtimeState, runtimeActions, pathDebugSnapshot]
+    [runtimeActions, runtimeDataState, runtimeUiState, pathDebugSnapshot]
   );
 
   const presetsValue = useMemo<AiPathPresetsData>(

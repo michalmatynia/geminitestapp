@@ -9,9 +9,11 @@ import {
   useCanvasActions,
   useCanvasRefs,
   useCanvasInteractions,
-  useGraphState,
-  useRuntimeState,
+  useGraphDataState,
+  usePathMetadataState,
+  useRuntimeDataState,
   useRuntimeActions,
+  useRuntimeStatusState,
   useSelectionState,
   useSelectionActions,
 } from '../context';
@@ -37,8 +39,10 @@ export function useCanvasBoardState({
   const canvasState = useCanvasState();
   const canvasActions = useCanvasActions();
   const canvasRefs = useCanvasRefs();
-  const graphState = useGraphState();
-  const runtimeStateContext = useRuntimeState();
+  const graphDataState = useGraphDataState();
+  const pathMetadataState = usePathMetadataState();
+  const runtimeDataState = useRuntimeDataState();
+  const runtimeStatusState = useRuntimeStatusState();
   const runtimeActions = useRuntimeActions();
   const selectionState = useSelectionState();
   const selectionActions = useSelectionActions();
@@ -171,20 +175,20 @@ export function useCanvasBoardState({
   }, [prefersReducedMotion]);
 
   // --- Derived ---
-  const configuredFlowIntensity: PathFlowIntensity = graphState.flowIntensity ?? 'medium';
+  const configuredFlowIntensity: PathFlowIntensity = pathMetadataState.flowIntensity ?? 'medium';
   const effectiveFlowIntensity = React.useMemo<PathFlowIntensity>(() => {
     if (prefersReducedMotion) return 'off';
     if (configuredFlowIntensity === 'off') return 'off';
-    const edgeCount = graphState.edges.length;
+    const edgeCount = graphDataState.edges.length;
     if (edgeCount > 1800) return 'off';
     if (edgeCount > 900) return 'low';
     if (edgeCount > 500 && configuredFlowIntensity === 'high') return 'medium';
     return configuredFlowIntensity;
-  }, [configuredFlowIntensity, graphState.edges.length, prefersReducedMotion]);
+  }, [configuredFlowIntensity, graphDataState.edges.length, prefersReducedMotion]);
 
   const nodeById = React.useMemo(
-    () => new Map(graphState.nodes.map((node: AiNode) => [node.id, node])),
-    [graphState.nodes]
+    () => new Map(graphDataState.nodes.map((node: AiNode) => [node.id, node])),
+    [graphDataState.nodes]
   );
 
   const getPortValue = React.useCallback(
@@ -196,12 +200,12 @@ export function useCanvasBoardState({
       ): unknown => {
         const source =
           bucket === 'inputs'
-            ? runtimeStateContext.runtimeState.inputs
-            : runtimeStateContext.runtimeState.outputs;
+            ? runtimeDataState.runtimeState.inputs
+            : runtimeDataState.runtimeState.outputs;
         const nodeValues = source?.[targetNodeId] ?? {};
         const direct = nodeValues[targetPort];
         if (direct !== undefined) return direct;
-        const history = runtimeStateContext.runtimeState.history?.[targetNodeId];
+        const history = runtimeDataState.runtimeState.history?.[targetNodeId];
         if (!Array.isArray(history) || history.length === 0) return undefined;
         const lastEntry = history[history.length - 1];
         const fallbackSource = bucket === 'inputs' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
@@ -221,7 +225,7 @@ export function useCanvasBoardState({
 
       if (direction === 'input') {
         const incomingValues: unknown[] = [];
-        graphState.edges.forEach((edge) => {
+        graphDataState.edges.forEach((edge) => {
           const toNodeId = typeof edge.to === 'string' ? edge.to : null;
           const toPort =
             typeof edge.toPort === 'string' && edge.toPort.trim().length > 0 ? edge.toPort : null;
@@ -242,7 +246,7 @@ export function useCanvasBoardState({
       }
       return directValue;
     },
-    [graphState.edges, runtimeStateContext.runtimeState]
+    [graphDataState.edges, runtimeDataState.runtimeState]
   );
 
   const getNodeRuntimeData = React.useCallback(
@@ -252,21 +256,21 @@ export function useCanvasBoardState({
       inputs: Record<string, unknown> | undefined;
       outputs: Record<string, unknown> | undefined;
     } => {
-      const history = runtimeStateContext.runtimeState.history?.[nodeId];
+      const history = runtimeDataState.runtimeState.history?.[nodeId];
       const lastEntry =
         Array.isArray(history) && history.length > 0 ? history[history.length - 1] : null;
       return {
         inputs: mergeRuntimePayload(
-          runtimeStateContext.runtimeState.inputs?.[nodeId],
+          runtimeDataState.runtimeState.inputs?.[nodeId],
           lastEntry?.['inputs']
         ),
         outputs: mergeRuntimePayload(
-          runtimeStateContext.runtimeState.outputs?.[nodeId],
+          runtimeDataState.runtimeState.outputs?.[nodeId],
           lastEntry?.['outputs']
         ),
       };
     },
-    [runtimeStateContext.runtimeState]
+    [runtimeDataState.runtimeState]
   );
 
   const getConnectorInfo = React.useCallback(
@@ -275,31 +279,31 @@ export function useCanvasBoardState({
         direction,
         nodeId,
         port,
-        edges: graphState.edges,
+        edges: graphDataState.edges,
         nodeById,
         getPortValue,
         getNodeRuntimeData,
       }),
-    [graphState.edges, getNodeRuntimeData, getPortValue, nodeById]
+    [graphDataState.edges, getNodeRuntimeData, getPortValue, nodeById]
   );
 
   const triggerPreflightById = React.useMemo((): ReadonlyMap<string, TriggerPreflightHint> => {
     const next = new Map<string, TriggerPreflightHint>();
-    const triggerNodes = graphState.nodes.filter(
+    const triggerNodes = graphDataState.nodes.filter(
       (node: AiNode): boolean => node.type === 'trigger'
     );
     if (triggerNodes.length === 0) return next;
 
     triggerNodes.forEach((triggerNode: AiNode) => {
       const preflight = evaluateRunPreflight({
-        nodes: graphState.nodes,
-        edges: graphState.edges,
-        aiPathsValidation: graphState.aiPathsValidation,
-        strictFlowMode: graphState.strictFlowMode,
+        nodes: graphDataState.nodes,
+        edges: graphDataState.edges,
+        aiPathsValidation: pathMetadataState.aiPathsValidation,
+        strictFlowMode: pathMetadataState.strictFlowMode,
         triggerNodeId: triggerNode.id,
-        runtimeState: runtimeStateContext.runtimeState,
-        parserSamples: runtimeStateContext.parserSamples,
-        updaterSamples: runtimeStateContext.updaterSamples,
+        runtimeState: runtimeDataState.runtimeState,
+        parserSamples: runtimeDataState.parserSamples,
+        updaterSamples: runtimeDataState.updaterSamples,
         mode: 'full',
       });
       if (!preflight.shouldBlock) return;
@@ -333,13 +337,13 @@ export function useCanvasBoardState({
 
     return next;
   }, [
-    graphState.aiPathsValidation,
-    graphState.edges,
-    graphState.nodes,
-    graphState.strictFlowMode,
-    runtimeStateContext.parserSamples,
-    runtimeStateContext.runtimeState,
-    runtimeStateContext.updaterSamples,
+    graphDataState.edges,
+    graphDataState.nodes,
+    pathMetadataState.aiPathsValidation,
+    pathMetadataState.strictFlowMode,
+    runtimeDataState.parserSamples,
+    runtimeDataState.runtimeState,
+    runtimeDataState.updaterSamples,
   ]);
 
   return {
@@ -351,14 +355,14 @@ export function useCanvasBoardState({
     connectingPos: canvasState.connectingPos,
     viewportRef: canvasRefs.viewportRef,
     canvasRef: canvasRefs.canvasRef,
-    nodes: graphState.nodes,
-    edges: graphState.edges,
+    nodes: graphDataState.nodes,
+    edges: graphDataState.edges,
     flowIntensity: configuredFlowIntensity,
-    runtimeState: runtimeStateContext.runtimeState,
-    runtimeNodeStatuses: runtimeStateContext.runtimeNodeStatuses,
-    runtimeEvents: runtimeStateContext.runtimeEvents,
-    runtimeRunStatus: runtimeStateContext.runtimeRunStatus,
-    nodeDurations: runtimeStateContext.nodeDurations,
+    runtimeState: runtimeDataState.runtimeState,
+    runtimeNodeStatuses: runtimeStatusState.runtimeNodeStatuses,
+    runtimeEvents: runtimeDataState.runtimeEvents,
+    runtimeRunStatus: runtimeStatusState.runtimeRunStatus,
+    nodeDurations: runtimeDataState.nodeDurations,
     triggerPreflightById,
     fireTrigger: runtimeActions.fireTrigger,
     selectedNodeId: selectionState.selectedNodeId,

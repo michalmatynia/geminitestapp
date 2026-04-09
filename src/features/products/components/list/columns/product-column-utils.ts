@@ -218,7 +218,7 @@ import {
   PROCESSING_STATUSES,
   FAILURE_STATUSES,
   normalizeMarketplaceStatus,
-} from '@/features/integrations/public';
+} from '@/features/integrations/product-integrations-adapter';
 
 export {
   SUCCESS_STATUSES,

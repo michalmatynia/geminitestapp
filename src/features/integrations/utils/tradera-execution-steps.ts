@@ -10,6 +10,11 @@ const EXECUTION_STEP_STATUS_VALUES = new Set([
   'skipped',
 ]);
 
+const isTraderaExecutionStepStatus = (
+  value: string
+): value is TraderaExecutionStep['status'] =>
+  EXECUTION_STEP_STATUS_VALUES.has(value as TraderaExecutionStep['status']);
+
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -487,7 +492,7 @@ export const readTraderaExecutionSteps = (value: unknown): TraderaExecutionStep[
     const id = readString(record['id']);
     const label = readString(record['label']);
     const status = readString(record['status']);
-    if (!id || !label || !status || !EXECUTION_STEP_STATUS_VALUES.has(status)) {
+    if (!id || !label || !status || !isTraderaExecutionStepStatus(status)) {
       return [];
     }
     return [

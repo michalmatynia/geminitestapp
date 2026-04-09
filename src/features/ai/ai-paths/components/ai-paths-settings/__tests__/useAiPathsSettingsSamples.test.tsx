@@ -14,6 +14,28 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ id: 'query-client' }),
+  useMutation: (config: {
+    mutationKey?: unknown;
+    mutationFn: (variables: unknown) => Promise<unknown>;
+    onSuccess?: (data: unknown, variables: unknown) => void;
+    onError?: (error: Error, variables: unknown) => void;
+  }) => {
+    const serializedKey = JSON.stringify(config.mutationKey ?? '');
+    const isParser = serializedKey.includes('fetch-parser-sample');
+    return {
+      isPending: isParser ? mockState.parserPending : mockState.updaterPending,
+      mutateAsync: async (variables: unknown) => {
+        try {
+          const result = await config.mutationFn(variables);
+          config.onSuccess?.(result, variables);
+          return result;
+        } catch (error) {
+          config.onError?.(error as Error, variables);
+          throw error;
+        }
+      },
+    };
+  },
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
@@ -38,28 +60,6 @@ vi.mock('@/shared/lib/ai-paths', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createMutationV2: (config: {
-    mutationKey?: unknown;
-    mutationFn: (variables: unknown) => Promise<unknown>;
-    onSuccess?: (data: unknown, variables: unknown) => void;
-    onError?: (error: Error, variables: unknown) => void;
-  }) => {
-    const serializedKey = JSON.stringify(config.mutationKey ?? '');
-    const isParser = serializedKey.includes('fetch-parser-sample');
-    return {
-      isPending: isParser ? mockState.parserPending : mockState.updaterPending,
-      mutateAsync: async (variables: unknown) => {
-        try {
-          const result = await config.mutationFn(variables);
-          config.onSuccess?.(result, variables);
-          return result;
-        } catch (error) {
-          config.onError?.(error as Error, variables);
-          throw error;
-        }
-      },
-    };
-  },
   fetchQueryV2: (_queryClient: unknown, options: Record<string, unknown>) => {
     mockState.fetchQueryCalls.push(options);
     return async () => {

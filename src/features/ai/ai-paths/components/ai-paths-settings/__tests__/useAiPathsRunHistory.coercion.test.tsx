@@ -90,12 +90,14 @@ const createWrapper = (): React.ComponentType<{ children: React.ReactNode }> => 
   };
 };
 
-const useHarness = (): {
+const useHarness = (
+  activePathId: string | null
+): {
   state: ReturnType<typeof useRunHistoryState>;
   actions: ReturnType<typeof useRunHistoryActions>;
 } => {
   useAiPathsRunHistory({
-    activePathId: 'path-legacy',
+    activePathId,
     toast: toastMock,
   });
   return {
@@ -129,7 +131,7 @@ describe('useAiPathsRunHistory run coercion', () => {
       },
     });
 
-    const { result } = renderHook(() => useHarness(), {
+    const { result } = renderHook(() => useHarness('path-legacy'), {
       wrapper: createWrapper(),
     });
 
@@ -166,7 +168,7 @@ describe('useAiPathsRunHistory run coercion', () => {
       },
     });
 
-    const { result } = renderHook(() => useHarness(), {
+    const { result } = renderHook(() => useHarness('path-legacy'), {
       wrapper: createWrapper(),
     });
 
@@ -191,7 +193,7 @@ describe('useAiPathsRunHistory run coercion', () => {
       },
     });
 
-    const { result } = renderHook(() => useHarness(), {
+    const { result } = renderHook(() => useHarness('path-legacy'), {
       wrapper: createWrapper(),
     });
 
@@ -242,5 +244,80 @@ describe('useAiPathsRunHistory run coercion', () => {
 
     expect(eventSourceInstances).toHaveLength(1);
     expect(activeSource?.close).not.toHaveBeenCalled();
+  });
+
+  it('clears stale run detail and closes the previous stream when the active path changes', async () => {
+    listAiPathRunsMock.mockImplementation(async ({ pathId }: { pathId?: string }) => ({
+      ok: true,
+      data: {
+        runs:
+          pathId === 'path-next'
+            ? [
+              {
+                id: 'run-next-1',
+                pathId: 'path-next',
+                status: 'queued',
+                createdAt: '2026-03-11T09:05:00.000Z',
+              },
+            ]
+            : [
+              {
+                id: 'run-prev-1',
+                pathId: 'path-legacy',
+                status: 'running',
+                createdAt: '2026-03-11T09:00:00.000Z',
+                updatedAt: '2026-03-11T09:01:00.000Z',
+              },
+            ],
+        total: 1,
+      },
+    }));
+
+    const { result, rerender } = renderHook(
+      ({ activePathId }: { activePathId: string | null }) => useHarness(activePathId),
+      {
+        initialProps: { activePathId: 'path-legacy' },
+        wrapper: createWrapper(),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.state.runList[0]?.id).toBe('run-prev-1');
+    });
+
+    act(() => {
+      result.current.actions.setRunDetail({
+        run: {
+          id: 'run-prev-1',
+          status: 'running',
+          pathId: 'path-legacy',
+          createdAt: '2026-03-11T09:00:00.000Z',
+          updatedAt: '2026-03-11T09:01:00.000Z',
+        },
+        nodes: [],
+        events: [],
+        errorSummary: null,
+      });
+      result.current.actions.setRunDetailOpen(true);
+      result.current.actions.setRunHistoryNodeId('node-prev');
+    });
+
+    await waitFor(() => {
+      expect(eventSourceInstances).toHaveLength(1);
+    });
+
+    const previousSource = eventSourceInstances[0];
+
+    rerender({ activePathId: 'path-next' });
+
+    await waitFor(() => {
+      expect(result.current.state.runList[0]?.id).toBe('run-next-1');
+    });
+
+    expect(previousSource?.close).toHaveBeenCalledTimes(1);
+    expect(result.current.state.runDetail).toBeNull();
+    expect(result.current.state.runDetailOpen).toBe(false);
+    expect(result.current.state.runHistoryNodeId).toBeNull();
+    expect(result.current.state.runStreamStatus).toBe('stopped');
   });
 });

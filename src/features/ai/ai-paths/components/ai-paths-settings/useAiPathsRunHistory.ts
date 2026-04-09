@@ -1,7 +1,7 @@
 'use client';
 
 import { type Query } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   useRunHistoryActions,
@@ -170,11 +170,21 @@ export function useAiPathsRunHistory({
 }: UseAiPathsRunHistoryArgs): void {
   const runHistoryState = useRunHistoryState();
   const runHistoryActions = useRunHistoryActions();
+  const previousActivePathIdRef = useRef<string | null | undefined>(undefined);
 
   const runDetailOpen = runHistoryState.runDetailOpen;
   const runDetail = runHistoryState.runDetail;
   const runHistoryNodeId = runHistoryState.runHistoryNodeId;
   const runStreamPaused = runHistoryState.runStreamPaused;
+
+  useEffect(() => {
+    const previousActivePathId = previousActivePathIdRef.current;
+    previousActivePathIdRef.current = activePathId;
+    if (previousActivePathId === undefined || previousActivePathId === activePathId) {
+      return;
+    }
+    runHistoryActions.clearRunDetail();
+  }, [activePathId, runHistoryActions]);
 
   useEffect(() => {
     if (!enabled) {

@@ -69,6 +69,12 @@ vi.mock('react-dom', async () => {
 
 vi.mock('../AiPathsSettingsPageContext', () => ({
   useAiPathsSettingsPageContext: () => pageContextMock,
+  useAiPathsSettingsPageWorkspaceContext: () => pageContextMock,
+  useAiPathsSettingsPageCanvasInteractionsContext: () => pageContextMock,
+  useAiPathsSettingsPageDiagnosticsContext: () => pageContextMock,
+  useAiPathsSettingsPagePathActionsContext: () => pageContextMock,
+  useAiPathsSettingsPagePersistenceContext: () => pageContextMock,
+  useAiPathsSettingsPageRuntimeContext: () => pageContextMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
@@ -81,6 +87,9 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
     setSelectionToolMode: vi.fn(),
   }),
   useGraphActions: () => graphActionsMock,
+  usePersistenceState: () => ({
+    isPathSwitching: Boolean(pageContextMock['isPathSwitching']),
+  }),
 }));
 
 vi.mock('../../canvas-board', () => ({

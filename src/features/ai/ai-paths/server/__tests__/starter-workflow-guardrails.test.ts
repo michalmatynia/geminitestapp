@@ -80,11 +80,22 @@ describe('starter workflow guardrails', () => {
       join(
         workspaceRoot,
         'src',
-        'features',
-        'ai',
+        'shared',
+        'lib',
         'ai-paths',
-        'components',
-        'AiPathsSettingsUtils.ts'
+        'core',
+        'utils',
+        'path-config-sanitization.ts'
+      ),
+      join(
+        workspaceRoot,
+        'src',
+        'shared',
+        'lib',
+        'ai-paths',
+        'core',
+        'utils',
+        'runtime-state.ts'
       ),
     ];
 

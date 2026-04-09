@@ -15,6 +15,7 @@ import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
 import {
   normalizeRemovedTriggerContextModesInDocument,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
+import { migrateAiPathConfigTriggerLabel } from '@/shared/lib/ai-paths/core/utils/trigger-label-migration';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -169,14 +170,15 @@ export const parsePathConfig = (
     });
   }
 
+  const migratedTrigger = migrateAiPathConfigTriggerLabel(config);
   const normalizedConfig: PathConfig = {
-    ...config,
+    ...migratedTrigger.config,
     aiPathsValidation: normalizeAiPathsValidationConfig(config.aiPathsValidation),
   };
 
   return {
     config: normalizedConfig,
-    repairedSetting: remediated.changed
+    repairedSetting: remediated.changed || migratedTrigger.changed
       ? {
         key: `${PATH_CONFIG_PREFIX}${pathId}`,
         value: JSON.stringify(normalizedConfig),

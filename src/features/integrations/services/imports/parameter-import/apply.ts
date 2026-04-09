@@ -239,6 +239,7 @@ export const applyBaseParameterImport = async (
           name_de: names.name_de ?? null,
           selectorType: 'text',
           optionLabels: [],
+          linkedTitleTermType: null,
         });
         if (!matched) continue;
         byId.set(matched.id, matched);

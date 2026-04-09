@@ -16,7 +16,7 @@ import {
   useOptionalProductImagesTabStateContext,
 } from './ProductImagesTabContext';
 
-const FileManager = dynamic(() => import('@/features/files/public').then(m => m.default || m.FileManager), {
+const FileManager = dynamic(() => import('@/features/files/client/public').then(m => m.default || m.FileManager), {
   ssr: false,
 });
 

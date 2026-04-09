@@ -106,6 +106,37 @@ const kangurObservabilityContractImportNames = [
 const kangurObservabilityContractImportGuardMessage =
   'Import Kangur observability contracts from "@/shared/contracts/kangur-observability".';
 
+const commonRestrictedImportPaths = [
+  {
+    name: '@/shared/contracts',
+    importNames: kangurObservabilityContractImportNames,
+    message: kangurObservabilityContractImportGuardMessage,
+  },
+  {
+    name: '@/shared/contracts/admin',
+    importNames: kangurObservabilityContractImportNames,
+    message: kangurObservabilityContractImportGuardMessage,
+  },
+  {
+    name: '@/shared/contracts/kangur',
+    importNames: kangurObservabilityContractImportNames,
+    message: kangurObservabilityContractImportGuardMessage,
+  },
+];
+
+const commonRestrictedImportPatterns = [
+  {
+    group: ['use client', 'use server'],
+    message: 'Prefer module-level directives over restricted imports.',
+  },
+];
+
+const integrationsPublicRestriction = {
+  name: '@/features/integrations/public',
+  message:
+    'Import product-facing integrations code from "@/features/integrations/product-integrations-adapter", route pages from "@/features/integrations/pages.public", or a narrower module directly.',
+};
+
 const commonRules = {
   ...js.configs.recommended.rules,
   ...preservedLegacyCoreRuleOffs,
@@ -149,29 +180,8 @@ const commonRules = {
   'no-restricted-imports': [
     'error',
     {
-      paths: [
-        {
-          name: '@/shared/contracts',
-          importNames: kangurObservabilityContractImportNames,
-          message: kangurObservabilityContractImportGuardMessage,
-        },
-        {
-          name: '@/shared/contracts/admin',
-          importNames: kangurObservabilityContractImportNames,
-          message: kangurObservabilityContractImportGuardMessage,
-        },
-        {
-          name: '@/shared/contracts/kangur',
-          importNames: kangurObservabilityContractImportNames,
-          message: kangurObservabilityContractImportGuardMessage,
-        },
-      ],
-      patterns: [
-        {
-          group: ['use client', 'use server'],
-          message: 'Prefer module-level directives over restricted imports.',
-        },
-      ],
+      paths: commonRestrictedImportPaths,
+      patterns: commonRestrictedImportPatterns,
     },
   ],
 };
@@ -413,6 +423,24 @@ export default defineConfig([
       'src/shared/utils/observability/error-system.ts',
       'src/shared/lib/auth/settings-manage-access.ts',
     ],
+  },
+
+  {
+    files: [
+      'src/features/products/**/*.{js,jsx,ts,tsx}',
+      'src/features/kangur/**/*.{js,jsx,ts,tsx}',
+      'src/features/integrations/**/*.{js,jsx,ts,tsx}',
+      'src/app/(admin)/admin/integrations/**/*.{js,jsx,ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [...commonRestrictedImportPaths, integrationsPublicRestriction],
+          patterns: commonRestrictedImportPatterns,
+        },
+      ],
+    },
   },
 
   {

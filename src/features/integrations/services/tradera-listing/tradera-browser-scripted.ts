@@ -778,7 +778,7 @@ export const runTraderaBrowserListingScripted = async ({
       logs: rawLogs,
       errorMessage: error instanceof Error ? error.message : String(error),
     });
-    const sanitizedMetadata = {
+    const sanitizedMetadata: Record<string, unknown> = {
       ...rawMetadata,
       ...(rawLogs.length > 0
         ? {
@@ -969,7 +969,7 @@ export const runTraderaBrowserCheckStatus = async ({
 
   return {
     externalListingId: result.externalListingId ?? listing.externalListingId ?? null,
-    listingUrl: result.listingUrl ?? resolvedListingUrl,
+    listingUrl: result.listingUrl ?? resolvedListingUrl ?? undefined,
     metadata: {
       checkedStatus,
       checkStatusError,

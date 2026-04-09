@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
-vi.mock('../AiPathsSettingsUtils', () => ({
+vi.mock('@/shared/lib/ai-paths/core/utils/runtime', () => ({
   safeJsonStringify: (value: unknown): string => JSON.stringify(value ?? null),
 }));
 

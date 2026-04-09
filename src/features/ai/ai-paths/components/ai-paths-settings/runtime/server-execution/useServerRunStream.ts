@@ -2,9 +2,9 @@
 
 import { useCallback, useRef } from 'react';
 
-import { parseRuntimeState } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
 import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
 import type { AiPathRunNodeRecord, AiPathRunRecord, AiPathRunEventRecord, AiPathRuntimeEvent, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import { parseRuntimeState } from '@/shared/lib/ai-paths/core/utils/runtime-state';
 import { streamAiPathRun } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';

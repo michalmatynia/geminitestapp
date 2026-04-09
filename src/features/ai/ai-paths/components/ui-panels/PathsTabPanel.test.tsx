@@ -57,7 +57,7 @@ vi.mock('../hooks/usePathsTabPanelActions', () => ({
 }));
 
 vi.mock('../../context', () => ({
-  useGraphState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphActions: () => ({
     setPaths: mockState.setPaths,
     setPathConfigs: mockState.setPathConfigs,

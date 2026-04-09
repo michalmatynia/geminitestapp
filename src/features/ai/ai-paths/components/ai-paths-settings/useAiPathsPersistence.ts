@@ -11,6 +11,12 @@ import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import { AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY, AI_PATHS_LAST_ERROR_KEY, PATH_CONFIG_PREFIX, PATH_INDEX_KEY, createDefaultPathConfig, normalizeNodes, sanitizeEdges, normalizeAiPathsValidationConfig, stableStringify } from '@/shared/lib/ai-paths';
 import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import {
+  normalizeParserSamples,
+  normalizeUpdaterSamples,
+  parseRuntimeState,
+} from '@/shared/lib/ai-paths/core/utils/runtime-state';
 import {
   fetchAiPathsSettingsByKeysCached,
   updateAiPathsSettingsBulk,
@@ -27,12 +33,6 @@ import {
   normalizeLoadedPathMetas,
   resolvePathSaveBlockedMessage,
 } from './useAiPathsPersistence.helpers';
-import {
-  normalizeParserSamples,
-  normalizeUpdaterSamples,
-  parseRuntimeState,
-  sanitizePathConfig,
-} from '../AiPathsSettingsUtils';
 import { usePathPersistence } from './hooks/persistence/usePathPersistence';
 import { usePreferencePersistence } from './hooks/persistence/usePreferencePersistence';
 import { usePresetPersistence } from './hooks/persistence/usePresetPersistence';

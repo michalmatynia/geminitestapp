@@ -304,7 +304,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     let directJobId: string | null = null;
 
     try {
-      const sourceOutputs = runtimeContextState.runtimeState.outputs?.[sourceNodeId] ?? {};
+      const sourceOutputs = runtimeStateRef.current.outputs?.[sourceNodeId] ?? {};
       const payload = buildGraphModelJobPayload({
         prompt,
         modelId: selectedModelId,
@@ -376,7 +376,6 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     contextRegistry,
     resolvePreviewModelNode,
     runtimeContextActions,
-    runtimeContextState,
     setRuntimeState,
   ]);
 

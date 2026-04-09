@@ -169,6 +169,28 @@ describe('AdminAiPathsValidationUtils', () => {
     });
   });
 
+  it('repairs legacy trigger labels in stored path configs', () => {
+    const config = {
+      ...toCanonicalPathConfig('path_legacy_trigger_label'),
+      trigger: 'Product Modal - Context Grabber',
+    };
+
+    const parsed = parseAiPathsSettings([
+      {
+        key: `${PATH_CONFIG_PREFIX}${config.id}`,
+        value: JSON.stringify(config),
+      },
+    ]);
+
+    expect(parsed.pathConfigs[config.id]?.trigger).toBe('Product Modal - Context Filter');
+    expect(parsed.repairedPathSettings).toHaveLength(1);
+    expect(parsed.repairedPathSettings[0]?.key).toBe(`${PATH_CONFIG_PREFIX}${config.id}`);
+    expect(JSON.parse(parsed.repairedPathSettings[0]?.value ?? '{}')).toMatchObject({
+      id: config.id,
+      trigger: 'Product Modal - Context Filter',
+    });
+  });
+
   it('parses canonical entity:collection lines in collection-map draft', () => {
     expect(parseCollectionMapText('product:product_parameters\nnote:notes')).toEqual({
       product: 'product_parameters',

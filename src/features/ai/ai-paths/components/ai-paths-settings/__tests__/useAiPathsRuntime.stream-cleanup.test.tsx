@@ -25,7 +25,14 @@ const { graphActionsMock, runtimeContextState } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
-  useRuntimeState: () => runtimeContextState,
+  useRuntimeDataState: () => ({
+    runtimeState: runtimeContextState.runtimeState,
+    parserSamples: runtimeContextState.parserSamples,
+    updaterSamples: runtimeContextState.updaterSamples,
+  }),
+  useRuntimeUiState: () => ({
+    sendingToAi: runtimeContextState.sendingToAi,
+  }),
   useRuntimeActions: () => ({
     setRuntimeState: vi.fn(),
     setLastRunAt: vi.fn(),

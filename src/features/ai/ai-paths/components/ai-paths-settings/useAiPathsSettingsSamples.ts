@@ -1,19 +1,19 @@
+'use client';
 'use no memo';
 
-import { type QueryClient, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import type { Toast } from '@/shared/contracts/ui/base';
 import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { dbApi, entityApi } from '@/shared/lib/ai-paths';
-import { createMutationV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-// This hook delegates into TanStack mutation/query wrappers that are already
-// sensitive to React Compiler dev-runtime cache mismatches elsewhere in the
-// app. Keep the AI Paths samples workflow on the plain hook runtime so admin
-// route prefetches do not trip hook queue errors.
+// This hook delegates into query-factory wrappers that call TanStack Query
+// hooks internally. Keep it on the plain hook runtime to avoid React Compiler
+// dev cache-size mismatches in AI Paths settings.
 
 const AI_PATHS_SAMPLE_STALE_MS = 10_000;
 const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
@@ -217,7 +217,7 @@ export function useAiPathsSettingsSamples({
 }: UseAiPathsSettingsSamplesInput): UseAiPathsSettingsSamplesReturn {
   const queryClient = useQueryClient();
   const { setParserSamples, setUpdaterSamples } = useRuntimeActions();
-  const fetchParserSampleMutation = createMutationV2({
+  const fetchParserSampleMutation = useMutation({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-parser-sample'),
     mutationFn: async ({
       nodeId,
@@ -321,8 +321,9 @@ export function useAiPathsSettingsSamples({
     },
   });
 
-  const fetchUpdaterSampleMutation = createMutationV2<
+  const fetchUpdaterSampleMutation = useMutation<
     FetchUpdaterSampleResult,
+    Error,
     FetchUpdaterSampleVariables
   >({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-updater-sample'),

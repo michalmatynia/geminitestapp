@@ -64,7 +64,7 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
   useBrainModelOptions: (...args: unknown[]) => useBrainModelOptionsMock(...args),
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
   useIntegrations: (...args: unknown[]) => useIntegrationsMock(...args),
   useIntegrationConnections: (...args: unknown[]) => useIntegrationConnectionsMock(...args),
 }));

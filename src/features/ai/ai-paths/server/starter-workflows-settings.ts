@@ -3,15 +3,19 @@ import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import {
-  computeStarterWorkflowGraphHash,
   getAutoSeedStarterWorkflowEntries,
   getStaticRecoveryStarterWorkflowEntries,
   materializeStarterWorkflowPathConfig,
   materializeStarterWorkflowRecoveryBundle,
+} from '@/shared/lib/ai-paths/core/starter-workflows/segments/api';
+import {
+  computeStarterWorkflowGraphHash,
   resolveStarterWorkflowForPathConfig,
-  type AiPathTemplateRegistryEntry,
-  type StarterWorkflowTriggerPreset,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import type {
+  AiPathTemplateRegistryEntry,
+  StarterWorkflowTriggerPreset,
+} from '@/shared/lib/ai-paths/core/starter-workflows/segments/types';
 
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,

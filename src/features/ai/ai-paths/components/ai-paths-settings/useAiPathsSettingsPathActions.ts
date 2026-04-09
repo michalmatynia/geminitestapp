@@ -23,14 +23,14 @@ import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
-
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import {
   normalizeParserSamples,
   normalizeUpdaterSamples,
   parseRuntimeState,
-  sanitizePathConfig,
-} from '../AiPathsSettingsUtils';
+} from '@/shared/lib/ai-paths/core/utils/runtime-state';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
+
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type UseAiPathsSettingsPathActionsInput = {

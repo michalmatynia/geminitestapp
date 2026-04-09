@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -17,6 +16,7 @@ import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pr
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { Edge, PathMeta, PathConfig } from '@/shared/lib/ai-paths';
 import { triggers } from '@/shared/lib/ai-paths';
+import { normalizeAiPathTriggerLabel } from '@/shared/lib/ai-paths/core/utils/trigger-label-migration';
 import {
   DOCS_OVERVIEW_SNIPPET,
   DOCS_WIRING_SNIPPET,
@@ -51,11 +51,6 @@ type AiPathsSettingsStateOptions = {
 };
 
 import type { UseAiPathsSettingsStateReturn } from './types';
-
-// The AI Paths settings state composes a large hook graph with nested TanStack
-// helpers and confirmation/runtime controllers. Keep it off the React Compiler
-// path in dev to avoid background-prefetch hook mismatches bubbling into other
-// admin pages.
 
 export function useAiPathsSettingsState({
   activeTab,
@@ -110,10 +105,7 @@ export function useAiPathsSettingsState({
     };
   }, [activeTab, triggerButtonsReady]);
 
-  const normalizeTriggerLabel = (value?: string | null): string =>
-    value === 'Product Modal - Context Grabber'
-      ? 'Product Modal - Context Filter'
-      : (value ?? triggers[0] ?? 'Product Modal - Context Filter');
+  const normalizeTriggerLabel = normalizeAiPathTriggerLabel;
 
   const {
     nodes,

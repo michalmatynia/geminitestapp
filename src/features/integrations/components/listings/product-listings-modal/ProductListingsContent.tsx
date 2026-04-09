@@ -42,7 +42,10 @@ import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBa
 import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
 import { VintedQuickExportRecoveryBanner } from './VintedQuickExportRecoveryBanner';
 import { VintedQuickExportSuccessBanner } from './VintedQuickExportSuccessBanner';
-import { SUCCESS_STATUSES, normalizeMarketplaceStatus } from '@/features/integrations/public';
+import {
+  SUCCESS_STATUSES,
+  normalizeMarketplaceStatus,
+} from '@/features/integrations/utils/marketplace-status';
 import { findTrackedVintedListing } from '@/features/integrations/hooks/useVintedQuickExportFeedback';
 
 const toRecord = (value: unknown): Record<string, unknown> =>

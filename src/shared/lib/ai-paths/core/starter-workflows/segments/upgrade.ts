@@ -17,6 +17,8 @@ import { STARTER_WORKFLOW_REGISTRY } from './templates';
 import { materializeStarterWorkflowPathConfig } from './api';
 import type { StarterWorkflowResolution, StarterWorkflowUpgradeResult } from './types';
 
+export { computeStarterWorkflowGraphHash } from './utils';
+
 // Force cache bust: 2026-04-07T12:00:00Z
 
 const edgeSignature = (edge: unknown): string => {

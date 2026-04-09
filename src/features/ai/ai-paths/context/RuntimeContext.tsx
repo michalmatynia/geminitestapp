@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 
 import type { AiNode, RuntimePortValues, ParserSampleState, UpdaterSampleState, PathDebugSnapshot, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -22,6 +30,11 @@ import {
   type RuntimeStatusState,
   type RuntimeUiState,
 } from './RuntimeContext.shared';
+import {
+  INITIAL_RUNTIME_STATUS_STATE,
+  runtimeStatusReducer,
+  type RuntimeStatusReducerState,
+} from './RuntimeContext.status-reducer';
 
 export type {
   LastErrorInfo,
@@ -50,10 +63,10 @@ export function RuntimeProvider({
   const [pathDebugSnapshots, setPathDebugSnapshotsInternal] = useState<
     Record<string, PathDebugSnapshot>
   >({});
-  const [lastRunAt, setLastRunAtInternal] = useState<string | null>(null);
-  const [lastError, setLastErrorInternal] = useState<RuntimeStateData['lastError']>(null);
-  const [runtimeRunStatus, setRuntimeRunStatusInternal] = useState<RuntimeRunStatus>('idle');
-  const [currentRunId, setCurrentRunIdInternal] = useState<string | null>(null);
+  const [{ currentRunId, lastError, lastRunAt, runtimeRunStatus }, dispatchStatus] = useReducer(
+    runtimeStatusReducer,
+    INITIAL_RUNTIME_STATUS_STATE
+  );
   const [nodeDurations, setNodeDurationsInternal] = useState<Record<string, number>>({});
   const [parserSampleLoading, setParserSampleLoadingInternal] = useState(false);
   const [updaterSampleLoading, setUpdaterSampleLoadingInternal] = useState(false);
@@ -61,16 +74,49 @@ export function RuntimeProvider({
   const [eventsOverflowed, setEventsOverflowedInternal] = useState(false);
   const runControlHandlersRef = useRef<RuntimeControlHandlers>({});
   const runtimeNodeConfigHandlersRef = useRef<RuntimeNodeConfigHandlers>({});
+  const runtimeStatusRef = useRef<RuntimeStatusReducerState>(INITIAL_RUNTIME_STATUS_STATE);
+
+  runtimeStatusRef.current = {
+    currentRunId,
+    lastError,
+    lastRunAt,
+    runtimeRunStatus,
+  };
+
+  const setLastRunAt = useCallback((value: string | null): void => {
+    dispatchStatus({ type: 'setLastRunAt', value });
+  }, []);
+
+  const setLastError = useCallback((value: RuntimeStateData['lastError']): void => {
+    dispatchStatus({ type: 'setLastError', value });
+  }, []);
+
+  const setCurrentRunId = useCallback((value: string | null): void => {
+    dispatchStatus({ type: 'setCurrentRunId', value });
+  }, []);
+
+  const setRuntimeRunStatus = useCallback(
+    (value: RuntimeRunStatus | ((prev: RuntimeRunStatus) => RuntimeRunStatus)): void => {
+      dispatchStatus({
+        type: 'setRuntimeRunStatus',
+        value:
+          typeof value === 'function'
+            ? value(runtimeStatusRef.current.runtimeRunStatus)
+            : value,
+      });
+    },
+    []
+  );
 
   const reportMissingRunControlHandler = useCallback(
     (action: string, options?: { nodeId?: string | null; markFailed?: boolean }): void => {
       const message = `AI Paths runtime handler "${action}" is not initialized. Reload the page and try again.`;
-      setLastErrorInternal({
+      setLastError({
         message,
         time: new Date().toISOString(),
       });
       if (options?.markFailed) {
-        setRuntimeRunStatusInternal('failed');
+        setRuntimeRunStatus('failed');
       }
       logClientError(new Error(message), {
         context: {
@@ -83,13 +129,13 @@ export function RuntimeProvider({
         },
       });
     },
-    []
+    [setLastError, setRuntimeRunStatus]
   );
 
   const reportMissingRuntimeNodeConfigHandler = useCallback(
     (action: string, options?: { nodeId?: string | null }): void => {
       const message = `AI Paths runtime node-config handler "${action}" is not initialized. Reload the page and try again.`;
-      setLastErrorInternal({
+      setLastError({
         message,
         time: new Date().toISOString(),
       });
@@ -104,7 +150,7 @@ export function RuntimeProvider({
         },
       });
     },
-    []
+    [setLastError]
   );
 
   const updateNodeInputs = useCallback((nodeId: string, inputs: RuntimePortValues) => {
@@ -144,8 +190,8 @@ export function RuntimeProvider({
     setRuntimeEventsInternal([]);
     setNodeDurationsInternal({});
     setEventsOverflowedInternal(false);
-    setCurrentRunIdInternal(null);
-  }, []);
+    setCurrentRunId(null);
+  }, [setCurrentRunId]);
 
   const addRuntimeEvent = useCallback((event: AiPathRuntimeEvent) => {
     setRuntimeEventsInternal((prev) => {
@@ -385,10 +431,10 @@ export function RuntimeProvider({
       updateUpdaterSample,
       setPathDebugSnapshots: setPathDebugSnapshotsInternal,
       updatePathDebugSnapshot,
-      setLastRunAt: setLastRunAtInternal,
-      setLastError: setLastErrorInternal,
-      setCurrentRunId: setCurrentRunIdInternal,
-      setRuntimeRunStatus: setRuntimeRunStatusInternal,
+      setLastRunAt,
+      setLastError,
+      setCurrentRunId,
+      setRuntimeRunStatus,
       setRunControlHandlers,
       resetRuntimeDiagnostics,
       fireTrigger,
@@ -427,9 +473,13 @@ export function RuntimeProvider({
       resumeActiveRun,
       runSimulation,
       sendToAi,
+      setCurrentRunId,
       setRunControlHandlers,
       setRuntimeNodeConfigHandlers,
       setRuntimeEvents,
+      setRuntimeRunStatus,
+      setLastError,
+      setLastRunAt,
       stepActiveRun,
       updateNodeInputs,
       updateNodeOutputs,

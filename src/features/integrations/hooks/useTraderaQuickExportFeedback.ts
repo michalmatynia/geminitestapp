@@ -32,7 +32,7 @@ import {
   PROCESSING_STATUSES,
   SUCCESS_STATUSES,
   normalizeMarketplaceStatus,
-} from '@/features/integrations/public';
+} from '@/features/integrations/utils/marketplace-status';
 
 export type { TraderaFeedbackOptions };
 

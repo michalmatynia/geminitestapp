@@ -54,7 +54,7 @@ vi.mock('@/shared/hooks/ui/useConfirm', () => ({
 }));
 
 vi.mock('../../context', () => ({
-  useGraphState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
 }));
 
 vi.mock('../../context/PersistenceContext', () => ({

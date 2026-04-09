@@ -5,7 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 import {
   buildPersistedRuntimeState,
   sanitizePathConfig,
-} from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
+} from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';

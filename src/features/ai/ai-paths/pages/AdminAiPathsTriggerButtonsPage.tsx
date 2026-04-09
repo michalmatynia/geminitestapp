@@ -1,5 +1,4 @@
 'use client';
-'use no memo';
 
 import { MousePointer2, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
@@ -39,10 +38,6 @@ import {
   TriggerButtonListManager,
   type AiTriggerButtonRow,
 } from '../components/TriggerButtonListManager';
-
-// This page composes TanStack query/mutation factory helpers that call hooks
-// internally. Keep it off the React Compiler path to avoid dev hook-order
-// mismatches when the compiler treats those plain helper calls as memoizable.
 
 type TriggerButtonDraft = AiTriggerButtonCreatePayload & { id?: string };
 type TriggerButtonPathUsage = { id: string; name: string };

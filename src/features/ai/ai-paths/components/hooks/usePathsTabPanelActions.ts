@@ -1,17 +1,11 @@
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { triggers } from '@/shared/lib/ai-paths';
+import { normalizeAiPathTriggerLabel } from '@/shared/lib/ai-paths/core/utils/trigger-label-migration';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { usePathMetadataState } from '../../context';
 import { usePersistenceActions } from '../../context/PersistenceContext';
 import { useAiPathsErrorReporting } from '../ai-paths-settings/useAiPathsErrorReporting';
 import { useAiPathsSettingsPathActions } from '../ai-paths-settings/useAiPathsSettingsPathActions';
-
-function normalizeTriggerLabel(value?: string | null): string {
-  return value === 'Product Modal - Context Grabber'
-    ? 'Product Modal - Context Filter'
-    : (value ?? triggers[0] ?? 'Product Modal - Context Filter');
-}
 
 export function usePathsTabPanelActions() {
   const { toast } = useToast();
@@ -30,7 +24,7 @@ export function usePathsTabPanelActions() {
     isPathLocked,
     pathConfigs,
     paths,
-    normalizeTriggerLabel,
+    normalizeTriggerLabel: normalizeAiPathTriggerLabel,
     persistPathSettings: async (nextPaths, configId, config) => {
       await persistPathSettings(nextPaths, configId, config);
     },

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '@/dev/ai-paths-runtime-compatibility-normalization';
-
 import {
   buildPersistedRuntimeState,
-  parseRuntimeState,
   sanitizePathConfig,
-} from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
+} from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { parseRuntimeState } from '@/shared/lib/ai-paths/core/utils/runtime-state';
+
 import type { AiNode, Edge, PathConfig, RuntimeState } from '@/shared/contracts/ai-paths';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';

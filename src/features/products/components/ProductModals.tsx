@@ -15,7 +15,7 @@ import {
   useProductListHeaderActionsContext,
   useProductListModalsContext,
 } from '@/features/products/context/ProductListContext';
-import { resolveProductListingsIntegrationScope } from '@/features/integrations/public';
+import { resolveProductListingsIntegrationScope } from '@/features/integrations/product-integrations-adapter';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import {
@@ -48,7 +48,7 @@ const ProductForm = dynamic(loadProductForm, {
   loading: () => <EditProductSkeletonContent />,
 });
 
-const FileManager = dynamic(() => import('@/features/files/public').then((mod) => mod.default || mod.FileManager), {
+const FileManager = dynamic(() => import('@/features/files/client/public').then((mod) => mod.default || mod.FileManager), {
   ssr: false,
 });
 
@@ -67,8 +67,8 @@ const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
 
 const ListProductModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) =>
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) =>
         mod.ListProductModal
     ),
   { ssr: false }
@@ -76,8 +76,8 @@ const ListProductModal = dynamic(
 
 const MassListProductModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) =>
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) =>
         mod.MassListProductModal
     ),
   { ssr: false }
@@ -85,8 +85,8 @@ const MassListProductModal = dynamic(
 
 const ProductListingsModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) =>
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) =>
         mod.ProductListingsModal
     ),
   { ssr: false }

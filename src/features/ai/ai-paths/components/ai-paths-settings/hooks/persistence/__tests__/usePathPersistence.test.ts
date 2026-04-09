@@ -45,7 +45,7 @@ const mockState = vi.hoisted(() => ({
   logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/components/AiPathsSettingsUtils', () => ({
+vi.mock('@/shared/lib/ai-paths/core/utils/path-config-sanitization', () => ({
   buildPersistedRuntimeState: (...args: unknown[]) => mockState.buildPersistedRuntimeState(...args),
   sanitizePathConfig: (...args: unknown[]) => mockState.sanitizePathConfig(...args),
 }));

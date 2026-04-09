@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import { PATH_TEMPLATES } from '@/shared/lib/ai-paths/core/utils/path-templates';
 import { buildPortablePathPackage, resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import { createDefaultPathConfig, createPathId, normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
@@ -11,7 +12,6 @@ import { AppModal } from '@/shared/ui/feedback.public';
 import { Button, DropdownMenuItem, Textarea } from '@/shared/ui/primitives.public';
 
 import { useGraphActions, usePathMetadataState } from '../../context';
-import { sanitizePathConfig } from '../AiPathsSettingsUtils';
 import { AiPathsMasterTreePanel } from '../ai-paths-settings/AiPathsMasterTreePanel';
 import { usePathsTabPanelActions } from '../hooks/usePathsTabPanelActions';
 

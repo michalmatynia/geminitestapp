@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { memo, useCallback, type ReactNode } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
-import { isMissingProductListingsError } from '@/features/integrations/public';
+import { isMissingProductListingsError } from '@/features/integrations/product-integrations-adapter';
 import {
   useProductListRowActionsContext,
   useProductListRowRuntime,

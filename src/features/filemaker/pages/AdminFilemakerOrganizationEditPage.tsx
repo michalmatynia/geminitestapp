@@ -1,3 +1,5 @@
+'use client';
+
 import React, { startTransition } from 'react';
 
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';

@@ -15,3 +15,5 @@ export * from './node-identity';
 export * from './data-contract-preflight';
 export * from './run-preflight';
 export * from './path-templates';
+export * from './path-config-sanitization';
+export * from './trigger-label-migration';

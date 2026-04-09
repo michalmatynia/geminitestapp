@@ -237,7 +237,16 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphActions: () => mockState.graphActions,
   usePersistenceActions: () => mockState.persistenceActions,
   usePersistenceState: () => mockState.persistenceState,
-  useRuntimeState: () => mockState.runtimeStateCtx,
+  useRuntimeDataState: () => ({
+    runtimeState: mockState.runtimeStateCtx.runtimeState,
+    parserSamples: mockState.runtimeStateCtx.parserSamples,
+    updaterSamples: mockState.runtimeStateCtx.updaterSamples,
+    pathDebugSnapshots: mockState.runtimeStateCtx.pathDebugSnapshots,
+  }),
+  useRuntimeStatusState: () => ({
+    lastRunAt: mockState.runtimeStateCtx.lastRunAt,
+    lastError: mockState.runtimeStateCtx.lastError,
+  }),
   useRuntimeActions: () => mockState.runtimeActions,
   useSelectionActions: () => mockState.selectionActions,
   useSelectionState: () => mockState.selectionState,
@@ -455,7 +464,9 @@ describe('useAiPathsSettingsState', () => {
     expect(mockState.persistenceArgs[0]?.normalizeTriggerLabel('Product Modal - Context Grabber')).toBe(
       'Product Modal - Context Filter'
     );
-    expect(mockState.persistenceArgs[0]?.normalizeTriggerLabel()).toBe('Fallback Trigger');
+    expect(mockState.persistenceArgs[0]?.normalizeTriggerLabel()).toBe(
+      'Product Modal - Context Filter'
+    );
     expect(mockState.pathActionArgs[0]?.normalizeTriggerLabel('Another Trigger')).toBe('Another Trigger');
 
     await act(async () => {
@@ -549,7 +560,9 @@ describe('useAiPathsSettingsState', () => {
     const { result } = renderHook(() => useAiPathsSettingsState({ activeTab: 'docs' }));
 
     expect(mockState.runtimeArgs.at(-1)?.runtimeKernelConfig).toBeUndefined();
-    expect(mockState.persistenceArgs.at(-1)?.normalizeTriggerLabel()).toBe('Fallback Trigger');
+    expect(mockState.persistenceArgs.at(-1)?.normalizeTriggerLabel()).toBe(
+      'Product Modal - Context Filter'
+    );
     expect(mockState.pathActionArgs.at(-1)?.normalizeTriggerLabel('Already Normalized')).toBe(
       'Already Normalized'
     );

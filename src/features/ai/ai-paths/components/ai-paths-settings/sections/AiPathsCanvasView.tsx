@@ -4,6 +4,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 
 import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 
 import { AiPathsLiveLog } from './AiPathsLiveLog';
 import { AiPathsCanvasPathTree } from './AiPathsCanvasPathTree';
@@ -21,6 +22,16 @@ import {
   useAiPathsSettingsPageWorkspaceContext,
 } from '../AiPathsSettingsPageContext';
 import { AiPathsRuntimeAnalysis } from '../panels/AiPathsRuntimeAnalysis';
+
+function AiPathsCanvasSectionBoundary({
+  source,
+  children,
+}: {
+  source: string;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return <AppErrorBoundary source={source}>{children}</AppErrorBoundary>;
+}
 
 export function AiPathsCanvasView(): React.JSX.Element | null {
   const {
@@ -130,14 +141,16 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         )}
         <div className='relative flex min-w-0 flex-1 flex-col overflow-hidden bg-background/10'>
           <div ref={canvasContainerRef} className='flex-1'>
-            <CanvasBoard
-              confirmNodeSwitch={confirmNodeSwitchSafe}
-              nodeDiagnosticsById={nodeDiagnosticsById}
-              onFocusNodeDiagnostics={(nodeId: string): void => {
-                focusDataContractNode(nodeId);
-                openPathSettings(true);
-              }}
-            />
+            <AiPathsCanvasSectionBoundary source='AiPathsCanvasView.CanvasBoard'>
+              <CanvasBoard
+                confirmNodeSwitch={confirmNodeSwitchSafe}
+                nodeDiagnosticsById={nodeDiagnosticsById}
+                onFocusNodeDiagnostics={(nodeId: string): void => {
+                  focusDataContractNode(nodeId);
+                  openPathSettings(true);
+                }}
+              />
+            </AiPathsCanvasSectionBoundary>
           </div>
           {isFocusMode && (
             <div className='absolute bottom-4 right-4 flex items-center gap-2'>
@@ -155,12 +168,16 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         {isInspectorVisible && (
           <div className='w-[340px] flex-shrink-0 border-l border-border/60 bg-card/30 xl:w-[376px]'>
             <div className='h-full space-y-4 overflow-y-auto p-4'>
-              <CanvasSidebar palette={palette} />
+              <AiPathsCanvasSectionBoundary source='AiPathsCanvasView.CanvasSidebar'>
+                <CanvasSidebar palette={palette} />
+              </AiPathsCanvasSectionBoundary>
               {secondaryPanelsReady ? (
                 <>
                   <ClusterPresetsPanel />
                   <GraphModelDebugPanel />
-                  <RunHistoryPanel />
+                  <AiPathsCanvasSectionBoundary source='AiPathsCanvasView.RunHistoryPanel'>
+                    <RunHistoryPanel />
+                  </AiPathsCanvasSectionBoundary>
                 </>
               ) : null}
             </div>
@@ -168,11 +185,17 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         )}
       </div>
 
-      {!isFocusMode && secondaryPanelsReady && <RuntimeEventLogPanel />}
+      {!isFocusMode && secondaryPanelsReady && (
+        <AiPathsCanvasSectionBoundary source='AiPathsCanvasView.RuntimeEventLogPanel'>
+          <RuntimeEventLogPanel />
+        </AiPathsCanvasSectionBoundary>
+      )}
       {!isFocusMode && secondaryPanelsReady && (
         <div className={`${UI_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
           <AiPathsRuntimeAnalysis />
-          <AiPathsLiveLog />
+          <AiPathsCanvasSectionBoundary source='AiPathsCanvasView.AiPathsLiveLog'>
+            <AiPathsLiveLog />
+          </AiPathsCanvasSectionBoundary>
         </div>
       )}
     </div>

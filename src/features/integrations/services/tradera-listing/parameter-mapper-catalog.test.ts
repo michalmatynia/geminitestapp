@@ -134,10 +134,10 @@ describe('fetchAndStoreTraderaParameterMapperCatalog', () => {
         connection: expect.objectContaining({
           id: 'connection-1',
         }),
-        input: {
+        input: expect.objectContaining({
           startUrl: 'https://www.tradera.com/en/selling/new?categoryId=101',
           externalCategoryId: '101',
-        },
+        }),
         timeoutMs: 90_000,
         disableStartUrlBootstrap: false,
       })

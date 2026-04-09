@@ -54,10 +54,14 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     setImportDryRun,
     allowDuplicateSku,
     setAllowDuplicateSku,
+    saveImportSettings,
+    hasUnsavedImportSettingsChanges,
   } = useImportExportState();
   const {
     handleLoadInventories,
     handleClearInventory,
+    handleClearSavedImportSettings,
+    handleSaveImportSettings,
     savingDefaultConnection,
     handleSaveDefaultBaseConnection,
     importing,
@@ -101,6 +105,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     ],
     [importTemplates]
   );
+  const canSaveImportSettings = !saveImportSettings || hasUnsavedImportSettingsChanges;
 
   return (
     <FormSection
@@ -278,23 +283,58 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
         </div>
 
         <Card className='border-border/60 bg-card/40 p-4'>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-start justify-between gap-3'>
             <div>
               <h3 className='text-sm font-semibold text-white'>Import Options</h3>
               <p className='text-xs text-gray-500'>
                 Control execution behavior for this import run.
               </p>
+              <p className='mt-2 text-xs text-gray-400'>
+                {saveImportSettings
+                  ? hasUnsavedImportSettingsChanges
+                    ? 'Saved import settings exist. You have unsaved changes.'
+                    : 'Saved import settings will be restored on the next reload in this browser.'
+                  : 'No saved import settings yet. Use Save Import Settings to retain this page configuration after reloads.'}
+              </p>
             </div>
-            <Button
-              size='sm'
-              onClick={(): void => {
-                void handleImport();
-              }}
-              loading={importing}
-              loadingText='Importing...'
-            >
-              Run import
-            </Button>
+            <div className='ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:self-start'>
+              <Button
+                type='button'
+                size='sm'
+                variant={canSaveImportSettings ? 'success' : 'outline'}
+                onClick={(): void => {
+                  void handleSaveImportSettings();
+                }}
+                disabled={!canSaveImportSettings}
+                className={cn(
+                  canSaveImportSettings &&
+                    'border-emerald-400/40 bg-emerald-500/15 text-emerald-300 shadow-[0_0_0_1px_rgba(16,185,129,0.24),0_0_28px_rgba(16,185,129,0.18)] transition-all duration-200 hover:bg-emerald-500/25 hover:text-emerald-200 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.32),0_0_34px_rgba(16,185,129,0.24)]'
+                )}
+              >
+                Save Import Settings
+              </Button>
+              <Button
+                type='button'
+                size='sm'
+                variant='ghost'
+                onClick={(): void => {
+                  void handleClearSavedImportSettings();
+                }}
+                disabled={!saveImportSettings}
+              >
+                Clear Saved
+              </Button>
+              <Button
+                size='sm'
+                onClick={(): void => {
+                  void handleImport();
+                }}
+                loading={importing}
+                loadingText='Importing...'
+              >
+                Run import
+              </Button>
+            </div>
           </div>
           <div className='mt-3 space-y-2'>
             <ToggleRow

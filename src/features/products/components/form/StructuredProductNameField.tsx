@@ -235,7 +235,7 @@ export function StructuredProductNameField(): React.JSX.Element {
     name: 'name_en',
     defaultValue: '',
   });
-  const { errors } = useProductFormCore();
+  const { errors, normalizeNameError, setNormalizeNameError } = useProductFormCore();
   const formMetadata = useProductFormMetadata() as Partial<ReturnType<typeof useProductFormMetadata>>;
   const selectedCatalogIds = formMetadata.selectedCatalogIds ?? [];
   const categories = formMetadata.categories ?? [];
@@ -262,7 +262,7 @@ export function StructuredProductNameField(): React.JSX.Element {
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [overlayMetrics, setOverlayMetrics] = useState<SuggestionOverlayMetrics | null>(null);
 
-  const error = errors.name_en?.message;
+  const error = normalizeNameError ?? errors.name_en?.message;
 
   const categorySuggestions = useMemo(
     (): SuggestionOption[] => buildCategorySuggestions(categories),
@@ -473,6 +473,7 @@ export function StructuredProductNameField(): React.JSX.Element {
   const applySuggestion = (option: SuggestionOption): void => {
     if (!activeStage || option.disabled) return;
     const nextValue = replaceStructuredSegment(nameValue, activeStage, option.value);
+    setNormalizeNameError(null);
     setValue('name_en', nextValue, {
       shouldDirty: true,
       shouldTouch: true,
@@ -657,6 +658,9 @@ export function StructuredProductNameField(): React.JSX.Element {
           value={nameValue}
           onChange={(event) => {
             const nextValue = event.target.value;
+            if (normalizeNameError) {
+              setNormalizeNameError(null);
+            }
             field.onChange(event);
             syncSuggestionContext(nextValue, event.target.selectionStart);
           }}

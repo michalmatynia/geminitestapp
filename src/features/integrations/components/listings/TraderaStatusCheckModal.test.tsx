@@ -330,6 +330,7 @@ describe('TraderaStatusCheckModal', () => {
         makeListing({
           id: 'listing-browser-1',
           productId: 'product-1',
+          status: 'ended',
           lastStatusCheckAt: '2026-04-01T12:05:00.000Z',
           updatedAt: '2026-04-01T12:05:00.000Z',
           marketplaceData: {
@@ -340,16 +341,16 @@ describe('TraderaStatusCheckModal', () => {
                 metadata: {
                   executionSteps: [
                     {
-                      id: 'open_listing',
-                      label: 'Open listing page',
+                      id: 'open_overview',
+                      label: 'Open My Overview',
                       status: 'success',
-                      message: 'Listing page opened successfully.',
+                      message: 'Tradera My Overview opened successfully.',
                     },
                     {
-                      id: 'detect_status',
-                      label: 'Detect listing status',
+                      id: 'resolve_status',
+                      label: 'Resolve final Tradera status',
                       status: 'success',
-                      message: 'Resolved listing status as active.',
+                      message: 'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
                     },
                   ],
                 },
@@ -387,13 +388,26 @@ describe('TraderaStatusCheckModal', () => {
         {}
       );
     });
+    expect(apiGetMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/v2/integrations/products/product-1/listings',
+      { cache: 'no-store' }
+    );
+    await waitFor(() => {
+      expect(apiGetMock).toHaveBeenNthCalledWith(
+        2,
+        '/api/v2/integrations/products/product-1/listings',
+        { cache: 'no-store' }
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Checked' })).toBeInTheDocument();
     });
+    expect(screen.getByText('Ended')).toBeInTheDocument();
     expect(screen.getByText('Latest check steps')).toBeInTheDocument();
-    expect(screen.getByText('Open listing page')).toBeInTheDocument();
-    expect(screen.getByText('Detect listing status')).toBeInTheDocument();
+    expect(screen.getByText('Open My Overview')).toBeInTheDocument();
+    expect(screen.getByText('Resolve final Tradera status')).toBeInTheDocument();
   });
 
   it('updates the modal as soon as polling sees the completed status check', async () => {
@@ -425,6 +439,7 @@ describe('TraderaStatusCheckModal', () => {
         makeListing({
           id: 'listing-browser-1',
           productId: 'product-1',
+          status: 'ended',
           lastStatusCheckAt: '2026-04-01T12:10:00.000Z',
           updatedAt: '2026-04-01T12:10:00.000Z',
           marketplaceData: {
@@ -467,5 +482,6 @@ describe('TraderaStatusCheckModal', () => {
       },
       { timeout: 5_000 }
     );
+    expect(screen.getByText('Ended')).toBeInTheDocument();
   });
 });

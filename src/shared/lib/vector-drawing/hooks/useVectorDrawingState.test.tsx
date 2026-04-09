@@ -13,7 +13,7 @@ const { smoothShapeMock, simplifyShapeMock, vectorShapesToPathMock } = vi.hoiste
   vectorShapesToPathMock: vi.fn((shapes: VectorShape[]) => `path:${shapes.map((shape) => shape.id).join(',')}`),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/data-display.public', () => ({
   vectorShapesToPath: (shapes: VectorShape[]) => vectorShapesToPathMock(shapes),
 }));
 

@@ -403,4 +403,259 @@ describe('importSingleItem custom fields', () => {
       })
     );
   });
+
+  it('adds linked title-term parameters from the structured English name during product creation', async () => {
+    mocks.mapBaseProductMock.mockReturnValue({
+      sku: 'SKU-1',
+      baseProductId: 'base-1',
+      name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      producerIds: [],
+      tagIds: [],
+      imageLinks: [],
+    });
+    mocks.applyBaseParameterImportMock.mockResolvedValue({
+      applied: true,
+      parameters: [],
+      summary: {
+        extracted: 0,
+        resolved: 0,
+        created: 0,
+        written: 0,
+      },
+    });
+
+    const productRepository = buildProductRepository({
+      createProduct: vi.fn().mockResolvedValue({ id: 'product-1', sku: 'SKU-1' }),
+    });
+
+    await importSingleItem(
+      buildInput({
+        productRepository,
+        prefetchedParameters: [
+          {
+            id: 'param-material',
+            catalogId: 'catalog-1',
+            name: 'Material',
+            name_en: 'Material',
+            name_pl: null,
+            name_de: null,
+            selectorType: 'text',
+            optionLabels: [],
+            linkedTitleTermType: 'material',
+            createdAt: '2026-04-08T00:00:00.000Z',
+            updatedAt: '2026-04-08T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    expect(mocks.validateProductCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parameters: [
+          {
+            parameterId: 'param-material',
+            value: '',
+          },
+        ],
+      })
+    );
+  });
+
+  it('lets linked title-term parameters override imported static parameter values', async () => {
+    mocks.mapBaseProductMock.mockReturnValue({
+      sku: 'SKU-1',
+      baseProductId: 'base-1',
+      name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      producerIds: [],
+      tagIds: [],
+      imageLinks: [],
+    });
+    mocks.applyBaseParameterImportMock.mockResolvedValue({
+      applied: true,
+      parameters: [
+        {
+          parameterId: 'param-material',
+          value: 'Plastic',
+          valuesByLanguage: { en: 'Plastic' },
+        },
+        {
+          parameterId: 'param-color',
+          value: 'Blue',
+        },
+      ],
+      summary: {
+        extracted: 2,
+        resolved: 2,
+        created: 0,
+        written: 2,
+      },
+    });
+
+    const productRepository = buildProductRepository({
+      createProduct: vi.fn().mockResolvedValue({ id: 'product-1', sku: 'SKU-1' }),
+    });
+
+    await importSingleItem(
+      buildInput({
+        productRepository,
+        prefetchedParameters: [
+          {
+            id: 'param-material',
+            catalogId: 'catalog-1',
+            name: 'Material',
+            name_en: 'Material',
+            name_pl: null,
+            name_de: null,
+            selectorType: 'text',
+            optionLabels: [],
+            linkedTitleTermType: 'material',
+            createdAt: '2026-04-08T00:00:00.000Z',
+            updatedAt: '2026-04-08T00:00:00.000Z',
+          },
+          {
+            id: 'param-color',
+            catalogId: 'catalog-1',
+            name: 'Color',
+            name_en: 'Color',
+            name_pl: null,
+            name_de: null,
+            selectorType: 'text',
+            optionLabels: [],
+            linkedTitleTermType: null,
+            createdAt: '2026-04-08T00:00:00.000Z',
+            updatedAt: '2026-04-08T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    expect(mocks.validateProductCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parameters: expect.arrayContaining([
+          {
+            parameterId: 'param-material',
+            value: '',
+          },
+          {
+            parameterId: 'param-color',
+            value: 'Blue',
+          },
+        ]),
+      })
+    );
+  });
+
+  it('clears linked parameter values on update instead of reusing imported or stale title-derived data', async () => {
+    mocks.mapBaseProductMock.mockReturnValue({
+      sku: 'SKU-1',
+      baseProductId: 'base-1',
+      name_en: 'Scout Regiment | 4 cm | Unknown Material | Anime Pin | Attack On Titan',
+      producerIds: [],
+      tagIds: [],
+      imageLinks: [],
+    });
+    mocks.applyBaseParameterImportMock.mockResolvedValue({
+      applied: true,
+      parameters: [
+        {
+          parameterId: 'param-material',
+          value: 'Metal',
+          valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
+        },
+        {
+          parameterId: 'param-color',
+          value: 'Blue',
+        },
+      ],
+      summary: {
+        extracted: 1,
+        resolved: 1,
+        created: 0,
+        written: 0,
+      },
+    });
+
+    const existingProduct = {
+      id: 'product-1',
+      sku: 'SKU-1',
+      baseProductId: 'base-1',
+      importSource: 'base',
+      parameters: [
+        {
+          parameterId: 'param-material',
+          value: 'Metal',
+          valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
+        },
+        {
+          parameterId: 'param-color',
+          value: 'Blue',
+        },
+      ],
+      customFields: [],
+    };
+    const productRepository = buildProductRepository({
+      findProductByBaseId: vi.fn().mockResolvedValue(existingProduct),
+      updateProduct: vi.fn().mockResolvedValue({ id: 'product-1', sku: 'SKU-1' }),
+    });
+    const listingRepository = buildListingRepository();
+    mocks.findProductListingByProductAndConnectionAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        externalListingId: 'base-1',
+        inventoryId: 'inventory-1',
+        status: 'active',
+        marketplaceData: {},
+      },
+      repository: listingRepository,
+    });
+
+    await importSingleItem(
+      buildInput({
+        productRepository,
+        prefetchedParameters: [
+          {
+            id: 'param-material',
+            catalogId: 'catalog-1',
+            name: 'Material',
+            name_en: 'Material',
+            name_pl: null,
+            name_de: null,
+            selectorType: 'text',
+            optionLabels: [],
+            linkedTitleTermType: 'material',
+            createdAt: '2026-04-08T00:00:00.000Z',
+            updatedAt: '2026-04-08T00:00:00.000Z',
+          },
+          {
+            id: 'param-color',
+            catalogId: 'catalog-1',
+            name: 'Color',
+            name_en: 'Color',
+            name_pl: null,
+            name_de: null,
+            selectorType: 'text',
+            optionLabels: [],
+            linkedTitleTermType: null,
+            createdAt: '2026-04-08T00:00:00.000Z',
+            updatedAt: '2026-04-08T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    expect(mocks.validateProductUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parameters: expect.arrayContaining([
+          {
+            parameterId: 'param-material',
+            value: '',
+          },
+          {
+            parameterId: 'param-color',
+            value: 'Blue',
+          },
+        ]),
+      })
+    );
+  });
 });

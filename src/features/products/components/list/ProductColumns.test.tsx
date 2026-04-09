@@ -963,6 +963,24 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByText('Hide Statuses')).toBeInTheDocument();
   });
 
+  it('renders a disabled fallback trigger run feedback toggle when the header context is unavailable', () => {
+    useProductListHeaderActionsContextMock.mockImplementation(() => {
+      throw new Error('useProductListHeaderActionsContext must be used within a ProductListProvider');
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.header !== 'function') {
+      throw new Error('Integrations column header was not found.');
+    }
+
+    const header = integrationsColumn.header({} as never);
+    render(header);
+
+    const button = screen.getByRole('button', { name: 'Show trigger run pills' });
+    expect(button).toBeDisabled();
+    expect(screen.getByText('Show Statuses')).toBeInTheDocument();
+  });
+
   it('pins fixed widths for the columns that must stay uniform across pages', () => {
     const columns = getProductColumns();
 

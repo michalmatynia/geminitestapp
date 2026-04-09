@@ -75,16 +75,16 @@ describe('tradera-execution-steps', () => {
           metadata: {
             executionSteps: [
               {
-                id: 'open_listing',
-                label: 'Open listing page',
+                id: 'open_overview',
+                label: 'Open My Overview',
                 status: 'success',
-                message: 'Listing page opened successfully.',
+                message: 'Tradera My Overview opened successfully.',
               },
               {
-                id: 'detect_status',
-                label: 'Detect listing status',
+                id: 'resolve_status',
+                label: 'Resolve final Tradera status',
                 status: 'success',
-                message: 'Resolved listing status as active.',
+                message: 'Resolved Tradera status as active from Active listings with raw tag "active".',
               },
             ],
           },

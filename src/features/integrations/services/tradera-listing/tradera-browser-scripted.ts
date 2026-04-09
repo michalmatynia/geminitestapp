@@ -879,13 +879,42 @@ export const runTraderaBrowserCheckStatus = async ({
       : null) ??
     (listing.externalListingId ? buildCanonicalTraderaListingUrl(listing.externalListingId) : null);
 
-  if (!resolvedListingUrl) {
+  let verificationBaseProductId: string | null = null;
+  let verificationDescriptionEn: string | null = null;
+  let verificationSearchTerms: string[] = [];
+
+  try {
+    const productRepository = await getProductRepository();
+    const product = await productRepository.getProductById(listing.productId);
+    if (product) {
+      const resolvedCopy = resolveMarketplaceAwareProductCopy({
+        product,
+        integrationId: listing.integrationId,
+        preferredLocales: ['en', 'pl', 'de'],
+      });
+      const englishTitle =
+        typeof product.name_en === 'string' && product.name_en.trim()
+          ? product.name_en.trim()
+          : null;
+      verificationSearchTerms = buildDuplicateSearchTerms(
+        englishTitle ? [englishTitle] : [resolvedCopy.title]
+      );
+      verificationBaseProductId = product.baseProductId ?? product.id;
+      verificationDescriptionEn = toTrimmedString(resolvedCopy.description) || null;
+    }
+  } catch {
+    verificationSearchTerms = [];
+    verificationBaseProductId = null;
+    verificationDescriptionEn = null;
+  }
+
+  if (!resolvedListingUrl && verificationSearchTerms.length === 0) {
     return {
       externalListingId: listing.externalListingId ?? null,
       listingUrl: undefined,
       metadata: {
         checkedStatus: null,
-        checkStatusError: 'No listing URL available to check status.',
+        checkStatusError: 'No listing URL or searchable product title available to check status.',
       },
     };
   }
@@ -895,6 +924,10 @@ export const runTraderaBrowserCheckStatus = async ({
     input: {
       listingUrl: resolvedListingUrl,
       externalListingId: listing.externalListingId ?? null,
+      duplicateSearchTitle: verificationSearchTerms[0] ?? null,
+      duplicateSearchTerms: verificationSearchTerms,
+      rawDescriptionEn: verificationDescriptionEn,
+      baseProductId: verificationBaseProductId,
     },
     connection,
     timeoutMs: TRADERA_CHECK_STATUS_TIMEOUT_MS,
@@ -909,6 +942,30 @@ export const runTraderaBrowserCheckStatus = async ({
   const checkStatusError =
     typeof result.rawResult['error'] === 'string' ? result.rawResult['error'] : null;
   const executionSteps = resolveTraderaCheckStatusExecutionStepsFromResult(result.rawResult);
+  const verificationSection =
+    typeof result.rawResult['verificationSection'] === 'string'
+      ? result.rawResult['verificationSection']
+      : null;
+  const verificationMatchStrategy =
+    typeof result.rawResult['verificationMatchStrategy'] === 'string'
+      ? result.rawResult['verificationMatchStrategy']
+      : null;
+  const verificationRawStatusTag =
+    typeof result.rawResult['verificationRawStatusTag'] === 'string'
+      ? result.rawResult['verificationRawStatusTag']
+      : null;
+  const verificationMatchedProductId =
+    typeof result.rawResult['verificationMatchedProductId'] === 'string'
+      ? result.rawResult['verificationMatchedProductId']
+      : null;
+  const verificationSearchTitle =
+    typeof result.rawResult['verificationSearchTitle'] === 'string'
+      ? result.rawResult['verificationSearchTitle']
+      : null;
+  const verificationCandidateCount =
+    typeof result.rawResult['verificationCandidateCount'] === 'number'
+      ? result.rawResult['verificationCandidateCount']
+      : null;
 
   return {
     externalListingId: result.externalListingId ?? listing.externalListingId ?? null,
@@ -918,6 +975,36 @@ export const runTraderaBrowserCheckStatus = async ({
       checkStatusError,
       requestedBrowserMode: browserMode,
       runId: result.runId,
+      ...(verificationSection
+        ? {
+            verificationSection,
+          }
+        : {}),
+      ...(verificationMatchStrategy
+        ? {
+            verificationMatchStrategy,
+          }
+        : {}),
+      ...(verificationRawStatusTag
+        ? {
+            verificationRawStatusTag,
+          }
+        : {}),
+      ...(verificationMatchedProductId
+        ? {
+            verificationMatchedProductId,
+          }
+        : {}),
+      ...(verificationSearchTitle
+        ? {
+            verificationSearchTitle,
+          }
+        : {}),
+      ...(typeof verificationCandidateCount === 'number'
+        ? {
+            verificationCandidateCount,
+          }
+        : {}),
       ...(executionSteps.length > 0
         ? {
             executionSteps,

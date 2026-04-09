@@ -134,4 +134,58 @@ describe('useProductFormSubmit', () => {
       'Structured product name category must match the selected category.'
     );
   });
+
+  it('serializes linked title-term parameters into the create payload FormData', async () => {
+    const { result } = renderHook(() => {
+      const methods = useForm<ProductFormData>({
+        defaultValues: {
+          sku: 'SKU-LINKED',
+          name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        } as ProductFormData,
+      });
+
+      return useProductFormSubmit({
+        methods,
+        imageSlots: [],
+        imageLinks: [],
+        imageBase64s: [],
+        selectedCatalogIds: ['catalog-1'],
+        selectedCategoryId: null,
+        selectedTagIds: [],
+        selectedProducerIds: [],
+        selectedNoteIds: [],
+        customFieldValues: [],
+        parameterValues: [
+          {
+            parameterId: 'param-material',
+            value: 'Metal',
+            valuesByLanguage: {
+              en: 'Metal',
+              pl: 'Metal PL',
+            },
+          },
+        ],
+        studioProjectId: null,
+        refreshImages: vi.fn(),
+      });
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(mocks.createMutationMock).toHaveBeenCalledTimes(1);
+    const submittedFormData = mocks.createMutationMock.mock.calls[0]?.[0] as FormData;
+    expect(submittedFormData).toBeInstanceOf(FormData);
+    expect(JSON.parse(String(submittedFormData.get('parameters')))).toEqual([
+      {
+        parameterId: 'param-material',
+        value: 'Metal',
+        valuesByLanguage: {
+          en: 'Metal',
+          pl: 'Metal PL',
+        },
+      },
+    ]);
+  });
 });

@@ -189,7 +189,7 @@
       "outputs": ["prompt", "images"],
       "config": {
         "prompt": {
-          "template": "You normalize English ecommerce product names.\\nUse only evidence from the current product fields, images, and the Context Registry bundle supplied in the system context.\\nThe Context Registry contains the authoritative leaf-category vocabulary for the active catalog selection. Choose category ONLY from that leaf-category list. Never use parent categories and never invent category names that are not present in that list.\\n\\nCurrent English title: \\\"{{title}}\\\"\\nCurrent English description: \\\"{{content_en}}\\\"\\nProduct JSON: {{bundle}}\\n\\nReturn ONLY valid JSON object with this exact schema:\\n{\"title\":\"\",\"size\":\"\",\"material\":\"\",\"category\":\"\",\"theme\":\"\",\"normalizedName\":\"\",\"confidence\":0.0}\\n\\nRules:\\n1. normalizedName MUST exactly equal \\\"<title> | <size> | <material> | <category> | <theme>\\\".\\n2. Every field except confidence must be a non-empty English string.\\n3. category MUST exactly match one leaf category name from the Context Registry bundle.\\n4. Use concise normalized values with no markdown and no extra commentary.\\n5. If size, material, or theme cannot be inferred confidently, use \\\"Unknown\\\" for that field.\\n6. confidence must be a number between 0 and 1.\\n7. Output JSON only."
+          "template": "You normalize English ecommerce product names into a strict parameterized format.\\nUse only evidence from the current product fields, images, and the Context Registry bundle supplied in the system context.\\nThe Context Registry contains the authoritative leaf-category vocabulary for the active catalog selection. Some entries may include the full category hierarchy for disambiguation. Use that hierarchy only to identify the correct category. The final category field and normalizedName MUST use only the final leaf label, never the full hierarchy string, never a parent category, and never an invented category.\\n\\nCurrent English title: \\\"{{title}}\\\"\\nCurrent English description: \\\"{{content_en}}\\\"\\nProduct JSON: {{bundle}}\\n\\nIf the current English title is a generic placeholder shape such as \\\"Name | X cm | Metal | Pins | Lore\\\", treat it only as weak context and infer the real title from description and images. Never repeat placeholder title values such as \\\"Name\\\" or \\\"X cm\\\" in the final answer. Use images and description to infer a specific title, size, material, category, and theme.\\n\\nReturn ONLY valid JSON with this exact schema:\\n{\"title\":\"\",\"size\":\"\",\"material\":\"\",\"category\":\"\",\"theme\":\"\",\"normalizedName\":\"\",\"isValid\":true,\"validationError\":null,\"confidence\":0.0}\\n\\nRules:\\n1. normalizedName MUST exactly equal \\\"<title> | <size> | <material> | <category> | <theme>\\\".\\n2. title, size, material, category, and theme must all be non-empty English strings when isValid is true.\\n3. category MUST resolve to one leaf category from the Context Registry bundle, and the returned category value must be that leaf label only.\\n4. Do not output placeholder values such as \\\"Name\\\", \\\"X cm\\\", \\\"Unknown\\\", or invented categories when isValid is true.\\n5. If the evidence is not strong enough to produce a specific valid normalized title, set isValid to false, set validationError to a short human-readable explanation, and still return best-effort strings for the five fields.\\n6. confidence must be a number between 0 and 1.\\n7. Output JSON only."
         }
       },
       "connections": {
@@ -240,6 +240,7 @@
       "outputs": ["result", "jobId"],
       "config": {
         "model": {
+          "modelId": "ollama:gemma4",
           "temperature": 0.1,
           "maxTokens": 900,
           "vision": true,
@@ -394,7 +395,7 @@
       "id": "node-update-name-normalize",
       "type": "database",
       "title": "Database Query",
-      "description": "Update product name_en with the normalized product name.",
+      "description": "Emit a harmless no-op write so the modal can validate and apply the normalized title locally.",
       "position": {
         "x": 2420,
         "y": 480
@@ -448,7 +449,7 @@
           "writeSourcePath": "",
           "dryRun": false,
           "distinctField": "",
-          "updateTemplate": "{\n  \"$set\": {\n    \"name_en\": \"{{result}}\"\n  },\n  \"$unset\": {\n    \"__noop__\": \"\"\n  }\n}",
+          "updateTemplate": "{\n  \"$unset\": {\n    \"__noop__\": \"\"\n  }\n}",
           "skipEmpty": true,
           "trimStrings": true,
           "aiPrompt": "",

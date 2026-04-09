@@ -98,7 +98,12 @@ const formatDetectedFieldName = (value: string): string => {
 
 const MARKET_EXCLUSION_NORMALIZED_KEYS = new Set([
   normalizeKey(MARKET_EXCLUSION_FIELD_NAME),
-  ...MARKET_EXCLUSION_OPTIONS.flatMap((option) => option.aliases.map((alias) => normalizeKey(alias))),
+  ...MARKET_EXCLUSION_OPTIONS.flatMap((option) =>
+    option.aliases.flatMap((alias) => [
+      normalizeKey(alias),             // e.g. "tradera"
+      normalizeKey(`${alias} Yes`),    // e.g. "traderayes" — FileMaker checkbox convention
+    ])
+  ),
 ]);
 
 const collectSourceKeys = (

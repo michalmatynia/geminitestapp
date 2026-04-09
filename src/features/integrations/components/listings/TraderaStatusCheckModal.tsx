@@ -435,7 +435,8 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
   const fetchListingsForProduct = useCallback(
     async (productId: string): Promise<ProductListingWithDetails[]> =>
       api.get<ProductListingWithDetails[]>(
-        `/api/v2/integrations/products/${productId}/listings`
+        `/api/v2/integrations/products/${productId}/listings`,
+        { cache: 'no-store' }
       ),
     []
   );

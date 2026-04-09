@@ -46,13 +46,19 @@ describe('useListingQueries', () => {
     expect(config.refetchOnMount).toBe('always');
 
     await expect(config.queryFn()).resolves.toEqual([]);
-    expect(apiGetMock).toHaveBeenCalledWith('/api/v2/integrations/products/product-1/listings');
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/products/product-1/listings',
+      { cache: 'no-store' }
+    );
   });
 
   it('fetches product listings from the integrations listings endpoint', async () => {
     apiGetMock.mockResolvedValue([{ id: 'listing-1' }]);
 
     await expect(fetchProductListings('product-2')).resolves.toEqual([{ id: 'listing-1' }]);
-    expect(apiGetMock).toHaveBeenCalledWith('/api/v2/integrations/products/product-2/listings');
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/products/product-2/listings',
+      { cache: 'no-store' }
+    );
   });
 });

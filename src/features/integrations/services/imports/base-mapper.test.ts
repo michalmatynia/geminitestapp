@@ -580,5 +580,102 @@ describe('mapBaseProduct', () => {
       expect(diagnostics.overriddenFieldNames).toEqual([]);
       expect(diagnostics.skippedFieldNames).toEqual(['Notes']);
     });
+
+    it('auto-extracts checkbox-set options from "X Yes" style Base keys', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          text_fields: {
+            'Tradera Yes': '1',
+            'Willhaben Yes': '0',
+            'Vinted Yes': 'yes',
+          },
+        },
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'KEYCHA084',
+              name: '3rd Party Marketplaces',
+              type: 'checkbox_set',
+              options: [
+                { id: 'opt-tradera', label: 'Tradera' },
+                { id: 'opt-willhaben', label: 'Willhaben' },
+                { id: 'opt-vinted', label: 'Vinted' },
+              ],
+              createdAt: '2026-04-09T00:00:00.000Z',
+              updatedAt: '2026-04-09T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'KEYCHA084', selectedOptionIds: ['opt-tradera', 'opt-vinted'] },
+      ]);
+    });
+
+    it('resolves checkbox option by label when template uses human-readable name instead of UUID', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          text_fields: { 'Tradera Yes': '1' },
+        },
+        [
+          {
+            sourceKey: 'Tradera Yes',
+            targetField: 'custom_field_option:KEYCHA084:Tradera', // label, not UUID
+          },
+        ],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'KEYCHA084',
+              name: '3rd Party Marketplaces',
+              type: 'checkbox_set',
+              options: [{ id: 'uuid-abc123', label: 'Tradera' }],
+              createdAt: '2026-04-09T00:00:00.000Z',
+              updatedAt: '2026-04-09T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      // "Tradera" label resolves to the actual UUID "uuid-abc123"
+      expect(result.customFields).toEqual([
+        { fieldId: 'KEYCHA084', selectedOptionIds: ['uuid-abc123'] },
+      ]);
+    });
+
+    it('diagnostics reflect resolved option ID when template uses label-based target', () => {
+      const diagnostics = collectCustomFieldImportDiagnostics(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          text_fields: { 'Tradera Yes': '1' },
+        },
+        [
+          {
+            sourceKey: 'Tradera Yes',
+            targetField: 'custom_field_option:KEYCHA084:Tradera',
+          },
+        ],
+        [
+          {
+            id: 'KEYCHA084',
+            name: '3rd Party Marketplaces',
+            type: 'checkbox_set',
+            options: [{ id: 'uuid-abc123', label: 'Tradera' }],
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+        ]
+      );
+
+      expect(diagnostics.explicitMappedFieldNames).toEqual(['3rd Party Marketplaces']);
+      expect(diagnostics.skippedFieldNames).toEqual([]);
+    });
   });
 });

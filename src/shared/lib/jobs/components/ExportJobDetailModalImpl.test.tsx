@@ -9,14 +9,14 @@ const detailModalMock = vi.hoisted(() => vi.fn());
 const detailModalSectionMock = vi.hoisted(() => vi.fn());
 const formatDateTimeMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: statusBadgeMock,
 }));
 vi.mock('@/shared/ui/templates/modals', () => ({
   DetailModal: detailModalMock,
   DetailModalSection: detailModalSectionMock,
 }));
-vi.mock('@/shared/utils', () => ({
+vi.mock('@/shared/utils/formatting', () => ({
   formatDateTime: formatDateTimeMock,
 }));
 

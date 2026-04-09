@@ -42,7 +42,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
 const TS = '2026-03-06T00:00:00.000Z';
 
 const makeIndex = (entries: Array<{ id: string; name: string }>) =>
-  JSON.stringify(entries.map((e) => ({ ...e, createdAt: TS, updatedAt: TS })));
+  JSON.stringify(entries.map((e) => ({ ...e, createdAt: TS, updatedAt: TS, folderPath: '' })));
 
 const makeConfig = (id: string, name: string, extra?: Record<string, unknown>) =>
   JSON.stringify({ ...createDefaultPathConfig(id), name, ...extra });

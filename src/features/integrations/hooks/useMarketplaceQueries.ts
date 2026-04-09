@@ -135,7 +135,11 @@ export function useMarketplaceBadgeStatus(
 ): { status: string | null; isFetching: boolean } {
   const { data: listings, isFetching } = useQuery<ProductListingWithDetails[]>({
     queryKey: QUERY_KEYS.integrations.listings(productId),
-    queryFn: () => api.get<ProductListingWithDetails[]>(`/api/v2/integrations/products/${productId}/listings`),
+    queryFn: () =>
+      api.get<ProductListingWithDetails[]>(
+        `/api/v2/integrations/products/${productId}/listings`,
+        { cache: 'no-store' }
+      ),
     enabled: enabled && !!productId,
     staleTime: 30000,
   });

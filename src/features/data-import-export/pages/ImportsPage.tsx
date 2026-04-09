@@ -6,8 +6,10 @@ import React from 'react';
 import {
   ImportExportProvider,
   useImportExportData,
+  useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
-import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
+import { AdminProductsBreadcrumbs } from '@/shared/ui/admin-products-breadcrumbs';
+import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 import { Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
@@ -30,15 +32,23 @@ function ImportTab(): React.JSX.Element {
 
 function ImportsPageContent(): React.JSX.Element {
   const { checkingIntegration, isBaseConnected } = useImportExportData();
+  const { importsPageTab, setImportsPageTab } = useImportExportState();
+  const handleImportsTabChange = (value: string): void => {
+    if (value === 'import' || value === 'import-template') {
+      setImportsPageTab(value);
+    }
+  };
 
   return (
-    <AdminProductsPageLayout
-      activeTab='import'
-      title='Product Import'
-      current='Import'
-      description='Import products from Base.com and manage import templates.'
-    >
-      <div className='space-y-6'>
+    <div data-testid='imports-page-shell' className='page-section-tight space-y-4'>
+      <AdminTitleBreadcrumbHeader
+        title={<h1 className='text-3xl font-bold tracking-tight text-white'>Product Import</h1>}
+        breadcrumb={<AdminProductsBreadcrumbs current='Import' />}
+      />
+      <p className='text-sm text-muted-foreground'>
+        Import products from Base.com and manage import templates.
+      </p>
+      <div className='space-y-4'>
         {checkingIntegration ? (
           <LoadingState
             message='Checking Base.com integration status...'
@@ -53,7 +63,11 @@ function ImportsPageContent(): React.JSX.Element {
             </p>
           </Card>
         ) : (
-          <Tabs defaultValue='import' className='w-full'>
+          <Tabs
+            value={importsPageTab}
+            onValueChange={handleImportsTabChange}
+            className='w-full space-y-4'
+          >
             <TabsList className='bg-muted/40 p-1' aria-label='Product import tabs'>
               <TabsTrigger value='import' className='gap-2'>
                 <Download className='size-3.5' />
@@ -65,17 +79,17 @@ function ImportsPageContent(): React.JSX.Element {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value='import' className='mt-6 outline-none'>
+            <TabsContent value='import' className='mt-0 outline-none'>
               <ImportTab />
             </TabsContent>
 
-            <TabsContent value='import-template' className='mt-6 outline-none'>
+            <TabsContent value='import-template' className='mt-0 outline-none'>
               <TemplatesTabContent scope='import' />
             </TabsContent>
           </Tabs>
         )}
       </div>
-    </AdminProductsPageLayout>
+    </div>
   );
 }
 

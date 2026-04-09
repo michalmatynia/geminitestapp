@@ -15,6 +15,7 @@ import type { AiPathTemplateRegistryEntry } from './types';
 
 const TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES: string[] = ['97eb2bff'];
 const PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES: string[] = ['7f2d8625'];
+const PRODUCT_NAME_NORMALIZE_ADDITIONAL_GRAPH_HASHES: string[] = ['30c56611'];
 
 const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
   {
@@ -75,8 +76,8 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'product_name_normalize',
-      templateVersion: 1,
-      canonicalGraphHashes: [],
+      templateVersion: 3,
+      canonicalGraphHashes: PRODUCT_NAME_NORMALIZE_ADDITIONAL_GRAPH_HASHES,
     },
   },
   {

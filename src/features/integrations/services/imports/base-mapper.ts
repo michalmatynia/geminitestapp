@@ -547,6 +547,32 @@ const mergeCheckboxOptionSelection = (
   });
 };
 
+/**
+ * Resolves a checkbox option identifier used in a template mapping to the canonical
+ * option ID stored in the field definition. Falls back to a case-insensitive label
+ * match so templates can use human-readable names (e.g. "Tradera") instead of UUIDs.
+ * If no definition is available, returns the raw value unchanged.
+ */
+const resolveCheckboxOptionId = (
+  fieldId: string,
+  optionIdOrLabel: string,
+  definitions: ProductCustomFieldDefinition[] | undefined
+): string => {
+  if (!definitions) return optionIdOrLabel;
+  const definition = definitions.find((d) => d.id === fieldId);
+  if (!definition || definition.type !== 'checkbox_set') return optionIdOrLabel;
+
+  // Direct ID match — already canonical, no-op
+  if (definition.options.some((o) => o.id === optionIdOrLabel)) return optionIdOrLabel;
+
+  // Label match (case-insensitive) — resolves e.g. "Tradera" → actual UUID
+  const normalized = optionIdOrLabel.trim().toLowerCase();
+  const byLabel = definition.options.find(
+    (o) => o.label.trim().toLowerCase() === normalized
+  );
+  return byLabel ? byLabel.id : optionIdOrLabel;
+};
+
 const getByPath = (record: BaseProductRecord, path: string[]): unknown => {
   let current: unknown = record;
   for (const key of path) {
@@ -941,7 +967,9 @@ const autoExtractCustomFieldValues = (
         const optionLabel = option.label.trim();
         if (!optionId || !optionLabel) return;
 
-        const rawValue = resolveAutoTemplateValue(record, optionLabel, fieldName);
+        const rawValue =
+          resolveAutoTemplateValue(record, optionLabel, fieldName) ??
+          resolveAutoTemplateValue(record, `${optionLabel} Yes`, fieldName);
         if (rawValue === null || rawValue === undefined) return;
 
         matchedAnyOption = true;
@@ -1043,10 +1071,15 @@ export const collectCustomFieldImportDiagnostics = (
 
     explicitMappedFieldIds.add(fieldId);
     if (customFieldTarget.optionId) {
+      const resolvedOptionId = resolveCheckboxOptionId(
+        fieldId,
+        customFieldTarget.optionId,
+        customFieldDefinitions
+      );
       mergeCheckboxOptionSelection(
         mergedByFieldId,
         fieldId,
-        customFieldTarget.optionId,
+        resolvedOptionId,
         toCheckboxValue(rawValue)
       );
       continue;
@@ -1096,7 +1129,8 @@ export const collectCustomFieldImportDiagnostics = (
 const applyTemplateMappings = (
   record: BaseProductRecord,
   mapped: ProductCreateInput,
-  mappings: TemplateMapping[]
+  mappings: TemplateMapping[],
+  customFieldDefinitions?: ProductCustomFieldDefinition[]
 ): void => {
   const parameterValuesById = new Map<string, { parameterId: string; value: string }>();
   const customFieldValuesById = new Map<string, ProductCustomFieldValue>();
@@ -1138,10 +1172,15 @@ const applyTemplateMappings = (
     const customFieldTarget = parseProductCustomFieldTarget(targetField);
     if (customFieldTarget) {
       if (customFieldTarget.optionId) {
+        const resolvedOptionId = resolveCheckboxOptionId(
+          customFieldTarget.fieldId,
+          customFieldTarget.optionId,
+          customFieldDefinitions
+        );
         mergeCheckboxOptionSelection(
           customFieldValuesById,
           customFieldTarget.fieldId,
-          customFieldTarget.optionId,
+          resolvedOptionId,
           toCheckboxValue(rawValue)
         );
       } else {
@@ -1338,7 +1377,7 @@ export function mapBaseProduct(
     extendedResult.customFields = autoCustomFieldValues;
   }
 
-  applyTemplateMappings(record, result, mappings);
+  applyTemplateMappings(record, result, mappings, options?.customFieldDefinitions);
 
   return result;
 }

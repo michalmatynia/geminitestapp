@@ -98,7 +98,8 @@ describe('starter workflow registry', () => {
     expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
     expect(hasNodeId(config, 'node-update-name-normalize')).toBe(true);
     expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
-    expect(databaseNode?.config?.database?.updateTemplate).toContain('"name_en": "{{result}}"');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
+    expect(databaseNode?.config?.database?.updateTemplate).not.toContain('"name_en"');
     expectSuccessfulStrictRunPreflight(report);
   });
 

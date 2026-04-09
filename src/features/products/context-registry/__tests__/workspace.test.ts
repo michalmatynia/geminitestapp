@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildProductLeafCategoriesContextBundle } from '../workspace';
 
 describe('buildProductLeafCategoriesContextBundle', () => {
-  it('includes only leaf category names for the selected catalog ids', () => {
+  it('includes leaf categories with hierarchy context while keeping the leaf label as the output name', () => {
     const bundle = buildProductLeafCategoriesContextBundle({
       catalogs: [
         {
@@ -55,8 +55,12 @@ describe('buildProductLeafCategoriesContextBundle', () => {
 
     expect(document?.entityType).toBe('product_editor_leaf_categories');
     expect(document?.facts?.['leafCategoryCount']).toBe(2);
+    expect(document?.facts?.['categoryOutputPolicy']).toBe('final_leaf_segment_only');
     expect(section?.text).toContain('"Pins"');
     expect(section?.text).toContain('"Brooches"');
-    expect(section?.text).not.toContain('"Jewelry"');
+    expect(section?.text).toContain('"leafName": "Pins"');
+    expect(section?.text).toContain('"hierarchyPath": "Jewelry > Pins"');
+    expect(section?.text).toContain('"pathSegments": [');
+    expect(section?.text).not.toContain('"leafName": "Jewelry"');
   });
 });

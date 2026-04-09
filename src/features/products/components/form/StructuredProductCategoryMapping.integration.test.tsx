@@ -150,6 +150,8 @@ describe('StructuredProductNameField category mapping integration', () => {
     vi.clearAllMocks();
     useProductFormCoreMock.mockReturnValue({
       errors: {},
+      normalizeNameError: null,
+      setNormalizeNameError: vi.fn(),
     });
     useTitleTermsMock.mockReturnValue({
       data: [],

@@ -167,6 +167,8 @@ describe('ProductFormGeneral structured name editing', () => {
     vi.clearAllMocks();
     useProductFormCoreMock.mockReturnValue({
       errors: {},
+      normalizeNameError: null,
+      setNormalizeNameError: vi.fn(),
     });
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [{ code: 'en', name: 'English' }],

@@ -90,6 +90,7 @@ export interface ProductFormCoreContextType {
   getValues: UseFormGetValues<ProductFormData>;
   selectedNoteIds: string[];
   generationError: string | null;
+  normalizeNameError: string | null;
   product?: ProductWithImages | undefined;
   draft?: ProductDraft | null | undefined;
   ConfirmationModal: React.ComponentType;
@@ -106,6 +107,7 @@ export interface ProductFormCoreActionsContextType {
   toggleNote: (noteId: string) => void;
   removeNote: (noteId: string) => void;
   setGenerationError: (error: string | null) => void;
+  setNormalizeNameError: (error: string | null) => void;
   setHandleSubmit: (fn: (e?: BaseSyntheticEvent) => Promise<void>) => void;
   setConfirmationModal: (component: React.ComponentType) => void;
   setHasUnsavedChanges: (value: boolean) => void;
@@ -182,6 +184,7 @@ export function ProductFormCoreProvider({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [normalizeNameError, setNormalizeNameError] = useState<string | null>(null);
   const hasAppliedInitialDefaultsRef = useRef(false);
   const latestDefaultValuesRef = useRef(defaultValues);
 
@@ -228,6 +231,7 @@ export function ProductFormCoreProvider({
       getValues: methods.getValues,
       selectedNoteIds,
       generationError,
+      normalizeNameError,
       product,
       draft,
       ConfirmationModal,
@@ -242,6 +246,7 @@ export function ProductFormCoreProvider({
       hasUnsavedChanges,
       selectedNoteIds,
       generationError,
+      normalizeNameError,
       product,
       draft,
       ConfirmationModal,
@@ -258,6 +263,7 @@ export function ProductFormCoreProvider({
       toggleNote,
       removeNote,
       setGenerationError,
+      setNormalizeNameError,
       setHandleSubmit: updateHandleSubmit,
       setConfirmationModal: updateConfirmationModal,
       setHasUnsavedChanges,
@@ -271,6 +277,7 @@ export function ProductFormCoreProvider({
       toggleNote,
       removeNote,
       setGenerationError,
+      setNormalizeNameError,
       updateHandleSubmit,
       updateConfirmationModal,
       setHasUnsavedChanges,

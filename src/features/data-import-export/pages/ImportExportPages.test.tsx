@@ -9,6 +9,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockState = vi.hoisted(() => ({
   checkingIntegration: false,
   isBaseConnected: true,
+  importsPageTab: 'import' as 'import' | 'import-template',
+  setImportsPageTab: vi.fn(),
 }));
 
 vi.mock('next/link', () => ({
@@ -29,19 +31,29 @@ vi.mock('@/features/data-import-export/context/ImportExportContext', () => ({
     checkingIntegration: mockState.checkingIntegration,
     isBaseConnected: mockState.isBaseConnected,
   }),
+  useImportExportState: () => ({
+    importsPageTab: mockState.importsPageTab,
+    setImportsPageTab: mockState.setImportsPageTab,
+  }),
 }));
 
-vi.mock('@/shared/ui/admin-products-page-layout', () => ({
-  AdminProductsPageLayout: ({
+vi.mock('@/shared/ui/admin-products-breadcrumbs', () => ({
+  AdminProductsBreadcrumbs: ({ current }: { current: string }) => (
+    <nav data-testid='imports-breadcrumbs'>{current}</nav>
+  ),
+}));
+
+vi.mock('@/shared/ui/admin-title-breadcrumb-header', () => ({
+  AdminTitleBreadcrumbHeader: ({
     title,
-    children,
+    breadcrumb,
   }: {
-    title: string;
-    children: React.ReactNode;
+    title: React.ReactNode;
+    breadcrumb: React.ReactNode;
   }) => (
-    <div>
-      <h1>{title}</h1>
-      {children}
+    <div data-testid='imports-header'>
+      {title}
+      {breadcrumb}
     </div>
   ),
 }));
@@ -151,17 +163,41 @@ describe('Import/export page shells', () => {
   beforeEach(() => {
     mockState.checkingIntegration = false;
     mockState.isBaseConnected = true;
+    mockState.importsPageTab = 'import';
+    mockState.setImportsPageTab.mockReset();
   });
 
   it('renders the dedicated product import page with import-only tabs', () => {
     render(<ImportsPage />);
 
     expect(screen.getByRole('heading', { name: 'Product Import' })).toBeInTheDocument();
+    expect(screen.getByTestId('imports-breadcrumbs')).toHaveTextContent('Import');
     expect(screen.getByRole('button', { name: 'Import' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import Template' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Export Template' })).not.toBeInTheDocument();
     expect(screen.getByText('import base connection')).toBeInTheDocument();
     expect(screen.getByTestId('templates-import')).toBeInTheDocument();
+  });
+
+  it('moves the breadcrumb under the import heading in the header shell', () => {
+    const { container } = render(<ImportsPage />);
+
+    const header = screen.getByTestId('imports-header');
+    const heading = screen.getByRole('heading', { name: 'Product Import' });
+    const breadcrumb = screen.getByTestId('imports-breadcrumbs');
+
+    expect(header).toContainElement(heading);
+    expect(header).toContainElement(breadcrumb);
+
+    const nodes = Array.from(container.querySelector('[data-testid="imports-header"]')?.children ?? []);
+    expect(nodes.indexOf(heading)).toBeLessThan(nodes.indexOf(breadcrumb));
+  });
+
+  it('uses the tighter imports page shell spacing instead of the default page section padding', () => {
+    render(<ImportsPage />);
+
+    expect(screen.getByTestId('imports-page-shell')).toHaveClass('page-section-tight');
+    expect(screen.getByTestId('imports-page-shell')).not.toHaveClass('page-section');
   });
 
   it('renders the export page with export-only tabs and import guidance link', () => {

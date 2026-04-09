@@ -24,6 +24,7 @@ import {
   summarizeVariant,
   trimText,
 } from './workspace.helpers';
+import { buildLeafCategoryHierarchyEntries } from '../lib/leafCategoryHierarchy';
 
 export const PRODUCT_EDITOR_CONTEXT_ROOT_IDS = [
   'page:product-editor',
@@ -156,6 +157,9 @@ const buildLeafCategoryRows = (
 ): Array<{
   id: string;
   name: string;
+  leafName: string;
+  hierarchyPath: string;
+  pathSegments: string[];
   catalogId: string;
   catalogName: string | null;
 }> => {
@@ -165,26 +169,18 @@ const buildLeafCategoryRows = (
   const catalogNameById = new Map(
     catalogs.map((catalog) => [catalog.id, typeof catalog.name === 'string' ? catalog.name.trim() : ''])
   );
-  const parentIds = new Set(
-    categories
-      .map((category) => (typeof category.parentId === 'string' ? category.parentId.trim() : ''))
-      .filter((parentId) => parentId.length > 0)
-  );
 
-  return categories
-    .filter((category) => {
-      const categoryId = category.id.trim();
-      if (!categoryId) return false;
-      if (catalogFilter.size > 0 && !catalogFilter.has(category.catalogId)) return false;
-      return !parentIds.has(categoryId);
-    })
-    .map((category) => ({
-      id: category.id,
-      name: category.name,
-      catalogId: category.catalogId,
-      catalogName: catalogNameById.get(category.catalogId) || null,
-    }))
-    .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
+  return buildLeafCategoryHierarchyEntries(categories)
+    .filter((entry) => catalogFilter.size === 0 || catalogFilter.has(entry.catalogId))
+    .map((entry) => ({
+      id: entry.id,
+      name: entry.leafName,
+      leafName: entry.leafName,
+      hierarchyPath: entry.hierarchyPath,
+      pathSegments: entry.pathSegments,
+      catalogId: entry.catalogId,
+      catalogName: catalogNameById.get(entry.catalogId) || null,
+    }));
 };
 
 const buildProductEditorWorkspaceSections = (
@@ -465,7 +461,7 @@ const buildProductLeafCategoriesRuntimeDocument = (
     title: 'Product leaf categories',
     summary:
       'Leaf-only product category vocabulary for the current product editor catalog selection. ' +
-      'Use category names exactly as listed here and never use parent categories.',
+      'Use the hierarchy to disambiguate categories, but write only the final leaf label in the normalized title.',
     status: null,
     tags: ['products', 'taxonomy', 'categories', 'leaf-categories', 'editor'],
     relatedNodeIds: [],
@@ -473,14 +469,15 @@ const buildProductLeafCategoriesRuntimeDocument = (
       selectedCatalogIds: input.selectedCatalogIds,
       selectedCatalogNames,
       leafCategoryCount: leafCategories.length,
-      categorySelectionPolicy: 'leaf_only_exact_name_match',
+      categorySelectionPolicy: 'leaf_only_exact_name_or_full_hierarchy_match',
+      categoryOutputPolicy: 'final_leaf_segment_only',
     },
     sections: [
       {
         kind: 'text',
         title: 'Leaf category options',
         summary:
-          'Resolved category vocabulary for AI tasks. Choose one category name from this list only.',
+          'Resolved category vocabulary for AI tasks. Match against the hierarchy when needed, but output only the final leaf label as the category value.',
         text: JSON.stringify(
           {
             selectedCatalogIds: input.selectedCatalogIds,

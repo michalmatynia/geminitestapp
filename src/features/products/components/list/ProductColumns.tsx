@@ -59,6 +59,13 @@ const PRODUCT_TABLE_COLUMN_SIZES = {
   actions: 64,
 } as const;
 
+const NOOP_SET_SHOW_TRIGGER_RUN_FEEDBACK = (_nextValue: boolean): void => {};
+
+const FALLBACK_HEADER_ACTIONS_CONTEXT = {
+  showTriggerRunFeedback: false,
+  setShowTriggerRunFeedback: NOOP_SET_SHOW_TRIGGER_RUN_FEEDBACK,
+} as const;
+
 const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
@@ -693,7 +700,17 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
 });
 
 const TriggerRunFeedbackHeader: React.FC = memo(function TriggerRunFeedbackHeader() {
-  const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
+  let showTriggerRunFeedback: boolean = FALLBACK_HEADER_ACTIONS_CONTEXT.showTriggerRunFeedback;
+  let setShowTriggerRunFeedback = FALLBACK_HEADER_ACTIONS_CONTEXT.setShowTriggerRunFeedback;
+  let isContextAvailable = true;
+
+  try {
+    const context = useProductListHeaderActionsContext();
+    showTriggerRunFeedback = context.showTriggerRunFeedback;
+    setShowTriggerRunFeedback = context.setShowTriggerRunFeedback;
+  } catch {
+    isContextAvailable = false;
+  }
 
   return (
     <div className='flex justify-center'>
@@ -701,6 +718,7 @@ const TriggerRunFeedbackHeader: React.FC = memo(function TriggerRunFeedbackHeade
         type='button'
         variant='ghost'
         size='sm'
+        disabled={!isContextAvailable}
         onClick={() => setShowTriggerRunFeedback(!showTriggerRunFeedback)}
         aria-label={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
         title={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}

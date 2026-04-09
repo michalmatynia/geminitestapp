@@ -45,23 +45,16 @@ vi.mock('@/shared/lib/jobs/components/JobTable', () => ({
   JobTable: jobTableMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Alert: ({ children }: { children: React.ReactNode }) => <div data-testid='alert'>{children}</div>,
   Button: ({
     asChild,
     children,
   }: React.PropsWithChildren<{ asChild?: boolean }>) =>
     asChild ? <div data-testid='button-as-child'>{children}</div> : <button>{children}</button>,
-  FormSection: ({
-    children,
-    title,
-  }: React.PropsWithChildren<{ title: string }>) => (
-    <section data-testid={`form-section-${title}`}>
-      <h2>{title}</h2>
-      {children}
-    </section>
-  ),
-  Hint: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   MetadataItem: ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div>{`${label}:${String(value)}`}</div>
   ),
@@ -85,17 +78,6 @@ vi.mock('@/shared/ui', () => ({
       </div>
     );
   },
-  RefreshButton: ({
-    isRefreshing,
-    onRefresh,
-  }: {
-    isRefreshing: boolean;
-    onRefresh: () => Promise<void> | void;
-  }) => (
-    <button data-refreshing={isRefreshing ? 'true' : 'false'} onClick={() => void onRefresh()} type='button'>
-      Refresh
-    </button>
-  ),
   SectionHeader: ({
     actions,
     description,
@@ -111,8 +93,35 @@ vi.mock('@/shared/ui', () => ({
       {actions}
     </header>
   ),
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: ({ status, variant }: { status: string; variant: string }) => (
     <div data-testid={`status-${status}`}>{`${status}:${variant}`}</div>
+  ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  FormSection: ({
+    children,
+    title,
+  }: React.PropsWithChildren<{ title: string }>) => (
+    <section data-testid={`form-section-${title}`}>
+      <h2>{title}</h2>
+      {children}
+    </section>
+  ),
+  Hint: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  RefreshButton: ({
+    isRefreshing,
+    onRefresh,
+  }: {
+    isRefreshing: boolean;
+    onRefresh: () => Promise<void> | void;
+  }) => (
+    <button data-refreshing={isRefreshing ? 'true' : 'false'} onClick={() => void onRefresh()} type='button'>
+      Refresh
+    </button>
   ),
 }));
 

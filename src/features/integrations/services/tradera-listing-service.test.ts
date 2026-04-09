@@ -146,7 +146,7 @@ describe('processTraderaListingJob', () => {
     });
 
     expect(runTraderaBrowserListingMock).not.toHaveBeenCalled();
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'active');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-1',
       expect.objectContaining({
@@ -300,7 +300,7 @@ describe('processTraderaListingJob', () => {
       })
     );
 
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'active');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-1',
       expect.objectContaining({
@@ -387,16 +387,16 @@ describe('processTraderaListingJob', () => {
         runId: 'run-check-status',
         executionSteps: [
           {
-            id: 'open_listing',
-            label: 'Open listing page',
+            id: 'open_overview',
+            label: 'Open My Overview',
             status: 'success',
-            message: 'Listing page opened successfully.',
+            message: 'Tradera My Overview opened successfully.',
           },
           {
-            id: 'detect_status',
-            label: 'Detect listing status',
+            id: 'resolve_status',
+            label: 'Resolve final Tradera status',
             status: 'success',
-            message: 'Resolved listing status as ended.',
+            message: 'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
           },
         ],
       },
@@ -415,10 +415,7 @@ describe('processTraderaListingJob', () => {
       })
     );
     expect(runTraderaBrowserListingMock).not.toHaveBeenCalled();
-    expect(updateListingStatusMock).toHaveBeenCalledWith(
-      'listing-check-status',
-      'ended'
-    );
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-check-status',
       expect.objectContaining({
@@ -440,11 +437,11 @@ describe('processTraderaListingJob', () => {
                 runId: 'run-check-status',
                 executionSteps: [
                   expect.objectContaining({
-                    id: 'open_listing',
+                    id: 'open_overview',
                     status: 'success',
                   }),
                   expect.objectContaining({
-                    id: 'detect_status',
+                    id: 'resolve_status',
                     status: 'success',
                   }),
                 ],
@@ -499,7 +496,7 @@ describe('processTraderaListingJob', () => {
       })
     ).rejects.toThrow('Tradera scripted listing failed.');
 
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'failed');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-1',
       expect.objectContaining({
@@ -571,7 +568,7 @@ describe('processTraderaListingJob', () => {
       })
     ).rejects.toThrow('Tradera login requires manual verification. Open login window and retry.');
 
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'auth_required');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-1',
       expect.objectContaining({
@@ -629,7 +626,7 @@ describe('processTraderaListingJob', () => {
       'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
     );
 
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'failed');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-1',
       expect.objectContaining({
@@ -682,7 +679,7 @@ describe('processTraderaListingJob', () => {
       'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
     );
 
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'failed');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-1',
       expect.objectContaining({
@@ -790,7 +787,7 @@ describe('processTraderaListingJob', () => {
       jobId: 'job-tradera-no-id-success',
     });
 
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'active');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-1',
       expect.objectContaining({
@@ -868,7 +865,7 @@ describe('processTraderaListingJob', () => {
       jobId: 'job-tradera-duplicate-linked',
     });
 
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-duplicate-linked', 'active');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-duplicate-linked',
       expect.objectContaining({
@@ -959,7 +956,7 @@ describe('processTraderaListingJob', () => {
       jobId: 'job-tradera-relist-duplicate-linked',
     });
 
-    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-relist-duplicate-linked', 'active');
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-relist-duplicate-linked',
       expect.objectContaining({

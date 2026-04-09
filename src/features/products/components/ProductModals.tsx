@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
+import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductLeafCategoriesContextRegistrySource } from '@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource';
 import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
 import {
@@ -17,10 +18,18 @@ import {
 import { resolveProductListingsIntegrationScope } from '@/features/integrations/public';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
+import {
+  extractNormalizeProductNameResultFromAiPathRunDetail,
+  isNormalizeProductNamePath,
+} from '@/features/products/lib/extractNormalizeProductNameFromAiPathRunDetail';
+import { validateNormalizedProductName } from '@/features/products/lib/validateNormalizedProductName';
 import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
+import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
 import {
   useDefaultExportConnection,
   useIntegrationsWithConnections,
@@ -115,9 +124,12 @@ function ProductFormModalBody(props: {
 }): React.JSX.Element {
   const { submitButtonText, validationInstanceScopeOverride, validatorSessionKey } = props;
 
-  const { product, draft, getValues } = useProductFormCore();
+  const { product, draft, getValues, setValue, setNormalizeNameError } = useProductFormCore();
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
+  const { categories } = useProductFormMetadata();
   const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
+  const [pendingLocalNormalizeRunId, setPendingLocalNormalizeRunId] = useState<string | null>(null);
+  const shouldApplyNormalizeResultLocally = validationInstanceScopeOverride !== undefined;
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
     return buildTriggeredProductEntityJson({
@@ -126,6 +138,97 @@ function ProductFormModalBody(props: {
       values: getValues(),
     });
   }, [getValues, product, draft]);
+
+  const handleRunQueued = useCallback(
+    (args: {
+      button: AiTriggerButtonRecord;
+      runId: string;
+      entityId?: string | null | undefined;
+      entityType: 'product' | 'note' | 'custom';
+    }): void => {
+      if (!shouldApplyNormalizeResultLocally) return;
+      if (!isNormalizeProductNamePath(args.button.pathId)) return;
+      setNormalizeNameError(null);
+      setPendingLocalNormalizeRunId(args.runId);
+    },
+    [setNormalizeNameError, shouldApplyNormalizeResultLocally]
+  );
+
+  useEffect(() => {
+    if (!pendingLocalNormalizeRunId || !shouldApplyNormalizeResultLocally) return;
+
+    let active = true;
+    let terminalHandled = false;
+    const trackedRunId = pendingLocalNormalizeRunId;
+
+    const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
+      if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
+      terminalHandled = true;
+
+      void (async (): Promise<void> => {
+        try {
+          if (snapshot.status !== 'completed') return;
+          const response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
+          if (!response.ok || !active) return;
+
+          const normalizeResult = extractNormalizeProductNameResultFromAiPathRunDetail(response.data);
+          if (!normalizeResult) {
+            setNormalizeNameError(
+              'Normalize failed: the AI Path did not return a normalized English title.'
+            );
+            return;
+          }
+          if (normalizeResult.isValid === false) {
+            setNormalizeNameError(
+              normalizeResult.validationError ??
+                'Normalize failed: the AI Path returned an invalid normalized title.'
+            );
+            return;
+          }
+          if (!normalizeResult.normalizedName) {
+            setNormalizeNameError(
+              normalizeResult.validationError ??
+                'Normalize failed: the AI Path did not return a normalized English title.'
+            );
+            return;
+          }
+
+          const validation = validateNormalizedProductName({
+            normalizedName: normalizeResult.normalizedName,
+            categories,
+          });
+          if (!validation.isValid) {
+            setNormalizeNameError(validation.error);
+            return;
+          }
+
+          setNormalizeNameError(null);
+          setValue('name_en', validation.normalizedName, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        } finally {
+          if (active) {
+            setPendingLocalNormalizeRunId((current) =>
+              current === trackedRunId ? null : current
+            );
+          }
+        }
+      })();
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [
+    categories,
+    pendingLocalNormalizeRunId,
+    setNormalizeNameError,
+    setValue,
+    shouldApplyNormalizeResultLocally,
+  ]);
 
   return (
     <ContextRegistryPageProvider
@@ -141,6 +244,7 @@ function ProductFormModalBody(props: {
           entityId={product?.id ?? null}
           getEntityJson={getEntityJson}
           showRunFeedback={showTriggerRunFeedback}
+          onRunQueued={handleRunQueued}
         />
         <Button
           type='button'

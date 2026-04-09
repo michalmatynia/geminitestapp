@@ -292,10 +292,6 @@ export const PART_5B = String.raw`
       publishInteraction,
       timeoutMs = 20_000
     ) => {
-      if (listingAction !== 'relist') {
-        return null;
-      }
-
       const deadline = Date.now() + timeoutMs;
       let attempt = 0;
 
@@ -564,8 +560,28 @@ export const PART_5B = String.raw`
       });
     }
 
-    const effectiveExternalListingId = externalListingId || existingExternalListingId || null;
+    const publishVerification = await recoverPublishConfirmationViaDuplicateSearch(
+      publishInteraction,
+      25_000
+    );
+    if (!publishVerification) {
+      await captureFailureArtifacts('publish-verification-missing', {
+        currentUrl: page.url(),
+        prePublishUrl,
+        publishTarget: publishTargetMetadata,
+        publishInteractionReason: publishInteraction.reason,
+        extractedListingUrl: listingUrl,
+        extractedExternalListingId: externalListingId,
+      }).catch(() => undefined);
+      throw new Error(
+        'FAIL_PUBLISH_VERIFICATION: Published listing could not be confirmed in Active listings.'
+      );
+    }
+
+    const effectiveExternalListingId =
+      publishVerification.externalListingId || externalListingId || existingExternalListingId || null;
     const effectiveListingUrl =
+      publishVerification.listingUrl ||
       listingUrl ||
       (effectiveExternalListingId
         ? 'https://www.tradera.com/item/' + effectiveExternalListingId
@@ -577,10 +593,20 @@ export const PART_5B = String.raw`
       externalListingId: effectiveExternalListingId,
       listingUrl: effectiveListingUrl,
       publishVerified: true,
+      duplicateMatchStrategy: publishVerification.duplicateMatchStrategy,
+      duplicateMatchedProductId: publishVerification.duplicateMatchedProductId,
+      duplicateCandidateCount: publishVerification.duplicateCandidateCount,
+      duplicateSearchTitle: publishVerification.duplicateSearchTitle,
+      publishInteractionReason: 'active-listings-verification',
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
       imageUploadSource: imageUploadResult?.uploadSource ?? null,
     };
+    emitStage('publish_verified', {
+      publishInteractionReason: 'active-listings-verification',
+      externalListingId: effectiveExternalListingId,
+      listingUrl: effectiveListingUrl,
+    });
     emit('result', result);
     return result;
   } catch (error) {

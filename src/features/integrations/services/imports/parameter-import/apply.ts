@@ -266,6 +266,10 @@ export const applyBaseParameterImport = async (
       }
     }
 
+    if (matched.linkedTitleTermType) {
+      continue;
+    }
+
     const nextValuePayload = buildParameterValuePayload({
       extracted: entry,
       settingsLanguageScope: input.settings.languageScope || 'catalog_languages',

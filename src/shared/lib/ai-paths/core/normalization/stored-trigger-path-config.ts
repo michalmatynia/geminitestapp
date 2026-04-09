@@ -184,10 +184,11 @@ const repairLegacyUpdateTemplateFromMappings = (
     const legacyUnquotedTemplate = deriveLegacyUnquotedCustomUpdateTemplateFromMappings(
       databaseConfig?.mappings
     );
+    const normalizeForComparison = (text: string): string => text.replace(/\s+/g, ' ').trim();
     const needsLegacyTemplateRepair =
       updateTemplate.length > 0 &&
       legacyUnquotedTemplate !== null &&
-      updateTemplate === legacyUnquotedTemplate &&
+      normalizeForComparison(updateTemplate) === normalizeForComparison(legacyUnquotedTemplate) &&
       derivedTemplate !== null &&
       derivedTemplate !== updateTemplate;
 

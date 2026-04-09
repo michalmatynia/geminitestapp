@@ -56,7 +56,9 @@ export async function GET_handler(
   try {
     const productId = requireProductId(params.id);
     const listings = await listCanonicalBaseProductListings(productId);
-    return NextResponse.json(listings);
+    const response = NextResponse.json(listings);
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
   } catch (error) {
     void ErrorSystem.captureException(error);
     const resolved = resolveError(error, {

@@ -486,6 +486,38 @@ const mergeParameterValues = (
   return Array.from(byParameterId.values());
 };
 
+const stripLinkedParameterValues = (input: {
+  values: ProductParameterValue[];
+  parameters: ProductParameter[] | undefined;
+}): ProductParameterValue[] => {
+  const linkedParameterIds = new Set(
+    (input.parameters ?? [])
+      .filter((parameter: ProductParameter): boolean => Boolean(parameter.linkedTitleTermType))
+      .map((parameter: ProductParameter) => parameter.id)
+  );
+  if (linkedParameterIds.size === 0) {
+    return normalizeParameterValues(input.values);
+  }
+  return normalizeParameterValues(input.values).filter(
+    (entry: ProductParameterValue): boolean => !linkedParameterIds.has(entry.parameterId)
+  );
+};
+
+const buildLinkedParameterPlaceholders = (
+  parameters: ProductParameter[] | undefined
+): ProductParameterValue[] =>
+  (parameters ?? []).reduce(
+    (acc: ProductParameterValue[], parameter: ProductParameter): ProductParameterValue[] => {
+      if (!parameter.linkedTitleTermType) return acc;
+      acc.push({
+        parameterId: parameter.id,
+        value: '',
+      });
+      return acc;
+    },
+    []
+  );
+
 const mergeCustomFieldValues = (
   base: ProductCustomFieldValue[],
   overrides: ProductCustomFieldValue[]
@@ -712,10 +744,21 @@ export const importSingleItem = async (input: {
     const parameterImportSummary: ParameterImportSummary | null = parameterImportResult.applied
       ? parameterImportResult.summary
       : null;
-    const resolvedParameterValues = mergeParameterValues(
+    const shouldResolveLinkedParameters =
+      parameterImportResult.applied || templateMappedParameterValues.length > 0;
+    const mergedImportedParameterValues = mergeParameterValues(
       parameterImportResult.applied ? parameterImportResult.parameters : [],
       templateMappedParameterValues
     );
+    const resolvedParameterValues = shouldResolveLinkedParameters
+      ? mergeParameterValues(
+        stripLinkedParameterValues({
+          values: mergedImportedParameterValues,
+          parameters: input.prefetchedParameters,
+        }),
+        buildLinkedParameterPlaceholders(input.prefetchedParameters)
+      )
+      : [];
     mapped.parameters = resolvedParameterValues.length > 0 ? resolvedParameterValues : undefined;
     const resolvedCustomFieldValues = mergeCustomFieldValues(
       Array.isArray(decision.target.customFields) ? decision.target.customFields : [],
@@ -745,7 +788,7 @@ export const importSingleItem = async (input: {
       ...(templateMappedCustomFieldValues.length > 0
         ? { customFields: resolvedCustomFieldValues }
         : {}),
-      ...(resolvedParameterValues.length > 0 ? { parameters: resolvedParameterValues } : {}),
+      ...(shouldResolveLinkedParameters ? { parameters: resolvedParameterValues } : {}),
     };
 
     if (mappedSku && !input.allowDuplicateSku && mappedSku !== decision.target.sku) {
@@ -907,10 +950,21 @@ export const importSingleItem = async (input: {
   const parameterImportSummary: ParameterImportSummary | null = parameterImportResult.applied
     ? parameterImportResult.summary
     : null;
-  const resolvedParameterValues = mergeParameterValues(
+  const shouldResolveLinkedParameters =
+    parameterImportResult.applied || templateMappedParameterValues.length > 0;
+  const mergedImportedParameterValues = mergeParameterValues(
     parameterImportResult.applied ? parameterImportResult.parameters : [],
     templateMappedParameterValues
   );
+  const resolvedParameterValues = shouldResolveLinkedParameters
+    ? mergeParameterValues(
+      stripLinkedParameterValues({
+        values: mergedImportedParameterValues,
+        parameters: input.prefetchedParameters,
+      }),
+      buildLinkedParameterPlaceholders(input.prefetchedParameters)
+    )
+    : mergedImportedParameterValues;
   const resolvedCustomFieldValues = normalizeProductCustomFieldValues(mapped.customFields);
   if (resolvedParameterValues.length > 0) {
     createData.parameters = resolvedParameterValues;

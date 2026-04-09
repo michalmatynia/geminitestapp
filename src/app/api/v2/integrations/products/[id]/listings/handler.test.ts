@@ -12,6 +12,7 @@ const {
   enqueueVintedListingJobMock,
   updateListingMock,
   initializeQueuesMock,
+  listCanonicalBaseProductListingsMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
   getProductByIdMock: vi.fn(),
@@ -24,6 +25,7 @@ const {
   enqueueVintedListingJobMock: vi.fn(),
   updateListingMock: vi.fn(),
   initializeQueuesMock: vi.fn(),
+  listCanonicalBaseProductListingsMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/server', () => ({
@@ -58,7 +60,13 @@ vi.mock('@/features/jobs/server', () => ({
   initializeQueues: (...args: unknown[]) => initializeQueuesMock(...args),
 }));
 
-import { POST_handler } from './handler';
+vi.mock('@/features/integrations/services/base-listing-canonicalization', () => ({
+  listCanonicalBaseProductListings: (...args: unknown[]) =>
+    listCanonicalBaseProductListingsMock(...args),
+  resolvePersistedTraderaLinkedTarget: vi.fn(),
+}));
+
+import { GET_handler, POST_handler } from './handler';
 
 describe('integration product listings handler', () => {
   beforeEach(() => {
@@ -94,6 +102,32 @@ describe('integration product listings handler', () => {
     });
     enqueueTraderaListingJobMock.mockResolvedValue('job-tradera-1');
     enqueueVintedListingJobMock.mockResolvedValue('job-vinted-1');
+    listCanonicalBaseProductListingsMock.mockResolvedValue([]);
+  });
+
+  it('serves product listings with no-store cache headers', async () => {
+    listCanonicalBaseProductListingsMock.mockResolvedValue([
+      {
+        id: 'listing-1',
+        productId: 'product-1',
+        status: 'ended',
+      },
+    ]);
+
+    const response = await GET_handler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    await expect(response.json()).resolves.toEqual([
+      {
+        id: 'listing-1',
+        productId: 'product-1',
+        status: 'ended',
+      },
+    ]);
   });
 
   it('initializes queues before enqueueing a Tradera listing job', async () => {

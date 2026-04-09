@@ -7,6 +7,10 @@ import type { ImportTemplateParameterImport } from '@/shared/contracts/integrati
 import type { Dispatch, SetStateAction } from 'react';
 
 export interface ImportExportContextType {
+  saveImportSettings: boolean;
+  hasUnsavedImportSettingsChanges: boolean;
+  importsPageTab: 'import' | 'import-template';
+  setImportsPageTab: (tab: 'import' | 'import-template') => void;
   inventoryId: string;
   setInventoryId: (id: string) => void;
   exportInventoryId: string;
@@ -110,6 +114,8 @@ export interface ImportExportContextType {
   handleResumeImport: () => Promise<void>;
   handleCancelImport: () => Promise<void>;
   handleDownloadImportReport: () => void;
+  handleSaveImportSettings: () => Promise<void>;
+  handleClearSavedImportSettings: () => Promise<void>;
   handleSaveDefaultBaseConnection: () => Promise<void>;
   handleSaveExportSettings: () => Promise<void>;
   handleClearInventory: () => Promise<void>;
@@ -129,6 +135,10 @@ export interface ImportExportContextType {
 
 export type ImportExportStateContextType = Pick<
   ImportExportContextType,
+  | 'saveImportSettings'
+  | 'hasUnsavedImportSettingsChanges'
+  | 'importsPageTab'
+  | 'setImportsPageTab'
   | 'inventoryId'
   | 'setInventoryId'
   | 'exportInventoryId'
@@ -237,6 +247,8 @@ export type ImportExportActionsContextType = Pick<
   | 'handleResumeImport'
   | 'handleCancelImport'
   | 'handleDownloadImportReport'
+  | 'handleSaveImportSettings'
+  | 'handleClearSavedImportSettings'
   | 'handleSaveDefaultBaseConnection'
   | 'handleSaveExportSettings'
   | 'handleClearInventory'

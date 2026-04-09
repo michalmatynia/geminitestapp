@@ -1,10 +1,12 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { FormProvider, useForm } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
@@ -334,15 +336,27 @@ function renderParameters({
     isLoading: false,
   });
 
+  function Wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
+    const methods = useForm<ProductFormData>({
+      defaultValues: {
+        name_en: nameEn,
+      } as ProductFormData,
+    });
+
+    return <FormProvider {...methods}>{children}</FormProvider>;
+  }
+
   return render(
-    <ProductFormMetadataContext.Provider value={metadataValue}>
-      <ProductFormParameterProvider
-        product={createProduct({ parameters, nameEn })}
-        selectedCatalogIds={['catalog-1']}
-      >
-        <ProductFormParameters />
-      </ProductFormParameterProvider>
-    </ProductFormMetadataContext.Provider>
+    <Wrapper>
+      <ProductFormMetadataContext.Provider value={metadataValue}>
+        <ProductFormParameterProvider
+          product={createProduct({ parameters, nameEn })}
+          selectedCatalogIds={['catalog-1']}
+        >
+          <ProductFormParameters />
+        </ProductFormParameterProvider>
+      </ProductFormMetadataContext.Provider>
+    </Wrapper>
   );
 }
 

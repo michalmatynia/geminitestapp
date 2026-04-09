@@ -147,9 +147,18 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       typeof (normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] === 'object'
         ? ((normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] as Record<string, unknown>)
         : null;
+    const normalizeModelNode = normalizeNodes.find((node) => node['id'] === 'node-model-name-normalize');
+    const normalizeModelConfig =
+      normalizeModelNode?.['config'] &&
+      typeof normalizeModelNode['config'] === 'object' &&
+      (normalizeModelNode['config'] as Record<string, unknown>)['model'] &&
+      typeof (normalizeModelNode['config'] as Record<string, unknown>)['model'] === 'object'
+        ? ((normalizeModelNode['config'] as Record<string, unknown>)['model'] as Record<string, unknown>)
+        : null;
     expect(normalizeDatabaseConfig?.['updatePayloadMode']).toBe('custom');
-    expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"name_en": "{{result}}"');
     expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"__noop__": ""');
+    expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).not.toContain('"name_en"');
+    expect(normalizeModelConfig?.['modelId']).toBe('ollama:gemma4');
 
     const triggerButtonsRecord = seeded.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
@@ -505,5 +514,84 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
         : null;
 
     expect(modelConfig?.['modelId']).toBe('gpt-oss:120b-cloud');
+  });
+
+  it('refreshes the default normalize starter config from the legacy gemma3 node override to gemma4', () => {
+    const seeded = ensureStarterWorkflowDefaults([
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: '[]',
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: '[]',
+      },
+    ]).nextRecords;
+
+    const staleRecords = seeded.map((record) => {
+      if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`) {
+        return record;
+      }
+
+      const parsed = JSON.parse(record.value) as Record<string, unknown>;
+      const nodes = Array.isArray(parsed['nodes']) ? (parsed['nodes'] as Array<Record<string, unknown>>) : [];
+      const nextNodes = nodes.map((node) => {
+        if (node['id'] !== 'node-model-name-normalize') return node;
+        const config =
+          node['config'] && typeof node['config'] === 'object'
+            ? { ...(node['config'] as Record<string, unknown>) }
+            : {};
+        const model =
+          config['model'] && typeof config['model'] === 'object'
+            ? { ...(config['model'] as Record<string, unknown>) }
+            : {};
+        model['modelId'] = 'ollama:gemma3';
+        return {
+          ...node,
+          config: {
+            ...config,
+            model,
+          },
+        };
+      });
+
+      return {
+        ...record,
+        value: JSON.stringify({
+          ...parsed,
+          nodes: nextNodes,
+          extensions: {
+            ...(parsed['extensions'] && typeof parsed['extensions'] === 'object'
+              ? (parsed['extensions'] as Record<string, unknown>)
+              : {}),
+            aiPathsStarter: {
+              starterKey: 'product_name_normalize',
+              templateId: 'starter_product_name_normalize',
+              templateVersion: 2,
+              seededDefault: true,
+            },
+          },
+        }),
+      };
+    });
+
+    const refreshed = ensureStarterWorkflowDefaults(staleRecords);
+    const normalizeRecord = refreshed.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
+    );
+    if (!normalizeRecord) throw new Error('Expected normalize config record');
+
+    const parsed = JSON.parse(normalizeRecord.value) as Record<string, unknown>;
+    const nodes = Array.isArray(parsed['nodes']) ? (parsed['nodes'] as Array<Record<string, unknown>>) : [];
+    const normalizeModelNode = nodes.find((node) => node['id'] === 'node-model-name-normalize');
+    const modelConfig =
+      normalizeModelNode?.['config'] &&
+      typeof normalizeModelNode['config'] === 'object' &&
+      (normalizeModelNode['config'] as Record<string, unknown>)['model'] &&
+      typeof (normalizeModelNode['config'] as Record<string, unknown>)['model'] === 'object'
+        ? ((normalizeModelNode['config'] as Record<string, unknown>)['model'] as Record<string, unknown>)
+        : null;
+
+    expect(modelConfig?.['modelId']).toBe('ollama:gemma4');
   });
 });

@@ -201,51 +201,6 @@ vi.mock('../node-config/ParserNodeConfigSection', () => ({
 
 import { NodeConfigurationSections } from '../NodeConfigurationSections';
 
-const EXPECTED_RENDER_ORDER = [
-  'TriggerNodeConfigSection',
-  'FetcherNodeConfigSection',
-  'SimulationNodeConfigSection',
-  'AudioOscillatorNodeConfigSection',
-  'AudioSpeakerNodeConfigSection',
-  'ContextNodeConfigSection',
-  'ParserNodeConfigSection',
-  'RegexNodeConfigSection',
-  'IteratorNodeConfigSection',
-  'MapperNodeConfigSection',
-  'BoundsNormalizerNodeConfigSection',
-  'CanvasOutputNodeConfigSection',
-  'MutatorNodeConfigSection',
-  'StringMutatorNodeConfigSection',
-  'ValidatorNodeConfigSection',
-  'ValidationPatternNodeConfigSection',
-  'ConstantNodeConfigSection',
-  'MathNodeConfigSection',
-  'FunctionNodeConfigSection',
-  'StateNodeConfigSection',
-  'SwitchNodeConfigSection',
-  'SubgraphNodeConfigSection',
-  'TemplateNodeConfigSection',
-  'BundleNodeConfigSection',
-  'GateNodeConfigSection',
-  'CompareNodeConfigSection',
-  'LogicalConditionNodeConfigSection',
-  'RouterNodeConfigSection',
-  'DelayNodeConfigSection',
-  'PollNodeConfigSection',
-  'PlaywrightNodeConfigSection',
-  'HttpNodeConfigSection',
-  'ApiAdvancedNodeConfigSection',
-  'PromptNodeConfigSection',
-  'ModelNodeConfigSection',
-  'AgentNodeConfigSection',
-  'LearnerAgentNodeConfigSection',
-  'DatabaseNodeConfigSection',
-  'DbSchemaNodeConfigSection',
-  'ViewerNodeConfigSection',
-  'RuntimeNodeConfigSection',
-  'UnsupportedNodeConfigNotice',
-] as const;
-
 describe('NodeConfigurationSections', () => {
   beforeEach(() => {
     mockState.selectedNode = null;
@@ -261,7 +216,7 @@ describe('NodeConfigurationSections', () => {
     expect(mockState.unsupportedProps).toEqual([]);
   });
 
-  it('renders all configuration sections and forwards the selected node to the unsupported notice', () => {
+  it('renders only the active node section plus shared runtime/unsupported sections', () => {
     mockState.selectedNode = {
       id: 'node-1',
       type: 'template',
@@ -270,15 +225,39 @@ describe('NodeConfigurationSections', () => {
 
     render(<NodeConfigurationSections />);
 
-    expect(mockState.renderedSections).toEqual(EXPECTED_RENDER_ORDER);
+    expect(mockState.renderedSections).toEqual([
+      'TemplateNodeConfigSection',
+      'RuntimeNodeConfigSection',
+      'UnsupportedNodeConfigNotice',
+    ]);
     expect(mockState.unsupportedProps).toEqual([
       {
         selectedNode: mockState.selectedNode,
       },
     ]);
 
-    for (const sectionName of EXPECTED_RENDER_ORDER) {
-      expect(screen.getByTestId(sectionName)).toBeInTheDocument();
-    }
+    expect(screen.getByTestId('TemplateNodeConfigSection')).toBeInTheDocument();
+    expect(screen.getByTestId('RuntimeNodeConfigSection')).toBeInTheDocument();
+    expect(screen.getByTestId('UnsupportedNodeConfigNotice')).toBeInTheDocument();
+    expect(screen.queryByTestId('ParserNodeConfigSection')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('DatabaseNodeConfigSection')).not.toBeInTheDocument();
+  });
+
+  it('renders shared sections even when the node type has no dedicated config section', () => {
+    mockState.selectedNode = {
+      id: 'node-2',
+      type: 'notification',
+      title: 'Notification node',
+    };
+
+    render(<NodeConfigurationSections />);
+
+    expect(mockState.renderedSections).toEqual([
+      'RuntimeNodeConfigSection',
+      'UnsupportedNodeConfigNotice',
+    ]);
+    expect(screen.queryByTestId('TemplateNodeConfigSection')).not.toBeInTheDocument();
+    expect(screen.getByTestId('RuntimeNodeConfigSection')).toBeInTheDocument();
+    expect(screen.getByTestId('UnsupportedNodeConfigNotice')).toBeInTheDocument();
   });
 });

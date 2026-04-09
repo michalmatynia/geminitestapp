@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -45,80 +46,84 @@ vi.mock('@/features/data-import-export/utils/image-retry-presets', () => ({
 
 import { useImportExportRuntime } from './useImportExportRuntime';
 
+const createRuntimeResourcesMock = (overrides: Record<string, unknown> = {}) => ({
+  activeImportRun: null,
+  allWarehouses: [],
+  baseConnections: [],
+  catalogsData: [],
+  checkingIntegration: false,
+  exportTemplates: [],
+  importList: [],
+  importListStats: null,
+  importSourceFieldValues: {},
+  importSourceFields: [],
+  importTemplates: [],
+  integrationsWithConnections: [],
+  inventories: [],
+  isBaseConnected: false,
+  isFetchingInventories: false,
+  isFetchingWarehouses: false,
+  loadingCatalogs: false,
+  loadingExportTemplates: false,
+  loadingImportList: false,
+  loadingImportRun: false,
+  loadingImportSourceFields: false,
+  loadingImportTemplates: false,
+  refreshImportParameterCacheMutation: { mutateAsync: vi.fn() },
+  refetchImportList: vi.fn().mockResolvedValue({ data: [], error: undefined }),
+  refetchInventories: vi.fn().mockResolvedValue({ data: [], error: undefined }),
+  refetchWarehouses: vi.fn().mockResolvedValue({ data: [], error: undefined }),
+  templates: {
+    exportActiveTemplateId: '',
+    exportImagesAsBase64: false,
+    setExportImagesAsBase64: vi.fn(),
+    handleNewTemplate: vi.fn(),
+    handleDuplicateTemplate: vi.fn(),
+    handleCreateExportFromImportTemplate: vi.fn(),
+    handleSaveTemplate: vi.fn(),
+    handleDeleteTemplate: vi.fn(),
+    applyTemplate: vi.fn(),
+    saveImportTemplateMutation: { isPending: false },
+    createImportTemplateMutation: { isPending: false },
+    saveExportTemplateMutation: { isPending: false },
+    createExportTemplateMutation: { isPending: false },
+    importActiveTemplateId: '',
+    setImportActiveTemplateId: vi.fn(),
+    exportTemplateName: '',
+    setExportTemplateName: vi.fn(),
+    exportTemplateDescription: '',
+    setExportTemplateDescription: vi.fn(),
+    importTemplateName: '',
+    setImportTemplateName: vi.fn(),
+    importTemplateDescription: '',
+    setImportTemplateDescription: vi.fn(),
+    importTemplateMappings: [],
+    setImportTemplateMappings: vi.fn(),
+    importTemplateParameterImport: {
+      enabled: false,
+      mode: 'all',
+      languageScope: 'catalog_languages',
+      createMissingParameters: false,
+      overwriteExistingValues: false,
+      matchBy: 'base_id_then_name',
+    },
+    setImportTemplateParameterImport: vi.fn(),
+    exportTemplateMappings: [],
+    setExportTemplateMappings: vi.fn(),
+    templateScope: 'import',
+    setTemplateScope: vi.fn(),
+  },
+  warehouses: [],
+  ...overrides,
+});
+
 describe('useImportExportRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
 
     mocks.useToastMock.mockReturnValue({ toast: vi.fn() });
-    mocks.useImportExportRuntimeResourcesMock.mockReturnValue({
-      activeImportRun: null,
-      allWarehouses: [],
-      baseConnections: [],
-      catalogsData: [],
-      checkingIntegration: false,
-      exportTemplates: [],
-      importList: [],
-      importListStats: null,
-      importSourceFieldValues: {},
-      importSourceFields: [],
-      importTemplates: [],
-      integrationsWithConnections: [],
-      inventories: [],
-      isBaseConnected: false,
-      isFetchingInventories: false,
-      isFetchingWarehouses: false,
-      loadingCatalogs: false,
-      loadingExportTemplates: false,
-      loadingImportList: false,
-      loadingImportRun: false,
-      loadingImportSourceFields: false,
-      loadingImportTemplates: false,
-      refreshImportParameterCacheMutation: { mutateAsync: vi.fn() },
-      refetchImportList: vi.fn().mockResolvedValue({ data: [], error: undefined }),
-      refetchInventories: vi.fn().mockResolvedValue({ data: [], error: undefined }),
-      refetchWarehouses: vi.fn().mockResolvedValue({ data: [], error: undefined }),
-      templates: {
-        exportActiveTemplateId: '',
-        exportImagesAsBase64: false,
-        setExportImagesAsBase64: vi.fn(),
-        handleNewTemplate: vi.fn(),
-        handleDuplicateTemplate: vi.fn(),
-        handleCreateExportFromImportTemplate: vi.fn(),
-        handleSaveTemplate: vi.fn(),
-        handleDeleteTemplate: vi.fn(),
-        applyTemplate: vi.fn(),
-        saveImportTemplateMutation: { isPending: false },
-        createImportTemplateMutation: { isPending: false },
-        saveExportTemplateMutation: { isPending: false },
-        createExportTemplateMutation: { isPending: false },
-        importActiveTemplateId: '',
-        setImportActiveTemplateId: vi.fn(),
-        exportTemplateName: '',
-        setExportTemplateName: vi.fn(),
-        exportTemplateDescription: '',
-        setExportTemplateDescription: vi.fn(),
-        importTemplateName: '',
-        setImportTemplateName: vi.fn(),
-        importTemplateDescription: '',
-        setImportTemplateDescription: vi.fn(),
-        importTemplateMappings: [],
-        setImportTemplateMappings: vi.fn(),
-        importTemplateParameterImport: {
-          enabled: false,
-          mode: 'all',
-          languageScope: 'catalog_languages',
-          createMissingParameters: false,
-          overwriteExistingValues: false,
-          matchBy: 'base_id_then_name',
-        },
-        setImportTemplateParameterImport: vi.fn(),
-        exportTemplateMappings: [],
-        setExportTemplateMappings: vi.fn(),
-        templateScope: 'import',
-        setTemplateScope: vi.fn(),
-      },
-      warehouses: [],
-    });
+    mocks.useImportExportRuntimeResourcesMock.mockReturnValue(createRuntimeResourcesMock());
     mocks.createImportExportRuntimeActionsMock.mockReturnValue({
       handleLoadInventories: vi.fn(),
       handleLoadWarehouses: vi.fn(),
@@ -158,5 +163,232 @@ describe('useImportExportRuntime', () => {
     const { result } = renderHook(() => useImportExportRuntime());
 
     expect(result.current.stateValue.imageMode).toBe('download');
+  });
+
+  it('hydrates saved import settings from local storage on reload', async () => {
+    window.localStorage.setItem(
+      'product-import-runtime.v1',
+      JSON.stringify({
+        version: 1,
+        saveImportSettings: true,
+        importsPageTab: 'import-template',
+        selectedBaseConnectionId: 'conn-1',
+        inventoryId: 'inv-1',
+        catalogId: 'catalog-1',
+        limit: '50',
+        imageMode: 'links',
+        importMode: 'upsert_on_sku',
+        importDryRun: true,
+        uniqueOnly: false,
+        allowDuplicateSku: true,
+        importTemplateId: 'tpl-1',
+        importNameSearch: 'hoodie',
+        importSkuSearch: 'SKU-1',
+        importListPage: 3,
+        importListPageSize: 50,
+        importListEnabled: true,
+      })
+    );
+
+    mocks.useImportExportRuntimeResourcesMock.mockReturnValue(
+      createRuntimeResourcesMock({
+        baseConnections: [{ id: 'conn-1', name: 'Conn 1' }],
+        catalogsData: [{ id: 'catalog-1', name: 'Catalog 1', isDefault: false }],
+        importTemplates: [
+          {
+            id: 'tpl-1',
+            name: 'Template 1',
+            provider: 'base',
+            mappings: [],
+            config: {},
+          },
+        ],
+        inventories: [{ id: 'inv-1', name: 'Inventory 1' }],
+      })
+    );
+
+    const { result } = renderHook(() => useImportExportRuntime());
+
+    await waitFor(() => {
+      expect(result.current.stateValue.saveImportSettings).toBe(true);
+      expect(result.current.stateValue.importsPageTab).toBe('import-template');
+      expect(result.current.stateValue.selectedBaseConnectionId).toBe('conn-1');
+      expect(result.current.stateValue.inventoryId).toBe('inv-1');
+      expect(result.current.stateValue.catalogId).toBe('catalog-1');
+      expect(result.current.stateValue.limit).toBe('50');
+      expect(result.current.stateValue.imageMode).toBe('links');
+      expect(result.current.stateValue.importMode).toBe('upsert_on_sku');
+      expect(result.current.stateValue.importDryRun).toBe(true);
+      expect(result.current.stateValue.uniqueOnly).toBe(false);
+      expect(result.current.stateValue.allowDuplicateSku).toBe(true);
+      expect(result.current.stateValue.importTemplateId).toBe('tpl-1');
+      expect(result.current.stateValue.importNameSearch).toBe('hoodie');
+      expect(result.current.stateValue.importSkuSearch).toBe('SKU-1');
+      expect(result.current.stateValue.importListPage).toBe(3);
+      expect(result.current.stateValue.importListPageSize).toBe(50);
+      expect(result.current.stateValue.importListEnabled).toBe(true);
+    });
+  });
+
+  it('persists import settings only after the explicit save action is used', async () => {
+    const { result } = renderHook(() => useImportExportRuntime());
+
+    await act(async () => {
+      result.current.stateValue.setImportsPageTab('import-template');
+      result.current.stateValue.setSelectedBaseConnectionId('conn-2');
+      result.current.stateValue.setInventoryId('inv-2');
+      result.current.stateValue.setCatalogId('catalog-2');
+      result.current.stateValue.setLimit('100');
+      result.current.stateValue.setImageMode('links');
+      result.current.stateValue.setImportMode('create_only');
+      result.current.stateValue.setImportDryRun(true);
+      result.current.stateValue.setUniqueOnly(false);
+      result.current.stateValue.setAllowDuplicateSku(true);
+      result.current.stateValue.setImportTemplateId('tpl-2');
+      result.current.stateValue.setImportNameSearch('pin');
+      result.current.stateValue.setImportSkuSearch('PIN-2');
+      result.current.stateValue.setImportListPage(4);
+      result.current.stateValue.setImportListPageSize(100);
+      result.current.stateValue.setImportListEnabled(true);
+    });
+
+    expect(window.localStorage.getItem('product-import-runtime.v1')).toBeNull();
+    expect(result.current.stateValue.saveImportSettings).toBe(false);
+
+    await act(async () => {
+      await result.current.actionsValue.handleSaveImportSettings();
+    });
+
+    await waitFor(() => {
+      expect(result.current.stateValue.saveImportSettings).toBe(true);
+      expect(result.current.stateValue.hasUnsavedImportSettingsChanges).toBe(false);
+      expect(JSON.parse(window.localStorage.getItem('product-import-runtime.v1') ?? 'null')).toEqual(
+        {
+          version: 1,
+          saveImportSettings: true,
+          importsPageTab: 'import-template',
+          selectedBaseConnectionId: 'conn-2',
+          inventoryId: 'inv-2',
+          catalogId: 'catalog-2',
+          limit: '100',
+          imageMode: 'links',
+          importMode: 'create_only',
+          importDryRun: true,
+          uniqueOnly: false,
+          allowDuplicateSku: true,
+          importTemplateId: 'tpl-2',
+          importNameSearch: 'pin',
+          importSkuSearch: 'PIN-2',
+          importListPage: 4,
+          importListPageSize: 100,
+          importListEnabled: true,
+        }
+      );
+    });
+  });
+
+  it('clears persisted import settings after the clear action is used', async () => {
+    const { result } = renderHook(() => useImportExportRuntime());
+
+    await act(async () => {
+      result.current.stateValue.setSelectedBaseConnectionId('conn-2');
+      result.current.stateValue.setImportListEnabled(true);
+    });
+
+    await act(async () => {
+      await result.current.actionsValue.handleSaveImportSettings();
+    });
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem('product-import-runtime.v1')).not.toBeNull();
+    });
+
+    await act(async () => {
+      await result.current.actionsValue.handleClearSavedImportSettings();
+    });
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem('product-import-runtime.v1')).toBeNull();
+      expect(result.current.stateValue.saveImportSettings).toBe(false);
+      expect(result.current.stateValue.hasUnsavedImportSettingsChanges).toBe(false);
+    });
+  });
+
+  it('marks saved import settings as dirty after editing them', async () => {
+    const { result } = renderHook(() => useImportExportRuntime());
+
+    await act(async () => {
+      result.current.stateValue.setCatalogId('catalog-2');
+      await result.current.actionsValue.handleSaveImportSettings();
+    });
+
+    await act(async () => {
+      result.current.stateValue.setCatalogId('catalog-3');
+    });
+
+    expect(result.current.stateValue.saveImportSettings).toBe(true);
+    expect(result.current.stateValue.hasUnsavedImportSettingsChanges).toBe(true);
+  });
+
+  it('clears stale persisted ids when saved resources are no longer available', async () => {
+    window.localStorage.setItem(
+      'product-import-runtime.v1',
+      JSON.stringify({
+        version: 1,
+        saveImportSettings: true,
+        importsPageTab: 'import',
+        selectedBaseConnectionId: 'missing-conn',
+        inventoryId: 'missing-inv',
+        catalogId: 'missing-catalog',
+        limit: 'all',
+        imageMode: 'download',
+        importMode: 'upsert_on_base_id',
+        importDryRun: false,
+        uniqueOnly: true,
+        allowDuplicateSku: false,
+        importTemplateId: 'missing-template',
+        importNameSearch: '',
+        importSkuSearch: '',
+        importListPage: 1,
+        importListPageSize: 25,
+        importListEnabled: true,
+      })
+    );
+
+    mocks.useImportExportRuntimeResourcesMock.mockImplementation(
+      ({
+        setBaseConnections,
+      }: {
+        setBaseConnections: (connections: Array<{ id: string; name: string }>) => void;
+      }) => {
+      useEffect(() => {
+        setBaseConnections([{ id: 'conn-1', name: 'Conn 1' }]);
+      }, [setBaseConnections]);
+
+      return createRuntimeResourcesMock({
+        catalogsData: [{ id: 'catalog-1', name: 'Catalog 1', isDefault: false }],
+        importTemplates: [
+          {
+            id: 'tpl-1',
+            name: 'Template 1',
+            provider: 'base',
+            mappings: [],
+            config: {},
+          },
+        ],
+        inventories: [{ id: 'inv-1', name: 'Inventory 1' }],
+      });
+      }
+    );
+
+    const { result } = renderHook(() => useImportExportRuntime());
+
+    await waitFor(() => {
+      expect(result.current.stateValue.selectedBaseConnectionId).toBe('');
+      expect(result.current.stateValue.inventoryId).toBe('');
+      expect(result.current.stateValue.catalogId).toBe('');
+      expect(result.current.stateValue.importTemplateId).toBe('');
+      expect(result.current.stateValue.importListEnabled).toBe(false);
+    });
   });
 });

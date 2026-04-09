@@ -1,7 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductTitleTerm, ProductTitleTermType } from '@/shared/contracts/products/title-terms';
 import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products/product';
@@ -18,7 +20,6 @@ import {
 } from '@/shared/lib/products/utils/parameter-values';
 
 import { useParameters, useTitleTerms } from '../hooks/useProductMetadataQueries';
-import { ProductFormCoreStateContext } from './ProductFormCoreContext';
 
 export interface ProductFormParameterContextType {
   parameters: ProductParameter[];
@@ -177,7 +178,7 @@ export function ProductFormParameterProvider({
   onInteraction?: () => void;
 }) {
   const primaryCatalogId = selectedCatalogIds[0] || '';
-  const coreState = useContext(ProductFormCoreStateContext);
+  const formContext = useFormContext<ProductFormData>();
   const parametersQuery = useParameters(primaryCatalogId);
   const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
   const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
@@ -195,7 +196,11 @@ export function ProductFormParameterProvider({
     sourceParameterValues
   );
   const adoptedParameterValuesKeyRef = useRef<string>(sourceParameterValuesKey);
-  const watchedNameEn = coreState?.methods.watch('name_en');
+  const watchedNameEn = useWatch({
+    control: formContext?.control,
+    name: 'name_en',
+    disabled: !formContext?.control,
+  });
   const currentStructuredName =
     (typeof watchedNameEn === 'string' ? watchedNameEn : null) ?? product?.name_en ?? draft?.name_en ?? '';
 

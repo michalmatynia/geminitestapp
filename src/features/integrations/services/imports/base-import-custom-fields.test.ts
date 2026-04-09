@@ -267,6 +267,44 @@ describe('ensureBaseTextCustomFields', () => {
       }),
     ]);
   });
+
+  it('does not create text custom fields for "X Yes" marketplace checkbox keys', async () => {
+    const repository = buildRepository();
+    vi.mocked(repository.createCustomField).mockImplementation(async (data) =>
+      buildDefinition({
+        id: `${data.name.toLowerCase().replace(/\s+/g, '-')}-id`,
+        name: data.name,
+        type: data.type,
+        options: data.options ?? [],
+      })
+    );
+
+    const definitions = await ensureBaseTextCustomFields({
+      repository,
+      existingDefinitions: [],
+      records: [
+        {
+          text_fields: {
+            'Tradera Yes': '1',
+            'Willhaben Yes': '1',
+            'Depop Yes': '0',
+            'Grailed Yes': '0',
+            'Schpock Yes': '0',
+            'Vinted Yes': '1',
+            custom_note: 'Handle with care',
+          },
+        },
+      ],
+    });
+
+    // Only the non-marketplace key should produce a custom field
+    expect(repository.createCustomField).toHaveBeenCalledTimes(1);
+    expect(repository.createCustomField).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Custom Note', type: 'text' })
+    );
+    expect(definitions).toHaveLength(1);
+    expect(definitions[0]).toMatchObject({ name: 'Custom Note' });
+  });
 });
 
 describe('ensureBaseMarketplaceExclusionCustomField', () => {

@@ -87,6 +87,8 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
 
   useProductFormCoreMock.mockReturnValue({
     errors: {},
+    normalizeNameError: null,
+    setNormalizeNameError: vi.fn(),
   });
   useProductFormMetadataMock.mockReturnValue({
     selectedCatalogIds: ['catalog-a'],
@@ -197,6 +199,55 @@ describe('StructuredProductNameField', () => {
       '/admin/products/title-terms?catalogId=catalog-a'
     );
     expect(titleTermsLink).toHaveAttribute('target', '_blank');
+  });
+
+  it('prefers the normalize error and clears it on manual edit', () => {
+    const setNormalizeNameError = vi.fn();
+    useProductFormCoreMock.mockReturnValue({
+      errors: {
+        name_en: {
+          message: 'Schema error',
+        },
+      },
+      normalizeNameError: 'Normalize failed: invalid title format.',
+      setNormalizeNameError,
+    });
+    useProductFormMetadataMock.mockReturnValue({
+      selectedCatalogIds: ['catalog-a'],
+      categories: [],
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+    });
+    useTitleTermsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    function Wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
+      const methods = useForm<ProductFormData>({
+        defaultValues: {
+          name_en: 'Scout Regiment | 4 cm | Metal | Anime Pins | Anime',
+          categoryId: '',
+        } as ProductFormData,
+      });
+      return <FormProvider {...methods}>{children}</FormProvider>;
+    }
+
+    render(
+      <Wrapper>
+        <StructuredProductNameField />
+      </Wrapper>
+    );
+
+    expect(screen.getByText('Normalize failed: invalid title format.')).toBeInTheDocument();
+    const input = screen.getByLabelText('English Name');
+    fireEvent.change(input, {
+      target: {
+        value: 'Scout Regiment Badge | 4 cm | Metal | Anime Pins | Anime',
+      },
+    });
+
+    expect(setNormalizeNameError).toHaveBeenCalledWith(null);
   });
 
   it('sorts matching non-category suggestions alphabetically before rendering the split window', async () => {

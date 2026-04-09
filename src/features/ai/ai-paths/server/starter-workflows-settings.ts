@@ -15,6 +15,7 @@ import {
   AI_PATHS_INDEX_KEY,
   AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsSettingRecord,
+  type ParsedPathMeta,
 } from './settings-store.constants';
 import {
   parsePathConfigFlags,
@@ -102,6 +103,15 @@ const parsePathConfigRecord = (value: string): PathConfig | null => {
     void ErrorSystem.captureException(error);
     return null;
   }
+};
+
+const upsertPathMeta = (metas: ParsedPathMeta[], meta: ParsedPathMeta): void => {
+  const existingIndex = metas.findIndex((entry) => entry.id === meta.id);
+  if (existingIndex >= 0) {
+    metas[existingIndex] = meta;
+    return;
+  }
+  metas.push(meta);
 };
 
 const findPathConfigRecord = (
@@ -222,23 +232,24 @@ const inheritNormalizeStarterModelSelection = (args: {
   normalizeRecord.record.value = JSON.stringify(normalizeRecord.config);
 
   const meta = parsePathConfigMeta('path_name_normalize_v1', normalizeRecord.record.value);
-  if (meta) {
-    const metaId = meta.id;
-    let metaIndex = -1;
-    for (let index = 0; index < args.metas.length; index += 1) {
-      const entry = args.metas[index] as { id?: unknown };
-      if (typeof entry.id === 'string' && entry.id === metaId) {
-        metaIndex = index;
-        break;
-      }
-    }
-    if (metaIndex >= 0) {
-      args.metas[metaIndex] = meta;
-    } else {
-      args.metas.push(meta);
-    }
-  }
+  if (meta) upsertPathMeta(args.metas, meta);
 
+  return true;
+};
+
+const refreshNormalizeStarterWorkflowConfig = (args: {
+  records: AiPathsSettingRecord[];
+  metas: ParsedPathMeta[];
+}): boolean => {
+  const normalizeRecord = findPathConfigRecord(args.records, 'path_name_normalize_v1');
+  if (!normalizeRecord) return false;
+
+  const refreshed = buildRefreshedStarterWorkflowConfig(normalizeRecord.config);
+  if (!refreshed) return false;
+
+  normalizeRecord.record.value = JSON.stringify(refreshed);
+  const meta = parsePathConfigMeta('path_name_normalize_v1', normalizeRecord.record.value);
+  if (meta) upsertPathMeta(args.metas, meta);
   return true;
 };
 
@@ -475,6 +486,10 @@ export const ensureStarterWorkflowDefaults = (
       affectedCount += 1;
     });
   });
+
+  if (refreshNormalizeStarterWorkflowConfig({ records: nextRecords, metas: nextMetas })) {
+    affectedCount += 1;
+  }
 
   if (
     inheritNormalizeStarterModelSelection({

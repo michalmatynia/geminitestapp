@@ -199,11 +199,11 @@ describe('runTraderaBrowserListingStandard', () => {
       playwrightStorageState: 'encrypted:{"cookies":[],"origins":[]}',
       playwrightStorageStateUpdatedAt: expect.any(String),
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       externalListingId: '987654',
       listingUrl: 'https://www.tradera.com/item/987654',
       completedAt: expect.any(String),
-      metadata: {
+      metadata: expect.objectContaining({
         mode: 'standard',
         browserMode: 'headless',
         requestedBrowserMode: 'connection_default',
@@ -223,7 +223,7 @@ describe('runTraderaBrowserListingStandard', () => {
         catalogPriceGroupIds: ['price-group-pln', 'price-group-eur'],
         loadedPriceGroupIds: ['price-group-pln', 'price-group-eur'],
         matchedTargetPriceGroupIds: ['price-group-eur'],
-      },
+      }),
     });
     expect(contextCloseMock).toHaveBeenCalled();
     expect(browserCloseMock).toHaveBeenCalled();

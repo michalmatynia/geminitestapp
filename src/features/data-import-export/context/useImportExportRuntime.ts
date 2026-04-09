@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useCancelImportRunMutation,
@@ -33,9 +33,131 @@ interface ImportExportRuntimeResult {
   stateValue: ImportExportStateContextType;
 }
 
+const IMPORT_SETTINGS_STORAGE_KEY = 'product-import-runtime.v1';
+
+type ImportsPageTab = 'import' | 'import-template';
+
+type PersistedImportRuntimeState = {
+  version: 1;
+  saveImportSettings: true;
+  importsPageTab: ImportsPageTab;
+  selectedBaseConnectionId: string;
+  inventoryId: string;
+  catalogId: string;
+  limit: string;
+  imageMode: 'links' | 'download';
+  importMode: BaseImportMode;
+  importDryRun: boolean;
+  uniqueOnly: boolean;
+  allowDuplicateSku: boolean;
+  importTemplateId: string;
+  importNameSearch: string;
+  importSkuSearch: string;
+  importListPage: number;
+  importListPageSize: number;
+  importListEnabled: boolean;
+};
+
+type PersistedImportRuntimeStateInput = Omit<
+  PersistedImportRuntimeState,
+  'version' | 'saveImportSettings'
+>;
+
+const isBrowser = (): boolean =>
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const isImportsPageTab = (value: unknown): value is ImportsPageTab =>
+  value === 'import' || value === 'import-template';
+
+const isImageMode = (value: unknown): value is 'links' | 'download' =>
+  value === 'links' || value === 'download';
+
+const isBaseImportMode = (value: unknown): value is BaseImportMode =>
+  value === 'create_only' || value === 'upsert_on_base_id' || value === 'upsert_on_sku';
+
+const buildPersistedImportRuntimeState = (
+  value: PersistedImportRuntimeStateInput
+): PersistedImportRuntimeState => ({
+  version: 1,
+  saveImportSettings: true,
+  ...value,
+});
+
+const arePersistedImportRuntimeStatesEqual = (
+  left: PersistedImportRuntimeState | null,
+  right: PersistedImportRuntimeState | null
+): boolean => JSON.stringify(left) === JSON.stringify(right);
+
+const readPersistedImportRuntimeState = (): PersistedImportRuntimeState | null => {
+  if (!isBrowser()) return null;
+  try {
+    const raw = window.localStorage.getItem(IMPORT_SETTINGS_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (parsed['version'] !== 1 || parsed['saveImportSettings'] !== true) return null;
+
+    return {
+      version: 1,
+      saveImportSettings: true,
+      importsPageTab: isImportsPageTab(parsed['importsPageTab']) ? parsed['importsPageTab'] : 'import',
+      selectedBaseConnectionId:
+        typeof parsed['selectedBaseConnectionId'] === 'string'
+          ? parsed['selectedBaseConnectionId']
+          : '',
+      inventoryId: typeof parsed['inventoryId'] === 'string' ? parsed['inventoryId'] : '',
+      catalogId: typeof parsed['catalogId'] === 'string' ? parsed['catalogId'] : '',
+      limit: typeof parsed['limit'] === 'string' ? parsed['limit'] : 'all',
+      imageMode: isImageMode(parsed['imageMode']) ? parsed['imageMode'] : 'download',
+      importMode: isBaseImportMode(parsed['importMode'])
+        ? parsed['importMode']
+        : 'upsert_on_base_id',
+      importDryRun: parsed['importDryRun'] === true,
+      uniqueOnly: parsed['uniqueOnly'] !== false,
+      allowDuplicateSku: parsed['allowDuplicateSku'] === true,
+      importTemplateId: typeof parsed['importTemplateId'] === 'string' ? parsed['importTemplateId'] : '',
+      importNameSearch: typeof parsed['importNameSearch'] === 'string' ? parsed['importNameSearch'] : '',
+      importSkuSearch: typeof parsed['importSkuSearch'] === 'string' ? parsed['importSkuSearch'] : '',
+      importListPage:
+        typeof parsed['importListPage'] === 'number' && parsed['importListPage'] > 0
+          ? Math.floor(parsed['importListPage'])
+          : 1,
+      importListPageSize:
+        typeof parsed['importListPageSize'] === 'number' && parsed['importListPageSize'] > 0
+          ? Math.floor(parsed['importListPageSize'])
+          : 25,
+      importListEnabled: parsed['importListEnabled'] === true,
+    };
+  } catch (error: unknown) {
+    logClientError(error);
+    try {
+      window.localStorage.removeItem(IMPORT_SETTINGS_STORAGE_KEY);
+    } catch {
+      // Ignore cleanup failures after malformed payloads.
+    }
+    return null;
+  }
+};
+
+const writePersistedImportRuntimeState = (value: PersistedImportRuntimeState | null): void => {
+  if (!isBrowser()) return;
+  try {
+    if (!value) {
+      window.localStorage.removeItem(IMPORT_SETTINGS_STORAGE_KEY);
+      return;
+    }
+    window.localStorage.setItem(IMPORT_SETTINGS_STORAGE_KEY, JSON.stringify(value));
+  } catch (error: unknown) {
+    logClientError(error);
+  }
+};
+
 export function useImportExportRuntime(): ImportExportRuntimeResult {
   const { toast } = useToast();
 
+  const [saveImportSettings, setSaveImportSettings] = useState(false);
+  const [savedImportSettingsSnapshot, setSavedImportSettingsSnapshot] =
+    useState<PersistedImportRuntimeState | null>(null);
+  const [importsPageTab, setImportsPageTab] = useState<ImportsPageTab>('import');
   const [showAllWarehouses, setShowAllWarehouses] = useState(false);
   const [includeAllWarehouses, setIncludeAllWarehouses] = useState(false);
   const [inventoryId, setInventoryId] = useState('');
@@ -81,6 +203,7 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   const skipNextImportActiveTemplatePersist = useRef(false);
   const skipNextExportActiveTemplatePersist = useRef(false);
   const lastHydratedImportSchemaKey = useRef('');
+  const importSettingsHydrated = useRef(false);
 
   const {
     activeImportRun,
@@ -156,6 +279,126 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   const saveDefaultConnectionMutation = useSaveDefaultConnectionMutation();
   const saveExportSettingsMutation = useSaveExportSettingsMutation();
   const clearInventoryMutation = useClearInventoryMutation();
+
+  const currentPersistedImportRuntimeState = useMemo<PersistedImportRuntimeState>(
+    () =>
+      buildPersistedImportRuntimeState({
+        importsPageTab,
+        selectedBaseConnectionId,
+        inventoryId,
+        catalogId,
+        limit,
+        imageMode,
+        importMode,
+        importDryRun,
+        uniqueOnly,
+        allowDuplicateSku,
+        importTemplateId,
+        importNameSearch,
+        importSkuSearch,
+        importListPage,
+        importListPageSize,
+        importListEnabled,
+      }),
+    [
+      allowDuplicateSku,
+      catalogId,
+      imageMode,
+      importDryRun,
+      importListEnabled,
+      importListPage,
+      importListPageSize,
+      importMode,
+      importNameSearch,
+      importSkuSearch,
+      importTemplateId,
+      importsPageTab,
+      inventoryId,
+      limit,
+      selectedBaseConnectionId,
+      uniqueOnly,
+    ]
+  );
+
+  const hasUnsavedImportSettingsChanges = useMemo(
+    () =>
+      saveImportSettings &&
+      savedImportSettingsSnapshot !== null &&
+      !arePersistedImportRuntimeStatesEqual(
+        savedImportSettingsSnapshot,
+        currentPersistedImportRuntimeState
+      ),
+    [currentPersistedImportRuntimeState, saveImportSettings, savedImportSettingsSnapshot]
+  );
+
+  useEffect(() => {
+    const persisted = readPersistedImportRuntimeState();
+    if (persisted) {
+      setSaveImportSettings(true);
+      setSavedImportSettingsSnapshot(persisted);
+      setImportsPageTab(persisted.importsPageTab);
+      setSelectedBaseConnectionId(persisted.selectedBaseConnectionId);
+      setInventoryId(persisted.inventoryId);
+      setCatalogId(persisted.catalogId);
+      setLimit(persisted.limit);
+      setImageMode(persisted.imageMode);
+      setImportMode(persisted.importMode);
+      setImportDryRun(persisted.importDryRun);
+      setUniqueOnly(persisted.uniqueOnly);
+      setAllowDuplicateSku(persisted.allowDuplicateSku);
+      setImportTemplateId(persisted.importTemplateId);
+      setImportNameSearch(persisted.importNameSearch);
+      setImportSkuSearch(persisted.importSkuSearch);
+      setImportListPage(persisted.importListPage);
+      setImportListPageSize(persisted.importListPageSize);
+      setImportListEnabled(persisted.importListEnabled);
+      if (persisted.selectedBaseConnectionId || persisted.inventoryId) {
+        setInventoriesEnabled(true);
+      }
+    } else {
+      setSaveImportSettings(false);
+      setSavedImportSettingsSnapshot(null);
+    }
+    importSettingsHydrated.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!saveImportSettings || !selectedBaseConnectionId || baseConnections.length === 0) return;
+    const hasSelectedConnection = baseConnections.some(
+      (connection) => connection.id === selectedBaseConnectionId
+    );
+    if (!hasSelectedConnection) {
+      setSelectedBaseConnectionId('');
+      setInventoryId('');
+      setImportTemplateId('');
+      setImportListEnabled(false);
+    }
+  }, [baseConnections, saveImportSettings, selectedBaseConnectionId]);
+
+  useEffect(() => {
+    if (!saveImportSettings || !inventoryId || inventories.length === 0) return;
+    const hasInventory = inventories.some((inventory) => inventory.id === inventoryId);
+    if (!hasInventory) {
+      setInventoryId('');
+      setImportListEnabled(false);
+    }
+  }, [inventories, inventoryId, saveImportSettings]);
+
+  useEffect(() => {
+    if (!saveImportSettings || !catalogId || catalogsData.length === 0) return;
+    const hasCatalog = catalogsData.some((catalog) => catalog.id === catalogId);
+    if (!hasCatalog) {
+      setCatalogId('');
+    }
+  }, [catalogId, catalogsData, saveImportSettings]);
+
+  useEffect(() => {
+    if (!saveImportSettings || !importTemplateId || importTemplates.length === 0) return;
+    const hasTemplate = importTemplates.some((template) => template.id === importTemplateId);
+    if (!hasTemplate) {
+      setImportTemplateId('');
+    }
+  }, [importTemplateId, importTemplates, saveImportSettings]);
 
   const activeRunBusy =
     activeImportRun?.run.status === 'queued' || activeImportRun?.run.status === 'running';
@@ -245,6 +488,21 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
     }
   }, [saveDefaultConnectionMutation, selectedBaseConnectionId, toast]);
 
+  const handleSaveImportSettings = useCallback(async (): Promise<void> => {
+    if (!importSettingsHydrated.current) return;
+    writePersistedImportRuntimeState(currentPersistedImportRuntimeState);
+    setSavedImportSettingsSnapshot(currentPersistedImportRuntimeState);
+    setSaveImportSettings(true);
+    toast('Import settings saved for this browser.', { variant: 'success' });
+  }, [currentPersistedImportRuntimeState, toast]);
+
+  const handleClearSavedImportSettings = useCallback(async (): Promise<void> => {
+    writePersistedImportRuntimeState(null);
+    setSavedImportSettingsSnapshot(null);
+    setSaveImportSettings(false);
+    toast('Saved import settings cleared.', { variant: 'success' });
+  }, [toast]);
+
   const importing =
     importMutation.isPending ||
     resumeImportRunMutation.isPending ||
@@ -261,6 +519,10 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
 
   const stateValue = useMemo<ImportExportStateContextType>(
     () => ({
+      saveImportSettings,
+      hasUnsavedImportSettingsChanges,
+      importsPageTab,
+      setImportsPageTab,
       inventoryId,
       setInventoryId,
       exportInventoryId,
@@ -316,6 +578,7 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
     [
       allowDuplicateSku,
       catalogId,
+      hasUnsavedImportSettingsChanges,
       debugWarehouses,
       exportInventoryId,
       exportStockFallbackEnabled,
@@ -330,9 +593,11 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
       importNameSearch,
       importSkuSearch,
       importTemplateId,
+      importsPageTab,
       includeAllWarehouses,
       inventoryId,
       limit,
+      saveImportSettings,
       selectedBaseConnectionId,
       selectedImportIds,
       showAllWarehouses,
@@ -402,6 +667,8 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   const actionsValue = useMemo<ImportExportActionsContextType>(
     () => ({
       ...runtimeActions,
+      handleSaveImportSettings,
+      handleClearSavedImportSettings,
       handleSaveDefaultBaseConnection,
       handleNewTemplate: (scope) => templates.handleNewTemplate(scope ?? templateScope),
       handleDuplicateTemplate: (scope) => templates.handleDuplicateTemplate(scope ?? templateScope),
@@ -416,6 +683,8 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
       savingExportTemplate,
     }),
     [
+      handleClearSavedImportSettings,
+      handleSaveImportSettings,
       handleSaveDefaultBaseConnection,
       importing,
       runtimeActions,

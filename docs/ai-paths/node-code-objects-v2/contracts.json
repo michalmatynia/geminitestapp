@@ -62,7 +62,7 @@
       "objectId": "node_obj_db_schema_portable_v2",
       "title": "Database Schema",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "b1ed031f64208ed9a9809957b8472de69f6efd9a14629492ba79bdd51d7f6efa"
+      "objectHash": "8653ed2e80b2b94a234a092590b38aebf91c849acd40928357a3aa42a954d8c6"
     },
     "delay": {
       "objectId": "node_obj_delay_portable_v2",
@@ -138,9 +138,9 @@
     },
     "playwright": {
       "objectId": "node_obj_playwright_portable_v2",
-      "title": "Playwright",
+      "title": "Playwright: Batch Capture",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "81fb0a69fde9df0fafb5210019ffdb20038f9a7b924a2c227a9c34100cb09ab9"
+      "objectHash": "c69fce17e5272ad564f22e0a0b45db5c0b93e506054d851353039108bf1e0b3a"
     },
     "poll": {
       "objectId": "node_obj_poll_portable_v2",
@@ -182,7 +182,7 @@
       "objectId": "node_obj_template_portable_v2",
       "title": "Template",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "401376fbc96a9e269f1d00adcbfa2c89ab35fc842301ecd4e7f1a30f48e67ff8"
+      "objectHash": "39653ea16e327ae396016266c36a8535463125018a794367e28f3e455f04a4f6"
     },
     "trigger": {
       "objectId": "node_obj_trigger_portable_v2",
@@ -210,5 +210,5 @@
     }
   },
   "contractsHashAlgorithm": "sha256",
-  "contractsHash": "7e22273fdd63abe11faaaa8dcbd79a05a74b4c2d5c46776f5f4af78b2f3a1e71"
+  "contractsHash": "9e82d8b75462f12c9b81268dc4fd56d3b7867515616c6c0d5ccee77902d93308"
 }

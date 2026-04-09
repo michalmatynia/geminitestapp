@@ -364,6 +364,31 @@ vi.mock('@/shared/ui/client-only', () => ({
   ClientOnly: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// Mock forms-and-actions components
+vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    SelectSimple: (props: any) => {
+      const { value, onValueChange, options, ariaLabel, disabled, placeholder, id } = props;
+      return React.createElement(
+        'select',
+        {
+          id,
+          'aria-label': ariaLabel,
+          value: value ?? '',
+          disabled,
+          onChange: (e: any) => onValueChange?.(e.target.value),
+        },
+        placeholder && React.createElement('option', { value: '', disabled: true }, placeholder),
+        options?.map((opt: any) =>
+          React.createElement('option', { key: opt.value, value: opt.value }, opt.label)
+        )
+      );
+    },
+  };
+});
+
 // Mock nextjs-toploader/app to provide a consistent useRouter mock
 vi.mock('nextjs-toploader/app', () => ({
   useRouter: vi.fn(() => ({

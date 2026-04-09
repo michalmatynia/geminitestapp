@@ -18,9 +18,11 @@
   },
   "ports": {
     "inputs": [
-      "bundle",
+      "template",
+      "context",
       "value",
-      "productId"
+      "result",
+      "bundle"
     ],
     "outputs": [
       "prompt"
@@ -115,9 +117,11 @@
         "y": 100
       },
       "inputs": [
-        "bundle",
+        "template",
+        "context",
         "value",
-        "productId"
+        "result",
+        "bundle"
       ],
       "outputs": [
         "prompt"
@@ -138,9 +142,11 @@
         "y": 100
       },
       "inputs": [
-        "bundle",
+        "template",
+        "context",
         "value",
-        "productId"
+        "result",
+        "bundle"
       ],
       "outputs": [
         "prompt"
@@ -175,9 +181,11 @@
             "y": 100
           },
           "inputs": [
-            "bundle",
+            "template",
+            "context",
             "value",
-            "productId"
+            "result",
+            "bundle"
           ],
           "outputs": [
             "prompt"
@@ -208,8 +216,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/template.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "349143bb99ff84ec6f3ceba1c8d8a24e48682e23c0679ef6bc8ff3048636640c"
+    "semanticNodeHash": "a61e6756bfbc5e139976478c63fa5ab3cf1c07342f9f33c74f9388079d857c4d"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "401376fbc96a9e269f1d00adcbfa2c89ab35fc842301ecd4e7f1a30f48e67ff8"
+  "objectHash": "39653ea16e327ae396016266c36a8535463125018a794367e28f3e455f04a4f6"
 }

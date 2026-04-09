@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 import { Button } from '@/shared/ui/primitives.public';
 import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
@@ -18,6 +19,7 @@ import {
   hasRetryableImportItems,
   resolveImportRunDispatchDiagnostics,
   resolveImportRunParameterImportSummary,
+  resolveImportRunRetryDiagnostics,
 } from './Import.RunStatus.helpers';
 
 export function ImportRunStatusSection(): React.JSX.Element | null {
@@ -33,6 +35,17 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
     (): boolean => hasRetryableImportItems(activeRunItems),
     [activeRunItems]
   );
+  const resumeScope = React.useMemo(() => {
+    const failed = activeRunItems.filter((item: BaseImportItemRecord) => item.status === 'failed');
+    const pending = activeRunItems.filter((item: BaseImportItemRecord) => item.status === 'pending');
+    const retryableFailed = failed.filter((item: BaseImportItemRecord) => item.retryable === true);
+    return {
+      failedCount: failed.length,
+      pendingCount: pending.length,
+      retryableFailedCount: retryableFailed.length,
+      resumableCount: failed.length + pending.length,
+    };
+  }, [activeRunItems]);
 
   const runErrorItems = React.useMemo(
     (): BaseImportItemRecord[] => getImportRunErrorItems(activeRunItems),
@@ -63,6 +76,11 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
       return resolveImportRunDispatchDiagnostics(activeRun);
     },
     [activeRun]
+  );
+
+  const activeRunRetryDiagnostics = React.useMemo(
+    () => resolveImportRunRetryDiagnostics(activeRunItems),
+    [activeRunItems]
   );
 
   const customFieldImportHistoryItems = React.useMemo(
@@ -117,6 +135,20 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
           {activeRunStats.failed} · Pending {activeRunStats.pending}
         </p>
       ) : null}
+      {resumeScope.resumableCount > 0 ? (
+        <div className='mt-2 rounded-md border border-border/60 bg-gray-950/30 p-3 text-xs text-gray-300'>
+          <p className='font-semibold text-gray-200'>Resume scope</p>
+          <p className='mt-1'>
+            <span className='font-mono text-gray-200'>Resume failed</span> will requeue{' '}
+            {resumeScope.resumableCount} item
+            {resumeScope.resumableCount === 1 ? '' : 's'} from this run.
+          </p>
+          <p className='mt-1 text-gray-400'>
+            Failed {resumeScope.failedCount} · Pending {resumeScope.pendingCount} · Marked retryable{' '}
+            {resumeScope.retryableFailedCount}
+          </p>
+        </div>
+      ) : null}
       <div className='mt-2 space-y-1 text-xs text-gray-400'>
         <p>
           Dispatch mode:{' '}
@@ -139,6 +171,22 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
             is unavailable.
           </p>
         ) : null}
+        <div className='flex flex-wrap items-center gap-x-3 gap-y-1 pt-1'>
+          <Link
+            href={`/admin/ai-paths/queue?tab=product-imports&query=${encodeURIComponent(activeRun.id)}`}
+            className='text-cyan-300 hover:text-cyan-200'
+          >
+            View in Runtime Queue
+          </Link>
+          <Link
+            href={`/api/v2/integrations/imports/base/runs/${encodeURIComponent(activeRun.id)}?includeItems=true&page=1&pageSize=250`}
+            target='_blank'
+            rel='noreferrer'
+            className='text-gray-300 hover:text-white'
+          >
+            Open JSON detail
+          </Link>
+        </div>
       </div>
       {activeRunDispatchDiagnostics ? (
         <div
@@ -161,6 +209,43 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
             {activeRunDispatchDiagnostics.details.map((detail: string) => (
               <p key={detail}>{detail}</p>
             ))}
+          </div>
+        </div>
+      ) : null}
+      {activeRunRetryDiagnostics ? (
+        <div className='mt-3 rounded-md border border-sky-500/30 bg-sky-950/20 p-3'>
+          <p className='text-[11px] font-semibold uppercase tracking-wider text-sky-200'>
+            Automatic retries
+          </p>
+          <div className='mt-2 space-y-1 text-xs text-gray-300'>
+            <p>
+              {activeRunRetryDiagnostics.scheduledCount} item
+              {activeRunRetryDiagnostics.scheduledCount === 1 ? '' : 's'} currently waiting for the
+              next retry window.
+            </p>
+            {activeRunRetryDiagnostics.nextRetryAt ? (
+              <p>
+                Next scheduled retry:{' '}
+                <span className='font-mono text-sky-200'>
+                  {activeRunRetryDiagnostics.nextRetryAt}
+                </span>
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+      {activeRun.errorCode || activeRun.error ? (
+        <div className='mt-3 rounded-md border border-rose-500/30 bg-rose-950/20 p-3'>
+          <p className='text-[11px] font-semibold uppercase tracking-wider text-rose-200'>
+            Latest failure
+          </p>
+          <div className='mt-2 space-y-1 text-xs text-gray-300'>
+            {activeRun.errorCode ? (
+              <p>
+                Error code: <span className='font-mono text-rose-200'>{activeRun.errorCode}</span>
+              </p>
+            ) : null}
+            {activeRun.error ? <p>{activeRun.error}</p> : null}
           </div>
         </div>
       ) : null}
@@ -240,13 +325,46 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
       ) : null}
       {loadingImportRun ? <Hint className='mt-2'>Refreshing run status...</Hint> : null}
       {runErrorItems.length > 0 ? (
-        <div className='mt-3 space-y-1 text-xs text-gray-400'>
-          {runErrorItems.map((item: BaseImportItemRecord) => (
-            <p key={`${item.itemId}-${item.attempt}`}>
-              • {item.errorMessage || 'Import failed'}
-              {item.sku ? ` (SKU: ${item.sku})` : ''}
+        <div className='mt-3 rounded-md border border-rose-500/30 bg-rose-950/10 p-3'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <p className='text-[11px] font-semibold uppercase tracking-wider text-rose-200'>
+              Recent failed items
             </p>
-          ))}
+            <span className='text-[11px] text-gray-400'>
+              Showing {runErrorItems.length}
+              {activeRunStats && activeRunStats.failed > runErrorItems.length
+                ? ` of ${activeRunStats.failed}`
+                : ''}
+            </span>
+          </div>
+          <div className='mt-2 space-y-2'>
+            {runErrorItems.map((item: BaseImportItemRecord) => (
+              <div
+                key={`${item.itemId}-${item.attempt}`}
+                className='rounded-md border border-white/10 bg-black/20 p-2'
+              >
+                <div className='flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-300'>
+                  <span className='font-mono text-white'>{item.sku || item.itemId}</span>
+                  {item.sku && item.itemId ? (
+                    <span className='text-gray-500'>Item {item.itemId}</span>
+                  ) : null}
+                  <span>Attempt {item.attempt}</span>
+                  {item.errorCode ? (
+                    <span className='font-mono text-rose-200'>{item.errorCode}</span>
+                  ) : null}
+                  {item.errorClass ? (
+                    <span className='uppercase text-amber-200'>{item.errorClass}</span>
+                  ) : null}
+                  {item.retryable === true ? (
+                    <span className='text-amber-300'>Retryable</span>
+                  ) : null}
+                </div>
+                <p className='mt-1 text-xs text-gray-300'>
+                  {item.errorMessage || item.error || 'Import failed'}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
     </FormSection>

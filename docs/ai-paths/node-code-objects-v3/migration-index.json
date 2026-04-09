@@ -1,6 +1,6 @@
 {
   "schemaVersion": "ai-paths.node-migration-doc-index.v5",
-  "generatedAt": "2026-04-05T14:57:58.017Z",
+  "generatedAt": "2026-04-05T14:57:57.569Z",
   "totalNodes": 34,
   "runtimeKernelNodeTypes": [
     "agent",
@@ -42,7 +42,7 @@
     "compatibility": 0,
     "code_object_v3": 34
   },
-  "v3ContractsHash": "51d0c2bdcdac8bed3c46a0b31de530847c93cb37cfaaa933cf5fdc73ca1a5139",
+  "v3ContractsHash": "e3d3507149b0c5aeb494dc25f56655ef173d567de7ca6c802e4d3bf4afa18b7a",
   "readiness": {
     "averageScore": 100,
     "totalsByStage": {
@@ -146,7 +146,7 @@
   "rolloutEligibility": {
     "sourceFile": "docs/ai-paths/node-code-objects-v3/rollout-eligibility.json",
     "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v2",
-    "generatedAt": "2026-04-05T14:57:58.017Z",
+    "generatedAt": "2026-04-05T14:57:57.569Z",
     "criteria": [
       "runtime_strategy=code_object_v3",
       "has_semantic_contract_hash",
@@ -650,14 +650,14 @@
           "context"
         ]
       },
-      "configFieldCount": 9,
+      "configFieldCount": 13,
       "docs": {
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/db_schema.json",
-        "semanticNodeHash": "a872b63af24b71cdcd57441d6a49d748f0a8c9d9a586a5b092a8ba97964a499f",
+        "semanticNodeHash": "9de668727483c8c0852e9b3c5d211aaa0d14c3f76a6943e7c1093d18c20fb0d1",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/db_schema.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json",
         "v3ObjectId": "node_obj_db_schema_portable_v3",
-        "v3ObjectHash": "5be73667a0e5dd52de4c894393f8490827f5a0133f81f538330ef14661d88621",
+        "v3ObjectHash": "8f9157a45b9a06fcd60c38661e0ba1ea219452a8d111e5c7e4a87f8ed5288905",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/db_schema.md"
       },
       "migrationChecklistTemplate": {
@@ -1213,7 +1213,7 @@
       "configFieldCount": 16,
       "docs": {
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/playwright.json",
-        "semanticNodeHash": "7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056",
+        "semanticNodeHash": "33b228c66c0793a7aa00140ca99d1b066eb21107810427c330001f69e25a70c0",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/playwright.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/playwright.scaffold.json",
         "v3ObjectId": "node_obj_playwright_portable_v3",
@@ -1509,9 +1509,11 @@
       "codeObjectId": "ai-paths.node-code-object.template.v3",
       "ports": {
         "inputs": [
-          "bundle",
+          "template",
+          "context",
           "value",
-          "productId"
+          "result",
+          "bundle"
         ],
         "outputs": [
           "prompt"
@@ -1520,7 +1522,7 @@
       "configFieldCount": 4,
       "docs": {
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/template.json",
-        "semanticNodeHash": "349143bb99ff84ec6f3ceba1c8d8a24e48682e23c0679ef6bc8ff3048636640c",
+        "semanticNodeHash": "a61e6756bfbc5e139976478c63fa5ab3cf1c07342f9f33c74f9388079d857c4d",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/template.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/template.scaffold.json",
         "v3ObjectId": "node_obj_template_portable_v3",

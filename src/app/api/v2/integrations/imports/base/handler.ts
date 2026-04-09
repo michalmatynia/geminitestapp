@@ -182,12 +182,17 @@ export async function postBaseImportsHandler(
       ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
       : listItems;
 
-    const pageSize = data.pageSize ?? data.limit ?? 50;
+    const scopedLimit = typeof data.limit === 'number' ? data.limit : null;
+    const effectivePageSize = data.pageSize ?? scopedLimit ?? 50;
+    const pageSize =
+      scopedLimit != null ? Math.min(effectivePageSize, scopedLimit) : effectivePageSize;
     const page = data.page ?? 1;
     const normalizedName = (data.searchName ?? '').trim().toLowerCase();
     const normalizedSku = (data.searchSku ?? '').trim().toLowerCase();
     const hasSearchFilter = normalizedName.length > 0 || normalizedSku.length > 0;
-    const filteredItemsTotalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+    const scopedFilteredItems =
+      scopedLimit != null ? filteredItems.slice(0, scopedLimit) : filteredItems;
+    const filteredItemsTotalPages = Math.max(1, Math.ceil(scopedFilteredItems.length / pageSize));
 
     const toStringId = (value: unknown): string | null => {
       if (typeof value === 'string' && value.trim()) return value.trim();
@@ -252,14 +257,14 @@ export async function postBaseImportsHandler(
     if (!hasSearchFilter) {
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
-      const pagedItems = filteredItems.slice(startIndex, endIndex);
+      const pagedItems = scopedFilteredItems.slice(startIndex, endIndex);
 
       if (pagedItems.length === 0) {
         const response: BaseImportListResponse = {
           products: [],
           total: listItems.length,
-          filtered: filteredItems.length,
-          available: filteredItems.length,
+          filtered: scopedFilteredItems.length,
+          available: scopedFilteredItems.length,
           existing: listItems.filter((i: { id: string; exists: boolean }) => i.exists).length,
           skuDuplicates: 0,
           page,
@@ -277,8 +282,8 @@ export async function postBaseImportsHandler(
       const response: BaseImportListResponse = {
         products: mappedList,
         total: listItems.length,
-        filtered: filteredItems.length,
-        available: filteredItems.length,
+        filtered: scopedFilteredItems.length,
+        available: scopedFilteredItems.length,
         existing: listItems.filter((item: { id: string; exists: boolean }) => item.exists).length,
         skuDuplicates: skuDuplicateCount,
         page,
@@ -288,7 +293,7 @@ export async function postBaseImportsHandler(
       return NextResponse.json(response);
     }
 
-    const searchableIds = filteredItems.map((item: { id: string; exists: boolean }) => item.id);
+    const searchableIds = scopedFilteredItems.map((item: { id: string; exists: boolean }) => item.id);
     const mappedSearchScope = await fetchMappedItemsByIds(searchableIds);
     const hasExactSkuMatch =
       normalizedSku.length > 0 &&
@@ -320,7 +325,7 @@ export async function postBaseImportsHandler(
       products: pagedSearchedList,
       total: listItems.length,
       filtered: searchedList.length,
-      available: filteredItems.length,
+      available: scopedFilteredItems.length,
       existing: listItems.filter((item: { id: string; exists: boolean }) => item.exists).length,
       skuDuplicates: skuDuplicateCount,
       page: normalizedPage,

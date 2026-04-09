@@ -275,6 +275,65 @@ describe('importSingleItem custom fields', () => {
     );
   });
 
+  it('allows Base import create to fall back to lenient name validation for legacy titles', async () => {
+    mocks.mapBaseProductMock.mockReturnValue({
+      sku: 'SKU-1',
+      baseProductId: 'base-1',
+      name_en: 'Sword | Foam | 90 cm | Diablo',
+      producerIds: [],
+      tagIds: [],
+      imageLinks: [],
+    });
+    mocks.validateProductCreateMock.mockResolvedValue({
+      success: false,
+      errors: [
+        {
+          field: 'name_en',
+          message:
+            'English name must use format: <name> | <size> | <material> | <category> | <lore or theme>',
+          code: 'custom',
+          severity: 'medium',
+        },
+      ],
+      metadata: {
+        validationTime: 1,
+        rulesApplied: [],
+        cacheHit: false,
+        source: 'schema',
+      },
+    });
+    const productRepository = buildProductRepository({
+      createProduct: vi.fn().mockResolvedValue({ id: 'product-1', sku: 'SKU-1' }),
+    });
+
+    const result = await importSingleItem(
+      buildInput({
+        productRepository,
+      })
+    );
+
+    expect(mocks.validateProductUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sku: 'SKU-1',
+        name_en: 'Sword | Foam | 90 cm | Diablo',
+        importSource: 'base',
+      })
+    );
+    expect(productRepository.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sku: 'SKU-1',
+        name_en: 'Sword | Foam | 90 cm | Diablo',
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'imported',
+        action: 'imported',
+        importedProductId: 'product-1',
+      })
+    );
+  });
+
   it('merges mapped custom fields with existing product values on update', async () => {
     mocks.mapBaseProductMock.mockReturnValue({
       sku: 'SKU-1',

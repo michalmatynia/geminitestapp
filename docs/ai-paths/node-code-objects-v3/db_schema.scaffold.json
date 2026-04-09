@@ -28,7 +28,7 @@
       "id": "node_db_schema_example",
       "type": "db_schema",
       "title": "Database Schema",
-      "description": "Provides live database structure as context for AI.",
+      "description": "Provides live database structure and optional collection context for AI.",
       "position": {
         "x": 720,
         "y": -60
@@ -40,12 +40,16 @@
       ],
       "config": {
         "db_schema": {
-          "provider": "all",
+          "provider": "auto",
           "mode": "all",
           "collections": [],
+          "sourceMode": "schema",
+          "contextCollections": [],
+          "contextQuery": "",
+          "contextLimit": 20,
           "includeFields": true,
-          "includeRelations": false,
-          "formatAs": "json"
+          "includeRelations": true,
+          "formatAs": "text"
         }
       }
     }
@@ -53,5 +57,5 @@
   "generatedAt": "2026-04-05T14:57:57.569Z",
   "id": "node_obj_db_schema_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "5be73667a0e5dd52de4c894393f8490827f5a0133f81f538330ef14661d88621"
+  "objectHash": "8f9157a45b9a06fcd60c38661e0ba1ea219452a8d111e5c7e4a87f8ed5288905"
 }

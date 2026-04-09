@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveImportRunDispatchDiagnostics } from './Import.RunStatus.helpers';
+import {
+  getImportRunErrorItems,
+  resolveImportRunRetryDiagnostics,
+  resolveImportRunDispatchDiagnostics,
+} from './Import.RunStatus.helpers';
 
 describe('resolveImportRunDispatchDiagnostics', () => {
   it('returns null when the run is missing', () => {
@@ -125,5 +129,94 @@ describe('resolveImportRunDispatchDiagnostics', () => {
         'This run executed inline because Redis queueing was unavailable or enqueueing failed.',
       ],
     });
+  });
+});
+
+describe('getImportRunErrorItems', () => {
+  it('returns the most recent failed items first', () => {
+    const items = getImportRunErrorItems([
+      {
+        id: 'item-1',
+        runId: 'run-1',
+        externalId: 'external-1',
+        itemId: '111',
+        sku: 'SKU-1',
+        status: 'failed',
+        errorMessage: 'Older failure',
+        createdAt: '2026-04-09T18:00:00.000Z',
+        updatedAt: '2026-04-09T18:00:05.000Z',
+        finishedAt: '2026-04-09T18:00:05.000Z',
+        attempt: 1,
+      },
+      {
+        id: 'item-2',
+        runId: 'run-1',
+        externalId: 'external-2',
+        itemId: '222',
+        sku: 'SKU-2',
+        status: 'failed',
+        errorMessage: 'Newest failure',
+        createdAt: '2026-04-09T18:00:00.000Z',
+        updatedAt: '2026-04-09T18:00:20.000Z',
+        finishedAt: '2026-04-09T18:00:20.000Z',
+        attempt: 2,
+      },
+    ]);
+
+    expect(items.map((item) => item.itemId)).toEqual(['222', '111']);
+  });
+});
+
+describe('resolveImportRunRetryDiagnostics', () => {
+  it('returns the next scheduled retry when pending retryable items exist', () => {
+    expect(
+      resolveImportRunRetryDiagnostics([
+        {
+          id: 'item-1',
+          runId: 'run-1',
+          externalId: 'external-1',
+          itemId: '111',
+          status: 'pending',
+          retryable: true,
+          nextRetryAt: '2026-04-09T18:00:20.000Z',
+          createdAt: '2026-04-09T18:00:00.000Z',
+          updatedAt: '2026-04-09T18:00:05.000Z',
+          attempt: 1,
+        },
+        {
+          id: 'item-2',
+          runId: 'run-1',
+          externalId: 'external-2',
+          itemId: '222',
+          status: 'pending',
+          retryable: true,
+          nextRetryAt: '2026-04-09T18:00:10.000Z',
+          createdAt: '2026-04-09T18:00:00.000Z',
+          updatedAt: '2026-04-09T18:00:06.000Z',
+          attempt: 2,
+        },
+      ])
+    ).toEqual({
+      scheduledCount: 2,
+      nextRetryAt: '2026-04-09T18:00:10.000Z',
+    });
+  });
+
+  it('returns null when no scheduled retry items exist', () => {
+    expect(
+      resolveImportRunRetryDiagnostics([
+        {
+          id: 'item-1',
+          runId: 'run-1',
+          externalId: 'external-1',
+          itemId: '111',
+          status: 'failed',
+          retryable: false,
+          createdAt: '2026-04-09T18:00:00.000Z',
+          updatedAt: '2026-04-09T18:00:05.000Z',
+          attempt: 1,
+        },
+      ])
+    ).toBeNull();
   });
 });

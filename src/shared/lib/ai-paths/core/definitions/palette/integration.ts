@@ -43,9 +43,23 @@ export const integrationPalette: NodeDefinition[] = [
   {
     type: 'db_schema',
     title: 'Database Schema',
-    description: 'Provides live database structure as context for AI.',
+    description: 'Provides live database structure and optional collection context for AI.',
     inputs: [],
     outputs: ['schema', 'context'],
+    config: {
+      db_schema: {
+        provider: 'auto',
+        mode: 'all',
+        collections: [],
+        sourceMode: 'schema',
+        contextCollections: [],
+        contextQuery: '',
+        contextLimit: 20,
+        includeFields: true,
+        includeRelations: true,
+        formatAs: 'text',
+      },
+    },
   },
   {
     type: 'playwright',

@@ -505,7 +505,7 @@ export const AI_PATHS_TOOLTIP_CATALOG_CHUNK_12 = [
   {
     "id": "node_palette_db_schema",
     "title": "Database Schema (Palette)",
-    "summary": "Provides live database structure as context for AI.",
+    "summary": "Provides live database structure and optional collection context for AI.",
     "section": "Node Palette",
     "aliases": [
       "db_schema",
@@ -679,4 +679,3 @@ export const AI_PATHS_TOOLTIP_CATALOG_CHUNK_12 = [
     ]
   }
 ];
-

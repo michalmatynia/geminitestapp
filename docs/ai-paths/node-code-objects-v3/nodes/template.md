@@ -8,7 +8,7 @@ canonical: true
 ---
 # Template Migration Sheet (`template`)
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-05T14:57:57.569Z
 
 ## Status
 
@@ -25,7 +25,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 ## Node Contract Files
 
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/template.json`
-- Semantic hash: `349143bb99ff84ec6f3ceba1c8d8a24e48682e23c0679ef6bc8ff3048636640c`
+- Semantic hash: `a61e6756bfbc5e139976478c63fa5ab3cf1c07342f9f33c74f9388079d857c4d`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/template.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/template.scaffold.json`
 - v3 object id: `node_obj_template_portable_v3`
@@ -34,9 +34,11 @@ Generated at: 2026-04-05T14:57:58.017Z
 ## Ports
 
 Inputs:
-- `bundle`
+- `template`
+- `context`
 - `value`
-- `productId`
+- `result`
+- `bundle`
 
 Outputs:
 - `prompt`

@@ -81,6 +81,40 @@ const BASE_IMPORT_TERMINAL_STATUSES = new Set([
 
 const BASE_IMPORT_RESUME_DEFAULT_STATUSES: BaseImportItemStatus[] = ['failed', 'pending'];
 
+const toFailureTimestamp = (item: BaseImportItemRecord): number => {
+  const candidates = [item.lastErrorAt, item.finishedAt, item.updatedAt];
+  for (const value of candidates) {
+    if (!value) continue;
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+};
+
+const pickLatestFailedImportItem = (
+  items: BaseImportItemRecord[]
+): BaseImportItemRecord | null => {
+  if (items.length === 0) return null;
+  return [...items].sort((left, right) => toFailureTimestamp(right) - toFailureTimestamp(left))[0] ?? null;
+};
+
+const toCompactFailureMessage = (value: string | null | undefined, maxLength = 220): string => {
+  const normalized = (value ?? '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+};
+
+const formatLatestFailureSummary = (item: BaseImportItemRecord | null): string | null => {
+  if (!item) return null;
+  const subject = item.sku?.trim() || item.itemId?.trim() || item.baseProductId?.trim() || 'item';
+  const code = item.errorCode?.trim() || '';
+  const message = toCompactFailureMessage(item.errorMessage);
+  if (!code && !message) return null;
+  if (!message) return `Latest failure: ${subject}${code ? ` [${code}]` : ''}`;
+  return `Latest failure: ${subject}${code ? ` [${code}]` : ''}: ${message}`;
+};
+
 const normalizeCustomFieldName = (value: string): string => value.trim().toLowerCase();
 
 const collectCustomFieldOptionKeys = (
@@ -822,9 +856,24 @@ export const processBaseImportRun = async (
 
     const finalStats = await recomputeBaseImportRunStats(runId);
     const terminalStatus = determineBaseImportTerminalStatus(finalStats.stats);
+    const failedItems =
+      (finalStats.stats?.failed ?? 0) > 0
+        ? await listBaseImportRunItems(runId, {
+          limit: 100_000,
+          statuses: ['failed'],
+        })
+        : [];
+    const latestFailure = pickLatestFailedImportItem(failedItems);
+    const latestFailureSummary = formatLatestFailureSummary(latestFailure);
+    const summaryMessageBase = buildSummaryMessage(finalStats.stats, Boolean(run.params.dryRun));
     return updateBaseImportRunStatus(runId, terminalStatus, {
       finishedAt: nowIso(),
-      summaryMessage: buildSummaryMessage(finalStats.stats, Boolean(run.params.dryRun)),
+      summaryMessage: latestFailureSummary
+        ? `${summaryMessageBase} ${latestFailureSummary}`
+        : summaryMessageBase,
+      error: latestFailure?.errorMessage ?? null,
+      errorCode: latestFailure?.errorCode ?? null,
+      errorClass: latestFailure?.errorClass ?? null,
     });
   } finally {
     await releaseBaseImportRunLease({ runId, ownerId });

@@ -2,18 +2,18 @@
   "specVersion": "ai-paths.semantic-grammar.v1",
   "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "playwright",
-  "title": "Playwright",
-  "purpose": "Run programmable browser automation with persona-driven fidelity.",
+  "title": "Playwright: Batch Capture",
+  "purpose": "Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.",
   "inputs": [
-    "url",
+    "captures",
+    "appearanceMode",
     "bundle",
     "context"
   ],
   "outputs": [
     "result",
     "jobId",
-    "screenshot",
-    "html"
+    "bundle"
   ],
   "configFields": [
     {
@@ -122,22 +122,22 @@
   "semanticNodeExample": {
     "id": "node_playwright",
     "type": "playwright",
-    "title": "Playwright",
-    "description": "Run programmable browser automation with persona-driven fidelity.",
+    "title": "Playwright: Batch Capture",
+    "description": "Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.",
     "position": {
       "x": 100,
       "y": 100
     },
     "inputs": [
-      "url",
+      "captures",
+      "appearanceMode",
       "bundle",
       "context"
     ],
     "outputs": [
       "result",
       "jobId",
-      "screenshot",
-      "html"
+      "bundle"
     ],
     "config": {
       "playwright": {
@@ -165,5 +165,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056"
+  "nodeHash": "33b228c66c0793a7aa00140ca99d1b066eb21107810427c330001f69e25a70c0"
 }

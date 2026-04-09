@@ -154,7 +154,7 @@
       "title": "Database Schema",
       "objectFile": "docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "5be73667a0e5dd52de4c894393f8490827f5a0133f81f538330ef14661d88621",
+      "objectHash": "8f9157a45b9a06fcd60c38661e0ba1ea219452a8d111e5c7e4a87f8ed5288905",
       "runtimeStrategy": "code_object_v3",
       "executionAdapter": "native_handler_registry",
       "legacyHandlerKey": "db_schema",

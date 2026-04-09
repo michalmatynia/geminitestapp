@@ -25,7 +25,7 @@ import type {
 } from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductRecord, ProductWithImages, ProductParameterValue } from '@/shared/contracts/products/product';
-import type { CreateProduct as ProductCreateInput, UpdateProduct as ProductUpdateInput } from '@/shared/contracts/products/io';
+import type { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
 import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import { productsRoot } from '@/shared/lib/files/server-constants';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
@@ -210,6 +210,7 @@ const formatProductValidationFailure = (
 
 const DOWNLOAD_MAX_ATTEMPTS = 3;
 const DOWNLOAD_RETRY_DELAY_MS = 1000;
+const STRUCTURED_PRODUCT_NAME_FORMAT_MESSAGE_PREFIX = 'English name must use format:';
 
 /** Returns true for HTTP status codes that are worth retrying (rate limit, server errors). */
 const isRetryableHttpStatus = (status: number): boolean =>
@@ -263,6 +264,62 @@ const createLinkedImage = async (url: string, index: number): Promise<{ id: stri
     mimetype: guessMimeType(url),
     size: 0,
   });
+};
+
+const isStructuredEnglishNameCreateValidationError = (field: string, message: string): boolean =>
+  field === 'name_en' && message.includes(STRUCTURED_PRODUCT_NAME_FORMAT_MESSAGE_PREFIX);
+
+const validateImportedCreateData = async (
+  createData: ProductCreateInput
+): Promise<
+  | { success: true; data: ProductCreateInput }
+  | {
+      success: false;
+      errors: Array<{
+        field: string;
+        message: string;
+        code: string;
+        severity: 'low' | 'medium' | 'high' | 'critical';
+        context?: Record<string, unknown> | undefined;
+      }>;
+    }
+> => {
+  const validationResult = await validateProductCreate(createData);
+  if (validationResult.success) {
+    return { success: true, data: validationResult.data };
+  }
+
+  const hasErrors = validationResult.errors.length > 0;
+  const onlyStructuredNameErrors =
+    hasErrors &&
+    validationResult.errors.every((error) =>
+      isStructuredEnglishNameCreateValidationError(error.field, error.message)
+    );
+
+  if (!onlyStructuredNameErrors) {
+    return { success: false, errors: validationResult.errors };
+  }
+
+  const fallbackValidation = await validateProductUpdate(createData);
+  if (!fallbackValidation.success) {
+    return { success: false, errors: validationResult.errors };
+  }
+
+  const normalizedSku =
+    typeof fallbackValidation.data.sku === 'string' ? fallbackValidation.data.sku.trim() : '';
+  if (!normalizedSku) {
+    return { success: false, errors: validationResult.errors };
+  }
+
+  const normalizedCreateData: ProductCreateInput = {
+    ...fallbackValidation.data,
+    sku: normalizedSku,
+  };
+
+  return {
+    success: true,
+    data: normalizedCreateData,
+  };
 };
 
 const linkImportedProductToBaseListing = async (input: {
@@ -1007,7 +1064,7 @@ export const importSingleItem = async (input: {
     mapped.customFields = undefined;
   }
 
-  const validationResult = await validateProductCreate(createData);
+  const validationResult = await validateImportedCreateData(createData);
   if (!validationResult.success) {
     const classified = classifyByErrorCode('VALIDATION_ERROR');
     return {
@@ -1048,7 +1105,7 @@ export const importSingleItem = async (input: {
         mappedBaseProductId,
         `BASE-${mappedBaseProductId ?? skuForCreate}`
       );
-      const fallbackValidation = await validateProductCreate({
+      const fallbackValidation = await validateImportedCreateData({
         ...createData,
         sku: fallbackSku,
       });

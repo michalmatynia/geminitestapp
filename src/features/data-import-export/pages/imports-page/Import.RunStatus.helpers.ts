@@ -116,6 +116,7 @@ export const getImportRunErrorItems = (
 ): BaseImportItemRecord[] => {
   return items
     .filter((item: BaseImportItemRecord) => item.status === 'failed' || Boolean(item.errorMessage))
+    .sort(compareImportItemsByLatestCompletion)
     .slice(0, limit);
 };
 
@@ -282,6 +283,11 @@ export type ImportRunDispatchDiagnostics = {
   details: string[];
 };
 
+export type ImportRunRetryDiagnostics = {
+  scheduledCount: number;
+  nextRetryAt: string | null;
+};
+
 export const resolveImportRunDispatchDiagnostics = (
   run: BaseImportRunRecord | null
 ): ImportRunDispatchDiagnostics | null => {
@@ -320,4 +326,31 @@ export const resolveImportRunDispatchDiagnostics = (
   }
 
   return null;
+};
+
+export const resolveImportRunRetryDiagnostics = (
+  items: BaseImportItemRecord[]
+): ImportRunRetryDiagnostics | null => {
+  const scheduledRetryItems = items.filter(
+    (item: BaseImportItemRecord): boolean =>
+      item.status === 'pending' && item.retryable === true && typeof item.nextRetryAt === 'string'
+  );
+
+  if (scheduledRetryItems.length === 0) {
+    return null;
+  }
+
+  const nextRetryAt =
+    scheduledRetryItems
+      .map((item: BaseImportItemRecord) => {
+        const parsed = Date.parse(item.nextRetryAt ?? '');
+        return Number.isFinite(parsed) ? parsed : Number.NaN;
+      })
+      .filter((value: number) => Number.isFinite(value))
+      .sort((left: number, right: number) => left - right)[0] ?? Number.NaN;
+
+  return {
+    scheduledCount: scheduledRetryItems.length,
+    nextRetryAt: Number.isFinite(nextRetryAt) ? new Date(nextRetryAt).toISOString() : null,
+  };
 };

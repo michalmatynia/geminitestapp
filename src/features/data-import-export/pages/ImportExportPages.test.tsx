@@ -11,6 +11,8 @@ const mockState = vi.hoisted(() => ({
   isBaseConnected: true,
   importsPageTab: 'import' as 'import' | 'import-template',
   setImportsPageTab: vi.fn(),
+  setActiveImportRunId: vi.fn(),
+  searchParams: new URLSearchParams(),
 }));
 
 vi.mock('next/link', () => ({
@@ -25,6 +27,10 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => mockState.searchParams,
+}));
+
 vi.mock('@/features/data-import-export/context/ImportExportContext', () => ({
   ImportExportProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useImportExportData: () => ({
@@ -34,6 +40,7 @@ vi.mock('@/features/data-import-export/context/ImportExportContext', () => ({
   useImportExportState: () => ({
     importsPageTab: mockState.importsPageTab,
     setImportsPageTab: mockState.setImportsPageTab,
+    setActiveImportRunId: mockState.setActiveImportRunId,
   }),
 }));
 
@@ -165,6 +172,8 @@ describe('Import/export page shells', () => {
     mockState.isBaseConnected = true;
     mockState.importsPageTab = 'import';
     mockState.setImportsPageTab.mockReset();
+    mockState.setActiveImportRunId.mockReset();
+    mockState.searchParams = new URLSearchParams();
   });
 
   it('renders the dedicated product import page with import-only tabs', () => {
@@ -198,6 +207,15 @@ describe('Import/export page shells', () => {
 
     expect(screen.getByTestId('imports-page-shell')).toHaveClass('page-section-tight');
     expect(screen.getByTestId('imports-page-shell')).not.toHaveClass('page-section');
+  });
+
+  it('hydrates the active import run from the runId query param', () => {
+    mockState.searchParams = new URLSearchParams('runId=run-42');
+
+    render(<ImportsPage />);
+
+    expect(mockState.setImportsPageTab).toHaveBeenCalledWith('import');
+    expect(mockState.setActiveImportRunId).toHaveBeenCalledWith('run-42');
   });
 
   it('renders the export page with export-only tabs and import guidance link', () => {

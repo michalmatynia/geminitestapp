@@ -178,6 +178,19 @@ export function BaseImportRunsQueuePanel({
               <div className='truncate text-gray-200' title={run.summaryMessage ?? run.error ?? '—'}>
                 {run.summaryMessage ?? run.error ?? '—'}
               </div>
+              {run.errorCode || run.error ? (
+                <div
+                  className='truncate text-rose-200'
+                  title={
+                    run.errorCode && run.error
+                      ? `${run.errorCode}: ${run.error}`
+                      : run.errorCode ?? run.error ?? ''
+                  }
+                >
+                  {run.errorCode ? `${run.errorCode}` : 'ERROR'}
+                  {run.error ? ` · ${run.error}` : ''}
+                </div>
+              ) : null}
               {preflightIssues.length > 0 ? (
                 <div className='text-amber-300'>
                   Preflight: {preflightIssues.map((issue) => issue.code).join(', ')}
@@ -196,6 +209,28 @@ export function BaseImportRunsQueuePanel({
         accessorKey: 'updatedAt',
         header: 'Updated',
         cell: ({ row }) => toDateLabel(row.original.finishedAt ?? row.original.updatedAt),
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className='flex flex-col items-start gap-1 text-[11px]'>
+            <Link
+              href={`/admin/products/import?runId=${encodeURIComponent(row.original.id)}`}
+              className='text-cyan-300 hover:text-cyan-200'
+            >
+              Open import page
+            </Link>
+            <Link
+              href={`/api/v2/integrations/imports/base/runs/${encodeURIComponent(row.original.id)}/report?format=csv`}
+              target='_blank'
+              rel='noreferrer'
+              className='text-gray-300 hover:text-white'
+            >
+              Download CSV report
+            </Link>
+          </div>
+        ),
       },
     ],
     []

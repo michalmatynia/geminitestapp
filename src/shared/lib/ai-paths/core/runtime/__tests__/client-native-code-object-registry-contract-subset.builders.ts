@@ -400,8 +400,13 @@ export const buildDbSchemaNode = (): AiNode => ({
   outputs: ['schema', 'context'],
   config: {
     db_schema: {
+      provider: 'auto',
       mode: 'selected',
       collections: ['products'],
+      sourceMode: 'schema_and_live_context',
+      contextCollections: ['products'],
+      contextQuery: '{"status":"active"}',
+      contextLimit: 20,
       includeFields: true,
       includeRelations: true,
       formatAs: 'text',

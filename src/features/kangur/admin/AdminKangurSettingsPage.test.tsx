@@ -216,6 +216,9 @@ describe('AdminKangurSettingsPage', () => {
           dailyMessageLimit: 12,
           guestIntroMode: 'first_visit',
           homeOnboardingMode: 'first_visit',
+          contextRegistryMaxNodes: 24,
+          contextRegistryDepth: 1,
+          knowledgeGraphEnabled: true,
         });
       }
       if (key === KANGUR_PARENT_VERIFICATION_SETTINGS_KEY) {

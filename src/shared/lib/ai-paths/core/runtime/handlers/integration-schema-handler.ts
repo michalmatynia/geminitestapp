@@ -16,6 +16,28 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 let schemaCacheResult: HttpResult<unknown> | null = null;
 let schemaCacheTs = 0;
 const SCHEMA_CACHE_TTL_MS = 30_000;
+const DEFAULT_LIVE_CONTEXT_LIMIT = 20;
+
+type LiveContextCollection = {
+  name: string;
+  provider: 'mongodb';
+  documents: Record<string, unknown>[];
+  total: number;
+  limit: number;
+  skip: number;
+  query: string | null;
+  error?: string;
+};
+
+type LiveContextPayload = {
+  fetchedAt: string;
+  selectedCollections: string[];
+  limitPerCollection: number;
+  query: string | null;
+  collections: LiveContextCollection[];
+  collectionMap: Record<string, LiveContextCollection>;
+  errors: Array<{ collection: string; error: string }>;
+};
 
 const isCollectionSchema = (value: unknown): value is CollectionSchema =>
   isObjectRecord(value) && typeof value['name'] === 'string' && Array.isArray(value['fields']);
@@ -30,6 +52,46 @@ const resolveCollectionList = (value: unknown): CollectionSchema[] => {
     );
   }
   return [];
+};
+
+const cloneSchemaResponse = (schema: SchemaResponse): SchemaResponse => {
+  if (typeof globalThis.structuredClone === 'function') {
+    return globalThis.structuredClone(schema) as SchemaResponse;
+  }
+  return JSON.parse(JSON.stringify(schema)) as SchemaResponse;
+};
+
+const normalizeSelectedCollectionKey = (value: string): string => value.trim().toLowerCase();
+
+const matchesSelectedCollection = (
+  collection: CollectionSchema,
+  selectedSet: Set<string>
+): boolean => {
+  const nameKey = normalizeSelectedCollectionKey(collection.name);
+  if (selectedSet.has(nameKey)) return true;
+  if (collection.provider) {
+    const providerKey = normalizeSelectedCollectionKey(`${collection.provider}:${collection.name}`);
+    if (selectedSet.has(providerKey)) return true;
+  }
+  return false;
+};
+
+const toFetchCollectionName = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed.includes(':')) return trimmed;
+  return trimmed.split(':').slice(1).join(':').trim();
+};
+
+const dedupeCollectionNames = (values: string[]): string[] => {
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  values.forEach((value: string) => {
+    const normalized = normalizeSelectedCollectionKey(value);
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    deduped.push(value.trim());
+  });
+  return deduped;
 };
 
 export const getCachedSchema = async (): Promise<HttpResult<unknown>> => {
@@ -84,28 +146,164 @@ const filterCollections = (
   selectedCollections: string[]
 ): SchemaResponse => {
   if (!selectedCollections || selectedCollections.length === 0) {
-    return schema;
+    return cloneSchemaResponse(schema);
   }
-  const selectedSet = new Set(selectedCollections.map((c: string): string => c.toLowerCase()));
+  const selectedSet = new Set(
+    selectedCollections.map((c: string): string => normalizeSelectedCollectionKey(c))
+  );
 
-  const baseCollections = resolveCollectionList(schema.collections);
+  const clonedSchema = cloneSchemaResponse(schema);
+  const baseCollections = resolveCollectionList(clonedSchema.collections);
 
-  if (schema.provider === 'multi') {
+  if (clonedSchema.provider === 'multi') {
     const collections = baseCollections.filter((c): boolean =>
-      selectedSet.has(c.name.toLowerCase())
+      matchesSelectedCollection(c, selectedSet)
     );
     return {
-      ...schema,
+      ...clonedSchema,
       collections,
     } as SchemaResponse;
   }
   const collections = baseCollections.filter((c: CollectionSchema): boolean =>
-    selectedSet.has(c.name.toLowerCase())
+    matchesSelectedCollection(c, selectedSet)
   );
   return {
-    provider: schema.provider,
+    provider: clonedSchema.provider,
     collections,
   } as SchemaResponse;
+};
+
+const formatLiveContextAsText = (payload: LiveContextPayload): string => {
+  const lines: string[] = [
+    'LIVE DATABASE CONTEXT',
+    '=====================',
+    `Fetched At: ${payload.fetchedAt}`,
+    `Selected Collections: ${payload.selectedCollections.length}`,
+    `Limit Per Collection: ${payload.limitPerCollection}`,
+    `Query: ${payload.query ?? '(none)'}`,
+    '',
+  ];
+
+  if (payload.collections.length === 0) {
+    lines.push('No live context collections selected.');
+    return lines.join('\n');
+  }
+
+  payload.collections.forEach((collection: LiveContextCollection) => {
+    lines.push(`Collection: ${collection.name}`);
+    if (collection.error) {
+      lines.push(`Error: ${collection.error}`);
+      lines.push('');
+      return;
+    }
+    lines.push(`Total Matching Documents: ${collection.total}`);
+    lines.push('Documents:');
+    if (collection.documents.length === 0) {
+      lines.push('  []');
+    } else {
+      collection.documents.forEach((document: Record<string, unknown>, index: number) => {
+        lines.push(`  ${index + 1}. ${JSON.stringify(document)}`);
+      });
+    }
+    lines.push('');
+  });
+
+  return lines.join('\n');
+};
+
+const resolveLiveContextCollectionKeys = (config: DbSchemaConfig): string[] => {
+  const explicit = dedupeCollectionNames(config.contextCollections ?? []);
+  if (explicit.length > 0) return explicit;
+  if (config.mode === 'selected') {
+    return dedupeCollectionNames(config.collections ?? []);
+  }
+  return [];
+};
+
+const loadLiveContext = async ({
+  nodeId,
+  config,
+  reportAiPathsError,
+}: {
+  nodeId: string;
+  config: DbSchemaConfig;
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+}): Promise<LiveContextPayload | null> => {
+  const selectedCollections = resolveLiveContextCollectionKeys(config);
+  if (selectedCollections.length === 0) {
+    return {
+      fetchedAt: new Date().toISOString(),
+      selectedCollections: [],
+      limitPerCollection: config.contextLimit ?? DEFAULT_LIVE_CONTEXT_LIMIT,
+      query: config.contextQuery?.trim() ? config.contextQuery.trim() : null,
+      collections: [],
+      collectionMap: {},
+      errors: [],
+    };
+  }
+
+  const limitPerCollection = config.contextLimit ?? DEFAULT_LIVE_CONTEXT_LIMIT;
+  const query = config.contextQuery?.trim() ? config.contextQuery.trim() : null;
+  const provider = config.provider === 'mongodb' ? 'mongodb' : 'auto';
+  const fetchedAt = new Date().toISOString();
+
+  const collections = await Promise.all(
+    selectedCollections.map(async (selectedKey): Promise<LiveContextCollection> => {
+      const collectionName = toFetchCollectionName(selectedKey);
+      const result = await dbApi.browse(collectionName, {
+        provider,
+        limit: limitPerCollection,
+        ...(query ? { query } : {}),
+      });
+
+      if (!result.ok) {
+        reportAiPathsError(
+          new Error(result.error),
+          { action: 'fetchDbLiveContext', nodeId, collection: collectionName },
+          'Database live context fetch failed:'
+        );
+        return {
+          name: collectionName,
+          provider: 'mongodb',
+          documents: [],
+          total: 0,
+          limit: limitPerCollection,
+          skip: 0,
+          query,
+          error: result.error,
+        };
+      }
+
+      return {
+        name: collectionName,
+        provider: result.data.provider,
+        documents: result.data.documents ?? [],
+        total: result.data.total ?? 0,
+        limit: result.data.limit ?? limitPerCollection,
+        skip: result.data.skip ?? 0,
+        query,
+      };
+    })
+  );
+
+  const errors = collections
+    .filter((collection: LiveContextCollection): boolean => typeof collection.error === 'string')
+    .map((collection: LiveContextCollection) => ({
+      collection: collection.name,
+      error: collection.error as string,
+    }));
+
+  return {
+    fetchedAt,
+    selectedCollections: selectedCollections.map((value: string) => toFetchCollectionName(value)),
+    limitPerCollection,
+    query,
+    collections,
+    collectionMap: Object.fromEntries(
+      collections.map((collection: LiveContextCollection) => [collection.name, collection])
+    ),
+    errors,
+  };
 };
 
 export const handleDbSchema: NodeHandler = async ({
@@ -119,6 +317,10 @@ export const handleDbSchema: NodeHandler = async ({
   const defaultConfig: DbSchemaConfig = {
     mode: 'all',
     collections: [],
+    sourceMode: 'schema',
+    contextCollections: [],
+    contextQuery: '',
+    contextLimit: DEFAULT_LIVE_CONTEXT_LIMIT,
     includeFields: true,
     includeRelations: true,
     formatAs: 'text',
@@ -142,13 +344,13 @@ export const handleDbSchema: NodeHandler = async ({
     };
   }
 
-  const fullSchema = schemaResult.data as SchemaResponse;
+  const fullSchema = cloneSchemaResponse(schemaResult.data as SchemaResponse);
 
   // Filter collections if mode is "selected"
   const schema =
     config.mode === 'selected'
       ? filterCollections(fullSchema, config.collections ?? [])
-      : fullSchema;
+      : cloneSchemaResponse(fullSchema);
 
   // Optionally filter out fields or relations
   if (!config.includeFields || !config.includeRelations) {
@@ -171,6 +373,36 @@ export const handleDbSchema: NodeHandler = async ({
   // Format for AI consumption
   const schemaText =
     config.formatAs === 'text' ? formatSchemaAsText(schema) : JSON.stringify(schema, null, 2);
+  const liveContext =
+    config.sourceMode === 'live_context' || config.sourceMode === 'schema_and_live_context'
+      ? await loadLiveContext({
+        nodeId: node.id,
+        config,
+        reportAiPathsError,
+      })
+      : null;
+  const liveContextText =
+    liveContext === null
+      ? null
+      : config.formatAs === 'text'
+        ? formatLiveContextAsText(liveContext)
+        : JSON.stringify(liveContext, null, 2);
+
+  const contextText =
+    config.sourceMode === 'live_context'
+      ? liveContextText ?? ''
+      : config.sourceMode === 'schema_and_live_context'
+        ? config.formatAs === 'text'
+          ? [schemaText, liveContextText].filter(Boolean).join('\n\n')
+          : JSON.stringify(
+            {
+              schema,
+              liveContext,
+            },
+            null,
+            2
+          )
+        : schemaText;
 
   executed.schema?.add(node.id);
 
@@ -180,10 +412,14 @@ export const handleDbSchema: NodeHandler = async ({
     // - `context` is an object containing both the raw schema + a text rendering for prompt/templates
     schema,
     context: {
+      sourceMode: config.sourceMode,
       schema,
       schemaText,
+      contextText,
       provider: schema.provider,
       collections: schema.collections,
+      ...(liveContext ? { liveContext } : {}),
+      ...(liveContextText ? { liveContextText } : {}),
     },
   };
 };

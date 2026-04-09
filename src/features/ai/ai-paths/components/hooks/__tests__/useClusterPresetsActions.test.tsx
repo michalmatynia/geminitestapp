@@ -107,6 +107,8 @@ vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
+  useGraphDataState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphState: () => mockState.graphState,
   useGraphActions: () => mockState.graphActions,
 }));

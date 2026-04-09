@@ -1,9 +1,9 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
-  "nodeDocVersion": "2026-02-20.v1",
+  "nodeDocVersion": "2026-04-09.v1",
   "nodeType": "db_schema",
   "title": "Database Schema",
-  "purpose": "Provides live database structure as context for AI.",
+  "purpose": "Provides live database structure and optional collection context for AI.",
   "inputs": [],
   "outputs": [
     "schema",
@@ -26,6 +26,26 @@
       "defaultValue": "[]"
     },
     {
+      "path": "db_schema.sourceMode",
+      "description": "schema = emit structure only; live_context = emit latest collection rows; schema_and_live_context = emit both.",
+      "defaultValue": "schema"
+    },
+    {
+      "path": "db_schema.contextCollections",
+      "description": "Collections to fetch as live context during runtime. Falls back to selected schema collections when empty.",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "db_schema.contextQuery",
+      "description": "Optional JSON filter or free-text search applied to each live context collection.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "db_schema.contextLimit",
+      "description": "Maximum documents fetched per live context collection during runtime.",
+      "defaultValue": "20"
+    },
+    {
       "path": "db_schema.includeFields",
       "description": "Include field lists for each collection.",
       "defaultValue": "true"
@@ -33,12 +53,12 @@
     {
       "path": "db_schema.includeRelations",
       "description": "Include inferred relations/foreign key hints when available.",
-      "defaultValue": "false"
+      "defaultValue": "true"
     },
     {
       "path": "db_schema.formatAs",
-      "description": "json emits a JSON object; text emits a compact schema text for prompting.",
-      "defaultValue": "json"
+      "description": "json emits structured schema/context payloads; text emits prompt-ready context text.",
+      "defaultValue": "text"
     },
     {
       "path": "runtime.cache.mode",
@@ -57,11 +77,25 @@
     }
   ],
   "notes": [],
+  "defaultConfig": {
+    "db_schema": {
+      "provider": "auto",
+      "mode": "all",
+      "collections": [],
+      "sourceMode": "schema",
+      "contextCollections": [],
+      "contextQuery": "",
+      "contextLimit": 20,
+      "includeFields": true,
+      "includeRelations": true,
+      "formatAs": "text"
+    }
+  },
   "semanticNodeExample": {
     "id": "node_db_schema",
     "type": "db_schema",
     "title": "Database Schema",
-    "description": "Provides live database structure as context for AI.",
+    "description": "Provides live database structure and optional collection context for AI.",
     "position": {
       "x": 100,
       "y": 100
@@ -71,6 +105,20 @@
       "schema",
       "context"
     ],
+    "config": {
+      "db_schema": {
+        "provider": "auto",
+        "mode": "all",
+        "collections": [],
+        "sourceMode": "schema",
+        "contextCollections": [],
+        "contextQuery": "",
+        "contextLimit": 20,
+        "includeFields": true,
+        "includeRelations": true,
+        "formatAs": "text"
+      }
+    },
     "data": {},
     "connections": {
       "incoming": [],
@@ -78,5 +126,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "a872b63af24b71cdcd57441d6a49d748f0a8c9d9a586a5b092a8ba97964a499f"
+  "nodeHash": "9de668727483c8c0852e9b3c5d211aaa0d14c3f76a6943e7c1093d18c20fb0d1"
 }

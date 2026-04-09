@@ -513,4 +513,59 @@ describe('processBaseImportRun custom fields', () => {
 
     expect(customFieldRepository.createCustomField).not.toHaveBeenCalled();
   });
+
+  it('persists the latest failed item cause onto the run summary and error fields', async () => {
+    const failedItem = {
+      ...buildItem(),
+      status: 'failed',
+      sku: 'FOASW022',
+      errorCode: 'VALIDATION_ERROR',
+      errorClass: 'permanent',
+      errorMessage:
+        'Validation failed for FOASW022. name_en: English name must use format: <name> | <size> | <material> | <category> | <lore or theme>',
+      updatedAt: '2026-04-08T00:00:03.000Z',
+      lastErrorAt: '2026-04-08T00:00:03.000Z',
+    };
+
+    mocks.listBaseImportRunItemsMock
+      .mockReset()
+      .mockResolvedValueOnce([buildItem()])
+      .mockResolvedValueOnce([buildItem()])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([failedItem]);
+    mocks.importSingleItemMock.mockResolvedValue({
+      status: 'failed',
+      action: 'failed',
+      baseProductId: 'base-1',
+      sku: 'FOASW022',
+      errorCode: 'VALIDATION_ERROR',
+      errorClass: 'permanent',
+      retryable: false,
+      errorMessage: failedItem.errorMessage,
+    });
+    mocks.recomputeBaseImportRunStatsMock.mockResolvedValue({
+      stats: {
+        total: 1,
+        pending: 0,
+        processing: 0,
+        imported: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 1,
+      },
+    });
+
+    await processBaseImportRun('run-live');
+
+    expect(mocks.updateBaseImportRunStatusMock).toHaveBeenLastCalledWith(
+      'run-live',
+      'failed',
+      expect.objectContaining({
+        error: failedItem.errorMessage,
+        errorCode: 'VALIDATION_ERROR',
+        errorClass: 'permanent',
+        summaryMessage: expect.stringContaining('Latest failure: FOASW022 [VALIDATION_ERROR]:'),
+      })
+    );
+  });
 });

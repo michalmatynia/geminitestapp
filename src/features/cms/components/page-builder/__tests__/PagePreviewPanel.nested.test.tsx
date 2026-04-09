@@ -37,11 +37,18 @@ vi.mock('@/shared/hooks/useUserPreferences', () => ({
   useUserPreferences: () => ({ data: {} }),
 }));
 
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: () => ({ toast: toastMock }),
+  };
+});
+
+vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/forms-and-actions.public')>();
+  return {
+    ...actual,
     SelectSimple: () => null,
   };
 });

@@ -647,7 +647,13 @@ export function StructuredProductNameField(): React.JSX.Element {
         </Button>
       }
     >
-      <div className='relative'>
+      <div
+        className='relative'
+        role='combobox'
+        aria-haspopup='listbox'
+        aria-expanded={dropdownOpen}
+        aria-owns={dropdownOpen ? listboxId : undefined}
+      >
         <Input
           ref={(node) => {
             inputRef.current = node;
@@ -728,8 +734,6 @@ export function StructuredProductNameField(): React.JSX.Element {
           autoCapitalize='off'
           aria-autocomplete='list'
           aria-controls={dropdownOpen ? listboxId : undefined}
-          aria-expanded={dropdownOpen}
-          aria-haspopup='listbox'
           aria-activedescendant={activeDescendantId}
           spellCheck={false}
           className={cn(error && 'border-red-500/60')}

@@ -10,6 +10,7 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useRuntimeState: () => mockState.runtimeState,
+  useRuntimeDataState: () => mockState.runtimeState,
 }));
 
 vi.mock('@/shared/ui/data-display.public', () => ({

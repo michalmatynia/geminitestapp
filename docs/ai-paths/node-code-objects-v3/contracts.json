@@ -98,7 +98,7 @@
       "objectId": "node_obj_db_schema_portable_v3",
       "title": "Database Schema",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "5be73667a0e5dd52de4c894393f8490827f5a0133f81f538330ef14661d88621",
+      "objectHash": "8f9157a45b9a06fcd60c38661e0ba1ea219452a8d111e5c7e4a87f8ed5288905",
       "runtimeStrategy": "code_object_v3",
       "executionAdapter": "native_handler_registry",
       "legacyHandlerKey": "db_schema",
@@ -346,5 +346,5 @@
     }
   },
   "contractsHashAlgorithm": "sha256",
-  "contractsHash": "51d0c2bdcdac8bed3c46a0b31de530847c93cb37cfaaa933cf5fdc73ca1a5139"
+  "contractsHash": "e3d3507149b0c5aeb494dc25f56655ef173d567de7ca6c802e4d3bf4afa18b7a"
 }

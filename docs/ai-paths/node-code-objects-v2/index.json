@@ -136,12 +136,12 @@
       "nodeFamily": "integration",
       "objectFile": "docs/ai-paths/node-code-objects-v2/db_schema.json",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "b1ed031f64208ed9a9809957b8472de69f6efd9a14629492ba79bdd51d7f6efa",
+      "objectHash": "8653ed2e80b2b94a234a092590b38aebf91c849acd40928357a3aa42a954d8c6",
       "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "a872b63af24b71cdcd57441d6a49d748f0a8c9d9a586a5b092a8ba97964a499f",
+      "semanticNodeHash": "9de668727483c8c0852e9b3c5d211aaa0d14c3f76a6943e7c1093d18c20fb0d1",
       "inputCount": 0,
       "outputCount": 2,
-      "configFieldCount": 9
+      "configFieldCount": 13
     },
     {
       "id": "node_obj_delay_portable_v2",
@@ -314,15 +314,15 @@
     {
       "id": "node_obj_playwright_portable_v2",
       "nodeType": "playwright",
-      "title": "Playwright",
+      "title": "Playwright: Batch Capture",
       "nodeFamily": "integration",
       "objectFile": "docs/ai-paths/node-code-objects-v2/playwright.json",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "81fb0a69fde9df0fafb5210019ffdb20038f9a7b924a2c227a9c34100cb09ab9",
+      "objectHash": "c69fce17e5272ad564f22e0a0b45db5c0b93e506054d851353039108bf1e0b3a",
       "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056",
-      "inputCount": 3,
-      "outputCount": 4,
+      "semanticNodeHash": "33b228c66c0793a7aa00140ca99d1b066eb21107810427c330001f69e25a70c0",
+      "inputCount": 4,
+      "outputCount": 3,
       "configFieldCount": 16
     },
     {
@@ -416,10 +416,10 @@
       "nodeFamily": "transform",
       "objectFile": "docs/ai-paths/node-code-objects-v2/template.json",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "401376fbc96a9e269f1d00adcbfa2c89ab35fc842301ecd4e7f1a30f48e67ff8",
+      "objectHash": "39653ea16e327ae396016266c36a8535463125018a794367e28f3e455f04a4f6",
       "semanticNodeHashAlgorithm": "sha256",
-      "semanticNodeHash": "349143bb99ff84ec6f3ceba1c8d8a24e48682e23c0679ef6bc8ff3048636640c",
-      "inputCount": 3,
+      "semanticNodeHash": "a61e6756bfbc5e139976478c63fa5ab3cf1c07342f9f33c74f9388079d857c4d",
+      "inputCount": 5,
       "outputCount": 1,
       "configFieldCount": 4
     },

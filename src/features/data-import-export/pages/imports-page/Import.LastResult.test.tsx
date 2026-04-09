@@ -14,6 +14,18 @@ vi.mock('@/features/data-import-export/context/ImportExportContext', () => ({
   useImportExportData: () => mocks.useImportExportDataMock(),
 }));
 
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.PropsWithChildren<{ href: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({
     title,
@@ -52,6 +64,7 @@ describe('ImportLastResultSection', () => {
         summaryMessage: 'Queued 10 products for import.',
       },
       activeImportRunId: 'run-1',
+      activeImportRun: null,
     });
 
     render(<ImportLastResultSection />);
@@ -61,6 +74,14 @@ describe('ImportLastResultSection', () => {
     expect(
       screen.getByText('This run was submitted to the separate base-import runtime queue.')
     ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View in Runtime Queue' })).toHaveAttribute(
+      'href',
+      '/admin/ai-paths/queue?tab=product-imports&query=run-1'
+    );
+    expect(screen.getByRole('link', { name: 'Open JSON detail' })).toHaveAttribute(
+      'href',
+      '/api/v2/integrations/imports/base/runs/run-1?includeItems=true&page=1&pageSize=250'
+    );
   });
 
   it('renders preflight-blocked summary details', () => {
@@ -78,6 +99,7 @@ describe('ImportLastResultSection', () => {
         },
       },
       activeImportRunId: 'run-2',
+      activeImportRun: null,
     });
 
     render(<ImportLastResultSection />);
@@ -88,5 +110,37 @@ describe('ImportLastResultSection', () => {
       screen.getByText('Dispatch stopped at preflight before this run reached runtime queueing.')
     ).toBeInTheDocument();
     expect(screen.getByText('• Catalog is required.')).toBeInTheDocument();
+  });
+
+  it('renders the latest run failure cause when the active run matches the last result', () => {
+    mocks.useImportExportDataMock.mockReturnValue({
+      lastResult: {
+        runId: 'run-3',
+        status: 'failed',
+        dispatchMode: 'queued',
+        queueJobId: 'job-3',
+        summaryMessage:
+          'Import completed: 0 imported, 0 updated, 0 skipped, 1 failed. Latest failure: FOASW022 [VALIDATION_ERROR]: Validation failed for FOASW022.',
+      },
+      activeImportRunId: 'run-3',
+      activeImportRun: {
+        run: {
+          id: 'run-3',
+          errorCode: 'VALIDATION_ERROR',
+          error:
+            'Validation failed for FOASW022. name_en: English name must use format: <name> | <size> | <material> | <category> | <lore or theme>',
+        },
+      },
+    });
+
+    render(<ImportLastResultSection />);
+
+    expect(screen.getByText('Latest failure')).toBeInTheDocument();
+    expect(screen.getByText('VALIDATION_ERROR')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Validation failed for FOASW022\. name_en: English name must use format:/
+      )
+    ).toBeInTheDocument();
   });
 });

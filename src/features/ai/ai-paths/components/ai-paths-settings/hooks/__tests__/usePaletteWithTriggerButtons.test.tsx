@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -25,7 +26,7 @@ const mockState = vi.hoisted(() => ({
   triggerButtonsQuery: {
     data: [] as Array<Record<string, unknown>>,
   },
-  createListQueryCalls: [] as Array<Record<string, unknown>>,
+  useQueryCalls: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({
@@ -37,12 +38,16 @@ vi.mock('@/shared/lib/ai-paths', () => ({
   triggerButtonsApi: mockState.triggerButtonsApi,
 }));
 
-vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: (args: Record<string, unknown>) => {
-    mockState.createListQueryCalls.push(args);
-    return mockState.triggerButtonsQuery;
-  },
-}));
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return {
+    ...actual,
+    useQuery: (args: Record<string, unknown>) => {
+      mockState.useQueryCalls.push(args);
+      return mockState.triggerButtonsQuery;
+    },
+  };
+});
 
 vi.mock('@/shared/lib/query-keys', () => ({
   QUERY_KEYS: {
@@ -54,36 +59,36 @@ vi.mock('@/shared/lib/query-keys', () => ({
   },
 }));
 
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
+
 describe('usePaletteWithTriggerButtons', () => {
   beforeEach(() => {
     mockState.derivePaletteNodeTypeId.mockClear();
     mockState.triggerButtonsApi.list.mockReset();
     mockState.triggerButtonsQuery.data = [];
-    mockState.createListQueryCalls.length = 0;
+    mockState.useQueryCalls.length = 0;
   });
 
   it('configures the trigger-button query and forwards API success and failure', async () => {
     const rows = [{ id: 'btn-1', enabled: true, name: 'Fresh', display: { label: 'Fresh' } }];
     mockState.triggerButtonsApi.list.mockResolvedValueOnce({ ok: true, data: rows });
-    renderHook(() => usePaletteWithTriggerButtons());
+    renderHook(() => usePaletteWithTriggerButtons(), { wrapper });
 
-    expect(mockState.createListQueryCalls).toHaveLength(1);
-    const queryArgs = mockState.createListQueryCalls[0] as {
+    expect(mockState.useQueryCalls).toHaveLength(1);
+    const queryArgs = mockState.useQueryCalls[0] as {
       queryKey: string[];
       queryFn: () => Promise<unknown>;
       enabled?: boolean;
-      meta: Record<string, unknown>;
     };
 
     expect(queryArgs.queryKey).toEqual(['trigger-buttons']);
     expect(queryArgs.enabled).toBe(true);
-    expect(queryArgs.meta).toEqual({
-      source: 'ai.ai-paths.settings.trigger-buttons',
-      operation: 'list',
-      resource: 'aiPaths.triggerButtons',
-      domain: 'global',
-      description: 'Loads ai paths trigger buttons.',
-    });
     await expect(queryArgs.queryFn()).resolves.toEqual(rows);
     expect(mockState.triggerButtonsApi.list).toHaveBeenCalledWith({ entityType: 'custom' });
 
@@ -94,7 +99,7 @@ describe('usePaletteWithTriggerButtons', () => {
   it('returns the base palette when there are no trigger buttons', () => {
     mockState.triggerButtonsQuery.data = [];
 
-    const { result } = renderHook(() => usePaletteWithTriggerButtons());
+    const { result } = renderHook(() => usePaletteWithTriggerButtons(), { wrapper });
 
     expect(result.current).toBe(mockState.palette);
     expect(mockState.derivePaletteNodeTypeId).not.toHaveBeenCalled();
@@ -111,7 +116,7 @@ describe('usePaletteWithTriggerButtons', () => {
       { id: 'btn-5', enabled: true, name: '  Fresh  ', display: { label: 'Ignored' } },
     ];
 
-    const { result } = renderHook(() => usePaletteWithTriggerButtons());
+    const { result } = renderHook(() => usePaletteWithTriggerButtons(), { wrapper });
 
     expect(result.current).toEqual([
       mockState.palette[0],
@@ -163,10 +168,10 @@ describe('usePaletteWithTriggerButtons', () => {
   });
 
   it('allows the trigger-button query to stay disabled while the base palette renders', () => {
-    renderHook(() => usePaletteWithTriggerButtons({ enabled: false }));
+    renderHook(() => usePaletteWithTriggerButtons({ enabled: false }), { wrapper });
 
-    expect(mockState.createListQueryCalls).toHaveLength(1);
-    const queryArgs = mockState.createListQueryCalls[0] as {
+    expect(mockState.useQueryCalls).toHaveLength(1);
+    const queryArgs = mockState.useQueryCalls[0] as {
       enabled?: boolean;
     };
     expect(queryArgs.enabled).toBe(false);

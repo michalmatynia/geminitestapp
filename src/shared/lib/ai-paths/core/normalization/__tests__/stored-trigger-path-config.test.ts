@@ -258,7 +258,7 @@ describe('materializeStoredTriggerPathConfig', () => {
       fallbackName: config.name,
     });
 
-    const modelNode = resolved.config.nodes.find((node) => node.id === 'node-model-name-normalize');
+    const modelNode = resolved.config.nodes.find((node) => node.type === 'model');
     expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
     expect(resolved.changed).toBe(true);
   });
@@ -413,7 +413,7 @@ describe('materializeStoredTriggerPathConfig', () => {
         aiPathsStarter: {
           starterKey: 'product_name_normalize',
           templateId: 'starter_product_name_normalize',
-          templateVersion: 5,
+          templateVersion: 4,
           seededDefault: true,
         },
       },

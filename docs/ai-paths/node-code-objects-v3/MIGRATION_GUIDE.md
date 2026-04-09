@@ -10,7 +10,7 @@ canonical: true
 
 This guide tracks node-by-node migration from compatibility runtime handlers to semantic portable code objects (`v3`).
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-05T14:57:57.569Z
 
 ## Inputs
 
@@ -38,7 +38,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 - Total node types: 34
 - `compatibility`: 0
 - `code_object_v3`: 34
-- v3 contracts hash: `51d0c2bdcdac8bed3c46a0b31de530847c93cb37cfaaa933cf5fdc73ca1a5139`
+- v3 contracts hash: `e3d3507149b0c5aeb494dc25f56655ef173d567de7ca6c802e4d3bf4afa18b7a`
 
 ## Readiness Scorecard
 
@@ -72,7 +72,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 
 - Source file: `docs/ai-paths/node-code-objects-v3/rollout-eligibility.json`
 - Schema version: `ai-paths.node-migration-rollout-eligibility.v2`
-- Generated at: `2026-04-05T14:57:58.017Z`
+- Generated at: `2026-04-05T14:57:57.569Z`
 - Eligibility criteria: `runtime_strategy=code_object_v3`, `has_semantic_contract_hash`, `has_v2_object_contract`, `has_v3_scaffold`, `has_v3_object_artifacts`, `dual_run_parity_validated`
 - Eligible node types: `agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 
@@ -103,7 +103,7 @@ No migration blockers detected.
 | `constant` | transform | `code_object_v3` | 0/1 | `yes` | [sheet](./nodes/constant.md) | `ae37de0024fb...` | `7ab1331fe618...` |
 | `context` | transform | `code_object_v3` | 1/4 | `yes` | [sheet](./nodes/context.md) | `8fec17546b68...` | `7ead38ff035c...` |
 | `database` | integration | `code_object_v3` | 12/4 | `yes` | [sheet](./nodes/database.md) | `a17f4531e80e...` | `68bdd970676e...` |
-| `db_schema` | integration | `code_object_v3` | 0/2 | `yes` | [sheet](./nodes/db_schema.md) | `a872b63af24b...` | `5be73667a0e5...` |
+| `db_schema` | integration | `code_object_v3` | 0/2 | `yes` | [sheet](./nodes/db_schema.md) | `9de668727483...` | `8f9157a45b9a...` |
 | `delay` | orchestration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/delay.md) | `fa631c84b720...` | `2d35e8bcc20d...` |
 | `fetcher` | orchestration | `code_object_v3` | 5/4 | `yes` | [sheet](./nodes/fetcher.md) | `b75a94276b7a...` | `0f2c8d16e14c...` |
 | `gate` | orchestration | `code_object_v3` | 3/3 | `yes` | [sheet](./nodes/gate.md) | `c49aeec3b3e8...` | `2e0a122c81e4...` |
@@ -116,14 +116,14 @@ No migration blockers detected.
 | `mutator` | transform | `code_object_v3` | 1/1 | `yes` | [sheet](./nodes/mutator.md) | `86dc18244f71...` | `74d37752bca1...` |
 | `notification` | integration | `code_object_v3` | 3/0 | `yes` | [sheet](./nodes/notification.md) | `171fd2da0826...` | `f350d714d27b...` |
 | `parser` | transform | `code_object_v3` | 2/4 | `yes` | [sheet](./nodes/parser.md) | `f4efe5d4248e...` | `bc9807ef13bf...` |
-| `playwright` | integration | `code_object_v3` | 4/3 | `yes` | [sheet](./nodes/playwright.md) | `7fe5f58cbada...` | `2a20d91e30ac...` |
+| `playwright` | integration | `code_object_v3` | 4/3 | `yes` | [sheet](./nodes/playwright.md) | `33b228c66c07...` | `2a20d91e30ac...` |
 | `poll` | orchestration | `code_object_v3` | 6/4 | `yes` | [sheet](./nodes/poll.md) | `bb7015cd0766...` | `87c66145015d...` |
 | `prompt` | ai-generation | `code_object_v3` | 5/2 | `yes` | [sheet](./nodes/prompt.md) | `98e6f0ffd5cb...` | `f4661d199bf1...` |
 | `regex` | transform | `code_object_v3` | 3/4 | `yes` | [sheet](./nodes/regex.md) | `119b8b6056ec...` | `169830833bb9...` |
 | `router` | orchestration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/router.md) | `82e9ef3cc91b...` | `790f1d79bbc6...` |
 | `simulation` | orchestration | `code_object_v3` | 1/4 | `yes` | [sheet](./nodes/simulation.md) | `cce9b04665f1...` | `2027d90bccd1...` |
 | `string_mutator` | transform | `code_object_v3` | 3/1 | `yes` | [sheet](./nodes/string_mutator.md) | `b4a7a5bd6daf...` | `80cb1ef198b2...` |
-| `template` | transform | `code_object_v3` | 3/1 | `yes` | [sheet](./nodes/template.md) | `349143bb99ff...` | `e6b05a3de450...` |
+| `template` | transform | `code_object_v3` | 5/1 | `yes` | [sheet](./nodes/template.md) | `a61e6756bfbc...` | `e6b05a3de450...` |
 | `trigger` | orchestration | `code_object_v3` | 0/2 | `yes` | [sheet](./nodes/trigger.md) | `fb32646a0464...` | `32cc8751bee3...` |
 | `validation_pattern` | transform | `code_object_v3` | 4/6 | `yes` | [sheet](./nodes/validation_pattern.md) | `e64e35e2fd11...` | `71bb929485b1...` |
 | `validator` | transform | `code_object_v3` | 1/3 | `yes` | [sheet](./nodes/validator.md) | `626a3f87a561...` | `55eb6c5bbce4...` |

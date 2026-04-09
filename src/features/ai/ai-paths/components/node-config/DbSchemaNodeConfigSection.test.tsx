@@ -33,6 +33,10 @@ const buildDbSchemaNode = (overrides: Record<string, unknown> = {}): Record<stri
       provider: 'auto',
       mode: 'all',
       collections: [],
+      sourceMode: 'schema',
+      contextCollections: [],
+      contextQuery: '',
+      contextLimit: 20,
       includeFields: true,
       includeRelations: true,
       formatAs: 'text',
@@ -237,6 +241,10 @@ describe('DbSchemaNodeConfigSection', () => {
           provider: 'auto',
           mode: 'selected',
           collections: ['mongodb:orders'],
+          sourceMode: 'schema',
+          contextCollections: [],
+          contextQuery: '',
+          contextLimit: 20,
           includeFields: true,
           includeRelations: true,
           formatAs: 'text',
@@ -321,6 +329,66 @@ describe('DbSchemaNodeConfigSection', () => {
     rerender(<DbSchemaNodeConfigSection />);
 
     expect(screen.getByText('No collections selected')).toBeInTheDocument();
+  });
+
+  it('configures live context collections, filters, and limits', () => {
+    mockState.selectedNode = buildDbSchemaNode({
+      config: {
+        db_schema: {
+          provider: 'auto',
+          mode: 'selected',
+          collections: ['products'],
+          sourceMode: 'schema',
+          contextCollections: [],
+          contextQuery: '',
+          contextLimit: 20,
+          includeFields: true,
+          includeRelations: true,
+          formatAs: 'text',
+        },
+      },
+    });
+
+    const { rerender } = render(<DbSchemaNodeConfigSection />);
+
+    fireEvent.change(screen.getByLabelText('Context source mode'), {
+      target: { value: 'schema_and_live_context' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        sourceMode: 'schema_and_live_context',
+        contextCollections: ['products'],
+      }),
+    });
+
+    rerender(<DbSchemaNodeConfigSection />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: /orders/i })[1] as HTMLElement);
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextCollections: ['products', 'orders'],
+      }),
+    });
+
+    fireEvent.change(screen.getByLabelText('Runtime context query filter'), {
+      target: { value: '{"catalogId":"catalog-1"}' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextQuery: '{"catalogId":"catalog-1"}',
+      }),
+    });
+
+    fireEvent.change(screen.getByLabelText('Documents per collection'), {
+      target: { value: '7' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextLimit: 7,
+      }),
+    });
+
+    expect(screen.getByText(/Runtime will fetch the latest documents from/i)).toBeInTheDocument();
   });
 
   it('browses documents, expands rows, searches, paginates, and clears the browser', () => {

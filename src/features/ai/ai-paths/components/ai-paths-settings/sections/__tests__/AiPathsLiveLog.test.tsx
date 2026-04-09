@@ -15,6 +15,7 @@ function getRuntimeStateMock() {
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useRuntimeState: getRuntimeStateMock,
+  useRuntimeDataState: getRuntimeStateMock,
 }));
 
 vi.mock('@/shared/ui/data-display.public', () => ({

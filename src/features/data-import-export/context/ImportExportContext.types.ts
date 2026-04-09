@@ -76,6 +76,7 @@ export interface ImportExportContextType {
   lastResult: ImportResponse | null;
   setLastResult: (res: ImportResponse | null) => void;
   activeImportRunId: string;
+  setActiveImportRunId: (id: string) => void;
   activeImportRun: ImportRunDetail | null;
   loadingImportRun: boolean;
   importSourceFields: string[];
@@ -199,6 +200,8 @@ export type ImportExportStateContextType = Pick<
   | 'setImportListEnabled'
   | 'selectedImportIds'
   | 'setSelectedImportIds'
+  | 'activeImportRunId'
+  | 'setActiveImportRunId'
   | 'templateScope'
   | 'setTemplateScope'
   | 'showAllWarehouses'

@@ -32,6 +32,7 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphActions: () => mockState.graphActions,
 }));
 

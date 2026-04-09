@@ -50,6 +50,10 @@ const definitionByType = new Map(
   NODE_DEFINITIONS.map((def: (typeof NODE_DEFINITIONS)[number]) => [def.type, def])
 );
 
+const NODE_DOC_VERSION_OVERRIDES: Partial<Record<NodeType, string>> = {
+  db_schema: '2026-04-09.v1',
+};
+
 const resolveDefaultConfigFromDefinition = (
   definition: unknown
 ): Record<string, unknown> | null => {
@@ -69,6 +73,9 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
   const defaultConfig = resolveDefaultConfigFromDefinition(def);
   return {
     type,
+    ...(NODE_DOC_VERSION_OVERRIDES[type]
+      ? { nodeDocVersion: NODE_DOC_VERSION_OVERRIDES[type] }
+      : {}),
     title: def?.title ?? type,
     purpose: def?.description ?? '—',
     inputs: def?.inputs ?? [],

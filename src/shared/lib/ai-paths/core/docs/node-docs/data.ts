@@ -157,6 +157,28 @@ export const dbSchemaDocs: NodeConfigDocField[] = [
     defaultValue: '[]',
   },
   {
+    path: 'db_schema.sourceMode',
+    description:
+      'schema = emit structure only; live_context = emit latest collection rows; schema_and_live_context = emit both.',
+    defaultValue: 'schema',
+  },
+  {
+    path: 'db_schema.contextCollections',
+    description:
+      'Collections to fetch as live context during runtime. Falls back to selected schema collections when empty.',
+    defaultValue: '[]',
+  },
+  {
+    path: 'db_schema.contextQuery',
+    description: 'Optional JSON filter or free-text search applied to each live context collection.',
+    defaultValue: '""',
+  },
+  {
+    path: 'db_schema.contextLimit',
+    description: 'Maximum documents fetched per live context collection during runtime.',
+    defaultValue: '20',
+  },
+  {
     path: 'db_schema.includeFields',
     description: 'Include field lists for each collection.',
     defaultValue: 'true',
@@ -164,12 +186,12 @@ export const dbSchemaDocs: NodeConfigDocField[] = [
   {
     path: 'db_schema.includeRelations',
     description: 'Include inferred relations/foreign key hints when available.',
-    defaultValue: 'false',
+    defaultValue: 'true',
   },
   {
     path: 'db_schema.formatAs',
-    description: 'json emits a JSON object; text emits a compact schema text for prompting.',
-    defaultValue: 'json',
+    description: 'json emits structured schema/context payloads; text emits prompt-ready context text.',
+    defaultValue: 'text',
   },
   ...COMMON_RUNTIME_FIELDS,
 ];

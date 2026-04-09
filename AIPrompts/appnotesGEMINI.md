@@ -93,6 +93,10 @@ INVESTIGATION AN PLANNING
 run application cleanup
 ---
 
+  path is importing the oversized features/integrations/public barrel in
+  multiple core modules, even though the repo already has a narrower
+  product-integrations-adapter.
+
 ERROR DETECTION
 Scan the **\*\*** feature and build logical try and Catch Blocks with error explanantion around potential areas of failure
 Add Error Boundary components to catch uncaught UI errors and forward them to your logger (via componentDidCatch)
@@ -139,7 +143,7 @@ Add granular error boundaries
 Admin speedup
 split barrel into domain │ Large       │ High — permanent fix   │
   │  sub-barrels
-  
+
 UI: LAYOUT
 - make mobile responsive
 

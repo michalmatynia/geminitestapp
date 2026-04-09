@@ -432,41 +432,8 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               title='Runtime Queue'
               variant='subtle-compact'
               className='p-3'
-              actions={
-                <div className='flex items-center gap-2'>
-                  <RefreshButton
-                    onRefresh={(): void => {
-                      void baseImportQueueHealthQuery.refetch();
-                    }}
-                    isRefreshing={Boolean(baseImportQueueHealthQuery.isFetching)}
-                    label='Refresh'
-                    size='sm'
-                    variant='ghost'
-                  />
-                  <Link
-                    href='/api/v2/integrations/queues/base-import'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    <Button variant='outline' size='sm'>
-                      Inspect runtime
-                    </Button>
-                  </Link>
-                  <Link
-                    href={
-                      activeImportRunId
-                        ? `/admin/ai-paths/queue?tab=product-imports&query=${encodeURIComponent(activeImportRunId)}`
-                        : '/admin/ai-paths/queue?tab=product-imports'
-                    }
-                  >
-                    <Button variant='outline' size='sm'>
-                      View Import Jobs
-                    </Button>
-                  </Link>
-                </div>
-              }
             >
-              <div className='flex items-center justify-between'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
                 <Hint size='xxs' uppercase className='font-bold text-gray-500'>
                   Delivery
                 </Hint>
@@ -480,6 +447,37 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               <Hint className='mt-2 text-[11px] text-gray-500'>
                 Base imports run on the separate <code>base-import</code> runtime queue.
               </Hint>
+              <div className='mt-3 flex flex-wrap items-center gap-2'>
+                <RefreshButton
+                  onRefresh={(): void => {
+                    void baseImportQueueHealthQuery.refetch();
+                  }}
+                  isRefreshing={Boolean(baseImportQueueHealthQuery.isFetching)}
+                  label='Refresh'
+                  size='xs'
+                  variant='ghost'
+                />
+                <Link
+                  href='/api/v2/integrations/queues/base-import'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  <Button variant='outline' size='xs'>
+                    Inspect runtime
+                  </Button>
+                </Link>
+                <Link
+                  href={
+                    activeImportRunId
+                      ? `/admin/ai-paths/queue?tab=product-imports&query=${encodeURIComponent(activeImportRunId)}`
+                      : '/admin/ai-paths/queue?tab=product-imports'
+                  }
+                >
+                  <Button variant='outline' size='xs'>
+                    View Import Jobs
+                  </Button>
+                </Link>
+              </div>
             </FormSection>
             <FormSection title='Worker Status' variant='subtle-compact' className='p-3'>
               <div className='flex items-center justify-between'>

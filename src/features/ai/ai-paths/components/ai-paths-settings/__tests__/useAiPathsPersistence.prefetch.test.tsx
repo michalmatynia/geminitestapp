@@ -128,10 +128,15 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphActions: () => graphActionsMock,
+  useGraphState: () => ({}),
+  useGraphDataState: () => ({ nodes: [], edges: [] }),
+  usePathMetadataState: () => ({ paths: [], pathConfigs: {}, activePathId: null }),
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
   useRuntimeActions: () => runtimeActionsMock,
+  useRuntimeDataState: () => ({ runtimeState: emptyRuntimeState(), parserSamples: {}, updaterSamples: {} }),
+  useRuntimeUiState: () => ({ sendingToAi: false }),
 }));
 
 vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({

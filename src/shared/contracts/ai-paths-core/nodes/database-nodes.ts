@@ -28,10 +28,22 @@ const dbSchemaProviderSchema = z
   ])
   .optional();
 
+export const dbSchemaSourceModeSchema = z.enum([
+  'schema',
+  'live_context',
+  'schema_and_live_context',
+]);
+export type DbSchemaSourceModeDto = z.infer<typeof dbSchemaSourceModeSchema>;
+export type DbSchemaSourceMode = DbSchemaSourceModeDto;
+
 export const dbSchemaConfigSchema = z.object({
   provider: dbSchemaProviderSchema,
   mode: z.enum(['all', 'selected']),
   collections: z.array(z.string()),
+  sourceMode: dbSchemaSourceModeSchema.optional(),
+  contextCollections: z.array(z.string()).optional(),
+  contextQuery: z.string().optional(),
+  contextLimit: z.number().int().min(1).max(100).optional(),
   includeFields: z.boolean(),
   includeRelations: z.boolean(),
   formatAs: z.enum(['json', 'text']),

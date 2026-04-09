@@ -156,6 +156,8 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphState: () => graphStateMock,
+  useGraphDataState: () => graphStateMock,
+  usePathMetadataState: () => graphStateMock,
   useGraphActions: () => graphActionsMock,
 }));
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { ClipboardList, Download } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import React from 'react';
 
 import {
@@ -31,8 +32,17 @@ function ImportTab(): React.JSX.Element {
 }
 
 function ImportsPageContent(): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const requestedRunId = searchParams?.get('runId')?.trim() ?? '';
   const { checkingIntegration, isBaseConnected } = useImportExportData();
-  const { importsPageTab, setImportsPageTab } = useImportExportState();
+  const { importsPageTab, setImportsPageTab, setActiveImportRunId } = useImportExportState();
+
+  React.useEffect(() => {
+    if (!requestedRunId) return;
+    setImportsPageTab('import');
+    setActiveImportRunId(requestedRunId);
+  }, [requestedRunId, setActiveImportRunId, setImportsPageTab]);
+
   const handleImportsTabChange = (value: string): void => {
     if (value === 'import' || value === 'import-template') {
       setImportsPageTab(value);

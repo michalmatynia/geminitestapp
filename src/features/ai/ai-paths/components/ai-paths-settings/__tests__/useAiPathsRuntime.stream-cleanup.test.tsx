@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const stopServerRunStreamFns = vi.hoisted((): Array<ReturnType<typeof vi.fn>> => []);
-const { graphActionsMock, runtimeContextState } = vi.hoisted(() => ({
+const { graphActionsMock, runtimeContextState, stopServerRunStreamFns } = vi.hoisted(() => ({
+  stopServerRunStreamFns: [] as Array<ReturnType<typeof vi.fn>>,
   graphActionsMock: {
     setPathConfigs: vi.fn(),
   },

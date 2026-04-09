@@ -306,6 +306,13 @@ describe('starter workflow registry', () => {
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
+    expect(modelNode?.config?.model).toEqual(
+      expect.objectContaining({
+        temperature: expect.any(Number),
+        maxTokens: expect.any(Number),
+        vision: expect.any(Boolean),
+      })
+    );
   });
 
   it('preserves an explicit Normalize model selection while fully replacing legacy random-id graphs', () => {

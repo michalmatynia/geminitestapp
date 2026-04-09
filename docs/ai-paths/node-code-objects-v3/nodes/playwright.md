@@ -8,7 +8,7 @@ canonical: true
 ---
 # Playwright: Batch Capture Migration Sheet (`playwright`)
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-05T14:57:57.569Z
 
 ## Status
 
@@ -25,7 +25,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 ## Node Contract Files
 
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/playwright.json`
-- Semantic hash: `7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056`
+- Semantic hash: `33b228c66c0793a7aa00140ca99d1b066eb21107810427c330001f69e25a70c0`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/playwright.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/playwright.scaffold.json`
 - v3 object id: `node_obj_playwright_portable_v3`

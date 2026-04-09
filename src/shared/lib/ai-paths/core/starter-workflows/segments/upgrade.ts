@@ -112,19 +112,27 @@ const collectExplicitModelSelections = (config: PathConfig): ExplicitModelSelect
   }, []);
 
 const applyExplicitModelIdToNode = (node: AiNode, modelId: string): AiNode => {
-  const currentConfig = toRecord(node.config);
-  const currentModel = toRecord(currentConfig?.['model']);
-  const currentModelId = normalizeText(currentModel?.['modelId']);
+  const currentConfig = node.config ?? {};
+  const currentModel = node.config?.model;
+  const currentModelId = normalizeText(currentModel?.modelId);
   if (currentModelId === modelId) {
     return node;
   }
   return {
     ...node,
     config: {
-      ...(currentConfig ?? {}),
+      ...currentConfig,
       model: {
-        ...(currentModel ?? {}),
+        ...(currentModel?.systemPrompt !== undefined
+          ? { systemPrompt: currentModel.systemPrompt }
+          : {}),
+        ...(currentModel?.waitForResult !== undefined
+          ? { waitForResult: currentModel.waitForResult }
+          : {}),
         modelId,
+        temperature: currentModel?.temperature ?? 0.7,
+        maxTokens: currentModel?.maxTokens ?? 800,
+        vision: currentModel?.vision ?? (node.inputs ?? []).includes('images'),
       },
     },
   };

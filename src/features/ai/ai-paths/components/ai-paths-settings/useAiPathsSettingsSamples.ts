@@ -1,3 +1,5 @@
+'use no memo';
+
 import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
@@ -7,6 +9,11 @@ import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-path
 import { dbApi, entityApi } from '@/shared/lib/ai-paths';
 import { createMutationV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+// This hook delegates into TanStack mutation/query wrappers that are already
+// sensitive to React Compiler dev-runtime cache mismatches elsewhere in the
+// app. Keep the AI Paths samples workflow on the plain hook runtime so admin
+// route prefetches do not trip hook queue errors.
 
 const AI_PATHS_SAMPLE_STALE_MS = 10_000;
 const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;

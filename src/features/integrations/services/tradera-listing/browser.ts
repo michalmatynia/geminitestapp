@@ -2,10 +2,11 @@ import { TraderaSystemSettings } from '@/features/integrations/constants/tradera
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { BrowserListingResultDto, PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 export { ensureLoggedIn } from './tradera-browser-auth';
-import { runTraderaBrowserListingScripted } from './tradera-browser-scripted';
+import { runTraderaBrowserListingScripted, runTraderaBrowserCheckStatus } from './tradera-browser-scripted';
 import { runTraderaBrowserListingStandard } from './tradera-browser-standard';
 
 export type { BrowserListingResultDto as TraderaBrowserListingResult };
+export { runTraderaBrowserCheckStatus };
 
 export const runTraderaBrowserListing = async ({
   listing,

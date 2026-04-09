@@ -82,7 +82,7 @@ async function runMutation<Result, Variables>(
   }
 }
 
-vi.mock('next/navigation', () => ({
+vi.mock('nextjs-toploader/app', () => ({
   useRouter: () => ({
     push: mockState.routerPush,
   }),
@@ -155,7 +155,7 @@ vi.mock('@/shared/lib/query-keys', () => ({
   },
 }));
 
-vi.mock('@/shared/utils', () => ({
+vi.mock('@/shared/utils/ui-utils', () => ({
   cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
 }));
 
@@ -187,114 +187,120 @@ vi.mock('@/shared/lib/icons', () => ({
 vi.mock('@/shared/lib/ai-paths', () => ({
   PATH_CONFIG_PREFIX: 'ai_paths:path_config:',
   PATH_INDEX_KEY: 'ai_paths:path_index',
-  resolvePortablePathInput: (...args: unknown[]) => mockState.resolvePortablePathInput(...args),
   triggerButtonsApi: mockState.triggerButtonsApi,
 }));
 
-vi.mock('@/shared/ui', () => ({
-  ...(() => {
-    const React = require('react') as typeof import('react');
-    return {
-      AppModal: ({
-        open,
-        title,
-        children,
-      }: {
-        open: boolean;
-        title: string;
-        children: React.ReactNode;
-      }): React.JSX.Element | null =>
-        open ? (
-          <div>
-            <h2>{title}</h2>
-            {children}
-          </div>
-        ) : null,
-      Badge: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
-        <span>{children}</span>
-      ),
-      Button: ({
-        children,
-        ...props
-      }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-        <button {...props}>{children}</button>
-      ),
-      Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
-        <div>{children}</div>
-      ),
-      Checkbox: ({
-        checked,
-        onCheckedChange,
-        ...props
-      }: {
-        checked?: boolean;
-        onCheckedChange?: (value: boolean) => void;
-      } & React.InputHTMLAttributes<HTMLInputElement>): React.JSX.Element => (
-        <input
-          {...props}
-          type='checkbox'
-          checked={checked}
-          onChange={(event) => onCheckedChange?.(event.target.checked)}
-        />
-      ),
-      ConfirmModal: ({
-        isOpen,
-        title,
-        message,
-        onConfirm,
-        onClose,
-      }: {
-        isOpen: boolean;
-        title: string;
-        message: string;
-        onConfirm: () => void;
-        onClose: () => void;
-      }): React.JSX.Element | null =>
-        isOpen ? (
-          <div>
-            <h2>{title}</h2>
-            <p>{message}</p>
-            <button type='button' onClick={onConfirm}>
-              Confirm
-            </button>
-            <button type='button' onClick={onClose}>
-              Cancel
-            </button>
-          </div>
-        ) : null,
-      Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <span>{children}</span>,
-      PanelHeader: ({
-        title,
-        onRefresh,
-        actions,
-      }: {
-        title: string;
-        onRefresh?: () => void;
-        actions?: Array<{ key: string; label: string; onClick: () => void; disabled?: boolean }>;
-      }): React.JSX.Element => (
-        <div>
-          <h1>{title}</h1>
-          <button type='button' onClick={onRefresh}>
-            Refresh
-          </button>
-          {actions?.map((action) => (
-            <button
-              key={action.key}
-              type='button'
-              disabled={action.disabled}
-              onClick={action.onClick}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      ),
-      UI_CENTER_ROW_SPACED_CLASSNAME: 'row',
-      useToast: () => ({
-        toast: mockState.toast,
-      }),
-    };
-  })(),
+vi.mock('@/shared/lib/ai-paths/portable-engine', () => ({
+  resolvePortablePathInput: (...args: unknown[]) => mockState.resolvePortablePathInput(...args),
+}));
+
+vi.mock('@/shared/ui/feedback.public', () => ({
+  AppModal: ({
+    open,
+    title,
+    children,
+  }: {
+    open: boolean;
+    title: string;
+    children: React.ReactNode;
+  }): React.JSX.Element | null =>
+    open ? (
+      <div>
+        <h2>{title}</h2>
+        {children}
+      </div>
+    ) : null,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Badge: ({ children }: { children: React.ReactNode }): React.JSX.Element => <span>{children}</span>,
+  Button: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
+    <button {...props}>{children}</button>
+  ),
+  Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+  Checkbox: ({
+    checked,
+    onCheckedChange,
+    ...props
+  }: {
+    checked?: boolean;
+    onCheckedChange?: (value: boolean) => void;
+  } & React.InputHTMLAttributes<HTMLInputElement>): React.JSX.Element => (
+    <input
+      {...props}
+      type='checkbox'
+      checked={checked}
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
+    />
+  ),
+  useToast: () => ({
+    toast: mockState.toast,
+  }),
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
+  ConfirmModal: ({
+    isOpen,
+    title,
+    message,
+    onConfirm,
+    onClose,
+  }: {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    onClose: () => void;
+  }): React.JSX.Element | null =>
+    isOpen ? (
+      <div>
+        <h2>{title}</h2>
+        <p>{message}</p>
+        <button type='button' onClick={onConfirm}>
+          Confirm
+        </button>
+        <button type='button' onClick={onClose}>
+          Cancel
+        </button>
+      </div>
+    ) : null,
+  PanelHeader: ({
+    title,
+    onRefresh,
+    actions,
+  }: {
+    title: string;
+    onRefresh?: () => void;
+    actions?: Array<{ key: string; label: string; onClick: () => void; disabled?: boolean }>;
+  }): React.JSX.Element => (
+    <div>
+      <h1>{title}</h1>
+      <button type='button' onClick={onRefresh}>
+        Refresh
+      </button>
+      {actions?.map((action) => (
+        <button
+          key={action.key}
+          type='button'
+          disabled={action.disabled}
+          onClick={action.onClick}
+        >
+          {action.label}
+        </button>
+      ))}
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <span>{children}</span>,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  UI_CENTER_ROW_SPACED_CLASSNAME: 'row',
 }));
 
 vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({

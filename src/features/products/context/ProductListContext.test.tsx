@@ -37,6 +37,8 @@ type BadgeState = {
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeIds: Set<string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeIds: Set<string>;
+  vintedBadgeStatuses: Map<string, string>;
 };
 
 const createBadgeState = (overrides: Partial<BadgeState> = {}): BadgeState => ({
@@ -46,6 +48,8 @@ const createBadgeState = (overrides: Partial<BadgeState> = {}): BadgeState => ({
   traderaBadgeStatuses: new Map<string, string>(),
   playwrightProgrammableBadgeIds: new Set<string>(),
   playwrightProgrammableBadgeStatuses: new Map<string, string>(),
+  vintedBadgeIds: new Set<string>(),
+  vintedBadgeStatuses: new Map<string, string>(),
   ...overrides,
 });
 

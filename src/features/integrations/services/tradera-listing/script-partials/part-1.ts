@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v114
+  // tradera-quicklist-default:v118
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -479,6 +479,15 @@ export const PART_1 = String.raw`export default async function run({
   const FALLBACK_CATEGORY_OPTION_LABELS = ['Other', 'Övrigt'];
   const FALLBACK_CATEGORY_PATH_SEGMENTS = ['Other', 'Other'];
   const FALLBACK_CATEGORY_PATH = FALLBACK_CATEGORY_PATH_SEGMENTS.join(' > ');
+  // Tradera's UI may localise the fallback category name. Include all known
+  // language variants so the pre-selection rejection check works regardless of
+  // whether the listing form is rendered in English or Swedish.
+  const FALLBACK_CATEGORY_PATH_SEGMENT_VARIANTS = [
+    FALLBACK_CATEGORY_PATH_SEGMENTS,   // English: Other > Other
+    ['Övrigt', 'Övrigt'],              // Swedish: Övrigt > Övrigt
+    ['Övrigt'],                         // Swedish single-level fallback
+    ['Other'],                          // English single-level fallback
+  ];
   const LISTING_FORMAT_FIELD_LABELS = ['Listing format', 'Annonsformat'];
   const BUY_NOW_OPTION_LABELS = ['Buy now', 'Buy Now', 'Fixed price', 'Köp nu', 'Fast pris'];
   const CONDITION_FIELD_LABELS = ['Condition', 'Skick'];

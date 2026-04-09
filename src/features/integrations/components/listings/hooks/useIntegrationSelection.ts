@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueries } from '@tanstack/react-query';
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -19,9 +20,9 @@ import type {
 } from '@/shared/contracts/integrations/preferences';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
-import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { useTelemetrizedMultiQueryOptionsV2 } from '@/shared/lib/tanstack-factory-v2/hooks';
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
@@ -105,96 +106,98 @@ export function useIntegrationSelection(
     connectionId: initialConnectionId?.trim() || null,
   });
 
-  const results = createMultiQueryV2({
+  const preferredBaseConnectionOptions = useTelemetrizedMultiQueryOptionsV2({
+    queryKey: normalizeQueryKey(integrationSelectionKeys.defaultConnection),
+    queryFn: fetchPreferredBaseConnection,
+    staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+    gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'integrations.hooks.useIntegrationSelection.preferredConnection',
+      operation: 'detail',
+      resource: 'integrations.selection.preferred-connection',
+      description: 'Loads integrations selection preferred connection.',
+      domain: 'integrations',
+      tags: ['integrations', 'selection', 'preferred-connection'],
+    },
+  });
+  const preferredTraderaConnectionOptions = useTelemetrizedMultiQueryOptionsV2({
+    queryKey: normalizeQueryKey(integrationSelectionKeys.traderaDefaultConnection),
+    queryFn: fetchPreferredTraderaConnection,
+    staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+    gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'integrations.hooks.useIntegrationSelection.preferredTraderaConnection',
+      operation: 'detail',
+      resource: 'integrations.selection.preferred-tradera-connection',
+      description: 'Loads integrations selection preferred Tradera connection.',
+      domain: 'integrations',
+      tags: ['integrations', 'selection', 'preferred-tradera-connection'],
+    },
+  });
+  const integrationsWithConnectionsOptions = useTelemetrizedMultiQueryOptionsV2({
+    queryKey: normalizeQueryKey(integrationSelectionKeys.withConnections),
+    queryFn: fetchIntegrationsWithConnections,
+    staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+    gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'integrations.hooks.useIntegrationSelection.integrationsWithConnections',
+      operation: 'list',
+      resource: 'integrations.with-connections',
+      description: 'Loads integrations with connections.',
+      domain: 'integrations',
+      tags: ['integrations', 'selection', 'list'],
+    },
+  });
+  const preferredVintedConnectionOptions = useTelemetrizedMultiQueryOptionsV2({
+    queryKey: normalizeQueryKey(integrationSelectionKeys.vintedDefaultConnection),
+    queryFn: fetchPreferredVintedConnection,
+    staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+    gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'integrations.hooks.useIntegrationSelection.preferredVintedConnection',
+      operation: 'detail',
+      resource: 'integrations.selection.preferred-vinted-connection',
+      description: 'Loads integrations selection preferred Vinted connection.',
+      domain: 'integrations',
+      tags: ['integrations', 'selection', 'preferred-vinted-connection'],
+    },
+  });
+  // Why: keep query hook calls explicit here. Delegating through a plain helper that
+  // internally calls hooks is fragile under the current React/Next compiler path and
+  // was causing hook-order mismatches in the listing modal.
+  const results = useQueries({
     queries: [
-      {
-        queryKey: normalizeQueryKey(integrationSelectionKeys.defaultConnection),
-        queryFn: fetchPreferredBaseConnection,
-        staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-        gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        meta: {
-          source: 'integrations.hooks.useIntegrationSelection.preferredConnection',
-          operation: 'detail',
-          resource: 'integrations.selection.preferred-connection',
-          description: 'Loads integrations selection preferred connection.',
-          domain: 'integrations',
-          tags: ['integrations', 'selection', 'preferred-connection'],
-        },
-      },
-      {
-        queryKey: normalizeQueryKey(integrationSelectionKeys.traderaDefaultConnection),
-        queryFn: fetchPreferredTraderaConnection,
-        staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-        gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        meta: {
-          source: 'integrations.hooks.useIntegrationSelection.preferredTraderaConnection',
-          operation: 'detail',
-          resource: 'integrations.selection.preferred-tradera-connection',
-          description: 'Loads integrations selection preferred Tradera connection.',
-          domain: 'integrations',
-          tags: ['integrations', 'selection', 'preferred-tradera-connection'],
-        },
-      },
-      {
-        queryKey: normalizeQueryKey(integrationSelectionKeys.withConnections),
-        queryFn: fetchIntegrationsWithConnections,
-        staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-        gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        meta: {
-          source: 'integrations.hooks.useIntegrationSelection.integrationsWithConnections',
-          operation: 'list',
-          resource: 'integrations.with-connections',
-          description: 'Loads integrations with connections.',
-          domain: 'integrations',
-          tags: ['integrations', 'selection', 'list'],
-        },
-      },
-      {
-        queryKey: normalizeQueryKey(integrationSelectionKeys.vintedDefaultConnection),
-        queryFn: fetchPreferredVintedConnection,
-        staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-        gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        meta: {
-          source: 'integrations.hooks.useIntegrationSelection.preferredVintedConnection',
-          operation: 'detail',
-          resource: 'integrations.selection.preferred-vinted-connection',
-          description: 'Loads integrations selection preferred Vinted connection.',
-          domain: 'integrations',
-          tags: ['integrations', 'selection', 'preferred-vinted-connection'],
-        },
-      },
-    ] as const,
+      preferredBaseConnectionOptions,
+      preferredTraderaConnectionOptions,
+      integrationsWithConnectionsOptions,
+      preferredVintedConnectionOptions,
+    ],
   });
 
   const preferredConnectionQuery = results[0];
   const preferredTraderaConnectionQuery = results[1];
   const integrationsQuery = results[2];
   const preferredVintedConnectionQuery = results[3];
-  const preferredBaseConnectionData =
-    (preferredConnectionQuery?.data as BaseDefaultConnectionPreferenceResponse | undefined) ?? null;
-  const preferredTraderaConnectionData =
-    (preferredTraderaConnectionQuery?.data as TraderaDefaultConnectionPreferenceResponse | undefined) ??
-    null;
-  const preferredVintedConnectionData =
-    (preferredVintedConnectionQuery?.data as VintedDefaultConnectionPreferenceResponse | undefined) ??
-    null;
+  const preferredBaseConnectionData = preferredConnectionQuery?.data ?? null;
+  const preferredTraderaConnectionData = preferredTraderaConnectionQuery?.data ?? null;
+  const preferredVintedConnectionData = preferredVintedConnectionQuery?.data ?? null;
   const integrationsData = integrationsQuery?.data;
 
   const loading = Boolean(integrationsQuery?.isPending && !integrationsData);
   const integrations = useMemo((): IntegrationWithConnections[] => {
-    const data = (integrationsData as IntegrationWithConnections[] | undefined) ?? [];
+    const data = integrationsData ?? [];
     return Array.isArray(data)
       ? data.filter(
           (i: IntegrationWithConnections) =>

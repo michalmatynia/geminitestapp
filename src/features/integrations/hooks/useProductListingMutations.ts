@@ -1,3 +1,5 @@
+'use no memo';
+
 import { useQueryClient } from '@tanstack/react-query';
 
 import {

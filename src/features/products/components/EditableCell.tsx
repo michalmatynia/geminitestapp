@@ -1,8 +1,11 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
 
-import { useUpdateProductField } from '@/features/products/hooks/useProductsMutations';
+import { api } from '@/shared/lib/api-client';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Input } from '@/shared/ui/input';
 import { useToast } from '@/shared/ui/toast';
 
@@ -15,6 +18,35 @@ type EditableCellProps = {
   onUpdate: (nextValue: number) => void;
 };
 
+type ProductListCacheValue =
+  | ProductWithImages[]
+  | { items: ProductWithImages[] }
+  | null
+  | undefined;
+
+const patchProductListCacheValue = (
+  cacheValue: ProductListCacheValue,
+  productId: string,
+  field: EditableCellProps['field'],
+  value: number
+): ProductListCacheValue => {
+  if (!cacheValue) return cacheValue;
+  if (Array.isArray(cacheValue)) {
+    return cacheValue.map((product: ProductWithImages) =>
+      product.id === productId ? { ...product, [field]: value } : product
+    );
+  }
+  if (Array.isArray(cacheValue.items)) {
+    return {
+      ...cacheValue,
+      items: cacheValue.items.map((product: ProductWithImages) =>
+        product.id === productId ? { ...product, [field]: value } : product
+      ),
+    };
+  }
+  return cacheValue;
+};
+
 export const EditableCell = memo(
   function EditableCell({
     value,
@@ -24,9 +56,11 @@ export const EditableCell = memo(
   }: EditableCellProps): React.JSX.Element {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(String(value ?? ''));
+    const [displayValue, setDisplayValue] = useState<number | null>(value);
+    const [isSaving, setIsSaving] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
-    const { mutateAsync: updateField, isPending: isSaving } = useUpdateProductField();
+    const queryClient = useQueryClient();
 
     useEffect((): void => {
       if (isEditing && inputRef.current) {
@@ -34,6 +68,13 @@ export const EditableCell = memo(
         inputRef.current.select();
       }
     }, [isEditing]);
+
+    useEffect((): void => {
+      if (!isEditing) {
+        setEditValue(String(value ?? ''));
+        setDisplayValue(value);
+      }
+    }, [isEditing, value]);
 
     const handleDoubleClick = (): void => {
       setIsEditing(true);
@@ -59,7 +100,18 @@ export const EditableCell = memo(
       }
 
       try {
-        await updateField({ id: productId, field, value: numValue });
+        setIsSaving(true);
+        await api.patch<ProductWithImages>(`/api/v2/products/${productId}`, { [field]: numValue });
+        queryClient.setQueriesData({ queryKey: QUERY_KEYS.products.lists() }, (old: ProductListCacheValue) =>
+          patchProductListCacheValue(old, productId, field, numValue)
+        );
+        queryClient.setQueryData(QUERY_KEYS.products.detail(productId), (old: ProductWithImages | undefined) =>
+          old ? { ...old, [field]: numValue } : old
+        );
+        queryClient.setQueryData(QUERY_KEYS.products.detailEdit(productId), (old: ProductWithImages | undefined) =>
+          old ? { ...old, [field]: numValue } : old
+        );
+        setDisplayValue(numValue);
         toast(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`, { variant: 'success' });
         setIsEditing(false);
         onUpdate(numValue);
@@ -75,6 +127,8 @@ export const EditableCell = memo(
         });
         setEditValue(String(value ?? ''));
         setIsEditing(false);
+      } finally {
+        setIsSaving(false);
       }
     };
 
@@ -117,7 +171,7 @@ export const EditableCell = memo(
         className='cursor-pointer rounded px-2 py-1 hover:bg-muted/50/50 transition-colors'
         title={`Double-click to edit ${field}`}
       >
-        {value !== null ? (field === 'price' ? value.toFixed(2) : value) : '-'}
+        {displayValue !== null ? (field === 'price' ? displayValue.toFixed(2) : displayValue) : '-'}
       </div>
     );
   },

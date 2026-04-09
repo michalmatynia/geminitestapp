@@ -107,6 +107,72 @@ export const PART_5 = String.raw`
       const expectedUploadCount = filesArray.length;
       const useSequentialUpload = expectedUploadCount > 1;
 
+      const tryPreserveRelistEditorImages = async (uploadAttempt) => {
+        if (listingAction !== 'relist') {
+          return null;
+        }
+
+        const [
+          editorState,
+          imageUploadPromptVisible,
+          imageUploadPending,
+          imageUploadErrorText,
+          uploadedImagePreviewCount,
+          draftImageRemoveControls,
+        ] = await Promise.all([
+          readListingEditorState().catch(() => ({
+            ready: false,
+          })),
+          isImageUploadPromptVisible().catch(() => false),
+          isImageUploadPending().catch(() => false),
+          readImageUploadErrorText().catch(() => null),
+          countUploadedImagePreviews().catch(() => 0),
+          countDraftImageRemoveControls().catch(() => 0),
+        ]);
+
+        const canPreserveExistingImages =
+          editorState.ready &&
+          !imageUploadPromptVisible &&
+          !imageUploadPending &&
+          !imageUploadErrorText;
+
+        log?.('tradera.quicklist.image.relist_preserve_check', {
+          uploadSource,
+          uploadAttempt,
+          expectedUploadCount,
+          currentUrl: page.url(),
+          uploadedImagePreviewCount,
+          draftImageRemoveControls,
+          imageUploadPromptVisible,
+          imageUploadPending,
+          imageUploadErrorText,
+          editorState,
+          canPreserveExistingImages,
+        });
+
+        if (!canPreserveExistingImages) {
+          return null;
+        }
+
+        currentImageUploadSource = 'preserved-relist';
+        log?.('tradera.quicklist.image.relist_preserved', {
+          uploadSource,
+          uploadAttempt,
+          expectedUploadCount,
+          currentUrl: page.url(),
+          uploadedImagePreviewCount,
+          draftImageRemoveControls,
+          editorState,
+        });
+
+        return {
+          imageCount: uploadedImagePreviewCount,
+          uploadSource: 'preserved-relist',
+          observedPreviewCount: uploadedImagePreviewCount,
+          expectedUploadCount,
+        };
+      };
+
       for (let uploadAttempt = 0; uploadAttempt < 2; uploadAttempt += 1) {
         log?.('tradera.quicklist.image.upload_prepare', {
           uploadSource,
@@ -116,6 +182,11 @@ export const PART_5 = String.raw`
         });
         const imageInput = await ensureImageInputReady();
         if (!imageInput) {
+          const preservedRelistImages = await tryPreserveRelistEditorImages(uploadAttempt);
+          if (preservedRelistImages) {
+            return preservedRelistImages;
+          }
+
           const editorReady = await isListingEditorReady();
           await captureFailureArtifacts('image-input-missing', {
             url: page.url(),
@@ -287,10 +358,19 @@ export const PART_5 = String.raw`
         imageUploadResult = await performImageUpload(fallbackUploadFiles, 'downloaded');
       }
 
-      emitStage('images_uploaded', {
-        imageCount: imageUploadResult?.imageCount ?? null,
-        uploadSource: imageUploadResult?.uploadSource ?? null,
-      });
+      if (imageUploadResult?.uploadSource === 'preserved-relist') {
+        emitStage('images_preserved', {
+          reason: 'relist-editor-ready',
+          imageCount: imageUploadResult?.imageCount ?? null,
+          observedPreviewCount: imageUploadResult?.observedPreviewCount ?? null,
+          expectedUploadCount: imageUploadResult?.expectedUploadCount ?? null,
+        });
+      } else {
+        emitStage('images_uploaded', {
+          imageCount: imageUploadResult?.imageCount ?? null,
+          uploadSource: imageUploadResult?.uploadSource ?? null,
+        });
+      }
     }
 
     const clickResidualContinueButton = async (button) => {

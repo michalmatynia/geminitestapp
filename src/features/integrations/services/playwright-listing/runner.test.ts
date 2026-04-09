@@ -1,3 +1,5 @@
+import { existsSync } from 'fs';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -25,9 +27,12 @@ vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
 import { runPlaywrightListingScript } from './runner';
 
 describe('runPlaywrightListingScript', () => {
+  const braveExecutablePath = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
+
   beforeEach(() => {
     vi.clearAllMocks();
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
+      browser: 'auto',
       headless: true,
       slowMo: 85,
       timeout: 30000,
@@ -63,6 +68,105 @@ describe('runPlaywrightListingScript', () => {
           },
         },
       },
+    });
+  });
+
+  it('launches scripted runs in Chrome when the connection browser is chrome', async () => {
+    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
+      browser: 'chrome',
+      headless: true,
+      slowMo: 85,
+      timeout: 30000,
+      navigationTimeout: 30000,
+      humanizeMouse: true,
+      mouseJitter: 11,
+      clickDelayMin: 45,
+      clickDelayMax: 140,
+      inputDelayMin: 35,
+      inputDelayMax: 125,
+      actionDelayMin: 250,
+      actionDelayMax: 950,
+      proxyEnabled: false,
+      proxyServer: '',
+      proxyUsername: '',
+      proxyPassword: '',
+      emulateDevice: false,
+      deviceName: 'Desktop Chrome',
+    });
+
+    await runPlaywrightListingScript({
+      script: 'export default async function run() {}',
+      input: { title: 'Example' },
+      connection: {} as never,
+    });
+
+    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+      request: expect.objectContaining({
+        launchOptions: {
+          channel: 'chrome',
+        },
+      }),
+      waitForResult: true,
+    });
+  });
+
+  it('launches scripted runs in Brave when the connection browser is brave', async () => {
+    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
+      browser: 'brave',
+      headless: true,
+      slowMo: 85,
+      timeout: 30000,
+      navigationTimeout: 30000,
+      humanizeMouse: true,
+      mouseJitter: 11,
+      clickDelayMin: 45,
+      clickDelayMax: 140,
+      inputDelayMin: 35,
+      inputDelayMax: 125,
+      actionDelayMin: 250,
+      actionDelayMax: 950,
+      proxyEnabled: false,
+      proxyServer: '',
+      proxyUsername: '',
+      proxyPassword: '',
+      emulateDevice: false,
+      deviceName: 'Desktop Chrome',
+    });
+
+    await runPlaywrightListingScript({
+      script: 'export default async function run() {}',
+      input: { title: 'Example' },
+      connection: {} as never,
+    });
+
+    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+      request: expect.objectContaining({
+        launchOptions: {
+          executablePath: braveExecutablePath,
+        },
+      }),
+      waitForResult: true,
+    });
+  });
+
+  it('launches scripted runs in the auto-selected local browser', async () => {
+    await runPlaywrightListingScript({
+      script: 'export default async function run() {}',
+      input: { title: 'Example' },
+      connection: {} as never,
+    });
+
+    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+      request: expect.objectContaining({
+        launchOptions: existsSync(braveExecutablePath)
+          ? {
+              executablePath: braveExecutablePath,
+            }
+          : {
+              channel: 'chrome',
+            },
+      }),
+      waitForResult: true,
     });
   });
 

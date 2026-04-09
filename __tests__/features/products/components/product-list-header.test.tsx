@@ -191,7 +191,9 @@ describe('ProductListHeader Component', () => {
 
   it('renders pagination info correctly', () => {
     renderWithContext(<ProductListHeader />);
-    expect(screen.getAllByText(/1\s*\/\s*5/).length).toBeGreaterThan(0);
+    // In compact jump-mode, page is in input value, total is in span content
+    expect(screen.getAllByDisplayValue('1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\/ 5/).length).toBeGreaterThan(0);
   });
 
   it('calls setPage when Prev/Next buttons are clicked', () => {

@@ -8,6 +8,7 @@ import type {
   ProductParameterValue,
   ProductWithImages,
 } from '@/shared/contracts/products/product';
+import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -311,17 +312,22 @@ const findMappedCategory = (
 
 export const resolveVintedProductMapping = ({
   product,
+  integrationId,
   customFieldDefinitions,
   parameters,
   categories,
 }: {
   product: ProductWithImages;
+  integrationId?: string | null | undefined;
   customFieldDefinitions: ProductCustomFieldDefinition[];
   parameters: ProductParameter[];
   categories: ProductCategory[];
 }): VintedProductMapping => {
-  const title = product.name_pl || product.name_en || product.sku || `Listing ${product.id}`;
-  const description = product.description_pl || product.description_en || title;
+  const { title, description } = resolveMarketplaceAwareProductCopy({
+    product,
+    integrationId,
+    preferredLocales: ['pl', 'en', 'de'],
+  });
   const price = product.price ? String(Math.floor(product.price)) : '10';
 
   const customFieldValues = collectCustomFieldValues({ product, customFieldDefinitions });

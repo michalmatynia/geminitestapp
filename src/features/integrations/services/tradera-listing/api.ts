@@ -9,6 +9,7 @@ import { IntegrationConnectionRecord } from '@/shared/contracts/integrations/rep
 import { ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 
 import {
   DEFAULT_TRADERA_API_CATEGORY_ID,
@@ -211,14 +212,11 @@ export const runTraderaApiListing = async ({
 
   const credentials = resolveTraderaApiCredentials(connection);
   const publicCredentials = resolveTraderaPublicApiCredentials(connection);
-  const title =
-    product.name_en ||
-    product.name_pl ||
-    product.name_de ||
-    product.sku ||
-    `Listing ${listing.productId}`;
-  const description =
-    product.description_en || product.description_pl || product.description_de || title;
+  const { title, description } = resolveMarketplaceAwareProductCopy({
+    product,
+    integrationId: listing.integrationId,
+    preferredLocales: ['en', 'pl', 'de'],
+  });
   const normalizedPrice =
     typeof product.price === 'number' && Number.isFinite(product.price) && product.price > 0
       ? product.price

@@ -3,7 +3,11 @@ import { randomUUID } from 'crypto';
 import { Collection, UpdateFilter, WithId } from 'mongodb';
 
 import { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
-import { ProductRecord, ProductWithImages } from '@/shared/contracts/products/product';
+import {
+  ProductRecord,
+  ProductWithImages,
+  normalizeProductMarketplaceContentOverrides,
+} from '@/shared/contracts/products/product';
 
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import {
@@ -59,6 +63,9 @@ export const mongoProductWriteImpl = {
       producers: [],
       customFields: normalizeProductCustomFieldValues(data.customFields),
       parameters: normalizeProductParameterValues(data.parameters),
+      marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
+        data.marketplaceContentOverrides
+      ),
       imageLinks: data.imageLinks || [],
       imageBase64s: data.imageBase64s || [],
       noteIds: data.noteIds || [],
@@ -134,6 +141,11 @@ export const mongoProductWriteImpl = {
     }
     if (data.parameters !== undefined)
       set['parameters'] = normalizeProductParameterValues(data.parameters);
+    if (data.marketplaceContentOverrides !== undefined) {
+      set['marketplaceContentOverrides'] = normalizeProductMarketplaceContentOverrides(
+        data.marketplaceContentOverrides
+      );
+    }
     if (data.imageLinks !== undefined) set['imageLinks'] = data.imageLinks;
     if (data.imageBase64s !== undefined) set['imageBase64s'] = data.imageBase64s;
     if (data.noteIds !== undefined) set['noteIds'] = data.noteIds;

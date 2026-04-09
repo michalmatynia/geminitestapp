@@ -10,6 +10,7 @@ import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/co
 import {
   ProductFormCoreProvider,
   useProductFormCoreState,
+  resolveProductFormDefaultValues,
   resolveProductFormDefaultSku,
 } from './ProductFormCoreContext';
 
@@ -67,6 +68,52 @@ describe('resolveProductFormDefaultSku', () => {
         draft: null,
       })
     ).toBe('');
+  });
+});
+
+describe('resolveProductFormDefaultValues', () => {
+  it('hydrates marketplace copy overrides from a saved product and normalizes nullable text for the form', () => {
+    expect(
+      resolveProductFormDefaultValues({
+        product: createProduct({
+          marketplaceContentOverrides: [
+            {
+              integrationIds: ['tradera-1'],
+              title: ' Tradera title ',
+              description: null,
+            },
+          ],
+        }),
+      }).marketplaceContentOverrides
+    ).toEqual([
+      {
+        integrationIds: ['tradera-1'],
+        title: 'Tradera title',
+        description: '',
+      },
+    ]);
+  });
+
+  it('hydrates marketplace copy overrides from a draft when creating from draft', () => {
+    expect(
+      resolveProductFormDefaultValues({
+        draft: createDraft({
+          marketplaceContentOverrides: [
+            {
+              integrationIds: ['vinted-1', 'tradera-1'],
+              title: '',
+              description: ' Draft-specific description ',
+            },
+          ],
+        }),
+      }).marketplaceContentOverrides
+    ).toEqual([
+      {
+        integrationIds: ['vinted-1', 'tradera-1'],
+        title: '',
+        description: 'Draft-specific description',
+      },
+    ]);
   });
 });
 

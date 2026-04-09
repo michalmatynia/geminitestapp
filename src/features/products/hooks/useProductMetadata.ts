@@ -39,8 +39,11 @@ export {
   usePriceGroups,
   useProducers,
   useSaveProducerMutation,
+  useDeleteTitleTermMutation,
+  useSaveTitleTermMutation,
   useShippingGroups,
   useTags,
+  useTitleTerms,
 } from './useProductMetadataQueries';
 
 export interface ProductMetadataHookResult {

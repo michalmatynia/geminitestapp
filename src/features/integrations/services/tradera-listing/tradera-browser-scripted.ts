@@ -7,6 +7,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { getParameterRepository } from '@/features/products/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 
 import { getIntegrationRepository } from '../integration-repository';
 import {
@@ -40,6 +41,7 @@ import {
   parseTraderaParameterMapperRulesJson,
   resolveTraderaParameterMapperSelections,
 } from './parameter-mapper';
+import { TRADERA_CHECK_STATUS_SCRIPT } from './check-status-script';
 
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 30_000;
 export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
@@ -250,10 +252,14 @@ export const buildTraderaScriptInput = async ({
   action: 'list' | 'relist' | 'sync';
   syncSkipImages?: boolean;
 }): Promise<Record<string, unknown>> => {
-  const title =
-    product.name_en || product.name_pl || product.name_de || product.sku || `Listing ${listing.productId}`;
+  const resolvedCopy = resolveMarketplaceAwareProductCopy({
+    product,
+    integrationId: listing.integrationId,
+    preferredLocales: ['en', 'pl', 'de'],
+  });
+  const title = resolvedCopy.title;
   const description = buildTraderaListingDescription({
-    rawDescription: product.description_en || product.description_pl || product.description_de,
+    rawDescription: resolvedCopy.description,
     fallbackTitle: title,
     baseProductId: product.baseProductId ?? product.id,
     sku: product.sku,
@@ -264,7 +270,7 @@ export const buildTraderaScriptInput = async ({
   const imageUploadPlan = await resolveTraderaProductImageUploadPlan(product);
   const imageUrls = imageUploadPlan.imageUrls.map((url) => toAbsoluteUrl(url, appBaseUrl));
   const localImagePaths = imageUploadPlan.localImagePaths;
-  const duplicateSearchTerms = buildDuplicateSearchTerms([product.name_en]);
+  const duplicateSearchTerms = buildDuplicateSearchTerms([title]);
   const priceResolution = await resolveTraderaListingPriceForProduct({
     product,
     targetCurrencyCode: 'EUR',
@@ -340,7 +346,7 @@ export const buildTraderaScriptInput = async ({
     height: product.sizeLength ?? null,
     duplicateSearchTitle: duplicateSearchTerms[0] ?? null,
     duplicateSearchTerms,
-    rawDescriptionEn: toTrimmedString(product.description_en) || null,
+    rawDescriptionEn: toTrimmedString(resolvedCopy.description) || null,
     title,
     description,
     price: priceResolution.listingPrice,
@@ -789,4 +795,76 @@ export const runTraderaBrowserListingScripted = async ({
         : {}),
     });
   }
+};
+
+const TRADERA_CHECK_STATUS_TIMEOUT_MS = 60_000;
+
+export const runTraderaBrowserCheckStatus = async ({
+  listing,
+  connection,
+  browserMode,
+}: {
+  listing: ProductListing;
+  connection: IntegrationConnectionRecord;
+  browserMode: PlaywrightRelistBrowserMode;
+}): Promise<BrowserListingResultDto> => {
+  const toRecord = (v: unknown): Record<string, unknown> =>
+    v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+
+  const marketplaceData = toRecord(listing.marketplaceData);
+  const traderaData = toRecord(marketplaceData['tradera']);
+  const lastExec = toRecord(traderaData['lastExecution']);
+
+  const resolvedListingUrl: string | null =
+    (typeof traderaData['listingUrl'] === 'string' && traderaData['listingUrl'].trim()
+      ? traderaData['listingUrl']
+      : null) ??
+    (typeof lastExec['listingUrl'] === 'string' && lastExec['listingUrl'].trim()
+      ? lastExec['listingUrl']
+      : null) ??
+    (typeof marketplaceData['listingUrl'] === 'string' && marketplaceData['listingUrl'].trim()
+      ? marketplaceData['listingUrl']
+      : null) ??
+    (listing.externalListingId ? buildCanonicalTraderaListingUrl(listing.externalListingId) : null);
+
+  if (!resolvedListingUrl) {
+    return {
+      externalListingId: listing.externalListingId ?? null,
+      listingUrl: undefined,
+      metadata: {
+        checkedStatus: null,
+        checkStatusError: 'No listing URL available to check status.',
+      },
+    };
+  }
+
+  const result = await runPlaywrightListingScript({
+    script: TRADERA_CHECK_STATUS_SCRIPT,
+    input: {
+      listingUrl: resolvedListingUrl,
+      externalListingId: listing.externalListingId ?? null,
+    },
+    connection,
+    timeoutMs: TRADERA_CHECK_STATUS_TIMEOUT_MS,
+    browserMode,
+    disableStartUrlBootstrap: true,
+  });
+
+  const checkedStatus =
+    typeof result.rawResult['status'] === 'string' && result.rawResult['status'].trim()
+      ? result.rawResult['status'].trim()
+      : null;
+  const checkStatusError =
+    typeof result.rawResult['error'] === 'string' ? result.rawResult['error'] : null;
+
+  return {
+    externalListingId: result.externalListingId ?? listing.externalListingId ?? null,
+    listingUrl: result.listingUrl ?? resolvedListingUrl,
+    metadata: {
+      checkedStatus,
+      checkStatusError,
+      requestedBrowserMode: browserMode,
+      runId: result.runId,
+    },
+  };
 };

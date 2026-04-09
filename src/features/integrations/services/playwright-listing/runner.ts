@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { existsSync } from 'fs';
+
 import { enqueuePlaywrightNodeRun } from '@/features/ai/server';
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
@@ -13,6 +15,7 @@ import {
   resolveConnectionPlaywrightSettings,
 } from '../tradera-playwright-settings';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
+import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
 
 export type PlaywrightExecutionSettingsSummary = Pick<
   PlaywrightSettings,
@@ -51,6 +54,12 @@ export type PlaywrightImportResult = {
   rawResult: Record<string, unknown>;
 };
 
+const BRAVE_PATHS: Record<string, string> = {
+  darwin: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+  win32: 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
+  linux: '/usr/bin/brave-browser',
+};
+
 const extractStringField = (obj: Record<string, unknown>, key: string): string | null => {
   const value = obj[key];
   return typeof value === 'string' && value.trim() ? value.trim() : null;
@@ -63,6 +72,46 @@ const extractBooleanField = (obj: Record<string, unknown>, key: string): boolean
 
 const extractTrimmedString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const getBraveExecutablePath = (): string | null => {
+  const bravePath = BRAVE_PATHS[process.platform];
+  return bravePath && existsSync(bravePath) ? bravePath : null;
+};
+
+const resolveBrowserLaunchOptions = (
+  browserPreference: PlaywrightBrowserPreference
+): Record<string, unknown> => {
+  switch (browserPreference) {
+    case 'brave': {
+      const braveExecutablePath = getBraveExecutablePath();
+      if (!braveExecutablePath) {
+        throw internalError(
+          `Brave browser not found at expected path (${BRAVE_PATHS[process.platform] ?? 'unsupported platform'}). Install Brave or switch the connection browser setting to Chrome or Auto.`
+        );
+      }
+      return {
+        executablePath: braveExecutablePath,
+      };
+    }
+    case 'chrome':
+      return {
+        channel: 'chrome',
+      };
+    case 'auto': {
+      const braveExecutablePath = getBraveExecutablePath();
+      return braveExecutablePath
+        ? {
+            executablePath: braveExecutablePath,
+          }
+        : {
+            channel: 'chrome',
+          };
+    }
+    case 'chromium':
+    default:
+      return {};
+  }
+};
 
 const resolveListingRunStartUrl = (input: Record<string, unknown>): string | undefined => {
   const directStartUrl = extractTrimmedString(input['startUrl']);
@@ -162,6 +211,7 @@ export const runPlaywrightListingScript = async ({
     headless: effectiveHeadless,
   };
   const startUrl = disableStartUrlBootstrap ? undefined : resolveListingRunStartUrl(input);
+  const launchOptions = resolveBrowserLaunchOptions(runtimeSettings.browser);
 
   const run = await enqueuePlaywrightNodeRun({
     request: {
@@ -175,6 +225,7 @@ export const runPlaywrightListingScript = async ({
       ...(contextRegistry ? { contextRegistry } : {}),
       ...(personaId ? { personaId } : {}),
       ...(storageState ? { contextOptions: { storageState } } : {}),
+      ...(Object.keys(launchOptions).length > 0 ? { launchOptions } : {}),
       settingsOverrides: {
         headless: effectiveSettings.headless,
         slowMo: effectiveSettings.slowMo,

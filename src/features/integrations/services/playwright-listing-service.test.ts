@@ -43,6 +43,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 }));
 
 import {
+  buildPlaywrightListingInput,
   processPlaywrightListingJob,
   runPlaywrightListing,
 } from './playwright-listing-service';
@@ -68,6 +69,44 @@ describe('playwright-listing-service', () => {
       imageLinks: ['https://example.com/image-1.jpg'],
       images: [],
     });
+  });
+
+  it('applies marketplace-specific alternate copy when building Playwright listing input', () => {
+    const input = buildPlaywrightListingInput({
+      product: {
+        id: 'product-1',
+        sku: 'SKU-1',
+        name_en: 'Example product',
+        description_en: 'Example description',
+        marketplaceContentOverrides: [
+          {
+            integrationIds: ['integration-1'],
+            title: 'Marketplace title',
+            description: 'Marketplace description',
+          },
+        ],
+        imageLinks: [],
+        images: [],
+      } as never,
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        username: null,
+        password: null,
+      } as never,
+    });
+
+    expect(input).toEqual(
+      expect.objectContaining({
+        title: 'Marketplace title',
+        description: 'Marketplace description',
+      })
+    );
   });
 
   it('passes headed relist overrides into the Playwright runner', async () => {

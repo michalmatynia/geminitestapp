@@ -152,9 +152,14 @@ export function useCatalogSync(
   }, [catalogsQuery.error, priceGroupsQuery.error]);
 
   // Extract data with defaults
-  const rawCatalogs = useMemo(() => (catalogsQuery.data as Catalog[]) ?? [], [catalogsQuery.data]);
+  const rawCatalogs = useMemo(() => {
+    return Array.isArray(catalogsQuery.data) ? (catalogsQuery.data as Catalog[]) : [];
+  }, [catalogsQuery.data]);
   const priceGroups = useMemo(
-    () => (priceGroupsQuery.data as PriceGroupWithDetails[]) ?? [],
+    () =>
+      Array.isArray(priceGroupsQuery.data)
+        ? (priceGroupsQuery.data as PriceGroupWithDetails[])
+        : [],
     [priceGroupsQuery.data]
   );
 

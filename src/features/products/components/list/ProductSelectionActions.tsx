@@ -13,6 +13,7 @@ import {
   Trash2,
   Upload,
   X,
+  Activity,
 } from 'lucide-react';
 import { memo, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
@@ -27,6 +28,7 @@ import {
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
+import { TraderaStatusCheckModal } from '@/features/integrations/components/listings/TraderaStatusCheckModal';
 import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ActionMenu } from '@/shared/ui/ActionMenu';
@@ -84,6 +86,8 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     useTraderaMassQuickExport();
   const { execute: executeVintedMassExport, isRunning: isVintedMassExportRunning } =
     useVintedMassQuickExport();
+  const [isTraderaStatusCheckOpen, setIsTraderaStatusCheckOpen] = useState(false);
+  const [statusCheckProductIds, setStatusCheckProductIds] = useState<string[]>([]);
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]
@@ -133,6 +137,21 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     }
     await executeVintedMassExport(selectedProductIds);
   }, [executeVintedMassExport, rowSelection, toast]);
+
+  const [statusCheckProducts, setStatusCheckProducts] = useState<typeof data>([]);
+
+  const handleCheckTraderaStatus = useCallback((): void => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to check.', { variant: 'error' });
+      return;
+    }
+    // Snapshot selected products at open time so re-fetches of the list don't affect the modal.
+    const selectedSet = new Set(selectedProductIds);
+    setStatusCheckProductIds(selectedProductIds);
+    setStatusCheckProducts(data.filter((p) => selectedSet.has(p.id)));
+    setIsTraderaStatusCheckOpen(true);
+  }, [data, rowSelection, toast]);
 
   const selectedCount = useMemo(
     () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
@@ -431,6 +450,14 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
               {isVintedMassExportRunning ? 'Exporting to Vinted...' : 'Quick Export to Vinted'}
             </DropdownMenuItem>
             <DropdownMenuItem
+              onClick={handleCheckTraderaStatus}
+              className='cursor-pointer gap-2'
+              disabled={selectedCount === 0}
+            >
+              <Activity className='h-4 w-4' />
+              Check Tradera Listing Status
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => {
                 void handleConvertSelected();
               }}
@@ -627,6 +654,13 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         onChange={(event) => {
           void handleImportFromFile(event);
         }}
+      />
+
+      <TraderaStatusCheckModal
+        isOpen={isTraderaStatusCheckOpen}
+        onClose={() => setIsTraderaStatusCheckOpen(false)}
+        productIds={statusCheckProductIds}
+        products={statusCheckProducts}
       />
     </>
   );

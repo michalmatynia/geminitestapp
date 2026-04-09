@@ -14,7 +14,27 @@ vi.mock('../../hooks/useTriggerButtons', () => ({
   useTriggerButtons: (...args: unknown[]) => useTriggerButtonsMock(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  ActionMenu: ({
+    children,
+    trigger,
+    ariaLabel,
+  }: {
+    children: React.ReactNode;
+    trigger?: React.ReactNode;
+    ariaLabel?: string;
+  }) => (
+    <div>
+      <button type='button' aria-label={ariaLabel ?? 'Open actions menu'}>
+        {trigger ?? 'Menu'}
+      </button>
+      <div>{children}</div>
+    </div>
+  ),
+  ToggleRow: ({ label }: { label: string }) => <div>{label}</div>,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -32,8 +52,27 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  ToggleRow: ({ label }: { label: string }) => <div>{label}</div>,
+  Dialog: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DialogTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => <>{children}</>,
+  DialogContent: ({ children }: { children: React.ReactNode }) => <div role='dialog'>{children}</div>,
+  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+  DialogDescription: ({ children }: { children: React.ReactNode; className?: string }) => <p>{children}</p>,
+  DropdownMenuItem: ({
+    children,
+    onSelect,
+  }: {
+    children: React.ReactNode;
+    onSelect?: (event: Event) => void;
+  }) => (
+    <button type='button' onClick={() => onSelect?.(new Event('select'))}>
+      {children}
+    </button>
+  ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: ({
     label,
     status,
@@ -49,39 +88,6 @@ vi.mock('@/shared/ui', () => ({
       {label ?? status}
     </span>
   ),
-  ActionMenu: ({
-    children,
-    trigger,
-    ariaLabel,
-  }: {
-    children: React.ReactNode;
-    trigger?: React.ReactNode;
-    ariaLabel?: string;
-  }) => (
-    <div>
-      <button type='button' aria-label={ariaLabel ?? 'Open actions menu'}>
-        {trigger ?? 'Menu'}
-      </button>
-      <div>{children}</div>
-    </div>
-  ),
-  DropdownMenuItem: ({
-    children,
-    onSelect,
-  }: {
-    children: React.ReactNode;
-    onSelect?: (event: Event) => void;
-  }) => (
-    <button type='button' onClick={() => onSelect?.(new Event('select'))}>
-      {children}
-    </button>
-  ),
-  Dialog: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DialogTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => <>{children}</>,
-  DialogContent: ({ children }: { children: React.ReactNode }) => <div role='dialog'>{children}</div>,
-  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
-  DialogDescription: ({ children }: { children: React.ReactNode; className?: string }) => <p>{children}</p>,
 }));
 
 import { TriggerButtonBar } from './TriggerButtonBar';

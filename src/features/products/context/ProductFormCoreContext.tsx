@@ -23,7 +23,10 @@ import {
 } from 'react-hook-form';
 
 import { ProductFormData, ProductDraft } from '@/shared/contracts/products/drafts';
-import { ProductWithImages } from '@/shared/contracts/products/product';
+import {
+  ProductWithImages,
+  normalizeProductMarketplaceContentOverrideDrafts,
+} from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import {
@@ -71,6 +74,13 @@ export const resolveProductFormDefaultValues = ({
   weight: product?.weight ?? draft?.weight ?? 0,
   length: product?.length ?? draft?.length ?? 0,
   shippingGroupId: product?.shippingGroupId ?? draft?.shippingGroupId ?? '',
+  marketplaceContentOverrides: normalizeProductMarketplaceContentOverrideDrafts(
+    product?.marketplaceContentOverrides ?? draft?.marketplaceContentOverrides ?? []
+  ).map((entry) => ({
+    integrationIds: entry.integrationIds,
+    title: entry.title ?? '',
+    description: entry.description ?? '',
+  })),
 });
 
 export interface ProductFormCoreContextType {

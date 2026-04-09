@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -49,6 +50,11 @@ type AiPathsSettingsStateOptions = {
 };
 
 import type { UseAiPathsSettingsStateReturn } from './types';
+
+// The AI Paths settings state composes a large hook graph with nested TanStack
+// helpers and confirmation/runtime controllers. Keep it off the React Compiler
+// path in dev to avoid background-prefetch hook mismatches bubbling into other
+// admin pages.
 
 export function useAiPathsSettingsState({
   activeTab,

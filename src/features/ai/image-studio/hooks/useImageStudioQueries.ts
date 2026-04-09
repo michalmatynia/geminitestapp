@@ -50,25 +50,26 @@ const normalizeProjectRecord = (entry: unknown): ImageStudioProjectRecord | null
   };
 };
 
+export async function fetchStudioProjects(): Promise<ImageStudioProjectRecord[]> {
+  const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects');
+  if (!Array.isArray(data.projects)) return [];
+  const normalized = data.projects
+    .map((entry: unknown) => normalizeProjectRecord(entry))
+    .filter((entry): entry is ImageStudioProjectRecord => Boolean(entry));
+  const seen = new Set<string>();
+  return normalized.filter((project: ImageStudioProjectRecord) => {
+    if (seen.has(project.id)) return false;
+    seen.add(project.id);
+    return true;
+  });
+}
+
 export function useStudioProjects(): ListQuery<ImageStudioProjectRecord> {
   const queryKey = studioKeys.projects();
-  const queryFn = async (): Promise<ImageStudioProjectRecord[]> => {
-    const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects');
-    if (!Array.isArray(data.projects)) return [];
-    const normalized = data.projects
-      .map((entry: unknown) => normalizeProjectRecord(entry))
-      .filter((entry): entry is ImageStudioProjectRecord => Boolean(entry));
-    const seen = new Set<string>();
-    return normalized.filter((project: ImageStudioProjectRecord) => {
-      if (seen.has(project.id)) return false;
-      seen.add(project.id);
-      return true;
-    });
-  };
 
   return createListQueryV2({
     queryKey,
-    queryFn,
+    queryFn: fetchStudioProjects,
     staleTime: 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

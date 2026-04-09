@@ -27,6 +27,33 @@ vi.mock('@/features/integrations/components/listings/useImageRetryPresets', () =
   useImageRetryPresets: () => useImageRetryPresetsMock(),
 }));
 
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    DropdownMenuItem: ({ children, onSelect, onClick }: any) => (
+      <button type='button' onClick={onSelect || onClick}>
+        {children}
+      </button>
+    ),
+  };
+});
+
+vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    ActionMenu: ({ children, trigger, ariaLabel }: any) => (
+      <div data-testid='mock-action-menu'>
+        <button type='button' aria-label={ariaLabel}>
+          {trigger}
+        </button>
+        <div>{children}</div>
+      </div>
+    ),
+  };
+});
+
 import { ProductListingActions } from './ProductListingActions';
 
 describe('ProductListingActions', () => {
@@ -198,6 +225,7 @@ describe('ProductListingActions', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Sync with Tradera' }));
+    fireEvent.click(screen.getByText('Sync (default)'));
     await Promise.resolve();
 
     expect(handleSyncTradera).toHaveBeenCalledWith('listing-1', {
@@ -245,6 +273,7 @@ describe('ProductListingActions', () => {
       skipSessionPreflight: true,
       integrationId: 'integration-1',
       connectionId: 'connection-1',
+      browserMode: 'headed',
     });
     expect(handleRelistTradera).not.toHaveBeenCalled();
   });

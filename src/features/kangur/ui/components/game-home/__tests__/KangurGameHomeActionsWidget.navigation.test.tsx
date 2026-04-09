@@ -77,6 +77,15 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => pathnameMock(),
+  useRouter: () => ({
+    prefetch: routerPrefetchMock,
+    push: routerPushMock,
+    replace: routerReplaceMock,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
 }));

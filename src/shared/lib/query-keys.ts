@@ -46,6 +46,10 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.products.metadata.all, 'parameters', catalogId] as const,
       simpleParameters: (catalogId: string | null) =>
         [...QUERY_KEYS.products.metadata.all, 'simple-parameters', catalogId] as const,
+      titleTermsAll: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.metadata.all, 'title-terms', catalogId] as const,
+      titleTerms: (catalogId: string | null, type: string | null) =>
+        [...QUERY_KEYS.products.metadata.titleTermsAll(catalogId), type ?? 'all'] as const,
       languages: () => [...QUERY_KEYS.products.metadata.all, 'languages'] as const,
       priceGroups: () => [...QUERY_KEYS.products.metadata.all, 'price-groups'] as const,
     },

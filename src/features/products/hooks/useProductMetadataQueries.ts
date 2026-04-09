@@ -10,6 +10,10 @@ import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/cont
 import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
 import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import type { ProductTag } from '@/shared/contracts/products/tags';
+import type {
+  ProductTitleTerm,
+  ProductTitleTermType,
+} from '@/shared/contracts/products/title-terms';
 import type { ListQuery, SaveMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -18,7 +22,10 @@ import {
   createMutationV2,
   createDeleteMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
+import {
+  invalidateProductMetadata,
+  invalidateProductTitleTerms,
+} from '@/shared/lib/query-invalidation';
 import { productMetadataKeys } from '@/shared/lib/query-key-exports';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
@@ -26,6 +33,7 @@ export { productMetadataKeys };
 
 export type ProductMetadataQueryOptions = {
   enabled?: boolean;
+  allowWithoutCatalog?: boolean;
 };
 
 const STABLE_METADATA_STALE_MS = 10 * 60 * 1_000;
@@ -322,6 +330,104 @@ export function useSimpleParameters(
       queryKey,
       tags: ['products', 'metadata', 'simple-parameters'],
       description: 'Loads products metadata simple parameters.'},
+  });
+}
+
+export function useTitleTerms(
+  catalogId?: string,
+  type?: ProductTitleTermType | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductTitleTerm> {
+  const allowWithoutCatalog = options?.allowWithoutCatalog ?? false;
+  const queryKey = productMetadataKeys.titleTerms(catalogId ?? null, type ?? null);
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductTitleTerm[]> => {
+      if (!catalogId && !allowWithoutCatalog) return [];
+      return await api.get<ProductTitleTerm[]>('/api/v2/products/title-terms', {
+        params: {
+          ...(catalogId ? { catalogId } : {}),
+          ...(type ? { type } : {}),
+        },
+        cache: 'no-store',
+      });
+    },
+    enabled: (allowWithoutCatalog || Boolean(catalogId)) && (options?.enabled ?? true),
+    ...STABLE_METADATA_QUERY_OPTIONS,
+    meta: {
+      source: 'products.hooks.useTitleTerms',
+      operation: 'list',
+      resource: 'products.metadata.title-terms',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'metadata', 'title-terms'],
+      description: 'Loads products metadata title terms.',
+    },
+  });
+}
+
+export function useSaveTitleTermMutation(): SaveMutation<
+  ProductTitleTerm,
+  {
+    id?: string;
+    data: {
+      catalogId: string;
+      type: ProductTitleTermType;
+      name_en: string;
+      name_pl?: string | null;
+    };
+  }
+> {
+  const mutationKey = [...productMetadataKeys.all, 'title-terms', 'save'] as const;
+  return createMutationV2({
+    mutationFn: ({ id, data }) =>
+      id
+        ? api.put<ProductTitleTerm>(`/api/v2/products/title-terms/${id}`, data)
+        : api.post<ProductTitleTerm>('/api/v2/products/title-terms', data),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSaveTitleTermMutation',
+      operation: 'action',
+      resource: 'products.metadata.title-terms',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'metadata', 'title-terms', 'save'],
+      description: 'Runs products metadata title terms.',
+    },
+    invalidate: async (queryClient) => {
+      await Promise.all([
+        invalidateProductTitleTerms(queryClient),
+        invalidateProductMetadata(queryClient),
+      ]);
+    },
+  });
+}
+
+export function useDeleteTitleTermMutation(): DeleteMutation<
+  void,
+  { id: string; catalogId?: string | null }
+> {
+  const mutationKey = [...productMetadataKeys.all, 'title-terms', 'delete'] as const;
+  return createDeleteMutationV2({
+    mutationFn: async ({ id }) => {
+      await api.delete<void>(`/api/v2/products/title-terms/${id}`);
+    },
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteTitleTermMutation',
+      operation: 'delete',
+      resource: 'products.metadata.title-terms',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'metadata', 'title-terms', 'delete'],
+      description: 'Deletes products metadata title terms.',
+    },
+    invalidate: async (queryClient, _data, variables) => {
+      await Promise.all([
+        invalidateProductTitleTerms(queryClient, variables.catalogId ?? null),
+        invalidateProductMetadata(queryClient),
+      ]);
+    },
   });
 }
 

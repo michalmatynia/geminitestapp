@@ -7,6 +7,7 @@ export * from './producers';
 export * from './product';
 export * from './shipping-groups';
 export * from './tags';
+export * from './title-terms';
 
 export * from './io';
 export * from './migration';

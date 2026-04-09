@@ -169,4 +169,16 @@ describe('ProductFilters layout contract', () => {
       expect(screen.getByTestId('advanced-filter-modal')).toBeInTheDocument();
     });
   });
+
+  it('stays renderable when metadata hooks return malformed cached payloads', () => {
+    useCatalogsMock.mockReturnValue({ data: { invalid: true } });
+    useTagsMock.mockReturnValue({ data: { invalid: true } });
+    useMultiTagsMock.mockReturnValue([{ data: { invalid: true } }]);
+    useProducersMock.mockReturnValue({ data: { invalid: true } });
+    useProductCategoriesMock.mockReturnValue({ data: { invalid: true } });
+
+    render(<ProductFilters />);
+
+    expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
+  });
 });

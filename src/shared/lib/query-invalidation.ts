@@ -298,6 +298,21 @@ export const invalidateProductCustomFields = async (
   ]);
 };
 
+export const invalidateProductTitleTerms = async (
+  queryClient: QueryClient,
+  catalogId?: string | null
+): Promise<void> => {
+  if (catalogId !== undefined) {
+    await queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.metadata.titleTermsAll(catalogId),
+    });
+    return;
+  }
+  await queryClient.invalidateQueries({
+    queryKey: [...QUERY_KEYS.products.metadata.all, 'title-terms'],
+  });
+};
+
 export const invalidateProductValidatorLatestSource = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({
     queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
@@ -379,6 +394,9 @@ export const invalidateCatalogScopedData = async (
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(catalogId) }),
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.products.metadata.simpleParameters(catalogId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.metadata.titleTermsAll(catalogId),
     }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(catalogId) }),
     queryClient.invalidateQueries({

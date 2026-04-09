@@ -1,6 +1,14 @@
 import type { ProductTag, ProductTagUpdateInput } from '@/shared/contracts/products/tags';
-import { conflictError } from '@/shared/errors/app-error';
+import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import type { CatalogNameLookupDto } from '@/shared/contracts/base';
+
+export const parseTagId = (params: { id: string }): string => {
+  const direct = params.id.trim();
+  if (!direct) {
+    throw badRequestError('Invalid route parameters: id is required');
+  }
+  return direct;
+};
 
 type ProductTagSnapshot = Pick<ProductTag, 'id' | 'catalogId'>;
 

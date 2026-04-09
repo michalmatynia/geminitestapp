@@ -502,19 +502,14 @@ export function FilemakerMailSidebar({
               setSyncingAccountId(parsed.accountId);
               void (async () => {
                 try {
-                  await fetchJson(`/api/filemaker/mail/accounts/${encodeURIComponent(parsed.accountId)}/sync`, {
-                    method: 'POST',
-                  });
-                  await fetchAccountsAndFolders();
-                  if (selectedAccountId === parsed.accountId) {
-                    // Re-trigger thread fetch logic if needed
-                  }
-                  toast(
-                    'Mailbox sync finished.',
-                    {
-                      variant: 'success',
-                    }
+                  const result = await fetchJson<{ result: { fetchedMessageCount: number } }>(
+                    `/api/filemaker/mail/accounts/${encodeURIComponent(parsed.accountId)}/sync`,
+                    { method: 'POST' }
                   );
+                  await fetchAccountsAndFolders();
+                  toast(`Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`, {
+                    variant: 'success',
+                  });
                 } catch (error) {
                   toast(error instanceof Error ? error.message : 'Mailbox sync failed.', {
                     variant: 'error',

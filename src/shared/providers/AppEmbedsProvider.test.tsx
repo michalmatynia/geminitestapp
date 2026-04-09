@@ -7,7 +7,7 @@ const toastMock = vi.fn();
 const useSettingsMapMock = vi.fn();
 const mutateAsyncMock = vi.fn();
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: toastMock,
   }),

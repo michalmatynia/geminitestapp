@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -396,7 +397,6 @@ export function BaseQuickExportButton(props: {
 
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       const [preferredConnection, defaultInventory, integrationsWithConnections] =
         await Promise.all([
         fetchQueryV2<BaseDefaultConnectionPreferenceResponse>(queryClient, {

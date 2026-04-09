@@ -16,6 +16,7 @@ import {
   resolveAppBaseUrl,
   toAbsoluteUrl,
 } from '@/shared/lib/files/services/storage/file-storage-service';
+import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { runPlaywrightListingScript } from './playwright-listing/runner';
@@ -59,16 +60,6 @@ const resolveProductImageUrls = (product: ProductWithImages): string[] => {
   return Array.from(urls);
 };
 
-const resolvePrimaryTitle = (product: ProductWithImages): string =>
-  product.name_en ||
-  product.name_pl ||
-  product.name_de ||
-  product.sku ||
-  `Product ${product.id}`;
-
-const resolvePrimaryDescription = (product: ProductWithImages, fallbackTitle: string): string =>
-  product.description_en || product.description_pl || product.description_de || fallbackTitle;
-
 export const buildPlaywrightListingInput = ({
   product,
   listing,
@@ -78,8 +69,11 @@ export const buildPlaywrightListingInput = ({
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
 }): Record<string, unknown> => {
-  const title = resolvePrimaryTitle(product);
-  const description = resolvePrimaryDescription(product, title);
+  const { title, description } = resolveMarketplaceAwareProductCopy({
+    product,
+    integrationId: listing.integrationId,
+    preferredLocales: ['en', 'pl', 'de'],
+  });
   const appBaseUrl = resolveAppBaseUrl();
   const images = resolveProductImageUrls(product).map((u) => toAbsoluteUrl(u, appBaseUrl));
   // Credentials passed in-memory only — never written to disk or job queue

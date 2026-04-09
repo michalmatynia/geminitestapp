@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { integrationService } from '@/features/integrations/server';
-import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
@@ -16,7 +15,6 @@ const integrationSchema = z.object({
  * Fetches all integrations.
  */
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  applyCacheLife('swr300');
   const integrations = await integrationService.listIntegrations();
   return NextResponse.json(integrations);
 }

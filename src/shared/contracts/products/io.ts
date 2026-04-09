@@ -2,10 +2,12 @@ import { z } from 'zod';
 
 import { productCustomFieldValueSchema } from './custom-fields';
 import {
+  productMarketplaceContentOverridesSchema,
   productImportSourceSchema,
   productParameterValueSchema,
   productSchema,
 } from './product';
+import { normalizeStructuredProductName, parseStructuredProductName } from '@/shared/lib/products/title-terms';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 /**
@@ -113,7 +115,33 @@ const optionalCustomFieldValuesFromFormSchema = z.preprocess((value: unknown): u
   }
 }, z.array(productCustomFieldValueSchema).optional());
 
-export const productCreateInputSchema = z.object({
+const optionalMarketplaceContentOverridesFromFormSchema = z.preprocess(
+  (value: unknown): unknown => {
+    if (value === undefined || value === null) return undefined;
+    if (Array.isArray(value)) return value;
+    if (typeof value !== 'string') return value;
+
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'contracts.products.io',
+        action: 'optionalMarketplaceContentOverridesFromFormSchema',
+        valueLength: trimmed.length,
+      });
+      return value;
+    }
+  },
+  productMarketplaceContentOverridesSchema.optional()
+);
+
+const STRUCTURED_PRODUCT_NAME_FORMAT_MESSAGE =
+  'English name must use format: <name> | <size> | <material> | <category> | <lore or theme>';
+
+const productInputFieldsSchema = z.object({
   id: z.string().nullable().optional(),
   baseProductId: z.string().nullable().optional(),
   importSource: productImportSourceSchema.nullable().optional(),
@@ -153,12 +181,26 @@ export const productCreateInputSchema = z.object({
 
   customFields: optionalCustomFieldValuesFromFormSchema,
   parameters: optionalParameterValuesFromFormSchema,
+  marketplaceContentOverrides: optionalMarketplaceContentOverridesFromFormSchema,
+});
+
+export const productCreateInputSchema = productInputFieldsSchema.superRefine((data, ctx) => {
+  const nameEn = typeof data.name_en === 'string' ? data.name_en.trim() : '';
+  if (!nameEn) return;
+
+  if (!parseStructuredProductName(normalizeStructuredProductName(nameEn))) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['name_en'],
+      message: STRUCTURED_PRODUCT_NAME_FORMAT_MESSAGE,
+    });
+  }
 });
 
 export type CreateProductInput = z.infer<typeof productCreateInputSchema>;
 export type ProductCreateInput = CreateProductInput;
 
-export const productUpdateInputSchema = productCreateInputSchema.partial().extend({
+export const productUpdateInputSchema = productInputFieldsSchema.partial().extend({
   sku: z.preprocess((value: unknown): unknown => {
     if (value === undefined) return undefined;
     if (value === null) return null;

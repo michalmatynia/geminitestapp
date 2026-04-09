@@ -52,6 +52,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     catalogs: overrides.catalogs ?? [],
     customFields: overrides.customFields ?? [],
     parameters: overrides.parameters ?? [],
+    marketplaceContentOverrides: overrides.marketplaceContentOverrides ?? [],
     imageLinks: overrides.imageLinks ?? [],
     imageBase64s: overrides.imageBase64s ?? [],
     noteIds: overrides.noteIds ?? [],
@@ -248,5 +249,33 @@ describe('resolveVintedProductMapping', () => {
       productCategoryPath: 'Women > Dresses',
       producerNames: ['COS'],
     });
+  });
+
+  it('uses marketplace-specific alternate copy when the integration matches', () => {
+    const mapping = resolveVintedProductMapping({
+      product: createProduct({
+        marketplaceContentOverrides: [
+          {
+            integrationIds: ['integration-vinted-1'],
+            title: 'Vinted title',
+            description: 'Vinted description',
+          },
+        ],
+      }),
+      integrationId: 'integration-vinted-1',
+      customFieldDefinitions: [],
+      parameters: [],
+      categories: [
+        createCategory({ id: 'fashion-root', name: 'Women' }),
+        createCategory({
+          id: 'internal-leaf',
+          name: 'Dresses',
+          parentId: 'fashion-root',
+        }),
+      ],
+    });
+
+    expect(mapping.title).toBe('Vinted title');
+    expect(mapping.description).toBe('Vinted description');
   });
 });

@@ -44,6 +44,12 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => '/',
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+}));
+
 vi.mock('@/shared/hooks/use-settings', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/hooks/use-settings')>();
   return {

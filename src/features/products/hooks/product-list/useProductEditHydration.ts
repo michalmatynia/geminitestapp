@@ -169,6 +169,18 @@ export function useProductEditHydration({
       description: 'Loads products detail.'},
   });
 
+  const handleMissingEditProduct = useCallback(
+    (message: string) => {
+      openingProductFromQueryRef.current = null;
+      setEditingProduct(null);
+      setIsEditHydrating(false);
+      clearProductEditorQueryParams();
+      toast(message, { variant: 'warning' });
+      setRefreshTrigger((prev: number) => prev + 1);
+    },
+    [clearProductEditorQueryParams, setEditingProduct, setRefreshTrigger, toast]
+  );
+
   const prefetchProductDetail = useCallback(
     (productId: string) => {
       const normalizedProductId = productId.trim();
@@ -286,22 +298,22 @@ export function useProductEditHydration({
         })
         .catch((error: unknown) => {
           if (editOpenRequestTokenRef.current !== requestToken) return;
-          setIsEditHydrating(false);
           if (error instanceof ApiError && error.status === 404) {
-            toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
-            setRefreshTrigger((prev: number) => prev + 1);
+            handleMissingEditProduct('This product no longer exists. Refreshing the list.');
             return;
           }
+          setIsEditHydrating(false);
           toast(error instanceof Error ? error.message : 'Failed to open product editor.', {
             variant: 'error',
           });
         });
     },
-    [queryClient, setActionError, setEditingProduct, setRefreshTrigger, toast]
+    [handleMissingEditProduct, queryClient, setActionError, setEditingProduct, toast]
   );
 
   const handleCloseEdit = useCallback(() => {
     editOpenRequestTokenRef.current += 1;
+    openingProductFromQueryRef.current = null;
     setEditingProduct(null);
     setIsEditHydrating(false);
     clearProductEditorQueryParams();
@@ -379,23 +391,22 @@ export function useProductEditHydration({
       })
       .catch((error: unknown) => {
         if (editOpenRequestTokenRef.current !== requestToken) return;
-        setIsEditHydrating(false);
         if (error instanceof ApiError && error.status === 404) {
-          toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
-          setRefreshTrigger((prev: number) => prev + 1);
+          handleMissingEditProduct('This product no longer exists. Refreshing the list.');
           return;
         }
+        setIsEditHydrating(false);
         toast(error instanceof Error ? error.message : 'Failed to open product editor.', {
           variant: 'error',
         });
       });
   }, [
     editingProduct?.id,
+    handleMissingEditProduct,
     openProductIdFromQuery,
     queryClient,
     setActionError,
     setEditingProduct,
-    setRefreshTrigger,
     toast,
   ]);
 
@@ -405,16 +416,11 @@ export function useProductEditHydration({
     const error = editingProductDetailQuery.error;
     if (!(error instanceof ApiError) || error.status !== 404) return;
 
-    setEditingProduct(null);
-    setIsEditHydrating(false);
-    toast('This product was deleted or is unavailable.', { variant: 'warning' });
-    setRefreshTrigger((prev: number) => prev + 1);
+    handleMissingEditProduct('This product was deleted or is unavailable.');
   }, [
     editingProduct?.id,
     editingProductDetailQuery.error,
-    setEditingProduct,
-    setRefreshTrigger,
-    toast,
+    handleMissingEditProduct,
   ]);
 
   return {

@@ -23,7 +23,7 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -33,11 +33,15 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  FormSection: ({ children }: { children?: React.ReactNode }) => <section>{children}</section>,
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   Label: ({ children, className }: { children?: React.ReactNode; className?: string }) => (
     <label className={className}>{children}</label>
   ),
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  FormSection: ({ children }: { children?: React.ReactNode }) => <section>{children}</section>,
   SelectSimple: ({
     value,
     onValueChange,
@@ -74,7 +78,6 @@ vi.mock('@/shared/ui', () => ({
       {enabled ? 'on' : 'off'}
     </button>
   ),
-  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
 }));
 
 const draft = {

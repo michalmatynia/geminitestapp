@@ -141,6 +141,21 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => pathnameMock(),
+  useRouter: () => ({
+    back: vi.fn(),
+    prefetch: prefetchMock,
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: replaceMock,
+  }),
+  useSearchParams: () => searchParamsMock(),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: () => null,
 }));

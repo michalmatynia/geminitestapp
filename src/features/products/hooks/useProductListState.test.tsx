@@ -5,6 +5,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
   applyProductListAdvancedFilterState,
+  applyProductListPageSizeChange,
   scheduleDeferredProductListDraftBootstrap,
   shouldEnableProductListBackgroundSync,
   shouldEnableProductListBackgroundSyncRuntime,
@@ -177,6 +178,44 @@ describe('applyProductListAdvancedFilterState', () => {
 
     expect(localCalls).toEqual([{ value: '', presetId: null }]);
     expect(persistedCalls).toEqual([{ advancedFilter: '', presetId: null }]);
+  });
+});
+
+describe('applyProductListPageSizeChange', () => {
+  it('updates local page size immediately and persists the same normalized value', () => {
+    const localCalls: number[] = [];
+    const persistedCalls: number[] = [];
+
+    applyProductListPageSizeChange({
+      size: 24,
+      setLocalPageSize: (size: number) => {
+        localCalls.push(size);
+      },
+      persistPageSize: async (size: number): Promise<void> => {
+        persistedCalls.push(size);
+      },
+    });
+
+    expect(localCalls).toEqual([24]);
+    expect(persistedCalls).toEqual([24]);
+  });
+
+  it('normalizes invalid page sizes before applying them locally or persisting them', () => {
+    const localCalls: number[] = [];
+    const persistedCalls: number[] = [];
+
+    applyProductListPageSizeChange({
+      size: 0,
+      setLocalPageSize: (size: number) => {
+        localCalls.push(size);
+      },
+      persistPageSize: async (size: number): Promise<void> => {
+        persistedCalls.push(size);
+      },
+    });
+
+    expect(localCalls).toEqual([12]);
+    expect(persistedCalls).toEqual([12]);
   });
 });
 

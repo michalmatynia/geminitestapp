@@ -22,6 +22,7 @@ import {
   productsCountsQueryKey,
   getProductDetailQueryKey,
   invalidateProductsAndCounts,
+  invalidateProductTitleTerms,
 } from './productCache';
 
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
@@ -145,7 +146,10 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
     },
     extraInvalidateKeys: [productsCountsQueryKey],
     invalidate: async (queryClient) => {
-      await invalidateProductsAndCounts(queryClient);
+      await Promise.all([
+        invalidateProductsAndCounts(queryClient),
+        invalidateProductTitleTerms(queryClient),
+      ]);
     },
     queuedMessage: 'Product creation queued in runtime queue.',
     processedMessage: 'Queued product creation completed.',
@@ -274,6 +278,7 @@ export function useUpdateProductMutation(): UseMutationResult<
         tags: ['products', 'update'],
       },
       invalidate: (queryClient, savedProduct) => {
+        void invalidateProductTitleTerms(queryClient);
         if (!savedProduct) return;
         refreshUpdatedProductCaches(queryClient, savedProduct);
       },
@@ -295,6 +300,7 @@ export function useUpdateProductMutation(): UseMutationResult<
       ) => {
         removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE);
         void invalidateProductsAndCounts(queryClient);
+        void invalidateProductTitleTerms(queryClient);
         void queryClient.invalidateQueries({
           queryKey: getProductDetailQueryKey(variables.id),
         });

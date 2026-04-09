@@ -102,13 +102,22 @@ export const ProductFilters = memo(function ProductFilters({
 
   const selectedCatalogId =
     catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : undefined;
-  const { data: categories = [] } = useProductCategories(selectedCatalogId, {
+  const { data: rawCategories } = useProductCategories(selectedCatalogId, {
     enabled: isFilterPanelExpanded,
   });
-  const { data: catalogs = [] } = useCatalogs({ enabled: filterMetadataEnabled });
-  const { data: tags = [] } = useTags(selectedCatalogId, {
+  const { data: rawCatalogs } = useCatalogs({ enabled: filterMetadataEnabled });
+  const { data: rawTags } = useTags(selectedCatalogId, {
     enabled: filterMetadataEnabled,
   });
+  const categories = useMemo(
+    () => (Array.isArray(rawCategories) ? rawCategories : []),
+    [rawCategories]
+  );
+  const catalogs = useMemo(
+    () => (Array.isArray(rawCatalogs) ? rawCatalogs : []),
+    [rawCatalogs]
+  );
+  const tags = useMemo(() => (Array.isArray(rawTags) ? rawTags : []), [rawTags]);
   const catalogIds = useMemo(
     () => catalogs.map((catalog) => catalog.id).filter((id) => id.trim().length > 0),
     [catalogs]
@@ -116,7 +125,11 @@ export const ProductFilters = memo(function ProductFilters({
   const multiTagQueries = useMultiTags(selectedCatalogId ? [] : catalogIds, {
     enabled: filterMetadataEnabled,
   });
-  const { data: producers = [] } = useProducers({ enabled: filterMetadataEnabled });
+  const { data: rawProducers } = useProducers({ enabled: filterMetadataEnabled });
+  const producers = useMemo(
+    () => (Array.isArray(rawProducers) ? rawProducers : []),
+    [rawProducers]
+  );
 
   const categoryOptions = useMemo(() => {
     const options = [{ value: '__all__', label: 'All categories' }];
@@ -137,7 +150,7 @@ export const ProductFilters = memo(function ProductFilters({
 
     const unique = new Map<string, { id: string; name: string }>();
     multiTagQueries.forEach((query) => {
-      const entries = query.data ?? [];
+      const entries = Array.isArray(query.data) ? query.data : [];
       entries.forEach((tag) => {
         if (!tag.id || unique.has(tag.id)) return;
         unique.set(tag.id, {

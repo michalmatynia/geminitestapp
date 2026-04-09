@@ -73,6 +73,14 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(navigationState.search),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => navigationState.pathname,
+  useRouter: () => ({
+    replace: replaceMock,
+  }),
+  useSearchParams: () => new URLSearchParams(navigationState.search),
+}));
+
 vi.mock('@/features/kangur/observability/hooks', () => ({
   useKangurObservabilitySummary: useKangurObservabilitySummaryMock,
   useKangurKnowledgeGraphStatus: useKangurKnowledgeGraphStatusMock,

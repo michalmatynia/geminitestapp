@@ -84,7 +84,7 @@ vi.mock(
   })
 );
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 

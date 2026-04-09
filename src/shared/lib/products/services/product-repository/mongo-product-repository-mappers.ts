@@ -1,5 +1,6 @@
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductParameterValue, ProductRecord, ProductWithImages } from '@/shared/contracts/products/product';
+import { normalizeProductMarketplaceContentOverrides } from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
@@ -464,6 +465,9 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
     customFields: normalizeProductCustomFieldValues(doc.customFields),
     parameters: normalizeParameterValues(doc.parameters),
+    marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
+      doc.marketplaceContentOverrides
+    ),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,
@@ -539,6 +543,9 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
     customFields: normalizeProductCustomFieldValues(doc.customFields),
     parameters: normalizeParameterValues(doc.parameters),
+    marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
+      doc.marketplaceContentOverrides
+    ),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,

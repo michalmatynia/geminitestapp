@@ -350,6 +350,11 @@ vi.mock('use-intl', () => {
 vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn(async () => vi.fn((key: string) => key)),
 }));
+// Mock ClientOnly
+vi.mock('@/shared/ui/client-only', () => ({
+  ClientOnly: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 // Mock useToast
 vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
@@ -361,6 +366,77 @@ vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
     })),
   };
 });
+
+// Mock data-display components
+vi.mock('@/shared/ui/data-display.public', () => ({
+  Badge: (props: any) => {
+    const {
+      children,
+      variant,
+      className,
+      'data-variant': dataVariant,
+      'data-testid': dataTestId,
+    } = props;
+    return React.createElement(
+      'div',
+      {
+        className,
+        'data-testid': dataTestId || 'badge',
+        'data-variant': dataVariant || variant,
+      },
+      children
+    );
+  },
+  StatusBadge: (props: any) => {
+    const { status, label, className, variant, size } = props;
+    return React.createElement(
+      'div',
+      {
+        className,
+        'data-testid': 'status-badge',
+        'data-status': status,
+        'data-variant': variant,
+        'data-size': size,
+        'data-class-name': className,
+      },
+      label || status
+    );
+  },
+}));
+
+// Mock forms-and-actions components
+vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    SelectSimple: (props: any) => {
+      const { value, onValueChange, options, ariaLabel, disabled } = props;
+      return React.createElement(
+        'select',
+        {
+          'aria-label': ariaLabel,
+          value,
+          disabled,
+          onChange: (e: any) => onValueChange?.(e.target.value),
+        },
+        options?.map((opt: any) =>
+          React.createElement('option', { key: opt.value, value: opt.value }, opt.label)
+        )
+      );
+    },
+  };
+});
+
+// Mock nextjs-toploader/app to provide a consistent useRouter mock
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    refresh: vi.fn(),
+  })),
+}));
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -380,14 +456,6 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
   permanentRedirect: vi.fn(),
 }));
-
-// Mock nextjs-toploader/app to use the same useRouter as next/navigation
-vi.mock('nextjs-toploader/app', async () => {
-  const nextNav = await vi.importMock<typeof import('next/navigation')>('next/navigation');
-  return {
-    useRouter: nextNav.useRouter,
-  };
-});
 
 // Mock next/server (for NextRequest/NextResponse in API routes)
 vi.mock('next/server', () => {

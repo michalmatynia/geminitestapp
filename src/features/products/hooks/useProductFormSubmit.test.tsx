@@ -94,4 +94,44 @@ describe('useProductFormSubmit', () => {
     });
     expect(refreshImages).toHaveBeenCalledTimes(1);
   });
+
+  it('surfaces create mutation errors from structured title validation', async () => {
+    mocks.createMutationMock.mockRejectedValue(
+      new Error('Structured product name category must match the selected category.')
+    );
+
+    const { result } = renderHook(() => {
+      const methods = useForm<ProductFormData>({
+        defaultValues: {
+          sku: 'SKU-NEW',
+          name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        } as ProductFormData,
+      });
+
+      return useProductFormSubmit({
+        methods,
+        imageSlots: [],
+        imageLinks: [],
+        imageBase64s: [],
+        selectedCatalogIds: ['catalog-1'],
+        selectedCategoryId: 'category-1',
+        selectedTagIds: [],
+        selectedProducerIds: [],
+        selectedNoteIds: [],
+        customFieldValues: [],
+        parameterValues: [],
+        studioProjectId: null,
+        refreshImages: vi.fn(),
+      });
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(mocks.createMutationMock).toHaveBeenCalledTimes(1);
+    expect(result.current.uploadError).toBe(
+      'Structured product name category must match the selected category.'
+    );
+  });
 });

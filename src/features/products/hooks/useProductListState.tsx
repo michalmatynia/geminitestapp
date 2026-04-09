@@ -34,12 +34,12 @@ import {
   type BackgroundSyncEvent,
   useProductListSync,
 } from '@/shared/hooks/sync/useBackgroundSync';
+import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui/toast';
 
 import { useProductEditHydration } from './product-list/useProductEditHydration';
 import { useProductListCategories } from './product-list/useProductListCategories';
-import { useProductListFilters } from './product-list/useProductListFilters';
 import { useProductListHighlights } from './product-list/useProductListHighlights';
 import { useProductListIntegrations } from './product-list/useProductListIntegrations';
 import { useProductListModals } from './product-list/useProductListModals';
@@ -141,6 +141,16 @@ export function applyProductListAdvancedFilterState(args: {
   });
 }
 
+export function applyProductListPageSizeChange(args: {
+  size: number;
+  setLocalPageSize: (size: number) => void;
+  persistPageSize: (size: number) => Promise<void>;
+}): void {
+  const normalizedPageSize = normalizeProductPageSize(args.size, 12);
+  args.setLocalPageSize(normalizedPageSize);
+  void args.persistPageSize(normalizedPageSize);
+}
+
 export function shouldEnableProductListBackgroundSync(args: {
   queuedProductIdsCount: number;
   activeTrackedProductAiRunsCount: number;
@@ -239,17 +249,13 @@ export function useProductListState(): ProductListContextType & {
       enabled: rowRuntimeReady,
     });
 
-  const filters = useProductListFilters({
-    updatePageSize,
-    persistAppliedAdvancedFilterState,
-  });
-
   const {
     data,
     totalPages,
     page,
     setPage,
     pageSize,
+    setPageSize: setLivePageSize,
     search,
     setSearch,
     productId,
@@ -698,7 +704,16 @@ export function useProductListState(): ProductListContextType & {
     [allDrafts]
   );
 
-  const { handleSetPageSize } = filters;
+  const handleSetPageSize = useCallback(
+    (size: number): void => {
+      applyProductListPageSizeChange({
+        size,
+        setLocalPageSize: setLivePageSize,
+        persistPageSize: updatePageSize,
+      });
+    },
+    [setLivePageSize, updatePageSize]
+  );
   const handleSetAdvancedFilterState = useCallback(
     (value: string, presetId: string | null): void => {
       applyProductListAdvancedFilterState({

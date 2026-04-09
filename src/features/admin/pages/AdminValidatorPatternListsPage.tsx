@@ -407,6 +407,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         <ListPanel
           variant='flat'
           className='[&>div:first-child]:mb-3'
+          data-testid='list-panel'
           header={
             <AdminTitleBreadcrumbHeader
               title={
@@ -418,6 +419,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
                 <AdminSectionBreadcrumbs
                   section={{ label: 'Global Validator', href: '/admin/validator' }}
                   current={activeView === 'tooltips' ? 'Settings' : 'Validation Pattern Lists'}
+                  data-testid='validator-lists-breadcrumbs'
                 />
               }
               actions={

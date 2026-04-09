@@ -5,6 +5,7 @@ import { namedDtoSchema } from '../base';
 import type { LabeledOptionDto } from '../base';
 import { productCustomFieldValueSchema, type ProductCustomFieldDefinitionCreateInput, type ProductCustomFieldDefinitionUpdateInput } from './custom-fields';
 import { productImportSourceSchema, productParameterValueSchema } from './product';
+import { productMarketplaceContentOverrideDraftsSchema } from './product';
 
 import type { ImageFileRecord } from '../files';
 import type { ManagedImageSlot } from '../image-slots';
@@ -40,6 +41,13 @@ import type {
   ProductShippingGroupUpdateInput,
 } from './shipping-groups';
 import type {
+  ProductTitleTerm,
+  ProductTitleTermCreateInput,
+  ProductTitleTermFilters,
+  ProductTitleTermType,
+  ProductTitleTermUpdateInput,
+} from './title-terms';
+import type {
   ProductValidationPatternFormData,
   ProductValidationPattern,
   ProductValidationSemanticState,
@@ -54,6 +62,7 @@ import type {
 import type { ProductValidationSemanticTransition } from '@/shared/lib/products/utils/validator-semantic-state';
 export const productDraftOpenFormTabSchema = z.enum([
   'general',
+  'marketplace-copy',
   'other',
   'custom-fields',
   'parameters',
@@ -68,6 +77,7 @@ export type ProductDraftOpenFormTab = z.infer<typeof productDraftOpenFormTabSche
 
 export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS: ProductDraftOpenFormTab[] = [
   'general',
+  'marketplace-copy',
   'other',
   'custom-fields',
   'parameters',
@@ -106,6 +116,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   producerIds: z.array(z.string()).optional(),
   customFields: z.array(productCustomFieldValueSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
+  marketplaceContentOverrides: productMarketplaceContentOverrideDraftsSchema.optional(),
   defaultPriceGroupId: z.string().nullable().optional(),
   active: z.boolean().optional(),
   validatorEnabled: z.boolean().optional(),
@@ -170,6 +181,9 @@ export type BaseFilters = {
   skip?: number;
   limit?: number;
 };
+
+export type CustomFieldFilters = BaseFilters;
+export type ProducerFilters = BaseFilters;
 
 export type ParameterFilters = BaseFilters & {
   catalogId?: string;
@@ -294,6 +308,23 @@ export type ShippingGroupRepository = {
   ): Promise<ProductShippingGroup>;
   deleteShippingGroup(id: string): Promise<void>;
   findByName(catalogId: string, name: string): Promise<ProductShippingGroup | null>;
+};
+
+export type TitleTermFilters = ProductTitleTermFilters;
+export type TitleTermCreateInput = ProductTitleTermCreateInput;
+export type TitleTermUpdateInput = ProductTitleTermUpdateInput;
+
+export type TitleTermRepository = {
+  listTitleTerms(filters: TitleTermFilters): Promise<ProductTitleTerm[]>;
+  getTitleTermById(id: string): Promise<ProductTitleTerm | null>;
+  createTitleTerm(data: TitleTermCreateInput): Promise<ProductTitleTerm>;
+  updateTitleTerm(id: string, data: TitleTermUpdateInput): Promise<ProductTitleTerm>;
+  deleteTitleTerm(id: string): Promise<void>;
+  findByName(
+    catalogId: string,
+    type: ProductTitleTermType,
+    name_en: string
+  ): Promise<ProductTitleTerm | null>;
 };
 
 export type PatternFormData = ProductValidationPatternFormData;

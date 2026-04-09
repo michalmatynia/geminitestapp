@@ -195,7 +195,7 @@ export const PART_5B = String.raw`
 
     const waitForPublishInteractionEvidence = async (
       initialPublishUrl,
-      timeoutMs = 6_000
+      timeoutMs = listingAction === 'relist' ? 12_000 : 8_000
     ) => {
       const deadline = Date.now() + timeoutMs;
       const normalizedInitialPublishUrl =
@@ -286,6 +286,82 @@ export const PART_5B = String.raw`
         reason: 'timeout',
         ...lastObservation,
       };
+    };
+
+    const recoverPublishConfirmationViaDuplicateSearch = async (
+      publishInteraction,
+      timeoutMs = 20_000
+    ) => {
+      if (listingAction !== 'relist') {
+        return null;
+      }
+
+      const deadline = Date.now() + timeoutMs;
+      let attempt = 0;
+
+      while (Date.now() < deadline) {
+        attempt += 1;
+        if (attempt > 1) {
+          await wait(2_500);
+        }
+
+        let duplicateMatch = null;
+        try {
+          duplicateMatch = await checkDuplicate(duplicateSearchTerms);
+        } catch (error) {
+          log?.('tradera.quicklist.publish.recovery_duplicate_failed', {
+            attempt,
+            reason: publishInteraction?.reason || null,
+            currentUrl: typeof page?.url === 'function' ? page.url() : null,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        }
+
+        log?.('tradera.quicklist.publish.recovery_duplicate_result', {
+          attempt,
+          reason: publishInteraction?.reason || null,
+          duplicateFound: duplicateMatch?.duplicateFound === true,
+          listingId: duplicateMatch?.listingId || null,
+          listingUrl: duplicateMatch?.listingUrl || null,
+          matchStrategy: duplicateMatch?.matchStrategy || null,
+          candidateCount:
+            typeof duplicateMatch?.candidateCount === 'number'
+              ? duplicateMatch.candidateCount
+              : 0,
+        });
+
+        if (!duplicateMatch?.duplicateFound) {
+          continue;
+        }
+
+        const externalListingId =
+          duplicateMatch.listingId ||
+          extractListingId(duplicateMatch.listingUrl || '') ||
+          null;
+        const listingUrl =
+          duplicateMatch.listingUrl ||
+          (externalListingId ? 'https://www.tradera.com/item/' + externalListingId : null);
+
+        if (!externalListingId && !listingUrl) {
+          continue;
+        }
+
+        return {
+          externalListingId,
+          listingUrl,
+          duplicateMatchStrategy: duplicateMatch.matchStrategy || null,
+          duplicateMatchedProductId: duplicateMatch.matchedProductId || null,
+          duplicateCandidateCount:
+            typeof duplicateMatch.candidateCount === 'number'
+              ? duplicateMatch.candidateCount
+              : null,
+          duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
+          attempt,
+        };
+      }
+
+      return null;
     };
 
     const NOTIFICATION_MODAL_DISMISS_LABELS = [
@@ -414,6 +490,40 @@ export const PART_5B = String.raw`
               validationMessages.join(' | ')
           );
         }
+      }
+
+      const publishRecovery = await recoverPublishConfirmationViaDuplicateSearch(
+        publishInteraction
+      );
+      if (publishRecovery) {
+        const recoveredResult = {
+          stage: 'publish_verified',
+          currentUrl: publishRecovery.listingUrl || page.url(),
+          externalListingId: publishRecovery.externalListingId,
+          listingUrl: publishRecovery.listingUrl,
+          publishVerified: true,
+          duplicateMatchStrategy: publishRecovery.duplicateMatchStrategy,
+          duplicateMatchedProductId: publishRecovery.duplicateMatchedProductId,
+          duplicateCandidateCount: publishRecovery.duplicateCandidateCount,
+          duplicateSearchTitle: publishRecovery.duplicateSearchTitle,
+          imageUploadSource: imageUploadResult?.uploadSource ?? null,
+          categoryPath: selectedCategoryPath,
+          categorySource: selectedCategorySource,
+        };
+        log?.('tradera.quicklist.publish.recovered_via_active_listings', {
+          reason: publishInteraction.reason,
+          recoveryAttempt: publishRecovery.attempt,
+          externalListingId: publishRecovery.externalListingId,
+          listingUrl: publishRecovery.listingUrl,
+          duplicateMatchStrategy: publishRecovery.duplicateMatchStrategy,
+        });
+        emitStage('publish_verified', {
+          publishInteractionReason: 'active-listings-recovery',
+          externalListingId: publishRecovery.externalListingId,
+          listingUrl: publishRecovery.listingUrl,
+        });
+        emit('result', recoveredResult);
+        return recoveredResult;
       }
 
       await captureFailureArtifacts('publish-click-not-confirmed', {

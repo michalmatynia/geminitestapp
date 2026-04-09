@@ -97,6 +97,21 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => searchParamsState.value,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  permanentRedirect: vi.fn(),
+  redirect: vi.fn(),
+  usePathname: () => '/games',
+  useRouter: () => ({
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
+  }),
+  useSearchParams: () => searchParamsState.value,
+}));
+
 vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
 

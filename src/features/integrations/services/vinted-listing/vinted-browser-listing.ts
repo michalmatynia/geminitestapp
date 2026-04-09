@@ -430,6 +430,7 @@ export const runVintedBrowserListing = async ({
     ]);
     const resolvedMapping = resolveVintedProductMapping({
       product,
+      integrationId: listing.integrationId,
       categories,
       customFieldDefinitions,
       parameters,

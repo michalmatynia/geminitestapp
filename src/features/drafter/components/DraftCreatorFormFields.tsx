@@ -38,6 +38,7 @@ const normalizeIconColor = (value: string | null | undefined): string | null => 
 
 const OPEN_PRODUCT_FORM_TAB_LABELS: Record<ProductDraftOpenFormTab, string> = {
   general: 'General',
+  'marketplace-copy': 'Marketplace Copy',
   other: 'Other',
   'custom-fields': 'Custom Fields',
   parameters: 'Parameters',

@@ -150,6 +150,44 @@ describe('mongo product repository mappers shared-lib coverage', () => {
     ]);
   });
 
+  it('normalizes marketplace content overrides on response and base product mappings', () => {
+    const doc = asProductDocument({
+      _id: 'product-copy-1',
+      id: 'product-copy-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: true,
+      marketplaceContentOverrides: [
+        {
+          integrationIds: [' integration-tradera ', 'integration-vinted'],
+          title: ' Alternate title ',
+          description: ' Alternate description ',
+        },
+        {
+          integrationIds: [],
+          title: null,
+          description: null,
+        },
+      ],
+    });
+
+    expect(toProductResponse(doc).marketplaceContentOverrides).toEqual([
+      {
+        integrationIds: ['integration-tradera', 'integration-vinted'],
+        title: 'Alternate title',
+        description: 'Alternate description',
+      },
+    ]);
+    expect(toProductBase(doc).marketplaceContentOverrides).toEqual([
+      {
+        integrationIds: ['integration-tradera', 'integration-vinted'],
+        title: 'Alternate title',
+        description: 'Alternate description',
+      },
+    ]);
+  });
+
   it('reconstructs legacy producer references in both response and base mappers', () => {
     const response = toProductResponse(
       asProductDocument({

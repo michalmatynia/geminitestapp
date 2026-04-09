@@ -325,6 +325,19 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                           ? 'Queuing sync...'
                           : 'Sync with Tradera'
               }
+              ariaLabel={
+                isQueuedTraderaSyncFieldsOnly
+                  ? 'Queued fields-only sync'
+                  : isQueuedTraderaSyncHeaded
+                    ? 'Queued headed sync'
+                    : isQueuedTraderaSyncHeadless
+                      ? 'Queued headless sync'
+                      : isQueuedTraderaSync
+                        ? 'Queued sync'
+                        : isSyncingCurrentListing
+                          ? 'Queuing sync'
+                          : 'Sync with Tradera'
+              }
               variant='outline'
               size='sm'
               disabled={isSyncingCurrentListing || isPersistedTraderaQueueState}

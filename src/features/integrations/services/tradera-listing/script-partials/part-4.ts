@@ -335,9 +335,15 @@ export const PART_4 = String.raw`);
   };
 
   const chooseTopSuggestedCategory = async () => {
-    // Use whatever Tradera AI autofilled first (fastest path)
+    // Fast path: if Tradera already filled a non-fallback category, accept it.
+    // Check all language variants (English "Other" + Swedish "Övrigt") so the
+    // Swedish fallback is not mistakenly accepted as a real AI suggestion.
     const preselectedPath = await readCurrentSelectedCategoryPath();
-    if (preselectedPath) {
+    const isKnownFallbackPath = (path) =>
+      FALLBACK_CATEGORY_PATH_SEGMENT_VARIANTS.some((variant) =>
+        categoryPathMatches(path, variant)
+      );
+    if (preselectedPath && !isKnownFallbackPath(preselectedPath)) {
       selectedCategoryPath = preselectedPath;
       selectedCategorySource = 'topSuggested';
       log?.('tradera.quicklist.category.top_suggested_preselected', {
@@ -345,16 +351,112 @@ export const PART_4 = String.raw`);
       });
       return;
     }
+    if (preselectedPath) {
+      log?.('tradera.quicklist.category.top_suggested_preselected_rejected', {
+        preselectedPath,
+        reason: 'fallback-category',
+      });
+    }
 
-    // Open the picker and click the first visible suggestion, then follow any
-    // cascading sub-dropdowns that Tradera opens after each selection.
     await ensureCategoryPickerOpen('top-suggested');
 
-    // Tradera AI-suggested categories may take a moment to render after the picker
-    // opens. Poll until options appear (up to 6 s) before declaring no options.
+    // Helper: returns true if an option text is a known fallback label.
+    const isOptionFallbackLabel = (opt) =>
+      FALLBACK_CATEGORY_OPTION_LABELS.some(
+        (label) => normalizeWhitespace(opt).toLowerCase() === normalizeWhitespace(label).toLowerCase()
+      );
+
+    // Strategy 1 — search / typeahead.
+    // Tradera's current listing form uses a search-based category picker: the list
+    // is empty until you type. Try this FIRST (mirrors chooseMappedCategory Strategy 1).
+    const pickerRoot = page.locator('[data-test-category-chooser="true"]').first();
+    const pickerVisible = await pickerRoot.isVisible().catch(() => false);
+    if (pickerVisible) {
+      const searchInput = pickerRoot
+        .locator('input[type="text"], input[type="search"], [role="searchbox"], [role="combobox"]')
+        .first();
+      const searchVisible = await searchInput.isVisible().catch(() => false);
+      if (searchVisible) {
+        // Click the input — Tradera may surface AI suggestions on focus alone.
+        await searchInput.click({ force: true }).catch(() => undefined);
+        await wait(500);
+        let searchOptions = await readVisibleCategoryMenuOptions();
+
+        if (searchOptions.length === 0) {
+          // No on-focus suggestions — type the product title to trigger typeahead.
+          const searchKeywords = (typeof title === 'string' ? title : '')
+            .split(/\s+/)
+            .slice(0, 4)
+            .join(' ');
+          log?.('tradera.quicklist.category.top_suggested_search_attempt', {
+            searchKeywords,
+            onFocusOptions: 0,
+          });
+          await searchInput.fill('').catch(() => undefined);
+          await searchInput.type(searchKeywords, { delay: 60 }).catch(() => undefined);
+          await wait(1500);
+          searchOptions = await readVisibleCategoryMenuOptions();
+        }
+
+        log?.('tradera.quicklist.category.top_suggested_search_options', {
+          count: searchOptions.length,
+          options: searchOptions.slice(0, 6),
+        });
+
+        if (searchOptions.length > 0) {
+          // Prefer the first option that is NOT a fallback label ("Övrigt", "Other").
+          const topSearchOption =
+            searchOptions.find((opt) => !isOptionFallbackLabel(opt)) ?? searchOptions[0];
+          log?.('tradera.quicklist.category.top_suggested_search_click', {
+            option: topSearchOption,
+            totalOptions: searchOptions.length,
+          });
+          const clicked = await clickCategoryPickerOptionByName(topSearchOption);
+          if (!clicked) {
+            await clickMenuItemByName(topSearchOption).catch(() => false);
+          }
+          await wait(600);
+          const confirmedPath = await readCurrentSelectedCategoryPath();
+          // Verify the confirmed path is a real category — not a placeholder or any
+          // known language variant of the fallback ("Other > Other" / "Övrigt > Övrigt").
+          const confirmedOk =
+            confirmedPath !== null &&
+            !isCategoryPlaceholderValue(confirmedPath) &&
+            !isKnownFallbackPath(confirmedPath);
+          log?.('tradera.quicklist.category.top_suggested_search_result', {
+            option: topSearchOption,
+            confirmedPath,
+            confirmed: confirmedOk,
+          });
+          if (confirmedOk) {
+            selectedCategoryPath = confirmedPath;
+            selectedCategorySource = 'topSuggested';
+            return;
+          }
+        } else {
+          log?.('tradera.quicklist.category.top_suggested_search_no_results', {});
+        }
+      }
+    }
+
+    // Strategy 2 — hierarchical list.
+    // Navigate back to the root level of the picker in case the picker opened
+    // at a sub-level (e.g. showing children of the currently selected "Övrigt").
+    let backButton = await findVisibleCategoryBackButton();
+    let backSteps = 0;
+    while (backButton && backSteps < 8) {
+      await humanClick(backButton);
+      await wait(400);
+      backButton = await findVisibleCategoryBackButton();
+      backSteps += 1;
+    }
+    if (backSteps > 0) {
+      log?.('tradera.quicklist.category.top_suggested_navigated_to_root', { backSteps });
+    }
+
     let initialOptions = await readVisibleCategoryMenuOptions();
     if (initialOptions.length === 0) {
-      const optionWaitDeadline = Date.now() + 6_000;
+      const optionWaitDeadline = Date.now() + 4_000;
       while (Date.now() < optionWaitDeadline) {
         await wait(400);
         initialOptions = await readVisibleCategoryMenuOptions();
@@ -368,12 +470,23 @@ export const PART_4 = String.raw`);
       return;
     }
 
+    log?.('tradera.quicklist.category.top_suggested_hierarchical_options', {
+      count: initialOptions.length,
+      options: initialOptions.slice(0, 6),
+    });
+
+    // At the root level, prefer the first option that is NOT "Övrigt"/"Other" so
+    // we don't immediately cascade into the fallback sub-tree.
+    const rootOption =
+      initialOptions.find((opt) => !isOptionFallbackLabel(opt)) ?? initialOptions[0];
+
     let currentOptions = initialOptions;
+    let startOption = rootOption;
     let lastClickedOption = null;
     const MAX_CASCADE_DEPTH = 8;
 
     for (let depth = 0; depth <= MAX_CASCADE_DEPTH; depth += 1) {
-      const topOption = currentOptions[0];
+      const topOption = depth === 0 ? startOption : currentOptions[0];
       const clicked = await clickCategoryPickerOptionByName(topOption);
       if (!clicked) {
         log?.('tradera.quicklist.category.top_suggested_click_failed', {
@@ -382,7 +495,6 @@ export const PART_4 = String.raw`);
         });
         break;
       }
-
       log?.('tradera.quicklist.category.top_suggested_click', {
         depth,
         chosenOption: topOption,
@@ -390,15 +502,10 @@ export const PART_4 = String.raw`);
       });
       lastClickedOption = topOption;
 
-      // Wait to see if a new sub-level appeared or the picker closed (leaf selected).
-      // waitForCategoryPickerUpdate returns options.length === 0 when the picker
-      // closes after a leaf selection, so that's our exit condition.
       const updateResult = await waitForCategoryPickerUpdate(topOption, currentOptions, 4_000);
       if (!updateResult.updated || updateResult.options.length === 0) {
         break;
       }
-
-      // New sub-options appeared — cascade into the next level.
       currentOptions = updateResult.options;
     }
 

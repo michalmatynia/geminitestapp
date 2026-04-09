@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useRouter } from 'nextjs-toploader/app';
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, startTransition } from 'react';

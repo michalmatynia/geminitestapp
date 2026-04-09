@@ -49,6 +49,18 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => usePathnameMock(),
+  useRouter: () => ({
+    replace: useRouterReplaceMock,
+  }),
+  useSelectedLayoutSegments: () => useSelectedLayoutSegmentsMock(),
+  useSearchParams: () => useSearchParamsMock(),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/observability/client', () => ({
   setKangurClientObservabilityContext: setKangurClientObservabilityContextMock,
   clearKangurClientObservabilityContext: clearKangurClientObservabilityContextMock,

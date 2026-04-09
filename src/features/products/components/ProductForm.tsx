@@ -1,5 +1,17 @@
 'use client';
 
+import {
+  Database,
+  ImageIcon,
+  Languages,
+  LayoutGrid,
+  Link2,
+  ListFilter,
+  Package,
+  Settings2,
+  ShieldAlert,
+  Sparkles,
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
@@ -18,6 +30,10 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
+import {
+  composeStructuredProductName,
+  parseStructuredProductName,
+} from '@/shared/lib/products/title-terms';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
 
 import { ProductFormFooter } from './form/ProductFormFooter';
@@ -47,6 +63,14 @@ const ProductFormOther = dynamic(() => import('./form/ProductFormOther'), {
   ssr: false,
   loading: DeferredTabPlaceholder,
 });
+
+const ProductFormMarketplaceCopy = dynamic(
+  () => import('./form/ProductFormMarketplaceCopy'),
+  {
+    ssr: false,
+    loading: DeferredTabPlaceholder,
+  }
+);
 
 const ProductFormParameters = dynamic(() => import('./form/ProductFormParameters'), {
   ssr: false,
@@ -99,6 +123,25 @@ interface ProductFormProps {
   validatorSessionKey?: string;
 }
 
+type ProductFormTabDefinition = {
+  value: ProductDraftOpenFormTab;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const PRODUCT_FORM_TABS: ProductFormTabDefinition[] = [
+  { value: 'general', label: 'General', icon: Package },
+  { value: 'marketplace-copy', label: 'Marketplace Copy', icon: Languages },
+  { value: 'other', label: 'Other', icon: Settings2 },
+  { value: 'custom-fields', label: 'Custom Fields', icon: LayoutGrid },
+  { value: 'parameters', label: 'Parameters', icon: ListFilter },
+  { value: 'images', label: 'Images', icon: ImageIcon },
+  { value: 'studio', label: 'Studio', icon: Sparkles },
+  { value: 'import-info', label: 'Import Info', icon: Database },
+  { value: 'note-link', label: 'Note Link', icon: Link2 },
+  { value: 'validation', label: 'Validation', icon: ShieldAlert },
+];
+
 const PRODUCT_FORM_TAB_SET = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS);
 
 const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
@@ -106,6 +149,29 @@ const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
   const trimmed = value.trim();
   if (!PRODUCT_FORM_TAB_SET.has(trimmed)) return 'general';
   return trimmed as ProductDraftOpenFormTab;
+};
+
+const normalizeStructuredSegment = (value: string): string => value.trim().replace(/\s+/g, ' ');
+
+export const alignDraftStructuredNameToSelectedCategory = (input: {
+  nameEn: string;
+  categoryName: string;
+}): string | null => {
+  const parsed = parseStructuredProductName(input.nameEn);
+  if (!parsed) return null;
+
+  const normalizedCategoryName = normalizeStructuredSegment(input.categoryName);
+  if (!normalizedCategoryName) return null;
+
+  const normalizedStructuredCategory = normalizeStructuredSegment(parsed.category);
+  if (normalizedStructuredCategory === normalizedCategoryName) {
+    return null;
+  }
+
+  return composeStructuredProductName({
+    ...parsed,
+    category: normalizedCategoryName,
+  });
 };
 
 const resolveProductEditorTitle = ({
@@ -211,7 +277,8 @@ export default function ProductForm({
   validationInstanceScopeOverride,
   validatorSessionKey,
 }: ProductFormProps): React.JSX.Element {
-  const { handleSubmit, product, draft, ConfirmationModal } = useProductFormCore();
+  const { handleSubmit, product, draft, ConfirmationModal, methods } = useProductFormCore();
+  const { categories, selectedCategoryId } = useProductFormMetadataState();
 
   const searchString = useSyncExternalStore(
     subscribePopstate,
@@ -242,6 +309,29 @@ export default function ProductForm({
     validationInstanceScopeOverride,
     effectiveValidatorSessionKey
   );
+
+  useEffect(() => {
+    if (product || !draft?.id || !selectedCategoryId) return;
+
+    const category = categories.find((entry) => entry.id === selectedCategoryId);
+    const categoryName = category?.name?.trim() ?? '';
+    if (!categoryName) return;
+
+    if (methods.getFieldState('name_en').isDirty) return;
+
+    const currentNameEn = methods.getValues('name_en') ?? '';
+    const correctedNameEn = alignDraftStructuredNameToSelectedCategory({
+      nameEn: currentNameEn,
+      categoryName,
+    });
+    if (!correctedNameEn || correctedNameEn === currentNameEn) return;
+
+    methods.setValue('name_en', correctedNameEn, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  }, [categories, draft?.id, methods, product, selectedCategoryId]);
 
   const footerEntityId = product?.id?.trim() || draft?.id?.trim() || '';
 
@@ -312,20 +402,35 @@ export default function ProductForm({
             }}
             className='w-full'
           >
-            <TabsList className='grid w-full grid-cols-3 md:grid-cols-9' aria-label='Product form tabs'>
-              <TabsTrigger value='general'>General</TabsTrigger>
-              <TabsTrigger value='other'>Other</TabsTrigger>
-              <TabsTrigger value='custom-fields'>Custom Fields</TabsTrigger>
-              <TabsTrigger value='parameters'>Parameters</TabsTrigger>
-              <TabsTrigger value='images'>Images</TabsTrigger>
-              <TabsTrigger value='studio'>Studio</TabsTrigger>
-              <TabsTrigger value='import-info'>Import Info</TabsTrigger>
-              <TabsTrigger value='note-link'>Note Link</TabsTrigger>
-              <TabsTrigger value='validation'>Validation</TabsTrigger>
+            <TabsList
+              className='h-auto w-full flex-wrap justify-start gap-2 rounded-xl border-border/60 bg-background/50 p-2'
+              aria-label='Product form tabs'
+            >
+              {PRODUCT_FORM_TABS.map((tab) => {
+                const Icon = tab.icon;
+
+                return (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    aria-label={tab.label}
+                    title={tab.label}
+                    className='group min-w-12 justify-start gap-2 rounded-lg px-3 py-2'
+                  >
+                    <Icon className='h-4 w-4 shrink-0' />
+                    <span className='max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-150 ease-out group-hover:max-w-40 group-hover:opacity-100 group-focus-visible:max-w-40 group-focus-visible:opacity-100'>
+                      {tab.label}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
             {/* General tab is always mounted — the formatter effect reads its fields from mount */}
             <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
               <ProductFormGeneral />
+            </TabsContent>
+            <TabsContent value='marketplace-copy' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('marketplace-copy') && <ProductFormMarketplaceCopy />}
             </TabsContent>
             {/* Remaining tabs use deferred mounting: content renders on first visit and */}
             {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}

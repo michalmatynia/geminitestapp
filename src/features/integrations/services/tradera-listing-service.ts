@@ -37,7 +37,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 export type { TraderaListingJobInput };
 
 import { runTraderaApiListing } from './tradera-listing/api';
-import { runTraderaBrowserListing } from './tradera-listing/browser';
+import { runTraderaBrowserListing, runTraderaBrowserCheckStatus } from './tradera-listing/browser';
 import { resolveEffectiveListingSettings, buildRelistPolicy } from './tradera-listing/settings';
 import {
   classifyTraderaFailure,
@@ -69,7 +69,7 @@ const buildTraderaMarketplaceData = ({
     'ok' | 'externalListingId' | 'listingUrl' | 'error' | 'errorCategory' | 'metadata'
   >;
   executedAt: Date;
-  action: 'list' | 'relist' | 'sync';
+  action: 'list' | 'relist' | 'sync' | 'check_status';
   source: 'manual' | 'scheduler' | 'api';
   requestId: string | null;
 }): Record<string, unknown> => {
@@ -97,9 +97,10 @@ const buildTraderaMarketplaceData = ({
       lastErrorCategory: result.ok ? null : result.errorCategory,
       pendingExecution: null,
       ...(action === 'sync' && result.ok
-        ? {
-            lastSyncedAt: executedAt.toISOString(),
-          }
+        ? { lastSyncedAt: executedAt.toISOString() }
+        : {}),
+      ...(action === 'check_status' && result.ok
+        ? { lastStatusCheckAt: executedAt.toISOString() }
         : {}),
       lastExecution: {
         executedAt: executedAt.toISOString(),
@@ -155,7 +156,7 @@ const resolveRequestedTraderaBrowserMode = ({
 
 const buildTraderaHistoryFields = (
   browserMode: string | null | undefined,
-  action: 'list' | 'relist' | 'sync'
+  action: 'list' | 'relist' | 'sync' | 'check_status'
 ): string[] | null => {
   const fields: string[] = [];
   const normalizedBrowserMode =
@@ -306,6 +307,25 @@ export const runTraderaListing = async (
       playwrightHeadless: connection.playwrightHeadless,
     });
 
+    // check_status: lightweight browser status read — no listing action, no API path
+    if (action === 'check_status') {
+      const checkResult = await runTraderaBrowserCheckStatus({
+        listing,
+        connection,
+        browserMode: requestedBrowserMode,
+      });
+      return {
+        ok: true,
+        externalListingId: checkResult.externalListingId ?? null,
+        listingUrl: checkResult.listingUrl ?? null,
+        expiresAt: null,
+        nextRelistAt: null,
+        error: null,
+        errorCategory: null,
+        metadata: checkResult.metadata,
+      };
+    }
+
     if (useApi) {
       if (action === 'sync') {
         return {
@@ -455,6 +475,22 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
     action === 'relist' ? now : (resolved.listing.lastRelistedAt ?? null);
 
   if (result.ok) {
+    // check_status: only update lastStatusCheckAt and the resolved status — do not touch listedAt/expiresAt
+    if (action === 'check_status') {
+      const checkedStatus =
+        typeof result.metadata?.['checkedStatus'] === 'string' && result.metadata['checkedStatus'].trim()
+          ? result.metadata['checkedStatus'].trim()
+          : null;
+      const statusToWrite = checkedStatus ?? resolved.listing.status ?? 'unknown';
+      await resolved.repository.updateListingStatus(input.listingId, statusToWrite);
+      await resolved.repository.updateListing(input.listingId, {
+        status: statusToWrite,
+        lastStatusCheckAt: now,
+        marketplaceData,
+      });
+      return;
+    }
+
     await resolved.repository.updateListingStatus(input.listingId, 'active');
     await resolved.repository.updateListing(input.listingId, {
       status: 'active',

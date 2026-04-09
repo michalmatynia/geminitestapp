@@ -37,7 +37,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
   };
 });
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toastMock }),
 }));
 

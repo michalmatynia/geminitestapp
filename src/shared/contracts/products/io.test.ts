@@ -38,6 +38,47 @@ describe('product io schemas', () => {
     expect(parsed.sku).toBeNull();
   });
 
+  it('parses marketplace content overrides from JSON form fields', () => {
+    const parsed = productCreateInputSchema.parse({
+      sku: 'SKU-1',
+      marketplaceContentOverrides: JSON.stringify([
+        {
+          integrationIds: [' integration-tradera ', 'integration-vinted'],
+          title: ' Alternate title ',
+          description: ' Alternate description ',
+        },
+      ]),
+    });
+
+    expect(parsed.marketplaceContentOverrides).toEqual([
+      {
+        integrationIds: ['integration-tradera', 'integration-vinted'],
+        title: 'Alternate title',
+        description: 'Alternate description',
+      },
+    ]);
+  });
+
+  it('rejects duplicate marketplace integration assignments across overrides', () => {
+    expect(() =>
+      productCreateInputSchema.parse({
+        sku: 'SKU-1',
+        marketplaceContentOverrides: [
+          {
+            integrationIds: ['integration-tradera'],
+            title: 'First title',
+            description: null,
+          },
+          {
+            integrationIds: ['integration-tradera'],
+            title: null,
+            description: 'Second description',
+          },
+        ],
+      })
+    ).toThrow(/Each marketplace integration can only belong to one alternate copy rule\./);
+  });
+
   it('keeps read-only shipping group metadata out of create DTOs', () => {
     const parsed = createProductSchema.parse({
       sku: 'SKU-1',

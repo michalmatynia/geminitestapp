@@ -3,9 +3,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { fetchStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { getProductsWithCount } from '@/features/products/api/products';
 import { loadProductColumns } from '@/features/products/components/list/product-columns-loader';
+import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { studioKeys } from '@/shared/lib/query-key-exports';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -126,8 +129,8 @@ export function useAdminDataPrefetch() {
       })();
     } else if (href === '/admin/image-studio') {
       void prefetchQueryV2(queryClient, {
-        queryKey: ['image-studio', 'projects'],
-        queryFn: async (): Promise<unknown> => await fetch('/api/v2/image-studio/projects').then((r) => r.json()),
+        queryKey: normalizeQueryKey(studioKeys.projects()),
+        queryFn: fetchStudioProjects,
         staleTime: 60_000,
         meta: {
           source: 'useAdminDataPrefetch.image-studio',
@@ -138,8 +141,8 @@ export function useAdminDataPrefetch() {
       })();
     } else if (href === '/admin/ai-paths') {
       void prefetchQueryV2(queryClient, {
-        queryKey: ['ai-paths', 'list'],
-        queryFn: async (): Promise<unknown> => await fetch('/api/v2/ai-paths').then((r) => r.json()),
+        queryKey: normalizeQueryKey(QUERY_KEYS.ai.aiPaths.settings()),
+        queryFn: async (): Promise<unknown> => await fetchAiPathsSettingsCached({ bypassCache: true }),
         staleTime: 60_000,
         meta: {
           source: 'useAdminDataPrefetch.ai-paths',

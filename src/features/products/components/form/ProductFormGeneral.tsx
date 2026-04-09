@@ -35,6 +35,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { ValidatedField } from './ValidatedField';
+import { StructuredProductNameField } from './StructuredProductNameField';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const PRODUCT_IDENTIFIER_OPTIONS = [
@@ -42,6 +43,19 @@ const PRODUCT_IDENTIFIER_OPTIONS = [
   { value: 'gtin', label: 'GTIN' },
   { value: 'asin', label: 'ASIN' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<'ean' | 'gtin' | 'asin'>>;
+
+const resolveFocusedProductFieldName = (): string | null => {
+  if (typeof document === 'undefined') return null;
+  const activeElement = document.activeElement;
+  if (
+    !(activeElement instanceof HTMLInputElement) &&
+    !(activeElement instanceof HTMLTextAreaElement) &&
+    !(activeElement instanceof HTMLSelectElement)
+  ) {
+    return null;
+  }
+  return activeElement.name?.trim() || activeElement.id?.trim() || null;
+};
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
@@ -56,6 +70,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const [activeNameTab, setActiveNameTab] = useState<string>('');
   const [activeDescriptionTab, setActiveDescriptionTab] = useState<string>('');
+  const [focusedFieldName, setFocusedFieldName] = useState<string | null>(null);
   const sequenceGroupDebounceRef = useRef<Record<string, number>>({});
   const formatterLoopGuardRef = useRef<{ recentSignatures: string[]; cycleHits: number }>({
     recentSignatures: [],
@@ -176,6 +191,29 @@ export default function ProductFormGeneral(): React.JSX.Element {
       prev && languageTabValues.includes(prev) ? prev : firstLanguageTab
     );
   }, [firstLanguageTab, languageTabValues]);
+
+  useEffect(() => {
+    const syncFocusedField = (): void => {
+      setFocusedFieldName(resolveFocusedProductFieldName());
+    };
+
+    const handleFocusIn = (): void => {
+      syncFocusedField();
+    };
+
+    const handleFocusOut = (): void => {
+      window.setTimeout(syncFocusedField, 0);
+    };
+
+    syncFocusedField();
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
 
   // Pre-compile regexes once per validatorPatterns change instead of re-creating
   // them on every loop iteration inside the formatter effect (Fix 1.2).
@@ -364,6 +402,9 @@ export default function ProductFormGeneral(): React.JSX.Element {
       }
 
       if (nextValue !== rawValue) {
+        if (focusedFieldName === fieldNameRaw) {
+          continue;
+        }
         const coercedValue = coerceProductValidationTargetValue({ target, value: nextValue });
         if (typeof coercedValue === 'number') {
           const currentNumeric =
@@ -416,6 +457,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     price,
     stock,
     weight,
+    focusedFieldName,
     sizeLength,
     sizeWidth,
     fieldLength,
@@ -492,11 +534,15 @@ export default function ProductFormGeneral(): React.JSX.Element {
               const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
               return (
                 <TabsContent key={language.code} value={language.code.toLowerCase()}>
-                  <ValidatedField
-                    name={fieldName}
-                    label={`${language.name} Name`}
-                    placeholder={`Enter product name in ${language.name}`}
-                  />
+                  {fieldName === 'name_en' ? (
+                    <StructuredProductNameField />
+                  ) : (
+                    <ValidatedField
+                      name={fieldName}
+                      label={`${language.name} Name`}
+                      placeholder={`Enter product name in ${language.name}`}
+                    />
+                  )}
                 </TabsContent>
               );
             })}

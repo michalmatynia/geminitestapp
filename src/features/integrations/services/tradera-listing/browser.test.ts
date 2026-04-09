@@ -145,7 +145,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v114');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v118');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('helpers,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];");
@@ -628,6 +628,12 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let currentImageUploadSource = null;\n\n  try {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let currentImageUploadSource = null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('currentImageUploadSource = uploadSource;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const tryPreserveRelistEditorImages = async (uploadAttempt) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.image.relist_preserve_check'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.image.relist_preserved'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("currentImageUploadSource = 'preserved-relist';");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("imageUploadResult?.uploadSource === 'preserved-relist'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("reason: 'relist-editor-ready'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clickResidualContinueButton = async (button) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const resolveTitleAndDescriptionInputs = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.field.selector_retry'");
@@ -733,7 +739,16 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let publishReadiness = await waitForPublishReadiness(publishButton);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const listingConfirmationState = await acknowledgeListingConfirmationIfPresent();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForPublishInteractionEvidence = async (');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "timeoutMs = listingAction === 'relist' ? 12_000 : 8_000"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const recoverPublishConfirmationViaDuplicateSearch = async ('
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.click_result', publishInteraction);");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "log?.('tradera.quicklist.publish.recovered_via_active_listings', {"
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const activeListingsVisible = currentUrl.toLowerCase().includes(\'/my/listings\');');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const publishTargetMetadata = await readClickTargetMetadata(publishButton);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await logClickTarget('publish', publishButton);");
@@ -2771,7 +2786,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v114',
+        scriptMarker: 'tradera-quicklist-default:v118',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -2899,7 +2914,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v114',
+        scriptMarker: 'tradera-quicklist-default:v118',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -3524,7 +3539,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v114',
+      'tradera-quicklist-default:v118',
       'tradera-quicklist-default:v89'
     );
 
@@ -3556,7 +3571,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v114',
+        scriptMarker: 'tradera-quicklist-default:v118',
         scriptStoredOnConnection: false,
         requestedBrowserMode: 'headed',
         runId: 'run-relist-homepage-cleanup',
@@ -3710,7 +3725,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v114',
+        scriptMarker: 'tradera-quicklist-default:v118',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
@@ -3832,7 +3847,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v114',
+        scriptMarker: 'tradera-quicklist-default:v118',
         scriptStoredOnConnection: false,
         runId: 'run-connection-default-relist',
         requestedBrowserMode: 'connection_default',

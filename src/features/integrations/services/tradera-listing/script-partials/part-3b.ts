@@ -635,7 +635,7 @@ export const PART_3B = String.raw`
 
   const chooseFallbackCategory = async () => {
     const currentSelectedPath = await readCurrentSelectedCategoryPath();
-    if (categoryPathMatches(currentSelectedPath, FALLBACK_CATEGORY_PATH_SEGMENTS)) {
+    if (FALLBACK_CATEGORY_PATH_SEGMENT_VARIANTS.some((v) => categoryPathMatches(currentSelectedPath, v))) {
       selectedCategoryPath = FALLBACK_CATEGORY_PATH;
       selectedCategorySource = 'fallback';
       log?.('tradera.quicklist.category.fallback', {

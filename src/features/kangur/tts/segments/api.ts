@@ -30,6 +30,7 @@ import {
   resolveOpenAiApiKey,
 } from './cache';
 import {
+  KangurLessonTtsGenerationError,
   getErrorCode,
   getErrorMessage,
   getErrorName,
@@ -125,15 +126,13 @@ export const probeKangurLessonNarrationBackend = async (input: {
         response_format: 'mp3',
       });
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      throw new Error('openai_speech_failed'); // Simplified for brevity in segment
+      throw new KangurLessonTtsGenerationError('openai_speech', error);
     }
 
     try {
       await response.arrayBuffer();
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      throw new Error('audio_buffer_failed'); // Simplified
+      throw new KangurLessonTtsGenerationError('audio_buffer', error);
     }
 
     return {

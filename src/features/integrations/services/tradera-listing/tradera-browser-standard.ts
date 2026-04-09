@@ -10,6 +10,7 @@ import type { BrowserListingResultDto, ProductListing } from '@/shared/contracts
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 import { getIntegrationRepository } from '../integration-repository';
 import {
   TITLE_SELECTORS,
@@ -121,14 +122,14 @@ export const runTraderaBrowserListingStandard = async ({
       );
     }
 
-    const title =
-      product.name_en ||
-      product.name_pl ||
-      product.name_de ||
-      product.sku ||
-      `Listing ${listing.productId}`;
+    const resolvedCopy = resolveMarketplaceAwareProductCopy({
+      product,
+      integrationId: listing.integrationId,
+      preferredLocales: ['en', 'pl', 'de'],
+    });
+    const title = resolvedCopy.title;
     const description = buildTraderaListingDescription({
-      rawDescription: product.description_en || product.description_pl || product.description_de,
+      rawDescription: resolvedCopy.description,
       fallbackTitle: title,
       baseProductId: product.baseProductId ?? product.id,
       sku: product.sku,

@@ -8,7 +8,6 @@ import {
   type CatchAllRouteDefinition,
   type CatchAllOptionalRoutePatternToken as PatternToken,
   type CatchAllRoutePathParams as RouteParams,
-  type CatchAllRouteModule,
 } from '@/shared/lib/api/catch-all-router';
 
 

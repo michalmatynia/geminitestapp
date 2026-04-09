@@ -136,6 +136,137 @@ export const resolvedProductParameterValueSchema = productParameterValueSchema.e
 
 export type ResolvedProductParameterValue = z.infer<typeof resolvedProductParameterValueSchema>;
 
+const normalizeTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeNullableOverrideText = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  return normalizeTrimmedString(value);
+};
+
+const normalizeOverrideIntegrationIds = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const unique = new Set<string>();
+  value.forEach((entry: unknown) => {
+    const normalized = normalizeTrimmedString(entry);
+    if (!normalized) return;
+    unique.add(normalized);
+  });
+  return Array.from(unique);
+};
+
+const normalizeProductMarketplaceContentOverrideEntry = (
+  value: unknown
+): ProductMarketplaceContentOverrideDraft | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const record = value as Record<string, unknown>;
+  return {
+    integrationIds: normalizeOverrideIntegrationIds(record['integrationIds']),
+    title: normalizeNullableOverrideText(record['title']),
+    description: normalizeNullableOverrideText(record['description']),
+  };
+};
+
+export const normalizeProductMarketplaceContentOverrideDrafts = (
+  value: unknown
+): ProductMarketplaceContentOverrideDraft[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry: unknown): ProductMarketplaceContentOverrideDraft | null =>
+      normalizeProductMarketplaceContentOverrideEntry(entry)
+    )
+    .filter(
+      (
+        entry: ProductMarketplaceContentOverrideDraft | null
+      ): entry is ProductMarketplaceContentOverrideDraft => entry !== null
+    );
+};
+
+export const productMarketplaceContentOverrideDraftSchema = z.object({
+  integrationIds: z.array(z.string()).default([]),
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+});
+
+export type ProductMarketplaceContentOverrideDraft = z.infer<
+  typeof productMarketplaceContentOverrideDraftSchema
+>;
+
+export const productMarketplaceContentOverrideSchema =
+  productMarketplaceContentOverrideDraftSchema.superRefine((entry, ctx) => {
+    if (entry.integrationIds.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['integrationIds'],
+        message: 'Select at least one marketplace integration.',
+      });
+    }
+
+    if (!entry.title && !entry.description) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['title'],
+        message: 'Provide an alternate title or description.',
+      });
+    }
+  });
+
+export type ProductMarketplaceContentOverride = z.infer<
+  typeof productMarketplaceContentOverrideSchema
+>;
+
+export const normalizeProductMarketplaceContentOverrides = (
+  value: unknown
+): ProductMarketplaceContentOverride[] =>
+  normalizeProductMarketplaceContentOverrideDrafts(value).filter(
+    (entry: ProductMarketplaceContentOverrideDraft): entry is ProductMarketplaceContentOverride =>
+      entry.integrationIds.length > 0 && Boolean(entry.title || entry.description)
+  );
+
+const validateMarketplaceContentOverrideUniqueness = (
+  entries: ProductMarketplaceContentOverrideDraft[],
+  ctx: z.RefinementCtx
+): void => {
+  const assignedIntegrationIndex = new Map<string, number>();
+
+  entries.forEach((entry: ProductMarketplaceContentOverrideDraft, index: number) => {
+    entry.integrationIds.forEach((integrationId: string) => {
+      const previousIndex = assignedIntegrationIndex.get(integrationId);
+      if (previousIndex === undefined) {
+        assignedIntegrationIndex.set(integrationId, index);
+        return;
+      }
+
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [index, 'integrationIds'],
+        message: 'Each marketplace integration can only belong to one alternate copy rule.',
+      });
+    });
+  });
+};
+
+export const productMarketplaceContentOverrideDraftsSchema = z
+  .preprocess(
+    (value: unknown): ProductMarketplaceContentOverrideDraft[] =>
+      normalizeProductMarketplaceContentOverrideDrafts(value),
+    z.array(productMarketplaceContentOverrideDraftSchema)
+  )
+  .superRefine(validateMarketplaceContentOverrideUniqueness);
+
+export const productMarketplaceContentOverridesSchema = z
+  .preprocess(
+    (value: unknown): ProductMarketplaceContentOverrideDraft[] =>
+      normalizeProductMarketplaceContentOverrideDrafts(value),
+    z.array(productMarketplaceContentOverrideSchema)
+  )
+  .superRefine(validateMarketplaceContentOverrideUniqueness);
+
 /**
  * Product Contract
  */
@@ -183,6 +314,7 @@ export const productSchema = dtoBaseSchema.extend({
   catalogs: z.array(productCatalogSchema).optional(),
   customFields: z.array(productCustomFieldValueSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
+  marketplaceContentOverrides: productMarketplaceContentOverridesSchema.optional(),
   imageLinks: z.array(z.string()).optional(),
   imageBase64s: z.array(z.string()).optional(),
   noteIds: z.array(z.string()).optional(),

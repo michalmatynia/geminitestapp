@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
@@ -351,6 +352,20 @@ export function ProductSettingsPage({
               onClick={(): void => setActiveSection('Images & Studio')}
             >
               Open Integration Settings
+            </Button>
+          </div>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='mb-4 border-border/60 bg-card/30'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <p className='text-sm font-medium text-gray-100'>Structured Product Name Terms</p>
+              <p className='text-xs text-gray-400'>
+                Manage catalog-specific size, material, and theme lists used by the English
+                product name composer.
+              </p>
+            </div>
+            <Button size='xs' type='button' variant='outline' asChild>
+              <Link href='/admin/products/title-terms'>Open Title Terms</Link>
             </Button>
           </div>
         </Card>

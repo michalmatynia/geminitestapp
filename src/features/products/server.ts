@@ -12,6 +12,7 @@ export { getParameterRepository } from '@/shared/lib/products/services/parameter
 export { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 export { getShippingGroupRepository } from '@/shared/lib/products/services/shipping-group-repository';
 export { getTagRepository } from '@/shared/lib/products/services/tag-repository';
+export { getTitleTermRepository } from '@/shared/lib/products/services/title-term-repository';
 export { getValidationPatternRepository } from '@/shared/lib/products/services/validation-pattern-repository';
 export { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
 export { productService } from '@/shared/lib/products/services/productService';

@@ -6,6 +6,7 @@ import type {
   ImageFileRepository,
 } from '@/shared/contracts/files';
 import type { ProductParameterValue, ProductWithImages, ProductImageRecord, ProductRecord } from '@/shared/contracts/products/product';
+import { normalizeProductMarketplaceContentOverrides } from '@/shared/contracts/products/product';
 import type { ProductFilters, ProductRepository } from '@/shared/contracts/products/drafts';
 import type { ProductCreateInput } from '@/shared/contracts/products/io';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -30,6 +31,11 @@ import {
   resolveEffectiveShippingGroup,
   resolveProductPrimaryCatalogId,
 } from '@/shared/lib/products/utils/effective-shipping-group';
+import { getTitleTermRepository } from '@/shared/lib/products/services/title-term-repository';
+import {
+  normalizeStructuredProductName,
+  parseStructuredProductName,
+} from '@/shared/lib/products/title-terms';
 import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
 import {
   filterProductCustomFieldValuesByDefinitions,
@@ -157,6 +163,7 @@ const normalizeCreateProductPayloadForStorage = <TData extends Record<string, un
     customFields?: unknown[] | null;
     parameters?: ProductParameterValue[] | null;
     imageFileIds?: string[] | null;
+    marketplaceContentOverrides?: unknown[] | null;
   };
   return {
     ...(payload as TData),
@@ -164,6 +171,9 @@ const normalizeCreateProductPayloadForStorage = <TData extends Record<string, un
       ? normalizeProductCustomFieldValues(payload.customFields)
       : [],
     parameters: Array.isArray(payload.parameters) ? payload.parameters : [],
+    marketplaceContentOverrides: Array.isArray(payload.marketplaceContentOverrides)
+      ? normalizeProductMarketplaceContentOverrides(payload.marketplaceContentOverrides)
+      : [],
     imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
   } as TData;
 };
@@ -175,6 +185,7 @@ const normalizeUpdateProductPayloadForStorage = <TData extends Record<string, un
     customFields?: unknown[] | null;
     parameters?: ProductParameterValue[] | null;
     imageFileIds?: string[] | null;
+    marketplaceContentOverrides?: unknown[] | null;
   };
   return {
     ...(payload as TData),
@@ -182,8 +193,115 @@ const normalizeUpdateProductPayloadForStorage = <TData extends Record<string, un
       ? { customFields: normalizeProductCustomFieldValues(payload.customFields) }
       : {}),
     ...(Array.isArray(payload.parameters) ? { parameters: payload.parameters } : {}),
+    ...(Array.isArray(payload.marketplaceContentOverrides)
+      ? {
+          marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
+            payload.marketplaceContentOverrides
+          ),
+        }
+      : {}),
     imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
   } as TData;
+};
+
+const resolvePrimaryCatalogIdFromPayload = (input: {
+  catalogIds?: string[] | undefined;
+  product?: ProductWithImages | null | undefined;
+}): string | null => {
+  const payloadCatalogId = input.catalogIds?.find(
+    (catalogId: string): boolean => catalogId.trim().length > 0
+  );
+  if (payloadCatalogId) {
+    return payloadCatalogId;
+  }
+  return input.product ? resolveProductPrimaryCatalogId(input.product) ?? null : null;
+};
+
+const normalizeStructuredProductNameField = <TData extends Record<string, unknown>>(
+  data: TData
+): TData => {
+  const rawName = data['name_en'];
+  if (typeof rawName !== 'string') return data;
+  const normalizedName = normalizeStructuredProductName(rawName);
+  if (normalizedName === rawName) return data;
+  return {
+    ...data,
+    name_en: normalizedName,
+  };
+};
+
+const ensureStructuredProductNameTerms = async (input: {
+  provider: ProductDbProvider;
+  catalogId: string | null;
+  nameEn: unknown;
+}): Promise<void> => {
+  if (!input.catalogId || typeof input.nameEn !== 'string') return;
+  const parsed = parseStructuredProductName(input.nameEn);
+  if (!parsed) return;
+
+  const titleTermRepository = await getTitleTermRepository(input.provider);
+  await Promise.all(
+    [
+      { type: 'size' as const, value: parsed.size },
+      { type: 'material' as const, value: parsed.material },
+      { type: 'theme' as const, value: parsed.theme },
+    ].map(async ({ type, value }) => {
+      const existing = await titleTermRepository.findByName(input.catalogId as string, type, value);
+      if (existing) return;
+      await titleTermRepository.createTitleTerm({
+        catalogId: input.catalogId as string,
+        type,
+        name_en: value,
+        name_pl: null,
+      });
+    })
+  );
+};
+
+const normalizeStructuredCategorySegment = (value: string): string =>
+  value.trim().replace(/\s+/g, ' ');
+
+const assertStructuredProductNameCategory = async (input: {
+  provider: ProductDbProvider;
+  categoryId: unknown;
+  nameEn: unknown;
+}): Promise<void> => {
+  if (typeof input.nameEn !== 'string') return;
+  const parsed = parseStructuredProductName(input.nameEn);
+  if (!parsed) return;
+
+  const categoryId =
+    typeof input.categoryId === 'string' && input.categoryId.trim().length > 0
+      ? input.categoryId.trim()
+      : null;
+
+  if (!categoryId) {
+    throw badRequestError('Structured product names require a selected category.', {
+      field: 'categoryId',
+      name_en: input.nameEn,
+    });
+  }
+
+  const categoryRepository = await getCategoryRepository(input.provider);
+  const category = await categoryRepository.getCategoryById(categoryId);
+  if (!category) {
+    throw badRequestError('Selected category was not found for this product.', {
+      field: 'categoryId',
+      categoryId,
+    });
+  }
+
+  const normalizedSegment = normalizeStructuredCategorySegment(parsed.category);
+  const normalizedCategoryName = normalizeStructuredCategorySegment(category.name);
+
+  if (normalizedSegment !== normalizedCategoryName) {
+    throw badRequestError('Structured product name category must match the selected category.', {
+      field: 'name_en',
+      categoryId,
+      expectedCategory: normalizedCategoryName,
+      receivedCategory: normalizedSegment,
+    });
+  }
 };
 
 const EXPLICIT_PARAMETER_CLEAR_FLAG_KEYS = [
@@ -507,8 +625,16 @@ async function createProduct(
 
   const normalized = await sanitizeCustomFieldsForStorage(
     provider,
-    normalizeCreateProductPayloadForStorage(validation.data)
+    normalizeStructuredProductNameField(
+      normalizeCreateProductPayloadForStorage(validation.data)
+    )
   );
+
+  await assertStructuredProductNameCategory({
+    provider,
+    categoryId: parsedForm ? parsedForm.categoryId : normalized.categoryId,
+    nameEn: normalized.name_en,
+  });
 
   const product = await productRepository.createProduct(normalized);
   if (!product) {
@@ -538,6 +664,14 @@ async function createProduct(
     relationPayload.producerIds = parsedForm.producerIds;
     relationPayload.noteIds = parsedForm.noteIds;
   }
+
+  await ensureStructuredProductNameTerms({
+    provider,
+    catalogId: resolvePrimaryCatalogIdFromPayload({
+      catalogIds: relationPayload.catalogIds,
+    }),
+    nameEn: normalized.name_en,
+  });
 
   await applyProductRelations(productRepository, product.id, relationPayload);
 
@@ -616,7 +750,9 @@ async function updateProduct(
     existing,
     normalized: await sanitizeCustomFieldsForStorage(
       provider,
-      normalizeUpdateProductPayloadForStorage(validation.data)
+      normalizeStructuredProductNameField(
+        normalizeUpdateProductPayloadForStorage(validation.data)
+      )
     ),
     rawInput: data,
   });
@@ -663,6 +799,15 @@ async function updateProduct(
     relationPayload.producerIds = parsedForm.producerIds;
     relationPayload.noteIds = parsedForm.noteIds;
   }
+
+  await ensureStructuredProductNameTerms({
+    provider,
+    catalogId: resolvePrimaryCatalogIdFromPayload({
+      catalogIds: relationPayload.catalogIds,
+      product: existing,
+    }),
+    nameEn: normalized['name_en'] ?? existing.name_en,
+  });
 
   await applyProductRelations(productRepository, id, relationPayload);
 

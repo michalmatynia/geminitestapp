@@ -125,12 +125,19 @@ vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
+    asChild,
     ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
-    <button type='button' onClick={onClick} {...props}>
-      {children}
-    </button>
-  ),
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    children?: React.ReactNode;
+    asChild?: boolean;
+  }) =>
+    asChild ? (
+      <span {...props}>{children}</span>
+    ) : (
+      <button type='button' onClick={onClick} {...props}>
+        {children}
+      </button>
+    ),
 }));
 
 vi.mock('@/shared/ui/card', () => ({

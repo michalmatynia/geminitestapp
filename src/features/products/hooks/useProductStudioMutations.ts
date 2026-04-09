@@ -1,23 +1,56 @@
+'use client';
+'use no memo';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { productStudioProductResponseSchema, productStudioSendResponseSchema } from '@/shared/contracts/products/studio';
-import { type ProductStudioSendRequest, type ProductStudioSendResponse, type ProductStudioProductResponse } from '@/shared/contracts/products';
+import {
+  type ProductStudioSendRequest,
+  type ProductStudioSendResponse,
+  type ProductStudioProductResponse,
+} from '@/shared/contracts/products';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import { invalidateProductsAndCounts, invalidateImageStudioSlots } from './productCache';
 
-export function useSendToStudioMutation() {
-  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+type SendToStudioVariables = {
+  productId: string;
+  imageSlotIndex: number;
+  projectId: string;
+  contextRegistry?: ProductStudioSendRequest['contextRegistry'];
+};
 
-  return createCreateMutationV2<
-    ProductStudioSendResponse,
-    {
-      productId: string;
-      imageSlotIndex: number;
-      projectId: string;
-      contextRegistry?: ProductStudioSendRequest['contextRegistry'];
-    }
-  >({
+type AcceptVariantVariables = {
+  productId: string;
+  imageSlotIndex: number;
+  generationSlotId: string;
+  projectId: string;
+};
+
+type RotateImageSlotVariables = {
+  productId: string;
+  imageSlotIndex: number;
+  direction: 'left' | 'right';
+};
+
+export function useSendToStudioMutation(): MutationResult<
+  ProductStudioSendResponse,
+  SendToStudioVariables
+> {
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+  const queryClient = useQueryClient();
+
+  return useMutation<ProductStudioSendResponse, Error, SendToStudioVariables>({
+    meta: {
+      source: 'products.hooks.useSendToStudioMutation',
+      operation: 'create',
+      resource: 'products.studio.send',
+      domain: 'products',
+      tags: ['products', 'studio', 'send'],
+      description: 'Creates products studio send.',
+    },
     mutationFn: async ({
       productId,
       imageSlotIndex,
@@ -33,33 +66,19 @@ export function useSendToStudioMutation() {
             : {}),
         })
       ),
-    meta: {
-      source: 'products.hooks.useSendToStudioMutation',
-      operation: 'create',
-      resource: 'products.studio.send',
-      domain: 'products',
-      tags: ['products', 'studio', 'send'],
-      description: 'Creates products studio send.',
-    },
-    invalidate: (queryClient, _data, { projectId }) => {
-      void invalidateImageStudioSlots(queryClient, projectId);
+    onSuccess: async (_data, { projectId }) => {
+      await invalidateImageStudioSlots(queryClient, projectId);
     },
   });
 }
 
-export function useAcceptVariantMutation() {
-  return createUpdateMutationV2<
-    ProductStudioProductResponse,
-    { productId: string; imageSlotIndex: number; generationSlotId: string; projectId: string }
-  >({
-    mutationFn: async ({ productId, imageSlotIndex, generationSlotId, projectId }) =>
-      productStudioProductResponseSchema.parse(
-        await api.post<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio/accept`, {
-          imageSlotIndex,
-          generationSlotId,
-          projectId,
-        })
-      ),
+export function useAcceptVariantMutation(): MutationResult<
+  ProductStudioProductResponse,
+  AcceptVariantVariables
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation<ProductStudioProductResponse, Error, AcceptVariantVariables>({
     meta: {
       source: 'products.hooks.useAcceptVariantMutation',
       operation: 'update',
@@ -68,24 +87,27 @@ export function useAcceptVariantMutation() {
       tags: ['products', 'studio', 'accept'],
       description: 'Updates products studio accept.',
     },
-    invalidate: (queryClient) => {
-      void invalidateProductsAndCounts(queryClient);
+    mutationFn: async ({ productId, imageSlotIndex, generationSlotId, projectId }) =>
+      productStudioProductResponseSchema.parse(
+        await api.post<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio/accept`, {
+          imageSlotIndex,
+          generationSlotId,
+          projectId,
+        })
+      ),
+    onSuccess: async () => {
+      await invalidateProductsAndCounts(queryClient);
     },
   });
 }
 
-export function useRotateImageSlotMutation() {
-  return createUpdateMutationV2<
-    ProductStudioProductResponse,
-    { productId: string; imageSlotIndex: number; direction: 'left' | 'right' }
-  >({
-    mutationFn: async ({ productId, imageSlotIndex, direction }) =>
-      productStudioProductResponseSchema.parse(
-        await api.post<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio/rotate`, {
-          imageSlotIndex,
-          direction,
-        })
-      ),
+export function useRotateImageSlotMutation(): MutationResult<
+  ProductStudioProductResponse,
+  RotateImageSlotVariables
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation<ProductStudioProductResponse, Error, RotateImageSlotVariables>({
     meta: {
       source: 'products.hooks.useRotateImageSlotMutation',
       operation: 'update',
@@ -94,8 +116,15 @@ export function useRotateImageSlotMutation() {
       tags: ['products', 'studio', 'rotate'],
       description: 'Updates products studio rotate.',
     },
-    invalidate: (queryClient) => {
-      void invalidateProductsAndCounts(queryClient);
+    mutationFn: async ({ productId, imageSlotIndex, direction }) =>
+      productStudioProductResponseSchema.parse(
+        await api.post<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio/rotate`, {
+          imageSlotIndex,
+          direction,
+        })
+      ),
+    onSuccess: async () => {
+      await invalidateProductsAndCounts(queryClient);
     },
   });
 }

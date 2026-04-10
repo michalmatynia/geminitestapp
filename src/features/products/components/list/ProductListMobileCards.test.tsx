@@ -256,6 +256,23 @@ describe('ProductListMobileCards', () => {
     expect(screen.getByLabelText('Select Keychain').className).toContain('cursor-pointer');
   });
 
+  it('renders a duplicate SKU marker on mobile cards when the SKU is reused', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          duplicateSkuCount: 2,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Duplicate SKU')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate SKU')).toHaveAttribute('title', 'SKU used by 2 products');
+  });
+
   it('passes Tradera badge runtime into the mobile quick export button', () => {
     useProductListRowRuntimeMock.mockReturnValue({
       showMarketplaceBadge: true,

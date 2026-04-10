@@ -107,7 +107,7 @@ vi.mock('@/features/integrations/services/tradera-listing/preflight', () => ({
     validateTraderaQuickListProductConfigMock(...args),
 }));
 
-vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
+vi.mock('@/features/playwright/server', () => ({
   parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
   resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
     resolveConnectionPlaywrightSettingsMock(...args),

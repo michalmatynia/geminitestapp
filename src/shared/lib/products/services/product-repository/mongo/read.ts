@@ -12,6 +12,86 @@ type ProductsWithCountAggregateResult = {
   meta?: Array<{ total?: number }>;
 };
 
+type DuplicateSkuAggregateResult = {
+  _id: string;
+  count: number;
+};
+
+const normalizeSkuForDuplicateDetection = (sku: unknown): string | null => {
+  if (typeof sku !== 'string') return null;
+  const trimmed = sku.trim();
+  return trimmed.length > 0 ? trimmed.toUpperCase() : null;
+};
+
+const attachDuplicateSkuCounts = async (
+  docs: WithId<ProductDocument>[],
+  collection: Collection<ProductDocument>
+): Promise<WithId<ProductDocument>[]> => {
+  const normalizedSkuByProductId = new Map<string, string>();
+
+  docs.forEach((doc) => {
+    const normalizedSku = normalizeSkuForDuplicateDetection(doc.sku);
+    if (!normalizedSku) return;
+    normalizedSkuByProductId.set(doc.id ?? doc._id, normalizedSku);
+  });
+
+  if (normalizedSkuByProductId.size === 0) {
+    return docs;
+  }
+
+  const duplicateCounts = await collection
+    .aggregate<DuplicateSkuAggregateResult>([
+      {
+        $match: {
+          sku: { $type: 'string' },
+        },
+      },
+      {
+        $project: {
+          normalizedSku: {
+            $toUpper: {
+              $trim: {
+                input: '$sku',
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          normalizedSku: {
+            $in: Array.from(new Set(normalizedSkuByProductId.values())),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: '$normalizedSku',
+          count: { $sum: 1 },
+        },
+      },
+    ])
+    .toArray();
+
+  const duplicateCountBySku = new Map<string, number>(
+    duplicateCounts
+      .filter(
+        (entry): entry is DuplicateSkuAggregateResult =>
+          typeof entry?._id === 'string' &&
+          typeof entry.count === 'number' &&
+          Number.isFinite(entry.count) &&
+          entry.count > 1
+      )
+      .map((entry) => [entry._id, Math.trunc(entry.count)])
+  );
+
+  return docs.map((doc) => {
+    const normalizedSku = normalizedSkuByProductId.get(doc.id ?? doc._id);
+    const duplicateSkuCount = normalizedSku ? duplicateCountBySku.get(normalizedSku) : undefined;
+    return duplicateSkuCount ? { ...doc, duplicateSkuCount } : doc;
+  });
+};
+
 export const buildListProjectStage = (filters: ProductFilters): Document | null => {
   if (typeof filters.sku === 'string' && filters.sku.trim().length > 0) {
     return null;
@@ -92,7 +172,10 @@ export const mongoProductReadImpl = {
         ? { hint: { createdAt: -1 } }
         : undefined;
       const docs = await collection.aggregate(pipeline, aggregateOptions).toArray();
-      const projectedDocs = docs as WithId<ProductDocument>[];
+      const projectedDocs = await attachDuplicateSkuCounts(
+        docs as WithId<ProductDocument>[],
+        collection
+      );
 
       return projectedDocs.map((doc) => toProductResponse(doc));
     }
@@ -103,8 +186,9 @@ export const mongoProductReadImpl = {
     }
     cursor = cursor.skip(skip).limit(limit);
     const docs = await cursor.toArray();
+    const docsWithDuplicateSkuCounts = await attachDuplicateSkuCounts(docs, collection);
 
-    return docs.map((doc) => toProductResponse(doc));
+    return docsWithDuplicateSkuCounts.map((doc) => toProductResponse(doc));
   },
 
   async getProductIds(
@@ -174,7 +258,10 @@ export const mongoProductReadImpl = {
         })(),
         collection.estimatedDocumentCount(),
       ]);
-      const projectedDocs = docs as WithId<ProductDocument>[];
+      const projectedDocs = await attachDuplicateSkuCounts(
+        docs as WithId<ProductDocument>[],
+        collection
+      );
 
       return {
         products: projectedDocs.map((doc) => toProductResponse(doc)),
@@ -208,7 +295,10 @@ export const mongoProductReadImpl = {
       result?.meta && Array.isArray(result.meta) && typeof result.meta[0]?.total === 'number'
         ? result.meta[0].total
         : 0;
-    const projectedDocs = docs as WithId<ProductDocument>[];
+    const projectedDocs = await attachDuplicateSkuCounts(
+      docs as WithId<ProductDocument>[],
+      collection
+    );
 
     return {
       products: projectedDocs.map((doc) => toProductResponse(doc)),

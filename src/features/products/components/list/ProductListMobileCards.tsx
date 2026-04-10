@@ -213,6 +213,8 @@ type ProductListMobileCardResolvedProps = {
   nameValue: string;
   isImported: boolean;
   skuLabel: string;
+  duplicateSkuCount: number | null;
+  duplicateSkuTitle: string | null;
   categoryLabel: string;
   autoShippingGroupLabel: string;
   autoShippingRuleLabel: string;
@@ -240,6 +242,8 @@ const renderProductListMobileCard = ({
   nameValue,
   isImported,
   skuLabel,
+  duplicateSkuCount,
+  duplicateSkuTitle,
   categoryLabel,
   autoShippingGroupLabel,
   autoShippingRuleLabel,
@@ -307,6 +311,14 @@ const renderProductListMobileCard = ({
           <div className='mt-1 space-y-1 text-xs text-muted-foreground'>
             <div className='flex flex-wrap items-center gap-2'>
               <span className='truncate'>SKU: {skuLabel}</span>
+              {duplicateSkuCount ? (
+                <span
+                  className='rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[11px] font-medium text-amber-300'
+                  title={duplicateSkuTitle ?? undefined}
+                >
+                  Duplicate SKU
+                </span>
+              ) : null}
               <span aria-hidden='true' className='text-muted-foreground/60'>
                 •
               </span>
@@ -530,6 +542,11 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
   const nameValue = getProductListDisplayName(product, nameKey);
   const isImported = hasImportedProductOrigin(product);
   const skuLabel = product.sku?.trim() || 'No SKU';
+  const duplicateSkuCount =
+    typeof product.duplicateSkuCount === 'number' && product.duplicateSkuCount > 1
+      ? product.duplicateSkuCount
+      : null;
+  const duplicateSkuTitle = duplicateSkuCount ? `SKU used by ${duplicateSkuCount} products` : null;
   const categoryLabel = resolveProductCategoryLabel(product, rowVisuals.categoryNameById, nameKey);
   const autoShippingGroupLabel =
     product.shippingGroupSource === 'category_rule' ? product.shippingGroup?.name?.trim() ?? '' : '';
@@ -596,6 +613,8 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
     nameValue,
     isImported,
     skuLabel,
+    duplicateSkuCount,
+    duplicateSkuTitle,
     categoryLabel,
     autoShippingGroupLabel,
     autoShippingRuleLabel,

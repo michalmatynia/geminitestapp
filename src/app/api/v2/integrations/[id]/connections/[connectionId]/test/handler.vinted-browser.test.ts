@@ -4,12 +4,14 @@ const {
   chromiumLaunchMock,
   decryptSecretMock,
   encryptSecretMock,
+  parsePersistedStorageStateMock,
   resolveConnectionPlaywrightSettingsMock,
   updateConnectionMock,
 } = vi.hoisted(() => ({
   chromiumLaunchMock: vi.fn(),
   decryptSecretMock: vi.fn(),
   encryptSecretMock: vi.fn(),
+  parsePersistedStorageStateMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
   updateConnectionMock: vi.fn(),
 }));
@@ -35,7 +37,8 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
-vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
+vi.mock('@/features/playwright/server', () => ({
+  parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
   resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
     resolveConnectionPlaywrightSettingsMock(...args),
 }));
@@ -172,6 +175,10 @@ describe('handleVintedBrowserTest', () => {
       return value;
     });
     encryptSecretMock.mockImplementation((value: string) => `encrypted:${value}`);
+    parsePersistedStorageStateMock.mockReturnValue({
+      cookies: [],
+      origins: [],
+    });
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
       browser: 'auto',
       headless: true,

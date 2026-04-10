@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  enqueuePlaywrightNodeRunMock: vi.fn(),
+  runPlaywrightEngineTaskMock: vi.fn(),
   readPlaywrightNodeArtifactMock: vi.fn(),
   getDiskPathFromPublicPathMock: vi.fn(),
   uploadToConfiguredStorageMock: vi.fn(),
@@ -16,8 +16,11 @@ vi.mock('sharp', () => ({
 }));
 
 vi.mock('@/features/playwright/server', () => ({
-  enqueuePlaywrightEngineRun: (...args: unknown[]) =>
-    mocks.enqueuePlaywrightNodeRunMock(...args),
+  runPlaywrightEngineTask: (input: Record<string, unknown>) =>
+    mocks.runPlaywrightEngineTaskMock({
+      ...input,
+      waitForResult: true,
+    }),
   readPlaywrightEngineArtifact: (...args: unknown[]) =>
     mocks.readPlaywrightNodeArtifactMock(...args),
   createSocialCaptureSinglePlaywrightInstance: (input: Record<string, unknown> = {}) => ({
@@ -54,7 +57,7 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
     mocks.sharpMock.mockReturnValue({
       metadata: vi.fn().mockResolvedValue({ width: 1280, height: 720 }),
     });
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue({
+    mocks.runPlaywrightEngineTaskMock.mockResolvedValue({
       runId: 'run-123',
       status: 'completed',
       artifacts: [{ name: 'addon', path: '/artifacts/addon.png' }],
@@ -82,7 +85,7 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
         'session=abc123; __Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.runPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_single',
@@ -144,7 +147,7 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
         '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456; session=abc123',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.runPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_single',
@@ -174,7 +177,7 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
       trustedSelfOriginHost: 'localhost:3000',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.runPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_single',

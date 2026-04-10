@@ -1,45 +1,60 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-02T21:21:20.591Z",
+  "generatedAt": "2026-04-10T11:37:21.499Z",
   "phase": "plan",
   "executionMode": "planned",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-parameter-integrity",
-    "products-category-schema-normalization",
+    "ui-consolidation",
+    "application-performance",
+    "testing-quality-baseline",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/plan-report.json",
   "steps": [
     {
-      "id": "products-parameter-integrity-plan-review",
-      "title": "Review the refreshed parameter recovery workspace",
-      "trackId": "products-parameter-integrity",
+      "id": "ui-consolidation-plan",
+      "title": "Review the latest shared UI convergence surface",
+      "trackId": "ui-consolidation",
       "phase": "plan",
       "mode": "manual",
       "writes": false,
       "status": "manual",
       "outputs": [],
       "instructions": [
-        "Confirm the latest unresolved count from /tmp/product-parameter-source-recovery-summary-latest.json.",
-        "Review the generated batch manifest and family mapping checklist before any write-side recovery step."
+        "Use docs/ui-consolidation/scan-latest.md as the current shared backlog.",
+        "Prefer migrating to existing shared templates before inventing a new abstraction.",
+        "Keep follow-up migrations inside the owning feature docs once the work stops being cross-feature."
       ]
     },
     {
-      "id": "products-category-schema-plan",
-      "title": "Plan category and schema normalization decisions",
-      "trackId": "products-category-schema-normalization",
+      "id": "application-performance-plan",
+      "title": "Review the latest performance baseline outputs before optimization work",
+      "trackId": "application-performance",
       "phase": "plan",
       "mode": "manual",
       "writes": false,
       "status": "manual",
       "outputs": [],
       "instructions": [
-        "Assign missing categories only when a defensible family/category match exists.",
-        "Choose final parameter ids for the unresolved families before generating any curated override file.",
-        "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.",
-        "Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.",
-        "Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply."
+        "Use docs/metrics/critical-path-performance-latest.md and docs/metrics/critical-flow-tests-latest.md as the default review surfaces.",
+        "Treat docs/metrics/route-hotspots.md as the next-level investigation when baseline output suggests route-level regressions.",
+        "Use the weekly lane only when you need trend context, not for every local improvement pass."
+      ]
+    },
+    {
+      "id": "testing-quality-plan",
+      "title": "Review testing quality drift before changing validation scope",
+      "trackId": "testing-quality-baseline",
+      "phase": "plan",
+      "mode": "manual",
+      "writes": false,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "Use docs/metrics/testing-suite-inventory-latest.md to confirm lane and suite ownership.",
+        "Use docs/metrics/testing-quality-snapshot-latest.md to identify inventory, quality, or ledger follow-up work.",
+        "Escalate to canonical lanes from docs/runbooks/testing-operations.md when a broad validation pass is required."
       ]
     },
     {

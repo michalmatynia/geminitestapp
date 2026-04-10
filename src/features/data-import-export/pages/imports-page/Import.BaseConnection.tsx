@@ -59,6 +59,8 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     setUniqueOnly,
     allowDuplicateSku,
     setAllowDuplicateSku,
+    importDirectTargetType,
+    importDirectTargetValue,
     saveImportSettings,
     hasUnsavedImportSettingsChanges,
   } = useImportExportState();
@@ -107,6 +109,13 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     [importTemplates]
   );
   const canSaveImportSettings = !saveImportSettings || hasUnsavedImportSettingsChanges;
+  const normalizedDirectTargetValue = importDirectTargetValue.trim();
+  const hasDirectTarget = normalizedDirectTargetValue.length > 0;
+  const directTargetLabel = hasDirectTarget
+    ? importDirectTargetType === 'sku'
+      ? `SKU ${normalizedDirectTargetValue}`
+      : `Base Product ID ${normalizedDirectTargetValue}`
+    : null;
   const baseImportQueueHealth = baseImportQueueHealthQuery.data ?? null;
   const baseImportQueue = baseImportQueueHealth?.queues.baseImport ?? null;
   const baseImportRuntimeMode = baseImportQueueHealthQuery.isLoading
@@ -288,7 +297,11 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
         <div className={cn(UI_GRID_RELAXED_CLASSNAME, 'md:grid-cols-2')}>
           <FormSection
             title='Import Mode'
-            description='Choose how Base products should be matched.'
+            description={
+              hasDirectTarget
+                ? `Exact target ${directTargetLabel} is active. This run will always create a new detached product.`
+                : 'Choose how Base products should be matched.'
+            }
             className='p-4'
           >
             <SelectSimple
@@ -300,9 +313,13 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 }
               }}
               options={IMPORT_MODE_OPTIONS}
+              disabled={hasDirectTarget}
+              ariaLabel='Import mode'
             />
             <Hint className='mt-2'>
-              Upsert by Base ID will update existing products tied to a Base.com product id.
+              {hasDirectTarget
+                ? 'Exact target imports bypass upsert matching and always create a new product.'
+                : 'Upsert by Base ID will update existing products tied to a Base.com product id.'}
             </Hint>
           </FormSection>
           <FormSection
@@ -471,6 +488,12 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               description='Apply unique-only filtering to both the import list preview and the import run.'
               checked={uniqueOnly}
               onCheckedChange={setUniqueOnly}
+              disabled={hasDirectTarget}
+              title={
+                hasDirectTarget
+                  ? 'Exact target imports ignore unique-only filtering.'
+                  : undefined
+              }
             />
             <ToggleRow
               label='Dry run (do not write to database)'
@@ -480,9 +503,19 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             />
             <ToggleRow
               label='Allow duplicate SKUs'
-              description='If enabled, duplicates are allowed to import.'
+              description={
+                hasDirectTarget
+                  ? 'Exact target imports already create a new product and generate a unique SKU if needed.'
+                  : 'If enabled, duplicates are allowed to import.'
+              }
               checked={allowDuplicateSku}
               onCheckedChange={setAllowDuplicateSku}
+              disabled={hasDirectTarget}
+              title={
+                hasDirectTarget
+                  ? 'Exact target imports ignore the duplicate-SKU toggle.'
+                  : undefined
+              }
             />
           </div>
         </Card>

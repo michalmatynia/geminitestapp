@@ -1,4 +1,9 @@
-import type { BaseImportMode, BaseImportRunResumePayload, BaseImportRunStartPayload } from '@/shared/contracts/integrations/base-com';
+import type {
+  BaseImportDirectTarget,
+  BaseImportMode,
+  BaseImportRunResumePayload,
+  BaseImportRunStartPayload,
+} from '@/shared/contracts/integrations/base-com';
 import type { ImportResponse } from '@/shared/contracts/integrations/import-export';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { Toast } from '@/shared/contracts/ui/base';
@@ -90,7 +95,7 @@ export type ImportExportRuntimeActions = {
   handleLoadInventories: () => Promise<void>;
   handleLoadWarehouses: () => Promise<void>;
   handleLoadImportList: () => Promise<void>;
-  handleImport: () => Promise<void>;
+  handleImport: (options?: { directTarget?: BaseImportDirectTarget | null }) => Promise<void>;
   handleResumeImport: () => Promise<void>;
   handleCancelImport: () => Promise<void>;
   handleDownloadImportReport: () => void;
@@ -202,7 +207,9 @@ export const createImportExportRuntimeActions = ({
     toast('Import list reloaded', { variant: 'success' });
   };
 
-  const handleImport = async (): Promise<void> => {
+  const handleImport = async (
+    options?: { directTarget?: BaseImportDirectTarget | null }
+  ): Promise<void> => {
     if (!inventoryId || !catalogId) {
       toast('Inventory and catalog are required', { variant: 'error' });
       return;
@@ -211,7 +218,8 @@ export const createImportExportRuntimeActions = ({
       toast('Select a Base.com connection first.', { variant: 'error' });
       return;
     }
-    if (importListEnabled && selectedImportIds.size === 0) {
+    const directTarget = options?.directTarget ?? null;
+    if (importListEnabled && selectedImportIds.size === 0 && !directTarget) {
       toast('Select at least one product from the import list.', { variant: 'error' });
       return;
     }
@@ -230,7 +238,9 @@ export const createImportExportRuntimeActions = ({
       };
       if (importTemplateId) importData.templateId = importTemplateId;
       if (limit !== 'all') importData.limit = Number(limit);
-      if (importListEnabled) {
+      if (directTarget) {
+        importData.directTarget = directTarget;
+      } else if (importListEnabled) {
         importData.selectedIds = selectedIds;
       } else if (selectedIds.length > 0) {
         importData.selectedIds = selectedIds;

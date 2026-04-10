@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from '../base';
 import {
+  baseImportDirectTargetSchema,
   baseInventorySchema,
   baseWarehouseSchema,
   importParameterCacheResponseSchema,
@@ -267,6 +268,7 @@ export const baseImportListPayloadSchema = z.object({
   pageSize: z.coerce.number().int().positive().optional(),
   searchName: z.string().trim().optional(),
   searchSku: z.string().trim().optional(),
+  directTarget: baseImportDirectTargetSchema.optional(),
 });
 
 export type BaseImportListPayload = z.infer<typeof baseImportListPayloadSchema>;
@@ -280,6 +282,7 @@ export const baseImportListIdsPayloadSchema = z.object({
   uniqueOnly: z.boolean().optional(),
   searchName: z.string().trim().optional(),
   searchSku: z.string().trim().optional(),
+  directTarget: baseImportDirectTargetSchema.optional(),
 });
 
 export type BaseImportListIdsPayload = z.infer<typeof baseImportListIdsPayloadSchema>;

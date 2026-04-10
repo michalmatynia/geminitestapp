@@ -1,6 +1,6 @@
 import type { BaseActiveTemplatePreferencePayload, BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferencePayload, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferencePayload, BaseDefaultInventoryPreferenceResponse, BaseImageRetryPresetsPayload, BaseImageRetryPresetsResponse, BaseSampleProductPayload, BaseSampleProductResponse, BaseStockFallbackPreferencePayload, BaseStockFallbackPreferenceResponse } from '@/shared/contracts/integrations/preferences';
 import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse, BaseImportListPayload, BaseImportListResponse, BaseImportParametersClearResponse, BaseImportParametersPayload, BaseImportParametersResponse, BaseImportWarehousesPayload, BaseImportWarehousesResponse, CatalogOption as CatalogRecord, ImportExportTemplateCreateInput } from '@/shared/contracts/integrations/import-export';
-import type { BaseImportRunDetailResponse, BaseImportRunResumePayload, BaseImportRunStartPayload, BaseImportStartResponse, BaseImportItemStatus, ImportParameterCacheResponse, BaseInventory, BaseImportStartResponse as ImportResponse } from '@/shared/contracts/integrations/base-com';
+import type { BaseImportDirectTarget, BaseImportRunDetailResponse, BaseImportRunResumePayload, BaseImportRunStartPayload, BaseImportStartResponse, BaseImportItemStatus, ImportParameterCacheResponse, BaseInventory, BaseImportStartResponse as ImportResponse } from '@/shared/contracts/integrations/base-com';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { IntegrationTemplate as Template } from '@/shared/contracts/integrations';
@@ -406,6 +406,7 @@ export function useImportList(
     pageSize?: number;
     searchName?: string;
     searchSku?: string;
+    directTarget?: BaseImportDirectTarget;
   },
   enabled: boolean = true
 ): SingleQuery<BaseImportListResponse> {
@@ -414,7 +415,17 @@ export function useImportList(
     id: inventoryId || null,
     queryKey,
     queryFn: () => {
-      const { connectionId, catalogId, limit, uniqueOnly, page, pageSize, searchName, searchSku } =
+      const {
+        connectionId,
+        catalogId,
+        limit,
+        uniqueOnly,
+        page,
+        pageSize,
+        searchName,
+        searchSku,
+        directTarget,
+      } =
         params;
       const normalizedConnectionId = connectionId.trim();
       if (!normalizedConnectionId) {
@@ -433,6 +444,7 @@ export function useImportList(
           pageSize,
           searchName,
           searchSku,
+          directTarget,
         } satisfies BaseImportListPayload
       );
     },

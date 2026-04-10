@@ -75,7 +75,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-vi.mock('./tradera-playwright-settings', () => ({
+vi.mock('@/features/playwright/server', () => ({
   resolveConnectionPlaywrightSettingsProfile: (...args: unknown[]) =>
     resolveConnectionPlaywrightSettingsProfileMock(...args) as Promise<unknown>,
 }));

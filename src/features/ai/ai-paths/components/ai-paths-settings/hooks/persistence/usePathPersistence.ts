@@ -6,11 +6,26 @@ import {
   buildPersistedRuntimeState,
   sanitizePathConfig,
 } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
+import {
+  normalizeParserSamples,
+  normalizeUpdaterSamples,
+  parseRuntimeState,
+} from '@/shared/lib/ai-paths/core/utils/runtime-state';
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
-import type { AiNode, Edge, PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
+import type {
+  AiNode,
+  Edge,
+  ParserSampleState,
+  PathConfig,
+  PathMeta,
+  RuntimeState,
+  UpdaterSampleState,
+} from '@/shared/lib/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, compileGraph, normalizeNodes, safeParseJson, stableStringify, sanitizeEdges } from '@/shared/lib/ai-paths';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
@@ -182,6 +197,11 @@ const buildNextPathsForSave = (
     path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
   );
 
+const preparePathConfigForPersistence = (config: PathConfig): PathConfig => {
+  const repaired = repairPathNodeIdentities(config, { palette });
+  return repaired.changed ? repaired.config : config;
+};
+
 const verifyPersistedNodeOverride = ({
   activePathId,
   args,
@@ -203,7 +223,7 @@ const verifyPersistedNodeOverride = ({
 
   const mismatch = resolvePersistedNodeConfigMismatch({
     expectedNode: nodeOverride,
-    expectedConfig: sanitizePathConfig(config),
+    expectedConfig: sanitizePathConfig(preparePathConfigForPersistence(config)),
     persistedConfig: finalConfig,
   });
   if (!mismatch) {
@@ -252,9 +272,13 @@ const applyPersistedPathState = ({
   selectNode,
   setEdges,
   setLastError,
+  setLastRunAt,
   setNodes,
+  setParserSamples,
   setPathConfigs,
   setPaths,
+  setRuntimeState,
+  setUpdaterSamples,
 }: {
   activePathId: string;
   finalConfig: PathConfig;
@@ -265,9 +289,13 @@ const applyPersistedPathState = ({
   selectNode: (nodeId: string | null) => void;
   setEdges: (edges: Edge[]) => void;
   setLastError: (error: LastErrorInfo | null) => void;
+  setLastRunAt: (value: string | null) => void;
   setNodes: (nodes: AiNode[]) => void;
+  setParserSamples: (samples: Record<string, ParserSampleState>) => void;
   setPathConfigs: (pathConfigs: Record<string, PathConfig>) => void;
   setPaths: (paths: PathMeta[]) => void;
+  setRuntimeState: (state: RuntimeState) => void;
+  setUpdaterSamples: (samples: Record<string, UpdaterSampleState>) => void;
 }): void => {
   const finalNodes = normalizeNodes(finalConfig.nodes);
   const finalEdges = sanitizeEdges(finalNodes, finalConfig.edges);
@@ -275,6 +303,10 @@ const applyPersistedPathState = ({
   setPathConfigs({ ...pathConfigs, [activePathId]: finalConfig });
   setNodes(finalNodes);
   setEdges(finalEdges);
+  setParserSamples(normalizeParserSamples(finalConfig.parserSamples));
+  setUpdaterSamples(normalizeUpdaterSamples(finalConfig.updaterSamples));
+  setRuntimeState(parseRuntimeState(finalConfig.runtimeState));
+  setLastRunAt(finalConfig.lastRunAt ?? null);
   selectNode(resolveFinalSelectedNodeId(finalNodes, preferredSelectedNodeId));
   setPaths(finalPaths);
   setLastError(null);
@@ -291,7 +323,8 @@ export function usePathPersistence(
   }
 ) {
   const { setNodes, setEdges, setPathConfigs, setPaths } = useGraphActions();
-  const { setLastError } = useRuntimeActions();
+  const { setLastError, setLastRunAt, setParserSamples, setRuntimeState, setUpdaterSamples } =
+    useRuntimeActions();
   const { selectNode } = useSelectionActions();
   const [saving, setSaving] = useState(false);
   const [autoSaveAt, setAutoSaveAt] = useState<string | null>(null);
@@ -316,7 +349,7 @@ export function usePathPersistence(
       configId: string,
       config: PathConfig
     ): Promise<PathConfig | null> => {
-      const sanitizedConfig = sanitizePathConfig(config);
+      const sanitizedConfig = sanitizePathConfig(preparePathConfigForPersistence(config));
       const payloadKey = stableStringify({
         index: nextPaths,
         configId,
@@ -570,9 +603,13 @@ export function usePathPersistence(
           selectNode,
           setEdges,
           setLastError,
+          setLastRunAt,
           setNodes,
+          setParserSamples,
           setPathConfigs,
           setPaths,
+          setRuntimeState,
+          setUpdaterSamples,
         });
         lastSavedSnapshotRef.current = buildPathSnapshot(resolvedName);
         if (!silent) {

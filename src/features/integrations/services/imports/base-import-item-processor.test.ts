@@ -134,6 +134,8 @@ const buildInput = (overrides?: Record<string, unknown>) => ({
   dryRun: false,
   inventoryId: 'inventory-1',
   mode: 'upsert_on_base_id' as const,
+  forceCreateNewProduct: false,
+  persistBaseSyncIdentity: true,
   allowDuplicateSku: false,
   customFieldDefinitions: [
     {
@@ -330,6 +332,92 @@ describe('importSingleItem custom fields', () => {
         status: 'imported',
         action: 'imported',
         importedProductId: 'product-1',
+      })
+    );
+  });
+
+  it('forces exact-target imports to create a detached product with a unique SKU instead of updating', async () => {
+    mocks.mapBaseProductMock.mockReturnValue({
+      sku: 'SKU-1',
+      baseProductId: 'base-1',
+      name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      customFields: [{ fieldId: 'market-exclusion', selectedOptionIds: ['tradera'] }],
+      producerIds: [],
+      tagIds: [],
+      imageLinks: [],
+    });
+
+    const existingByBaseId = {
+      id: 'product-existing-base',
+      sku: 'BASE-SYNC-1',
+      baseProductId: 'base-1',
+      importSource: 'base',
+      parameters: [],
+      customFields: [],
+    };
+    const existingBySku = {
+      id: 'product-existing-sku',
+      sku: 'SKU-1',
+      baseProductId: null,
+      importSource: null,
+      parameters: [],
+      customFields: [],
+    };
+    const getProductBySku = vi.fn(async (sku: string) => {
+      if (sku === 'SKU-1') return existingBySku;
+      return null;
+    });
+    const createProduct = vi.fn().mockResolvedValue({ id: 'product-created', sku: 'SKU-1-1' });
+    const productRepository = buildProductRepository({
+      findProductByBaseId: vi.fn().mockResolvedValue(existingByBaseId),
+      getProductBySku,
+      createProduct,
+    });
+
+    const result = await importSingleItem(
+      buildInput({
+        run: {
+          ...buildRun(),
+          params: {
+            ...buildRun().params,
+            directTarget: {
+              type: 'sku',
+              value: 'SKU-1',
+            },
+          },
+        },
+        productRepository,
+        mode: 'create_only',
+        forceCreateNewProduct: true,
+        persistBaseSyncIdentity: false,
+      })
+    );
+
+    expect(mocks.validateProductCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sku: 'SKU-1-1',
+        baseProductId: null,
+        importSource: null,
+        customFields: [{ fieldId: 'market-exclusion', selectedOptionIds: ['tradera'] }],
+      })
+    );
+    expect(createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sku: 'SKU-1-1',
+        baseProductId: null,
+        importSource: null,
+        customFields: [{ fieldId: 'market-exclusion', selectedOptionIds: ['tradera'] }],
+      })
+    );
+    expect(mocks.findProductListingByProductAndConnectionAcrossProvidersMock).not.toHaveBeenCalled();
+    expect(mocks.getProductListingRepositoryMock).not.toHaveBeenCalled();
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'imported',
+        action: 'imported',
+        importedProductId: 'product-created',
+        sku: 'SKU-1-1',
+        baseProductId: 'base-1',
       })
     );
   });

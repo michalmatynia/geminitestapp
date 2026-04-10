@@ -110,6 +110,30 @@ vi.mock('@/shared/lib/documentation/tooltips', () => ({
 
 import { ImportListPreviewSection } from './Import.List';
 
+const createStateMock = (overrides: Record<string, unknown> = {}) => ({
+  selectedBaseConnectionId: 'connection-1',
+  inventoryId: 'inventory-1',
+  catalogId: 'catalog-1',
+  limit: '5',
+  importNameSearch: '',
+  setImportNameSearch: vi.fn(),
+  importSkuSearch: '',
+  setImportSkuSearch: vi.fn(),
+  importDirectTargetType: 'base_product_id',
+  setImportDirectTargetType: vi.fn(),
+  importDirectTargetValue: '',
+  setImportDirectTargetValue: vi.fn(),
+  importListPage: 1,
+  setImportListPage: vi.fn(),
+  importListPageSize: 25,
+  setImportListPageSize: vi.fn(),
+  uniqueOnly: true,
+  setUniqueOnly: vi.fn(),
+  selectedImportIds: new Set<string>(),
+  setSelectedImportIds: vi.fn(),
+  ...overrides,
+});
+
 describe('ImportListPreviewSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -154,24 +178,7 @@ describe('ImportListPreviewSection', () => {
       handleImport,
       importing: false,
     });
-    mocks.useImportExportStateMock.mockReturnValue({
-      selectedBaseConnectionId: 'connection-1',
-      inventoryId: 'inventory-1',
-      catalogId: 'catalog-1',
-      limit: '5',
-      importNameSearch: '',
-      setImportNameSearch: vi.fn(),
-      importSkuSearch: '',
-      setImportSkuSearch: vi.fn(),
-      importListPage: 1,
-      setImportListPage: vi.fn(),
-      importListPageSize: 25,
-      setImportListPageSize: vi.fn(),
-      uniqueOnly: true,
-      setUniqueOnly: vi.fn(),
-      selectedImportIds: new Set<string>(),
-      setSelectedImportIds: vi.fn(),
-    });
+    mocks.useImportExportStateMock.mockReturnValue(createStateMock());
 
     render(<ImportListPreviewSection />);
 
@@ -185,26 +192,60 @@ describe('ImportListPreviewSection', () => {
     expect(handleImport).toHaveBeenCalledTimes(1);
   });
 
+  it('shows exact-target load action text when an exact target is active', () => {
+    mocks.useImportExportStateMock.mockReturnValue(
+      createStateMock({
+        importDirectTargetType: 'sku',
+        importDirectTargetValue: 'FOASW022',
+      })
+    );
+
+    render(<ImportListPreviewSection />);
+
+    expect(screen.getByRole('button', { name: 'Load exact item' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run exact import' })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Exact target imports always create a new product, generate a unique SKU when needed, and stay detached from Base sync/update linkage.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('submits an exact SKU target when provided', () => {
+    const handleImport = vi.fn();
+    mocks.useImportExportActionsMock.mockReturnValue({
+      handleLoadImportList: vi.fn(),
+      handleImport,
+      importing: false,
+    });
+    mocks.useImportExportStateMock.mockReturnValue(
+      createStateMock({
+        limit: 'all',
+        importDirectTargetType: 'sku',
+        importDirectTargetValue: 'FOASW022',
+        selectedImportIds: new Set<string>(['1']),
+      })
+    );
+
+    render(<ImportListPreviewSection />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run exact import' }));
+
+    expect(handleImport).toHaveBeenCalledWith({
+      directTarget: {
+        type: 'sku',
+        value: 'FOASW022',
+      },
+    });
+  });
+
   it('selects all matching ids across all pages', async () => {
     const setSelectedImportIds = vi.fn();
-    mocks.useImportExportStateMock.mockReturnValue({
-      selectedBaseConnectionId: 'connection-1',
-      inventoryId: 'inventory-1',
-      catalogId: 'catalog-1',
-      limit: '5',
-      importNameSearch: '',
-      setImportNameSearch: vi.fn(),
-      importSkuSearch: '',
-      setImportSkuSearch: vi.fn(),
-      importListPage: 1,
-      setImportListPage: vi.fn(),
-      importListPageSize: 25,
-      setImportListPageSize: vi.fn(),
-      uniqueOnly: true,
-      setUniqueOnly: vi.fn(),
-      selectedImportIds: new Set<string>(),
-      setSelectedImportIds,
-    });
+    mocks.useImportExportStateMock.mockReturnValue(
+      createStateMock({
+        setSelectedImportIds,
+      })
+    );
     mocks.apiPostMock.mockResolvedValue({
       ids: ['1', '2', '3', '4', '5'],
       totalMatching: 5,
@@ -234,6 +275,44 @@ describe('ImportListPreviewSection', () => {
     expect(mocks.toastMock).toHaveBeenCalledWith('Selected 5 matching products.', {
       variant: 'success',
     });
+  });
+
+  it('passes an exact target when selecting all matching ids across all pages', async () => {
+    const setSelectedImportIds = vi.fn();
+    mocks.useImportExportStateMock.mockReturnValue(
+      createStateMock({
+        importDirectTargetType: 'sku',
+        importDirectTargetValue: 'FOASW022',
+        setSelectedImportIds,
+      })
+    );
+    mocks.apiPostMock.mockResolvedValue({
+      ids: ['9568407'],
+      totalMatching: 1,
+    });
+
+    render(<ImportListPreviewSection />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select All Pages (5)' }));
+
+    await waitFor(() => {
+      expect(mocks.apiPostMock).toHaveBeenCalledWith('/api/v2/integrations/imports/base', {
+        action: 'list_ids',
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        catalogId: 'catalog-1',
+        limit: 5,
+        uniqueOnly: true,
+        searchName: '',
+        searchSku: '',
+        directTarget: {
+          type: 'sku',
+          value: 'FOASW022',
+        },
+      });
+    });
+
+    expect(setSelectedImportIds).toHaveBeenCalledWith(new Set(['9568407']));
   });
 
   it('selects all visible products from the header checkbox', async () => {
@@ -275,24 +354,11 @@ describe('ImportListPreviewSection', () => {
         },
       ],
     });
-    mocks.useImportExportStateMock.mockReturnValue({
-      selectedBaseConnectionId: 'connection-1',
-      inventoryId: 'inventory-1',
-      catalogId: 'catalog-1',
-      limit: '5',
-      importNameSearch: '',
-      setImportNameSearch: vi.fn(),
-      importSkuSearch: '',
-      setImportSkuSearch: vi.fn(),
-      importListPage: 1,
-      setImportListPage: vi.fn(),
-      importListPageSize: 25,
-      setImportListPageSize: vi.fn(),
-      uniqueOnly: true,
-      setUniqueOnly: vi.fn(),
-      selectedImportIds: new Set<string>(),
-      setSelectedImportIds,
-    });
+    mocks.useImportExportStateMock.mockReturnValue(
+      createStateMock({
+        setSelectedImportIds,
+      })
+    );
 
     render(<ImportListPreviewSection />);
 
@@ -306,22 +372,10 @@ describe('ImportListPreviewSection', () => {
   it('clears selected ids when the import list scope changes', async () => {
     const setSelectedImportIds = vi.fn();
     const state = {
-      selectedBaseConnectionId: 'connection-1',
-      inventoryId: 'inventory-1',
-      catalogId: 'catalog-1',
-      limit: '5',
-      importNameSearch: '',
-      setImportNameSearch: vi.fn(),
-      importSkuSearch: '',
-      setImportSkuSearch: vi.fn(),
-      importListPage: 1,
-      setImportListPage: vi.fn(),
-      importListPageSize: 25,
-      setImportListPageSize: vi.fn(),
-      uniqueOnly: true,
-      setUniqueOnly: vi.fn(),
-      selectedImportIds: new Set<string>(['1']),
-      setSelectedImportIds,
+      ...createStateMock({
+        selectedImportIds: new Set<string>(['1']),
+        setSelectedImportIds,
+      }),
     };
     mocks.useImportExportStateMock.mockImplementation(() => state);
 

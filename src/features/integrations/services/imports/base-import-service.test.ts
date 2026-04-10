@@ -126,7 +126,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { processBaseImportRun } from './base-import-service';
+import { prepareBaseImportRun, processBaseImportRun } from './base-import-service';
 
 const buildRun = (dryRun: boolean) => ({
   id: dryRun ? 'run-dry' : 'run-live',
@@ -565,6 +565,267 @@ describe('processBaseImportRun custom fields', () => {
         errorCode: 'VALIDATION_ERROR',
         errorClass: 'permanent',
         summaryMessage: expect.stringContaining('Latest failure: FOASW022 [VALIDATION_ERROR]:'),
+      })
+    );
+  });
+});
+
+describe('prepareBaseImportRun direct target', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mocks.resolveBaseConnectionContextMock.mockResolvedValue({
+      token: 'token-1',
+      connectionId: 'connection-1',
+      baseIntegrationId: 'integration-base',
+      issue: null,
+    });
+    mocks.buildPreflightMock.mockResolvedValue({
+      preflight: {
+        ok: true,
+        checkedAt: '2026-04-10T00:00:00.000Z',
+        issues: [],
+      },
+      catalogExists: true,
+      hasPriceGroup: true,
+    });
+    mocks.resolveRunItemsMock.mockResolvedValue({
+      ids: [],
+      resolutionError: 'SKU FOASW022 was not found in the selected inventory.',
+    });
+    mocks.createBaseImportRunMock.mockImplementation(async (input: Record<string, unknown>) => ({
+      id: 'run-direct-target-failed',
+      status: 'failed',
+      params: input['params'],
+      preflight: input['preflight'],
+      summaryMessage: input['summaryMessage'],
+      stats: {
+        total: 0,
+        pending: 0,
+        processing: 0,
+        imported: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 0,
+      },
+      createdAt: '2026-04-10T00:00:00.000Z',
+      updatedAt: '2026-04-10T00:00:00.000Z',
+    }));
+  });
+
+  it('returns a preflight-style failed run when an exact target cannot be resolved', async () => {
+    const result = await prepareBaseImportRun({
+      connectionId: 'connection-1',
+      inventoryId: 'inventory-1',
+      catalogId: 'catalog-1',
+      imageMode: 'download',
+      uniqueOnly: true,
+      allowDuplicateSku: false,
+      directTarget: {
+        type: 'sku',
+        value: 'FOASW022',
+      },
+    });
+
+    expect(mocks.resolveRunItemsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        directTarget: {
+          type: 'sku',
+          value: 'FOASW022',
+        },
+      })
+    );
+    expect(mocks.createBaseImportRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: expect.objectContaining({
+          mode: 'create_only',
+        }),
+        summaryMessage: 'Preflight failed. Resolve errors and retry import.',
+        preflight: expect.objectContaining({
+          ok: false,
+          issues: expect.arrayContaining([
+            expect.objectContaining({
+              code: 'NOT_FOUND',
+              message: 'SKU FOASW022 was not found in the selected inventory.',
+              severity: 'error',
+            }),
+          ]),
+        }),
+      })
+    );
+    expect(result.status).toBe('failed');
+  });
+});
+
+describe('processBaseImportRun exact target summaries', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    const productRepository = {
+      findProductsByBaseIds: vi.fn().mockResolvedValue([]),
+      getProductsBySkus: vi.fn().mockResolvedValue([]),
+    };
+    const parameterRepository = {
+      listParameters: vi.fn().mockResolvedValue([]),
+    };
+    const customFieldRepository = {
+      listCustomFields: vi.fn().mockResolvedValue([]),
+    };
+
+    mocks.acquireBaseImportRunLeaseMock.mockResolvedValue({ acquired: true });
+    mocks.releaseBaseImportRunLeaseMock.mockResolvedValue(undefined);
+    mocks.getBaseImportRunMock.mockResolvedValue({
+      ...buildRun(false),
+      params: {
+        ...buildRun(false).params,
+        directTarget: {
+          type: 'sku',
+          value: 'KEYCHA1045',
+        },
+      },
+    });
+    mocks.listBaseImportRunItemsMock
+      .mockResolvedValueOnce([buildItem()])
+      .mockResolvedValueOnce([buildItem()])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          ...buildItem(),
+          status: 'updated',
+          sku: 'KEYCHA1045',
+          importedProductId: 'product-123',
+        },
+      ]);
+    mocks.updateBaseImportRunStatusMock.mockImplementation(
+      async (runId: string, status: string, patch: Record<string, unknown>) => ({
+        ...buildRun(false),
+        id: runId,
+        status,
+        summaryMessage: (patch['summaryMessage'] as string | null | undefined) ?? null,
+        finishedAt: (patch['finishedAt'] as string | null | undefined) ?? null,
+      })
+    );
+    mocks.resolveBaseConnectionContextMock.mockResolvedValue({
+      token: 'token-1',
+      connectionId: 'connection-1',
+      baseIntegrationId: 'integration-base',
+      issue: null,
+    });
+    mocks.getCatalogRepositoryMock.mockResolvedValue({
+      listCatalogs: vi.fn().mockResolvedValue([
+        {
+          id: 'catalog-1',
+          defaultPriceGroupId: 'price-group-1',
+        },
+      ]),
+    });
+    mocks.getProductDataProviderMock.mockResolvedValue('mongodb');
+    mocks.resolvePriceGroupContextMock.mockResolvedValue({
+      defaultPriceGroupId: 'price-group-1',
+      preferredCurrencies: ['EUR'],
+    });
+    mocks.getImportTemplateMock.mockResolvedValue(null);
+    mocks.resolveProducerAndTagLookupsMock.mockResolvedValue({
+      producerIdSet: new Set<string>(),
+      producerNameToId: new Map<string, string>(),
+      tagIdSet: new Set<string>(),
+      tagNameToId: new Map<string, string>(),
+      externalTagToInternalTagId: new Map<string, string>(),
+    });
+    mocks.getProductRepositoryMock.mockResolvedValue(productRepository);
+    mocks.getParameterRepositoryMock.mockResolvedValue(parameterRepository);
+    mocks.getCustomFieldRepositoryMock.mockResolvedValue(customFieldRepository);
+    mocks.getCatalogParameterLinksMock.mockResolvedValue({});
+    mocks.resolveCatalogLanguageContextMock.mockResolvedValue({
+      languageCodes: ['en'],
+      defaultLanguageCode: 'en',
+    });
+    mocks.fetchDetailsMapMock.mockResolvedValue(
+      new Map([
+        [
+          'base-1',
+          {
+            id: 'base-1',
+            base_product_id: 'base-1',
+          },
+        ],
+      ])
+    );
+    mocks.normalizeMappedProductMock.mockReturnValue({
+      baseProductId: 'base-1',
+      sku: 'KEYCHA1045',
+    });
+    mocks.pickMappedSkuMock.mockReturnValue('KEYCHA1045');
+    mocks.findProductListingsByProductsAndConnectionAcrossProvidersMock.mockResolvedValue(new Map());
+    mocks.importSingleItemMock.mockResolvedValue({
+      status: 'updated',
+      action: 'updated',
+      importedProductId: 'product-123',
+      retryable: false,
+    });
+    mocks.markRunItemMock.mockResolvedValue(undefined);
+    mocks.recomputeBaseImportRunStatsMock.mockResolvedValue({
+      stats: {
+        total: 1,
+        pending: 0,
+        processing: 0,
+        imported: 0,
+        updated: 1,
+        skipped: 0,
+        failed: 0,
+      },
+    });
+  });
+
+  it('writes an explicit summary for exact target updates', async () => {
+    await processBaseImportRun('run-live');
+
+    expect(mocks.importSingleItemMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'create_only',
+        forceCreateNewProduct: true,
+        persistBaseSyncIdentity: false,
+      })
+    );
+
+    expect(mocks.updateBaseImportRunStatusMock).toHaveBeenLastCalledWith(
+      'run-live',
+      'completed',
+      expect.objectContaining({
+        summaryMessage: 'Exact target SKU KEYCHA1045 updated existing product product-123.',
+      })
+    );
+  });
+
+  it('writes a detached-create summary for exact target imports', async () => {
+    mocks.importSingleItemMock.mockResolvedValueOnce({
+      status: 'imported',
+      action: 'imported',
+      importedProductId: 'product-456',
+      retryable: false,
+    });
+    mocks.listBaseImportRunItemsMock
+      .mockReset()
+      .mockResolvedValueOnce([buildItem()])
+      .mockResolvedValueOnce([buildItem()])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          ...buildItem(),
+          status: 'imported',
+          sku: 'KEYCHA1045',
+          importedProductId: 'product-456',
+        },
+      ]);
+
+    await processBaseImportRun('run-live');
+
+    expect(mocks.updateBaseImportRunStatusMock).toHaveBeenLastCalledWith(
+      'run-live',
+      'completed',
+      expect.objectContaining({
+        summaryMessage:
+          'Exact target SKU KEYCHA1045 created new detached product product-456 with SKU KEYCHA1045.',
       })
     );
   });

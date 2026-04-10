@@ -149,6 +149,12 @@ describe('ImportRunStatusSection', () => {
           status: 'queued',
           dispatchMode: 'queued',
           queueJobId: 'job-1',
+          params: {
+            directTarget: {
+              type: 'sku',
+              value: 'FOASW022',
+            },
+          },
           stats: {
             total: 10,
             imported: 0,
@@ -170,6 +176,13 @@ describe('ImportRunStatusSection', () => {
     expect(screen.getByText('queued (base-import runtime queue)')).toBeInTheDocument();
     expect(screen.getByText('Queue job:')).toBeInTheDocument();
     expect(screen.getByText('job-1')).toBeInTheDocument();
+    expect(screen.getByText('Exact target:')).toBeInTheDocument();
+    expect(screen.getByText('SKU FOASW022')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Exact target runs always create a new detached product and do not reuse Base sync linkage.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View in Runtime Queue' })).toHaveAttribute(
       'href',
       '/admin/ai-paths/queue?tab=product-imports&query=run-1'

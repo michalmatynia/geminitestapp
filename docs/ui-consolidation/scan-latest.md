@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-04-07T16:03:38.438Z
+Generated at: 2026-04-10T11:36:47.677Z
 
 ## Snapshot
 
-- Scanned UI files: 2540
+- Scanned UI files: 2563
 - Duplicate-name clusters: 0
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
-- Thin re-export wrappers ignored: 38
+- Thin re-export wrappers ignored: 42
 - Total consolidation opportunities: 0
 - High-priority opportunities (score >= 2000): 0
 
@@ -24,23 +24,23 @@ Generated at: 2026-04-07T16:03:38.438Z
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 1967 |
-| `app` | 337 |
+| `feature` | 1986 |
+| `app` | 339 |
 | `shared-ui` | 182 |
-| `shared` | 54 |
+| `shared` | 56 |
 
 ## Top Families
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 1858 |
-| `Page` | 170 |
+| `Unknown` | 1874 |
+| `Page` | 173 |
 | `Section` | 144 |
-| `Panel` | 100 |
-| `Modal` | 68 |
+| `Panel` | 102 |
+| `Modal` | 69 |
 | `Tab` | 44 |
 | `Card` | 40 |
-| `Settings` | 24 |
+| `Settings` | 25 |
 | `Header` | 23 |
 | `List` | 19 |
 | `Form` | 15 |

@@ -69,7 +69,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       'Normalize the English product name from title, description, images, and leaf-category context.',
     semanticAsset: productNameNormalizeAsset as CanvasSemanticDocument,
     seedPolicy: {
-      autoSeed: false,
+      autoSeed: true,
       defaultPathId: 'path_name_normalize_v1',
       isActive: true,
       isLocked: false,

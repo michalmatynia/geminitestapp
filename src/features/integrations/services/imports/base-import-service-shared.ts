@@ -1,7 +1,17 @@
 import { createHash } from 'crypto';
 import path from 'path';
 
-import type { BaseImportErrorClass, BaseImportErrorCode, BaseImportItemRecord, BaseImportParameterImportSummary, BaseImportItemStatus, BaseImportMode, BaseImportRunParams, BaseImportRunStatus } from '@/shared/contracts/integrations/base-com';
+import type {
+  BaseImportDirectTarget,
+  BaseImportErrorClass,
+  BaseImportErrorCode,
+  BaseImportItemRecord,
+  BaseImportParameterImportSummary,
+  BaseImportItemStatus,
+  BaseImportMode,
+  BaseImportRunParams,
+  BaseImportRunStatus,
+} from '@/shared/contracts/integrations/base-com';
 import type { PriceGroupLookup, BaseConnectionContext } from '@/shared/contracts/integrations/base-api';
 import type { ImportDecision, ProcessItemResult, NormalizedMappedProduct } from '@/shared/contracts/integrations/processing';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -10,6 +20,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 export type {
   BaseImportErrorClass,
   BaseImportErrorCode,
+  BaseImportDirectTarget,
   BaseImportItemRecord,
   BaseImportParameterImportSummary,
   BaseImportItemStatus,
@@ -146,11 +157,35 @@ export const normalizeSelectedIds = (selectedIds: string[] | undefined): string[
     )
   );
 
+export const normalizeDirectTarget = (
+  directTarget: BaseImportDirectTarget | undefined
+): BaseImportDirectTarget | null => {
+  if (!directTarget) {
+    return null;
+  }
+
+  const value = directTarget.value.trim();
+  if (!value) {
+    return null;
+  }
+
+  return {
+    type: directTarget.type,
+    value,
+  };
+};
+
+export const isExactTargetImport = (
+  directTarget: BaseImportDirectTarget | null | undefined
+): boolean => normalizeDirectTarget(directTarget ?? undefined) !== null;
+
 export const shouldFilterToUniqueOnly = (input: {
   uniqueOnly: boolean;
   selectedIds?: string[];
+  directTarget?: BaseImportDirectTarget | null;
 }): boolean => {
   if (!input.uniqueOnly) return false;
+  if (normalizeDirectTarget(input.directTarget ?? undefined)) return false;
   return normalizeSelectedIds(input.selectedIds).length === 0;
 };
 
@@ -159,6 +194,11 @@ export const shouldReuseIdempotentRun = (status: BaseImportRunStatus): boolean =
 
 export const resolveMode = (mode: BaseImportMode | undefined): BaseImportMode =>
   mode ?? 'upsert_on_base_id';
+
+export const resolveEffectiveMode = (input: {
+  mode: BaseImportMode | undefined;
+  directTarget?: BaseImportDirectTarget | null;
+}): BaseImportMode => (isExactTargetImport(input.directTarget) ? 'create_only' : resolveMode(input.mode));
 
 export const createRunIdempotencyKey = (params: BaseImportRunParams, ids: string[]): string => {
   const hash = createHash('sha1');
@@ -172,8 +212,9 @@ export const createRunIdempotencyKey = (params: BaseImportRunParams, ids: string
       uniqueOnly: params.uniqueOnly,
       allowDuplicateSku: params.allowDuplicateSku,
       dryRun: params.dryRun ?? false,
-      mode: params.mode ?? 'upsert_on_base_id',
+      mode: resolveEffectiveMode(params),
       requestId: params.requestId ?? null,
+      directTarget: normalizeDirectTarget(params.directTarget) ?? null,
       ids,
     })
   );

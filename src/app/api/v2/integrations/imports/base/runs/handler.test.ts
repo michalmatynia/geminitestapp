@@ -64,4 +64,38 @@ describe('base import runs handler module', () => {
     );
     expect(response.status).toBe(200);
   });
+
+  it('passes directTarget through when starting an exact import run', async () => {
+    startBaseImportRunResponseMock.mockResolvedValue({
+      runId: 'run-exact',
+      status: 'queued',
+      queueJobId: 'job-exact',
+      dispatchMode: 'queued',
+      summaryMessage: 'Queued exact SKU target FOASW022 for import.',
+    });
+
+    await POST_handler({} as never, {
+      body: {
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        catalogId: 'catalog-1',
+        imageMode: 'download',
+        uniqueOnly: true,
+        allowDuplicateSku: false,
+        directTarget: {
+          type: 'sku',
+          value: 'FOASW022',
+        },
+      },
+    } as never);
+
+    expect(startBaseImportRunResponseMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        directTarget: {
+          type: 'sku',
+          value: 'FOASW022',
+        },
+      })
+    );
+  });
 });

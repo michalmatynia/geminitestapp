@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-10'
 status: 'active'
 doc_type: 'policy'
 scope: 'repo'
@@ -218,6 +218,7 @@ For non-markdown artifacts such as JSON manifests or exception registers:
 | Cross-feature decisions | `docs/decisions/` | ADR-style records, exception registers, matrices | date-stamped records belong here |
 | Machine-readable decision companions | `docs/decisions/` | exception register JSON, decision manifests tied to one owning record | keep root copies only as temporary compatibility mirrors |
 | Migration execution | `docs/migrations/` | wave execution, verification, reports | keep execution artifacts together |
+| Cross-feature improvement operations | `docs/build/improvements/` | broad improvement portfolios that combine instructions with generated latest scans across multiple tracks | use this instead of creating new top-level program folders |
 | Generated metrics | `docs/metrics/` | scans, baselines, trend outputs | generated only |
 | Artifact-only generated buckets | nested under the owning docs area | JSON schemas, reports, CSV exports, screenshots, and other non-markdown outputs | either add a local hub or declare the bucket in the manifest with an owning markdown reference |
 | Historical program folders | `docs/<program>/` | rare residual cross-feature program surfaces that still have live consumers, such as ui-consolidation | remove them once the active surface is gone |
@@ -231,17 +232,19 @@ When adding or rewriting docs:
    - If yes, place it in the feature’s generated area or `docs/metrics/`.
 2. Is it feature-specific?
    - If yes, place it under that feature’s folder.
-3. Is it cross-cutting but operational?
+3. Is it a cross-feature improvement portfolio with generated latest scans?
+   - Use `docs/build/improvements/`.
+4. Is it cross-cutting but operational?
    - Use `docs/runbooks/`.
-4. Is it cross-cutting and forward-looking?
+5. Is it cross-cutting and forward-looking?
    - Use `docs/plans/`.
-5. Is it a decision, exception register, or matrix?
+6. Is it a decision, exception register, or matrix?
    - Use `docs/decisions/`.
-6. Is it a machine-readable companion to a decision or policy doc?
+7. Is it a machine-readable companion to a decision or policy doc?
    - Put it beside that canonical doc unless compatibility requires a mirror.
-7. Is it a stable shared platform guide?
+8. Is it a stable shared platform guide?
    - Use `docs/platform/`.
-8. Is it a repo entrypoint or governance doc?
+9. Is it a repo entrypoint or governance doc?
    - Use the root `docs/` allowlist.
 
 If two locations seem possible, prefer the one with the clearest owner and the

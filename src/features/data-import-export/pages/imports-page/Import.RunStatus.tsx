@@ -30,6 +30,16 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
   const activeRun = activeImportRun?.run ?? null;
   const activeRunStats = activeRun?.stats ?? null;
   const activeRunItems = activeImportRun?.items ?? [];
+  const directTargetLabel = React.useMemo(() => {
+    const directTarget = activeRun?.params?.directTarget;
+    if (!directTarget) {
+      return null;
+    }
+
+    return directTarget.type === 'sku'
+      ? `SKU ${directTarget.value}`
+      : `Base Product ID ${directTarget.value}`;
+  }, [activeRun?.params?.directTarget]);
 
   const runHasRetryableItems = React.useMemo(
     (): boolean => hasRetryableImportItems(activeRunItems),
@@ -164,6 +174,16 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
           Queue job:{' '}
           <span className='font-mono text-gray-200'>{activeRun.queueJobId || 'not assigned'}</span>
         </p>
+        {directTargetLabel ? (
+          <>
+            <p>
+              Exact target: <span className='font-mono text-cyan-200'>{directTargetLabel}</span>
+            </p>
+            <p className='text-cyan-300'>
+              Exact target runs always create a new detached product and do not reuse Base sync linkage.
+            </p>
+          </>
+        ) : null}
         {activeRun.dispatchMode === 'inline' ? (
           <p className='text-amber-300'>
             This run is not visible in the AI Paths queue. Base imports use the separate

@@ -29,7 +29,7 @@ vi.mock('./vinted-listing/vinted-browser-listing', () => ({
     runVintedBrowserListingMock(...args) as Promise<unknown>,
 }));
 
-vi.mock('./tradera-playwright-settings', () => ({
+vi.mock('@/features/playwright/server', () => ({
   resolveConnectionPlaywrightSettingsProfile: (...args: unknown[]) =>
     resolveConnectionPlaywrightSettingsProfileMock(...args) as Promise<unknown>,
 }));

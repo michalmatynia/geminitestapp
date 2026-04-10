@@ -7,6 +7,7 @@ import {
   type CatchAllRoutePathParams as RouteParams,
   getPathSegments,
   handleCatchAllRequest,
+  matchCatchAllPattern,
 } from '@/shared/lib/api/catch-all-router';
 
 import * as agentIndex from '../agent/route-handler';
@@ -67,6 +68,11 @@ const ROUTES = [
   },
   { pattern: ['teaching', 'collections', { param: 'collectionId' }], module: teachingCollectionById },
 ];
+
+export const __testables = {
+  ROUTES,
+  matchPattern: matchCatchAllPattern,
+};
 
 const routeAgentCreator = (
   method: HttpMethod,

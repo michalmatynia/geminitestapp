@@ -25,6 +25,7 @@ export type ProductDocument = Omit<
   | 'catalogs'
 > & {
   _id: string;
+  duplicateSkuCount?: number;
   createdAt: Date;
   updatedAt: Date;
   name?: ProductRecord['name'];
@@ -432,6 +433,12 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
   const catalogId = resolveCanonicalCatalogId(doc);
   const category = normalizeProductCategory(doc.category, catalogId);
+  const duplicateSkuCount =
+    typeof doc.duplicateSkuCount === 'number' &&
+    Number.isFinite(doc.duplicateSkuCount) &&
+    doc.duplicateSkuCount > 1
+      ? Math.trunc(doc.duplicateSkuCount)
+      : undefined;
 
   return {
     id: productId,
@@ -471,6 +478,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,
+    duplicateSkuCount,
     createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt),
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : String(doc.updatedAt),
     images: images.map((img) => ({ ...img, assignedAt: img.assignedAt })),

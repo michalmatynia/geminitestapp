@@ -15,7 +15,7 @@ import {
   resolveRequestedVintedBrowserPreference,
   type VintedListingSource,
 } from './vinted-listing/vinted-browser-runtime';
-import { resolveConnectionPlaywrightSettingsProfile } from './tradera-playwright-settings';
+import { resolveConnectionPlaywrightSettingsProfile } from '@/features/playwright/server';
 
 export type VintedListingJobInput = {
   listingId: string;

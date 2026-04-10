@@ -10,14 +10,9 @@ import {
   buildPlaywrightEngineRunFailureMeta,
   createProgrammableImportPlaywrightInstance,
   createProgrammableListingPlaywrightInstance,
-  enqueuePlaywrightEngineRun,
+  runPlaywrightConnectionEngineTask,
   resolvePlaywrightEngineRunOutputs,
 } from '@/features/playwright/server';
-import {
-  buildPlaywrightConnectionEngineLaunchOptions,
-  buildPlaywrightConnectionSettingsOverrides,
-  resolvePlaywrightConnectionRuntime,
-} from '@/features/playwright/server/connection-runtime';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 export type PlaywrightExecutionSettingsSummary = Pick<
@@ -89,7 +84,25 @@ const resolveListingRunStartUrl = (input: Record<string, unknown>): string | und
 };
 
 const buildExecutionSettingsSummary = (
-  settings: PlaywrightSettings
+  settings: Pick<
+    PlaywrightSettings,
+    | 'headless'
+    | 'slowMo'
+    | 'timeout'
+    | 'navigationTimeout'
+    | 'humanizeMouse'
+    | 'mouseJitter'
+    | 'clickDelayMin'
+    | 'clickDelayMax'
+    | 'inputDelayMin'
+    | 'inputDelayMax'
+    | 'actionDelayMin'
+    | 'actionDelayMax'
+    | 'emulateDevice'
+    | 'deviceName'
+  > & {
+    proxyEnabled: boolean;
+  }
 ): PlaywrightExecutionSettingsSummary => ({
   headless: settings.headless,
   slowMo: settings.slowMo,
@@ -133,24 +146,11 @@ export const runPlaywrightListingScript = async ({
   failureHoldOpenMs?: number;
   runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
 }): Promise<PlaywrightListingResult> => {
-  const runtime = await resolvePlaywrightConnectionRuntime(connection);
-  const runtimeSettings = {
-    ...runtime.settings,
-    ...(runtimeSettingsOverrides ?? {}),
-  };
-  const effectiveHeadless =
-    browserMode === 'headless' ? true : browserMode === 'headed' ? false : runtimeSettings.headless;
-  const effectiveSettings = {
-    ...runtimeSettings,
-    headless: effectiveHeadless,
-  };
   const startUrl = disableStartUrlBootstrap ? undefined : resolveListingRunStartUrl(input);
-  const launchOptions = buildPlaywrightConnectionEngineLaunchOptions({
-    browserPreference: effectiveSettings.browser,
-  });
   const listingId = extractTrimmedString(input['listingId']);
 
-  const run = await enqueuePlaywrightEngineRun({
+  const { run, runtime, settings: effectiveSettings } = await runPlaywrightConnectionEngineTask({
+    connection,
     request: {
       script,
       input,
@@ -160,17 +160,32 @@ export const runPlaywrightListingScript = async ({
       browserEngine: 'chromium',
       ...(startUrl ? { startUrl } : {}),
       ...(contextRegistry ? { contextRegistry } : {}),
-      ...(runtime.personaId ? { personaId: runtime.personaId } : {}),
-      ...(runtime.storageState ? { contextOptions: { storageState: runtime.storageState } } : {}),
-      ...(Object.keys(launchOptions).length > 0 ? { launchOptions } : {}),
-      settingsOverrides: buildPlaywrightConnectionSettingsOverrides(effectiveSettings),
     },
-    waitForResult: true,
     instance: createProgrammableListingPlaywrightInstance({
       connectionId: connection.id,
       integrationId: connection.integrationId,
       listingId,
     }),
+    resolveEngineRequestConfig: (runtime) => {
+      const runtimeSettings = {
+        ...runtime.settings,
+        ...(runtimeSettingsOverrides ?? {}),
+      };
+      const effectiveHeadless =
+        browserMode === 'headless'
+          ? true
+          : browserMode === 'headed'
+            ? false
+            : runtimeSettings.headless;
+
+      return {
+        settings: {
+          ...runtimeSettings,
+          headless: effectiveHeadless,
+        },
+        browserPreference: runtimeSettings.browser,
+      };
+    },
   });
 
   if (run.status === 'failed') {
@@ -190,7 +205,7 @@ export const runPlaywrightListingScript = async ({
     listingUrl: extractStringField(resultValue, 'listingUrl'),
     expiresAt: extractStringField(resultValue, 'expiresAt'),
     publishVerified: extractBooleanField(resultValue, 'publishVerified'),
-    effectiveBrowserMode: effectiveHeadless ? 'headless' : 'headed',
+    effectiveBrowserMode: effectiveSettings.headless ? 'headless' : 'headed',
     personaId: runtime.personaId ?? null,
     executionSettings: buildExecutionSettingsSummary(effectiveSettings),
     rawResult: resultValue,
@@ -215,9 +230,8 @@ export const runPlaywrightImportScript = async ({
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
   timeoutMs?: number;
 }): Promise<PlaywrightImportResult> => {
-  const runtime = await resolvePlaywrightConnectionRuntime(connection);
-
-  const run = await enqueuePlaywrightEngineRun({
+  const { run } = await runPlaywrightConnectionEngineTask({
+    connection,
     request: {
       script,
       input,
@@ -225,11 +239,7 @@ export const runPlaywrightImportScript = async ({
       preventNewPages: true,
       browserEngine: 'chromium',
       ...(contextRegistry ? { contextRegistry } : {}),
-      ...(runtime.personaId ? { personaId: runtime.personaId } : {}),
-      ...(runtime.storageState ? { contextOptions: { storageState: runtime.storageState } } : {}),
-      settingsOverrides: buildPlaywrightConnectionSettingsOverrides(runtime.settings),
     },
-    waitForResult: true,
     instance: createProgrammableImportPlaywrightInstance({
       connectionId: connection.id,
       integrationId: connection.integrationId,

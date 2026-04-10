@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:06.738Z",
+  "generatedAt": "2026-04-10T11:36:57.577Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,13 +7,13 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeFileCount": 305,
-    "handlerFileCount": 428
+    "routeFileCount": 311,
+    "handlerFileCount": 438
   },
   "scope": {
     "root": "src/app/api"
   },
   "issues": [],
   "rules": [],
-  "durationMs": 59
+  "durationMs": 121
 }

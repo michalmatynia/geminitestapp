@@ -384,27 +384,33 @@ const linkImportedProductToBaseListing = async (input: {
 
 const resolveUniqueSku = async (
   productRepository: Awaited<ReturnType<typeof getProductRepository>>,
-  baseProductId: string | null,
-  fallbackSeed: string
+  preferredSeed: string,
+  baseProductId: string | null
 ): Promise<string> => {
-  const normalizedSeed = sanitizeSku(fallbackSeed) || 'BASE';
-  const candidates: string[] = [];
-  if (baseProductId) {
-    candidates.push(`BASE-${sanitizeSku(baseProductId)}`);
+  const normalizedSeed = sanitizeSku(preferredSeed);
+  const roots: string[] = [];
+  if (normalizedSeed) {
+    roots.push(normalizedSeed);
   }
-  candidates.push(normalizedSeed);
+  if (baseProductId) {
+    roots.push(`BASE-${sanitizeSku(baseProductId)}`);
+  }
+  roots.push('BASE');
 
-  const base = candidates[0] ?? 'BASE';
-  for (let index = 0; index < 1000; index += 1) {
-    const candidate = index === 0 ? base : `${base}-${index}`;
-    const existing = await productRepository.getProductBySku(candidate);
-    if (!existing) return candidate;
+  const uniqueRoots = Array.from(new Set(roots.filter((value: string): boolean => value.length > 0)));
+  for (const root of uniqueRoots) {
+    for (let index = 0; index < 1000; index += 1) {
+      const candidate = index === 0 ? root : `${root}-${index}`;
+      const existing = await productRepository.getProductBySku(candidate);
+      if (!existing) return candidate;
+    }
   }
   return `BASE-${Date.now()}`;
 };
 
 const decideImportAction = (input: {
   mode: BaseImportMode;
+  forceCreateNewProduct: boolean;
   allowDuplicateSku: boolean;
   mappedBaseProductId: string | null;
   mappedSku: string | null;
@@ -413,12 +419,17 @@ const decideImportAction = (input: {
 }): ImportDecision => {
   const {
     mode,
+    forceCreateNewProduct,
     allowDuplicateSku,
     mappedBaseProductId,
     mappedSku,
     existingByBaseId,
     existingBySku,
   } = input;
+
+  if (forceCreateNewProduct) {
+    return { type: 'create' };
+  }
 
   if (mode === 'create_only') {
     if (existingByBaseId) {
@@ -689,6 +700,8 @@ export const importSingleItem = async (input: {
   dryRun: boolean;
   inventoryId: string;
   mode: BaseImportMode;
+  forceCreateNewProduct: boolean;
+  persistBaseSyncIdentity: boolean;
   allowDuplicateSku: boolean;
   parameterImportSettings?: ImportTemplateParameterImport;
   customFieldDefinitions?: ProductCustomFieldDefinition[];
@@ -757,6 +770,7 @@ export const importSingleItem = async (input: {
 
   const decision = decideImportAction({
     mode: input.mode,
+    forceCreateNewProduct: input.forceCreateNewProduct,
     allowDuplicateSku: input.allowDuplicateSku,
     mappedBaseProductId,
     mappedSku,
@@ -999,19 +1013,22 @@ export const importSingleItem = async (input: {
     };
   }
 
-  if (existingBySku && input.allowDuplicateSku) {
+  const shouldResolveDuplicateSkuByCreating =
+    input.allowDuplicateSku || input.forceCreateNewProduct;
+
+  if (existingBySku && shouldResolveDuplicateSkuByCreating) {
     skuForCreate = await resolveUniqueSku(
       input.productRepository,
-      mappedBaseProductId,
-      `BASE-${mappedBaseProductId ?? skuForCreate}`
+      skuForCreate,
+      mappedBaseProductId
     );
   }
 
   const createData: ProductCreateInput = {
     ...mapped,
     sku: skuForCreate,
-    baseProductId: mappedBaseProductId ?? null,
-    importSource: 'base',
+    baseProductId: input.persistBaseSyncIdentity ? mappedBaseProductId ?? null : null,
+    importSource: input.persistBaseSyncIdentity ? 'base' : null,
     defaultPriceGroupId: input.defaultPriceGroupId,
     imageLinks: imageUrls,
   };
@@ -1099,11 +1116,11 @@ export const importSingleItem = async (input: {
     created = await input.productRepository.createProduct(validationResult.data);
   } catch (error: unknown) {
     logClientError(error);
-    if (isSkuConflictError(error) && input.allowDuplicateSku) {
+    if (isSkuConflictError(error) && shouldResolveDuplicateSkuByCreating) {
       const fallbackSku = await resolveUniqueSku(
         input.productRepository,
-        mappedBaseProductId,
-        `BASE-${mappedBaseProductId ?? skuForCreate}`
+        skuForCreate,
+        mappedBaseProductId
       );
       const fallbackValidation = await validateImportedCreateData({
         ...createData,
@@ -1146,14 +1163,16 @@ export const importSingleItem = async (input: {
     }
   }
 
-  await linkImportedProductToBaseListing({
-    product: created,
-    baseIntegrationId: input.baseIntegrationId,
-    connectionId: input.connectionId,
-    inventoryId: input.inventoryId,
-    baseProductId: mappedBaseProductId,
-    existingListing: input.prefetchedListings?.get(created.id) ?? null,
-  });
+  if (input.persistBaseSyncIdentity) {
+    await linkImportedProductToBaseListing({
+      product: created,
+      baseIntegrationId: input.baseIntegrationId,
+      connectionId: input.connectionId,
+      inventoryId: input.inventoryId,
+      baseProductId: mappedBaseProductId,
+      existingListing: input.prefetchedListings?.get(created.id) ?? null,
+    });
+  }
   emitProductCacheInvalidation();
 
   return {

@@ -513,7 +513,7 @@ describe('starter workflow registry', () => {
     const description = getStarterWorkflowTemplateByIdOrThrow('starter_description_inference_lite');
     const translation = getStarterWorkflowTemplateByIdOrThrow('starter_translation_en_pl');
 
-    expect(normalize.seedPolicy?.autoSeed).toBe(false);
+    expect(normalize.seedPolicy?.autoSeed).toBe(true);
     expect(description.seedPolicy?.autoSeed).toBe(true);
     expect(translation.seedPolicy?.autoSeed).toBe(false);
     expect(normalize.upgradePolicy?.versionedOverlayScope).toBe('any_provenance_path');
@@ -521,7 +521,7 @@ describe('starter workflow registry', () => {
     expect(translation.upgradePolicy?.versionedOverlayScope).toBe('any_provenance_path');
   });
 
-  it('lets trigger-backed starter workflows opt out of auto-seed while keeping canonical default path ids', () => {
+  it('auto-seeds shipped trigger-backed starter workflows with canonical default path ids', () => {
     const triggerBackedDefaultEntries = STARTER_WORKFLOW_REGISTRY.filter(
       (entry) =>
         (entry.triggerButtonPresets?.length ?? 0) > 0 &&
@@ -537,11 +537,11 @@ describe('starter workflow registry', () => {
     expect(autoSeedTemplateIds).toEqual(
       expect.arrayContaining([
         'starter_parameter_inference',
+        'starter_product_name_normalize',
         'starter_description_inference_lite',
         'starter_base_export_blwo',
       ])
     );
-    expect(autoSeedTemplateIds).not.toContain('starter_product_name_normalize');
   });
 
   it('does not resolve starter graphs with legacy edge alias fields', () => {

@@ -8,6 +8,9 @@ import {
   useImportList,
   useImportRun,
 } from '@/features/data-import-export/hooks/useImportQueries';
+import type {
+  BaseImportDirectTargetType,
+} from '@/shared/contracts/integrations/base-com';
 import type { InventoryOption, ImportListItem, ImportRunDetail, WarehouseOption } from '@/shared/contracts/integrations/import-export';
 
 export function useImportExportData({
@@ -26,6 +29,8 @@ export function useImportExportData({
   importListPage,
   importListPageSize,
   importNameSearch,
+  importDirectTargetType,
+  importDirectTargetValue,
   importSkuSearch,
   importListEnabled,
   activeImportRunId,
@@ -47,6 +52,8 @@ export function useImportExportData({
   importListPage: number;
   importListPageSize: number;
   importNameSearch: string;
+  importDirectTargetType: BaseImportDirectTargetType;
+  importDirectTargetValue: string;
   importSkuSearch: string;
   importListEnabled: boolean;
   activeImportRunId: string;
@@ -125,6 +132,14 @@ export function useImportExportData({
 
   const warehouses: WarehouseOption[] = warehousesData?.warehouses ?? [];
   const allWarehouses: WarehouseOption[] = warehousesData?.allWarehouses ?? [];
+  const normalizedImportDirectTargetValue = importDirectTargetValue.trim();
+  const importDirectTarget =
+    normalizedImportDirectTargetValue.length > 0
+      ? {
+          type: importDirectTargetType,
+          value: normalizedImportDirectTargetValue,
+        }
+      : undefined;
 
   const importListQuery = useImportList(
     inventoryId,
@@ -136,6 +151,7 @@ export function useImportExportData({
       page: importListPage,
       pageSize: importListPageSize,
       searchName: importNameSearch,
+      directTarget: importDirectTarget,
       searchSku: importSkuSearch,
     },
     importListEnabled && isBaseConnected && !!inventoryId && !!normalizedSelectedBaseConnectionId

@@ -11,7 +11,14 @@ import {
   useSaveExportSettingsMutation,
 } from '@/features/data-import-export/hooks/useImportQueries';
 import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
-import type { BaseImportMode } from '@/shared/contracts/integrations/base-com';
+import {
+  areImportResponsesEquivalent,
+  resolveLiveImportResult,
+} from '@/features/data-import-export/utils/import-run-feedback';
+import type {
+  BaseImportDirectTargetType,
+  BaseImportMode,
+} from '@/shared/contracts/integrations/base-com';
 import type { DebugWarehouses, ImportResponse } from '@/shared/contracts/integrations/import-export';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -183,6 +190,9 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   const [pollImportRun, setPollImportRun] = useState(false);
   const [importNameSearch, setImportNameSearch] = useState('');
   const [importSkuSearch, setImportSkuSearch] = useState('');
+  const [importDirectTargetType, setImportDirectTargetType] =
+    useState<BaseImportDirectTargetType>('base_product_id');
+  const [importDirectTargetValue, setImportDirectTargetValue] = useState('');
   const [selectedImportIds, setSelectedImportIds] = useState<Set<string>>(new Set());
   const [uniqueOnly, setUniqueOnly] = useState(true);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
@@ -251,6 +261,8 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
     importListPage,
     importListPageSize,
     importNameSearch,
+    importDirectTargetType,
+    importDirectTargetValue,
     importSkuSearch,
     importTemplateId,
     inventoriesEnabled,
@@ -413,6 +425,14 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   const activeRunBusy =
     activeImportRun?.run.status === 'queued' || activeImportRun?.run.status === 'running';
 
+  useEffect(() => {
+    if (!lastResult) return;
+    const syncedResult = resolveLiveImportResult(lastResult, activeImportRun?.run ?? null);
+    if (!areImportResponsesEquivalent(lastResult, syncedResult)) {
+      setLastResult(syncedResult);
+    }
+  }, [activeImportRun?.run, lastResult]);
+
   const refetchInventoriesSafe = useCallback(async () => {
     const result = await refetchInventories();
     return {
@@ -568,6 +588,10 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
       setImportNameSearch,
       importSkuSearch,
       setImportSkuSearch,
+      importDirectTargetType,
+      setImportDirectTargetType,
+      importDirectTargetValue,
+      setImportDirectTargetValue,
       importListPage,
       setImportListPage,
       importListPageSize,
@@ -603,6 +627,8 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
       importListPageSize,
       importMode,
       importNameSearch,
+      importDirectTargetType,
+      importDirectTargetValue,
       importSkuSearch,
       importTemplateId,
       importsPageTab,

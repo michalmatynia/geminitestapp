@@ -11,13 +11,9 @@ import {
   buildPlaywrightEngineRunFailureMeta,
   collectPlaywrightEngineRunFailureMessages,
   createTraderaCategoryScrapePlaywrightInstance,
-  enqueuePlaywrightEngineRun,
+  runPlaywrightConnectionEngineTask,
   resolvePlaywrightEngineRunOutputs,
 } from '@/features/playwright/server';
-import {
-  buildPlaywrightConnectionSettingsOverrides,
-  resolvePlaywrightConnectionRuntime,
-} from '@/features/playwright/server/connection-runtime';
 
 const CATEGORY_SCRAPE_TIMEOUT_MS = 300_000;
 
@@ -70,7 +66,7 @@ const normalizeCategories = (value: unknown): TraderaCategoryRecord[] => {
 };
 
 const buildFailureMeta = (
-  run: Awaited<ReturnType<typeof enqueuePlaywrightEngineRun>>
+  run: Awaited<ReturnType<typeof runPlaywrightConnectionEngineTask>>['run']
 ): Record<string, unknown> => {
   return {
     ...buildPlaywrightEngineRunFailureMeta(run),
@@ -78,7 +74,7 @@ const buildFailureMeta = (
 };
 
 const toCategoryFetchError = (
-  run: Awaited<ReturnType<typeof enqueuePlaywrightEngineRun>>,
+  run: Awaited<ReturnType<typeof runPlaywrightConnectionEngineTask>>['run'],
   connectionId: string
 ): Error => {
   const failureMessages = collectPlaywrightEngineRunFailureMessages(run);
@@ -101,9 +97,8 @@ const toCategoryFetchError = (
 export const fetchTraderaCategoriesForConnection = async (
   connection: IntegrationConnectionRecord
 ): Promise<TraderaCategoryRecord[]> => {
-  const runtime = await resolvePlaywrightConnectionRuntime(connection);
-
-  const run = await enqueuePlaywrightEngineRun({
+  const { run } = await runPlaywrightConnectionEngineTask({
+    connection,
     request: {
       script: DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT,
       input: {
@@ -120,11 +115,7 @@ export const fetchTraderaCategoriesForConnection = async (
         screenshot: true,
         html: true,
       },
-      ...(runtime.personaId ? { personaId: runtime.personaId } : {}),
-      ...(runtime.storageState ? { contextOptions: { storageState: runtime.storageState } } : {}),
-      settingsOverrides: buildPlaywrightConnectionSettingsOverrides(runtime.settings),
     },
-    waitForResult: true,
     instance: createTraderaCategoryScrapePlaywrightInstance({
       connectionId: connection.id,
       integrationId: connection.integrationId,

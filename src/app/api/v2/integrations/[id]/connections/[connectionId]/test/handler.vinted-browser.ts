@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
 import { devices } from 'playwright';
 
-import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import { encryptSecret } from '@/features/integrations/server';
 import {
+  parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
   type PersistedStorageState,
-} from '@/features/integrations/services/tradera-playwright-settings';
+} from '@/features/playwright/server';
 import { type TestLogEntry } from '@/shared/contracts/integrations';
 import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -55,21 +56,10 @@ export const handleVintedBrowserTest = async (
   const playwrightStorageState = connection.playwrightStorageState;
   if (playwrightStorageState) {
     pushStep('Loading session', 'pending', 'Loading stored Playwright session');
-    try {
-      const raw = decryptSecret(playwrightStorageState);
-      const parsed = JSON.parse(raw) as unknown;
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        Array.isArray((parsed as { cookies?: unknown[] }).cookies)
-      ) {
-        storedState = parsed as PersistedStorageState;
-        pushStep('Loading session', 'ok', 'Stored session loaded');
-      } else {
-        pushStep('Loading session', 'failed', 'Stored session has invalid shape');
-      }
-    } catch (_error) {
-      void ErrorSystem.captureException(_error);
+    storedState = parsePersistedStorageState(playwrightStorageState);
+    if (storedState) {
+      pushStep('Loading session', 'ok', 'Stored session loaded');
+    } else {
       pushStep('Loading session', 'failed', 'Failed to load session');
     }
   }

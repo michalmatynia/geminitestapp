@@ -170,6 +170,27 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByLabelText('Select row').className).toContain('cursor-pointer');
   });
 
+  it('renders a duplicate SKU marker in the name summary when the SKU is reused', () => {
+    const product = createProduct({
+      duplicateSkuCount: 2,
+    });
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByText('Duplicate SKU')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate SKU')).toHaveAttribute('title', 'SKU used by 2 products');
+  });
+
   it('renders the queued badge when the product id is currently queued', () => {
     const product = createProduct();
     setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);

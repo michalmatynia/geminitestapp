@@ -143,4 +143,76 @@ describe('ImportLastResultSection', () => {
       )
     ).toBeInTheDocument();
   });
+
+  it('prefers the refreshed active run status over the initial queued start response', () => {
+    mocks.useImportExportDataMock.mockReturnValue({
+      lastResult: {
+        runId: 'run-4',
+        status: 'queued',
+        dispatchMode: 'queued',
+        queueJobId: 'job-4',
+        summaryMessage: 'Queued 1 products for import.',
+      },
+      activeImportRunId: 'run-4',
+      activeImportRun: {
+        run: {
+          id: 'run-4',
+          status: 'completed',
+          dispatchMode: 'queued',
+          queueJobId: 'job-4',
+          summaryMessage: 'Import completed: 1 imported, 0 updated, 0 skipped, 0 failed.',
+        },
+      },
+    });
+
+    render(<ImportLastResultSection />);
+
+    expect(screen.getByText('completed')).toBeInTheDocument();
+    expect(
+      screen.getByText('Import completed: 1 imported, 0 updated, 0 skipped, 0 failed.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows exact-target detached-create context when the active run includes a direct target', () => {
+    mocks.useImportExportDataMock.mockReturnValue({
+      lastResult: {
+        runId: 'run-exact-2',
+        status: 'queued',
+        dispatchMode: 'queued',
+        queueJobId: 'job-exact-2',
+        summaryMessage: 'Queued exact SKU FOASW022 target for new product creation.',
+      },
+      activeImportRunId: 'run-exact-2',
+      activeImportRun: {
+        run: {
+          id: 'run-exact-2',
+          status: 'queued',
+          dispatchMode: 'queued',
+          queueJobId: 'job-exact-2',
+          summaryMessage: 'Queued exact SKU FOASW022 target for new product creation.',
+          params: {
+            directTarget: {
+              type: 'sku',
+              value: 'FOASW022',
+            },
+          },
+        },
+      },
+    });
+
+    render(<ImportLastResultSection />);
+
+    expect(screen.getByText('Exact target:')).toBeInTheDocument();
+    expect(screen.getByText('SKU FOASW022')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'This exact-target run was submitted to the separate base-import runtime queue and will create a new detached product.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Exact target runs always create a new detached product and do not reuse Base sync linkage.'
+      )
+    ).toBeInTheDocument();
+  });
 });

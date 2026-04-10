@@ -140,7 +140,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       seeded.nextRecords.some(
         (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
       )
-    ).toBe(false);
+    ).toBe(true);
 
     const triggerButtonsRecord = seeded.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
@@ -158,7 +158,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     ).toBe(true);
     expect(
       triggerButtons.some((button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('restores the broader static recovery bundle from semantic workflow assets', () => {
@@ -392,8 +392,8 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     expect(normalizeButtons).toHaveLength(1);
     expect(normalizeButtons[0]).toEqual(
       expect.objectContaining({
-        id: 'cf9974ae-1fb3-4e61-8a30-8df8af63744f',
-        pathId: null,
+        id: '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27',
+        pathId: 'path_name_normalize_v1',
         locations: ['product_modal'],
       })
     );

@@ -1,3 +1,4 @@
+import type { BaseImportDirectTargetType } from '@/shared/contracts/integrations/base-com';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
 import type { Toast } from '@/shared/contracts/ui/base';
@@ -21,6 +22,8 @@ interface ImportExportRuntimeResourcesParams {
   importListPage: number;
   importListPageSize: number;
   importNameSearch: string;
+  importDirectTargetType: BaseImportDirectTargetType;
+  importDirectTargetValue: string;
   importSkuSearch: string;
   importTemplateId: string;
   inventoriesEnabled: boolean;
@@ -102,6 +105,8 @@ export function useImportExportRuntimeResources(
     importListPage,
     importListPageSize,
     importNameSearch,
+    importDirectTargetType,
+    importDirectTargetValue,
     importSkuSearch,
     importTemplateId,
     inventoriesEnabled,
@@ -201,6 +206,8 @@ export function useImportExportRuntimeResources(
     importListPage,
     importListPageSize,
     importNameSearch,
+    importDirectTargetType,
+    importDirectTargetValue,
     importSkuSearch,
     importListEnabled,
     activeImportRunId,

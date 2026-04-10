@@ -1,20 +1,14 @@
-import { existsSync } from 'fs';
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  enqueuePlaywrightEngineRunMock,
-  resolveConnectionPlaywrightSettingsMock,
-  parsePersistedStorageStateMock,
-} = vi.hoisted(() => ({
-  enqueuePlaywrightEngineRunMock: vi.fn(),
-  resolveConnectionPlaywrightSettingsMock: vi.fn(),
-  parsePersistedStorageStateMock: vi.fn(),
+import type { ResolvedPlaywrightConnectionRuntime } from '@/features/playwright/server';
+
+const { runPlaywrightConnectionEngineTaskMock } = vi.hoisted(() => ({
+  runPlaywrightConnectionEngineTaskMock: vi.fn(),
 }));
 
 vi.mock('@/features/playwright/server', () => ({
-  enqueuePlaywrightEngineRun: (...args: unknown[]) =>
-    enqueuePlaywrightEngineRunMock(...args) as Promise<unknown>,
+  runPlaywrightConnectionEngineTask: (input: Record<string, unknown>) =>
+    runPlaywrightConnectionEngineTaskMock(input) as Promise<unknown>,
   createProgrammableListingPlaywrightInstance: (input: Record<string, unknown> = {}) => ({
     kind: 'programmable_listing',
     label: 'Programmable Playwright listing',
@@ -27,210 +21,239 @@ vi.mock('@/features/playwright/server', () => ({
     tags: ['integration', 'import'],
     ...input,
   }),
-}));
+  resolvePlaywrightEngineRunOutputs: (resultPayload: unknown) => {
+    const payloadRecord =
+      resultPayload && typeof resultPayload === 'object' && !Array.isArray(resultPayload)
+        ? (resultPayload as Record<string, unknown>)
+        : {};
+    const outputs =
+      payloadRecord['outputs'] &&
+      typeof payloadRecord['outputs'] === 'object' &&
+      !Array.isArray(payloadRecord['outputs'])
+        ? (payloadRecord['outputs'] as Record<string, unknown>)
+        : payloadRecord;
+    const resultValue =
+      outputs['result'] && typeof outputs['result'] === 'object' && !Array.isArray(outputs['result'])
+        ? (outputs['result'] as Record<string, unknown>)
+        : outputs;
 
-vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
-  resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
-    resolveConnectionPlaywrightSettingsMock(...args) as Promise<unknown>,
-  parsePersistedStorageState: (...args: unknown[]) =>
-    parsePersistedStorageStateMock(...args) as unknown,
+    return {
+      outputs,
+      resultValue,
+      finalUrl:
+        typeof payloadRecord['finalUrl'] === 'string' ? payloadRecord['finalUrl'].trim() : null,
+    };
+  },
+  buildPlaywrightEngineRunFailureMeta: (
+    run: Record<string, unknown>,
+    options?: { includeRawResult?: boolean }
+  ) => {
+    const payloadRecord =
+      run['result'] && typeof run['result'] === 'object' && !Array.isArray(run['result'])
+        ? (run['result'] as Record<string, unknown>)
+        : {};
+    const outputs =
+      payloadRecord['outputs'] &&
+      typeof payloadRecord['outputs'] === 'object' &&
+      !Array.isArray(payloadRecord['outputs'])
+        ? (payloadRecord['outputs'] as Record<string, unknown>)
+        : payloadRecord;
+    const resultValue =
+      outputs['result'] && typeof outputs['result'] === 'object' && !Array.isArray(outputs['result'])
+        ? (outputs['result'] as Record<string, unknown>)
+        : outputs;
+    const finalUrl =
+      typeof payloadRecord['finalUrl'] === 'string' ? payloadRecord['finalUrl'].trim() : null;
+
+    return {
+      runId: run['runId'],
+      runStatus: run['status'],
+      finalUrl,
+      latestStage:
+        typeof resultValue['stage'] === 'string' ? resultValue['stage'].trim() : null,
+      latestStageUrl:
+        typeof resultValue['currentUrl'] === 'string'
+          ? resultValue['currentUrl'].trim()
+          : finalUrl,
+      failureArtifacts: Array.isArray(run['artifacts']) ? run['artifacts'] : [],
+      logTail: Array.isArray(run['logs']) ? (run['logs'] as unknown[]).slice(-12) : [],
+      ...(options?.includeRawResult
+        ? {
+            rawResult: Object.keys(resultValue).length > 0 ? resultValue : null,
+          }
+        : {}),
+    };
+  },
 }));
 
 import { runPlaywrightListingScript } from './runner';
 
-describe('runPlaywrightListingScript', () => {
-  const braveExecutablePath = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
+const defaultRuntimeSettings = {
+  browser: 'auto',
+  headless: true,
+  slowMo: 85,
+  timeout: 30_000,
+  navigationTimeout: 30_000,
+  humanizeMouse: true,
+  mouseJitter: 11,
+  clickDelayMin: 45,
+  clickDelayMax: 140,
+  inputDelayMin: 35,
+  inputDelayMax: 125,
+  actionDelayMin: 250,
+  actionDelayMax: 950,
+  proxyEnabled: false,
+  proxyServer: '',
+  proxyUsername: '',
+  proxyPassword: '',
+  emulateDevice: false,
+  deviceName: 'Desktop Chrome',
+} as const;
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
-      browser: 'auto',
-      headless: true,
-      slowMo: 85,
-      timeout: 30000,
-      navigationTimeout: 30000,
-      humanizeMouse: true,
-      mouseJitter: 11,
-      clickDelayMin: 45,
-      clickDelayMax: 140,
-      inputDelayMin: 35,
-      inputDelayMax: 125,
-      actionDelayMin: 250,
-      actionDelayMax: 950,
-      proxyEnabled: false,
-      proxyServer: '',
-      proxyUsername: '',
-      proxyPassword: '',
-      emulateDevice: false,
-      deviceName: 'Desktop Chrome',
-    });
-    parsePersistedStorageStateMock.mockReturnValue({
-      cookies: [{ name: 'session', value: 'abc', domain: '.tradera.com', path: '/' }],
-      origins: [],
-    });
-    enqueuePlaywrightEngineRunMock.mockResolvedValue({
-      runId: 'run-123',
-      status: 'completed',
-      result: {
-        outputs: {
-          result: {
-            externalListingId: 'listing-123',
-            listingUrl: 'https://www.tradera.com/item/123',
-            publishVerified: true,
-          },
+const defaultStorageState = {
+  cookies: [{ name: 'session', value: 'abc', domain: '.tradera.com', path: '/' }],
+  origins: [],
+} as const;
+
+const makeRuntime = (
+  overrides: Partial<ResolvedPlaywrightConnectionRuntime> = {}
+): ResolvedPlaywrightConnectionRuntime => ({
+  browserPreference: 'auto',
+  deviceContextOptions: {},
+  deviceProfileName: null,
+  personaId: undefined,
+  storageState: defaultStorageState,
+  settings: {
+    ...defaultRuntimeSettings,
+    ...(overrides.settings ?? {}),
+  },
+  ...overrides,
+});
+
+const makeConnectionTaskResult = (overrides?: {
+  runtime?: Partial<ResolvedPlaywrightConnectionRuntime>;
+  settings?: Partial<(typeof defaultRuntimeSettings)>;
+  run?: Record<string, unknown>;
+}) => ({
+  runtime: makeRuntime(overrides?.runtime),
+  settings: {
+    ...defaultRuntimeSettings,
+    ...(overrides?.settings ?? {}),
+  },
+  browserPreference:
+    overrides?.runtime?.browserPreference ??
+    overrides?.runtime?.settings?.browser ??
+    defaultRuntimeSettings.browser,
+  run: {
+    runId: 'run-123',
+    status: 'completed',
+    result: {
+      outputs: {
+        result: {
+          externalListingId: 'listing-123',
+          listingUrl: 'https://www.tradera.com/item/123',
+          publishVerified: true,
         },
       },
-    });
+    },
+    ...(overrides?.run ?? {}),
+  },
+});
+
+describe('runPlaywrightListingScript', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(makeConnectionTaskResult());
   });
 
-  it('launches scripted runs in Chrome when the connection browser is chrome', async () => {
-    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
-      browser: 'chrome',
-      headless: true,
-      slowMo: 85,
-      timeout: 30000,
-      navigationTimeout: 30000,
-      humanizeMouse: true,
-      mouseJitter: 11,
-      clickDelayMin: 45,
-      clickDelayMax: 140,
-      inputDelayMin: 35,
-      inputDelayMax: 125,
-      actionDelayMin: 250,
-      actionDelayMax: 950,
-      proxyEnabled: false,
-      proxyServer: '',
-      proxyUsername: '',
-      proxyPassword: '',
-      emulateDevice: false,
-      deviceName: 'Desktop Chrome',
-    });
-
+  it('passes the connection browser preference through the engine config resolver', async () => {
     await runPlaywrightListingScript({
       script: 'export default async function run() {}',
       input: { title: 'Example' },
       connection: {} as never,
     });
 
-    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
-      request: expect.objectContaining({
-        launchOptions: {
-          channel: 'chrome',
-        },
-      }),
-      waitForResult: true,
-      instance: expect.objectContaining({
-        kind: 'programmable_listing',
-      }),
-    });
-  });
-
-  it('launches scripted runs in Brave when the connection browser is brave', async () => {
-    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
-      browser: 'brave',
-      headless: true,
-      slowMo: 85,
-      timeout: 30000,
-      navigationTimeout: 30000,
-      humanizeMouse: true,
-      mouseJitter: 11,
-      clickDelayMin: 45,
-      clickDelayMax: 140,
-      inputDelayMin: 35,
-      inputDelayMax: 125,
-      actionDelayMin: 250,
-      actionDelayMax: 950,
-      proxyEnabled: false,
-      proxyServer: '',
-      proxyUsername: '',
-      proxyPassword: '',
-      emulateDevice: false,
-      deviceName: 'Desktop Chrome',
-    });
-
-    await runPlaywrightListingScript({
-      script: 'export default async function run() {}',
-      input: { title: 'Example' },
-      connection: {} as never,
-    });
-
-    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
-      request: expect.objectContaining({
-        launchOptions: {
-          executablePath: braveExecutablePath,
-        },
-      }),
-      waitForResult: true,
-      instance: expect.objectContaining({
-        kind: 'programmable_listing',
-      }),
-    });
-  });
-
-  it('launches scripted runs in the auto-selected local browser', async () => {
-    await runPlaywrightListingScript({
-      script: 'export default async function run() {}',
-      input: { title: 'Example' },
-      connection: {} as never,
-    });
-
-    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
-      request: expect.objectContaining({
-        launchOptions: existsSync(braveExecutablePath)
-          ? {
-              executablePath: braveExecutablePath,
-            }
-          : {
-              channel: 'chrome',
-            },
-      }),
-      waitForResult: true,
-      instance: expect.objectContaining({
-        kind: 'programmable_listing',
-      }),
-    });
-  });
-
-  it('forwards saved storageState into the Playwright node runner context', async () => {
-    const connection = {
-      playwrightPersonaId: 'persona-1',
-      playwrightStorageState: 'encrypted-state',
+    const call = runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0] as {
+      resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
+        browserPreference?: string | null;
+      };
     };
+    const resolved = call.resolveEngineRequestConfig(
+      makeRuntime({
+        browserPreference: 'chrome',
+        settings: {
+          ...defaultRuntimeSettings,
+          browser: 'chrome',
+        },
+      })
+    );
+
+    expect(resolved.browserPreference).toBe('chrome');
+  });
+
+  it('keeps Brave browser preference available to the centralized engine config', async () => {
+    await runPlaywrightListingScript({
+      script: 'export default async function run() {}',
+      input: { title: 'Example' },
+      connection: {} as never,
+    });
+
+    const call = runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0] as {
+      resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
+        browserPreference?: string | null;
+      };
+    };
+    const resolved = call.resolveEngineRequestConfig(
+      makeRuntime({
+        browserPreference: 'brave',
+        settings: {
+          ...defaultRuntimeSettings,
+          browser: 'brave',
+        },
+      })
+    );
+
+    expect(resolved.browserPreference).toBe('brave');
+  });
+
+  it('returns mapped listing details and runtime-derived execution summary', async () => {
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(
+      makeConnectionTaskResult({
+        runtime: {
+          personaId: 'persona-1',
+        },
+        settings: {
+          emulateDevice: false,
+          deviceName: 'Desktop Chrome',
+        },
+      })
+    );
 
     const result = await runPlaywrightListingScript({
       script: 'export default async function run() {}',
       input: { title: 'Example' },
-      connection: connection as never,
+      connection: {
+        playwrightPersonaId: 'persona-1',
+        playwrightStorageState: 'encrypted-state',
+      } as never,
     });
 
-    expect(parsePersistedStorageStateMock).toHaveBeenCalledWith('encrypted-state');
-    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
-      request: expect.objectContaining({
-        script: 'export default async function run() {}',
-        input: { title: 'Example' },
-        personaId: 'persona-1',
-        contextOptions: {
-          storageState: {
-            cookies: [{ name: 'session', value: 'abc', domain: '.tradera.com', path: '/' }],
-            origins: [],
-          },
-        },
-        settingsOverrides: expect.objectContaining({
-          humanizeMouse: true,
-          mouseJitter: 11,
-          clickDelayMin: 45,
-          clickDelayMax: 140,
-          inputDelayMin: 35,
-          inputDelayMax: 125,
-          actionDelayMin: 250,
-          actionDelayMax: 950,
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connection: expect.objectContaining({
+          playwrightStorageState: 'encrypted-state',
         }),
-      }),
-      waitForResult: true,
-      instance: expect.objectContaining({
-        kind: 'programmable_listing',
-      }),
-    });
+        request: expect.objectContaining({
+          script: 'export default async function run() {}',
+          input: { title: 'Example' },
+          browserEngine: 'chromium',
+          preventNewPages: true,
+        }),
+        instance: expect.objectContaining({
+          kind: 'programmable_listing',
+        }),
+      })
+    );
     expect(result).toMatchObject({
       runId: 'run-123',
       externalListingId: 'listing-123',
@@ -241,8 +264,8 @@ describe('runPlaywrightListingScript', () => {
       executionSettings: {
         headless: true,
         slowMo: 85,
-        timeout: 30000,
-        navigationTimeout: 30000,
+        timeout: 30_000,
+        navigationTimeout: 30_000,
         humanizeMouse: true,
         mouseJitter: 11,
         clickDelayMin: 45,
@@ -258,12 +281,7 @@ describe('runPlaywrightListingScript', () => {
     });
   });
 
-  it('forwards the Tradera listing form URL as the runner startUrl for storage-state sanitization', async () => {
-    const connection = {
-      playwrightPersonaId: 'persona-1',
-      playwrightStorageState: 'encrypted-state',
-    };
-
+  it('forwards the Tradera listing form URL as the centralized engine startUrl', async () => {
     await runPlaywrightListingScript({
       script: 'export default async function run() {}',
       input: {
@@ -272,73 +290,69 @@ describe('runPlaywrightListingScript', () => {
           listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
         },
       },
-      connection: connection as never,
+      connection: {} as never,
     });
 
-    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
-      request: expect.objectContaining({
-        startUrl: 'https://www.tradera.com/en/selling/new',
-      }),
-      waitForResult: true,
-      instance: expect.objectContaining({
-        kind: 'programmable_listing',
-      }),
-    });
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          startUrl: 'https://www.tradera.com/en/selling/new',
+        }),
+        instance: expect.objectContaining({
+          kind: 'programmable_listing',
+        }),
+      })
+    );
   });
 
-  it('overrides the connection headless setting for headed relist troubleshooting runs', async () => {
-    const connection = {
-      playwrightPersonaId: 'persona-1',
-      playwrightStorageState: 'encrypted-state',
-    };
-
+  it('forces headed troubleshooting runs through the engine config resolver', async () => {
     await runPlaywrightListingScript({
       script: 'export default async function run() {}',
       input: { title: 'Example' },
-      connection: connection as never,
+      connection: {} as never,
       browserMode: 'headed',
     });
 
-    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
-      request: expect.objectContaining({
-        settingsOverrides: expect.objectContaining({
-          headless: false,
-        }),
-      }),
-      waitForResult: true,
-      instance: expect.objectContaining({
-        kind: 'programmable_listing',
-      }),
-    });
+    const call = runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0] as {
+      resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
+        settings: { headless: boolean };
+      };
+    };
+    const resolved = call.resolveEngineRequestConfig(makeRuntime());
+
+    expect(resolved.settings.headless).toBe(false);
   });
 
   it('applies runtime settings overrides on top of the resolved connection settings', async () => {
-    const connection = {
-      playwrightPersonaId: 'persona-1',
-      playwrightStorageState: 'encrypted-state',
-    };
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(
+      makeConnectionTaskResult({
+        settings: {
+          emulateDevice: false,
+          deviceName: 'Desktop Chrome',
+        },
+      })
+    );
 
     const result = await runPlaywrightListingScript({
       script: 'export default async function run() {}',
       input: { title: 'Example' },
-      connection: connection as never,
+      connection: {} as never,
       runtimeSettingsOverrides: {
         emulateDevice: false,
         deviceName: 'Desktop Chrome',
       },
     });
 
-    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
-      request: expect.objectContaining({
-        settingsOverrides: expect.objectContaining({
-          emulateDevice: false,
-          deviceName: 'Desktop Chrome',
-        }),
-      }),
-      waitForResult: true,
-      instance: expect.objectContaining({
-        kind: 'programmable_listing',
-      }),
+    const call = runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0] as {
+      resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
+        settings: { emulateDevice: boolean; deviceName: string };
+      };
+    };
+    const resolved = call.resolveEngineRequestConfig(makeRuntime());
+
+    expect(resolved.settings).toMatchObject({
+      emulateDevice: false,
+      deviceName: 'Desktop Chrome',
     });
     expect(result.executionSettings).toMatchObject({
       emulateDevice: false,
@@ -347,11 +361,6 @@ describe('runPlaywrightListingScript', () => {
   });
 
   it('can skip startUrl bootstrap so Tradera scripts control sell-page navigation', async () => {
-    const connection = {
-      playwrightPersonaId: 'persona-1',
-      playwrightStorageState: 'encrypted-state',
-    };
-
     await runPlaywrightListingScript({
       script: 'export default async function run() {}',
       input: {
@@ -360,27 +369,32 @@ describe('runPlaywrightListingScript', () => {
           listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
         },
       },
-      connection: connection as never,
+      connection: {} as never,
       disableStartUrlBootstrap: true,
     });
 
-    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
-      request: expect.not.objectContaining({
-        startUrl: expect.anything(),
-      }),
-      waitForResult: true,
-      instance: expect.objectContaining({
-        kind: 'programmable_listing',
-      }),
-    });
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'programmable_listing',
+        }),
+      })
+    );
+    expect(runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0]?.request).not.toHaveProperty(
+      'startUrl'
+    );
   });
 
-  it('preserves the Playwright run id when the node runner fails', async () => {
-    enqueuePlaywrightEngineRunMock.mockResolvedValue({
-      runId: 'run-failed-1',
-      status: 'failed',
-      error: 'Script execution failed',
-    });
+  it('preserves the Playwright run id when the centralized engine task fails', async () => {
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(
+      makeConnectionTaskResult({
+        run: {
+          runId: 'run-failed-1',
+          status: 'failed',
+          error: 'Script execution failed',
+        },
+      })
+    );
 
     await expect(
       runPlaywrightListingScript({

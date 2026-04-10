@@ -47,6 +47,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     ...(data.templateId ? { templateId: data.templateId } : {}),
     ...(typeof data.limit === 'number' ? { limit: data.limit } : {}),
     ...(Array.isArray(data.selectedIds) ? { selectedIds: data.selectedIds } : {}),
+    ...(data.directTarget ? { directTarget: data.directTarget } : {}),
     ...(typeof data.dryRun === 'boolean' ? { dryRun: data.dryRun } : {}),
     ...(data.mode ? { mode: data.mode } : {}),
     ...(data.requestId ? { requestId: data.requestId } : {}),

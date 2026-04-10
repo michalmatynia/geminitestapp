@@ -327,6 +327,7 @@ export type Product = ProductRecord;
  * Product With Images Contract
  */
 export const productWithImagesSchema = productSchema.extend({
+  duplicateSkuCount: z.number().int().min(0).optional(),
   images: z.array(productImageRecordSchema).default([]),
   catalogs: z.array(productCatalogRecordSchema).default([]),
   tags: z.array(productTagRelationSchema).default([]),

@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-10T11:37:21.555Z",
+  "track": {
+    "id": "ui-consolidation",
+    "title": "UI consolidation",
+    "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
+    "docs": {
+      "category": "ui",
+      "defaultSelected": true,
+      "commands": [
+        "npm run improvements:audit -- --track ui-consolidation",
+        "npm run check:ui-consolidation",
+        "bun run bun:check:ui-consolidation"
+      ],
+      "relatedDocs": [
+        "docs/ui-consolidation/README.md",
+        "docs/platform/component-patterns.md"
+      ],
+      "generatedArtifacts": [
+        "docs/ui-consolidation/scan-latest.md",
+        "docs/ui-consolidation/scan-latest.json",
+        "docs/ui-consolidation/inventory-latest.csv"
+      ]
+    },
+    "phases": {
+      "audit": [
+        {
+          "id": "ui-consolidation-guardrail",
+          "title": "Run UI consolidation guardrail",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "docs/ui-consolidation/scan-latest.md",
+            "docs/ui-consolidation/scan-latest.json",
+            "docs/ui-consolidation/inventory-latest.csv"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "check:ui-consolidation"
+          }
+        }
+      ],
+      "classify": [],
+      "plan": [
+        {
+          "id": "ui-consolidation-plan",
+          "title": "Review the latest shared UI convergence surface",
+          "mode": "manual",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Use docs/ui-consolidation/scan-latest.md as the current shared backlog.",
+              "Prefer migrating to existing shared templates before inventing a new abstraction.",
+              "Keep follow-up migrations inside the owning feature docs once the work stops being cross-feature."
+            ]
+          }
+        }
+      ],
+      "dry-run": [
+        {
+          "id": "ui-consolidation-guardrail",
+          "title": "Run UI consolidation guardrail",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "docs/ui-consolidation/scan-latest.md",
+            "docs/ui-consolidation/scan-latest.json",
+            "docs/ui-consolidation/inventory-latest.csv"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "check:ui-consolidation"
+          }
+        }
+      ],
+      "apply": [
+        {
+          "id": "ui-consolidation-apply",
+          "title": "Apply UI consolidation changes through targeted feature migrations",
+          "mode": "manual",
+          "writes": true,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "This track intentionally stops at the shared backlog and guardrail surface.",
+              "Implement migrations in the owning feature areas instead of using the improvement runner for blind UI rewrites."
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "summary": {
+    "trackId": "ui-consolidation",
+    "title": "UI consolidation",
+    "category": "ui",
+    "defaultSelected": true,
+    "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
+    "overallStatus": "failed",
+    "latestGeneratedAt": "2026-04-10T11:37:21.499Z",
+    "docDir": "docs/build/improvements/ui-consolidation",
+    "phases": [
+      {
+        "phase": "audit",
+        "generatedAt": "2026-04-10T11:36:59.778Z",
+        "reportPath": "artifacts/improvements/audit-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 1,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 1,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [
+          "docs/ui-consolidation/scan-latest.md",
+          "docs/ui-consolidation/scan-latest.json",
+          "docs/ui-consolidation/inventory-latest.csv"
+        ],
+        "steps": [
+          {
+            "id": "ui-consolidation-guardrail",
+            "title": "Run UI consolidation guardrail",
+            "trackId": "ui-consolidation",
+            "phase": "audit",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "docs/ui-consolidation/scan-latest.md",
+              "docs/ui-consolidation/scan-latest.json",
+              "docs/ui-consolidation/inventory-latest.csv"
+            ],
+            "instructions": [],
+            "script": "check:ui-consolidation",
+            "durationMs": 9644
+          }
+        ],
+        "status": "failed"
+      },
+      {
+        "phase": "classify",
+        "generatedAt": "2026-04-10T11:37:20.871Z",
+        "reportPath": "artifacts/improvements/classify-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-configured"
+      },
+      {
+        "phase": "plan",
+        "generatedAt": "2026-04-10T11:37:21.499Z",
+        "reportPath": "artifacts/improvements/plan-report.json",
+        "executionMode": "planned",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 0,
+        "manualStepCount": 1,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "ui-consolidation-plan",
+            "title": "Review the latest shared UI convergence surface",
+            "trackId": "ui-consolidation",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Use docs/ui-consolidation/scan-latest.md as the current shared backlog.",
+              "Prefer migrating to existing shared templates before inventing a new abstraction.",
+              "Keep follow-up migrations inside the owning feature docs once the work stops being cross-feature."
+            ]
+          }
+        ],
+        "status": "manual"
+      },
+      {
+        "phase": "dry-run",
+        "generatedAt": "2026-03-14T08:13:11.213Z",
+        "reportPath": "artifacts/improvements/dry-run-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
+      },
+      {
+        "phase": "apply",
+        "generatedAt": "2026-04-02T09:59:31.245Z",
+        "reportPath": "artifacts/improvements/apply-report.json",
+        "executionMode": "executed",
+        "allowWrite": true,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
+      }
+    ]
+  }
+}

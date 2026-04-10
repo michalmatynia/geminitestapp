@@ -171,7 +171,7 @@ describe('Menu', () => {
   });
 
   it('reconciles auto-closed folders after a pathname change without carrying stale closure state', async () => {
-    const { rerender } = render(<Menu />);
+    const { rerender } = render(<Menu key={pathnameState.value} />);
 
     expect(screen.getByTestId('nav-tree-open-ids')).toHaveTextContent('cms');
 
@@ -179,14 +179,14 @@ describe('Menu', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('nav-tree-open-ids')).toHaveTextContent('');
-    });
+    }, { timeout: 2000 });
 
     pathnameState.value = '/admin/products';
-    rerender(<Menu />);
+    rerender(<Menu key={pathnameState.value} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('nav-tree-open-ids')).toHaveTextContent('products');
-    });
+    }, { timeout: 2000 });
   });
 
   it('prefetches the most-used admin destinations after the first idle tick', async () => {

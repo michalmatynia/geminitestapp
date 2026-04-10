@@ -43,9 +43,11 @@ import {
   BASE_IMPORT_MAX_ATTEMPTS,
   type StartBaseImportRunInput,
   createRunIdempotencyKey,
+  isExactTargetImport,
+  normalizeDirectTarget,
   normalizeSelectedIds,
   nowIso,
-  resolveMode,
+  resolveEffectiveMode,
   shouldReuseIdempotentRun,
   toStringId,
 } from '@/features/integrations/services/imports/base-import-service-shared';
@@ -113,6 +115,41 @@ const formatLatestFailureSummary = (item: BaseImportItemRecord | null): string |
   if (!code && !message) return null;
   if (!message) return `Latest failure: ${subject}${code ? ` [${code}]` : ''}`;
   return `Latest failure: ${subject}${code ? ` [${code}]` : ''}: ${message}`;
+};
+
+const formatExactTargetItemSummary = (input: {
+  run: BaseImportRunRecord;
+  item: BaseImportItemRecord | null;
+}): string | null => {
+  const directTarget = input.run.params.directTarget;
+  const item = input.item;
+  if (!directTarget || !item) return null;
+
+  const targetLabel =
+    directTarget.type === 'sku'
+      ? `SKU ${directTarget.value}`
+      : `Base Product ID ${directTarget.value}`;
+  const productReference = item.importedProductId?.trim()
+    ? ` product ${item.importedProductId.trim()}`
+    : ' product';
+  const importedSkuReference = item.sku?.trim() ? ` with SKU ${item.sku.trim()}` : '';
+
+  if (item.status === 'imported') {
+    return `Exact target ${targetLabel} created new detached${productReference}${importedSkuReference}.`;
+  }
+
+  if (item.status === 'updated') {
+    return `Exact target ${targetLabel} updated existing${productReference}.`;
+  }
+
+  if (item.status === 'skipped') {
+    const message = toCompactFailureMessage(item.errorMessage, 160);
+    return message
+      ? `Exact target ${targetLabel} was skipped: ${message}`
+      : `Exact target ${targetLabel} was skipped.`;
+  }
+
+  return null;
 };
 
 const normalizeCustomFieldName = (value: string): string => value.trim().toLowerCase();
@@ -185,6 +222,7 @@ export const prepareBaseImportRun = async (
   const normalizedTemplateId = input.templateId?.trim() || '';
   const normalizedRequestId = input.requestId?.trim() || '';
   const normalizedSelectedIds = normalizeSelectedIds(input.selectedIds);
+  const normalizedDirectTarget = normalizeDirectTarget(input.directTarget);
   const normalizedLimit =
     typeof input.limit === 'number' && Number.isFinite(input.limit)
       ? Math.max(1, Math.floor(input.limit))
@@ -198,10 +236,14 @@ export const prepareBaseImportRun = async (
     uniqueOnly: input.uniqueOnly,
     allowDuplicateSku: input.allowDuplicateSku,
     dryRun: input.dryRun ?? false,
-    mode: resolveMode(input.mode),
+    mode: resolveEffectiveMode({
+      mode: input.mode,
+      directTarget: normalizedDirectTarget,
+    }),
     ...(normalizedTemplateId ? { templateId: normalizedTemplateId } : {}),
     ...(normalizedLimit !== null ? { limit: normalizedLimit } : {}),
     ...(normalizedSelectedIds.length > 0 ? { selectedIds: normalizedSelectedIds } : {}),
+    ...(normalizedDirectTarget ? { directTarget: normalizedDirectTarget } : {}),
     ...(normalizedRequestId ? { requestId: normalizedRequestId } : {}),
   };
 
@@ -218,13 +260,38 @@ export const prepareBaseImportRun = async (
     });
   }
 
-  const ids = await resolveRunItems({
+  const resolvedItems = await resolveRunItems({
     token: connection.token,
     inventoryId: normalizedParams.inventoryId,
     uniqueOnly: normalizedParams.uniqueOnly,
     ...(normalizedParams.selectedIds ? { selectedIds: normalizedParams.selectedIds } : {}),
+    ...(normalizedParams.directTarget ? { directTarget: normalizedParams.directTarget } : {}),
     ...(typeof normalizedParams.limit === 'number' ? { limit: normalizedParams.limit } : {}),
   });
+  const ids = resolvedItems.ids;
+
+  if (normalizedParams.directTarget && ids.length === 0) {
+    return createBaseImportRun({
+      params: normalizedParams,
+      preflight: {
+        ...preflightResult.preflight,
+        ok: false,
+        issues: [
+          ...preflightResult.preflight.issues,
+          {
+            code: 'NOT_FOUND',
+            severity: 'error',
+            message:
+              resolvedItems.resolutionError ??
+              'The requested Base product could not be resolved in the selected inventory.',
+          },
+        ],
+      },
+      summaryMessage: 'Preflight failed. Resolve errors and retry import.',
+      totalItems: 0,
+      maxAttempts: BASE_IMPORT_MAX_ATTEMPTS,
+    });
+  }
 
   const idempotencyKey = createRunIdempotencyKey(normalizedParams, ids);
 
@@ -248,7 +315,9 @@ export const prepareBaseImportRun = async (
     totalItems: ids.length,
     maxAttempts: BASE_IMPORT_MAX_ATTEMPTS,
     summaryMessage:
-      ids.length === 0
+      normalizedParams.directTarget && ids.length === 1
+        ? `Queued exact ${normalizedParams.directTarget.type === 'sku' ? 'SKU' : 'Base Product ID'} target ${normalizedParams.directTarget.value} for new product creation.`
+        : ids.length === 0
         ? 'No products matched current import filters.'
         : `Queued ${ids.length} products for import.`,
   });
@@ -572,6 +641,7 @@ export const processBaseImportRun = async (
     }
 
     const template = run.params.templateId ? await getImportTemplate(run.params.templateId) : null;
+    const exactTargetImport = isExactTargetImport(run.params.directTarget);
     const templateMappings = Array.isArray(template?.mappings) ? template.mappings : [];
     const templateParameterImportSettings = normalizeBaseImportParameterImportSettings(
       template?.parameterImport
@@ -790,7 +860,9 @@ export const processBaseImportRun = async (
             imageMode: run.params.imageMode,
             dryRun: Boolean(run.params.dryRun),
             inventoryId: run.params.inventoryId,
-            mode: resolveMode(run.params.mode),
+            mode: resolveEffectiveMode(run.params),
+            forceCreateNewProduct: exactTargetImport,
+            persistBaseSyncIdentity: !exactTargetImport,
             allowDuplicateSku: run.params.allowDuplicateSku,
             parameterImportSettings: templateParameterImportSettings,
             catalogLanguageCodes: catalogLanguageContext.languageCodes,
@@ -866,11 +938,23 @@ export const processBaseImportRun = async (
     const latestFailure = pickLatestFailedImportItem(failedItems);
     const latestFailureSummary = formatLatestFailureSummary(latestFailure);
     const summaryMessageBase = buildSummaryMessage(finalStats.stats, Boolean(run.params.dryRun));
+    const exactTargetItems =
+      run.params.directTarget && (finalStats.stats?.total ?? 0) === 1
+        ? await listBaseImportRunItems(runId, {
+            limit: 1,
+          })
+        : [];
+    const exactTargetSummary = formatExactTargetItemSummary({
+      run,
+      item: exactTargetItems[0] ?? null,
+    });
     return updateBaseImportRunStatus(runId, terminalStatus, {
       finishedAt: nowIso(),
-      summaryMessage: latestFailureSummary
-        ? `${summaryMessageBase} ${latestFailureSummary}`
-        : summaryMessageBase,
+      summaryMessage: exactTargetSummary
+        ? exactTargetSummary
+        : latestFailureSummary
+          ? `${summaryMessageBase} ${latestFailureSummary}`
+          : summaryMessageBase,
       error: latestFailure?.errorMessage ?? null,
       errorCode: latestFailure?.errorCode ?? null,
       errorClass: latestFailure?.errorClass ?? null,

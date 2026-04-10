@@ -4,7 +4,7 @@ import {
   encryptSecret,
   getIntegrationRepository,
 } from '@/features/integrations/server';
-import type { PersistedStorageState } from '@/features/integrations/services/tradera-playwright-settings';
+import type { PersistedStorageState } from './settings';
 
 export const persistPlaywrightConnectionStorageState = async (input: {
   connectionId: string;

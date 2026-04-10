@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import {
+  checkBaseSkuExists,
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
   fetchBaseInventories,
   fetchBaseInventoriesDebug,
+  fetchBaseProductById,
   fetchBaseProductIds,
   fetchBaseProductDetails,
   fetchBaseWarehouses,
@@ -156,8 +158,6 @@ export async function postBaseImportsHandler(
       targetCatalog?.defaultPriceGroupId ?? null
     );
 
-    const allBaseIds = await fetchBaseProductIds(token, inventoryId);
-
     // Get existing products using repository to check for baseProductIds and SKUs
     const productRepository = await getProductRepository();
     const allProducts = await productRepository.getProducts({
@@ -174,6 +174,7 @@ export async function postBaseImportsHandler(
         .map((product: ProductWithImages) => product.sku)
         .filter((sku): sku is string => typeof sku === 'string' && sku.trim() !== '')
     );
+    const allBaseIds = listData.directTarget ? [] : await fetchBaseProductIds(token, inventoryId);
 
     const listItems = allBaseIds.map((id: string) => ({
       id,
@@ -256,6 +257,42 @@ export async function postBaseImportsHandler(
       return mapRecordsToItems(records);
     };
 
+    if (listData.directTarget) {
+      let directRecord: BaseProductRecord | null = null;
+
+      if (listData.directTarget.type === 'base_product_id') {
+        directRecord = await fetchBaseProductById(token, inventoryId, listData.directTarget.value);
+      } else {
+        const skuLookup = await checkBaseSkuExists(token, inventoryId, listData.directTarget.value);
+        if (skuLookup.productId) {
+          directRecord = await fetchBaseProductById(token, inventoryId, skuLookup.productId);
+        }
+      }
+
+      const directItems = directRecord ? mapRecordsToItems([directRecord]) : [];
+
+      if (listData.action === 'list_ids') {
+        const response: BaseImportListIdsResponse = {
+          ids: directItems.map((item: ImportListItem) => item.baseProductId),
+          totalMatching: directItems.length,
+        };
+        return NextResponse.json(response);
+      }
+
+      const pageSize = listData.pageSize ?? 50;
+      const response: BaseImportListResponse = {
+        products: directItems,
+        total: directItems.length,
+        filtered: directItems.length,
+        available: directItems.length,
+        existing: directItems.filter((item: ImportListItem) => item.exists).length,
+        skuDuplicates: directItems.filter((item: ImportListItem) => item.skuExists).length,
+        page: 1,
+        pageSize,
+        totalPages: 1,
+      };
+      return NextResponse.json(response);
+    }
     if (!hasSearchFilter) {
       if (listData.action === 'list_ids') {
         const response: BaseImportListIdsResponse = {

@@ -47,8 +47,8 @@ import {
   toRecord,
   resolvePersistedTraderaLinkedTarget,
 } from './tradera-listing/utils';
+import { resolveConnectionPlaywrightSettingsProfile } from '@/features/playwright/server';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
-import { resolveConnectionPlaywrightSettingsProfile } from './tradera-playwright-settings';
 
 const extractErrorMetadata = (error: unknown): Record<string, unknown> | undefined => {
   if (!isAppError(error)) return undefined;

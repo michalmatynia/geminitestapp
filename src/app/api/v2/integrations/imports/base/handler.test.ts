@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   fetchBaseAllWarehousesDebugMock: vi.fn(),
   fetchBaseProductIdsMock: vi.fn(),
   fetchBaseProductDetailsMock: vi.fn(),
+  fetchBaseProductByIdMock: vi.fn(),
+  checkBaseSkuExistsMock: vi.fn(),
   getIntegrationRepositoryMock: vi.fn(),
   mapBaseProductMock: vi.fn(),
   extractBaseImageUrlsMock: vi.fn(),
@@ -33,6 +35,8 @@ vi.mock('@/features/integrations/services/imports/base-client', () => ({
     mocks.fetchBaseAllWarehousesDebugMock(...args),
   fetchBaseProductIds: (...args: unknown[]) => mocks.fetchBaseProductIdsMock(...args),
   fetchBaseProductDetails: (...args: unknown[]) => mocks.fetchBaseProductDetailsMock(...args),
+  fetchBaseProductById: (...args: unknown[]) => mocks.fetchBaseProductByIdMock(...args),
+  checkBaseSkuExists: (...args: unknown[]) => mocks.checkBaseSkuExistsMock(...args),
 }));
 
 vi.mock('@/features/integrations/services/integration-repository', () => ({
@@ -111,6 +115,18 @@ describe('postBaseImportsHandler', () => {
           sku: `SKU-${id}`,
         }))
     );
+    mocks.fetchBaseProductByIdMock.mockImplementation(
+      async (_token: string, _inventoryId: string, id: string) => ({
+        id,
+        product_id: id,
+        name: `Product ${id}`,
+        sku: `SKU-${id}`,
+      })
+    );
+    mocks.checkBaseSkuExistsMock.mockResolvedValue({
+      exists: true,
+      productId: '7',
+    });
     mocks.mapBaseProductMock.mockImplementation((record: { id: string; name: string; sku: string }) => ({
       baseProductId: record.id,
       name_en: record.name,
@@ -181,5 +197,73 @@ describe('postBaseImportsHandler', () => {
       totalMatching: 5,
     });
     expect(mocks.fetchBaseProductDetailsMock).not.toHaveBeenCalled();
+  });
+
+  it('returns a single preview item for an exact Base product ID target', async () => {
+    const response = await postBaseImportsHandler(
+      new NextRequest('http://localhost/api/v2/integrations/imports/base', {
+        method: 'POST',
+      }),
+      createRequestContext({
+        action: 'list',
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        catalogId: 'catalog-1',
+        directTarget: {
+          type: 'base_product_id',
+          value: '9568407',
+        },
+        page: 1,
+        pageSize: 25,
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(payload.products).toHaveLength(1);
+    expect(payload.products[0]).toMatchObject({
+      baseProductId: '9568407',
+      sku: 'SKU-9568407',
+    });
+    expect(payload.filtered).toBe(1);
+    expect(payload.total).toBe(1);
+    expect(mocks.fetchBaseProductByIdMock).toHaveBeenCalledWith(
+      'token-1',
+      'inventory-1',
+      '9568407'
+    );
+    expect(mocks.fetchBaseProductIdsMock).not.toHaveBeenCalled();
+  });
+
+  it('returns a single id for an exact SKU target', async () => {
+    const response = await postBaseImportsHandler(
+      new NextRequest('http://localhost/api/v2/integrations/imports/base', {
+        method: 'POST',
+      }),
+      createRequestContext({
+        action: 'list_ids',
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        catalogId: 'catalog-1',
+        directTarget: {
+          type: 'sku',
+          value: 'FOASW022',
+        },
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      ids: ['7'],
+      totalMatching: 1,
+    });
+    expect(mocks.checkBaseSkuExistsMock).toHaveBeenCalledWith(
+      'token-1',
+      'inventory-1',
+      'FOASW022'
+    );
+    expect(mocks.fetchBaseProductByIdMock).toHaveBeenCalledWith('token-1', 'inventory-1', '7');
+    expect(mocks.fetchBaseProductIdsMock).not.toHaveBeenCalled();
   });
 });

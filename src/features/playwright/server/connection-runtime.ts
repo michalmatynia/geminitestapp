@@ -7,7 +7,14 @@ import {
   resolveConnectionPlaywrightSettings,
   type PersistedStorageState,
   type TraderaPlaywrightRuntimeSettings,
-} from '@/features/integrations/services/tradera-playwright-settings';
+} from './settings';
+import {
+  runPlaywrightEngineTask,
+  startPlaywrightEngineTask,
+  type PlaywrightEngineRunInstance,
+  type PlaywrightEngineRunRecord,
+  type PlaywrightEngineRunRequest,
+} from './runtime';
 import { normalizeIntegrationConnectionPlaywrightPersonaId } from '@/features/integrations/utils/playwright-connection-settings';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import {
@@ -24,6 +31,62 @@ export type ResolvedPlaywrightConnectionRuntime = {
   browserPreference: PlaywrightBrowserPreference;
   deviceProfileName: string | null;
   deviceContextOptions: BrowserContextOptions;
+};
+
+type PlaywrightConnectionSettingsOverridesInput = Pick<
+  TraderaPlaywrightRuntimeSettings,
+  | 'headless'
+  | 'slowMo'
+  | 'timeout'
+  | 'navigationTimeout'
+  | 'humanizeMouse'
+  | 'mouseJitter'
+  | 'clickDelayMin'
+  | 'clickDelayMax'
+  | 'inputDelayMin'
+  | 'inputDelayMax'
+  | 'actionDelayMin'
+  | 'actionDelayMax'
+  | 'proxyEnabled'
+  | 'proxyServer'
+  | 'proxyUsername'
+  | 'proxyPassword'
+  | 'emulateDevice'
+  | 'deviceName'
+>;
+
+export type PlaywrightConnectionEngineRequestOptions = {
+  personaId?: string;
+  contextOptions?: { storageState: PersistedStorageState };
+  settingsOverrides: Record<string, unknown>;
+  launchOptions?: Record<string, unknown>;
+};
+
+export type PlaywrightConnectionBaseEngineRunRequest = Omit<
+  PlaywrightEngineRunRequest,
+  'personaId' | 'contextOptions' | 'settingsOverrides' | 'launchOptions'
+>;
+
+export type PlaywrightConnectionEngineRequestConfig = {
+  settings: PlaywrightConnectionSettingsOverridesInput;
+  browserPreference?: PlaywrightBrowserPreference | null;
+};
+
+export type PlaywrightConnectionEngineTaskInput = {
+  connection: IntegrationConnectionRecord;
+  request: PlaywrightConnectionBaseEngineRunRequest;
+  ownerUserId?: string | null;
+  instance?: PlaywrightEngineRunInstance | null;
+  resolveEngineRequestConfig?: (
+    runtime: ResolvedPlaywrightConnectionRuntime
+  ) => PlaywrightConnectionEngineRequestConfig;
+};
+
+export type PlaywrightConnectionEngineTaskResult = {
+  runtime: ResolvedPlaywrightConnectionRuntime;
+  settings: PlaywrightConnectionSettingsOverridesInput;
+  browserPreference: PlaywrightBrowserPreference | null;
+  run: PlaywrightEngineRunRecord;
 };
 
 const toDeviceContextOptions = (
@@ -103,27 +166,7 @@ export const buildPlaywrightConnectionContextOptions = (input: {
 });
 
 export const buildPlaywrightConnectionSettingsOverrides = (
-  settings: Pick<
-    TraderaPlaywrightRuntimeSettings,
-    | 'headless'
-    | 'slowMo'
-    | 'timeout'
-    | 'navigationTimeout'
-    | 'humanizeMouse'
-    | 'mouseJitter'
-    | 'clickDelayMin'
-    | 'clickDelayMax'
-    | 'inputDelayMin'
-    | 'inputDelayMax'
-    | 'actionDelayMin'
-    | 'actionDelayMax'
-    | 'proxyEnabled'
-    | 'proxyServer'
-    | 'proxyUsername'
-    | 'proxyPassword'
-    | 'emulateDevice'
-    | 'deviceName'
-  >
+  settings: PlaywrightConnectionSettingsOverridesInput
 ): Record<string, unknown> => ({
   headless: settings.headless,
   slowMo: settings.slowMo,
@@ -150,3 +193,103 @@ export const buildPlaywrightConnectionEngineLaunchOptions = (input: {
 }): Record<string, unknown> => ({
   ...resolvePlaywrightBrowserLaunchOptions(input.browserPreference),
 });
+
+export const buildPlaywrightConnectionEngineRequestOptions = (input: {
+  runtime: Pick<ResolvedPlaywrightConnectionRuntime, 'personaId' | 'storageState'>;
+  settings: PlaywrightConnectionSettingsOverridesInput;
+  browserPreference?: PlaywrightBrowserPreference | null;
+}): PlaywrightConnectionEngineRequestOptions => {
+  const launchOptions =
+    input.browserPreference
+      ? buildPlaywrightConnectionEngineLaunchOptions({
+          browserPreference: input.browserPreference,
+        })
+      : {};
+
+  return {
+    ...(input.runtime.personaId ? { personaId: input.runtime.personaId } : {}),
+    ...(input.runtime.storageState
+      ? { contextOptions: { storageState: input.runtime.storageState } }
+      : {}),
+    settingsOverrides: buildPlaywrightConnectionSettingsOverrides(input.settings),
+    ...(Object.keys(launchOptions).length > 0 ? { launchOptions } : {}),
+  };
+};
+
+const resolvePlaywrightConnectionEngineRequestConfig = (
+  runtime: ResolvedPlaywrightConnectionRuntime,
+  resolver?: (
+    runtime: ResolvedPlaywrightConnectionRuntime
+  ) => PlaywrightConnectionEngineRequestConfig
+): PlaywrightConnectionEngineRequestConfig => {
+  if (resolver) {
+    return resolver(runtime);
+  }
+
+  return {
+    settings: runtime.settings,
+    browserPreference: runtime.browserPreference,
+  };
+};
+
+const buildPlaywrightConnectionEngineRunRequest = (input: {
+  request: PlaywrightConnectionBaseEngineRunRequest;
+  runtime: ResolvedPlaywrightConnectionRuntime;
+  settings: PlaywrightConnectionSettingsOverridesInput;
+  browserPreference?: PlaywrightBrowserPreference | null;
+}): PlaywrightEngineRunRequest => ({
+  ...input.request,
+  ...buildPlaywrightConnectionEngineRequestOptions({
+    runtime: input.runtime,
+    settings: input.settings,
+    browserPreference: input.browserPreference,
+  }),
+});
+
+const executePlaywrightConnectionEngineTask = async (
+  input: PlaywrightConnectionEngineTaskInput,
+  mode: 'run' | 'start'
+): Promise<PlaywrightConnectionEngineTaskResult> => {
+  const runtime = await resolvePlaywrightConnectionRuntime(input.connection);
+  const config = resolvePlaywrightConnectionEngineRequestConfig(
+    runtime,
+    input.resolveEngineRequestConfig
+  );
+  const browserPreference = config.browserPreference ?? runtime.browserPreference;
+  const request = buildPlaywrightConnectionEngineRunRequest({
+    request: input.request,
+    runtime,
+    settings: config.settings,
+    browserPreference,
+  });
+
+  const run =
+    mode === 'start'
+      ? await startPlaywrightEngineTask({
+          request,
+          ownerUserId: input.ownerUserId,
+          instance: input.instance,
+        })
+      : await runPlaywrightEngineTask({
+          request,
+          ownerUserId: input.ownerUserId,
+          instance: input.instance,
+        });
+
+  return {
+    runtime,
+    settings: config.settings,
+    browserPreference,
+    run,
+  };
+};
+
+export const runPlaywrightConnectionEngineTask = async (
+  input: PlaywrightConnectionEngineTaskInput
+): Promise<PlaywrightConnectionEngineTaskResult> =>
+  executePlaywrightConnectionEngineTask(input, 'run');
+
+export const startPlaywrightConnectionEngineTask = async (
+  input: PlaywrightConnectionEngineTaskInput
+): Promise<PlaywrightConnectionEngineTaskResult> =>
+  executePlaywrightConnectionEngineTask(input, 'start');

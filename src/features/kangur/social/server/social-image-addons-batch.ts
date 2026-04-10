@@ -8,9 +8,9 @@ import sharp from 'sharp';
 
 import {
   createSocialCaptureBatchPlaywrightInstance,
-  enqueuePlaywrightEngineRun,
   readPlaywrightEngineArtifact,
   readPlaywrightEngineRun,
+  startPlaywrightEngineTask,
   type PlaywrightEngineRunArtifact,
   type PlaywrightEngineRunRecord,
 } from '@/features/playwright/server';
@@ -34,10 +34,7 @@ import {
   KANGUR_SOCIAL_PLAYWRIGHT_CAPTURE_TIMEOUT_MS,
 } from '@/features/kangur/social/shared/social-playwright-capture';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
-import {
-  sanitizePlaywrightCookiesFromHeader,
-  sanitizePlaywrightStorageState,
-} from '@/shared/lib/playwright/storage-state';
+import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server/request-storage-state';
 
 import {
   findLatestAddonByPresetId,
@@ -190,68 +187,30 @@ const resolvePlaywrightStorageState = (params: {
   cookieHeader: string | null | undefined;
   baseUrl: string;
   appearanceMode: string | null | undefined;
-}):
-  | {
-      cookies: Array<Record<string, unknown>>;
-      origins: Array<{
-        origin: string;
-        localStorage: Array<{ name: string; value: string }>;
-      }>;
-    }
-  | null => {
-  const cookies = params.cookieHeader
-    ? sanitizePlaywrightCookiesFromHeader(params.cookieHeader, params.baseUrl)
-    : [];
+}): ReturnType<typeof resolvePlaywrightRequestStorageState> => {
   const appearanceMode = normalizeCaptureAppearanceMode(params.appearanceMode);
-  let origin: string | null = null;
-  if (appearanceMode) {
-    try {
-      origin = new URL(params.baseUrl).origin;
-    } catch {
-      origin = null;
-    }
-  }
-
-  const origins =
-    appearanceMode && origin
+  const resolved = resolvePlaywrightRequestStorageState({
+    cookieHeader: params.cookieHeader,
+    sourceUrl: params.baseUrl,
+    localStorageEntries: appearanceMode
       ? [
           {
-            origin,
-            localStorage: [
-              {
-                name: KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
-                value: appearanceMode,
-              },
-            ],
+            name: KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
+            value: appearanceMode,
           },
         ]
-      : [];
+      : null,
+  });
 
-  if (cookies.length === 0 && origins.length === 0) {
-    return null;
-  }
-
-  const storageState = sanitizePlaywrightStorageState(
-    { cookies, origins },
-    { fallbackOrigin: params.baseUrl }
-  );
-  const sanitizedCookieNames = new Set((storageState?.cookies ?? []).map((cookie) => cookie.name));
-  const droppedCookieNames = cookies
-    .map((cookie) => {
-      const name = typeof cookie['name'] === 'string' ? cookie['name'] : null;
-      return name && !sanitizedCookieNames.has(name) ? name : null;
-    })
-    .filter((name): name is string => name !== null);
-
-  if (droppedCookieNames.length > 0) {
+  if (resolved.droppedCookieNames.length > 0) {
     logger.warn('[kangur.social-image-addons.batch] dropped invalid Playwright cookies', {
       baseUrl: params.baseUrl,
-      droppedCookieNames,
+      droppedCookieNames: resolved.droppedCookieNames,
       service: 'kangur.social-image-addons',
     });
   }
 
-  return storageState;
+  return resolved;
 };
 
 const sleep = async (ms: number): Promise<void> =>
@@ -453,7 +412,7 @@ const resolveBatchCaptureRequest = (
   }
 
   const contextOptions: Record<string, unknown> = {};
-  const storageState = resolvePlaywrightStorageState({
+  const { storageState } = resolvePlaywrightStorageState({
     cookieHeader: input.forwardCookies,
     baseUrl,
     appearanceMode,
@@ -489,7 +448,7 @@ export const startPlaywrightBatchCapture = async (
   }));
 
   logger.info('[BATCH] Enqueueing Playwright run', { captureCount: captures.length });
-  const run = await enqueuePlaywrightEngineRun({
+  const run = await startPlaywrightEngineTask({
     request: {
       script: resolved.playwrightScript,
       input: {
@@ -502,7 +461,6 @@ export const startPlaywrightBatchCapture = async (
       contextOptions: resolved.contextOptions,
       policyAllowedHosts: resolved.trustedSelfOriginHost ? [resolved.trustedSelfOriginHost] : undefined,
     },
-    waitForResult: false,
     ownerUserId: resolved.createdBy,
     instance: createSocialCaptureBatchPlaywrightInstance(),
   });

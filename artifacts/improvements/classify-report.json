@@ -1,155 +1,50 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-02T21:21:20.286Z",
+  "generatedAt": "2026-04-10T11:37:20.871Z",
   "phase": "classify",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-parameter-integrity",
-    "products-category-schema-normalization",
+    "ui-consolidation",
+    "application-performance",
+    "testing-quality-baseline",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/classify-report.json",
   "steps": [
     {
-      "id": "products-parameter-recovery-classification",
-      "title": "Classify product parameter recovery state",
-      "trackId": "products-parameter-integrity",
+      "id": "application-performance-baseline",
+      "title": "Run the performance baseline pass",
+      "trackId": "application-performance",
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
-        "/tmp/product-parameter-recovery-classification-*.json",
-        "/tmp/product-parameter-recovery-classification-latest.json"
+        "docs/metrics/critical-path-performance-latest.md",
+        "docs/metrics/critical-path-performance-latest.json",
+        "docs/metrics/critical-flow-tests-latest.md",
+        "docs/metrics/critical-flow-tests-latest.json",
+        "docs/metrics/unit-domain-timings-latest.md",
+        "docs/metrics/unit-domain-timings-latest.json",
+        "docs/metrics/route-hotspots.md"
       ],
       "instructions": [],
-      "script": "products:classify:parameter-recovery",
-      "durationMs": 3182
+      "script": "perf:ops:baseline",
+      "durationMs": 16001
     },
     {
-      "id": "products-parameter-source-report",
-      "title": "Refresh source-recovery report for unresolved products",
-      "trackId": "products-parameter-integrity",
+      "id": "testing-quality-snapshot",
+      "title": "Collect the testing quality snapshot",
+      "trackId": "testing-quality-baseline",
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
       "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-*.json",
-        "/tmp/product-parameter-source-recovery-latest.json"
-      ],
+      "outputs": [],
       "instructions": [],
-      "script": "products:report:parameter-source-recovery",
-      "durationMs": 6723
-    },
-    {
-      "id": "products-parameter-source-summary",
-      "title": "Summarize unresolved source-recovery products",
-      "trackId": "products-parameter-integrity",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-summary-*.json",
-        "/tmp/product-parameter-source-recovery-summary-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:summarize:parameter-source-recovery",
-      "durationMs": 398
-    },
-    {
-      "id": "products-parameter-source-template",
-      "title": "Generate source-recovery template for unresolved products",
-      "trackId": "products-parameter-integrity",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-template-*.json",
-        "/tmp/product-parameter-source-recovery-template-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:generate:parameter-source-recovery-template",
-      "durationMs": 415
-    },
-    {
-      "id": "products-parameter-source-batch-split",
-      "title": "Split source-recovery template into family batches",
-      "trackId": "products-parameter-integrity",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-batches/manifest.json"
-      ],
-      "instructions": [],
-      "script": "products:split:parameter-source-recovery-template",
-      "durationMs": 329
-    },
-    {
-      "id": "products-parameter-family-mapping-packs",
-      "title": "Generate family mapping packs from the latest source-recovery batches",
-      "trackId": "products-parameter-integrity",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-batches/*-mapping-pack.json"
-      ],
-      "instructions": [],
-      "script": "products:generate:parameter-family-mapping-pack",
-      "durationMs": 316
-    },
-    {
-      "id": "products-parameter-family-mapping-index",
-      "title": "Build family mapping index for unresolved products",
-      "trackId": "products-parameter-integrity",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-batches/family-mapping-index.json"
-      ],
-      "instructions": [],
-      "script": "products:build:parameter-family-mapping-index",
-      "durationMs": 341
-    },
-    {
-      "id": "products-parameter-family-mapping-checklist",
-      "title": "Render family mapping checklist for manual curation",
-      "trackId": "products-parameter-integrity",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md"
-      ],
-      "instructions": [],
-      "script": "products:render:parameter-family-mapping-checklist",
-      "durationMs": 301
-    },
-    {
-      "id": "products-category-manual-remediation-report",
-      "title": "Report products requiring manual category or schema remediation",
-      "trackId": "products-category-schema-normalization",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-manual-remediation-*.json",
-        "/tmp/product-parameter-manual-remediation-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:report:parameter-remediation",
-      "durationMs": 692
+      "script": "check:test-quality",
+      "durationMs": 1667
     },
     {
       "id": "repo-quality-lint",
@@ -158,11 +53,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:lint",
-      "durationMs": 280785
+      "durationMs": 1882
     },
     {
       "id": "repo-quality-typecheck",
@@ -171,11 +66,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:typecheck",
-      "durationMs": 89891
+      "durationMs": 422
     }
   ]
 }

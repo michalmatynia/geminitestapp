@@ -130,15 +130,18 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
     onValueChange,
     options,
     ariaLabel,
+    disabled,
   }: {
     value: string;
     onValueChange: (value: string) => void;
     options: Array<LabeledOptionDto<string>>;
     ariaLabel?: string;
+    disabled?: boolean;
   }) => (
     <select
       aria-label={ariaLabel ?? 'select'}
       value={value}
+      disabled={disabled}
       onChange={(event) => onValueChange(event.target.value)}
     >
       {options.map((option) => (
@@ -153,17 +156,22 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
     description,
     checked,
     onCheckedChange,
+    disabled,
+    title,
   }: {
     label: string;
     description?: string;
     checked: boolean;
     onCheckedChange: (value: boolean) => void;
+    disabled?: boolean;
+    title?: string;
   }) => (
-    <label>
+    <label title={title}>
       <input
         type='checkbox'
         aria-label={label}
         checked={checked}
+        disabled={disabled}
         onChange={(event) => onCheckedChange(event.target.checked)}
       />
       <span>{label}</span>
@@ -204,6 +212,8 @@ const buildState = (overrides: Record<string, unknown> = {}) => ({
   setUniqueOnly: mocks.setUniqueOnlyMock,
   allowDuplicateSku: false,
   setAllowDuplicateSku: mocks.setAllowDuplicateSkuMock,
+  importDirectTargetType: 'base_product_id',
+  importDirectTargetValue: '',
   saveImportSettings: false,
   hasUnsavedImportSettingsChanges: false,
   ...overrides,
@@ -444,5 +454,30 @@ describe('ImportBaseConnectionSection', () => {
     fireEvent.click(screen.getByLabelText('Unique products only'));
 
     expect(mocks.setUniqueOnlyMock).toHaveBeenCalledWith(false);
+  });
+
+  it('disables upsert-specific options when an exact target is active', () => {
+    mocks.useImportExportStateMock.mockReturnValue(
+      buildState({
+        importDirectTargetType: 'sku',
+        importDirectTargetValue: 'FOASW022',
+      })
+    );
+
+    render(<ImportBaseConnectionSection />);
+
+    expect(screen.getByLabelText('Import mode')).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Exact target SKU FOASW022 is active. This run will always create a new detached product.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Unique products only')).toBeDisabled();
+    expect(screen.getByLabelText('Allow duplicate SKUs')).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Exact target imports already create a new product and generate a unique SKU if needed.'
+      )
+    ).toBeInTheDocument();
   });
 });

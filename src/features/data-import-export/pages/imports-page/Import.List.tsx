@@ -13,6 +13,7 @@ import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
+import type { BaseImportDirectTargetType } from '@/shared/contracts/integrations/base-com';
 import type { BaseImportListIdsResponse, ImportListItem } from '@/shared/contracts/integrations/import-export';
 import type { FilterField } from '@/shared/contracts/ui/panels';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
@@ -56,6 +57,11 @@ function SelectionCheckbox({
   );
 }
 
+const DIRECT_TARGET_TYPE_OPTIONS: Array<{ value: BaseImportDirectTargetType; label: string }> = [
+  { value: 'base_product_id', label: 'Base Product ID' },
+  { value: 'sku', label: 'SKU' },
+];
+
 export function ImportListPreviewSection(): React.JSX.Element {
   const { toast } = useToast();
   const { loadingImportList, importListStats, importList } = useImportExportData();
@@ -68,6 +74,10 @@ export function ImportListPreviewSection(): React.JSX.Element {
     setImportNameSearch,
     importSkuSearch,
     setImportSkuSearch,
+    importDirectTargetType,
+    setImportDirectTargetType,
+    importDirectTargetValue,
+    setImportDirectTargetValue,
     importListPage,
     setImportListPage,
     importListPageSize,
@@ -78,6 +88,8 @@ export function ImportListPreviewSection(): React.JSX.Element {
   } = useImportExportState();
   const { handleLoadImportList, handleImport, importing } = useImportExportActions();
   const [loadingAllMatchingSelection, setLoadingAllMatchingSelection] = React.useState(false);
+  const normalizedDirectTargetValue = importDirectTargetValue.trim();
+  const hasDirectTarget = normalizedDirectTargetValue.length > 0;
 
   const selectedImportCount = selectedImportIds.size;
   const visibleImportIds = React.useMemo(
@@ -104,13 +116,17 @@ export function ImportListPreviewSection(): React.JSX.Element {
         uniqueOnly,
         importNameSearch,
         importSkuSearch,
+        importDirectTargetType,
+        directTargetValue: normalizedDirectTargetValue,
       }),
     [
       catalogId,
       importNameSearch,
       importSkuSearch,
+      importDirectTargetType,
       inventoryId,
       limit,
+      normalizedDirectTargetValue,
       selectedBaseConnectionId,
       uniqueOnly,
     ]
@@ -163,6 +179,12 @@ export function ImportListPreviewSection(): React.JSX.Element {
         uniqueOnly,
         searchName: importNameSearch,
         searchSku: importSkuSearch,
+        directTarget: hasDirectTarget
+          ? {
+              type: importDirectTargetType,
+              value: normalizedDirectTargetValue,
+            }
+          : undefined,
       });
       setSelectedImportIds(new Set(response.ids));
       toast(`Selected ${response.totalMatching} matching products.`, { variant: 'success' });
@@ -177,13 +199,32 @@ export function ImportListPreviewSection(): React.JSX.Element {
     catalogId,
     importNameSearch,
     importSkuSearch,
+    importDirectTargetType,
     inventoryId,
+    hasDirectTarget,
     limit,
+    normalizedDirectTargetValue,
     selectedBaseConnectionId,
     setSelectedImportIds,
     toast,
     uniqueOnly,
   ]);
+
+  const updateDirectTargetType = React.useCallback(
+    (value: BaseImportDirectTargetType): void => {
+      setImportDirectTargetType(value);
+      setImportListPage(1);
+    },
+    [setImportDirectTargetType, setImportListPage]
+  );
+
+  const updateDirectTargetValue = React.useCallback(
+    (value: string): void => {
+      setImportDirectTargetValue(value);
+      setImportListPage(1);
+    },
+    [setImportDirectTargetValue, setImportListPage]
+  );
 
   const skuExistsTooltip =
     getDocumentationTooltip(
@@ -369,19 +410,87 @@ export function ImportListPreviewSection(): React.JSX.Element {
             loading={loadingImportList}
             loadingText='Loading...'
           >
-            Load import list
+            {hasDirectTarget ? 'Load exact item' : 'Load import list'}
           </Button>
           <Button
             size='sm'
             onClick={(): void => {
-              void handleImport();
+              void handleImport(
+                hasDirectTarget
+                  ? {
+                      directTarget: {
+                        type: importDirectTargetType,
+                        value: normalizedDirectTargetValue,
+                      },
+                    }
+                  : undefined
+              );
             }}
             loading={importing}
             loadingText='Importing...'
           >
-            Run import
+            {hasDirectTarget ? 'Run exact import' : 'Run import'}
           </Button>
         </div>
+      </div>
+
+      <div className='rounded-md border border-border/60 bg-black/20 p-3'>
+        <div className='flex flex-wrap items-end gap-3'>
+          <label className='flex min-w-[180px] flex-col gap-1 text-xs text-gray-300'>
+            <span className='font-semibold text-gray-200'>Exact import target</span>
+            <select
+              className='h-9 rounded-md border border-border/60 bg-background px-3 text-sm text-white'
+              value={importDirectTargetType}
+              onChange={(event) =>
+                updateDirectTargetType(event.target.value as BaseImportDirectTargetType)
+              }
+              aria-label='Exact import target type'
+            >
+              {DIRECT_TARGET_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className='flex min-w-[260px] flex-1 flex-col gap-1 text-xs text-gray-300'>
+            <span className='font-semibold text-gray-200'>
+              {importDirectTargetType === 'sku' ? 'Exact SKU' : 'Exact Base Product ID'}
+            </span>
+            <input
+              type='text'
+              value={importDirectTargetValue}
+              onChange={(event) => updateDirectTargetValue(event.target.value)}
+              placeholder={
+                importDirectTargetType === 'sku'
+                  ? 'Example: FOASW022'
+                  : 'Example: 9568407'
+              }
+              aria-label='Exact import target value'
+              className='h-9 rounded-md border border-border/60 bg-background px-3 text-sm text-white placeholder:text-gray-500'
+            />
+          </label>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={(): void => {
+              updateDirectTargetValue('');
+            }}
+            disabled={!hasDirectTarget}
+          >
+            Clear exact target
+          </Button>
+        </div>
+        <p className='mt-2 text-[11px] text-gray-400'>
+          When set, exact import target overrides preview row selection, preview filters, limit, and
+          unique-only filtering for this preview and run.
+        </p>
+        {hasDirectTarget ? (
+          <p className='mt-1 text-[11px] text-cyan-300'>
+            Exact target imports always create a new product, generate a unique SKU when needed,
+            and stay detached from Base sync/update linkage.
+          </p>
+        ) : null}
       </div>
 
       <PanelFilters
@@ -422,6 +531,15 @@ export function ImportListPreviewSection(): React.JSX.Element {
             {importListStats.filtered} · Selected: {selectedImportCount}
             {importListStats.skuDuplicates ? (
               <span className='text-amber-500'> · SKU dups: {importListStats.skuDuplicates}</span>
+            ) : null}
+            {hasDirectTarget ? (
+              <span className='text-cyan-300'>
+                {' '}
+                · Exact target:{' '}
+                {importDirectTargetType === 'sku'
+                  ? `SKU ${normalizedDirectTargetValue}`
+                  : `Base ID ${normalizedDirectTargetValue}`}
+              </span>
             ) : null}
             {selectedImportCount > 0 ? (
               <span className='text-emerald-300'>

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildImportResultToast, getImportResultDisplaySummary } from './import-run-feedback';
+import {
+  areImportResponsesEquivalent,
+  buildImportResponseFromRun,
+  buildImportResultToast,
+  getImportResultDisplaySummary,
+  resolveLiveImportResult,
+} from './import-run-feedback';
 
 describe('import-run-feedback', () => {
   it('builds queued runtime feedback with queue job id', () => {
@@ -20,6 +26,28 @@ describe('import-run-feedback', () => {
 
     expect(buildImportResultToast(result, { kind: 'import', dryRun: false })).toEqual({
       message: 'Import queued to base-import runtime (job job-1).',
+      toast: { variant: 'success' },
+    });
+  });
+
+  it('labels queued exact-target imports as detached exact imports', () => {
+    const result = {
+      runId: 'run-exact-1',
+      status: 'queued' as const,
+      dispatchMode: 'queued' as const,
+      queueJobId: 'job-exact-1',
+      summaryMessage: 'Queued exact SKU FOASW022 target for new product creation.',
+    };
+
+    expect(getImportResultDisplaySummary(result)).toEqual({
+      dispatchModeLabel: 'queued (base-import runtime queue)',
+      queueJobLabel: 'job-exact-1',
+      explanation:
+        'This exact-target run was submitted to the separate base-import runtime queue and will create a new detached product.',
+    });
+
+    expect(buildImportResultToast(result, { kind: 'import', dryRun: false })).toEqual({
+      message: 'Exact import queued to base-import runtime (job job-exact-1).',
       toast: { variant: 'success' },
     });
   });
@@ -70,5 +98,77 @@ describe('import-run-feedback', () => {
       message: 'Import blocked before dispatch: Catalog is required.',
       toast: { variant: 'error' },
     });
+  });
+
+  it('builds an import response snapshot from a live run record', () => {
+    expect(
+      buildImportResponseFromRun({
+        id: 'run-4',
+        status: 'completed',
+        dispatchMode: 'queued',
+        queueJobId: 'job-4',
+        summaryMessage: 'Import completed.',
+        preflight: null,
+      } as never)
+    ).toEqual({
+      runId: 'run-4',
+      status: 'completed',
+      dispatchMode: 'queued',
+      queueJobId: 'job-4',
+      summaryMessage: 'Import completed.',
+      preflight: null,
+    });
+  });
+
+  it('prefers the live run state for the same run id', () => {
+    expect(
+      resolveLiveImportResult(
+        {
+          runId: 'run-5',
+          status: 'queued',
+          dispatchMode: 'queued',
+          queueJobId: 'job-5',
+          summaryMessage: 'Queued 1 products for import.',
+        },
+        {
+          id: 'run-5',
+          status: 'completed',
+          dispatchMode: 'queued',
+          queueJobId: 'job-5',
+          summaryMessage: 'Import completed.',
+          preflight: null,
+        } as never
+      )
+    ).toEqual({
+      runId: 'run-5',
+      status: 'completed',
+      dispatchMode: 'queued',
+      queueJobId: 'job-5',
+      summaryMessage: 'Import completed.',
+      preflight: null,
+    });
+  });
+
+  it('compares import responses by value, not object identity', () => {
+    expect(
+      areImportResponsesEquivalent(
+        {
+          runId: 'run-6',
+          status: 'completed',
+          dispatchMode: 'queued',
+          queueJobId: 'job-6',
+          summaryMessage: 'Done.',
+          preflight: null,
+        },
+        {
+          runId: 'run-6',
+          status: 'completed',
+          dispatchMode: 'queued',
+          queueJobId: 'job-6',
+          summaryMessage: 'Done.',
+          preflight: null,
+        }
+      )
+    ).toBe(true);
   });
 });

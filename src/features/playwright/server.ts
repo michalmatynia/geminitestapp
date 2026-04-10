@@ -11,6 +11,8 @@ export {
 export type { PlaywrightCaptureRoute, PlaywrightEngineConfig } from '@/shared/contracts/playwright';
 export {
   enqueuePlaywrightEngineRun,
+  runPlaywrightEngineTask,
+  startPlaywrightEngineTask,
   readPlaywrightEngineRun,
   readPlaywrightEngineArtifact,
   validatePlaywrightEngineScript,
@@ -29,19 +31,41 @@ export type {
   EnqueuePlaywrightEngineRunInput,
 } from './server/runtime';
 export {
+  parsePersistedStorageState,
+  resolveConnectionPlaywrightSettings,
+  resolveConnectionPlaywrightSettingsProfile,
+} from './server/settings';
+export type {
+  PersistedStorageState,
+  ResolvedConnectionPlaywrightSettingsProfile,
+  TraderaPlaywrightRuntimeSettings,
+} from './server/settings';
+export {
   resolvePlaywrightConnectionRuntime,
   buildPlaywrightConnectionLaunchOptions,
   buildPlaywrightConnectionContextOptions,
   buildPlaywrightConnectionSettingsOverrides,
   buildPlaywrightConnectionEngineLaunchOptions,
+  runPlaywrightConnectionEngineTask,
+  startPlaywrightConnectionEngineTask,
 } from './server/connection-runtime';
-export type { ResolvedPlaywrightConnectionRuntime } from './server/connection-runtime';
+export type {
+  ResolvedPlaywrightConnectionRuntime,
+  PlaywrightConnectionBaseEngineRunRequest,
+  PlaywrightConnectionEngineRequestConfig,
+  PlaywrightConnectionEngineTaskInput,
+  PlaywrightConnectionEngineTaskResult,
+} from './server/connection-runtime';
 export { openPlaywrightConnectionPageSession } from './server/browser-session';
 export type {
   OpenPlaywrightConnectionPageSessionInput,
   OpenPlaywrightConnectionPageSessionResult,
 } from './server/browser-session';
 export { persistPlaywrightConnectionStorageState } from './server/storage-state';
+export {
+  resolvePlaywrightRequestStorageState,
+  type ResolvedPlaywrightRequestStorageState,
+} from './server/request-storage-state';
 export {
   PLAYWRIGHT_ENGINE_INSTANCE_DEFINITIONS,
   createAiPathNodePlaywrightInstance,

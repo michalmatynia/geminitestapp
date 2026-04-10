@@ -83,6 +83,34 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/build/improvements",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/application-performance",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/products-category-schema-normalization",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/products-parameter-integrity",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/repo-quality-baseline",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/testing-quality-baseline",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/ui-consolidation",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/plans",
       "mode": "complete_direct_files"
     },
@@ -265,6 +293,20 @@
     "docs/build/vercel-deployment.md",
     "docs/build/codeql.md",
     "docs/build/general-improvements.md",
+    "docs/build/improvements/README.md",
+    "docs/build/improvements/scan-latest.md",
+    "docs/build/improvements/application-performance/README.md",
+    "docs/build/improvements/application-performance/scan-latest.md",
+    "docs/build/improvements/products-category-schema-normalization/README.md",
+    "docs/build/improvements/products-category-schema-normalization/scan-latest.md",
+    "docs/build/improvements/products-parameter-integrity/README.md",
+    "docs/build/improvements/products-parameter-integrity/scan-latest.md",
+    "docs/build/improvements/repo-quality-baseline/README.md",
+    "docs/build/improvements/repo-quality-baseline/scan-latest.md",
+    "docs/build/improvements/testing-quality-baseline/README.md",
+    "docs/build/improvements/testing-quality-baseline/scan-latest.md",
+    "docs/build/improvements/ui-consolidation/README.md",
+    "docs/build/improvements/ui-consolidation/scan-latest.md",
     "docs/plans/README.md",
     "docs/decisions/README.md",
     "docs/runbooks/README.md",

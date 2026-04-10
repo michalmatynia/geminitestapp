@@ -1,4 +1,7 @@
-import type { BaseImportPreflightIssue } from '@/shared/contracts/integrations/base-com';
+import type {
+  BaseImportPreflightIssue,
+  BaseImportRunRecord,
+} from '@/shared/contracts/integrations/base-com';
 import type { ImportResponse } from '@/shared/contracts/integrations/import-export';
 import type { ToastOptions } from '@/shared/contracts/ui/base';
 
@@ -15,9 +18,50 @@ const getPreflightErrorMessages = (result: ImportResponse): string[] =>
     .filter((issue: BaseImportPreflightIssue) => issue.severity === 'error')
     .map((issue: BaseImportPreflightIssue) => issue.message);
 
+export const buildImportResponseFromRun = (run: BaseImportRunRecord): ImportResponse => ({
+  runId: run.id,
+  status: run.status,
+  preflight: run.preflight ?? null,
+  queueJobId: run.queueJobId ?? null,
+  dispatchMode: run.dispatchMode ?? null,
+  summaryMessage: run.summaryMessage ?? null,
+});
+
+export const resolveLiveImportResult = (
+  lastResult: ImportResponse,
+  activeRun: BaseImportRunRecord | null | undefined
+): ImportResponse => {
+  if (activeRun?.id !== lastResult.runId) {
+    return lastResult;
+  }
+
+  return {
+    ...lastResult,
+    ...buildImportResponseFromRun(activeRun),
+  };
+};
+
+export const areImportResponsesEquivalent = (
+  left: ImportResponse | null,
+  right: ImportResponse | null
+): boolean => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+
+  return (
+    left.runId === right.runId &&
+    left.status === right.status &&
+    left.queueJobId === right.queueJobId &&
+    left.dispatchMode === right.dispatchMode &&
+    left.summaryMessage === right.summaryMessage &&
+    JSON.stringify(left.preflight ?? null) === JSON.stringify(right.preflight ?? null)
+  );
+};
+
 export const getImportResultDisplaySummary = (
   result: ImportResponse
 ): ImportResultDisplaySummary => {
+  const isExactTargetSummary = result.summaryMessage?.startsWith('Queued exact ') === true;
   const dispatchModeLabel =
     result.dispatchMode === 'queued'
       ? 'queued (base-import runtime queue)'
@@ -48,7 +92,9 @@ export const getImportResultDisplaySummary = (
     return {
       dispatchModeLabel,
       queueJobLabel,
-      explanation: 'This run was submitted to the separate base-import runtime queue.',
+      explanation: isExactTargetSummary
+        ? 'This exact-target run was submitted to the separate base-import runtime queue and will create a new detached product.'
+        : 'This run was submitted to the separate base-import runtime queue.',
     };
   }
 
@@ -74,9 +120,12 @@ export const buildImportResultToast = (
   result: ImportResponse,
   options: { kind: ImportActionKind; dryRun?: boolean }
 ): { message: string; toast: ToastOptions } => {
+  const isExactTargetSummary = result.summaryMessage?.startsWith('Queued exact ') === true;
   const label =
     options.kind === 'resume'
       ? 'Import resume'
+      : isExactTargetSummary
+        ? 'Exact import'
       : options.dryRun
         ? 'Dry-run import'
         : 'Import';

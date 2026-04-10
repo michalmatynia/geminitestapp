@@ -1,18 +1,18 @@
 {
   "summary": {
-    "generatedAt": "2026-04-07T16:03:37.828Z",
-    "scannedSourceFiles": 7086,
-    "scannedJsxFiles": 2497,
-    "componentCount": 4350,
+    "generatedAt": "2026-04-10T11:36:50.619Z",
+    "scannedSourceFiles": 7186,
+    "scannedJsxFiles": 2516,
+    "componentCount": 4402,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 296,
-    "resolvedTransitionCount": 1232,
-    "depth2CandidateChainCount": 1232,
+    "componentsWithAnyForwarding": 304,
+    "resolvedTransitionCount": 1279,
+    "depth2CandidateChainCount": 1279,
     "candidateChainCount": 230,
     "highPriorityChainCount": 66,
     "unknownSpreadForwardingCount": 12,
-    "highPropCountComponentCount": 47,
-    "passThroughHotspotCount": 88,
+    "highPropCountComponentCount": 48,
+    "passThroughHotspotCount": 90,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
@@ -20,11 +20,15 @@
       },
       {
         "scope": "feature:integrations",
-        "count": 9
+        "count": 10
       },
       {
         "scope": "shared-ui",
-        "count": 9
+        "count": 10
+      },
+      {
+        "scope": "feature:ai",
+        "count": 7
       },
       {
         "scope": "feature:filemaker",
@@ -47,12 +51,8 @@
         "count": 4
       },
       {
-        "scope": "feature:ai",
-        "count": 3
-      },
-      {
         "scope": "shared-lib",
-        "count": 2
+        "count": 3
       },
       {
         "scope": "feature:playwright",
@@ -60,6 +60,10 @@
       },
       {
         "scope": "feature:notesapp",
+        "count": 1
+      },
+      {
+        "scope": "shared",
         "count": 1
       }
     ]
@@ -6546,6 +6550,110 @@
       "depth": 2,
       "rootFanout": 5,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge"
+      ],
+      "propPath": [
+        "node",
+        "nodeId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge",
+          "sourceProp": "node",
+          "targetProp": "nodeId",
+          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
+          "line": 651
+        }
+      ]
+    },
+    {
+      "score": 92,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge"
+      ],
+      "propPath": [
+        "node",
+        "visible"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge",
+          "sourceProp": "node",
+          "targetProp": "visible",
+          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
+          "line": 651
+        }
+      ]
+    },
+    {
+      "score": 92,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelCapabilityBadge",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelCapabilityBadge"
+      ],
+      "propPath": [
+        "node",
+        "visible"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelCapabilityBadge",
+          "sourceProp": "node",
+          "targetProp": "visible",
+          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
+          "line": 658
+        }
+      ]
+    },
+    {
+      "score": 92,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeDiagnosticsBadge",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeDiagnosticsBadge"
+      ],
+      "propPath": [
+        "node",
+        "nodeId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeDiagnosticsBadge",
+          "sourceProp": "node",
+          "targetProp": "nodeId",
+          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
+          "line": 732
+        }
+      ]
+    },
+    {
+      "score": 92,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.tsx#KangurAssignmentManagerSuggestedCard",
       "sinkComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.cards.tsx#KangurAssignmentManagerItemCard",
       "componentPath": [
@@ -7291,7 +7399,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -7317,7 +7425,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -7343,7 +7451,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -7369,7 +7477,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 765
+          "line": 759
         }
       ]
     },
@@ -7395,7 +7503,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 765
+          "line": 759
         }
       ]
     },
@@ -7421,7 +7529,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 765
+          "line": 759
         }
       ]
     },
@@ -7447,7 +7555,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "value",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 826
+          "line": 820
         }
       ]
     },
@@ -7473,7 +7581,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "onValueChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 826
+          "line": 820
         }
       ]
     },
@@ -7499,7 +7607,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "value",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 839
+          "line": 833
         }
       ]
     },
@@ -7525,7 +7633,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "onChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 839
+          "line": 833
         }
       ]
     },
@@ -7551,7 +7659,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "checked",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 856
+          "line": 850
         }
       ]
     },
@@ -7577,7 +7685,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "onCheckedChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 856
+          "line": 850
         }
       ]
     },
@@ -7686,6 +7794,110 @@
       ]
     },
     {
+      "score": 88,
+      "depth": 2,
+      "rootFanout": 4,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "disabled",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "disabled",
+          "targetProp": "onClick",
+          "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
+          "line": 373
+        }
+      ]
+    },
+    {
+      "score": 88,
+      "depth": 2,
+      "rootFanout": 4,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "disabled",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "disabled",
+          "targetProp": "className",
+          "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
+          "line": 373
+        }
+      ]
+    },
+    {
+      "score": 88,
+      "depth": 2,
+      "rootFanout": 4,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
+      "componentPath": [
+        "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
+      ],
+      "propPath": [
+        "disabled",
+        "onSelect"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
+          "sourceProp": "disabled",
+          "targetProp": "onSelect",
+          "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
+          "line": 435
+        }
+      ]
+    },
+    {
+      "score": 84,
+      "depth": 2,
+      "rootFanout": 5,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeTriggerAction",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeTriggerAction"
+      ],
+      "propPath": [
+        "node",
+        "node"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeTriggerAction",
+          "sourceProp": "node",
+          "targetProp": "node",
+          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
+          "line": 741
+        }
+      ]
+    },
+    {
       "score": 84,
       "depth": 2,
       "rootFanout": 5,
@@ -7734,84 +7946,6 @@
           "targetProp": "item",
           "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.tsx",
           "line": 200
-        }
-      ]
-    },
-    {
-      "score": 82,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge"
-      ],
-      "propPath": [
-        "node",
-        "nodeId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge",
-          "sourceProp": "node",
-          "targetProp": "nodeId",
-          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
-          "line": 615
-        }
-      ]
-    },
-    {
-      "score": 82,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge"
-      ],
-      "propPath": [
-        "node",
-        "visible"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelSelectionBadge",
-          "sourceProp": "node",
-          "targetProp": "visible",
-          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
-          "line": 615
-        }
-      ]
-    },
-    {
-      "score": 82,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeDiagnosticsBadge",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeDiagnosticsBadge"
-      ],
-      "propPath": [
-        "node",
-        "nodeId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeDiagnosticsBadge",
-          "sourceProp": "node",
-          "targetProp": "nodeId",
-          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
-          "line": 693
         }
       ]
     },
@@ -8830,6 +8964,32 @@
       ]
     },
     {
+      "score": 80,
+      "depth": 2,
+      "rootFanout": 4,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "disabled",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "disabled",
+          "targetProp": "disabled",
+          "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
+          "line": 373
+        }
+      ]
+    },
+    {
       "score": 78,
       "depth": 2,
       "rootFanout": 3,
@@ -9034,32 +9194,6 @@
           "targetProp": "onCheckedChange",
           "relativePath": "src/shared/lib/text-editor-engine/pages/AdminTextEditorSettingsPage.tsx",
           "line": 135
-        }
-      ]
-    },
-    {
-      "score": 74,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeTriggerAction",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeTriggerAction"
-      ],
-      "propPath": [
-        "node",
-        "node"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeTriggerAction",
-          "sourceProp": "node",
-          "targetProp": "node",
-          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
-          "line": 702
         }
       ]
     },
@@ -10931,7 +11065,7 @@
           "sourceProp": "item",
           "targetProp": "aria-controls",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 293
+          "line": 294
         }
       ]
     },
@@ -10957,7 +11091,423 @@
           "sourceProp": "item",
           "targetProp": "content",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 335
+          "line": 336
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
+      ],
+      "propPath": [
+        "searchPlaceholder",
+        "header"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+          "sourceProp": "searchPlaceholder",
+          "targetProp": "header",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 566
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
+      ],
+      "propPath": [
+        "searchAriaLabel",
+        "header"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+          "sourceProp": "searchAriaLabel",
+          "targetProp": "header",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 566
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
+      ],
+      "propPath": [
+        "handleCreatePath",
+        "header"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+          "sourceProp": "handleCreatePath",
+          "targetProp": "header",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 566
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "searchPlaceholder",
+        "placeholder"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "searchPlaceholder",
+          "targetProp": "placeholder",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 581
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "searchAriaLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "searchAriaLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 581
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "handleCreatePath",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "handleCreatePath",
+          "targetProp": "onClick",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 592
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "activePathId",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "activePathId",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "handleDeletePath",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "handleDeletePath",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "handleDuplicatePath",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "handleDuplicatePath",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "handleMoveFolder",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "handleMoveFolder",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "handleMovePathToFolder",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "handleMovePathToFolder",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "handleRenameFolder",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "handleRenameFolder",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "onCopyPathJson",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "onCopyPathJson",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "toast",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "toast",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "isPathTreeVisible",
+        "aria-pressed"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "isPathTreeVisible",
+          "targetProp": "aria-pressed",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
+          "line": 199
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "isPathTreeVisible",
+        "title"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "isPathTreeVisible",
+          "targetProp": "title",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
+          "line": 199
         }
       ]
     },
@@ -11087,7 +11637,7 @@
           "sourceProp": "onNewMailbox",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -11113,7 +11663,7 @@
           "sourceProp": "selectedAccountId",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -11139,7 +11689,7 @@
           "sourceProp": "selectedMailboxPath",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -11165,7 +11715,7 @@
           "sourceProp": "originPanel",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -11191,7 +11741,7 @@
           "sourceProp": "searchQuery",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -11217,7 +11767,7 @@
           "sourceProp": "onRecentMailboxFilterChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -11243,7 +11793,7 @@
           "sourceProp": "onRecentQueryChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -11269,7 +11819,7 @@
           "sourceProp": "onRecentUnreadOnlyChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 738
+          "line": 732
         }
       ]
     },
@@ -11295,7 +11845,7 @@
           "sourceProp": "onNewMailbox",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 751
+          "line": 745
         }
       ]
     },
@@ -11321,7 +11871,7 @@
           "sourceProp": "selectedAccountId",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 765
+          "line": 759
         }
       ]
     },
@@ -11347,7 +11897,7 @@
           "sourceProp": "selectedMailboxPath",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 765
+          "line": 759
         }
       ]
     },
@@ -11373,7 +11923,7 @@
           "sourceProp": "originPanel",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 765
+          "line": 759
         }
       ]
     },
@@ -11399,7 +11949,7 @@
           "sourceProp": "searchQuery",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 765
+          "line": 759
         }
       ]
     },
@@ -11425,7 +11975,7 @@
           "sourceProp": "onRecentMailboxFilterChange",
           "targetProp": "onValueChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 826
+          "line": 820
         }
       ]
     },
@@ -11451,7 +12001,7 @@
           "sourceProp": "onRecentQueryChange",
           "targetProp": "onChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 839
+          "line": 833
         }
       ]
     },
@@ -11477,7 +12027,7 @@
           "sourceProp": "onRecentUnreadOnlyChange",
           "targetProp": "onCheckedChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 856
+          "line": 850
         }
       ]
     },
@@ -11841,7 +12391,7 @@
           "sourceProp": "field",
           "targetProp": "step",
           "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 97
+          "line": 151
         }
       ]
     },
@@ -11867,7 +12417,7 @@
           "sourceProp": "field",
           "targetProp": "aria-label",
           "relativePath": "src/features/products/components/EditableCell.tsx",
-          "line": 97
+          "line": 151
         }
       ]
     },
@@ -12465,7 +13015,7 @@
           "sourceProp": "item",
           "targetProp": "items",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -15845,7 +16395,7 @@
           "sourceProp": "active",
           "targetProp": "className",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 219
+          "line": 220
         }
       ]
     },
@@ -15871,7 +16421,189 @@
           "sourceProp": "isOpen",
           "targetProp": "aria-expanded",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 293
+          "line": 294
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
+      ],
+      "propPath": [
+        "panelClassName",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+          "sourceProp": "panelClassName",
+          "targetProp": "className",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 566
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
+      ],
+      "propPath": [
+        "headerTitle",
+        "header"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+          "sourceProp": "headerTitle",
+          "targetProp": "header",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 566
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
+      ],
+      "propPath": [
+        "headerDescription",
+        "header"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+          "sourceProp": "headerDescription",
+          "targetProp": "header",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 566
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
+      ],
+      "propPath": [
+        "renderHeaderActions",
+        "header"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+          "sourceProp": "renderHeaderActions",
+          "targetProp": "header",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 566
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onTogglePathTree",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onTogglePathTree",
+          "targetProp": "onClick",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
+          "line": 199
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
+      ],
+      "propPath": [
+        "onToggleInspector",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
+          "sourceProp": "onToggleInspector",
+          "targetProp": "onClick",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
+          "line": 328
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+      "sinkComponentId": "src/shared/ui/status-badge.tsx#StatusBadge",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+        "src/shared/ui/status-badge.tsx#StatusBadge"
+      ],
+      "propPath": [
+        "isInspectorVisible",
+        "status"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+          "toComponentId": "src/shared/ui/status-badge.tsx#StatusBadge",
+          "sourceProp": "isInspectorVisible",
+          "targetProp": "status",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
+          "line": 388
         }
       ]
     },
@@ -17076,6 +17808,110 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onRelist",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onRelist",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+          "line": 377
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "isRefreshingSession",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "isRefreshingSession",
+          "targetProp": "disabled",
+          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+          "line": 403
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onLiveCheck",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onLiveCheck",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+          "line": 403
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onRefreshSession",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onRefreshSession",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+          "line": 427
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/kangur/social/admin/workspace/KangurSocialPipelineQueuePanel.tsx#KangurSocialPipelineQueuePanel",
       "sinkComponentId": "src/shared/ui/list-panel.tsx#ListPanel",
       "componentPath": [
@@ -17535,7 +18371,7 @@
           "sourceProp": "item",
           "targetProp": "item",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         }
       ]
     },
@@ -17561,7 +18397,7 @@
           "sourceProp": "depth",
           "targetProp": "depth",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         }
       ]
     },
@@ -17587,7 +18423,7 @@
           "sourceProp": "isMenuCollapsed",
           "targetProp": "isMenuCollapsed",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         }
       ]
     },
@@ -17613,7 +18449,7 @@
           "sourceProp": "onToggleOpen",
           "targetProp": "onToggleOpen",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         }
       ]
     },
@@ -17639,7 +18475,7 @@
           "sourceProp": "onNavigateHref",
           "targetProp": "onNavigateHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         }
       ]
     },
@@ -17665,7 +18501,7 @@
           "sourceProp": "onPrefetchHref",
           "targetProp": "onPrefetchHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         }
       ]
     },
@@ -17691,7 +18527,7 @@
           "sourceProp": "onSetPendingHref",
           "targetProp": "onSetPendingHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         }
       ]
     },
@@ -17717,7 +18553,7 @@
           "sourceProp": "depth",
           "targetProp": "depth",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -17743,7 +18579,7 @@
           "sourceProp": "isMenuCollapsed",
           "targetProp": "isMenuCollapsed",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -17769,7 +18605,7 @@
           "sourceProp": "onToggleOpen",
           "targetProp": "onToggleOpen",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -17795,7 +18631,7 @@
           "sourceProp": "onNavigateHref",
           "targetProp": "onNavigateHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -17821,7 +18657,7 @@
           "sourceProp": "onPrefetchHref",
           "targetProp": "onPrefetchHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -17847,7 +18683,215 @@
           "sourceProp": "onSetPendingHref",
           "targetProp": "onSetPendingHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "activePathId",
+        "activePathId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "activePathId",
+          "targetProp": "activePathId",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 657
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "handleDeletePath",
+        "handleDeletePath"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "handleDeletePath",
+          "targetProp": "handleDeletePath",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 657
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "handleDuplicatePath",
+        "handleDuplicatePath"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "handleDuplicatePath",
+          "targetProp": "handleDuplicatePath",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 657
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "handleMoveFolder",
+        "handleMoveFolder"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "handleMoveFolder",
+          "targetProp": "handleMoveFolder",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 657
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "handleMovePathToFolder",
+        "handleMovePathToFolder"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "handleMovePathToFolder",
+          "targetProp": "handleMovePathToFolder",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 657
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "handleRenameFolder",
+        "handleRenameFolder"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "handleRenameFolder",
+          "targetProp": "handleRenameFolder",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 657
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "onCopyPathJson",
+        "onCopyPathJson"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "onCopyPathJson",
+          "targetProp": "onCopyPathJson",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 657
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "toast",
+        "toast"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "toast",
+          "targetProp": "toast",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 657
         }
       ]
     },
@@ -20032,6 +21076,32 @@
           "targetProp": "onChange",
           "relativePath": "src/shared/ui/playwright/PlaywrightCaptureRoutesEditor.tsx",
           "line": 212
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+      "sinkComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelCapabilityBadge",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+        "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelCapabilityBadge"
+      ],
+      "propPath": [
+        "modelCapabilityBlocked",
+        "visible"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+          "toComponentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNodeModelCapabilityBadge",
+          "sourceProp": "modelCapabilityBlocked",
+          "targetProp": "visible",
+          "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
+          "line": 658
         }
       ]
     },
@@ -27320,6 +28390,32 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/providers/RootProvidersClient.tsx#RootProviderFrame",
+      "sinkComponentId": "src/shared/providers/SettingsStoreProvider.tsx#SettingsStoreProvider",
+      "componentPath": [
+        "src/shared/providers/RootProvidersClient.tsx#RootProviderFrame",
+        "src/shared/providers/SettingsStoreProvider.tsx#SettingsStoreProvider"
+      ],
+      "propPath": [
+        "isSyntheticKangurCapture",
+        "suppressOwnQuery"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/providers/RootProvidersClient.tsx#RootProviderFrame",
+          "toComponentId": "src/shared/providers/SettingsStoreProvider.tsx#SettingsStoreProvider",
+          "sourceProp": "isSyntheticKangurCapture",
+          "targetProp": "suppressOwnQuery",
+          "relativePath": "src/shared/providers/RootProvidersClient.tsx",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/ui/PageLayout.tsx#PageLayoutTabs",
       "sinkComponentId": "src/shared/ui/tabs.tsx#TabsList",
       "componentPath": [
@@ -27493,7 +28589,85 @@
           "sourceProp": "canReadAdminSettings",
           "targetProp": "canReadAdminSettings",
           "relativePath": "src/features/admin/layout/AdminLayout.tsx",
-          "line": 383
+          "line": 423
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
+      ],
+      "propPath": [
+        "bodyClassName",
+        "bodyClassName"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
+          "sourceProp": "bodyClassName",
+          "targetProp": "bodyClassName",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 566
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "emptyLabel",
+        "emptyLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "emptyLabel",
+          "targetProp": "emptyLabel",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 618
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx#AiPathsCanvasSectionBoundary",
+      "sinkComponentId": "src/shared/ui/AppErrorBoundary.tsx#AppErrorBoundary",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx#AiPathsCanvasSectionBoundary",
+        "src/shared/ui/AppErrorBoundary.tsx#AppErrorBoundary"
+      ],
+      "propPath": [
+        "source",
+        "source"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx#AiPathsCanvasSectionBoundary",
+          "toComponentId": "src/shared/ui/AppErrorBoundary.tsx#AppErrorBoundary",
+          "sourceProp": "source",
+          "targetProp": "source",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx",
+          "line": 33
         }
       ]
     },
@@ -27883,7 +29057,7 @@
           "sourceProp": "instanceId",
           "targetProp": "instanceId",
           "relativePath": "src/features/products/components/list/ProductFilters.tsx",
-          "line": 358
+          "line": 371
         }
       ]
     },
@@ -27961,7 +29135,7 @@
           "sourceProp": "pathname",
           "targetProp": "pathname",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -27987,7 +29161,7 @@
           "sourceProp": "openIds",
           "targetProp": "openIds",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -28013,7 +29187,7 @@
           "sourceProp": "pendingHref",
           "targetProp": "pendingHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 395
+          "line": 396
         }
       ]
     },
@@ -28039,7 +29213,7 @@
           "sourceProp": "depth",
           "targetProp": "depth",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 481
+          "line": 486
         }
       ]
     },
@@ -28065,7 +29239,7 @@
           "sourceProp": "isMenuCollapsed",
           "targetProp": "isMenuCollapsed",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 481
+          "line": 486
         }
       ]
     },
@@ -28091,7 +29265,7 @@
           "sourceProp": "pathname",
           "targetProp": "pathname",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 481
+          "line": 486
         }
       ]
     },
@@ -28117,7 +29291,7 @@
           "sourceProp": "openIds",
           "targetProp": "openIds",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 481
+          "line": 486
         }
       ]
     },
@@ -28143,7 +29317,7 @@
           "sourceProp": "onToggleOpen",
           "targetProp": "onToggleOpen",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 481
+          "line": 486
         }
       ]
     },
@@ -28169,7 +29343,7 @@
           "sourceProp": "pendingHref",
           "targetProp": "pendingHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 481
+          "line": 486
         }
       ]
     },
@@ -28195,7 +29369,7 @@
           "sourceProp": "onSetPendingHref",
           "targetProp": "onSetPendingHref",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 481
+          "line": 486
         }
       ]
     },
@@ -28221,7 +29395,33 @@
           "sourceProp": "hasInitialMenuPreference",
           "targetProp": "hasInitialMenuPreference",
           "relativePath": "src/features/admin/layout/AdminLayout.tsx",
-          "line": 387
+          "line": 427
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ui-panels/PathsTabPanel.tsx#PathsTabPanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ui-panels/PathsTabPanel.tsx#PathsTabPanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel"
+      ],
+      "propPath": [
+        "onPathOpen",
+        "onPathOpen"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ui-panels/PathsTabPanel.tsx#PathsTabPanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "sourceProp": "onPathOpen",
+          "targetProp": "onPathOpen",
+          "relativePath": "src/features/ai/ai-paths/components/ui-panels/PathsTabPanel.tsx",
+          "line": 192
         }
       ]
     },
@@ -28663,7 +29863,7 @@
           "sourceProp": "forceBodyScrollLock",
           "targetProp": "forceBodyScrollLock",
           "relativePath": "src/features/kangur/ui/KangurFeatureRouteShell.tsx",
-          "line": 429
+          "line": 430
         }
       ]
     },
@@ -35614,6 +36814,32 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/admin-section-breadcrumbs.tsx#AdminSectionBreadcrumbs",
+      "sinkComponentId": "src/shared/ui/admin-favorite-breadcrumb-row.tsx#AdminFavoriteBreadcrumbRow",
+      "componentPath": [
+        "src/shared/ui/admin-section-breadcrumbs.tsx#AdminSectionBreadcrumbs",
+        "src/shared/ui/admin-favorite-breadcrumb-row.tsx#AdminFavoriteBreadcrumbRow"
+      ],
+      "propPath": [
+        "data-testid",
+        "data-testid"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/admin-section-breadcrumbs.tsx#AdminSectionBreadcrumbs",
+          "toComponentId": "src/shared/ui/admin-favorite-breadcrumb-row.tsx#AdminFavoriteBreadcrumbRow",
+          "sourceProp": "data-testid",
+          "targetProp": "data-testid",
+          "relativePath": "src/shared/ui/admin-section-breadcrumbs.tsx",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/ui/documentation-section.tsx#DocumentationSection",
       "sinkComponentId": "src/shared/ui/InsetPanel.tsx#InsetPanel",
       "componentPath": [
@@ -35741,6 +36967,15 @@
     }
   ],
   "componentBacklog": [
+    {
+      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "name": "AiPathsMasterTreePanel",
+      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 17,
+      "outgoingTransitionCount": 28,
+      "hasUnknownSpreadForwarding": false
+    },
     {
       "componentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
       "name": "LaunchSchedulingSection",
@@ -36318,6 +37553,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+      "name": "AiPathsCanvasToolbar",
+      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
       "name": "NumberBalanceRushTileZone",
       "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
@@ -36369,6 +37613,15 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "name": "ListingRowView",
+      "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -36793,36 +38046,18 @@
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWidget",
-      "name": "KangurParentDashboardHeroWidget",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationMobileMenuOverlay",
-      "name": "KangurPrimaryNavigationMobileMenuOverlay",
-      "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/design/primitives/KangurInlineFallback.tsx#KangurInlineFallback",
-      "name": "KangurInlineFallback",
-      "relativePath": "src/features/kangur/ui/design/primitives/KangurInlineFallback.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
     }
   ],
   "forwardingComponentBacklog": [
+    {
+      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "name": "AiPathsMasterTreePanel",
+      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 17,
+      "outgoingTransitionCount": 28,
+      "hasUnknownSpreadForwarding": false
+    },
     {
       "componentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
       "name": "LaunchSchedulingSection",
@@ -37400,6 +38635,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
+      "name": "AiPathsCanvasToolbar",
+      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
       "name": "NumberBalanceRushTileZone",
       "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
@@ -37451,6 +38695,15 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "name": "ListingRowView",
+      "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -37937,6 +39190,15 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 7,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
+      "name": "CanvasSvgNode",
+      "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -38453,19 +39715,19 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx#CanvasSvgNode",
-      "name": "CanvasSvgNode",
-      "relativePath": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
-      "feature": "feature:ai",
+      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardLearnerActivitySection",
+      "name": "KangurParentDashboardLearnerActivitySection",
+      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
+      "feature": "feature:kangur",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardLearnerActivitySection",
-      "name": "KangurParentDashboardLearnerActivitySection",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
+      "componentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+      "name": "TriggerButtonBar",
+      "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
+      "feature": "shared-lib",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
@@ -38621,6 +39883,24 @@
       "feature": "feature:products",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx#AiPathsCanvasSectionBoundary",
+      "name": "AiPathsCanvasSectionBoundary",
+      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/ai/ai-paths/components/ui-panels/PathsTabPanel.tsx#PathsTabPanel",
+      "name": "PathsTabPanel",
+      "relativePath": "src/features/ai/ai-paths/components/ui-panels/PathsTabPanel.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -39344,6 +40624,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/shared/providers/RootProvidersClient.tsx#RootProviderFrame",
+      "name": "RootProviderFrame",
+      "relativePath": "src/shared/providers/RootProvidersClient.tsx",
+      "feature": "shared",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/shared/ui/JsonViewer.tsx#JsonViewer",
       "name": "JsonViewer",
       "relativePath": "src/shared/ui/JsonViewer.tsx",
@@ -39356,6 +40645,15 @@
       "componentId": "src/shared/ui/PageLayout.tsx#PageLayoutTabs",
       "name": "PageLayoutTabs",
       "relativePath": "src/shared/ui/PageLayout.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/admin-section-breadcrumbs.tsx#AdminSectionBreadcrumbs",
+      "name": "AdminSectionBreadcrumbs",
+      "relativePath": "src/shared/ui/admin-section-breadcrumbs.tsx",
       "feature": "shared-ui",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
@@ -43873,7 +45171,7 @@
           "sourceProp": "item",
           "targetProp": "item",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         },
         {
           "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
@@ -43881,7 +45179,7 @@
           "sourceProp": "item",
           "targetProp": "aria-controls",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 293
+          "line": 294
         }
       ]
     },
@@ -43909,7 +45207,7 @@
           "sourceProp": "item",
           "targetProp": "item",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 381
+          "line": 382
         },
         {
           "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
@@ -43917,7 +45215,7 @@
           "sourceProp": "item",
           "targetProp": "content",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 335
+          "line": 336
         }
       ]
     },

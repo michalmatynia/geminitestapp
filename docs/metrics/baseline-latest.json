@@ -1,28 +1,28 @@
 {
-  "generatedAt": "2026-04-08T18:58:41.357Z",
+  "generatedAt": "2026-04-10T11:37:09.941Z",
   "source": {
-    "totalFiles": 10049,
-    "totalLines": 1633639,
-    "useClientFiles": 1749,
-    "hooksWithoutUseClient": 1,
-    "filesOver800": 92,
-    "filesOver1000": 6,
+    "totalFiles": 10178,
+    "totalLines": 1671569,
+    "useClientFiles": 1771,
+    "hooksWithoutUseClient": 0,
+    "filesOver800": 96,
+    "filesOver1000": 7,
     "filesOver1500": 0,
     "largestFile": {
-      "path": "src/features/integrations/services/tradera-listing/script-partials/part-4.ts",
-      "lines": 1423
+      "path": "src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx",
+      "lines": 1203
     }
   },
   "api": {
     "totalRoutes": 30,
     "routesWithApiHandler": 126,
-    "delegatedServerRoutes": 180,
+    "delegatedServerRoutes": 185,
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 0,
     "revalidateRoutes": 0,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 8,
-    "routesWithExplicitCachePolicy": 306,
+    "routesWithExplicitCachePolicy": 311,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
@@ -39,7 +39,7 @@
       },
       {
         "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 111
+        "lines": 112
       },
       {
         "path": "src/app/api/agentcreator/[[...path]]/route.ts",
@@ -68,6 +68,10 @@
       {
         "path": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
         "lines": 30
+      },
+      {
+        "path": "src/app/api/user/preferences/route.ts",
+        "lines": 26
       },
       {
         "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
@@ -100,19 +104,15 @@
       {
         "path": "src/app/api/assets3d/[id]/route.ts",
         "lines": 20
-      },
-      {
-        "path": "src/app/api/cms/pages/[id]/route.ts",
-        "lines": 20
       }
     ]
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 4,
+    "appFeatureDeepImports": 0,
     "featureToSharedTotalImports": 25,
     "featureToAppApiTotalImports": 0,
-    "sharedToFeaturesTotalImports": 1
+    "sharedToFeaturesTotalImports": 0
   },
   "architecture": {
     "crossFeatureEdgePairs": 0,
@@ -121,67 +121,67 @@
       {
         "feature": "kangur",
         "files": 2501,
-        "lines": 528304
+        "lines": 528499
       },
       {
         "feature": "ai",
-        "files": 1288,
-        "lines": 244773
+        "files": 1298,
+        "lines": 249463
       },
       {
         "feature": "integrations",
-        "files": 439,
-        "lines": 91720
+        "files": 457,
+        "lines": 98135
       },
       {
         "feature": "products",
-        "files": 374,
-        "lines": 77354
+        "files": 398,
+        "lines": 86241
       },
       {
         "feature": "case-resolver",
         "files": 327,
-        "lines": 67310
+        "lines": 67314
       },
       {
         "feature": "cms",
         "files": 358,
-        "lines": 53433
+        "lines": 53479
       },
       {
         "feature": "filemaker",
         "files": 161,
-        "lines": 38286
+        "lines": 38182
       },
       {
         "feature": "prompt-exploder",
         "files": 135,
-        "lines": 26811
+        "lines": 26824
       },
       {
         "feature": "notesapp",
         "files": 98,
-        "lines": 13519
-      },
-      {
-        "feature": "admin",
-        "files": 59,
-        "lines": 10004
+        "lines": 13496
       },
       {
         "feature": "data-import-export",
-        "files": 40,
-        "lines": 8001
+        "files": 46,
+        "lines": 11209
       },
       {
-        "feature": "auth",
-        "files": 58,
-        "lines": 7438
+        "feature": "admin",
+        "files": 61,
+        "lines": 10320
       },
       {
         "feature": "database",
-        "files": 51,
-        "lines": 7327
+        "files": 52,
+        "lines": 8384
+      },
+      {
+        "feature": "auth",
+        "files": 59,
+        "lines": 7604
       },
       {
         "feature": "viewer3d",
@@ -196,7 +196,7 @@
       {
         "feature": "drafter",
         "files": 19,
-        "lines": 3020
+        "lines": 3021
       },
       {
         "feature": "product-sync",
@@ -209,6 +209,11 @@
         "lines": 2773
       },
       {
+        "feature": "playwright",
+        "files": 42,
+        "lines": 2698
+      },
+      {
         "feature": "internationalization",
         "files": 29,
         "lines": 2278
@@ -216,12 +221,7 @@
       {
         "feature": "observability",
         "files": 19,
-        "lines": 1193
-      },
-      {
-        "feature": "playwright",
-        "files": 26,
-        "lines": 601
+        "lines": 1204
       },
       {
         "feature": "jobs",
@@ -269,9 +269,9 @@
       {
         "path": "src/features/products/hooks/useProductListState.tsx",
         "useEffectCount": 7,
-        "useCallbackCount": 17,
+        "useCallbackCount": 18,
         "useMemoCount": 8,
-        "total": 32
+        "total": 33
       },
       {
         "path": "src/features/case-resolver/hooks/useAdminCaseResolverPageState.ts",
@@ -337,18 +337,18 @@
         "total": 20
       },
       {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts",
+        "useEffectCount": 8,
+        "useCallbackCount": 8,
+        "useMemoCount": 4,
+        "total": 20
+      },
+      {
         "path": "src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts",
         "useEffectCount": 0,
         "useCallbackCount": 12,
         "useMemoCount": 8,
         "total": 20
-      },
-      {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts",
-        "useEffectCount": 8,
-        "useCallbackCount": 8,
-        "useMemoCount": 3,
-        "total": 19
       },
       {
         "path": "src/features/kangur/social/admin/workspace/hooks/useSocialCaptureFlows.ts",
@@ -393,6 +393,13 @@
         "total": 17
       },
       {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts",
+        "useEffectCount": 8,
+        "useCallbackCount": 6,
+        "useMemoCount": 2,
+        "total": 16
+      },
+      {
         "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts",
         "useEffectCount": 0,
         "useCallbackCount": 16,
@@ -419,13 +426,6 @@
         "useCallbackCount": 11,
         "useMemoCount": 1,
         "total": 16
-      },
-      {
-        "path": "src/features/kangur/ui/pages/duels/useDuelsLobby.ts",
-        "useEffectCount": 1,
-        "useCallbackCount": 15,
-        "useMemoCount": 0,
-        "total": 16
       }
     ],
     "highComplexityHooksCount": 170
@@ -434,39 +434,59 @@
     "topFilesByLines": [
       {
         "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-        "lines": 4093
+        "lines": 4292
       },
       {
-        "path": "src/features/integrations/services/tradera-listing/script-partials/part-4.ts",
-        "lines": 1423
+        "path": "src/features/products/components/ProductModals.test.tsx",
+        "lines": 1535
       },
       {
-        "path": "src/features/integrations/services/imports/base-mapper.ts",
-        "lines": 1345
+        "path": "src/features/products/components/list/ProductColumns.test.tsx",
+        "lines": 1208
       },
       {
         "path": "src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx",
         "lines": 1203
       },
       {
-        "path": "src/features/products/components/list/ProductColumns.test.tsx",
-        "lines": 1154
+        "path": "src/features/integrations/services/imports/base-import-item-processor.ts",
+        "lines": 1170
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing-service.test.ts",
+        "lines": 1111
       },
       {
         "path": "src/features/products/hooks/useProductListState.tsx",
-        "lines": 1090
+        "lines": 1105
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts",
+        "lines": 1095
+      },
+      {
+        "path": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+        "lines": 1085
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/check-status-script.ts",
+        "lines": 1085
       },
       {
         "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
         "lines": 1055
       },
       {
-        "path": "src/features/integrations/services/imports/base-import-item-processor.ts",
-        "lines": 1031
+        "path": "src/shared/lib/products/services/productService.test.ts",
+        "lines": 1048
       },
       {
         "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-        "lines": 1022
+        "lines": 1045
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/tradera-browser-scripted.ts",
+        "lines": 1028
       },
       {
         "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
@@ -477,12 +497,24 @@
         "lines": 999
       },
       {
+        "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
+        "lines": 993
+      },
+      {
+        "path": "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
+        "lines": 993
+      },
+      {
         "path": "src/shared/lib/products/services/product-ai-graph-model-payload.test.ts",
         "lines": 991
       },
       {
         "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",
         "lines": 989
+      },
+      {
+        "path": "src/app/api/settings/handler.ts",
+        "lines": 983
       },
       {
         "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx",
@@ -493,8 +525,8 @@
         "lines": 981
       },
       {
-        "path": "src/app/api/settings/handler.ts",
-        "lines": 978
+        "path": "src/shared/lib/products/services/productService.ts",
+        "lines": 981
       },
       {
         "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
@@ -509,48 +541,16 @@
         "lines": 974
       },
       {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx",
+        "lines": 972
+      },
+      {
         "path": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx",
         "lines": 970
       },
       {
         "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
         "lines": 970
-      },
-      {
-        "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts",
-        "lines": 969
-      },
-      {
-        "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx",
-        "lines": 968
-      },
-      {
-        "path": "src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx",
-        "lines": 968
-      },
-      {
-        "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
-        "lines": 967
-      },
-      {
-        "path": "src/features/kangur/ui/components/GeometryBasicsWorkshopGame.tsx",
-        "lines": 964
-      },
-      {
-        "path": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.ts",
-        "lines": 962
-      },
-      {
-        "path": "src/features/kangur/admin/components/kangur-theme-settings.copy.ts",
-        "lines": 960
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts",
-        "lines": 958
-      },
-      {
-        "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
-        "lines": 950
       }
     ],
     "topPagesByLines": [

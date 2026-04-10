@@ -151,6 +151,21 @@ describe('mongo product repository mappers', () => {
     ]);
   });
 
+  it('preserves duplicateSkuCount on product list responses', () => {
+    const result = toProductResponse(asProductDocument({
+      _id: 'product-duplicate-sku-1',
+      id: 'product-duplicate-sku-1',
+      duplicateSkuCount: 2,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      name_en: 'Keychain',
+      published: false,
+    }));
+
+    expect(result.duplicateSkuCount).toBe(2);
+  });
+
   it('rejects legacy nested localized objects', () => {
     expect(() =>
       toProductResponse(asProductDocument({

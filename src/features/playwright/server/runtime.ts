@@ -39,6 +39,30 @@ export const enqueuePlaywrightEngineRun = async (
     instance: input.instance,
   });
 
+export const runPlaywrightEngineTask = async (input: {
+  request: PlaywrightEngineRunRequest;
+  ownerUserId?: string | null;
+  instance?: PlaywrightEngineRunInstance | null;
+}): Promise<PlaywrightEngineRunRecord> =>
+  enqueuePlaywrightEngineRun({
+    request: input.request,
+    waitForResult: true,
+    ownerUserId: input.ownerUserId,
+    instance: input.instance,
+  });
+
+export const startPlaywrightEngineTask = async (input: {
+  request: PlaywrightEngineRunRequest;
+  ownerUserId?: string | null;
+  instance?: PlaywrightEngineRunInstance | null;
+}): Promise<PlaywrightEngineRunRecord> =>
+  enqueuePlaywrightEngineRun({
+    request: input.request,
+    waitForResult: false,
+    ownerUserId: input.ownerUserId,
+    instance: input.instance,
+  });
+
 export const readPlaywrightEngineRun = readPlaywrightNodeRun;
 export const readPlaywrightEngineArtifact = readPlaywrightNodeArtifact;
 export const validatePlaywrightEngineScript = validatePlaywrightNodeScript;

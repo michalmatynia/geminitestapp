@@ -310,6 +310,11 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
 
   const isImported = hasImportedProductOrigin(product);
   const normalizedSku = (product.sku ?? '').trim();
+  const duplicateSkuCount =
+    typeof product.duplicateSkuCount === 'number' && product.duplicateSkuCount > 1
+      ? product.duplicateSkuCount
+      : null;
+  const duplicateSkuTitle = duplicateSkuCount ? `SKU used by ${duplicateSkuCount} products` : null;
   const normalizedProductId = (product.baseProductId ?? product.id ?? '').trim();
   const categoryLabel = resolveProductCategoryLabel(
     product,
@@ -383,6 +388,14 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
         >
           {normalizedSku || 'No SKU'}
         </span>
+        {duplicateSkuCount ? (
+          <span
+            className='rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[11px] font-medium text-amber-300'
+            title={duplicateSkuTitle ?? undefined}
+          >
+            Duplicate SKU
+          </span>
+        ) : null}
         <span aria-hidden='true' className='text-gray-600'>
           |
         </span>

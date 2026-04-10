@@ -165,6 +165,31 @@ describe('useImportExportRuntime', () => {
     expect(result.current.stateValue.imageMode).toBe('download');
   });
 
+  it('threads exact import target state into runtime resources', async () => {
+    const { result } = renderHook(() => useImportExportRuntime());
+
+    expect(mocks.useImportExportRuntimeResourcesMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        importDirectTargetType: 'base_product_id',
+        importDirectTargetValue: '',
+      })
+    );
+
+    await act(async () => {
+      result.current.stateValue.setImportDirectTargetType('sku');
+      result.current.stateValue.setImportDirectTargetValue('FOASW022');
+    });
+
+    await waitFor(() => {
+      expect(mocks.useImportExportRuntimeResourcesMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          importDirectTargetType: 'sku',
+          importDirectTargetValue: 'FOASW022',
+        })
+      );
+    });
+  });
+
   it('hydrates saved import settings from local storage on reload', async () => {
     window.localStorage.setItem(
       'product-import-runtime.v1',
@@ -397,6 +422,77 @@ describe('useImportExportRuntime', () => {
       expect(result.current.stateValue.importTemplateId).toBe('');
       expect(result.current.stateValue.importListEnabled).toBe(false);
       expect(result.current.stateValue.importsPageTab).toBe('import-list');
+    });
+  });
+
+  it('syncs lastResult forward from the live active import run when the same run updates', async () => {
+    mocks.useImportExportRuntimeResourcesMock.mockReturnValue(
+      createRuntimeResourcesMock({
+        activeImportRun: {
+          run: {
+            id: 'run-5',
+            status: 'completed',
+            dispatchMode: 'queued',
+            queueJobId: 'job-5',
+            summaryMessage: 'Import completed: 1 imported, 0 updated, 0 skipped, 0 failed.',
+          },
+        },
+      })
+    );
+
+    mocks.createImportExportRuntimeActionsMock.mockImplementation(
+      ({
+        setActiveImportRunId,
+        setLastResult,
+        setPollImportRun,
+      }: {
+        setActiveImportRunId: (value: string) => void;
+        setLastResult: (value: {
+          runId: string;
+          status: 'queued';
+          dispatchMode: 'queued';
+          queueJobId: string;
+          summaryMessage: string;
+        }) => void;
+        setPollImportRun: (value: boolean) => void;
+      }) => ({
+        handleLoadInventories: vi.fn(),
+        handleLoadWarehouses: vi.fn(),
+        handleLoadImportList: vi.fn(),
+        handleImport: async () => {
+          setLastResult({
+            runId: 'run-5',
+            status: 'queued',
+            dispatchMode: 'queued',
+            queueJobId: 'job-5',
+            summaryMessage: 'Queued 1 products for import.',
+          });
+          setActiveImportRunId('run-5');
+          setPollImportRun(true);
+        },
+        handleResumeImport: vi.fn(),
+        handleCancelImport: vi.fn(),
+        handleDownloadImportReport: vi.fn(),
+        handleSaveExportSettings: vi.fn(),
+        handleClearInventory: vi.fn(),
+      })
+    );
+
+    const { result } = renderHook(() => useImportExportRuntime());
+
+    await act(async () => {
+      await result.current.actionsValue.handleImport();
+    });
+
+    await waitFor(() => {
+      expect(result.current.dataValue.lastResult).toEqual({
+        runId: 'run-5',
+        status: 'completed',
+        dispatchMode: 'queued',
+        queueJobId: 'job-5',
+        summaryMessage: 'Import completed: 1 imported, 0 updated, 0 skipped, 0 failed.',
+        preflight: null,
+      });
     });
   });
 });

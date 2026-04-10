@@ -92,6 +92,7 @@ Future platform-wide docs should land under [`docs/platform/`](./platform/README
 ## Generated and Managed Artifact Areas
 
 - Route and architecture metrics: [`docs/metrics/README.md`](./metrics/README.md)
+- Improvement operations hub: [`docs/build/improvements/README.md`](./build/improvements/README.md)
 - AI Paths semantic grammar: [`docs/ai-paths/semantic-grammar/`](./ai-paths/semantic-grammar/)
 - Validator semantic grammar: [`docs/validator/semantic-grammar/`](./validator/semantic-grammar/)
 - Migration execution docs: [`docs/migrations/README.md`](./migrations/README.md)
@@ -107,6 +108,9 @@ These folders still exist only when they expose an active cross-feature docs or
 artifact surface. Completed historical archives should be removed instead of
 kept as passive shelfware.
 
+- New broad improvement portfolios should use
+  [`docs/build/improvements/README.md`](./build/improvements/README.md) instead
+  of creating more top-level program folders.
 - UI consolidation: [`docs/ui-consolidation/README.md`](./ui-consolidation/README.md)
 
 ## Structural Rules

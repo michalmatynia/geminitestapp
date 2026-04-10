@@ -1,5 +1,5 @@
 import type { TemplateMapping, ImportListItem, ImportListStats, DebugWarehouses, CatalogOption, InventoryOption, WarehouseOption, Template, ImportResponse, ImportRunDetail } from '@/shared/contracts/integrations/import-export';
-import type { BaseImportMode } from '@/shared/contracts/integrations/base-com';
+import type { BaseImportDirectTarget, BaseImportDirectTargetType, BaseImportMode } from '@/shared/contracts/integrations/base-com';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { ImportTemplateParameterImport } from '@/shared/contracts/integrations';
@@ -67,6 +67,10 @@ export interface ImportExportContextType {
   setImportNameSearch: (val: string) => void;
   importSkuSearch: string;
   setImportSkuSearch: (val: string) => void;
+  importDirectTargetType: BaseImportDirectTargetType;
+  setImportDirectTargetType: (type: BaseImportDirectTargetType) => void;
+  importDirectTargetValue: string;
+  setImportDirectTargetValue: (value: string) => void;
   importListPage: number;
   setImportListPage: (page: number) => void;
   importListPageSize: number;
@@ -113,7 +117,7 @@ export interface ImportExportContextType {
   handleLoadInventories: () => Promise<void>;
   handleLoadWarehouses: () => Promise<void>;
   handleLoadImportList: () => Promise<void>;
-  handleImport: () => Promise<void>;
+  handleImport: (options?: { directTarget?: BaseImportDirectTarget | null }) => Promise<void>;
   handleResumeImport: () => Promise<void>;
   handleCancelImport: () => Promise<void>;
   handleDownloadImportReport: () => void;
@@ -194,6 +198,10 @@ export type ImportExportStateContextType = Pick<
   | 'setImportNameSearch'
   | 'importSkuSearch'
   | 'setImportSkuSearch'
+  | 'importDirectTargetType'
+  | 'setImportDirectTargetType'
+  | 'importDirectTargetValue'
+  | 'setImportDirectTargetValue'
   | 'importListPage'
   | 'setImportListPage'
   | 'importListPageSize'

@@ -146,7 +146,10 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v119');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v120');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isKnownAuthenticatedTraderaUrl = (url) =>');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("url.includes('/my/listings')");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain("currentUrl.includes('/my/')");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('helpers,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const TRADERA_ALLOWED_PAGE_HOSTS = [\'www.tradera.com\', \'tradera.com\'];');
@@ -852,13 +855,14 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
 });
 
 describe('TRADERA_CHECK_STATUS_SCRIPT', () => {
-  it('parses as a valid Playwright node script and targets seller overview verification', () => {
+  it('parses as a valid Playwright node script and targets seller listing sections directly', () => {
     const validation = validatePlaywrightNodeScript(TRADERA_CHECK_STATUS_SCRIPT);
 
     expect(validation).toMatchObject({
       ok: true,
     });
-    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('https://www.tradera.com/en/my/overview');
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('https://www.tradera.com/en/my/listings');
+    expect(TRADERA_CHECK_STATUS_SCRIPT).not.toContain('https://www.tradera.com/en/my/overview');
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Active listings\'');
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Unsold items\'');
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Your sold items\'');
@@ -2807,7 +2811,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v119',
+        scriptMarker: 'tradera-quicklist-default:v120',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -2935,7 +2939,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v119',
+        scriptMarker: 'tradera-quicklist-default:v120',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -3560,7 +3564,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v119',
+      'tradera-quicklist-default:v120',
       'tradera-quicklist-default:v89'
     );
 
@@ -3592,7 +3596,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v119',
+        scriptMarker: 'tradera-quicklist-default:v120',
         scriptStoredOnConnection: false,
         requestedBrowserMode: 'headed',
         runId: 'run-relist-homepage-cleanup',
@@ -3746,7 +3750,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v119',
+        scriptMarker: 'tradera-quicklist-default:v120',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
@@ -3868,7 +3872,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v119',
+        scriptMarker: 'tradera-quicklist-default:v120',
         scriptStoredOnConnection: false,
         runId: 'run-connection-default-relist',
         requestedBrowserMode: 'connection_default',
@@ -3933,7 +3937,7 @@ describe('runTraderaBrowserCheckStatus', () => {
     });
   });
 
-  it('passes overview verification search inputs and returns Tradera verification metadata', async () => {
+  it('passes direct section verification search inputs and returns Tradera verification metadata', async () => {
     runPlaywrightListingScriptMock.mockResolvedValue({
       runId: 'run-check-status',
       externalListingId: 'listing-123',
@@ -3949,9 +3953,9 @@ describe('runTraderaBrowserCheckStatus', () => {
         executionSteps: [
           {
             id: 'open_overview',
-            label: 'Open My Overview',
+            label: 'Open Active listings',
             status: 'success',
-            message: 'Tradera My Overview opened successfully.',
+            message: 'Tradera Active listings opened successfully.',
           },
           {
             id: 'resolve_status',
@@ -3985,6 +3989,17 @@ describe('runTraderaBrowserCheckStatus', () => {
     expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'headed',
+        runtimeSettingsOverrides: {
+          slowMo: 0,
+          humanizeMouse: false,
+          mouseJitter: 0,
+          clickDelayMin: 0,
+          clickDelayMax: 0,
+          inputDelayMin: 0,
+          inputDelayMax: 0,
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+        },
         input: expect.objectContaining({
           listingUrl: 'https://www.tradera.com/item/123',
           externalListingId: 'listing-123',
@@ -4013,9 +4028,9 @@ describe('runTraderaBrowserCheckStatus', () => {
         executionSteps: [
           {
             id: 'open_overview',
-            label: 'Open My Overview',
+            label: 'Open Active listings',
             status: 'success',
-            message: 'Tradera My Overview opened successfully.',
+            message: 'Tradera Active listings opened successfully.',
           },
           {
             id: 'resolve_status',
@@ -4030,7 +4045,7 @@ describe('runTraderaBrowserCheckStatus', () => {
 });
 
 describe('ensureLoggedIn', () => {
-  it('reuses a session that lands on an authenticated /my route even without a visible logout link', async () => {
+  it('reuses a session that lands on the authenticated /my/listings route even without a visible logout link', async () => {
     const gotoMock = vi.fn(async (url: string) => {
       currentUrl = url.includes('/my/listings')
         ? 'https://www.tradera.com/en/my/listings?tab=active'
@@ -4078,6 +4093,47 @@ describe('ensureLoggedIn', () => {
       })
     );
     expect(gotoMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not treat a generic /my page without account markers as an authenticated session', async () => {
+    const gotoMock = vi.fn(async (url: string) => {
+      currentUrl = url.includes('/my/listings')
+        ? 'https://www.tradera.com/en/my/'
+        : url;
+    });
+    let currentUrl = 'about:blank';
+    const page = {
+      goto: gotoMock,
+      url: () => currentUrl,
+      locator: (_selector: string) => ({
+        first: () => ({
+          isVisible: async () => false,
+        }),
+      }),
+      waitForSelector: vi.fn(),
+      waitForNavigation: vi.fn(),
+    };
+
+    await expect(
+      ensureLoggedIn(
+        page as never,
+        {
+          username: 'user@example.com',
+          password: 'encrypted-password',
+          playwrightStorageState: 'stored-state',
+        } as never,
+        'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts'
+      )
+    ).rejects.toThrow('AUTH_REQUIRED: Stored Tradera session expired or requires manual verification.');
+
+    expect(gotoMock).toHaveBeenCalledTimes(1);
+    expect(gotoMock).toHaveBeenCalledWith(
+      'https://www.tradera.com/en/my/listings?tab=active',
+      expect.objectContaining({
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      })
+    );
   });
 
   it('keeps the worker and manual-login success selectors aligned', () => {

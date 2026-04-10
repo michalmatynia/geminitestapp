@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-05'
+last_reviewed: '2026-04-10'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -10,7 +10,7 @@ canonical: true
 
 This guide tracks node-by-node migration from compatibility runtime handlers to semantic portable code objects (`v3`).
 
-Generated at: 2026-04-05T14:57:57.569Z
+Generated at: 2026-04-10T09:12:39.132Z
 
 ## Inputs
 
@@ -72,7 +72,7 @@ Generated at: 2026-04-05T14:57:57.569Z
 
 - Source file: `docs/ai-paths/node-code-objects-v3/rollout-eligibility.json`
 - Schema version: `ai-paths.node-migration-rollout-eligibility.v2`
-- Generated at: `2026-04-05T14:57:57.569Z`
+- Generated at: `2026-04-10T09:12:39.132Z`
 - Eligibility criteria: `runtime_strategy=code_object_v3`, `has_semantic_contract_hash`, `has_v2_object_contract`, `has_v3_scaffold`, `has_v3_object_artifacts`, `dual_run_parity_validated`
 - Eligible node types: `agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 
@@ -103,7 +103,7 @@ No migration blockers detected.
 | `constant` | transform | `code_object_v3` | 0/1 | `yes` | [sheet](./nodes/constant.md) | `ae37de0024fb...` | `7ab1331fe618...` |
 | `context` | transform | `code_object_v3` | 1/4 | `yes` | [sheet](./nodes/context.md) | `8fec17546b68...` | `7ead38ff035c...` |
 | `database` | integration | `code_object_v3` | 12/4 | `yes` | [sheet](./nodes/database.md) | `a17f4531e80e...` | `68bdd970676e...` |
-| `db_schema` | integration | `code_object_v3` | 0/2 | `yes` | [sheet](./nodes/db_schema.md) | `9de668727483...` | `8f9157a45b9a...` |
+| `db_schema` | integration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/db_schema.md) | `569562070749...` | `8f9157a45b9a...` |
 | `delay` | orchestration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/delay.md) | `fa631c84b720...` | `2d35e8bcc20d...` |
 | `fetcher` | orchestration | `code_object_v3` | 5/4 | `yes` | [sheet](./nodes/fetcher.md) | `b75a94276b7a...` | `0f2c8d16e14c...` |
 | `gate` | orchestration | `code_object_v3` | 3/3 | `yes` | [sheet](./nodes/gate.md) | `c49aeec3b3e8...` | `2e0a122c81e4...` |

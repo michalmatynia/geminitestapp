@@ -3,17 +3,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TRADERA_PUBLIC_CATEGORIES_URL } from '@/features/integrations/constants/tradera';
 
 const {
-  enqueuePlaywrightNodeRunMock,
+  enqueuePlaywrightEngineRunMock,
   parsePersistedStorageStateMock,
   resolveConnectionPlaywrightSettingsMock,
 } = vi.hoisted(() => ({
-  enqueuePlaywrightNodeRunMock: vi.fn(),
+  enqueuePlaywrightEngineRunMock: vi.fn(),
   parsePersistedStorageStateMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
-  enqueuePlaywrightNodeRun: (...args: unknown[]) => enqueuePlaywrightNodeRunMock(...args),
+vi.mock('@/features/playwright/server', () => ({
+  enqueuePlaywrightEngineRun: (...args: unknown[]) => enqueuePlaywrightEngineRunMock(...args),
+  createTraderaCategoryScrapePlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+    kind: 'tradera_category_scrape',
+    label: 'Tradera public category scrape',
+    tags: ['integration', 'tradera', 'taxonomy'],
+    ...input,
+  }),
 }));
 
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
@@ -54,7 +60,7 @@ describe('fetchTraderaCategoriesForConnection', () => {
   });
 
   it('runs the public Tradera categories crawl and returns normalized categories', async () => {
-    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+    enqueuePlaywrightEngineRunMock.mockResolvedValue({
       runId: 'run-123',
       status: 'completed',
       error: null,
@@ -94,7 +100,7 @@ describe('fetchTraderaCategoriesForConnection', () => {
       { id: '200', name: 'Antiques & Design', parentId: '0' },
     ]);
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
         browserEngine: 'chromium',
         preventNewPages: true,
@@ -115,12 +121,15 @@ describe('fetchTraderaCategoriesForConnection', () => {
         },
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'tradera_category_scrape',
+      }),
     });
   });
 
   it('does not require a stored browser session for the public crawl', async () => {
     parsePersistedStorageStateMock.mockReturnValue(null);
-    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+    enqueuePlaywrightEngineRunMock.mockResolvedValue({
       runId: 'run-public',
       status: 'completed',
       error: null,
@@ -144,19 +153,22 @@ describe('fetchTraderaCategoriesForConnection', () => {
       } as never)
     ).resolves.toEqual([{ id: '100', name: 'Accessories', parentId: '0' }]);
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledTimes(1);
-    expect(enqueuePlaywrightNodeRunMock.mock.calls[0]?.[0]).toMatchObject({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledTimes(1);
+    expect(enqueuePlaywrightEngineRunMock.mock.calls[0]?.[0]).toMatchObject({
       request: expect.objectContaining({
         startUrl: TRADERA_PUBLIC_CATEGORIES_URL,
       }),
+      instance: expect.objectContaining({
+        kind: 'tradera_category_scrape',
+      }),
     });
-    expect(enqueuePlaywrightNodeRunMock.mock.calls[0]?.[0]?.request).not.toHaveProperty(
+    expect(enqueuePlaywrightEngineRunMock.mock.calls[0]?.[0]?.request).not.toHaveProperty(
       'contextOptions'
     );
   });
 
   it('surfaces failed public crawl runs as operation errors', async () => {
-    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+    enqueuePlaywrightEngineRunMock.mockResolvedValue({
       runId: 'run-failed',
       status: 'failed',
       error: null,
@@ -188,7 +200,7 @@ describe('fetchTraderaCategoriesForConnection', () => {
   });
 
   it('fails when the public crawl completes without categories', async () => {
-    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+    enqueuePlaywrightEngineRunMock.mockResolvedValue({
       runId: 'run-empty',
       status: 'completed',
       error: null,

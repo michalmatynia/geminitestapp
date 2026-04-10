@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { BaseProductRecord } from '@/features/integrations/server';
+import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import {
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
@@ -10,20 +10,20 @@ import {
   fetchBaseProductDetails,
   fetchBaseWarehouses,
   fetchBaseWarehousesDebug,
-  getIntegrationRepository,
-  mapBaseProduct,
-  extractBaseImageUrls,
-} from '@/features/integrations/server';
+} from '@/features/integrations/services/imports/base-client';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
+import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
+import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper-utils';
 import { resolvePriceGroupContext } from '@/features/integrations/services/imports/base-import-service-context';
-import { resolveBaseConnectionToken } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import {
   getCatalogRepository,
   getProductDataProvider,
   getProductRepository,
 } from '@/features/products/server';
 import type { ProductCreateInput, ProductWithImages } from '@/features/products/server';
-import { baseImportInventoriesPayloadSchema, baseImportListPayloadSchema, baseImportWarehousesPayloadSchema, baseImportWarehousesDebugPayloadSchema } from '@/shared/contracts/integrations/import-export';
-import { type BaseImportInventoriesResponse, type BaseImportListResponse, type BaseImportWarehousesResponse, type BaseImportWarehousesDebugResponse, type BaseWarehouse, type ImportListItem } from '@/shared/contracts/integrations';
+import { baseImportInventoriesPayloadSchema, baseImportListIdsPayloadSchema, baseImportListPayloadSchema, baseImportWarehousesPayloadSchema, baseImportWarehousesDebugPayloadSchema } from '@/shared/contracts/integrations/import-export';
+import { type BaseImportInventoriesResponse, type BaseImportListIdsResponse, type BaseImportListResponse, type BaseImportWarehousesResponse, type BaseImportWarehousesDebugResponse, type BaseWarehouse, type ImportListItem } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -31,7 +31,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const requestSchema = baseImportInventoriesPayloadSchema.or(
   baseImportWarehousesPayloadSchema
-).or(baseImportWarehousesDebugPayloadSchema).or(baseImportListPayloadSchema);
+).or(baseImportWarehousesDebugPayloadSchema).or(baseImportListPayloadSchema).or(baseImportListIdsPayloadSchema);
 
 type MappedItem = Omit<ImportListItem, 'baseProductId' | 'sku'> & {
   baseProductId: string | null;
@@ -142,12 +142,13 @@ export async function postBaseImportsHandler(
   const inventoryId = data.inventoryId;
   const provider = await getProductDataProvider();
 
-  if (action === 'list') {
+  if (data.action === 'list' || data.action === 'list_ids') {
+    const listData = data;
     const catalogRepository = await getCatalogRepository();
     const catalogs = await catalogRepository.listCatalogs();
     const defaultCatalog = catalogs.find((catalog: (typeof catalogs)[number]) => catalog.isDefault);
-    const targetCatalog = data.catalogId
-      ? (catalogs.find((catalog: (typeof catalogs)[number]) => catalog.id === data.catalogId) ??
+    const targetCatalog = listData.catalogId
+      ? (catalogs.find((catalog: (typeof catalogs)[number]) => catalog.id === listData.catalogId) ??
         defaultCatalog)
       : defaultCatalog;
     const { preferredCurrencies: listPreferredCurrencies } = await resolvePriceGroupContext(
@@ -178,17 +179,18 @@ export async function postBaseImportsHandler(
       id,
       exists: existingIds.has(id),
     }));
-    const filteredItems = data.uniqueOnly
+    const filteredItems = listData.uniqueOnly
       ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
       : listItems;
 
-    const scopedLimit = typeof data.limit === 'number' ? data.limit : null;
-    const effectivePageSize = data.pageSize ?? scopedLimit ?? 50;
+    const scopedLimit = typeof listData.limit === 'number' ? listData.limit : null;
+    const requestedPageSize = listData.action === 'list' ? listData.pageSize : undefined;
+    const effectivePageSize = requestedPageSize ?? scopedLimit ?? 50;
     const pageSize =
       scopedLimit != null ? Math.min(effectivePageSize, scopedLimit) : effectivePageSize;
-    const page = data.page ?? 1;
-    const normalizedName = (data.searchName ?? '').trim().toLowerCase();
-    const normalizedSku = (data.searchSku ?? '').trim().toLowerCase();
+    const page = listData.action === 'list' ? listData.page ?? 1 : 1;
+    const normalizedName = (listData.searchName ?? '').trim().toLowerCase();
+    const normalizedSku = (listData.searchSku ?? '').trim().toLowerCase();
     const hasSearchFilter = normalizedName.length > 0 || normalizedSku.length > 0;
     const scopedFilteredItems =
       scopedLimit != null ? filteredItems.slice(0, scopedLimit) : filteredItems;
@@ -255,6 +257,14 @@ export async function postBaseImportsHandler(
     };
 
     if (!hasSearchFilter) {
+      if (listData.action === 'list_ids') {
+        const response: BaseImportListIdsResponse = {
+          ids: scopedFilteredItems.map((item: { id: string }) => item.id),
+          totalMatching: scopedFilteredItems.length,
+        };
+        return NextResponse.json(response);
+      }
+
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
       const pagedItems = scopedFilteredItems.slice(startIndex, endIndex);
@@ -313,6 +323,13 @@ export async function postBaseImportsHandler(
       return nameOk && skuOk;
     });
     const searchedTotalPages = Math.max(1, Math.ceil(searchedList.length / pageSize));
+    if (listData.action === 'list_ids') {
+      const response: BaseImportListIdsResponse = {
+        ids: searchedList.map((item: ImportListItem) => item.baseProductId),
+        totalMatching: searchedList.length,
+      };
+      return NextResponse.json(response);
+    }
     const normalizedPage = Math.min(Math.max(page, 1), searchedTotalPages);
     const startIndex = (normalizedPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;

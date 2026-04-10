@@ -34,10 +34,16 @@ vi.mock('@/features/ai/ai-paths/context-registry/server', () => ({
   resolveAiPathsContextRegistryEnvelope: resolveAiPathsContextRegistryEnvelopeMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
-  enqueuePlaywrightNodeRun: enqueuePlaywrightNodeRunMock,
-  readPlaywrightNodeRun: readPlaywrightNodeRunMock,
-  readPlaywrightNodeArtifact: readPlaywrightNodeArtifactMock,
+vi.mock('@/features/playwright/server', () => ({
+  enqueuePlaywrightEngineRun: enqueuePlaywrightNodeRunMock,
+  readPlaywrightEngineRun: readPlaywrightNodeRunMock,
+  readPlaywrightEngineArtifact: readPlaywrightNodeArtifactMock,
+  createAiPathNodePlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+    kind: 'ai_path_node',
+    label: 'AI Paths Playwright node',
+    tags: ['ai-paths', 'playwright'],
+    ...input,
+  }),
 }));
 
 import { GET_handler as GET_playwrightArtifactHandler } from '@/app/api/ai-paths/playwright/[runId]/artifacts/[file]/handler';
@@ -166,6 +172,11 @@ describe('AI Paths Playwright routes', () => {
       request: expectedEnqueueRequest,
       waitForResult: false,
       ownerUserId: 'user-1',
+      instance: {
+        kind: 'ai_path_node',
+        label: 'AI Paths Playwright node',
+        tags: ['ai-paths', 'playwright'],
+      },
     });
     expect(resolveAiPathsContextRegistryEnvelopeMock).toHaveBeenCalledWith({
       refs: [{ kind: 'static_node', id: 'page:ai-paths' }],
@@ -194,6 +205,9 @@ describe('AI Paths Playwright routes', () => {
     expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
         ownerUserId: 'system',
+        instance: expect.objectContaining({
+          kind: 'ai_path_node',
+        }),
       })
     );
   });

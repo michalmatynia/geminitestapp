@@ -67,7 +67,11 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       : isVintedIntegrationSlug(data.activeIntegration?.slug)
         ? defaultVintedConnectionQuery.data?.connectionId ?? null
       : null;
-  const form = useIntegrationsFormImpl(data.connections, preferredConnectionId);
+  const form = useIntegrationsFormImpl(
+    data.connections,
+    preferredConnectionId,
+    data.playwrightPersonas
+  );
   const testing = useIntegrationsTestingImpl();
   const session = useIntegrationsSessionImpl(
     data.connections.find((c) => c.id === form.editingConnectionId) ?? data.connections[0] ?? null

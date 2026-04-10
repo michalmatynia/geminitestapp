@@ -48,6 +48,7 @@ import {
   resolvePersistedTraderaLinkedTarget,
 } from './tradera-listing/utils';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
+import { resolveConnectionPlaywrightSettingsProfile } from './tradera-playwright-settings';
 
 const extractErrorMetadata = (error: unknown): Record<string, unknown> | undefined => {
   if (!isAppError(error)) return undefined;
@@ -138,15 +139,18 @@ const resolveFailureListingStatus = (errorCategory: string | null): string =>
 const resolveRequestedTraderaBrowserMode = ({
   requestedBrowserMode,
   source,
+  action,
   browserMode,
   playwrightHeadless,
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   source: 'manual' | 'scheduler' | 'api';
+  action: 'list' | 'relist' | 'sync' | 'check_status';
   browserMode: 'builtin' | 'scripted' | null | undefined;
   playwrightHeadless: boolean | null | undefined;
 }): PlaywrightRelistBrowserMode => {
   if (requestedBrowserMode) return requestedBrowserMode;
+  if (action === 'check_status') return 'headless';
   // Respect the connection's explicit headed/headless preference
   if (playwrightHeadless === false) return 'headed';
   if (playwrightHeadless === true) return 'headless';
@@ -300,11 +304,15 @@ export const runTraderaListing = async (
         };
       }
     }
+    const resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettingsProfile(connection);
     const requestedBrowserMode = resolveRequestedTraderaBrowserMode({
       requestedBrowserMode: input.browserMode,
       source,
+      action,
       browserMode: connection.traderaBrowserMode,
-      playwrightHeadless: connection.playwrightHeadless,
+      playwrightHeadless: resolvedPlaywrightSettings.hasExplicitHeadlessPreference
+        ? resolvedPlaywrightSettings.settings.headless
+        : undefined,
     });
 
     // check_status: lightweight browser status read — no listing action, no API path

@@ -1,8 +1,8 @@
 /**
  * Tradera listing status-check script.
  *
- * Verifies listing state from the authenticated seller overview instead of
- * trusting the public item page. The search order is:
+ * Verifies listing state from the authenticated seller listing sections instead
+ * of trusting the public item page. The search order is:
  * 1. Active listings
  * 2. Unsold items
  * 3. Your sold items
@@ -18,7 +18,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
   emit,
   log,
 }) {
-  const OVERVIEW_URL = 'https://www.tradera.com/en/my/overview';
+  const INITIAL_SECTION_URL = 'https://www.tradera.com/en/my/listings';
   const ACTIVE_SEARCH_SELECTORS = [
     'main input[type="search"]',
     'main [role="searchbox"]',
@@ -136,7 +136,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
   const executionSteps = [
     {
       id: 'open_overview',
-      label: 'Open My Overview',
+      label: 'Open Active listings',
       status: 'pending',
       message: null,
     },
@@ -222,6 +222,33 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
   };
 
   const wait = (ms) => page.waitForTimeout(ms).catch(() => undefined);
+
+  const waitForPageIdle = async (timeoutMs = 1_500) => {
+    await page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => undefined);
+  };
+
+  const waitForCondition = async (
+    predicate,
+    { timeoutMs = 1_500, intervalMs = 100 } = {}
+  ) => {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      try {
+        if (await predicate()) {
+          return true;
+        }
+      } catch {}
+
+      await wait(intervalMs);
+    }
+
+    try {
+      return Boolean(await predicate());
+    } catch {
+      return false;
+    }
+  };
 
   const firstVisible = async (selectors) => {
     for (const selector of selectors) {
@@ -388,7 +415,10 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     const searchTrigger = await findScopedSearchTrigger();
     if (searchTrigger) {
       await searchTrigger.click({ timeout: 2_000 }).catch(() => undefined);
-      await wait(500);
+      await waitForCondition(async () => Boolean(await findScopedSearchInput()), {
+        timeoutMs: 1_200,
+        intervalMs: 100,
+      });
       searchInput = await findScopedSearchInput();
     }
 
@@ -411,24 +441,35 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
 
   const prepareSearchInput = async (searchInput, term) => {
     const expectedTerm = normalizeWhitespace(term);
+    const normalizedExpectedTerm = expectedTerm.toLowerCase();
     if (!searchInput || !expectedTerm) {
       return '';
     }
 
+    const hasExpectedValue = async () =>
+      normalizeWhitespace(await readSearchInputValue(searchInput)).toLowerCase() ===
+      normalizedExpectedTerm;
+
     await searchInput.click({ timeout: 2_000 }).catch(() => undefined);
     await searchInput.fill('').catch(() => undefined);
     await searchInput.fill(expectedTerm).catch(() => undefined);
-    await wait(250);
+    await waitForCondition(hasExpectedValue, {
+      timeoutMs: 1_000,
+      intervalMs: 100,
+    });
 
     let appliedValue = await readSearchInputValue(searchInput);
-    if (normalizeWhitespace(appliedValue).toLowerCase() !== expectedTerm.toLowerCase()) {
+    if (normalizeWhitespace(appliedValue).toLowerCase() !== normalizedExpectedTerm) {
       await searchInput.fill('').catch(() => undefined);
       await searchInput.fill(expectedTerm).catch(() => undefined);
-      await wait(250);
+      await waitForCondition(hasExpectedValue, {
+        timeoutMs: 1_000,
+        intervalMs: 100,
+      });
       appliedValue = await readSearchInputValue(searchInput);
     }
 
-    if (normalizeWhitespace(appliedValue).toLowerCase() !== expectedTerm.toLowerCase()) {
+    if (normalizeWhitespace(appliedValue).toLowerCase() !== normalizedExpectedTerm) {
       throw new Error(
         'FAIL_STATUS_SEARCH_UNCERTAIN: Tradera section search input did not accept the English title search term.'
       );
@@ -441,12 +482,12 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     const submitButton = await firstVisible(ACTIVE_SEARCH_SUBMIT_SELECTORS);
     if (submitButton) {
       await submitButton.click({ timeout: 2_000 }).catch(() => undefined);
-      await wait(500);
+      await waitForPageIdle(1_000);
       return 'button';
     }
 
     await page.keyboard.press('Enter').catch(() => undefined);
-    await wait(500);
+    await waitForPageIdle(1_000);
     return 'enter';
   };
 
@@ -491,8 +532,12 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     const trigger = await findSectionTrigger(section);
     if (trigger) {
       await trigger.click({ timeout: 2_000 }).catch(() => undefined);
-      await wait(1_500);
-      if (await hasSectionContext()) {
+      if (
+        await waitForCondition(hasSectionContext, {
+          timeoutMs: 2_500,
+          intervalMs: 100,
+        })
+      ) {
         return true;
       }
     }
@@ -502,7 +547,14 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
         waitUntil: 'domcontentloaded',
         timeout: 30_000,
       }).catch(() => undefined);
-      await wait(1_500);
+      if (
+        await waitForCondition(hasSectionContext, {
+          timeoutMs: 2_500,
+          intervalMs: 100,
+        })
+      ) {
+        return true;
+      }
     }
 
     return hasSectionContext();
@@ -777,9 +829,9 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
       waitUntil: 'domcontentloaded',
       timeout: 30_000,
     });
-    await wait(900);
+    await waitForPageIdle(1_200);
     await acceptCookies();
-    await wait(500);
+    await waitForPageIdle(800);
 
     const finalUrl = page.url();
     const listingText = await readDuplicateCandidateListingText();
@@ -817,7 +869,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     }
 
     await acceptCookies();
-    await wait(600);
+    await waitForPageIdle(800);
 
     const searchInput = await openScopedSearchInput();
     if (!searchInput) {
@@ -826,7 +878,6 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
 
     const preparedSearchValue = await prepareSearchInput(searchInput, searchTitle || '');
     const searchTrigger = await triggerSearchSubmit();
-    await wait(1_200);
 
     const exactTitleCandidates = await collectListingLinksForTerm(searchTitle || '');
     updateStep(
@@ -925,15 +976,12 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
       });
     }
 
-    updateStep('open_overview', 'running', 'Opening Tradera My Overview.');
-    await page.goto(OVERVIEW_URL, {
+    updateStep('open_overview', 'running', 'Opening Tradera Active listings.');
+    await page.goto(INITIAL_SECTION_URL, {
       waitUntil: 'domcontentloaded',
       timeout: 30_000,
     });
-    updateStep('open_overview', 'success', 'Tradera My Overview opened successfully.');
-
-    await acceptCookies();
-    await wait(800);
+    updateStep('open_overview', 'success', 'Tradera Active listings opened successfully.');
 
     let matchedResult = null;
     for (const section of SECTIONS) {

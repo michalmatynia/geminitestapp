@@ -6,17 +6,17 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { aiPathsPlaywrightRunRouteParamsSchema } from '@/shared/contracts/ai-paths';
 import {
-  readPlaywrightNodeRun,
-  type PlaywrightNodeRunRecord,
-} from '@/features/ai/ai-paths/services/playwright-node-runner';
+  readPlaywrightEngineRun,
+  type PlaywrightEngineRunRecord,
+} from '@/features/playwright/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 
 import { assertPlaywrightRunAccess } from '../access';
 
 const toPublicRun = (
-  run: PlaywrightNodeRunRecord
-): Omit<PlaywrightNodeRunRecord, 'ownerUserId'> => {
+  run: PlaywrightEngineRunRecord
+): Omit<PlaywrightEngineRunRecord, 'ownerUserId'> => {
   const { ownerUserId: _ownerUserId, ...rest } = run;
   return rest;
 };
@@ -39,7 +39,7 @@ export async function GET_handler(
   }
   const { runId } = parsedParams.data;
 
-  const run = await readPlaywrightNodeRun(runId);
+  const run = await readPlaywrightEngineRun(runId);
   if (!run) {
     throw notFoundError('Playwright run not found.', { runId });
   }

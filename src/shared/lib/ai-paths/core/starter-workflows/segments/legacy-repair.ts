@@ -18,7 +18,7 @@ const hasTranslationRepairDatabaseUpdateTemplate = (config: PathConfig): boolean
     );
   });
 
-const matchesLegacyTranslationRepairSignature = (config: PathConfig): boolean => {
+export const matchesLegacyTranslationRepairSignature = (config: PathConfig): boolean => {
   if (
     !hasAliasOrTriggerMatch(
       config,
@@ -55,7 +55,7 @@ const hasNormalizeProductNameLegacyDatabaseUpdate = (config: PathConfig): boolea
     }
 
     const updateTemplate = normalizeText(database?.['updateTemplate']);
-    if (updateTemplate.includes('"name_en"') || updateTemplate.includes("'name_en'")) {
+    if (updateTemplate.includes('"name_en"') || updateTemplate.includes('\'name_en\'')) {
       return true;
     }
 
@@ -65,7 +65,9 @@ const hasNormalizeProductNameLegacyDatabaseUpdate = (config: PathConfig): boolea
     return mappings.some((entry) => normalizeText(toRecord(entry)?.['targetPath']) === 'name_en');
   });
 
-const matchesLegacyNormalizeProductNameRepairSignature = (config: PathConfig): boolean => {
+export const matchesLegacyNormalizeProductNameRepairSignature = (
+  config: PathConfig
+): boolean => {
   if (
     !hasAliasOrTriggerMatch(
       config,
@@ -119,7 +121,7 @@ const hasParameterInferenceLegacyMappingUpdate = (config: PathConfig): boolean =
     );
   });
 
-const matchesLegacyParameterInferenceRepairSignature = (config: PathConfig): boolean => {
+export const matchesLegacyParameterInferenceRepairSignature = (config: PathConfig): boolean => {
   if (
     !hasAliasOrTriggerMatch(
       config,
@@ -142,15 +144,4 @@ const matchesLegacyParameterInferenceRepairSignature = (config: PathConfig): boo
 export const matchesLegacyStarterWorkflowRepairSignature = (
   entry: AiPathTemplateRegistryEntry,
   config: PathConfig
-): boolean => {
-  switch (entry.starterLineage.starterKey) {
-    case 'translation_en_pl':
-      return matchesLegacyTranslationRepairSignature(config);
-    case 'parameter_inference':
-      return matchesLegacyParameterInferenceRepairSignature(config);
-    case 'product_name_normalize':
-      return matchesLegacyNormalizeProductNameRepairSignature(config);
-    default:
-      return false;
-  }
-};
+): boolean => entry.upgradePolicy?.legacyRepairMatcher?.(config) ?? false;

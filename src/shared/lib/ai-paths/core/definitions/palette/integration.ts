@@ -2,6 +2,7 @@ import type { NodeDefinition } from '@/shared/contracts/ai-paths';
 import {
   API_ADVANCED_INPUT_PORTS,
   DATABASE_INPUT_PORTS,
+  DB_SCHEMA_INPUT_PORTS,
   HTTP_INPUT_PORTS,
   PLAYWRIGHT_CAPTURE_INPUT_PORTS,
   PLAYWRIGHT_CAPTURE_OUTPUT_PORTS,
@@ -44,8 +45,9 @@ export const integrationPalette: NodeDefinition[] = [
     type: 'db_schema',
     title: 'Database Schema',
     description: 'Provides live database structure and optional collection context for AI.',
-    inputs: [],
+    inputs: DB_SCHEMA_INPUT_PORTS,
     outputs: ['schema', 'context'],
+    inputContracts: buildOptionalInputContracts(DB_SCHEMA_INPUT_PORTS),
     config: {
       db_schema: {
         provider: 'auto',

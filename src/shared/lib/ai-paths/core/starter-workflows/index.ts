@@ -2,6 +2,7 @@ export {
   STARTER_WORKFLOW_REGISTRY,
   computeStarterWorkflowGraphHash,
   getAutoSeedStarterWorkflowEntries,
+  getStaticRecoveryStarterWorkflowEntryByDefaultPathId,
   getStaticRecoveryStarterWorkflowEntries,
   getStarterWorkflowRegistry,
   getStarterWorkflowTemplateById,

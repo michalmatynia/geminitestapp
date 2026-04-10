@@ -48,8 +48,7 @@ vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
   useUpdatePage: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
-vi.mock('@/shared/ui', () => ({
-  AdminCmsBreadcrumbs: () => null,
+vi.mock('@/shared/ui/primitives.public', () => ({
   Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Button: ({
     children,
@@ -59,11 +58,21 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormActions: () => null,
   FormSection: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
-  SectionHeader: () => null,
   ToggleRow: () => null,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  AdminCmsBreadcrumbs: () => null,
+  SectionHeader: () => null,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
   StatusBadge: ({ status }: { status: string }) => <div>{status}</div>,
   SearchableList: (props: MockSearchableListProps<{ id: string; slug: string }>) => {
     latestSearchableListProps = props;

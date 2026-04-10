@@ -5,7 +5,11 @@ import {
   connectionIdQuerySchema,
   type ConnectionIdQuery,
 } from '@/shared/validations/product-metadata-api-schemas';
-import { type MarketplaceMappingSaveResult } from '../marketplace-api.types';
+import {
+  type MarketplaceMappingSaveResult,
+  type MarketplaceMappingSaveRepository,
+  saveMarketplaceMapping,
+} from '../marketplace-api.types';
 
 export type ProducerMappingCreateFields = {
   connectionId: string;
@@ -13,16 +17,20 @@ export type ProducerMappingCreateFields = {
   internalProducerId: string;
 };
 
-export type ProducerMappingSaveRepository = {
+export type ProducerMappingUpdateFields = {
+  externalProducerId: string;
+  isActive: true;
+};
+
+export type ProducerMappingSaveRepository = MarketplaceMappingSaveRepository<
+  ProducerMapping,
+  ProducerMappingCreateFields,
+  ProducerMappingUpdateFields
+> & {
   getByInternalProducer: (
     connectionId: string,
     internalProducerId: string
   ) => Promise<ProducerMapping | null>;
-  update: (
-    id: string,
-    input: { externalProducerId: string; isActive: true }
-  ) => Promise<ProducerMapping>;
-  create: (input: ProducerMappingCreateFields) => Promise<ProducerMapping>;
 };
 
 export type ProducerMappingSaveResult = MarketplaceMappingSaveResult<ProducerMapping>;
@@ -59,16 +67,10 @@ export const requireProducerMappingCreateFields = (
 export const saveProducerMapping = async (
   repo: ProducerMappingSaveRepository,
   input: ProducerMappingCreateFields
-): Promise<ProducerMappingSaveResult> => {
-  const existing = await repo.getByInternalProducer(input.connectionId, input.internalProducerId);
-  if (existing) {
-    const updated = await repo.update(existing.id, {
-      externalProducerId: input.externalProducerId,
-      isActive: true,
-    });
-    return { body: updated, status: 200 };
-  }
-
-  const mapping = await repo.create(input);
-  return { body: mapping, status: 201 };
-};
+): Promise<ProducerMappingSaveResult> =>
+  saveMarketplaceMapping(
+    repo,
+    () => repo.getByInternalProducer(input.connectionId, input.internalProducerId),
+    input,
+    { externalProducerId: input.externalProducerId, isActive: true }
+  );

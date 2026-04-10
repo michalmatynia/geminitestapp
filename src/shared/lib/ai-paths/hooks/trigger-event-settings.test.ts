@@ -371,7 +371,7 @@ describe('loadPathConfigsFromSettings', () => {
         value: JSON.stringify({
           ...config,
           nodes: (config.nodes ?? []).map((node) => {
-            if (node.id !== 'node-model-name-normalize') return node;
+            if (node.type !== 'model') return node;
             return {
               ...node,
               config: {
@@ -397,13 +397,86 @@ describe('loadPathConfigsFromSettings', () => {
 
     const loaded = await loadPathConfigsFromSettings(data);
     const modelNode = loaded.configs[pathId]?.nodes.find(
-      (node) => node.id === 'node-model-name-normalize'
+      (node) => node.type === 'model'
     );
 
     expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
     expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
       `${PATH_CONFIG_PREFIX}${pathId}`,
       expect.stringContaining('"modelId":"ollama:gemma3"')
+    );
+  });
+
+  it('preserves edited Normalize model settings while repairing stored trigger configs', async () => {
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) {
+      throw new Error('Expected starter_product_name_normalize template');
+    }
+    const pathId = 'path_name_normalize_v1';
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId,
+      seededDefault: true,
+    });
+    const data: Array<{ key: string; value: string }> = [
+      { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: config.name }]) },
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: JSON.stringify({
+          ...config,
+          nodes: (config.nodes ?? []).map((node) => {
+            if (node.type !== 'model') return node;
+            return {
+              ...node,
+              config: {
+                ...node.config,
+                model: {
+                  ...node.config?.model,
+                  temperature: 0.35,
+                  maxTokens: 1337,
+                  systemPrompt: 'Only return normalized output.',
+                  waitForResult: false,
+                },
+              },
+            };
+          }),
+          extensions: {
+            aiPathsStarter: {
+              starterKey: 'product_name_normalize',
+              templateId: 'starter_product_name_normalize',
+              templateVersion: 4,
+              seededDefault: true,
+            },
+          },
+        }),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+    const modelNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'model');
+
+    expect(modelNode?.config?.model).toEqual(
+      expect.objectContaining({
+        temperature: 0.35,
+        maxTokens: 1337,
+        systemPrompt: 'Only return normalized output.',
+        waitForResult: false,
+      })
+    );
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${pathId}`,
+      expect.stringContaining('"temperature":0.35')
+    );
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${pathId}`,
+      expect.stringContaining('"maxTokens":1337')
+    );
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${pathId}`,
+      expect.stringContaining('"systemPrompt":"Only return normalized output."')
+    );
+    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${pathId}`,
+      expect.stringContaining('"waitForResult":false')
     );
   });
 

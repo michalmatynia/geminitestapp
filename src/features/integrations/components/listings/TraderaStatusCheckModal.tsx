@@ -14,7 +14,6 @@ import {
 } from '@/features/integrations/utils/tradera-status-check';
 import {
   isTraderaBrowserAuthRequiredMessage,
-  preflightTraderaQuickListSession,
   refreshTraderaBrowserSession,
 } from '@/features/integrations/utils/tradera-browser-session';
 import { resolveTraderaExecutionStepsFromMarketplaceData } from '@/features/integrations/utils/tradera-execution-steps';
@@ -736,39 +735,6 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     });
   }, [rows, startPollingForLiveCheck]);
 
-  const verifyLiveCheckSession = useCallback(
-    async (
-      target: TraderaSessionTarget
-    ): Promise<{ ready: boolean; authRequired: boolean; message: string | null }> => {
-      try {
-        const result = await preflightTraderaQuickListSession({
-          integrationId: target.integrationId,
-          connectionId: target.connectionId,
-        });
-        if (result.ready) {
-          return { ready: true, authRequired: false, message: null };
-        }
-        return {
-          ready: false,
-          authRequired: true,
-          message:
-            'Stored Tradera session expired or is missing. Login to Tradera and retry the live check.',
-        };
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : 'Failed to verify the Tradera browser session.';
-        return {
-          ready: false,
-          authRequired: isTraderaBrowserAuthRequiredMessage(message),
-          message,
-        };
-      }
-    },
-    []
-  );
-
   const handleRefreshSession = useCallback(
     async (productId: string) => {
       const row = rows.find((candidate) => candidate.productId === productId);
@@ -839,32 +805,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
   const handleLiveCheck = useCallback(
     async (productId: string, listingId: string) => {
       const row = rows.find((r) => r.productId === productId);
-      const target = resolveTraderaSessionTarget(row);
       const baseline = buildLiveCheckBaseline(row?.listing);
-
-      if (target) {
-        const sessionCheck = await verifyLiveCheckSession(target);
-        if (!sessionCheck.ready) {
-          const message =
-            sessionCheck.message ??
-            'Stored Tradera session expired or is missing. Login to Tradera and retry the live check.';
-          setRows((prev) =>
-            prev.map((candidate) =>
-              candidate.productId === productId
-                ? {
-                    ...candidate,
-                    liveCheckState: sessionCheck.authRequired ? 'idle' : 'error',
-                    liveCheckError: message,
-                  }
-                : candidate
-            )
-          );
-          toast(message, {
-            variant: sessionCheck.authRequired ? 'warning' : 'error',
-          });
-          return;
-        }
-      }
 
       setRows((prev) =>
         prev.map((r) =>
@@ -897,20 +838,22 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
           startPollingForLiveCheck(productId, baseline);
         }
       } catch (err) {
+        const message = err instanceof Error ? err.message : 'Live check failed.';
+        const authRequired = isTraderaBrowserAuthRequiredMessage(message);
         setRows((prev) =>
           prev.map((r) =>
             r.productId === productId
               ? {
                   ...r,
-                  liveCheckState: 'error',
-                  liveCheckError: err instanceof Error ? err.message : 'Live check failed.',
+                  liveCheckState: authRequired ? 'idle' : 'error',
+                  liveCheckError: message,
                 }
               : r
           )
         );
       }
     },
-    [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck, toast, verifyLiveCheckSession]
+    [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck]
   );
 
   const handleCheckAllLive = useCallback(async () => {
@@ -931,35 +874,6 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     const baselineByProductId = new Map(
       eligibleRows.map((row) => [row.productId, buildLiveCheckBaseline(row.listing)])
     );
-    const sessionTargets = new Map<
-      string,
-      {
-        integrationId: string;
-        connectionId: string;
-        productIds: string[];
-      }
-    >();
-
-    eligibleRows.forEach((row) => {
-      const target = resolveTraderaSessionTarget(row);
-      if (!target) {
-        return;
-      }
-
-      const key = `${target.integrationId}:${target.connectionId}`;
-      const existing = sessionTargets.get(key);
-      if (existing) {
-        existing.productIds.push(target.productId);
-        return;
-      }
-
-      sessionTargets.set(key, {
-        integrationId: target.integrationId,
-        connectionId: target.connectionId,
-        productIds: [target.productId],
-      });
-    });
-
     setIsBatchChecking(true);
     setRows((prev) =>
       prev.map((row) =>
@@ -970,74 +884,9 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     );
 
     try {
-      const blockedByProductId = new Map<
-        string,
-        { message: string; authRequired: boolean }
-      >();
-
-      for (const target of sessionTargets.values()) {
-        const sessionCheck = await verifyLiveCheckSession({
-          productId: target.productIds[0] ?? '',
-          integrationId: target.integrationId,
-          connectionId: target.connectionId,
-        });
-        if (sessionCheck.ready) {
-          continue;
-        }
-        const message =
-          sessionCheck.message ??
-          'Stored Tradera session expired or is missing. Login to Tradera and retry the live check.';
-        target.productIds.forEach((productId) => {
-          blockedByProductId.set(productId, {
-            message,
-            authRequired: sessionCheck.authRequired,
-          });
-        });
-      }
-
-      if (blockedByProductId.size > 0) {
-        setRows((prev) =>
-          prev.map((row) => {
-            const blocked = blockedByProductId.get(row.productId);
-            if (!blocked) {
-              return row;
-            }
-            return {
-              ...row,
-              liveCheckState: blocked.authRequired ? 'idle' : 'error',
-              liveCheckError: blocked.message,
-            };
-          })
-        );
-      }
-
-      const queueableProductIds = eligibleProductIds.filter(
-        (productId) => !blockedByProductId.has(productId)
-      );
-      const queueableProductIdSet = new Set(queueableProductIds);
-      const authRequiredCount = Array.from(blockedByProductId.values()).filter(
-        (entry) => entry.authRequired
-      ).length;
-      const preflightFailedCount = blockedByProductId.size - authRequiredCount;
-
-      if (queueableProductIds.length === 0) {
-        const summaryParts = [
-          authRequiredCount > 0 && `${authRequiredCount} need login`,
-          preflightFailedCount > 0 && `${preflightFailedCount} preflight failed`,
-        ].filter(Boolean);
-
-        toast(
-          summaryParts.length > 0
-            ? `Tradera live checks: ${summaryParts.join(', ')}.`
-            : 'No Tradera browser listings were eligible for live check.',
-          { variant: 'warning' }
-        );
-        return;
-      }
-
       setRows((prev) =>
         prev.map((row) =>
-          queueableProductIdSet.has(row.productId)
+          eligibleProductIdSet.has(row.productId)
             ? { ...row, liveCheckState: 'queued', liveCheckError: null }
             : row
         )
@@ -1046,7 +895,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
       const response = await api.post<TraderaListingStatusCheckBatchResponse>(
         '/api/v2/integrations/product-listings/tradera-status-check',
         {
-          productIds: queueableProductIds,
+          productIds: eligibleProductIds,
         }
       );
       const resultByProductId = new Map(
@@ -1069,9 +918,10 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
                 'No Tradera browser listing available for live status check.',
             };
           }
+          const authRequired = isTraderaBrowserAuthRequiredMessage(result.message);
           return {
             ...row,
-            liveCheckState: 'error',
+            liveCheckState: authRequired ? 'idle' : 'error',
             liveCheckError: result.message ?? 'Live check failed.',
           };
         })
@@ -1106,9 +956,10 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         response.queued > 0 && `${response.queued} queued`,
         response.alreadyQueued > 0 && `${response.alreadyQueued} already queued`,
         response.skipped > 0 && `${response.skipped} skipped`,
-        response.failed > 0 && `${response.failed} failed`,
-        authRequiredCount > 0 && `${authRequiredCount} need login`,
-        preflightFailedCount > 0 && `${preflightFailedCount} preflight failed`,
+        response.results.filter((result) => isTraderaBrowserAuthRequiredMessage(result.message)).length > 0 &&
+          `${response.results.filter((result) => isTraderaBrowserAuthRequiredMessage(result.message)).length} need login`,
+        response.results.filter((result) => result.status === 'error' && !isTraderaBrowserAuthRequiredMessage(result.message)).length > 0 &&
+          `${response.results.filter((result) => result.status === 'error' && !isTraderaBrowserAuthRequiredMessage(result.message)).length} failed`,
       ].filter(Boolean);
 
       toast(
@@ -1117,7 +968,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
           : 'No Tradera browser listings were eligible for live check.',
         {
           variant:
-            response.failed > 0 || blockedByProductId.size > 0 ? 'warning' : 'success',
+            response.failed > 0 ? 'warning' : 'success',
         }
       );
     } catch (err) {
@@ -1138,7 +989,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     } finally {
       setIsBatchChecking(false);
     }
-  }, [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck, toast, verifyLiveCheckSession]);
+  }, [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck, toast]);
 
   // Summary counts
   const totalWithListing = rows.filter((r) => r.listing !== null).length;

@@ -55,6 +55,8 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     setImportMode,
     importDryRun,
     setImportDryRun,
+    uniqueOnly,
+    setUniqueOnly,
     allowDuplicateSku,
     setAllowDuplicateSku,
     saveImportSettings,
@@ -67,8 +69,6 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     handleSaveImportSettings,
     savingDefaultConnection,
     handleSaveDefaultBaseConnection,
-    importing,
-    handleImport,
   } = useImportExportActions();
   const baseConnectionOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> => [
@@ -145,43 +145,6 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     baseImportQueueHealth?.redisAvailable,
     baseImportQueueHealthQuery.isLoading,
   ]);
-  const runImportButtonConfig = React.useMemo(() => {
-    if (baseImportQueueHealthQuery.isLoading) {
-      return {
-        label: 'Run import',
-        variant: 'default' as const,
-        hint: 'Checking runtime queue health before the next dispatch.',
-      };
-    }
-
-    if (baseImportQueueHealth?.mode === 'inline') {
-      return {
-        label: 'Run import inline',
-        variant: 'warning' as const,
-        hint: 'Redis queueing is unavailable. The next import will run inline instead of appearing as a BullMQ runtime job.',
-      };
-    }
-
-    if (baseImportQueueHealth?.redisAvailable && !baseImportQueue?.running) {
-      return {
-        label: 'Queue import anyway',
-        variant: 'warning' as const,
-        hint: 'The base-import worker is offline. The next import may queue successfully but will not process until the worker is restored.',
-      };
-    }
-
-    return {
-      label: 'Run import',
-      variant: 'default' as const,
-      hint: 'The next import will be submitted to the base-import runtime queue.',
-    };
-  }, [
-    baseImportQueue?.running,
-    baseImportQueueHealth?.mode,
-    baseImportQueueHealth?.redisAvailable,
-    baseImportQueueHealthQuery.isLoading,
-  ]);
-
   return (
     <FormSection
       title='Base.com Connection'
@@ -405,20 +368,8 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               >
                 Clear Saved
               </Button>
-              <Button
-                size='sm'
-                variant={runImportButtonConfig.variant}
-                onClick={(): void => {
-                  void handleImport();
-                }}
-                loading={importing}
-                loadingText='Importing...'
-              >
-                {runImportButtonConfig.label}
-              </Button>
             </div>
           </div>
-          <p className='mt-3 text-xs text-gray-400'>{runImportButtonConfig.hint}</p>
           {runtimeQueueWarning ? (
             <Card variant='warning' padding='sm' className='mt-4'>
               <p className='text-xs font-semibold uppercase tracking-wider text-amber-200'>
@@ -515,6 +466,12 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             </FormSection>
           </div>
           <div className='mt-3 space-y-2'>
+            <ToggleRow
+              label='Unique products only'
+              description='Apply unique-only filtering to both the import list preview and the import run.'
+              checked={uniqueOnly}
+              onCheckedChange={setUniqueOnly}
+            />
             <ToggleRow
               label='Dry run (do not write to database)'
               description='Fetch and validate import data without saving.'

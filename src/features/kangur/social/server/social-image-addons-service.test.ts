@@ -15,11 +15,17 @@ vi.mock('sharp', () => ({
   default: (...args: unknown[]) => mocks.sharpMock(...args),
 }));
 
-vi.mock('@/features/ai/server', () => ({
-  enqueuePlaywrightNodeRun: (...args: unknown[]) =>
+vi.mock('@/features/playwright/server', () => ({
+  enqueuePlaywrightEngineRun: (...args: unknown[]) =>
     mocks.enqueuePlaywrightNodeRunMock(...args),
-  readPlaywrightNodeArtifact: (...args: unknown[]) =>
+  readPlaywrightEngineArtifact: (...args: unknown[]) =>
     mocks.readPlaywrightNodeArtifactMock(...args),
+  createSocialCaptureSinglePlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+    kind: 'social_capture_single',
+    label: 'Kangur social single capture',
+    tags: ['kangur', 'social', 'capture', 'single'],
+    ...input,
+  }),
 }));
 
 vi.mock('@/features/files/server', () => ({
@@ -78,6 +84,9 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_single',
+        }),
         request: expect.objectContaining({
           input: expect.objectContaining({
             appearanceMode: 'dark',
@@ -137,6 +146,9 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_single',
+        }),
         request: expect.objectContaining({
           contextOptions: {
             storageState: {
@@ -164,6 +176,9 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_single',
+        }),
         request: expect.objectContaining({
           policyAllowedHosts: ['localhost:3000'],
         }),

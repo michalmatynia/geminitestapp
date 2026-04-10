@@ -75,12 +75,6 @@ vi.mock('@/shared/ui/toast', () => ({
 import { TraderaStatusCheckModal } from './TraderaStatusCheckModal';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-const buildTraderaPreflightResponse = () => ({
-  ok: true,
-  sessionReady: true,
-  steps: [{ step: 'Preflight validation', status: 'ok' }],
-});
-
 const buildTraderaSessionRefreshResponse = () => ({
   ok: true,
   steps: [{ step: 'Saving session', status: 'ok' }],
@@ -165,9 +159,6 @@ describe('TraderaStatusCheckModal', () => {
     });
 
     apiPostMock.mockImplementation((url: string) => {
-      if (url.includes('/connections/')) {
-        return Promise.resolve(buildTraderaPreflightResponse());
-      }
       if (url === '/api/v2/integrations/product-listings/tradera-status-check') {
         return Promise.resolve({
           total: 2,
@@ -226,6 +217,9 @@ describe('TraderaStatusCheckModal', () => {
         }
       );
     });
+    expect(
+      apiPostMock.mock.calls.some(([url]) => String(url).includes('/connections/'))
+    ).toBe(false);
 
     await waitFor(() => {
       expect(toastMock).toHaveBeenCalledWith(
@@ -255,9 +249,6 @@ describe('TraderaStatusCheckModal', () => {
       }),
     ]);
     apiPostMock.mockImplementation((url: string) => {
-      if (url.includes('/connections/')) {
-        return Promise.resolve(buildTraderaPreflightResponse());
-      }
       if (url === '/api/v2/integrations/product-listings/tradera-status-check') {
         return Promise.resolve({
           total: 1,
@@ -309,9 +300,6 @@ describe('TraderaStatusCheckModal', () => {
       }),
     ]);
     apiPostMock.mockImplementation((url: string) => {
-      if (url.includes('/connections/')) {
-        return Promise.resolve(buildTraderaPreflightResponse());
-      }
       if (
         url ===
         '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
@@ -358,7 +346,7 @@ describe('TraderaStatusCheckModal', () => {
     });
   });
 
-  it('requires a Tradera login refresh before queueing a live check when preflight reports auth_required', async () => {
+  it('requires a Tradera login refresh when the single live-check endpoint reports auth_required', async () => {
     apiGetMock
       .mockResolvedValueOnce([
         makeListing({
@@ -373,15 +361,20 @@ describe('TraderaStatusCheckModal', () => {
         }),
       ]);
     apiPostMock.mockImplementation((url: string, body?: Record<string, unknown>) => {
-      if (url.includes('/connections/') && url.endsWith('/test')) {
-        if (body?.mode === 'manual_session_refresh') {
-          return Promise.resolve(buildTraderaSessionRefreshResponse());
-        }
+      if (
+        url ===
+        '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
+      ) {
         return Promise.reject(
           new Error(
             'AUTH_REQUIRED: Stored Tradera session expired or is missing. Login to Tradera and retry the live check.'
           )
         );
+      }
+      if (url.includes('/connections/') && url.endsWith('/test')) {
+        if (body?.mode === 'manual_session_refresh') {
+          return Promise.resolve(buildTraderaSessionRefreshResponse());
+        }
       }
       return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
     });
@@ -413,7 +406,7 @@ describe('TraderaStatusCheckModal', () => {
             url ===
             '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
         )
-    ).toHaveLength(0);
+    ).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Login to Tradera' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
@@ -437,18 +430,29 @@ describe('TraderaStatusCheckModal', () => {
     });
   });
 
-  it('marks batch live checks as needing login when preflight fails before queueing', async () => {
+  it('marks batch live checks as needing login when the batch endpoint reports auth_required', async () => {
     apiGetMock.mockResolvedValue([
       makeListing({
         id: 'listing-browser-1',
         productId: 'product-1',
       }),
     ]);
-    apiPostMock.mockRejectedValue(
-      new Error(
-        'AUTH_REQUIRED: Stored Tradera session expired or is missing. Login to Tradera and retry the live check.'
-      )
-    );
+    apiPostMock.mockResolvedValue({
+      total: 1,
+      queued: 0,
+      alreadyQueued: 0,
+      skipped: 0,
+      failed: 1,
+      results: [
+        {
+          productId: 'product-1',
+          listingId: 'listing-browser-1',
+          status: 'error',
+          message:
+            'AUTH_REQUIRED: Stored Tradera session expired or is missing. Login to Tradera and retry the live check.',
+        },
+      ],
+    });
 
     render(
       <TraderaStatusCheckModal
@@ -471,7 +475,7 @@ describe('TraderaStatusCheckModal', () => {
       apiPostMock
         .mock.calls.map(([url]) => url)
         .filter((url) => url === '/api/v2/integrations/product-listings/tradera-status-check')
-    ).toHaveLength(0);
+    ).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Login to Tradera' })).toBeInTheDocument();
   });
 
@@ -501,9 +505,9 @@ describe('TraderaStatusCheckModal', () => {
                   executionSteps: [
                     {
                       id: 'open_overview',
-                      label: 'Open My Overview',
+                      label: 'Open Active listings',
                       status: 'success',
-                      message: 'Tradera My Overview opened successfully.',
+                      message: 'Tradera Active listings opened successfully.',
                     },
                     {
                       id: 'resolve_status',
@@ -520,9 +524,6 @@ describe('TraderaStatusCheckModal', () => {
       ]);
 
     apiPostMock.mockImplementation((url: string) => {
-      if (url.includes('/connections/')) {
-        return Promise.resolve(buildTraderaPreflightResponse());
-      }
       if (
         url ===
         '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
@@ -576,7 +577,7 @@ describe('TraderaStatusCheckModal', () => {
     });
     expect(screen.getByText('Ended')).toBeInTheDocument();
     expect(screen.getByText('Latest check steps')).toBeInTheDocument();
-    expect(screen.getByText('Open My Overview')).toBeInTheDocument();
+    expect(screen.getByText('Open Active listings')).toBeInTheDocument();
     expect(screen.getByText('Resolve final Tradera status')).toBeInTheDocument();
   });
 
@@ -621,9 +622,6 @@ describe('TraderaStatusCheckModal', () => {
       ]);
 
     apiPostMock.mockImplementation((url: string) => {
-      if (url.includes('/connections/')) {
-        return Promise.resolve(buildTraderaPreflightResponse());
-      }
       if (
         url ===
         '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'

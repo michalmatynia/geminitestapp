@@ -22,6 +22,30 @@ const getBravePath = (): string | null => {
   return path && existsSync(path) ? path : null;
 };
 
+export const resolvePlaywrightBrowserLaunchOptions = (
+  preference: PlaywrightBrowserPreference
+): LaunchOptions => {
+  const bravePath = getBravePath();
+
+  switch (preference) {
+    case 'brave': {
+      if (!bravePath) {
+        throw new Error(
+          `Brave browser not found at expected path (${BRAVE_PATHS[process.platform] ?? 'unsupported platform'}). Install Brave or switch to a different browser in connection settings.`
+        );
+      }
+      return { executablePath: bravePath };
+    }
+    case 'chrome':
+      return { channel: 'chrome' };
+    case 'auto':
+      return bravePath ? { executablePath: bravePath } : { channel: 'chrome' };
+    case 'chromium':
+    default:
+      return {};
+  }
+};
+
 /**
  * Build an ordered list of browser launch attempts based on the user's preference.
  *

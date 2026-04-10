@@ -5,15 +5,6 @@ import {
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
 import { ApiError } from '@/shared/lib/api-client';
 
-export type ShippingGroupFormData = {
-  name: string;
-  description: string;
-  catalogId: string;
-  traderaShippingCondition: string;
-  traderaShippingPriceEur: string;
-  autoAssignCategoryIds: string[];
-};
-
 export const DRAFT_SHIPPING_GROUP_ID = '__draft-shipping-group__';
 
 const toTrimmedString = (value: unknown): string =>

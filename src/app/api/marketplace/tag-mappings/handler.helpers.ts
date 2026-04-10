@@ -5,7 +5,11 @@ import {
   connectionIdQuerySchema,
   type ConnectionIdQuery,
 } from '@/shared/validations/product-metadata-api-schemas';
-import { type MarketplaceMappingSaveResult } from '../marketplace-api.types';
+import {
+  type MarketplaceMappingSaveResult,
+  type MarketplaceMappingSaveRepository,
+  saveMarketplaceMapping,
+} from '../marketplace-api.types';
 
 export type TagMappingCreateFields = {
   connectionId: string;
@@ -13,13 +17,17 @@ export type TagMappingCreateFields = {
   internalTagId: string;
 };
 
-export type TagMappingSaveRepository = {
+export type TagMappingUpdateFields = {
+  externalTagId: string;
+  isActive: true;
+};
+
+export type TagMappingSaveRepository = MarketplaceMappingSaveRepository<
+  TagMapping,
+  TagMappingCreateFields,
+  TagMappingUpdateFields
+> & {
   getByInternalTag: (connectionId: string, internalTagId: string) => Promise<TagMapping | null>;
-  update: (
-    id: string,
-    input: { externalTagId: string; isActive: true }
-  ) => Promise<TagMapping>;
-  create: (input: TagMappingCreateFields) => Promise<TagMapping>;
 };
 
 export type TagMappingSaveResult = MarketplaceMappingSaveResult<TagMapping>;
@@ -56,16 +64,10 @@ export const requireTagMappingCreateFields = (
 export const saveTagMapping = async (
   repo: TagMappingSaveRepository,
   input: TagMappingCreateFields
-): Promise<TagMappingSaveResult> => {
-  const existing = await repo.getByInternalTag(input.connectionId, input.internalTagId);
-  if (existing) {
-    const updated = await repo.update(existing.id, {
-      externalTagId: input.externalTagId,
-      isActive: true,
-    });
-    return { body: updated, status: 200 };
-  }
-
-  const mapping = await repo.create(input);
-  return { body: mapping, status: 201 };
-};
+): Promise<TagMappingSaveResult> =>
+  saveMarketplaceMapping(
+    repo,
+    () => repo.getByInternalTag(input.connectionId, input.internalTagId),
+    input,
+    { externalTagId: input.externalTagId, isActive: true }
+  );

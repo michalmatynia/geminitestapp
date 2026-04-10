@@ -163,8 +163,8 @@
             "edgeId": "edge-name-normalize-02",
             "fromNodeId": "node-parser-name-normalize",
             "fromPort": "bundle",
-            "toNodeId": "node-prompt-name-normalize",
-            "toPort": "bundle"
+            "toNodeId": "node-db-schema-name-normalize",
+            "toPort": "context"
           },
           {
             "edgeId": "edge-name-normalize-03",
@@ -172,6 +172,129 @@
             "fromPort": "images",
             "toNodeId": "node-prompt-name-normalize",
             "toPort": "images"
+          },
+          {
+            "edgeId": "edge-name-normalize-15",
+            "fromNodeId": "node-parser-name-normalize",
+            "fromPort": "bundle",
+            "toNodeId": "node-category-context-name-normalize",
+            "toPort": "bundle"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-db-schema-name-normalize",
+      "type": "db_schema",
+      "title": "Database Schema",
+      "description": "Fetch the latest product_categories rows for the active catalog during each Normalize run.",
+      "position": {
+        "x": 820,
+        "y": 700
+      },
+      "inputs": ["context", "schema"],
+      "outputs": ["schema", "context"],
+      "config": {
+        "db_schema": {
+          "provider": "auto",
+          "mode": "selected",
+          "collections": ["product_categories"],
+          "sourceMode": "live_context",
+          "contextCollections": ["product_categories"],
+          "contextQuery": "{\n  \"catalogId\": \"{{context.catalogId}}\"\n}",
+          "contextLimit": 100,
+          "includeFields": true,
+          "includeRelations": true,
+          "formatAs": "json"
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "context": {
+              "required": true
+            },
+            "schema": {
+              "required": false
+            }
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-02",
+            "fromNodeId": "node-parser-name-normalize",
+            "fromPort": "bundle",
+            "toNodeId": "node-db-schema-name-normalize",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-17",
+            "fromNodeId": "node-db-schema-name-normalize",
+            "fromPort": "context",
+            "toNodeId": "node-category-context-name-normalize",
+            "toPort": "context"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-category-context-name-normalize",
+      "type": "function",
+      "title": "Function",
+      "description": "Reduce live product_categories rows into prompt-safe leaf-category context and current-category evidence.",
+      "position": {
+        "x": 1130,
+        "y": 700
+      },
+      "inputs": ["bundle", "context"],
+      "outputs": ["bundle"],
+      "config": {
+        "function": {
+          "script": "const product = inputs.bundle && typeof inputs.bundle === 'object' ? inputs.bundle : {};\nconst liveContext =\n  inputs.context && typeof inputs.context === 'object' && inputs.context.liveContext && typeof inputs.context.liveContext === 'object'\n    ? inputs.context.liveContext\n    : {};\nconst collectionMap =\n  liveContext.collectionMap && typeof liveContext.collectionMap === 'object'\n    ? liveContext.collectionMap\n    : {};\nconst categoryCollection =\n  collectionMap.product_categories && typeof collectionMap.product_categories === 'object'\n    ? collectionMap.product_categories\n    : {};\nconst rawDocuments = Array.isArray(categoryCollection.documents) ? categoryCollection.documents : [];\n\nconst normalizeLabel = (doc) => {\n  if (!doc || typeof doc !== 'object') return '';\n  return String(doc.name_en || doc.name || doc.name_pl || doc.name_de || doc.id || doc._id || '').trim();\n};\n\nconst normalizedCategories = rawDocuments\n  .map((doc) => {\n    const id = typeof doc.id === 'string' && doc.id.trim() ? doc.id.trim() : typeof doc._id === 'string' && doc._id.trim() ? doc._id.trim() : '';\n    if (!id) return null;\n    const label = normalizeLabel(doc);\n    return {\n      id,\n      label: label || id,\n      parentId: typeof doc.parentId === 'string' && doc.parentId.trim() ? doc.parentId.trim() : null,\n      catalogId: typeof doc.catalogId === 'string' && doc.catalogId.trim() ? doc.catalogId.trim() : null,\n      sortIndex: typeof doc.sortIndex === 'number' ? doc.sortIndex : null,\n    };\n  })\n  .filter(Boolean);\n\nconst byId = Object.fromEntries(normalizedCategories.map((category) => [category.id, category]));\nconst childrenByParent = normalizedCategories.reduce((acc, category) => {\n  const parentKey = category.parentId || '__root__';\n  acc[parentKey] = (acc[parentKey] || 0) + 1;\n  return acc;\n}, {});\n\nconst buildFullPath = (categoryId, seen = new Set()) => {\n  const category = byId[categoryId];\n  if (!category) return '';\n  if (seen.has(categoryId)) return category.label;\n  const nextSeen = new Set(seen);\n  nextSeen.add(categoryId);\n  if (!category.parentId || !byId[category.parentId]) return category.label;\n  const parentPath = buildFullPath(category.parentId, nextSeen);\n  return parentPath ? `${parentPath} > ${category.label}` : category.label;\n};\n\nconst leafCategories = normalizedCategories\n  .filter((category) => !childrenByParent[category.id])\n  .map((category) => ({\n    id: category.id,\n    label: category.label,\n    fullPath: buildFullPath(category.id),\n    parentId: category.parentId,\n    isCurrent: category.id === product.categoryId,\n  }))\n  .sort((left, right) => left.fullPath.localeCompare(right.fullPath));\n\nconst currentCategoryId =\n  typeof product.categoryId === 'string' && product.categoryId.trim() ? product.categoryId.trim() : null;\nconst currentCategoryBase = currentCategoryId ? byId[currentCategoryId] || null : null;\nconst currentCategory = currentCategoryBase\n  ? {\n      id: currentCategoryBase.id,\n      label: currentCategoryBase.label,\n      fullPath: buildFullPath(currentCategoryBase.id),\n      isLeaf: !childrenByParent[currentCategoryBase.id],\n    }\n  : null;\n\nreturn {\n  bundle: {\n    ...product,\n    categoryContext: {\n      collection: 'product_categories',\n      catalogId: typeof product.catalogId === 'string' && product.catalogId.trim() ? product.catalogId.trim() : null,\n      currentCategoryId,\n      currentCategory,\n      leafCategories,\n      allowedLeafLabels: leafCategories.map((category) => category.label),\n      totalCategories: normalizedCategories.length,\n      totalLeafCategories: leafCategories.length,\n      fetchedAt:\n        typeof liveContext.fetchedAt === 'string' && liveContext.fetchedAt.trim()\n          ? liveContext.fetchedAt\n          : null,\n    },\n  },\n};",
+          "safeMode": true,
+          "expectedType": "object",
+          "maxExecutionMs": 1000,
+          "maxOutputBytes": 65536
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "bundle": {
+              "required": true
+            },
+            "context": {
+              "required": true
+            }
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-name-normalize-15",
+            "fromNodeId": "node-parser-name-normalize",
+            "fromPort": "bundle",
+            "toNodeId": "node-category-context-name-normalize",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-name-normalize-17",
+            "fromNodeId": "node-db-schema-name-normalize",
+            "fromPort": "context",
+            "toNodeId": "node-category-context-name-normalize",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-name-normalize-16",
+            "fromNodeId": "node-category-context-name-normalize",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-name-normalize",
+            "toPort": "bundle"
           }
         ]
       }
@@ -182,21 +305,21 @@
       "title": "Prompt",
       "description": "Build the semantic normalization prompt for the product name.",
       "position": {
-        "x": 900,
+        "x": 1310,
         "y": 320
       },
       "inputs": ["bundle", "images"],
       "outputs": ["prompt", "images"],
       "config": {
         "prompt": {
-          "template": "You normalize English ecommerce product names into a strict parameterized format.\\nUse only evidence from the current product fields, images, and the Context Registry bundle supplied in the system context.\\nThe Context Registry contains the authoritative leaf-category vocabulary for the active catalog selection. Some entries may include the full category hierarchy for disambiguation. Use that hierarchy only to identify the correct category. Always prefer the most specific terminal leaf from the hierarchy. If a hierarchy ends with \\\"Movie Keychain\\\" or \\\"Gaming Keychain\\\", never collapse it to an interior segment such as \\\"Keychains\\\". The final category field and normalizedName MUST use only the final leaf label, never the full hierarchy string, never a parent category, and never an invented category.\\n\\nCurrent English title: \\\"{{title}}\\\"\\nCurrent English description: \\\"{{content_en}}\\\"\\nProduct JSON: {{bundle}}\\n\\nIf the current English title is a generic placeholder shape such as \\\"Name | X cm | Metal | Pins | Lore\\\", treat it only as weak context and infer the real title from description and images. Never repeat placeholder title values such as \\\"Name\\\" or \\\"X cm\\\" in the final answer. Use images and description to infer a specific title, size, material, category, and theme.\\n\\nReturn ONLY valid JSON with this exact schema:\\n{\"title\":\"\",\"size\":\"\",\"material\":\"\",\"category\":\"\",\"theme\":\"\",\"normalizedName\":\"\",\"isValid\":true,\"validationError\":null,\"confidence\":0.0}\\n\\nRules:\\n1. normalizedName MUST exactly equal \\\"<title> | <size> | <material> | <category> | <theme>\\\".\\n2. title, size, material, category, and theme must all be non-empty English strings when isValid is true.\\n3. category MUST resolve to one leaf category from the Context Registry bundle, and the returned category value must be that terminal leaf label only. If a generic hierarchy segment and a more specific terminal leaf are both possible, choose the terminal leaf.\\n4. Do not output placeholder values such as \\\"Name\\\", \\\"X cm\\\", \\\"Unknown\\\", or invented categories when isValid is true.\\n5. If the evidence is not strong enough to produce a specific valid normalized title, set isValid to false, set validationError to a short human-readable explanation, and still return best-effort strings for the five fields.\\n6. confidence must be a number between 0 and 1.\\n7. Output JSON only."
+          "template": "You normalize English ecommerce product names into a strict parameterized format.\\nUse only evidence from the current product fields, images, and the live product_categories context fetched during this workflow run.\\nThe live category context is authoritative for the active catalog. You MUST choose category only from bundle.categoryContext.leafCategories or bundle.categoryContext.allowedLeafLabels.\\nUse fullPath only for disambiguation. The returned category value and normalizedName MUST use the terminal leaf label only, never the full hierarchy string, never a parent category, and never an invented category.\\nIf bundle.categoryContext.currentCategory is present, treat it only as weak prior context. Keep it only when the evidence matches it.\\n\\nCurrent English title: \\\"{{title}}\\\"\\nCurrent English description: \\\"{{content_en}}\\\"\\nCurrent category context: {{bundle.categoryContext.currentCategory}}\\nAllowed leaf categories: {{bundle.categoryContext.leafCategories}}\\n\\nIf the current English title is a generic placeholder shape such as \\\"Name | X cm | Metal | Pins | Lore\\\", treat it only as weak context and infer the real title from description and images. Never repeat placeholder title values such as \\\"Name\\\" or \\\"X cm\\\" in the final answer. Use images and description to infer a specific title, size, material, category, and theme.\\n\\nReturn ONLY valid JSON with this exact schema:\\n{\"title\":\"\",\"size\":\"\",\"material\":\"\",\"category\":\"\",\"theme\":\"\",\"normalizedName\":\"\",\"isValid\":true,\"validationError\":null,\"confidence\":0.0}\\n\\nRules:\\n1. normalizedName MUST exactly equal \\\"<title> | <size> | <material> | <category> | <theme>\\\".\\n2. title, size, material, category, and theme must all be non-empty English strings when isValid is true.\\n3. category MUST be one of bundle.categoryContext.allowedLeafLabels, and it must correspond to a leaf entry from bundle.categoryContext.leafCategories.\\n4. If a generic hierarchy segment and a more specific terminal leaf are both possible, choose the terminal leaf.\\n5. If bundle.categoryContext.totalLeafCategories is 0, set isValid to false and set validationError to \\\"Category context unavailable\\\".\\n6. Do not output placeholder values such as \\\"Name\\\", \\\"X cm\\\", \\\"Unknown\\\", or invented categories when isValid is true.\\n7. If the evidence is not strong enough to produce a specific valid normalized title, set isValid to false, set validationError to a short human-readable explanation, and still return best-effort strings for the five fields.\\n8. confidence must be a number between 0 and 1.\\n9. Output JSON only."
         }
       },
       "connections": {
         "incoming": [
           {
-            "edgeId": "edge-name-normalize-02",
-            "fromNodeId": "node-parser-name-normalize",
+            "edgeId": "edge-name-normalize-16",
+            "fromNodeId": "node-category-context-name-normalize",
             "fromPort": "bundle",
             "toNodeId": "node-prompt-name-normalize",
             "toPort": "bundle"
@@ -233,7 +356,7 @@
       "title": "Model",
       "description": "Run a single vision-capable model pass for semantic name normalization.",
       "position": {
-        "x": 1310,
+        "x": 1680,
         "y": 480
       },
       "inputs": ["prompt", "images", "context"],
@@ -280,7 +403,7 @@
       "title": "Regex JSON Extract",
       "description": "Extract the normalization JSON object from the model response.",
       "position": {
-        "x": 1690,
+        "x": 2060,
         "y": 480
       },
       "inputs": ["value", "prompt", "regexCallback"],
@@ -340,7 +463,7 @@
       "title": "JSON Mapper",
       "description": "Extract the normalized name and confidence from the parsed JSON object.",
       "position": {
-        "x": 2050,
+        "x": 2420,
         "y": 480
       },
       "inputs": ["context", "result", "bundle", "value"],
@@ -374,6 +497,13 @@
             "toPort": "result"
           },
           {
+            "edgeId": "edge-name-normalize-18",
+            "fromNodeId": "node-mapper-name-normalize",
+            "fromPort": "bundle",
+            "toNodeId": "node-update-name-normalize",
+            "toPort": "bundle"
+          },
+          {
             "edgeId": "edge-name-normalize-12",
             "fromNodeId": "node-mapper-name-normalize",
             "fromPort": "result",
@@ -396,7 +526,7 @@
       "title": "Database Query",
       "description": "Emit a dry-run payload so the modal can validate and apply the normalized title locally without waiting on a real database write.",
       "position": {
-        "x": 2420,
+        "x": 2790,
         "y": 480
       },
       "inputs": [
@@ -471,6 +601,13 @@
             "toPort": "result"
           },
           {
+            "edgeId": "edge-name-normalize-18",
+            "fromNodeId": "node-mapper-name-normalize",
+            "fromPort": "bundle",
+            "toNodeId": "node-update-name-normalize",
+            "toPort": "bundle"
+          },
+          {
             "edgeId": "edge-name-normalize-09",
             "fromNodeId": "node-fetcher-name-normalize",
             "fromPort": "entityId",
@@ -502,7 +639,7 @@
       "title": "Result Viewer",
       "description": "Inspect the normalized name payload, confidence, and database write result.",
       "position": {
-        "x": 2790,
+        "x": 3160,
         "y": 480
       },
       "inputs": [
@@ -584,9 +721,9 @@
     {
       "id": "edge-name-normalize-02",
       "fromNodeId": "node-parser-name-normalize",
-      "toNodeId": "node-prompt-name-normalize",
+      "toNodeId": "node-db-schema-name-normalize",
       "fromPort": "bundle",
-      "toPort": "bundle"
+      "toPort": "context"
     },
     {
       "id": "edge-name-normalize-03",
@@ -671,6 +808,34 @@
       "toNodeId": "node-view-name-normalize",
       "fromPort": "result",
       "toPort": "meta"
+    },
+    {
+      "id": "edge-name-normalize-15",
+      "fromNodeId": "node-parser-name-normalize",
+      "toNodeId": "node-category-context-name-normalize",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-name-normalize-16",
+      "fromNodeId": "node-category-context-name-normalize",
+      "toNodeId": "node-prompt-name-normalize",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-name-normalize-17",
+      "fromNodeId": "node-db-schema-name-normalize",
+      "toNodeId": "node-category-context-name-normalize",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-name-normalize-18",
+      "fromNodeId": "node-mapper-name-normalize",
+      "toNodeId": "node-update-name-normalize",
+      "fromPort": "bundle",
+      "toPort": "bundle"
     }
   ],
   "execution": {

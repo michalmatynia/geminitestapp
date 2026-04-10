@@ -9,9 +9,9 @@ import {
   aiPathsPlaywrightArtifactRouteParamsSchema,
 } from '@/shared/contracts/ai-paths';
 import {
-  readPlaywrightNodeArtifact,
-  readPlaywrightNodeRun,
-} from '@/features/ai/ai-paths/services/playwright-node-runner';
+  readPlaywrightEngineArtifact,
+  readPlaywrightEngineRun,
+} from '@/features/playwright/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 
@@ -50,13 +50,13 @@ export async function GET_handler(
   }
   const { runId, file } = parsedParams.data;
 
-  const run = await readPlaywrightNodeRun(runId);
+  const run = await readPlaywrightEngineRun(runId);
   if (!run) {
     throw notFoundError('Playwright run not found.', { runId });
   }
   assertPlaywrightRunAccess({ run, access, isInternal });
 
-  const artifact = await readPlaywrightNodeArtifact({
+  const artifact = await readPlaywrightEngineArtifact({
     runId,
     fileName: file,
   });

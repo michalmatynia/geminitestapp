@@ -24,6 +24,7 @@ function getRuntimeActionsMock() {
 
 vi.mock('../../context', () => ({
   useRuntimeState: getRuntimeStateMock,
+  useRuntimeDataState: getRuntimeStateMock,
   useRuntimeActions: getRuntimeActionsMock,
 }));
 

@@ -7,6 +7,12 @@ import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
 import productNameNormalizeAsset from '../assets/product-name-normalize.canvas.json';
 import translationEnPlAsset from '../assets/translation-en-pl.canvas.json';
 import {
+  hasParameterInferencePromptStructure,
+  matchesLegacyNormalizeProductNameRepairSignature,
+  matchesLegacyParameterInferenceRepairSignature,
+  matchesLegacyTranslationRepairSignature,
+} from './legacy-repair';
+import {
   buildTriggerDisplay,
   computeStarterWorkflowGraphHash,
   materializeSemanticAsset,
@@ -49,6 +55,12 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       templateVersion: 16,
       canonicalGraphHashes: PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES,
     },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+      lowOverlapReplacementMode: 'any_resolved',
+      lowOverlapStructuralMatcher: hasParameterInferencePromptStructure,
+      legacyRepairMatcher: matchesLegacyParameterInferenceRepairSignature,
+    },
   },
   {
     templateId: 'starter_product_name_normalize',
@@ -57,7 +69,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       'Normalize the English product name from title, description, images, and leaf-category context.',
     semanticAsset: productNameNormalizeAsset as CanvasSemanticDocument,
     seedPolicy: {
-      autoSeed: true,
+      autoSeed: false,
       defaultPathId: 'path_name_normalize_v1',
       isActive: true,
       isLocked: false,
@@ -78,8 +90,14 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'product_name_normalize',
-      templateVersion: 5,
+      templateVersion: 6,
       canonicalGraphHashes: PRODUCT_NAME_NORMALIZE_ADDITIONAL_GRAPH_HASHES,
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+      lowOverlapReplacementMode: 'seeded_default_or_legacy_alias',
+      allowCurrentVersionSeededDefaultZeroOverlap: true,
+      legacyRepairMatcher: matchesLegacyNormalizeProductNameRepairSignature,
     },
   },
   {
@@ -89,7 +107,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       'Single-model grounded description generation workflow optimized for server execution.',
     semanticAsset: descriptionInferenceLiteAsset as CanvasSemanticDocument,
     seedPolicy: {
-      autoSeed: false,
+      autoSeed: true,
       defaultPathId: 'path_descv3lite',
       isActive: true,
       isLocked: false,
@@ -112,6 +130,9 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       starterKey: 'description_inference_lite',
       templateVersion: 6,
       canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
     },
   },
   {
@@ -162,6 +183,10 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       starterKey: 'translation_en_pl',
       templateVersion: 6,
       canonicalGraphHashes: TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES,
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+      legacyRepairMatcher: matchesLegacyTranslationRepairSignature,
     },
   },
   {

@@ -6,6 +6,8 @@ import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import {
   marketplaceConnectionQuerySchema,
   type MarketplaceMappingSaveResult,
+  type MarketplaceMappingSaveRepository,
+  saveMarketplaceMapping,
 } from '../marketplace-api.types';
 
 const marketplaceMappingsQuerySchema = marketplaceConnectionQuerySchema.extend({
@@ -24,12 +26,19 @@ export type CategoryMappingCreateFields = {
   catalogId: string;
 };
 
+export type CategoryMappingUpdateFields = {
+  internalCategoryId: string;
+  isActive: true;
+};
+
 export type CategoryMappingSaveResult = MarketplaceMappingSaveResult<CategoryMapping>;
 
-type CategoryMappingSaveRepository = Pick<
-  CategoryMappingRepository,
-  'getByExternalCategory' | 'update' | 'create'
->;
+type CategoryMappingSaveRepository = MarketplaceMappingSaveRepository<
+  CategoryMapping,
+  CategoryMappingCreateFields,
+  CategoryMappingUpdateFields
+> &
+  Pick<CategoryMappingRepository, 'getByExternalCategory'>;
 
 export const parseMarketplaceMappingsQuery = (
   rawQuery: unknown
@@ -74,21 +83,10 @@ export const requireCategoryMappingCreateFields = (
 export const saveCategoryMapping = async (
   repo: CategoryMappingSaveRepository,
   input: CategoryMappingCreateFields
-): Promise<CategoryMappingSaveResult> => {
-  const existing = await repo.getByExternalCategory(
-    input.connectionId,
-    input.externalCategoryId,
-    input.catalogId
+): Promise<CategoryMappingSaveResult> =>
+  saveMarketplaceMapping(
+    repo,
+    () => repo.getByExternalCategory(input.connectionId, input.externalCategoryId, input.catalogId),
+    input,
+    { internalCategoryId: input.internalCategoryId, isActive: true }
   );
-
-  if (existing) {
-    const updated = await repo.update(existing.id, {
-      internalCategoryId: input.internalCategoryId,
-      isActive: true,
-    });
-    return { body: updated, status: 200 };
-  }
-
-  const mapping = await repo.create(input);
-  return { body: mapping, status: 201 };
-};

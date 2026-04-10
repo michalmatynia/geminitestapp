@@ -6,11 +6,13 @@ import type { ImportTemplateParameterImport } from '@/shared/contracts/integrati
 
 import type { Dispatch, SetStateAction } from 'react';
 
+export type ImportsPageTab = 'import-list' | 'import-settings' | 'import-template';
+
 export interface ImportExportContextType {
   saveImportSettings: boolean;
   hasUnsavedImportSettingsChanges: boolean;
-  importsPageTab: 'import' | 'import-template';
-  setImportsPageTab: (tab: 'import' | 'import-template') => void;
+  importsPageTab: ImportsPageTab;
+  setImportsPageTab: (tab: ImportsPageTab) => void;
   inventoryId: string;
   setInventoryId: (id: string) => void;
   exportInventoryId: string;

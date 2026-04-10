@@ -21,6 +21,8 @@ vi.mock('react-dom', async () => {
 
 vi.mock('../AiPathsSettingsPageContext', () => ({
   useAiPathsSettingsPageContext: () => pageContextMock,
+  useAiPathsSettingsPagePathActionsContext: () => pageContextMock,
+  useAiPathsSettingsPageWorkspaceContext: () => pageContextMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/utils/ai-paths-master-tree-adapter', () => ({

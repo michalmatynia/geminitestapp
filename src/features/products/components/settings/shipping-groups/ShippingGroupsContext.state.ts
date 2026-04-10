@@ -13,7 +13,7 @@ import {
   summarizeRuleDescendantCoverage,
   toTrimmedString,
 } from './shipping-group-utils';
-import type { ShippingGroupFormData } from './ShippingGroupsContext';
+import type { ShippingGroupFormData } from '@/shared/contracts/products/shipping-groups';
 
 export const useShippingGroupsModalState = ({
   formData,

@@ -247,6 +247,36 @@ describe('TemplatesTabContent custom fields', () => {
     ).toBeInTheDocument();
   });
 
+  it('normalizes marketplace source field aliases in import template source options', () => {
+    mocks.useImportExportStateMock.mockReturnValue(buildState('import') as never);
+    mocks.useImportExportDataMock.mockReturnValue({
+      ...buildData(),
+      importSourceFields: ['Tradera Yes', 'Shpock Yes', 'custom_note'],
+      importSourceFieldValues: {
+        'Tradera Yes': '1',
+        'Shpock Yes': '0',
+        custom_note: 'Handle with care',
+      },
+    } as never);
+
+    render(<TemplatesTabContent />);
+
+    const sourceFieldSelect = screen.getByTitle('Select source field');
+
+    expect(
+      within(sourceFieldSelect).getByRole('option', { name: 'Tradera (1)' })
+    ).toBeInTheDocument();
+    expect(
+      within(sourceFieldSelect).getByRole('option', { name: 'Schpock (0)' })
+    ).toBeInTheDocument();
+    expect(
+      within(sourceFieldSelect).queryByRole('option', { name: 'Tradera Yes (1)' })
+    ).not.toBeInTheDocument();
+    expect(
+      within(sourceFieldSelect).queryByRole('option', { name: 'Shpock Yes (0)' })
+    ).not.toBeInTheDocument();
+  });
+
   it('hides custom field targets in export templates', () => {
     mocks.useImportExportStateMock.mockReturnValue(buildState('export') as never);
 

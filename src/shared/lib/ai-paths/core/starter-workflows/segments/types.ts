@@ -31,6 +31,21 @@ export type StarterWorkflowLineage = {
   canonicalGraphHashes: string[];
 };
 
+export type StarterWorkflowVersionedOverlayScope = 'seeded_default_only' | 'any_provenance_path';
+
+export type StarterWorkflowLowOverlapReplacementMode =
+  | 'never'
+  | 'any_resolved'
+  | 'seeded_default_or_legacy_alias';
+
+export type StarterWorkflowUpgradePolicy = {
+  versionedOverlayScope?: StarterWorkflowVersionedOverlayScope;
+  lowOverlapReplacementMode?: StarterWorkflowLowOverlapReplacementMode;
+  allowCurrentVersionSeededDefaultZeroOverlap?: boolean;
+  lowOverlapStructuralMatcher?: (config: PathConfig) => boolean;
+  legacyRepairMatcher?: (config: PathConfig) => boolean;
+};
+
 export type AiPathTemplateRegistryEntry = {
   templateId: string;
   name: string;
@@ -39,6 +54,7 @@ export type AiPathTemplateRegistryEntry = {
   seedPolicy?: StarterWorkflowSeedPolicy;
   triggerButtonPresets?: StarterWorkflowTriggerPreset[];
   starterLineage: StarterWorkflowLineage;
+  upgradePolicy?: StarterWorkflowUpgradePolicy;
 };
 
 export type AiPathsStarterProvenance = {

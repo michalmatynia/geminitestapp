@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth, findAuthUserById } from '@/features/auth/server';
+import { isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import {
@@ -11,36 +12,51 @@ import {
 import {
   normalizePersistedTraderaPlaywrightListingScript,
 } from '@/features/integrations/services/tradera-listing/managed-script';
+import {
+  normalizeIntegrationPlaywrightPersonas,
+  resolveIntegrationConnectionPlaywrightBrowserWithPersona,
+  resolveIntegrationConnectionPlaywrightSettingsWithPersona,
+} from '@/features/integrations/utils/playwright-connection-settings';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY, type PlaywrightPersona } from '@/shared/contracts/playwright';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
   username: z.string().trim().optional(),
   password: z.string().trim().optional(),
-  playwrightHeadless: z.boolean().optional(),
-  playwrightSlowMo: z.number().int().min(0).optional(),
-  playwrightTimeout: z.number().int().min(1000).optional(),
-  playwrightNavigationTimeout: z.number().int().min(1000).optional(),
-  playwrightHumanizeMouse: z.boolean().optional(),
-  playwrightMouseJitter: z.number().int().min(0).optional(),
-  playwrightClickDelayMin: z.number().int().min(0).optional(),
-  playwrightClickDelayMax: z.number().int().min(0).optional(),
-  playwrightInputDelayMin: z.number().int().min(0).optional(),
-  playwrightInputDelayMax: z.number().int().min(0).optional(),
-  playwrightActionDelayMin: z.number().int().min(0).optional(),
-  playwrightActionDelayMax: z.number().int().min(0).optional(),
-  playwrightProxyEnabled: z.boolean().optional(),
-  playwrightProxyServer: z.string().optional(),
-  playwrightProxyUsername: z.string().optional(),
-  playwrightProxyPassword: z.string().optional(),
-  playwrightEmulateDevice: z.boolean().optional(),
-  playwrightDeviceName: z.string().optional(),
+  playwrightHeadless: z.boolean().nullable().optional(),
+  playwrightSlowMo: z.number().int().min(0).nullable().optional(),
+  playwrightTimeout: z.number().int().min(1000).nullable().optional(),
+  playwrightNavigationTimeout: z.number().int().min(1000).nullable().optional(),
+  playwrightHumanizeMouse: z.boolean().nullable().optional(),
+  playwrightMouseJitter: z.number().int().min(0).nullable().optional(),
+  playwrightClickDelayMin: z.number().int().min(0).nullable().optional(),
+  playwrightClickDelayMax: z.number().int().min(0).nullable().optional(),
+  playwrightInputDelayMin: z.number().int().min(0).nullable().optional(),
+  playwrightInputDelayMax: z.number().int().min(0).nullable().optional(),
+  playwrightActionDelayMin: z.number().int().min(0).nullable().optional(),
+  playwrightActionDelayMax: z.number().int().min(0).nullable().optional(),
+  playwrightProxyEnabled: z.boolean().nullable().optional(),
+  playwrightProxyServer: z.string().nullable().optional(),
+  playwrightProxyUsername: z.string().nullable().optional(),
+  playwrightProxyPassword: z.string().nullable().optional(),
+  playwrightBrowser: z.enum(['auto', 'brave', 'chrome', 'chromium']).nullable().optional(),
+  playwrightEmulateDevice: z.boolean().nullable().optional(),
+  playwrightDeviceName: z.string().nullable().optional(),
   playwrightPersonaId: z.string().trim().nullable().optional(),
   traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
+  traderaCategoryStrategy: z.enum(['mapper', 'top_suggested']).nullable().optional(),
   playwrightListingScript: z.string().nullable().optional(),
+  playwrightImportScript: z.string().nullable().optional(),
+  playwrightImportBaseUrl: z.string().nullable().optional(),
+  playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
+  playwrightFieldMapperJson: z.string().nullable().optional(),
+  resetPlaywrightOverrides: z.boolean().optional(),
   allegroUseSandbox: z.boolean().optional(),
   traderaDefaultTemplateId: z.string().trim().nullable().optional(),
   traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
@@ -57,6 +73,26 @@ const connectionSchema = z.object({
 });
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+const PLAYWRIGHT_OVERRIDE_RESET_VALUES = {
+  playwrightHeadless: null,
+  playwrightSlowMo: null,
+  playwrightTimeout: null,
+  playwrightNavigationTimeout: null,
+  playwrightHumanizeMouse: null,
+  playwrightMouseJitter: null,
+  playwrightClickDelayMin: null,
+  playwrightClickDelayMax: null,
+  playwrightInputDelayMin: null,
+  playwrightInputDelayMax: null,
+  playwrightActionDelayMin: null,
+  playwrightActionDelayMax: null,
+  playwrightProxyEnabled: null,
+  playwrightProxyServer: null,
+  playwrightProxyUsername: null,
+  playwrightProxyPassword: null,
+  playwrightEmulateDevice: null,
+  playwrightDeviceName: null,
+} as const;
 
 const deleteConnectionSchema = z.object({
   userPassword: z.string().trim().min(1),
@@ -65,6 +101,44 @@ const deleteConnectionSchema = z.object({
 export const deleteQuerySchema = z.object({
   replacementConnectionId: optionalTrimmedQueryString(),
 });
+
+const loadPlaywrightPersonas = async (): Promise<PlaywrightPersona[]> =>
+  normalizeIntegrationPlaywrightPersonas(
+    parseJsonSetting(await getSettingValue(PLAYWRIGHT_PERSONA_SETTINGS_KEY), [])
+  );
+
+const serializePlaywrightConnectionSettings = (
+  connection: Record<string, unknown>,
+  playwrightPersonas: PlaywrightPersona[]
+): Record<string, unknown> => {
+  const settings = resolveIntegrationConnectionPlaywrightSettingsWithPersona(
+    connection,
+    playwrightPersonas
+  );
+  return {
+    playwrightHeadless: settings.headless,
+    playwrightSlowMo: settings.slowMo,
+    playwrightTimeout: settings.timeout,
+    playwrightNavigationTimeout: settings.navigationTimeout,
+    playwrightHumanizeMouse: settings.humanizeMouse,
+    playwrightMouseJitter: settings.mouseJitter,
+    playwrightClickDelayMin: settings.clickDelayMin,
+    playwrightClickDelayMax: settings.clickDelayMax,
+    playwrightInputDelayMin: settings.inputDelayMin,
+    playwrightInputDelayMax: settings.inputDelayMax,
+    playwrightActionDelayMin: settings.actionDelayMin,
+    playwrightActionDelayMax: settings.actionDelayMax,
+    playwrightProxyEnabled: settings.proxyEnabled,
+    playwrightProxyServer: settings.proxyServer,
+    playwrightProxyUsername: settings.proxyUsername,
+    playwrightBrowser: resolveIntegrationConnectionPlaywrightBrowserWithPersona(
+      connection,
+      playwrightPersonas
+    ),
+    playwrightEmulateDevice: settings.emulateDevice,
+    playwrightDeviceName: settings.deviceName,
+  };
+};
 
 /**
  * PUT /api/v2/integrations/connections/[id]
@@ -111,11 +185,15 @@ export async function PUT_handler(
   const isVintedIntegration = Boolean(
     integration && (integration.slug ?? '').trim().toLowerCase() === 'vinted'
   );
+  const isPlaywrightProgrammableIntegration = Boolean(
+    integration && isPlaywrightProgrammableSlug(integration.slug)
+  );
 
   if (
     integration &&
     integration.slug !== 'baselinker' &&
     !isVintedIntegration &&
+    !isPlaywrightProgrammableIntegration &&
     typeof normalizedUsername === 'string' &&
     !normalizedUsername
   ) {
@@ -149,62 +227,70 @@ export async function PUT_handler(
         };
       })()
       : {}),
+    ...(data.resetPlaywrightOverrides ? PLAYWRIGHT_OVERRIDE_RESET_VALUES : {}),
 
-    ...(typeof data.playwrightHeadless === 'boolean'
-      ? { playwrightHeadless: data.playwrightHeadless }
+    ...(typeof data.playwrightHeadless === 'boolean' || data.playwrightHeadless === null
+      ? { playwrightHeadless: data.playwrightHeadless ?? null }
       : {}),
-    ...(typeof data.playwrightSlowMo === 'number'
-      ? { playwrightSlowMo: data.playwrightSlowMo }
+    ...(typeof data.playwrightSlowMo === 'number' || data.playwrightSlowMo === null
+      ? { playwrightSlowMo: data.playwrightSlowMo ?? null }
       : {}),
-    ...(typeof data.playwrightTimeout === 'number'
-      ? { playwrightTimeout: data.playwrightTimeout }
+    ...(typeof data.playwrightTimeout === 'number' || data.playwrightTimeout === null
+      ? { playwrightTimeout: data.playwrightTimeout ?? null }
       : {}),
-    ...(typeof data.playwrightNavigationTimeout === 'number'
-      ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout }
+    ...(typeof data.playwrightNavigationTimeout === 'number' ||
+    data.playwrightNavigationTimeout === null
+      ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout ?? null }
       : {}),
-    ...(typeof data.playwrightHumanizeMouse === 'boolean'
-      ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse }
+    ...(typeof data.playwrightHumanizeMouse === 'boolean' || data.playwrightHumanizeMouse === null
+      ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse ?? null }
       : {}),
-    ...(typeof data.playwrightMouseJitter === 'number'
-      ? { playwrightMouseJitter: data.playwrightMouseJitter }
+    ...(typeof data.playwrightMouseJitter === 'number' || data.playwrightMouseJitter === null
+      ? { playwrightMouseJitter: data.playwrightMouseJitter ?? null }
       : {}),
-    ...(typeof data.playwrightClickDelayMin === 'number'
-      ? { playwrightClickDelayMin: data.playwrightClickDelayMin }
+    ...(typeof data.playwrightClickDelayMin === 'number' || data.playwrightClickDelayMin === null
+      ? { playwrightClickDelayMin: data.playwrightClickDelayMin ?? null }
       : {}),
-    ...(typeof data.playwrightClickDelayMax === 'number'
-      ? { playwrightClickDelayMax: data.playwrightClickDelayMax }
+    ...(typeof data.playwrightClickDelayMax === 'number' || data.playwrightClickDelayMax === null
+      ? { playwrightClickDelayMax: data.playwrightClickDelayMax ?? null }
       : {}),
-    ...(typeof data.playwrightInputDelayMin === 'number'
-      ? { playwrightInputDelayMin: data.playwrightInputDelayMin }
+    ...(typeof data.playwrightInputDelayMin === 'number' || data.playwrightInputDelayMin === null
+      ? { playwrightInputDelayMin: data.playwrightInputDelayMin ?? null }
       : {}),
-    ...(typeof data.playwrightInputDelayMax === 'number'
-      ? { playwrightInputDelayMax: data.playwrightInputDelayMax }
+    ...(typeof data.playwrightInputDelayMax === 'number' || data.playwrightInputDelayMax === null
+      ? { playwrightInputDelayMax: data.playwrightInputDelayMax ?? null }
       : {}),
-    ...(typeof data.playwrightActionDelayMin === 'number'
-      ? { playwrightActionDelayMin: data.playwrightActionDelayMin }
+    ...(typeof data.playwrightActionDelayMin === 'number' || data.playwrightActionDelayMin === null
+      ? { playwrightActionDelayMin: data.playwrightActionDelayMin ?? null }
       : {}),
-    ...(typeof data.playwrightActionDelayMax === 'number'
-      ? { playwrightActionDelayMax: data.playwrightActionDelayMax }
+    ...(typeof data.playwrightActionDelayMax === 'number' || data.playwrightActionDelayMax === null
+      ? { playwrightActionDelayMax: data.playwrightActionDelayMax ?? null }
       : {}),
-    ...(typeof data.playwrightProxyEnabled === 'boolean'
-      ? { playwrightProxyEnabled: data.playwrightProxyEnabled }
+    ...(typeof data.playwrightProxyEnabled === 'boolean' || data.playwrightProxyEnabled === null
+      ? { playwrightProxyEnabled: data.playwrightProxyEnabled ?? null }
       : {}),
-    ...(typeof data.playwrightProxyServer === 'string'
-      ? { playwrightProxyServer: data.playwrightProxyServer }
+    ...(typeof data.playwrightProxyServer === 'string' || data.playwrightProxyServer === null
+      ? { playwrightProxyServer: data.playwrightProxyServer ?? null }
       : {}),
-    ...(typeof data.playwrightProxyUsername === 'string'
-      ? { playwrightProxyUsername: data.playwrightProxyUsername }
+    ...(typeof data.playwrightProxyUsername === 'string' || data.playwrightProxyUsername === null
+      ? { playwrightProxyUsername: data.playwrightProxyUsername ?? null }
+      : {}),
+    ...(data.playwrightProxyPassword === null
+      ? { playwrightProxyPassword: null }
       : {}),
     ...(typeof data.playwrightProxyPassword === 'string' && data.playwrightProxyPassword.trim()
       ? {
         playwrightProxyPassword: encryptSecret(data.playwrightProxyPassword.trim()),
       }
       : {}),
-    ...(typeof data.playwrightEmulateDevice === 'boolean'
-      ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
+    ...(typeof data.playwrightBrowser === 'string' || data.playwrightBrowser === null
+      ? { playwrightBrowser: data.playwrightBrowser ?? 'auto' }
       : {}),
-    ...(typeof data.playwrightDeviceName === 'string'
-      ? { playwrightDeviceName: data.playwrightDeviceName }
+    ...(typeof data.playwrightEmulateDevice === 'boolean' || data.playwrightEmulateDevice === null
+      ? { playwrightEmulateDevice: data.playwrightEmulateDevice ?? null }
+      : {}),
+    ...(typeof data.playwrightDeviceName === 'string' || data.playwrightDeviceName === null
+      ? { playwrightDeviceName: data.playwrightDeviceName ?? null }
       : {}),
     ...(typeof data.playwrightPersonaId === 'string' || data.playwrightPersonaId === null
       ? { playwrightPersonaId: data.playwrightPersonaId ?? null }
@@ -212,9 +298,27 @@ export async function PUT_handler(
     ...(typeof data.traderaBrowserMode === 'string' || data.traderaBrowserMode === null
       ? { traderaBrowserMode: data.traderaBrowserMode ?? 'builtin' }
       : {}),
+    ...(typeof data.traderaCategoryStrategy === 'string' || data.traderaCategoryStrategy === null
+      ? { traderaCategoryStrategy: data.traderaCategoryStrategy ?? 'mapper' }
+      : {}),
     ...(typeof normalizedPlaywrightListingScript === 'string' ||
     normalizedPlaywrightListingScript === null
       ? { playwrightListingScript: normalizedPlaywrightListingScript ?? null }
+      : {}),
+    ...(typeof data.playwrightImportScript === 'string' || data.playwrightImportScript === null
+      ? { playwrightImportScript: data.playwrightImportScript ?? null }
+      : {}),
+    ...(typeof data.playwrightImportBaseUrl === 'string' || data.playwrightImportBaseUrl === null
+      ? { playwrightImportBaseUrl: data.playwrightImportBaseUrl ?? null }
+      : {}),
+    ...(typeof data.playwrightImportCaptureRoutesJson === 'string' ||
+    data.playwrightImportCaptureRoutesJson === null
+      ? {
+          playwrightImportCaptureRoutesJson: data.playwrightImportCaptureRoutesJson ?? null,
+        }
+      : {}),
+    ...(typeof data.playwrightFieldMapperJson === 'string' || data.playwrightFieldMapperJson === null
+      ? { playwrightFieldMapperJson: data.playwrightFieldMapperJson ?? null }
       : {}),
     ...(typeof data.allegroUseSandbox === 'boolean'
       ? { allegroUseSandbox: data.allegroUseSandbox }
@@ -265,6 +369,7 @@ export async function PUT_handler(
         }
       : {}),
   });
+  const playwrightPersonas = await loadPlaywrightPersonas();
 
   return NextResponse.json({
     id: connection.id,
@@ -284,27 +389,16 @@ export async function PUT_handler(
     linkedinScope: connection.linkedinScope ?? null,
     linkedinPersonUrn: connection.linkedinPersonUrn ?? null,
     linkedinProfileUrl: connection.linkedinProfileUrl ?? null,
-    playwrightHeadless: connection.playwrightHeadless,
-    playwrightSlowMo: connection.playwrightSlowMo,
-    playwrightTimeout: connection.playwrightTimeout,
-    playwrightNavigationTimeout: connection.playwrightNavigationTimeout,
-    playwrightHumanizeMouse: connection.playwrightHumanizeMouse,
-    playwrightMouseJitter: connection.playwrightMouseJitter,
-    playwrightClickDelayMin: connection.playwrightClickDelayMin,
-    playwrightClickDelayMax: connection.playwrightClickDelayMax,
-    playwrightInputDelayMin: connection.playwrightInputDelayMin,
-    playwrightInputDelayMax: connection.playwrightInputDelayMax,
-    playwrightActionDelayMin: connection.playwrightActionDelayMin,
-    playwrightActionDelayMax: connection.playwrightActionDelayMax,
-    playwrightProxyEnabled: connection.playwrightProxyEnabled,
-    playwrightProxyServer: connection.playwrightProxyServer,
-    playwrightProxyUsername: connection.playwrightProxyUsername,
+    ...serializePlaywrightConnectionSettings(connection, playwrightPersonas),
     playwrightProxyHasPassword: Boolean(connection.playwrightProxyPassword),
-    playwrightEmulateDevice: connection.playwrightEmulateDevice,
-    playwrightDeviceName: connection.playwrightDeviceName,
     playwrightPersonaId: connection.playwrightPersonaId ?? null,
     traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
+    traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
     playwrightListingScript: connection.playwrightListingScript ?? null,
+    playwrightImportScript: connection.playwrightImportScript ?? null,
+    playwrightImportBaseUrl: connection.playwrightImportBaseUrl ?? null,
+    playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
+    playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
     hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,

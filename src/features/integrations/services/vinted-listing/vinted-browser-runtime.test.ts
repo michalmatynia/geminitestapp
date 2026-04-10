@@ -14,9 +14,7 @@ describe('vinted-browser-runtime', () => {
       resolveRequestedVintedBrowserMode({
         requestedBrowserMode: undefined,
         source: 'api',
-        connection: {
-          playwrightHeadless: true,
-        } as never,
+        connectionHeadless: true,
       })
     ).toBe('headed');
 
@@ -24,9 +22,7 @@ describe('vinted-browser-runtime', () => {
       resolveRequestedVintedBrowserPreference({
         requestedBrowserPreference: undefined,
         source: 'manual',
-        connection: {
-          playwrightBrowser: 'auto',
-        } as never,
+        connectionBrowserPreference: 'auto',
       })
     ).toBe('brave');
   });
@@ -36,9 +32,7 @@ describe('vinted-browser-runtime', () => {
       resolveRequestedVintedBrowserMode({
         requestedBrowserMode: undefined,
         source: 'scheduler',
-        connection: {
-          playwrightHeadless: true,
-        } as never,
+        connectionHeadless: true,
       })
     ).toBe('headless');
 
@@ -46,9 +40,7 @@ describe('vinted-browser-runtime', () => {
       resolveRequestedVintedBrowserPreference({
         requestedBrowserPreference: undefined,
         source: 'scheduler',
-        connection: {
-          playwrightBrowser: 'chromium',
-        } as never,
+        connectionBrowserPreference: 'chromium',
       })
     ).toBe('chromium');
 

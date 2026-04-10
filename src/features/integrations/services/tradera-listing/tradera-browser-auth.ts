@@ -32,6 +32,11 @@ export type TraderaAuthState = {
   manualVerificationDetected: boolean;
 };
 
+const isKnownAuthenticatedTraderaUrl = (normalizedUrl: string): boolean =>
+  normalizedUrl.includes('/my/listings') ||
+  normalizedUrl.includes('/selling/new') ||
+  normalizedUrl.includes('/selling/edit');
+
 export const acceptTraderaCookies = async (page: Page): Promise<void> => {
   for (const selector of TRADERA_COOKIE_ACCEPT_SELECTORS) {
     const locator = page.locator(selector).first();
@@ -61,10 +66,9 @@ export const readTraderaAuthState = async (page: Page): Promise<TraderaAuthState
     includesAnyHint(normalizedUrl, TRADERA_MANUAL_VERIFICATION_URL_HINTS);
   const loggedIn =
     successVisible ||
-    (!loginFormVisible &&
-      (normalizedUrl.includes('/my/') ||
-        normalizedUrl.includes('/my?') ||
-        normalizedUrl.includes('/selling')));
+    (!manualVerificationDetected &&
+      !loginFormVisible &&
+      isKnownAuthenticatedTraderaUrl(normalizedUrl));
 
   return {
     successVisible,

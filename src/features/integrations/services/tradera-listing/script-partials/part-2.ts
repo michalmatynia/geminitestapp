@@ -306,17 +306,18 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     return null;
   };
 
+  const isKnownAuthenticatedTraderaUrl = (url) =>
+    typeof url === 'string' &&
+    (url.includes('/my/listings') ||
+      url.includes('/selling/new') ||
+      url.includes('/selling/edit'));
+
   const ensureLoggedIn = async () => {
     const readAuthState = async () => {
       const successVisible = Boolean(await firstVisible(LOGIN_SUCCESS_SELECTORS));
       const loginFormVisible = Boolean(await firstVisible(LOGIN_FORM_SELECTORS));
       const currentUrl = page.url().trim().toLowerCase();
-      const loggedIn =
-        successVisible ||
-        (!loginFormVisible &&
-          (currentUrl.includes('/my/') ||
-            currentUrl.includes('/my?') ||
-            currentUrl.includes('/selling')));
+      const loggedIn = successVisible || (!loginFormVisible && isKnownAuthenticatedTraderaUrl(currentUrl));
 
       return {
         successVisible,

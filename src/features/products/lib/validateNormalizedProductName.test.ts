@@ -196,4 +196,48 @@ describe('validateNormalizedProductName', () => {
       normalizedName: 'Collectible Charm | 4 cm | Metal | Gaming Keychain | Retro Gaming',
     });
   });
+
+  it('uses AI Path live category context when local categories are unavailable', () => {
+    expect(
+      validateNormalizedProductName({
+        normalizedName: 'Collectible Charm | 4 cm | Metal | Keychains | Retro Gaming',
+        categoryHint: 'Accessories > Keychains > Gaming Keychain',
+        categories: [],
+        categoryContext: {
+          leafCategories: [
+            {
+              label: 'Movie Keychain',
+              fullPath: 'Accessories > Keychains > Movie Keychain',
+            },
+            {
+              label: 'Gaming Keychain',
+              fullPath: 'Accessories > Keychains > Gaming Keychain',
+            },
+          ],
+          allowedLeafLabels: ['Movie Keychain', 'Gaming Keychain'],
+          totalLeafCategories: 2,
+        },
+      })
+    ).toEqual({
+      isValid: true,
+      normalizedName: 'Collectible Charm | 4 cm | Metal | Gaming Keychain | Retro Gaming',
+    });
+  });
+
+  it('rejects normalize results when the AI Path reports no live leaf categories', () => {
+    expect(
+      validateNormalizedProductName({
+        normalizedName: 'Collectible Charm | 4 cm | Metal | Keychains | Retro Gaming',
+        categories: [],
+        categoryContext: {
+          leafCategories: [],
+          allowedLeafLabels: [],
+          totalLeafCategories: 0,
+        },
+      })
+    ).toEqual({
+      isValid: false,
+      error: 'Normalize failed: category context unavailable.',
+    });
+  });
 });

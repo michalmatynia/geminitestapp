@@ -6,12 +6,14 @@ const {
   getIntegrationByIdMock,
   updateConnectionMock,
   encryptSecretMock,
+  getSettingValueMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   encryptSecretMock: vi.fn(),
+  getSettingValueMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
@@ -32,16 +34,22 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
+vi.mock('@/shared/lib/ai/server-settings', () => ({
+  getSettingValue: (...args: unknown[]) => getSettingValueMock(...args),
+}));
+
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { PUT_handler, deleteQuerySchema } from './handler';
 
 describe('integration connection by-id handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getSettingValueMock.mockResolvedValue(null);
     parseJsonBodyMock.mockResolvedValue({
       ok: true,
       data: {
         name: 'Tradera browser',
+        playwrightBrowser: 'chromium',
         traderaBrowserMode: 'scripted',
         playwrightListingScript: 'export default async function run() {}',
       },
@@ -77,6 +85,7 @@ describe('integration connection by-id handler', () => {
       playwrightProxyServer: '',
       playwrightProxyUsername: '',
       playwrightProxyPassword: null,
+      playwrightBrowser: 'chromium',
       playwrightEmulateDevice: false,
       playwrightDeviceName: 'Desktop Chrome',
       playwrightPersonaId: null,
@@ -110,11 +119,13 @@ describe('integration connection by-id handler', () => {
 
     expect(updateConnectionMock).toHaveBeenCalledWith('conn-tradera-1', {
       name: 'Tradera browser',
+      playwrightBrowser: 'chromium',
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
     });
     expect(payload).toMatchObject({
       id: 'conn-tradera-1',
+      playwrightBrowser: 'chromium',
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,
@@ -336,6 +347,124 @@ describe('integration connection by-id handler', () => {
       id: 'conn-vinted-1',
       name: 'Vinted Browser',
       username: '',
+    });
+  });
+
+  it('persists programmable Playwright fields and can reset explicit Playwright overrides', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Programmable Browser',
+        playwrightPersonaId: 'persona-1',
+        playwrightImportScript: 'export default async function run() {}',
+        resetPlaywrightOverrides: true,
+      },
+    });
+    getConnectionByIdMock.mockResolvedValue({
+      id: 'conn-playwright-1',
+      integrationId: 'integration-playwright-1',
+    });
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-playwright-1',
+      slug: 'playwright-programmable',
+    });
+    updateConnectionMock.mockResolvedValue({
+      id: 'conn-playwright-1',
+      integrationId: 'integration-playwright-1',
+      name: 'Programmable Browser',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      playwrightPersonaId: 'persona-1',
+      playwrightImportScript: 'export default async function run() {}',
+      playwrightHeadless: null,
+    });
+
+    const response = await PUT_handler(
+      new Request('http://localhost/api/v2/integrations/connections/conn-playwright-1', {
+        method: 'PUT',
+      }) as never,
+      {} as never,
+      { id: 'conn-playwright-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(updateConnectionMock).toHaveBeenCalledWith(
+      'conn-playwright-1',
+      expect.objectContaining({
+        name: 'Programmable Browser',
+        playwrightPersonaId: 'persona-1',
+        playwrightImportScript: 'export default async function run() {}',
+        playwrightHeadless: null,
+        playwrightSlowMo: null,
+        playwrightTimeout: null,
+        playwrightNavigationTimeout: null,
+      })
+    );
+    expect(payload).toMatchObject({
+      id: 'conn-playwright-1',
+      playwrightPersonaId: 'persona-1',
+      playwrightImportScript: 'export default async function run() {}',
+      playwrightHeadless: true,
+    });
+  });
+
+  it('resolves response Playwright settings from persona baselines after updates', async () => {
+    getSettingValueMock.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'persona-1',
+          name: 'Human runner',
+          settings: {
+            slowMo: 125,
+            humanizeMouse: false,
+            browser: 'chrome',
+          },
+        },
+      ])
+    );
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Programmable Browser',
+        playwrightPersonaId: 'persona-1',
+        resetPlaywrightOverrides: true,
+      },
+    });
+    getConnectionByIdMock.mockResolvedValue({
+      id: 'conn-playwright-1',
+      integrationId: 'integration-playwright-1',
+    });
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-playwright-1',
+      slug: 'playwright-programmable',
+    });
+    updateConnectionMock.mockResolvedValue({
+      id: 'conn-playwright-1',
+      integrationId: 'integration-playwright-1',
+      name: 'Programmable Browser',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      playwrightPersonaId: 'persona-1',
+      playwrightHeadless: null,
+    });
+
+    const response = await PUT_handler(
+      new Request('http://localhost/api/v2/integrations/connections/conn-playwright-1', {
+        method: 'PUT',
+      }) as never,
+      {} as never,
+      { id: 'conn-playwright-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toMatchObject({
+      id: 'conn-playwright-1',
+      playwrightPersonaId: 'persona-1',
+      playwrightSlowMo: 125,
+      playwrightHumanizeMouse: false,
+      playwrightBrowser: 'chrome',
     });
   });
 

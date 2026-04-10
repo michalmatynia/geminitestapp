@@ -6,6 +6,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { Integration } from '@/shared/contracts/integrations/base';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
+import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/integrations/utils/playwright-connection-settings';
 
 const {
   toastMock,
@@ -206,7 +207,6 @@ describe('useIntegrationsActionsImpl', () => {
           playwrightSlowMo: 125,
           playwrightTimeout: 45000,
           playwrightNavigationTimeout: 60000,
-          playwrightHumanizeMouse: true,
           playwrightMouseJitter: 12,
           playwrightClickDelayMin: 40,
           playwrightClickDelayMax: 160,
@@ -263,5 +263,151 @@ describe('useIntegrationsActionsImpl', () => {
     );
     expect(payload).not.toHaveProperty('username');
     expect(payload).not.toHaveProperty('password');
+  });
+
+  it('applies personas on top of the canonical integration Playwright defaults', async () => {
+    const activeIntegration = createIntegration('tradera');
+    const setPlaywrightSettings = vi.fn();
+    const setPlaywrightPersonaId = vi.fn();
+    const args = {
+      ...createArgs(activeIntegration),
+      playwrightPersonas: [
+        {
+          id: 'persona-1',
+          name: 'Natural Motion',
+          description: null,
+          createdAt: '2026-04-02T00:00:00.000Z',
+          updatedAt: '2026-04-02T00:00:00.000Z',
+          settings: {
+            slowMo: 125,
+          } as never,
+        },
+      ],
+      setPlaywrightSettings,
+      setPlaywrightPersonaId,
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handleSelectPlaywrightPersona('persona-1');
+
+    expect(setPlaywrightPersonaId).toHaveBeenCalledWith('persona-1');
+    expect(setPlaywrightSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...defaultIntegrationConnectionPlaywrightSettings,
+        slowMo: 125,
+      })
+    );
+  });
+
+  it('saves pure persona/default settings by resetting explicit Playwright overrides', async () => {
+    const activeIntegration = createIntegration('tradera');
+    const connection = {
+      id: 'connection-1',
+      integrationId: activeIntegration.id,
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      createdAt: '2026-04-02T00:00:00.000Z',
+      updatedAt: '2026-04-02T00:00:00.000Z',
+    } as IntegrationConnection;
+    const args = {
+      ...createArgs(activeIntegration),
+      connections: [connection],
+      editingConnectionId: connection.id,
+      playwrightPersonas: [
+        {
+          id: 'persona-1',
+          name: 'Natural Motion',
+          description: null,
+          createdAt: '2026-04-02T00:00:00.000Z',
+          updatedAt: '2026-04-02T00:00:00.000Z',
+          settings: {
+            slowMo: 125,
+          } as never,
+        },
+      ],
+      playwrightPersonaId: 'persona-1',
+      playwrightSettings: {
+        ...defaultIntegrationConnectionPlaywrightSettings,
+        slowMo: 125,
+      },
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handleSavePlaywrightSettings();
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
+
+    expect(payload).toMatchObject({
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      playwrightPersonaId: 'persona-1',
+      resetPlaywrightOverrides: true,
+    });
+    expect(payload).not.toHaveProperty('playwrightSlowMo');
+    expect(payload).not.toHaveProperty('playwrightHeadless');
+  });
+
+  it('resets Playwright settings to the canonical defaults when clearing the persona', async () => {
+    const activeIntegration = createIntegration('tradera');
+    const setPlaywrightPersonaId = vi.fn();
+    const setPlaywrightSettings = vi.fn();
+    const args = {
+      ...createArgs(activeIntegration),
+      setPlaywrightPersonaId,
+      setPlaywrightSettings,
+      playwrightPersonaId: 'persona-1',
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handleSelectPlaywrightPersona(null);
+
+    expect(setPlaywrightPersonaId).toHaveBeenCalledWith(null);
+    expect(setPlaywrightSettings).toHaveBeenCalledWith(
+      defaultIntegrationConnectionPlaywrightSettings
+    );
+  });
+
+  it('clears the stored browser override when it matches the selected persona baseline', async () => {
+    const activeIntegration = createIntegration('tradera');
+    const args = {
+      ...createArgs(activeIntegration),
+      playwrightPersonaId: 'persona-1',
+      playwrightPersonas: [
+        {
+          id: 'persona-1',
+          name: 'Chrome runner',
+          description: null,
+          createdAt: '2026-04-02T00:00:00.000Z',
+          updatedAt: '2026-04-02T00:00:00.000Z',
+          settings: {
+            ...defaultIntegrationConnectionPlaywrightSettings,
+            browser: 'chrome',
+          } as never,
+        },
+      ],
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handleSaveConnection({
+      mode: 'update',
+      connectionId: 'connection-1',
+      formData: {
+        ...createEmptyConnectionForm(),
+        name: 'Tradera Browser',
+        username: 'seller@example.com',
+        playwrightBrowser: 'chrome',
+      },
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'connection-1',
+        payload: expect.objectContaining({
+          playwrightBrowser: null,
+        }),
+      })
+    );
   });
 });

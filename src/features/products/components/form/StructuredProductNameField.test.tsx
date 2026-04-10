@@ -161,8 +161,9 @@ describe('StructuredProductNameField', () => {
     const listbox = await screen.findByRole('listbox', { name: 'Size suggestions' });
     const sizeOption = within(listbox).getByRole('option', { name: '4 cm' });
     expect(sizeOption).toHaveAttribute('aria-selected', 'true');
-    expect(input).toHaveAttribute('aria-expanded', 'true');
-    expect(input).toHaveAttribute('aria-controls', listbox.id);
+    const combobox = screen.getByRole('combobox');
+    expect(combobox).toHaveAttribute('aria-expanded', 'true');
+    expect(combobox).toHaveAttribute('aria-owns', listbox.id);
     expect(within(listbox).getByText('4 cm')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByText('4 cm')[0]!.closest('button') as HTMLButtonElement);
@@ -297,7 +298,7 @@ describe('StructuredProductNameField', () => {
       expect(screen.queryByRole('listbox', { name: 'Size suggestions' })).not.toBeInTheDocument();
     });
     expect(screen.queryByText('Use custom value')).not.toBeInTheDocument();
-    expect(input).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('lets the user move up and down through the anchored list before choosing a size', async () => {

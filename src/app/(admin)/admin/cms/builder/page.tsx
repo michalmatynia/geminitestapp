@@ -1,4 +1,4 @@
-import { PageBuilderPage } from '@/features/cms/pages.public';
+import { PageBuilderPage } from '@/features/cms/public';
 
 export default function Page() {
   return <PageBuilderPage />;

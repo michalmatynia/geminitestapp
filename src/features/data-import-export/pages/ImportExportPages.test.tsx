@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockState = vi.hoisted(() => ({
   checkingIntegration: false,
   isBaseConnected: true,
-  importsPageTab: 'import' as 'import' | 'import-template',
+  importsPageTab: 'import-list' as 'import-list' | 'import-settings' | 'import-template',
   setImportsPageTab: vi.fn(),
   setActiveImportRunId: vi.fn(),
   searchParams: new URLSearchParams(),
@@ -80,30 +80,47 @@ vi.mock('@/shared/ui/admin-integrations-page-layout', () => ({
   ),
 }));
 
-vi.mock('@/shared/ui/primitives.public', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Tabs: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TabsList: ({
-    children,
-    ...props
-  }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
-    <div {...props}>{children}</div>
-  ),
-  TabsTrigger: ({
-    children,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
-    <button type='button' {...props}>
-      {children}
-    </button>
-  ),
-  TabsContent: ({
-    children,
-    ...props
-  }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
-    <div {...props}>{children}</div>
-  ),
-}));
+vi.mock('@/shared/ui/primitives.public', () => {
+  const TabsContext = React.createContext<string | undefined>(undefined);
+
+  return {
+    Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Tabs: ({
+      children,
+      value,
+    }: {
+      children: React.ReactNode;
+      value?: string;
+    }) => (
+      <TabsContext.Provider value={value}>
+        <div data-tabs-value={value}>{children}</div>
+      </TabsContext.Provider>
+    ),
+    TabsList: ({
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+      <div {...props}>{children}</div>
+    ),
+    TabsTrigger: ({
+      children,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
+      <button type='button' {...props}>
+        {children}
+      </button>
+    ),
+    TabsContent: ({
+      children,
+      value,
+      ...props
+    }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode; value?: string }) => {
+      const activeValue = React.useContext(TabsContext);
+      if (value && activeValue && value !== activeValue) return null;
+      return <div {...props}>{children}</div>;
+    },
+  };
+});
 
 vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
@@ -170,7 +187,7 @@ describe('Import/export page shells', () => {
   beforeEach(() => {
     mockState.checkingIntegration = false;
     mockState.isBaseConnected = true;
-    mockState.importsPageTab = 'import';
+    mockState.importsPageTab = 'import-list';
     mockState.setImportsPageTab.mockReset();
     mockState.setActiveImportRunId.mockReset();
     mockState.searchParams = new URLSearchParams();
@@ -181,11 +198,37 @@ describe('Import/export page shells', () => {
 
     expect(screen.getByRole('heading', { name: 'Product Import' })).toBeInTheDocument();
     expect(screen.getByTestId('imports-breadcrumbs')).toHaveTextContent('Import');
-    expect(screen.getByRole('button', { name: 'Import' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import List Preview' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import Settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import Template' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Export Template' })).not.toBeInTheDocument();
+    expect(screen.getByText('import list preview')).toBeInTheDocument();
+    expect(screen.getByText('import run status')).toBeInTheDocument();
+    expect(screen.getByText('import last result')).toBeInTheDocument();
+    expect(screen.queryByText('import base connection')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('templates-import')).not.toBeInTheDocument();
+  });
+
+  it('renders import settings only on the dedicated settings tab', () => {
+    mockState.importsPageTab = 'import-settings';
+
+    render(<ImportsPage />);
+
     expect(screen.getByText('import base connection')).toBeInTheDocument();
+    expect(screen.queryByText('import list preview')).not.toBeInTheDocument();
+    expect(screen.queryByText('import run status')).not.toBeInTheDocument();
+    expect(screen.queryByText('import last result')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('templates-import')).not.toBeInTheDocument();
+  });
+
+  it('renders import template content only on the template tab', () => {
+    mockState.importsPageTab = 'import-template';
+
+    render(<ImportsPage />);
+
     expect(screen.getByTestId('templates-import')).toBeInTheDocument();
+    expect(screen.queryByText('import base connection')).not.toBeInTheDocument();
+    expect(screen.queryByText('import list preview')).not.toBeInTheDocument();
   });
 
   it('moves the breadcrumb under the import heading in the header shell', () => {
@@ -214,7 +257,7 @@ describe('Import/export page shells', () => {
 
     render(<ImportsPage />);
 
-    expect(mockState.setImportsPageTab).toHaveBeenCalledWith('import');
+    expect(mockState.setImportsPageTab).toHaveBeenCalledWith('import-list');
     expect(mockState.setActiveImportRunId).toHaveBeenCalledWith('run-42');
   });
 

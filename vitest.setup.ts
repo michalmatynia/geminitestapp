@@ -389,6 +389,20 @@ vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
   };
 });
 
+// Mock useToast
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
+  const toastMock = vi.fn();
+  const dismissMock = vi.fn();
+  return {
+    ...actual,
+    useToast: vi.fn(() => ({
+      toast: toastMock,
+      dismiss: dismissMock,
+    })),
+  };
+});
+
 // Mock nextjs-toploader/app to provide a consistent useRouter mock
 vi.mock('nextjs-toploader/app', () => ({
   useRouter: vi.fn(() => ({

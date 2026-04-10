@@ -76,9 +76,9 @@ describe('tradera-execution-steps', () => {
             executionSteps: [
               {
                 id: 'open_overview',
-                label: 'Open My Overview',
+                label: 'Open Active listings',
                 status: 'success',
-                message: 'Tradera My Overview opened successfully.',
+                message: 'Tradera Active listings opened successfully.',
               },
               {
                 id: 'resolve_status',

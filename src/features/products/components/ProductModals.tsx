@@ -21,6 +21,7 @@ import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-t
 import {
   extractNormalizeProductNameResultFromAiPathRunDetail,
   isNormalizeProductNamePath,
+  type NormalizeProductNameAiPathResult,
 } from '@/features/products/lib/extractNormalizeProductNameFromAiPathRunDetail';
 import { validateNormalizedProductName } from '@/features/products/lib/validateNormalizedProductName';
 import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
@@ -93,6 +94,17 @@ const ProductListingsModal = dynamic(
 );
 
 type ProductFormScope = 'draft_template' | 'product_create' | 'product_edit';
+type NormalizeCompletionState =
+  | {
+      kind: 'result';
+      runId: string;
+      result: NormalizeProductNameAiPathResult;
+    }
+  | {
+      kind: 'error';
+      runId: string;
+      error: string;
+    };
 
 function ProductFormModalBridge(props: {
   onIsSavingChange: (value: boolean) => void;
@@ -121,14 +133,25 @@ function ProductFormModalBody(props: {
   submitButtonText: string;
   validationInstanceScopeOverride?: ProductFormScope;
   validatorSessionKey?: string;
+  disableTriggerButtons?: boolean;
+  pendingNormalizeCompletion: NormalizeCompletionState | null;
+  onNormalizeRunQueued: (runId: string) => void;
+  onNormalizeCompletionHandled: (runId: string) => void;
 }): React.JSX.Element {
-  const { submitButtonText, validationInstanceScopeOverride, validatorSessionKey } = props;
+  const {
+    submitButtonText,
+    validationInstanceScopeOverride,
+    validatorSessionKey,
+    disableTriggerButtons = false,
+    pendingNormalizeCompletion,
+    onNormalizeRunQueued,
+    onNormalizeCompletionHandled,
+  } = props;
 
   const { product, draft, getValues, setValue, setNormalizeNameError } = useProductFormCore();
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
   const { categories } = useProductFormMetadata();
   const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
-  const [pendingLocalNormalizeRunId, setPendingLocalNormalizeRunId] = useState<string | null>(null);
   const shouldApplyNormalizeResultLocally = validationInstanceScopeOverride !== undefined;
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
@@ -149,83 +172,62 @@ function ProductFormModalBody(props: {
       if (!shouldApplyNormalizeResultLocally) return;
       if (!isNormalizeProductNamePath(args.button.pathId)) return;
       setNormalizeNameError(null);
-      setPendingLocalNormalizeRunId(args.runId);
+      onNormalizeRunQueued(args.runId);
     },
-    [setNormalizeNameError, shouldApplyNormalizeResultLocally]
+    [onNormalizeRunQueued, setNormalizeNameError, shouldApplyNormalizeResultLocally]
   );
 
   useEffect(() => {
-    if (!pendingLocalNormalizeRunId || !shouldApplyNormalizeResultLocally) return;
+    if (!pendingNormalizeCompletion || !shouldApplyNormalizeResultLocally) return;
 
-    let active = true;
-    let terminalHandled = false;
-    const trackedRunId = pendingLocalNormalizeRunId;
+    const completionRunId = pendingNormalizeCompletion.runId;
 
-    const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
-      if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
-      terminalHandled = true;
+    try {
+      if (pendingNormalizeCompletion.kind === 'error') {
+        setNormalizeNameError(pendingNormalizeCompletion.error);
+        return;
+      }
 
-      void (async (): Promise<void> => {
-        try {
-          if (snapshot.status !== 'completed') return;
-          const response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
-          if (!response.ok || !active) return;
+      const normalizeResult = pendingNormalizeCompletion.result;
+      if (normalizeResult.isValid === false) {
+        setNormalizeNameError(
+          normalizeResult.validationError ??
+            'Normalize failed: the AI Path returned an invalid normalized title.'
+        );
+        return;
+      }
+      if (!normalizeResult.normalizedName) {
+        setNormalizeNameError(
+          normalizeResult.validationError ??
+            'Normalize failed: the AI Path did not return a normalized English title.'
+        );
+        return;
+      }
 
-          const normalizeResult = extractNormalizeProductNameResultFromAiPathRunDetail(response.data);
-          if (!normalizeResult) {
-            setNormalizeNameError(
-              'Normalize failed: the AI Path did not return a normalized English title.'
-            );
-            return;
-          }
-          if (normalizeResult.isValid === false) {
-            setNormalizeNameError(
-              normalizeResult.validationError ??
-                'Normalize failed: the AI Path returned an invalid normalized title.'
-            );
-            return;
-          }
-          if (!normalizeResult.normalizedName) {
-            setNormalizeNameError(
-              normalizeResult.validationError ??
-                'Normalize failed: the AI Path did not return a normalized English title.'
-            );
-            return;
-          }
+      const validation = validateNormalizedProductName({
+        normalizedName: normalizeResult.normalizedName,
+        categories,
+        categoryHint: normalizeResult.category,
+        categoryContext: normalizeResult.categoryContext,
+      });
+      if (!validation.isValid) {
+        setNormalizeNameError(validation.error);
+        return;
+      }
 
-          const validation = validateNormalizedProductName({
-            normalizedName: normalizeResult.normalizedName,
-            categories,
-            categoryHint: normalizeResult.category,
-          });
-          if (!validation.isValid) {
-            setNormalizeNameError(validation.error);
-            return;
-          }
-
-          setNormalizeNameError(null);
-          setValue('name_en', validation.normalizedName, {
-            shouldDirty: true,
-            shouldTouch: true,
-            shouldValidate: true,
-          });
-        } finally {
-          if (active) {
-            setPendingLocalNormalizeRunId((current) =>
-              current === trackedRunId ? null : current
-            );
-          }
-        }
-      })();
-    });
-
-    return () => {
-      active = false;
-      unsubscribe();
-    };
+      setNormalizeNameError(null);
+      setValue('name_en', validation.normalizedName, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    } finally {
+      onNormalizeCompletionHandled(completionRunId);
+    }
   }, [
     categories,
-    pendingLocalNormalizeRunId,
+    onNormalizeCompletionHandled,
+    pendingNormalizeCompletion,
     setNormalizeNameError,
     setValue,
     shouldApplyNormalizeResultLocally,
@@ -244,6 +246,7 @@ function ProductFormModalBody(props: {
           entityType='product'
           entityId={product?.id ?? null}
           getEntityJson={getEntityJson}
+          disabled={disableTriggerButtons}
           showRunFeedback={showTriggerRunFeedback}
           onRunQueued={handleRunQueued}
         />
@@ -259,6 +262,11 @@ function ProductFormModalBody(props: {
           {showTriggerRunFeedback ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
           <span>{showTriggerRunFeedback ? 'Hide Statuses' : 'Show Statuses'}</span>
         </Button>
+        {disableTriggerButtons ? (
+          <span className='text-xs text-muted-foreground'>
+            AI actions are unavailable until full product details finish loading.
+          </span>
+        ) : null}
       </div>
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />
@@ -455,8 +463,12 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   const [validatorSessionKey, setValidatorSessionKey] = useState<string>(() =>
     `${providerKey}:session:${isOpen ? 1 : 0}`
   );
+  const [pendingNormalizeRunId, setPendingNormalizeRunId] = useState<string | null>(null);
+  const [pendingNormalizeCompletion, setPendingNormalizeCompletion] =
+    useState<NormalizeCompletionState | null>(null);
   const shouldSuppressNonHydratedEditWarning =
     suppressNonHydratedEditWarning || isSaveDisabledOverride;
+  const shouldApplyNormalizeResultLocally = validationInstanceScopeOverride !== undefined;
 
   const onIsSavingChange = useCallback((value: boolean) => setFormIsSaving(value), []);
   const onHasUnsavedChangesChange = useCallback(
@@ -478,6 +490,76 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
       setFormHasUnsavedChanges(false);
     }
   }, [showSkeleton]);
+
+  useEffect(() => {
+    if (!pendingNormalizeRunId || !shouldApplyNormalizeResultLocally) return;
+
+    let active = true;
+    let terminalHandled = false;
+    const trackedRunId = pendingNormalizeRunId;
+
+    const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
+      if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
+      terminalHandled = true;
+
+      void (async (): Promise<void> => {
+        if (snapshot.status !== 'completed') {
+          if (!active) return;
+          setPendingNormalizeCompletion({
+            kind: 'error',
+            runId: trackedRunId,
+            error:
+              snapshot.errorMessage ??
+              `Normalize failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`,
+          });
+          setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        const response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
+        if (!active) return;
+        if (!response.ok) {
+          setPendingNormalizeCompletion({
+            kind: 'error',
+            runId: trackedRunId,
+            error:
+              response.error ||
+              'Normalize failed: unable to load the completed AI Path run details.',
+          });
+          setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        const normalizeResult = extractNormalizeProductNameResultFromAiPathRunDetail(response.data);
+        setPendingNormalizeCompletion(
+          normalizeResult
+            ? {
+                kind: 'result',
+                runId: trackedRunId,
+                result: normalizeResult,
+              }
+            : {
+                kind: 'error',
+                runId: trackedRunId,
+                error: 'Normalize failed: the AI Path did not return a normalized English title.',
+              }
+        );
+        setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+      })();
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [pendingNormalizeRunId, shouldApplyNormalizeResultLocally]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPendingNormalizeRunId(null);
+      setPendingNormalizeCompletion(null);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -521,6 +603,20 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
             submitButtonText={submitButtonText}
             validationInstanceScopeOverride={validationInstanceScopeOverride}
             validatorSessionKey={validatorSessionKey}
+            disableTriggerButtons={
+              Boolean(isSaveDisabledOverride) &&
+              validationInstanceScopeOverride === 'product_edit'
+            }
+            pendingNormalizeCompletion={pendingNormalizeCompletion}
+            onNormalizeRunQueued={(runId: string) => {
+              setPendingNormalizeCompletion(null);
+              setPendingNormalizeRunId(runId);
+            }}
+            onNormalizeCompletionHandled={(runId: string) => {
+              setPendingNormalizeCompletion((current) =>
+                current?.runId === runId ? null : current
+              );
+            }}
           />
         </ProductFormProvider>
       )}

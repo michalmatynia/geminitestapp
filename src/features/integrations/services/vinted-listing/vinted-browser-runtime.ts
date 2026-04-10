@@ -1,5 +1,4 @@
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
 
 export type VintedListingSource = 'manual' | 'scheduler' | 'api';
@@ -14,17 +13,17 @@ const normalizeConfiguredBrowserPreference = (
 export const resolveRequestedVintedBrowserMode = ({
   requestedBrowserMode,
   source,
-  connection,
+  connectionHeadless,
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   source: VintedListingSource;
-  connection: Pick<IntegrationConnectionRecord, 'playwrightHeadless'>;
+  connectionHeadless: boolean | null | undefined;
 }): PlaywrightRelistBrowserMode => {
   if (requestedBrowserMode) return requestedBrowserMode;
 
   if (source === 'scheduler') {
-    if (connection.playwrightHeadless === false) return 'headed';
-    if (connection.playwrightHeadless === true) return 'headless';
+    if (connectionHeadless === false) return 'headed';
+    if (connectionHeadless === true) return 'headless';
     return 'connection_default';
   }
 
@@ -36,17 +35,15 @@ export const resolveRequestedVintedBrowserMode = ({
 export const resolveRequestedVintedBrowserPreference = ({
   requestedBrowserPreference,
   source,
-  connection,
+  connectionBrowserPreference,
 }: {
   requestedBrowserPreference: PlaywrightBrowserPreference | undefined;
   source: VintedListingSource;
-  connection: Pick<IntegrationConnectionRecord, 'playwrightBrowser'>;
+  connectionBrowserPreference: unknown;
 }): PlaywrightBrowserPreference => {
   if (requestedBrowserPreference) return requestedBrowserPreference;
 
-  const configuredPreference = normalizeConfiguredBrowserPreference(
-    connection.playwrightBrowser
-  );
+  const configuredPreference = normalizeConfiguredBrowserPreference(connectionBrowserPreference);
 
   if (source === 'scheduler') {
     return configuredPreference;

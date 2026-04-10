@@ -4,13 +4,13 @@ import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-button
 import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import {
   getAutoSeedStarterWorkflowEntries,
+  getStaticRecoveryStarterWorkflowEntryByDefaultPathId,
   getStaticRecoveryStarterWorkflowEntries,
-  materializeStarterWorkflowPathConfig,
   materializeStarterWorkflowRecoveryBundle,
 } from '@/shared/lib/ai-paths/core/starter-workflows/segments/api';
 import {
-  computeStarterWorkflowGraphHash,
   resolveStarterWorkflowForPathConfig,
+  upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import type {
   AiPathTemplateRegistryEntry,
@@ -110,83 +110,15 @@ const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | n
   const resolution = resolveStarterWorkflowForPathConfig(config);
   if (!resolution) return null;
 
-  const currentHash = computeStarterWorkflowGraphHash(config);
-  const canonicalHashes = new Set(resolution.entry.starterLineage.canonicalGraphHashes);
-  if (!canonicalHashes.has(currentHash)) return null;
-
-  const latest = materializeStarterWorkflowPathConfig(resolution.entry, {
-    pathId: config.id,
-    name: typeof config.name === 'string' && config.name.trim().length > 0 ? config.name : undefined,
-    description:
-      typeof config.description === 'string' && config.description.trim().length > 0
-        ? config.description
-        : undefined,
-    isActive: config.isActive,
-    isLocked: config.isLocked,
-    seededDefault:
-      config.id === resolution.entry.seedPolicy?.defaultPathId &&
-      resolution.entry.seedPolicy?.autoSeed === true,
-    updatedAt: config.updatedAt,
-  });
-
-  const currentNodesById = new Map((config.nodes ?? []).map((node) => [node.id, node] as const));
-  const currentEdgesById = new Map((config.edges ?? []).map((edge) => [edge.id, edge] as const));
-
-  const nextConfig: PathConfig = {
-    ...config,
-    ...latest,
-    id: config.id,
-    name: typeof config.name === 'string' && config.name.trim().length > 0 ? config.name : latest.name,
-    description:
-      typeof config.description === 'string' && config.description.trim().length > 0
-        ? config.description
-        : latest.description,
-    isActive: config.isActive ?? latest.isActive,
-    isLocked: config.isLocked ?? latest.isLocked,
-    updatedAt: config.updatedAt ?? latest.updatedAt,
-    nodes: (latest.nodes ?? []).map((node) => {
-      const currentNode = currentNodesById.get(node.id);
-      return {
-        ...node,
-        position: currentNode?.position ?? node.position,
-        data: currentNode?.data ?? node.data,
-        createdAt: currentNode?.createdAt ?? node.createdAt,
-        updatedAt: currentNode?.updatedAt ?? node.updatedAt,
-      };
-    }),
-    edges: (latest.edges ?? []).map((edge) => {
-      const currentEdge = currentEdgesById.get(edge.id);
-      return {
-        ...edge,
-        createdAt: currentEdge?.createdAt ?? edge.createdAt,
-        updatedAt: currentEdge?.updatedAt ?? edge.updatedAt,
-        data: currentEdge?.data ?? edge.data,
-      };
-    }),
-    extensions:
-      config.extensions || latest.extensions
-        ? {
-          ...(config.extensions ?? {}),
-          ...(latest.extensions ?? {}),
-        }
-        : undefined,
-    uiState: config.uiState ?? latest.uiState,
-  };
-
-  return JSON.stringify(nextConfig) === JSON.stringify(config) ? null : nextConfig;
+  const upgraded = upgradeStarterWorkflowPathConfig(config);
+  return upgraded.changed ? upgraded.config : null;
 };
 
-const DEFAULT_STARTER_PATH_IDS = new Set(
-  getAutoSeedStarterWorkflowEntries()
-    .map((entry) => entry.seedPolicy?.defaultPathId ?? null)
-    .filter((pathId): pathId is string => typeof pathId === 'string' && pathId.trim().length > 0)
-);
-
-const tryRepairBrokenSeededStarterConfig = (args: {
+const tryRepairBrokenRecoverableStarterConfig = (args: {
   pathId: string;
   rawConfig: string;
 }): PathConfig | null => {
-  if (!DEFAULT_STARTER_PATH_IDS.has(args.pathId)) {
+  if (!getStaticRecoveryStarterWorkflowEntryByDefaultPathId(args.pathId)) {
     return null;
   }
   try {
@@ -367,24 +299,24 @@ export const refreshStarterWorkflowConfigs = (
     const pathId = record.key.replace(AI_PATHS_CONFIG_KEY_PREFIX, '');
     const parsedConfig = parsePathConfigRecord(record.value);
     if (!parsedConfig) {
-      const repairedSeededConfig = tryRepairBrokenSeededStarterConfig({
+      const repairedStarterConfig = tryRepairBrokenRecoverableStarterConfig({
         pathId,
         rawConfig: record.value,
       });
-      if (!repairedSeededConfig) return;
-      record.value = JSON.stringify(repairedSeededConfig);
+      if (!repairedStarterConfig) return;
+      record.value = JSON.stringify(repairedStarterConfig);
       affectedCount += 1;
       return;
     }
 
     const refreshed = buildRefreshedStarterWorkflowConfig(parsedConfig);
     if (!refreshed) {
-      const repairedSeededConfig = tryRepairBrokenSeededStarterConfig({
+      const repairedStarterConfig = tryRepairBrokenRecoverableStarterConfig({
         pathId,
         rawConfig: record.value,
       });
-      if (!repairedSeededConfig) return;
-      record.value = JSON.stringify(repairedSeededConfig);
+      if (!repairedStarterConfig) return;
+      record.value = JSON.stringify(repairedStarterConfig);
       affectedCount += 1;
       return;
     }

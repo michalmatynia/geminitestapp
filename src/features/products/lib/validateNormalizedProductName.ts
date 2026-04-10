@@ -6,6 +6,17 @@ import {
 } from '@/shared/lib/products/title-terms';
 import { buildLeafCategoryHierarchyEntries } from './leafCategoryHierarchy';
 
+export type NormalizeProductNameCategoryContextLeaf = {
+  label: string;
+  fullPath?: string | null;
+};
+
+export type NormalizeProductNameCategoryContext = {
+  leafCategories: NormalizeProductNameCategoryContextLeaf[];
+  allowedLeafLabels?: string[] | null;
+  totalLeafCategories?: number | null;
+};
+
 export type ValidateNormalizedProductNameResult =
   | {
       isValid: true;
@@ -116,10 +127,104 @@ const resolveLeafCategoryMatch = (
   };
 };
 
+const resolveLeafCategoryMatchFromContext = (
+  categoryContext: NormalizeProductNameCategoryContext,
+  rawCategoryValue: string
+):
+  | {
+      canonicalCategoryName: string;
+    }
+  | {
+      error: 'missing' | 'ambiguous' | 'too_generic';
+    } => {
+  const normalizedLeafEntries = categoryContext.leafCategories
+    .map((entry) => {
+      const label = normalizeComparable(entry.label);
+      const fullPath = normalizeHierarchyComparable(entry.fullPath ?? entry.label);
+      if (!label) return null;
+      return {
+        label: entry.label.trim(),
+        normalizedLabel: label,
+        normalizedFullPath: fullPath,
+      };
+    })
+    .filter(
+      (
+        entry
+      ): entry is {
+        label: string;
+        normalizedLabel: string;
+        normalizedFullPath: string;
+      } => entry !== null
+    );
+
+  if (normalizedLeafEntries.length === 0) {
+    return {
+      error: 'missing',
+    };
+  }
+
+  const entriesByHierarchyPath = new Map<string, string>();
+  const entriesByLeafName = new Map<string, string[]>();
+
+  normalizedLeafEntries.forEach((entry) => {
+    if (entry.normalizedFullPath && !entriesByHierarchyPath.has(entry.normalizedFullPath)) {
+      entriesByHierarchyPath.set(entry.normalizedFullPath, entry.label);
+    }
+
+    const matches = entriesByLeafName.get(entry.normalizedLabel) ?? [];
+    matches.push(entry.label);
+    entriesByLeafName.set(entry.normalizedLabel, matches);
+  });
+
+  const normalizedHierarchyInput = normalizeHierarchyComparable(rawCategoryValue);
+  if (normalizedHierarchyInput) {
+    const hierarchyMatch = entriesByHierarchyPath.get(normalizedHierarchyInput);
+    if (hierarchyMatch) {
+      return {
+        canonicalCategoryName: hierarchyMatch,
+      };
+    }
+  }
+
+  const normalizedCategoryValue = normalizeComparable(rawCategoryValue);
+  if (
+    normalizedLeafEntries.some((entry) =>
+      entry.normalizedFullPath
+        .split(' > ')
+        .slice(0, -1)
+        .includes(normalizedCategoryValue)
+    )
+  ) {
+    return {
+      error: 'too_generic',
+    };
+  }
+
+  const normalizedLeafInput =
+    normalizedHierarchyInput.split(' > ').filter(Boolean).pop() ?? normalizedCategoryValue;
+  const leafMatches = entriesByLeafName.get(normalizedLeafInput) ?? [];
+  if (leafMatches.length === 1) {
+    return {
+      canonicalCategoryName: leafMatches[0]!,
+    };
+  }
+  if (leafMatches.length > 1) {
+    return {
+      error: 'ambiguous',
+    };
+  }
+
+  return {
+    error: 'missing',
+  };
+};
+
 export const validateNormalizedProductName = (args: {
   normalizedName: string;
   categories: ProductCategory[];
   categoryHint?: string | null;
+  categoryContext?: NormalizeProductNameCategoryContext | null;
 }): ValidateNormalizedProductNameResult => {
   const structuredValue = normalizeStructuredProductName(args.normalizedName);
   const parsed = parseStructuredProductName(structuredValue);
@@ -155,12 +260,29 @@ export const validateNormalizedProductName = (args: {
     };
   }
 
+  if (
+    args.categoryContext &&
+    typeof args.categoryContext.totalLeafCategories === 'number' &&
+    args.categoryContext.totalLeafCategories <= 0
+  ) {
+    return {
+      isValid: false,
+      error: 'Normalize failed: category context unavailable.',
+    };
+  }
+
   const categoryCandidates = [
     typeof args.categoryHint === 'string' ? args.categoryHint.trim() : '',
     parsed.category,
   ].filter((value, index, values): value is string => value.length > 0 && values.indexOf(value) === index);
 
-  const categoryMatches = categoryCandidates.map((value) => resolveLeafCategoryMatch(args.categories, value));
+  const shouldUseCategoryContext =
+    Boolean(args.categoryContext) && (args.categoryContext?.leafCategories.length ?? 0) > 0;
+  const categoryMatches = categoryCandidates.map((value) =>
+    shouldUseCategoryContext
+      ? resolveLeafCategoryMatchFromContext(args.categoryContext!, value)
+      : resolveLeafCategoryMatch(args.categories, value)
+  );
   const categoryMatch = categoryMatches.find(
     (value): value is { canonicalCategoryName: string } => 'canonicalCategoryName' in value
   );

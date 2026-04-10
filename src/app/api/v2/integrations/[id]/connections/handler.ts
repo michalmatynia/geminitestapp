@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import {
@@ -9,17 +10,50 @@ import {
 import {
   normalizePersistedTraderaPlaywrightListingScript,
 } from '@/features/integrations/services/tradera-listing/managed-script';
+import {
+  normalizeIntegrationPlaywrightPersonas,
+  resolveIntegrationConnectionPlaywrightBrowserWithPersona,
+  resolveIntegrationConnectionPlaywrightSettingsWithPersona,
+} from '@/features/integrations/utils/playwright-connection-settings';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY, type PlaywrightPersona } from '@/shared/contracts/playwright';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 const createConnectionSchema = z
   .object({
     name: z.string().trim().min(1),
     username: z.string().trim().optional(),
     password: z.string().trim().optional(),
+    playwrightHeadless: z.boolean().optional(),
+    playwrightSlowMo: z.number().int().min(0).optional(),
+    playwrightTimeout: z.number().int().min(1000).optional(),
+    playwrightNavigationTimeout: z.number().int().min(1000).optional(),
+    playwrightHumanizeMouse: z.boolean().optional(),
+    playwrightMouseJitter: z.number().int().min(0).optional(),
+    playwrightClickDelayMin: z.number().int().min(0).optional(),
+    playwrightClickDelayMax: z.number().int().min(0).optional(),
+    playwrightInputDelayMin: z.number().int().min(0).optional(),
+    playwrightInputDelayMax: z.number().int().min(0).optional(),
+    playwrightActionDelayMin: z.number().int().min(0).optional(),
+    playwrightActionDelayMax: z.number().int().min(0).optional(),
+    playwrightProxyEnabled: z.boolean().optional(),
+    playwrightProxyServer: z.string().trim().nullable().optional(),
+    playwrightProxyUsername: z.string().trim().nullable().optional(),
+    playwrightProxyPassword: z.string().trim().nullable().optional(),
+    playwrightBrowser: z.enum(['auto', 'brave', 'chrome', 'chromium']).nullable().optional(),
+    playwrightEmulateDevice: z.boolean().optional(),
+    playwrightDeviceName: z.string().trim().nullable().optional(),
+    playwrightPersonaId: z.string().trim().nullable().optional(),
     traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
+    traderaCategoryStrategy: z.enum(['mapper', 'top_suggested']).nullable().optional(),
     playwrightListingScript: z.string().trim().nullable().optional(),
+    playwrightImportScript: z.string().trim().nullable().optional(),
+    playwrightImportBaseUrl: z.string().trim().nullable().optional(),
+    playwrightImportCaptureRoutesJson: z.string().trim().nullable().optional(),
+    playwrightFieldMapperJson: z.string().trim().nullable().optional(),
     traderaDefaultTemplateId: z.string().trim().nullable().optional(),
     traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
     traderaAutoRelistEnabled: z.boolean().optional(),
@@ -37,6 +71,44 @@ const createConnectionSchema = z
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
+const loadPlaywrightPersonas = async (): Promise<PlaywrightPersona[]> =>
+  normalizeIntegrationPlaywrightPersonas(
+    parseJsonSetting(await getSettingValue(PLAYWRIGHT_PERSONA_SETTINGS_KEY), [])
+  );
+
+const serializePlaywrightConnectionSettings = (
+  connection: Record<string, unknown>,
+  playwrightPersonas: PlaywrightPersona[]
+): Record<string, unknown> => {
+  const settings = resolveIntegrationConnectionPlaywrightSettingsWithPersona(
+    connection,
+    playwrightPersonas
+  );
+  return {
+    playwrightHeadless: settings.headless,
+    playwrightSlowMo: settings.slowMo,
+    playwrightTimeout: settings.timeout,
+    playwrightNavigationTimeout: settings.navigationTimeout,
+    playwrightHumanizeMouse: settings.humanizeMouse,
+    playwrightMouseJitter: settings.mouseJitter,
+    playwrightClickDelayMin: settings.clickDelayMin,
+    playwrightClickDelayMax: settings.clickDelayMax,
+    playwrightInputDelayMin: settings.inputDelayMin,
+    playwrightInputDelayMax: settings.inputDelayMax,
+    playwrightActionDelayMin: settings.actionDelayMin,
+    playwrightActionDelayMax: settings.actionDelayMax,
+    playwrightProxyEnabled: settings.proxyEnabled,
+    playwrightProxyServer: settings.proxyServer,
+    playwrightProxyUsername: settings.proxyUsername,
+    playwrightBrowser: resolveIntegrationConnectionPlaywrightBrowserWithPersona(
+      connection,
+      playwrightPersonas
+    ),
+    playwrightEmulateDevice: settings.emulateDevice,
+    playwrightDeviceName: settings.deviceName,
+  };
+};
+
 /**
  * GET /api/v2/integrations/[id]/connections
  * Fetch connections for an integration.
@@ -53,6 +125,7 @@ export async function GET_handler(
 
   const repo = await getIntegrationRepository();
   const connections = await repo.listConnections(integrationId);
+  const playwrightPersonas = await loadPlaywrightPersonas();
   const payload = connections.map((connection: (typeof connections)[number]) => ({
     id: connection.id,
     integrationId: connection.integrationId,
@@ -79,27 +152,16 @@ export async function GET_handler(
     baseTokenUpdatedAt: connection.baseTokenUpdatedAt,
     baseLastInventoryId: connection.baseLastInventoryId,
 
-    playwrightHeadless: connection.playwrightHeadless,
-    playwrightSlowMo: connection.playwrightSlowMo,
-    playwrightTimeout: connection.playwrightTimeout,
-    playwrightNavigationTimeout: connection.playwrightNavigationTimeout,
-    playwrightHumanizeMouse: connection.playwrightHumanizeMouse,
-    playwrightMouseJitter: connection.playwrightMouseJitter,
-    playwrightClickDelayMin: connection.playwrightClickDelayMin,
-    playwrightClickDelayMax: connection.playwrightClickDelayMax,
-    playwrightInputDelayMin: connection.playwrightInputDelayMin,
-    playwrightInputDelayMax: connection.playwrightInputDelayMax,
-    playwrightActionDelayMin: connection.playwrightActionDelayMin,
-    playwrightActionDelayMax: connection.playwrightActionDelayMax,
-    playwrightProxyEnabled: connection.playwrightProxyEnabled,
-    playwrightProxyServer: connection.playwrightProxyServer,
-    playwrightProxyUsername: connection.playwrightProxyUsername,
+    ...serializePlaywrightConnectionSettings(connection, playwrightPersonas),
     playwrightProxyHasPassword: Boolean(connection.playwrightProxyPassword),
-    playwrightEmulateDevice: connection.playwrightEmulateDevice,
-    playwrightDeviceName: connection.playwrightDeviceName,
     playwrightPersonaId: connection.playwrightPersonaId ?? null,
     traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
+    traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
     playwrightListingScript: connection.playwrightListingScript ?? null,
+    playwrightImportScript: connection.playwrightImportScript ?? null,
+    playwrightImportBaseUrl: connection.playwrightImportBaseUrl ?? null,
+    playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
+    playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
     hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
@@ -153,6 +215,7 @@ export async function POST_handler(
   const resolvedTraderaBrowserMode = data.traderaBrowserMode ?? 'builtin';
   const isBaseIntegration = BASE_INTEGRATION_SLUGS.has(integrationSlug);
   const isVintedIntegration = integrationSlug === 'vinted';
+  const isPlaywrightProgrammableIntegration = isPlaywrightProgrammableSlug(integration.slug);
   const normalizedPlaywrightListingScript = normalizePersistedTraderaPlaywrightListingScript({
     integrationSlug: integration.slug,
     traderaBrowserMode: resolvedTraderaBrowserMode,
@@ -161,13 +224,18 @@ export async function POST_handler(
         ? data.playwrightListingScript.trim() || null
         : data.playwrightListingScript ?? undefined,
   });
-  if (integrationSlug !== 'baselinker' && !isVintedIntegration && !normalizedUsername) {
+  if (
+    integrationSlug !== 'baselinker' &&
+    !isVintedIntegration &&
+    !isPlaywrightProgrammableIntegration &&
+    !normalizedUsername
+  ) {
     throw badRequestError('Username is required for this integration.', {
       integrationId,
       integrationSlug: integration.slug,
     });
   }
-  if (!isVintedIntegration && !normalizedPassword) {
+  if (!isVintedIntegration && !isPlaywrightProgrammableIntegration && !normalizedPassword) {
     throw badRequestError('Password/Token is required for this integration.', {
       integrationId,
       integrationSlug: integration.slug,
@@ -184,8 +252,70 @@ export async function POST_handler(
 
   const created = await repo.createConnection(integrationId, {
     name: data.name,
-    ...(normalizedUsername || !isVintedIntegration ? { username: normalizedUsername } : {}),
+    ...(normalizedUsername || (!isVintedIntegration && !isPlaywrightProgrammableIntegration)
+      ? { username: normalizedUsername }
+      : {}),
     ...(encryptedPassword ? { password: encryptedPassword } : {}),
+    ...(typeof data.playwrightBrowser === 'string' || data.playwrightBrowser === null
+      ? { playwrightBrowser: data.playwrightBrowser ?? 'auto' }
+      : {}),
+    ...(typeof data.playwrightHeadless === 'boolean'
+      ? { playwrightHeadless: data.playwrightHeadless }
+      : {}),
+    ...(typeof data.playwrightSlowMo === 'number'
+      ? { playwrightSlowMo: data.playwrightSlowMo }
+      : {}),
+    ...(typeof data.playwrightTimeout === 'number'
+      ? { playwrightTimeout: data.playwrightTimeout }
+      : {}),
+    ...(typeof data.playwrightNavigationTimeout === 'number'
+      ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout }
+      : {}),
+    ...(typeof data.playwrightHumanizeMouse === 'boolean'
+      ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse }
+      : {}),
+    ...(typeof data.playwrightMouseJitter === 'number'
+      ? { playwrightMouseJitter: data.playwrightMouseJitter }
+      : {}),
+    ...(typeof data.playwrightClickDelayMin === 'number'
+      ? { playwrightClickDelayMin: data.playwrightClickDelayMin }
+      : {}),
+    ...(typeof data.playwrightClickDelayMax === 'number'
+      ? { playwrightClickDelayMax: data.playwrightClickDelayMax }
+      : {}),
+    ...(typeof data.playwrightInputDelayMin === 'number'
+      ? { playwrightInputDelayMin: data.playwrightInputDelayMin }
+      : {}),
+    ...(typeof data.playwrightInputDelayMax === 'number'
+      ? { playwrightInputDelayMax: data.playwrightInputDelayMax }
+      : {}),
+    ...(typeof data.playwrightActionDelayMin === 'number'
+      ? { playwrightActionDelayMin: data.playwrightActionDelayMin }
+      : {}),
+    ...(typeof data.playwrightActionDelayMax === 'number'
+      ? { playwrightActionDelayMax: data.playwrightActionDelayMax }
+      : {}),
+    ...(typeof data.playwrightProxyEnabled === 'boolean'
+      ? { playwrightProxyEnabled: data.playwrightProxyEnabled }
+      : {}),
+    ...(typeof data.playwrightProxyServer === 'string' || data.playwrightProxyServer === null
+      ? { playwrightProxyServer: data.playwrightProxyServer ?? null }
+      : {}),
+    ...(typeof data.playwrightProxyUsername === 'string' || data.playwrightProxyUsername === null
+      ? { playwrightProxyUsername: data.playwrightProxyUsername ?? null }
+      : {}),
+    ...(typeof data.playwrightProxyPassword === 'string' && data.playwrightProxyPassword.trim()
+      ? { playwrightProxyPassword: encryptSecret(data.playwrightProxyPassword.trim()) }
+      : {}),
+    ...(typeof data.playwrightEmulateDevice === 'boolean'
+      ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
+      : {}),
+    ...(typeof data.playwrightDeviceName === 'string' || data.playwrightDeviceName === null
+      ? { playwrightDeviceName: data.playwrightDeviceName ?? null }
+      : {}),
+    ...(typeof data.playwrightPersonaId === 'string' || data.playwrightPersonaId === null
+      ? { playwrightPersonaId: data.playwrightPersonaId ?? null }
+      : {}),
     ...(isBaseIntegration && encryptedPassword
       ? {
         baseApiToken: encryptedPassword,
@@ -195,9 +325,27 @@ export async function POST_handler(
     ...(typeof data.traderaBrowserMode === 'string' || data.traderaBrowserMode === null
       ? { traderaBrowserMode: data.traderaBrowserMode ?? 'builtin' }
       : {}),
+    ...(typeof data.traderaCategoryStrategy === 'string' || data.traderaCategoryStrategy === null
+      ? { traderaCategoryStrategy: data.traderaCategoryStrategy ?? 'mapper' }
+      : {}),
     ...(typeof normalizedPlaywrightListingScript === 'string' ||
     normalizedPlaywrightListingScript === null
       ? { playwrightListingScript: normalizedPlaywrightListingScript ?? null }
+      : {}),
+    ...(typeof data.playwrightImportScript === 'string' || data.playwrightImportScript === null
+      ? { playwrightImportScript: data.playwrightImportScript ?? null }
+      : {}),
+    ...(typeof data.playwrightImportBaseUrl === 'string' || data.playwrightImportBaseUrl === null
+      ? { playwrightImportBaseUrl: data.playwrightImportBaseUrl ?? null }
+      : {}),
+    ...(typeof data.playwrightImportCaptureRoutesJson === 'string' ||
+    data.playwrightImportCaptureRoutesJson === null
+      ? {
+          playwrightImportCaptureRoutesJson: data.playwrightImportCaptureRoutesJson ?? null,
+        }
+      : {}),
+    ...(typeof data.playwrightFieldMapperJson === 'string' || data.playwrightFieldMapperJson === null
+      ? { playwrightFieldMapperJson: data.playwrightFieldMapperJson ?? null }
       : {}),
     ...(typeof data.traderaDefaultTemplateId === 'string' || data.traderaDefaultTemplateId === null
       ? { traderaDefaultTemplateId: data.traderaDefaultTemplateId ?? null }
@@ -243,6 +391,7 @@ export async function POST_handler(
         }
       : {}),
   });
+  const playwrightPersonas = await loadPlaywrightPersonas();
 
   return NextResponse.json({
     id: created.id,
@@ -263,27 +412,16 @@ export async function POST_handler(
     linkedinScope: created.linkedinScope ?? null,
     linkedinPersonUrn: created.linkedinPersonUrn ?? null,
     linkedinProfileUrl: created.linkedinProfileUrl ?? null,
-    playwrightHeadless: created.playwrightHeadless,
-    playwrightSlowMo: created.playwrightSlowMo,
-    playwrightTimeout: created.playwrightTimeout,
-    playwrightNavigationTimeout: created.playwrightNavigationTimeout,
-    playwrightHumanizeMouse: created.playwrightHumanizeMouse,
-    playwrightMouseJitter: created.playwrightMouseJitter,
-    playwrightClickDelayMin: created.playwrightClickDelayMin,
-    playwrightClickDelayMax: created.playwrightClickDelayMax,
-    playwrightInputDelayMin: created.playwrightInputDelayMin,
-    playwrightInputDelayMax: created.playwrightInputDelayMax,
-    playwrightActionDelayMin: created.playwrightActionDelayMin,
-    playwrightActionDelayMax: created.playwrightActionDelayMax,
-    playwrightProxyEnabled: created.playwrightProxyEnabled,
-    playwrightProxyServer: created.playwrightProxyServer,
-    playwrightProxyUsername: created.playwrightProxyUsername,
+    ...serializePlaywrightConnectionSettings(created, playwrightPersonas),
     playwrightProxyHasPassword: Boolean(created.playwrightProxyPassword),
-    playwrightEmulateDevice: created.playwrightEmulateDevice,
-    playwrightDeviceName: created.playwrightDeviceName,
     playwrightPersonaId: created.playwrightPersonaId ?? null,
     traderaBrowserMode: created.traderaBrowserMode ?? 'builtin',
+    traderaCategoryStrategy: created.traderaCategoryStrategy ?? 'mapper',
     playwrightListingScript: created.playwrightListingScript ?? null,
+    playwrightImportScript: created.playwrightImportScript ?? null,
+    playwrightImportBaseUrl: created.playwrightImportBaseUrl ?? null,
+    playwrightImportCaptureRoutesJson: created.playwrightImportCaptureRoutesJson ?? null,
+    playwrightFieldMapperJson: created.playwrightFieldMapperJson ?? null,
     hasPlaywrightListingScript: Boolean(created.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: created.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: created.traderaDefaultDurationHours ?? 72,

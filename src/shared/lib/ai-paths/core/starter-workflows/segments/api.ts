@@ -42,6 +42,21 @@ export const getStaticRecoveryStarterWorkflowEntries = (): AiPathTemplateRegistr
       entry.seedPolicy.restoreOnStaticRecovery === true
   ).sort((left, right) => (left.seedPolicy?.sortOrder ?? 0) - (right.seedPolicy?.sortOrder ?? 0));
 
+export const getStaticRecoveryStarterWorkflowEntryByDefaultPathId = (
+  pathId: string
+): AiPathTemplateRegistryEntry | null => {
+  const normalizedPathId = pathId.trim();
+  if (!normalizedPathId) {
+    return null;
+  }
+
+  return (
+    getStaticRecoveryStarterWorkflowEntries().find(
+      (entry) => entry.seedPolicy?.defaultPathId === normalizedPathId
+    ) ?? null
+  );
+};
+
 const resolveMaterializedStarterWorkflowArgs = (
   entry: AiPathTemplateRegistryEntry,
   args: MaterializeStarterWorkflowArgs

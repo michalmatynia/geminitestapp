@@ -263,6 +263,66 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.changed).toBe(true);
   });
 
+  it('preserves edited Normalize model settings while materializing stale starter configs', async () => {
+    const actualPortableEngine = await vi.importActual<
+      typeof import('@/shared/lib/ai-paths/portable-engine')
+    >('@/shared/lib/ai-paths/portable-engine');
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) {
+      throw new Error('Expected starter_product_name_normalize template');
+    }
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path_name_normalize_v1',
+      seededDefault: true,
+    });
+    const rawConfig = JSON.stringify({
+      ...config,
+      nodes: (config.nodes ?? []).map((node) => {
+        if (node.id !== 'node-model-name-normalize') return node;
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            model: {
+              ...node.config?.model,
+              temperature: 0.35,
+              maxTokens: 1337,
+              systemPrompt: 'Only return normalized output.',
+              waitForResult: false,
+            },
+          },
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 4,
+          seededDefault: true,
+        },
+      },
+    });
+
+    mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: 'path_name_normalize_v1',
+      rawConfig,
+      fallbackName: config.name,
+    });
+
+    const modelNode = resolved.config.nodes.find((node) => node.type === 'model');
+    expect(modelNode?.config?.model).toEqual(
+      expect.objectContaining({
+        temperature: 0.35,
+        maxTokens: 1337,
+        systemPrompt: 'Only return normalized output.',
+        waitForResult: false,
+      })
+    );
+    expect(resolved.changed).toBe(true);
+  });
+
   it('fully replaces stale default normalize starter graphs with random node ids so the database node becomes dry-run', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')
@@ -311,6 +371,34 @@ describe('materializeStoredTriggerPathConfig', () => {
 
     const databaseNode = resolved.config.nodes.find((node) => node.type === 'database');
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
+    expect(resolved.changed).toBe(true);
+  });
+
+  it('repairs broken recoverable default-path configs even when the starter is not auto-seeded', async () => {
+    const actualPortableEngine = await vi.importActual<
+      typeof import('@/shared/lib/ai-paths/portable-engine')
+    >('@/shared/lib/ai-paths/portable-engine');
+    const template = getStarterWorkflowTemplateById('starter_translation_en_pl');
+    if (!template) {
+      throw new Error('Expected starter_translation_en_pl template');
+    }
+
+    mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: 'path_96708d',
+      rawConfig: '{"broken":',
+      fallbackName: template.name,
+    });
+
+    expect(resolved.config.id).toBe('path_96708d');
+    expect(resolved.config.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(resolved.config.extensions?.['aiPathsStarter']).toEqual(
+      expect.objectContaining({
+        templateId: 'starter_translation_en_pl',
+        seededDefault: false,
+      })
+    );
     expect(resolved.changed).toBe(true);
   });
 
@@ -375,7 +463,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     const promptNode = resolved.config.nodes.find((node) => node.type === 'prompt');
     const databaseNode = resolved.config.nodes.find((node) => node.type === 'database');
     expect(promptNode?.config?.prompt?.template).toContain(
-      'Always prefer the most specific terminal leaf from the hierarchy.'
+      'choose the terminal leaf'
     );
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expect(resolved.changed).toBe(true);
@@ -430,7 +518,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     const promptNode = resolved.config.nodes.find((node) => node.type === 'prompt');
     const databaseNode = resolved.config.nodes.find((node) => node.type === 'database');
     expect(promptNode?.config?.prompt?.template).toContain(
-      'Always prefer the most specific terminal leaf from the hierarchy.'
+      'choose the terminal leaf'
     );
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expect(resolved.changed).toBe(true);

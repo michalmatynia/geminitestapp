@@ -6,7 +6,7 @@ import { useRouter } from 'nextjs-toploader/app';
 import React, { memo, useCallback, useMemo, useRef, startTransition } from 'react';
 
 import { Tooltip, Button } from '@/shared/ui/primitives.public';
-import { useAdminDataPrefetch } from '@/shared/hooks/useAdminDataPrefetch';
+import { useAdminDataPrefetch } from '../../hooks/useAdminDataPrefetch';
 import { TreeContextMenu } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
 

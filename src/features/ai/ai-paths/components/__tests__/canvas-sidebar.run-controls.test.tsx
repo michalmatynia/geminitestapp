@@ -30,6 +30,8 @@ const {
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphState: useGraphStateMock,
+  useGraphDataState: useGraphStateMock,
+  usePathMetadataState: useGraphStateMock,
   usePersistenceActions: usePersistenceActionsMock,
   useRunHistoryActions: useRunHistoryActionsMock,
   usePresetsState: usePresetsStateMock,
@@ -37,6 +39,8 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
   useSelectionState: useSelectionStateMock,
   useSelectionActions: useSelectionActionsMock,
   useRuntimeState: useRuntimeStateMock,
+  useRuntimeDataState: useRuntimeStateMock,
+  useRuntimeStatusState: useRuntimeStateMock,
   useRuntimeActions: useRuntimeActionsMock,
 }));
 

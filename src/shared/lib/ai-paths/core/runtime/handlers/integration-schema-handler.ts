@@ -9,6 +9,8 @@ import type { HttpResult } from '@/shared/contracts/http';
 import { dbApi } from '@/shared/lib/ai-paths/api';
 import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
+import { coerceInput, renderJsonTemplate } from '../../utils';
 
 
 // Module-scoped schema cache to avoid redundant API calls across database nodes
@@ -56,7 +58,7 @@ const resolveCollectionList = (value: unknown): CollectionSchema[] => {
 
 const cloneSchemaResponse = (schema: SchemaResponse): SchemaResponse => {
   if (typeof globalThis.structuredClone === 'function') {
-    return globalThis.structuredClone(schema) as SchemaResponse;
+    return globalThis.structuredClone(schema);
   }
   return JSON.parse(JSON.stringify(schema)) as SchemaResponse;
 };
@@ -223,10 +225,12 @@ const resolveLiveContextCollectionKeys = (config: DbSchemaConfig): string[] => {
 const loadLiveContext = async ({
   nodeId,
   config,
+  nodeInputs,
   reportAiPathsError,
 }: {
   nodeId: string;
   config: DbSchemaConfig;
+  nodeInputs: RuntimePortValues;
   reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
 }): Promise<LiveContextPayload | null> => {
   const selectedCollections = resolveLiveContextCollectionKeys(config);
@@ -243,9 +247,70 @@ const loadLiveContext = async ({
   }
 
   const limitPerCollection = config.contextLimit ?? DEFAULT_LIVE_CONTEXT_LIMIT;
-  const query = config.contextQuery?.trim() ? config.contextQuery.trim() : null;
-  const provider = config.provider === 'mongodb' ? 'mongodb' : 'auto';
   const fetchedAt = new Date().toISOString();
+  const rawQuery = config.contextQuery?.trim() ? config.contextQuery.trim() : null;
+  const missingQueryPorts =
+    rawQuery && rawQuery.length > 0 ? extractMissingTemplatePorts(rawQuery, nodeInputs) : [];
+  if (missingQueryPorts.length > 0) {
+    const error = `Live context query is missing connected inputs: ${missingQueryPorts.join(', ')}.`;
+    reportAiPathsError(
+      new Error(error),
+      { action: 'fetchDbLiveContext', nodeId, missingQueryPorts },
+      'Database live context query resolution failed:'
+    );
+    return {
+      fetchedAt,
+      selectedCollections: selectedCollections.map((value: string) => toFetchCollectionName(value)),
+      limitPerCollection,
+      query: rawQuery,
+      collections: selectedCollections.map(
+        (selectedKey: string): LiveContextCollection => ({
+          name: toFetchCollectionName(selectedKey),
+          provider: 'mongodb',
+          documents: [],
+          total: 0,
+          limit: limitPerCollection,
+          skip: 0,
+          query: rawQuery,
+          error,
+        })
+      ),
+      collectionMap: Object.fromEntries(
+        selectedCollections.map((selectedKey: string) => {
+          const collectionName = toFetchCollectionName(selectedKey);
+          return [
+            collectionName,
+            {
+              name: collectionName,
+              provider: 'mongodb',
+              documents: [],
+              total: 0,
+              limit: limitPerCollection,
+              skip: 0,
+              query: rawQuery,
+              error,
+            } satisfies LiveContextCollection,
+          ];
+        })
+      ),
+      errors: selectedCollections.map((selectedKey: string) => ({
+        collection: toFetchCollectionName(selectedKey),
+        error,
+      })),
+    };
+  }
+  const query =
+    rawQuery && rawQuery.length > 0
+      ? renderJsonTemplate(
+        rawQuery,
+        nodeInputs,
+        coerceInput(nodeInputs['context']) ??
+            coerceInput(nodeInputs['bundle']) ??
+            coerceInput(nodeInputs['value']) ??
+            ''
+      ).trim()
+      : null;
+  const provider = config.provider === 'mongodb' ? 'mongodb' : 'auto';
 
   const collections = await Promise.all(
     selectedCollections.map(async (selectedKey): Promise<LiveContextCollection> => {
@@ -308,6 +373,7 @@ const loadLiveContext = async ({
 
 export const handleDbSchema: NodeHandler = async ({
   node,
+  nodeInputs,
   prevOutputs,
   executed,
   reportAiPathsError,
@@ -378,6 +444,7 @@ export const handleDbSchema: NodeHandler = async ({
       ? await loadLiveContext({
         nodeId: node.id,
         config,
+        nodeInputs,
         reportAiPathsError,
       })
       : null;

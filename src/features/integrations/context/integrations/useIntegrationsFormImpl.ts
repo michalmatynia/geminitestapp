@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
-import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
+import {
+  defaultIntegrationConnectionPlaywrightSettings,
+  normalizeIntegrationConnectionPlaywrightPersonaId,
+  resolveIntegrationConnectionPlaywrightSettingsWithPersona,
+} from '@/features/integrations/utils/playwright-connection-settings';
 
 export const resolveEditingConnection = (args: {
   connections: IntegrationConnection[];
@@ -35,12 +40,15 @@ export const resolveEditingConnection = (args: {
 
 export function useIntegrationsFormImpl(
   connections: IntegrationConnection[],
-  preferredConnectionId: string | null = null
+  preferredConnectionId: string | null = null,
+  playwrightPersonas: PlaywrightPersona[] = []
 ) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConnectionId, setEditingConnectionIdState] = useState<string | null>(null);
   const [connectionToDelete, setConnectionToDelete] = useState<IntegrationConnection | null>(null);
-  const [playwrightSettings, setPlaywrightSettings] = useState(defaultPlaywrightSettings);
+  const [playwrightSettings, setPlaywrightSettings] = useState(
+    defaultIntegrationConnectionPlaywrightSettings
+  );
   const [playwrightPersonaId, setPlaywrightPersonaId] = useState<string | null>(null);
   const lastAutoSelectedConnectionIdRef = useRef<string | null>(null);
 
@@ -53,7 +61,7 @@ export function useIntegrationsFormImpl(
     if (connections.length === 0) {
       lastAutoSelectedConnectionIdRef.current = null;
       setEditingConnectionIdState(null);
-      setPlaywrightSettings(defaultPlaywrightSettings);
+      setPlaywrightSettings(defaultIntegrationConnectionPlaywrightSettings);
       setPlaywrightPersonaId(null);
       return;
     }
@@ -71,30 +79,13 @@ export function useIntegrationsFormImpl(
       setEditingConnectionIdState(connection.id);
     }
     setPlaywrightSettings({
-      headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
-      slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
-      timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
-      navigationTimeout:
-        connection.playwrightNavigationTimeout ?? defaultPlaywrightSettings.navigationTimeout,
-      humanizeMouse: connection.playwrightHumanizeMouse ?? defaultPlaywrightSettings.humanizeMouse,
-      mouseJitter: connection.playwrightMouseJitter ?? defaultPlaywrightSettings.mouseJitter,
-      clickDelayMin: connection.playwrightClickDelayMin ?? defaultPlaywrightSettings.clickDelayMin,
-      clickDelayMax: connection.playwrightClickDelayMax ?? defaultPlaywrightSettings.clickDelayMax,
-      inputDelayMin: connection.playwrightInputDelayMin ?? defaultPlaywrightSettings.inputDelayMin,
-      inputDelayMax: connection.playwrightInputDelayMax ?? defaultPlaywrightSettings.inputDelayMax,
-      actionDelayMin:
-        connection.playwrightActionDelayMin ?? defaultPlaywrightSettings.actionDelayMin,
-      actionDelayMax:
-        connection.playwrightActionDelayMax ?? defaultPlaywrightSettings.actionDelayMax,
-      proxyEnabled: connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
-      proxyServer: connection.playwrightProxyServer ?? defaultPlaywrightSettings.proxyServer,
-      proxyUsername: connection.playwrightProxyUsername ?? defaultPlaywrightSettings.proxyUsername,
+      ...resolveIntegrationConnectionPlaywrightSettingsWithPersona(connection, playwrightPersonas),
       proxyPassword: '',
-      emulateDevice: connection.playwrightEmulateDevice ?? defaultPlaywrightSettings.emulateDevice,
-      deviceName: connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName,
     });
-    setPlaywrightPersonaId(connection.playwrightPersonaId ?? null);
-  }, [connections, editingConnectionId, preferredConnectionId]);
+    setPlaywrightPersonaId(
+      normalizeIntegrationConnectionPlaywrightPersonaId(connection.playwrightPersonaId)
+    );
+  }, [connections, editingConnectionId, playwrightPersonas, preferredConnectionId]);
 
   return {
     isModalOpen,

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
@@ -359,5 +359,32 @@ describe('TriggerButtonBar', () => {
     expect(screen.getByRole('button', { name: 'Open 2 more AI actions' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Second Trigger' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Third Trigger' })).toBeInTheDocument();
+  });
+
+  it('disables inline click triggers when the bar is disabled', () => {
+    const handleTrigger = vi.fn();
+    useTriggerButtonsMock.mockReturnValue({
+      buttons: [BUTTON],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {},
+      handleTrigger,
+      isLoading: false,
+    });
+
+    render(
+      <TriggerButtonBar
+        location='product_modal'
+        entityType='product'
+        entityId='product-1'
+        disabled
+      />
+    );
+
+    const button = screen.getByRole('button', { name: 'Trigger' });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(handleTrigger).not.toHaveBeenCalled();
   });
 });

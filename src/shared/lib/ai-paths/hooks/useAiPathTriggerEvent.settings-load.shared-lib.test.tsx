@@ -41,7 +41,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
   updateAiPathsSetting: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: toastMock,
   }),

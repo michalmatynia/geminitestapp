@@ -111,6 +111,81 @@ describe('extractNormalizeProductNameFromAiPathRunDetail', () => {
       confidence: 0.88,
     });
   });
+
+  it('enriches the normalize payload with live category context from sibling node outputs', () => {
+    expect(
+      extractNormalizeProductNameResultFromAiPathRunDetail({
+        nodes: [
+          {
+            nodeType: 'function',
+            outputs: {
+              bundle: {
+                categoryContext: {
+                  catalogId: 'catalog-a',
+                  currentCategoryId: 'leaf-anime-pins',
+                  totalCategories: 2,
+                  totalLeafCategories: 1,
+                  allowedLeafLabels: ['Anime Pins'],
+                  leafCategories: [
+                    {
+                      id: 'leaf-anime-pins',
+                      label: 'Anime Pins',
+                      fullPath: 'Pins > Anime Pins',
+                      parentId: 'parent-pins',
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          {
+            nodeType: 'mapper',
+            outputs: {
+              bundle: {
+                normalizedName: 'Scout Regiment Badge | 4 cm | Metal | Anime Pins | Attack On Titan',
+                title: 'Scout Regiment Badge',
+                size: '4 cm',
+                material: 'Metal',
+                category: 'Anime Pins',
+                theme: 'Attack On Titan',
+                isValid: true,
+                validationError: null,
+                confidence: 0.88,
+              },
+            },
+          },
+        ],
+      })
+    ).toEqual({
+      normalizedName: 'Scout Regiment Badge | 4 cm | Metal | Anime Pins | Attack On Titan',
+      title: 'Scout Regiment Badge',
+      size: '4 cm',
+      material: 'Metal',
+      category: 'Anime Pins',
+      theme: 'Attack On Titan',
+      isValid: true,
+      validationError: null,
+      confidence: 0.88,
+      categoryContext: {
+        catalogId: 'catalog-a',
+        currentCategoryId: 'leaf-anime-pins',
+        allowedLeafLabels: ['Anime Pins'],
+        totalCategories: 2,
+        totalLeafCategories: 1,
+        fetchedAt: null,
+        leafCategories: [
+          {
+            id: 'leaf-anime-pins',
+            label: 'Anime Pins',
+            fullPath: 'Pins > Anime Pins',
+            parentId: 'parent-pins',
+            isCurrent: true,
+          },
+        ],
+      },
+    });
+  });
 });
 
 describe('isNormalizeProductNamePath', () => {

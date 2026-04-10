@@ -23,6 +23,7 @@ export { validatePlaywrightNodeScript } from './playwright-node-runner.parser';
 export * from './playwright-node-runner.types';
 import type {
   PlaywrightNodeRunArtifact,
+  PlaywrightNodeRunInstance,
   PlaywrightNodeRunRecord,
   PlaywrightNodeRunRequest,
   PlaywrightNodeArtifactReadResult,
@@ -117,8 +118,41 @@ const buildBaseRunState = (runId: string): PlaywrightNodeRunRecord => {
     completedAt: null,
     createdAt: now,
     updatedAt: now,
+    instance: null,
     artifacts: [],
     logs: [],
+  };
+};
+
+const normalizeRunInstance = (
+  value: PlaywrightNodeRunInstance | null | undefined
+): PlaywrightNodeRunInstance | null => {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const normalizedKind = typeof value.kind === 'string' ? value.kind.trim() : '';
+  if (!normalizedKind) {
+    return null;
+  }
+
+  const toOptionalString = (entry: unknown): string | null =>
+    typeof entry === 'string' && entry.trim().length > 0 ? entry.trim() : null;
+
+  const normalizedTags = Array.isArray(value.tags)
+    ? value.tags
+        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter((tag) => tag.length > 0)
+    : [];
+
+  return {
+    kind: normalizedKind as PlaywrightNodeRunInstance['kind'],
+    label: toOptionalString(value.label),
+    connectionId: toOptionalString(value.connectionId),
+    integrationId: toOptionalString(value.integrationId),
+    listingId: toOptionalString(value.listingId),
+    nodeId: toOptionalString(value.nodeId),
+    tags: normalizedTags.length > 0 ? normalizedTags : null,
   };
 };
 
@@ -133,6 +167,10 @@ export const updateRunState = async (
     ...patch,
     runId,
     updatedAt: nowIso(),
+    instance:
+      patch.instance === undefined
+        ? (base.instance ?? null)
+        : normalizeRunInstance(patch.instance ?? null),
     artifacts: patch.artifacts ?? base.artifacts ?? [],
     logs: patch.logs ?? base.logs ?? [],
   };
@@ -857,12 +895,14 @@ export const enqueuePlaywrightNodeRun = async (input: {
   request: PlaywrightNodeRunRequest;
   waitForResult: boolean;
   ownerUserId?: string | null;
+  instance?: PlaywrightNodeRunInstance | null;
 }): Promise<PlaywrightNodeRunRecord> => {
   await cleanupOldRuns();
   const runId = randomUUID();
   const queuedState = {
     ...buildBaseRunState(runId),
     ownerUserId: input.ownerUserId?.trim() || null,
+    instance: normalizeRunInstance(input.instance ?? null),
   };
   await writeRunState(queuedState);
 
@@ -894,6 +934,9 @@ export const readPlaywrightNodeRun = async (
     return {
       ...(parsed as PlaywrightNodeRunRecord),
       ownerUserId: typeof parsed['ownerUserId'] === 'string' ? parsed['ownerUserId'] : null,
+      instance: normalizeRunInstance(
+        isObjectRecord(parsed['instance']) ? (parsed['instance'] as PlaywrightNodeRunInstance) : null
+      ),
     };
   } catch (error) {
     void ErrorSystem.captureException(error);

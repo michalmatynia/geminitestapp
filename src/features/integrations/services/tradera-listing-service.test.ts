@@ -14,6 +14,7 @@ const {
   resolveEffectiveListingSettingsMock,
   buildRelistPolicyMock,
   captureExceptionMock,
+  resolveConnectionPlaywrightSettingsProfileMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   listProductListingsByProductIdAcrossProvidersMock: vi.fn(),
@@ -26,6 +27,7 @@ const {
   resolveEffectiveListingSettingsMock: vi.fn(),
   buildRelistPolicyMock: vi.fn(),
   captureExceptionMock: vi.fn(),
+  resolveConnectionPlaywrightSettingsProfileMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/services/product-listing-repository', () => ({
@@ -73,6 +75,11 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
+vi.mock('./tradera-playwright-settings', () => ({
+  resolveConnectionPlaywrightSettingsProfile: (...args: unknown[]) =>
+    resolveConnectionPlaywrightSettingsProfileMock(...args) as Promise<unknown>,
+}));
+
 import { processTraderaListingJob } from './tradera-listing-service';
 
 describe('processTraderaListingJob', () => {
@@ -94,6 +101,13 @@ describe('processTraderaListingJob', () => {
       id: 'connection-1',
       integrationId: 'integration-1',
       traderaBrowserMode: 'scripted',
+    });
+    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
+      hasExplicitHeadlessPreference: false,
+      hasExplicitBrowserPreference: false,
+      settings: {
+        headless: true,
+      },
     });
     getIntegrationByIdMock.mockResolvedValue({
       id: 'integration-1',
@@ -222,6 +236,13 @@ describe('processTraderaListingJob', () => {
       traderaBrowserMode: 'scripted',
       playwrightHeadless: false,
     });
+    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
+      hasExplicitHeadlessPreference: true,
+      hasExplicitBrowserPreference: false,
+      settings: {
+        headless: false,
+      },
+    });
     runTraderaBrowserListingMock.mockResolvedValue({
       externalListingId: 'external-1',
       listingUrl: 'https://www.tradera.com/item/1',
@@ -248,6 +269,62 @@ describe('processTraderaListingJob', () => {
       expect.objectContaining({
         fields: ['browser_mode:headed'],
         requestId: 'job-tradera-api-1',
+      })
+    );
+  });
+
+  it('uses canonical resolved Playwright settings for Tradera browser mode decisions', async () => {
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: {
+          tradera: {
+            categoryId: 12345,
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: vi.fn(),
+        updateListing: vi.fn(),
+        appendExportHistory: vi.fn(),
+      },
+    });
+    getConnectionByIdMock.mockResolvedValue({
+      id: 'connection-1',
+      integrationId: 'integration-1',
+      traderaBrowserMode: 'scripted',
+      playwrightHeadless: true,
+      playwrightPersonaId: 'persona-1',
+    });
+    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
+      hasExplicitHeadlessPreference: true,
+      hasExplicitBrowserPreference: false,
+      settings: {
+        headless: false,
+      },
+    });
+    runTraderaBrowserListingMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.tradera.com/item/1',
+      metadata: {
+        browserMode: 'headed',
+        requestedBrowserMode: 'headed',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'api',
+      jobId: 'job-tradera-api-persona-1',
+    });
+
+    expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        browserMode: 'headed',
       })
     );
   });
@@ -386,14 +463,14 @@ describe('processTraderaListingJob', () => {
       listingUrl: 'https://www.tradera.com/item/1',
       metadata: {
         checkedStatus: 'ended',
-        requestedBrowserMode: 'headed',
+        requestedBrowserMode: 'headless',
         runId: 'run-check-status',
         executionSteps: [
           {
             id: 'open_overview',
-            label: 'Open My Overview',
+            label: 'Open Active listings',
             status: 'success',
-            message: 'Tradera My Overview opened successfully.',
+            message: 'Tradera Active listings opened successfully.',
           },
           {
             id: 'resolve_status',
@@ -414,7 +491,7 @@ describe('processTraderaListingJob', () => {
 
     expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        browserMode: 'headed',
+        browserMode: 'headless',
       })
     );
     expect(runTraderaBrowserListingMock).not.toHaveBeenCalled();
@@ -455,6 +532,53 @@ describe('processTraderaListingJob', () => {
       })
     );
     expect(appendExportHistoryMock).not.toHaveBeenCalled();
+  });
+
+  it('still honors an explicit headed override for a live status check', async () => {
+    const updateListingMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-check-status',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'active',
+        externalListingId: 'external-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: vi.fn(),
+        updateListing: updateListingMock,
+        appendExportHistory: vi.fn(),
+      },
+    });
+    runTraderaBrowserCheckStatusMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.tradera.com/item/1',
+      metadata: {
+        checkedStatus: 'active',
+        requestedBrowserMode: 'headed',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-check-status',
+      action: 'check_status',
+      source: 'manual',
+      browserMode: 'headed',
+    });
+
+    expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        browserMode: 'headed',
+      })
+    );
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-check-status',
+      expect.objectContaining({
+        status: 'active',
+      })
+    );
   });
 
   it('persists AppError metadata on failure', async () => {

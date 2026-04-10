@@ -256,9 +256,16 @@ describe('database node normalization', () => {
       provider: 'auto',
       mode: 'selected',
       collections: ['products'],
+      sourceMode: 'schema',
+      contextCollections: [],
+      contextQuery: '',
+      contextLimit: 20,
       includeFields: false,
       includeRelations: false,
       formatAs: 'json',
     });
+    expect(normalized?.inputs).toEqual(expect.arrayContaining(['context', 'schema']));
+    expect(normalized?.outputs).toEqual(expect.arrayContaining(['schema', 'context']));
+    expect(normalized?.config?.runtime?.waitForInputs).toBe(false);
   });
 });

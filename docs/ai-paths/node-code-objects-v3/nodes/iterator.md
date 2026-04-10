@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-05'
+last_reviewed: '2026-04-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Iterator Migration Sheet (`iterator`)
 
-Generated at: 2026-04-05T14:57:57.569Z
+Generated at: 2026-04-10T09:12:39.132Z
 
 ## Status
 

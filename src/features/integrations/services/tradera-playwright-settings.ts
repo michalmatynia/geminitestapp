@@ -5,8 +5,13 @@ import { playwrightStorageStateSchema } from '@/shared/contracts/integrations/se
 import { type IntegrationConnectionRecord, type PlaywrightStorageState } from '@/shared/contracts/integrations';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
-import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import {
+  defaultIntegrationConnectionPlaywrightSettings,
+  extractIntegrationConnectionPlaywrightSettingsOverrides,
+  normalizeIntegrationConnectionPlaywrightPersonaId,
+  resolveIntegrationConnectionPlaywrightBrowserOverride,
+} from '@/features/integrations/utils/playwright-connection-settings';
 
 import type { BrowserContextOptions } from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -99,6 +104,12 @@ export type TraderaPlaywrightRuntimeSettings = {
   deviceName: string;
 };
 
+export type ResolvedConnectionPlaywrightSettingsProfile = {
+  settings: TraderaPlaywrightRuntimeSettings;
+  hasExplicitHeadlessPreference: boolean;
+  hasExplicitBrowserPreference: boolean;
+};
+
 export const parsePersistedStorageState = (
   encryptedValue: string | null | undefined
 ): PersistedStorageState | null => {
@@ -148,102 +159,140 @@ const findPersonaSettings = (raw: unknown, personaId: string): Record<string, un
   return null;
 };
 
+export const resolveConnectionPlaywrightSettingsProfile = async (
+  connection: IntegrationConnectionRecord
+): Promise<ResolvedConnectionPlaywrightSettingsProfile> => {
+  const personaId = normalizeIntegrationConnectionPlaywrightPersonaId(
+    connection.playwrightPersonaId
+  );
+  const connectionOverrides = extractIntegrationConnectionPlaywrightSettingsOverrides(connection);
+  const connectionBrowser = resolveIntegrationConnectionPlaywrightBrowserOverride(connection);
+  const connectionProxyPassword = connection.playwrightProxyPassword
+    ? decryptSecret(connection.playwrightProxyPassword)
+    : undefined;
+
+  let browser: TraderaPlaywrightRuntimeSettings['browser'] = 'auto';
+  let personaProvidesHeadlessPreference = false;
+  let personaProvidesBrowserPreference = false;
+  let settings = {
+    ...defaultIntegrationConnectionPlaywrightSettings,
+    proxyServer: toTrimmedString(defaultIntegrationConnectionPlaywrightSettings.proxyServer, ''),
+    proxyUsername: toTrimmedString(defaultIntegrationConnectionPlaywrightSettings.proxyUsername, ''),
+    proxyPassword: '',
+    deviceName: toTrimmedString(
+      defaultIntegrationConnectionPlaywrightSettings.deviceName,
+      defaultIntegrationConnectionPlaywrightSettings.deviceName
+    ),
+  };
+
+  if (personaId) {
+    const raw = await getSettingValue(PLAYWRIGHT_PERSONA_SETTINGS_KEY);
+    const parsed = parseJsonSetting<unknown>(raw, null);
+    const personaSettings = findPersonaSettings(parsed, personaId);
+    if (personaSettings) {
+      const personaProxyPassword = toTrimmedString(personaSettings['proxyPassword'], '');
+      const personaBrowser = toTrimmedString(personaSettings['browser'], '');
+      personaProvidesHeadlessPreference = typeof personaSettings['headless'] === 'boolean';
+      personaProvidesBrowserPreference =
+        personaBrowser === 'auto' ||
+        personaBrowser === 'brave' ||
+        personaBrowser === 'chrome' ||
+        personaBrowser === 'chromium';
+      browser =
+        personaBrowser === 'brave' || personaBrowser === 'chrome' || personaBrowser === 'chromium'
+          ? personaBrowser
+          : browser;
+      settings = {
+        ...settings,
+        headless: toBoolean(personaSettings['headless'], settings.headless),
+        slowMo: toFiniteNumber(personaSettings['slowMo'], settings.slowMo, 0),
+        timeout: toFiniteNumber(personaSettings['timeout'], settings.timeout, 1000),
+        navigationTimeout: toFiniteNumber(
+          personaSettings['navigationTimeout'],
+          settings.navigationTimeout,
+          1000
+        ),
+        humanizeMouse: toBoolean(personaSettings['humanizeMouse'], settings.humanizeMouse),
+        mouseJitter: toFiniteNumber(personaSettings['mouseJitter'], settings.mouseJitter, 0),
+        clickDelayMin: toFiniteNumber(
+          personaSettings['clickDelayMin'],
+          settings.clickDelayMin,
+          0
+        ),
+        clickDelayMax: toFiniteNumber(
+          personaSettings['clickDelayMax'],
+          settings.clickDelayMax,
+          0
+        ),
+        inputDelayMin: toFiniteNumber(
+          personaSettings['inputDelayMin'],
+          settings.inputDelayMin,
+          0
+        ),
+        inputDelayMax: toFiniteNumber(
+          personaSettings['inputDelayMax'],
+          settings.inputDelayMax,
+          0
+        ),
+        actionDelayMin: toFiniteNumber(
+          personaSettings['actionDelayMin'],
+          settings.actionDelayMin,
+          0
+        ),
+        actionDelayMax: toFiniteNumber(
+          personaSettings['actionDelayMax'],
+          settings.actionDelayMax,
+          0
+        ),
+        proxyEnabled: toBoolean(personaSettings['proxyEnabled'], settings.proxyEnabled),
+        proxyServer: toTrimmedString(personaSettings['proxyServer'], settings.proxyServer),
+        proxyUsername: toTrimmedString(personaSettings['proxyUsername'], settings.proxyUsername),
+        proxyPassword: personaProxyPassword || settings.proxyPassword,
+        emulateDevice: toBoolean(personaSettings['emulateDevice'], settings.emulateDevice),
+        deviceName: toTrimmedString(personaSettings['deviceName'], settings.deviceName),
+      };
+    }
+  }
+
+  const nextProxyServer =
+    'proxyServer' in connectionOverrides
+      ? toTrimmedString(connectionOverrides.proxyServer, '')
+      : settings.proxyServer;
+  const nextProxyUsername =
+    'proxyUsername' in connectionOverrides
+      ? toTrimmedString(connectionOverrides.proxyUsername, '')
+      : settings.proxyUsername;
+  const nextDeviceName =
+    'deviceName' in connectionOverrides
+      ? toTrimmedString(
+          connectionOverrides.deviceName,
+          defaultIntegrationConnectionPlaywrightSettings.deviceName
+        )
+      : settings.deviceName;
+
+  return {
+    hasExplicitHeadlessPreference:
+      'headless' in connectionOverrides || personaProvidesHeadlessPreference,
+    hasExplicitBrowserPreference:
+      typeof connectionBrowser !== 'undefined' || personaProvidesBrowserPreference,
+    settings: {
+      browser: connectionBrowser ?? browser,
+      ...settings,
+      ...connectionOverrides,
+      proxyServer: nextProxyServer,
+      proxyUsername: nextProxyUsername,
+      proxyPassword:
+        typeof connectionProxyPassword === 'string'
+          ? connectionProxyPassword
+          : settings.proxyPassword,
+      deviceName: nextDeviceName || defaultIntegrationConnectionPlaywrightSettings.deviceName,
+    },
+  };
+};
+
 export const resolveConnectionPlaywrightSettings = async (
   connection: IntegrationConnectionRecord
 ): Promise<TraderaPlaywrightRuntimeSettings> => {
-  const rawBrowser = (connection as Record<string, unknown>)['playwrightBrowser'] as
-    | string
-    | undefined;
-  const browser: TraderaPlaywrightRuntimeSettings['browser'] =
-    rawBrowser === 'brave' || rawBrowser === 'chrome' || rawBrowser === 'chromium'
-      ? rawBrowser
-      : 'auto';
-  const base: TraderaPlaywrightRuntimeSettings = {
-    browser,
-    headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
-    slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
-    timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
-    navigationTimeout:
-      connection.playwrightNavigationTimeout ?? defaultPlaywrightSettings.navigationTimeout,
-    humanizeMouse:
-      connection.playwrightHumanizeMouse ?? defaultPlaywrightSettings.humanizeMouse,
-    mouseJitter: connection.playwrightMouseJitter ?? defaultPlaywrightSettings.mouseJitter,
-    clickDelayMin:
-      connection.playwrightClickDelayMin ?? defaultPlaywrightSettings.clickDelayMin,
-    clickDelayMax:
-      connection.playwrightClickDelayMax ?? defaultPlaywrightSettings.clickDelayMax,
-    inputDelayMin:
-      connection.playwrightInputDelayMin ?? defaultPlaywrightSettings.inputDelayMin,
-    inputDelayMax:
-      connection.playwrightInputDelayMax ?? defaultPlaywrightSettings.inputDelayMax,
-    actionDelayMin:
-      connection.playwrightActionDelayMin ?? defaultPlaywrightSettings.actionDelayMin,
-    actionDelayMax:
-      connection.playwrightActionDelayMax ?? defaultPlaywrightSettings.actionDelayMax,
-    proxyEnabled: connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
-    proxyServer: connection.playwrightProxyServer?.trim() ?? '',
-    proxyUsername: connection.playwrightProxyUsername?.trim() ?? '',
-    proxyPassword: connection.playwrightProxyPassword
-      ? decryptSecret(connection.playwrightProxyPassword)
-      : '',
-    emulateDevice: connection.playwrightEmulateDevice ?? defaultPlaywrightSettings.emulateDevice,
-    deviceName:
-      connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName ?? 'Desktop Chrome',
-  };
-
-  const personaId = connection.playwrightPersonaId?.trim();
-  if (!personaId) return base;
-
-  const raw = await getSettingValue(PLAYWRIGHT_PERSONA_SETTINGS_KEY);
-  const parsed = parseJsonSetting<unknown>(raw, null);
-  const personaSettings = findPersonaSettings(parsed, personaId);
-  if (!personaSettings) return base;
-
-  const personaProxyPassword = toTrimmedString(personaSettings['proxyPassword'], '');
-
-  const personaBrowser = toTrimmedString(personaSettings['browser'], '');
-  return {
-    browser:
-      personaBrowser === 'brave' || personaBrowser === 'chrome' || personaBrowser === 'chromium'
-        ? personaBrowser
-        : base.browser,
-    headless: toBoolean(personaSettings['headless'], base.headless),
-    slowMo: toFiniteNumber(personaSettings['slowMo'], base.slowMo, 0),
-    timeout: toFiniteNumber(personaSettings['timeout'], base.timeout, 1000),
-    navigationTimeout: toFiniteNumber(
-      personaSettings['navigationTimeout'],
-      base.navigationTimeout,
-      1000
-    ),
-    humanizeMouse: toBoolean(personaSettings['humanizeMouse'], base.humanizeMouse),
-    mouseJitter: toFiniteNumber(personaSettings['mouseJitter'], base.mouseJitter, 0),
-    clickDelayMin: toFiniteNumber(personaSettings['clickDelayMin'], base.clickDelayMin, 0),
-    clickDelayMax: toFiniteNumber(
-      personaSettings['clickDelayMax'],
-      base.clickDelayMax,
-      0
-    ),
-    inputDelayMin: toFiniteNumber(personaSettings['inputDelayMin'], base.inputDelayMin, 0),
-    inputDelayMax: toFiniteNumber(
-      personaSettings['inputDelayMax'],
-      base.inputDelayMax,
-      0
-    ),
-    actionDelayMin: toFiniteNumber(
-      personaSettings['actionDelayMin'],
-      base.actionDelayMin,
-      0
-    ),
-    actionDelayMax: toFiniteNumber(
-      personaSettings['actionDelayMax'],
-      base.actionDelayMax,
-      0
-    ),
-    proxyEnabled: toBoolean(personaSettings['proxyEnabled'], base.proxyEnabled),
-    proxyServer: toTrimmedString(personaSettings['proxyServer'], base.proxyServer),
-    proxyUsername: toTrimmedString(personaSettings['proxyUsername'], base.proxyUsername),
-    proxyPassword: personaProxyPassword || base.proxyPassword,
-    emulateDevice: toBoolean(personaSettings['emulateDevice'], base.emulateDevice),
-    deviceName: toTrimmedString(personaSettings['deviceName'], base.deviceName),
-  };
+  const profile = await resolveConnectionPlaywrightSettingsProfile(connection);
+  return profile.settings;
 };

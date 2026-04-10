@@ -3,6 +3,10 @@ import { ObjectId } from 'mongodb';
 import { IntegrationRecord, IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { ConnectionDeleteOptions, ConnectionDependencyCounts } from '@/shared/contracts/integrations/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
+  defaultIntegrationConnectionPlaywrightSettings,
+} from '@/features/integrations/utils/playwright-connection-settings';
 
 
 export type { ConnectionDeleteOptions, ConnectionDependencyCounts };
@@ -16,23 +20,24 @@ export const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 
 export const CONNECTION_DEFAULTS = {
   traderaBrowserMode: 'builtin' as const,
-  playwrightHeadless: true,
-  playwrightSlowMo: 0,
-  playwrightTimeout: 30000,
-  playwrightNavigationTimeout: 30000,
-  playwrightHumanizeMouse: true,
-  playwrightMouseJitter: 5,
-  playwrightClickDelayMin: 50,
-  playwrightClickDelayMax: 150,
-  playwrightInputDelayMin: 20,
-  playwrightInputDelayMax: 80,
-  playwrightActionDelayMin: 500,
-  playwrightActionDelayMax: 1500,
-  playwrightProxyEnabled: false,
-  playwrightProxyServer: '',
-  playwrightProxyUsername: '',
+  playwrightBrowser: DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
+  playwrightHeadless: defaultIntegrationConnectionPlaywrightSettings.headless,
+  playwrightSlowMo: defaultIntegrationConnectionPlaywrightSettings.slowMo,
+  playwrightTimeout: defaultIntegrationConnectionPlaywrightSettings.timeout,
+  playwrightNavigationTimeout: defaultIntegrationConnectionPlaywrightSettings.navigationTimeout,
+  playwrightHumanizeMouse: defaultIntegrationConnectionPlaywrightSettings.humanizeMouse,
+  playwrightMouseJitter: defaultIntegrationConnectionPlaywrightSettings.mouseJitter,
+  playwrightClickDelayMin: defaultIntegrationConnectionPlaywrightSettings.clickDelayMin,
+  playwrightClickDelayMax: defaultIntegrationConnectionPlaywrightSettings.clickDelayMax,
+  playwrightInputDelayMin: defaultIntegrationConnectionPlaywrightSettings.inputDelayMin,
+  playwrightInputDelayMax: defaultIntegrationConnectionPlaywrightSettings.inputDelayMax,
+  playwrightActionDelayMin: defaultIntegrationConnectionPlaywrightSettings.actionDelayMin,
+  playwrightActionDelayMax: defaultIntegrationConnectionPlaywrightSettings.actionDelayMax,
+  playwrightProxyEnabled: defaultIntegrationConnectionPlaywrightSettings.proxyEnabled,
+  playwrightProxyServer: defaultIntegrationConnectionPlaywrightSettings.proxyServer,
+  playwrightProxyUsername: defaultIntegrationConnectionPlaywrightSettings.proxyUsername,
   playwrightEmulateDevice: false,
-  playwrightDeviceName: 'Desktop Chrome',
+  playwrightDeviceName: defaultIntegrationConnectionPlaywrightSettings.deviceName,
   playwrightPersonaId: null,
   playwrightListingScript: null,
   playwrightImportScript: null,
@@ -229,39 +234,75 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     playwrightStorageState: (d['playwrightStorageState'] as string) ?? null,
     playwrightStorageStateUpdatedAt: toIsoStringOrNull(d['playwrightStorageStateUpdatedAt']),
     playwrightHeadless:
-      (d['playwrightHeadless'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHeadless,
-    playwrightSlowMo: (d['playwrightSlowMo'] as number) ?? CONNECTION_DEFAULTS.playwrightSlowMo,
-    playwrightTimeout: (d['playwrightTimeout'] as number) ?? CONNECTION_DEFAULTS.playwrightTimeout,
+      typeof d['playwrightHeadless'] === 'boolean' ? d['playwrightHeadless'] : undefined,
+    playwrightSlowMo:
+      typeof d['playwrightSlowMo'] === 'number' ? d['playwrightSlowMo'] : undefined,
+    playwrightTimeout:
+      typeof d['playwrightTimeout'] === 'number' ? d['playwrightTimeout'] : undefined,
     playwrightNavigationTimeout:
-      (d['playwrightNavigationTimeout'] as number) ??
-      CONNECTION_DEFAULTS.playwrightNavigationTimeout,
+      typeof d['playwrightNavigationTimeout'] === 'number'
+        ? d['playwrightNavigationTimeout']
+        : undefined,
     playwrightHumanizeMouse:
-      (d['playwrightHumanizeMouse'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHumanizeMouse,
+      typeof d['playwrightHumanizeMouse'] === 'boolean'
+        ? d['playwrightHumanizeMouse']
+        : undefined,
     playwrightMouseJitter:
-      (d['playwrightMouseJitter'] as number) ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
+      typeof d['playwrightMouseJitter'] === 'number'
+        ? d['playwrightMouseJitter']
+        : undefined,
     playwrightClickDelayMin:
-      (d['playwrightClickDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightClickDelayMin,
+      typeof d['playwrightClickDelayMin'] === 'number'
+        ? d['playwrightClickDelayMin']
+        : undefined,
     playwrightClickDelayMax:
-      (d['playwrightClickDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightClickDelayMax,
+      typeof d['playwrightClickDelayMax'] === 'number'
+        ? d['playwrightClickDelayMax']
+        : undefined,
     playwrightInputDelayMin:
-      (d['playwrightInputDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightInputDelayMin,
+      typeof d['playwrightInputDelayMin'] === 'number'
+        ? d['playwrightInputDelayMin']
+        : undefined,
     playwrightInputDelayMax:
-      (d['playwrightInputDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightInputDelayMax,
+      typeof d['playwrightInputDelayMax'] === 'number'
+        ? d['playwrightInputDelayMax']
+        : undefined,
     playwrightActionDelayMin:
-      (d['playwrightActionDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightActionDelayMin,
+      typeof d['playwrightActionDelayMin'] === 'number'
+        ? d['playwrightActionDelayMin']
+        : undefined,
     playwrightActionDelayMax:
-      (d['playwrightActionDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightActionDelayMax,
+      typeof d['playwrightActionDelayMax'] === 'number'
+        ? d['playwrightActionDelayMax']
+        : undefined,
     playwrightProxyEnabled:
-      (d['playwrightProxyEnabled'] as boolean) ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
+      typeof d['playwrightProxyEnabled'] === 'boolean'
+        ? d['playwrightProxyEnabled']
+        : undefined,
     playwrightProxyServer:
-      (d['playwrightProxyServer'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyServer,
+      typeof d['playwrightProxyServer'] === 'string'
+        ? d['playwrightProxyServer']
+        : undefined,
     playwrightProxyUsername:
-      (d['playwrightProxyUsername'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
+      typeof d['playwrightProxyUsername'] === 'string'
+        ? d['playwrightProxyUsername']
+        : undefined,
     playwrightProxyPassword: (d['playwrightProxyPassword'] as string) ?? null,
+    playwrightBrowser:
+      d['playwrightBrowser'] === 'auto' ||
+      d['playwrightBrowser'] === 'brave' ||
+      d['playwrightBrowser'] === 'chrome' ||
+      d['playwrightBrowser'] === 'chromium'
+        ? d['playwrightBrowser']
+        : undefined,
     playwrightEmulateDevice:
-      (d['playwrightEmulateDevice'] as boolean) ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
+      typeof d['playwrightEmulateDevice'] === 'boolean'
+        ? d['playwrightEmulateDevice']
+        : undefined,
     playwrightDeviceName:
-      (d['playwrightDeviceName'] as string) ?? CONNECTION_DEFAULTS.playwrightDeviceName,
+      typeof d['playwrightDeviceName'] === 'string'
+        ? d['playwrightDeviceName']
+        : undefined,
     playwrightPersonaId:
       (d['playwrightPersonaId'] as string) ?? CONNECTION_DEFAULTS.playwrightPersonaId,
     playwrightListingScript:

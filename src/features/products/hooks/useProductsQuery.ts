@@ -23,6 +23,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { refetchProductsAndCounts } from './productCache';
+import { useProductsPagedDebugLogging } from './useProductsPagedDebugLogging';
 
 export type { UseProductsFilters };
 
@@ -111,49 +112,6 @@ const parseProductsPagedResult = (
 
 const getProductsPagedQueryKey = (filters: UseProductsFilters) =>
   [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
-
-type ProductsPagedDebugSnapshot = {
-  queryKey: string;
-  enabled: boolean;
-  isPending: boolean;
-  isFetching: boolean;
-  itemsCount: number;
-  total: number;
-  hasError: boolean;
-  errorMessage: string | null;
-  dataUpdatedAt: number;
-  errorUpdatedAt: number;
-};
-
-const buildProductsPagedDebugSnapshot = (args: {
-  enabled: boolean;
-  queryKey: readonly unknown[];
-  query: {
-    isPending: boolean;
-    isFetching: boolean;
-    data?: { items?: ProductWithImages[]; total?: number };
-    error?: unknown;
-    dataUpdatedAt?: number;
-    errorUpdatedAt?: number;
-  };
-}): ProductsPagedDebugSnapshot => ({
-  queryKey: JSON.stringify(args.queryKey),
-  enabled: args.enabled,
-  isPending: args.query.isPending,
-  isFetching: args.query.isFetching,
-  itemsCount: args.query.data?.items?.length ?? 0,
-  total: args.query.data?.total ?? 0,
-  hasError: Boolean(args.query.error),
-  errorMessage: args.query.error instanceof Error ? args.query.error.message : null,
-  dataUpdatedAt:
-    typeof args.query.dataUpdatedAt === 'number' && Number.isFinite(args.query.dataUpdatedAt)
-      ? args.query.dataUpdatedAt
-      : 0,
-  errorUpdatedAt:
-    typeof args.query.errorUpdatedAt === 'number' && Number.isFinite(args.query.errorUpdatedAt)
-      ? args.query.errorUpdatedAt
-      : 0,
-});
 
 export function useProducts(
   filters: UseProductsFilters,
@@ -328,66 +286,22 @@ export function useProductsWithCount(
     })();
   }, [enabled, filters, query.data, queryClient, shouldPrefetchNextPage]);
 
-  const previousDebugSnapshotRef = useRef<ProductsPagedDebugSnapshot | null>(null);
-  const debugSnapshot = useMemo(
-    () =>
-      buildProductsPagedDebugSnapshot({
-        enabled,
-        queryKey,
-        query,
-      }),
-    [
-      enabled,
-      queryKey,
-      query.isPending,
-      query.isFetching,
-      query.data,
-      query.error,
-      query.dataUpdatedAt,
-      query.errorUpdatedAt,
-    ]
-  );
-
-  useEffect(() => {
-    const previousSnapshot = previousDebugSnapshotRef.current;
-    if (
-      previousSnapshot?.queryKey === debugSnapshot.queryKey &&
-      previousSnapshot?.enabled === debugSnapshot.enabled &&
-      previousSnapshot?.isPending === debugSnapshot.isPending &&
-      previousSnapshot?.isFetching === debugSnapshot.isFetching &&
-      previousSnapshot?.itemsCount === debugSnapshot.itemsCount &&
-      previousSnapshot?.total === debugSnapshot.total &&
-      previousSnapshot?.hasError === debugSnapshot.hasError &&
-      previousSnapshot?.errorMessage === debugSnapshot.errorMessage &&
-      previousSnapshot?.dataUpdatedAt === debugSnapshot.dataUpdatedAt &&
-      previousSnapshot?.errorUpdatedAt === debugSnapshot.errorUpdatedAt
-    ) {
-      return;
-    }
-
-    logProductListDebug(
-      'paged-query-state-change',
-      {
-        ...debugSnapshot,
-      },
-      {
-        dedupeKey: 'paged-query-state-change',
-        throttleMs: 500,
-      }
-    );
-    previousDebugSnapshotRef.current = debugSnapshot;
-  }, [debugSnapshot]);
+  const debugQueryKey = useProductsPagedDebugLogging({
+    enabled,
+    queryKey,
+    query,
+  });
 
   const refetch = useCallback(async (): Promise<void> => {
     logProductListDebug(
       'paged-query-refetch-requested',
       {
-        queryKey: debugSnapshot.queryKey,
+        queryKey: debugQueryKey,
       },
       { dedupeKey: 'paged-query-refetch-requested', throttleMs: 250 }
     );
     await refetchProductsAndCounts(queryClient);
-  }, [debugSnapshot.queryKey, queryClient]);
+  }, [debugQueryKey, queryClient]);
 
   return {
     products: query.data?.items ?? [],

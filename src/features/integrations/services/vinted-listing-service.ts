@@ -15,6 +15,7 @@ import {
   resolveRequestedVintedBrowserPreference,
   type VintedListingSource,
 } from './vinted-listing/vinted-browser-runtime';
+import { resolveConnectionPlaywrightSettingsProfile } from './tradera-playwright-settings';
 
 export type VintedListingJobInput = {
   listingId: string;
@@ -179,16 +180,21 @@ export const runVintedListing = async (
         errorCategory: 'NOT_FOUND',
       };
     }
+    const resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettingsProfile(connection);
 
     requestedBrowserMode = resolveRequestedVintedBrowserMode({
       requestedBrowserMode: input.browserMode,
       source,
-      connection,
+      connectionHeadless: resolvedPlaywrightSettings.hasExplicitHeadlessPreference
+        ? resolvedPlaywrightSettings.settings.headless
+        : undefined,
     });
     requestedBrowserPreference = resolveRequestedVintedBrowserPreference({
       requestedBrowserPreference: input.browserPreference,
       source,
-      connection,
+      connectionBrowserPreference: resolvedPlaywrightSettings.hasExplicitBrowserPreference
+        ? resolvedPlaywrightSettings.settings.browser
+        : undefined,
     });
 
     const result = await runVintedBrowserListing({

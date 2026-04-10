@@ -170,7 +170,8 @@ export const dbSchemaDocs: NodeConfigDocField[] = [
   },
   {
     path: 'db_schema.contextQuery',
-    description: 'Optional JSON filter or free-text search applied to each live context collection.',
+    description:
+      'Optional JSON filter or free-text search applied to each live context collection. Supports runtime templates such as `{{context.catalogId}}` or `{{bundle.categoryId}}`.',
     defaultValue: '""',
   },
   {

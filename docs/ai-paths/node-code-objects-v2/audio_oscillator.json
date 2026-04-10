@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-28T14:11:53.253Z",
+  "generatedAt": "2026-04-10T09:12:39.416Z",
   "id": "node_obj_audio_oscillator_portable_v2",
   "nodeType": "audio_oscillator",
   "nodeDocVersion": "2026-02-20.v1",
@@ -256,5 +256,5 @@
     "semanticNodeHash": "7baab1b01ab357f02eee514fc42f17c000caaa5d51e5610ca9197cbe0a9f8224"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "7284d5bb9855a023e8bf5f3da9c8ab8977fce65f7ca07c4a2f1cf1d809279e81"
+  "objectHash": "a776a1080f7dbabc85e3f7e2b3059fcf2ae9502bc79a0cf07812ccb608d6a38e"
 }

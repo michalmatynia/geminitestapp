@@ -1,5 +1,5 @@
 import { normalizeTraderaListingFormUrl, type TraderaSystemSettings } from '@/features/integrations/constants/tradera';
-import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
+import { validatePlaywrightEngineScript } from '@/features/playwright/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { BrowserListingResultDto, PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
@@ -52,6 +52,17 @@ export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
 export const TRADERA_IMAGE_SETTLE_TIMEOUT_MESSAGE_PREFIX =
   'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish. Last state: ';
 const MANAGED_TRADERA_QUICKLIST_DESKTOP_DEVICE_NAME = 'Desktop Chrome';
+const TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES: Partial<PlaywrightSettings> = {
+  slowMo: 0,
+  humanizeMouse: false,
+  mouseJitter: 0,
+  clickDelayMin: 0,
+  clickDelayMax: 0,
+  inputDelayMin: 0,
+  inputDelayMax: 0,
+  actionDelayMin: 0,
+  actionDelayMax: 0,
+};
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -222,7 +233,7 @@ const resolveManagedTraderaScript = async ({
     };
   }
 
-  const validation = validatePlaywrightNodeScript(connectionScript);
+  const validation = validatePlaywrightEngineScript(connectionScript);
   if (!validation.ok) {
     const integrationRepository = await getIntegrationRepository();
     await integrationRepository.updateConnection(connection.id, {
@@ -933,6 +944,7 @@ export const runTraderaBrowserCheckStatus = async ({
     timeoutMs: TRADERA_CHECK_STATUS_TIMEOUT_MS,
     browserMode,
     disableStartUrlBootstrap: true,
+    runtimeSettingsOverrides: TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES,
   });
 
   const checkedStatus =

@@ -378,6 +378,8 @@ describe('DbSchemaNodeConfigSection', () => {
         contextQuery: '{"catalogId":"catalog-1"}',
       }),
     });
+    expect(screen.getByText(/supports runtime templates from connected inputs/i)).toBeInTheDocument();
+    expect(screen.getByText('{{context.catalogId}}')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Documents per collection'), {
       target: { value: '7' },

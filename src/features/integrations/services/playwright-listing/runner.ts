@@ -1,21 +1,24 @@
 import 'server-only';
 
-import { existsSync } from 'fs';
-
-import { enqueuePlaywrightNodeRun } from '@/features/ai/ai-paths/services/playwright-node-runner';
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 import { internalError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-
 import {
-  parsePersistedStorageState,
-  resolveConnectionPlaywrightSettings,
-} from '../tradera-playwright-settings';
+  buildPlaywrightEngineRunFailureMeta,
+  createProgrammableImportPlaywrightInstance,
+  createProgrammableListingPlaywrightInstance,
+  enqueuePlaywrightEngineRun,
+  resolvePlaywrightEngineRunOutputs,
+} from '@/features/playwright/server';
+import {
+  buildPlaywrightConnectionEngineLaunchOptions,
+  buildPlaywrightConnectionSettingsOverrides,
+  resolvePlaywrightConnectionRuntime,
+} from '@/features/playwright/server/connection-runtime';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
-import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
 
 export type PlaywrightExecutionSettingsSummary = Pick<
   PlaywrightSettings,
@@ -55,12 +58,6 @@ export type PlaywrightImportResult = {
   rawResult: Record<string, unknown>;
 };
 
-const BRAVE_PATHS: Record<string, string> = {
-  darwin: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
-  win32: 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
-  linux: '/usr/bin/brave-browser',
-};
-
 const extractStringField = (obj: Record<string, unknown>, key: string): string | null => {
   const value = obj[key];
   return typeof value === 'string' && value.trim() ? value.trim() : null;
@@ -73,46 +70,6 @@ const extractBooleanField = (obj: Record<string, unknown>, key: string): boolean
 
 const extractTrimmedString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-
-const getBraveExecutablePath = (): string | null => {
-  const bravePath = BRAVE_PATHS[process.platform];
-  return bravePath && existsSync(bravePath) ? bravePath : null;
-};
-
-const resolveBrowserLaunchOptions = (
-  browserPreference: PlaywrightBrowserPreference
-): Record<string, unknown> => {
-  switch (browserPreference) {
-    case 'brave': {
-      const braveExecutablePath = getBraveExecutablePath();
-      if (!braveExecutablePath) {
-        throw internalError(
-          `Brave browser not found at expected path (${BRAVE_PATHS[process.platform] ?? 'unsupported platform'}). Install Brave or switch the connection browser setting to Chrome or Auto.`
-        );
-      }
-      return {
-        executablePath: braveExecutablePath,
-      };
-    }
-    case 'chrome':
-      return {
-        channel: 'chrome',
-      };
-    case 'auto': {
-      const braveExecutablePath = getBraveExecutablePath();
-      return braveExecutablePath
-        ? {
-            executablePath: braveExecutablePath,
-          }
-        : {
-            channel: 'chrome',
-          };
-    }
-    case 'chromium':
-    default:
-      return {};
-  }
-};
 
 const resolveListingRunStartUrl = (input: Record<string, unknown>): string | undefined => {
   const directStartUrl = extractTrimmedString(input['startUrl']);
@@ -129,28 +86,6 @@ const resolveListingRunStartUrl = (input: Record<string, unknown>): string | und
   }
 
   return undefined;
-};
-
-const resolveRunnerOutputs = (
-  resultPayload: unknown
-): {
-  outputs: Record<string, unknown>;
-  resultValue: Record<string, unknown>;
-  finalUrl: string | null;
-} => {
-  const payloadRecord = isObjectRecord(resultPayload) ? resultPayload : {};
-  const outputs = isObjectRecord(payloadRecord['outputs']) ? payloadRecord['outputs'] : payloadRecord;
-  const resultValue = isObjectRecord(outputs['result'])
-    ? outputs['result']
-    : isObjectRecord(outputs)
-      ? outputs
-      : {};
-
-  return {
-    outputs,
-    resultValue,
-    finalUrl: extractStringField(payloadRecord, 'finalUrl'),
-  };
 };
 
 const buildExecutionSettingsSummary = (
@@ -198,23 +133,24 @@ export const runPlaywrightListingScript = async ({
   failureHoldOpenMs?: number;
   runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
 }): Promise<PlaywrightListingResult> => {
-  const settings = await resolveConnectionPlaywrightSettings(connection);
-  const personaId = connection.playwrightPersonaId?.trim() || undefined;
-  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
+  const runtime = await resolvePlaywrightConnectionRuntime(connection);
   const runtimeSettings = {
-    ...settings,
+    ...runtime.settings,
     ...(runtimeSettingsOverrides ?? {}),
   };
   const effectiveHeadless =
     browserMode === 'headless' ? true : browserMode === 'headed' ? false : runtimeSettings.headless;
-  const effectiveSettings: PlaywrightSettings = {
+  const effectiveSettings = {
     ...runtimeSettings,
     headless: effectiveHeadless,
   };
   const startUrl = disableStartUrlBootstrap ? undefined : resolveListingRunStartUrl(input);
-  const launchOptions = resolveBrowserLaunchOptions(runtimeSettings.browser);
+  const launchOptions = buildPlaywrightConnectionEngineLaunchOptions({
+    browserPreference: effectiveSettings.browser,
+  });
+  const listingId = extractTrimmedString(input['listingId']);
 
-  const run = await enqueuePlaywrightNodeRun({
+  const run = await enqueuePlaywrightEngineRun({
     request: {
       script,
       input,
@@ -224,53 +160,29 @@ export const runPlaywrightListingScript = async ({
       browserEngine: 'chromium',
       ...(startUrl ? { startUrl } : {}),
       ...(contextRegistry ? { contextRegistry } : {}),
-      ...(personaId ? { personaId } : {}),
-      ...(storageState ? { contextOptions: { storageState } } : {}),
+      ...(runtime.personaId ? { personaId: runtime.personaId } : {}),
+      ...(runtime.storageState ? { contextOptions: { storageState: runtime.storageState } } : {}),
       ...(Object.keys(launchOptions).length > 0 ? { launchOptions } : {}),
-      settingsOverrides: {
-        headless: effectiveSettings.headless,
-        slowMo: effectiveSettings.slowMo,
-        timeout: effectiveSettings.timeout,
-        navigationTimeout: effectiveSettings.navigationTimeout,
-        humanizeMouse: effectiveSettings.humanizeMouse,
-        mouseJitter: effectiveSettings.mouseJitter,
-        clickDelayMin: effectiveSettings.clickDelayMin,
-        clickDelayMax: effectiveSettings.clickDelayMax,
-        inputDelayMin: effectiveSettings.inputDelayMin,
-        inputDelayMax: effectiveSettings.inputDelayMax,
-        actionDelayMin: effectiveSettings.actionDelayMin,
-        actionDelayMax: effectiveSettings.actionDelayMax,
-        proxyEnabled: effectiveSettings.proxyEnabled,
-        proxyServer: effectiveSettings.proxyServer,
-        proxyUsername: effectiveSettings.proxyUsername,
-        proxyPassword: effectiveSettings.proxyPassword,
-        emulateDevice: effectiveSettings.emulateDevice,
-        deviceName: effectiveSettings.deviceName,
-      },
+      settingsOverrides: buildPlaywrightConnectionSettingsOverrides(effectiveSettings),
     },
     waitForResult: true,
+    instance: createProgrammableListingPlaywrightInstance({
+      connectionId: connection.id,
+      integrationId: connection.integrationId,
+      listingId,
+    }),
   });
 
   if (run.status === 'failed') {
-    const { resultValue, finalUrl } = resolveRunnerOutputs(run.result);
     throw internalError(run.error ?? 'Playwright listing script failed.', {
-      runId: run.runId,
-      runStatus: run.status,
-      rawResult: Object.keys(resultValue).length > 0 ? resultValue : null,
-      latestStage: extractStringField(resultValue, 'stage'),
-      latestStageUrl: extractStringField(resultValue, 'currentUrl') ?? finalUrl,
+      ...buildPlaywrightEngineRunFailureMeta(run, {
+        includeRawResult: true,
+      }),
       logs: Array.isArray(run.logs) ? run.logs : [],
-      failureArtifacts: (Array.isArray(run.artifacts) ? run.artifacts : []).map((artifact) => ({
-        name: artifact.name,
-        path: artifact.path,
-        kind: artifact.kind ?? null,
-        mimeType: artifact.mimeType ?? null,
-      })),
-      logTail: (Array.isArray(run.logs) ? run.logs : []).slice(-12),
     });
   }
 
-  const { resultValue } = resolveRunnerOutputs(run.result);
+  const { resultValue } = resolvePlaywrightEngineRunOutputs(run.result);
 
   return {
     runId: run.runId,
@@ -279,7 +191,7 @@ export const runPlaywrightListingScript = async ({
     expiresAt: extractStringField(resultValue, 'expiresAt'),
     publishVerified: extractBooleanField(resultValue, 'publishVerified'),
     effectiveBrowserMode: effectiveHeadless ? 'headless' : 'headed',
-    personaId: personaId ?? null,
+    personaId: runtime.personaId ?? null,
     executionSettings: buildExecutionSettingsSummary(effectiveSettings),
     rawResult: resultValue,
     logs: Array.isArray(run.logs) ? run.logs : [],
@@ -303,11 +215,9 @@ export const runPlaywrightImportScript = async ({
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
   timeoutMs?: number;
 }): Promise<PlaywrightImportResult> => {
-  const settings = await resolveConnectionPlaywrightSettings(connection);
-  const personaId = connection.playwrightPersonaId?.trim() || undefined;
-  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
+  const runtime = await resolvePlaywrightConnectionRuntime(connection);
 
-  const run = await enqueuePlaywrightNodeRun({
+  const run = await enqueuePlaywrightEngineRun({
     request: {
       script,
       input,
@@ -315,30 +225,15 @@ export const runPlaywrightImportScript = async ({
       preventNewPages: true,
       browserEngine: 'chromium',
       ...(contextRegistry ? { contextRegistry } : {}),
-      ...(personaId ? { personaId } : {}),
-      ...(storageState ? { contextOptions: { storageState } } : {}),
-      settingsOverrides: {
-        headless: settings.headless,
-        slowMo: settings.slowMo,
-        timeout: settings.timeout,
-        navigationTimeout: settings.navigationTimeout,
-        humanizeMouse: settings.humanizeMouse,
-        mouseJitter: settings.mouseJitter,
-        clickDelayMin: settings.clickDelayMin,
-        clickDelayMax: settings.clickDelayMax,
-        inputDelayMin: settings.inputDelayMin,
-        inputDelayMax: settings.inputDelayMax,
-        actionDelayMin: settings.actionDelayMin,
-        actionDelayMax: settings.actionDelayMax,
-        proxyEnabled: settings.proxyEnabled,
-        proxyServer: settings.proxyServer,
-        proxyUsername: settings.proxyUsername,
-        proxyPassword: settings.proxyPassword,
-        emulateDevice: settings.emulateDevice,
-        deviceName: settings.deviceName,
-      },
+      ...(runtime.personaId ? { personaId: runtime.personaId } : {}),
+      ...(runtime.storageState ? { contextOptions: { storageState: runtime.storageState } } : {}),
+      settingsOverrides: buildPlaywrightConnectionSettingsOverrides(runtime.settings),
     },
     waitForResult: true,
+    instance: createProgrammableImportPlaywrightInstance({
+      connectionId: connection.id,
+      integrationId: connection.integrationId,
+    }),
   });
 
   if (run.status === 'failed') {
@@ -349,9 +244,7 @@ export const runPlaywrightImportScript = async ({
   }
 
   const resultPayload = run.result;
-  const outputs = isObjectRecord(resultPayload)
-    ? (isObjectRecord(resultPayload['outputs']) ? resultPayload['outputs'] : resultPayload)
-    : {};
+  const { outputs } = resolvePlaywrightEngineRunOutputs(resultPayload);
 
   const resultValue = outputs['result'] ?? outputs;
   const products = Array.isArray(resultValue)

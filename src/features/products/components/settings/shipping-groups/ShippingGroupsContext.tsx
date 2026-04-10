@@ -18,7 +18,10 @@ import { useToast } from '@/shared/ui/toast';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Catalog } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
-import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
+import type {
+  ProductShippingGroup,
+  ShippingGroupFormData,
+} from '@/shared/contracts/products/shipping-groups';
 import {
   DRAFT_SHIPPING_GROUP_ID,
 } from './shipping-group-utils';
@@ -35,16 +38,6 @@ import {
 } from './ShippingGroupsContext.hooks';
 import { useShippingGroupHandlers } from './ShippingGroupsContext.handlers';
 import { useShippingGroupsModalState } from './ShippingGroupsContext.state';
-
-export type ShippingGroupFormData = {
-  name: string;
-  description: string;
-  catalogId: string;
-  traderaShippingCondition: string;
-  traderaShippingPriceEur: string;
-  autoAssignCategoryIds: string[];
-  autoAssignCurrencyCodes: string[];
-};
 
 type ShippingGroupToast = ReturnType<typeof useToast>['toast'];
 type ShippingGroupSaveMutation = ReturnType<typeof useSaveShippingGroupMutation>;

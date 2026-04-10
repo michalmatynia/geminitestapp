@@ -8,6 +8,25 @@ export type PlaywrightNodeRunArtifact = {
   kind?: string | null;
 };
 
+export type PlaywrightNodeRunInstanceKind =
+  | 'ai_path_node'
+  | 'programmable_listing'
+  | 'programmable_import'
+  | 'tradera_category_scrape'
+  | 'social_capture_single'
+  | 'social_capture_batch'
+  | 'custom';
+
+export type PlaywrightNodeRunInstance = {
+  kind: PlaywrightNodeRunInstanceKind;
+  label?: string | null;
+  connectionId?: string | null;
+  integrationId?: string | null;
+  listingId?: string | null;
+  nodeId?: string | null;
+  tags?: string[] | null;
+};
+
 export type PlaywrightNodeRunRecord = {
   runId: string;
   ownerUserId: string | null;
@@ -18,6 +37,7 @@ export type PlaywrightNodeRunRecord = {
   updatedAt: string;
   result?: unknown;
   error?: string | null;
+  instance?: PlaywrightNodeRunInstance | null;
   artifacts: PlaywrightNodeRunArtifact[];
   logs: string[];
 };
@@ -50,4 +70,3 @@ export type PlaywrightNodeArtifactReadResult = {
   artifact: PlaywrightNodeRunArtifact;
   content: Buffer;
 };
-

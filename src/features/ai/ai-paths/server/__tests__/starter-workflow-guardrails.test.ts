@@ -121,4 +121,47 @@ describe('starter workflow guardrails', () => {
 
     expect(report.actions.some((action) => deprecatedActionIds.has(action.id))).toBe(false);
   });
+
+  it('keeps starter upgrade routing registry-driven instead of branching on starter keys', () => {
+    const workspaceRoot = process.cwd();
+    const upgradeSource = readFileSync(
+      join(
+        workspaceRoot,
+        'src',
+        'shared',
+        'lib',
+        'ai-paths',
+        'core',
+        'starter-workflows',
+        'segments',
+        'upgrade.ts'
+      ),
+      'utf8'
+    );
+    const legacyRepairSource = readFileSync(
+      join(
+        workspaceRoot,
+        'src',
+        'shared',
+        'lib',
+        'ai-paths',
+        'core',
+        'starter-workflows',
+        'segments',
+        'legacy-repair.ts'
+      ),
+      'utf8'
+    );
+
+    [
+      "'parameter_inference'",
+      "'product_name_normalize'",
+      "'description_inference_lite'",
+      "'translation_en_pl'",
+    ].forEach((starterKeyLiteral) => {
+      expect(upgradeSource.includes(`starterLineage.starterKey === ${starterKeyLiteral}`)).toBe(false);
+    });
+
+    expect(legacyRepairSource.includes('switch (entry.starterLineage.starterKey)')).toBe(false);
+  });
 });

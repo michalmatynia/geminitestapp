@@ -108,8 +108,11 @@ export async function handleTraderaBrowserTest(
 
   try {
     const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
-    const effectiveHeadless =
-      manualMode || manualSessionRefreshMode ? false : playwrightSettings.headless;
+    const effectiveHeadless = quicklistPreflightMode
+      ? true
+      : manualMode || manualSessionRefreshMode
+        ? false
+        : playwrightSettings.headless;
     const emulateDevice = playwrightSettings.emulateDevice;
     const deviceName = playwrightSettings.deviceName;
     const deviceProfile =
@@ -154,31 +157,29 @@ export async function handleTraderaBrowserTest(
     page = await context.newPage();
     const humanizeMouse = quicklistPreflightMode
       ? false
-      : (connection.playwrightHumanizeMouse ?? false);
+      : playwrightSettings.humanizeMouse;
     const mouseJitter =
-      quicklistPreflightMode ? 0 : Math.max(0, connection.playwrightMouseJitter ?? 0);
+      quicklistPreflightMode ? 0 : Math.max(0, playwrightSettings.mouseJitter);
     const clickDelayMin = quicklistPreflightMode
       ? 0
-      : Math.max(0, connection.playwrightClickDelayMin ?? 0);
+      : Math.max(0, playwrightSettings.clickDelayMin);
     const clickDelayMax = Math.max(
       clickDelayMin,
-      quicklistPreflightMode ? clickDelayMin : (connection.playwrightClickDelayMax ?? clickDelayMin)
+      quicklistPreflightMode ? clickDelayMin : playwrightSettings.clickDelayMax
     );
     const inputDelayMin = quicklistPreflightMode
       ? 0
-      : Math.max(0, connection.playwrightInputDelayMin ?? 0);
+      : Math.max(0, playwrightSettings.inputDelayMin);
     const inputDelayMax = Math.max(
       inputDelayMin,
-      quicklistPreflightMode ? inputDelayMin : (connection.playwrightInputDelayMax ?? inputDelayMin)
+      quicklistPreflightMode ? inputDelayMin : playwrightSettings.inputDelayMax
     );
     const actionDelayMin = quicklistPreflightMode
       ? 0
-      : Math.max(0, connection.playwrightActionDelayMin ?? 0);
+      : Math.max(0, playwrightSettings.actionDelayMin);
     const actionDelayMax = Math.max(
       actionDelayMin,
-      quicklistPreflightMode
-        ? actionDelayMin
-        : (connection.playwrightActionDelayMax ?? actionDelayMin)
+      quicklistPreflightMode ? actionDelayMin : playwrightSettings.actionDelayMax
     );
     const activePage = page;
     const utils = createTraderaBrowserTestUtils({
@@ -270,33 +271,39 @@ export async function handleTraderaBrowserTest(
       return NextResponse.json(response);
     } else if (manualMode || manualSessionRefreshMode) {
       const stepLabel = manualSessionRefreshMode ? 'Session refresh' : 'Manual login';
-      pushStep(stepLabel, 'pending', 'Checking current session status...');
+      let sessionAlreadyActive = false;
 
-      await utils.safeGoto(
-        SESSION_CHECK_URL,
-        { waitUntil: 'domcontentloaded', timeout: 30_000 },
-        'Session check'
-      );
-      await acceptCookies();
+      if (!manualSessionRefreshMode) {
+        pushStep(stepLabel, 'pending', 'Checking current session status...');
 
-      const sessionAlreadyActive = await isUserLoggedIn();
-      if (!sessionAlreadyActive) {
+        await utils.safeGoto(
+          SESSION_CHECK_URL,
+          { waitUntil: 'domcontentloaded', timeout: 30_000 },
+          'Session check'
+        );
+        await acceptCookies();
+
+        sessionAlreadyActive = await isUserLoggedIn();
+      } else {
+        pushStep(
+          stepLabel,
+          'pending',
+          'Opening Tradera login page to refresh the saved browser session...'
+        );
+      }
+
+      if (manualSessionRefreshMode || !sessionAlreadyActive) {
         pushStep(
           stepLabel,
           'pending',
           manualSessionRefreshMode
-            ? 'Session expired — navigating to Tradera dashboard...'
+            ? 'Navigating to login page for manual session refresh...'
             : 'Session expired — navigating to login page...'
         );
-        await activePage.goto(
-          manualSessionRefreshMode
-            ? 'https://www.tradera.com/en/my/'
-            : 'https://www.tradera.com/login',
-          {
-            waitUntil: 'domcontentloaded',
-            timeout: 60_000,
-          }
-        );
+        await activePage.goto('https://www.tradera.com/login', {
+          waitUntil: 'domcontentloaded',
+          timeout: 60_000,
+        });
         await acceptCookies();
 
         pushStep(

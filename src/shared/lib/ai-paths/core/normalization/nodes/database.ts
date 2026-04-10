@@ -5,7 +5,7 @@ import {
   type DbSchemaConfig,
 } from '@/shared/contracts/ai-paths';
 
-import { DATABASE_INPUT_PORTS } from '../../constants';
+import { DATABASE_INPUT_PORTS, DB_SCHEMA_INPUT_PORTS, DB_SCHEMA_OUTPUT_PORTS } from '../../constants';
 import { ensureUniquePorts } from '../../utils/graph.ports';
 import { normalizeTemplateText } from '../normalization.helpers';
 
@@ -171,10 +171,19 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
 
 export const normalizeDbSchemaNode = (node: AiNode): AiNode => {
   const schemaConfig = node.config?.db_schema;
+  const runtimeConfig = node.config?.runtime
+    ? {
+      ...node.config.runtime,
+      ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: false } : {}),
+    }
+    : { waitForInputs: false };
   return {
     ...node,
+    inputs: ensureUniquePorts(node.inputs ?? [], DB_SCHEMA_INPUT_PORTS),
+    outputs: ensureUniquePorts(node.outputs ?? [], DB_SCHEMA_OUTPUT_PORTS),
     config: {
       ...node.config,
+      ...(runtimeConfig ? { runtime: runtimeConfig } : {}),
       db_schema: {
         ...DEFAULT_DB_SCHEMA_CONFIG,
         ...schemaConfig,

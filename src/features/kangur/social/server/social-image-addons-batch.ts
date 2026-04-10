@@ -7,12 +7,13 @@ import path from 'path';
 import sharp from 'sharp';
 
 import {
-  enqueuePlaywrightNodeRun,
-  readPlaywrightNodeArtifact,
-  readPlaywrightNodeRun,
-  type PlaywrightNodeRunArtifact,
-  type PlaywrightNodeRunRecord,
-} from '@/features/ai/server';
+  createSocialCaptureBatchPlaywrightInstance,
+  enqueuePlaywrightEngineRun,
+  readPlaywrightEngineArtifact,
+  readPlaywrightEngineRun,
+  type PlaywrightEngineRunArtifact,
+  type PlaywrightEngineRunRecord,
+} from '@/features/playwright/server';
 import { uploadToConfiguredStorage } from '@/features/files/server';
 import {
   normalizeKangurSocialImageAddon,
@@ -99,16 +100,16 @@ type ResolvedBatchCaptureRequest = {
 };
 
 export type StartedPlaywrightBatchCapture = ResolvedBatchCaptureRequest & {
-  run: PlaywrightNodeRunRecord;
+  run: PlaywrightEngineRunRecord;
 };
 
 const LIVE_PROGRESS_POLL_INTERVAL_MS = 250;
 const LIVE_PROGRESS_TIMEOUT_MS = 195_000;
 
 const resolveArtifactByName = (
-  artifacts: PlaywrightNodeRunArtifact[],
+  artifacts: PlaywrightEngineRunArtifact[],
   name: string
-): PlaywrightNodeRunArtifact | null =>
+): PlaywrightEngineRunArtifact | null =>
   artifacts.find((artifact) => artifact.name === name) ?? null;
 
 const buildAddonPublicPath = (filename: string): string =>
@@ -365,7 +366,7 @@ export const waitForPlaywrightBatchRun = async (params: {
   let lastProgressSignature: string | null = null;
 
   while (Date.now() - startedAt <= LIVE_PROGRESS_TIMEOUT_MS) {
-    const currentRun = await readPlaywrightNodeRun(params.runId);
+    const currentRun = await readPlaywrightEngineRun(params.runId);
     if (currentRun) {
       latestRun = currentRun;
       const progress = readLiveCaptureProgress(currentRun);
@@ -488,7 +489,7 @@ export const startPlaywrightBatchCapture = async (
   }));
 
   logger.info('[BATCH] Enqueueing Playwright run', { captureCount: captures.length });
-  const run = await enqueuePlaywrightNodeRun({
+  const run = await enqueuePlaywrightEngineRun({
     request: {
       script: resolved.playwrightScript,
       input: {
@@ -503,6 +504,7 @@ export const startPlaywrightBatchCapture = async (
     },
     waitForResult: false,
     ownerUserId: resolved.createdBy,
+    instance: createSocialCaptureBatchPlaywrightInstance(),
   });
 
   return {
@@ -512,7 +514,7 @@ export const startPlaywrightBatchCapture = async (
 };
 
 export const finalizePlaywrightBatchCapture = async (
-  input: StartedPlaywrightBatchCapture & { run: PlaywrightNodeRunRecord }
+  input: StartedPlaywrightBatchCapture & { run: PlaywrightEngineRunRecord }
 ): Promise<KangurSocialImageAddonsBatchResult> => {
   const startedAt = Date.now();
   const {
@@ -590,7 +592,7 @@ export const finalizePlaywrightBatchCapture = async (
     }
 
     logger.info('[BATCH] Reading artifact file', { targetId: target.id });
-    const artifactData = await readPlaywrightNodeArtifact({
+    const artifactData = await readPlaywrightEngineArtifact({
       runId: run.runId,
       fileName: artifactFile,
     });

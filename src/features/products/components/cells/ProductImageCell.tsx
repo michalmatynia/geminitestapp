@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import React, { useMemo } from 'react';
 import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';

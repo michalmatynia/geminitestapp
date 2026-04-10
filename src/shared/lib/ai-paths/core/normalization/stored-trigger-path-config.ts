@@ -1,7 +1,7 @@
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
 import {
-  getAutoSeedStarterWorkflowEntries,
+  getStaticRecoveryStarterWorkflowEntryByDefaultPathId,
   materializeStarterWorkflowPathConfig,
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
@@ -345,15 +345,13 @@ const resolveSelectedNodeIdOverride = (
   return resolveStoredSelectedNodeIdValue(resolveStoredUiStateRecord(parsedConfig));
 };
 
-const resolveSeededStarterFallbackConfig = (args: {
+const resolveRecoverableStarterFallbackConfig = (args: {
   pathId: string;
   rawConfig: string;
   fallbackName?: string | null | undefined;
 }): PathConfig | null => {
   const { pathId, rawConfig, fallbackName } = args;
-  const entry =
-    getAutoSeedStarterWorkflowEntries().find((candidate) => candidate.seedPolicy?.defaultPathId === pathId) ??
-    null;
+  const entry = getStaticRecoveryStarterWorkflowEntryByDefaultPathId(pathId);
   if (!entry) return null;
 
   let parsedConfig: Record<string, unknown> | null = null;
@@ -382,7 +380,7 @@ const resolveSeededStarterFallbackConfig = (args: {
       typeof parsedConfig?.['isLocked'] === 'boolean'
         ? parsedConfig['isLocked']
         : entry.seedPolicy?.isLocked,
-    seededDefault: true,
+    seededDefault: entry.seedPolicy?.autoSeed === true,
     updatedAt: normalizeOptionalText(parsedConfig?.['updatedAt']),
   });
 };
@@ -580,7 +578,7 @@ export const materializeStoredTriggerPathConfig = (args: {
     };
   } catch (error) {
     logClientError(error);
-    const fallbackConfig = resolveSeededStarterFallbackConfig({
+    const fallbackConfig = resolveRecoverableStarterFallbackConfig({
       pathId,
       rawConfig,
       fallbackName,

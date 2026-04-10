@@ -9,6 +9,8 @@ import type {
 import { fetchFilemakerMailJson as fetchJson } from '../mail-ui-helpers';
 import { useToast } from '@/shared/ui/primitives.public';
 
+import { logSystemError } from '@/shared/lib/observability/system-logger-client';
+
 type AccountsResponse = { accounts: FilemakerMailAccount[] };
 type FoldersResponse = { folders: FilemakerMailFolderSummary[] };
 type ThreadsResponse = { threads: FilemakerMailThread[] };
@@ -107,7 +109,12 @@ export const useFilemakerMailData = ({
       );
       setSearchResults(result.threads);
     } catch (error) {
-      console.error('Failed to fetch search results:', error);
+      void logSystemError({
+        message: 'Failed to fetch search results',
+        error,
+        source: 'filemaker.mail.hooks.useFilemakerMailData',
+        context: { searchContextAccountId, searchQuery },
+      });
     }
   }, [searchContextAccountId, searchQuery]);
 

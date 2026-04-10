@@ -3,7 +3,7 @@
 import React from 'react';
 import NextImage from 'next/image';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Button, Tooltip } from '@/shared/ui/primitives.public';
+import { Button, Tooltip, useToast } from '@/shared/ui/primitives.public';
 import { Pagination } from '@/shared/ui/navigation-and-layout.public';
 import { PanelFilters, StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
@@ -13,19 +13,57 @@ import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
-import type { ImportListItem } from '@/shared/contracts/integrations/import-export';
+import type { BaseImportListIdsResponse, ImportListItem } from '@/shared/contracts/integrations/import-export';
 import type { FilterField } from '@/shared/contracts/ui/panels';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import {
-  IMPORT_LIST_MODE_OPTIONS,
   IMPORT_LIST_PAGE_SIZE_OPTIONS,
 } from './ImportsPage.Constants';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { api } from '@/shared/lib/api-client';
+
+function SelectionCheckbox({
+  checked,
+  indeterminate = false,
+  onChange,
+  ariaLabel,
+  title,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  ariaLabel: string;
+  title: string;
+}): React.JSX.Element {
+  const ref = React.useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    if (!ref.current) return;
+    ref.current.indeterminate = indeterminate;
+  }, [indeterminate]);
+
+  return (
+    <input
+      ref={ref}
+      type='checkbox'
+      className='size-4 rounded border-border/60'
+      checked={checked}
+      onChange={onChange}
+      aria-label={ariaLabel}
+      title={title}
+    />
+  );
+}
 
 export function ImportListPreviewSection(): React.JSX.Element {
+  const { toast } = useToast();
   const { loadingImportList, importListStats, importList } = useImportExportData();
   const {
+    selectedBaseConnectionId,
+    inventoryId,
+    catalogId,
+    limit,
     importNameSearch,
     setImportNameSearch,
     importSkuSearch,
@@ -35,11 +73,11 @@ export function ImportListPreviewSection(): React.JSX.Element {
     importListPageSize,
     setImportListPageSize,
     uniqueOnly,
-    setUniqueOnly,
     selectedImportIds,
     setSelectedImportIds,
   } = useImportExportState();
-  const { handleLoadImportList } = useImportExportActions();
+  const { handleLoadImportList, handleImport, importing } = useImportExportActions();
+  const [loadingAllMatchingSelection, setLoadingAllMatchingSelection] = React.useState(false);
 
   const selectedImportCount = selectedImportIds.size;
   const visibleImportIds = React.useMemo(
@@ -49,6 +87,49 @@ export function ImportListPreviewSection(): React.JSX.Element {
         .filter((id: string): id is string => Boolean(id)),
     [importList]
   );
+  const selectedVisibleCount = React.useMemo(
+    () => visibleImportIds.filter((id: string) => selectedImportIds.has(id)).length,
+    [selectedImportIds, visibleImportIds]
+  );
+  const allVisibleSelected =
+    visibleImportIds.length > 0 && selectedVisibleCount === visibleImportIds.length;
+  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
+  const scopeSelectionKey = React.useMemo(
+    () =>
+      JSON.stringify({
+        selectedBaseConnectionId,
+        inventoryId,
+        catalogId,
+        limit,
+        uniqueOnly,
+        importNameSearch,
+        importSkuSearch,
+      }),
+    [
+      catalogId,
+      importNameSearch,
+      importSkuSearch,
+      inventoryId,
+      limit,
+      selectedBaseConnectionId,
+      uniqueOnly,
+    ]
+  );
+  const previousScopeSelectionKeyRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (previousScopeSelectionKeyRef.current === null) {
+      previousScopeSelectionKeyRef.current = scopeSelectionKey;
+      return;
+    }
+    if (
+      previousScopeSelectionKeyRef.current !== scopeSelectionKey &&
+      selectedImportIds.size > 0
+    ) {
+      setSelectedImportIds(new Set());
+    }
+    previousScopeSelectionKeyRef.current = scopeSelectionKey;
+  }, [scopeSelectionKey, selectedImportIds.size, setSelectedImportIds]);
 
   const toggleVisibleImportSelection = React.useCallback(
     (checked: boolean): void => {
@@ -65,6 +146,45 @@ export function ImportListPreviewSection(): React.JSX.Element {
     [setSelectedImportIds, visibleImportIds]
   );
 
+  const handleSelectAllMatching = React.useCallback(async (): Promise<void> => {
+    if (!selectedBaseConnectionId.trim() || !inventoryId.trim()) {
+      toast('Load the import list first.', { variant: 'error' });
+      return;
+    }
+
+    setLoadingAllMatchingSelection(true);
+    try {
+      const response = await api.post<BaseImportListIdsResponse>('/api/v2/integrations/imports/base', {
+        action: 'list_ids',
+        connectionId: selectedBaseConnectionId.trim(),
+        inventoryId: inventoryId.trim(),
+        catalogId: catalogId.trim() || undefined,
+        limit: limit === 'all' ? undefined : Number(limit),
+        uniqueOnly,
+        searchName: importNameSearch,
+        searchSku: importSkuSearch,
+      });
+      setSelectedImportIds(new Set(response.ids));
+      toast(`Selected ${response.totalMatching} matching products.`, { variant: 'success' });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to select all matching products.';
+      toast(message, { variant: 'error' });
+    } finally {
+      setLoadingAllMatchingSelection(false);
+    }
+  }, [
+    catalogId,
+    importNameSearch,
+    importSkuSearch,
+    inventoryId,
+    limit,
+    selectedBaseConnectionId,
+    setSelectedImportIds,
+    toast,
+    uniqueOnly,
+  ]);
+
   const skuExistsTooltip =
     getDocumentationTooltip(
       DOCUMENTATION_MODULE_IDS.dataImportExport,
@@ -75,14 +195,20 @@ export function ImportListPreviewSection(): React.JSX.Element {
     () => [
       {
         id: 'select',
-        header: 'Select',
+        header: () => (
+          <SelectionCheckbox
+            checked={allVisibleSelected}
+            indeterminate={someVisibleSelected}
+            onChange={(event) => toggleVisibleImportSelection(event.target.checked)}
+            ariaLabel='Select all products on this page'
+            title='Select all products on this page'
+          />
+        ),
         cell: ({ row }) => (
-          <input
-            type='checkbox'
-            className='size-4 rounded border-border/60'
+          <SelectionCheckbox
             checked={selectedImportIds.has(row.original.baseProductId)}
-            onChange={(e) => {
-              const isChecked = e.target.checked;
+            onChange={(event) => {
+              const isChecked = event.target.checked;
               setSelectedImportIds((prev: Set<string>) => {
                 const next = new Set(prev);
                 if (isChecked) next.add(row.original.baseProductId);
@@ -90,7 +216,7 @@ export function ImportListPreviewSection(): React.JSX.Element {
                 return next;
               });
             }}
-            aria-label={`Select ${row.original.name}`}
+            ariaLabel={`Select ${row.original.name}`}
             title={`Select ${row.original.name}`}
           />
         ),
@@ -197,7 +323,15 @@ export function ImportListPreviewSection(): React.JSX.Element {
         size: 80,
       },
     ],
-    [selectedImportIds, setSelectedImportIds, skuExistsTooltip]
+    [
+      allVisibleSelected,
+      selectedImportIds,
+      selectedImportIds.size,
+      setSelectedImportIds,
+      skuExistsTooltip,
+      someVisibleSelected,
+      toggleVisibleImportSelection,
+    ]
   );
 
   const filters: FilterField[] = [
@@ -206,12 +340,6 @@ export function ImportListPreviewSection(): React.JSX.Element {
       label: 'SKU',
       type: 'text',
       placeholder: 'Search SKU...',
-    },
-    {
-      key: 'mode',
-      label: 'Mode',
-      type: 'select',
-      options: IMPORT_LIST_MODE_OPTIONS,
     },
     {
       key: 'pageSize',
@@ -227,6 +355,10 @@ export function ImportListPreviewSection(): React.JSX.Element {
         <div>
           <h3 className='text-sm font-semibold text-white'>Import list preview</h3>
           <p className='text-xs text-gray-500'>Compare Base products with existing records.</p>
+          <p className='mt-1 text-[11px] text-gray-500'>
+            Using import settings: {uniqueOnly ? 'Unique only' : 'All products'} · Limit{' '}
+            {limit === 'all' ? 'All' : limit}
+          </p>
         </div>
         <div className='flex items-center gap-2'>
           <Button
@@ -239,6 +371,16 @@ export function ImportListPreviewSection(): React.JSX.Element {
           >
             Load import list
           </Button>
+          <Button
+            size='sm'
+            onClick={(): void => {
+              void handleImport();
+            }}
+            loading={importing}
+            loadingText='Importing...'
+          >
+            Run import
+          </Button>
         </div>
       </div>
 
@@ -246,7 +388,6 @@ export function ImportListPreviewSection(): React.JSX.Element {
         filters={filters}
         values={{
           sku: importSkuSearch,
-          mode: uniqueOnly ? 'unique' : 'all',
           pageSize: String(importListPageSize),
         }}
         search={importNameSearch}
@@ -260,10 +401,6 @@ export function ImportListPreviewSection(): React.JSX.Element {
             setImportSkuSearch(value as string);
             setImportListPage(1);
           }
-          if (key === 'mode') {
-            setUniqueOnly(value === 'unique');
-            setImportListPage(1);
-          }
           if (key === 'pageSize') {
             setImportListPageSize(Number(value));
             setImportListPage(1);
@@ -272,7 +409,6 @@ export function ImportListPreviewSection(): React.JSX.Element {
         onReset={() => {
           setImportNameSearch('');
           setImportSkuSearch('');
-          setUniqueOnly(false);
           setImportListPage(1);
         }}
         compact
@@ -287,6 +423,16 @@ export function ImportListPreviewSection(): React.JSX.Element {
             {importListStats.skuDuplicates ? (
               <span className='text-amber-500'> · SKU dups: {importListStats.skuDuplicates}</span>
             ) : null}
+            {selectedImportCount > 0 ? (
+              <span className='text-emerald-300'>
+                {' '}
+                ·{' '}
+                {selectedImportCount === importListStats.filtered &&
+                importListStats.filtered > visibleImportIds.length
+                  ? `All ${selectedImportCount} matching products selected`
+                  : `${selectedImportCount} products selected`}
+              </span>
+            ) : null}
           </div>
           <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
             <button
@@ -295,6 +441,25 @@ export function ImportListPreviewSection(): React.JSX.Element {
               onClick={() => toggleVisibleImportSelection(true)}
             >
               Select Page
+            </button>
+            <button
+              type='button'
+              className='hover:text-white transition-colors'
+              onClick={() => toggleVisibleImportSelection(false)}
+            >
+              Deselect Page
+            </button>
+            <button
+              type='button'
+              className='hover:text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+              onClick={() => {
+                void handleSelectAllMatching();
+              }}
+              disabled={loadingAllMatchingSelection}
+            >
+              {loadingAllMatchingSelection
+                ? 'Selecting...'
+                : `Select All Pages (${importListStats.filtered})`}
             </button>
             <button
               type='button'

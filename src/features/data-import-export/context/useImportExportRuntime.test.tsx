@@ -396,6 +396,7 @@ describe('useImportExportRuntime', () => {
       expect(result.current.stateValue.catalogId).toBe('catalog-1');
       expect(result.current.stateValue.importTemplateId).toBe('');
       expect(result.current.stateValue.importListEnabled).toBe(false);
+      expect(result.current.stateValue.importsPageTab).toBe('import-list');
     });
   });
 });

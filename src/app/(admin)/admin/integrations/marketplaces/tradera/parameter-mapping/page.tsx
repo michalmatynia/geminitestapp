@@ -1,7 +1,7 @@
 import { JSX, Suspense } from 'react';
 
 import { AdminRouteLoading } from '@/features/admin/public';
-import { TraderaParameterMappingPage } from '@/features/integrations/pages.public';
+import { TraderaParameterMappingPage } from '@/features/integrations/public';
 
 export default function Page(): JSX.Element {
   return (

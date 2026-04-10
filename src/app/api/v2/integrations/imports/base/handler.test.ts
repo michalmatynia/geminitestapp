@@ -22,6 +22,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/integrations/server', () => ({
+}));
+
+vi.mock('@/features/integrations/services/imports/base-client', () => ({
   fetchBaseInventories: (...args: unknown[]) => mocks.fetchBaseInventoriesMock(...args),
   fetchBaseWarehouses: (...args: unknown[]) => mocks.fetchBaseWarehousesMock(...args),
   fetchBaseWarehousesDebug: (...args: unknown[]) => mocks.fetchBaseWarehousesDebugMock(...args),
@@ -30,9 +33,21 @@ vi.mock('@/features/integrations/server', () => ({
     mocks.fetchBaseAllWarehousesDebugMock(...args),
   fetchBaseProductIds: (...args: unknown[]) => mocks.fetchBaseProductIdsMock(...args),
   fetchBaseProductDetails: (...args: unknown[]) => mocks.fetchBaseProductDetailsMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/integration-repository', () => ({
   getIntegrationRepository: (...args: unknown[]) => mocks.getIntegrationRepositoryMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/imports/base-mapper', () => ({
   mapBaseProduct: (...args: unknown[]) => mocks.mapBaseProductMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/imports/base-mapper-utils', () => ({
   extractBaseImageUrls: (...args: unknown[]) => mocks.extractBaseImageUrlsMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/base-token-resolver', () => ({
   resolveBaseConnectionToken: (...args: unknown[]) =>
     mocks.resolveBaseConnectionTokenMock(...args),
 }));
@@ -143,5 +158,28 @@ describe('postBaseImportsHandler', () => {
       'inventory-1',
       ['1', '2', '3', '4', '5']
     );
+  });
+
+  it('returns all matching ids for the current filtered scope', async () => {
+    const response = await postBaseImportsHandler(
+      new NextRequest('http://localhost/api/v2/integrations/imports/base', {
+        method: 'POST',
+      }),
+      createRequestContext({
+        action: 'list_ids',
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        catalogId: 'catalog-1',
+        limit: 5,
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      ids: ['1', '2', '3', '4', '5'],
+      totalMatching: 5,
+    });
+    expect(mocks.fetchBaseProductDetailsMock).not.toHaveBeenCalled();
   });
 });

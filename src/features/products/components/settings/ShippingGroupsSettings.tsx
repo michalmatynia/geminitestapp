@@ -13,7 +13,10 @@ import {
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Catalog } from '@/shared/contracts/products/catalogs';
-import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
+import type {
+  ProductShippingGroup,
+  ShippingGroupFormData,
+} from '@/shared/contracts/products/shipping-groups';
 import {
   buildCategoryPathLabelMap,
   buildShippingGroupRuleConflicts,
@@ -38,7 +41,6 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 
 import { useProductSettingsShippingGroupsContext } from './ProductSettingsContext';
 import {
-  type ShippingGroupFormData,
   DRAFT_SHIPPING_GROUP_ID,
   readConflictMetaFromApiError,
   formatShippingGroupConflictMessage,
@@ -70,6 +72,7 @@ export function ShippingGroupsSettings(): React.JSX.Element {
     traderaShippingCondition: '',
     traderaShippingPriceEur: '',
     autoAssignCategoryIds: [],
+    autoAssignCurrencyCodes: [],
   });
 
   const {
@@ -123,13 +126,14 @@ export function ShippingGroupsSettings(): React.JSX.Element {
       traderaShippingCondition: '',
       traderaShippingPriceEur: '',
       autoAssignCategoryIds: [],
+      autoAssignCurrencyCodes: [],
     });
     setShowModal(true);
   };
 
   const openEditModal = (shippingGroup: ProductShippingGroup): void => {
     setEditingShippingGroup(shippingGroup);
-    setFormData({
+    const nextFormData: ShippingGroupFormData = {
       name: shippingGroup.name,
       description: shippingGroup.description ?? '',
       catalogId: shippingGroup.catalogId,
@@ -142,7 +146,11 @@ export function ShippingGroupsSettings(): React.JSX.Element {
       autoAssignCategoryIds: Array.isArray(shippingGroup.autoAssignCategoryIds)
         ? shippingGroup.autoAssignCategoryIds
         : [],
-    });
+      autoAssignCurrencyCodes: Array.isArray(shippingGroup.autoAssignCurrencyCodes)
+        ? shippingGroup.autoAssignCurrencyCodes
+        : [],
+    };
+    setFormData(nextFormData);
     setShowModal(true);
   };
 
@@ -187,6 +195,7 @@ export function ShippingGroupsSettings(): React.JSX.Element {
           traderaShippingCondition: formData.traderaShippingCondition.trim() || null,
           traderaShippingPriceEur: trimmedShippingPrice ? Number(trimmedShippingPrice) : null,
           autoAssignCategoryIds: normalizedModalRuleIds,
+          autoAssignCurrencyCodes: formData.autoAssignCurrencyCodes,
         },
       });
 

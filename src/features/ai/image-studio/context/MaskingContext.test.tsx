@@ -32,7 +32,7 @@ vi.mock('./SlotsContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: mocks.toast,
   }),

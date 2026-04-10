@@ -1,17 +1,13 @@
-import { devices, type BrowserContextOptions } from 'playwright';
 import { normalizeTraderaListingFormUrl, TraderaSystemSettings } from '@/features/integrations/constants/tradera';
-import { encryptSecret } from '@/features/integrations/server';
 import {
-  parsePersistedStorageState,
-  resolveConnectionPlaywrightSettings,
-} from '@/features/integrations/services/tradera-playwright-settings';
+  openPlaywrightConnectionPageSession,
+  persistPlaywrightConnectionStorageState,
+} from '@/features/playwright/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { BrowserListingResultDto, ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
-import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
-import { getIntegrationRepository } from '../integration-repository';
 import {
   TITLE_SELECTORS,
   DESCRIPTION_SELECTORS,
@@ -107,44 +103,12 @@ export const runTraderaBrowserListingStandard = async ({
     }
   };
   const listingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
-  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
-  const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
+  const session = await openPlaywrightConnectionPageSession({
+    connection,
+  });
+  const { runtime, context, page } = session;
+  const playwrightSettings = runtime.settings;
   const effectiveHeadless = playwrightSettings.headless;
-  const emulateDevice = playwrightSettings.emulateDevice;
-  const deviceName = playwrightSettings.deviceName;
-  const deviceProfile =
-    emulateDevice && deviceName && devices[deviceName] ? devices[deviceName] : null;
-
-  const { browser } = await launchPlaywrightBrowser(playwrightSettings.browser, {
-    headless: effectiveHeadless,
-    slowMo: playwrightSettings.slowMo,
-    ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
-      ? {
-        proxy: {
-          server: playwrightSettings.proxyServer,
-          ...(playwrightSettings.proxyUsername
-            ? { username: playwrightSettings.proxyUsername }
-            : {}),
-          ...(playwrightSettings.proxyPassword
-            ? { password: playwrightSettings.proxyPassword }
-            : {}),
-        },
-      }
-      : {}),
-  });
-
-  const deviceContextOptions: BrowserContextOptions = deviceProfile
-    ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
-    : {};
-
-  const context = await browser.newContext({
-    ...deviceContextOptions,
-    ...(storageState ? { storageState } : {}),
-  });
-  context.setDefaultTimeout(playwrightSettings.timeout);
-  context.setDefaultNavigationTimeout(playwrightSettings.navigationTimeout);
-
-  const page = await context.newPage();
   const effectiveBrowserMode = effectiveHeadless ? 'headless' : 'headed';
   let pricingMetadata: Record<string, unknown> | null = null;
   try {
@@ -260,11 +224,11 @@ export const runTraderaBrowserListingStandard = async ({
     }
 
     const nextStorageState = await context.storageState();
-    const integrationRepository = await getIntegrationRepository();
     const completedAt = new Date().toISOString();
-    await integrationRepository.updateConnection(connection.id, {
-      playwrightStorageState: encryptSecret(JSON.stringify(nextStorageState)),
-      playwrightStorageStateUpdatedAt: completedAt,
+    await persistPlaywrightConnectionStorageState({
+      connectionId: connection.id,
+      storageState: nextStorageState,
+      updatedAt: completedAt,
     });
     markStep('publish', {
       status: 'success',
@@ -340,7 +304,6 @@ export const runTraderaBrowserListingStandard = async ({
       errorId,
     });
   } finally {
-    await context.close().catch(() => undefined);
-    await browser.close();
+    await session.close();
   }
 };

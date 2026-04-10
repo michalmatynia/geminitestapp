@@ -481,9 +481,18 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                       onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                         updateSchemaConfig({ contextQuery: event.target.value })
                       }
-                      placeholder='Optional JSON filter or text search'
+                      placeholder={'Optional JSON filter, text search, or template such as {\n  "catalogId": "{{context.catalogId}}"\n}'}
                       className='mt-2 min-h-[84px] w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white'
                     />
+                    <div className='mt-2 text-[10px] text-gray-500'>
+                      Supports runtime templates from connected inputs, for example
+                      {' '}
+                      <code>{'{{context.catalogId}}'}</code>
+                      {' '}
+                      or
+                      {' '}
+                      <code>{'{{bundle.categoryId}}'}</code>.
+                    </div>
                   </div>
                   <div>
                     <Label className='text-xs text-gray-400'>Documents Per Collection</Label>

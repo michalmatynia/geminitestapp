@@ -18,13 +18,19 @@ vi.mock('sharp', () => ({
   default: (...args: unknown[]) => mocks.sharpMock(...args),
 }));
 
-vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
-  enqueuePlaywrightNodeRun: (...args: unknown[]) =>
+vi.mock('@/features/playwright/server', () => ({
+  enqueuePlaywrightEngineRun: (...args: unknown[]) =>
     mocks.enqueuePlaywrightNodeRunMock(...args),
-  readPlaywrightNodeRun: (...args: unknown[]) =>
+  readPlaywrightEngineRun: (...args: unknown[]) =>
     mocks.readPlaywrightNodeRunMock(...args),
-  readPlaywrightNodeArtifact: (...args: unknown[]) =>
+  readPlaywrightEngineArtifact: (...args: unknown[]) =>
     mocks.readPlaywrightNodeArtifactMock(...args),
+  createSocialCaptureBatchPlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+    kind: 'social_capture_batch',
+    label: 'Kangur social batch capture',
+    tags: ['kangur', 'social', 'capture', 'batch'],
+    ...input,
+  }),
 }));
 
 vi.mock('@/features/files/server', () => ({
@@ -189,6 +195,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
     expect(result.addons).toHaveLength(1);
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           input: expect.objectContaining({
             captures: [
@@ -213,6 +222,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           contextOptions: {
             storageState: {
@@ -250,6 +262,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           contextOptions: {
             storageState: {
@@ -287,6 +302,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           contextOptions: {
             storageState: {
@@ -316,6 +334,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           policyAllowedHosts: ['localhost:3000'],
         }),
@@ -336,6 +357,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           input: expect.objectContaining({
             appearanceMode: 'dark',
@@ -434,7 +458,12 @@ describe('createKangurSocialImageAddonsBatch', () => {
     });
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
-      expect.objectContaining({ waitForResult: false })
+      expect.objectContaining({
+        waitForResult: false,
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
+      })
     );
     expect(onProgress).toHaveBeenNthCalledWith(1, {
       processedCount: 1,
@@ -477,6 +506,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           input: expect.objectContaining({
             captures: [
@@ -493,6 +525,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
     );
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           script: expect.stringContaining('data-kangur-appearance-mode'),
         }),
@@ -500,6 +535,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
     );
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           script: expect.stringContaining('const maxCaptureAttempts = 2;'),
         }),
@@ -646,6 +684,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           personaId: 'persona-1',
           script: 'return input.captures;',

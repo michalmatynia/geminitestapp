@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   fileManagerProvider: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Card: ({ children }: { children?: React.ReactNode }) => <div data-testid='card'>{children}</div>,
 }));
 

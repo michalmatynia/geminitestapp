@@ -21,6 +21,10 @@ import {
   useProductParameters,
   useProductSimpleParameters,
 } from '@/features/data-import-export/hooks/useImportQueries';
+import {
+  BASE_MARKETPLACE_CHECKBOX_OPTIONS,
+  normalizeBaseMarketplaceCheckboxKey,
+} from '@/shared/lib/integrations/base-marketplace-checkboxes';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImportTemplateParameterImport } from '@/shared/contracts/integrations';
 import type { TemplateMapping } from '@/shared/contracts/integrations/import-export';
@@ -78,6 +82,25 @@ const SOURCE_FIELD_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
 const TARGET_FIELD_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
   value: '__none__',
   label: 'Target Field',
+};
+
+const getCanonicalMarketplaceImportSourceField = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const lastSegment = trimmed.split('.').at(-1)?.trim() ?? trimmed;
+  const normalizedLastSegment = normalizeBaseMarketplaceCheckboxKey(lastSegment);
+  if (!normalizedLastSegment) return null;
+
+  const matchedOption = BASE_MARKETPLACE_CHECKBOX_OPTIONS.find((option) =>
+    option.aliases.some((alias) => {
+      const normalizedAlias = normalizeBaseMarketplaceCheckboxKey(alias);
+      return (
+        normalizedAlias === normalizedLastSegment ||
+        normalizeBaseMarketplaceCheckboxKey(`${alias} Yes`) === normalizedLastSegment
+      );
+    })
+  );
+  return matchedOption?.label ?? null;
 };
 
 type TemplatesTabContentProps = {
@@ -210,11 +233,33 @@ export function TemplatesTabContent({
     simpleParameterTargetFields,
   ]);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const importSourceFieldOptions = React.useMemo(
-    (): string[] =>
-      [...importSourceFields].sort((a: string, b: string): number => a.localeCompare(b)),
-    [importSourceFields]
-  );
+  const normalizedImportSourceState = React.useMemo(() => {
+    const seen = new Set<string>();
+    const fields: string[] = [];
+    const values: Record<string, string> = {};
+
+    [...importSourceFields]
+      .sort((a: string, b: string): number => a.localeCompare(b))
+      .forEach((field: string) => {
+        const canonicalField = getCanonicalMarketplaceImportSourceField(field) ?? field;
+        if (seen.has(canonicalField)) {
+          return;
+        }
+        seen.add(canonicalField);
+        fields.push(canonicalField);
+        const canonicalValue = importSourceFieldValues[canonicalField];
+        const rawValue = importSourceFieldValues[field];
+        if (canonicalValue) {
+          values[canonicalField] = canonicalValue;
+        } else if (rawValue) {
+          values[canonicalField] = rawValue;
+        }
+      });
+
+    return { fields, values };
+  }, [importSourceFieldValues, importSourceFields]);
+  const importSourceFieldOptions = normalizedImportSourceState.fields;
+  const normalizedImportSourceFieldValues = normalizedImportSourceState.values;
   const buildImportSourceFieldOptions = React.useCallback(
     (mapping: TemplateMapping): Array<LabeledOptionDto<string>> => {
       const customOption: Array<LabeledOptionDto<string>> =
@@ -229,14 +274,14 @@ export function TemplatesTabContent({
 
       const mappedOptions = importSourceFieldOptions.map((field: string) => ({
         value: field,
-        label: importSourceFieldValues[field]
-          ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
+        label: normalizedImportSourceFieldValues[field]
+          ? `${field} (${normalizedImportSourceFieldValues[field].slice(0, 60)})`
           : field,
       }));
 
       return [SOURCE_FIELD_PLACEHOLDER_OPTION, ...customOption, ...mappedOptions];
     },
-    [importSourceFieldOptions, importSourceFieldValues]
+    [importSourceFieldOptions, normalizedImportSourceFieldValues]
   );
   const buildTemplateTargetFieldOptions = React.useCallback(
     (mapping: TemplateMapping): Array<LabeledOptionDto<string>> => {

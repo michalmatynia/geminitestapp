@@ -8,6 +8,11 @@ import type {
 } from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 
+import {
+  BASE_MARKETPLACE_CHECKBOX_OPTIONS,
+  normalizeBaseMarketplaceCheckboxKey,
+} from '@/shared/lib/integrations/base-marketplace-checkboxes';
+
 const MARKET_EXCLUSION_FIELD_NAME = 'Market Exclusion';
 const TEXT_CUSTOM_FIELD_ID_PREFIX = 'base-text-custom-field';
 
@@ -40,41 +45,10 @@ const RESERVED_TEXT_FIELD_EXACT_KEYS = new Set([
   'description_de_long',
 ].map(normalizeKey));
 
-const MARKET_EXCLUSION_OPTIONS = [
-  {
-    id: 'market-exclusion-tradera',
-    label: 'Tradera',
-    aliases: ['Tradera'],
-  },
-  {
-    id: 'market-exclusion-willhaben',
-    label: 'Willhaben',
-    aliases: ['Willhaben'],
-  },
-  {
-    id: 'market-exclusion-depop',
-    label: 'Depop',
-    aliases: ['Depop'],
-  },
-  {
-    id: 'market-exclusion-grailed',
-    label: 'Grailed',
-    aliases: ['Grailed'],
-  },
-  {
-    id: 'market-exclusion-shpock',
-    label: 'Schpock',
-    aliases: ['Schpock', 'Shpock'],
-  },
-  {
-    id: 'market-exclusion-vinted',
-    label: 'Vinted',
-    aliases: ['Vinted'],
-  },
-] as const;
+const MARKET_EXCLUSION_OPTIONS = BASE_MARKETPLACE_CHECKBOX_OPTIONS;
 
 function normalizeKey(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return normalizeBaseMarketplaceCheckboxKey(value);
 }
 
 const stripLanguageScope = (value: string): string => {

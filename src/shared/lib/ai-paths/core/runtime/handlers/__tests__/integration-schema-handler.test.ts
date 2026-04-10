@@ -63,6 +63,15 @@ const buildContext = (node: AiNode): NodeHandlerContext =>
     },
   }) as NodeHandlerContext;
 
+const buildContextWithInputs = (
+  node: AiNode,
+  nodeInputs: Record<string, unknown>
+): NodeHandlerContext =>
+  ({
+    ...buildContext(node),
+    nodeInputs,
+  }) as NodeHandlerContext;
+
 describe('handleDbSchema', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -205,6 +214,73 @@ describe('handleDbSchema', () => {
     ).toBe('Decor');
     expect(String((firstRun['context'] as { contextText: string }).contextText)).toContain(
       '"liveContext"'
+    );
+  });
+
+  it('renders runtime query templates from connected db_schema inputs', async () => {
+    schemaMock.mockResolvedValue({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collections: [
+          {
+            name: 'product_categories',
+            fields: [{ name: 'name_en', type: 'string' }],
+          },
+        ],
+      },
+    });
+    browseMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collection: 'product_categories',
+        documents: [{ _id: 'cat-1', catalogId: 'catalog-1', name_en: 'Pins' }],
+        total: 1,
+        limit: 25,
+        skip: 0,
+      },
+    });
+
+    const { handleDbSchema } = await import(
+      '@/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler'
+    );
+
+    const node = buildNode({
+      mode: 'selected',
+      collections: ['product_categories'],
+      sourceMode: 'live_context',
+      contextCollections: ['product_categories'],
+      contextQuery: '{\n  "catalogId": "{{context.catalogId}}"\n}',
+      contextLimit: 25,
+      includeFields: true,
+      includeRelations: true,
+      formatAs: 'json',
+    });
+
+    const result = await handleDbSchema(
+      buildContextWithInputs(node, {
+        context: {
+          catalogId: 'catalog-1',
+          categoryId: 'category-2',
+        },
+      })
+    );
+
+    expect(browseMock).toHaveBeenCalledWith(
+      'product_categories',
+      expect.objectContaining({
+        provider: 'auto',
+        limit: 25,
+        query: '{\n  "catalogId": "catalog-1"\n}',
+      })
+    );
+    expect(result['context']).toEqual(
+      expect.objectContaining({
+        liveContext: expect.objectContaining({
+          query: '{\n  "catalogId": "catalog-1"\n}',
+        }),
+      })
     );
   });
 });

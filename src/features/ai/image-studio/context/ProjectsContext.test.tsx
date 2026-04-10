@@ -65,7 +65,7 @@ vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: mocks.toast,
   }),

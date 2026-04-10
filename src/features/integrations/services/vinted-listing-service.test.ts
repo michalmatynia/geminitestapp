@@ -7,11 +7,13 @@ const {
   getConnectionByIdMock,
   runVintedBrowserListingMock,
   captureExceptionMock,
+  resolveConnectionPlaywrightSettingsProfileMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   runVintedBrowserListingMock: vi.fn(),
   captureExceptionMock: vi.fn(),
+  resolveConnectionPlaywrightSettingsProfileMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -25,6 +27,11 @@ vi.mock('@/features/integrations/server', () => ({
 vi.mock('./vinted-listing/vinted-browser-listing', () => ({
   runVintedBrowserListing: (...args: unknown[]) =>
     runVintedBrowserListingMock(...args) as Promise<unknown>,
+}));
+
+vi.mock('./tradera-playwright-settings', () => ({
+  resolveConnectionPlaywrightSettingsProfile: (...args: unknown[]) =>
+    resolveConnectionPlaywrightSettingsProfileMock(...args) as Promise<unknown>,
 }));
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
@@ -46,6 +53,14 @@ describe('vinted-listing-service', () => {
       integrationId: 'integration-1',
       playwrightHeadless: true,
       playwrightBrowser: 'auto',
+    });
+    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
+      hasExplicitHeadlessPreference: false,
+      hasExplicitBrowserPreference: false,
+      settings: {
+        headless: true,
+        browser: 'auto',
+      },
     });
   });
 
@@ -88,6 +103,64 @@ describe('vinted-listing-service', () => {
       metadata: expect.objectContaining({
         requestedBrowserMode: 'headed',
         requestedBrowserPreference: 'brave',
+      }),
+    });
+  });
+
+  it('uses canonical resolved Playwright settings for scheduler-triggered Vinted runs', async () => {
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+      },
+    });
+    getConnectionByIdMock.mockResolvedValue({
+      id: 'connection-1',
+      integrationId: 'integration-1',
+      playwrightHeadless: true,
+      playwrightBrowser: 'auto',
+      playwrightPersonaId: 'persona-1',
+    });
+    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
+      hasExplicitHeadlessPreference: true,
+      hasExplicitBrowserPreference: true,
+      settings: {
+        headless: false,
+        browser: 'chrome',
+      },
+    });
+    runVintedBrowserListingMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.vinted.pl/items/123456-example',
+      metadata: {
+        browserMode: 'headed',
+        requestedBrowserMode: 'headed',
+        browserPreference: 'chrome',
+        requestedBrowserPreference: 'chrome',
+        browserLabel: 'Chrome',
+        publishVerified: true,
+      },
+    });
+
+    const result = await runVintedListing({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'scheduler',
+    });
+
+    expect(runVintedBrowserListingMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        browserMode: 'headed',
+        browserPreference: 'chrome',
+      })
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      metadata: expect.objectContaining({
+        requestedBrowserMode: 'headed',
+        requestedBrowserPreference: 'chrome',
       }),
     });
   });

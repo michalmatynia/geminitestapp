@@ -45,6 +45,9 @@ vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
 
 vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
+  getIntegrationRepository: async () => ({
+    updateConnection: (...args: unknown[]) => updateConnectionMock(...args),
+  }),
 }));
 
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
@@ -70,12 +73,6 @@ vi.mock('./utils', () => ({
   extractExternalListingId: (...args: unknown[]) => extractExternalListingIdMock(...args),
   captureTraderaListingDebugArtifacts: (...args: unknown[]) =>
     captureTraderaListingDebugArtifactsMock(...args),
-}));
-
-vi.mock('../integration-repository', () => ({
-  getIntegrationRepository: async () => ({
-    updateConnection: (...args: unknown[]) => updateConnectionMock(...args),
-  }),
 }));
 
 import { runTraderaBrowserListingStandard } from './tradera-browser-standard';

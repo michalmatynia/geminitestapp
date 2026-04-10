@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-28T14:11:53.253Z",
+  "generatedAt": "2026-04-10T09:12:39.416Z",
   "id": "node_obj_db_schema_portable_v2",
   "nodeType": "db_schema",
   "nodeDocVersion": "2026-04-09.v1",
@@ -17,7 +17,10 @@
     ]
   },
   "ports": {
-    "inputs": [],
+    "inputs": [
+      "context",
+      "schema"
+    ],
     "outputs": [
       "schema",
       "context"
@@ -106,7 +109,7 @@
       },
       {
         "path": "db_schema.contextQuery",
-        "description": "Optional JSON filter or free-text search applied to each live context collection.",
+        "description": "Optional JSON filter or free-text search applied to each live context collection. Supports runtime templates such as `{{context.catalogId}}` or `{{bundle.categoryId}}`.",
         "defaultValue": "\"\""
       },
       {
@@ -156,7 +159,10 @@
         "x": 100,
         "y": 100
       },
-      "inputs": [],
+      "inputs": [
+        "context",
+        "schema"
+      ],
       "outputs": [
         "schema",
         "context"
@@ -176,7 +182,10 @@
         "x": 100,
         "y": 100
       },
-      "inputs": [],
+      "inputs": [
+        "context",
+        "schema"
+      ],
       "outputs": [
         "schema",
         "context"
@@ -219,7 +228,10 @@
             "x": 100,
             "y": 100
           },
-          "inputs": [],
+          "inputs": [
+            "context",
+            "schema"
+          ],
           "outputs": [
             "schema",
             "context"
@@ -259,8 +271,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/db_schema.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "9de668727483c8c0852e9b3c5d211aaa0d14c3f76a6943e7c1093d18c20fb0d1"
+    "semanticNodeHash": "56956207074969f36d8750610fedc5877d6b3b873ad8f5048fdcf2d09dfa11af"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "8653ed2e80b2b94a234a092590b38aebf91c849acd40928357a3aa42a954d8c6"
+  "objectHash": "9e571a06c5e186a7b587428d459122bdddbb7e3b4184f30c9e67949669932355"
 }

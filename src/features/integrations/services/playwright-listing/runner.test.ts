@@ -3,18 +3,30 @@ import { existsSync } from 'fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  enqueuePlaywrightNodeRunMock,
+  enqueuePlaywrightEngineRunMock,
   resolveConnectionPlaywrightSettingsMock,
   parsePersistedStorageStateMock,
 } = vi.hoisted(() => ({
-  enqueuePlaywrightNodeRunMock: vi.fn(),
+  enqueuePlaywrightEngineRunMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
   parsePersistedStorageStateMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
-  enqueuePlaywrightNodeRun: (...args: unknown[]) =>
-    enqueuePlaywrightNodeRunMock(...args) as Promise<unknown>,
+vi.mock('@/features/playwright/server', () => ({
+  enqueuePlaywrightEngineRun: (...args: unknown[]) =>
+    enqueuePlaywrightEngineRunMock(...args) as Promise<unknown>,
+  createProgrammableListingPlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+    kind: 'programmable_listing',
+    label: 'Programmable Playwright listing',
+    tags: ['integration', 'listing'],
+    ...input,
+  }),
+  createProgrammableImportPlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+    kind: 'programmable_import',
+    label: 'Programmable Playwright import',
+    tags: ['integration', 'import'],
+    ...input,
+  }),
 }));
 
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
@@ -56,7 +68,7 @@ describe('runPlaywrightListingScript', () => {
       cookies: [{ name: 'session', value: 'abc', domain: '.tradera.com', path: '/' }],
       origins: [],
     });
-    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+    enqueuePlaywrightEngineRunMock.mockResolvedValue({
       runId: 'run-123',
       status: 'completed',
       result: {
@@ -100,13 +112,16 @@ describe('runPlaywrightListingScript', () => {
       connection: {} as never,
     });
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
         launchOptions: {
           channel: 'chrome',
         },
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'programmable_listing',
+      }),
     });
   });
 
@@ -139,13 +154,16 @@ describe('runPlaywrightListingScript', () => {
       connection: {} as never,
     });
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
         launchOptions: {
           executablePath: braveExecutablePath,
         },
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'programmable_listing',
+      }),
     });
   });
 
@@ -156,7 +174,7 @@ describe('runPlaywrightListingScript', () => {
       connection: {} as never,
     });
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
         launchOptions: existsSync(braveExecutablePath)
           ? {
@@ -167,6 +185,9 @@ describe('runPlaywrightListingScript', () => {
             },
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'programmable_listing',
+      }),
     });
   });
 
@@ -183,7 +204,7 @@ describe('runPlaywrightListingScript', () => {
     });
 
     expect(parsePersistedStorageStateMock).toHaveBeenCalledWith('encrypted-state');
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
         script: 'export default async function run() {}',
         input: { title: 'Example' },
@@ -206,6 +227,9 @@ describe('runPlaywrightListingScript', () => {
         }),
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'programmable_listing',
+      }),
     });
     expect(result).toMatchObject({
       runId: 'run-123',
@@ -251,11 +275,14 @@ describe('runPlaywrightListingScript', () => {
       connection: connection as never,
     });
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
         startUrl: 'https://www.tradera.com/en/selling/new',
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'programmable_listing',
+      }),
     });
   });
 
@@ -272,13 +299,16 @@ describe('runPlaywrightListingScript', () => {
       browserMode: 'headed',
     });
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
         settingsOverrides: expect.objectContaining({
           headless: false,
         }),
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'programmable_listing',
+      }),
     });
   });
 
@@ -298,7 +328,7 @@ describe('runPlaywrightListingScript', () => {
       },
     });
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
         settingsOverrides: expect.objectContaining({
           emulateDevice: false,
@@ -306,6 +336,9 @@ describe('runPlaywrightListingScript', () => {
         }),
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'programmable_listing',
+      }),
     });
     expect(result.executionSettings).toMatchObject({
       emulateDevice: false,
@@ -331,16 +364,19 @@ describe('runPlaywrightListingScript', () => {
       disableStartUrlBootstrap: true,
     });
 
-    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+    expect(enqueuePlaywrightEngineRunMock).toHaveBeenCalledWith({
       request: expect.not.objectContaining({
         startUrl: expect.anything(),
       }),
       waitForResult: true,
+      instance: expect.objectContaining({
+        kind: 'programmable_listing',
+      }),
     });
   });
 
   it('preserves the Playwright run id when the node runner fails', async () => {
-    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+    enqueuePlaywrightEngineRunMock.mockResolvedValue({
       runId: 'run-failed-1',
       status: 'failed',
       error: 'Script execution failed',

@@ -128,7 +128,7 @@ describe('integrations product-listings tradera-status-check handler', () => {
           tradera: expect.objectContaining({
             pendingExecution: expect.objectContaining({
               action: 'check_status',
-              requestedBrowserMode: 'connection_default',
+              requestedBrowserMode: 'headless',
               requestId: 'job-tradera-batch-1',
             }),
           }),

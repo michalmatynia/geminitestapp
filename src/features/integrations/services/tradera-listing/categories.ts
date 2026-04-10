@@ -1,16 +1,23 @@
 import 'server-only';
 
-import { enqueuePlaywrightNodeRun } from '@/features/ai/ai-paths/services/playwright-node-runner';
+import { logger } from '@/shared/utils/logger';
 import { TRADERA_PUBLIC_CATEGORIES_URL } from '@/features/integrations/constants/tradera';
 import { DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT } from '@/features/integrations/services/tradera-listing/category-scrape-script';
-import {
-  parsePersistedStorageState,
-  resolveConnectionPlaywrightSettings,
-} from '@/features/integrations/services/tradera-playwright-settings';
 import { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import {
+  buildPlaywrightEngineRunFailureMeta,
+  collectPlaywrightEngineRunFailureMessages,
+  createTraderaCategoryScrapePlaywrightInstance,
+  enqueuePlaywrightEngineRun,
+  resolvePlaywrightEngineRunOutputs,
+} from '@/features/playwright/server';
+import {
+  buildPlaywrightConnectionSettingsOverrides,
+  resolvePlaywrightConnectionRuntime,
+} from '@/features/playwright/server/connection-runtime';
 
 const CATEGORY_SCRAPE_TIMEOUT_MS = 300_000;
 
@@ -62,94 +69,19 @@ const normalizeCategories = (value: unknown): TraderaCategoryRecord[] => {
   return Array.from(deduped.values());
 };
 
-const resolveRunnerOutputs = (
-  resultPayload: unknown
-): {
-  resultValue: Record<string, unknown>;
-  finalUrl: string | null;
-} => {
-  const payloadRecord = isObjectRecord(resultPayload) ? resultPayload : {};
-  const outputs = isObjectRecord(payloadRecord['outputs']) ? payloadRecord['outputs'] : payloadRecord;
-  const resultValue = isObjectRecord(outputs['result'])
-    ? outputs['result']
-    : isObjectRecord(outputs)
-      ? outputs
-      : {};
-
-  return {
-    resultValue,
-    finalUrl: extractTrimmedString(payloadRecord['finalUrl']),
-  };
-};
-
 const buildFailureMeta = (
-  run: Awaited<ReturnType<typeof enqueuePlaywrightNodeRun>>
+  run: Awaited<ReturnType<typeof enqueuePlaywrightEngineRun>>
 ): Record<string, unknown> => {
-  const { resultValue, finalUrl } = resolveRunnerOutputs(run.result);
-
   return {
-    runId: run.runId,
-    runStatus: run.status,
-    finalUrl,
-    latestStage: extractTrimmedString(resultValue['stage']),
-    latestStageUrl: extractTrimmedString(resultValue['currentUrl']) ?? finalUrl,
-    failureArtifacts: (Array.isArray(run.artifacts) ? run.artifacts : []).map((artifact) => ({
-      name: artifact.name,
-      path: artifact.path,
-      kind: artifact.kind ?? null,
-      mimeType: artifact.mimeType ?? null,
-    })),
-    logTail: (Array.isArray(run.logs) ? run.logs : []).slice(-12),
+    ...buildPlaywrightEngineRunFailureMeta(run),
   };
-};
-
-const normalizeRunnerErrorMessage = (value: unknown): string | null => {
-  const trimmed =
-    extractTrimmedString(value) ||
-    (isObjectRecord(value) ? extractTrimmedString(value['message']) : null);
-  if (!trimmed) {
-    return null;
-  }
-
-  return trimmed
-    .replace(/^\[runtime\]\[error\]\s*/i, '')
-    .replace(/^Error:\s*/i, '')
-    .trim();
-};
-
-const collectRunnerFailureMessages = (
-  run: Awaited<ReturnType<typeof enqueuePlaywrightNodeRun>>
-): string[] => {
-  const messages = new Set<string>();
-  const directMessage = normalizeRunnerErrorMessage(run.error);
-  if (directMessage) {
-    messages.add(directMessage);
-  }
-
-  const { resultValue } = resolveRunnerOutputs(run.result);
-  const resultMessage = normalizeRunnerErrorMessage(resultValue['message']);
-  if (resultMessage) {
-    messages.add(resultMessage);
-  }
-
-  for (const logLine of Array.isArray(run.logs) ? run.logs : []) {
-    if (typeof logLine !== 'string' || !logLine.toLowerCase().includes('[runtime][error]')) {
-      continue;
-    }
-    const normalizedLogLine = normalizeRunnerErrorMessage(logLine);
-    if (normalizedLogLine) {
-      messages.add(normalizedLogLine);
-    }
-  }
-
-  return Array.from(messages);
 };
 
 const toCategoryFetchError = (
-  run: Awaited<ReturnType<typeof enqueuePlaywrightNodeRun>>,
+  run: Awaited<ReturnType<typeof enqueuePlaywrightEngineRun>>,
   connectionId: string
 ): Error => {
-  const failureMessages = collectRunnerFailureMessages(run);
+  const failureMessages = collectPlaywrightEngineRunFailureMessages(run);
   const rawMessage = failureMessages[0] ?? null;
 
   return new AppError(
@@ -169,11 +101,9 @@ const toCategoryFetchError = (
 export const fetchTraderaCategoriesForConnection = async (
   connection: IntegrationConnectionRecord
 ): Promise<TraderaCategoryRecord[]> => {
-  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
-  const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
-  const personaId = connection.playwrightPersonaId?.trim() || undefined;
+  const runtime = await resolvePlaywrightConnectionRuntime(connection);
 
-  const run = await enqueuePlaywrightNodeRun({
+  const run = await enqueuePlaywrightEngineRun({
     request: {
       script: DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT,
       input: {
@@ -190,62 +120,40 @@ export const fetchTraderaCategoriesForConnection = async (
         screenshot: true,
         html: true,
       },
-      ...(personaId ? { personaId } : {}),
-      ...(storageState ? { contextOptions: { storageState } } : {}),
-      settingsOverrides: {
-        headless: playwrightSettings.headless,
-        slowMo: playwrightSettings.slowMo,
-        timeout: playwrightSettings.timeout,
-        navigationTimeout: playwrightSettings.navigationTimeout,
-        humanizeMouse: playwrightSettings.humanizeMouse,
-        mouseJitter: playwrightSettings.mouseJitter,
-        clickDelayMin: playwrightSettings.clickDelayMin,
-        clickDelayMax: playwrightSettings.clickDelayMax,
-        inputDelayMin: playwrightSettings.inputDelayMin,
-        inputDelayMax: playwrightSettings.inputDelayMax,
-        actionDelayMin: playwrightSettings.actionDelayMin,
-        actionDelayMax: playwrightSettings.actionDelayMax,
-        proxyEnabled: playwrightSettings.proxyEnabled,
-        proxyServer: playwrightSettings.proxyServer,
-        proxyUsername: playwrightSettings.proxyUsername,
-        proxyPassword: playwrightSettings.proxyPassword,
-        emulateDevice: playwrightSettings.emulateDevice,
-        deviceName: playwrightSettings.deviceName,
-      },
+      ...(runtime.personaId ? { personaId: runtime.personaId } : {}),
+      ...(runtime.storageState ? { contextOptions: { storageState: runtime.storageState } } : {}),
+      settingsOverrides: buildPlaywrightConnectionSettingsOverrides(runtime.settings),
     },
     waitForResult: true,
+    instance: createTraderaCategoryScrapePlaywrightInstance({
+      connectionId: connection.id,
+      integrationId: connection.integrationId,
+    }),
   });
 
   if (run.status === 'failed') {
     throw toCategoryFetchError(run, connection.id);
   }
 
-  const { resultValue, finalUrl } = resolveRunnerOutputs(run.result);
+  const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
   const categories = normalizeCategories(resultValue['categories']);
   const categorySource = extractTrimmedString(resultValue['categorySource']);
   const withParent = categories.filter((category) => category.parentId && category.parentId !== '0');
 
-  console.log(
-    '[tradera-category-fetch]',
-    JSON.stringify(
-      {
-        categorySource,
-        total: categories.length,
-        withParentCount: withParent.length,
-        rootCount: categories.length - withParent.length,
-        scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
-        sampleCategories: categories
-          .slice(0, 5)
-          .map((category) => ({ id: category.id, name: category.name, parentId: category.parentId })),
-        crawlStats: isObjectRecord(resultValue['crawlStats']) ? resultValue['crawlStats'] : null,
-        runLogs: (Array.isArray(run.logs) ? run.logs : [])
-          .filter((line) => typeof line === 'string' && line.includes('tradera.category'))
-          .slice(-20),
-      },
-      null,
-      2
-    )
-  );
+  logger.info('[tradera-category-fetch]', {
+    categorySource,
+    total: categories.length,
+    withParentCount: withParent.length,
+    rootCount: categories.length - withParent.length,
+    scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
+    sampleCategories: categories
+      .slice(0, 5)
+      .map((category) => ({ id: category.id, name: category.name, parentId: category.parentId })),
+    crawlStats: isObjectRecord(resultValue['crawlStats']) ? resultValue['crawlStats'] : null,
+    runLogs: (Array.isArray(run.logs) ? run.logs : [])
+      .filter((line) => typeof line === 'string' && line.includes('tradera.category'))
+      .slice(-20),
+  });
 
   if (categories.length === 0) {
     throw new AppError(

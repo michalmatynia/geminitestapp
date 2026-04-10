@@ -15,20 +15,16 @@ import {
   VINTED_DROPDOWN_OPTION_SELECTORS,
   VINTED_ITEM_URL_PATTERN,
 } from './config';
-import { devices } from 'playwright';
-import type { BrowserContextOptions, Locator, Page } from 'playwright';
-import {
-  parsePersistedStorageState,
-  resolveConnectionPlaywrightSettings,
-} from '@/features/integrations/services/tradera-playwright-settings';
-import { encryptSecret, getIntegrationRepository } from '@/features/integrations/server';
+import type { Locator, Page } from 'playwright';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { logger } from '@/shared/utils/logger';
 import {
-  launchPlaywrightBrowser,
-  type PlaywrightBrowserPreference,
-} from '@/shared/lib/playwright/browser-launch';
+  openPlaywrightConnectionPageSession,
+  persistPlaywrightConnectionStorageState,
+} from '@/features/playwright/server';
+import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
 import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
 import { getCustomFieldRepository } from '@/shared/lib/products/services/custom-field-repository';
 import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
@@ -86,7 +82,7 @@ const fillField = async (
   const locator = await findFirstVisible(page, selectors);
   if (!locator) {
     if (required) throw internalError(`Field ${fieldName} not found on Vinted listing form.`);
-    console.warn(`[VintedListing] Optional field "${fieldName}" not found — skipping.`);
+    logger.warn(`[VintedListing] Optional field "${fieldName}" not found — skipping.`);
     return false;
   }
   await locator.fill(value);
@@ -333,56 +329,26 @@ export const runVintedBrowserListing = async ({
   browserMode: PlaywrightRelistBrowserMode;
   browserPreference: PlaywrightBrowserPreference;
 }): Promise<BrowserListingResultDto> => {
-  // 1. Resolve storage state
-  const storedState = parsePersistedStorageState(connection.playwrightStorageState);
-
-  const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
+  const connectionRuntime = await openPlaywrightConnectionPageSession({
+    connection,
+    browserPreference,
+    headless: browserMode === 'headless'
+      ? true
+      : browserMode === 'headed'
+        ? false
+        : undefined,
+    viewport: { width: 1280, height: 720 },
+  });
+  const { runtime, context, page, launchLabel, fallbackMessages, close } = connectionRuntime;
+  const playwrightSettings = runtime.settings;
   const effectiveBrowserMode = resolveEffectiveVintedBrowserMode({
     requestedBrowserMode: browserMode,
     connectionHeadless: playwrightSettings.headless,
   });
-  const effectiveHeadless = effectiveBrowserMode === 'headless';
-  const configuredDeviceName = playwrightSettings.deviceName?.trim();
-  const deviceProfile =
-    playwrightSettings.emulateDevice && configuredDeviceName && devices[configuredDeviceName]
-      ? devices[configuredDeviceName]
-      : null;
-  const deviceContextOptions: BrowserContextOptions = deviceProfile
-    ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
-    : {};
-  const launchOptions = {
-    headless: effectiveHeadless,
-    slowMo: playwrightSettings.slowMo,
-    ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
-      ? {
-          proxy: {
-            server: playwrightSettings.proxyServer,
-            ...(playwrightSettings.proxyUsername
-              ? { username: playwrightSettings.proxyUsername }
-              : {}),
-            ...(playwrightSettings.proxyPassword
-              ? { password: playwrightSettings.proxyPassword }
-              : {}),
-          },
-        }
-      : {}),
-  };
-  const launchResult = await launchPlaywrightBrowser(browserPreference, launchOptions);
-  const { browser } = launchResult;
   const effectiveBrowserPreference = resolveEffectiveBrowserPreferenceFromLabel({
-    launchLabel: launchResult.label,
+    launchLabel,
     requestedBrowserPreference: browserPreference,
   });
-
-  const context = await browser.newContext({
-    ...deviceContextOptions,
-    ...(storedState ? { storageState: storedState } : {}),
-    ...(!deviceProfile ? { viewport: { width: 1280, height: 720 } } : {}),
-  });
-  context.setDefaultTimeout(playwrightSettings.timeout);
-  context.setDefaultNavigationTimeout(playwrightSettings.navigationTimeout);
-
-  const page = await context.newPage();
   const {
     acceptCookieConsent,
     safeIsVisible,
@@ -556,8 +522,8 @@ export const runVintedBrowserListing = async ({
           browserMode: effectiveBrowserMode,
           requestedBrowserPreference: browserPreference,
           browserPreference: effectiveBrowserPreference,
-          browserLabel: launchResult.label,
-          fallbackMessages: launchResult.fallbackMessages,
+          browserLabel: launchLabel,
+          fallbackMessages,
           currentUrl: finalUrl || authState.currentUrl,
           authState,
           publishVerified: false,
@@ -569,8 +535,8 @@ export const runVintedBrowserListing = async ({
         browserMode: effectiveBrowserMode,
         requestedBrowserPreference: browserPreference,
         browserPreference: effectiveBrowserPreference,
-        browserLabel: launchResult.label,
-        fallbackMessages: launchResult.fallbackMessages,
+        browserLabel: launchLabel,
+        fallbackMessages,
         currentUrl: finalUrl,
         publishVerified: false,
       });
@@ -581,10 +547,10 @@ export const runVintedBrowserListing = async ({
 
     // 10. Save refreshed session
     const nextStorageState = await context.storageState();
-    const integrationRepository = await getIntegrationRepository();
-    await integrationRepository.updateConnection(connection.id, {
-      playwrightStorageState: encryptSecret(JSON.stringify(nextStorageState)),
-      playwrightStorageStateUpdatedAt: completedAt,
+    await persistPlaywrightConnectionStorageState({
+      connectionId: connection.id,
+      storageState: nextStorageState,
+      updatedAt: completedAt,
     });
 
     return {
@@ -597,8 +563,8 @@ export const runVintedBrowserListing = async ({
         requestedBrowserMode: browserMode,
         browserPreference: effectiveBrowserPreference,
         requestedBrowserPreference: browserPreference,
-        browserLabel: launchResult.label,
-        fallbackMessages: launchResult.fallbackMessages,
+        browserLabel: launchLabel,
+        fallbackMessages,
         listingFormUrl: VINTED_LISTING_FORM_URL,
         currentUrl: finalUrl,
         itemIdExtracted: true,
@@ -623,7 +589,6 @@ export const runVintedBrowserListing = async ({
       },
     };
   } finally {
-    await context.close().catch(() => undefined);
-    await browser.close().catch(() => undefined);
+    await close();
   }
 };

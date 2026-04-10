@@ -7,10 +7,11 @@ import path from 'path';
 import sharp from 'sharp';
 
 import {
-  enqueuePlaywrightNodeRun,
-  readPlaywrightNodeArtifact,
-  type PlaywrightNodeRunArtifact,
-} from '@/features/ai/server';
+  createSocialCaptureSinglePlaywrightInstance,
+  enqueuePlaywrightEngineRun,
+  readPlaywrightEngineArtifact,
+  type PlaywrightEngineRunArtifact,
+} from '@/features/playwright/server';
 import {
   getDiskPathFromPublicPath,
   uploadToConfiguredStorage,
@@ -127,9 +128,9 @@ const toSourceHost = (sourceUrl: string): string | null => {
 };
 
 const resolveArtifactByName = (
-  artifacts: PlaywrightNodeRunArtifact[],
+  artifacts: PlaywrightEngineRunArtifact[],
   name: string
-): PlaywrightNodeRunArtifact | null =>
+): PlaywrightEngineRunArtifact | null =>
   artifacts.find((artifact) => artifact.name === name) ?? null;
 
 const buildAddonPublicPath = (filename: string): string =>
@@ -275,7 +276,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
       contextOptions['storageState'] = storageState;
     }
 
-    const run = await enqueuePlaywrightNodeRun({
+    const run = await enqueuePlaywrightEngineRun({
       request: {
         script: SOCIAL_ADDON_PLAYWRIGHT_SCRIPT,
         input: {
@@ -292,6 +293,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
       },
       waitForResult: true,
       ownerUserId: input.createdBy ?? null,
+      instance: createSocialCaptureSinglePlaywrightInstance(),
     });
 
     runId = run.runId;
@@ -314,7 +316,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
     }
 
     stage = 'download';
-    const artifactData = await readPlaywrightNodeArtifact({
+    const artifactData = await readPlaywrightEngineArtifact({
       runId: run.runId,
       fileName: artifactFile,
     });

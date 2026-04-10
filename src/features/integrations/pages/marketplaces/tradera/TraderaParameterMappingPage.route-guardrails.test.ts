@@ -17,6 +17,6 @@ describe('TraderaParameterMappingPage route guardrails', () => {
 
   it('renders TraderaParameterMappingPage from the integrations public barrel', () => {
     expect(source).toContain('TraderaParameterMappingPage');
-    expect(source).toMatch(/@\/features\/integrations\/public/);
+    expect(source).toMatch(/@\/features\/integrations\/(pages\.)?public/);
   });
 });

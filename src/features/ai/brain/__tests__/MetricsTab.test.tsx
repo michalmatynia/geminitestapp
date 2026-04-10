@@ -9,7 +9,7 @@ vi.mock('../context/BrainContext', () => ({
   useBrain: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -17,41 +17,10 @@ vi.mock('@/shared/ui', () => ({
     children: React.ReactNode;
     onClick?: () => void;
   }) => <button onClick={onClick}>{children}</button>,
-  MetadataItem: ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: React.ReactNode;
-  }) => (
-    <div>
-      <span>{label}</span>
-      <span>{String(value)}</span>
-    </div>
-  ),
-  StatusBadge: ({
-    label,
-    status,
-  }: {
-    label: string;
-    status: string;
-  }) => (
-    <span data-testid={`status-${status}`}>
-      {label}
-    </span>
-  ),
-  SectionHeader: ({
-    title,
-    description,
-  }: {
-    title: string;
-    description?: string;
-  }) => (
-    <header>
-      <h1>{title}</h1>
-      {description ? <p>{description}</p> : null}
-    </header>
-  ),
+  Card: ({ children }: { children: React.ReactNode }) => <article>{children}</article>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({
     title,
     description,
@@ -67,6 +36,36 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </section>
   ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  MetadataItem: ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: React.ReactNode;
+  }) => (
+    <div>
+      <span>{label}</span>
+      <span>{String(value)}</span>
+    </div>
+  ),
+  SectionHeader: ({
+    title,
+    description,
+    actions,
+  }: {
+    title: string;
+    description?: string;
+    actions?: React.ReactNode;
+  }) => (
+    <header>
+      <h1>{title}</h1>
+      {description ? <p>{description}</p> : null}
+      {actions}
+    </header>
+  ),
   CompactEmptyState: ({
     title,
     description,
@@ -79,8 +78,21 @@ vi.mock('@/shared/ui', () => ({
       {description ? <div>{description}</div> : null}
     </div>
   ),
-  Card: ({ children }: { children: React.ReactNode }) => <article>{children}</article>,
   UI_GRID_RELAXED_CLASSNAME: 'grid',
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  StatusBadge: ({
+    label,
+    status,
+  }: {
+    label: string;
+    status: string;
+  }) => (
+    <span data-testid={`status-${status}`}>
+      {label}
+    </span>
+  ),
 }));
 
 describe('MetricsTab', () => {

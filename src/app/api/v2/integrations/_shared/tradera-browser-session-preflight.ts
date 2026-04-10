@@ -11,6 +11,13 @@ import { notFoundError } from '@/shared/errors/app-error';
 const QUICKLIST_AUTH_REQUIRED_DETAIL =
   'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.';
 const TRADERA_PREFLIGHT_TIMEOUT_MS = 240000;
+export const TRADERA_PREFLIGHT_CACHE_TTL_MS = 15000;
+
+const sessionReadyCache = new Map<string, number>();
+
+export const resetTraderaBrowserSessionPreflightCacheForTests = (): void => {
+  sessionReadyCache.clear();
+};
 
 const readResponseMessage = (value: unknown): string | null => {
   if (!value || typeof value !== 'object') {
@@ -30,6 +37,31 @@ const isSessionReadyResponse = (
       'sessionReady' in value &&
       (value as { sessionReady?: unknown }).sessionReady === true
   );
+
+const toCacheKey = ({
+  connectionId,
+  integrationId,
+  playwrightStorageState,
+  playwrightStorageStateUpdatedAt,
+}: {
+  connectionId: string;
+  integrationId: string;
+  playwrightStorageState: string | null | undefined;
+  playwrightStorageStateUpdatedAt: string | Date | null | undefined;
+}): string | null => {
+  if (typeof playwrightStorageState !== 'string' || playwrightStorageState.trim().length === 0) {
+    return null;
+  }
+
+  const updatedAt =
+    playwrightStorageStateUpdatedAt instanceof Date
+      ? playwrightStorageStateUpdatedAt.toISOString()
+      : typeof playwrightStorageStateUpdatedAt === 'string'
+        ? playwrightStorageStateUpdatedAt.trim()
+        : '';
+
+  return `${integrationId}:${connectionId}:${updatedAt || 'unknown-session-version'}`;
+};
 
 export const assertTraderaBrowserSessionReady = async ({
   connectionId,
@@ -52,6 +84,20 @@ export const assertTraderaBrowserSessionReady = async ({
       connectionId,
       integrationId,
     });
+  }
+
+  const cacheKey = toCacheKey({
+    connectionId,
+    integrationId,
+    playwrightStorageState: connection.playwrightStorageState,
+    playwrightStorageStateUpdatedAt: connection.playwrightStorageStateUpdatedAt,
+  });
+  const cachedExpiry = cacheKey ? sessionReadyCache.get(cacheKey) ?? null : null;
+  if (typeof cachedExpiry === 'number') {
+    if (cachedExpiry > Date.now()) {
+      return;
+    }
+    sessionReadyCache.delete(cacheKey!);
   }
 
   const steps: TestLogEntry[] = [];
@@ -88,9 +134,15 @@ export const assertTraderaBrowserSessionReady = async ({
     .catch(() => null)) as (TestConnectionResponse & { message?: string }) | null;
 
   if (response.ok && isSessionReadyResponse(payload)) {
+    if (cacheKey) {
+      sessionReadyCache.set(cacheKey, Date.now() + TRADERA_PREFLIGHT_CACHE_TTL_MS);
+    }
     return;
   }
 
+  if (cacheKey) {
+    sessionReadyCache.delete(cacheKey);
+  }
   const message = readResponseMessage(payload) ?? QUICKLIST_AUTH_REQUIRED_DETAIL;
   throw mapStatusToAppError(message, response.ok ? 409 : response.status);
 };

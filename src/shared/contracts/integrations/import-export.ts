@@ -271,11 +271,31 @@ export const baseImportListPayloadSchema = z.object({
 
 export type BaseImportListPayload = z.infer<typeof baseImportListPayloadSchema>;
 
+export const baseImportListIdsPayloadSchema = z.object({
+  action: z.literal('list_ids'),
+  connectionId: z.string().trim().min(1),
+  inventoryId: z.string().trim().min(1),
+  catalogId: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().positive().optional(),
+  uniqueOnly: z.boolean().optional(),
+  searchName: z.string().trim().optional(),
+  searchSku: z.string().trim().optional(),
+});
+
+export type BaseImportListIdsPayload = z.infer<typeof baseImportListIdsPayloadSchema>;
+
 export const baseImportListResponseSchema = importListStatsSchema.extend({
   products: z.array(importListItemSchema).optional(),
 });
 
 export type BaseImportListResponse = z.infer<typeof baseImportListResponseSchema>;
+
+export const baseImportListIdsResponseSchema = z.object({
+  ids: z.array(z.string()),
+  totalMatching: z.number(),
+});
+
+export type BaseImportListIdsResponse = z.infer<typeof baseImportListIdsResponseSchema>;
 
 const optionalBaseImportParameterIdSchema = z.preprocess((value) => {
   if (typeof value !== 'string') return value;

@@ -310,6 +310,27 @@ describe('ProductModals', () => {
       expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled();
     });
 
+    it('disables product-modal AI trigger buttons while edit hydration is in progress', () => {
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: createProduct(),
+          isEditHydrating: true,
+        })
+      );
+
+      render(<ProductModals />);
+
+      expect(triggerButtonBarMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: 'product_modal',
+          disabled: true,
+        })
+      );
+      expect(
+        screen.getByText('AI actions are unavailable until full product details finish loading.')
+      ).toBeInTheDocument();
+    });
+
     it('renders edit form for non-hydrated edit product snapshots while keeping save enabled state external', () => {
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
@@ -907,6 +928,251 @@ describe('ProductModals', () => {
         expect(setValue).toHaveBeenCalledWith(
           'name_en',
           'Normalized Name | 4 cm | Metal | Gaming Keychain | Gaming',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('uses AI Path live category context when local category metadata is stale or empty', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-1',
+        },
+        draft: { id: 'draft-1', name: 'Draft 1' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductFormMetadataMock.mockReturnValue({
+        categories: [],
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-1', name: 'Draft 1' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      getAiPathRunMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'function',
+              outputs: {
+                bundle: {
+                  categoryContext: {
+                    catalogId: 'catalog-a',
+                    totalCategories: 4,
+                    totalLeafCategories: 2,
+                    allowedLeafLabels: ['Movie Keychain', 'Gaming Keychain'],
+                    leafCategories: [
+                      {
+                        id: 'leaf-movie-keychain',
+                        label: 'Movie Keychain',
+                        fullPath: 'Accessories > Keychains > Movie Keychain',
+                        parentId: 'parent-keychains',
+                        isCurrent: false,
+                      },
+                      {
+                        id: 'leaf-gaming-keychain',
+                        label: 'Gaming Keychain',
+                        fullPath: 'Accessories > Keychains > Gaming Keychain',
+                        parentId: 'parent-keychains',
+                        isCurrent: true,
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Normalized Name | 4 cm | Metal | Keychains | Gaming',
+                  category: 'Accessories > Keychains > Gaming Keychain',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-live-category-context',
+          entityId: 'transient-product-1',
+          entityType: 'product',
+        });
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-live-category-context',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Normalized Name | 4 cm | Metal | Gaming Keychain | Gaming',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('keeps pending normalize runs alive across edit hydration remounts', async () => {
+      const partialProduct = createProduct();
+      const hydratedProduct = markEditingProductHydrated(createProduct());
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+      let currentProduct = partialProduct;
+
+      useProductFormCoreMock.mockImplementation(() => ({
+        product: currentProduct,
+        draft: null,
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      }));
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: partialProduct,
+          isEditHydrating: true,
+        })
+      );
+      getAiPathRunMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Updated Name | 5 cm | Metal | Anime Pins | Manga',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      const view = render(<ProductModals />);
+      const firstProviderInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-remount-survival',
+          entityId: 'product-1',
+          entityType: 'product',
+        });
+      });
+
+      await waitFor(() => {
+        expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+          'run-normalize-remount-survival',
+          expect.any(Function)
+        );
+      });
+
+      currentProduct = hydratedProduct;
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: hydratedProduct,
+          isEditHydrating: false,
+        })
+      );
+      view.rerender(<ProductModals />);
+
+      const secondProviderInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
+      expect(secondProviderInstanceId).not.toBe(firstProviderInstanceId);
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-remount-survival',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Updated Name | 5 cm | Metal | Anime Pins | Manga',
           {
             shouldDirty: true,
             shouldTouch: true,

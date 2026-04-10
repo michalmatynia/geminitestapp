@@ -135,6 +135,7 @@ export const buildCompletedRunState = async (params: {
     completedAt,
     createdAt: existingRun?.createdAt ?? startedAt,
     updatedAt: completedAt,
+    instance: existingRun?.instance ?? null,
     result: {
       returnValue,
       outputs: emittedOutputs,
@@ -263,6 +264,7 @@ export const buildFailedRunState = (params: {
     completedAt,
     createdAt: existingRun?.createdAt ?? startedAt,
     updatedAt: completedAt,
+    instance: existingRun?.instance ?? null,
     result: null,
     error: errorMessage,
     artifacts,

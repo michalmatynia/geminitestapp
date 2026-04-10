@@ -5,6 +5,7 @@ import {
   countPendingStaticStarterWorkflowBundle,
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
+  refreshStarterWorkflowConfigs,
   restoreStaticStarterWorkflowBundle,
 } from '@/features/ai/ai-paths/server/starter-workflows-settings';
 import {
@@ -16,6 +17,14 @@ import {
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+
+const buildEmptyStarterSettings = () => [
+  { key: AI_PATHS_INDEX_KEY, value: '[]' },
+  { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
+];
+
+const buildStaticRecoveryRecords = () =>
+  restoreStaticStarterWorkflowBundle(buildEmptyStarterSettings()).nextRecords;
 
 describe('settings-store flag preservation and read-time seeding policy', () => {
   it('preserves path activation and lock flags when seeded defaults are rewritten', () => {
@@ -107,10 +116,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
   });
 
   it('generically seeds auto-seeded starter workflows from the registry', () => {
-    const initial = [
-      { key: AI_PATHS_INDEX_KEY, value: '[]' },
-      { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
-    ];
+    const initial = buildEmptyStarterSettings();
 
     expect(countPendingStarterWorkflowDefaults(initial)).toBeGreaterThan(0);
 
@@ -122,7 +128,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     ).toBe(true);
     expect(
       seeded.nextRecords.some(
-        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_descv3lite`
       )
     ).toBe(true);
     expect(
@@ -130,38 +136,11 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
         (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
       )
     ).toBe(true);
-
-    const normalizeConfigRecord = seeded.nextRecords.find(
-      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
-    );
-    if (!normalizeConfigRecord) throw new Error('Expected normalize config record');
-    const normalizeConfig = JSON.parse(normalizeConfigRecord.value) as Record<string, unknown>;
-    const normalizeNodes = Array.isArray(normalizeConfig['nodes'])
-      ? (normalizeConfig['nodes'] as Array<Record<string, unknown>>)
-      : [];
-    const normalizeDatabaseNode = normalizeNodes.find(
-      (node) => node['id'] === 'node-update-name-normalize'
-    );
-    const normalizeDatabaseConfig =
-      normalizeDatabaseNode?.['config'] &&
-      typeof normalizeDatabaseNode['config'] === 'object' &&
-      (normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] &&
-      typeof (normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] === 'object'
-        ? ((normalizeDatabaseNode['config'] as Record<string, unknown>)['database'] as Record<string, unknown>)
-        : null;
-    const normalizeModelNode = normalizeNodes.find((node) => node['id'] === 'node-model-name-normalize');
-    const normalizeModelConfig =
-      normalizeModelNode?.['config'] &&
-      typeof normalizeModelNode['config'] === 'object' &&
-      (normalizeModelNode['config'] as Record<string, unknown>)['model'] &&
-      typeof (normalizeModelNode['config'] as Record<string, unknown>)['model'] === 'object'
-        ? ((normalizeModelNode['config'] as Record<string, unknown>)['model'] as Record<string, unknown>)
-        : null;
-    expect(normalizeDatabaseConfig?.['dryRun']).toBe(true);
-    expect(normalizeDatabaseConfig?.['updatePayloadMode']).toBe('custom');
-    expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).toContain('"__noop__": ""');
-    expect(String(normalizeDatabaseConfig?.['updateTemplate'] ?? '')).not.toContain('"name_en"');
-    expect(normalizeModelConfig?.['modelId']).toBeUndefined();
+    expect(
+      seeded.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
+      )
+    ).toBe(false);
 
     const triggerButtonsRecord = seeded.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
@@ -172,11 +151,14 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       triggerButtons.some((button) => button['id'] === '0ef40981-7ac6-416e-9205-7200289f851c')
     ).toBe(true);
     expect(
-      triggerButtons.some((button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')
+      triggerButtons.some((button) => button['id'] === '4c07d35b-ea92-4d1f-b86b-c586359f68de')
     ).toBe(true);
     expect(
       triggerButtons.some((button) => button['id'] === '5f36f340-3d89-4f6f-a08f-2387f380b90b')
     ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')
+    ).toBe(false);
   });
 
   it('restores the broader static recovery bundle from semantic workflow assets', () => {
@@ -198,6 +180,11 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       )
     ).toBe(true);
     expect(
+      restored.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
+      )
+    ).toBe(true);
+    expect(
       restored.nextRecords.some((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`)
     ).toBe(true);
 
@@ -208,6 +195,9 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
     expect(
       triggerButtons.some((button) => button['id'] === '4c07d35b-ea92-4d1f-b86b-c586359f68de')
+    ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')
     ).toBe(true);
   });
 
@@ -365,7 +355,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     expect(triggerButtons.some((button) => button['id'] === 'btn-custom-param')).toBe(true);
   });
 
-  it('upgrades a legacy unbound normalize button in place instead of duplicating it', () => {
+  it('upgrades a legacy unbound normalize button during default seeding', () => {
     const legacyNormalizeButton = {
       id: 'cf9974ae-1fb3-4e61-8a30-8df8af63744f',
       name: 'Normalize',
@@ -402,24 +392,15 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     expect(normalizeButtons).toHaveLength(1);
     expect(normalizeButtons[0]).toEqual(
       expect.objectContaining({
-        id: '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27',
-        pathId: 'path_name_normalize_v1',
+        id: 'cf9974ae-1fb3-4e61-8a30-8df8af63744f',
+        pathId: null,
         locations: ['product_modal'],
       })
     );
   });
 
   it('does not inherit normalize starter model selection from other starter paths', () => {
-    const seeded = ensureStarterWorkflowDefaults([
-      {
-        key: AI_PATHS_INDEX_KEY,
-        value: '[]',
-      },
-      {
-        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
-        value: '[]',
-      },
-    ]).nextRecords;
+    const seeded = buildStaticRecoveryRecords();
 
     const descriptionButton = {
       id: 'f5af953f-632d-4704-adec-cc7e58aa68c6',
@@ -551,22 +532,15 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     expect(modelConfig?.['modelId']).toBeUndefined();
   });
 
-  it('does not rewrite a legacy normalize node override during default seeding', () => {
-    const seeded = ensureStarterWorkflowDefaults([
-      {
-        key: AI_PATHS_INDEX_KEY,
-        value: '[]',
-      },
-      {
-        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
-        value: '[]',
-      },
-    ]).nextRecords;
+  it('does not rewrite a legacy normalize node override during static recovery restore', () => {
+    const seeded = buildStaticRecoveryRecords();
 
-    const staleRecords = seeded.map((record) => {
-      if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`) {
-        return record;
-      }
+    const staleRecords = seeded
+      .filter((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`)
+      .map((record) => {
+        if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`) {
+          return record;
+        }
 
       const parsed = JSON.parse(record.value) as Record<string, unknown>;
       const nodes = Array.isArray(parsed['nodes']) ? (parsed['nodes'] as Array<Record<string, unknown>>) : [];
@@ -603,14 +577,14 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
               starterKey: 'product_name_normalize',
               templateId: 'starter_product_name_normalize',
               templateVersion: 2,
-              seededDefault: true,
+              seededDefault: false,
             },
           },
         }),
       };
-    });
+      });
 
-    const refreshed = ensureStarterWorkflowDefaults(staleRecords);
+    const refreshed = restoreStaticStarterWorkflowBundle(staleRecords);
     const normalizeRecord = refreshed.nextRecords.find(
       (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
     );
@@ -628,5 +602,101 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
         : null;
 
     expect(modelConfig?.['modelId']).toBe('ollama:gemma3');
+  });
+
+  it('refreshes stale Normalize starter configs while preserving edited model settings', () => {
+    const seeded = buildStaticRecoveryRecords();
+
+    const staleRecords = seeded
+      .filter((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`)
+      .map((record) => {
+      if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`) {
+        return record;
+      }
+
+      const parsed = JSON.parse(record.value) as Record<string, unknown>;
+      const nodes = Array.isArray(parsed['nodes'])
+        ? (parsed['nodes'] as Array<Record<string, unknown>>)
+        : [];
+      const nextNodes = nodes.map((node) => {
+        if (node['id'] !== 'node-model-name-normalize') return node;
+        const config =
+          node['config'] && typeof node['config'] === 'object'
+            ? { ...(node['config'] as Record<string, unknown>) }
+            : {};
+        const model =
+          config['model'] && typeof config['model'] === 'object'
+            ? { ...(config['model'] as Record<string, unknown>) }
+            : {};
+        model['temperature'] = 0.35;
+        model['maxTokens'] = 1337;
+        model['systemPrompt'] = 'Only return normalized output.';
+        model['waitForResult'] = false;
+        return {
+          ...node,
+          config: {
+            ...config,
+            model,
+          },
+        };
+      });
+
+      return {
+        ...record,
+        value: JSON.stringify({
+          ...parsed,
+          nodes: nextNodes,
+          extensions: {
+            ...(parsed['extensions'] && typeof parsed['extensions'] === 'object'
+              ? (parsed['extensions'] as Record<string, unknown>)
+              : {}),
+            aiPathsStarter: {
+              starterKey: 'product_name_normalize',
+              templateId: 'starter_product_name_normalize',
+              templateVersion: 2,
+              seededDefault: false,
+            },
+          },
+        }),
+      };
+      });
+
+    const refreshed = refreshStarterWorkflowConfigs(staleRecords);
+    expect(refreshed.affectedCount).toBe(1);
+
+    const normalizeRecord = refreshed.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
+    );
+    if (!normalizeRecord) throw new Error('Expected normalize config record');
+
+    const parsed = JSON.parse(normalizeRecord.value) as Record<string, unknown>;
+    const nodes = Array.isArray(parsed['nodes'])
+      ? (parsed['nodes'] as Array<Record<string, unknown>>)
+      : [];
+    const normalizeModelNode = nodes.find((node) => node['id'] === 'node-model-name-normalize');
+    const modelConfig =
+      normalizeModelNode?.['config'] &&
+      typeof normalizeModelNode['config'] === 'object' &&
+      (normalizeModelNode['config'] as Record<string, unknown>)['model'] &&
+      typeof (normalizeModelNode['config'] as Record<string, unknown>)['model'] === 'object'
+        ? ((normalizeModelNode['config'] as Record<string, unknown>)['model'] as Record<string, unknown>)
+        : null;
+    const starterExtension =
+      parsed['extensions'] &&
+      typeof parsed['extensions'] === 'object' &&
+      (parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] &&
+      typeof (parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] === 'object'
+        ? ((parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] as Record<string, unknown>)
+        : null;
+
+    expect(modelConfig).toEqual(
+      expect.objectContaining({
+        temperature: 0.35,
+        maxTokens: 1337,
+        systemPrompt: 'Only return normalized output.',
+        waitForResult: false,
+      })
+    );
+    expect(starterExtension?.['templateVersion']).not.toBe(2);
   });
 });

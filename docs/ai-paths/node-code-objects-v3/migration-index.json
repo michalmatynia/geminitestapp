@@ -1,6 +1,6 @@
 {
   "schemaVersion": "ai-paths.node-migration-doc-index.v5",
-  "generatedAt": "2026-04-05T14:57:57.569Z",
+  "generatedAt": "2026-04-10T09:12:39.132Z",
   "totalNodes": 34,
   "runtimeKernelNodeTypes": [
     "agent",
@@ -146,7 +146,7 @@
   "rolloutEligibility": {
     "sourceFile": "docs/ai-paths/node-code-objects-v3/rollout-eligibility.json",
     "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v2",
-    "generatedAt": "2026-04-05T14:57:57.569Z",
+    "generatedAt": "2026-04-10T09:12:39.132Z",
     "criteria": [
       "runtime_strategy=code_object_v3",
       "has_semantic_contract_hash",
@@ -644,7 +644,10 @@
       "migrationWave": "runtime_kernel",
       "codeObjectId": "ai-paths.node-code-object.db_schema.v3",
       "ports": {
-        "inputs": [],
+        "inputs": [
+          "context",
+          "schema"
+        ],
         "outputs": [
           "schema",
           "context"
@@ -653,7 +656,7 @@
       "configFieldCount": 13,
       "docs": {
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/db_schema.json",
-        "semanticNodeHash": "9de668727483c8c0852e9b3c5d211aaa0d14c3f76a6943e7c1093d18c20fb0d1",
+        "semanticNodeHash": "56956207074969f36d8750610fedc5877d6b3b873ad8f5048fdcf2d09dfa11af",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/db_schema.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json",
         "v3ObjectId": "node_obj_db_schema_portable_v3",

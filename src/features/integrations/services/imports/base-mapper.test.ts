@@ -327,6 +327,62 @@ describe('mapBaseProduct', () => {
       ]);
     });
 
+    it('auto-maps marketplace checkbox-set options from arbitrary grouped Base buckets', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p-marketplaces',
+          sku: 'SKU-MARKETPLACES',
+          parameters: [
+            {
+              name: 'Disabled Sales Channels',
+              values: [
+                { label: 'Tradera', selected: true },
+                { label: 'Willhaben', checked: true },
+                { label: 'Depop', selected: true },
+                { label: 'Grailed', selected: true },
+                { label: 'Shpock', selected: true },
+                { label: 'Vinted', selected: true },
+              ],
+            },
+          ],
+        },
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'KEYCHA088',
+              name: '3rd Party Marketplaces',
+              type: 'checkbox_set',
+              options: [
+                { id: 'opt-tradera', label: 'Tradera' },
+                { id: 'opt-willhaben', label: 'Willhaben' },
+                { id: 'opt-depop', label: 'Depop' },
+                { id: 'opt-grailed', label: 'Grailed' },
+                { id: 'opt-schpock', label: 'Schpock' },
+                { id: 'opt-vinted', label: 'Vinted' },
+              ],
+              createdAt: '2026-04-10T00:00:00.000Z',
+              updatedAt: '2026-04-10T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        {
+          fieldId: 'KEYCHA088',
+          selectedOptionIds: [
+            'opt-tradera',
+            'opt-willhaben',
+            'opt-depop',
+            'opt-grailed',
+            'opt-schpock',
+            'opt-vinted',
+          ],
+        },
+      ]);
+    });
+
     it('maps text custom fields from template mappings', () => {
       const result = mapBaseProduct(
         {
@@ -659,6 +715,43 @@ describe('mapBaseProduct', () => {
       // "Tradera" label resolves to the actual UUID "uuid-abc123"
       expect(result.customFields).toEqual([
         { fieldId: 'KEYCHA084', selectedOptionIds: ['uuid-abc123'] },
+      ]);
+    });
+
+    it('resolves normalized marketplace source keys for explicit checkbox mappings', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          parameters: [
+            {
+              name: 'Disabled Sales Channels',
+              values: [{ label: 'Tradera', selected: true }],
+            },
+          ],
+        },
+        [
+          {
+            sourceKey: 'Tradera',
+            targetField: 'custom_field_option:KEYCHA088:Tradera',
+          },
+        ],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'KEYCHA088',
+              name: '3rd Party Marketplaces',
+              type: 'checkbox_set',
+              options: [{ id: 'uuid-tradera', label: 'Tradera' }],
+              createdAt: '2026-04-10T00:00:00.000Z',
+              updatedAt: '2026-04-10T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'KEYCHA088', selectedOptionIds: ['uuid-tradera'] },
       ]);
     });
 

@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   useImportExportStateMock: vi.fn(),
   useBaseImportQueueHealthMock: vi.fn(),
   setImportDryRunMock: vi.fn(),
+  setUniqueOnlyMock: vi.fn(),
   setAllowDuplicateSkuMock: vi.fn(),
   setInventoryIdMock: vi.fn(),
   setLimitMock: vi.fn(),
@@ -199,6 +200,8 @@ const buildState = (overrides: Record<string, unknown> = {}) => ({
   setImportMode: mocks.setImportModeMock,
   importDryRun: false,
   setImportDryRun: mocks.setImportDryRunMock,
+  uniqueOnly: true,
+  setUniqueOnly: mocks.setUniqueOnlyMock,
   allowDuplicateSku: false,
   setAllowDuplicateSku: mocks.setAllowDuplicateSkuMock,
   saveImportSettings: false,
@@ -272,10 +275,6 @@ describe('ImportBaseConnectionSection', () => {
       'success'
     );
     expect(screen.getByRole('button', { name: 'Clear Saved' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Run import' })).toBeInTheDocument();
-    expect(
-      screen.getByText('The next import will be submitted to the base-import runtime queue.')
-    ).toBeInTheDocument();
     expect(
       screen.getByText('Saved import settings exist. You have unsaved changes.')
     ).toBeInTheDocument();
@@ -400,15 +399,6 @@ describe('ImportBaseConnectionSection', () => {
 
     render(<ImportBaseConnectionSection />);
 
-    expect(screen.getByRole('button', { name: 'Run import inline' })).toHaveAttribute(
-      'variant',
-      'warning'
-    );
-    expect(
-      screen.getByText(
-        'Redis queueing is unavailable. The next import will run inline instead of appearing as a BullMQ runtime job.'
-      )
-    ).toBeInTheDocument();
     expect(screen.getByText('Runtime queue is in inline fallback mode')).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -440,15 +430,19 @@ describe('ImportBaseConnectionSection', () => {
 
     render(<ImportBaseConnectionSection />);
 
-    expect(screen.getByRole('button', { name: 'Queue import anyway' })).toHaveAttribute(
-      'variant',
-      'warning'
-    );
     expect(
       screen.getByText(
-        'The base-import worker is offline. The next import may queue successfully but will not process until the worker is restored.'
+        'Redis is available, but the base-import worker is not running. New imports may queue without being processed until the worker is restored.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('Base import worker is offline')).toBeInTheDocument();
+  });
+
+  it('lets import settings control unique-only filtering from the settings tab', () => {
+    render(<ImportBaseConnectionSection />);
+
+    fireEvent.click(screen.getByLabelText('Unique products only'));
+
+    expect(mocks.setUniqueOnlyMock).toHaveBeenCalledWith(false);
   });
 });

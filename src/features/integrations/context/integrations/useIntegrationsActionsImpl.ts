@@ -18,8 +18,15 @@ import {
   useBaseApiRequest,
   useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
-import { toPlaywrightConnectionPayload } from '@/features/integrations/utils/playwright-connection-payload';
+import {
+  toPlaywrightConnectionOverridePayload,
+} from '@/features/integrations/utils/playwright-connection-payload';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
+import {
+  defaultIntegrationConnectionPlaywrightSettings,
+  resolveIntegrationPlaywrightPersonaBrowser,
+  resolveIntegrationPlaywrightPersonaSettings,
+} from '@/features/integrations/utils/playwright-connection-settings';
 import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionTestType } from '@/shared/contracts/integrations/session-testing';
 import { Integration } from '@/shared/contracts/integrations/base';
@@ -27,7 +34,6 @@ import { IntegrationConnection } from '@/shared/contracts/integrations/connectio
 import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
-import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
 import { useToast } from '@/shared/ui/primitives.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -102,6 +108,13 @@ export function useIntegrationsActionsImpl(args: {
     args.connections[0] ??
     null;
 
+  const resolveSelectedPlaywrightBaseline = (): PlaywrightSettings => {
+    return resolveIntegrationPlaywrightPersonaSettings(
+      args.playwrightPersonas,
+      args.playwrightPersonaId
+    );
+  };
+
   const handleIntegrationClick = async (definition: IntegrationDefinition): Promise<void> => {
     const ensureIntegration = async (def: IntegrationDefinition): Promise<Integration | null> => {
       let currentIntegrations = args.integrations;
@@ -158,6 +171,22 @@ export function useIntegrationsActionsImpl(args: {
       options.mode === 'create' || (options.mode !== 'update' && !resolvedConnectionId);
     const normalizedName = formData.name.trim();
     const normalizedUsername = formData.username.trim();
+    const playwrightBrowserBaseline = resolveIntegrationPlaywrightPersonaBrowser(
+      args.playwrightPersonas,
+      args.playwrightPersonaId
+    );
+    const playwrightBrowserPayload = isBrowserIntegration
+      ? isCreateMode
+        ? formData.playwrightBrowser !== playwrightBrowserBaseline
+          ? { playwrightBrowser: formData.playwrightBrowser }
+          : {}
+        : {
+            playwrightBrowser:
+              formData.playwrightBrowser !== playwrightBrowserBaseline
+                ? formData.playwrightBrowser
+                : null,
+          }
+      : {};
 
     if (!normalizedName) {
       toast('Connection name is required.', { variant: 'error' });
@@ -186,7 +215,7 @@ export function useIntegrationsActionsImpl(args: {
         ? { username: normalizedUsername }
         : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
-      ...(isBrowserIntegration ? { playwrightBrowser: formData.playwrightBrowser } : {}),
+      ...playwrightBrowserPayload,
       ...(isTraderaIntegration
         ? {
           ...(isTraderaBrowserIntegration
@@ -417,12 +446,13 @@ export function useIntegrationsActionsImpl(args: {
   const handleSelectPlaywrightPersona = async (personaId: string | null): Promise<void> => {
     if (!personaId) {
       args.setPlaywrightPersonaId(null);
+      args.setPlaywrightSettings(defaultIntegrationConnectionPlaywrightSettings);
       return;
     }
     const persona = args.playwrightPersonas.find((p: PlaywrightPersona) => p.id === personaId);
     if (!persona) return;
     args.setPlaywrightPersonaId(persona.id);
-    args.setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
+    args.setPlaywrightSettings(resolveIntegrationPlaywrightPersonaSettings([persona], persona.id));
     toast(`Applied persona "${persona.name}".`, { variant: 'success' });
   };
 
@@ -430,6 +460,7 @@ export function useIntegrationsActionsImpl(args: {
     const connection = activeConnection;
     if (!connection) return;
     try {
+      const baselineSettings = resolveSelectedPlaywrightBaseline();
       await upsertConnectionMutation.mutateAsync({
         integrationId: args.activeIntegration?.id ?? connection.integrationId,
         connectionId: connection.id,
@@ -437,7 +468,11 @@ export function useIntegrationsActionsImpl(args: {
           name: connection.name,
           username: connection.username,
           playwrightPersonaId: args.playwrightPersonaId,
-          ...toPlaywrightConnectionPayload(args.playwrightSettings),
+          ...toPlaywrightConnectionOverridePayload({
+            settings: args.playwrightSettings,
+            baselineSettings,
+            includeResetFlag: true,
+          }),
         },
       });
       toast('Playwright settings saved.', { variant: 'success' });

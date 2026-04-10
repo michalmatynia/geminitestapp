@@ -1,10 +1,7 @@
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine/portable-engine-resolvers';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
-import {
-  hasParameterInferencePromptStructure,
-  matchesLegacyStarterWorkflowRepairSignature,
-} from './legacy-repair';
+import { matchesLegacyStarterWorkflowRepairSignature } from './legacy-repair';
 import {
   computeStarterWorkflowGraphHash,
   hasCanonicalGraphHash,
@@ -15,7 +12,14 @@ import {
 } from './utils';
 import { STARTER_WORKFLOW_REGISTRY } from './templates';
 import { materializeStarterWorkflowPathConfig } from './api';
-import type { StarterWorkflowResolution, StarterWorkflowUpgradeResult } from './types';
+import type {
+  AiPathTemplateRegistryEntry,
+  AiPathsStarterProvenance,
+  StarterWorkflowLowOverlapReplacementMode,
+  StarterWorkflowResolution,
+  StarterWorkflowUpgradeResult,
+  StarterWorkflowVersionedOverlayScope,
+} from './types';
 
 export { computeStarterWorkflowGraphHash } from './utils';
 
@@ -98,6 +102,15 @@ type ExplicitModelSelection = {
   title: string;
 };
 
+type ModelConfigOverride = {
+  modelId?: string;
+  temperature?: number;
+  maxTokens?: number;
+  vision?: boolean;
+  waitForResult?: boolean;
+  systemPrompt?: string;
+};
+
 const collectExplicitModelSelections = (config: PathConfig): ExplicitModelSelection[] =>
   (config.nodes ?? []).reduce<ExplicitModelSelection[]>((acc, node: AiNode) => {
     if (node.type !== 'model') return acc;
@@ -111,31 +124,95 @@ const collectExplicitModelSelections = (config: PathConfig): ExplicitModelSelect
     return acc;
   }, []);
 
-const applyExplicitModelIdToNode = (node: AiNode, modelId: string): AiNode => {
+const applyModelConfigOverrideToNode = (
+  node: AiNode,
+  override: ModelConfigOverride
+): AiNode => {
   const currentConfig = node.config ?? {};
   const currentModel = node.config?.model;
-  const currentModelId = normalizeText(currentModel?.modelId);
-  if (currentModelId === modelId) {
-    return node;
-  }
   return {
     ...node,
     config: {
       ...currentConfig,
       model: {
-        ...(currentModel?.systemPrompt !== undefined
-          ? { systemPrompt: currentModel.systemPrompt }
-          : {}),
-        ...(currentModel?.waitForResult !== undefined
-          ? { waitForResult: currentModel.waitForResult }
-          : {}),
-        modelId,
-        temperature: currentModel?.temperature ?? 0.7,
-        maxTokens: currentModel?.maxTokens ?? 800,
-        vision: currentModel?.vision ?? (node.inputs ?? []).includes('images'),
+        ...(override.modelId !== undefined
+          ? { modelId: override.modelId }
+          : currentModel?.modelId !== undefined
+            ? { modelId: currentModel.modelId }
+            : {}),
+        temperature:
+          typeof override.temperature === 'number' && Number.isFinite(override.temperature)
+            ? override.temperature
+            : (currentModel?.temperature ?? 0.7),
+        maxTokens:
+          typeof override.maxTokens === 'number' && Number.isFinite(override.maxTokens)
+            ? override.maxTokens
+            : (currentModel?.maxTokens ?? 800),
+        vision:
+          typeof override.vision === 'boolean'
+            ? override.vision
+            : (currentModel?.vision ?? (node.inputs ?? []).includes('images')),
+        ...(override.systemPrompt !== undefined
+          ? { systemPrompt: override.systemPrompt }
+          : currentModel?.systemPrompt !== undefined
+            ? { systemPrompt: currentModel.systemPrompt }
+            : {}),
+        ...(override.waitForResult !== undefined
+          ? { waitForResult: override.waitForResult }
+          : currentModel?.waitForResult !== undefined
+            ? { waitForResult: currentModel.waitForResult }
+            : {}),
       },
     },
   };
+};
+
+const applyExplicitModelIdToNode = (node: AiNode, modelId: string): AiNode => {
+  const currentModelId = normalizeText(node.config?.model?.modelId);
+  if (currentModelId === modelId) {
+    return node;
+  }
+  return applyModelConfigOverrideToNode(node, { modelId });
+};
+
+const preserveNonCanonicalModelNodeConfigById = (
+  current: PathConfig,
+  next: PathConfig
+): PathConfig => {
+  if (!Array.isArray(current.nodes) || !Array.isArray(next.nodes) || next.nodes.length === 0) {
+    return next;
+  }
+
+  const currentModelNodesById = new Map(
+    current.nodes
+      .filter((node: AiNode): boolean => node.type === 'model')
+      .map((node: AiNode) => [node.id, node] as const)
+  );
+
+  let changed = false;
+  const nextNodes = next.nodes.map((node: AiNode): AiNode => {
+    if (node.type !== 'model') {
+      return node;
+    }
+    const currentNode = currentModelNodesById.get(node.id);
+    const currentModel = currentNode?.config?.model;
+    if (!currentModel) {
+      return node;
+    }
+
+    const nextNode = applyModelConfigOverrideToNode(node, currentModel);
+    if (JSON.stringify(nextNode) !== JSON.stringify(node)) {
+      changed = true;
+    }
+    return nextNode;
+  });
+
+  return changed
+    ? {
+        ...next,
+        nodes: nextNodes,
+      }
+    : next;
 };
 
 const preserveExplicitModelSelections = (current: PathConfig, next: PathConfig): PathConfig => {
@@ -386,6 +463,81 @@ const countNodeIdOverlap = (left: PathConfig, right: PathConfig): number => {
   return (left.nodes ?? []).reduce((count, node) => count + Number(rightNodeIds.has(node.id)), 0);
 };
 
+const isSeededDefaultPath = (
+  entry: AiPathTemplateRegistryEntry,
+  config: PathConfig
+): boolean => config.id === entry.seedPolicy?.defaultPathId;
+
+const hasMatchingStarterProvenance = (
+  provenance: AiPathsStarterProvenance | null,
+  entry: AiPathTemplateRegistryEntry
+): boolean => provenance?.starterKey === entry.starterLineage.starterKey;
+
+const isPathEligibleForVersionedOverlay = (
+  entry: AiPathTemplateRegistryEntry,
+  config: PathConfig
+): boolean => {
+  const scope: StarterWorkflowVersionedOverlayScope =
+    entry.upgradePolicy?.versionedOverlayScope ?? 'seeded_default_only';
+  return scope === 'any_provenance_path' || isSeededDefaultPath(entry, config);
+};
+
+const hasOutdatedStarterProvenance = (
+  provenance: AiPathsStarterProvenance | null,
+  entry: AiPathTemplateRegistryEntry,
+  config: PathConfig
+): boolean =>
+  hasMatchingStarterProvenance(provenance, entry) &&
+  (provenance?.templateVersion ?? Number.POSITIVE_INFINITY) < entry.starterLineage.templateVersion &&
+  isPathEligibleForVersionedOverlay(entry, config);
+
+const shouldReplaceLowOverlapStarterGraph = (args: {
+  config: PathConfig;
+  entry: AiPathTemplateRegistryEntry;
+  latestNodeCount: number;
+  matchedBy: StarterWorkflowResolution['matchedBy'];
+  nodeIdOverlap: number;
+  provenance: AiPathsStarterProvenance | null;
+}): boolean => {
+  const policy = args.entry.upgradePolicy;
+  const mode: StarterWorkflowLowOverlapReplacementMode =
+    policy?.lowOverlapReplacementMode ?? 'never';
+  if (mode === 'never' || args.nodeIdOverlap >= args.latestNodeCount) {
+    return false;
+  }
+
+  if (policy?.lowOverlapStructuralMatcher && !policy.lowOverlapStructuralMatcher(args.config)) {
+    return false;
+  }
+
+  if (mode === 'any_resolved') {
+    return true;
+  }
+
+  if (mode === 'seeded_default_or_legacy_alias') {
+    if (args.matchedBy === 'legacy_alias') {
+      return true;
+    }
+
+    const seededDefaultPath = isSeededDefaultPath(args.entry, args.config);
+    const matchingStarter = hasMatchingStarterProvenance(args.provenance, args.entry);
+    const sameVersionSeededDefaultZeroOverlap =
+      policy?.allowCurrentVersionSeededDefaultZeroOverlap === true &&
+      seededDefaultPath &&
+      matchingStarter &&
+      args.provenance?.seededDefault === true &&
+      args.provenance?.templateVersion === args.entry.starterLineage.templateVersion &&
+      args.nodeIdOverlap === 0;
+
+    return (
+      hasOutdatedStarterProvenance(args.provenance, args.entry, args.config) ||
+      sameVersionSeededDefaultZeroOverlap
+    );
+  }
+
+  return false;
+};
+
 const selectStarterOverlaySource = (current: PathConfig, latest: PathConfig): PathConfig => {
   const variants: PathConfig[] = [latest];
   const resolvedLatest = resolvePortablePathInput(latest, {
@@ -445,6 +597,7 @@ export const upgradeStarterWorkflowPathConfig = (
   const resolution = resolveStarterWorkflowForPathConfig(config);
   if (!resolution) return { config, changed: false, resolution: null };
   const currentGraphHash = computeStarterWorkflowGraphHash(config);
+  const currentMatchesCanonicalHash = hasCanonicalGraphHash(resolution.entry, currentGraphHash);
   const provenance = readStarterProvenance(config);
 
   const latest = materializeStarterWorkflowPathConfig(resolution.entry, {
@@ -459,46 +612,21 @@ export const upgradeStarterWorkflowPathConfig = (
   });
 
   const safeToOverlay =
-    hasCanonicalGraphHash(resolution.entry, currentGraphHash) ||
+    currentMatchesCanonicalHash ||
     resolution.matchedBy === 'legacy_alias' ||
-    Boolean(
-      provenance?.starterKey === resolution.entry.starterLineage.starterKey &&
-        provenance?.templateVersion < resolution.entry.starterLineage.templateVersion &&
-        (config.id === resolution.entry.seedPolicy?.defaultPathId ||
-          resolution.entry.starterLineage.starterKey === 'parameter_inference' ||
-          resolution.entry.starterLineage.starterKey === 'product_name_normalize' ||
-          resolution.entry.starterLineage.starterKey === 'description_inference_lite' ||
-          resolution.entry.starterLineage.starterKey === 'translation_en_pl')
-    );
+    hasOutdatedStarterProvenance(provenance, resolution.entry, config);
 
   const overlaySource = selectStarterOverlaySource(config, latest);
   const latestNodeCount = (overlaySource.nodes ?? []).length;
   const nodeIdOverlap = countNodeIdOverlap(config, overlaySource);
-  const shouldReplaceGraphCompletely =
-    (
-      resolution.entry.starterLineage.starterKey === 'parameter_inference' &&
-      hasParameterInferencePromptStructure(config) &&
-      nodeIdOverlap < latestNodeCount
-    ) ||
-    (
-      resolution.entry.starterLineage.starterKey === 'product_name_normalize' &&
-      (
-        resolution.matchedBy === 'legacy_alias' ||
-        (
-          provenance?.starterKey === resolution.entry.starterLineage.starterKey &&
-          config.id === resolution.entry.seedPolicy?.defaultPathId &&
-          (
-            provenance?.templateVersion < resolution.entry.starterLineage.templateVersion ||
-            (
-              provenance?.seededDefault === true &&
-              provenance?.templateVersion === resolution.entry.starterLineage.templateVersion &&
-              nodeIdOverlap === 0
-            )
-          )
-        )
-      ) &&
-      nodeIdOverlap < latestNodeCount
-    );
+  const shouldReplaceGraphCompletely = shouldReplaceLowOverlapStarterGraph({
+    config,
+    entry: resolution.entry,
+    latestNodeCount,
+    matchedBy: resolution.matchedBy,
+    nodeIdOverlap,
+    provenance,
+  });
 
   if (!safeToOverlay && !shouldReplaceGraphCompletely) {
     return { config, changed: false, resolution };
@@ -507,14 +635,23 @@ export const upgradeStarterWorkflowPathConfig = (
   const next = shouldReplaceGraphCompletely
     ? buildStarterGraphReplacement(config, latest)
     : buildStarterAssetOverlay(config, overlaySource);
-  if (next === config || JSON.stringify(next) === JSON.stringify(config)) {
-    return { config: next, changed: false, resolution };
+  const nextWithPreservedModelConfig = currentMatchesCanonicalHash
+    ? next
+    : preserveNonCanonicalModelNodeConfigById(config, next);
+  if (
+    nextWithPreservedModelConfig === config ||
+    JSON.stringify(nextWithPreservedModelConfig) === JSON.stringify(config)
+  ) {
+    return { config: nextWithPreservedModelConfig, changed: false, resolution };
   }
 
   return {
     config: {
-      ...next,
-      edges: sanitizeEdges(next.nodes ?? [], next.edges ?? []),
+      ...nextWithPreservedModelConfig,
+      edges: sanitizeEdges(
+        nextWithPreservedModelConfig.nodes ?? [],
+        nextWithPreservedModelConfig.edges ?? []
+      ),
     },
     changed: true,
     resolution,

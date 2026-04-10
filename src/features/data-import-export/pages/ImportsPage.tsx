@@ -1,6 +1,6 @@
 'use client';
 
-import { ClipboardList, Download } from 'lucide-react';
+import { ClipboardList, ListChecks, SlidersHorizontal } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React from 'react';
 
@@ -20,13 +20,20 @@ import { ImportListPreviewSection } from './imports-page/Import.List';
 import { ImportRunStatusSection } from './imports-page/Import.RunStatus';
 import { ImportLastResultSection } from './imports-page/Import.LastResult';
 
-function ImportTab(): React.JSX.Element {
+function ImportListTab(): React.JSX.Element {
   return (
     <div className='space-y-4'>
-      <ImportBaseConnectionSection />
       <ImportListPreviewSection />
       <ImportRunStatusSection />
       <ImportLastResultSection />
+    </div>
+  );
+}
+
+function ImportSettingsTab(): React.JSX.Element {
+  return (
+    <div className='space-y-4'>
+      <ImportBaseConnectionSection />
     </div>
   );
 }
@@ -39,12 +46,16 @@ function ImportsPageContent(): React.JSX.Element {
 
   React.useEffect(() => {
     if (!requestedRunId) return;
-    setImportsPageTab('import');
+    setImportsPageTab('import-list');
     setActiveImportRunId(requestedRunId);
   }, [requestedRunId, setActiveImportRunId, setImportsPageTab]);
 
   const handleImportsTabChange = (value: string): void => {
-    if (value === 'import' || value === 'import-template') {
+    if (
+      value === 'import-list' ||
+      value === 'import-settings' ||
+      value === 'import-template'
+    ) {
       setImportsPageTab(value);
     }
   };
@@ -79,9 +90,13 @@ function ImportsPageContent(): React.JSX.Element {
             className='w-full space-y-4'
           >
             <TabsList className='bg-muted/40 p-1' aria-label='Product import tabs'>
-              <TabsTrigger value='import' className='gap-2'>
-                <Download className='size-3.5' />
-                Import
+              <TabsTrigger value='import-list' className='gap-2'>
+                <ListChecks className='size-3.5' />
+                Import List Preview
+              </TabsTrigger>
+              <TabsTrigger value='import-settings' className='gap-2'>
+                <SlidersHorizontal className='size-3.5' />
+                Import Settings
               </TabsTrigger>
               <TabsTrigger value='import-template' className='gap-2'>
                 <ClipboardList className='size-3.5' />
@@ -89,8 +104,12 @@ function ImportsPageContent(): React.JSX.Element {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value='import' className='mt-0 outline-none'>
-              <ImportTab />
+            <TabsContent value='import-list' className='mt-0 outline-none'>
+              <ImportListTab />
+            </TabsContent>
+
+            <TabsContent value='import-settings' className='mt-0 outline-none'>
+              <ImportSettingsTab />
             </TabsContent>
 
             <TabsContent value='import-template' className='mt-0 outline-none'>

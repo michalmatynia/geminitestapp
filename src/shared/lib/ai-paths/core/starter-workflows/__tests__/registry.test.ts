@@ -98,6 +98,8 @@ describe('starter workflow registry', () => {
     );
 
     expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(hasNodeId(config, 'node-db-schema-name-normalize')).toBe(true);
+    expect(hasNodeId(config, 'node-category-context-name-normalize')).toBe(true);
     expect(hasNodeId(config, 'node-update-name-normalize')).toBe(true);
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
@@ -218,7 +220,8 @@ describe('starter workflow registry', () => {
     expect(upgraded.changed).toBe(true);
     expect(hasNodeId(upgraded.config, 'node-prompt-name-normalize')).toBe(true);
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
-    expect(promptTemplate).toContain('Always prefer the most specific terminal leaf from the hierarchy.');
+    expect(promptTemplate).toContain('live product_categories context fetched during this workflow run');
+    expect(promptTemplate).toContain('bundle.categoryContext.allowedLeafLabels');
   });
 
   it('fully replaces partially-upgraded default normalize graphs whose provenance is current but node ids never migrated', () => {
@@ -250,7 +253,7 @@ describe('starter workflow registry', () => {
         aiPathsStarter: {
           starterKey: 'product_name_normalize',
           templateId: 'starter_product_name_normalize',
-          templateVersion: 5,
+          templateVersion: 6,
           seededDefault: true,
         },
       },
@@ -311,6 +314,60 @@ describe('starter workflow registry', () => {
         temperature: expect.any(Number),
         maxTokens: expect.any(Number),
         vision: expect.any(Boolean),
+      })
+    );
+  });
+
+  it('preserves edited Normalize model settings while overlaying stale starter assets', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_name_normalize_v1',
+        seededDefault: true,
+      }
+    );
+
+    const staleConfig: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).map((node) => {
+        if (node.id !== 'node-model-name-normalize') return node;
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            model: {
+              ...node.config?.model,
+              temperature: 0.35,
+              maxTokens: 1337,
+              systemPrompt: 'Only return normalized output.',
+              waitForResult: false,
+            },
+          },
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 4,
+          seededDefault: true,
+        },
+      },
+    };
+
+    const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
+    const modelNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-model-name-normalize'
+    );
+
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(modelNode?.config?.model).toEqual(
+      expect.objectContaining({
+        temperature: 0.35,
+        maxTokens: 1337,
+        systemPrompt: 'Only return normalized output.',
+        waitForResult: false,
       })
     );
   });
@@ -417,11 +474,9 @@ describe('starter workflow registry', () => {
 
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(upgraded.changed).toBe(true);
-    expect(promptTemplate).toContain('Always prefer the most specific terminal leaf from the hierarchy.');
-    expect(promptTemplate).toContain('If a hierarchy ends with \\"Movie Keychain\\" or \\"Gaming Keychain\\"');
-    expect(promptTemplate).toContain(
-      'If a generic hierarchy segment and a more specific terminal leaf are both possible, choose the terminal leaf.'
-    );
+    expect(promptTemplate).toContain('live product_categories context fetched during this workflow run');
+    expect(promptTemplate).toContain('bundle.categoryContext.leafCategories');
+    expect(promptTemplate).toContain('Category context unavailable');
   });
 
   it('does not materialize starter workflows with embedded model selections', () => {
@@ -443,12 +498,50 @@ describe('starter workflow registry', () => {
     });
   });
 
-  it('materializes a static recovery bundle that includes canonical non-auto-seeded workflows', () => {
+  it('materializes a static recovery bundle that includes all canonical recoverable workflows', () => {
     const bundle = materializeStarterWorkflowRecoveryBundle('static_recovery');
 
     expect(bundle.pathConfigs.some((config) => config.id === 'path_descv3lite')).toBe(true);
+    expect(bundle.pathConfigs.some((config) => config.id === 'path_name_normalize_v1')).toBe(true);
     expect(bundle.pathConfigs.some((config) => config.id === 'path_96708d')).toBe(true);
     expect(bundle.triggerButtons.some((button) => button.id === '4c07d35b-ea92-4d1f-b86b-c586359f68de')).toBe(true);
+    expect(bundle.triggerButtons.some((button) => button.id === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')).toBe(true);
+  });
+
+  it('decouples starter upgrade scope from auto-seed policy', () => {
+    const normalize = getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize');
+    const description = getStarterWorkflowTemplateByIdOrThrow('starter_description_inference_lite');
+    const translation = getStarterWorkflowTemplateByIdOrThrow('starter_translation_en_pl');
+
+    expect(normalize.seedPolicy?.autoSeed).toBe(false);
+    expect(description.seedPolicy?.autoSeed).toBe(true);
+    expect(translation.seedPolicy?.autoSeed).toBe(false);
+    expect(normalize.upgradePolicy?.versionedOverlayScope).toBe('any_provenance_path');
+    expect(description.upgradePolicy?.versionedOverlayScope).toBe('any_provenance_path');
+    expect(translation.upgradePolicy?.versionedOverlayScope).toBe('any_provenance_path');
+  });
+
+  it('lets trigger-backed starter workflows opt out of auto-seed while keeping canonical default path ids', () => {
+    const triggerBackedDefaultEntries = STARTER_WORKFLOW_REGISTRY.filter(
+      (entry) =>
+        (entry.triggerButtonPresets?.length ?? 0) > 0 &&
+        typeof entry.seedPolicy?.defaultPathId === 'string' &&
+        entry.seedPolicy.defaultPathId.trim().length > 0
+    );
+
+    expect(triggerBackedDefaultEntries.length).toBeGreaterThan(0);
+    const autoSeedTemplateIds = triggerBackedDefaultEntries
+      .filter((entry) => entry.seedPolicy?.autoSeed === true)
+      .map((entry) => entry.templateId);
+
+    expect(autoSeedTemplateIds).toEqual(
+      expect.arrayContaining([
+        'starter_parameter_inference',
+        'starter_description_inference_lite',
+        'starter_base_export_blwo',
+      ])
+    );
+    expect(autoSeedTemplateIds).not.toContain('starter_product_name_normalize');
   });
 
   it('does not resolve starter graphs with legacy edge alias fields', () => {

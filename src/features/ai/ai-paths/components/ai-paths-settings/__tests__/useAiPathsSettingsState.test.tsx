@@ -245,6 +245,20 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphActions: () => mockState.graphActions,
+  useGraphState: () => ({
+    nodes: mockState.coreState.nodes,
+    edges: mockState.coreState.edges,
+  }),
+  useGraphDataState: () => ({
+    nodes: mockState.coreState.nodes,
+    edges: mockState.coreState.edges,
+  }),
+  usePathMetadataState: () => ({
+    activePathId: mockState.coreState.activePathId,
+    isPathLocked: mockState.coreState.isPathLocked,
+    pathConfigs: mockState.coreState.pathConfigs,
+    paths: mockState.coreState.paths,
+  }),
   usePersistenceActions: () => mockState.persistenceActions,
   usePersistenceState: () => mockState.persistenceState,
   useRuntimeDataState: () => ({

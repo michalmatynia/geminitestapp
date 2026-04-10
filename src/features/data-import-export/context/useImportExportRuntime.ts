@@ -22,6 +22,7 @@ import { useImportExportRuntimeResources } from './useImportExportRuntimeResourc
 import type {
   ImportExportActionsContextType,
   ImportExportDataContextType,
+  ImportsPageTab,
   ImportExportStateContextType,
 } from './ImportExportContext.types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -34,8 +35,6 @@ interface ImportExportRuntimeResult {
 }
 
 const IMPORT_SETTINGS_STORAGE_KEY = 'product-import-runtime.v1';
-
-type ImportsPageTab = 'import' | 'import-template';
 
 type PersistedImportRuntimeState = {
   version: 1;
@@ -66,8 +65,19 @@ type PersistedImportRuntimeStateInput = Omit<
 const isBrowser = (): boolean =>
   typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
-const isImportsPageTab = (value: unknown): value is ImportsPageTab =>
-  value === 'import' || value === 'import-template';
+const DEFAULT_IMPORTS_PAGE_TAB: ImportsPageTab = 'import-list';
+
+const normalizeImportsPageTab = (value: unknown): ImportsPageTab | null => {
+  if (value === 'import') return 'import-list';
+  if (
+    value === 'import-list' ||
+    value === 'import-settings' ||
+    value === 'import-template'
+  ) {
+    return value;
+  }
+  return null;
+};
 
 const isImageMode = (value: unknown): value is 'links' | 'download' =>
   value === 'links' || value === 'download';
@@ -99,7 +109,7 @@ const readPersistedImportRuntimeState = (): PersistedImportRuntimeState | null =
     return {
       version: 1,
       saveImportSettings: true,
-      importsPageTab: isImportsPageTab(parsed['importsPageTab']) ? parsed['importsPageTab'] : 'import',
+      importsPageTab: normalizeImportsPageTab(parsed['importsPageTab']) ?? DEFAULT_IMPORTS_PAGE_TAB,
       selectedBaseConnectionId:
         typeof parsed['selectedBaseConnectionId'] === 'string'
           ? parsed['selectedBaseConnectionId']
@@ -157,7 +167,7 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   const [saveImportSettings, setSaveImportSettings] = useState(false);
   const [savedImportSettingsSnapshot, setSavedImportSettingsSnapshot] =
     useState<PersistedImportRuntimeState | null>(null);
-  const [importsPageTab, setImportsPageTab] = useState<ImportsPageTab>('import');
+  const [importsPageTab, setImportsPageTab] = useState<ImportsPageTab>(DEFAULT_IMPORTS_PAGE_TAB);
   const [showAllWarehouses, setShowAllWarehouses] = useState(false);
   const [includeAllWarehouses, setIncludeAllWarehouses] = useState(false);
   const [inventoryId, setInventoryId] = useState('');

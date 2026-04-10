@@ -19,7 +19,7 @@ import type {
   useDeleteShippingGroupMutation,
   useSaveShippingGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import type { ShippingGroupFormData } from './ShippingGroupsContext';
+import type { ShippingGroupFormData } from '@/shared/contracts/products/shipping-groups';
 
 type ShippingGroupToast = ReturnType<typeof useToast>['toast'];
 type ShippingGroupSaveMutation = ReturnType<typeof useSaveShippingGroupMutation>;

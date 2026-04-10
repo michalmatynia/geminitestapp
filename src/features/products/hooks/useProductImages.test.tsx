@@ -42,6 +42,22 @@ const createWrapper = (queryClient: QueryClient) =>
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
 
+const createImage = (id: string) => ({
+  productId: 'product-1',
+  imageFileId: id,
+  assignedAt: '2026-04-01T00:00:00.000Z',
+  imageFile: {
+    id,
+    filename: `${id}.jpg`,
+    filepath: `/tmp/${id}.jpg`,
+    mimetype: 'image/jpeg',
+    size: 1234,
+    url: `https://example.com/${id}.jpg`,
+    createdAt: '2026-04-01T00:00:00.000Z',
+    updatedAt: '2026-04-01T00:00:00.000Z',
+  },
+});
+
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
     id: 'product-1',
@@ -73,23 +89,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     catalogId: '',
     tags: [],
     producers: [],
-    images: [
-      {
-        productId: 'product-1',
-        imageFileId: 'image-file-1',
-        assignedAt: '2026-04-01T00:00:00.000Z',
-        imageFile: {
-          id: 'image-file-1',
-          filename: 'image-1.jpg',
-          filepath: '/tmp/image-1.jpg',
-          mimetype: 'image/jpeg',
-          size: 1234,
-          url: 'https://example.com/image-1.jpg',
-          createdAt: '2026-04-01T00:00:00.000Z',
-          updatedAt: '2026-04-01T00:00:00.000Z',
-        },
-      },
-    ],
+    images: [createImage('image-file-1')],
     catalogs: [],
     parameters: [],
     imageLinks: [],
@@ -122,5 +122,52 @@ describe('useProductImages', () => {
     expect(mocks.deleteMock).toHaveBeenCalledWith('/api/v2/products/product-1/images/image-file-1');
     expect(mocks.invalidateProductsMock).toHaveBeenCalledWith(queryClient);
     expect(result.current.imageSlots[0]).toBeNull();
+  });
+
+  it('compacts refreshed existing images without duplicating and removes the last image on the next click', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = createWrapper(queryClient);
+
+    const initialProduct = createProduct({
+      images: [createImage('image-file-1'), createImage('image-file-2')],
+    });
+
+    const { result } = renderHook(() => useProductImages(initialProduct), { wrapper });
+
+    expect(result.current.imageSlots[0]?.slotId).toBe('image-file-1');
+    expect(result.current.imageSlots[1]?.slotId).toBe('image-file-2');
+
+    await act(async () => {
+      await result.current.handleSlotDisconnectImage(0);
+    });
+
+    expect(result.current.imageSlots[0]).toBeNull();
+    expect(result.current.imageSlots[1]?.slotId).toBe('image-file-2');
+
+    act(() => {
+      result.current.refreshFromProduct(
+        createProduct({
+          images: [createImage('image-file-2')],
+        })
+      );
+    });
+
+    expect(result.current.imageSlots[0]?.slotId).toBe('image-file-2');
+    expect(result.current.imageSlots[1]).toBeNull();
+
+    await act(async () => {
+      await result.current.handleSlotDisconnectImage(0);
+    });
+
+    expect(mocks.deleteMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/v2/products/product-1/images/image-file-1'
+    );
+    expect(mocks.deleteMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/v2/products/product-1/images/image-file-2'
+    );
+    expect(result.current.imageSlots[0]).toBeNull();
+    expect(result.current.imageSlots[1]).toBeNull();
   });
 });

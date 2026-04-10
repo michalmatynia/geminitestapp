@@ -19,6 +19,9 @@ export interface FilterField {
   width?: string; // CSS width value
   className?: string;
   colSpan?: string; // Tailwind grid col-span e.g. "col-span-2"
+  autoComplete?: string;
+  inputName?: string;
+  spellCheck?: boolean;
 }
 
 export interface PanelStat {

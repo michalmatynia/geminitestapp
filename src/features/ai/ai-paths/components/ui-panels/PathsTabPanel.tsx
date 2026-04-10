@@ -206,6 +206,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
           }}
           onPathOpen={onPathOpen}
           panelClassName='min-h-[680px] overflow-hidden rounded-2xl border border-border/60 bg-card/20 shadow-xl'
+          pathClickBehavior='select'
           paths={graphPaths}
           renderHeaderActions={({ selectedFolderPath }) => (
             <>
@@ -239,6 +240,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
           )}
           searchAriaLabel='Search paths'
           searchPlaceholder='Search folders or paths'
+          showPathHoverActions
           toast={toast}
         />
         <AppModal

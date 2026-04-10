@@ -211,6 +211,19 @@ describe('ImportListPreviewSection', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders the exact-target input with browser autofill disabled', () => {
+    mocks.useImportExportStateMock.mockReturnValue(createStateMock());
+
+    render(<ImportListPreviewSection />);
+
+    const input = screen.getByLabelText('Exact import target value');
+    expect(input).toHaveAttribute('name', 'base-import-exact-target');
+    expect(input).toHaveAttribute('autocomplete', 'off');
+    expect(input).toHaveAttribute('autocapitalize', 'none');
+    expect(input).toHaveAttribute('autocorrect', 'off');
+    expect(input).toHaveAttribute('spellcheck', 'false');
+  });
+
   it('submits an exact SKU target when provided', () => {
     const handleImport = vi.fn();
     mocks.useImportExportActionsMock.mockReturnValue({

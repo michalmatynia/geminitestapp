@@ -381,6 +381,9 @@ export function ImportListPreviewSection(): React.JSX.Element {
       label: 'SKU',
       type: 'text',
       placeholder: 'Search SKU...',
+      inputName: 'base-import-sku-filter',
+      autoComplete: 'off',
+      spellCheck: false,
     },
     {
       key: 'pageSize',
@@ -461,6 +464,11 @@ export function ImportListPreviewSection(): React.JSX.Element {
               type='text'
               value={importDirectTargetValue}
               onChange={(event) => updateDirectTargetValue(event.target.value)}
+              name='base-import-exact-target'
+              autoComplete='off'
+              spellCheck={false}
+              autoCapitalize='none'
+              autoCorrect='off'
               placeholder={
                 importDirectTargetType === 'sku'
                   ? 'Example: FOASW022'

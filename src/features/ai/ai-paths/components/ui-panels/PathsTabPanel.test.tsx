@@ -68,13 +68,31 @@ vi.mock('../ai-paths-settings/AiPathsMasterTreePanel', () => ({
   AiPathsMasterTreePanel: ({
     handleSwitchPath,
     onPathOpen,
+    pathClickBehavior,
     renderHeaderActions,
+    showPathHoverActions,
   }: {
     handleSwitchPath: (pathId: string) => void;
     onPathOpen?: (pathId: string) => void;
+    pathClickBehavior?: 'open' | 'select';
     renderHeaderActions?: (input: { selectedFolderPath: string }) => React.ReactNode;
+    showPathHoverActions?: boolean;
   }) => (
-    <div data-testid='ai-paths-master-tree-panel'>
+    <div
+      data-testid='ai-paths-master-tree-panel'
+      data-path-click-behavior={pathClickBehavior}
+      data-show-hover-actions={showPathHoverActions ? 'true' : 'false'}
+    >
+      <button
+        type='button'
+        onClick={() => {
+          if (pathClickBehavior === 'open') {
+            handleSwitchPath('path-main');
+          }
+        }}
+      >
+        select row
+      </button>
       <button
         type='button'
         onClick={() => {
@@ -82,7 +100,7 @@ vi.mock('../ai-paths-settings/AiPathsMasterTreePanel', () => ({
           onPathOpen?.('path-main');
         }}
       >
-        open from tree
+        preview from tree
       </button>
       <div>{renderHeaderActions?.({ selectedFolderPath: 'drafts/seo' })}</div>
     </div>
@@ -177,8 +195,21 @@ describe('PathsTabPanel', () => {
     render(<PathsTabPanel onPathOpen={onPathOpen} />);
 
     expect(screen.getByTestId('ai-paths-master-tree-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-paths-master-tree-panel')).toHaveAttribute(
+      'data-path-click-behavior',
+      'select',
+    );
+    expect(screen.getByTestId('ai-paths-master-tree-panel')).toHaveAttribute(
+      'data-show-hover-actions',
+      'true',
+    );
 
-    fireEvent.click(screen.getByRole('button', { name: 'open from tree' }));
+    fireEvent.click(screen.getByRole('button', { name: 'select row' }));
+
+    expect(mockState.handleSwitchPath).not.toHaveBeenCalled();
+    expect(onPathOpen).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'preview from tree' }));
 
     expect(mockState.handleSwitchPath).toHaveBeenCalledWith('path-main');
     expect(onPathOpen).toHaveBeenCalledWith('path-main');

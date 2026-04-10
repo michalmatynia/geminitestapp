@@ -1,6 +1,4 @@
-import { mkdir, readdir, stat, unlink, writeFile } from 'fs/promises';
-import path from 'path';
-
+import { createPlaywrightConnectionTestFailWithDebug } from '@/features/playwright/server';
 import type { Locator, Page } from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
@@ -119,54 +117,14 @@ export function createVintedBrowserTestUtils(params: {
     }
   };
 
-  const captureDebugArtifacts = async (label: string): Promise<string> => {
-    try {
-      const now = new Date().toISOString().replace(/[:.]/g, '-');
-      const safeLabel = label
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .slice(0, 40);
-      const baseDir = path.join(process.cwd(), 'playwright-debug');
-      await mkdir(baseDir, { recursive: true });
-      try {
-        const entries = await readdir(baseDir);
-        const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-        await Promise.all(
-          entries.map(async (entry) => {
-            const entryPath = path.join(baseDir, entry);
-            const info = await stat(entryPath);
-            if (info.mtimeMs < cutoff) {
-              await unlink(entryPath);
-            }
-          })
-        );
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-      }
-      const prefix = `${params.connectionId}-${now}-${safeLabel || 'debug'}`;
-      const screenshotPath = path.join(baseDir, `${prefix}.png`);
-      const htmlPath = path.join(baseDir, `${prefix}.html`);
-      await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => undefined);
-      const html = await page.content().catch(() => '');
-      if (html) {
-        await writeFile(htmlPath, html, 'utf8');
-      }
-      return `Screenshot: ${screenshotPath}\nHTML: ${htmlPath}`;
-    } catch (error) {
+  const failWithDebug = createPlaywrightConnectionTestFailWithDebug({
+    page,
+    connectionId: params.connectionId,
+    fail,
+    onError: (error) => {
       void ErrorSystem.captureException(error);
-      return '';
-    }
-  };
-
-  const failWithDebug = async (
-    step: string,
-    detail: string,
-    status = 400
-  ): Promise<never> => {
-    const debugInfo = await captureDebugArtifacts(step);
-    const combined = debugInfo ? `${detail}\n\nDebug:\n${debugInfo}` : detail;
-    return await fail(step, combined, status);
-  };
+    },
+  });
 
   return {
     safeWaitForSelector,

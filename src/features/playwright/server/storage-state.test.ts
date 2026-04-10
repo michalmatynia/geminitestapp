@@ -45,4 +45,26 @@ describe('persistPlaywrightConnectionStorageState', () => {
       playwrightStorageStateUpdatedAt: '2026-04-10T10:00:00.000Z',
     });
   });
+
+  it('uses an injected repository when provided', async () => {
+    const repoUpdateConnectionMock = vi.fn().mockResolvedValue(undefined);
+
+    await persistPlaywrightConnectionStorageState({
+      connectionId: 'connection-2',
+      storageState: {
+        cookies: [],
+        origins: [],
+      },
+      updatedAt: '2026-04-10T11:00:00.000Z',
+      repo: {
+        updateConnection: repoUpdateConnectionMock,
+      },
+    });
+
+    expect(updateConnectionMock).not.toHaveBeenCalled();
+    expect(repoUpdateConnectionMock).toHaveBeenCalledWith('connection-2', {
+      playwrightStorageState: 'encrypted:{"cookies":[],"origins":[]}',
+      playwrightStorageStateUpdatedAt: '2026-04-10T11:00:00.000Z',
+    });
+  });
 });

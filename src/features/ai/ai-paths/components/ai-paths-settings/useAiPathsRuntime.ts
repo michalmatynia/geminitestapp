@@ -33,6 +33,7 @@ import { createRunId } from './runtime/utils';
 import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const LOCAL_RUN_STALE_RECOVERY_MS = 2000;
 
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
   const runtimeDataState = useRuntimeDataState();
@@ -426,6 +427,66 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   );
 
   const { setRunStatus: stateSetRunStatus, resetRuntimeNodeStatuses, setRuntimeEvents: stateSetRuntimeEvents } = state;
+  useEffect(() => {
+    if (args.executionMode !== 'local') return;
+    if (state.runStatus !== 'running') return;
+
+    const recoveryTimer = window.setTimeout((): void => {
+      if (runLoopActiveRef.current) return;
+      if (server.serverRunActiveRef.current) return;
+
+      const recoveredAt = new Date().toISOString();
+      runInFlightRef.current = false;
+      pauseRequestedRef.current = false;
+      abortControllerRef.current = null;
+      currentRunIdRef.current = null;
+      currentRunStartedAtRef.current = null;
+      currentRunStartedAtMsRef.current = null;
+      triggerContextRef.current = null;
+      queuedRunsRef.current = [];
+
+      setRuntimeState((prev: RuntimeState): RuntimeState => {
+        const nextCurrentRun =
+          prev.currentRun == null
+            ? null
+            : {
+                ...prev.currentRun,
+                status: prev.currentRun.status === 'running' ? 'canceled' : prev.currentRun.status,
+                finishedAt: prev.currentRun.finishedAt ?? recoveredAt,
+              };
+        const nextState: RuntimeState = {
+          ...prev,
+          status: 'idle',
+          currentRun: nextCurrentRun,
+        };
+        runtimeStateRef.current = nextState;
+        return nextState;
+      });
+      stateSetRunStatus('idle');
+      runtimeContextActions.setRuntimeRunStatus('idle');
+      runtimeContextActions.setCurrentRunId(null);
+      appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_warning',
+        level: 'warn',
+        message: 'Recovered a stale local run and reset runtime state to idle.',
+        timestamp: recoveredAt,
+      });
+    }, LOCAL_RUN_STALE_RECOVERY_MS);
+
+    return () => {
+      window.clearTimeout(recoveryTimer);
+    };
+  }, [
+    args.executionMode,
+    appendRuntimeEvent,
+    runtimeContextActions,
+    server.serverRunActiveRef,
+    setRuntimeState,
+    state.runStatus,
+    stateSetRunStatus,
+  ]);
+
   const resetRuntimeDiagnostics = useCallback((): void => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();

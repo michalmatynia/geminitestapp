@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   categoryBulkWrite: vi.fn(),
+  categoryDeleteMany: vi.fn(),
   categoryDeleteOne: vi.fn(),
   categoryFind: vi.fn(),
   categoryFindOne: vi.fn(),
@@ -16,6 +17,8 @@ const mocks = vi.hoisted(() => ({
   categoryToArray: vi.fn(),
   categoryUpdateOne: vi.fn(),
   getMongoDb: vi.fn(),
+  productFindOne: vi.fn(),
+  shippingGroupFindOne: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -39,6 +42,7 @@ describe('mongo-category-repository shared-lib', () => {
     };
 
     mocks.categoryBulkWrite.mockReset();
+    mocks.categoryDeleteMany.mockReset();
     mocks.categoryDeleteOne.mockReset();
     mocks.categoryFind.mockReset().mockReturnValue(cursor);
     mocks.categoryFindOne.mockReset();
@@ -47,11 +51,24 @@ describe('mongo-category-repository shared-lib', () => {
     mocks.categorySort.mockReset().mockReturnValue(cursor);
     mocks.categoryToArray.mockReset();
     mocks.categoryUpdateOne.mockReset();
+    mocks.productFindOne.mockReset().mockResolvedValue(null);
+    mocks.shippingGroupFindOne.mockReset().mockResolvedValue(null);
     mocks.getMongoDb.mockReset().mockResolvedValue({
       collection: (name: string) => {
+        if (name === 'products') {
+          return {
+            findOne: mocks.productFindOne,
+          };
+        }
+        if (name === 'product_shipping_groups') {
+          return {
+            findOne: mocks.shippingGroupFindOne,
+          };
+        }
         if (name !== 'product_categories') return {};
         return {
           bulkWrite: mocks.categoryBulkWrite,
+          deleteMany: mocks.categoryDeleteMany,
           deleteOne: mocks.categoryDeleteOne,
           find: mocks.categoryFind,
           findOne: mocks.categoryFindOne,
@@ -450,6 +467,76 @@ describe('mongo-category-repository shared-lib', () => {
       });
     mocks.categoryToArray
       .mockResolvedValueOnce([
+        {
+          _id: categoryId,
+          name: 'Delete Me',
+          name_en: 'Delete Me',
+          name_pl: null,
+          name_de: null,
+          description: null,
+          description_en: null,
+          description_pl: null,
+          description_de: null,
+          color: null,
+          parentId: null,
+          catalogId: 'catalog-1',
+          sortIndex: 0,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          _id: childId,
+          name: 'Delete Child',
+          name_en: 'Delete Child',
+          name_pl: null,
+          name_de: null,
+          description: null,
+          description_en: null,
+          description_pl: null,
+          description_de: null,
+          color: null,
+          parentId: categoryId,
+          catalogId: 'catalog-1',
+          sortIndex: 0,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          _id: siblingA,
+          name: 'Sibling A',
+          name_en: 'Sibling A',
+          name_pl: null,
+          name_de: null,
+          description: null,
+          description_en: null,
+          description_pl: null,
+          description_de: null,
+          color: null,
+          parentId: null,
+          catalogId: 'catalog-1',
+          sortIndex: 1,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          _id: siblingB,
+          name: 'Sibling B',
+          name_en: 'Sibling B',
+          name_pl: null,
+          name_de: null,
+          description: null,
+          description_en: null,
+          description_pl: null,
+          description_de: null,
+          color: null,
+          parentId: null,
+          catalogId: 'catalog-1',
+          sortIndex: 3,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ])
+      .mockResolvedValueOnce([
         { _id: siblingA, sortIndex: 1 },
         { _id: siblingB, sortIndex: 3 },
       ])
@@ -463,8 +550,13 @@ describe('mongo-category-repository shared-lib', () => {
       targetId.toString()
     );
 
-    const [deleteFilter] = mocks.categoryDeleteOne.mock.calls[0] as [{ _id: ObjectId | string }];
-    expect(deleteFilter._id.toString()).toBe(categoryId.toString());
+    const [deleteFilter] = mocks.categoryDeleteMany.mock.calls[0] as [
+      { _id: { $in: Array<ObjectId | string> } },
+    ];
+    expect(deleteFilter._id.$in.map((entry) => entry.toString())).toEqual([
+      categoryId.toString(),
+      childId.toString(),
+    ]);
     expect(mocks.categoryBulkWrite).toHaveBeenCalledWith([
       {
         updateOne: {
@@ -485,5 +577,160 @@ describe('mongo-category-repository shared-lib', () => {
     expect(byName?.name).toBe('Named');
     expect(descendant).toBe(true);
     expect(await mongoCategoryRepository.isDescendant('same-id', 'same-id')).toBe(true);
+  });
+
+  it('blocks deleting category subtrees that are still referenced by products', async () => {
+    const now = new Date('2026-03-25T19:45:00.000Z');
+    const categoryId = new ObjectId('507f1f77bcf86cd799439055');
+    const childId = new ObjectId('507f1f77bcf86cd799439056');
+
+    mocks.categoryFindOne.mockResolvedValueOnce({
+      _id: categoryId,
+      name: 'In Use',
+      name_en: 'In Use',
+      name_pl: null,
+      name_de: null,
+      description: null,
+      description_en: null,
+      description_pl: null,
+      description_de: null,
+      color: null,
+      parentId: null,
+      catalogId: 'catalog-1',
+      sortIndex: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+    mocks.categoryToArray.mockResolvedValueOnce([
+      {
+        _id: categoryId,
+        name: 'In Use',
+        name_en: 'In Use',
+        name_pl: null,
+        name_de: null,
+        description: null,
+        description_en: null,
+        description_pl: null,
+        description_de: null,
+        color: null,
+        parentId: null,
+        catalogId: 'catalog-1',
+        sortIndex: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        _id: childId,
+        name: 'In Use Child',
+        name_en: 'In Use Child',
+        name_pl: null,
+        name_de: null,
+        description: null,
+        description_en: null,
+        description_pl: null,
+        description_de: null,
+        color: null,
+        parentId: categoryId,
+        catalogId: 'catalog-1',
+        sortIndex: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    mocks.productFindOne.mockResolvedValueOnce({
+      _id: 'product-1',
+      id: 'product-1',
+      sku: 'SKU-1',
+      categoryId: childId,
+    });
+
+    await expect(mongoCategoryRepository.deleteCategory(categoryId.toString())).rejects.toMatchObject(
+      {
+        code: 'CONFLICT',
+        message: 'Cannot delete category because it is still used by products or shipping groups.',
+        meta: expect.objectContaining({
+          referencedProductId: 'product-1',
+          referencedProductCategoryId: childId,
+          subtreeCategoryIds: [categoryId.toString(), childId.toString()],
+        }),
+      }
+    );
+    expect(mocks.productFindOne).toHaveBeenCalledWith(
+      {
+        categoryId: {
+          $in: [categoryId.toString(), categoryId, childId.toString(), childId],
+        },
+      },
+      expect.any(Object)
+    );
+    expect(mocks.categoryDeleteMany).not.toHaveBeenCalled();
+  });
+
+  it('blocks deleting category subtrees that are still referenced by shipping group rules', async () => {
+    const now = new Date('2026-03-25T20:00:00.000Z');
+    const categoryId = new ObjectId('507f1f77bcf86cd799439057');
+
+    mocks.categoryFindOne.mockResolvedValueOnce({
+      _id: categoryId,
+      name: 'Shipping Rule Category',
+      name_en: 'Shipping Rule Category',
+      name_pl: null,
+      name_de: null,
+      description: null,
+      description_en: null,
+      description_pl: null,
+      description_de: null,
+      color: null,
+      parentId: null,
+      catalogId: 'catalog-1',
+      sortIndex: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+    mocks.categoryToArray.mockResolvedValueOnce([
+      {
+        _id: categoryId,
+        name: 'Shipping Rule Category',
+        name_en: 'Shipping Rule Category',
+        name_pl: null,
+        name_de: null,
+        description: null,
+        description_en: null,
+        description_pl: null,
+        description_de: null,
+        color: null,
+        parentId: null,
+        catalogId: 'catalog-1',
+        sortIndex: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    mocks.shippingGroupFindOne.mockResolvedValueOnce({
+      _id: 'shipping-group-1',
+      name: 'Default shipping',
+      autoAssignCategoryIds: [categoryId.toString()],
+    });
+
+    await expect(mongoCategoryRepository.deleteCategory(categoryId.toString())).rejects.toMatchObject(
+      {
+        code: 'CONFLICT',
+        message: 'Cannot delete category because it is still used by products or shipping groups.',
+        meta: expect.objectContaining({
+          referencedShippingGroupId: 'shipping-group-1',
+          referencedShippingGroupName: 'Default shipping',
+          subtreeCategoryIds: [categoryId.toString()],
+        }),
+      }
+    );
+    expect(mocks.shippingGroupFindOne).toHaveBeenCalledWith(
+      {
+        autoAssignCategoryIds: {
+          $in: [categoryId.toString(), categoryId],
+        },
+      },
+      expect.any(Object)
+    );
+    expect(mocks.categoryDeleteMany).not.toHaveBeenCalled();
   });
 });

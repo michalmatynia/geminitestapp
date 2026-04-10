@@ -18,6 +18,7 @@ vi.mock('@/shared/lib/ai/server-settings', () => ({
 
 import {
   parsePersistedStorageState,
+  resolveConnectionPlaywrightExplicitPreferences,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
 
@@ -222,6 +223,43 @@ describe('tradera-playwright-settings', () => {
       humanizeMouse: false,
       clickDelayMin: 33,
       actionDelayMax: 999,
+    });
+  });
+
+  it('exposes only explicit preference signals from the resolved profile', async () => {
+    getSettingValueMock.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'persona-1',
+          settings: {
+            browser: 'brave',
+            headless: false,
+          },
+        },
+      ])
+    );
+
+    const resolved = await resolveConnectionPlaywrightExplicitPreferences({
+      id: 'connection-1',
+      integrationId: 'integration-1',
+      name: 'Connection',
+      createdAt: '2026-04-10T00:00:00.000Z',
+      updatedAt: '2026-04-10T00:00:00.000Z',
+      playwrightPersonaId: 'persona-1',
+      playwrightBrowser: 'chrome',
+    } as never);
+
+    expect(resolved).toMatchObject({
+      connectionHeadless: false,
+      connectionBrowserPreference: 'chrome',
+      profile: {
+        hasExplicitHeadlessPreference: true,
+        hasExplicitBrowserPreference: true,
+        settings: {
+          browser: 'chrome',
+          headless: false,
+        },
+      },
     });
   });
 });

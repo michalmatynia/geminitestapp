@@ -181,6 +181,65 @@ describe('openPlaywrightConnectionPageSession', () => {
     });
   });
 
+  it('reuses a provided runtime and applies launch setting overrides', async () => {
+    const runtime = {
+      browserPreference: 'chromium',
+      deviceProfileName: null,
+      settings: {
+        headless: false,
+        slowMo: 77,
+        timeout: 30_000,
+        navigationTimeout: 31_000,
+        proxyEnabled: false,
+        proxyServer: '',
+        proxyUsername: '',
+        proxyPassword: '',
+      },
+      storageState: null,
+      personaId: 'persona-1',
+    };
+    const newContextMock = vi.fn().mockResolvedValue({
+      setDefaultTimeout: vi.fn(),
+      setDefaultNavigationTimeout: vi.fn(),
+      newPage: vi.fn().mockResolvedValue({}),
+      close: vi.fn().mockResolvedValue(undefined),
+    });
+
+    launchPlaywrightBrowserMock.mockResolvedValue({
+      browser: {
+        newContext: newContextMock,
+        close: vi.fn().mockResolvedValue(undefined),
+      },
+      label: 'Chromium',
+      fallbackMessages: [],
+    });
+
+    await openPlaywrightConnectionPageSession({
+      connection: { id: 'connection-1' } as never,
+      runtime: runtime as never,
+      headless: true,
+      launchSettingsOverrides: {
+        slowMo: 0,
+      },
+    });
+
+    expect(resolvePlaywrightConnectionRuntimeMock).not.toHaveBeenCalled();
+    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith('chromium', {
+      fromHelper: true,
+      settings: {
+        headless: false,
+        slowMo: 0,
+        timeout: 30_000,
+        navigationTimeout: 31_000,
+        proxyEnabled: false,
+        proxyServer: '',
+        proxyUsername: '',
+        proxyPassword: '',
+      },
+      headless: true,
+    });
+  });
+
   it('builds standardized native session metadata with instance identity', () => {
     expect(
       buildPlaywrightConnectionSessionMetadata({

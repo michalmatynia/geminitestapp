@@ -46,8 +46,8 @@ describe('base import parameters handler module', () => {
 
     expect(collected.keys).toEqual(expect.arrayContaining(['Tradera', 'Schpock']));
     expect(collected.values).toMatchObject({
-      Tradera: '1',
-      Schpock: '0',
+      Tradera: 'true',
+      Schpock: 'false',
     });
   });
 });

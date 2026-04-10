@@ -14,13 +14,23 @@ import {
   resolvePlaywrightConnectionRuntime,
   type ResolvedPlaywrightConnectionRuntime,
 } from './connection-runtime';
+import type { TraderaPlaywrightRuntimeSettings } from './settings';
 import type { PlaywrightEngineRunInstance } from './runtime';
+
+type OpenPlaywrightConnectionPageSessionLaunchSettingsOverrides = Partial<
+  Pick<
+    TraderaPlaywrightRuntimeSettings,
+    'slowMo' | 'proxyEnabled' | 'proxyServer' | 'proxyUsername' | 'proxyPassword'
+  >
+>;
 
 export type OpenPlaywrightConnectionPageSessionInput = {
   connection: IntegrationConnectionRecord;
   instance?: PlaywrightEngineRunInstance | null;
+  runtime?: ResolvedPlaywrightConnectionRuntime;
   browserPreference?: PlaywrightBrowserPreference;
   headless?: boolean;
+  launchSettingsOverrides?: OpenPlaywrightConnectionPageSessionLaunchSettingsOverrides;
   viewport?: { width: number; height: number };
 };
 
@@ -141,15 +151,20 @@ export const buildPlaywrightNativeTaskMetadata = <
 export const openPlaywrightConnectionPageSession = async (
   input: OpenPlaywrightConnectionPageSessionInput
 ): Promise<OpenPlaywrightConnectionPageSessionResult> => {
-  const runtime = await resolvePlaywrightConnectionRuntime(input.connection);
+  const runtime =
+    input.runtime ?? (await resolvePlaywrightConnectionRuntime(input.connection));
   const browserPreference = input.browserPreference ?? runtime.browserPreference;
   const headless =
     typeof input.headless === 'boolean' ? input.headless : runtime.settings.headless;
+  const launchSettings = {
+    ...runtime.settings,
+    ...(input.launchSettingsOverrides ?? {}),
+  };
 
   const launchResult = await launchPlaywrightBrowser(
     browserPreference,
     buildPlaywrightConnectionLaunchOptions({
-      settings: runtime.settings,
+      settings: launchSettings,
       headless,
     })
   );

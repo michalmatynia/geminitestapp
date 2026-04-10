@@ -3,12 +3,17 @@ import { ObjectId } from 'mongodb';
 import type { CategoryRepository, CategoryFilters } from '@/shared/contracts/products/drafts';
 import type { ProductCategoryCreateInput, ProductCategoryUpdateInput } from '@/shared/contracts/products/categories';
 import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
-import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { conflictError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import {
+  buildLookupValues,
+  productCollectionName,
+} from '@/shared/lib/products/services/product-repository/mongo-product-repository.helpers';
 
 import type { AnyBulkWriteOperation, Filter, Document } from 'mongodb';
 
 const COLLECTION = 'product_categories';
+const SHIPPING_GROUP_COLLECTION = 'product_shipping_groups';
 
 interface ProductCategoryDoc extends Document {
   _id: ObjectId | string;
@@ -27,6 +32,19 @@ interface ProductCategoryDoc extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+type ProductCategoryUsageDoc = Document & {
+  _id?: ObjectId | string;
+  id?: string;
+  sku?: string | null;
+  categoryId?: string | null;
+};
+
+type ProductShippingGroupUsageDoc = Document & {
+  _id?: ObjectId | string;
+  name?: string;
+  autoAssignCategoryIds?: string[];
+};
 
 const toMongoId = (id: string | null | undefined): ObjectId | string | null => {
   if (!id) return null;
@@ -95,6 +113,40 @@ const getPrimaryCategoryName = (doc: ProductCategoryDoc): string =>
   toOptionalTrimmedString(doc.name_pl) ??
   toOptionalTrimmedString(doc.name_de) ??
   'Unnamed category';
+
+const collectCategorySubtreeDocs = (
+  root: ProductCategoryDoc,
+  catalogCategories: ProductCategoryDoc[]
+): ProductCategoryDoc[] => {
+  const byParentId = new Map<string, ProductCategoryDoc[]>();
+
+  catalogCategories.forEach((category: ProductCategoryDoc): void => {
+    const parentId = category.parentId?.toString();
+    if (!parentId) return;
+    const siblings = byParentId.get(parentId) ?? [];
+    siblings.push(category);
+    byParentId.set(parentId, siblings);
+  });
+
+  const subtree: ProductCategoryDoc[] = [];
+  const queue: ProductCategoryDoc[] = [root];
+  const visited = new Set<string>();
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+    const currentId = current._id.toString();
+    if (visited.has(currentId)) continue;
+    visited.add(currentId);
+    subtree.push(current);
+    const children = byParentId.get(currentId) ?? [];
+    children.forEach((child: ProductCategoryDoc): void => {
+      queue.push(child);
+    });
+  }
+
+  return subtree;
+};
 
 const normalizeSiblingOrder = async (catalogId: string, parentId: string | null): Promise<void> => {
   const db = await getMongoDb();
@@ -371,11 +423,79 @@ export const mongoCategoryRepository: CategoryRepository = {
 
   async deleteCategory(id: string): Promise<void> {
     const db = await getMongoDb();
-    const current = await db.collection<ProductCategoryDoc>(COLLECTION).findOne(buildIdFilter(id));
-    await db.collection<ProductCategoryDoc>(COLLECTION).deleteOne(buildIdFilter(id));
-    if (current) {
-      await normalizeSiblingOrder(current.catalogId, current.parentId?.toString() ?? null);
+    const categoryCollection = db.collection<ProductCategoryDoc>(COLLECTION);
+    const current = await categoryCollection.findOne(buildIdFilter(id));
+    if (!current) {
+      throw notFoundError('Category not found', { categoryId: id });
     }
+
+    const catalogCategories = await categoryCollection
+      .find({ catalogId: current.catalogId })
+      .toArray();
+    const subtreeDocs = collectCategorySubtreeDocs(current, catalogCategories);
+    const subtreeCategoryIds = subtreeDocs.map((category: ProductCategoryDoc): string =>
+      category._id.toString()
+    );
+    const subtreeCategoryLookupValues = buildLookupValues(subtreeCategoryIds);
+
+    const productReference = await db
+      .collection<ProductCategoryUsageDoc>(productCollectionName)
+      .findOne(
+        { categoryId: { $in: subtreeCategoryLookupValues } },
+        {
+          projection: {
+            _id: 1,
+            id: 1,
+            sku: 1,
+            categoryId: 1,
+          },
+        }
+      );
+    const shippingGroupReference = await db
+      .collection<ProductShippingGroupUsageDoc>(SHIPPING_GROUP_COLLECTION)
+      .findOne(
+        { autoAssignCategoryIds: { $in: subtreeCategoryLookupValues } },
+        {
+          projection: {
+            _id: 1,
+            name: 1,
+            autoAssignCategoryIds: 1,
+          },
+        }
+      );
+
+    if (productReference || shippingGroupReference) {
+      throw conflictError(
+        'Cannot delete category because it is still used by products or shipping groups.',
+        {
+          categoryId: id,
+          subtreeCategoryIds,
+          ...(productReference
+            ? {
+                referencedProductId:
+                  typeof productReference.id === 'string'
+                    ? productReference.id
+                    : productReference._id?.toString() ?? null,
+                referencedProductSku: productReference.sku ?? null,
+                referencedProductCategoryId: productReference.categoryId ?? null,
+              }
+            : {}),
+          ...(shippingGroupReference
+            ? {
+                referencedShippingGroupId: shippingGroupReference._id?.toString() ?? null,
+                referencedShippingGroupName: shippingGroupReference.name ?? null,
+              }
+            : {}),
+        }
+      );
+    }
+
+    await categoryCollection.deleteMany({
+      _id: {
+        $in: subtreeDocs.map((category: ProductCategoryDoc): ObjectId | string => category._id),
+      },
+    });
+    await normalizeSiblingOrder(current.catalogId, current.parentId?.toString() ?? null);
   },
 
   async findByName(

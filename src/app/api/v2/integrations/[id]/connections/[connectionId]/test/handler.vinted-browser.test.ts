@@ -4,15 +4,13 @@ const {
   chromiumLaunchMock,
   decryptSecretMock,
   encryptSecretMock,
-  parsePersistedStorageStateMock,
-  resolveConnectionPlaywrightSettingsMock,
+  resolvePlaywrightConnectionRuntimeMock,
   updateConnectionMock,
 } = vi.hoisted(() => ({
   chromiumLaunchMock: vi.fn(),
   decryptSecretMock: vi.fn(),
   encryptSecretMock: vi.fn(),
-  parsePersistedStorageStateMock: vi.fn(),
-  resolveConnectionPlaywrightSettingsMock: vi.fn(),
+  resolvePlaywrightConnectionRuntimeMock: vi.fn(),
   updateConnectionMock: vi.fn(),
 }));
 
@@ -37,11 +35,20 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
-vi.mock('@/features/playwright/server', () => ({
-  parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
-  resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
-    resolveConnectionPlaywrightSettingsMock(...args),
-}));
+vi.mock('@/features/playwright/server', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/features/playwright/server')>(
+      '@/features/playwright/server'
+    );
+  return {
+    ...actual,
+    resolvePlaywrightConnectionRuntime: (...args: unknown[]) =>
+      resolvePlaywrightConnectionRuntimeMock(...args) as Promise<unknown>,
+    resolvePlaywrightConnectionTestRuntime: async (
+      input: { connection: unknown }
+    ) => resolvePlaywrightConnectionRuntimeMock(input.connection),
+  };
+});
 
 import {
   VINTED_AUTH_ENTRY_URL,
@@ -175,23 +182,33 @@ describe('handleVintedBrowserTest', () => {
       return value;
     });
     encryptSecretMock.mockImplementation((value: string) => `encrypted:${value}`);
-    parsePersistedStorageStateMock.mockReturnValue({
-      cookies: [],
-      origins: [],
-    });
-    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
-      browser: 'auto',
-      headless: true,
-      slowMo: 0,
-      timeout: 15_000,
-      navigationTimeout: 30_000,
-      proxyEnabled: false,
-      proxyServer: '',
-      proxyUsername: '',
-      proxyPassword: '',
-      emulateDevice: false,
-      deviceName: 'Desktop Chrome',
-    });
+    resolvePlaywrightConnectionRuntimeMock.mockImplementation(
+      async (connection: { playwrightStorageState?: string | null }) => ({
+        settings: {
+          browser: 'auto',
+          headless: true,
+          slowMo: 0,
+          timeout: 15_000,
+          navigationTimeout: 30_000,
+          proxyEnabled: false,
+          proxyServer: '',
+          proxyUsername: '',
+          proxyPassword: '',
+          emulateDevice: false,
+          deviceName: 'Desktop Chrome',
+        },
+        storageState: connection.playwrightStorageState
+          ? {
+              cookies: [],
+              origins: [],
+            }
+          : null,
+        personaId: undefined,
+        browserPreference: 'auto',
+        deviceProfileName: null,
+        deviceContextOptions: {},
+      })
+    );
     updateConnectionMock.mockResolvedValue(undefined);
   });
 

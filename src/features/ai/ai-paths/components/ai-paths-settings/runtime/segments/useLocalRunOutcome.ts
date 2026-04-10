@@ -46,6 +46,28 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
     [setPathDebugSnapshots]
   );
 
+  const settleRuntimeCurrentRun = useCallback(
+    (status: 'completed' | 'failed' | 'canceled', finishedAt: string): void => {
+      const args = argsRef.current;
+      args.setRuntimeState((prev: RuntimeState): RuntimeState => {
+        const currentRun = prev.currentRun ?? null;
+        return {
+          ...prev,
+          status,
+          currentRun: currentRun
+            ? {
+                ...currentRun,
+                status,
+                finishedAt,
+                ...(status === 'completed' ? { completedAt: finishedAt } : {}),
+              }
+            : currentRun,
+        };
+      });
+    },
+    []
+  );
+
   const finalizeLocalRunOutcome = useCallback(
     (
       outcome: {
@@ -63,6 +85,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
       const args = argsRef.current;
       const finishedAt = new Date().toISOString();
       if (outcome.status === 'completed') {
+        settleRuntimeCurrentRun('completed', finishedAt);
         args.settleTransientNodeStatuses('completed');
         args.appendRuntimeEvent({
           source: 'local',
@@ -130,6 +153,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
       }
 
       if (outcome.status === 'error') {
+        settleRuntimeCurrentRun('failed', finishedAt);
         args.settleTransientNodeStatuses('failed');
         args.appendRuntimeEvent({
           source: 'local',
@@ -190,6 +214,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
       }
 
       if (outcome.status === 'canceled') {
+        settleRuntimeCurrentRun('canceled', finishedAt);
         args.settleTransientNodeStatuses('canceled');
         args.appendRuntimeEvent({
           source: 'local',
@@ -246,7 +271,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         });
       }
     },
-    [persistDebugSnapshot, setPathConfigs]
+    [persistDebugSnapshot, setPathConfigs, settleRuntimeCurrentRun]
   );
 
   return { finalizeLocalRunOutcome, persistDebugSnapshot };

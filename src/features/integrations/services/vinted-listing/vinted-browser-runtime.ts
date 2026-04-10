@@ -1,5 +1,6 @@
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
+import { buildPlaywrightListingHistoryFields } from '@/features/playwright/server/listing-service-utils';
 
 export type VintedListingSource = 'manual' | 'scheduler' | 'api';
 
@@ -88,11 +89,7 @@ export const resolveEffectiveBrowserPreferenceFromLabel = ({
 
 export const buildVintedHistoryFields = (
   browserMode: string | null | undefined
-): string[] | null => {
-  const normalizedBrowserMode =
-    typeof browserMode === 'string' && browserMode.trim().length > 0
-      ? browserMode.trim()
-      : null;
-  if (!normalizedBrowserMode) return null;
-  return [`browser_mode:${normalizedBrowserMode}`];
-};
+): string[] | null =>
+  buildPlaywrightListingHistoryFields({
+    browserMode,
+  });

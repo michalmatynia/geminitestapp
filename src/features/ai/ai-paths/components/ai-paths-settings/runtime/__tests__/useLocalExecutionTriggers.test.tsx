@@ -337,6 +337,12 @@ describe('useLocalExecutionTriggers', () => {
         }),
       })
     );
+    expect(args.runInFlightRef.current).toBe(false);
+    expect(args.currentRunIdRef.current).toBeNull();
+    expect(args.currentRunStartedAtRef.current).toBeNull();
+    expect(args.currentRunStartedAtMsRef.current).toBe(0);
+    expect(args.triggerContextRef.current).toBeNull();
+    expect(args.setRunStatus).toHaveBeenCalledWith('idle');
     expect(appendRuntimeEvent).not.toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'run_blocked',
@@ -350,6 +356,63 @@ describe('useLocalExecutionTriggers', () => {
     expect(toast).not.toHaveBeenCalledWith(
       expect.stringContaining('Canvas run blocked'),
       expect.anything()
+    );
+  });
+
+  it('resets local run state when the loop throws during a simulation-backed run', async () => {
+    const triggerNode = buildTriggerNode();
+    const simulationNode = buildSimulationNode();
+    const edges: Edge[] = [
+      {
+        id: 'edge-simulation-trigger',
+        from: simulationNode.id,
+        to: triggerNode.id,
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+    const { args, runtimeStateRef, fetchEntityByType } = createArgs({
+      normalizedNodes: [triggerNode, simulationNode],
+      sanitizedEdges: edges,
+      executionMode: 'local',
+    });
+    const loopFailure = new Error('loop exploded');
+    const runLocalLoop = vi.fn(async () => {
+      throw loopFailure;
+    });
+    const finalizeLocalRunOutcome = vi.fn();
+
+    const { result } = renderHook(() =>
+      useLocalExecutionTriggers(args, { runLocalLoop }, { finalizeLocalRunOutcome })
+    );
+
+    await act(async () => {
+      await result.current.runGraphForTrigger(triggerNode);
+    });
+
+    expect(fetchEntityByType).toHaveBeenCalledWith('product', 'product-123');
+    expect(args.runInFlightRef.current).toBe(false);
+    expect(args.currentRunIdRef.current).toBeNull();
+    expect(args.currentRunStartedAtRef.current).toBeNull();
+    expect(args.currentRunStartedAtMsRef.current).toBe(0);
+    expect(args.triggerContextRef.current).toBeNull();
+    expect(args.abortControllerRef.current).toBeNull();
+    expect(args.pauseRequestedRef.current).toBe(false);
+    expect(args.setRunStatus).toHaveBeenCalledWith('idle');
+    expect(finalizeLocalRunOutcome).toHaveBeenCalledWith(
+      {
+        status: 'error',
+        error: loopFailure,
+        state: runtimeStateRef.current,
+      },
+      expect.objectContaining({
+        triggerContext: expect.objectContaining({
+          entityId: 'product-123',
+          entityType: 'product',
+          productId: 'product-123',
+          source: 'simulation',
+        }),
+      })
     );
   });
 

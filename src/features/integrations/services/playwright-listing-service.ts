@@ -3,8 +3,6 @@ import 'server-only';
 import { isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
 import {
   decryptSecret,
-  findProductListingByIdAcrossProviders,
-  getIntegrationRepository,
 } from '@/features/integrations/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
@@ -19,11 +17,15 @@ import {
 import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
-  buildPlaywrightListingLastExecutionRecord,
-  buildPlaywrightListingProviderRecord,
+  buildPlaywrightProgrammableListingProcessArtifacts,
   buildPlaywrightScriptListingMetadata,
+  buildPlaywrightServiceListingCaughtFailure,
   buildPlaywrightServiceListingFailure,
+  buildPlaywrightServiceListingMissingContextFailure,
   buildPlaywrightServiceListingSuccess,
+  finalizePlaywrightStandardListingJobOutcome,
+  resolvePlaywrightListingPersistenceContextAfterRun,
+  resolvePlaywrightListingRunContext,
   type PlaywrightServiceListingExecutionBase,
   runPlaywrightProgrammableListingForConnection,
 } from '@/features/playwright/server';
@@ -33,9 +35,6 @@ export type { PlaywrightListingJobInput };
 export type PlaywrightListingExecutionResult = PlaywrightServiceListingExecutionBase & {
   expiresAt: Date | null;
 };
-
-const toRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
 const resolveProductImageUrls = (product: ProductWithImages): string[] => {
   const urls = new Set<string>();
@@ -109,54 +108,25 @@ const resolveRequestedBrowserMode = (
   browserMode: PlaywrightRelistBrowserMode | undefined
 ): PlaywrightRelistBrowserMode => browserMode ?? 'connection_default';
 
-const buildPlaywrightHistoryFields = (
-  browserMode: string | null | undefined
-): string[] | null => {
-  const normalizedBrowserMode =
-    typeof browserMode === 'string' && browserMode.trim().length > 0 ? browserMode.trim() : null;
-  if (!normalizedBrowserMode) return null;
-  return [`browser_mode:${normalizedBrowserMode}`];
-};
-
 export const runPlaywrightListing = async (
   input: PlaywrightListingJobInput
 ): Promise<PlaywrightListingExecutionResult> => {
   const requestedBrowserMode = resolveRequestedBrowserMode(input.browserMode);
   try {
-    const resolvedListing = await findProductListingByIdAcrossProviders(input.listingId);
-    if (!resolvedListing) {
-      return buildPlaywrightServiceListingFailure({
-        error: `Listing not found: ${input.listingId}`,
-        errorCategory: 'NOT_FOUND',
+    const runContext = await resolvePlaywrightListingRunContext({
+      listingId: input.listingId,
+      includeIntegration: true,
+    });
+    if (!runContext.ok) {
+      return buildPlaywrightServiceListingMissingContextFailure({
+        context: runContext,
         extra: {
           expiresAt: null,
         },
       });
     }
 
-    const { listing } = resolvedListing;
-    const integrationRepo = await getIntegrationRepository();
-    const connection = await integrationRepo.getConnectionById(listing.connectionId);
-    if (!connection) {
-      return buildPlaywrightServiceListingFailure({
-        error: `Connection not found: ${listing.connectionId}`,
-        errorCategory: 'NOT_FOUND',
-        extra: {
-          expiresAt: null,
-        },
-      });
-    }
-
-    const integration = await integrationRepo.getIntegrationById(connection.integrationId);
-    if (!integration) {
-      return buildPlaywrightServiceListingFailure({
-        error: `Integration not found: ${connection.integrationId}`,
-        errorCategory: 'NOT_FOUND',
-        extra: {
-          expiresAt: null,
-        },
-      });
-    }
+    const { listing, connection, integration } = runContext;
 
     if (!isPlaywrightProgrammableSlug(integration.slug)) {
       return buildPlaywrightServiceListingFailure({
@@ -204,8 +174,10 @@ export const runPlaywrightListing = async (
       listingId: input.listingId,
     });
 
-    return buildPlaywrightServiceListingFailure({
-      error: error instanceof Error ? error.message : 'Programmable Playwright listing failed.',
+    return buildPlaywrightServiceListingCaughtFailure({
+      error,
+      errorMessage:
+        error instanceof Error ? error.message : 'Programmable Playwright listing failed.',
       errorCategory: 'EXECUTION_FAILED',
       metadata: {
         requestedBrowserMode,
@@ -213,100 +185,83 @@ export const runPlaywrightListing = async (
       extra: {
         expiresAt: null,
       },
+      includeAppErrorMetadata: false,
     });
   }
 };
 
 export const processPlaywrightListingJob = async (input: PlaywrightListingJobInput): Promise<void> => {
   const result = await runPlaywrightListing(input);
-  const resolved = await findProductListingByIdAcrossProviders(input.listingId);
-
-  if (!resolved) {
-    if (!result.ok) {
-      throw new Error(result.error ?? `Listing not found: ${input.listingId}`);
-    }
+  const persistenceContext = await resolvePlaywrightListingPersistenceContextAfterRun({
+    listingId: input.listingId,
+    result,
+    missingErrorMessage: `Listing not found: ${input.listingId}`,
+  });
+  if (!persistenceContext) {
     return;
   }
 
   const now = new Date();
-  const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);
+  const { listing, repository } = persistenceContext;
   const requestedBrowserMode = resolveRequestedBrowserMode(input.browserMode);
-  const effectiveBrowserMode =
-    typeof result.metadata?.['browserMode'] === 'string' ? result.metadata['browserMode'] : null;
-  const historyFields = buildPlaywrightHistoryFields(effectiveBrowserMode ?? requestedBrowserMode);
-  const lastExecution = buildPlaywrightListingLastExecutionRecord({
+  const { historyFields, marketplaceData } = buildPlaywrightProgrammableListingProcessArtifacts({
     executedAt: now,
+    existingMarketplaceData: listing.marketplaceData,
     result,
     requestId: input.jobId ?? null,
-    includeOutcomeFields: false,
-    metadata: {
-      runId:
-        typeof result.metadata?.['runId'] === 'string'
-          ? result.metadata['runId']
-          : null,
-      browserMode: effectiveBrowserMode,
-      requestedBrowserMode,
-      publishVerified:
-        typeof result.metadata?.['publishVerified'] === 'boolean'
-          ? result.metadata['publishVerified']
-          : null,
-      rawResult: result.metadata?.['rawResult'] ?? null,
-    },
-    extra: {
-      errorCategory: result.errorCategory,
-    },
+    requestedBrowserMode,
   });
-  const playwrightData = buildPlaywrightListingProviderRecord({
-    existingMarketplaceData: previousMarketplaceData,
-    providerKey: 'playwright',
-    result,
-    lastExecution,
-  });
-  const marketplaceData = {
-    ...previousMarketplaceData,
-    marketplace: 'playwright-programmable',
-    listingUrl: result.listingUrl,
-    playwright: playwrightData,
-  };
 
   if (result.ok) {
-    await resolved.repository.updateListingStatus(input.listingId, 'active');
-    await resolved.repository.updateListing(input.listingId, {
-      externalListingId: result.externalListingId ?? null,
-      listedAt: now,
-      expiresAt: result.expiresAt ?? null,
-      lastStatusCheckAt: now,
-      failureReason: null,
+    await finalizePlaywrightStandardListingJobOutcome({
+      repository,
+      listingId: input.listingId,
+      result,
+      at: now,
       marketplaceData,
-    });
-    await resolved.repository.appendExportHistory(input.listingId, {
-      exportedAt: now,
-      status: 'active',
-      externalListingId: result.externalListingId ?? null,
-      expiresAt: result.expiresAt ?? null,
-      failureReason: null,
       relist: input.action === 'relist',
       requestId: input.jobId ?? null,
-      fields: historyFields,
+      historyFields,
+      success: {
+        transitionStatus: 'active',
+        historyStatus: 'active',
+        expiresAt: result.expiresAt ?? null,
+        updateExtra: {
+          listedAt: now,
+          expiresAt: result.expiresAt ?? null,
+        },
+      },
+      failure: {
+        transitionStatus: 'failed',
+        historyStatus: 'failed',
+        failureReason: 'Programmable Playwright listing failed.',
+      },
     });
     return;
   }
 
-  await resolved.repository.updateListingStatus(input.listingId, 'failed');
-  await resolved.repository.updateListing(input.listingId, {
-    lastStatusCheckAt: now,
-    failureReason: result.error ?? 'Programmable Playwright listing failed.',
+  await finalizePlaywrightStandardListingJobOutcome({
+    repository,
+    listingId: input.listingId,
+    result,
+    at: now,
     marketplaceData,
-  });
-  await resolved.repository.appendExportHistory(input.listingId, {
-    exportedAt: now,
-    status: 'failed',
-    externalListingId: null,
-    expiresAt: null,
-    failureReason: result.error ?? 'Programmable Playwright listing failed.',
     relist: input.action === 'relist',
     requestId: input.jobId ?? null,
-    fields: historyFields,
+    historyFields,
+    success: {
+      transitionStatus: 'active',
+      historyStatus: 'active',
+      expiresAt: result.expiresAt ?? null,
+      updateExtra: {
+        listedAt: now,
+        expiresAt: result.expiresAt ?? null,
+      },
+    },
+    failure: {
+      transitionStatus: 'failed',
+      historyStatus: 'failed',
+      failureReason: 'Programmable Playwright listing failed.',
+    },
   });
-  throw new Error(result.error ?? 'Programmable Playwright listing failed.');
 };

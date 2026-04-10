@@ -7,13 +7,13 @@ const {
   getConnectionByIdMock,
   runVintedBrowserListingMock,
   captureExceptionMock,
-  resolveConnectionPlaywrightSettingsProfileMock,
+  resolveConnectionPlaywrightExplicitPreferencesMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   runVintedBrowserListingMock: vi.fn(),
   captureExceptionMock: vi.fn(),
-  resolveConnectionPlaywrightSettingsProfileMock: vi.fn(),
+  resolveConnectionPlaywrightExplicitPreferencesMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -36,8 +36,8 @@ vi.mock('@/features/playwright/server', async () => {
     );
   return {
     ...actual,
-    resolveConnectionPlaywrightSettingsProfile: (...args: unknown[]) =>
-      resolveConnectionPlaywrightSettingsProfileMock(...args) as Promise<unknown>,
+    resolveConnectionPlaywrightExplicitPreferences: (...args: unknown[]) =>
+      resolveConnectionPlaywrightExplicitPreferencesMock(...args) as Promise<unknown>,
   };
 });
 
@@ -61,12 +61,16 @@ describe('vinted-listing-service', () => {
       playwrightHeadless: true,
       playwrightBrowser: 'auto',
     });
-    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
-      hasExplicitHeadlessPreference: false,
-      hasExplicitBrowserPreference: false,
-      settings: {
-        headless: true,
-        browser: 'auto',
+    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
+      connectionHeadless: undefined,
+      connectionBrowserPreference: undefined,
+      profile: {
+        hasExplicitHeadlessPreference: false,
+        hasExplicitBrowserPreference: false,
+        settings: {
+          headless: true,
+          browser: 'auto',
+        },
       },
     });
   });
@@ -130,12 +134,16 @@ describe('vinted-listing-service', () => {
       playwrightBrowser: 'auto',
       playwrightPersonaId: 'persona-1',
     });
-    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
-      hasExplicitHeadlessPreference: true,
-      hasExplicitBrowserPreference: true,
-      settings: {
-        headless: false,
-        browser: 'chrome',
+    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
+      connectionHeadless: false,
+      connectionBrowserPreference: 'chrome',
+      profile: {
+        hasExplicitHeadlessPreference: true,
+        hasExplicitBrowserPreference: true,
+        settings: {
+          headless: false,
+          browser: 'chrome',
+        },
       },
     });
     runVintedBrowserListingMock.mockResolvedValue({

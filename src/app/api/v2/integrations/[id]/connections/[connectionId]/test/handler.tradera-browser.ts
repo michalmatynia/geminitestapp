@@ -1,10 +1,8 @@
-import { NextResponse } from 'next/server';
-import { devices, type BrowserContextOptions } from 'playwright';
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
   normalizeTraderaListingFormUrl,
 } from '@/features/integrations/constants/tradera';
-import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import { decryptSecret } from '@/features/integrations/server';
 import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
 import {
   acceptTraderaCookies,
@@ -21,14 +19,16 @@ import {
 } from '@/features/integrations/services/tradera-listing/config';
 import { findVisibleLocator } from '@/features/integrations/services/tradera-listing/utils';
 import {
-  parsePersistedStorageState,
-  resolveConnectionPlaywrightSettings,
+  createPlaywrightConnectionTestFailureResponse,
+  createPlaywrightConnectionTestSuccessResponse,
+  openPlaywrightConnectionTestSession,
+  persistPlaywrightConnectionTestSession,
+  resolvePlaywrightConnectionTestRuntime,
 } from '@/features/playwright/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import { type IntegrationConnectionRecord, type IntegrationRepository, type TestConnectionResponse, type TestLogEntry } from '@/shared/contracts/integrations';
+import { type IntegrationConnectionRecord, type IntegrationRepository, type TestLogEntry } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
-import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
-import type { Browser, BrowserContext, Page } from 'playwright';
+import type { Page } from 'playwright';
 
 const QUICKLIST_AUTH_REQUIRED_DETAIL =
   'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.';
@@ -90,71 +90,43 @@ export async function handleTraderaBrowserTest(
       ? 'Skipped in non-credential mode.'
       : 'Password decrypted successfully'
   );
-
-  if (connection.playwrightStorageState) {
-    pushStep('Loading session', 'pending', 'Loading stored Playwright session');
-    const storedState = parsePersistedStorageState(connection.playwrightStorageState);
-    if (storedState) {
-      pushStep('Loading session', 'ok', 'Stored session loaded successfully');
-    } else {
-      pushStep('Loading session', 'ok', 'Stored session was corrupt or invalid (skipped)');
-    }
-  }
-
-  pushStep('Launching browser', 'pending', 'Starting isolated Chromium instance');
-  let browser: Browser | null = null;
-  let context: BrowserContext | null = null;
   let page: Page | null = null;
+  let closeSession: (() => Promise<void>) | null = null;
 
   try {
-    const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
+    const runtime = await resolvePlaywrightConnectionTestRuntime({
+      connection,
+      pushStep,
+      storedSession: {
+        loadedDetail: 'Stored session loaded successfully',
+        missingDetail: 'Stored session was corrupt or invalid (skipped)',
+        missingStatus: 'ok',
+      },
+    });
+    const playwrightSettings = runtime.settings;
     const effectiveHeadless = quicklistPreflightMode
       ? true
       : manualMode || manualSessionRefreshMode
         ? false
         : playwrightSettings.headless;
-    const emulateDevice = playwrightSettings.emulateDevice;
-    const deviceName = playwrightSettings.deviceName;
-    const deviceProfile =
-      emulateDevice && deviceName && devices[deviceName] ? devices[deviceName] : null;
 
-    const launchResult = await launchPlaywrightBrowser(playwrightSettings.browser, {
+    const session = await openPlaywrightConnectionTestSession({
+      connection,
+      pushStep,
+      runtime,
       headless: effectiveHeadless,
-      slowMo: quicklistPreflightMode ? 0 : playwrightSettings.slowMo,
-      ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
-        ? {
-          proxy: {
-            server: playwrightSettings.proxyServer,
-            ...(playwrightSettings.proxyUsername
-              ? { username: playwrightSettings.proxyUsername }
-              : {}),
-            ...(playwrightSettings.proxyPassword
-              ? { password: playwrightSettings.proxyPassword }
-              : {}),
-          },
-        }
-        : {}),
+      launchSettingsOverrides: {
+        slowMo: quicklistPreflightMode ? 0 : playwrightSettings.slowMo,
+      },
+      launchStep: {
+        stepName: 'Launching browser',
+        pendingDetail: 'Starting isolated Chromium instance',
+        successDetail: 'Browser ready',
+      },
     });
-    browser = launchResult.browser;
-    for (const msg of launchResult.fallbackMessages) {
-      pushStep('Browser selection', 'ok', msg);
-    }
-    pushStep('Browser selection', 'ok', `Using ${launchResult.label}.`);
+    closeSession = session.close;
+    page = session.page;
 
-    const deviceContextOptions: BrowserContextOptions = deviceProfile
-      ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
-      : {};
-
-    const resolvedStorageState =
-      parsePersistedStorageState(connection.playwrightStorageState) ?? undefined;
-    context = await browser.newContext({
-      ...deviceContextOptions,
-      ...(resolvedStorageState ? { storageState: resolvedStorageState } : {}),
-    });
-    context.setDefaultTimeout(playwrightSettings.timeout);
-    context.setDefaultNavigationTimeout(playwrightSettings.navigationTimeout);
-
-    page = await context.newPage();
     const humanizeMouse = quicklistPreflightMode
       ? false
       : playwrightSettings.humanizeMouse;
@@ -181,7 +153,7 @@ export async function handleTraderaBrowserTest(
       actionDelayMin,
       quicklistPreflightMode ? actionDelayMin : playwrightSettings.actionDelayMax
     );
-    const activePage = page;
+    const activePage = session.page;
     const utils = createTraderaBrowserTestUtils({
       page: activePage,
       connectionId: connection.id,
@@ -243,8 +215,6 @@ export async function handleTraderaBrowserTest(
       return false;
     };
 
-    pushStep('Launching browser', 'ok', 'Browser ready');
-
     if (quicklistPreflightMode) {
       // Auth check only — no listing form navigation or session save needed for preflight.
       pushStep('Preflight validation', 'pending', 'Checking active listing session');
@@ -262,13 +232,11 @@ export async function handleTraderaBrowserTest(
       }
       pushStep('Preflight validation', 'ok', 'Stored session active');
 
-      const response: TestConnectionResponse = {
-        ok: true,
+      return createPlaywrightConnectionTestSuccessResponse({
         message: 'Tradera session is active.',
         steps,
         sessionReady: true,
-      };
-      return NextResponse.json(response);
+      });
     } else if (manualMode || manualSessionRefreshMode) {
       const stepLabel = manualSessionRefreshMode ? 'Session refresh' : 'Manual login';
       let sessionAlreadyActive = false;
@@ -376,24 +344,23 @@ export async function handleTraderaBrowserTest(
     }
     pushStep('Accessing listing form', 'ok', 'Listing form accessible');
 
-    pushStep('Saving session', 'pending', 'Capturing cookies and local storage');
-    const newState = await activePage.context().storageState();
-    const encryptedState = encryptSecret(JSON.stringify(newState));
-    await repo.updateConnection(connection.id, {
-      playwrightStorageState: encryptedState,
-      playwrightStorageStateUpdatedAt: new Date().toISOString(),
+    await persistPlaywrightConnectionTestSession({
+      connectionId: connection.id,
+      page: activePage,
+      repo,
+      pushStep,
+      pendingDetail: 'Capturing cookies and local storage',
+      successDetail: 'Playwright session updated',
+      failureDetail: 'Failed to store session',
     });
-    pushStep('Saving session', 'ok', 'Playwright session updated');
 
-    const response: TestConnectionResponse = {
-      ok: true,
+    return createPlaywrightConnectionTestSuccessResponse({
       message: manualSessionRefreshMode
         ? 'Tradera session refreshed successfully.'
         : 'Tradera browser connection test successful.',
       steps,
       sessionReady: true,
-    };
-    return NextResponse.json(response);
+    });
   } catch (error: unknown) {
     if (manualMode || manualSessionRefreshMode) {
       await page?.waitForTimeout?.(2000);
@@ -402,13 +369,12 @@ export async function handleTraderaBrowserTest(
     const errorMsg = error instanceof Error ? error.message : String(error);
     pushStep('Connection test', 'failed', errorMsg);
 
-    const response: TestConnectionResponse = {
-      ok: false,
+    return createPlaywrightConnectionTestFailureResponse({
       message: errorMsg,
       steps,
-    };
-    return NextResponse.json(response, { status: errorMsg.includes('AUTH_REQUIRED') ? 401 : 400 });
+    });
   } finally {
-    await browser?.close();
+    await page?.close().catch(() => undefined);
+    await closeSession?.().catch(() => undefined);
   }
 }

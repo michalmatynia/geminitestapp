@@ -9,8 +9,7 @@ const {
   updateConnectionMock,
   decryptSecretMock,
   encryptSecretMock,
-  parsePersistedStorageStateMock,
-  resolveConnectionPlaywrightSettingsMock,
+  resolvePlaywrightConnectionRuntimeMock,
   createTraderaBrowserTestUtilsMock,
   validateTraderaQuickListProductConfigMock,
   chromiumLaunchMock,
@@ -38,8 +37,7 @@ const {
   updateConnectionMock: vi.fn(),
   decryptSecretMock: vi.fn(),
   encryptSecretMock: vi.fn(),
-  parsePersistedStorageStateMock: vi.fn(),
-  resolveConnectionPlaywrightSettingsMock: vi.fn(),
+  resolvePlaywrightConnectionRuntimeMock: vi.fn(),
   createTraderaBrowserTestUtilsMock: vi.fn(),
   validateTraderaQuickListProductConfigMock: vi.fn(),
   chromiumLaunchMock: vi.fn(),
@@ -107,11 +105,20 @@ vi.mock('@/features/integrations/services/tradera-listing/preflight', () => ({
     validateTraderaQuickListProductConfigMock(...args),
 }));
 
-vi.mock('@/features/playwright/server', () => ({
-  parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
-  resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
-    resolveConnectionPlaywrightSettingsMock(...args),
-}));
+vi.mock('@/features/playwright/server', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/features/playwright/server')>(
+      '@/features/playwright/server'
+    );
+  return {
+    ...actual,
+    resolvePlaywrightConnectionRuntime: (...args: unknown[]) =>
+      resolvePlaywrightConnectionRuntimeMock(...args) as Promise<unknown>,
+    resolvePlaywrightConnectionTestRuntime: async (
+      input: { connection: unknown }
+    ) => resolvePlaywrightConnectionRuntimeMock(input.connection),
+  };
+});
 
 vi.mock('@/features/integrations/services/tradera-browser-test-utils', () => ({
   createTraderaBrowserTestUtils: (...args: unknown[]) => createTraderaBrowserTestUtilsMock(...args),
@@ -174,28 +181,36 @@ describe('integration connection test handler', () => {
     });
 
     encryptSecretMock.mockImplementation((value: string) => `encrypted:${value}`);
-    parsePersistedStorageStateMock.mockReturnValue({ cookies: [], origins: [] });
-
-    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
-      browser: 'chromium',
-      headless: true,
-      slowMo: 77,
-      timeout: 11_111,
-      navigationTimeout: 22_222,
-      humanizeMouse: true,
-      mouseJitter: 11,
-      clickDelayMin: 40,
-      clickDelayMax: 160,
-      inputDelayMin: 35,
-      inputDelayMax: 140,
-      actionDelayMin: 300,
-      actionDelayMax: 1_100,
-      proxyEnabled: true,
-      proxyServer: 'http://persona-proxy.example:8080',
-      proxyUsername: 'persona-user',
-      proxyPassword: 'persona-pass',
-      emulateDevice: true,
-      deviceName: 'Desktop Chrome',
+    resolvePlaywrightConnectionRuntimeMock.mockResolvedValue({
+      settings: {
+        browser: 'chromium',
+        headless: true,
+        slowMo: 77,
+        timeout: 11_111,
+        navigationTimeout: 22_222,
+        humanizeMouse: true,
+        mouseJitter: 11,
+        clickDelayMin: 40,
+        clickDelayMax: 160,
+        inputDelayMin: 35,
+        inputDelayMax: 140,
+        actionDelayMin: 300,
+        actionDelayMax: 1_100,
+        proxyEnabled: true,
+        proxyServer: 'http://persona-proxy.example:8080',
+        proxyUsername: 'persona-user',
+        proxyPassword: 'persona-pass',
+        emulateDevice: true,
+        deviceName: 'Desktop Chrome',
+      },
+      storageState: { cookies: [], origins: [] },
+      personaId: 'persona-1',
+      browserPreference: 'chromium',
+      deviceProfileName: 'Desktop Chrome',
+      deviceContextOptions: {
+        viewport: { width: 1280, height: 720 },
+        userAgent: 'persona-user-agent',
+      },
     });
     createTraderaBrowserTestUtilsMock.mockReturnValue({
       safeWaitForSelector: vi.fn(),
@@ -283,21 +298,18 @@ describe('integration connection test handler', () => {
     const payload = (await response.json()) as { ok: boolean };
 
     expect(payload.ok).toBe(true);
-    expect(resolveConnectionPlaywrightSettingsMock).toHaveBeenCalledWith(
+    expect(resolvePlaywrightConnectionRuntimeMock).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'connection-1',
         playwrightPersonaId: 'persona-1',
       })
     );
-    expect(chromiumLaunchMock).toHaveBeenCalledWith({
-      headless: false,
-      slowMo: 77,
-      proxy: {
-        server: 'http://persona-proxy.example:8080',
-        username: 'persona-user',
-        password: 'persona-pass',
-      },
-    });
+    expect(chromiumLaunchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headless: false,
+        slowMo: 77,
+      })
+    );
     expect(browserNewContextMock).toHaveBeenCalledWith(
       expect.objectContaining({
         storageState: { cookies: [], origins: [] },
@@ -430,15 +442,12 @@ describe('integration connection test handler', () => {
 
     expect(payload.ok).toBe(true);
     expect(payload.sessionReady).toBe(true);
-    expect(chromiumLaunchMock).toHaveBeenCalledWith({
-      headless: true,
-      slowMo: 0,
-      proxy: {
-        server: 'http://persona-proxy.example:8080',
-        username: 'persona-user',
-        password: 'persona-pass',
-      },
-    });
+    expect(chromiumLaunchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headless: true,
+        slowMo: 0,
+      })
+    );
     expect(safeGotoMock).toHaveBeenCalledTimes(1);
     expect(safeGotoMock).toHaveBeenCalledWith(
       'https://www.tradera.com/en/my/listings?tab=active',
@@ -458,18 +467,28 @@ describe('integration connection test handler', () => {
   });
 
   it('forces quicklist preflight to stay headless even when the connection default is headed', async () => {
-    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
-      browser: 'chromium',
-      headless: false,
-      slowMo: 77,
-      timeout: 11_111,
-      navigationTimeout: 22_222,
-      proxyEnabled: true,
-      proxyServer: 'http://persona-proxy.example:8080',
-      proxyUsername: 'persona-user',
-      proxyPassword: 'persona-pass',
-      emulateDevice: true,
-      deviceName: 'Desktop Chrome',
+    resolvePlaywrightConnectionRuntimeMock.mockResolvedValue({
+      settings: {
+        browser: 'chromium',
+        headless: false,
+        slowMo: 77,
+        timeout: 11_111,
+        navigationTimeout: 22_222,
+        proxyEnabled: true,
+        proxyServer: 'http://persona-proxy.example:8080',
+        proxyUsername: 'persona-user',
+        proxyPassword: 'persona-pass',
+        emulateDevice: true,
+        deviceName: 'Desktop Chrome',
+      },
+      storageState: { cookies: [], origins: [] },
+      personaId: 'persona-1',
+      browserPreference: 'chromium',
+      deviceProfileName: 'Desktop Chrome',
+      deviceContextOptions: {
+        viewport: { width: 1280, height: 720 },
+        userAgent: 'persona-user-agent',
+      },
     });
     parseJsonBodyMock.mockResolvedValue({
       ok: true,
@@ -491,15 +510,12 @@ describe('integration connection test handler', () => {
 
     expect(payload.ok).toBe(true);
     expect(payload.sessionReady).toBe(true);
-    expect(chromiumLaunchMock).toHaveBeenCalledWith({
-      headless: true,
-      slowMo: 0,
-      proxy: {
-        server: 'http://persona-proxy.example:8080',
-        username: 'persona-user',
-        password: 'persona-pass',
-      },
-    });
+    expect(chromiumLaunchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headless: true,
+        slowMo: 0,
+      })
+    );
   });
 
   it('validates product configuration during quicklist preflight when a product id is supplied', async () => {

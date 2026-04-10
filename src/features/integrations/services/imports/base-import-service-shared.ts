@@ -95,17 +95,17 @@ export const toStringId = (value: unknown): string | null => {
   return null;
 };
 
-const normalizeCurrencyCode = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const compact = value
+const normalizePriceIdentifier = (value: unknown): string | null => {
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  const compact = String(value)
     .trim()
     .toUpperCase()
-    .replace(/[^A-Z]/g, '');
-  return compact.length === 3 ? compact : null;
+    .replace(/[^A-Z0-9]/g, '');
+  return compact.length > 0 ? compact : null;
 };
 
 export const addCurrencyCandidate = (target: Set<string>, value: unknown): void => {
-  const code = normalizeCurrencyCode(value);
+  const code = normalizePriceIdentifier(value);
   if (code) target.add(code);
 };
 

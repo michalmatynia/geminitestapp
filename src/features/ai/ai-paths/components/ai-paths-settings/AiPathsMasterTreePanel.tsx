@@ -1,6 +1,6 @@
 'use client';
 
-import { FileCode2, Folder, FolderOpen, FolderPlus, GripVertical, Plus } from 'lucide-react';
+import { Eye, FileCode2, Folder, FolderOpen, FolderPlus, GripVertical, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
 import { createAiPathsMasterTreeAdapter } from '@/features/ai/ai-paths/utils/ai-paths-master-tree-adapter';
@@ -38,6 +38,8 @@ type PathCreateFolderOptions = {
 
 type TreeNodeToast = Toast;
 
+type PathClickBehavior = 'open' | 'select';
+
 type AiPathsTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   activePathId: string | null;
   controller: MasterFolderTreeController;
@@ -54,9 +56,11 @@ type AiPathsTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   };
   onCopyPathJson?: ((pathId: string) => void) | undefined;
   openPath: (pathId: string) => void;
+  pathClickBehavior: PathClickBehavior;
   profile: ReturnType<typeof useMasterFolderTreeShell>['profile'];
   selectedPathFolderById: Map<string, string>;
   setSelectedTreeNodeId: React.Dispatch<React.SetStateAction<string | null>>;
+  showPathHoverActions: boolean;
   toast: TreeNodeToast;
 };
 
@@ -83,9 +87,11 @@ function AiPathsTreeNode(props: AiPathsTreeNodeProps): React.JSX.Element | null 
     icons: { FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon },
     onCopyPathJson,
     openPath,
+    pathClickBehavior,
     profile,
     selectedPathFolderById,
     setSelectedTreeNodeId,
+    showPathHoverActions,
     toast,
   } = props;
 
@@ -369,18 +375,54 @@ function AiPathsTreeNode(props: AiPathsTreeNodeProps): React.JSX.Element | null 
               event.stopPropagation();
               select(event);
               setSelectedTreeNodeId(node.id);
-              openPath(pathId);
+              if (pathClickBehavior === 'open') {
+                openPath(pathId);
+              }
             }}
             title={node.name}
           >
             <FileIcon className='size-3.5 shrink-0 text-gray-400' />
             <span className='min-w-0 flex-1 truncate'>{node.name}</span>
-            {activePathId === pathId ? (
-              <span className='shrink-0 rounded-full bg-sky-500/20 px-1.5 py-0.5 text-[10px] text-sky-100'>
-                Active
-              </span>
-            ) : null}
           </button>
+          {activePathId === pathId || showPathHoverActions ? (
+            <div className='ml-auto flex shrink-0 items-center gap-1'>
+              {activePathId === pathId ? (
+                <span className='shrink-0 rounded-full bg-sky-500/20 px-1.5 py-0.5 text-[10px] text-sky-100'>
+                  Active
+                </span>
+              ) : null}
+              {showPathHoverActions ? (
+                <div className='flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
+                  <button
+                    type='button'
+                    aria-label={`Preview ${node.name}`}
+                    title={`Preview ${node.name}`}
+                    className='inline-flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-muted/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40'
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      openPath(pathId);
+                    }}
+                  >
+                    <Eye className='size-3.5' />
+                  </button>
+                  <button
+                    type='button'
+                    aria-label={`Delete ${node.name}`}
+                    title={`Delete ${node.name}`}
+                    className='inline-flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-500/15 hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40'
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      void handleDeletePath(pathId);
+                    }}
+                  >
+                    <Trash2 className='size-3.5' />
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </TreeRow>
     </TreeContextMenu>
@@ -403,10 +445,12 @@ export type AiPathsMasterTreePanelProps = {
   onCopyPathJson?: ((pathId: string) => void) | undefined;
   onPathOpen?: ((pathId: string) => void) | undefined;
   panelClassName?: string | undefined;
+  pathClickBehavior?: PathClickBehavior | undefined;
   paths: PathMeta[];
   renderHeaderActions?: ((input: { selectedFolderPath: string }) => React.ReactNode) | undefined;
   searchAriaLabel?: string | undefined;
   searchPlaceholder?: string | undefined;
+  showPathHoverActions?: boolean | undefined;
   toast: TreeNodeToast;
   viewportClassName?: string | undefined;
 };
@@ -427,10 +471,12 @@ export function AiPathsMasterTreePanel({
   onCopyPathJson,
   onPathOpen,
   panelClassName,
+  pathClickBehavior = 'open',
   paths,
   renderHeaderActions,
   searchAriaLabel = 'Search path groups',
   searchPlaceholder = 'Search groups or paths',
+  showPathHoverActions = false,
   toast,
   viewportClassName,
 }: AiPathsMasterTreePanelProps): React.JSX.Element {
@@ -666,9 +712,11 @@ export function AiPathsMasterTreePanel({
                 icons={icons}
                 onCopyPathJson={onCopyPathJson}
                 openPath={openPath}
+                pathClickBehavior={pathClickBehavior}
                 profile={profile}
                 selectedPathFolderById={selectedPathFolderById}
                 setSelectedTreeNodeId={setSelectedTreeNodeId}
+                showPathHoverActions={showPathHoverActions}
                 toast={toast}
               />
             )}

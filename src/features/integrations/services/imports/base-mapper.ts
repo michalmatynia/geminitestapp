@@ -26,6 +26,7 @@ import {
   getImageUrlsForAll,
   getImageUrlsForLinks,
   getImageUrlsForSlots,
+  hasMultipleParsedPriceEntries,
   mergeCheckboxOptionSelection,
   normalizeImportedStructuredName,
   normalizePreferredCurrencies,
@@ -627,8 +628,46 @@ const applyTemplateMappings = (
   record: BaseProductRecord,
   mapped: ProductCreateInput,
   mappings: TemplateMapping[],
-  customFieldDefinitions?: ProductCustomFieldDefinition[]
+  customFieldDefinitions?: ProductCustomFieldDefinition[],
+  preferredPriceIdentifiers: string[] = []
 ): void => {
+  const hasMultiplePriceEntries = hasMultipleParsedPriceEntries(record);
+  const normalizedPreferredPriceIdentifiers = normalizePreferredCurrencies(preferredPriceIdentifiers);
+  const normalizePriceSourceKey = (value: string): string[] =>
+    value
+      .trim()
+      .toUpperCase()
+      .split(/[^A-Z0-9]+/)
+      .map((segment: string): string => segment.trim())
+      .filter((segment: string): boolean => segment.length > 0);
+  const sourceContainsPreferredPriceIdentifier = (sourceKey: string): boolean => {
+    const segments = normalizePriceSourceKey(sourceKey);
+    return segments.some((segment: string): boolean =>
+      normalizedPreferredPriceIdentifiers.some((preferredIdentifier: string): boolean => {
+        if (segment === preferredIdentifier) {
+          return true;
+        }
+        if (preferredIdentifier.length === 3) {
+          return (
+            segment.startsWith(preferredIdentifier) || segment.endsWith(preferredIdentifier)
+          );
+        }
+        return false;
+      })
+    );
+  };
+  const isAmbiguousPriceTemplateSource = (sourceKey: string): boolean => {
+    const normalized = sourceKey.trim().toLowerCase();
+    if (!normalized) return false;
+    if (['price', 'price_gross', 'price_brutto'].includes(normalized)) {
+      return true;
+    }
+    if (!normalized.startsWith('prices.')) {
+      return false;
+    }
+    return !sourceContainsPreferredPriceIdentifier(sourceKey);
+  };
+
   const parameterValuesById = new Map<string, { parameterId: string; value: string }>();
   const customFieldValuesById = new Map<string, ProductCustomFieldValue>();
   if (Array.isArray(mapped.parameters)) {
@@ -703,6 +742,14 @@ const applyTemplateMappings = (
       continue;
     }
     if (NUMBER_FIELDS.has(targetField)) {
+      if (
+        targetField === 'price' &&
+        hasMultiplePriceEntries &&
+        normalizedPreferredPriceIdentifiers.length > 0 &&
+        isAmbiguousPriceTemplateSource(sourceKey)
+      ) {
+        continue;
+      }
       const parsed = toIntValue(rawValue);
       if (parsed === null) continue;
       (mapped as Record<string, unknown>)[targetField] = parsed;
@@ -799,15 +846,16 @@ export function mapBaseProduct(
   const sku = pickString(record, ['sku', 'code', 'product_code', 'item_code']);
 
   const preferredCurrencies = normalizePreferredCurrencies(options?.preferredPriceCurrencies);
+  const hasMultiplePriceEntries = hasMultipleParsedPriceEntries(record);
+  const allowGenericPriceFallback =
+    preferredCurrencies.length === 0 || !hasMultiplePriceEntries;
   const price =
     pickPriceByPreferredCurrency(record, preferredCurrencies) ??
     pickInt(record, [
       ...(preferredCurrencies.includes('PLN')
         ? ['price_pln', 'price_gross_pln', 'price_brutto_pln']
         : []),
-      'price',
-      'price_gross',
-      'price_brutto',
+      ...(allowGenericPriceFallback ? ['price', 'price_gross', 'price_brutto'] : []),
     ]) ??
     pickNestedInt(record, [
       ...(preferredCurrencies.includes('PLN')
@@ -820,10 +868,14 @@ export function mapBaseProduct(
           ['prices', 'PLN', 'price_brutto'],
         ]
         : []),
-      ['prices', '0', 'price'],
-      ['prices', '0', 'price_brutto'],
+      ...(allowGenericPriceFallback
+        ? [
+          ['prices', '0', 'price'] as string[],
+          ['prices', '0', 'price_brutto'] as string[],
+        ]
+        : []),
     ]) ??
-    pickFirstIntFromObject(record, 'prices');
+    (allowGenericPriceFallback ? pickFirstIntFromObject(record, 'prices') : null);
 
   const stock =
     pickInt(record, ['stock', 'quantity', 'qty', 'available']) ??
@@ -874,7 +926,13 @@ export function mapBaseProduct(
     extendedResult.customFields = autoCustomFieldValues;
   }
 
-  applyTemplateMappings(record, result, mappings, options?.customFieldDefinitions);
+  applyTemplateMappings(
+    record,
+    result,
+    mappings,
+    options?.customFieldDefinitions,
+    preferredCurrencies
+  );
 
   return result;
 }

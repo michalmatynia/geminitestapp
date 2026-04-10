@@ -768,29 +768,54 @@ export function useLocalExecutionTriggers(
         args.setRuntimeState(nextState);
       }
 
-      const loopResult = await loop.runLocalLoop(mode);
-      if (loopResult.status === 'paused') {
-        args.setRunStatus('paused');
-        args.appendRuntimeEvent({
-          source: 'local',
-          kind: 'run_paused',
-          level: 'info',
-          message: 'Run paused.',
-        });
-        return;
-      }
-
-      args.runInFlightRef.current = false;
-      args.setRunStatus('idle');
-      args.abortControllerRef.current = null;
-      args.pauseRequestedRef.current = false;
-
-      outcome.finalizeLocalRunOutcome(loopResult, {
+      const finalizeMeta = {
         startedAt,
         startedAtMs,
         triggerEvent: triggerEvent ?? null,
         triggerContext,
-      });
+      };
+      let keepRunActive = false;
+      let loopResult:
+        | {
+            status: 'completed' | 'paused' | 'canceled' | 'error';
+            error?: unknown;
+            state: RuntimeState;
+          }
+        | undefined;
+
+      try {
+        loopResult = await loop.runLocalLoop(mode);
+        if (loopResult.status === 'paused') {
+          keepRunActive = true;
+          args.setRunStatus('paused');
+          args.appendRuntimeEvent({
+            source: 'local',
+            kind: 'run_paused',
+            level: 'info',
+            message: 'Run paused.',
+          });
+          return;
+        }
+      } catch (error) {
+        loopResult = {
+          status: 'error',
+          error,
+          state: args.runtimeStateRef.current,
+        };
+      } finally {
+        if (!keepRunActive) {
+          args.runInFlightRef.current = false;
+          args.setRunStatus('idle');
+          args.abortControllerRef.current = null;
+          args.pauseRequestedRef.current = false;
+          args.currentRunIdRef.current = null;
+          args.currentRunStartedAtRef.current = null;
+          args.currentRunStartedAtMsRef.current = 0;
+          args.triggerContextRef.current = null;
+        }
+      }
+
+      outcome.finalizeLocalRunOutcome(loopResult, finalizeMeta);
 
       if (args.runMode === 'automatic' && args.queuedRunsRef.current.length > 0) {
         const next = args.queuedRunsRef.current.shift();

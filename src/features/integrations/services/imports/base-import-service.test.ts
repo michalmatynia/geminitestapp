@@ -207,6 +207,20 @@ const buildCustomField = (
 describe('processBaseImportRun custom fields', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    const existingCustomFieldDefinitions: ProductCustomFieldDefinition[] = [
+      buildCustomField({
+        id: 'field-market-exclusion',
+        name: 'Market Exclusion',
+      }),
+      buildCustomField({
+        id: 'field-third-party-marketplaces',
+        name: '3rd Party Marketplaces',
+        options: [
+          { id: 'market-amazon', label: 'Amazon' },
+          { id: 'market-etsy', label: 'Etsy' },
+        ],
+      }),
+    ];
 
     const productRepository = {
       findProductsByBaseIds: vi.fn().mockResolvedValue([]),
@@ -217,7 +231,7 @@ describe('processBaseImportRun custom fields', () => {
       createParameter: vi.fn(),
     };
     const customFieldRepository = {
-      listCustomFields: vi.fn().mockResolvedValue([]),
+      listCustomFields: vi.fn().mockResolvedValue(existingCustomFieldDefinitions),
       getCustomFieldById: vi.fn(),
       createCustomField: vi.fn().mockImplementation(async (data) =>
         buildCustomField({
@@ -334,24 +348,13 @@ describe('processBaseImportRun custom fields', () => {
     });
   });
 
-  it('persists seeded Base custom fields for live imports and passes them into item processing', async () => {
+  it('uses only existing custom field definitions during live imports and never creates missing ones', async () => {
     const result = await processBaseImportRun('run-live');
 
     const customFieldRepository = await mocks.getCustomFieldRepositoryMock.mock.results[0]?.value;
+    const importInput = mocks.importSingleItemMock.mock.calls[0]?.[0];
 
-    expect(customFieldRepository.createCustomField).toHaveBeenNthCalledWith(1, {
-      name: 'Market Exclusion',
-      type: 'checkbox_set',
-      options: BASE_MARKETPLACE_CHECKBOX_OPTIONS.map((option) => ({
-        id: option.id,
-        label: option.label,
-      })),
-    });
-    expect(customFieldRepository.createCustomField).toHaveBeenNthCalledWith(2, {
-      name: 'Custom Note',
-      type: 'text',
-      options: [],
-    });
+    expect(customFieldRepository.createCustomField).not.toHaveBeenCalled();
     expect(mocks.normalizeMappedProductMock).toHaveBeenCalledWith(
       expect.objectContaining({ base_product_id: 'base-1' }),
       [],
@@ -362,12 +365,12 @@ describe('processBaseImportRun custom fields', () => {
           name: 'Market Exclusion',
         }),
         expect.objectContaining({
-          id: 'field-custom-note',
-          name: 'Custom Note',
+          id: 'field-third-party-marketplaces',
+          name: '3rd Party Marketplaces',
         }),
       ])
     );
-    expect(mocks.importSingleItemMock).toHaveBeenCalledWith(
+    expect(importInput).toEqual(
       expect.objectContaining({
         dryRun: false,
         customFieldDefinitions: expect.arrayContaining([
@@ -376,23 +379,21 @@ describe('processBaseImportRun custom fields', () => {
             name: 'Market Exclusion',
           }),
           expect.objectContaining({
-            id: 'field-custom-note',
-            name: 'Custom Note',
+            id: 'field-third-party-marketplaces',
+            name: '3rd Party Marketplaces',
           }),
-        ]),
-        customFieldImportSeededFieldNames: expect.arrayContaining([
-          'Custom Note',
-          'Market Exclusion',
         ]),
       })
     );
+    expect(importInput).not.toHaveProperty('customFieldImportSeededFieldNames');
     expect(result.status).toBe('completed');
   });
 
-  it('simulates seeded Base custom fields during dry runs without persisting settings', async () => {
+  it('uses only existing custom field definitions during dry runs without creating new settings', async () => {
     const result = await processBaseImportRun('run-dry');
 
     const customFieldRepository = await mocks.getCustomFieldRepositoryMock.mock.results[0]?.value;
+    const importInput = mocks.importSingleItemMock.mock.calls[0]?.[0];
 
     expect(customFieldRepository.createCustomField).not.toHaveBeenCalled();
     expect(mocks.normalizeMappedProductMock).toHaveBeenCalledWith(
@@ -401,38 +402,35 @@ describe('processBaseImportRun custom fields', () => {
       ['EUR'],
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'base-market-exclusion',
+          id: 'field-market-exclusion',
           name: 'Market Exclusion',
         }),
         expect.objectContaining({
-          id: 'base-text-custom-field-customnote',
-          name: 'Custom Note',
+          id: 'field-third-party-marketplaces',
+          name: '3rd Party Marketplaces',
         }),
       ])
     );
-    expect(mocks.importSingleItemMock).toHaveBeenCalledWith(
+    expect(importInput).toEqual(
       expect.objectContaining({
         dryRun: true,
         customFieldDefinitions: expect.arrayContaining([
           expect.objectContaining({
-            id: 'base-market-exclusion',
+            id: 'field-market-exclusion',
             name: 'Market Exclusion',
           }),
           expect.objectContaining({
-            id: 'base-text-custom-field-customnote',
-            name: 'Custom Note',
+            id: 'field-third-party-marketplaces',
+            name: '3rd Party Marketplaces',
           }),
-        ]),
-        customFieldImportSeededFieldNames: expect.arrayContaining([
-          'Custom Note',
-          'Market Exclusion',
         ]),
       })
     );
+    expect(importInput).not.toHaveProperty('customFieldImportSeededFieldNames');
     expect(result.status).toBe('completed');
   });
 
-  it('creates custom fields from Base feature buckets when parameter import is disabled', async () => {
+  it('does not create custom fields from Base feature buckets when parameter import is disabled', async () => {
     mocks.fetchDetailsMapMock.mockResolvedValue(
       new Map([
         [
@@ -454,12 +452,7 @@ describe('processBaseImportRun custom fields', () => {
 
     const customFieldRepository = await mocks.getCustomFieldRepositoryMock.mock.results[0]?.value;
 
-    expect(customFieldRepository.createCustomField).toHaveBeenCalledTimes(1);
-    expect(customFieldRepository.createCustomField).toHaveBeenCalledWith({
-      name: 'Material',
-      type: 'text',
-      options: [],
-    });
+    expect(customFieldRepository.createCustomField).not.toHaveBeenCalled();
   });
 
   it('does not create custom fields from Base feature buckets when parameter import is enabled', async () => {

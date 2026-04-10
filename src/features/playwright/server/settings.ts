@@ -112,6 +112,12 @@ export type ResolvedConnectionPlaywrightSettingsProfile = {
   hasExplicitBrowserPreference: boolean;
 };
 
+export type ResolvedConnectionPlaywrightExplicitPreferences = {
+  profile: ResolvedConnectionPlaywrightSettingsProfile;
+  connectionHeadless: boolean | undefined;
+  connectionBrowserPreference: TraderaPlaywrightRuntimeSettings['browser'] | undefined;
+};
+
 export const parsePersistedStorageState = (
   encryptedValue: string | null | undefined
 ): PersistedStorageState | null => {
@@ -298,4 +304,20 @@ export const resolveConnectionPlaywrightSettings = async (
 ): Promise<TraderaPlaywrightRuntimeSettings> => {
   const profile = await resolveConnectionPlaywrightSettingsProfile(connection);
   return profile.settings;
+};
+
+export const resolveConnectionPlaywrightExplicitPreferences = async (
+  connection: IntegrationConnectionRecord
+): Promise<ResolvedConnectionPlaywrightExplicitPreferences> => {
+  const profile = await resolveConnectionPlaywrightSettingsProfile(connection);
+
+  return {
+    profile,
+    connectionHeadless: profile.hasExplicitHeadlessPreference
+      ? profile.settings.headless
+      : undefined,
+    connectionBrowserPreference: profile.hasExplicitBrowserPreference
+      ? profile.settings.browser
+      : undefined,
+  };
 };

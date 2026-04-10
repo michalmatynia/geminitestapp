@@ -34,10 +34,12 @@ export type {
 export {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
+  resolveConnectionPlaywrightExplicitPreferences,
   resolveConnectionPlaywrightSettingsProfile,
 } from './server/settings';
 export type {
   PersistedStorageState,
+  ResolvedConnectionPlaywrightExplicitPreferences,
   ResolvedConnectionPlaywrightSettingsProfile,
   TraderaPlaywrightRuntimeSettings,
 } from './server/settings';
@@ -57,6 +59,39 @@ export type {
   PlaywrightConnectionEngineTaskInput,
   PlaywrightConnectionEngineTaskResult,
 } from './server/connection-runtime';
+export {
+  resolvePlaywrightConnectionTestRuntime,
+} from './server/connection-test-runtime';
+export type {
+  ResolvePlaywrightConnectionTestRuntimeInput,
+} from './server/connection-test-runtime';
+export {
+  openPlaywrightConnectionTestSession,
+} from './server/connection-test-session';
+export type {
+  OpenPlaywrightConnectionTestSessionInput,
+} from './server/connection-test-session';
+export {
+  createPlaywrightConnectionTestSuccessResponse,
+  createPlaywrightConnectionTestFailureResponse,
+} from './server/connection-test-response';
+export {
+  capturePlaywrightConnectionTestDebugArtifacts,
+  createPlaywrightConnectionTestFailWithDebug,
+} from './server/connection-test-debug';
+export {
+  persistPlaywrightConnectionTestSession,
+} from './server/connection-test-persistence';
+export type {
+  PersistPlaywrightConnectionTestSessionInput,
+} from './server/connection-test-persistence';
+export {
+  pushPlaywrightStoredSessionLoadingSteps,
+  pushPlaywrightBrowserSelectionSteps,
+} from './server/connection-test-steps';
+export type {
+  PlaywrightConnectionTestPushStep,
+} from './server/connection-test-steps';
 export {
   runPlaywrightConnectionScriptTask,
 } from './server/script-task';
@@ -82,6 +117,44 @@ export type {
   BuildPlaywrightListingResultInput,
 } from './server/listing-result';
 export {
+  resolvePlaywrightListingEffectiveBrowserMode,
+  resolvePlaywrightHistoryBrowserMode,
+  resolvePlaywrightPersistedExternalListingId,
+} from './server/listing-outcome';
+export {
+  resolvePlaywrightListingRunContext,
+} from './server/listing-context';
+export type {
+  PlaywrightListingRunContextResult,
+  PlaywrightResolvedListingRunContext,
+} from './server/listing-context';
+export {
+  resolvePlaywrightListingPersistenceContext,
+  resolvePlaywrightListingPersistenceContextAfterRun,
+} from './server/listing-persistence-context';
+export type {
+  PlaywrightListingPersistenceContext,
+  PlaywrightResolvedListingPersistenceContext,
+} from './server/listing-persistence-context';
+export {
+  buildPlaywrightListingHistoryFields,
+  resolvePlaywrightFailureListingStatus,
+  extractPlaywrightAppErrorMetadata,
+} from './server/listing-service-utils';
+export {
+  buildPlaywrightListingExportHistoryRecord,
+  buildPlaywrightListingSuccessUpdateFields,
+  buildPlaywrightListingFailureUpdateFields,
+} from './server/listing-persistence';
+export {
+  finalizePlaywrightListingJobSuccess,
+  finalizePlaywrightListingJobFailure,
+  finalizePlaywrightStandardListingJobOutcome,
+  finalizePlaywrightListingStatusCheckOutcome,
+} from './server/listing-job';
+export {
+  buildPlaywrightServiceListingCaughtFailure,
+  buildPlaywrightServiceListingMissingContextFailure,
   buildPlaywrightServiceListingSuccess,
   buildPlaywrightServiceListingFailure,
 } from './server/service-result';
@@ -92,6 +165,8 @@ export {
   buildPlaywrightListingLastExecutionRecord,
   buildPlaywrightListingProviderRecord,
   buildPlaywrightListingMarketplaceDataRecord,
+  buildPlaywrightMarketplaceListingProcessArtifacts,
+  buildPlaywrightProgrammableListingProcessArtifacts,
 } from './server/marketplace-data';
 export type {
   PlaywrightListingMarketplaceOutcome,

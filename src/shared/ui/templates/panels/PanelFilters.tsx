@@ -357,6 +357,9 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder ?? `Search ${field.label.toLowerCase()}...`}
             value={String(localValue ?? '')}
             onChange={(e) => setLocalValue(e.target.value)}
+            {...(field.inputName ? { name: field.inputName } : {})}
+            {...(field.autoComplete ? { autoComplete: field.autoComplete } : {})}
+            {...(field.spellCheck !== undefined ? { spellCheck: field.spellCheck } : {})}
             onClear={() => {
               setLocalValue('');
               onChange('');
@@ -397,6 +400,9 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder}
             value={localValue ?? ''}
             onChange={(e) => setLocalValue(e.target.value ? Number(e.target.value) : undefined)}
+            {...(field.inputName ? { name: field.inputName } : {})}
+            {...(field.autoComplete ? { autoComplete: field.autoComplete } : {})}
+            {...(field.spellCheck !== undefined ? { spellCheck: field.spellCheck } : {})}
             className='h-8 w-full text-sm'
            aria-label={field.placeholder} title={field.placeholder}/>
         </div>
@@ -417,6 +423,9 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             type='date'
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
+            {...(field.inputName ? { name: field.inputName } : {})}
+            {...(field.autoComplete ? { autoComplete: field.autoComplete } : {})}
+            {...(field.spellCheck !== undefined ? { spellCheck: field.spellCheck } : {})}
             className='h-8 w-full text-sm'
            aria-label={inputId} title={inputId}/>
         </div>
@@ -483,6 +492,9 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder}
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
+            {...(field.inputName ? { name: field.inputName } : {})}
+            {...(field.autoComplete ? { autoComplete: field.autoComplete } : {})}
+            {...(field.spellCheck !== undefined ? { spellCheck: field.spellCheck } : {})}
             className='h-8 w-full text-sm'
            aria-label={field.placeholder} title={field.placeholder}/>
         </div>

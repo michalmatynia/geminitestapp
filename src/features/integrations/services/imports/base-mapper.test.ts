@@ -182,6 +182,145 @@ describe('mapBaseProduct', () => {
       expect(result.price).toBe(4999);
     });
 
+    it('prefers the PLN price from grouped price entries instead of the first EUR slot', () => {
+      const record = {
+        product_id: 'p1',
+        sku: 'SKU-PLN',
+        prices: [
+          {
+            price: 1200,
+            price_group_id: 'EUR_STANDARD',
+          },
+          {
+            price: 5100,
+            price_group_id: 'PLN_STANDARD',
+          },
+        ],
+      };
+
+      const result = mapBaseProduct(record, [], {
+        preferredPriceCurrencies: ['PLN'],
+      });
+
+      expect(result.price).toBe(5100);
+    });
+
+    it('does not fall back to the first multi-currency price when the target currency cannot be matched safely', () => {
+      const record = {
+        product_id: 'p1',
+        sku: 'SKU-AMBIGUOUS',
+        prices: [
+          { price: 1200 },
+          { price: 5100 },
+        ],
+      };
+
+      const result = mapBaseProduct(record, [], {
+        preferredPriceCurrencies: ['PLN'],
+      });
+
+      expect(result.price).toBeUndefined();
+    });
+
+    it('matches numeric Base price-group ids when the preferred identifiers include a PLN slot id', () => {
+      const record = {
+        product_id: 'p1',
+        sku: 'SKU-PLN-NUMERIC',
+        prices: {
+          3772: 42,
+          7448: 222.6,
+          7474: 10.08,
+          7475: 12.6,
+          29877: 7.98,
+          77295: 0,
+        },
+      };
+
+      const result = mapBaseProduct(record, [], {
+        preferredPriceCurrencies: ['PLN', '3772', '77295'],
+      });
+
+      expect(result.price).toBe(42);
+    });
+
+    it('does not let a generic price template mapping override the preferred PLN price', () => {
+      const record = {
+        product_id: 'p1',
+        sku: 'SKU-TEMPLATE',
+        price: 1200,
+        prices: [
+          {
+            price: 1200,
+            price_group_id: 'EUR_STANDARD',
+          },
+          {
+            price: 5100,
+            price_group_id: 'PLN_STANDARD',
+          },
+        ],
+      };
+
+      const result = mapBaseProduct(
+        record,
+        [{ sourceKey: 'price', targetField: 'price' }],
+        {
+          preferredPriceCurrencies: ['PLN', 'PLN_STANDARD'],
+        }
+      );
+
+      expect(result.price).toBe(5100);
+    });
+
+    it('does not let a non-preferred numeric Base price-group mapping override the preferred PLN price', () => {
+      const record = {
+        product_id: 'p1',
+        sku: 'SKU-TEMPLATE-NUMERIC',
+        prices: {
+          3772: 42,
+          7448: 222.6,
+          7474: 10.08,
+          7475: 12.6,
+          29877: 7.98,
+          77295: 0,
+        },
+      };
+
+      const result = mapBaseProduct(
+        record,
+        [{ sourceKey: 'prices.29877', targetField: 'price' }],
+        {
+          preferredPriceCurrencies: ['PLN', '3772', '77295'],
+        }
+      );
+
+      expect(result.price).toBe(42);
+    });
+
+    it('allows an explicit preferred-currency price template mapping to set the price', () => {
+      const record = {
+        product_id: 'p1',
+        sku: 'SKU-TEMPLATE-EXPLICIT',
+        prices: {
+          EUR_STANDARD: {
+            price: 1200,
+          },
+          PLN_STANDARD: {
+            price: 5100,
+          },
+        },
+      };
+
+      const result = mapBaseProduct(
+        record,
+        [{ sourceKey: 'prices.PLN_STANDARD.price', targetField: 'price' }],
+        {
+          preferredPriceCurrencies: ['PLN', 'PLN_STANDARD'],
+        }
+      );
+
+      expect(result.price).toBe(5100);
+    });
+
     it('generates a BASE- prefixed SKU when record has no sku', () => {
       const record = { product_id: 'abc123', name: 'Test' };
 
@@ -494,6 +633,42 @@ describe('mapBaseProduct', () => {
 
       expect(result.customFields).toEqual([
         { fieldId: 'material-field', textValue: 'Cotton' },
+      ]);
+    });
+
+    it('ignores Base text-field and feature-bucket values when no matching custom field definitions exist', () => {
+      const result = mapBaseProduct(
+        {
+          product_id: 'p1',
+          sku: 'SKU-1',
+          text_fields: {
+            custom_note: 'Handle with care',
+            Tradera: '1',
+            features: {
+              Material: 'Cotton',
+            },
+          },
+        },
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'market-exclusion',
+              name: 'Market Exclusion',
+              type: 'checkbox_set',
+              options: [
+                { id: 'opt-tradera', label: 'Tradera' },
+                { id: 'opt-vinted', label: 'Vinted' },
+              ],
+              createdAt: '2026-04-10T00:00:00.000Z',
+              updatedAt: '2026-04-10T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toEqual([
+        { fieldId: 'market-exclusion', selectedOptionIds: ['opt-tradera'] },
       ]);
     });
 

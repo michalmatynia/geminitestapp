@@ -127,6 +127,15 @@ export const normalizeCurrencyCode = (value: unknown): string | null => {
   return compact || null;
 };
 
+const normalizePriceIdentifier = (value: unknown): string | null => {
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  const compact = String(value)
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  return compact.length > 0 ? compact : null;
+};
+
 export const parsePrice = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return Math.round(value);
@@ -206,10 +215,98 @@ export const normalizePreferredCurrencies = (preferred?: string[]): string[] =>
   Array.from(
     new Set(
       (preferred ?? [])
-        .map((value: string): string | null => normalizeCurrencyCode(value))
+        .map((value: string): string | null => normalizePriceIdentifier(value))
         .filter((value: string | null): value is string => Boolean(value))
     )
   );
+
+const collectPriceIdentifiers = (entry: unknown, keyHint?: string): string[] => {
+  const identifiers = new Set<string>();
+  const add = (value: unknown): void => {
+    const normalized = normalizePriceIdentifier(value);
+    if (normalized) {
+      identifiers.add(normalized);
+    }
+  };
+
+  add(keyHint);
+  if (!entry || typeof entry !== 'object') {
+    return Array.from(identifiers);
+  }
+
+  const entryRecord = entry as Record<string, unknown>;
+  add(entryRecord['currency']);
+  add(entryRecord['currency_code']);
+  add(entryRecord['currencyId']);
+  add(entryRecord['currency_id']);
+  add(entryRecord['code']);
+  add(entryRecord['symbol']);
+  add(entryRecord['priceGroupId']);
+  add(entryRecord['price_group_id']);
+  add(entryRecord['priceGroup']);
+  add(entryRecord['price_group']);
+  add(entryRecord['priceGroupCode']);
+  add(entryRecord['price_group_code']);
+  add(entryRecord['groupId']);
+  add(entryRecord['group_id']);
+
+  return Array.from(identifiers);
+};
+
+const matchesPreferredPriceIdentifier = (
+  identifier: string,
+  preferredSet: Set<string>
+): boolean => {
+  for (const preferred of preferredSet) {
+    if (identifier === preferred) {
+      return true;
+    }
+    if (preferred.length === 3) {
+      if (identifier.startsWith(preferred) || identifier.endsWith(preferred)) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+const collectParsedPriceEntries = (
+  rawPrices: unknown
+): Array<{ value: number; identifiers: string[] }> => {
+  const buffered: Array<{ value: number; identifiers: string[] }> = [];
+  const pushResolved = (entry: unknown, keyHint?: string): void => {
+    const parsed = readPriceFromPriceEntry(entry);
+    if (parsed === null) return;
+    buffered.push({
+      value: parsed,
+      identifiers: collectPriceIdentifiers(entry, keyHint),
+    });
+  };
+
+  if (Array.isArray(rawPrices)) {
+    rawPrices.forEach((entry: unknown) => {
+      pushResolved(entry);
+    });
+    return buffered;
+  }
+
+  if (rawPrices && typeof rawPrices === 'object') {
+    Object.entries(rawPrices as Record<string, unknown>).forEach(
+      ([key, value]: [string, unknown]) => {
+        pushResolved(value, key);
+      }
+    );
+    return buffered;
+  }
+
+  pushResolved(rawPrices);
+  return buffered;
+};
+
+export const hasMultipleParsedPriceEntries = (
+  record: BaseProductRecord,
+  key = 'prices'
+): boolean => collectParsedPriceEntries(record[key]).length > 1;
 
 export const readPriceFromPriceEntry = (value: unknown): number | null => {
   if (value === null || value === undefined) return null;
@@ -241,58 +338,18 @@ export const pickPriceByPreferredCurrency = (
   const preferredSet = new Set(normalizePreferredCurrencies(preferredCurrencies));
   const rawPrices = record['prices'];
   if (!rawPrices) return null;
-
-  const tryValue = (
-    entry: unknown,
-    keyHint?: string
-  ): { value: number | null; currency: string | null } => {
-    const parsed = readPriceFromPriceEntry(entry);
-    if (parsed === null) return { value: null, currency: null };
-    let detectedCurrency: string | null = null;
-    if (keyHint) {
-      detectedCurrency = normalizeCurrencyCode(keyHint);
-    }
-    if (!detectedCurrency && entry && typeof entry === 'object') {
-      const entryRecord = entry as Record<string, unknown>;
-      detectedCurrency =
-        normalizeCurrencyCode(entryRecord['currency']) ??
-        normalizeCurrencyCode(entryRecord['currency_code']) ??
-        normalizeCurrencyCode(entryRecord['code']) ??
-        normalizeCurrencyCode(entryRecord['symbol']);
-    }
-    return { value: parsed, currency: detectedCurrency };
-  };
-
-  const buffered: Array<{ value: number; currency: string | null }> = [];
-  if (Array.isArray(rawPrices)) {
-    rawPrices.forEach((entry: unknown) => {
-      const resolved = tryValue(entry);
-      if (resolved.value !== null) {
-        buffered.push({ value: resolved.value, currency: resolved.currency });
-      }
-    });
-  } else if (rawPrices && typeof rawPrices === 'object') {
-    Object.entries(rawPrices as Record<string, unknown>).forEach(
-      ([key, value]: [string, unknown]) => {
-        const resolved = tryValue(value, key);
-        if (resolved.value !== null) {
-          buffered.push({ value: resolved.value, currency: resolved.currency });
-        }
-      }
-    );
-  } else {
-    const resolved = tryValue(rawPrices);
-    if (resolved.value !== null) {
-      buffered.push({ value: resolved.value, currency: resolved.currency });
-    }
-  }
+  const buffered = collectParsedPriceEntries(rawPrices);
 
   if (buffered.length === 0) return null;
   if (preferredSet.size > 0) {
     const preferredMatch = buffered.find(
-      (entry) => entry.currency && preferredSet.has(entry.currency)
+      (entry) =>
+        entry.identifiers.some((identifier) =>
+          matchesPreferredPriceIdentifier(identifier, preferredSet)
+        )
     );
     if (preferredMatch) return preferredMatch.value;
+    if (buffered.length > 1) return null;
   }
   return buffered[0]?.value ?? null;
 };

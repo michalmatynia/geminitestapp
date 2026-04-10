@@ -155,7 +155,11 @@ export async function postBaseImportsHandler(
       : defaultCatalog;
     const { preferredCurrencies: listPreferredCurrencies } = await resolvePriceGroupContext(
       provider,
-      targetCatalog?.defaultPriceGroupId ?? null
+      targetCatalog?.defaultPriceGroupId ?? null,
+      {
+        baseToken: token,
+        inventoryId,
+      }
     );
 
     // Get existing products using repository to check for baseProductIds and SKUs

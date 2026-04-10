@@ -14,7 +14,7 @@ const {
   resolveEffectiveListingSettingsMock,
   buildRelistPolicyMock,
   captureExceptionMock,
-  resolveConnectionPlaywrightSettingsProfileMock,
+  resolveConnectionPlaywrightExplicitPreferencesMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   listProductListingsByProductIdAcrossProvidersMock: vi.fn(),
@@ -27,7 +27,7 @@ const {
   resolveEffectiveListingSettingsMock: vi.fn(),
   buildRelistPolicyMock: vi.fn(),
   captureExceptionMock: vi.fn(),
-  resolveConnectionPlaywrightSettingsProfileMock: vi.fn(),
+  resolveConnectionPlaywrightExplicitPreferencesMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/services/product-listing-repository', () => ({
@@ -82,8 +82,8 @@ vi.mock('@/features/playwright/server', async () => {
     );
   return {
     ...actual,
-    resolveConnectionPlaywrightSettingsProfile: (...args: unknown[]) =>
-      resolveConnectionPlaywrightSettingsProfileMock(...args) as Promise<unknown>,
+    resolveConnectionPlaywrightExplicitPreferences: (...args: unknown[]) =>
+      resolveConnectionPlaywrightExplicitPreferencesMock(...args) as Promise<unknown>,
   };
 });
 
@@ -109,11 +109,15 @@ describe('processTraderaListingJob', () => {
       integrationId: 'integration-1',
       traderaBrowserMode: 'scripted',
     });
-    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
-      hasExplicitHeadlessPreference: false,
-      hasExplicitBrowserPreference: false,
-      settings: {
-        headless: true,
+    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
+      connectionHeadless: undefined,
+      connectionBrowserPreference: undefined,
+      profile: {
+        hasExplicitHeadlessPreference: false,
+        hasExplicitBrowserPreference: false,
+        settings: {
+          headless: true,
+        },
       },
     });
     getIntegrationByIdMock.mockResolvedValue({
@@ -243,11 +247,15 @@ describe('processTraderaListingJob', () => {
       traderaBrowserMode: 'scripted',
       playwrightHeadless: false,
     });
-    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
-      hasExplicitHeadlessPreference: true,
-      hasExplicitBrowserPreference: false,
-      settings: {
-        headless: false,
+    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
+      connectionHeadless: false,
+      connectionBrowserPreference: undefined,
+      profile: {
+        hasExplicitHeadlessPreference: true,
+        hasExplicitBrowserPreference: false,
+        settings: {
+          headless: false,
+        },
       },
     });
     runTraderaBrowserListingMock.mockResolvedValue({
@@ -306,11 +314,15 @@ describe('processTraderaListingJob', () => {
       playwrightHeadless: true,
       playwrightPersonaId: 'persona-1',
     });
-    resolveConnectionPlaywrightSettingsProfileMock.mockResolvedValue({
-      hasExplicitHeadlessPreference: true,
-      hasExplicitBrowserPreference: false,
-      settings: {
-        headless: false,
+    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
+      connectionHeadless: false,
+      connectionBrowserPreference: undefined,
+      profile: {
+        hasExplicitHeadlessPreference: true,
+        hasExplicitBrowserPreference: false,
+        settings: {
+          headless: false,
+        },
       },
     });
     runTraderaBrowserListingMock.mockResolvedValue({

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 
 import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { useIntegrationConnections, useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
@@ -43,12 +43,6 @@ import {
   Button,
   Card,
   Input,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
   Tabs,
   TabsContent,
   TabsList,
@@ -56,45 +50,17 @@ import {
   useToast,
 } from '@/shared/ui/primitives.public';
 
-type MapperTab = 'mappings' | 'catalogs';
-
-const buildCategoryOptionLabel = (category: {
-  externalCategoryPath?: string | null;
-  externalCategoryName?: string | null;
-  path?: string | null;
-  name?: string | null;
-}): string =>
-  (
-    category.externalCategoryPath ??
-    category.path ??
-    category.externalCategoryName ??
-    category.name ??
-    ''
-  ).trim();
-
-const normalizeMapperLookupKey = (value: string): string =>
-  value
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '');
-
-const createRuleId = (): string => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-
-  return `tradera-param-rule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-};
-
-const sortRules = (rules: TraderaParameterMapperRule[]): TraderaParameterMapperRule[] =>
-  rules
-    .slice()
-    .sort(
-      (left, right) =>
-        new Date(right.updatedAt ?? 0).getTime() - new Date(left.updatedAt ?? 0).getTime()
-    );
+import {
+  buildCategoryOptionLabel,
+  createRuleId,
+  getRuleStatus,
+  MapperTab,
+  normalizeMapperLookupKey,
+  sortRules,
+} from './components/tradera-mapping-utils';
+import { MappingsRulesTable } from './components/MappingsRulesTable';
+import { CatalogCategoryTable } from './components/CatalogCategoryTable';
+import { CatalogEntriesTable } from './components/CatalogEntriesTable';
 
 export default function TraderaParameterMappingPage(): React.JSX.Element {
   const searchParams = useSearchParams();
@@ -242,45 +208,17 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
     [parameterCatalogCategoryFetches]
   );
   const parameterMapperRuleStatuses = useMemo(() => {
-    const statuses = new Map<
-      string,
-      {
-        label: string;
-        tone: 'default' | 'warning';
-      }
-    >();
+    const statuses = new Map<string, { label: string; tone: 'default' | 'warning' }>();
 
     parameterMapperRules.forEach((rule) => {
-      const catalogEntryId = `${rule.externalCategoryId.trim()}:${rule.fieldKey.trim()}`;
-      const catalogEntry = parameterCatalogEntryById.get(catalogEntryId) ?? null;
-      const categoryFetch = parameterCatalogCategoryFetchesByCategoryId.get(rule.externalCategoryId) ?? null;
-
-      if (!categoryFetch && !catalogEntry) {
-        statuses.set(rule.id, {
-          label: 'Category catalog not fetched',
-          tone: 'warning',
-        });
-        return;
-      }
-
-      if (!catalogEntry) {
-        statuses.set(rule.id, {
-          label: 'Field missing from current catalog',
-          tone: 'warning',
-        });
-        return;
-      }
-
-      const hasOption = catalogEntry.optionLabels.some(
-        (optionLabel) =>
-          normalizeMapperLookupKey(optionLabel) ===
-          normalizeMapperLookupKey(rule.targetOptionLabel)
+      statuses.set(
+        rule.id,
+        getRuleStatus(
+          rule,
+          parameterCatalogEntryById,
+          parameterCatalogCategoryFetchesByCategoryId
+        )
       );
-
-      statuses.set(rule.id, {
-        label: hasOption ? 'Current' : `Missing option: ${rule.targetOptionLabel}`,
-        tone: hasOption ? 'default' : 'warning',
-      });
     });
 
     return statuses;
@@ -939,72 +877,13 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
                   ) : null}
                 </div>
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tradera Category</TableHead>
-                      <TableHead>Field</TableHead>
-                      <TableHead>Product Parameter</TableHead>
-                      <TableHead>Source Value</TableHead>
-                      <TableHead>Target Option</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className='w-[120px] text-right'>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {visibleParameterMapperRules.map((rule) => {
-                      const ruleStatus = parameterMapperRuleStatuses.get(rule.id) ?? {
-                        label: 'Unknown',
-                        tone: 'warning' as const,
-                      };
-
-                      return (
-                        <TableRow key={rule.id}>
-                          <TableCell className='align-top'>
-                            {buildCategoryOptionLabel(rule)}
-                          </TableCell>
-                          <TableCell className='align-top'>{rule.fieldLabel}</TableCell>
-                          <TableCell className='align-top'>
-                            <div>{rule.parameterName}</div>
-                            <div className='text-xs text-muted-foreground'>
-                              {rule.parameterCatalogId}
-                            </div>
-                          </TableCell>
-                          <TableCell className='align-top'>{rule.sourceValue}</TableCell>
-                          <TableCell className='align-top'>{rule.targetOptionLabel}</TableCell>
-                          <TableCell
-                            className={
-                              ruleStatus.tone === 'warning'
-                                ? 'align-top text-sm text-amber-600'
-                                : 'align-top text-sm text-muted-foreground'
-                            }
-                          >
-                            {ruleStatus.label}
-                          </TableCell>
-                          <TableCell className='text-right align-top'>
-                            <div className='flex justify-end gap-2'>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={() => handleReviewRule(rule)}
-                              >
-                                Review
-                              </Button>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={() => void handleDeleteRule(rule.id)}
-                                loading={upsertConnectionMutation.isPending}
-                              >
-                                <Trash2 className='h-4 w-4' />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <MappingsRulesTable
+                  rules={visibleParameterMapperRules}
+                  ruleStatuses={parameterMapperRuleStatuses}
+                  onReview={handleReviewRule}
+                  onDelete={handleDeleteRule}
+                  isDeleting={upsertConnectionMutation.isPending}
+                />
               </div>
             )}
           </Card>
@@ -1081,63 +960,12 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
                 description='Sync the Tradera category tree for this connection before fetching dropdown catalogs.'
               />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Current Tradera Category</TableHead>
-                    <TableHead>Fetch Status</TableHead>
-                    <TableHead>Stale Rules</TableHead>
-                    <TableHead>Latest Fetch</TableHead>
-                    <TableHead className='w-[140px] text-right'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {catalogCategoryRows.map((category) => (
-                    <TableRow key={category.externalCategoryId}>
-                      <TableCell className='align-top'>{category.label}</TableCell>
-                      <TableCell className='align-top'>
-                        {!category.hasFetchedCatalog
-                          ? 'Not fetched yet'
-                          : category.fieldCount > 0
-                          ? `${category.fieldCount} field catalog${category.fieldCount === 1 ? '' : 's'} stored`
-                          : 'Fetched, no additional fields found'}
-                      </TableCell>
-                      <TableCell
-                        className={
-                          category.staleRuleCount > 0
-                            ? 'align-top text-sm text-amber-600'
-                            : 'align-top text-sm text-muted-foreground'
-                        }
-                      >
-                        {category.staleRuleCount > 0
-                          ? `${category.staleRuleCount} stale rule${
-                              category.staleRuleCount === 1 ? '' : 's'
-                            }`
-                          : 'No stale rules'}
-                      </TableCell>
-                      <TableCell className='align-top text-sm text-muted-foreground'>
-                        {category.latestFetchedAt
-                          ? new Date(category.latestFetchedAt).toLocaleString()
-                          : 'Not fetched yet'}
-                      </TableCell>
-                      <TableCell className='text-right align-top'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => void handleFetchCatalog(category.externalCategoryId)}
-                          loading={
-                            fetchCatalogMutation.isPending &&
-                            fetchCatalogMutation.variables?.externalCategoryId === category.externalCategoryId
-                          }
-                        >
-                          <RefreshCw className='mr-2 h-4 w-4' />
-                          {category.hasFetchedCatalog ? 'Refetch' : 'Fetch'}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <CatalogCategoryTable
+                categories={catalogCategoryRows}
+                onFetch={handleFetchCatalog}
+                isFetching={fetchCatalogMutation.isPending}
+                fetchingCategoryId={fetchCatalogMutation.variables?.externalCategoryId ?? null}
+              />
             )}
           </Card>
 
@@ -1148,51 +976,12 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
                 description='Fetch a Tradera category above to capture its additional dropdown fields and options.'
               />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tradera Category</TableHead>
-                    <TableHead>Field</TableHead>
-                    <TableHead>Available Options</TableHead>
-                    <TableHead>Fetched</TableHead>
-                    <TableHead className='w-[140px] text-right'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {parameterCatalogEntries.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell className='align-top'>
-                        {buildCategoryOptionLabel(entry)}
-                      </TableCell>
-                      <TableCell className='align-top'>{entry.fieldLabel}</TableCell>
-                      <TableCell className='align-top'>
-                        <div className='line-clamp-3 text-sm'>
-                          {entry.optionLabels.length > 0
-                            ? entry.optionLabels.join(', ')
-                            : 'No visible options detected'}
-                        </div>
-                      </TableCell>
-                      <TableCell className='align-top text-sm text-muted-foreground'>
-                        {new Date(entry.fetchedAt).toLocaleString()}
-                      </TableCell>
-                      <TableCell className='text-right align-top'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => void handleFetchCatalog(entry.externalCategoryId)}
-                          loading={
-                            fetchCatalogMutation.isPending &&
-                            fetchCatalogMutation.variables?.externalCategoryId === entry.externalCategoryId
-                          }
-                        >
-                          <RefreshCw className='mr-2 h-4 w-4' />
-                          Refetch
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <CatalogEntriesTable
+                entries={parameterCatalogEntries}
+                onRefetch={handleFetchCatalog}
+                isRefetching={fetchCatalogMutation.isPending}
+                refetchingCategoryId={fetchCatalogMutation.variables?.externalCategoryId ?? null}
+              />
             )}
           </Card>
         </TabsContent>

@@ -34,10 +34,6 @@ import {
   resolvePriceGroupContext,
 } from '@/features/integrations/services/imports/base-import-service-context';
 import {
-  ensureBaseMarketplaceExclusionCustomField,
-  ensureBaseTextCustomFields,
-} from '@/features/integrations/services/imports/base-import-custom-fields';
-import {
   BASE_IMPORT_HEARTBEAT_EVERY_ITEMS,
   BASE_IMPORT_LEASE_MS,
   BASE_IMPORT_MAX_ATTEMPTS,
@@ -150,66 +146,6 @@ const formatExactTargetItemSummary = (input: {
   }
 
   return null;
-};
-
-const normalizeCustomFieldName = (value: string): string => value.trim().toLowerCase();
-
-const collectCustomFieldOptionKeys = (
-  definition: ProductCustomFieldDefinition
-): Set<string> => {
-  if (definition.type !== 'checkbox_set') {
-    return new Set<string>();
-  }
-  return new Set(
-    definition.options
-      .map((option) => option.label.trim().toLowerCase())
-      .filter((label: string): boolean => label.length > 0)
-  );
-};
-
-const collectSeededCustomFieldNames = (
-  previousDefinitions: ProductCustomFieldDefinition[],
-  nextDefinitions: ProductCustomFieldDefinition[]
-): string[] => {
-  const previousByName = new Map<string, ProductCustomFieldDefinition>();
-  previousDefinitions.forEach((definition: ProductCustomFieldDefinition) => {
-    const normalizedName = normalizeCustomFieldName(definition.name);
-    if (!normalizedName) return;
-    previousByName.set(normalizedName, definition);
-  });
-
-  const seededNames = new Set<string>();
-  nextDefinitions.forEach((definition: ProductCustomFieldDefinition) => {
-    const normalizedName = normalizeCustomFieldName(definition.name);
-    const displayName = definition.name.trim();
-    if (!normalizedName || !displayName) return;
-
-    const previousDefinition = previousByName.get(normalizedName);
-    if (!previousDefinition) {
-      seededNames.add(displayName);
-      return;
-    }
-
-    if (previousDefinition.type !== definition.type) {
-      seededNames.add(displayName);
-      return;
-    }
-
-    if (definition.type !== 'checkbox_set' || previousDefinition.type !== 'checkbox_set') {
-      return;
-    }
-
-    const previousOptionKeys = collectCustomFieldOptionKeys(previousDefinition);
-    const hasNewOption = definition.options.some((option) => {
-      const normalizedOptionLabel = option.label.trim().toLowerCase();
-      return normalizedOptionLabel.length > 0 && !previousOptionKeys.has(normalizedOptionLabel);
-    });
-    if (hasNewOption) {
-      seededNames.add(displayName);
-    }
-  });
-
-  return Array.from(seededNames).sort((left: string, right: string) => left.localeCompare(right));
 };
 
 export const prepareBaseImportRun = async (
@@ -624,7 +560,11 @@ export const processBaseImportRun = async (
     const provider = await getProductDataProvider();
     const pricingContext = await resolvePriceGroupContext(
       provider,
-      targetCatalog.defaultPriceGroupId
+      targetCatalog.defaultPriceGroupId,
+      {
+        baseToken: connection.token,
+        inventoryId: run.params.inventoryId,
+      }
     );
     if (!pricingContext.defaultPriceGroupId) {
       await failRemainingItems({
@@ -714,25 +654,6 @@ export const processBaseImportRun = async (
         connection.token,
         run.params.inventoryId,
         dueItems.map((item: BaseImportItemRecord): string => item.itemId)
-      );
-      const previousCustomFieldDefinitions = customFieldDefinitions;
-      customFieldDefinitions = await ensureBaseMarketplaceExclusionCustomField({
-        repository: customFieldRepository,
-        existingDefinitions: customFieldDefinitions,
-        records: Array.from(detailsMap.values()),
-        persist: !run.params.dryRun,
-      });
-      customFieldDefinitions = await ensureBaseTextCustomFields({
-        repository: customFieldRepository,
-        existingDefinitions: customFieldDefinitions,
-        records: Array.from(detailsMap.values()),
-        existingParameters: prefetchedParameters,
-        includeFeatureBuckets: !templateParameterImportSettings.enabled,
-        persist: !run.params.dryRun,
-      });
-      const seededCustomFieldNames = collectSeededCustomFieldNames(
-        previousCustomFieldDefinitions,
-        customFieldDefinitions
       );
 
       // Performance optimization: batch pre-fetch existing products
@@ -852,7 +773,6 @@ export const processBaseImportRun = async (
             defaultPriceGroupId: pricingContext.defaultPriceGroupId,
             preferredPriceCurrencies: pricingContext.preferredCurrencies,
             customFieldDefinitions,
-            customFieldImportSeededFieldNames: seededCustomFieldNames,
             lookups,
             templateMappings,
             productRepository,

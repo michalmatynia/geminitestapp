@@ -247,8 +247,8 @@ describe('useImportExportRuntime', () => {
       expect(result.current.stateValue.uniqueOnly).toBe(false);
       expect(result.current.stateValue.allowDuplicateSku).toBe(true);
       expect(result.current.stateValue.importTemplateId).toBe('tpl-1');
-      expect(result.current.stateValue.importNameSearch).toBe('hoodie');
-      expect(result.current.stateValue.importSkuSearch).toBe('SKU-1');
+      expect(result.current.stateValue.importNameSearch).toBe('');
+      expect(result.current.stateValue.importSkuSearch).toBe('');
       expect(result.current.stateValue.importListPage).toBe(3);
       expect(result.current.stateValue.importListPageSize).toBe(50);
       expect(result.current.stateValue.importListEnabled).toBe(true);
@@ -302,8 +302,6 @@ describe('useImportExportRuntime', () => {
           uniqueOnly: false,
           allowDuplicateSku: true,
           importTemplateId: 'tpl-2',
-          importNameSearch: 'pin',
-          importSkuSearch: 'PIN-2',
           importListPage: 4,
           importListPageSize: 100,
           importListEnabled: true,

@@ -1,15 +1,13 @@
-import { NextResponse } from 'next/server';
-import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
+import type { BrowserContextOptions, Page } from 'playwright';
 import { devices } from 'playwright';
 
-import { encryptSecret } from '@/features/integrations/server';
 import {
-  parsePersistedStorageState,
-  resolveConnectionPlaywrightSettings,
-  type PersistedStorageState,
+  createPlaywrightConnectionTestSuccessResponse,
+  openPlaywrightConnectionTestSession,
+  persistPlaywrightConnectionTestSession,
+  resolvePlaywrightConnectionTestRuntime,
 } from '@/features/playwright/server';
 import { type TestLogEntry } from '@/shared/contracts/integrations';
-import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createVintedBrowserTestUtils } from '@/features/integrations/services/vinted-listing/vinted-browser-test-utils';
 import {
@@ -52,32 +50,26 @@ export const handleVintedBrowserTest = async (
     pushStep('Quicklist preflight', 'ok', 'Fast stored-session validation enabled.');
   }
 
-  let storedState: PersistedStorageState | null = null;
-  const playwrightStorageState = connection.playwrightStorageState;
-  if (playwrightStorageState) {
-    pushStep('Loading session', 'pending', 'Loading stored Playwright session');
-    storedState = parsePersistedStorageState(playwrightStorageState);
-    if (storedState) {
-      pushStep('Loading session', 'ok', 'Stored session loaded');
-    } else {
-      pushStep('Loading session', 'failed', 'Failed to load session');
-    }
-  }
-
-  pushStep('Loading Playwright settings', 'pending', 'Resolving browser runtime settings');
-  let resolvedPlaywrightSettings;
-  try {
-    resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettings(connection);
-  } catch (_error) {
-    void ErrorSystem.captureException(_error);
-    return fail('Loading Playwright settings', 'Failed to resolve Playwright settings');
-  }
-  pushStep('Loading Playwright settings', 'ok', 'Resolved browser runtime settings');
+  let storedState = null;
+  const runtime = await resolvePlaywrightConnectionTestRuntime({
+    connection,
+    pushStep,
+    fail,
+    settingsStep: {
+      pendingDetail: 'Resolving browser runtime settings',
+      successDetail: 'Resolved browser runtime settings',
+      failureDetail: 'Failed to resolve Playwright settings',
+    },
+    storedSession: {
+      loadedDetail: 'Stored session loaded',
+      missingDetail: 'Failed to load session',
+    },
+  });
+  storedState = runtime.storageState;
+  const resolvedPlaywrightSettings = runtime.settings;
 
   const headless = manualMode ? false : quicklistPreflightMode ? true : resolvedPlaywrightSettings.headless;
   const slowMo = quicklistPreflightMode ? 0 : resolvedPlaywrightSettings.slowMo;
-  const defaultTimeout = resolvedPlaywrightSettings.timeout;
-  const navigationTimeout = resolvedPlaywrightSettings.navigationTimeout;
   const proxyEnabled = resolvedPlaywrightSettings.proxyEnabled;
   const proxyServer = resolvedPlaywrightSettings.proxyServer;
   const proxyUsername = resolvedPlaywrightSettings.proxyUsername;
@@ -114,53 +106,39 @@ export const handleVintedBrowserTest = async (
     pushStep('Device emulation', 'failed', `Unknown device profile: ${effectiveDeviceName}`);
   }
   
-  let browser: Browser | null = null;
-  let context: BrowserContext | null = null;
   let page: Page | null = null;
+  let closeSession: (() => Promise<void>) | null = null;
 
   try {
-    const baseLaunchOptions = {
-      headless,
-      slowMo,
-      ...(proxyEnabled && proxyServer
-        ? {
-          proxy: {
-            server: proxyServer,
-            ...(proxyUsername ? { username: proxyUsername } : {}),
-            ...(proxyPassword ? { password: proxyPassword } : {}),
-          },
-        }
-        : {}),
-    };
-
-    pushStep(
-      'Launching Playwright',
-      'pending',
-      `Starting browser (headless=${headless ? 'on' : 'off'})`
-    );
-
     const browserPreference = manualMode && resolvedPlaywrightSettings.browser === 'chromium'
       ? 'auto' as const
       : resolvedPlaywrightSettings.browser;
-    const launchResult = await launchPlaywrightBrowser(browserPreference, baseLaunchOptions);
-    browser = launchResult.browser;
-
-    for (const msg of launchResult.fallbackMessages) {
-      pushStep('Browser selection', 'ok', msg);
-    }
-    pushStep('Browser selection', 'ok', `Using ${launchResult.label}.`);
-
-    const contextOptions: BrowserContextOptions = {
-      ...deviceContextOptions,
-      ...(storedState ? { storageState: storedState } : {}),
-      ...(!deviceProfile ? { viewport: { width: 1280, height: 720 } } : {}),
-    };
-
-    context = await browser.newContext(contextOptions);
-    context.setDefaultTimeout(defaultTimeout);
-    context.setDefaultNavigationTimeout(navigationTimeout);
-    page = await context.newPage();
-    const activePage = page;
+    const session = await openPlaywrightConnectionTestSession({
+      connection,
+      pushStep,
+      runtime: {
+        ...runtime,
+        deviceProfileName: deviceProfile ? effectiveDeviceName : null,
+        deviceContextOptions,
+      },
+      browserPreference,
+      headless,
+      launchSettingsOverrides: {
+        slowMo,
+        proxyEnabled,
+        proxyServer,
+        proxyUsername,
+        proxyPassword,
+      },
+      viewport: { width: 1280, height: 720 },
+      launchStep: {
+        stepName: 'Launching Playwright',
+        pendingDetail: `Starting browser (headless=${headless ? 'on' : 'off'})`,
+      },
+    });
+    closeSession = session.close;
+    page = session.page;
+    const activePage = session.page;
 
     const {
       acceptCookieConsent,
@@ -225,7 +203,10 @@ export const handleVintedBrowserTest = async (
         );
       }
       pushStep('Quicklist preflight', 'ok', 'Stored session is ready.');
-      return NextResponse.json({ ok: true, steps, sessionReady: true });
+      return createPlaywrightConnectionTestSuccessResponse({
+        steps,
+        sessionReady: true,
+      });
     }
 
     if (!sessionReused) {
@@ -292,22 +273,20 @@ export const handleVintedBrowserTest = async (
         : 'Vinted login successful'
     );
 
-    pushStep('Saving session', 'pending', 'Storing Vinted Playwright session');
-    try {
-      const storageStateResult = await page.context().storageState();
-      await repo.updateConnection(connection.id, {
-        playwrightStorageState: encryptSecret(JSON.stringify(storageStateResult)),
-        playwrightStorageStateUpdatedAt: new Date(),
-      });
-      pushStep('Saving session', 'ok', 'Session stored for reuse');
-    } catch (_error) {
-      pushStep('Saving session', 'failed', 'Failed to store session');
-    }
+    await persistPlaywrightConnectionTestSession({
+      connectionId: connection.id,
+      page,
+      repo,
+      pushStep,
+      pendingDetail: 'Storing Vinted Playwright session',
+      successDetail: 'Session stored for reuse',
+      failureDetail: 'Failed to store session',
+      throwOnFailure: false,
+    });
   } finally {
     await page?.close().catch(() => undefined);
-    await context?.close().catch(() => undefined);
-    await browser?.close().catch(() => undefined);
+    await closeSession?.().catch(() => undefined);
   }
 
-  return NextResponse.json({ ok: true, steps });
+  return createPlaywrightConnectionTestSuccessResponse({ steps });
 };

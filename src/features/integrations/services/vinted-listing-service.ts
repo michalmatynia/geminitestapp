@@ -1,26 +1,26 @@
 import 'server-only';
 
-import {
-  findProductListingByIdAcrossProviders,
-  getIntegrationRepository,
-} from '@/features/integrations/server';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { runVintedBrowserListing } from './vinted-listing/vinted-browser-listing';
-import { isAppError } from '@/shared/errors/app-error';
 import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
 import {
-  buildVintedHistoryFields,
   resolveRequestedVintedBrowserMode,
   resolveRequestedVintedBrowserPreference,
   type VintedListingSource,
 } from './vinted-listing/vinted-browser-runtime';
 import {
-  buildPlaywrightListingLastExecutionRecord,
-  buildPlaywrightListingMarketplaceDataRecord,
-  buildPlaywrightServiceListingFailure,
+  buildPlaywrightListingHistoryFields,
+  buildPlaywrightMarketplaceListingProcessArtifacts,
+  buildPlaywrightServiceListingCaughtFailure,
+  buildPlaywrightServiceListingMissingContextFailure,
   buildPlaywrightServiceListingSuccess,
-  resolveConnectionPlaywrightSettingsProfile,
+  finalizePlaywrightStandardListingJobOutcome,
+  resolvePlaywrightFailureListingStatus,
+  resolvePlaywrightListingPersistenceContext,
+  resolvePlaywrightListingPersistenceContextAfterRun,
+  resolvePlaywrightListingRunContext,
+  resolveConnectionPlaywrightExplicitPreferences,
   type PlaywrightServiceListingExecutionBase,
 } from '@/features/playwright/server';
 
@@ -34,11 +34,6 @@ export type VintedListingJobInput = {
 };
 
 export type VintedListingExecutionResult = PlaywrightServiceListingExecutionBase;
-
-const toRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
 
 const classifyVintedFailure = (message: string): string => {
   const lower = message.toLowerCase();
@@ -72,31 +67,6 @@ const classifyVintedFailure = (message: string): string => {
   return 'UNKNOWN';
 };
 
-const resolveFailureListingStatus = (errorCategory: string): string =>
-  errorCategory === 'AUTH' ? 'auth_required' : 'failed';
-
-const extractVintedErrorMetadata = (error: unknown): Record<string, unknown> | undefined => {
-  if (!isAppError(error)) return undefined;
-  const metadata = toRecord(error.meta);
-  return Object.keys(metadata).length > 0 ? metadata : undefined;
-};
-
-const resolvePersistedExternalListingId = ({
-  existingExternalListingId,
-  resultExternalListingId,
-}: {
-  existingExternalListingId: unknown;
-  resultExternalListingId: string | null;
-}): string | null => {
-  if (typeof resultExternalListingId === 'string' && resultExternalListingId.trim()) {
-    return resultExternalListingId;
-  }
-
-  return typeof existingExternalListingId === 'string' && existingExternalListingId.trim()
-    ? existingExternalListingId
-    : null;
-};
-
 export const runVintedListing = async (
   input: VintedListingJobInput
 ): Promise<VintedListingExecutionResult> => {
@@ -105,38 +75,27 @@ export const runVintedListing = async (
   let requestedBrowserPreference: PlaywrightBrowserPreference | undefined;
 
   try {
-    const resolvedListing = await findProductListingByIdAcrossProviders(listingId);
-    if (!resolvedListing) {
-      return buildPlaywrightServiceListingFailure({
-        error: `Listing not found: ${listingId}`,
-        errorCategory: 'NOT_FOUND',
+    const runContext = await resolvePlaywrightListingRunContext({
+      listingId,
+    });
+    if (!runContext.ok) {
+      return buildPlaywrightServiceListingMissingContextFailure({
+        context: runContext,
       });
     }
-    const { listing } = resolvedListing;
-
-    const integrationRepo = await getIntegrationRepository();
-    const connection = await integrationRepo.getConnectionById(listing.connectionId);
-    if (!connection) {
-      return buildPlaywrightServiceListingFailure({
-        error: `Connection not found: ${listing.connectionId}`,
-        errorCategory: 'NOT_FOUND',
-      });
-    }
-    const resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettingsProfile(connection);
+    const { listing, connection } = runContext;
+    const { connectionBrowserPreference, connectionHeadless } =
+      await resolveConnectionPlaywrightExplicitPreferences(connection);
 
     requestedBrowserMode = resolveRequestedVintedBrowserMode({
       requestedBrowserMode: input.browserMode,
       source,
-      connectionHeadless: resolvedPlaywrightSettings.hasExplicitHeadlessPreference
-        ? resolvedPlaywrightSettings.settings.headless
-        : undefined,
+      connectionHeadless,
     });
     requestedBrowserPreference = resolveRequestedVintedBrowserPreference({
       requestedBrowserPreference: input.browserPreference,
       source,
-      connectionBrowserPreference: resolvedPlaywrightSettings.hasExplicitBrowserPreference
-        ? resolvedPlaywrightSettings.settings.browser
-        : undefined,
+      connectionBrowserPreference,
     });
 
     const result = await runVintedBrowserListing({
@@ -164,11 +123,11 @@ export const runVintedListing = async (
       action,
     });
 
-    return buildPlaywrightServiceListingFailure({
-      error: message,
+    return buildPlaywrightServiceListingCaughtFailure({
+      error,
+      errorMessage: message,
       errorCategory: category,
       metadata: {
-        ...(extractVintedErrorMetadata(error) ?? {}),
         ...(requestedBrowserMode ? { requestedBrowserMode } : {}),
         ...(requestedBrowserPreference ? { requestedBrowserPreference } : {}),
       },
@@ -180,35 +139,41 @@ export const processVintedListingJob = async (input: VintedListingJobInput): Pro
   const { listingId, action = 'list', source = 'manual', jobId } = input;
   
   // Update status to 'running' during processing
-  const preResolved = await findProductListingByIdAcrossProviders(listingId);
-  if (preResolved) {
-    await preResolved.repository.updateListingStatus(listingId, 'running');
+  const prePersistenceContext = await resolvePlaywrightListingPersistenceContext({
+    listingId,
+  });
+  if (prePersistenceContext.found) {
+    await prePersistenceContext.repository.updateListingStatus(listingId, 'running');
   }
 
   const result = await runVintedListing(input);
-  const resolved = await findProductListingByIdAcrossProviders(listingId);
-  if (!resolved) {
-    if (!result.ok) throw new Error(result.error ?? 'Listing not found');
+  const persistenceContext = await resolvePlaywrightListingPersistenceContextAfterRun({
+    listingId,
+    result,
+    missingErrorMessage: 'Listing not found',
+  });
+  if (!persistenceContext) {
     return;
   }
 
   const now = new Date();
-  const lastExecution = buildPlaywrightListingLastExecutionRecord({
+  const { listing, repository } = persistenceContext;
+  const {
+    marketplaceData,
+    historyBrowserMode,
+    persistedExternalListingId,
+  } = buildPlaywrightMarketplaceListingProcessArtifacts({
     executedAt: now,
-    result,
-    requestId: jobId ?? null,
-    metadata: result.metadata ?? null,
-    extra: {
-      action,
-      source,
-    },
-  });
-  const marketplaceData = buildPlaywrightListingMarketplaceDataRecord({
-    existingMarketplaceData: resolved.listing.marketplaceData,
+    existingMarketplaceData: listing.marketplaceData,
+    existingExternalListingId: listing.externalListingId,
     marketplace: 'vinted',
     providerKey: 'vinted',
     result,
-    lastExecution,
+    requestId: jobId ?? null,
+    lastExecutionExtra: {
+      action,
+      source,
+    },
     providerState:
       action === 'sync'
         ? {
@@ -216,56 +181,35 @@ export const processVintedListingJob = async (input: VintedListingJobInput): Pro
           }
         : undefined,
   });
-  const historyBrowserMode =
-    typeof result.metadata?.['browserMode'] === 'string'
-      ? result.metadata['browserMode']
-      : typeof result.metadata?.['requestedBrowserMode'] === 'string'
-        ? result.metadata['requestedBrowserMode']
-        : null;
-  const historyFields = buildVintedHistoryFields(historyBrowserMode);
-  const persistedExternalListingId = resolvePersistedExternalListingId({
-    existingExternalListingId: resolved.listing.externalListingId,
-    resultExternalListingId: result.externalListingId,
+  const historyFields = buildPlaywrightListingHistoryFields({
+    browserMode: historyBrowserMode,
   });
+  const failureStatus = resolvePlaywrightFailureListingStatus(result.errorCategory);
 
-  if (result.ok) {
-    await resolved.repository.updateListing(listingId, {
-      status: 'active',
+  await finalizePlaywrightStandardListingJobOutcome({
+    repository,
+    listingId,
+    result,
+    at: now,
+    marketplaceData,
+    relist: action === 'relist',
+    requestId: jobId ?? null,
+    historyFields,
+    success: {
+      historyStatus: 'active',
       externalListingId: persistedExternalListingId,
-      listedAt: now,
-      lastStatusCheckAt: now,
-      failureReason: null,
-      marketplaceData,
-    });
-
-    await resolved.repository.appendExportHistory(listingId, {
-      exportedAt: now,
-      status: 'active',
-      externalListingId: persistedExternalListingId,
-      failureReason: null,
-      relist: action === 'relist',
-      requestId: jobId ?? null,
-      fields: historyFields,
-    });
-  } else {
-    const failureStatus = resolveFailureListingStatus(result.errorCategory ?? 'UNKNOWN');
-    await resolved.repository.updateListingStatus(listingId, failureStatus);
-    await resolved.repository.updateListing(listingId, {
-      status: failureStatus,
-      lastStatusCheckAt: now,
-      failureReason: result.error ?? 'Vinted listing failed.',
-      marketplaceData,
-    });
-    
-    await resolved.repository.appendExportHistory(listingId, {
-      exportedAt: now,
-      status: failureStatus,
-      failureReason: result.error ?? 'Vinted listing failed.',
-      relist: action === 'relist',
-      requestId: jobId ?? null,
-      fields: historyFields,
-    });
-    
-    throw new Error(result.error ?? 'Vinted listing failed.');
-  }
+      updateExtra: {
+        status: 'active',
+        listedAt: now,
+      },
+    },
+    failure: {
+      transitionStatus: failureStatus,
+      historyStatus: failureStatus,
+      failureReason: 'Vinted listing failed.',
+      updateExtra: {
+        status: failureStatus,
+      },
+    },
+  });
 };

@@ -57,8 +57,6 @@ type PersistedImportRuntimeState = {
   uniqueOnly: boolean;
   allowDuplicateSku: boolean;
   importTemplateId: string;
-  importNameSearch: string;
-  importSkuSearch: string;
   importListPage: number;
   importListPageSize: number;
   importListEnabled: boolean;
@@ -132,8 +130,6 @@ const readPersistedImportRuntimeState = (): PersistedImportRuntimeState | null =
       uniqueOnly: parsed['uniqueOnly'] !== false,
       allowDuplicateSku: parsed['allowDuplicateSku'] === true,
       importTemplateId: typeof parsed['importTemplateId'] === 'string' ? parsed['importTemplateId'] : '',
-      importNameSearch: typeof parsed['importNameSearch'] === 'string' ? parsed['importNameSearch'] : '',
-      importSkuSearch: typeof parsed['importSkuSearch'] === 'string' ? parsed['importSkuSearch'] : '',
       importListPage:
         typeof parsed['importListPage'] === 'number' && parsed['importListPage'] > 0
           ? Math.floor(parsed['importListPage'])
@@ -316,8 +312,6 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
         uniqueOnly,
         allowDuplicateSku,
         importTemplateId,
-        importNameSearch,
-        importSkuSearch,
         importListPage,
         importListPageSize,
         importListEnabled,
@@ -369,8 +363,6 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
       setUniqueOnly(persisted.uniqueOnly);
       setAllowDuplicateSku(persisted.allowDuplicateSku);
       setImportTemplateId(persisted.importTemplateId);
-      setImportNameSearch(persisted.importNameSearch);
-      setImportSkuSearch(persisted.importSkuSearch);
       setImportListPage(persisted.importListPage);
       setImportListPageSize(persisted.importListPageSize);
       setImportListEnabled(persisted.importListEnabled);

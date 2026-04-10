@@ -37,13 +37,13 @@ type ProductCategoryUsageDoc = Document & {
   _id?: ObjectId | string;
   id?: string;
   sku?: string | null;
-  categoryId?: string | null;
+  categoryId?: ObjectId | string | null;
 };
 
 type ProductShippingGroupUsageDoc = Document & {
   _id?: ObjectId | string;
   name?: string;
-  autoAssignCategoryIds?: string[];
+  autoAssignCategoryIds?: Array<ObjectId | string>;
 };
 
 const toMongoId = (id: string | null | undefined): ObjectId | string | null => {

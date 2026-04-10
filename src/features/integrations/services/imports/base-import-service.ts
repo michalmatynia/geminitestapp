@@ -37,6 +37,8 @@ import {
   BASE_IMPORT_HEARTBEAT_EVERY_ITEMS,
   BASE_IMPORT_LEASE_MS,
   BASE_IMPORT_MAX_ATTEMPTS,
+  BASE_IMPORT_PROCESSING_BATCH_SIZE,
+  BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE,
   type StartBaseImportRunInput,
   createRunIdempotencyKey,
   isExactTargetImport,
@@ -78,6 +80,7 @@ const BASE_IMPORT_TERMINAL_STATUSES = new Set([
 ]);
 
 const BASE_IMPORT_RESUME_DEFAULT_STATUSES: BaseImportItemStatus[] = ['failed', 'pending'];
+const BASE_IMPORT_RETRY_WAIT_WINDOW_MS = 5_000;
 
 const toFailureTimestamp = (item: BaseImportItemRecord): number => {
   const candidates = [item.lastErrorAt, item.finishedAt, item.updatedAt];
@@ -94,6 +97,30 @@ const pickLatestFailedImportItem = (
 ): BaseImportItemRecord | null => {
   if (items.length === 0) return null;
   return [...items].sort((left, right) => toFailureTimestamp(right) - toFailureTimestamp(left))[0] ?? null;
+};
+
+const findLatestFailedImportItem = async (
+  runId: string
+): Promise<BaseImportItemRecord | null> => {
+  let latest: BaseImportItemRecord | null = null;
+  let offset = 0;
+
+  while (true) {
+    const listedPage = await listBaseImportRunItems(runId, {
+      limit: BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE,
+      offset,
+    });
+    const page = Array.isArray(listedPage) ? listedPage : [];
+    if (page.length === 0) break;
+
+    const failedItems = page.filter((item): boolean => item.status === 'failed');
+    latest = pickLatestFailedImportItem([...(latest ? [latest] : []), ...failedItems]);
+
+    offset += page.length;
+    if (page.length < BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE) break;
+  }
+
+  return latest;
 };
 
 const toCompactFailureMessage = (value: string | null | undefined, maxLength = 220): string => {
@@ -146,6 +173,75 @@ const formatExactTargetItemSummary = (input: {
   }
 
   return null;
+};
+
+type DueBaseImportRunItemBatch = {
+  dueItems: BaseImportItemRecord[];
+  nextOffset: number;
+  nextRetryAtMs: number | null;
+  reachedEnd: boolean;
+};
+
+const toRetryTimestamp = (item: BaseImportItemRecord): number | null => {
+  if (!item.nextRetryAt) return null;
+  const retryAt = Date.parse(item.nextRetryAt);
+  return Number.isFinite(retryAt) ? retryAt : null;
+};
+
+const isBaseImportRunItemDue = (item: BaseImportItemRecord, nowMs: number): boolean => {
+  if (item.status !== 'pending') return true;
+  const retryAt = toRetryTimestamp(item);
+  return retryAt === null || retryAt <= nowMs;
+};
+
+const listDueBaseImportRunItemBatch = async (input: {
+  runId: string;
+  allowedStatuses: Set<BaseImportItemStatus>;
+  nowMs: number;
+  offset: number;
+}): Promise<DueBaseImportRunItemBatch> => {
+  const dueItems: BaseImportItemRecord[] = [];
+  let nextRetryAtMs: number | null = null;
+  let offset = input.offset;
+  let reachedEnd = false;
+
+  while (dueItems.length < BASE_IMPORT_PROCESSING_BATCH_SIZE) {
+    const listedPage = await listBaseImportRunItems(input.runId, {
+      limit: BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE,
+      offset,
+    });
+    const page = Array.isArray(listedPage) ? listedPage : [];
+    if (page.length === 0) {
+      reachedEnd = true;
+      break;
+    }
+
+    let pageCursor = 0;
+
+    for (const item of page) {
+      pageCursor += 1;
+      if (!input.allowedStatuses.has(item.status)) continue;
+
+      if (isBaseImportRunItemDue(item, input.nowMs)) {
+        dueItems.push(item);
+        if (dueItems.length >= BASE_IMPORT_PROCESSING_BATCH_SIZE) break;
+        continue;
+      }
+
+      const retryAt = toRetryTimestamp(item);
+      if (retryAt !== null && (nextRetryAtMs === null || retryAt < nextRetryAtMs)) {
+        nextRetryAtMs = retryAt;
+      }
+    }
+
+    offset += pageCursor;
+    if (page.length < BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE) {
+      reachedEnd = true;
+      break;
+    }
+  }
+
+  return { dueItems, nextOffset: offset, nextRetryAtMs, reachedEnd };
 };
 
 export const prepareBaseImportRun = async (
@@ -477,51 +573,31 @@ export const processBaseImportRun = async (
     throw badRequestError('Import run is locked by another worker.', { runId });
   }
 
-  const getDueItems = (items: BaseImportItemRecord[], nowMs: number): BaseImportItemRecord[] =>
-    items.filter((item: BaseImportItemRecord): boolean => {
-      if (!allowedStatuses.has(item.status)) return false;
-      if (item.status !== 'pending') return true;
-      if (!item.nextRetryAt) return true;
-      const retryAt = Date.parse(item.nextRetryAt);
-      if (!Number.isFinite(retryAt)) return true;
-      return retryAt <= nowMs;
-    });
-
-  const getNextRetryTimestamp = (items: BaseImportItemRecord[]): number | null => {
-    let next: number | null = null;
-    items.forEach((item: BaseImportItemRecord): void => {
-      if (item.status !== 'pending' || !allowedStatuses.has(item.status)) return;
-      if (!item.nextRetryAt) return;
-      const retryAt = Date.parse(item.nextRetryAt);
-      if (!Number.isFinite(retryAt)) return;
-      if (next === null || retryAt < next) next = retryAt;
-    });
-    return next;
-  };
-
   let processedItemsSinceHeartbeat = 0;
+  let itemScanOffset = 0;
+  let wrappedItemScan = false;
 
   try {
-    const initialItems = await listBaseImportRunItems(runId, {
-      limit: 100_000,
-      statuses: Array.from(allowedStatuses),
-    });
-    if (initialItems.length === 0) {
+    let runTotal = run.stats?.total ?? 0;
+    if (runTotal === 0) {
       const refreshed = await recomputeBaseImportRunStats(runId);
-      const alreadyFinished =
-        refreshed.status === 'completed' ||
-        refreshed.status === 'partial_success' ||
-        refreshed.status === 'failed' ||
-        refreshed.status === 'canceled';
-      if (alreadyFinished) return refreshed;
-      return updateBaseImportRunStatus(runId, 'completed', {
-        summaryMessage: buildSummaryMessage(refreshed.stats, Boolean(run.params.dryRun)),
-      });
+      runTotal = refreshed.stats?.total ?? 0;
+      if (runTotal === 0) {
+        const alreadyFinished =
+          refreshed.status === 'completed' ||
+          refreshed.status === 'partial_success' ||
+          refreshed.status === 'failed' ||
+          refreshed.status === 'canceled';
+        if (alreadyFinished) return refreshed;
+        return updateBaseImportRunStatus(runId, 'completed', {
+          summaryMessage: buildSummaryMessage(refreshed.stats, Boolean(run.params.dryRun)),
+        });
+      }
     }
 
     await updateBaseImportRunStatus(runId, 'running', {
       queueJobId: options?.jobId ?? run.queueJobId ?? null,
-      summaryMessage: `Processing ${initialItems.length} product(s).`,
+      summaryMessage: `Processing ${runTotal} product(s).`,
       cancellationRequestedAt: run.cancellationRequestedAt ?? null,
     });
 
@@ -632,23 +708,34 @@ export const processBaseImportRun = async (
         });
       }
 
-      const candidates = await listBaseImportRunItems(runId, {
-        limit: 100_000,
-        statuses: Array.from(allowedStatuses),
-      });
       const nowMs = Date.now();
-      const dueItems = getDueItems(candidates, nowMs);
+      const batch = await listDueBaseImportRunItemBatch({
+        runId,
+        allowedStatuses,
+        nowMs,
+        offset: itemScanOffset,
+      });
+      itemScanOffset = batch.nextOffset;
+      const dueItems = batch.dueItems;
       if (dueItems.length === 0) {
-        const nextRetryAtMs = getNextRetryTimestamp(candidates);
+        if (batch.reachedEnd && itemScanOffset > 0 && !wrappedItemScan) {
+          itemScanOffset = 0;
+          wrappedItemScan = true;
+          continue;
+        }
+        const nextRetryAtMs = batch.nextRetryAtMs;
         if (nextRetryAtMs !== null) {
           const waitMs = nextRetryAtMs - nowMs;
-          if (waitMs > 0 && waitMs <= 5_000) {
+          if (waitMs > 0 && waitMs <= BASE_IMPORT_RETRY_WAIT_WINDOW_MS) {
             await new Promise((resolve) => setTimeout(resolve, waitMs));
+            itemScanOffset = 0;
+            wrappedItemScan = false;
             continue;
           }
         }
         break;
       }
+      wrappedItemScan = false;
 
       const detailsMap = await fetchDetailsMap(
         connection.token,
@@ -816,10 +903,10 @@ export const processBaseImportRun = async (
                 lastErrorAt: now,
                 nextRetryAt: new Date(Date.now() + delayMs).toISOString(),
               },
-              { recompute: true }
+              { recompute: false }
             );
           } else {
-            await markRunItem(runId, item, result, { recompute: true });
+            await markRunItem(runId, item, result, { recompute: false });
           }
         } catch (error: unknown) {
           void ErrorSystem.captureException(error);
@@ -840,22 +927,20 @@ export const processBaseImportRun = async (
               nextRetryAt: isRetryable ? new Date(Date.now() + delayMs).toISOString() : null,
               finishedAt: isRetryable ? null : now,
             },
-            { recompute: true }
+            { recompute: false }
           );
         }
       }
     }
 
     const finalStats = await recomputeBaseImportRunStats(runId);
-    const terminalStatus = determineBaseImportTerminalStatus(finalStats.stats);
-    const failedItems =
-      (finalStats.stats?.failed ?? 0) > 0
-        ? await listBaseImportRunItems(runId, {
-          limit: 100_000,
-          statuses: ['failed'],
-        })
-        : [];
-    const latestFailure = pickLatestFailedImportItem(failedItems);
+    const hasPendingItems =
+      (finalStats.stats?.pending ?? 0) > 0 || (finalStats.stats?.processing ?? 0) > 0;
+    const terminalStatus = determineBaseImportTerminalStatus(finalStats.stats, {
+      hasPendingItems,
+    });
+    const latestFailure =
+      (finalStats.stats?.failed ?? 0) > 0 ? await findLatestFailedImportItem(runId) : null;
     const latestFailureSummary = formatLatestFailureSummary(latestFailure);
     const summaryMessageBase = buildSummaryMessage(finalStats.stats, Boolean(run.params.dryRun));
     const exactTargetItems =
@@ -866,7 +951,7 @@ export const processBaseImportRun = async (
         : [];
     const exactTargetSummary = formatExactTargetItemSummary({
       run,
-      item: exactTargetItems[0] ?? null,
+      item: Array.isArray(exactTargetItems) ? (exactTargetItems[0] ?? null) : null,
     });
     return updateBaseImportRunStatus(runId, terminalStatus, {
       finishedAt: nowIso(),

@@ -60,13 +60,15 @@ export const runPlaywrightInstanceTask = async <
       throw metadataCarrier;
     }
 
+    const internalErrorAdditional = {
+      ...(errorAdditional as Record<string, unknown>),
+      cause: error,
+    };
+
     throw createPlaywrightInstanceTaskInternalError(
       input.getErrorMessage?.(error) ??
         (error instanceof Error ? error.message : 'Playwright instance task failed'),
-      {
-        ...(errorAdditional as Record<string, unknown>),
-        cause: error,
-      } as TErrorAdditional
+      internalErrorAdditional
     );
   }
 };

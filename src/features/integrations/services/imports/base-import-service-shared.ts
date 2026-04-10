@@ -51,6 +51,9 @@ const DEFAULT_BASE_IMPORT_RETRY_BASE_DELAY_MS = 2_000;
 const DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS = 60_000;
 const DEFAULT_BASE_IMPORT_LEASE_MS = 60_000;
 const DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = 10;
+const DEFAULT_BASE_IMPORT_PROCESSING_BATCH_SIZE = 100;
+const DEFAULT_BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE = 1000;
+const DEFAULT_BASE_IMPORT_QUEUE_LOCK_DURATION_MS = 10 * 60_000;
 
 const toPositiveIntOrFallback = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
@@ -82,6 +85,24 @@ export const BASE_IMPORT_LEASE_MS = toPositiveIntOrFallback(
 export const BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = toPositiveIntOrFallback(
   process.env['BASE_IMPORT_HEARTBEAT_EVERY_ITEMS'],
   DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS
+);
+
+export const BASE_IMPORT_PROCESSING_BATCH_SIZE = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_PROCESSING_BATCH_SIZE'],
+  DEFAULT_BASE_IMPORT_PROCESSING_BATCH_SIZE
+);
+
+export const BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE = Math.max(
+  BASE_IMPORT_PROCESSING_BATCH_SIZE,
+  toPositiveIntOrFallback(
+    process.env['BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE'],
+    DEFAULT_BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE
+  )
+);
+
+export const BASE_IMPORT_QUEUE_LOCK_DURATION_MS = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_QUEUE_LOCK_DURATION_MS'],
+  DEFAULT_BASE_IMPORT_QUEUE_LOCK_DURATION_MS
 );
 
 export const BASE_DETAILS_BATCH_SIZE = 100;
@@ -196,7 +217,7 @@ export const resolveMode = (mode: BaseImportMode | undefined): BaseImportMode =>
   mode ?? 'upsert_on_base_id';
 
 export const resolveEffectiveMode = (input: {
-  mode: BaseImportMode | undefined;
+  mode?: BaseImportMode | undefined;
   directTarget?: BaseImportDirectTarget | null;
 }): BaseImportMode => (isExactTargetImport(input.directTarget) ? 'create_only' : resolveMode(input.mode));
 

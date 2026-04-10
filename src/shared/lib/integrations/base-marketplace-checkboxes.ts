@@ -107,7 +107,7 @@ export const normalizeBaseMarketplaceCheckboxKey = (value: string): string =>
 type BaseMarketplaceCheckboxOptionDefinition = {
   id: string;
   label: string;
-  aliases: string[];
+  aliases: readonly string[];
 };
 
 const toOptionKey = (value: unknown): string | null => {

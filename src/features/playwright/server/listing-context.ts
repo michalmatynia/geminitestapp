@@ -19,6 +19,11 @@ export type PlaywrightResolvedListingRunContext = {
   integration?: IntegrationRecord;
 };
 
+export type PlaywrightResolvedListingRunContextWithIntegration =
+  PlaywrightResolvedListingRunContext & {
+    integration: IntegrationRecord;
+  };
+
 export type PlaywrightMissingListingRunContext =
   | {
       ok: false;
@@ -45,13 +50,21 @@ export type PlaywrightListingRunContextResult =
   | PlaywrightResolvedListingRunContext
   | PlaywrightMissingListingRunContext;
 
-export const resolvePlaywrightListingRunContext = async ({
+export function resolvePlaywrightListingRunContext(input: {
+  listingId: string;
+  includeIntegration: true;
+}): Promise<PlaywrightResolvedListingRunContextWithIntegration | PlaywrightMissingListingRunContext>;
+export function resolvePlaywrightListingRunContext(input: {
+  listingId: string;
+  includeIntegration?: false;
+}): Promise<PlaywrightResolvedListingRunContext | PlaywrightMissingListingRunContext>;
+export async function resolvePlaywrightListingRunContext({
   listingId,
   includeIntegration = false,
 }: {
   listingId: string;
   includeIntegration?: boolean;
-}): Promise<PlaywrightListingRunContextResult> => {
+}): Promise<PlaywrightListingRunContextResult> {
   const resolvedListing = await findProductListingByIdAcrossProviders(listingId);
   if (!resolvedListing) {
     return {
@@ -102,4 +115,4 @@ export const resolvePlaywrightListingRunContext = async ({
     connection,
     integration,
   };
-};
+}

@@ -252,7 +252,7 @@ describe('processBaseImportRun custom fields', () => {
       buildRun(runId === 'run-dry')
     );
     mocks.listBaseImportRunItemsMock
-      .mockResolvedValueOnce([buildItem()])
+      .mockReset()
       .mockResolvedValueOnce([buildItem()])
       .mockResolvedValueOnce([]);
     mocks.updateBaseImportRunStatusMock.mockImplementation(
@@ -500,6 +500,45 @@ describe('processBaseImportRun custom fields', () => {
     expect(customFieldRepository.createCustomField).not.toHaveBeenCalled();
   });
 
+  it('processes large due item sets in bounded detail batches', async () => {
+    const items = Array.from({ length: 105 }, (_, index) => ({
+      ...buildItem(),
+      id: `item-${index}`,
+      externalId: `base-${index}`,
+      itemId: `base-${index}`,
+      baseProductId: `base-${index}`,
+      idempotencyKey: `run-live:base-${index}`,
+    }));
+    const firstBatch = items.slice(0, 100);
+
+    mocks.listBaseImportRunItemsMock
+      .mockReset()
+      .mockResolvedValueOnce(items)
+      .mockResolvedValueOnce([]);
+    mocks.heartbeatBaseImportRunLeaseMock.mockResolvedValue(buildRun(false));
+    mocks.fetchDetailsMapMock.mockResolvedValue(
+      new Map(
+        firstBatch.map((item) => [
+          item.itemId,
+          {
+            id: item.itemId,
+            base_product_id: item.itemId,
+          },
+        ])
+      )
+    );
+
+    await processBaseImportRun('run-live');
+
+    expect(mocks.fetchDetailsMapMock).toHaveBeenCalledWith(
+      'token-1',
+      'inventory-1',
+      firstBatch.map((item) => item.itemId)
+    );
+    expect(mocks.fetchDetailsMapMock.mock.calls[0]?.[2]).toHaveLength(100);
+    expect(mocks.importSingleItemMock).toHaveBeenCalledTimes(100);
+  });
+
   it('persists the latest failed item cause onto the run summary and error fields', async () => {
     const failedItem = {
       ...buildItem(),
@@ -516,9 +555,10 @@ describe('processBaseImportRun custom fields', () => {
     mocks.listBaseImportRunItemsMock
       .mockReset()
       .mockResolvedValueOnce([buildItem()])
-      .mockResolvedValueOnce([buildItem()])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([failedItem]);
+      .mockResolvedValueOnce([failedItem])
+      .mockResolvedValueOnce([failedItem])
+      .mockResolvedValueOnce([]);
     mocks.importSingleItemMock.mockResolvedValue({
       status: 'failed',
       action: 'failed',
@@ -671,9 +711,17 @@ describe('processBaseImportRun exact target summaries', () => {
       },
     });
     mocks.listBaseImportRunItemsMock
-      .mockResolvedValueOnce([buildItem()])
+      .mockReset()
       .mockResolvedValueOnce([buildItem()])
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          ...buildItem(),
+          status: 'updated',
+          sku: 'KEYCHA1045',
+          importedProductId: 'product-123',
+        },
+      ])
       .mockResolvedValueOnce([
         {
           ...buildItem(),
@@ -793,8 +841,15 @@ describe('processBaseImportRun exact target summaries', () => {
     mocks.listBaseImportRunItemsMock
       .mockReset()
       .mockResolvedValueOnce([buildItem()])
-      .mockResolvedValueOnce([buildItem()])
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          ...buildItem(),
+          status: 'imported',
+          sku: 'KEYCHA1045',
+          importedProductId: 'product-456',
+        },
+      ])
       .mockResolvedValueOnce([
         {
           ...buildItem(),

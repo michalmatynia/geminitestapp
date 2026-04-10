@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { processBaseImportRun } from '@/features/integrations/server';
+import { BASE_IMPORT_QUEUE_LOCK_DURATION_MS } from '@/features/integrations/services/imports/base-import-service-shared';
 import type { BaseImportDispatchMode, BaseImportItemStatus } from '@/shared/contracts/integrations/base-com';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -14,6 +15,9 @@ type BaseImportQueueJobData = {
 const queue = createManagedQueue<BaseImportQueueJobData>({
   name: 'base-import',
   concurrency: 1,
+  workerOptions: {
+    lockDuration: BASE_IMPORT_QUEUE_LOCK_DURATION_MS,
+  },
   defaultJobOptions: {
     attempts: 1,
     removeOnComplete: true,

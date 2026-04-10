@@ -10,11 +10,14 @@ import type { ProductParameter } from '@/shared/contracts/products/parameters';
 
 import {
   BASE_MARKETPLACE_CHECKBOX_OPTIONS,
+  getBaseMarketExclusionNormalizedKeys,
+  hasBaseMarketExclusionValue,
+  MARKET_EXCLUSION_FIELD_NAME,
   normalizeBaseMarketplaceCheckboxKey,
 } from '@/shared/lib/integrations/base-marketplace-checkboxes';
 
-const MARKET_EXCLUSION_FIELD_NAME = 'Market Exclusion';
 const TEXT_CUSTOM_FIELD_ID_PREFIX = 'base-text-custom-field';
+const GENERIC_EXTRA_FIELD_KEY_PATTERN = /^extra\s+field\s+\d+$/i;
 
 const RESERVED_TEXT_FIELD_BASE_KEYS = new Set([
   'name',
@@ -70,69 +73,13 @@ const formatDetectedFieldName = (value: string): string => {
   return normalizedSeparators;
 };
 
-const MARKET_EXCLUSION_NORMALIZED_KEYS = new Set([
-  normalizeKey(MARKET_EXCLUSION_FIELD_NAME),
-  ...MARKET_EXCLUSION_OPTIONS.flatMap((option) =>
-    option.aliases.flatMap((alias) => [
-      normalizeKey(alias),             // e.g. "tradera"
-      normalizeKey(`${alias} Yes`),    // e.g. "traderayes" — FileMaker checkbox convention
-    ])
-  ),
-]);
-
-const collectSourceKeys = (
-  value: unknown,
-  keys: Set<string>,
-  depth: number = 0,
-  prefix?: string
-): void => {
-  if (value === null || value === undefined || depth > 4) return;
-
-  if (Array.isArray(value)) {
-    value.forEach((entry: unknown) => collectSourceKeys(entry, keys, depth + 1, prefix));
-    return;
-  }
-
-  if (typeof value !== 'object') return;
-
-  const record = value as Record<string, unknown>;
-
-  Object.entries(record).forEach(([key, entry]: [string, unknown]) => {
-    if (key.trim()) {
-      keys.add(key.trim());
-      if (prefix) {
-        keys.add(`${prefix}.${key.trim()}`);
-      }
-    }
-
-    if (
-      ['name', 'parameter', 'code', 'label', 'title'].includes(key) &&
-      typeof entry === 'string' &&
-      entry.trim()
-    ) {
-      keys.add(entry.trim());
-    }
-
-    collectSourceKeys(entry, keys, depth + 1, prefix ? `${prefix}.${key.trim()}` : key.trim());
-  });
-};
-
-const hasMarketExclusionSignals = (records: BaseProductRecord[]): boolean => {
-  const detectedKeys = new Set<string>();
-  records.forEach((record: BaseProductRecord) => {
-    collectSourceKeys(record, detectedKeys);
-  });
-
-  const normalizedDetectedKeys = Array.from(detectedKeys).map(normalizeKey);
-  return MARKET_EXCLUSION_OPTIONS.some((option) =>
-    option.aliases.some((alias) => {
-      const normalizedAlias = normalizeKey(alias);
-      return normalizedDetectedKeys.some(
-        (candidate) => candidate === normalizedAlias || candidate.endsWith(normalizedAlias)
-      );
-    })
+const hasMarketExclusionSignals = (
+  records: BaseProductRecord[],
+  customFieldDefinitions?: ProductCustomFieldDefinition[]
+): boolean =>
+  records.some((record: BaseProductRecord): boolean =>
+    hasBaseMarketExclusionValue(record, customFieldDefinitions)
   );
-};
 
 const findByNormalizedName = (
   customFieldDefinitions: ProductCustomFieldDefinition[],
@@ -173,9 +120,13 @@ const buildMergedOptions = (
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const shouldSkipDetectedTextFieldKey = (key: string): boolean => {
+const shouldSkipDetectedTextFieldKey = (
+  key: string,
+  customFieldDefinitions?: ProductCustomFieldDefinition[]
+): boolean => {
   const trimmedKey = key.trim();
   if (!trimmedKey) return true;
+  const marketExclusionNormalizedKeys = getBaseMarketExclusionNormalizedKeys(customFieldDefinitions);
 
   const normalizedExactKey = normalizeKey(trimmedKey);
   if (RESERVED_TEXT_FIELD_EXACT_KEYS.has(normalizedExactKey)) {
@@ -186,14 +137,17 @@ const shouldSkipDetectedTextFieldKey = (key: string): boolean => {
   return (
     !normalizedBaseKey ||
     RESERVED_TEXT_FIELD_BASE_KEYS.has(normalizedBaseKey) ||
-    MARKET_EXCLUSION_NORMALIZED_KEYS.has(normalizedBaseKey)
+    marketExclusionNormalizedKeys.has(normalizedBaseKey)
   );
 };
 
 const isSupportedGenericTextFieldValue = (value: unknown): boolean =>
   value !== null && value !== undefined && !isRecord(value);
 
-const collectBaseTextCustomFieldNames = (records: BaseProductRecord[]): string[] => {
+const collectBaseTextCustomFieldNames = (
+  records: BaseProductRecord[],
+  customFieldDefinitions?: ProductCustomFieldDefinition[]
+): string[] => {
   const namesByNormalizedKey = new Map<string, string>();
 
   records.forEach((record: BaseProductRecord) => {
@@ -201,7 +155,16 @@ const collectBaseTextCustomFieldNames = (records: BaseProductRecord[]): string[]
     if (!isRecord(textFields)) return;
 
     Object.entries(textFields).forEach(([key, value]: [string, unknown]) => {
-      if (shouldSkipDetectedTextFieldKey(key) || !isSupportedGenericTextFieldValue(value)) {
+      if (
+        shouldSkipDetectedTextFieldKey(key, customFieldDefinitions) ||
+        !isSupportedGenericTextFieldValue(value)
+      ) {
+        return;
+      }
+      if (
+        GENERIC_EXTRA_FIELD_KEY_PATTERN.test(key.trim()) &&
+        hasBaseMarketExclusionValue(value, customFieldDefinitions)
+      ) {
         return;
       }
 
@@ -265,9 +228,13 @@ const buildReservedFeatureFieldNames = (parameters: ProductParameter[] | undefin
 const collectBaseFeatureCustomFieldNames = (input: {
   records: BaseProductRecord[];
   existingParameters?: ProductParameter[];
+  existingDefinitions?: ProductCustomFieldDefinition[];
 }): string[] => {
   const namesByNormalizedKey = new Map<string, string>();
   const reservedFeatureNames = buildReservedFeatureFieldNames(input.existingParameters);
+  const marketExclusionNormalizedKeys = getBaseMarketExclusionNormalizedKeys(
+    input.existingDefinitions
+  );
 
   input.records.forEach((record: BaseProductRecord) => {
     collectFeatureBucketObjects(record).forEach((bucket) => {
@@ -280,7 +247,7 @@ const collectBaseFeatureCustomFieldNames = (input: {
         const normalizedDisplayName = normalizeKey(displayName);
         if (
           !normalizedDisplayName ||
-          MARKET_EXCLUSION_NORMALIZED_KEYS.has(normalizedDisplayName) ||
+          marketExclusionNormalizedKeys.has(normalizedDisplayName) ||
           reservedFeatureNames.has(normalizedDisplayName) ||
           namesByNormalizedKey.has(normalizedDisplayName)
         ) {
@@ -307,12 +274,13 @@ export const ensureBaseTextCustomFields = async (input: {
 }): Promise<ProductCustomFieldDefinition[]> => {
   const shouldPersist = input.persist ?? true;
   const detectedFieldNames = [
-    ...collectBaseTextCustomFieldNames(input.records),
+    ...collectBaseTextCustomFieldNames(input.records, input.existingDefinitions),
     ...(input.includeFeatureBuckets
       ? collectBaseFeatureCustomFieldNames({
-        records: input.records,
-        existingParameters: input.existingParameters,
-      })
+          records: input.records,
+          existingParameters: input.existingParameters,
+          existingDefinitions: input.existingDefinitions,
+        })
       : []),
   ].sort((left: string, right: string) => left.localeCompare(right));
 
@@ -357,7 +325,7 @@ export const ensureBaseMarketplaceExclusionCustomField = async (input: {
   persist?: boolean;
 }): Promise<ProductCustomFieldDefinition[]> => {
   const shouldPersist = input.persist ?? true;
-  if (!hasMarketExclusionSignals(input.records)) {
+  if (!hasMarketExclusionSignals(input.records, input.existingDefinitions)) {
     return input.existingDefinitions;
   }
 

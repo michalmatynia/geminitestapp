@@ -1024,11 +1024,14 @@ export const importSingleItem = async (input: {
     );
   }
 
+  const shouldPersistImportProvenance =
+    input.persistBaseSyncIdentity || Boolean(input.run.params.directTarget);
+
   const createData: ProductCreateInput = {
     ...mapped,
     sku: skuForCreate,
     baseProductId: input.persistBaseSyncIdentity ? mappedBaseProductId ?? null : null,
-    importSource: input.persistBaseSyncIdentity ? 'base' : null,
+    importSource: shouldPersistImportProvenance ? 'base' : null,
     defaultPriceGroupId: input.defaultPriceGroupId,
     imageLinks: imageUrls,
   };
@@ -1163,7 +1166,7 @@ export const importSingleItem = async (input: {
     }
   }
 
-  if (input.persistBaseSyncIdentity) {
+  if (shouldPersistImportProvenance) {
     await linkImportedProductToBaseListing({
       product: created,
       baseIntegrationId: input.baseIntegrationId,

@@ -93,7 +93,7 @@ export const getImportResultDisplaySummary = (
       dispatchModeLabel,
       queueJobLabel,
       explanation: isExactTargetSummary
-        ? 'This exact-target run was submitted to the separate base-import runtime queue and will create a new detached product.'
+        ? 'This exact-target run was submitted to the separate base-import runtime queue and will create a new product with a Base.com connection.'
         : 'This run was submitted to the separate base-import runtime queue.',
     };
   }

@@ -15,7 +15,14 @@ import {
   resolveRequestedVintedBrowserPreference,
   type VintedListingSource,
 } from './vinted-listing/vinted-browser-runtime';
-import { resolveConnectionPlaywrightSettingsProfile } from '@/features/playwright/server';
+import {
+  buildPlaywrightListingLastExecutionRecord,
+  buildPlaywrightListingMarketplaceDataRecord,
+  buildPlaywrightServiceListingFailure,
+  buildPlaywrightServiceListingSuccess,
+  resolveConnectionPlaywrightSettingsProfile,
+  type PlaywrightServiceListingExecutionBase,
+} from '@/features/playwright/server';
 
 export type VintedListingJobInput = {
   listingId: string;
@@ -25,6 +32,8 @@ export type VintedListingJobInput = {
   browserMode?: PlaywrightRelistBrowserMode;
   browserPreference?: PlaywrightBrowserPreference;
 };
+
+export type VintedListingExecutionResult = PlaywrightServiceListingExecutionBase;
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value)
@@ -72,66 +81,6 @@ const extractVintedErrorMetadata = (error: unknown): Record<string, unknown> | u
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 };
 
-const buildVintedMarketplaceData = ({
-  existingMarketplaceData,
-  result,
-  executedAt,
-  action,
-  source,
-  requestId,
-}: {
-  existingMarketplaceData: Record<string, unknown> | null | undefined;
-  result: Pick<
-    Awaited<ReturnType<typeof runVintedListing>>,
-    'ok' | 'externalListingId' | 'listingUrl' | 'error' | 'errorCategory' | 'metadata'
-  >;
-  executedAt: Date;
-  action: 'list' | 'relist' | 'sync';
-  source: VintedListingSource;
-  requestId: string | null;
-}): Record<string, unknown> => {
-  const marketplaceData = toRecord(existingMarketplaceData);
-  const vintedData = toRecord(marketplaceData['vinted']);
-  const nextListingUrl =
-    result.listingUrl ??
-    (typeof marketplaceData['listingUrl'] === 'string' && marketplaceData['listingUrl'].trim()
-      ? marketplaceData['listingUrl']
-      : null);
-  const nextExternalListingId =
-    result.externalListingId ??
-    (typeof marketplaceData['externalListingId'] === 'string' &&
-    marketplaceData['externalListingId'].trim()
-      ? marketplaceData['externalListingId']
-      : null);
-
-  return {
-    ...marketplaceData,
-    marketplace: 'vinted',
-    ...(nextListingUrl ? { listingUrl: nextListingUrl } : {}),
-    ...(nextExternalListingId ? { externalListingId: nextExternalListingId } : {}),
-    vinted: {
-      ...vintedData,
-      lastErrorCategory: result.ok ? null : result.errorCategory,
-      pendingExecution: null,
-      ...(action === 'sync'
-        ? {
-            lastSyncedAt: executedAt.toISOString(),
-          }
-        : {}),
-      lastExecution: {
-        executedAt: executedAt.toISOString(),
-        action,
-        source,
-        requestId,
-        ok: result.ok,
-        error: result.error,
-        errorCategory: result.errorCategory,
-        metadata: result.metadata ?? null,
-      },
-    },
-  };
-};
-
 const resolvePersistedExternalListingId = ({
   existingExternalListingId,
   resultExternalListingId,
@@ -150,14 +99,7 @@ const resolvePersistedExternalListingId = ({
 
 export const runVintedListing = async (
   input: VintedListingJobInput
-): Promise<{
-  ok: boolean;
-  externalListingId: string | null;
-  listingUrl: string | null;
-  error: string | null;
-  errorCategory: string | null;
-  metadata?: Record<string, unknown>;
-}> => {
+): Promise<VintedListingExecutionResult> => {
   const { listingId, action = 'list', source = 'manual' } = input;
   let requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   let requestedBrowserPreference: PlaywrightBrowserPreference | undefined;
@@ -165,20 +107,20 @@ export const runVintedListing = async (
   try {
     const resolvedListing = await findProductListingByIdAcrossProviders(listingId);
     if (!resolvedListing) {
-      return { ok: false, externalListingId: null, listingUrl: null, error: `Listing not found: ${listingId}`, errorCategory: 'NOT_FOUND' };
+      return buildPlaywrightServiceListingFailure({
+        error: `Listing not found: ${listingId}`,
+        errorCategory: 'NOT_FOUND',
+      });
     }
     const { listing } = resolvedListing;
 
     const integrationRepo = await getIntegrationRepository();
     const connection = await integrationRepo.getConnectionById(listing.connectionId);
     if (!connection) {
-      return {
-        ok: false,
-        externalListingId: null,
-        listingUrl: null,
+      return buildPlaywrightServiceListingFailure({
         error: `Connection not found: ${listing.connectionId}`,
         errorCategory: 'NOT_FOUND',
-      };
+      });
     }
     const resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettingsProfile(connection);
 
@@ -206,14 +148,11 @@ export const runVintedListing = async (
       browserPreference: requestedBrowserPreference,
     });
 
-    return {
-      ok: true,
+    return buildPlaywrightServiceListingSuccess({
       externalListingId: result.externalListingId ?? null,
       listingUrl: result.listingUrl ?? null,
-      error: null,
-      errorCategory: null,
       metadata: result.metadata,
-    };
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     const category = classifyVintedFailure(message);
@@ -225,10 +164,7 @@ export const runVintedListing = async (
       action,
     });
 
-    return {
-      ok: false,
-      externalListingId: null,
-      listingUrl: null,
+    return buildPlaywrightServiceListingFailure({
       error: message,
       errorCategory: category,
       metadata: {
@@ -236,7 +172,7 @@ export const runVintedListing = async (
         ...(requestedBrowserMode ? { requestedBrowserMode } : {}),
         ...(requestedBrowserPreference ? { requestedBrowserPreference } : {}),
       },
-    };
+    });
   }
 };
 
@@ -257,13 +193,28 @@ export const processVintedListingJob = async (input: VintedListingJobInput): Pro
   }
 
   const now = new Date();
-  const marketplaceData = buildVintedMarketplaceData({
-    existingMarketplaceData: resolved.listing.marketplaceData,
-    result,
+  const lastExecution = buildPlaywrightListingLastExecutionRecord({
     executedAt: now,
-    action,
-    source,
+    result,
     requestId: jobId ?? null,
+    metadata: result.metadata ?? null,
+    extra: {
+      action,
+      source,
+    },
+  });
+  const marketplaceData = buildPlaywrightListingMarketplaceDataRecord({
+    existingMarketplaceData: resolved.listing.marketplaceData,
+    marketplace: 'vinted',
+    providerKey: 'vinted',
+    result,
+    lastExecution,
+    providerState:
+      action === 'sync'
+        ? {
+            lastSyncedAt: now.toISOString(),
+          }
+        : undefined,
   });
   const historyBrowserMode =
     typeof result.metadata?.['browserMode'] === 'string'

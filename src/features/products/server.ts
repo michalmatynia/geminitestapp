@@ -14,7 +14,10 @@ export { getShippingGroupRepository } from '@/shared/lib/products/services/shipp
 export { getTagRepository } from '@/shared/lib/products/services/tag-repository';
 export { getTitleTermRepository } from '@/shared/lib/products/services/title-term-repository';
 export { getValidationPatternRepository } from '@/shared/lib/products/services/validation-pattern-repository';
-export { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
+export {
+  buildNormalizedProductValidationPayload,
+  formDataToObject,
+} from '@/shared/lib/products/services/product-service-form-utils';
 export { productService } from '@/shared/lib/products/services/productService';
 export {
   getProductDataProvider,

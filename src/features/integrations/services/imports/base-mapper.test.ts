@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   baseMarketExclusionFlatFeatureRecord,
+  baseMarketExclusionGenericExtraFieldRecord,
   baseMarketExclusionGroupedOptionObjectsRecord,
   baseMarketExclusionGroupedValuesRecord,
   baseMarketExclusionNestedFeatureRecord,
@@ -325,6 +326,46 @@ describe('mapBaseProduct', () => {
       expect(result.customFields).toEqual([
         { fieldId: 'market-exclusion', selectedOptionIds: ['tradera', 'willhaben'] },
       ]);
+    });
+
+    it('auto-maps Market Exclusion checkbox options from generic Base extra fields using real option labels', () => {
+      const result = mapBaseProduct(
+        baseMarketExclusionGenericExtraFieldRecord,
+        [],
+        {
+          customFieldDefinitions: [
+            {
+              id: 'market-exclusion',
+              name: 'Market Exclusion',
+              type: 'checkbox_set',
+              options: [
+                { id: 'allegro', label: 'Allegro' },
+                { id: 'amazon-pl', label: 'Amazon.pl' },
+                { id: 'tradera', label: 'Tradera' },
+                { id: 'vinted', label: 'Vinted' },
+              ],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+            {
+              id: 'extra-18808',
+              name: 'Extra Field 18808',
+              type: 'text',
+              options: [],
+              createdAt: '2026-04-08T00:00:00.000Z',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+            },
+          ],
+        }
+      );
+
+      expect(result.customFields).toHaveLength(2);
+      expect(result.customFields).toEqual(
+        expect.arrayContaining([
+          { fieldId: 'extra-18808', textValue: 'Yes' },
+          { fieldId: 'market-exclusion', selectedOptionIds: ['allegro', 'tradera'] },
+        ])
+      );
     });
 
     it('auto-maps marketplace checkbox-set options from arbitrary grouped Base buckets', () => {

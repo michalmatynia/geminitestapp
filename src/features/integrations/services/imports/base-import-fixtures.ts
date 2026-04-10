@@ -49,6 +49,20 @@ export const baseMarketExclusionGroupedOptionObjectsRecord = {
   ],
 } as const;
 
+export const baseMarketExclusionGenericExtraFieldRecord = {
+  product_id: 'p-generic-extra-field',
+  sku: 'SKU-GENERIC-EXTRA',
+  text_fields: {
+    'Extra Field 6302': [
+      { label: 'Allegro', checked: true },
+      { label: 'Amazon.pl', checked: false },
+      { label: 'Tradera', selected: true },
+      { label: 'Vinted', selected: false },
+    ],
+    'Extra Field 18808': 'Yes',
+  },
+} as const;
+
 export const baseInventoryProductsListObjectPayload = {
   products: {
     '2001': {

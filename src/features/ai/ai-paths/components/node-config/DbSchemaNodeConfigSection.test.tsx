@@ -37,6 +37,7 @@ const buildDbSchemaNode = (overrides: Record<string, unknown> = {}): Record<stri
       contextCollections: [],
       contextQuery: '',
       contextLimit: 20,
+      contextTransform: 'none',
       includeFields: true,
       includeRelations: true,
       formatAs: 'text',
@@ -245,6 +246,7 @@ describe('DbSchemaNodeConfigSection', () => {
           contextCollections: [],
           contextQuery: '',
           contextLimit: 20,
+          contextTransform: 'none',
           includeFields: true,
           includeRelations: true,
           formatAs: 'text',
@@ -342,6 +344,7 @@ describe('DbSchemaNodeConfigSection', () => {
           contextCollections: [],
           contextQuery: '',
           contextLimit: 20,
+          contextTransform: 'none',
           includeFields: true,
           includeRelations: true,
           formatAs: 'text',
@@ -387,6 +390,15 @@ describe('DbSchemaNodeConfigSection', () => {
     expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
       db_schema: expect.objectContaining({
         contextLimit: 7,
+      }),
+    });
+
+    fireEvent.change(screen.getByLabelText('Live context transform'), {
+      target: { value: 'product_categories_leaf_only' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextTransform: 'product_categories_leaf_only',
       }),
     });
 

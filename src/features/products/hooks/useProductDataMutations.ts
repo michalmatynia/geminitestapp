@@ -160,32 +160,73 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
 export function useUpdateProductMutation(): UseMutationResult<
   ProductWithImages | null,
   Error,
-  IdDataDto<Partial<ProductWithImages> | FormData> & { originalSku?: string | null },
+  IdDataDto<Partial<ProductWithImages> | FormData> & {
+    originalSku?: string | null;
+    originalNameEn?: string | null;
+  },
   unknown
 > {
+  const normalizeIdentityText = (value?: string | null): string =>
+    typeof value === 'string' ? value.trim() : '';
+
+  const collectFieldErrorMessages = (details: unknown): string[] => {
+    if (!details || typeof details !== 'object' || Array.isArray(details)) {
+      return [];
+    }
+
+    const fields = (details as { fields?: unknown }).fields;
+    if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
+      return [];
+    }
+
+    return Object.entries(fields as Record<string, unknown>)
+      .flatMap(([field, value]): string[] => {
+        if (!Array.isArray(value)) {
+          return [];
+        }
+
+        return value
+          .map((entry: unknown): string => {
+            const message = typeof entry === 'string' ? entry.trim() : '';
+            return message ? `${field}: ${message}` : '';
+          })
+          .filter((entry: string): boolean => entry.length > 0);
+      })
+      .slice(0, 3);
+  };
+
   const parseUpdateError = async (response: Response): Promise<string> => {
     const errorData = (await response.json().catch(() => ({}))) as {
       error?: string;
       details?: unknown;
     };
     let message = errorData.error || 'Failed to update product';
-    if (Array.isArray(errorData.details) && errorData.details.length > 0) {
-      const detailMessages = errorData.details
+    const detailMessages = Array.isArray(errorData.details)
+      ? errorData.details
         .slice(0, 3)
         .map((d: { field?: unknown; message?: unknown }) => {
           const field = typeof d.field === 'string' && d.field ? d.field : 'field';
           const msg = typeof d.message === 'string' && d.message ? d.message : 'invalid';
           return `${field}: ${msg}`;
         })
-        .join(', ');
-      if (detailMessages) message = `${message} (${detailMessages})`;
+      : collectFieldErrorMessages(errorData.details);
+    if (detailMessages.length > 0) {
+      message = `${message} (${detailMessages.join(', ')})`;
     }
     return message;
   };
 
-  const resolveProductIdBySku = async (originalSku?: string | null): Promise<string | null> => {
-    const normalizedSku = typeof originalSku === 'string' ? originalSku.trim().toUpperCase() : '';
-    if (!normalizedSku) return null;
+  const resolveProductIdByIdentity = async (
+    originalSku?: string | null,
+    originalNameEn?: string | null
+  ): Promise<
+    | { kind: 'resolved'; id: string }
+    | { kind: 'ambiguous'; matchCount: number }
+    | { kind: 'missing' }
+  > => {
+    const normalizedSku = normalizeIdentityText(originalSku).toUpperCase();
+    if (!normalizedSku) return { kind: 'missing' };
+    const normalizedNameEn = normalizeIdentityText(originalNameEn);
 
     const products = await api
       .get<ProductWithImages[]>(`/api/v2/products?sku=${encodeURIComponent(normalizedSku)}`, {
@@ -194,14 +235,32 @@ export function useUpdateProductMutation(): UseMutationResult<
       })
       .catch(() => null);
 
-    if (!products) return null;
+    if (!products) return { kind: 'missing' };
 
     const exactMatches = products.filter(
       (product: ProductWithImages): boolean =>
         typeof product.sku === 'string' && product.sku.trim().toUpperCase() === normalizedSku
     );
 
-    return exactMatches.length === 1 ? exactMatches[0]!.id : null;
+    if (exactMatches.length === 1) {
+      return { kind: 'resolved', id: exactMatches[0]!.id };
+    }
+
+    if (exactMatches.length > 1 && normalizedNameEn) {
+      const exactNameMatches = exactMatches.filter(
+        (product: ProductWithImages): boolean =>
+          typeof product.name_en === 'string' && product.name_en.trim() === normalizedNameEn
+      );
+      if (exactNameMatches.length === 1) {
+        return { kind: 'resolved', id: exactNameMatches[0]!.id };
+      }
+    }
+
+    if (exactMatches.length > 1) {
+      return { kind: 'ambiguous', matchCount: exactMatches.length };
+    }
+
+    return { kind: 'missing' };
   };
 
   return useOfflineMutation(
@@ -209,8 +268,10 @@ export function useUpdateProductMutation(): UseMutationResult<
       id,
       data,
       originalSku,
+      originalNameEn,
     }: IdDataDto<Partial<ProductWithImages> | FormData> & {
       originalSku?: string | null;
+      originalNameEn?: string | null;
     }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
         const putProductFormData = async (
@@ -244,10 +305,14 @@ export function useUpdateProductMutation(): UseMutationResult<
         let response = await putProductFormData(targetId, data);
 
         if (response.status === 404) {
-          const resolvedId = await resolveProductIdBySku(originalSku);
-          if (resolvedId && resolvedId !== targetId) {
-            targetId = resolvedId;
+          const resolution = await resolveProductIdByIdentity(originalSku, originalNameEn);
+          if (resolution.kind === 'resolved' && resolution.id !== targetId) {
+            targetId = resolution.id;
             response = await putProductFormData(targetId, data);
+          } else if (resolution.kind === 'ambiguous') {
+            throw notFoundError(
+              `Product not found. The opened product id is stale, and SKU ${normalizeIdentityText(originalSku) || 'this product'} matches ${resolution.matchCount} products. Refresh the products list and reopen the correct product.`
+            );
           }
         }
 
@@ -284,17 +349,18 @@ export function useUpdateProductMutation(): UseMutationResult<
       },
       queuedMessage: 'Product update queued in runtime queue.',
       processedMessage: 'Queued product update completed.',
-      errorMessage: 'Failed to update product',
       onQueued: (variables: {
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
+        originalNameEn?: string | null;
       }) => addQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
       onProcessed: (
         variables: {
           id: string;
           data: Partial<ProductWithImages> | FormData;
           originalSku?: string | null;
+          originalNameEn?: string | null;
         },
         { queryClient }
       ) => {
@@ -315,6 +381,7 @@ export function useUpdateProductMutation(): UseMutationResult<
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
+        originalNameEn?: string | null;
       }) => removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
     }
   );

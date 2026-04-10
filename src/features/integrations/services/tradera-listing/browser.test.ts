@@ -4,6 +4,7 @@ import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/pl
 const {
   getProductByIdMock,
   runPlaywrightListingScriptMock,
+  runPlaywrightScrapeScriptMock,
   updateConnectionMock,
   accessMock,
   copyFileMock,
@@ -19,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
   getProductByIdMock: vi.fn(),
   runPlaywrightListingScriptMock: vi.fn(),
+  runPlaywrightScrapeScriptMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   accessMock: vi.fn(),
   copyFileMock: vi.fn(),
@@ -81,10 +83,28 @@ vi.mock('@/shared/lib/products/services/category-repository', () => ({
   }),
 }));
 
-vi.mock('../playwright-listing/runner', () => ({
-  runPlaywrightListingScript: (...args: unknown[]) =>
-    runPlaywrightListingScriptMock(...args) as Promise<unknown>,
-}));
+vi.mock('@/features/playwright/server', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/features/playwright/server')>(
+      '@/features/playwright/server'
+    );
+  return {
+    ...actual,
+    runPlaywrightListingScript: (...args: unknown[]) =>
+      runPlaywrightListingScriptMock(...args) as Promise<unknown>,
+    runPlaywrightScrapeScript: (...args: unknown[]) =>
+      runPlaywrightScrapeScriptMock(...args) as Promise<unknown>,
+    createTraderaListingStatusScrapePlaywrightInstance: (
+      input: Record<string, unknown> = {}
+    ) => ({
+      kind: 'tradera_listing_status_scrape',
+      family: 'scrape',
+      label: 'Tradera listing status scrape',
+      tags: ['integration', 'tradera', 'status', 'scrape'],
+      ...input,
+    }),
+  };
+});
 
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
   resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
@@ -131,7 +151,9 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
 describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   it('parses as a valid Playwright node script', () => {
     const validation = validatePlaywrightNodeScript(DEFAULT_TRADERA_QUICKLIST_SCRIPT);
-
+    if (!validation.ok) {
+      console.error(validation.error);
+    }
     expect(validation).toMatchObject({
       ok: true,
     });
@@ -343,7 +365,6 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('failureCode = \'FAIL_PUBLISH_VALIDATION\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clickMenuItemByName = async (name) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('categoryFallbackAllowed: mappedCategorySegments.length === 0');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('could not be selected in the listing form. Refresh Tradera categories in Category Mapper');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isSafeMenuChoiceTarget = async (locator) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.menu_option.skipped_navigation\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('reason: \'category-page-link\'');
@@ -458,7 +479,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const SKU_REFERENCE_PATTERN = /\\bsku\\s*:/i;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('referenceLines.join(\' | \')');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('rawDescription + \' | \' + referenceLines.join(\' | \')');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const applyCategorySelection = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const tryAutofillCategory = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizeCategoryPathValue = (value) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const readVisibleCategoryMenuOptions = async () => {');
@@ -469,9 +490,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('requireRoot = false,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.category.repositioned\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.category.reposition_failed\'');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.category.mapped_already_selected\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.category.autofill_preserved\'');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.category.mapped_unavailable\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_CATEGORY_SET: Fallback category path "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('for (const segment of FALLBACK_CATEGORY_PATH_SEGMENTS)');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.category.fallback\'');
@@ -1052,6 +1071,11 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         disableStartUrlBootstrap: true,
         failureHoldOpenMs: 30_000,
+        instance: expect.objectContaining({
+          kind: 'tradera_scripted_listing',
+          family: 'listing',
+          listingId: 'listing-1',
+        }),
         input: expect.objectContaining({
           listingAction: 'list',
           existingExternalListingId: null,
@@ -3935,14 +3959,58 @@ describe('runTraderaBrowserCheckStatus', () => {
       name_en: 'Example title',
       description_en: 'Example description',
     });
-  });
-
-  it('passes direct section verification search inputs and returns Tradera verification metadata', async () => {
-    runPlaywrightListingScriptMock.mockResolvedValue({
+    runPlaywrightScrapeScriptMock.mockResolvedValue({
       runId: 'run-check-status',
-      externalListingId: 'listing-123',
-      listingUrl: 'https://www.tradera.com/item/123',
+      effectiveBrowserMode: 'headed',
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 0,
+        timeout: 30_000,
+        navigationTimeout: 30_000,
+        humanizeMouse: false,
+        mouseJitter: 0,
+        clickDelayMin: 0,
+        clickDelayMax: 0,
+        inputDelayMin: 0,
+        inputDelayMax: 0,
+        actionDelayMin: 0,
+        actionDelayMax: 0,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      outputs: {
+        result: {
+          externalListingId: 'listing-123',
+          listingUrl: 'https://www.tradera.com/item/123',
+          status: 'ended',
+          verificationSection: 'unsold',
+          verificationMatchStrategy: 'title+product-id',
+          verificationRawStatusTag: 'ended',
+          verificationMatchedProductId: 'BASE-1',
+          verificationSearchTitle: 'Example title',
+          verificationCandidateCount: 1,
+          executionSteps: [
+            {
+              id: 'open_overview',
+              label: 'Open Active listings',
+              status: 'success',
+              message: 'Tradera Active listings opened successfully.',
+            },
+            {
+              id: 'resolve_status',
+              label: 'Resolve final Tradera status',
+              status: 'success',
+              message:
+                'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
+            },
+          ],
+        },
+      },
       rawResult: {
+        externalListingId: 'listing-123',
+        listingUrl: 'https://www.tradera.com/item/123',
         status: 'ended',
         verificationSection: 'unsold',
         verificationMatchStrategy: 'title+product-id',
@@ -3965,8 +4033,48 @@ describe('runTraderaBrowserCheckStatus', () => {
           },
         ],
       },
+      finalUrl: null,
+      logs: [],
+      run: {
+        runId: 'run-check-status',
+        status: 'completed',
+        logs: [],
+        artifacts: [],
+        result: {
+          outputs: {
+            result: {
+              externalListingId: 'listing-123',
+              listingUrl: 'https://www.tradera.com/item/123',
+              status: 'ended',
+              verificationSection: 'unsold',
+              verificationMatchStrategy: 'title+product-id',
+              verificationRawStatusTag: 'ended',
+              verificationMatchedProductId: 'BASE-1',
+              verificationSearchTitle: 'Example title',
+              verificationCandidateCount: 1,
+              executionSteps: [
+                {
+                  id: 'open_overview',
+                  label: 'Open Active listings',
+                  status: 'success',
+                  message: 'Tradera Active listings opened successfully.',
+                },
+                {
+                  id: 'resolve_status',
+                  label: 'Resolve final Tradera status',
+                  status: 'success',
+                  message:
+                    'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
+                },
+              ],
+            },
+          },
+        },
+      },
     });
+  });
 
+  it('passes direct section verification search inputs and returns Tradera verification metadata', async () => {
     const result = await runTraderaBrowserCheckStatus({
       listing: {
         id: 'listing-1',
@@ -3986,20 +4094,14 @@ describe('runTraderaBrowserCheckStatus', () => {
       browserMode: 'headed',
     });
 
-    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+    expect(runPlaywrightScrapeScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        connection: expect.objectContaining({
+          id: 'connection-1',
+        }),
+        script: TRADERA_CHECK_STATUS_SCRIPT,
+        timeoutMs: 60_000,
         browserMode: 'headed',
-        runtimeSettingsOverrides: {
-          slowMo: 0,
-          humanizeMouse: false,
-          mouseJitter: 0,
-          clickDelayMin: 0,
-          clickDelayMax: 0,
-          inputDelayMin: 0,
-          inputDelayMax: 0,
-          actionDelayMin: 0,
-          actionDelayMax: 0,
-        },
         input: expect.objectContaining({
           listingUrl: 'https://www.tradera.com/item/123',
           externalListingId: 'listing-123',
@@ -4007,6 +4109,11 @@ describe('runTraderaBrowserCheckStatus', () => {
           duplicateSearchTerms: ['Example title'],
           rawDescriptionEn: 'Example description',
           baseProductId: 'BASE-1',
+        }),
+        instance: expect.objectContaining({
+          kind: 'tradera_listing_status_scrape',
+          family: 'scrape',
+          listingId: 'listing-1',
         }),
       })
     );

@@ -12,13 +12,26 @@ export type PlaywrightNodeRunInstanceKind =
   | 'ai_path_node'
   | 'programmable_listing'
   | 'programmable_import'
+  | 'tradera_standard_listing'
+  | 'tradera_scripted_listing'
+  | 'tradera_parameter_mapper_catalog_scrape'
   | 'tradera_category_scrape'
+  | 'tradera_listing_status_scrape'
+  | 'vinted_browser_listing'
   | 'social_capture_single'
   | 'social_capture_batch'
   | 'custom';
 
+export type PlaywrightNodeRunInstanceFamily =
+  | 'ai_path'
+  | 'listing'
+  | 'scrape'
+  | 'capture'
+  | 'custom';
+
 export type PlaywrightNodeRunInstance = {
   kind: PlaywrightNodeRunInstanceKind;
+  family?: PlaywrightNodeRunInstanceFamily | null;
   label?: string | null;
   connectionId?: string | null;
   integrationId?: string | null;

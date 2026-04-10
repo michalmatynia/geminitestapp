@@ -503,6 +503,23 @@ describe('ProductListMobileCards', () => {
     expect(screen.getByText('Imported')).toBeInTheDocument();
   });
 
+  it('renders the imported badge for detached Base imports without a linked Base id', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          baseProductId: null,
+          importSource: 'base',
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Imported')).toBeInTheDocument();
+  });
+
   it('shows the auto-assigned shipping group on mobile cards', () => {
     useProductListSelectionContextMock.mockReturnValue({
       data: [

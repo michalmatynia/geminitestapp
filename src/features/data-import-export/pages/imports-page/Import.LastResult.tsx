@@ -79,7 +79,7 @@ export function ImportLastResultSection(): React.JSX.Element | null {
       ) : null}
       {directTargetLabel ? (
         <p className='mt-1 text-xs text-cyan-300'>
-          Exact target runs always create a new detached product and do not reuse Base sync linkage.
+          Exact target runs always create a new product and attach a Base.com connection to it.
         </p>
       ) : null}
       {runFailure?.errorCode || runFailure?.error ? (

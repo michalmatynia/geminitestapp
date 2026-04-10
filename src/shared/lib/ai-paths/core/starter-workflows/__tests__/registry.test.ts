@@ -96,11 +96,15 @@ describe('starter workflow registry', () => {
     const databaseNode = (config.nodes ?? []).find(
       (node) => node.type === 'database' && node.id === 'node-update-name-normalize'
     );
+    const dbSchemaNode = (config.nodes ?? []).find(
+      (node) => node.type === 'db_schema' && node.id === 'node-db-schema-name-normalize'
+    );
 
     expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
     expect(hasNodeId(config, 'node-db-schema-name-normalize')).toBe(true);
     expect(hasNodeId(config, 'node-category-context-name-normalize')).toBe(true);
     expect(hasNodeId(config, 'node-update-name-normalize')).toBe(true);
+    expect(dbSchemaNode?.config?.db_schema?.contextTransform).toBe('product_categories_leaf_only');
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
     expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
@@ -369,6 +373,80 @@ describe('starter workflow registry', () => {
         systemPrompt: 'Only return normalized output.',
         waitForResult: false,
       })
+    );
+  });
+
+  it('preserves edited Normalize prompt and fetcher settings while overlaying stale starter assets', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
+      {
+        pathId: 'path_name_normalize_v1',
+        seededDefault: true,
+      }
+    );
+
+    const staleConfig: PathConfig = {
+      ...canonical,
+      nodes: (canonical.nodes ?? []).map((node) => {
+        if (node.id === 'node-fetcher-name-normalize') {
+          return {
+            ...node,
+            config: {
+              ...node.config,
+              fetcher: {
+                ...node.config?.fetcher,
+                sourceMode: 'simulation_id',
+                entityId: 'prod_custom_123',
+                productId: 'prod_custom_123',
+              },
+            },
+          };
+        }
+        if (node.id === 'node-prompt-name-normalize') {
+          return {
+            ...node,
+            config: {
+              ...node.config,
+              prompt: {
+                ...node.config?.prompt,
+                template:
+                  'Custom normalize prompt.\nReturn JSON with {"normalizedName":"","validationError":""}.',
+              },
+            },
+          };
+        }
+        return node;
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 4,
+          seededDefault: true,
+        },
+      },
+    };
+
+    const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
+    const fetcherNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-fetcher-name-normalize'
+    );
+    const promptNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-prompt-name-normalize'
+    );
+
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(fetcherNode?.config?.fetcher).toEqual(
+      expect.objectContaining({
+        sourceMode: 'simulation_id',
+        entityId: 'prod_custom_123',
+        productId: 'prod_custom_123',
+      })
+    );
+    expect(fetcherNode?.config?.runtime?.inputContracts?.trigger?.required).toBe(true);
+    expect(promptNode?.config?.prompt?.template).toBe(
+      'Custom normalize prompt.\nReturn JSON with {"normalizedName":"","validationError":""}.'
     );
   });
 

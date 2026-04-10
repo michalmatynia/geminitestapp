@@ -30,7 +30,7 @@ describe('import-run-feedback', () => {
     });
   });
 
-  it('labels queued exact-target imports as detached exact imports', () => {
+  it('labels queued exact-target imports as linked exact imports', () => {
     const result = {
       runId: 'run-exact-1',
       status: 'queued' as const,
@@ -43,7 +43,7 @@ describe('import-run-feedback', () => {
       dispatchModeLabel: 'queued (base-import runtime queue)',
       queueJobLabel: 'job-exact-1',
       explanation:
-        'This exact-target run was submitted to the separate base-import runtime queue and will create a new detached product.',
+        'This exact-target run was submitted to the separate base-import runtime queue and will create a new product with a Base.com connection.',
     });
 
     expect(buildImportResultToast(result, { kind: 'import', dryRun: false })).toEqual({

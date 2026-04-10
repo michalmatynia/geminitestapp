@@ -21,8 +21,11 @@ import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contr
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { logger } from '@/shared/utils/logger';
 import {
-  openPlaywrightConnectionPageSession,
+  buildPlaywrightNativeTaskResult,
+  createPlaywrightNativeTaskInternalError,
+  createVintedBrowserListingPlaywrightInstance,
   persistPlaywrightConnectionStorageState,
+  runPlaywrightConnectionNativeTask,
 } from '@/features/playwright/server';
 import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
 import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
@@ -33,10 +36,6 @@ import { createVintedBrowserTestUtils } from './vinted-browser-test-utils';
 import { resolveVintedProductImageUploadPlan } from './vinted-browser-images';
 import type { BrowserListingResultDto } from '@/shared/contracts/integrations/listings';
 import { readVintedAuthState } from './vinted-browser-auth';
-import {
-  resolveEffectiveBrowserPreferenceFromLabel,
-  resolveEffectiveVintedBrowserMode,
-} from './vinted-browser-runtime';
 import { resolveVintedProductMapping } from './vinted-product-mapping';
 
 /** Extract Vinted numeric item ID from a URL, e.g. /items/1234567890-item-name → "1234567890" */
@@ -329,266 +328,260 @@ export const runVintedBrowserListing = async ({
   browserMode: PlaywrightRelistBrowserMode;
   browserPreference: PlaywrightBrowserPreference;
 }): Promise<BrowserListingResultDto> => {
-  const connectionRuntime = await openPlaywrightConnectionPageSession({
+  return runPlaywrightConnectionNativeTask({
     connection,
-    browserPreference,
-    headless: browserMode === 'headless'
-      ? true
-      : browserMode === 'headed'
-        ? false
-        : undefined,
-    viewport: { width: 1280, height: 720 },
-  });
-  const { runtime, context, page, launchLabel, fallbackMessages, close } = connectionRuntime;
-  const playwrightSettings = runtime.settings;
-  const effectiveBrowserMode = resolveEffectiveVintedBrowserMode({
+    instance: createVintedBrowserListingPlaywrightInstance({
+      connectionId: connection.id,
+      integrationId: connection.integrationId,
+      listingId: listing.id,
+    }),
     requestedBrowserMode: browserMode,
-    connectionHeadless: playwrightSettings.headless,
-  });
-  const effectiveBrowserPreference = resolveEffectiveBrowserPreferenceFromLabel({
-    launchLabel,
     requestedBrowserPreference: browserPreference,
-  });
-  const {
-    acceptCookieConsent,
-    safeIsVisible,
-  } = createVintedBrowserTestUtils({
-    page,
-    connectionId: connection.id,
-    fail: async (step, detail) => { throw internalError(`${step}: ${detail}`); },
-  });
-
-  try {
-    // 2. Navigate to listing form and verify auth
-    try {
-      await page.goto(VINTED_LISTING_FORM_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    } catch (navError) {
-      const navMessage = navError instanceof Error ? navError.message : '';
-      if (navMessage.includes('net::ERR_ABORTED')) {
-        // Vinted redirects during navigation (consent, locale detection) — wait for the page to settle
-        await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
-      } else {
-        throw internalError(`Open Vinted Sell Form: Failed to navigate: ${navMessage}`);
-      }
-    }
-    await acceptCookieConsent();
-
-    const authState = await readVintedAuthState(page);
-    if (!authState.loggedIn) {
-      throw internalError('AUTH_REQUIRED: Vinted session expired. Please refresh the session.');
-    }
-
-    // 3. Load product data
-    const productRepository = await getProductRepository();
-    const product = await productRepository.getProductById(listing.productId);
-    if (!product) {
-      throw notFoundError('Product not found', { productId: listing.productId });
-    }
-    const [categoryRepository, customFieldRepository, parameterRepository] = await Promise.all([
-      getCategoryRepository(),
-      getCustomFieldRepository(),
-      getParameterRepository(),
-    ]);
-    const [categories, customFieldDefinitions, parameters] = await Promise.all([
-      categoryRepository.listCategories({ catalogId: product.catalogId }),
-      customFieldRepository.listCustomFields({}),
-      parameterRepository.listParameters({ catalogId: product.catalogId }),
-    ]);
-    const resolvedMapping = resolveVintedProductMapping({
-      product,
-      integrationId: listing.integrationId,
-      categories,
-      customFieldDefinitions,
-      parameters,
-    });
-    if (!resolvedMapping.category) {
-      throw internalError(
-        'Vinted category mapping required: set a Vinted Category custom field or parameter, or assign an internal product category.',
-        {
-          fieldName: 'category',
-          diagnostics: resolvedMapping.diagnostics,
-        }
-      );
-    }
-    if (!resolvedMapping.condition) {
-      throw internalError(
-        'Vinted condition mapping required: set a Vinted Condition custom field or parameter.',
-        {
-          fieldName: 'condition',
-          diagnostics: resolvedMapping.diagnostics,
-        }
-      );
-    }
-
-    // 4. Upload images
-    const imageUploadPlan = await resolveVintedProductImageUploadPlan(product);
-    if (imageUploadPlan.localImagePaths.length > 0) {
-      const fileInput = page.locator(VINTED_IMAGE_UPLOAD_SELECTORS[0]!).first();
-      if (await safeIsVisible(fileInput)) {
-        await fileInput.setInputFiles(imageUploadPlan.localImagePaths);
-        await page.waitForTimeout(3000); // Wait for uploads to begin
-      }
-    }
-
-    const title = resolvedMapping.title;
-    const description = resolvedMapping.description;
-    const price = resolvedMapping.price;
-
-    // 5. Fill required fields
-    await fillField(page, VINTED_TITLE_SELECTORS, title, 'Title', true);
-    await fillField(page, VINTED_DESCRIPTION_SELECTORS, description, 'Description', true);
-
-    // 6. Fill mapped marketplace fields.
-    const selectedCategoryPath = await selectCategoryPath(page, resolvedMapping.category.pathSegments);
-
-    let selectedBrand: string | null = null;
-    if (resolvedMapping.brand) {
-      selectedBrand = await fillBrandAutocomplete(page, resolvedMapping.brand.label);
-    }
-
-    await page.waitForTimeout(500);
-
-    const selectedCondition = await selectDropdownOptionByLabel({
-      page,
-      triggerSelectors: VINTED_CONDITION_SELECTORS,
-      optionSelectors: VINTED_DROPDOWN_OPTION_SELECTORS,
-      label: resolvedMapping.condition.label,
-      fieldName: 'condition',
-      extraMeta: {
-        source: resolvedMapping.condition.source,
-        sourceName: resolvedMapping.condition.sourceName,
-      },
-    });
-
-    let selectedSize: string | null = null;
-    if (resolvedMapping.size) {
-      selectedSize = await selectDropdownOptionByLabel({
+    viewport: { width: 1280, height: 720 },
+    execute: async (connectionRuntime) => {
+      const { context, page } = connectionRuntime;
+      const {
+        acceptCookieConsent,
+        safeIsVisible,
+      } = createVintedBrowserTestUtils({
         page,
-        triggerSelectors: VINTED_SIZE_SELECTORS,
-        optionSelectors: VINTED_DROPDOWN_OPTION_SELECTORS,
-        label: resolvedMapping.size.label,
-        fieldName: 'size',
-        extraMeta: {
-          source: resolvedMapping.size.source,
-          sourceName: resolvedMapping.size.sourceName,
-        },
+        connectionId: connection.id,
+        fail: async (step, detail) => { throw internalError(`${step}: ${detail}`); },
       });
-    }
 
-    // 7. Fill price (after optional fields to avoid Vinted re-rendering clearing it)
-    await fillField(page, VINTED_PRICE_SELECTORS, price, 'Price', true);
-
-    // 8. Submit the listing
-    const submitButton = await findFirstVisible(page, VINTED_SUBMIT_SELECTORS);
-    if (!submitButton) {
-      throw internalError('Submit button not found on Vinted listing form.');
-    }
-
-    // Wait for submit button to become enabled (images uploaded, required fields filled)
-    for (const selector of VINTED_SUBMIT_SELECTORS) {
+      // 2. Navigate to listing form and verify auth
       try {
-        await page.waitForFunction(
-          (sel) => {
-            const btn = document.querySelector<HTMLButtonElement>(sel);
-            return btn !== null && !btn.disabled;
-          },
-          selector,
-          { timeout: 20000 }
-        );
-        break;
-      } catch {
-        // try next selector
+        await page.goto(VINTED_LISTING_FORM_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      } catch (navError) {
+        const navMessage = navError instanceof Error ? navError.message : '';
+        if (navMessage.includes('net::ERR_ABORTED')) {
+          // Vinted redirects during navigation (consent, locale detection) — wait for the page to settle
+          await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
+        } else {
+          throw internalError(`Open Vinted Sell Form: Failed to navigate: ${navMessage}`);
+        }
       }
-    }
+      await acceptCookieConsent();
 
-    await submitButton.click();
-
-    // 9. Wait for the real listing page. Do not fabricate success from a stale draft URL.
-    await page
-      .waitForURL(
-        (url) => VINTED_ITEM_URL_PATTERN.test(`${url.pathname}${url.search}${url.hash}`),
-        { timeout: 45000 }
-      )
-      .catch(() => undefined);
-    await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
-
-    const finalUrl = page.url().trim();
-    const itemId = extractVintedItemId(finalUrl);
-    if (!itemId) {
       const authState = await readVintedAuthState(page);
       if (!authState.loggedIn) {
-        throw internalError('AUTH_REQUIRED: Vinted session expired during publish. Please refresh the session.', {
-          requestedBrowserMode: browserMode,
-          browserMode: effectiveBrowserMode,
-          requestedBrowserPreference: browserPreference,
-          browserPreference: effectiveBrowserPreference,
-          browserLabel: launchLabel,
-          fallbackMessages,
-          currentUrl: finalUrl || authState.currentUrl,
-          authState,
-          publishVerified: false,
+        throw internalError('AUTH_REQUIRED: Vinted session expired. Please refresh the session.');
+      }
+
+      // 3. Load product data
+      const productRepository = await getProductRepository();
+      const product = await productRepository.getProductById(listing.productId);
+      if (!product) {
+        throw notFoundError('Product not found', { productId: listing.productId });
+      }
+      const [categoryRepository, customFieldRepository, parameterRepository] = await Promise.all([
+        getCategoryRepository(),
+        getCustomFieldRepository(),
+        getParameterRepository(),
+      ]);
+      const [categories, customFieldDefinitions, parameters] = await Promise.all([
+        categoryRepository.listCategories({ catalogId: product.catalogId }),
+        customFieldRepository.listCustomFields({}),
+        parameterRepository.listParameters({ catalogId: product.catalogId }),
+      ]);
+      const resolvedMapping = resolveVintedProductMapping({
+        product,
+        integrationId: listing.integrationId,
+        categories,
+        customFieldDefinitions,
+        parameters,
+      });
+      if (!resolvedMapping.category) {
+        throw internalError(
+          'Vinted category mapping required: set a Vinted Category custom field or parameter, or assign an internal product category.',
+          {
+            fieldName: 'category',
+            diagnostics: resolvedMapping.diagnostics,
+          }
+        );
+      }
+      if (!resolvedMapping.condition) {
+        throw internalError(
+          'Vinted condition mapping required: set a Vinted Condition custom field or parameter.',
+          {
+            fieldName: 'condition',
+            diagnostics: resolvedMapping.diagnostics,
+          }
+        );
+      }
+
+      // 4. Upload images
+      const imageUploadPlan = await resolveVintedProductImageUploadPlan(product);
+      if (imageUploadPlan.localImagePaths.length > 0) {
+        const fileInput = page.locator(VINTED_IMAGE_UPLOAD_SELECTORS[0]!).first();
+        if (await safeIsVisible(fileInput)) {
+          await fileInput.setInputFiles(imageUploadPlan.localImagePaths);
+          await page.waitForTimeout(3000); // Wait for uploads to begin
+        }
+      }
+
+      const title = resolvedMapping.title;
+      const description = resolvedMapping.description;
+      const price = resolvedMapping.price;
+
+      // 5. Fill required fields
+      await fillField(page, VINTED_TITLE_SELECTORS, title, 'Title', true);
+      await fillField(page, VINTED_DESCRIPTION_SELECTORS, description, 'Description', true);
+
+      // 6. Fill mapped marketplace fields.
+      const selectedCategoryPath = await selectCategoryPath(page, resolvedMapping.category.pathSegments);
+
+      let selectedBrand: string | null = null;
+      if (resolvedMapping.brand) {
+        selectedBrand = await fillBrandAutocomplete(page, resolvedMapping.brand.label);
+      }
+
+      await page.waitForTimeout(500);
+
+      const selectedCondition = await selectDropdownOptionByLabel({
+        page,
+        triggerSelectors: VINTED_CONDITION_SELECTORS,
+        optionSelectors: VINTED_DROPDOWN_OPTION_SELECTORS,
+        label: resolvedMapping.condition.label,
+        fieldName: 'condition',
+        extraMeta: {
+          source: resolvedMapping.condition.source,
+          sourceName: resolvedMapping.condition.sourceName,
+        },
+      });
+
+      let selectedSize: string | null = null;
+      if (resolvedMapping.size) {
+        selectedSize = await selectDropdownOptionByLabel({
+          page,
+          triggerSelectors: VINTED_SIZE_SELECTORS,
+          optionSelectors: VINTED_DROPDOWN_OPTION_SELECTORS,
+          label: resolvedMapping.size.label,
+          fieldName: 'size',
+          extraMeta: {
+            source: resolvedMapping.size.source,
+            sourceName: resolvedMapping.size.sourceName,
+          },
         });
       }
 
-      throw internalError('Vinted publish verification failed: listing URL was not confirmed after submit.', {
-        requestedBrowserMode: browserMode,
-        browserMode: effectiveBrowserMode,
-        requestedBrowserPreference: browserPreference,
-        browserPreference: effectiveBrowserPreference,
-        browserLabel: launchLabel,
-        fallbackMessages,
-        currentUrl: finalUrl,
-        publishVerified: false,
+      // 7. Fill price (after optional fields to avoid Vinted re-rendering clearing it)
+      await fillField(page, VINTED_PRICE_SELECTORS, price, 'Price', true);
+
+      // 8. Submit the listing
+      const submitButton = await findFirstVisible(page, VINTED_SUBMIT_SELECTORS);
+      if (!submitButton) {
+        throw internalError('Submit button not found on Vinted listing form.');
+      }
+
+      // Wait for submit button to become enabled (images uploaded, required fields filled)
+      for (const selector of VINTED_SUBMIT_SELECTORS) {
+        try {
+          await page.waitForFunction(
+            (sel) => {
+              const btn = document.querySelector<HTMLButtonElement>(sel);
+              return btn !== null && !btn.disabled;
+            },
+            selector,
+            { timeout: 20000 }
+          );
+          break;
+        } catch {
+          // try next selector
+        }
+      }
+
+      await submitButton.click();
+
+      // 9. Wait for the real listing page. Do not fabricate success from a stale draft URL.
+      await page
+        .waitForURL(
+          (url) => VINTED_ITEM_URL_PATTERN.test(`${url.pathname}${url.search}${url.hash}`),
+          { timeout: 45000 }
+        )
+        .catch(() => undefined);
+      await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
+
+      const finalUrl = page.url().trim();
+      const itemId = extractVintedItemId(finalUrl);
+      if (!itemId) {
+        const currentAuthState = await readVintedAuthState(page);
+        if (!currentAuthState.loggedIn) {
+          throw createPlaywrightNativeTaskInternalError(
+            'AUTH_REQUIRED: Vinted session expired during publish. Please refresh the session.',
+            {
+              session: connectionRuntime,
+              additional: {
+                currentUrl: finalUrl || currentAuthState.currentUrl,
+                authState: currentAuthState,
+                publishVerified: false,
+              },
+            }
+          );
+        }
+
+        throw createPlaywrightNativeTaskInternalError(
+          'Vinted publish verification failed: listing URL was not confirmed after submit.',
+          {
+            session: connectionRuntime,
+            additional: {
+              currentUrl: finalUrl,
+              publishVerified: false,
+            },
+          }
+        );
+      }
+      const completedAt = new Date().toISOString();
+      const externalListingId = itemId;
+      const listingUrl = finalUrl;
+
+      // 10. Save refreshed session
+      const nextStorageState = await context.storageState();
+      await persistPlaywrightConnectionStorageState({
+        connectionId: connection.id,
+        storageState: nextStorageState,
+        updatedAt: completedAt,
       });
-    }
-    const completedAt = new Date().toISOString();
-    const externalListingId = itemId;
-    const listingUrl = finalUrl;
 
-    // 10. Save refreshed session
-    const nextStorageState = await context.storageState();
-    await persistPlaywrightConnectionStorageState({
-      connectionId: connection.id,
-      storageState: nextStorageState,
-      updatedAt: completedAt,
-    });
-
-    return {
-      externalListingId,
-      listingUrl,
-      completedAt,
-      metadata: {
-        mode: 'standard',
-        browserMode: effectiveBrowserMode,
-        requestedBrowserMode: browserMode,
-        browserPreference: effectiveBrowserPreference,
-        requestedBrowserPreference: browserPreference,
-        browserLabel: launchLabel,
-        fallbackMessages,
-        listingFormUrl: VINTED_LISTING_FORM_URL,
-        currentUrl: finalUrl,
-        itemIdExtracted: true,
-        publishVerified: true,
-        rawResult: {
-          finalUrl,
-          itemId,
-          source,
-          action,
-          mapping: {
-            brand: resolvedMapping.brand,
-            category: resolvedMapping.category,
-            condition: resolvedMapping.condition,
-            size: resolvedMapping.size,
-            diagnostics: resolvedMapping.diagnostics,
-            selectedBrand,
-            selectedCategoryPath,
-            selectedCondition,
-            selectedSize,
+      return buildPlaywrightNativeTaskResult({
+        session: connectionRuntime,
+        externalListingId,
+        listingUrl,
+        completedAt,
+        metadata: {
+          mode: 'standard',
+          listingFormUrl: VINTED_LISTING_FORM_URL,
+          currentUrl: finalUrl,
+          itemIdExtracted: true,
+          publishVerified: true,
+          rawResult: {
+            finalUrl,
+            itemId,
+            source,
+            action,
+            mapping: {
+              brand: resolvedMapping.brand,
+              category: resolvedMapping.category,
+              condition: resolvedMapping.condition,
+              size: resolvedMapping.size,
+              diagnostics: resolvedMapping.diagnostics,
+              selectedBrand,
+              selectedCategoryPath,
+              selectedCondition,
+              selectedSize,
+            },
           },
         },
-      },
-    };
-  } finally {
-    await close();
-  }
+      });
+    },
+    buildErrorAdditional: async ({ session }) => ({
+      mode: 'standard',
+      listingFormUrl: VINTED_LISTING_FORM_URL,
+      source,
+      action,
+      currentUrl: session.page.url().trim() || null,
+    }),
+    getErrorMessage: (error) =>
+      error instanceof Error ? error.message : 'Vinted browser listing failed',
+  });
 };

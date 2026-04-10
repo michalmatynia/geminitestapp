@@ -1,5 +1,5 @@
 import { createValidationErrorResponse } from '@/shared/lib/api/handle-api-error';
-import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
+import { buildNormalizedProductValidationPayload } from '@/shared/lib/products/services/product-service-form-utils';
 import {
   validateProductCreate,
   validateProductUpdate,
@@ -12,10 +12,7 @@ export type ValidationMiddlewareOptions = {
 };
 
 const toValidationPayload = (formData: FormData): Record<string, unknown> => {
-  const payload = formDataToObject(formData);
-  // Files are handled in the service layer after validation.
-  delete payload['images'];
-  return payload;
+  return buildNormalizedProductValidationPayload(formData);
 };
 
 export async function validateProductCreateMiddleware(

@@ -134,15 +134,19 @@ describe('NumberBalanceRushGame touch interactions', () => {
 
     fireEvent.click(tile);
 
-    expect(screen.getByTestId('number-balance-touch-hint')).toHaveTextContent(
-      `Selected number: ${tileValue}. Tap the left side, right side, or tray.`
+    await waitFor(() =>
+      expect(screen.getByTestId('number-balance-touch-hint')).toHaveTextContent(
+        `Selected number: ${tileValue}. Tap the left side, right side, or tray.`
+      )
     );
 
     const leftZone = screen.getByTestId('number-balance-left-zone');
     fireEvent.click(leftZone);
 
-    expect(screen.getByTestId('number-balance-touch-hint')).toHaveTextContent(
-      'Tap a tile, then tap the left side, right side, or tray.'
+    await waitFor(() =>
+      expect(screen.getByTestId('number-balance-touch-hint')).toHaveTextContent(
+        'Tap a tile, then tap the left side, right side, or tray.'
+      )
     );
     expect(within(leftZone).getByText(tileValue)).toBeInTheDocument();
   });

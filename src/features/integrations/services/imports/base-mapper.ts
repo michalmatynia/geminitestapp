@@ -11,21 +11,22 @@ import type { ProductCreateInput } from '@/shared/contracts/products/io';
 import {
   normalizeProductCustomFieldValues,
 } from '@/shared/lib/products/utils/custom-field-values';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { resolveBaseMarketplaceCheckboxValue } from '@/shared/lib/integrations/base-marketplace-checkboxes';
+import {
+  MARKET_EXCLUSION_FIELD_NAME,
+  normalizeBaseMarketplaceCheckboxKey,
+  resolveBaseMarketExclusionOptionStates,
+  resolveBaseMarketplaceCheckboxValue,
+} from '@/shared/lib/integrations/base-marketplace-checkboxes';
 
 import {
   autoExtractProducerIds,
   autoExtractTagIds,
-  collectUrls,
   getImageUrlsForAll as extractImageUrlsForAll,
   getImageUrlsForAll,
   getImageUrlsForLinks,
   getImageUrlsForSlots,
-  isUrl,
   mergeCheckboxOptionSelection,
-  normalizeCurrencyCode,
   normalizeImportedStructuredName,
   normalizePreferredCurrencies,
   normalizeProducerIds,
@@ -441,6 +442,11 @@ const autoExtractCustomFieldValues = (
     if (!fieldId || !fieldName) return;
 
     if (customField.type === 'checkbox_set') {
+      const marketExclusionStates =
+        normalizeBaseMarketplaceCheckboxKey(fieldName) ===
+        normalizeBaseMarketplaceCheckboxKey(MARKET_EXCLUSION_FIELD_NAME)
+          ? resolveBaseMarketExclusionOptionStates(record, customFieldDefinitions)
+          : null;
       let matchedAnyOption = false;
       customField.options.forEach((option) => {
         const optionId = option.id.trim();
@@ -450,14 +456,25 @@ const autoExtractCustomFieldValues = (
         const rawValue =
           resolveAutoTemplateValue(record, optionLabel, fieldName) ??
           resolveAutoTemplateValue(record, `${optionLabel} Yes`, fieldName);
-        if (rawValue === null || rawValue === undefined) return;
+        if (rawValue !== null && rawValue !== undefined) {
+          matchedAnyOption = true;
+          mergeCheckboxOptionSelection(
+            customFieldValuesById,
+            fieldId,
+            optionId,
+            toCheckboxValue(rawValue)
+          );
+          return;
+        }
+
+        if (!marketExclusionStates?.has(optionId)) return;
 
         matchedAnyOption = true;
         mergeCheckboxOptionSelection(
           customFieldValuesById,
           fieldId,
           optionId,
-          toCheckboxValue(rawValue)
+          marketExclusionStates.get(optionId) ?? false
         );
       });
 

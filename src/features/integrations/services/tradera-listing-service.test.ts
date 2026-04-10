@@ -75,10 +75,17 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-vi.mock('@/features/playwright/server', () => ({
-  resolveConnectionPlaywrightSettingsProfile: (...args: unknown[]) =>
-    resolveConnectionPlaywrightSettingsProfileMock(...args) as Promise<unknown>,
-}));
+vi.mock('@/features/playwright/server', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/features/playwright/server')>(
+      '@/features/playwright/server'
+    );
+  return {
+    ...actual,
+    resolveConnectionPlaywrightSettingsProfile: (...args: unknown[]) =>
+      resolveConnectionPlaywrightSettingsProfileMock(...args) as Promise<unknown>,
+  };
+});
 
 import { processTraderaListingJob } from './tradera-listing-service';
 

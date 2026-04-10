@@ -90,7 +90,9 @@ export default function ProductFormCustomFields(): React.JSX.Element {
                             onCheckedChange={(checked: boolean): void =>
                               toggleSelectedOption(customField.id, option.id, checked)
                             }
-                            className='border-none bg-transparent p-0 hover:bg-transparent'
+                            showBorder={false}
+                            toggleOnRowClick
+                            className='cursor-pointer rounded-md border border-transparent bg-transparent px-2 py-2 hover:border-primary/30 hover:bg-accent/15 focus-within:border-primary/40 focus-within:bg-accent/15'
                           />
                         ))}
                       </div>

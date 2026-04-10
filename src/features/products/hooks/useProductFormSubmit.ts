@@ -112,6 +112,19 @@ type BuildProductFormDataInput = {
   studioProjectId: string | null;
 };
 
+const MANAGED_FORM_DATA_FIELDS = new Set<string>([
+  'catalogIds',
+  'categoryId',
+  'customFields',
+  'imageBase64s',
+  'imageLinks',
+  'noteIds',
+  'parameters',
+  'producerIds',
+  'studioProjectId',
+  'tagIds',
+]);
+
 function buildFormData(input: BuildProductFormDataInput): FormData {
   const {
     data,
@@ -130,6 +143,9 @@ function buildFormData(input: BuildProductFormDataInput): FormData {
   const formData = new FormData();
 
   Object.entries(data).forEach(([key, value]: [string, unknown]): void => {
+    if (MANAGED_FORM_DATA_FIELDS.has(key)) {
+      return;
+    }
     if (value !== null && value !== undefined) {
       if (typeof value === 'object') {
         formData.append(key, JSON.stringify(value));
@@ -293,13 +309,17 @@ export function useProductFormSubmit(
 
           const savedProduct = product
             ? await updateMutationRef.current.mutateAsync({
-                id: product.id,
-                data: formData,
-                originalSku:
-                  typeof product.sku === 'string' && product.sku.trim().length > 0
-                    ? product.sku.trim()
-                    : undefined,
-              })
+              id: product.id,
+              data: formData,
+              originalSku:
+                typeof product.sku === 'string' && product.sku.trim().length > 0
+                  ? product.sku.trim()
+                  : undefined,
+              originalNameEn:
+                typeof product.name_en === 'string' && product.name_en.trim().length > 0
+                  ? product.name_en.trim()
+                  : undefined,
+            })
             : await createMutationRef.current.mutateAsync(formData);
 
           const isQueued = savedProduct == null;

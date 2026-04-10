@@ -111,11 +111,6 @@ export const PART_4 = String.raw`
     return false;
   };
 
-  const chooseFallbackCategory = async () => {
-    if (!FALLBACK_CATEGORY_PATH) return;
-    await setFallbackCategoryPath();
-  };
-
   const tryAutofillCategory = async () => {
     const autofillButton = await firstVisible(AUTOFILL_SELECTORS);
     if (!autofillButton) {

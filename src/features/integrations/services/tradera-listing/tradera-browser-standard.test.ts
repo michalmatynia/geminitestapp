@@ -206,6 +206,13 @@ describe('runTraderaBrowserListingStandard', () => {
         requestedBrowserMode: 'connection_default',
         listingFormUrl: 'https://www.tradera.com/en/selling/new',
         completedAt: expect.any(String),
+        playwright: expect.objectContaining({
+          instance: expect.objectContaining({
+            kind: 'tradera_standard_listing',
+            family: 'listing',
+            listingId: 'listing-1',
+          }),
+        }),
         listingPrice: 55,
         listingCurrencyCode: 'EUR',
         targetCurrencyCode: 'EUR',

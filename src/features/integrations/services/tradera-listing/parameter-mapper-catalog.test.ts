@@ -6,14 +6,14 @@ const {
   updateConnectionMock,
   getByExternalIdMock,
   loadTraderaSystemSettingsMock,
-  runPlaywrightListingScriptMock,
+  runPlaywrightScrapeScriptMock,
 } = vi.hoisted(() => ({
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   getByExternalIdMock: vi.fn(),
   loadTraderaSystemSettingsMock: vi.fn(),
-  runPlaywrightListingScriptMock: vi.fn(),
+  runPlaywrightScrapeScriptMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -31,9 +31,16 @@ vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
   loadTraderaSystemSettings: (...args: unknown[]) => loadTraderaSystemSettingsMock(...args),
 }));
 
-vi.mock('../playwright-listing/runner', () => ({
-  runPlaywrightListingScript: (...args: unknown[]) => runPlaywrightListingScriptMock(...args),
-}));
+vi.mock('@/features/playwright/server', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/features/playwright/server')>(
+      '@/features/playwright/server'
+    );
+  return {
+    ...actual,
+    runPlaywrightScrapeScript: (...args: unknown[]) => runPlaywrightScrapeScriptMock(...args),
+  };
+});
 
 import { fetchAndStoreTraderaParameterMapperCatalog } from './parameter-mapper-catalog';
 
@@ -88,8 +95,13 @@ describe('fetchAndStoreTraderaParameterMapperCatalog', () => {
     loadTraderaSystemSettingsMock.mockResolvedValue({
       listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
     });
-    runPlaywrightListingScriptMock.mockResolvedValue({
+    runPlaywrightScrapeScriptMock.mockResolvedValue({
       runId: 'run-123',
+      run: {
+        runId: 'run-123',
+        status: 'completed',
+        logs: [],
+      },
       rawResult: {
         entries: [
           {
@@ -129,20 +141,24 @@ describe('fetchAndStoreTraderaParameterMapperCatalog', () => {
       externalCategoryId: '101',
     });
 
-    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+    expect(runPlaywrightScrapeScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
         connection: expect.objectContaining({
           id: 'connection-1',
+        }),
+        instance: expect.objectContaining({
+          kind: 'tradera_parameter_mapper_catalog_scrape',
+          family: 'scrape',
         }),
         input: expect.objectContaining({
           startUrl: 'https://www.tradera.com/en/selling/new?categoryId=101',
           externalCategoryId: '101',
         }),
         timeoutMs: 90_000,
-        disableStartUrlBootstrap: false,
+        startUrl: 'https://www.tradera.com/en/selling/new?categoryId=101',
       })
     );
-    const script = runPlaywrightListingScriptMock.mock.calls[0]?.[0]?.script as string | undefined;
+    const script = runPlaywrightScrapeScriptMock.mock.calls[0]?.[0]?.script as string | undefined;
     expect(script).toContain("'listing format'");
     expect(script).toContain("'delivery'");
 
@@ -213,13 +229,18 @@ describe('fetchAndStoreTraderaParameterMapperCatalog', () => {
       httpStatus: 400,
     });
 
-    expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
+    expect(runPlaywrightScrapeScriptMock).not.toHaveBeenCalled();
     expect(updateConnectionMock).not.toHaveBeenCalled();
   });
 
   it('stores category fetch metadata even when no additional fields are found', async () => {
-    runPlaywrightListingScriptMock.mockResolvedValueOnce({
+    runPlaywrightScrapeScriptMock.mockResolvedValueOnce({
       runId: 'run-empty',
+      run: {
+        runId: 'run-empty',
+        status: 'completed',
+        logs: [],
+      },
       rawResult: {
         entries: [],
       },

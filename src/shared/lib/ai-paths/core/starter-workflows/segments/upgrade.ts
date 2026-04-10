@@ -111,6 +111,31 @@ type ModelConfigOverride = {
   systemPrompt?: string;
 };
 
+const STARTER_OVERLAY_PRESERVED_CONFIG_KEYS_BY_NODE_TYPE: Record<string, string[]> = {
+  fetcher: ['fetcher'],
+  model: ['model'],
+  prompt: ['prompt'],
+};
+
+const isLegacyNormalizePromptUpgradeCandidate = (
+  currentValue: unknown,
+  latestValue: unknown
+): boolean => {
+  const currentTemplate = normalizeText(toRecord(currentValue)?.['template']).toLowerCase();
+  const latestTemplate = normalizeText(toRecord(latestValue)?.['template']).toLowerCase();
+
+  if (!currentTemplate || !latestTemplate) {
+    return false;
+  }
+
+  return (
+    currentTemplate.includes('context registry bundle supplied in the system context') &&
+    currentTemplate.includes('authoritative leaf-category vocabulary for the active catalog selection') &&
+    latestTemplate.includes('live product_categories context fetched during this workflow run') &&
+    latestTemplate.includes('bundle.categorycontext.leafcategories')
+  );
+};
+
 const collectExplicitModelSelections = (config: PathConfig): ExplicitModelSelection[] =>
   (config.nodes ?? []).reduce<ExplicitModelSelection[]>((acc, node: AiNode) => {
     if (node.type !== 'model') return acc;
@@ -175,7 +200,7 @@ const applyExplicitModelIdToNode = (node: AiNode, modelId: string): AiNode => {
   return applyModelConfigOverrideToNode(node, { modelId });
 };
 
-const preserveNonCanonicalModelNodeConfigById = (
+const preserveNonCanonicalStarterNodeConfigById = (
   current: PathConfig,
   next: PathConfig
 ): PathConfig => {
@@ -183,28 +208,65 @@ const preserveNonCanonicalModelNodeConfigById = (
     return next;
   }
 
-  const currentModelNodesById = new Map(
-    current.nodes
-      .filter((node: AiNode): boolean => node.type === 'model')
-      .map((node: AiNode) => [node.id, node] as const)
-  );
+  const currentNodesById = new Map(current.nodes.map((node: AiNode) => [node.id, node] as const));
 
   let changed = false;
   const nextNodes = next.nodes.map((node: AiNode): AiNode => {
-    if (node.type !== 'model') {
-      return node;
-    }
-    const currentNode = currentModelNodesById.get(node.id);
-    const currentModel = currentNode?.config?.model;
-    if (!currentModel) {
+    const preservedConfigKeys = STARTER_OVERLAY_PRESERVED_CONFIG_KEYS_BY_NODE_TYPE[node.type] ?? [];
+    if (preservedConfigKeys.length === 0) {
       return node;
     }
 
-    const nextNode = applyModelConfigOverrideToNode(node, currentModel);
-    if (JSON.stringify(nextNode) !== JSON.stringify(node)) {
-      changed = true;
+    const currentNode = currentNodesById.get(node.id);
+    if (!currentNode || currentNode.type !== node.type) {
+      return node;
     }
-    return nextNode;
+
+    const currentConfig = toRecord(currentNode.config);
+    if (!currentConfig) {
+      return node;
+    }
+
+    const nextConfig = toRecord(node.config);
+    let nodeChanged = false;
+    const mergedConfig: Record<string, unknown> = { ...(nextConfig ?? {}) };
+
+    preservedConfigKeys.forEach((configKey) => {
+      const currentValue = currentConfig[configKey];
+      if (currentValue === undefined) {
+        return;
+      }
+      const latestValue = nextConfig?.[configKey];
+      if (
+        node.type === 'prompt' &&
+        configKey === 'prompt' &&
+        isLegacyNormalizePromptUpgradeCandidate(currentValue, latestValue)
+      ) {
+        return;
+      }
+      const mergedValue =
+        toRecord(latestValue) && toRecord(currentValue)
+          ? {
+              ...toRecord(latestValue),
+              ...toRecord(currentValue),
+            }
+          : currentValue;
+      if (JSON.stringify(mergedValue) === JSON.stringify(latestValue)) {
+        return;
+      }
+      mergedConfig[configKey] = mergedValue;
+      nodeChanged = true;
+    });
+
+    if (!nodeChanged) {
+      return node;
+    }
+
+    changed = true;
+    return {
+      ...node,
+      config: mergedConfig,
+    };
   });
 
   return changed
@@ -449,11 +511,11 @@ const buildStarterGraphReplacement = (current: PathConfig, latest: PathConfig): 
     updatedAt: current.updatedAt ?? latest.updatedAt,
     ...(currentExtensions || latestExtensions
       ? {
-        extensions: {
-          ...(currentExtensions ?? {}),
-          ...(latestExtensions ?? {}),
-        },
-      }
+          extensions: {
+            ...(currentExtensions ?? {}),
+            ...(latestExtensions ?? {}),
+          },
+        }
       : {}),
   });
 };
@@ -637,7 +699,7 @@ export const upgradeStarterWorkflowPathConfig = (
     : buildStarterAssetOverlay(config, overlaySource);
   const nextWithPreservedModelConfig = currentMatchesCanonicalHash
     ? next
-    : preserveNonCanonicalModelNodeConfigById(config, next);
+    : preserveNonCanonicalStarterNodeConfigById(config, next);
   if (
     nextWithPreservedModelConfig === config ||
     JSON.stringify(nextWithPreservedModelConfig) === JSON.stringify(config)

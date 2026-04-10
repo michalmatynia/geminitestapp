@@ -16,7 +16,7 @@ const isPlaywrightRuntime = Boolean(
   process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] || process.env['PLAYWRIGHT_RUNTIME_AGENT_ID']
 );
 
-async function AdminLayoutResolver({ children }: { children: React.ReactNode }) {
+export async function AdminLayoutResolver({ children }: { children: React.ReactNode }) {
   const requestHeadersPromise = readOptionalRequestHeaders();
   const cookiesPromise = readOptionalRequestCookies();
 

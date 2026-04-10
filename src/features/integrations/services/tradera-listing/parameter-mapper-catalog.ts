@@ -2,15 +2,20 @@ import 'server-only';
 
 import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { loadTraderaSystemSettings } from '@/features/integrations/services/tradera-system-settings';
+import {
+  buildPlaywrightEngineRunFailureMeta,
+  createTraderaParameterMapperCatalogScrapePlaywrightInstance,
+  runPlaywrightScrapeScript,
+  runPlaywrightScrapeTask,
+} from '@/features/playwright/server';
 import { getExternalCategoryRepository, getIntegrationRepository } from '@/features/integrations/server';
 import type {
   TraderaParameterMapperCatalogEntry,
   TraderaParameterMapperCatalogFetchResponse,
 } from '@/shared/contracts/integrations/tradera-parameter-mapper';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
-import { runPlaywrightListingScript } from '../playwright-listing/runner';
 import {
   buildTraderaParameterMapperCatalogEntryId,
   buildTraderaParameterMapperFieldKey,
@@ -523,26 +528,51 @@ export const fetchAndStoreTraderaParameterMapperCatalog = async ({
   categoryUrl.searchParams.set('categoryId', externalCategoryId);
 
   const fetchedAt = new Date().toISOString();
-  const runResult = await runPlaywrightListingScript({
-    script: DEFAULT_TRADERA_PARAMETER_MAPPER_CATALOG_SCRIPT,
-    input: {
-      startUrl: categoryUrl.toString(),
-      externalCategoryId,
-      externalCategoryPath: category.path ?? null,
-      externalCategoryName: category.name,
-    },
-    connection,
-    timeoutMs: 90_000,
-    disableStartUrlBootstrap: false,
-  });
+  const { nextEntries, runId } = await runPlaywrightScrapeTask({
+    execute: async () =>
+      runPlaywrightScrapeScript({
+        script: DEFAULT_TRADERA_PARAMETER_MAPPER_CATALOG_SCRIPT,
+        input: {
+          startUrl: categoryUrl.toString(),
+          externalCategoryId,
+          externalCategoryPath: category.path ?? null,
+          externalCategoryName: category.name,
+        },
+        connection,
+        instance: createTraderaParameterMapperCatalogScrapePlaywrightInstance({
+          connectionId: connection.id,
+          integrationId: connection.integrationId,
+        }),
+        timeoutMs: 90_000,
+        startUrl: categoryUrl.toString(),
+      }),
+    mapResult: async (runResult) => {
+      if (runResult.run.status === 'failed') {
+        throw internalError(
+          runResult.run.error ?? 'Tradera parameter mapper catalog scrape failed.',
+          {
+            ...buildPlaywrightEngineRunFailureMeta(runResult.run, {
+              includeRawResult: true,
+            }),
+            logs: Array.isArray(runResult.logs) ? runResult.logs : [],
+            externalCategoryId,
+            connectionId,
+          }
+        );
+      }
 
-  const nextEntries = toCatalogEntries({
-    externalCategoryId,
-    externalCategoryName: category.name,
-    externalCategoryPath: category.path ?? null,
-    rawEntries: runResult.rawResult['entries'],
-    fetchedAt,
-    runId: runResult.runId,
+      return {
+        nextEntries: toCatalogEntries({
+          externalCategoryId,
+          externalCategoryName: category.name,
+          externalCategoryPath: category.path ?? null,
+          rawEntries: runResult.rawResult['entries'],
+          fetchedAt,
+          runId: runResult.runId,
+        }),
+        runId: runResult.runId,
+      };
+    },
   });
 
   const existingCatalogPayload = parseTraderaParameterMapperCatalogPayload(
@@ -564,7 +594,7 @@ export const fetchAndStoreTraderaParameterMapperCatalog = async ({
       externalCategoryPath: category.path ?? null,
       fetchedAt,
       fieldCount: nextEntries.length,
-      runId: runResult.runId,
+      runId,
     },
   });
 

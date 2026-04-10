@@ -656,4 +656,5 @@ export const PART_3B = String.raw`
     if (!fallbackVisible) {
       const pickerState = await readCategoryPickerState();
       throw new Error(
-        'FAIL_CATEGORY_SET: Fallback category path "' + FALLBACK_CATEGORY_PATH + '" not found. Last state: ' + JSON.stringify(pickerState) + ''`;
+        'FAIL_CATEGORY_SET: Fallback category path "' + FALLBACK_CATEGORY_PATH + '" not found. Last state: ' + JSON.stringify(pickerState) + ''
+      );`;

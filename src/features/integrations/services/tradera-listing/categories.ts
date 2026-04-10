@@ -11,8 +11,8 @@ import {
   buildPlaywrightEngineRunFailureMeta,
   collectPlaywrightEngineRunFailureMessages,
   createTraderaCategoryScrapePlaywrightInstance,
-  runPlaywrightConnectionEngineTask,
-  resolvePlaywrightEngineRunOutputs,
+  runPlaywrightScrapeScript,
+  runPlaywrightScrapeTask,
 } from '@/features/playwright/server';
 
 const CATEGORY_SCRAPE_TIMEOUT_MS = 300_000;
@@ -66,7 +66,7 @@ const normalizeCategories = (value: unknown): TraderaCategoryRecord[] => {
 };
 
 const buildFailureMeta = (
-  run: Awaited<ReturnType<typeof runPlaywrightConnectionEngineTask>>['run']
+  run: Awaited<ReturnType<typeof runPlaywrightScrapeScript>>['run']
 ): Record<string, unknown> => {
   return {
     ...buildPlaywrightEngineRunFailureMeta(run),
@@ -74,7 +74,7 @@ const buildFailureMeta = (
 };
 
 const toCategoryFetchError = (
-  run: Awaited<ReturnType<typeof runPlaywrightConnectionEngineTask>>['run'],
+  run: Awaited<ReturnType<typeof runPlaywrightScrapeScript>>['run'],
   connectionId: string
 ): Error => {
   const failureMessages = collectPlaywrightEngineRunFailureMessages(run);
@@ -96,78 +96,82 @@ const toCategoryFetchError = (
 
 export const fetchTraderaCategoriesForConnection = async (
   connection: IntegrationConnectionRecord
-): Promise<TraderaCategoryRecord[]> => {
-  const { run } = await runPlaywrightConnectionEngineTask({
-    connection,
-    request: {
-      script: DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT,
-      input: {
-        connectionId: connection.id,
-        traderaConfig: {
-          categoriesUrl: TRADERA_PUBLIC_CATEGORIES_URL,
-        },
-      },
-      timeoutMs: CATEGORY_SCRAPE_TIMEOUT_MS,
-      preventNewPages: true,
-      browserEngine: 'chromium',
-      startUrl: TRADERA_PUBLIC_CATEGORIES_URL,
-      capture: {
-        screenshot: true,
-        html: true,
-      },
-    },
-    instance: createTraderaCategoryScrapePlaywrightInstance({
-      connectionId: connection.id,
-      integrationId: connection.integrationId,
-    }),
-  });
-
-  if (run.status === 'failed') {
-    throw toCategoryFetchError(run, connection.id);
-  }
-
-  const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
-  const categories = normalizeCategories(resultValue['categories']);
-  const categorySource = extractTrimmedString(resultValue['categorySource']);
-  const withParent = categories.filter((category) => category.parentId && category.parentId !== '0');
-
-  logger.info('[tradera-category-fetch]', {
-    categorySource,
-    total: categories.length,
-    withParentCount: withParent.length,
-    rootCount: categories.length - withParent.length,
-    scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
-    sampleCategories: categories
-      .slice(0, 5)
-      .map((category) => ({ id: category.id, name: category.name, parentId: category.parentId })),
-    crawlStats: isObjectRecord(resultValue['crawlStats']) ? resultValue['crawlStats'] : null,
-    runLogs: (Array.isArray(run.logs) ? run.logs : [])
-      .filter((line) => typeof line === 'string' && line.includes('tradera.category'))
-      .slice(-20),
-  });
-
-  if (categories.length === 0) {
-    throw new AppError(
-      'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed. Configure Tradera API credentials (App ID and App Key) on the connection to fetch categories via the Tradera SOAP API instead.',
-      {
-        code: AppErrorCodes.operationFailed,
-        httpStatus: 422,
-        meta: {
-          ...buildFailureMeta(run),
+): Promise<TraderaCategoryRecord[]> =>
+  runPlaywrightScrapeTask({
+    execute: async () =>
+      runPlaywrightScrapeScript({
+        script: DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT,
+        input: {
           connectionId: connection.id,
-          finalUrl,
-          categorySource: extractTrimmedString(resultValue['categorySource']),
-          scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
-          diagnostics: isObjectRecord(resultValue['diagnostics']) ? resultValue['diagnostics'] : null,
-          crawlStats: isObjectRecord(resultValue['crawlStats']) ? resultValue['crawlStats'] : null,
-          recoveryAction: 'tradera_configure_api_credentials',
-          recoveryMessage:
-            'Add Tradera API App ID and App Key to this connection, then retry category fetch.',
+          traderaConfig: {
+            categoriesUrl: TRADERA_PUBLIC_CATEGORIES_URL,
+          },
         },
-        expected: true,
+        connection,
+        instance: createTraderaCategoryScrapePlaywrightInstance({
+          connectionId: connection.id,
+          integrationId: connection.integrationId,
+        }),
+        timeoutMs: CATEGORY_SCRAPE_TIMEOUT_MS,
+        startUrl: TRADERA_PUBLIC_CATEGORIES_URL,
+        capture: {
+          screenshot: true,
+          html: true,
+        },
+      }),
+    mapResult: async ({ run, rawResult, finalUrl }) => {
+      if (run.status === 'failed') {
+        throw toCategoryFetchError(run, connection.id);
       }
-    );
-  }
 
-  return categories;
-};
+      const categories = normalizeCategories(rawResult['categories']);
+      const categorySource = extractTrimmedString(rawResult['categorySource']);
+      const withParent = categories.filter(
+        (category) => category.parentId && category.parentId !== '0'
+      );
+
+      logger.info('[tradera-category-fetch]', {
+        categorySource,
+        total: categories.length,
+        withParentCount: withParent.length,
+        rootCount: categories.length - withParent.length,
+        scrapedFrom: extractTrimmedString(rawResult['scrapedFrom']),
+        sampleCategories: categories.slice(0, 5).map((category) => ({
+          id: category.id,
+          name: category.name,
+          parentId: category.parentId,
+        })),
+        crawlStats: isObjectRecord(rawResult['crawlStats']) ? rawResult['crawlStats'] : null,
+        runLogs: (Array.isArray(run.logs) ? run.logs : [])
+          .filter((line) => typeof line === 'string' && line.includes('tradera.category'))
+          .slice(-20),
+      });
+
+      if (categories.length === 0) {
+        throw new AppError(
+          'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed. Configure Tradera API credentials (App ID and App Key) on the connection to fetch categories via the Tradera SOAP API instead.',
+          {
+            code: AppErrorCodes.operationFailed,
+            httpStatus: 422,
+            meta: {
+              ...buildFailureMeta(run),
+              connectionId: connection.id,
+              finalUrl,
+              categorySource: extractTrimmedString(rawResult['categorySource']),
+              scrapedFrom: extractTrimmedString(rawResult['scrapedFrom']),
+              diagnostics: isObjectRecord(rawResult['diagnostics'])
+                ? rawResult['diagnostics']
+                : null,
+              crawlStats: isObjectRecord(rawResult['crawlStats']) ? rawResult['crawlStats'] : null,
+              recoveryAction: 'tradera_configure_api_credentials',
+              recoveryMessage:
+                'Add Tradera API App ID and App Key to this connection, then retry category fetch.',
+            },
+            expected: true,
+          }
+        );
+      }
+
+      return categories;
+    },
+  });

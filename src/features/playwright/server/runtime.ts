@@ -9,6 +9,7 @@ import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/pl
 import type {
   PlaywrightNodeArtifactReadResult,
   PlaywrightNodeRunArtifact,
+  PlaywrightNodeRunInstanceFamily,
   PlaywrightNodeRunInstance,
   PlaywrightNodeRunInstanceKind,
   PlaywrightNodeRunRecord,
@@ -20,6 +21,7 @@ export type PlaywrightEngineRunArtifact = PlaywrightNodeRunArtifact;
 export type PlaywrightEngineRunRecord = PlaywrightNodeRunRecord;
 export type PlaywrightEngineArtifactReadResult = PlaywrightNodeArtifactReadResult;
 export type PlaywrightEngineRunInstanceKind = PlaywrightNodeRunInstanceKind;
+export type PlaywrightEngineRunInstanceFamily = PlaywrightNodeRunInstanceFamily;
 export type PlaywrightEngineRunInstance = PlaywrightNodeRunInstance;
 
 export type EnqueuePlaywrightEngineRunInput = {

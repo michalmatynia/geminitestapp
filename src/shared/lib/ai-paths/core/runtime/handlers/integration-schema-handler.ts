@@ -19,6 +19,7 @@ let schemaCacheResult: HttpResult<unknown> | null = null;
 let schemaCacheTs = 0;
 const SCHEMA_CACHE_TTL_MS = 30_000;
 const DEFAULT_LIVE_CONTEXT_LIMIT = 20;
+const PRODUCT_CATEGORIES_COLLECTION = 'product_categories';
 
 type LiveContextCollection = {
   name: string;
@@ -94,6 +95,99 @@ const dedupeCollectionNames = (values: string[]): string[] => {
     deduped.push(value.trim());
   });
   return deduped;
+};
+
+const resolveRecordString = (value: unknown): string => {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (value && typeof value === 'object' && typeof value.toString === 'function') {
+    const resolved = value.toString();
+    return typeof resolved === 'string' ? resolved.trim() : '';
+  }
+  return '';
+};
+
+const resolveProductCategoryLeafDocuments = (
+  documents: Record<string, unknown>[]
+): Record<string, unknown>[] => {
+  const categories = documents
+    .map((document) => {
+      if (!isObjectRecord(document)) return null;
+      const id = resolveRecordString(document['id']) || resolveRecordString(document['_id']);
+      if (!id) return null;
+      const label =
+        resolveRecordString(document['name_en']) ||
+        resolveRecordString(document['name']) ||
+        resolveRecordString(document['name_pl']) ||
+        resolveRecordString(document['name_de']) ||
+        id;
+      return {
+        id,
+        label,
+        parentId: resolveRecordString(document['parentId']) || null,
+        raw: document,
+      };
+    })
+    .filter(
+      (
+        category
+      ): category is {
+        id: string;
+        label: string;
+        parentId: string | null;
+        raw: Record<string, unknown>;
+      } => category !== null
+    );
+
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  const parentIds = new Set(
+    categories
+      .map((category) => category.parentId)
+      .filter((parentId): parentId is string => typeof parentId === 'string' && parentId.length > 0)
+  );
+
+  const buildFullPath = (categoryId: string, seen: Set<string> = new Set()): string => {
+    const category = byId.get(categoryId);
+    if (!category) return '';
+    if (seen.has(categoryId)) return category.label;
+    const nextSeen = new Set(seen);
+    nextSeen.add(categoryId);
+    if (!category.parentId || !byId.has(category.parentId)) return category.label;
+    const parentPath = buildFullPath(category.parentId, nextSeen);
+    return parentPath ? `${parentPath} > ${category.label}` : category.label;
+  };
+
+  return categories
+    .filter((category) => !parentIds.has(category.id))
+    .map((category) => ({
+      ...category.raw,
+      id: resolveRecordString(category.raw['id']) || category.id,
+      parentId: category.parentId,
+      fullPath: buildFullPath(category.id),
+      leafLabel: category.label,
+      isLeaf: true,
+    }))
+    .sort((left, right) =>
+      resolveRecordString(left['fullPath']).localeCompare(resolveRecordString(right['fullPath']))
+    );
+};
+
+const transformLiveContextDocuments = ({
+  collectionName,
+  documents,
+  config,
+}: {
+  collectionName: string;
+  documents: Record<string, unknown>[];
+  config: DbSchemaConfig;
+}): Record<string, unknown>[] => {
+  if (
+    config.contextTransform === 'product_categories_leaf_only' &&
+    collectionName === PRODUCT_CATEGORIES_COLLECTION
+  ) {
+    return resolveProductCategoryLeafDocuments(documents);
+  }
+  return documents;
 };
 
 export const getCachedSchema = async (): Promise<HttpResult<unknown>> => {
@@ -339,11 +433,19 @@ const loadLiveContext = async ({
         };
       }
 
+      const rawDocuments = result.data.documents ?? [];
+      const documents = transformLiveContextDocuments({
+        collectionName,
+        documents: rawDocuments,
+        config,
+      });
+      const transformedDocuments = documents !== rawDocuments;
+
       return {
         name: collectionName,
         provider: result.data.provider,
-        documents: result.data.documents ?? [],
-        total: result.data.total ?? 0,
+        documents,
+        total: transformedDocuments ? documents.length : result.data.total ?? 0,
         limit: result.data.limit ?? limitPerCollection,
         skip: result.data.skip ?? 0,
         query,

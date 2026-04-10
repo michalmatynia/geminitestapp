@@ -260,6 +260,7 @@ describe('database node normalization', () => {
       contextCollections: [],
       contextQuery: '',
       contextLimit: 20,
+      contextTransform: 'none',
       includeFields: false,
       includeRelations: false,
       formatAs: 'json',

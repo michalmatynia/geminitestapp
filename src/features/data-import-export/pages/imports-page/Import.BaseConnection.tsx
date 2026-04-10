@@ -299,7 +299,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             title='Import Mode'
             description={
               hasDirectTarget
-                ? `Exact target ${directTargetLabel} is active. This run will always create a new detached product.`
+                ? `Exact target ${directTargetLabel} is active. This run will always create a new product with a Base.com connection.`
                 : 'Choose how Base products should be matched.'
             }
             className='p-4'
@@ -318,7 +318,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             />
             <Hint className='mt-2'>
               {hasDirectTarget
-                ? 'Exact target imports bypass upsert matching and always create a new product.'
+                ? 'Exact target imports bypass upsert matching and always create a new product with its own Base.com connection.'
                 : 'Upsert by Base ID will update existing products tied to a Base.com product id.'}
             </Hint>
           </FormSection>

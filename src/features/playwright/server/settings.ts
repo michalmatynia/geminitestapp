@@ -268,7 +268,7 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
     'deviceName' in connectionOverrides
       ? toTrimmedString(
           connectionOverrides.deviceName,
-          defaultIntegrationConnectionPlaywrightSettings.deviceName
+          defaultIntegrationConnectionPlaywrightSettings.deviceName ?? 'Desktop Chrome'
         )
       : settings.deviceName;
 
@@ -287,7 +287,8 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
         typeof connectionProxyPassword === 'string'
           ? connectionProxyPassword
           : settings.proxyPassword,
-      deviceName: nextDeviceName || defaultIntegrationConnectionPlaywrightSettings.deviceName,
+      deviceName:
+        nextDeviceName || defaultIntegrationConnectionPlaywrightSettings.deviceName || 'Desktop Chrome',
     },
   };
 };

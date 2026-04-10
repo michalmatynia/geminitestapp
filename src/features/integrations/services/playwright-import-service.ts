@@ -10,7 +10,7 @@ import {
   parsePlaywrightFieldMapperJson,
   type PlaywrightMappedImportProduct,
 } from './playwright-listing/field-mapper';
-import { runPlaywrightImportScript } from './playwright-listing/runner';
+import { runPlaywrightProgrammableImportForConnection } from '@/features/playwright/server';
 
 const normalizeCaptureRoutes = (value: unknown) => {
   if (!Array.isArray(value)) return [];
@@ -73,14 +73,6 @@ export const buildPlaywrightImportInput = (
   };
 };
 
-const ensurePlaywrightImportScript = (connection: IntegrationConnectionRecord): string => {
-  const script = connection.playwrightImportScript?.trim();
-  if (!script) {
-    throw new Error('This connection does not have a Playwright import script configured.');
-  }
-  return script;
-};
-
 export const runPlaywrightImport = async ({
   connection,
   integration,
@@ -98,11 +90,9 @@ export const runPlaywrightImport = async ({
     );
   }
 
-  const script = ensurePlaywrightImportScript(connection);
-  const result = await runPlaywrightImportScript({
-    script,
-    input: buildPlaywrightImportInput(connection),
+  const result = await runPlaywrightProgrammableImportForConnection({
     connection,
+    input: buildPlaywrightImportInput(connection),
   });
 
   const fieldMappings = parsePlaywrightFieldMapperJson(connection.playwrightFieldMapperJson);

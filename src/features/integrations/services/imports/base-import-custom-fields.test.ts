@@ -7,6 +7,7 @@ import {
 
 import type { CustomFieldRepository } from '@/shared/contracts/products/drafts';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
+import { BASE_MARKETPLACE_CHECKBOX_OPTIONS } from '@/shared/lib/integrations/base-marketplace-checkboxes';
 
 const buildRepository = (): CustomFieldRepository => ({
   listCustomFields: vi.fn(),
@@ -305,6 +306,56 @@ describe('ensureBaseTextCustomFields', () => {
     expect(definitions).toHaveLength(1);
     expect(definitions[0]).toMatchObject({ name: 'Custom Note' });
   });
+
+  it('skips generic extra fields that carry Market Exclusion checkbox selections', async () => {
+    const repository = buildRepository();
+    vi.mocked(repository.createCustomField).mockImplementation(async (data) =>
+      buildDefinition({
+        id: `${data.name.toLowerCase().replace(/\s+/g, '-')}-id`,
+        name: data.name,
+        type: data.type,
+        options: data.options ?? [],
+      })
+    );
+
+    const definitions = await ensureBaseTextCustomFields({
+      repository,
+      existingDefinitions: [
+        buildDefinition({
+          id: 'market-exclusion',
+          options: [
+            { id: 'allegro', label: 'Allegro' },
+            { id: 'amazon-pl', label: 'Amazon.pl' },
+            { id: 'tradera', label: 'Tradera' },
+            { id: 'vinted', label: 'Vinted' },
+          ],
+        }),
+      ],
+      records: [
+        {
+          text_fields: {
+            'Extra Field 6302': [
+              { label: 'Allegro', checked: true },
+              { label: 'Amazon.pl', checked: false },
+              { label: 'Tradera', selected: true },
+            ],
+            'Extra Field 18808': 'Yes',
+          },
+        },
+      ],
+    });
+
+    expect(repository.createCustomField).toHaveBeenCalledTimes(1);
+    expect(repository.createCustomField).toHaveBeenCalledWith({
+      name: 'Extra Field 18808',
+      type: 'text',
+      options: [],
+    });
+    expect(definitions).toEqual([
+      expect.objectContaining({ id: 'market-exclusion', name: 'Market Exclusion' }),
+      expect.objectContaining({ name: 'Extra Field 18808', type: 'text' }),
+    ]);
+  });
 });
 
 describe('ensureBaseMarketplaceExclusionCustomField', () => {
@@ -331,14 +382,10 @@ describe('ensureBaseMarketplaceExclusionCustomField', () => {
     expect(repository.createCustomField).toHaveBeenCalledWith({
       name: 'Market Exclusion',
       type: 'checkbox_set',
-      options: [
-        { id: 'market-exclusion-tradera', label: 'Tradera' },
-        { id: 'market-exclusion-willhaben', label: 'Willhaben' },
-        { id: 'market-exclusion-depop', label: 'Depop' },
-        { id: 'market-exclusion-grailed', label: 'Grailed' },
-        { id: 'market-exclusion-shpock', label: 'Schpock' },
-        { id: 'market-exclusion-vinted', label: 'Vinted' },
-      ],
+      options: BASE_MARKETPLACE_CHECKBOX_OPTIONS.map((option) => ({
+        id: option.id,
+        label: option.label,
+      })),
     });
     expect(definitions).toEqual([
       expect.objectContaining({
@@ -366,9 +413,12 @@ describe('ensureBaseMarketplaceExclusionCustomField', () => {
         id: 'base-market-exclusion',
         name: 'Market Exclusion',
         type: 'checkbox_set',
-        options: expect.arrayContaining([
-          { id: 'market-exclusion-vinted', label: 'Vinted' },
-        ]),
+        options: expect.arrayContaining(
+          BASE_MARKETPLACE_CHECKBOX_OPTIONS.map((option) => ({
+            id: option.id,
+            label: option.label,
+          }))
+        ),
       }),
     ]);
   });
@@ -396,25 +446,53 @@ describe('ensureBaseMarketplaceExclusionCustomField', () => {
     });
 
     expect(repository.updateCustomField).toHaveBeenCalledWith('field-1', {
-      options: [
+      options: expect.arrayContaining([
         { id: 'existing-tradera', label: 'Tradera' },
         { id: 'existing-shpock', label: 'Shpock' },
         { id: 'custom-option', label: 'Custom Market' },
+        { id: 'market-exclusion-allegro', label: 'Allegro' },
+        { id: 'market-exclusion-amazon-co-uk', label: 'Amazon.co.uk' },
+        { id: 'market-exclusion-amazon-pl', label: 'Amazon.pl' },
+        { id: 'market-exclusion-etsy-sparksofsindri', label: 'Etsy - SparksOfSindri' },
+        { id: 'market-exclusion-etsy-keyrealmz', label: 'Etsy - KeyRealmz' },
+        { id: 'market-exclusion-etsy-good-old-times', label: 'Etsy - Good Old Times' },
+        { id: 'market-exclusion-ebay-pl', label: 'eBay.pl' },
+        { id: 'market-exclusion-olx', label: 'Olx' },
+        { id: 'market-exclusion-taniey', label: 'Taniey' },
+        { id: 'market-exclusion-empik', label: 'Empik' },
+        { id: 'market-exclusion-arena-pl', label: 'Arena.pl' },
+        { id: 'market-exclusion-erli-pl', label: 'Erli.pl' },
+        { id: 'market-exclusion-velomarket', label: 'Velomarket' },
         { id: 'market-exclusion-willhaben', label: 'Willhaben' },
         { id: 'market-exclusion-depop', label: 'Depop' },
         { id: 'market-exclusion-grailed', label: 'Grailed' },
         { id: 'market-exclusion-vinted', label: 'Vinted' },
-      ],
+      ]),
     });
-    expect(definitions[0]?.options).toEqual([
-      { id: 'existing-tradera', label: 'Tradera' },
-      { id: 'existing-shpock', label: 'Shpock' },
-      { id: 'custom-option', label: 'Custom Market' },
-      { id: 'market-exclusion-willhaben', label: 'Willhaben' },
-      { id: 'market-exclusion-depop', label: 'Depop' },
-      { id: 'market-exclusion-grailed', label: 'Grailed' },
-      { id: 'market-exclusion-vinted', label: 'Vinted' },
-    ]);
+    expect(definitions[0]?.options).toEqual(
+      expect.arrayContaining([
+        { id: 'existing-tradera', label: 'Tradera' },
+        { id: 'existing-shpock', label: 'Shpock' },
+        { id: 'custom-option', label: 'Custom Market' },
+        { id: 'market-exclusion-allegro', label: 'Allegro' },
+        { id: 'market-exclusion-amazon-co-uk', label: 'Amazon.co.uk' },
+        { id: 'market-exclusion-amazon-pl', label: 'Amazon.pl' },
+        { id: 'market-exclusion-etsy-sparksofsindri', label: 'Etsy - SparksOfSindri' },
+        { id: 'market-exclusion-etsy-keyrealmz', label: 'Etsy - KeyRealmz' },
+        { id: 'market-exclusion-etsy-good-old-times', label: 'Etsy - Good Old Times' },
+        { id: 'market-exclusion-ebay-pl', label: 'eBay.pl' },
+        { id: 'market-exclusion-olx', label: 'Olx' },
+        { id: 'market-exclusion-taniey', label: 'Taniey' },
+        { id: 'market-exclusion-empik', label: 'Empik' },
+        { id: 'market-exclusion-arena-pl', label: 'Arena.pl' },
+        { id: 'market-exclusion-erli-pl', label: 'Erli.pl' },
+        { id: 'market-exclusion-velomarket', label: 'Velomarket' },
+        { id: 'market-exclusion-willhaben', label: 'Willhaben' },
+        { id: 'market-exclusion-depop', label: 'Depop' },
+        { id: 'market-exclusion-grailed', label: 'Grailed' },
+        { id: 'market-exclusion-vinted', label: 'Vinted' },
+      ])
+    );
   });
 
   it('does not modify an existing field when it is not a checkbox set', async () => {

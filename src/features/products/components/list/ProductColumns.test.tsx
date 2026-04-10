@@ -999,6 +999,23 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
   });
 
+  it('renders the imported badge for detached Base imports without sync linkage', () => {
+    const product = createProduct({
+      baseProductId: null,
+      importSource: 'base',
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+  });
+
   it('renders a global trigger run feedback toggle in the integrations header', () => {
     const setShowTriggerRunFeedback = vi.fn();
     useProductListHeaderActionsContextMock.mockReturnValue({

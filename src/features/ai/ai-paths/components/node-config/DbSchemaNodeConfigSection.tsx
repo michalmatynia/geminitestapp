@@ -38,6 +38,13 @@ const CONTEXT_SOURCE_MODE_OPTIONS = [
   LabeledOptionDto<'schema' | 'schema_and_live_context' | 'live_context'>
 >;
 
+const CONTEXT_TRANSFORM_OPTIONS = [
+  { value: 'none', label: 'Raw Documents' },
+  { value: 'product_categories_leaf_only', label: 'Product Categories Leaves Only' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'none' | 'product_categories_leaf_only'>
+>;
+
 const DEFAULT_CONTEXT_LIMIT = 20;
 const MAX_CONTEXT_LIMIT = 100;
 
@@ -111,6 +118,7 @@ interface SchemaConfig {
   contextCollections: string[];
   contextQuery: string;
   contextLimit: number;
+  contextTransform: 'none' | 'product_categories_leaf_only';
   includeFields: boolean;
   includeRelations: boolean;
   formatAs: 'json' | 'text';
@@ -142,6 +150,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     contextCollections: selectedNode.config?.db_schema?.contextCollections ?? [],
     contextQuery: selectedNode.config?.db_schema?.contextQuery ?? '',
     contextLimit: selectedNode.config?.db_schema?.contextLimit ?? DEFAULT_CONTEXT_LIMIT,
+    contextTransform: selectedNode.config?.db_schema?.contextTransform ?? 'none',
     includeFields: selectedNode.config?.db_schema?.includeFields ?? true,
     includeRelations: selectedNode.config?.db_schema?.includeRelations ?? true,
     formatAs: selectedNode.config?.db_schema?.formatAs ?? 'text',
@@ -517,6 +526,41 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                     <div className='mt-2 text-[10px] text-gray-500'>
                       Uses fresh data on each run. Keep this low to control prompt size.
                     </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className='text-xs text-gray-400'>Live Context Transform</Label>
+                  <SelectSimple
+                    size='sm'
+                    value={schemaConfig.contextTransform}
+                    onValueChange={(value: string) =>
+                      updateSchemaConfig({
+                        contextTransform: value as SchemaConfig['contextTransform'],
+                      })
+                    }
+                    ariaLabel='Live context transform'
+                    options={CONTEXT_TRANSFORM_OPTIONS}
+                    triggerClassName='mt-2 border-border bg-card/70'
+                   title='Select option'/>
+                  <div className='mt-2 text-[10px] text-gray-500'>
+                    Use
+                    {' '}
+                    <code>Product Categories Leaves Only</code>
+                    {' '}
+                    when
+                    {' '}
+                    <code>product_categories</code>
+                    {' '}
+                    should emit only terminal leaves such as
+                    {' '}
+                    <code>Movie Keychain</code>
+                    {' '}
+                    while preserving a
+                    {' '}
+                    <code>fullPath</code>
+                    {' '}
+                    field for disambiguation.
                   </div>
                 </div>
               </Card>

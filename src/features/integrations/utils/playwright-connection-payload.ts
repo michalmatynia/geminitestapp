@@ -51,10 +51,10 @@ export const toPlaywrightConnectionOverridePayload = ({
     return acc;
   }, {} as Record<string, unknown>);
 
-  const normalizedProxyPassword = settings.proxyPassword.trim();
+  const normalizedProxyPassword = (settings.proxyPassword ?? '').trim();
   if (
     normalizedProxyPassword.length > 0 &&
-    normalizedProxyPassword !== baselineSettings.proxyPassword
+    normalizedProxyPassword !== (baselineSettings.proxyPassword ?? '')
   ) {
     payload['playwrightProxyPassword'] = normalizedProxyPassword;
   }

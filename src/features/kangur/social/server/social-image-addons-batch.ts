@@ -278,7 +278,7 @@ const readBatchCaptureResults = (
 };
 
 const readLiveCaptureProgress = (
-  run: Pick<PlaywrightNodeRunRecord, 'result'> | null
+  run: { result?: unknown } | null
 ): BatchCaptureProgressSnapshot | null => {
   const result = toRecord(run?.result);
   const outputs = toRecord(result?.['outputs']);
@@ -319,9 +319,9 @@ const readLiveCaptureProgress = (
 export const waitForPlaywrightBatchRun = async (params: {
   runId: string;
   onProgress: (progress: BatchCaptureProgressSnapshot) => Promise<void> | void;
-}): Promise<PlaywrightNodeRunRecord> => {
+}): Promise<PlaywrightEngineRunRecord> => {
   const startedAt = Date.now();
-  let latestRun: PlaywrightNodeRunRecord | null = null;
+  let latestRun: PlaywrightEngineRunRecord | null = null;
   let lastProgressSignature: string | null = null;
 
   while (Date.now() - startedAt <= LIVE_PROGRESS_TIMEOUT_MS) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { baseMarketExclusionGenericExtraFieldRecord } from './base-import-fixtures';
 import { normalizeMappedProduct } from './base-import-item-processor';
 
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
@@ -60,5 +61,50 @@ describe('normalizeMappedProduct', () => {
         ],
       },
     ]);
+  });
+
+  it('maps generic Base extra fields into the real Market Exclusion checkbox set during import processing', () => {
+    const mapped = normalizeMappedProduct(
+      baseMarketExclusionGenericExtraFieldRecord,
+      [],
+      ['EUR'],
+      [
+        {
+          id: 'market-exclusion',
+          name: 'Market Exclusion',
+          type: 'checkbox_set',
+          options: [
+            { id: 'opt-allegro', label: 'Allegro' },
+            { id: 'opt-amazon-pl', label: 'Amazon.pl' },
+            { id: 'opt-tradera', label: 'Tradera' },
+            { id: 'opt-vinted', label: 'Vinted' },
+          ],
+          createdAt: '2026-04-10T00:00:00.000Z',
+          updatedAt: '2026-04-10T00:00:00.000Z',
+        },
+        {
+          id: 'extra-18808',
+          name: 'Extra Field 18808',
+          type: 'text',
+          options: [],
+          createdAt: '2026-04-10T00:00:00.000Z',
+          updatedAt: '2026-04-10T00:00:00.000Z',
+        },
+      ]
+    );
+
+    expect(mapped.customFields).toHaveLength(2);
+    expect(mapped.customFields).toEqual(
+      expect.arrayContaining([
+        {
+          fieldId: 'market-exclusion',
+          selectedOptionIds: ['opt-allegro', 'opt-tradera'],
+        },
+        {
+          fieldId: 'extra-18808',
+          textValue: 'Yes',
+        },
+      ])
+    );
   });
 });

@@ -475,6 +475,7 @@ export const getDefaultConfigForType = (
         contextCollections: [],
         contextQuery: '',
         contextLimit: 20,
+        contextTransform: 'none',
         includeFields: true,
         includeRelations: true,
         formatAs: 'text',

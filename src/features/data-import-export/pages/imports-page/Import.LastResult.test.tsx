@@ -173,7 +173,7 @@ describe('ImportLastResultSection', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows exact-target detached-create context when the active run includes a direct target', () => {
+  it('shows exact-target linked-create context when the active run includes a direct target', () => {
     mocks.useImportExportDataMock.mockReturnValue({
       lastResult: {
         runId: 'run-exact-2',
@@ -206,12 +206,12 @@ describe('ImportLastResultSection', () => {
     expect(screen.getByText('SKU FOASW022')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'This exact-target run was submitted to the separate base-import runtime queue and will create a new detached product.'
+        'This exact-target run was submitted to the separate base-import runtime queue and will create a new product with a Base.com connection.'
       )
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Exact target runs always create a new detached product and do not reuse Base sync linkage.'
+        'Exact target runs always create a new product and attach a Base.com connection to it.'
       )
     ).toBeInTheDocument();
   });

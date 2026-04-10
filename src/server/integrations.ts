@@ -2,6 +2,7 @@ import 'server-only';
 
 export {
   callBaseApi,
+  checkBaseSkuExists,
   fetchBaseProductDetails,
   findProductListingByProductAndConnectionAcrossProviders,
   getExportDefaultConnectionId,

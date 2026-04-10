@@ -234,6 +234,68 @@ describe('importSingleItem custom fields', () => {
     );
   });
 
+  it('preserves Market Exclusion checkbox selections alongside real text extra fields during product creation', async () => {
+    mocks.mapBaseProductMock.mockReturnValue({
+      sku: 'SKU-1',
+      baseProductId: 'base-1',
+      customFields: [
+        { fieldId: 'market-exclusion', selectedOptionIds: ['allegro', 'tradera'] },
+        { fieldId: 'extra-18808', textValue: 'Yes' },
+      ],
+      producerIds: [],
+      tagIds: [],
+      imageLinks: [],
+    });
+
+    const productRepository = buildProductRepository({
+      createProduct: vi.fn().mockResolvedValue({ id: 'product-1', sku: 'SKU-1' }),
+    });
+
+    await importSingleItem(
+      buildInput({
+        productRepository,
+        customFieldDefinitions: [
+          {
+            id: 'market-exclusion',
+            name: 'Market Exclusion',
+            type: 'checkbox_set',
+            options: [
+              { id: 'allegro', label: 'Allegro' },
+              { id: 'tradera', label: 'Tradera' },
+            ],
+            createdAt: '2026-04-10T00:00:00.000Z',
+            updatedAt: '2026-04-10T00:00:00.000Z',
+          },
+          {
+            id: 'extra-18808',
+            name: 'Extra Field 18808',
+            type: 'text',
+            options: [],
+            createdAt: '2026-04-10T00:00:00.000Z',
+            updatedAt: '2026-04-10T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    expect(mocks.validateProductCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'market-exclusion', selectedOptionIds: ['allegro', 'tradera'] },
+          { fieldId: 'extra-18808', textValue: 'Yes' },
+        ],
+      })
+    );
+    expect(productRepository.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'market-exclusion', selectedOptionIds: ['allegro', 'tradera'] },
+          { fieldId: 'extra-18808', textValue: 'Yes' },
+        ],
+      })
+    );
+  });
+
   it('reports seeded generic Base custom fields in item metadata when they are auto-matched', async () => {
     mocks.mapBaseProductMock.mockReturnValue({
       sku: 'SKU-1',
@@ -336,7 +398,7 @@ describe('importSingleItem custom fields', () => {
     );
   });
 
-  it('forces exact-target imports to create a detached product with a unique SKU instead of updating', async () => {
+  it('forces exact-target imports to create a Base-linked product with a unique SKU while preserving import provenance', async () => {
     mocks.mapBaseProductMock.mockReturnValue({
       sku: 'SKU-1',
       baseProductId: 'base-1',
@@ -368,11 +430,13 @@ describe('importSingleItem custom fields', () => {
       return null;
     });
     const createProduct = vi.fn().mockResolvedValue({ id: 'product-created', sku: 'SKU-1-1' });
+    const listingRepository = buildListingRepository();
     const productRepository = buildProductRepository({
       findProductByBaseId: vi.fn().mockResolvedValue(existingByBaseId),
       getProductBySku,
       createProduct,
     });
+    mocks.getProductListingRepositoryMock.mockReturnValue(listingRepository);
 
     const result = await importSingleItem(
       buildInput({
@@ -397,7 +461,7 @@ describe('importSingleItem custom fields', () => {
       expect.objectContaining({
         sku: 'SKU-1-1',
         baseProductId: null,
-        importSource: null,
+        importSource: 'base',
         customFields: [{ fieldId: 'market-exclusion', selectedOptionIds: ['tradera'] }],
       })
     );
@@ -405,12 +469,26 @@ describe('importSingleItem custom fields', () => {
       expect.objectContaining({
         sku: 'SKU-1-1',
         baseProductId: null,
-        importSource: null,
+        importSource: 'base',
         customFields: [{ fieldId: 'market-exclusion', selectedOptionIds: ['tradera'] }],
       })
     );
-    expect(mocks.findProductListingByProductAndConnectionAcrossProvidersMock).not.toHaveBeenCalled();
-    expect(mocks.getProductListingRepositoryMock).not.toHaveBeenCalled();
+    expect(mocks.findProductListingByProductAndConnectionAcrossProvidersMock).toHaveBeenCalledWith(
+      'product-created',
+      'connection-1'
+    );
+    expect(listingRepository.createListing).toHaveBeenCalledWith({
+      productId: 'product-created',
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+      status: 'active',
+      externalListingId: 'base-1',
+      inventoryId: 'inventory-1',
+      marketplaceData: {
+        source: 'base-import',
+        marketplace: 'base',
+      },
+    });
     expect(result).toEqual(
       expect.objectContaining({
         status: 'imported',

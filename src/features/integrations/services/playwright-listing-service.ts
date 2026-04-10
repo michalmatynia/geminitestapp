@@ -18,19 +18,20 @@ import {
 } from '@/shared/lib/files/services/storage/file-storage-service';
 import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-import { runPlaywrightListingScript } from './playwright-listing/runner';
+import {
+  buildPlaywrightListingLastExecutionRecord,
+  buildPlaywrightListingProviderRecord,
+  buildPlaywrightScriptListingMetadata,
+  buildPlaywrightServiceListingFailure,
+  buildPlaywrightServiceListingSuccess,
+  type PlaywrightServiceListingExecutionBase,
+  runPlaywrightProgrammableListingForConnection,
+} from '@/features/playwright/server';
 
 export type { PlaywrightListingJobInput };
 
-export type PlaywrightListingExecutionResult = {
-  ok: boolean;
-  externalListingId: string | null;
-  listingUrl: string | null;
+export type PlaywrightListingExecutionResult = PlaywrightServiceListingExecutionBase & {
   expiresAt: Date | null;
-  error: string | null;
-  errorCategory: string | null;
-  metadata?: Record<string, unknown>;
 };
 
 const toRecord = (value: unknown): Record<string, unknown> =>
@@ -104,14 +105,6 @@ export const buildPlaywrightListingInput = ({
   };
 };
 
-const ensureProgrammablePlaywrightConnection = (connection: IntegrationConnectionRecord): string => {
-  const script = connection.playwrightListingScript?.trim();
-  if (!script) {
-    throw new Error('This connection does not have a Playwright listing script configured.');
-  }
-  return script;
-};
-
 const resolveRequestedBrowserMode = (
   browserMode: PlaywrightRelistBrowserMode | undefined
 ): PlaywrightRelistBrowserMode => browserMode ?? 'connection_default';
@@ -132,51 +125,47 @@ export const runPlaywrightListing = async (
   try {
     const resolvedListing = await findProductListingByIdAcrossProviders(input.listingId);
     if (!resolvedListing) {
-      return {
-        ok: false,
-        externalListingId: null,
-        listingUrl: null,
-        expiresAt: null,
+      return buildPlaywrightServiceListingFailure({
         error: `Listing not found: ${input.listingId}`,
         errorCategory: 'NOT_FOUND',
-      };
+        extra: {
+          expiresAt: null,
+        },
+      });
     }
 
     const { listing } = resolvedListing;
     const integrationRepo = await getIntegrationRepository();
     const connection = await integrationRepo.getConnectionById(listing.connectionId);
     if (!connection) {
-      return {
-        ok: false,
-        externalListingId: null,
-        listingUrl: null,
-        expiresAt: null,
+      return buildPlaywrightServiceListingFailure({
         error: `Connection not found: ${listing.connectionId}`,
         errorCategory: 'NOT_FOUND',
-      };
+        extra: {
+          expiresAt: null,
+        },
+      });
     }
 
     const integration = await integrationRepo.getIntegrationById(connection.integrationId);
     if (!integration) {
-      return {
-        ok: false,
-        externalListingId: null,
-        listingUrl: null,
-        expiresAt: null,
+      return buildPlaywrightServiceListingFailure({
         error: `Integration not found: ${connection.integrationId}`,
         errorCategory: 'NOT_FOUND',
-      };
+        extra: {
+          expiresAt: null,
+        },
+      });
     }
 
     if (!isPlaywrightProgrammableSlug(integration.slug)) {
-      return {
-        ok: false,
-        externalListingId: null,
-        listingUrl: null,
-        expiresAt: null,
+      return buildPlaywrightServiceListingFailure({
         error: `Integration ${integration.slug} does not support programmable Playwright listings.`,
         errorCategory: 'UNSUPPORTED_INTEGRATION',
-      };
+        extra: {
+          expiresAt: null,
+        },
+      });
     }
 
     const productRepository = await getProductRepository();
@@ -185,11 +174,9 @@ export const runPlaywrightListing = async (
       throw notFoundError('Product not found', { productId: listing.productId });
     }
 
-    const script = ensureProgrammablePlaywrightConnection(connection);
-    const result = await runPlaywrightListingScript({
-      script,
-      input: buildPlaywrightListingInput({ product, listing, connection }),
+    const result = await runPlaywrightProgrammableListingForConnection({
       connection,
+      input: buildPlaywrightListingInput({ product, listing, connection }),
       browserMode: requestedBrowserMode,
     });
 
@@ -198,39 +185,35 @@ export const runPlaywrightListing = async (
         ? new Date(result.expiresAt)
         : null;
 
-    return {
-      ok: true,
+    return buildPlaywrightServiceListingSuccess({
       externalListingId: result.externalListingId,
       listingUrl: result.listingUrl,
-      expiresAt:
-        expiresAt && Number.isFinite(expiresAt.getTime()) ? expiresAt : null,
-      error: null,
-      errorCategory: null,
       metadata: {
-        runId: result.runId,
-        browserMode: result.effectiveBrowserMode,
-        requestedBrowserMode,
-        publishVerified: result.publishVerified,
-        rawResult: result.rawResult,
+        ...buildPlaywrightScriptListingMetadata({
+          result,
+          requestedBrowserMode,
+        }),
       },
-    };
+      extra: {
+        expiresAt: expiresAt && Number.isFinite(expiresAt.getTime()) ? expiresAt : null,
+      },
+    });
   } catch (error: unknown) {
     void ErrorSystem.captureException(error, {
       service: 'playwright-programmable-listing',
       listingId: input.listingId,
     });
 
-    return {
-      ok: false,
-      externalListingId: null,
-      listingUrl: null,
-      expiresAt: null,
+    return buildPlaywrightServiceListingFailure({
       error: error instanceof Error ? error.message : 'Programmable Playwright listing failed.',
       errorCategory: 'EXECUTION_FAILED',
       metadata: {
         requestedBrowserMode,
       },
-    };
+      extra: {
+        expiresAt: null,
+      },
+    });
   }
 };
 
@@ -247,39 +230,43 @@ export const processPlaywrightListingJob = async (input: PlaywrightListingJobInp
 
   const now = new Date();
   const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);
-  const previousPlaywrightData = toRecord(previousMarketplaceData['playwright']);
   const requestedBrowserMode = resolveRequestedBrowserMode(input.browserMode);
   const effectiveBrowserMode =
     typeof result.metadata?.['browserMode'] === 'string' ? result.metadata['browserMode'] : null;
   const historyFields = buildPlaywrightHistoryFields(effectiveBrowserMode ?? requestedBrowserMode);
+  const lastExecution = buildPlaywrightListingLastExecutionRecord({
+    executedAt: now,
+    result,
+    requestId: input.jobId ?? null,
+    includeOutcomeFields: false,
+    metadata: {
+      runId:
+        typeof result.metadata?.['runId'] === 'string'
+          ? result.metadata['runId']
+          : null,
+      browserMode: effectiveBrowserMode,
+      requestedBrowserMode,
+      publishVerified:
+        typeof result.metadata?.['publishVerified'] === 'boolean'
+          ? result.metadata['publishVerified']
+          : null,
+      rawResult: result.metadata?.['rawResult'] ?? null,
+    },
+    extra: {
+      errorCategory: result.errorCategory,
+    },
+  });
+  const playwrightData = buildPlaywrightListingProviderRecord({
+    existingMarketplaceData: previousMarketplaceData,
+    providerKey: 'playwright',
+    result,
+    lastExecution,
+  });
   const marketplaceData = {
     ...previousMarketplaceData,
     marketplace: 'playwright-programmable',
     listingUrl: result.listingUrl,
-    playwright: {
-      ...previousPlaywrightData,
-      pendingExecution: null,
-      lastErrorCategory: result.ok ? null : result.errorCategory,
-      lastExecution: {
-        executedAt: now.toISOString(),
-        requestId: input.jobId ?? null,
-        errorCategory: result.errorCategory,
-        metadata: {
-          runId:
-            typeof result.metadata?.['runId'] === 'string'
-              ? result.metadata['runId']
-              : null,
-          browserMode:
-            effectiveBrowserMode,
-          requestedBrowserMode,
-          publishVerified:
-            typeof result.metadata?.['publishVerified'] === 'boolean'
-              ? result.metadata['publishVerified']
-              : null,
-          rawResult: result.metadata?.['rawResult'] ?? null,
-        },
-      },
-    },
+    playwright: playwrightData,
   };
 
   if (result.ok) {

@@ -32,6 +32,7 @@ vi.mock('nextjs-toploader/app', () => ({
 
 vi.mock('@/features/admin/public', () => ({
   AdminLayout: adminLayoutMock,
+  AdminRouteLoading: () => <div>Loading...</div>,
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -79,9 +80,9 @@ describe('admin app layout', () => {
       get: vi.fn().mockReturnValue({ value: 'true' }),
     });
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
-    const layout = await Layout({
+    const layout = await AdminLayoutResolver({
       children: <div data-testid='admin-content'>admin</div>,
     });
     render(layout);
@@ -110,9 +111,9 @@ describe('admin app layout', () => {
       })
     );
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
-    const layout = await Layout({
+    const layout = await AdminLayoutResolver({
       children: <div data-testid='admin-content'>admin</div>,
     });
     render(layout);
@@ -134,11 +135,13 @@ describe('admin app layout', () => {
 
   it('captures cookie read errors and falls back to the default menu state', async () => {
     const error = new Error('cookie store unavailable');
-    readOptionalRequestCookiesMock.mockRejectedValue(error);
+    readOptionalRequestCookiesMock.mockResolvedValue({
+      get: vi.fn().mockImplementation(() => { throw error; }),
+    });
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
-    const layout = await Layout({
+    const layout = await AdminLayoutResolver({
       children: <div data-testid='admin-content'>admin</div>,
     });
     render(layout);
@@ -162,10 +165,10 @@ describe('admin app layout', () => {
   it('redirects anonymous users to signin without capturing a request-scope error', async () => {
     readOptionalServerAuthSessionMock.mockResolvedValue(null);
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
     await expect(
-      Layout({
+      AdminLayoutResolver({
         children: <div data-testid='admin-content'>admin</div>,
       })
     ).rejects.toThrow('redirect:/auth/signin');
@@ -185,9 +188,9 @@ describe('admin app layout', () => {
       },
     });
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
-    const layout = await Layout({
+    const layout = await AdminLayoutResolver({
       children: <div data-testid='admin-content'>admin</div>,
     });
     render(layout);

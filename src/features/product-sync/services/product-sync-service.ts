@@ -11,6 +11,7 @@ import {
   updateProductSyncRunStatus,
 } from '@/features/product-sync/services/product-sync-repository';
 import {
+  checkBaseSkuExists,
   getExportDefaultConnectionId,
   getIntegrationRepository,
   getProductListingRepository,
@@ -339,6 +340,29 @@ const ensureBaseListingLink = async (input: {
     marketplaceData: marketplaceDataPatch,
   });
   return 'created';
+};
+
+const resolveBackfillBaseProductId = async (input: {
+  product: ProductWithImages;
+  token: string;
+  inventoryId: string;
+}): Promise<string | null> => {
+  const persistedBaseProductId = toTrimmedString(input.product.baseProductId);
+  if (persistedBaseProductId) {
+    return persistedBaseProductId;
+  }
+
+  if (toTrimmedString(input.product.importSource).toLowerCase() !== 'base') {
+    return null;
+  }
+
+  const sku = toTrimmedString(input.product.sku);
+  if (!sku) {
+    return null;
+  }
+
+  const skuLookup = await checkBaseSkuExists(input.token, input.inventoryId, sku);
+  return toTrimmedString(skuLookup.productId) || null;
 };
 
 const syncSingleLinkedProduct = async (input: {
@@ -743,6 +767,10 @@ export const runBaseListingBackfill = async (options?: {
     throw new Error('Inventory ID is required for link backfill.');
   }
 
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
+
   const productRepository = await getProductRepository();
   const pageSize = 200;
   const limit =
@@ -770,13 +798,28 @@ export const runBaseListingBackfill = async (options?: {
     for (const product of products) {
       if (scanned >= limit) break;
       const baseProductId = toTrimmedString(product.baseProductId);
-      if (!baseProductId) continue;
+      const resolvedBaseProductId =
+        baseProductId ||
+        (tokenResolution.token
+          ? await resolveBackfillBaseProductId({
+              product,
+              token: tokenResolution.token,
+              inventoryId,
+            })
+          : null);
+      if (!resolvedBaseProductId) continue;
 
       scanned += 1;
 
+      if (!baseProductId) {
+        await productRepository.updateProduct(product.id, {
+          baseProductId: resolvedBaseProductId,
+        });
+      }
+
       const result = await ensureBaseListingLink({
         productId: product.id,
-        baseProductId,
+        baseProductId: resolvedBaseProductId,
         integrationId: baseIntegration.id,
         connectionId: connection.id,
         inventoryId,

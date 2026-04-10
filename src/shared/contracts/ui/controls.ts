@@ -116,6 +116,7 @@ export interface ToggleRowProps {
   children?: ReactNode | undefined;
   showBorder?: boolean | undefined;
   controlWrapper?: (control: ReactNode) => ReactNode;
+  toggleOnRowClick?: boolean | undefined;
 }
 
 export interface StatusToggleProps {

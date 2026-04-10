@@ -469,7 +469,7 @@ describe('ImportBaseConnectionSection', () => {
     expect(screen.getByLabelText('Import mode')).toBeDisabled();
     expect(
       screen.getByText(
-        'Exact target SKU FOASW022 is active. This run will always create a new detached product.'
+        'Exact target SKU FOASW022 is active. This run will always create a new product with a Base.com connection.'
       )
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Unique products only')).toBeDisabled();

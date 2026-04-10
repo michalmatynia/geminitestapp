@@ -135,7 +135,7 @@ const formatExactTargetItemSummary = (input: {
   const importedSkuReference = item.sku?.trim() ? ` with SKU ${item.sku.trim()}` : '';
 
   if (item.status === 'imported') {
-    return `Exact target ${targetLabel} created new detached${productReference}${importedSkuReference}.`;
+    return `Exact target ${targetLabel} created new Base-linked${productReference}${importedSkuReference}.`;
   }
 
   if (item.status === 'updated') {

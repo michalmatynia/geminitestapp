@@ -180,7 +180,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
               Exact target: <span className='font-mono text-cyan-200'>{directTargetLabel}</span>
             </p>
             <p className='text-cyan-300'>
-              Exact target runs always create a new detached product and do not reuse Base sync linkage.
+              Exact target runs always create a new product and attach a Base.com connection to it.
             </p>
           </>
         ) : null}

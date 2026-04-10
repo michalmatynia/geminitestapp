@@ -43,6 +43,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
   ({
     id: 'stale-product-id',
     sku: 'SKU-ORIGINAL',
+    name_en: 'Original product',
     ...overrides,
   }) as ProductWithImages;
 
@@ -53,7 +54,7 @@ describe('useProductFormSubmit', () => {
     mocks.updateMutationMock.mockResolvedValue({ id: 'resolved-product-id' });
   });
 
-  it('passes the original persisted SKU to the update mutation for stale-id recovery', async () => {
+  it('passes the original persisted product identity to the update mutation for stale-id recovery', async () => {
     const product = createProduct();
     const refreshImages = vi.fn();
 
@@ -91,8 +92,91 @@ describe('useProductFormSubmit', () => {
       id: 'stale-product-id',
       data: expect.any(FormData),
       originalSku: 'SKU-ORIGINAL',
+      originalNameEn: 'Original product',
     });
     expect(refreshImages).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not duplicate managed category and payload fields in update FormData', async () => {
+    const product = createProduct();
+
+    const { result } = renderHook(() => {
+      const methods = useForm<ProductFormData>({
+        defaultValues: {
+          sku: 'SKU-UPDATED',
+          categoryId: 'category-from-form',
+          catalogIds: ['catalog-from-form'],
+          tagIds: ['tag-from-form'],
+          producerIds: ['producer-from-form'],
+          imageLinks: ['https://example.com/old-image.jpg'],
+          imageBase64s: ['data:image/png;base64,AAAA'],
+          customFields: [
+            {
+              definitionId: 'field-1',
+              value: 'from-form',
+            },
+          ],
+          parameters: [
+            {
+              parameterId: 'param-from-form',
+              value: 'from-form',
+              valuesByLanguage: {},
+            },
+          ],
+        } as ProductFormData,
+      });
+
+      return useProductFormSubmit({
+        product,
+        methods,
+        imageSlots: [],
+        imageLinks: ['https://example.com/normalized-image.jpg'],
+        imageBase64s: ['data:image/png;base64,BBBB'],
+        selectedCatalogIds: ['catalog-selected'],
+        selectedCategoryId: 'category-selected',
+        selectedTagIds: ['tag-selected'],
+        selectedProducerIds: ['producer-selected'],
+        selectedNoteIds: ['note-selected'],
+        customFieldValues: [
+          {
+            definitionId: 'field-2',
+            value: 'normalized',
+          },
+        ],
+        parameterValues: [
+          {
+            parameterId: 'param-selected',
+            value: 'selected',
+            valuesByLanguage: {
+              en: 'selected',
+            },
+          },
+        ],
+        studioProjectId: 'studio-1',
+        refreshImages: vi.fn(),
+      });
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(mocks.updateMutationMock).toHaveBeenCalledTimes(1);
+    const submittedFormData = mocks.updateMutationMock.mock.calls[0]?.[0]?.data as FormData;
+    expect(submittedFormData).toBeInstanceOf(FormData);
+    expect(submittedFormData.getAll('categoryId')).toEqual(['category-selected']);
+    expect(submittedFormData.getAll('catalogIds')).toEqual(['catalog-selected']);
+    expect(submittedFormData.getAll('tagIds')).toEqual(['tag-selected']);
+    expect(submittedFormData.getAll('producerIds')).toEqual(['producer-selected']);
+    expect(submittedFormData.getAll('noteIds')).toEqual(['note-selected']);
+    expect(submittedFormData.getAll('imageLinks')).toEqual([
+      JSON.stringify(['https://example.com/normalized-image.jpg']),
+    ]);
+    expect(submittedFormData.getAll('imageBase64s')).toEqual([
+      JSON.stringify(['data:image/png;base64,BBBB']),
+    ]);
+    expect(submittedFormData.getAll('customFields')).toHaveLength(1);
+    expect(submittedFormData.getAll('parameters')).toHaveLength(1);
   });
 
   it('surfaces create mutation errors from structured title validation', async () => {

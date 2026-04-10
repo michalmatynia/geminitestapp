@@ -7,7 +7,16 @@ import { CaseResolverPartySelectField } from '@/features/case-resolver/component
 import { CaseResolverPartyFieldRuntimeProvider } from '@/features/case-resolver/components/page/CaseResolverPartyFieldRuntimeContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Button: ({
+    children,
+    ...rest
+  }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
+    <button {...rest}>{children}</button>
+  ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     value,
     onValueChange,
@@ -56,12 +65,6 @@ vi.mock('@/shared/ui', () => ({
         </button>
       ))}
     </div>
-  ),
-  Button: ({
-    children,
-    ...rest
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-    <button {...rest}>{children}</button>
   ),
 }));
 

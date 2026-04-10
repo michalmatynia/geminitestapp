@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
+import { BASE_MARKETPLACE_CHECKBOX_OPTIONS } from '@/shared/lib/integrations/base-marketplace-checkboxes';
 
 const mocks = vi.hoisted(() => ({
   getImportTemplateMock: vi.fn(),
@@ -194,14 +195,10 @@ const buildCustomField = (
   id: 'field-created',
   name: 'Market Exclusion',
   type: 'checkbox_set',
-  options: [
-    { id: 'market-exclusion-tradera', label: 'Tradera' },
-    { id: 'market-exclusion-willhaben', label: 'Willhaben' },
-    { id: 'market-exclusion-depop', label: 'Depop' },
-    { id: 'market-exclusion-grailed', label: 'Grailed' },
-    { id: 'market-exclusion-shpock', label: 'Schpock' },
-    { id: 'market-exclusion-vinted', label: 'Vinted' },
-  ],
+  options: BASE_MARKETPLACE_CHECKBOX_OPTIONS.map((option) => ({
+    id: option.id,
+    label: option.label,
+  })),
   createdAt: '2026-04-08T00:00:00.000Z',
   updatedAt: '2026-04-08T00:00:00.000Z',
   ...overrides,
@@ -345,14 +342,10 @@ describe('processBaseImportRun custom fields', () => {
     expect(customFieldRepository.createCustomField).toHaveBeenNthCalledWith(1, {
       name: 'Market Exclusion',
       type: 'checkbox_set',
-      options: [
-        { id: 'market-exclusion-tradera', label: 'Tradera' },
-        { id: 'market-exclusion-willhaben', label: 'Willhaben' },
-        { id: 'market-exclusion-depop', label: 'Depop' },
-        { id: 'market-exclusion-grailed', label: 'Grailed' },
-        { id: 'market-exclusion-shpock', label: 'Schpock' },
-        { id: 'market-exclusion-vinted', label: 'Vinted' },
-      ],
+      options: BASE_MARKETPLACE_CHECKBOX_OPTIONS.map((option) => ({
+        id: option.id,
+        label: option.label,
+      })),
     });
     expect(customFieldRepository.createCustomField).toHaveBeenNthCalledWith(2, {
       name: 'Custom Note',
@@ -797,7 +790,7 @@ describe('processBaseImportRun exact target summaries', () => {
     );
   });
 
-  it('writes a detached-create summary for exact target imports', async () => {
+  it('writes a linked-create summary for exact target imports', async () => {
     mocks.importSingleItemMock.mockResolvedValueOnce({
       status: 'imported',
       action: 'imported',
@@ -825,7 +818,7 @@ describe('processBaseImportRun exact target summaries', () => {
       'completed',
       expect.objectContaining({
         summaryMessage:
-          'Exact target SKU KEYCHA1045 created new detached product product-456 with SKU KEYCHA1045.',
+          'Exact target SKU KEYCHA1045 created new Base-linked product product-456 with SKU KEYCHA1045.',
       })
     );
   });

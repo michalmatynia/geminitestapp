@@ -180,7 +180,7 @@ describe('ImportRunStatusSection', () => {
     expect(screen.getByText('SKU FOASW022')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Exact target runs always create a new detached product and do not reuse Base sync linkage.'
+        'Exact target runs always create a new product and attach a Base.com connection to it.'
       )
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View in Runtime Queue' })).toHaveAttribute(

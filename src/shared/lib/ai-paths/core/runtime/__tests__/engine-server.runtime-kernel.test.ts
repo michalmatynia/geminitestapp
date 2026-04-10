@@ -176,6 +176,7 @@ const buildDbSchemaLiveContextNode = (): AiNode => ({
       sourceMode: 'live_context',
       contextCollections: ['product_categories'],
       contextQuery: '{\n  "catalogId": "{{context.catalogId}}"\n}',
+      contextTransform: 'product_categories_leaf_only',
       contextLimit: 50,
       includeFields: true,
       includeRelations: true,
@@ -218,8 +219,9 @@ const docs = Array.isArray(categoryCollection.documents) ? categoryCollection.do
 const categories = docs
   .map((doc) => ({
     id: typeof doc._id === 'string' ? doc._id : typeof doc.id === 'string' ? doc.id : '',
-    label: String(doc.name_en || doc.name || '').trim(),
+    label: String(doc.leafLabel || doc.name_en || doc.name || '').trim(),
     parentId: typeof doc.parentId === 'string' && doc.parentId.trim() ? doc.parentId.trim() : null,
+    fullPath: typeof doc.fullPath === 'string' && doc.fullPath.trim() ? doc.fullPath.trim() : null,
   }))
   .filter((category) => category.id && category.label);
 const byId = Object.fromEntries(categories.map((category) => [category.id, category]));
@@ -229,6 +231,10 @@ const parentCounts = categories.reduce((acc, category) => {
   return acc;
 }, {});
 const buildFullPath = (categoryId) => {
+  const direct = byId[categoryId];
+  if (direct && typeof direct.fullPath === 'string' && direct.fullPath.trim()) {
+    return direct.fullPath;
+  }
   const segments = [];
   const seen = new Set();
   let current = byId[categoryId];
@@ -547,6 +553,18 @@ describe('engine-server runtime-kernel resolver wiring', () => {
         query: '{\n  "catalogId": "catalog-1"\n}',
       })
     );
+    expect(
+      result.outputs?.['node-db-schema-live']?.['context']?.liveContext?.collectionMap?.[
+        'product_categories'
+      ]?.documents
+    ).toEqual([
+      expect.objectContaining({
+        _id: 'leaf-1',
+        fullPath: 'Accessories > Movie Keychain',
+        leafLabel: 'Movie Keychain',
+        isLeaf: true,
+      }),
+    ]);
     expect(result.outputs?.['node-category-prompt']?.['prompt']).toContain(
       'Accessories > Movie Keychain'
     );

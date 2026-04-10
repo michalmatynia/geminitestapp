@@ -1,18 +1,26 @@
 import { normalizeTraderaListingFormUrl, type TraderaSystemSettings } from '@/features/integrations/constants/tradera';
-import { validatePlaywrightEngineScript } from '@/features/playwright/server';
+import {
+  buildPlaywrightListingResult,
+  buildPlaywrightScriptListingMetadata,
+  buildPlaywrightEngineRunFailureMeta,
+  createTraderaScriptedListingPlaywrightInstance,
+  createTraderaListingStatusScrapePlaywrightInstance,
+  runPlaywrightListingTask,
+  runPlaywrightListingScript,
+  runPlaywrightScrapeScript,
+  runPlaywrightScrapeTask,
+  validatePlaywrightEngineScript,
+} from '@/features/playwright/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { BrowserListingResultDto, PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
+import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getParameterRepository } from '@/features/products/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 
 import { getIntegrationRepository } from '../integration-repository';
-import {
-  runPlaywrightListingScript,
-} from '../playwright-listing/runner';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
 import {
   resolveAppBaseUrl,
@@ -531,12 +539,7 @@ const buildSuccessMetadata = ({
     scriptKind,
     scriptMarker,
     scriptStoredOnConnection,
-    runId: result.runId,
-    requestedBrowserMode: browserMode,
     listingFormUrl: normalizeTraderaListingFormUrl(systemSettings.listingFormUrl),
-    browserMode: effectiveBrowserMode,
-    playwrightPersonaId: result.personaId,
-    playwrightSettings: result.executionSettings,
     ...(traderaPricing ?? {}),
     ...(
       runtimeSettingsOverrides?.emulateDevice === false &&
@@ -551,12 +554,6 @@ const buildSuccessMetadata = ({
           scriptValidationError,
         }
       : {}),
-    rawResult: result.rawResult,
-    latestStage:
-      typeof result.rawResult['stage'] === 'string' ? result.rawResult['stage'] : null,
-    latestStageUrl:
-      typeof result.rawResult['currentUrl'] === 'string' ? result.rawResult['currentUrl'] : null,
-    publishVerified: result.publishVerified,
     ...(duplicateLinked
       ? {
           duplicateLinked: true,
@@ -651,6 +648,13 @@ const buildSuccessMetadata = ({
       traderaShipping && typeof traderaShipping === 'object'
         ? (traderaShipping as Record<string, unknown>)['matchingShippingGroupIds'] ?? []
         : [],
+    ...buildPlaywrightScriptListingMetadata({
+      result: {
+        ...result,
+        effectiveBrowserMode,
+      },
+      requestedBrowserMode: browserMode,
+    }),
   };
 };
 
@@ -705,54 +709,113 @@ export const runTraderaBrowserListingScripted = async ({
   }): Promise<BrowserListingResultDto> => {
     const runtimeSettingsOverrides = buildManagedQuicklistRuntimeSettingsOverrides(script);
     const failureHoldOpenMs = resolveTraderaFailureHoldOpenMs({ action, browserMode });
-    const result = await runPlaywrightListingScript({
-      script,
-      input: scriptInput,
-      connection,
-      timeoutMs: TRADERA_SCRIPTED_LISTING_TIMEOUT_MS,
-      browserMode,
-      disableStartUrlBootstrap: true,
-      ...(typeof failureHoldOpenMs === 'number' ? { failureHoldOpenMs } : {}),
-      runtimeSettingsOverrides,
-    });
 
-    const externalListingId =
-      result.externalListingId ??
-      (action === 'sync' ? listing.externalListingId ?? null : null) ??
-      (typeof result.listingUrl === 'string'
-        ? extractExternalListingId(result.listingUrl)
-        : null);
-    if (!externalListingId && result.publishVerified !== true) {
-      throw internalError(
-        `Tradera scripted listing run ${result.runId} finished without an external listing ID.`,
-        {
+    return runPlaywrightListingTask({
+      execute: async () =>
+        runPlaywrightListingScript({
+          script,
+          input: scriptInput,
+          connection,
+          instance: createTraderaScriptedListingPlaywrightInstance({
+            connectionId: connection.id,
+            integrationId: connection.integrationId,
+            listingId: listing.id,
+          }),
+          timeoutMs: TRADERA_SCRIPTED_LISTING_TIMEOUT_MS,
+          browserMode,
+          disableStartUrlBootstrap: true,
+          ...(typeof failureHoldOpenMs === 'number' ? { failureHoldOpenMs } : {}),
+          runtimeSettingsOverrides,
+        }),
+      mapResult: async (result) => {
+        const externalListingId =
+          result.externalListingId ??
+          (action === 'sync' ? listing.externalListingId ?? null : null) ??
+          (typeof result.listingUrl === 'string'
+            ? extractExternalListingId(result.listingUrl)
+            : null);
+        if (!externalListingId && result.publishVerified !== true) {
+          throw internalError(
+            `Tradera scripted listing run ${result.runId} finished without an external listing ID.`,
+            {
+              scriptMode: 'scripted',
+              scriptSource,
+              ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
+              requestedBrowserMode: browserMode,
+              listingFormUrl: normalizedListingFormUrl,
+              runId: result.runId,
+              rawResult: result.rawResult,
+              publishVerified: result.publishVerified,
+            }
+          );
+        }
+
+        return buildPlaywrightListingResult({
+          externalListingId,
+          listingUrl: result.listingUrl ?? undefined,
+          metadata: buildSuccessMetadata({
+            result,
+            script,
+            scriptInput,
+            action,
+            browserMode,
+            systemSettings,
+            scriptSource,
+            scriptValidationError,
+            runtimeSettingsOverrides,
+          }),
+        });
+      },
+      buildErrorAdditional: async ({ error }) => {
+        const imageSettleState =
+          error instanceof Error ? parseImageSettleState(error.message) : null;
+        const rawMetadata =
+          error instanceof Error && 'meta' in error
+            ? toRecord((error as Error & { meta?: unknown }).meta)
+            : {};
+        const rawResult = toRecord(rawMetadata['rawResult']);
+        const rawLogs = Array.isArray(rawMetadata['logs'])
+          ? rawMetadata['logs'].filter((entry): entry is string => typeof entry === 'string')
+          : [];
+        const executionSteps = buildTraderaQuicklistExecutionSteps({
+          action,
+          rawResult,
+          logs: rawLogs,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
+        const sanitizedMetadata: Record<string, unknown> = {
+          ...rawMetadata,
+          ...(rawLogs.length > 0
+            ? {
+                logTail:
+                  rawMetadata['logTail'] ??
+                  rawLogs.slice(-12),
+              }
+            : {}),
+          ...(executionSteps.length > 0
+            ? {
+                executionSteps,
+              }
+            : {}),
+        };
+        delete sanitizedMetadata['logs'];
+
+        return {
+          ...sanitizedMetadata,
           scriptMode: 'scripted',
           scriptSource,
           ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
           requestedBrowserMode: browserMode,
           listingFormUrl: normalizedListingFormUrl,
-          runId: result.runId,
-          rawResult: result.rawResult,
-          publishVerified: result.publishVerified,
-        }
-      );
-    }
-
-    return {
-      externalListingId,
-      listingUrl: result.listingUrl ?? undefined,
-      metadata: buildSuccessMetadata({
-        result,
-        script,
-        scriptInput,
-        action,
-        browserMode,
-        systemSettings,
-        scriptSource,
-        scriptValidationError,
-        runtimeSettingsOverrides,
-      }),
-    };
+          imageSettleState,
+          ...(scriptValidationError
+            ? {
+                scriptValidationError,
+              }
+            : {}),
+        };
+      },
+    });
   };
 
   try {
@@ -772,91 +835,7 @@ export const runTraderaBrowserListingScripted = async ({
         scriptSource: 'runtime-default-refresh',
       });
     }
-
-    const imageSettleState =
-      error instanceof Error ? parseImageSettleState(error.message) : null;
-    const rawMetadata =
-      error instanceof Error && 'meta' in error
-        ? toRecord((error as Error & { meta?: unknown }).meta)
-        : {};
-    const rawResult = toRecord(rawMetadata['rawResult']);
-    const rawLogs = Array.isArray(rawMetadata['logs'])
-      ? rawMetadata['logs'].filter((entry): entry is string => typeof entry === 'string')
-      : [];
-    const executionSteps = buildTraderaQuicklistExecutionSteps({
-      action,
-      rawResult,
-      logs: rawLogs,
-      errorMessage: error instanceof Error ? error.message : String(error),
-    });
-    const sanitizedMetadata: Record<string, unknown> = {
-      ...rawMetadata,
-      ...(rawLogs.length > 0
-        ? {
-            logTail:
-              rawMetadata['logTail'] ??
-              rawLogs.slice(-12),
-          }
-        : {}),
-      ...(executionSteps.length > 0
-        ? {
-            executionSteps,
-          }
-        : {}),
-    };
-    delete sanitizedMetadata['logs'];
-
-    if (isAppError(error)) {
-      error.meta = {
-        ...sanitizedMetadata,
-        scriptMode: 'scripted',
-        scriptSource,
-        ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
-        requestedBrowserMode: browserMode,
-        listingFormUrl: normalizedListingFormUrl,
-        imageSettleState,
-        ...(scriptValidationError
-          ? {
-              scriptValidationError,
-            }
-          : {}),
-      };
-      throw error;
-    }
-
-    if (error instanceof Error) {
-      const metadataCarrier = error as Error & { meta?: Record<string, unknown> };
-      metadataCarrier.meta = {
-        ...sanitizedMetadata,
-        scriptMode: 'scripted',
-        scriptSource,
-        ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
-        requestedBrowserMode: browserMode,
-        listingFormUrl: normalizedListingFormUrl,
-        imageSettleState,
-        ...(scriptValidationError
-          ? {
-              scriptValidationError,
-            }
-          : {}),
-      };
-      throw metadataCarrier;
-    }
-
-    throw internalError('Scripted listing failed', {
-      cause: error,
-      scriptMode: 'scripted',
-      scriptSource,
-      ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
-      requestedBrowserMode: browserMode,
-      listingFormUrl: normalizedListingFormUrl,
-      imageSettleState,
-      ...(scriptValidationError
-        ? {
-            scriptValidationError,
-          }
-        : {}),
-    });
+    throw error;
   }
 };
 
@@ -920,108 +899,131 @@ export const runTraderaBrowserCheckStatus = async ({
   }
 
   if (!resolvedListingUrl && verificationSearchTerms.length === 0) {
-    return {
+    return buildPlaywrightListingResult({
       externalListingId: listing.externalListingId ?? null,
-      listingUrl: undefined,
       metadata: {
         checkedStatus: null,
         checkStatusError: 'No listing URL or searchable product title available to check status.',
       },
-    };
+    });
   }
 
-  const result = await runPlaywrightListingScript({
-    script: TRADERA_CHECK_STATUS_SCRIPT,
-    input: {
-      listingUrl: resolvedListingUrl,
-      externalListingId: listing.externalListingId ?? null,
-      duplicateSearchTitle: verificationSearchTerms[0] ?? null,
-      duplicateSearchTerms: verificationSearchTerms,
-      rawDescriptionEn: verificationDescriptionEn,
-      baseProductId: verificationBaseProductId,
+  return runPlaywrightScrapeTask({
+    execute: async () =>
+      runPlaywrightScrapeScript({
+        script: TRADERA_CHECK_STATUS_SCRIPT,
+        input: {
+          listingUrl: resolvedListingUrl,
+          externalListingId: listing.externalListingId ?? null,
+          duplicateSearchTitle: verificationSearchTerms[0] ?? null,
+          duplicateSearchTerms: verificationSearchTerms,
+          rawDescriptionEn: verificationDescriptionEn,
+          baseProductId: verificationBaseProductId,
+        },
+        connection,
+        instance: createTraderaListingStatusScrapePlaywrightInstance({
+          connectionId: connection.id,
+          integrationId: connection.integrationId,
+          listingId: listing.id,
+        }),
+        timeoutMs: TRADERA_CHECK_STATUS_TIMEOUT_MS,
+        browserMode,
+        runtimeSettingsOverrides: TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES,
+      }),
+    mapResult: async ({ run, rawResult }) => {
+      if (run.status === 'failed') {
+        throw internalError(run.error ?? 'Tradera live status check failed.', {
+          ...buildPlaywrightEngineRunFailureMeta(run, {
+            includeRawResult: true,
+          }),
+          logs: Array.isArray(run.logs) ? run.logs : [],
+        });
+      }
+
+      const resolvedExternalListingId =
+        toTrimmedString(rawResult['externalListingId']) ||
+        listing.externalListingId ||
+        null;
+      const resolvedResultListingUrl =
+        toTrimmedString(rawResult['listingUrl']) || resolvedListingUrl || null;
+
+      const checkedStatus =
+        typeof rawResult['status'] === 'string' && rawResult['status'].trim()
+          ? rawResult['status'].trim()
+          : null;
+      const checkStatusError =
+        typeof rawResult['error'] === 'string' ? rawResult['error'] : null;
+      const executionSteps = resolveTraderaCheckStatusExecutionStepsFromResult(rawResult);
+      const verificationSection =
+        typeof rawResult['verificationSection'] === 'string'
+          ? rawResult['verificationSection']
+          : null;
+      const verificationMatchStrategy =
+        typeof rawResult['verificationMatchStrategy'] === 'string'
+          ? rawResult['verificationMatchStrategy']
+          : null;
+      const verificationRawStatusTag =
+        typeof rawResult['verificationRawStatusTag'] === 'string'
+          ? rawResult['verificationRawStatusTag']
+          : null;
+      const verificationMatchedProductId =
+        typeof rawResult['verificationMatchedProductId'] === 'string'
+          ? rawResult['verificationMatchedProductId']
+          : null;
+      const verificationSearchTitle =
+        typeof rawResult['verificationSearchTitle'] === 'string'
+          ? rawResult['verificationSearchTitle']
+          : null;
+      const verificationCandidateCount =
+        typeof rawResult['verificationCandidateCount'] === 'number'
+          ? rawResult['verificationCandidateCount']
+          : null;
+
+      return buildPlaywrightListingResult({
+        externalListingId: resolvedExternalListingId,
+        listingUrl: resolvedResultListingUrl ?? undefined,
+        metadata: {
+          checkedStatus,
+          checkStatusError,
+          requestedBrowserMode: browserMode,
+          runId: run.runId,
+          ...(verificationSection
+            ? {
+                verificationSection,
+              }
+            : {}),
+          ...(verificationMatchStrategy
+            ? {
+                verificationMatchStrategy,
+              }
+            : {}),
+          ...(verificationRawStatusTag
+            ? {
+                verificationRawStatusTag,
+              }
+            : {}),
+          ...(verificationMatchedProductId
+            ? {
+                verificationMatchedProductId,
+              }
+            : {}),
+          ...(verificationSearchTitle
+            ? {
+                verificationSearchTitle,
+              }
+            : {}),
+          ...(typeof verificationCandidateCount === 'number'
+            ? {
+                verificationCandidateCount,
+              }
+            : {}),
+          ...(executionSteps.length > 0
+            ? {
+                executionSteps,
+              }
+            : {}),
+        },
+      });
     },
-    connection,
-    timeoutMs: TRADERA_CHECK_STATUS_TIMEOUT_MS,
-    browserMode,
-    disableStartUrlBootstrap: true,
-    runtimeSettingsOverrides: TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES,
   });
-
-  const checkedStatus =
-    typeof result.rawResult['status'] === 'string' && result.rawResult['status'].trim()
-      ? result.rawResult['status'].trim()
-      : null;
-  const checkStatusError =
-    typeof result.rawResult['error'] === 'string' ? result.rawResult['error'] : null;
-  const executionSteps = resolveTraderaCheckStatusExecutionStepsFromResult(result.rawResult);
-  const verificationSection =
-    typeof result.rawResult['verificationSection'] === 'string'
-      ? result.rawResult['verificationSection']
-      : null;
-  const verificationMatchStrategy =
-    typeof result.rawResult['verificationMatchStrategy'] === 'string'
-      ? result.rawResult['verificationMatchStrategy']
-      : null;
-  const verificationRawStatusTag =
-    typeof result.rawResult['verificationRawStatusTag'] === 'string'
-      ? result.rawResult['verificationRawStatusTag']
-      : null;
-  const verificationMatchedProductId =
-    typeof result.rawResult['verificationMatchedProductId'] === 'string'
-      ? result.rawResult['verificationMatchedProductId']
-      : null;
-  const verificationSearchTitle =
-    typeof result.rawResult['verificationSearchTitle'] === 'string'
-      ? result.rawResult['verificationSearchTitle']
-      : null;
-  const verificationCandidateCount =
-    typeof result.rawResult['verificationCandidateCount'] === 'number'
-      ? result.rawResult['verificationCandidateCount']
-      : null;
-
-  return {
-    externalListingId: result.externalListingId ?? listing.externalListingId ?? null,
-    listingUrl: result.listingUrl ?? resolvedListingUrl ?? undefined,
-    metadata: {
-      checkedStatus,
-      checkStatusError,
-      requestedBrowserMode: browserMode,
-      runId: result.runId,
-      ...(verificationSection
-        ? {
-            verificationSection,
-          }
-        : {}),
-      ...(verificationMatchStrategy
-        ? {
-            verificationMatchStrategy,
-          }
-        : {}),
-      ...(verificationRawStatusTag
-        ? {
-            verificationRawStatusTag,
-          }
-        : {}),
-      ...(verificationMatchedProductId
-        ? {
-            verificationMatchedProductId,
-          }
-        : {}),
-      ...(verificationSearchTitle
-        ? {
-            verificationSearchTitle,
-          }
-        : {}),
-      ...(typeof verificationCandidateCount === 'number'
-        ? {
-            verificationCandidateCount,
-          }
-        : {}),
-      ...(executionSteps.length > 0
-        ? {
-            executionSteps,
-          }
-        : {}),
-    },
-  };
 };

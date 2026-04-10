@@ -69,21 +69,41 @@ vi.mock('@/shared/ui/toggle-row', () => ({
     label,
     checked,
     onCheckedChange,
+    className,
+    showBorder,
+    toggleOnRowClick,
+    children,
   }: {
     label: string;
     checked: boolean;
     onCheckedChange?: (checked: boolean) => void;
+    className?: string;
+    showBorder?: boolean;
+    toggleOnRowClick?: boolean;
+    children?: React.ReactNode;
   }) => (
-    <label>
-      <input
-        type='checkbox'
-        checked={checked}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-          onCheckedChange?.(event.target.checked)
-        }
-      />
-      {label}
-    </label>
+    <div
+      className={className}
+      data-show-border={showBorder === false ? 'false' : 'true'}
+      data-toggle-on-row-click={toggleOnRowClick === true ? 'true' : 'false'}
+      onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+        if (!toggleOnRowClick) return;
+        if ((event.target as HTMLElement).closest('label,input')) return;
+        onCheckedChange?.(!checked);
+      }}
+    >
+      <label>
+        <input
+          type='checkbox'
+          checked={checked}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            onCheckedChange?.(event.target.checked)
+          }
+        />
+        {label}
+      </label>
+      {children}
+    </div>
   ),
 }));
 
@@ -187,5 +207,38 @@ describe('ProductFormCustomFields', () => {
 
     expect(giftReady).toBeChecked();
     expect(fragile).toBeChecked();
+  });
+
+  it('applies a hover highlight wrapper to checkbox-set options', () => {
+    renderCustomFields([{ fieldId: 'flags', selectedOptionIds: [] }]);
+
+    const giftReadyRow = screen.getByText('Gift Ready').closest('div');
+    expect(giftReadyRow).toHaveAttribute('data-show-border', 'false');
+    expect(giftReadyRow).toHaveAttribute('data-toggle-on-row-click', 'true');
+    expect(giftReadyRow).toHaveClass(
+      'cursor-pointer',
+      'rounded-md',
+      'hover:border-primary/30',
+      'hover:bg-accent/15',
+      'focus-within:border-primary/40',
+      'focus-within:bg-accent/15'
+    );
+  });
+
+  it('toggles a checkbox-set option when clicking the row wrapper', async () => {
+    const user = userEvent.setup();
+    renderCustomFields([{ fieldId: 'flags', selectedOptionIds: [] }]);
+
+    const giftReady = screen.getByRole('checkbox', { name: 'Gift Ready' });
+    const giftReadyRow = screen.getByText('Gift Ready').closest('div');
+
+    expect(giftReady).not.toBeChecked();
+    if (!giftReadyRow) {
+      throw new Error('Expected gift-ready row wrapper.');
+    }
+
+    await user.click(giftReadyRow);
+
+    expect(giftReady).toBeChecked();
   });
 });

@@ -323,6 +323,85 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.changed).toBe(true);
   });
 
+  it('preserves edited Normalize prompt and fetcher settings while materializing stale starter configs', async () => {
+    const actualPortableEngine = await vi.importActual<
+      typeof import('@/shared/lib/ai-paths/portable-engine')
+    >('@/shared/lib/ai-paths/portable-engine');
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) {
+      throw new Error('Expected starter_product_name_normalize template');
+    }
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path_name_normalize_v1',
+      seededDefault: true,
+    });
+    const rawConfig = JSON.stringify({
+      ...config,
+      nodes: (config.nodes ?? []).map((node) => {
+        if (node.id === 'node-fetcher-name-normalize') {
+          return {
+            ...node,
+            config: {
+              ...node.config,
+              fetcher: {
+                ...node.config?.fetcher,
+                sourceMode: 'simulation_id',
+                entityId: 'prod_custom_123',
+                productId: 'prod_custom_123',
+              },
+            },
+          };
+        }
+        if (node.id === 'node-prompt-name-normalize') {
+          return {
+            ...node,
+            config: {
+              ...node.config,
+              prompt: {
+                ...node.config?.prompt,
+                template:
+                  'Custom normalize prompt.\nReturn JSON with {"normalizedName":"","validationError":""}.',
+              },
+            },
+          };
+        }
+        return node;
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 4,
+          seededDefault: true,
+        },
+      },
+    });
+
+    mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: 'path_name_normalize_v1',
+      rawConfig,
+      fallbackName: config.name,
+    });
+
+    const fetcherNode = resolved.config.nodes.find((node) => node.type === 'fetcher');
+    const promptNode = resolved.config.nodes.find((node) => node.type === 'prompt');
+
+    expect(fetcherNode?.config?.fetcher).toEqual(
+      expect.objectContaining({
+        sourceMode: 'simulation_id',
+        entityId: 'prod_custom_123',
+        productId: 'prod_custom_123',
+      })
+    );
+    expect(fetcherNode?.config?.runtime?.inputContracts?.trigger?.required).toBe(true);
+    expect(promptNode?.config?.prompt?.template).toBe(
+      'Custom normalize prompt.\nReturn JSON with {"normalizedName":"","validationError":""}.'
+    );
+    expect(resolved.changed).toBe(true);
+  });
+
   it('fully replaces stale default normalize starter graphs with random node ids so the database node becomes dry-run', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')

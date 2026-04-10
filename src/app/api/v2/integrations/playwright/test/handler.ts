@@ -8,9 +8,9 @@ import {
   parsePlaywrightFieldMapperJson,
 } from '@/features/integrations/services/playwright-listing/field-mapper';
 import {
-  runPlaywrightImportScript,
-  runPlaywrightListingScript,
-} from '@/features/integrations/services/playwright-listing/runner';
+  runPlaywrightProgrammableImportForConnection,
+  runPlaywrightProgrammableListingForConnection,
+} from '@/features/playwright/server';
 import { buildPlaywrightImportInput } from '@/features/integrations/services/playwright-import-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -79,19 +79,13 @@ export async function POST_handler(
   const sampleInput = parsed.data.sampleInput ?? {};
 
   if (parsed.data.scriptType === 'listing') {
-    const script = connection.playwrightListingScript?.trim();
-    if (!script) {
-      throw badRequestError('This connection does not have a Playwright listing script configured.');
-    }
-
     const input = {
       ...buildDefaultListingSampleInput(),
       ...sampleInput,
     };
-    const result = await runPlaywrightListingScript({
-      script,
-      input,
+    const result = await runPlaywrightProgrammableListingForConnection({
       connection,
+      input,
     });
 
     return NextResponse.json({
@@ -102,19 +96,13 @@ export async function POST_handler(
     });
   }
 
-  const script = connection.playwrightImportScript?.trim();
-  if (!script) {
-    throw badRequestError('This connection does not have a Playwright import script configured.');
-  }
-
   const input = {
     ...buildPlaywrightImportInput(connection),
     ...sampleInput,
   };
-  const result = await runPlaywrightImportScript({
-    script,
-    input,
+  const result = await runPlaywrightProgrammableImportForConnection({
     connection,
+    input,
   });
   const fieldMappings = parsePlaywrightFieldMapperJson(connection.playwrightFieldMapperJson);
 

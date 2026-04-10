@@ -47,74 +47,20 @@ import {
   toRecord,
   resolvePersistedTraderaLinkedTarget,
 } from './tradera-listing/utils';
-import { resolveConnectionPlaywrightSettingsProfile } from '@/features/playwright/server';
+import {
+  buildPlaywrightListingLastExecutionRecord,
+  buildPlaywrightListingMarketplaceDataRecord,
+  buildPlaywrightServiceListingFailure,
+  buildPlaywrightServiceListingSuccess,
+  resolveConnectionPlaywrightSettingsProfile,
+  type PlaywrightServiceListingExecutionBase,
+} from '@/features/playwright/server';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 
 const extractErrorMetadata = (error: unknown): Record<string, unknown> | undefined => {
   if (!isAppError(error)) return undefined;
   const metadata = toRecord(error.meta);
   return Object.keys(metadata).length > 0 ? metadata : undefined;
-};
-
-const buildTraderaMarketplaceData = ({
-  existingMarketplaceData,
-  result,
-  executedAt,
-  action,
-  source,
-  requestId,
-}: {
-  existingMarketplaceData: Record<string, unknown> | null | undefined;
-  result: Pick<
-    Awaited<ReturnType<typeof runTraderaListing>>,
-    'ok' | 'externalListingId' | 'listingUrl' | 'error' | 'errorCategory' | 'metadata'
-  >;
-  executedAt: Date;
-  action: 'list' | 'relist' | 'sync' | 'check_status';
-  source: 'manual' | 'scheduler' | 'api';
-  requestId: string | null;
-}): Record<string, unknown> => {
-  const marketplaceData = toRecord(existingMarketplaceData);
-  const traderaData = toRecord(marketplaceData['tradera']);
-  const nextListingUrl =
-    result.listingUrl ??
-    (typeof marketplaceData['listingUrl'] === 'string' && marketplaceData['listingUrl'].trim()
-      ? marketplaceData['listingUrl']
-      : null);
-  const nextExternalListingId =
-    result.externalListingId ??
-    (typeof marketplaceData['externalListingId'] === 'string' &&
-    marketplaceData['externalListingId'].trim()
-      ? marketplaceData['externalListingId']
-      : null);
-
-  return {
-    ...marketplaceData,
-    marketplace: 'tradera',
-    ...(nextListingUrl ? { listingUrl: nextListingUrl } : {}),
-    ...(nextExternalListingId ? { externalListingId: nextExternalListingId } : {}),
-    tradera: {
-      ...traderaData,
-      lastErrorCategory: result.ok ? null : result.errorCategory,
-      pendingExecution: null,
-      ...(action === 'sync' && result.ok
-        ? { lastSyncedAt: executedAt.toISOString() }
-        : {}),
-      ...(action === 'check_status' && result.ok
-        ? { lastStatusCheckAt: executedAt.toISOString() }
-        : {}),
-      lastExecution: {
-        executedAt: executedAt.toISOString(),
-        action,
-        source,
-        requestId,
-        ok: result.ok,
-        error: result.error,
-        errorCategory: result.errorCategory,
-        metadata: result.metadata ?? null,
-      },
-    },
-  };
 };
 
 const resolvePersistedExternalListingId = ({
@@ -218,16 +164,12 @@ const resolveExistingLinkedTraderaListingCandidate = async ({
 
 export const runTraderaListing = async (
   input: TraderaListingJobInput
-): Promise<{
-  ok: boolean;
-  externalListingId: string | null;
-  listingUrl: string | null;
-  expiresAt: Date | null;
-  nextRelistAt: Date | null;
-  error: string | null;
-  errorCategory: string | null;
-  metadata?: Record<string, unknown>;
-}> => {
+): Promise<
+  PlaywrightServiceListingExecutionBase & {
+    expiresAt: Date | null;
+    nextRelistAt: Date | null;
+  }
+> => {
   const listingId = input.listingId;
   const source = input.source ?? 'manual';
   const action = input.action ?? 'list';
@@ -235,42 +177,39 @@ export const runTraderaListing = async (
   try {
     const resolvedListing = await findProductListingByIdAcrossProviders(listingId);
     if (!resolvedListing) {
-      return {
-        ok: false,
-        externalListingId: null,
-        listingUrl: null,
-        expiresAt: null,
-        nextRelistAt: null,
+      return buildPlaywrightServiceListingFailure({
         error: `Listing not found: ${listingId}`,
         errorCategory: 'NOT_FOUND',
-      };
+        extra: {
+          expiresAt: null,
+          nextRelistAt: null,
+        },
+      });
     }
     const { listing } = resolvedListing;
 
     const integrationRepo = await getIntegrationRepository();
     const connection = await integrationRepo.getConnectionById(listing.connectionId);
     if (!connection) {
-      return {
-        ok: false,
-        externalListingId: null,
-        listingUrl: null,
-        expiresAt: null,
-        nextRelistAt: null,
+      return buildPlaywrightServiceListingFailure({
         error: `Connection not found: ${listing.connectionId}`,
         errorCategory: 'NOT_FOUND',
-      };
+        extra: {
+          expiresAt: null,
+          nextRelistAt: null,
+        },
+      });
     }
     const integration = await integrationRepo.getIntegrationById(connection.integrationId);
     if (!integration) {
-      return {
-        ok: false,
-        externalListingId: null,
-        listingUrl: null,
-        expiresAt: null,
-        nextRelistAt: null,
+      return buildPlaywrightServiceListingFailure({
         error: `Integration not found: ${connection.integrationId}`,
         errorCategory: 'NOT_FOUND',
-      };
+        extra: {
+          expiresAt: null,
+          nextRelistAt: null,
+        },
+      });
     }
 
     const systemSettings = await loadTraderaSystemSettings();
@@ -284,14 +223,9 @@ export const runTraderaListing = async (
       });
 
       if (linkedTraderaListing) {
-        return {
-          ok: true,
+        return buildPlaywrightServiceListingSuccess({
           externalListingId: linkedTraderaListing.externalListingId,
           listingUrl: linkedTraderaListing.listingUrl,
-          expiresAt: null,
-          nextRelistAt: null,
-          error: null,
-          errorCategory: null,
           metadata: {
             duplicateLinked: true,
             duplicateMatchStrategy: 'existing-linked-record',
@@ -301,7 +235,11 @@ export const runTraderaListing = async (
             persistedLinkedListingGuard: true,
             linkedListingId: linkedTraderaListing.listingId,
           },
-        };
+          extra: {
+            expiresAt: null,
+            nextRelistAt: null,
+          },
+        });
       }
     }
     const resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettingsProfile(connection);
@@ -322,29 +260,27 @@ export const runTraderaListing = async (
         connection,
         browserMode: requestedBrowserMode,
       });
-      return {
-        ok: true,
+      return buildPlaywrightServiceListingSuccess({
         externalListingId: checkResult.externalListingId ?? null,
         listingUrl: checkResult.listingUrl ?? null,
-        expiresAt: null,
-        nextRelistAt: null,
-        error: null,
-        errorCategory: null,
         metadata: checkResult.metadata,
-      };
+        extra: {
+          expiresAt: null,
+          nextRelistAt: null,
+        },
+      });
     }
 
     if (useApi) {
       if (action === 'sync') {
-        return {
-          ok: false,
-          externalListingId: null,
-          listingUrl: null,
-          expiresAt: null,
-          nextRelistAt: null,
+        return buildPlaywrightServiceListingFailure({
           error: 'Sync is only supported for Tradera browser listings.',
           errorCategory: 'NOT_FOUND',
-        };
+          extra: {
+            expiresAt: null,
+            nextRelistAt: null,
+          },
+        });
       }
       const result = await runTraderaApiListing({ listing, connection });
       const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
@@ -355,19 +291,18 @@ export const runTraderaListing = async (
         settings.autoRelistLeadMinutes
       );
 
-      return {
-        ok: true,
+      return buildPlaywrightServiceListingSuccess({
         externalListingId: result.externalListingId,
         listingUrl: result.listingUrl ?? null,
-        expiresAt,
-        nextRelistAt,
-        error: null,
-        errorCategory: null,
         metadata: {
           ...result.metadata,
           relistPolicy: buildRelistPolicy(settings),
         },
-      };
+        extra: {
+          expiresAt,
+          nextRelistAt,
+        },
+      });
     }
 
     const browserListingInput = {
@@ -389,20 +324,19 @@ export const runTraderaListing = async (
       settings.autoRelistLeadMinutes
     );
 
-    return {
-      ok: true,
+    return buildPlaywrightServiceListingSuccess({
       externalListingId: result.externalListingId,
       listingUrl: result.listingUrl ?? null,
-      expiresAt,
-      nextRelistAt,
-      error: null,
-      errorCategory: null,
       metadata: {
         ...result.metadata,
         simulated: result.simulated ?? false,
         relistPolicy: buildRelistPolicy(settings),
       },
-    };
+      extra: {
+        expiresAt,
+        nextRelistAt,
+      },
+    });
   } catch (error: unknown) {
     void ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : String(error);
@@ -418,16 +352,15 @@ export const runTraderaListing = async (
       userMessage,
     });
 
-    return {
-      ok: false,
-      externalListingId: null,
-      listingUrl: null,
-      expiresAt: null,
-      nextRelistAt: null,
+    return buildPlaywrightServiceListingFailure({
       error: userMessage,
       errorCategory: category,
       metadata: extractErrorMetadata(error),
-    };
+      extra: {
+        expiresAt: null,
+        nextRelistAt: null,
+      },
+    });
   }
 };
 
@@ -439,13 +372,32 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
   }
 
   const now = new Date();
-  const marketplaceData = buildTraderaMarketplaceData({
-    existingMarketplaceData: resolved.listing.marketplaceData,
-    result,
+  const action = input.action ?? 'list';
+  const source = input.source ?? 'manual';
+  const lastExecution = buildPlaywrightListingLastExecutionRecord({
     executedAt: now,
-    action: input.action ?? 'list',
-    source: input.source ?? 'manual',
+    result,
     requestId: input.jobId ?? null,
+    metadata: result.metadata ?? null,
+    extra: {
+      action,
+      source,
+    },
+  });
+  const marketplaceData = buildPlaywrightListingMarketplaceDataRecord({
+    existingMarketplaceData: resolved.listing.marketplaceData,
+    marketplace: 'tradera',
+    providerKey: 'tradera',
+    result,
+    lastExecution,
+    providerState: {
+      ...(action === 'sync' && result.ok
+        ? { lastSyncedAt: now.toISOString() }
+        : {}),
+      ...(action === 'check_status' && result.ok
+        ? { lastStatusCheckAt: now.toISOString() }
+        : {}),
+    },
   });
   const historyBrowserMode =
     typeof result.metadata?.['browserMode'] === 'string'
@@ -453,7 +405,6 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       : typeof result.metadata?.['requestedBrowserMode'] === 'string'
         ? result.metadata['requestedBrowserMode']
         : null;
-  const action = input.action ?? 'list';
   const historyFields = buildTraderaHistoryFields(historyBrowserMode, action);
   const persistedExternalListingId = resolvePersistedExternalListingId({
     existingExternalListingId: resolved.listing.externalListingId,

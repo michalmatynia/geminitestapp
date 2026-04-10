@@ -70,6 +70,7 @@ describe('products/[id] handler cache invalidation', () => {
     const formData = new FormData();
     formData.append('name_en', 'Updated');
     const request = {
+      headers: new Headers(),
       formData: vi.fn().mockResolvedValue(formData),
     } as unknown as NextRequest;
 
@@ -89,6 +90,7 @@ describe('products/[id] handler cache invalidation', () => {
     const formData = new FormData();
     formData.append('parameters', '[]');
     const request = {
+      headers: new Headers(),
       formData: vi.fn().mockResolvedValue(formData),
     } as unknown as NextRequest;
 
@@ -105,6 +107,7 @@ describe('products/[id] handler cache invalidation', () => {
     formData.append('parameters', '[]');
     formData.append('forceClearParameters', 'true');
     const request = {
+      headers: new Headers(),
       formData: vi.fn().mockResolvedValue(formData),
     } as unknown as NextRequest;
 
@@ -152,6 +155,7 @@ describe('products/[id] handler cache invalidation', () => {
   it('does not invalidate product cache when PUT fails with not found', async () => {
     const formData = new FormData();
     const request = {
+      headers: new Headers(),
       formData: vi.fn().mockResolvedValue(formData),
     } as unknown as NextRequest;
     updateProductMock.mockResolvedValueOnce(null);
@@ -161,5 +165,51 @@ describe('products/[id] handler cache invalidation', () => {
     );
 
     expect(invalidateProductMock).not.toHaveBeenCalled();
+  });
+
+  it('accepts JSON PUT updates and forwards the parsed object to productService', async () => {
+    parseJsonBodyMock.mockResolvedValueOnce({ ok: true, data: { price: 11.5, stock: 7 } });
+    const request = {
+      headers: { get: (key: string) => key.toLowerCase() === 'content-type' ? 'application/json' : null },
+      json: vi.fn().mockResolvedValue({ price: 11.5, stock: 7 }),
+      formData: vi.fn(),
+    } as unknown as NextRequest;
+
+    const response = await PUT_handler(request, buildContext(), { id: 'product-1' });
+
+    expect(response.status).toBe(200);
+    expect(parseJsonBodyMock).toHaveBeenCalledTimes(1);
+    expect(validateProductUpdateMiddlewareMock).not.toHaveBeenCalled();
+    expect(updateProductMock).toHaveBeenCalledWith(
+      'product-1',
+      { price: 11.5, stock: 7 },
+      {}
+    );
+    expect((request as unknown as { formData: ReturnType<typeof vi.fn> }).formData).not.toHaveBeenCalled();
+    expect(invalidateProductMock).toHaveBeenCalledWith('product-1');
+    const timingHeader = response.headers.get('Server-Timing');
+    expect(timingHeader).toContain('jsonBody;dur=');
+    expect(timingHeader).toContain('serviceUpdate;dur=');
+  });
+
+  it('returns the JSON validation response for invalid PUT payloads', async () => {
+    const validationResponse = new Response(JSON.stringify({ error: 'Invalid payload' }), {
+      status: 400,
+    });
+    parseJsonBodyMock.mockResolvedValueOnce({ ok: false, response: validationResponse });
+    const request = {
+      headers: { get: (key: string) => key.toLowerCase() === 'content-type' ? 'application/json' : null },
+      json: vi.fn().mockResolvedValue({ price: -1 }),
+      formData: vi.fn(),
+    } as unknown as NextRequest;
+
+    const response = await PUT_handler(request, buildContext(), { id: 'product-1' });
+
+    expect(response.status).toBe(400);
+    expect(updateProductMock).not.toHaveBeenCalled();
+    expect(validateProductUpdateMiddlewareMock).not.toHaveBeenCalled();
+    expect((request as unknown as { formData: ReturnType<typeof vi.fn> }).formData).not.toHaveBeenCalled();
+    expect(invalidateProductMock).not.toHaveBeenCalled();
+    expect(response.headers.get('Server-Timing')).toContain('jsonBody;dur=');
   });
 });

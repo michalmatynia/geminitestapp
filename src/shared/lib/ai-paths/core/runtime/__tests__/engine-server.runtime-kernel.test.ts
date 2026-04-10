@@ -193,6 +193,30 @@ const buildDbSchemaLiveContextNode = (): AiNode => ({
   position: { x: 220, y: 420 },
 });
 
+const buildNormalizeParserNode = (): AiNode => ({
+  id: 'node-parser-normalize',
+  type: 'parser',
+  title: 'JSON Parser',
+  description: '',
+  inputs: ['entityJson', 'context'],
+  outputs: ['bundle', 'images'],
+  config: {
+    parser: {
+      mappings: {
+        productId: '',
+        catalogId: '$.catalogs[0].catalogId',
+        categoryId: '$.categoryId',
+        title: '$.name_en',
+        content_en: '$.description_en',
+        images: '',
+      },
+      outputMode: 'bundle',
+      presetId: 'product_core',
+    },
+  },
+  position: { x: 220, y: 540 },
+});
+
 const buildCategoryShapeFunctionNode = (): AiNode => ({
   id: 'node-category-shape',
   type: 'function',
@@ -569,5 +593,96 @@ describe('engine-server runtime-kernel resolver wiring', () => {
       'Accessories > Movie Keychain'
     );
     expect(result.outputs?.['node-category-prompt']?.['prompt']).toContain('Movie Keychain');
+  });
+
+  it('propagates top-level catalogId through parser fallback into db_schema live context queries', async () => {
+    schemaMock.mockResolvedValue({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collections: [
+          {
+            name: 'product_categories',
+            fields: [{ name: 'name_en', type: 'string' }],
+          },
+        ],
+      },
+    });
+    browseMock.mockResolvedValue({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collection: 'product_categories',
+        documents: [
+          { _id: 'leaf-1', name_en: 'Gaming Keychain', parentId: null, catalogId: 'catalog-top' },
+        ],
+        total: 1,
+        limit: 50,
+        skip: 0,
+      },
+    });
+
+    const result = await evaluateGraphServer({
+      nodes: [
+        buildJsonConstantNode({
+          id: 'node-product-entity',
+          title: 'Product Entity',
+          value: {
+            id: 'product-1',
+            catalogId: 'catalog-top',
+            catalogs: [],
+            categoryId: 'leaf-1',
+            name_en: 'Placeholder',
+            description_en: 'Description',
+          },
+        }),
+        buildNormalizeParserNode(),
+        buildDbSchemaLiveContextNode(),
+      ],
+      edges: [
+        {
+          id: 'edge-entity-parser',
+          from: 'node-product-entity',
+          to: 'node-parser-normalize',
+          fromPort: 'value',
+          toPort: 'entityJson',
+        },
+        {
+          id: 'edge-parser-db-schema',
+          from: 'node-parser-normalize',
+          to: 'node-db-schema-live',
+          fromPort: 'bundle',
+          toPort: 'context',
+        },
+      ],
+      runtimeKernelNodeTypes: ['constant', 'parser', 'db_schema'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-parser-normalize']?.['bundle']).toMatchObject({
+      catalogId: 'catalog-top',
+      categoryId: 'leaf-1',
+      title: 'Placeholder',
+      content_en: 'Description',
+    });
+    expect(browseMock).toHaveBeenCalledWith(
+      'product_categories',
+      expect.objectContaining({
+        provider: 'auto',
+        limit: 50,
+        query: '{\n  "catalogId": "catalog-top"\n}',
+      })
+    );
+    expect(
+      result.outputs?.['node-db-schema-live']?.['context']?.liveContext?.collectionMap?.[
+        'product_categories'
+      ]?.documents
+    ).toEqual([
+      expect.objectContaining({
+        _id: 'leaf-1',
+        leafLabel: 'Gaming Keychain',
+        isLeaf: true,
+      }),
+    ]);
   });
 });

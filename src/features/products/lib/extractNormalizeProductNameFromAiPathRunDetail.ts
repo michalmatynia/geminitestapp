@@ -31,6 +31,17 @@ export type NormalizeProductNameAiPathResult = {
   categoryContext?: NormalizeProductNameCategoryContext | null;
 };
 
+type NormalizeDbSchemaCollectionState = {
+  name: string;
+  documentsCount: number | null;
+  error: string | null;
+};
+
+type NormalizeDbSchemaContextState = {
+  query: string | null;
+  collections: NormalizeDbSchemaCollectionState[];
+};
+
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
@@ -47,6 +58,13 @@ const asNullableBoolean = (value: unknown): boolean | null =>
 
 const asNullableNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+const asRecordArray = (value: unknown): Record<string, unknown>[] =>
+  Array.isArray(value)
+    ? value
+        .map((entry: unknown) => asRecord(entry))
+        .filter((entry): entry is Record<string, unknown> => entry !== null)
+    : [];
 
 const resolveNormalizeCategoryLeaf = (value: unknown): NormalizeProductNameCategoryLeaf | null => {
   const record = asRecord(value);
@@ -121,6 +139,123 @@ const resolveNormalizeCategoryContextFromValue = (
     resolveNormalizeCategoryContext(asRecord(record['value'])?.['categoryContext']) ??
     null
   );
+};
+
+const resolveDbSchemaCollectionState = (
+  value: unknown
+): NormalizeDbSchemaCollectionState | null => {
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const name = asTrimmedString(record['name']);
+  if (!name) return null;
+
+  const documentsCount = Array.isArray(record['documents']) ? record['documents'].length : null;
+  const error = asTrimmedString(record['error']);
+
+  return {
+    name,
+    documentsCount,
+    error,
+  };
+};
+
+const resolveNormalizeDbSchemaContextState = (
+  value: unknown
+): NormalizeDbSchemaContextState | null => {
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const liveContext = asRecord(record['liveContext']);
+  if (!liveContext) return null;
+
+  const collections = asRecordArray(liveContext['collections'])
+    .map((entry: Record<string, unknown>) => resolveDbSchemaCollectionState(entry))
+    .filter((entry): entry is NormalizeDbSchemaCollectionState => entry !== null);
+
+  const collectionMap = asRecord(liveContext['collectionMap']);
+  if (collectionMap) {
+    Object.values(collectionMap).forEach((entry: unknown) => {
+      const resolved = resolveDbSchemaCollectionState(entry);
+      if (!resolved) return;
+      if (collections.some((collection) => collection.name === resolved.name)) return;
+      collections.push(resolved);
+    });
+  }
+
+  if (collections.length === 0 && asTrimmedString(liveContext['query']) === null) {
+    return null;
+  }
+
+  return {
+    query: asTrimmedString(liveContext['query']),
+    collections,
+  };
+};
+
+const resolveNormalizeDbSchemaContextFromNodes = (
+  value: unknown
+): NormalizeDbSchemaContextState | null => {
+  if (!Array.isArray(value)) return null;
+
+  const nodeEntries = value
+    .map((entry: unknown) => asRecord(entry))
+    .filter((entry): entry is Record<string, unknown> => entry !== null);
+
+  for (const entry of nodeEntries) {
+    const outputs = asRecord(entry['outputs']);
+    const resolved =
+      resolveNormalizeDbSchemaContextState(outputs?.['context']) ??
+      resolveNormalizeDbSchemaContextState(outputs);
+    if (resolved) return resolved;
+  }
+
+  return null;
+};
+
+const resolveNormalizeDbSchemaContextFromRuntimeState = (
+  value: unknown
+): NormalizeDbSchemaContextState | null => {
+  const runtimeState = asRecord(value);
+  if (!runtimeState) return null;
+
+  const nodeOutputs = asRecord(runtimeState['nodeOutputs']) ?? asRecord(runtimeState['outputs']);
+  if (!nodeOutputs) return null;
+
+  for (const entry of Object.values(nodeOutputs)) {
+    const resolved = resolveNormalizeDbSchemaContextState(entry);
+    if (resolved) return resolved;
+  }
+
+  return null;
+};
+
+const normalizeCategoryUnavailableValidationError = (args: {
+  validationError: string | null;
+  categoryContext: NormalizeProductNameCategoryContext | null;
+  dbSchemaContext: NormalizeDbSchemaContextState | null;
+}): string | null => {
+  const normalizedError = args.validationError?.trim().toLowerCase() ?? '';
+  if (normalizedError !== 'category context unavailable') {
+    return args.validationError;
+  }
+
+  const collection = args.dbSchemaContext?.collections.find(
+    (entry) => entry.name === 'product_categories'
+  );
+  if (collection?.error) {
+    return `Category context unavailable: ${collection.error}`;
+  }
+
+  if (collection && collection.documentsCount === 0) {
+    const catalogId = args.categoryContext?.catalogId;
+    if (catalogId) {
+      return `Category context unavailable: no product_categories rows matched catalog "${catalogId}".`;
+    }
+    return 'Category context unavailable: no product_categories rows were returned.';
+  }
+
+  return args.validationError;
 };
 
 const resolveNameFromUpdateDoc = (value: unknown): string | null => {
@@ -282,8 +417,21 @@ export const extractNormalizeProductNameResultFromAiPathRunDetail = (
     resolveNormalizeCategoryContextFromRuntimeState(asRecord(record['run'])?.['runtimeState']) ??
     resolveNormalizeCategoryContextFromValue(asRecord(record['run'])?.['result']) ??
     null;
+  const dbSchemaContext =
+    resolveNormalizeDbSchemaContextFromNodes(record['nodes']) ??
+    resolveNormalizeDbSchemaContextFromRuntimeState(asRecord(record['run'])?.['runtimeState']) ??
+    null;
+  const validationError = normalizeCategoryUnavailableValidationError({
+    validationError: payload.validationError,
+    categoryContext,
+    dbSchemaContext,
+  });
+  const enrichedPayload = {
+    ...payload,
+    validationError,
+  };
 
-  return categoryContext ? { ...payload, categoryContext } : payload;
+  return categoryContext ? { ...enrichedPayload, categoryContext } : enrichedPayload;
 };
 
 export const extractNormalizeProductNameFromAiPathRunDetail = (

@@ -51,9 +51,10 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
       const args = argsRef.current;
       args.setRuntimeState((prev: RuntimeState): RuntimeState => {
         const currentRun = prev.currentRun ?? null;
+        const runtimeStatus: RuntimeState['status'] = status === 'canceled' ? 'idle' : status;
         return {
           ...prev,
-          status,
+          status: runtimeStatus,
           currentRun: currentRun
             ? {
                 ...currentRun,

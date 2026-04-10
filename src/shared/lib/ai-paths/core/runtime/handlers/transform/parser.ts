@@ -92,6 +92,21 @@ const isEmptyParserValue = (value: unknown): boolean =>
 
 const fallbackParserValue = (source: ParserSourceRecord, key: string): unknown => {
   const normalized = key.trim().toLowerCase();
+  if (normalized === 'catalogid') {
+    if (typeof source['catalogId'] === 'string' && source['catalogId'].trim().length > 0) {
+      return source['catalogId'];
+    }
+    if (Array.isArray(source['catalogs'])) {
+      for (const entry of source['catalogs']) {
+        if (!entry || typeof entry !== 'object') continue;
+        const catalogId = (entry as Record<string, unknown>)['catalogId'];
+        if (typeof catalogId === 'string' && catalogId.trim().length > 0) {
+          return catalogId;
+        }
+      }
+    }
+    return undefined;
+  }
   if (normalized === 'title' || normalized === 'name') {
     return (
       source['title'] ??

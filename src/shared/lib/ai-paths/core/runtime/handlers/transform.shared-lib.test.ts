@@ -67,6 +67,23 @@ describe('Transform Handlers', () => {
       expect(result['title']).toBe('Fallback Name');
     });
 
+    it('should fall back to top-level catalogId when catalogs mapping is missing', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'parser',
+          config: {
+            parser: {
+              mappings: { catalogId: '$.catalogs[0].catalogId' },
+            },
+          },
+        } as any,
+        nodeInputs: { entityJson: { catalogId: 'catalog-top-level', catalogs: [] } },
+      });
+      const result = await handleParser(ctx);
+      expect(result['catalogId']).toBe('catalog-top-level');
+    });
+
     it('normalizes images output to image URL list', async () => {
       const ctx = createMockContext({
         node: {

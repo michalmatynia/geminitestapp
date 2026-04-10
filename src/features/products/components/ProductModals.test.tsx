@@ -1293,20 +1293,24 @@ describe('ProductModals', () => {
 
       render(<ProductModals />);
 
-      expect(triggerButtonBarMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          location: 'product_modal',
-          entityType: 'product',
-          entityId: 'product-1',
-        })
-      );
+      return waitFor(() => {
+        expect(triggerButtonBarMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            location: 'product_modal',
+            entityType: 'product',
+            entityId: 'product-1',
+          })
+        );
 
-      const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
-      const entityJson = getEntityJson();
+        const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
+        const entityJson = getEntityJson();
 
-      expect(entityJson).toMatchObject({
-        id: 'product-1',
-        catalogIds: ['cat-1', 'cat-2'],
+        expect(entityJson).toMatchObject({
+          id: 'product-1',
+          catalogIds: ['cat-1', 'cat-2'],
+          catalogId: 'cat-1',
+          catalogs: [{ catalogId: 'cat-1' }, { catalogId: 'cat-2' }],
+        });
       });
     });
 
@@ -1330,11 +1334,13 @@ describe('ProductModals', () => {
 
       render(<ProductModals />);
 
-      const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
-      const entityJson = getEntityJson();
+      return waitFor(() => {
+        const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
+        const entityJson = getEntityJson();
 
-      expect(entityJson).toMatchObject({
-        status: 'published',
+        expect(entityJson).toMatchObject({
+          status: 'published',
+        });
       });
     });
   });

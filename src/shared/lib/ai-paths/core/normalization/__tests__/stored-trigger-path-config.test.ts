@@ -602,4 +602,62 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expect(resolved.changed).toBe(true);
   });
+
+  it('materializes stored starter configs whose edges still use semantic alias keys', async () => {
+    const actualPortableEngine = await vi.importActual<
+      typeof import('@/shared/lib/ai-paths/portable-engine')
+    >('@/shared/lib/ai-paths/portable-engine');
+    const template = getStarterWorkflowTemplateById('starter_description_inference_lite');
+    if (!template) {
+      throw new Error('Expected starter_description_inference_lite template');
+    }
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path_descv3lite',
+      seededDefault: true,
+    });
+    const legacyEdgeConfig = {
+      ...config,
+      edges: (config.edges ?? []).map((edge) => ({
+        id: edge.id,
+        fromNodeId: edge.from,
+        toNodeId: edge.to,
+        fromPort: edge.fromPort ?? null,
+        toPort: edge.toPort ?? null,
+        label: edge.label ?? null,
+        ...(typeof edge.type === 'string' ? { type: edge.type } : {}),
+        ...(edge.data && typeof edge.data === 'object' ? { data: edge.data } : {}),
+        ...(typeof edge.createdAt === 'string' ? { createdAt: edge.createdAt } : {}),
+        ...(typeof edge.updatedAt === 'string' || edge.updatedAt === null
+          ? { updatedAt: edge.updatedAt }
+          : {}),
+      })),
+    };
+
+    mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: 'path_descv3lite',
+      rawConfig: JSON.stringify(legacyEdgeConfig),
+      fallbackName: config.name,
+    });
+
+    expect(resolved.config.id).toBe('path_descv3lite');
+    expect(resolved.config.edges).toHaveLength(27);
+    expect(
+      resolved.config.edges.every(
+        (edge) =>
+          typeof edge.from === 'string' &&
+          edge.from.length > 0 &&
+          typeof edge.to === 'string' &&
+          edge.to.length > 0 &&
+          !Object.prototype.hasOwnProperty.call(edge, 'fromNodeId') &&
+          !Object.prototype.hasOwnProperty.call(edge, 'toNodeId')
+      )
+    ).toBe(true);
+    expect(
+      resolved.config.nodes.find((node) => node.title === 'Database Query')?.config?.database
+        ?.writeOutcomePolicy?.onZeroAffected
+    ).toBe('warn');
+    expect(resolved.changed).toBe(true);
+  });
 });

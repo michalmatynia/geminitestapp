@@ -1,7 +1,7 @@
 import type { DatabaseBrowse, SchemaResponse } from '@/shared/contracts/database';
 import type { HttpResult } from '@/shared/contracts/http';
 
-import { apiFetch, apiPost } from './base';
+import { apiFetch, apiPost, withApiCsrfHeaders } from './base';
 
 export type DbProvider = 'auto' | 'mongodb';
 export type DbSchemaProvider = DbProvider | 'all';
@@ -154,7 +154,9 @@ export async function fetchSchema(args?: {
   if (args?.includeCounts) params.set('includeCounts', 'true');
   const query = params.toString();
   const url = query ? `/api/databases/schema?${query}` : '/api/databases/schema';
-  return apiFetch<SchemaResponse>(url);
+  return apiFetch<SchemaResponse>(url, {
+    headers: await withApiCsrfHeaders(),
+  });
 }
 
 export async function browseDatabase(args: {
@@ -172,5 +174,7 @@ export async function browseDatabase(args: {
   if (typeof args.query === 'string' && args.query.trim()) {
     params.set('query', args.query.trim());
   }
-  return apiFetch<DatabaseBrowse>(`/api/databases/browse?${params.toString()}`);
+  return apiFetch<DatabaseBrowse>(`/api/databases/browse?${params.toString()}`, {
+    headers: await withApiCsrfHeaders(),
+  });
 }

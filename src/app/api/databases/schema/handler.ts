@@ -13,7 +13,10 @@ import {
   optionalBooleanQuerySchema,
 } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { assertDatabaseEngineManageAccess } from '@/features/database/server';
+import {
+  assertDatabaseEngineManageAccessOrAiPathsInternal,
+} from '@/features/database/server';
+import { isCollectionAllowed } from '@/features/ai/ai-paths/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -155,27 +158,42 @@ const enrichCollections = (
   }));
 };
 
+const filterCollectionsToAiPathsAllowlist = (schema: SchemaResponse): SchemaResponse => {
+  const filteredCollections = schema.collections.filter((collection: CollectionSchema) =>
+    isCollectionAllowed(collection.name)
+  );
+
+  return {
+    ...schema,
+    collections: filteredCollections,
+  };
+};
+
 export async function getDatabasesSchemaHandler(
-  _request: NextRequest,
+  request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  await assertDatabaseEngineManageAccess();
+  const { isInternal } = await assertDatabaseEngineManageAccessOrAiPathsInternal(request);
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const providerParam = query.provider ?? 'auto';
   const includeCounts = query.includeCounts === true;
 
   if (providerParam === 'all') {
     const mongoSchema = await getMongoSchema(includeCounts);
+    const visibleMongoSchema = isInternal
+      ? filterCollectionsToAiPathsAllowlist(mongoSchema)
+      : mongoSchema;
     const payload: SchemaResponse = {
       provider: 'multi',
-      collections: enrichCollections(mongoSchema, 'mongodb'),
+      collections: enrichCollections(visibleMongoSchema, 'mongodb'),
       sources: {
-        mongodb: toSchemaSource(mongoSchema),
+        mongodb: toSchemaSource(visibleMongoSchema),
       },
     };
     return NextResponse.json(payload);
   }
 
   const schema = await getMongoSchema(includeCounts);
-  return NextResponse.json(schema);
+  const visibleSchema = isInternal ? filterCollectionsToAiPathsAllowlist(schema) : schema;
+  return NextResponse.json(visibleSchema);
 }

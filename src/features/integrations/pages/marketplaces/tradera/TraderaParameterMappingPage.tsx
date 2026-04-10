@@ -55,7 +55,6 @@ import {
   createRuleId,
   getRuleStatus,
   MapperTab,
-  normalizeMapperLookupKey,
   sortRules,
 } from './components/tradera-mapping-utils';
 import { MappingsRulesTable } from './components/MappingsRulesTable';

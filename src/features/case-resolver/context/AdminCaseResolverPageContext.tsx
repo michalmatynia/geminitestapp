@@ -5,7 +5,6 @@ import React, { useMemo } from 'react';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type {
-  FunctionKey,
   OmitState,
   PickActions,
 } from '@/shared/lib/react/types';
@@ -13,8 +12,6 @@ import type {
 import { useAdminCaseResolverPageState } from '../hooks/useAdminCaseResolverPageState';
 
 export type AdminCaseResolverPageContextValue = ReturnType<typeof useAdminCaseResolverPageState>;
-
-type AdminCaseResolverPageActionKey = FunctionKey<AdminCaseResolverPageContextValue>;
 
 export type AdminCaseResolverPageActionsValue = PickActions<AdminCaseResolverPageContextValue>;
 export type AdminCaseResolverPageStateValue = OmitState<AdminCaseResolverPageContextValue>;

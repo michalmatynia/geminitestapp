@@ -275,7 +275,7 @@ describe('portable AI-path engine scaffold', () => {
     expect(parsed.value.pathConfig.edges.length).toBe(pathConfig.edges.length);
   });
 
-  it('keeps alias-only path-config edge fields unresolved when resolving raw payloads', () => {
+  it('canonicalizes alias-only path-config edge fields when resolving raw payloads', () => {
     const pathConfig = createDefaultPathConfig('path_portable_alias_edges');
     const fromNode = pathConfig.nodes[0]!;
     const toNode = pathConfig.nodes[1]!;
@@ -295,10 +295,10 @@ describe('portable AI-path engine scaffold', () => {
 
     const edge = parsed.value.pathConfig.edges[0];
     expect(parsed.value.source).toBe('path_config');
-    expect(edge?.from).toBe('');
-    expect(edge?.to).toBe('');
-    expect(edge?.fromPort).toBeUndefined();
-    expect(edge?.toPort).toBeUndefined();
+    expect(edge?.from).toBe(fromNode.id);
+    expect(edge?.to).toBe(toNode.id);
+    expect(edge?.fromPort).toBe('context');
+    expect(edge?.toPort).toBe('context');
     expect(edge?.source).toBeUndefined();
     expect(edge?.target).toBeUndefined();
     expect(edge?.sourceHandle).toBeUndefined();
@@ -341,6 +341,53 @@ describe('portable AI-path engine scaffold', () => {
     expect(
       migrated.value.migrationWarnings.some((warning) => warning.code === 'path_config_upgraded')
     ).toBe(true);
+  });
+
+  it('repairs raw path-config edges that still use semantic edge aliases', () => {
+    const pathConfig = createDefaultPathConfig('path_portable_legacy_edge_aliases');
+    const legacyEdgeConfig = {
+      ...pathConfig,
+      edges: (pathConfig.edges ?? []).map((edge) => ({
+        id: edge.id,
+        fromNodeId: edge.from,
+        toNodeId: edge.to,
+        sourceHandle: edge.fromPort ?? null,
+        targetHandle: edge.toPort ?? null,
+        label: edge.label ?? null,
+        ...(typeof edge.type === 'string' ? { type: edge.type } : {}),
+        ...(edge.data && typeof edge.data === 'object' ? { data: edge.data } : {}),
+        ...(typeof edge.createdAt === 'string' ? { createdAt: edge.createdAt } : {}),
+        ...(typeof edge.updatedAt === 'string' || edge.updatedAt === null
+          ? { updatedAt: edge.updatedAt }
+          : {}),
+      })),
+    };
+
+    const resolved = resolvePortablePathInput(legacyEdgeConfig);
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+
+    expect(resolved.value.source).toBe('path_config');
+    expect(
+      resolved.value.pathConfig.edges.map((edge) => ({
+        id: edge.id,
+        from: edge.from,
+        to: edge.to,
+        fromPort: edge.fromPort,
+        toPort: edge.toPort,
+      }))
+    ).toEqual(
+      pathConfig.edges.map((edge) => ({
+        id: edge.id,
+        from: edge.from,
+        to: edge.to,
+        fromPort: edge.fromPort,
+        toPort: edge.toPort,
+      }))
+    );
+    expect(
+      Object.prototype.hasOwnProperty.call(resolved.value.pathConfig.edges[0] ?? {}, 'fromNodeId')
+    ).toBe(false);
   });
 
   it('migrates portable package v2 payload through migration registry', () => {

@@ -39,28 +39,61 @@ const resolveEdgePort = (
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const resolveAliasEdgePort = (value: unknown): string | null | undefined => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 export const normalizePathConfigEdges = (pathConfig: PathConfig): PathConfig => {
   let changed = false;
   const nextEdges = (pathConfig.edges ?? []).map((edge: Edge): Edge => {
-    const resolvedFrom = asTrimmedString(edge.from);
-    const resolvedTo = asTrimmedString(edge.to);
-    const resolvedFromPort = resolveEdgePort(edge, 'fromPort');
-    const resolvedToPort = resolveEdgePort(edge, 'toPort');
+    const legacyEdge = edge as Edge & {
+      fromNodeId?: unknown;
+      toNodeId?: unknown;
+    };
+    const resolvedFrom =
+      asTrimmedString(edge.from) ??
+      asTrimmedString(edge.source) ??
+      asTrimmedString(legacyEdge.fromNodeId);
+    const resolvedTo =
+      asTrimmedString(edge.to) ??
+      asTrimmedString(edge.target) ??
+      asTrimmedString(legacyEdge.toNodeId);
+    const resolvedFromPort =
+      resolveEdgePort(edge, 'fromPort') ?? resolveAliasEdgePort(edge.sourceHandle);
+    const resolvedToPort =
+      resolveEdgePort(edge, 'toPort') ?? resolveAliasEdgePort(edge.targetHandle);
 
     const edgeChanged =
-      (resolvedFrom !== undefined && resolvedFrom !== edge.from) ||
-      (resolvedTo !== undefined && resolvedTo !== edge.to) ||
-      (resolvedFromPort !== undefined && resolvedFromPort !== edge.fromPort) ||
-      (resolvedToPort !== undefined && resolvedToPort !== edge.toPort);
+      resolvedFrom !== edge.from ||
+      resolvedTo !== edge.to ||
+      resolvedFromPort !== edge.fromPort ||
+      resolvedToPort !== edge.toPort ||
+      edge.source !== undefined ||
+      edge.target !== undefined ||
+      edge.sourceHandle !== undefined ||
+      edge.targetHandle !== undefined ||
+      legacyEdge.fromNodeId !== undefined ||
+      legacyEdge.toNodeId !== undefined;
 
     if (!edgeChanged) return edge;
     changed = true;
     return {
-      ...edge,
+      id: edge.id,
       ...(resolvedFrom !== undefined ? { from: resolvedFrom } : {}),
       ...(resolvedTo !== undefined ? { to: resolvedTo } : {}),
       ...(resolvedFromPort !== undefined ? { fromPort: resolvedFromPort } : {}),
       ...(resolvedToPort !== undefined ? { toPort: resolvedToPort } : {}),
+      ...(typeof edge.label === 'string' || edge.label === null ? { label: edge.label } : {}),
+      ...(typeof edge.type === 'string' ? { type: edge.type } : {}),
+      ...(edge.data && typeof edge.data === 'object' ? { data: edge.data } : {}),
+      ...(typeof edge.createdAt === 'string' ? { createdAt: edge.createdAt } : {}),
+      ...(typeof edge.updatedAt === 'string' || edge.updatedAt === null
+        ? { updatedAt: edge.updatedAt }
+        : {}),
     };
   });
 

@@ -2,6 +2,7 @@ import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { DatabaseOperation } from '@/shared/contracts/ai-paths-core';
 import type { CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
 import type { AiTriggerButtonDisplay } from '@/shared/contracts/ai-trigger-buttons';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization/normalization.nodes';
 import { deserializeSemanticCanvasToPathConfig } from '@/shared/lib/ai-paths/core/semantic-grammar/deserialize';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import type {
@@ -166,9 +167,11 @@ export const materializeSemanticAsset = (
     isLocked: args.isLocked ?? config.isLocked,
     updatedAt: args.updatedAt ?? config.updatedAt,
   };
+  const normalizedNodes = normalizeNodes(repaired.nodes ?? []);
   return {
     ...repaired,
-    edges: sanitizeEdges(repaired.nodes ?? [], repaired.edges ?? []),
+    nodes: normalizedNodes,
+    edges: sanitizeEdges(normalizedNodes, repaired.edges ?? []),
   };
 };
 

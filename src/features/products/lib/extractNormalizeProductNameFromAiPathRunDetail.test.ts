@@ -186,6 +186,68 @@ describe('extractNormalizeProductNameFromAiPathRunDetail', () => {
       },
     });
   });
+
+  it('replaces generic category-context errors with db schema diagnostics when available', () => {
+    expect(
+      extractNormalizeProductNameResultFromAiPathRunDetail({
+        nodes: [
+          {
+            nodeType: 'db_schema',
+            outputs: {
+              context: {
+                liveContext: {
+                  query: '{ "catalogId": "catalog-a" }',
+                  collectionMap: {
+                    product_categories: {
+                      name: 'product_categories',
+                      documents: [],
+                      error: 'Live context query is missing connected inputs: context.catalogId.',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          {
+            nodeType: 'function',
+            outputs: {
+              bundle: {
+                categoryContext: {
+                  catalogId: 'catalog-a',
+                  totalCategories: 0,
+                  totalLeafCategories: 0,
+                  allowedLeafLabels: [],
+                  leafCategories: [],
+                },
+              },
+            },
+          },
+          {
+            nodeType: 'mapper',
+            outputs: {
+              bundle: {
+                normalizedName: 'Placeholder | 4 cm | Metal | Pins | Anime',
+                title: 'Placeholder',
+                size: '4 cm',
+                material: 'Metal',
+                category: 'Pins',
+                theme: 'Anime',
+                isValid: false,
+                validationError: 'Category context unavailable',
+                confidence: 0.12,
+              },
+            },
+          },
+        ],
+      })
+    ).toEqual(
+      expect.objectContaining({
+        isValid: false,
+        validationError:
+          'Category context unavailable: Live context query is missing connected inputs: context.catalogId.',
+      })
+    );
+  });
 });
 
 describe('isNormalizeProductNamePath', () => {

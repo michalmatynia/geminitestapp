@@ -6,7 +6,7 @@ export {
   runPlaywrightListingScript,
 } from '@/features/playwright/server/programmable';
 export type {
-  PlaywrightExecutionSettingsSummary,
   PlaywrightImportResult,
   PlaywrightListingResult,
 } from '@/features/playwright/server/programmable';
+export type { PlaywrightExecutionSettingsSummary } from '@/features/playwright/server/execution-settings';

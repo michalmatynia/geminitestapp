@@ -135,6 +135,31 @@ describe('buildTriggeredProductEntityJson', () => {
       expect(catalogs[0]).toEqual({ catalogId: 'new-cat', productId: 'p99' });
     });
 
+    it('builds catalogs array from top-level catalogId when catalogIds are absent', () => {
+      const result = buildTriggeredProductEntityJson({
+        product: { id: 'p99', catalogId: 'catalog-top-level' } as never,
+        values: {},
+      });
+
+      expect(result['catalogId']).toBe('catalog-top-level');
+      expect(result['catalogs']).toEqual([{ catalogId: 'catalog-top-level', productId: 'p99' }]);
+    });
+
+    it('reuses existing catalogs when catalogIds are absent', () => {
+      const result = buildTriggeredProductEntityJson({
+        product: {
+          id: 'p1',
+          catalogId: 'cat-1',
+          catalogs: [{ catalogId: 'cat-1', assignedAt: '2026-04-01T00:00:00.000Z' }],
+        } as never,
+        values: {},
+      });
+
+      expect(result['catalogs']).toEqual([
+        { catalogId: 'cat-1', assignedAt: '2026-04-01T00:00:00.000Z' },
+      ]);
+    });
+
     it('returns entityJson unchanged when catalogIds is empty', () => {
       const result = buildTriggeredProductEntityJson({
         values: { catalogIds: [] },

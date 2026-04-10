@@ -22,6 +22,33 @@ const normalizeTriggerCatalogIds = (value: unknown): string[] => {
   return Array.from(unique);
 };
 
+const normalizeCatalogEntries = (value: unknown): Array<Record<string, unknown>> => {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (entry: unknown): entry is Record<string, unknown> =>
+      Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+  );
+};
+
+const resolveTriggerCatalogIds = (entityJson: Record<string, unknown>): string[] => {
+  const explicitCatalogIds = normalizeTriggerCatalogIds(entityJson['catalogIds']);
+  if (explicitCatalogIds.length > 0) {
+    return explicitCatalogIds;
+  }
+
+  const catalogs = normalizeCatalogEntries(entityJson['catalogs']);
+  const catalogIdsFromCatalogs = normalizeTriggerCatalogIds(catalogs);
+  if (catalogIdsFromCatalogs.length > 0) {
+    return catalogIdsFromCatalogs;
+  }
+
+  if (typeof entityJson['catalogId'] === 'string' && entityJson['catalogId'].trim().length > 0) {
+    return [entityJson['catalogId'].trim()];
+  }
+
+  return [];
+};
+
 export const buildTriggeredProductEntityJson = (args: {
   product?: ProductWithImages;
   draft?: ProductDraft | null;
@@ -36,14 +63,12 @@ export const buildTriggeredProductEntityJson = (args: {
 
   normalizeProductTriggerStatus(entityJson);
 
-  const catalogIds = normalizeTriggerCatalogIds(entityJson['catalogIds']);
+  const catalogIds = resolveTriggerCatalogIds(entityJson);
   if (catalogIds.length === 0) {
     return entityJson;
   }
 
-  const existingCatalogs: unknown[] = Array.isArray(entityJson['catalogs'])
-    ? (entityJson['catalogs'] as unknown[])
-    : [];
+  const existingCatalogs = normalizeCatalogEntries(entityJson['catalogs']);
   entityJson['catalogId'] = catalogIds[0] ?? entityJson['catalogId'];
   entityJson['catalogs'] = catalogIds.map((catalogId: string) => {
     const existing =

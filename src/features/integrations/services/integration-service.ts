@@ -6,7 +6,12 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getIntegrationRepository } from './integration-repository';
 
-import type { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository } from '@/shared/contracts/integrations/repositories';
+import type {
+  IntegrationConnectionRecord,
+  IntegrationConnectionUpdateInput,
+  IntegrationRecord,
+  IntegrationRepository,
+} from '@/shared/contracts/integrations/repositories';
 
 /**
  * Helper to call the Integration repository with error handling and logging.
@@ -70,7 +75,7 @@ export const integrationService: IntegrationRepository = {
   },
   updateConnection: async (
     id: string,
-    input: Partial<IntegrationConnectionRecord>
+    input: IntegrationConnectionUpdateInput
   ): Promise<IntegrationConnectionRecord> => {
     const result = await repoCall('updateConnection', id, input);
     void logActivity({

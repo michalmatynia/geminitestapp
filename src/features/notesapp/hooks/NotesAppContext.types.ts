@@ -1,8 +1,13 @@
 import type { NotesAppContextValue } from '@/shared/contracts/notes';
 import { PickActions, OmitState } from '@/shared/lib/react/types';
 
-export type NotesAppActionsValue = PickActions<NotesAppContextValue>;
-export type NotesAppStateValue = OmitState<NotesAppContextValue>;
+export type NotesAppActionsValue = Omit<
+  PickActions<NotesAppContextValue>,
+  'getThemeForNote'
+> &
+  Pick<NotesAppContextValue, 'operations'>;
+export type NotesAppStateValue = Omit<OmitState<NotesAppContextValue>, 'operations'> &
+  Pick<NotesAppContextValue, 'getThemeForNote'>;
 
 export interface NotesAppConfirmationState {
   title: string;

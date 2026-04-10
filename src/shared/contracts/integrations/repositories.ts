@@ -40,6 +40,33 @@ export type IntegrationConnectionRecord = Omit<
   linkedinExpiresAt?: string | Date | null;
 };
 
+type NullablePlaywrightConnectionOverrideKey =
+  | 'playwrightHeadless'
+  | 'playwrightSlowMo'
+  | 'playwrightTimeout'
+  | 'playwrightNavigationTimeout'
+  | 'playwrightHumanizeMouse'
+  | 'playwrightMouseJitter'
+  | 'playwrightClickDelayMin'
+  | 'playwrightClickDelayMax'
+  | 'playwrightInputDelayMin'
+  | 'playwrightInputDelayMax'
+  | 'playwrightActionDelayMin'
+  | 'playwrightActionDelayMax'
+  | 'playwrightProxyEnabled'
+  | 'playwrightProxyServer'
+  | 'playwrightProxyUsername'
+  | 'playwrightProxyPassword'
+  | 'playwrightEmulateDevice'
+  | 'playwrightDeviceName';
+
+export type IntegrationConnectionUpdateInput = Omit<
+  Partial<IntegrationConnectionRecord>,
+  NullablePlaywrightConnectionOverrideKey
+> & {
+  [K in NullablePlaywrightConnectionOverrideKey]?: IntegrationConnectionRecord[K] | null;
+};
+
 export type IntegrationRepository = {
   listIntegrations: () => Promise<IntegrationRecord[]>;
   upsertIntegration: (input: { name: string; slug: string }) => Promise<IntegrationRecord>;
@@ -56,7 +83,7 @@ export type IntegrationRepository = {
   ) => Promise<IntegrationConnectionRecord>;
   updateConnection: (
     id: string,
-    input: Partial<IntegrationConnectionRecord>
+    input: IntegrationConnectionUpdateInput
   ) => Promise<IntegrationConnectionRecord>;
   deleteConnection: (
     id: string,

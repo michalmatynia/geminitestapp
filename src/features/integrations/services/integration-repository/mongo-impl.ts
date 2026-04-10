@@ -21,7 +21,12 @@ import {
   ConnectionDeleteOptions,
   ConnectionDependencyCounts,
 } from './common';
-import { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository } from '@/shared/contracts/integrations/repositories';
+import type {
+  IntegrationConnectionRecord,
+  IntegrationConnectionUpdateInput,
+  IntegrationRecord,
+  IntegrationRepository,
+} from '@/shared/contracts/integrations/repositories';
 
 type IntegrationDocument = {
   name: string;
@@ -426,7 +431,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
 
     async updateConnection(
       id: string,
-      input: Partial<IntegrationConnectionRecord>
+      input: IntegrationConnectionUpdateInput
     ): Promise<IntegrationConnectionRecord> {
       const db = await getMongoDb();
       const now = new Date();

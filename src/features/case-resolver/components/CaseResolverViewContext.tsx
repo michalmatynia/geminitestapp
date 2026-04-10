@@ -16,7 +16,6 @@ import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-r
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type {
-  FunctionKey,
   OmitState,
   PickActions,
 } from '@/shared/lib/react/types';
@@ -152,8 +151,6 @@ export type CaseResolverViewContextValue = {
   handleDiscardActiveCaseMetadata: () => void;
   handleResetCaseContext: () => void;
 };
-
-type CaseResolverViewActionKey = FunctionKey<CaseResolverViewContextValue>;
 
 export type CaseResolverViewActionsValue = PickActions<CaseResolverViewContextValue>;
 export type CaseResolverViewStateValue = OmitState<CaseResolverViewContextValue>;

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, Play, X } from 'lucide-react';
 import React from 'react';
 
@@ -140,6 +141,8 @@ const resolveTargetSourceLabel = (source: ProductSyncTargetSource): string | nul
   if (source === 'sku_backfill') return 'Import SKU';
   return null;
 };
+
+const GLOBAL_SYNC_SETTINGS_HREF = '/admin/integrations/aggregators/base-com/synchronization-engine';
 
 const renderTargetSourceHint = (source: ProductSyncTargetSource): string | null => {
   if (source === 'listing') {
@@ -511,9 +514,11 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
             {isCheckingPreview ? 'Checking...' : hasChecked ? 'Check Again' : 'Check'}
           </Button>
           {preview?.profile && (
-            <Badge variant='outline' className='text-[10px]'>
-              {preview.profile.name}
-            </Badge>
+            <Button asChild variant='outline' size='sm' className='h-7 px-3 text-[10px]'>
+              <Link href={GLOBAL_SYNC_SETTINGS_HREF} title='Open global sync settings'>
+                {preview.profile.name}
+              </Link>
+            </Button>
           )}
           {preview?.linkedBaseProductId && (
             <Badge variant='outline' className='text-[10px] font-mono'>

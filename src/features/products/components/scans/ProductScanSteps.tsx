@@ -73,6 +73,16 @@ export type ProductScanLatestOutcomeSummary = {
   timingLabel: string | null;
 };
 
+export type ProductScanContinuationSummary = {
+  phaseLabel: string;
+  stepLabel: string;
+  message: string | null;
+  resultCodeLabel: string | null;
+  attempt: number | null;
+  nextUrl: string | null;
+  rejectedUrl: string | null;
+};
+
 export const resolveProductScanActiveStepSummary = (
   steps: ProductScanStep[]
 ): ProductScanActiveStepSummary | null => {
@@ -174,6 +184,77 @@ export const resolveProductScanLatestOutcomeSummary = (
   };
 };
 
+const resolveStepDetailValue = (
+  step: Pick<ProductScanStep, 'details'>,
+  label: string
+): string | null => {
+  const details = Array.isArray(step.details) ? step.details : [];
+  const matchedDetail = details.find((entry) => entry.label === label);
+  return typeof matchedDetail?.value === 'string' && matchedDetail.value.trim().length > 0
+    ? matchedDetail.value.trim()
+    : null;
+};
+
+export const resolveProductScanContinuationSummary = (
+  steps: ProductScanStep[]
+): ProductScanContinuationSummary | null => {
+  const continuationStep =
+    [...steps]
+      .reverse()
+      .find(
+        (step) =>
+          step.key === 'queue_scan' &&
+          (step.label === 'Continue with next Amazon candidate' ||
+            step.message?.includes('next Amazon candidate after AI rejection'))
+      ) ?? null;
+
+  if (!continuationStep) {
+    return null;
+  }
+
+  return {
+    phaseLabel: STEP_GROUP_LABELS[resolveStepGroup(continuationStep)],
+    stepLabel: continuationStep.label,
+    message: continuationStep.message ?? null,
+    resultCodeLabel: formatResultCode(continuationStep.resultCode),
+    attempt: continuationStep.attempt ?? null,
+    nextUrl: resolveStepDetailValue(continuationStep, 'Next candidate URL'),
+    rejectedUrl: resolveStepDetailValue(continuationStep, 'Rejected candidate URL'),
+  };
+};
+
+type ProductScanContinuationContext = {
+  step: ProductScanStep;
+  rejectedUrl: string | null;
+  nextUrl: string | null;
+};
+
+const resolveContinuationContexts = (
+  steps: ProductScanStep[]
+): Map<number, ProductScanContinuationContext> => {
+  const contexts = new Map<number, ProductScanContinuationContext>();
+
+  for (const step of steps) {
+    if (
+      step.key !== 'queue_scan' ||
+      (step.label !== 'Continue with next Amazon candidate' &&
+        !step.message?.includes('next Amazon candidate after AI rejection')) ||
+      typeof step.attempt !== 'number' ||
+      !Number.isFinite(step.attempt)
+    ) {
+      continue;
+    }
+
+    contexts.set(step.attempt, {
+      step,
+      rejectedUrl: resolveStepDetailValue(step, 'Rejected candidate URL'),
+      nextUrl: resolveStepDetailValue(step, 'Next candidate URL'),
+    });
+  }
+
+  return contexts;
+};
+
 const formatTimestamp = (value: string | null | undefined): string => {
   if (!value) return 'Unknown time';
   const parsed = new Date(value);
@@ -268,6 +349,7 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
       .map((step) => step.attempt)
   ).size;
   const activeStepSummary = resolveProductScanActiveStepSummary(steps);
+  const continuationContexts = resolveContinuationContexts(steps);
 
   return (
     <div className='space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3'>
@@ -311,6 +393,18 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
               const timing = formatStepTiming(step);
               const stepDetails = Array.isArray(step.details) ? step.details : [];
               const resultCodeLabel = formatResultCode(step.resultCode);
+              const continuationContext =
+                typeof step.attempt === 'number' && Number.isFinite(step.attempt)
+                  ? continuationContexts.get(step.attempt) ?? null
+                  : null;
+              const isContinuationQueueStep =
+                continuationContext?.step === step &&
+                step.key === 'queue_scan' &&
+                step.label === 'Continue with next Amazon candidate';
+              const isContinuationAmazonStep =
+                resolveStepGroup(step) === 'amazon' &&
+                Boolean(continuationContext) &&
+                continuationContext?.step !== step;
               return (
                 <div
                   key={`${step.key}-${step.attempt ?? 1}-${step.inputSource ?? 'none'}-${index}`}
@@ -343,10 +437,26 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                         {resultCodeLabel}
                       </span>
                     ) : null}
+                    {isContinuationQueueStep ? (
+                      <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
+                        AI rejection recovery
+                      </span>
+                    ) : null}
+                    {isContinuationAmazonStep ? (
+                      <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
+                        Recovery attempt
+                      </span>
+                    ) : null}
                   </div>
                   {step.message ? <p className='text-sm text-muted-foreground'>{step.message}</p> : null}
                   {step.warning ? (
                     <p className='text-xs font-medium text-amber-300'>{step.warning}</p>
+                  ) : null}
+                  {isContinuationAmazonStep && continuationContext ? (
+                    <p className='text-xs text-muted-foreground'>
+                      Continues after AI rejection of{' '}
+                      {continuationContext.rejectedUrl ?? 'the previous Amazon candidate'}.
+                    </p>
                   ) : null}
                   {step.retryOf ? (
                     <p className='text-xs text-muted-foreground'>Retry of: {step.retryOf}</p>

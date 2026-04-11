@@ -23,6 +23,7 @@ import { ProductFormParameterContext } from '@/features/products/context/Product
 import {
   ProductScanSteps,
   resolveProductScanActiveStepSummary,
+  resolveProductScanContinuationSummary,
   resolveProductScanLatestOutcomeSummary,
 } from '@/features/products/components/scans/ProductScanSteps';
 import type {
@@ -975,6 +976,10 @@ export function ProductAmazonScanModal(
                 (row.status === 'queued' || row.status === 'running') && scanSteps.length > 0
                   ? resolveProductScanActiveStepSummary(scanSteps)
                   : null;
+              const continuationSummary =
+                (row.status === 'queued' || row.status === 'running') && scanSteps.length > 0
+                  ? resolveProductScanContinuationSummary(scanSteps)
+                  : null;
               const latestOutcomeSummary =
                 scanSteps.length > 0 &&
                 !progressSummary &&
@@ -1083,6 +1088,39 @@ export function ProductAmazonScanModal(
                       {progressSummary.message ? (
                         <p className='text-sm text-muted-foreground'>{progressSummary.message}</p>
                       ) : null}
+                    </div>
+                  ) : null}
+
+                  {continuationSummary ? (
+                    <div className='space-y-1 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span className='inline-flex items-center rounded-md border border-amber-500/20 px-2 py-0.5 font-medium text-amber-300'>
+                          Candidate continuation
+                        </span>
+                        <span className='text-muted-foreground'>After AI rejection</span>
+                        <span className='font-medium text-foreground'>{continuationSummary.stepLabel}</span>
+                        {continuationSummary.resultCodeLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {continuationSummary.resultCodeLabel}
+                          </span>
+                        ) : null}
+                        {continuationSummary.attempt ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            Attempt {continuationSummary.attempt}
+                          </span>
+                        ) : null}
+                      </div>
+                      {continuationSummary.message ? (
+                        <p className='text-sm text-muted-foreground'>{continuationSummary.message}</p>
+                      ) : null}
+                      <div className='flex flex-wrap gap-3 text-xs text-muted-foreground'>
+                        {continuationSummary.rejectedUrl ? (
+                          <span>Rejected: {continuationSummary.rejectedUrl}</span>
+                        ) : null}
+                        {continuationSummary.nextUrl ? (
+                          <span>Next: {continuationSummary.nextUrl}</span>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
 

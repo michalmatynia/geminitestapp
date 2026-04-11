@@ -422,8 +422,46 @@ describe('product-scan-amazon-script', () => {
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('artifactKey,');
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('heroImageArtifactName,');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('descriptionSnippet');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('bulletPoints');
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("{ label: 'Hero image artifact', value: heroImageArtifactName }");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("{ label: 'Artifact key', value: artifactKey }");
+  });
+
+  it('can stop after probe collection for AI evaluation before detailed extraction', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("input?.probeOnlyOnAmazonMatch === true");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("status: 'probe_ready'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "message: 'Collected Amazon candidate evidence for AI evaluation.'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("stage: 'amazon_probe'");
+  });
+
+  it('supports a direct Amazon candidate extraction mode that skips Google Lens', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const directAmazonCandidateUrl = toText(input?.directAmazonCandidateUrl);'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const directAmazonCandidateUrls = Array.isArray(input?.directAmazonCandidateUrls)'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const skipAmazonProbe = input?.skipAmazonProbe === true;'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'if (directAmazonCandidateUrl) {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const extracted = await extractAmazonPageData('
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'directAmazonCandidateUrl,'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'candidateUrls: directCandidateUrls,'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "resultCode: 'probe_reused'"
+    );
   });
 
   it('keeps searching past weak Amazon matches and exits early on strong ones', () => {

@@ -144,6 +144,27 @@ describe('ProductForm', () => {
     expect(screen.getAllByTestId('dynamic-tab-stub').length).toBeGreaterThan(0);
   });
 
+  it('renders product form tabs in the requested order', () => {
+    render(<ProductForm submitButtonText='Save' validatorSessionKey='validator-session-order' />);
+
+    const tabs = screen.getAllByRole('tab');
+    const labels = tabs.map((tab) => tab.getAttribute('aria-label'));
+
+    expect(labels).toEqual([
+      'General',
+      'Other',
+      'Parameters',
+      'Images',
+      'Studio',
+      'Marketplace Copy',
+      'Custom Fields',
+      'Scans',
+      'Import Info',
+      'Note Link',
+      'Validation',
+    ]);
+  });
+
   it('prefers the openProductTab query param when deciding the active tab', () => {
     window.history.replaceState({}, '', '/admin/products?openProductTab=marketplace-copy');
 

@@ -448,6 +448,96 @@ describe('processTraderaListingJob', () => {
     );
   });
 
+  it('persists Tradera fallback category and image diagnostics on scripted success', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-fallback-success',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockResolvedValue({
+      externalListingId: 'external-fallback-1',
+      listingUrl: 'https://www.tradera.com/item/fallback-1',
+      metadata: {
+        scriptMode: 'scripted',
+        scriptSource: 'connection',
+        runId: 'run-fallback-1',
+        browserMode: 'headed',
+        requestedBrowserMode: 'headed',
+        publishVerified: true,
+        categorySource: 'fallback',
+        categoryPath: 'Other > Other',
+        categoryMappingReason: 'stale_external_category',
+        categoryMatchScope: 'none',
+        categoryInternalCategoryId: 'internal-category-1',
+        imageInputSource: 'remote',
+        imageUploadSource: 'downloaded',
+        imageUrlCount: 3,
+        localImagePathCount: 0,
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-fallback-success',
+      action: 'list',
+      source: 'manual',
+      jobId: 'job-tradera-fallback-success',
+    });
+
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-fallback-success',
+      expect.objectContaining({
+        externalListingId: 'external-fallback-1',
+        failureReason: null,
+        marketplaceData: expect.objectContaining({
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/fallback-1',
+          externalListingId: 'external-fallback-1',
+          tradera: expect.objectContaining({
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-fallback-success',
+              ok: true,
+              action: 'list',
+              source: 'manual',
+              metadata: expect.objectContaining({
+                categorySource: 'fallback',
+                categoryPath: 'Other > Other',
+                categoryMappingReason: 'stale_external_category',
+                categoryMatchScope: 'none',
+                categoryInternalCategoryId: 'internal-category-1',
+                imageInputSource: 'remote',
+                imageUploadSource: 'downloaded',
+                imageUrlCount: 3,
+                localImagePathCount: 0,
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-fallback-success',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: 'external-fallback-1',
+        requestId: 'job-tradera-fallback-success',
+      })
+    );
+  });
+
   it('persists the resolved Tradera status after a live status check', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();

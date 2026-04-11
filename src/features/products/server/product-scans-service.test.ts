@@ -504,6 +504,478 @@ describe('product-scans-service', () => {
     );
   });
 
+  it('queues a direct Amazon extraction run after an approved probe-stage AI evaluation', async () => {
+    const scan = createScan({
+      status: 'running',
+      imageCandidates: [
+        {
+          id: 'image-1',
+          filepath: null,
+          url: 'data:image/jpeg;base64,QUJD',
+          filename: 'product-1.jpg',
+        },
+      ],
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [
+        {
+          name: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero',
+          path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+          mimeType: 'image/png',
+          kind: 'screenshot',
+        },
+        {
+          name: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+          path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1.png',
+          mimeType: 'image/png',
+          kind: 'screenshot',
+        },
+      ],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'probe_ready',
+        asin: 'b00test123',
+        title: 'Amazon title',
+        price: null,
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        description: 'Amazon description snippet',
+        amazonDetails: null,
+        amazonProbe: {
+          asin: 'b00test123',
+          pageTitle: 'Amazon title',
+          descriptionSnippet: 'Amazon description snippet',
+          candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+          canonicalUrl: 'https://www.amazon.com/dp/B00TEST123',
+          heroImageUrl: 'data:image/jpeg;base64,QUJDREVGRw==',
+          heroImageAlt: 'Acme product',
+          heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+          artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+          bulletPoints: ['Steel frame'],
+          bulletCount: 1,
+          attributeCount: 1,
+        },
+        matchedImageId: 'image-1',
+        steps: [
+          {
+            key: 'amazon_probe',
+            label: 'Probe Amazon product page',
+            group: 'amazon',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'probe_ready',
+            status: 'completed',
+            message: 'Collected Amazon candidate page evidence before extraction.',
+            warning: null,
+            details: [],
+            url: 'https://www.amazon.com/dp/B00TEST123',
+            startedAt: '2026-04-11T04:04:00.000Z',
+            completedAt: '2026-04-11T04:04:03.000Z',
+            durationMs: 3000,
+          },
+        ],
+      },
+      finalUrl: 'https://www.amazon.com/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.85,
+      onlyForAmbiguousCandidates: false,
+      modelId: 'gpt-4o',
+      systemPrompt: 'Judge the Amazon page conservatively.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_match',
+      },
+    });
+    mocks.readPlaywrightEngineArtifactMock.mockImplementation(async ({ fileName }) => {
+      if (fileName === 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png') {
+        return {
+          artifact: {
+            name: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero',
+            path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+            mimeType: 'image/png',
+            kind: 'screenshot',
+          },
+          content: Buffer.from('amazon-hero-screenshot'),
+        };
+      }
+
+      return {
+        artifact: {
+          name: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+          path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1.png',
+          mimeType: 'image/png',
+          kind: 'screenshot',
+        },
+        content: Buffer.from('amazon-screenshot'),
+      };
+    });
+    mocks.runBrainChatCompletionMock.mockResolvedValue({
+      vendor: 'openai',
+      modelId: 'gpt-4o',
+      text: JSON.stringify({
+        sameProduct: true,
+        imageMatch: true,
+        descriptionMatch: true,
+        pageRepresentsSameProduct: true,
+        confidence: 0.93,
+        proceed: true,
+        reasons: ['Packaging and title align with the source product.'],
+        mismatches: [],
+      }),
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledTimes(1);
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            directAmazonCandidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+            directMatchedImageId: 'image-1',
+            directAmazonCandidateRank: 1,
+            probeOnlyOnAmazonMatch: false,
+            skipAmazonProbe: true,
+          }),
+        }),
+      })
+    );
+    expect(mocks.updateProductMock).not.toHaveBeenCalled();
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        amazonProbe: expect.objectContaining({
+          artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+        }),
+        amazonEvaluation: expect.objectContaining({
+          status: 'approved',
+          proceed: true,
+        }),
+      })
+    );
+  });
+
+  it('does not rerun AI evaluation during approved-candidate extraction completion', async () => {
+    const scan = createScan({
+      status: 'running',
+      engineRunId: 'run-2',
+      rawResult: {
+        runId: 'run-2',
+        approvedCandidateExtraction: true,
+      },
+      amazonProbe: {
+        asin: 'b00test123',
+        pageTitle: 'Amazon title',
+        descriptionSnippet: 'Amazon description snippet',
+        candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+        canonicalUrl: 'https://www.amazon.com/dp/B00TEST123',
+        heroImageUrl: 'data:image/jpeg;base64,QUJDREVGRw==',
+        heroImageAlt: 'Acme product',
+        heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+        artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+        bulletPoints: ['Steel frame'],
+        bulletCount: 1,
+        attributeCount: 1,
+      },
+      amazonEvaluation: {
+        status: 'approved',
+        sameProduct: true,
+        imageMatch: true,
+        descriptionMatch: true,
+        pageRepresentsSameProduct: true,
+        confidence: 0.93,
+        proceed: true,
+        threshold: 0.85,
+        reasons: ['Packaging and title align with the source product.'],
+        mismatches: [],
+        modelId: 'gpt-4o',
+        brainApplied: {
+          capability: 'product.scan.amazon_candidate_match',
+        },
+        evidence: {
+          candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+          pageTitle: 'Amazon title',
+          heroImageSource: 'data:image/jpeg;base64,QUJDREVGRw==',
+          heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+          screenshotArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-1.png',
+          htmlArtifactName: null,
+          productImageSource: 'data:image/jpeg;base64,QUJD',
+        },
+        error: null,
+        evaluatedAt: '2026-04-11T04:04:05.000Z',
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'completed',
+      completedAt: '2026-04-11T04:06:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'matched',
+        asin: 'b00test123',
+        title: 'Amazon title',
+        price: '$19.99',
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        description: 'Amazon description',
+        amazonProbe: null,
+        amazonDetails: {
+          brand: 'Acme',
+          manufacturer: 'Acme Manufacturing',
+          bulletPoints: ['Steel frame'],
+          attributes: [],
+          rankings: [],
+        },
+        matchedImageId: 'image-1',
+      },
+      finalUrl: 'https://www.amazon.com/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.updateProductMock.mockResolvedValue({ id: 'product-1', asin: 'B00TEST123' });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.runBrainChatCompletionMock).not.toHaveBeenCalled();
+    expect(mocks.updateProductMock).toHaveBeenCalledWith(
+      'product-1',
+      { asin: 'B00TEST123' },
+      { userId: 'user-1' }
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'completed',
+        amazonProbe: expect.objectContaining({
+          artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+        }),
+        amazonEvaluation: expect.objectContaining({
+          status: 'approved',
+        }),
+      })
+    );
+  });
+
+  it('continues with the next Amazon candidate after a probe-stage AI rejection', async () => {
+    const scan = createScan({
+      status: 'running',
+      imageCandidates: [
+        {
+          id: 'image-1',
+          filepath: null,
+          url: 'data:image/jpeg;base64,QUJD',
+          filename: 'product-1.jpg',
+        },
+      ],
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [
+        {
+          name: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero',
+          path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+          mimeType: 'image/png',
+          kind: 'screenshot',
+        },
+        {
+          name: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+          path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1.png',
+          mimeType: 'image/png',
+          kind: 'screenshot',
+        },
+      ],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'probe_ready',
+        asin: 'b00test123',
+        title: 'Wrong Amazon title',
+        price: null,
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        description: 'Wrong Amazon description snippet',
+        candidateUrls: [
+          'https://www.amazon.com/dp/B00TEST123',
+          'https://www.amazon.com/dp/B00TEST456',
+          'https://www.amazon.com/dp/B00TEST789',
+        ],
+        amazonDetails: null,
+        amazonProbe: {
+          asin: 'b00test123',
+          pageTitle: 'Wrong Amazon title',
+          descriptionSnippet: 'Wrong Amazon description snippet',
+          candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+          canonicalUrl: 'https://www.amazon.com/dp/B00TEST123',
+          heroImageUrl: 'data:image/jpeg;base64,QUJDREVGRw==',
+          heroImageAlt: 'Wrong product',
+          heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+          artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+          bulletPoints: ['Wrong bullet'],
+          bulletCount: 1,
+          attributeCount: 1,
+        },
+        matchedImageId: 'image-1',
+        steps: [
+          {
+            key: 'amazon_probe',
+            label: 'Probe Amazon product page',
+            group: 'amazon',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'probe_ready',
+            status: 'completed',
+            message: 'Collected Amazon candidate page evidence before extraction.',
+            warning: null,
+            details: [],
+            url: 'https://www.amazon.com/dp/B00TEST123',
+            startedAt: '2026-04-11T04:04:00.000Z',
+            completedAt: '2026-04-11T04:04:03.000Z',
+            durationMs: 3000,
+          },
+        ],
+      },
+      finalUrl: 'https://www.amazon.com/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.85,
+      onlyForAmbiguousCandidates: false,
+      modelId: 'gpt-4o',
+      systemPrompt: 'Judge the Amazon page conservatively.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_match',
+      },
+    });
+    mocks.readPlaywrightEngineArtifactMock.mockImplementation(async ({ fileName }) => {
+      if (fileName === 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png') {
+        return {
+          artifact: {
+            name: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero',
+            path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+            mimeType: 'image/png',
+            kind: 'screenshot',
+          },
+          content: Buffer.from('amazon-hero-screenshot'),
+        };
+      }
+
+      return {
+        artifact: {
+          name: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+          path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1.png',
+          mimeType: 'image/png',
+          kind: 'screenshot',
+        },
+        content: Buffer.from('amazon-screenshot'),
+      };
+    });
+    mocks.runBrainChatCompletionMock.mockResolvedValue({
+      vendor: 'openai',
+      modelId: 'gpt-4o',
+      text: JSON.stringify({
+        sameProduct: false,
+        imageMatch: false,
+        descriptionMatch: false,
+        pageRepresentsSameProduct: false,
+        confidence: 0.21,
+        proceed: false,
+        reasons: ['The Amazon page shows a different product.'],
+        mismatches: ['Title and image do not match.'],
+      }),
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledTimes(1);
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            directAmazonCandidateUrl: 'https://www.amazon.com/dp/B00TEST456',
+            directAmazonCandidateUrls: [
+              'https://www.amazon.com/dp/B00TEST456',
+              'https://www.amazon.com/dp/B00TEST789',
+            ],
+            directMatchedImageId: 'image-1',
+            directAmazonCandidateRank: 2,
+            probeOnlyOnAmazonMatch: true,
+            skipAmazonProbe: false,
+          }),
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        url: 'https://www.amazon.com/dp/B00TEST456',
+        amazonProbe: expect.objectContaining({
+          artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+        }),
+        amazonEvaluation: expect.objectContaining({
+          status: 'rejected',
+          proceed: false,
+        }),
+      })
+    );
+  });
+
   it('turns a matched Amazon candidate into no_match when the AI evaluator rejects it', async () => {
     const scan = createScan({
       imageCandidates: [

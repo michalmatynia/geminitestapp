@@ -84,6 +84,34 @@ describe('product scan run feedback', () => {
     expect(feedback.variant).toBe('warning');
   });
 
+  it('keeps active scans in queued/running feedback even when the latest candidate was AI rejected', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        status: 'queued',
+        amazonEvaluation: {
+          status: 'rejected',
+          sameProduct: false,
+          imageMatch: false,
+          descriptionMatch: false,
+          pageRepresentsSameProduct: false,
+          confidence: 0.24,
+          proceed: false,
+          threshold: 0.85,
+          reasons: ['Different product.'],
+          mismatches: ['Hero image does not match.'],
+          modelId: 'gpt-4o',
+          brainApplied: null,
+          evidence: null,
+          error: null,
+          evaluatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      })
+    );
+
+    expect(feedback.label).toBe('Queued');
+    expect(feedback.variant).toBe('pending');
+  });
+
   it('surfaces evaluator failures distinctly from generic scan failures', () => {
     const feedback = buildProductScanRunFeedbackFromRecord(
       createScanRecord({

@@ -348,6 +348,10 @@ describe('ProductListingsSyncPanel', () => {
       expect(refetchPreviewMock).toHaveBeenCalledTimes(1);
     });
 
+    expect(screen.getByRole('link', { name: 'Base Product Sync' })).toHaveAttribute(
+      'href',
+      '/admin/integrations/aggregators/base-com/synchronization-engine'
+    );
     expect(screen.getAllByText('App -> Base').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Base -> App').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Base Product Sync').length).toBeGreaterThan(0);

@@ -63,6 +63,7 @@ export type AmazonScanScriptResult = {
   description: string | null;
   amazonDetails: ProductScanAmazonDetails;
   amazonProbe: ProductScanAmazonProbe;
+  candidateUrls: string[];
   matchedImageId: string | null;
   message: string | null;
   currentUrl: string | null;
@@ -228,6 +229,25 @@ export const normalizeParsedAmazonDetails = (value: unknown): ProductScanAmazonD
 export const normalizeParsedAmazonProbe = (value: unknown): ProductScanAmazonProbe => {
   const parsed = productScanAmazonProbeSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedCandidateUrls = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  for (const entry of value) {
+    const next = readOptionalString(entry, PRODUCT_SCAN_URL_MAX_LENGTH);
+    if (!next || seen.has(next)) {
+      continue;
+    }
+    seen.add(next);
+    normalized.push(next);
+  }
+
+  return normalized;
 };
 
 const resolveComparableStepAttempt = (attempt: number | null | undefined): number =>
@@ -528,6 +548,7 @@ export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptRes
     description: readOptionalString(record?.['description'], PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH),
     amazonDetails: normalizeParsedAmazonDetails(record?.['amazonDetails']),
     amazonProbe: normalizeParsedAmazonProbe(record?.['amazonProbe']),
+    candidateUrls: normalizeParsedCandidateUrls(record?.['candidateUrls']),
     matchedImageId: readOptionalString(
       record?.['matchedImageId'],
       PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH
@@ -548,7 +569,9 @@ export const buildAmazonScanRequestInput = (input: {
   allowManualVerification: boolean;
   manualVerificationTimeoutMs: number;
   probeOnlyOnAmazonMatch?: boolean;
+  skipAmazonProbe?: boolean;
   directAmazonCandidateUrl?: string | null;
+  directAmazonCandidateUrls?: string[] | null;
   directMatchedImageId?: string | null;
   directAmazonCandidateRank?: number | null;
 }) => ({
@@ -563,7 +586,9 @@ export const buildAmazonScanRequestInput = (input: {
   allowManualVerification: input.allowManualVerification,
   manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
   probeOnlyOnAmazonMatch: input.probeOnlyOnAmazonMatch === true,
+  skipAmazonProbe: input.skipAmazonProbe === true,
   directAmazonCandidateUrl: readOptionalString(input.directAmazonCandidateUrl, PRODUCT_SCAN_URL_MAX_LENGTH),
+  directAmazonCandidateUrls: normalizeParsedCandidateUrls(input.directAmazonCandidateUrls),
   directMatchedImageId: readOptionalString(input.directMatchedImageId, PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH),
   directAmazonCandidateRank:
     typeof input.directAmazonCandidateRank === 'number' &&

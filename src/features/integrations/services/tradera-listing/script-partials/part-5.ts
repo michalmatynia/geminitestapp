@@ -303,7 +303,11 @@ export const PART_5 = String.raw`
           }
         }
 
-        await advancePastImagesStep(imageInput, expectedUploadCount, baselinePreviewCount);
+        const imageAdvanceResult = await advancePastImagesStep(
+          imageInput,
+          expectedUploadCount,
+          baselinePreviewCount
+        );
         const imageDraftState = await waitForDraftSaveSettled();
         if (!imageDraftState?.settled) {
           throw new Error(
@@ -313,11 +317,65 @@ export const PART_5 = String.raw`
 
         return {
           imageCount: expectedUploadCount,
+          expectedUploadCount,
+          observedPreviewCount: imageAdvanceResult?.observedPreviewCount ?? null,
           uploadSource,
         };
       }
 
       throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload could not be dispatched.');
+    };
+
+    const ensureRetryImageCleanupSettled = async ({
+      reason,
+      initialUploadSource,
+    }) => {
+      const removedCount = await clearDraftImagesIfPresent().catch(() => null);
+      const deadline = Date.now() + 15_000;
+      let lastCleanupState = null;
+
+      while (Date.now() < deadline) {
+        const [cleanupState, imageUploadPending] = await Promise.all([
+          readDraftImageCleanupState().catch(() => ({
+            currentUrl: page.url(),
+            draftImageRemoveControls: null,
+            uploadedImagePreviewCount: null,
+            onHomepage: false,
+            onSellingRoute: true,
+          })),
+          isImageUploadPending().catch(() => false),
+        ]);
+
+        lastCleanupState = {
+          ...cleanupState,
+          imageUploadPending,
+          removedCount,
+        };
+
+        if (
+          !imageUploadPending &&
+          cleanupState.draftImageRemoveControls === 0 &&
+          cleanupState.uploadedImagePreviewCount === 0
+        ) {
+          log?.('tradera.quicklist.image.retry_cleanup', {
+            initialUploadSource,
+            reason,
+            ...lastCleanupState,
+          });
+          return;
+        }
+
+        await wait(500);
+      }
+
+      throw new Error(
+        'FAIL_IMAGE_SET_INVALID: Tradera retry image cleanup did not clear the previous upload state. Last state: ' +
+          JSON.stringify({
+            initialUploadSource,
+            reason,
+            ...lastCleanupState,
+          })
+      );
     };
 
     let imageUploadResult;
@@ -353,7 +411,10 @@ export const PART_5 = String.raw`
           imageUrlCount: imageUrls.length,
         });
 
-        await clearDraftImagesIfPresent().catch(() => undefined);
+        await ensureRetryImageCleanupSettled({
+          reason: error instanceof Error ? error.message : String(error),
+          initialUploadSource,
+        });
         const fallbackUploadFiles = await downloadImages();
         imageUploadResult = await performImageUpload(fallbackUploadFiles, 'downloaded');
       }

@@ -481,8 +481,12 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       title:
         readOptionalString(input.parsedResult.amazonProbe?.pageTitle) ??
         readOptionalString(input.parsedResult.title),
-      description: readOptionalString(input.parsedResult.description),
-      asin: readOptionalString(input.parsedResult.asin),
+      description:
+        readOptionalString(input.parsedResult.amazonProbe?.descriptionSnippet) ??
+        readOptionalString(input.parsedResult.description),
+      asin:
+        readOptionalString(input.parsedResult.amazonProbe?.asin) ??
+        readOptionalString(input.parsedResult.asin),
       brand: readOptionalString(amazonDetails?.brand),
       manufacturer: readOptionalString(amazonDetails?.manufacturer),
       modelNumber: readOptionalString(amazonDetails?.modelNumber),
@@ -496,9 +500,13 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       ean: readOptionalString(amazonDetails?.ean),
       gtin: readOptionalString(amazonDetails?.gtin),
       upc: readOptionalString(amazonDetails?.upc),
-      bulletPoints: Array.isArray(amazonDetails?.bulletPoints)
-        ? amazonDetails.bulletPoints.slice(0, 8)
-        : [],
+      bulletPoints:
+        Array.isArray(input.parsedResult.amazonProbe?.bulletPoints) &&
+        input.parsedResult.amazonProbe.bulletPoints.length > 0
+          ? input.parsedResult.amazonProbe.bulletPoints.slice(0, 8)
+          : Array.isArray(amazonDetails?.bulletPoints)
+            ? amazonDetails.bulletPoints.slice(0, 8)
+            : [],
       attributes: Array.isArray(amazonDetails?.attributes)
         ? amazonDetails.attributes.slice(0, 12).map((attribute) => ({
             label: attribute.label,

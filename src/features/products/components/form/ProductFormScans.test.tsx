@@ -322,6 +322,96 @@ describe('ProductFormScans', () => {
     expect(screen.getByText('Waiting for reverse image results.')).toBeInTheDocument();
   });
 
+  it('shows candidate continuation context when the scan moves past an AI-rejected Amazon page', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-3c',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-3c',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: 'https://www.amazon.com/dp/B00TEST456',
+          description: null,
+          steps: [
+            {
+              key: 'queue_scan',
+              label: 'Continue with next Amazon candidate',
+              group: 'input',
+              attempt: 2,
+              candidateId: null,
+              candidateRank: null,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'run_queued',
+              status: 'completed',
+              message: 'Queued the next Amazon candidate after AI rejection.',
+              warning: null,
+              details: [
+                { label: 'Rejected candidate URL', value: 'https://www.amazon.com/dp/B00TEST123' },
+                { label: 'Next candidate URL', value: 'https://www.amazon.com/dp/B00TEST456' },
+              ],
+              url: 'https://www.amazon.com/dp/B00TEST456',
+              startedAt: '2026-04-11T03:59:02.000Z',
+              completedAt: '2026-04-11T03:59:03.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_open',
+              label: 'Open Amazon candidate',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-2',
+              candidateRank: 2,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_open_start',
+              status: 'running',
+              message: 'Opening Amazon candidate page.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B00TEST456',
+              startedAt: '2026-04-11T03:59:04.000Z',
+              completedAt: null,
+              durationMs: null,
+            },
+          ],
+          rawResult: {
+            candidateContinuation: true,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Candidate continuation')).toBeInTheDocument();
+    expect(screen.getByText('After AI rejection')).toBeInTheDocument();
+    expect(screen.getByText('Continue with next Amazon candidate')).toBeInTheDocument();
+    expect(screen.getByText('Queued the next Amazon candidate after AI rejection.')).toBeInTheDocument();
+    expect(screen.getByText('Rejected: https://www.amazon.com/dp/B00TEST123')).toBeInTheDocument();
+    expect(screen.getByText('Next: https://www.amazon.com/dp/B00TEST456')).toBeInTheDocument();
+  });
+
   it('shows a captcha badge and guidance when manual verification is pending', async () => {
     mocks.apiGetMock.mockResolvedValue({
       scans: [

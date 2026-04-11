@@ -126,6 +126,7 @@ describe('ProductListingDetails', () => {
                       continueButtonDisabled: true,
                     },
                     categorySource: 'categoryMapper',
+                    categoryFallbackUsed: false,
                     categoryMappingReason: 'mapped',
                     categoryMatchScope: 'catalog_match',
                     categoryInternalCategoryId: 'internal-category-1',
@@ -135,6 +136,9 @@ describe('ProductListingDetails', () => {
                     shippingPriceEur: 5,
                     imageInputSource: 'local',
                     imageUploadSource: 'downloaded',
+                    imageUploadFallbackUsed: true,
+                    plannedImageCount: 3,
+                    observedImagePreviewCount: 4,
                     localImagePathCount: 2,
                     imageUrlCount: 3,
                     rawResult: {
@@ -229,6 +233,12 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('local')).toBeInTheDocument();
     expect(screen.getByText('Actual image upload source:')).toBeInTheDocument();
     expect(screen.getByText('downloaded')).toBeInTheDocument();
+    expect(screen.getByText('Image upload fallback used:')).toBeInTheDocument();
+    expect(screen.getAllByText('Yes').length).toBeGreaterThan(0);
+    expect(screen.getByText('Planned image count:')).toBeInTheDocument();
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0);
+    expect(screen.getByText('Observed uploaded previews:')).toBeInTheDocument();
+    expect(screen.getAllByText('4').length).toBeGreaterThan(0);
     expect(screen.getByText('Local image files:')).toBeInTheDocument();
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
     expect(screen.getByText('Image URLs:')).toBeInTheDocument();
@@ -415,6 +425,7 @@ describe('ProductListingDetails', () => {
                   metadata: {
                     scriptMode: 'scripted',
                     categorySource: 'fallback',
+                    categoryFallbackUsed: true,
                     categoryMappingReason: 'ambiguous_external_category',
                     categoryMatchScope: 'cross_catalog',
                     categoryInternalCategoryId: 'internal-category-1',
@@ -429,6 +440,8 @@ describe('ProductListingDetails', () => {
 
     expect(screen.getByText('Category source:')).toBeInTheDocument();
     expect(screen.getByText('fallback')).toBeInTheDocument();
+    expect(screen.getByText('Category fallback used:')).toBeInTheDocument();
+    expect(screen.getAllByText('Yes').length).toBeGreaterThan(0);
     expect(screen.getByText('Category mapping reason:')).toBeInTheDocument();
     expect(screen.getByText('ambiguous_external_category')).toBeInTheDocument();
     expect(screen.getByText('Category match scope:')).toBeInTheDocument();

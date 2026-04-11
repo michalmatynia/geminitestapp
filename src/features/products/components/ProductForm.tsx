@@ -138,13 +138,13 @@ type ProductFormTabDefinition = {
 
 const PRODUCT_FORM_TABS: ProductFormTabDefinition[] = [
   { value: 'general', label: 'General', icon: Package },
-  { value: 'marketplace-copy', label: 'Marketplace Copy', icon: Languages },
   { value: 'other', label: 'Other', icon: Settings2 },
-  { value: 'custom-fields', label: 'Custom Fields', icon: LayoutGrid },
   { value: 'parameters', label: 'Parameters', icon: ListFilter },
   { value: 'images', label: 'Images', icon: ImageIcon },
-  { value: 'scans', label: 'Scans', icon: Search },
   { value: 'studio', label: 'Studio', icon: Sparkles },
+  { value: 'marketplace-copy', label: 'Marketplace Copy', icon: Languages },
+  { value: 'custom-fields', label: 'Custom Fields', icon: LayoutGrid },
+  { value: 'scans', label: 'Scans', icon: Search },
   { value: 'import-info', label: 'Import Info', icon: Database },
   { value: 'note-link', label: 'Note Link', icon: Link2 },
   { value: 'validation', label: 'Validation', icon: ShieldAlert },
@@ -456,28 +456,28 @@ export default function ProductForm({
             <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
               <ProductFormGeneral />
             </TabsContent>
-            <TabsContent value='marketplace-copy' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('marketplace-copy') && <ProductFormMarketplaceCopy />}
-            </TabsContent>
-            {/* Remaining tabs use deferred mounting: content renders on first visit and */}
-            {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}
             <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
               <ProductFormOther />
             </TabsContent>
-            <TabsContent value='custom-fields' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('custom-fields') && <ProductFormCustomFields />}
-            </TabsContent>
+            {/* Remaining tabs use deferred mounting: content renders on first visit and */}
+            {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}
             <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('parameters') && <ProductFormParameters />}
             </TabsContent>
             <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('images') && <ProductFormImages />}
             </TabsContent>
-            <TabsContent value='scans' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('scans') && <ProductFormScans />}
-            </TabsContent>
             <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('studio') && <ProductFormStudio />}
+            </TabsContent>
+            <TabsContent value='marketplace-copy' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('marketplace-copy') && <ProductFormMarketplaceCopy />}
+            </TabsContent>
+            <TabsContent value='custom-fields' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('custom-fields') && <ProductFormCustomFields />}
+            </TabsContent>
+            <TabsContent value='scans' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('scans') && <ProductFormScans />}
             </TabsContent>
             <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('import-info') && <ProductFormImportInfo />}

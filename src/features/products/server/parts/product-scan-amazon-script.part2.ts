@@ -485,7 +485,10 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
 
   const buildAmazonCandidateOutcome = (input = {}) => ({
     status:
-      input.status === 'matched' || input.status === 'no_match' || input.status === 'failed'
+      input.status === 'matched' ||
+      input.status === 'probe_ready' ||
+      input.status === 'no_match' ||
+      input.status === 'failed'
         ? input.status
         : 'failed',
     asin: toText(input.asin),
@@ -497,6 +500,11 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
       input.amazonDetails && typeof input.amazonDetails === 'object' ? input.amazonDetails : null,
     amazonProbe:
       input.amazonProbe && typeof input.amazonProbe === 'object' ? input.amazonProbe : null,
+    candidateUrls: Array.isArray(input.candidateUrls)
+      ? input.candidateUrls
+          .map((value) => toText(value))
+          .filter(Boolean)
+      : [],
     matchedImageId: toText(input.matchedImageId),
     currentUrl: toText(input.currentUrl) || page.url(),
     message: toText(input.message),
@@ -877,9 +885,20 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         await page.locator('link[rel="canonical"]').first().getAttribute('href').catch(() => null)
       );
       const canonicalUrl = toAbsoluteUrl(canonicalHref, currentUrl) || currentUrl;
+      const asin =
+        extractAsin(currentUrl) ||
+        extractAsin(canonicalUrl) ||
+        extractAsin(await page.locator('[data-asin]').first().getAttribute('data-asin').catch(() => null)) ||
+        extractAsin(await page.locator('input[name="ASIN"]').first().inputValue().catch(() => null));
       const pageTitle =
         (await readFirstText(['#productTitle', 'h1.a-size-large', 'h1#title'])) ||
         toText(await getMetaContent('meta[property="og:title"]'));
+      const descriptionSnippet =
+        (await readFirstText([
+          '#feature-bullets',
+          '#productDescription',
+          '#bookDescription_feature_div',
+        ])) || toText(await getMetaContent('meta[name="description"]'));
       const heroImageSelectors = [
         '#landingImage',
         '#imgTagWrapperId img',
@@ -912,18 +931,22 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
           break;
         }
       }
-      const bulletCount = (await readAmazonBulletPoints()).length;
+      const bulletPoints = (await readAmazonBulletPoints()).slice(0, 8);
+      const bulletCount = bulletPoints.length;
       const attributeCount = (await readAmazonAttributePairs()).length;
       await artifacts.screenshot(artifactKey).catch(() => undefined);
       await artifacts.html(artifactKey).catch(() => undefined);
       const amazonProbe = {
+        asin,
         pageTitle,
+        descriptionSnippet,
         candidateUrl: toText(candidateUrl),
         canonicalUrl,
         heroImageUrl,
         heroImageAlt,
         heroImageArtifactName,
         artifactKey,
+        bulletPoints,
         bulletCount,
         attributeCount,
       };
@@ -939,7 +962,9 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         message: 'Collected Amazon candidate page evidence before extraction.',
         url: currentUrl,
         details: [
+          { label: 'ASIN', value: asin },
           { label: 'Title', value: pageTitle },
+          { label: 'Description', value: descriptionSnippet },
           { label: 'Canonical URL', value: canonicalUrl },
           { label: 'Hero image URL', value: heroImageUrl },
           { label: 'Hero image artifact', value: heroImageArtifactName },
@@ -1029,12 +1054,52 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
       });
     }
 
-    const probeResult = await probeAmazonProductPage({
-      candidateUrl,
-      matchedImageId,
-      amazonCandidateAttempt,
-      candidateRank,
-    });
+    const skipAmazonProbe = input?.skipAmazonProbe === true;
+    let probeResult = {
+      success: true,
+      amazonProbe: null,
+    };
+
+    if (skipAmazonProbe) {
+      upsertScanStep({
+        key: 'amazon_probe',
+        label: 'Probe Amazon product page',
+        attempt: amazonCandidateAttempt,
+        candidateId: toText(matchedImageId),
+        candidateRank,
+        status: 'skipped',
+        resultCode: 'probe_reused',
+        message: 'Reused earlier Amazon probe evidence for approved direct extraction.',
+        url: page.url(),
+      });
+    } else {
+      probeResult = await probeAmazonProductPage({
+        candidateUrl,
+        matchedImageId,
+        amazonCandidateAttempt,
+        candidateRank,
+      });
+    }
+
+    if (input?.probeOnlyOnAmazonMatch === true) {
+      return buildAmazonCandidateOutcome({
+        status: 'probe_ready',
+        asin: probeResult.amazonProbe?.asin ?? null,
+        title: probeResult.amazonProbe?.pageTitle ?? null,
+        price: null,
+        url:
+          probeResult.amazonProbe?.canonicalUrl ||
+          probeResult.amazonProbe?.candidateUrl ||
+          page.url(),
+        description: probeResult.amazonProbe?.descriptionSnippet ?? null,
+        amazonDetails: null,
+        amazonProbe: probeResult.amazonProbe,
+        matchedImageId: toText(matchedImageId),
+        currentUrl: page.url(),
+        message: 'Collected Amazon candidate evidence for AI evaluation.',
+        stage: 'amazon_probe',
+      });
+    }
 
     return await extractAmazonProductFromPage({
       candidateUrl,
@@ -1050,6 +1115,17 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
       typeof input?.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0
         ? Math.trunc(input.batchIndex)
         : 0;
+    const directAmazonCandidateUrl = toText(input?.directAmazonCandidateUrl);
+    const directAmazonCandidateUrls = Array.isArray(input?.directAmazonCandidateUrls)
+      ? input.directAmazonCandidateUrls.map((value) => toText(value)).filter(Boolean)
+      : [];
+    const directMatchedImageId = toText(input?.directMatchedImageId);
+    const directAmazonCandidateRank =
+      typeof input?.directAmazonCandidateRank === 'number' &&
+      Number.isFinite(input.directAmazonCandidateRank) &&
+      input.directAmazonCandidateRank > 0
+        ? Math.trunc(input.directAmazonCandidateRank)
+        : 1;
     if (batchIndex > 0) {
       await emitProgress({
         stage: 'validate',
@@ -1105,6 +1181,55 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         (imageCandidates.length === 1 ? '' : 's') +
         '.',
     });
+
+    if (directAmazonCandidateUrl) {
+      const extracted = await extractAmazonPageData(
+        directAmazonCandidateUrl,
+        directMatchedImageId,
+        1,
+        directAmazonCandidateRank
+      );
+      const directCandidateUrls =
+        directAmazonCandidateUrls.length > 0
+          ? directAmazonCandidateUrls
+          : [directAmazonCandidateUrl].filter(Boolean);
+
+      if (extracted.status === 'matched') {
+        await artifacts.screenshot('amazon-scan-match').catch(() => undefined);
+        await artifacts.html('amazon-scan-match').catch(() => undefined);
+        await emitResult({
+          ...extracted,
+          candidateUrls: directCandidateUrls,
+        });
+        return;
+      }
+
+      if (extracted.status === 'probe_ready') {
+        await emitResult({
+          ...extracted,
+          candidateUrls: directCandidateUrls,
+        });
+        return;
+      }
+
+      if (extracted.status === 'no_match') {
+        await artifacts.screenshot('amazon-scan-no-match').catch(() => undefined);
+        await artifacts.html('amazon-scan-no-match').catch(() => undefined);
+        await emitResult({
+          ...extracted,
+          candidateUrls: directCandidateUrls,
+        });
+        return;
+      }
+
+      await artifacts.screenshot('amazon-scan-error').catch(() => undefined);
+      await artifacts.html('amazon-scan-error').catch(() => undefined);
+      await emitResult({
+        ...extracted,
+        candidateUrls: directCandidateUrls,
+      });
+      return;
+    }
 
     let attemptedAmazonCandidateCount = 0;
     let openedAmazonCandidateCount = 0;

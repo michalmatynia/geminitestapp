@@ -132,9 +132,18 @@ export const PART_4D = String.raw`
       );
     }
 
+    const observedPreviewCount =
+      imageSettleState &&
+      typeof imageSettleState === 'object' &&
+      typeof imageSettleState.uploadedImagePreviewCount === 'number'
+        ? imageSettleState.uploadedImagePreviewCount
+        : null;
+
     const imageStepEntry = await waitForImageStepActionable(20_000);
     if (imageStepEntry.type === 'editor_ready') {
-      return true;
+      return {
+        observedPreviewCount,
+      };
     }
 
     if (imageStepEntry.type !== 'continue' || !imageStepEntry.button) {
@@ -150,7 +159,9 @@ export const PART_4D = String.raw`
 
       const imageStepAfterContinue = await waitForImageStepActionable(20_000);
       if (imageStepAfterContinue.type === 'editor_ready') {
-        return true;
+        return {
+          observedPreviewCount,
+        };
       }
 
       if (imageStepAfterContinue.type !== 'continue' || !imageStepAfterContinue.button) {

@@ -38,7 +38,10 @@ export const canUseFallbackTraderaCategory = ({
   categoryMapping,
 }: {
   categoryMapping: TraderaCategoryMappingResolution;
-}): boolean => categoryMapping.reason === 'no_active_mapping';
+}): boolean =>
+  categoryMapping.reason === 'no_active_mapping' ||
+  categoryMapping.reason === 'stale_external_category' ||
+  categoryMapping.reason === 'invalid_external_category';
 
 export const assertTraderaCategoryMappingReady = ({
   categoryMapping,

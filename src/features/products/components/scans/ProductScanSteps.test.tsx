@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ProductScanSteps,
   resolveProductScanActiveStepSummary,
+  resolveProductScanContinuationSummary,
   resolveProductScanLatestOutcomeSummary,
 } from './ProductScanSteps';
 
@@ -183,5 +184,136 @@ describe('ProductScanSteps', () => {
       url: 'https://www.google.com/searchbyimage?image_url=https://cdn.example.com/image-2.jpg',
     });
     expect(summary?.timingLabel).toContain('Duration 8.0 s');
+  });
+
+  it('resolves candidate continuation summaries after AI rejection', () => {
+    const summary = resolveProductScanContinuationSummary([
+      {
+        key: 'amazon_ai_evaluate',
+        label: 'Evaluate Amazon candidate match',
+        group: 'amazon',
+        attempt: 1,
+        candidateId: 'image-2',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidate_rejected',
+        status: 'failed',
+        message: 'AI evaluator rejected the Amazon candidate.',
+        warning: null,
+        details: [],
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+      {
+        key: 'queue_scan',
+        label: 'Continue with next Amazon candidate',
+        group: 'input',
+        attempt: 2,
+        candidateId: null,
+        candidateRank: null,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'run_queued',
+        status: 'completed',
+        message: 'Queued the next Amazon candidate after AI rejection.',
+        warning: null,
+        details: [
+          { label: 'Rejected candidate URL', value: 'https://www.amazon.com/dp/B00TEST123' },
+          { label: 'Next candidate URL', value: 'https://www.amazon.com/dp/B00TEST456' },
+        ],
+        url: 'https://www.amazon.com/dp/B00TEST456',
+        startedAt: '2026-04-11T10:00:08.000Z',
+        completedAt: '2026-04-11T10:00:09.000Z',
+        durationMs: 1000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      phaseLabel: 'Input',
+      stepLabel: 'Continue with next Amazon candidate',
+      message: 'Queued the next Amazon candidate after AI rejection.',
+      resultCodeLabel: 'Run Queued',
+      attempt: 2,
+      rejectedUrl: 'https://www.amazon.com/dp/B00TEST123',
+      nextUrl: 'https://www.amazon.com/dp/B00TEST456',
+    });
+  });
+
+  it('renders recovery badges and context for continuation attempts in the timeline', () => {
+    render(
+      <ProductScanSteps
+        steps={[
+          {
+            key: 'amazon_ai_evaluate',
+            label: 'Evaluate Amazon candidate match',
+            group: 'amazon',
+            attempt: 1,
+            candidateId: 'image-2',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'candidate_rejected',
+            status: 'failed',
+            message: 'AI evaluator rejected the Amazon candidate.',
+            warning: null,
+            details: [],
+            url: 'https://www.amazon.com/dp/B00TEST123',
+            startedAt: '2026-04-11T10:00:05.000Z',
+            completedAt: '2026-04-11T10:00:08.000Z',
+            durationMs: 3000,
+          },
+          {
+            key: 'queue_scan',
+            label: 'Continue with next Amazon candidate',
+            group: 'input',
+            attempt: 2,
+            candidateId: null,
+            candidateRank: null,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'run_queued',
+            status: 'completed',
+            message: 'Queued the next Amazon candidate after AI rejection.',
+            warning: null,
+            details: [
+              { label: 'Rejected candidate URL', value: 'https://www.amazon.com/dp/B00TEST123' },
+              { label: 'Next candidate URL', value: 'https://www.amazon.com/dp/B00TEST456' },
+            ],
+            url: 'https://www.amazon.com/dp/B00TEST456',
+            startedAt: '2026-04-11T10:00:08.000Z',
+            completedAt: '2026-04-11T10:00:09.000Z',
+            durationMs: 1000,
+          },
+          {
+            key: 'amazon_open',
+            label: 'Open Amazon candidate',
+            group: 'amazon',
+            attempt: 2,
+            candidateId: 'image-2',
+            candidateRank: 2,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'candidate_open_start',
+            status: 'running',
+            message: 'Opening Amazon candidate page.',
+            warning: null,
+            details: [],
+            url: 'https://www.amazon.com/dp/B00TEST456',
+            startedAt: '2026-04-11T10:00:10.000Z',
+            completedAt: null,
+            durationMs: null,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText('AI rejection recovery')).toBeInTheDocument();
+    expect(screen.getByText('Recovery attempt')).toBeInTheDocument();
+    expect(
+      screen.getByText('Continues after AI rejection of https://www.amazon.com/dp/B00TEST123.')
+    ).toBeInTheDocument();
   });
 });

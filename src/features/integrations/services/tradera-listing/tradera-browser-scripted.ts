@@ -339,12 +339,41 @@ const buildSuccessMetadata = ({
   runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
 }): Record<string, unknown> => {
   const traderaPricing = toRecord(scriptInput['traderaPricing']);
+  const traderaCategory = toRecord(scriptInput['traderaCategory']);
+  const traderaCategoryMapping = toRecord(scriptInput['traderaCategoryMapping']);
+  const traderaShipping = toRecord(scriptInput['traderaShipping']);
   const imageDiagnostics = resolveScriptInputImageDiagnostics(scriptInput);
   const executionSteps = buildTraderaQuicklistExecutionSteps({
     action,
     rawResult: result.rawResult,
     logs: result.logs ?? [],
   });
+  const categoryId = toTrimmedString(traderaCategory['externalId']) || null;
+  const categoryName = toTrimmedString(traderaCategory['name']) || null;
+  const categoryPath =
+    toTrimmedString(result.rawResult['categoryPath']) ||
+    toTrimmedString(traderaCategory['path']) ||
+    null;
+  const categorySource = toTrimmedString(result.rawResult['categorySource']) || null;
+  const categoryMappingReason = toTrimmedString(traderaCategoryMapping['reason']) || null;
+  const categoryMatchScope = toTrimmedString(traderaCategoryMapping['matchScope']) || null;
+  const categoryInternalCategoryId =
+    toTrimmedString(traderaCategoryMapping['internalCategoryId']) || null;
+  const shippingCondition = toTrimmedString(traderaShipping['shippingCondition']) || null;
+  const shippingGroupId = toTrimmedString(traderaShipping['shippingGroupId']) || null;
+  const shippingGroupName = toTrimmedString(traderaShipping['shippingGroupName']) || null;
+  const shippingGroupSource = toTrimmedString(traderaShipping['shippingGroupSource']) || null;
+  const shippingConditionReason = toTrimmedString(traderaShipping['reason']) || null;
+  const imageUploadSource =
+    typeof result.rawResult['imageUploadSource'] === 'string'
+      ? result.rawResult['imageUploadSource']
+      : null;
+  const plannedImageCount =
+    typeof result.rawResult['imageCount'] === 'number' ? result.rawResult['imageCount'] : null;
+  const observedImagePreviewCount =
+    typeof result.rawResult['observedPreviewCount'] === 'number'
+      ? result.rawResult['observedPreviewCount']
+      : null;
 
   return buildPlaywrightScriptListingMetadata({
     result,
@@ -363,11 +392,33 @@ const buildSuccessMetadata = ({
       ...(scriptValidationError ? { scriptValidationError } : {}),
       ...(executionSteps.length > 0 ? { executionSteps } : {}),
       ...traderaPricing,
+      categoryId,
+      categoryName,
+      categoryPath,
+      categorySource,
+      categoryMappingReason,
+      categoryMatchScope,
+      categoryInternalCategoryId,
+      shippingGroupId,
+      shippingGroupName,
+      shippingGroupSource,
+      shippingCondition,
+      shippingPriceEur:
+        typeof traderaShipping['shippingPriceEur'] === 'number' ? traderaShipping['shippingPriceEur'] : null,
+      shippingConditionReason,
+      matchedCategoryRuleIds: Array.isArray(traderaShipping['matchedCategoryRuleIds'])
+        ? traderaShipping['matchedCategoryRuleIds']
+        : [],
+      matchingShippingGroupIds: Array.isArray(traderaShipping['matchingShippingGroupIds'])
+        ? traderaShipping['matchingShippingGroupIds']
+        : [],
+      categoryFallbackUsed: categorySource === 'fallback',
       imageInputSource: imageDiagnostics.imageInputSource,
-      imageUploadSource:
-        typeof result.rawResult['imageUploadSource'] === 'string'
-          ? result.rawResult['imageUploadSource']
-          : null,
+      imageUploadSource,
+      imageUploadFallbackUsed:
+        imageDiagnostics.imageInputSource === 'local' && imageUploadSource === 'downloaded',
+      plannedImageCount,
+      observedImagePreviewCount,
       localImagePathCount: imageDiagnostics.localImagePathCount,
       imageUrlCount: imageDiagnostics.imageUrlCount,
     },

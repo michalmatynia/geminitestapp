@@ -8,6 +8,7 @@ import {
   productParameterLinkedTitleTermTypeSchema,
 } from '@/shared/contracts/products/parameters';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 
 const SELECTOR_TYPES = [
@@ -135,7 +136,36 @@ export async function DELETE_handler(
   params: { id: string }
 ): Promise<Response> {
   const repository = await getParameterRepository();
-  await repository.deleteParameter(params.id);
+  const parameter = await repository.getParameterById(params.id);
+  if (!parameter) {
+    throw notFoundError('Parameter not found', { parameterId: params.id });
+  }
+
+  await repository.deleteParameter(parameter.id);
+  const db = await getMongoDb();
+  const parameterId = parameter.id;
+  await Promise.all([
+    db.collection('products').updateMany(
+      { 'parameters.parameterId': parameterId },
+      {
+        $pull: {
+          parameters: {
+            parameterId,
+          },
+        },
+      }
+    ),
+    db.collection('product_drafts').updateMany(
+      { 'parameters.parameterId': parameterId },
+      {
+        $pull: {
+          parameters: {
+            parameterId,
+          },
+        },
+      }
+    ),
+  ]);
   CachedProductService.invalidateAll();
   return NextResponse.json({ success: true });
 }

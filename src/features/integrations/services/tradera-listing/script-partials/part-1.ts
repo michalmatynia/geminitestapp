@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v120
+  // tradera-quicklist-default:v123
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';

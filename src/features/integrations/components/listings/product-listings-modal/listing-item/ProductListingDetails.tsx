@@ -327,6 +327,14 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.categoryFallbackUsed ? (
+            <MetadataItem
+              label='Category fallback used'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.categoryMappingReason ? (
             <MetadataItem
               label='Category mapping reason'
@@ -425,6 +433,28 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Actual image upload source'
               value={traderaExecution.imageUploadSource}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.imageUploadFallbackUsed ? (
+            <MetadataItem
+              label='Image upload fallback used'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.plannedImageCount !== null ? (
+            <MetadataItem
+              label='Planned image count'
+              value={String(traderaExecution.plannedImageCount)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.observedImagePreviewCount !== null ? (
+            <MetadataItem
+              label='Observed uploaded previews'
+              value={String(traderaExecution.observedImagePreviewCount)}
               variant='minimal'
             />
           ) : null}

@@ -882,6 +882,119 @@ describe('ProductAmazonScanModal', () => {
     });
   });
 
+  it('shows candidate continuation context when a scan advances after AI rejection', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 1,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'running',
+          message: 'Amazon reverse image scan running.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: 'https://www.amazon.com/dp/B00TEST456',
+          description: null,
+          steps: [
+            {
+              key: 'queue_scan',
+              label: 'Continue with next Amazon candidate',
+              group: 'input',
+              attempt: 2,
+              candidateId: null,
+              candidateRank: null,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'run_queued',
+              status: 'completed',
+              message: 'Queued the next Amazon candidate after AI rejection.',
+              warning: null,
+              details: [
+                { label: 'Rejected candidate URL', value: 'https://www.amazon.com/dp/B00TEST123' },
+                { label: 'Next candidate URL', value: 'https://www.amazon.com/dp/B00TEST456' },
+              ],
+              url: 'https://www.amazon.com/dp/B00TEST456',
+              startedAt: '2026-04-11T03:59:02.000Z',
+              completedAt: '2026-04-11T03:59:03.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_open',
+              label: 'Open Amazon candidate',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-2',
+              candidateRank: 2,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_open_start',
+              status: 'running',
+              message: 'Opening Amazon candidate page.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B00TEST456',
+              startedAt: '2026-04-11T03:59:04.000Z',
+              completedAt: null,
+              durationMs: null,
+            },
+          ],
+          rawResult: {
+            candidateContinuation: true,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Candidate continuation')).toBeInTheDocument();
+    expect(screen.getByText('After AI rejection')).toBeInTheDocument();
+    expect(screen.getByText('Continue with next Amazon candidate')).toBeInTheDocument();
+    expect(screen.getByText('Queued the next Amazon candidate after AI rejection.')).toBeInTheDocument();
+    expect(screen.getByText('Rejected: https://www.amazon.com/dp/B00TEST123')).toBeInTheDocument();
+    expect(screen.getByText('Next: https://www.amazon.com/dp/B00TEST456')).toBeInTheDocument();
+  });
+
   it('shows the current phase and step for an active scan row without expanding steps', async () => {
     mocks.apiPost.mockResolvedValue({
       queued: 0,

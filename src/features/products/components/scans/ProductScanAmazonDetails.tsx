@@ -24,6 +24,7 @@ type AmazonExtractionProvenance = {
   candidateRank: number | null;
   inputSourceLabel: string | null;
   retryOf: string | null;
+  reusedProbe: boolean;
   extractionResultLabel: string | null;
 };
 
@@ -156,6 +157,7 @@ const resolveAmazonExtractionProvenance = (
   const amazonExtractStep =
     [...normalizedSteps].reverse().find((step) => step.key === 'amazon_extract' && step.status === 'completed') ??
     [...normalizedSteps].reverse().find((step) => step.key === 'amazon_extract');
+  const amazonProbeStep = [...normalizedSteps].reverse().find((step) => step.key === 'amazon_probe') ?? null;
   const googleUploadStep =
     [...normalizedSteps].reverse().find(
       (step) =>
@@ -173,10 +175,11 @@ const resolveAmazonExtractionProvenance = (
       : null;
   const inputSourceLabel = resolveInputSourceLabel(googleUploadStep?.inputSource);
   const retryOf = googleUploadStep?.retryOf?.trim() || null;
+  const reusedProbe = amazonProbeStep?.resultCode === 'probe_reused';
   const extractionResultLabel =
     formatResultCode(amazonExtractStep?.resultCode) ?? formatResultCode(googleUploadStep?.resultCode);
 
-  if (!candidateId && !candidateRank && !inputSourceLabel && !retryOf && !extractionResultLabel) {
+  if (!candidateId && !candidateRank && !inputSourceLabel && !retryOf && !reusedProbe && !extractionResultLabel) {
     return null;
   }
 
@@ -185,6 +188,7 @@ const resolveAmazonExtractionProvenance = (
     candidateRank,
     inputSourceLabel,
     retryOf,
+    reusedProbe,
     extractionResultLabel,
   };
 };
@@ -279,6 +283,11 @@ export function ProductScanAmazonProvenanceSummary(props: {
         {provenance.retryOf ? (
           <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
             Fallback: {provenance.retryOf}
+          </span>
+        ) : null}
+        {provenance.reusedProbe ? (
+          <span className='inline-flex items-center rounded-md border border-emerald-500/40 px-2 py-0.5 text-[11px] font-medium text-emerald-300'>
+            Probe reused
           </span>
         ) : null}
         {typeof provenance.candidateRank === 'number' ? (
@@ -489,6 +498,11 @@ export function ProductScanAmazonDetails(props: {
             Fallback used
           </span>
         ) : null}
+        {provenance?.reusedProbe ? (
+          <span className='inline-flex items-center rounded-md border border-emerald-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-emerald-300'>
+            Probe reused
+          </span>
+        ) : null}
         {quality?.usedCaptcha ? (
           <span className='inline-flex items-center rounded-md border border-sky-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-sky-300'>
             Captcha path
@@ -598,7 +612,9 @@ export function ProductScanAmazonDetails(props: {
         <FieldGroup
           title='Amazon Probe'
           fields={[
+            { label: 'Probe ASIN', value: scan.amazonProbe.asin },
             { label: 'Probe title', value: scan.amazonProbe.pageTitle },
+            { label: 'Description snippet', value: scan.amazonProbe.descriptionSnippet },
             { label: 'Candidate URL', value: scan.amazonProbe.candidateUrl },
             { label: 'Canonical URL', value: scan.amazonProbe.canonicalUrl },
             { label: 'Hero image URL', value: scan.amazonProbe.heroImageUrl },
@@ -623,6 +639,10 @@ export function ProductScanAmazonDetails(props: {
         />
       ) : null}
 
+      {scan.amazonProbe?.bulletPoints.length ? (
+        <TextBlock title='Probe Bullet Points' value={scan.amazonProbe.bulletPoints.join('\n')} />
+      ) : null}
+
       <FieldGroup
         title='Scan Provenance'
         fields={[
@@ -632,6 +652,10 @@ export function ProductScanAmazonDetails(props: {
             label: 'Amazon candidate rank',
             value:
               typeof provenance?.candidateRank === 'number' ? `#${provenance.candidateRank}` : null,
+          },
+          {
+            label: 'Probe handling',
+            value: provenance?.reusedProbe ? 'Reused earlier approved probe' : null,
           },
           { label: 'Retry path', value: provenance?.retryOf },
           { label: 'Extraction result', value: provenance?.extractionResultLabel },

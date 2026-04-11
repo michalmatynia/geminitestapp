@@ -46,6 +46,7 @@ import {
 import {
   invalidateCatalogScopedData,
   invalidatePriceGroups,
+  invalidateProductsAndCounts,
   invalidateProductCustomFields,
   invalidateProductSettingsCatalogs,
   invalidateValidatorConfig,
@@ -649,7 +650,10 @@ export function useDeleteParameterMutation(): UpdateMutation<
       tags: ['products', 'settings', 'parameters', 'delete'],
       description: 'Deletes products settings parameters.'},
     invalidate: async (queryClient, _data, variables) => {
-      await invalidateCatalogScopedData(queryClient, variables.catalogId);
+      await Promise.all([
+        invalidateCatalogScopedData(queryClient, variables.catalogId),
+        invalidateProductsAndCounts(queryClient),
+      ]);
     },
   });
 }

@@ -1,7 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProductScanAmazonDetails } from './ProductScanAmazonDetails';
+import {
+  ProductScanAmazonDetails,
+  ProductScanAmazonProvenanceSummary,
+} from './ProductScanAmazonDetails';
 
 describe('ProductScanAmazonDetails', () => {
   beforeEach(() => {
@@ -20,13 +23,16 @@ describe('ProductScanAmazonDetails', () => {
           title: 'Amazon product title',
           description: 'Amazon product description',
           amazonProbe: {
+            asin: 'B00TEST123',
             pageTitle: 'Amazon product title',
+            descriptionSnippet: 'Amazon product description',
             candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
             canonicalUrl: 'https://www.amazon.com/dp/B00TEST123',
             heroImageUrl: 'https://m.media-amazon.com/images/I/example.jpg',
             heroImageAlt: 'Acme product',
             heroImageArtifactName: 'amazon-scan-probe-image-2-attempt-1-rank-1-hero.png',
             artifactKey: 'amazon-scan-probe-image-2-attempt-1-rank-1',
+            bulletPoints: ['Steel frame', 'Blue finish'],
             bulletCount: 2,
             attributeCount: 2,
           },
@@ -95,10 +101,29 @@ describe('ProductScanAmazonDetails', () => {
               durationMs: 2000,
             },
             {
+              key: 'amazon_probe',
+              label: 'Probe Amazon product page',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-2',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'probe_reused',
+              status: 'skipped',
+              message: 'Reused earlier Amazon probe evidence for approved direct extraction.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B00TEST123',
+              startedAt: '2026-04-11T10:00:04.000Z',
+              completedAt: '2026-04-11T10:00:04.000Z',
+              durationMs: 0,
+            },
+            {
               key: 'amazon_extract',
               label: 'Extract Amazon details',
               group: 'amazon',
-              attempt: 1,
+              attempt: 2,
               candidateId: 'image-2',
               candidateRank: 1,
               inputSource: null,
@@ -171,7 +196,7 @@ describe('ProductScanAmazonDetails', () => {
     expect(screen.getByText('Listing Text')).toBeInTheDocument();
     expect(screen.getAllByText('Amazon product title')).toHaveLength(2);
     expect(screen.getByText('Description')).toBeInTheDocument();
-    expect(screen.getByText('Amazon product description')).toBeInTheDocument();
+    expect(screen.getAllByText('Amazon product description')).toHaveLength(2);
     expect(screen.getByText('Showing 2 of 2')).toBeInTheDocument();
     expect(screen.getByText('Scan Provenance')).toBeInTheDocument();
     expect(screen.getAllByText('AI approved')).toHaveLength(2);
@@ -181,20 +206,79 @@ describe('ProductScanAmazonDetails', () => {
     expect(screen.getByText('Acme product')).toBeInTheDocument();
     expect(screen.getByText('Artifact key')).toBeInTheDocument();
     expect(screen.getByText('amazon-scan-probe-image-2-attempt-1-rank-1')).toBeInTheDocument();
+    expect(screen.getByText('Probe ASIN')).toBeInTheDocument();
+    expect(screen.getByText('Description snippet')).toBeInTheDocument();
+    expect(screen.getByText('Probe Bullet Points')).toBeInTheDocument();
     expect(screen.getByText('Hero image source')).toBeInTheDocument();
     expect(screen.getAllByText('Hero image artifact')).toHaveLength(2);
     expect(screen.getAllByText('amazon-scan-probe-image-2-attempt-1-rank-1-hero.png')).toHaveLength(2);
     expect(screen.getByText('Packaging and title align with the source product.')).toBeInTheDocument();
     expect(screen.getAllByText('URL input')).toHaveLength(2);
     expect(screen.getByText('Fallback used')).toBeInTheDocument();
+    expect(screen.getByText('Probe reused')).toBeInTheDocument();
     expect(screen.getByText('Captcha path')).toBeInTheDocument();
     expect(screen.getByText('Amazon candidate #1')).toBeInTheDocument();
     expect(screen.getByText('Winning image candidate')).toBeInTheDocument();
     expect(screen.getByText('image-2')).toBeInTheDocument();
+    expect(screen.getByText('Probe handling')).toBeInTheDocument();
+    expect(screen.getByText('Reused earlier approved probe')).toBeInTheDocument();
     expect(screen.getByText('Retry path')).toBeInTheDocument();
     expect(screen.getByText('Local file upload')).toBeInTheDocument();
     expect(screen.getByText('Extraction result')).toBeInTheDocument();
     expect(screen.getByText('Match Found')).toBeInTheDocument();
+  });
+
+  it('shows probe reuse in the shared provenance summary', () => {
+    render(
+      <ProductScanAmazonProvenanceSummary
+        scan={{
+          steps: [
+            {
+              key: 'amazon_probe',
+              label: 'Probe Amazon product page',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-2',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'probe_reused',
+              status: 'skipped',
+              message: 'Reused earlier Amazon probe evidence for approved direct extraction.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B00TEST123',
+              startedAt: '2026-04-11T10:00:04.000Z',
+              completedAt: '2026-04-11T10:00:04.000Z',
+              durationMs: 0,
+            },
+            {
+              key: 'amazon_extract',
+              label: 'Extract Amazon details',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-2',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'match_found',
+              status: 'completed',
+              message: 'Extracted Amazon ASIN B00TEST123.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B00TEST123',
+              startedAt: '2026-04-11T10:00:05.000Z',
+              completedAt: '2026-04-11T10:00:08.000Z',
+              durationMs: 3000,
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByText('Probe reused')).toBeInTheDocument();
+    expect(screen.getByText('Amazon rank: #1')).toBeInTheDocument();
+    expect(screen.getByText('Result: Match Found')).toBeInTheDocument();
   });
 
   it('filters extracted Amazon attributes by label or value', () => {
@@ -331,13 +415,16 @@ describe('ProductScanAmazonDetails', () => {
           title: null,
           description: null,
           amazonProbe: {
+            asin: 'B00TEST123',
             pageTitle: 'Wrong Amazon product',
+            descriptionSnippet: 'Wrong Amazon description',
             candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
             canonicalUrl: 'https://www.amazon.com/dp/B00TEST123',
             heroImageUrl: 'https://m.media-amazon.com/images/I/wrong.jpg',
             heroImageAlt: 'Wrong product image',
             heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
             artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+            bulletPoints: ['Wrong bullet'],
             bulletCount: 1,
             attributeCount: 0,
           },

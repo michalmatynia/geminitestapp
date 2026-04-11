@@ -83,6 +83,7 @@ export const resolveTraderaExecutionSummary = (
   categoryId: string | null;
   categoryPath: string | null;
   categorySource: string | null;
+  categoryFallbackUsed: boolean | null;
   categoryMappingReason: string | null;
   categoryMatchScope: string | null;
   categoryInternalCategoryId: string | null;
@@ -95,6 +96,9 @@ export const resolveTraderaExecutionSummary = (
   shippingPriceEur: number | null;
   imageInputSource: string | null;
   imageUploadSource: string | null;
+  imageUploadFallbackUsed: boolean | null;
+  plannedImageCount: number | null;
+  observedImagePreviewCount: number | null;
   localImagePathCount: number | null;
   imageUrlCount: number | null;
   imageSettleState: unknown;
@@ -148,6 +152,7 @@ export const resolveTraderaExecutionSummary = (
     categoryId: readString(metadata['categoryId']),
     categoryPath: readString(metadata['categoryPath']),
     categorySource: readString(metadata['categorySource']),
+    categoryFallbackUsed: readBoolean(metadata['categoryFallbackUsed']),
     categoryMappingReason: readString(metadata['categoryMappingReason']),
     categoryMatchScope: readString(metadata['categoryMatchScope']),
     categoryInternalCategoryId: readString(metadata['categoryInternalCategoryId']),
@@ -162,6 +167,14 @@ export const resolveTraderaExecutionSummary = (
     imageUploadSource:
       readString(metadata['imageUploadSource']) ??
       readString(toRecord(metadata['rawResult'])['imageUploadSource']),
+    imageUploadFallbackUsed: readBoolean(metadata['imageUploadFallbackUsed']),
+    plannedImageCount:
+      readNumber(metadata['plannedImageCount']) ??
+      readNumber(metadata['uploadedImageCount']) ??
+      readNumber(toRecord(metadata['rawResult'])['imageCount']),
+    observedImagePreviewCount:
+      readNumber(metadata['observedImagePreviewCount']) ??
+      readNumber(toRecord(metadata['rawResult'])['observedPreviewCount']),
     localImagePathCount: readNumber(metadata['localImagePathCount']),
     imageUrlCount: readNumber(metadata['imageUrlCount']),
     imageSettleState: metadata['imageSettleState'] ?? null,

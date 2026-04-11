@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T09:25:09.835Z",
+  "generatedAt": "2026-04-11T10:39:04.276Z",
   "strictMode": false,
   "summary": {
     "total": 10,
@@ -383,7 +383,7 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-11T09:25:09.827Z",
+    "generatedAt": "2026-04-11T10:39:04.269Z",
     "hotspots": {
       "topFilesByLines": [
         {
@@ -393,6 +393,10 @@
         {
           "path": "src/features/products/components/ProductModals.test.tsx",
           "lines": 1543
+        },
+        {
+          "path": "src/features/products/server/product-scans-service.test.ts",
+          "lines": 1382
         },
         {
           "path": "src/features/products/components/list/ProductColumns.test.tsx",
@@ -427,10 +431,6 @@
           "lines": 1014
         },
         {
-          "path": "src/features/products/server/product-scans-service.test.ts",
-          "lines": 1012
-        },
-        {
           "path": "src/features/integrations/services/imports/base-mapper.test.ts",
           "lines": 1004
         },
@@ -440,14 +440,14 @@
         },
         {
           "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
-          "lines": 993
-        },
-        {
-          "path": "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
-          "lines": 993
+          "lines": 992
         },
         {
           "path": "src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx",
+          "lines": 991
+        },
+        {
+          "path": "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
           "lines": 991
         },
         {

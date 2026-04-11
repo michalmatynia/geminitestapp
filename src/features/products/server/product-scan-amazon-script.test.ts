@@ -29,8 +29,9 @@ describe('product-scan-amazon-script', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("locator('a[href]')");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("const isGoogleRedirectHost = (host) => {");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("const googleIndex = hostParts.lastIndexOf('google');");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("normalizedHost === 'googleadservices.com'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("normalizedHost.endsWith('.googleusercontent.com')");
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("parsed.searchParams.get('url') || parsed.searchParams.get('q')");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("parsed.searchParams.get('adurl')");
   });
 
   it('prioritizes Amazon product-like links ahead of generic marketplace links', () => {

@@ -92,7 +92,6 @@ const cleanupOldRuns = async (): Promise<void> => {
     );
   } catch (error) {
     void ErrorSystem.captureException(error);
-  
     // best effort cleanup only
   }
 };

@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-11T09:25:02.858Z",
+  "generatedAt": "2026-04-11T10:56:39.430Z",
   "source": {
-    "totalFiles": 10264,
-    "totalLines": 1688699,
-    "useClientFiles": 1780,
+    "totalFiles": 10265,
+    "totalLines": 1690342,
+    "useClientFiles": 1644,
     "hooksWithoutUseClient": 0,
     "filesOver800": 92,
     "filesOver1000": 0,
     "filesOver1500": 0,
     "largestFile": {
       "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
-      "lines": 993
+      "lines": 992
     }
   },
   "api": {
@@ -109,7 +109,7 @@
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 2,
+    "appFeatureDeepImports": 0,
     "featureToSharedTotalImports": 24,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 0
@@ -121,67 +121,67 @@
       {
         "feature": "kangur",
         "files": 2501,
-        "lines": 528503
+        "lines": 528473
       },
       {
         "feature": "ai",
         "files": 1300,
-        "lines": 250657
+        "lines": 250613
       },
       {
         "feature": "integrations",
         "files": 470,
-        "lines": 99338
+        "lines": 99260
       },
       {
         "feature": "products",
         "files": 417,
-        "lines": 91935
+        "lines": 93674
       },
       {
         "feature": "case-resolver",
         "files": 327,
-        "lines": 67311
+        "lines": 67287
       },
       {
         "feature": "cms",
         "files": 358,
-        "lines": 53479
+        "lines": 53451
       },
       {
         "feature": "filemaker",
         "files": 161,
-        "lines": 38182
+        "lines": 38172
       },
       {
         "feature": "prompt-exploder",
         "files": 135,
-        "lines": 26824
+        "lines": 26822
       },
       {
         "feature": "notesapp",
         "files": 98,
-        "lines": 13501
+        "lines": 13493
       },
       {
         "feature": "data-import-export",
         "files": 46,
-        "lines": 11672
+        "lines": 11670
       },
       {
         "feature": "admin",
         "files": 61,
-        "lines": 10348
+        "lines": 10356
       },
       {
         "feature": "database",
         "files": 53,
-        "lines": 8486
+        "lines": 8478
       },
       {
         "feature": "playwright",
         "files": 88,
-        "lines": 8269
+        "lines": 8265
       },
       {
         "feature": "auth",
@@ -190,13 +190,13 @@
       },
       {
         "feature": "viewer3d",
-        "files": 39,
-        "lines": 5258
+        "files": 40,
+        "lines": 5255
       },
       {
         "feature": "prompt-engine",
         "files": 32,
-        "lines": 4374
+        "lines": 4368
       },
       {
         "feature": "product-sync",
@@ -211,7 +211,7 @@
       {
         "feature": "files",
         "files": 36,
-        "lines": 2773
+        "lines": 2769
       },
       {
         "feature": "internationalization",
@@ -241,7 +241,7 @@
     ]
   },
   "runtime": {
-    "setIntervalOccurrences": 1
+    "setIntervalOccurrences": 0
   },
   "codeHealth": {
     "deepRelativeImportCount": 0,
@@ -436,6 +436,10 @@
         "lines": 1543
       },
       {
+        "path": "src/features/products/server/product-scans-service.test.ts",
+        "lines": 1441
+      },
+      {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
         "lines": 1246
       },
@@ -468,10 +472,6 @@
         "lines": 1014
       },
       {
-        "path": "src/features/products/server/product-scans-service.test.ts",
-        "lines": 1012
-      },
-      {
         "path": "src/features/integrations/services/imports/base-mapper.test.ts",
         "lines": 1004
       },
@@ -481,14 +481,14 @@
       },
       {
         "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
-        "lines": 993
-      },
-      {
-        "path": "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
-        "lines": 993
+        "lines": 992
       },
       {
         "path": "src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx",
+        "lines": 991
+      },
+      {
+        "path": "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
         "lines": 991
       },
       {

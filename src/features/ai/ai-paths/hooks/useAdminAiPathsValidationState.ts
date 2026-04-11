@@ -56,7 +56,6 @@ export function useAdminAiPathsValidationState() {
   const { toast } = useToast();
   const settingsQuery = useAiPathsSettingsQuery();
   const settingsParseErrorSignatureRef = useRef<string | null>(null);
-  const legacyTriggerRepairSignatureRef = useRef<string | null>(null);
   const parsedSettingsResult = useMemo(() => {
     try {
       return {
@@ -69,7 +68,6 @@ export function useAdminAiPathsValidationState() {
         parsedSettings: {
           pathMetas: [],
           pathConfigs: {},
-          repairedPathSettings: [],
         },
         settingsParseError:
           error instanceof Error
@@ -96,28 +94,6 @@ export function useAdminAiPathsValidationState() {
     });
     toast(settingsParseError.message, { variant: 'error' });
   }, [settingsParseError, toast]);
-
-  useEffect(() => {
-    if (parsedSettings.repairedPathSettings.length === 0) {
-      legacyTriggerRepairSignatureRef.current = null;
-      return;
-    }
-
-    const signature = JSON.stringify(parsedSettings.repairedPathSettings);
-    if (legacyTriggerRepairSignatureRef.current === signature) return;
-    legacyTriggerRepairSignatureRef.current = signature;
-
-    void updateAiPathsSettingsBulk(parsedSettings.repairedPathSettings).catch((error: unknown) => {
-      logClientError(error, {
-        context: {
-          source: 'useAdminAiPathsValidationState',
-          action: 'persistLegacyTriggerContextModeRepair',
-          level: 'warn',
-          repairedPathCount: parsedSettings.repairedPathSettings.length,
-        },
-      });
-    });
-  }, [parsedSettings.repairedPathSettings]);
 
   const [selectedPathId, setSelectedPathId] = useState<string>('');
   const [validationDraft, setValidationDraft] = useState<AiPathsValidationConfig>(

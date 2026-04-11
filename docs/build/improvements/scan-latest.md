@@ -8,7 +8,7 @@ canonical: true
 ---
 # Improvement Operations Portfolio
 
-Generated at: 2026-04-11T09:41:25.066Z
+Generated at: 2026-04-11T11:04:43.121Z
 
 ## Snapshot
 
@@ -40,12 +40,12 @@ Generated at: 2026-04-11T09:41:25.066Z
 
 | Track | Category | Default | Overall | Latest Report | README | Scan |
 | --- | --- | --- | --- | --- | --- | --- |
-| `products-parameter-integrity` | `data` | yes | `passed` | 2026-04-11T09:41:24.964Z | [README](./products-parameter-integrity/README.md) | [scan](./products-parameter-integrity/scan-latest.md) |
-| `products-category-schema-normalization` | `data` | yes | `failed` | 2026-04-11T09:41:24.964Z | [README](./products-category-schema-normalization/README.md) | [scan](./products-category-schema-normalization/scan-latest.md) |
-| `ui-consolidation` | `ui` | yes | `failed` | 2026-04-11T09:41:24.964Z | [README](./ui-consolidation/README.md) | [scan](./ui-consolidation/scan-latest.md) |
-| `application-performance` | `performance` | yes | `passed` | 2026-04-11T09:41:24.964Z | [README](./application-performance/README.md) | [scan](./application-performance/scan-latest.md) |
+| `products-parameter-integrity` | `data` | yes | `passed` | 2026-04-11T11:04:43.118Z | [README](./products-parameter-integrity/README.md) | [scan](./products-parameter-integrity/scan-latest.md) |
+| `products-category-schema-normalization` | `data` | yes | `failed` | 2026-04-11T11:04:43.118Z | [README](./products-category-schema-normalization/README.md) | [scan](./products-category-schema-normalization/scan-latest.md) |
+| `ui-consolidation` | `ui` | yes | `failed` | 2026-04-11T11:04:43.118Z | [README](./ui-consolidation/README.md) | [scan](./ui-consolidation/scan-latest.md) |
+| `application-performance` | `performance` | yes | `passed` | 2026-04-11T11:04:43.118Z | [README](./application-performance/README.md) | [scan](./application-performance/scan-latest.md) |
 | `testing-quality-baseline` | `testing` | no | `no-data` | not available | [README](./testing-quality-baseline/README.md) | [scan](./testing-quality-baseline/scan-latest.md) |
-| `repo-quality-baseline` | `quality` | yes | `passed` | 2026-04-11T09:41:24.964Z | [README](./repo-quality-baseline/README.md) | [scan](./repo-quality-baseline/scan-latest.md) |
+| `repo-quality-baseline` | `quality` | yes | `passed` | 2026-04-11T11:04:43.118Z | [README](./repo-quality-baseline/README.md) | [scan](./repo-quality-baseline/scan-latest.md) |
 
 ## Notes
 

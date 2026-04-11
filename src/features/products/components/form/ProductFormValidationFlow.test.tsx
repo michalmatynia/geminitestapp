@@ -108,6 +108,13 @@ vi.mock('./ValidatedField', () => ({
   ),
 }));
 
+vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useTitleTerms: () => ({
+    data: [],
+    isLoading: false,
+  }),
+}));
+
 import ProductFormGeneral from './ProductFormGeneral';
 import { ProductFormValidationTab } from './ProductFormValidationTab';
 

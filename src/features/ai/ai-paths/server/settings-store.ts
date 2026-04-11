@@ -13,7 +13,6 @@ import {
 import {
   assertMongoConfigured,
   isAiPathsKey,
-  parseBooleanEnv,
   parsePositiveInt,
 } from './settings-store.helpers';
 import {
@@ -28,12 +27,6 @@ import {
   upsertMongoAiPathsSettings,
   ensureMongoIndexes,
 } from './settings-store.repository';
-import {
-  ensureStarterWorkflowDefaults,
-  restoreStaticStarterWorkflowBundle,
-} from './starter-workflows-settings';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
   process.env['AI_PATHS_MONGO_OP_TIMEOUT_MS'],
   15000
@@ -57,10 +50,6 @@ const serverSettingsByKeysCache = new Map<
 >();
 const serverSettingsByKeysInflight = new Map<string, Promise<AiPathsSettingRecord[]>>();
 const SERVER_SETTINGS_BY_KEYS_CACHE_MAX = 200;
-const AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED = parseBooleanEnv(
-  process.env['AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED'],
-  true
-);
 
 const normalizeServerSettingsKeys = (keys: string[]): string[] =>
   Array.from(new Set(keys.filter(isAiPathsKey))).sort();
@@ -85,45 +74,6 @@ const invalidateServerSettingsCache = (): void => {
   serverSettingsFetchInflight = null;
   serverSettingsByKeysCache.clear();
   serverSettingsByKeysInflight.clear();
-};
-
-const createStaticRecoverySnapshotSeed = (): AiPathsSettingRecord[] => [
-  { key: AI_PATHS_INDEX_KEY, value: '[]' },
-  { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
-];
-
-const filterSettingsByKeys = (
-  records: AiPathsSettingRecord[],
-  keys: string[]
-): AiPathsSettingRecord[] => {
-  const allowedKeys = new Set(keys);
-  return records.filter((record) => allowedKeys.has(record.key));
-};
-
-const readAiPathsSettingsFromStaticRecovery = (
-  keys?: string[]
-): AiPathsSettingRecord[] => {
-  const restored = restoreStaticStarterWorkflowBundle(createStaticRecoverySnapshotSeed()).nextRecords;
-  if (!keys || keys.length === 0) {
-    return restored;
-  }
-  return filterSettingsByKeys(restored, normalizeServerSettingsKeys(keys));
-};
-
-const readAiPathsSettingsWithStaticFallback = async (
-  reader: () => Promise<AiPathsSettingRecord[]>,
-  keys?: string[]
-): Promise<AiPathsSettingRecord[]> => {
-  if (!AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED) {
-    return await reader();
-  }
-
-  try {
-    return await reader();
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return readAiPathsSettingsFromStaticRecovery(keys);
-  }
 };
 
 export async function getAiPathsSettings(
@@ -161,7 +111,7 @@ export async function getAiPathsSettings(
       return getAiPathsSettings(allKeys, options);
     };
 
-    const promise = readAiPathsSettingsWithStaticFallback(fetchAll)
+    const promise = fetchAll()
       .then((records) => {
         serverSettingsCache = { records, cachedAt: Date.now() };
         return records;
@@ -188,10 +138,10 @@ export async function getAiPathsSettings(
       return await inflight;
     }
 
-    const fetchByKeys = readAiPathsSettingsWithStaticFallback(async () => {
+    const fetchByKeys = (async () => {
       assertMongoConfigured();
       return await fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
-    }, normalizedKeys).then((records) => {
+    })().then((records) => {
         serverSettingsByKeysCache.set(keysetCacheKey, {
           records,
           cachedAt: Date.now(),
@@ -220,41 +170,6 @@ export async function getAllAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
 }
 
 export const listAiPathsSettings = getAiPathsSettings;
-
-async function maybeAutoApplyDefaultSeedsOnRead(
-  requestedKeys: string[],
-  existingRecords: AiPathsSettingRecord[],
-  testOptions?: {
-    autoApply?: boolean;
-    applyDefaultSeeds?: (items: AiPathsSettingRecord[]) => Promise<AiPathsSettingRecord[]>;
-  }
-): Promise<AiPathsSettingRecord[]> {
-  const envAutoApply =
-    testOptions?.autoApply !== undefined
-      ? testOptions.autoApply
-      : parseBooleanEnv(process.env['AI_PATHS_AUTO_APPLY_DEFAULTS'], false);
-
-  if (!envAutoApply) return existingRecords;
-
-  if (testOptions?.applyDefaultSeeds) {
-    return testOptions.applyDefaultSeeds(existingRecords);
-  }
-
-  const result = [...existingRecords];
-  const requestedDefaultKeys = requestedKeys.filter((key) => {
-    if (key === AI_PATHS_INDEX_KEY || key === AI_PATHS_TRIGGER_BUTTONS_KEY) return true;
-    return key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX);
-  });
-  if (requestedDefaultKeys.length > 0) {
-    const seeded = ensureStarterWorkflowDefaults(result);
-    if (seeded.affectedCount > 0) {
-      await upsertAiPathsSettings(seeded.nextRecords);
-      return seeded.nextRecords;
-    }
-  }
-
-  return result;
-}
 
 export async function upsertAiPathsSettings(records: AiPathsSettingRecord[]): Promise<void> {
   const normalized = records.filter((r) => isAiPathsKey(r.key));
@@ -333,11 +248,7 @@ export const applyAiPathsSettingsMaintenance = async (
 };
 
 export const __testOnly = {
-  maybeAutoApplyDefaultSeedsOnRead,
   preservePathConfigFlagsOnSeed,
-  readAiPathsSettingsFromStaticRecovery,
-  resolveAutoApplyDefaultSeedsOnRead: (value: string | undefined): boolean =>
-    parseBooleanEnv(value, false),
 };
 
 export type {

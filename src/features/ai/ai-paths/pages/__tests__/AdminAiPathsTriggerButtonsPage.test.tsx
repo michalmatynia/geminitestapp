@@ -42,7 +42,7 @@ const mockState = vi.hoisted(() => ({
     data: [] as Array<{ key: string; value: string }>,
     refetch: vi.fn(),
   },
-  resolvePortablePathInput: vi.fn(),
+  loadCanonicalStoredPathConfig: vi.fn(),
 }));
 
 const PATH_CONFIG_PREFIX = 'ai_paths:path_config:';
@@ -190,8 +190,9 @@ vi.mock('@/shared/lib/ai-paths', () => ({
   triggerButtonsApi: mockState.triggerButtonsApi,
 }));
 
-vi.mock('@/shared/lib/ai-paths/portable-engine', () => ({
-  resolvePortablePathInput: (...args: unknown[]) => mockState.resolvePortablePathInput(...args),
+vi.mock('@/shared/lib/ai-paths/core/utils/stored-path-config', () => ({
+  loadCanonicalStoredPathConfig: (...args: unknown[]) =>
+    mockState.loadCanonicalStoredPathConfig(...args),
 }));
 
 vi.mock('@/shared/ui/feedback.public', () => ({
@@ -486,14 +487,10 @@ beforeEach(() => {
   mockState.aiPathsSettingsQuery.refetch.mockReset();
   mockState.aiPathsSettingsQuery.refetch.mockResolvedValue({});
 
-  mockState.resolvePortablePathInput.mockReset();
-  mockState.resolvePortablePathInput.mockImplementation((raw: string) => ({
-    ok: true,
-    value: {
-      pathConfig: JSON.parse(raw),
-      migrationWarnings: [],
-    },
-  }));
+  mockState.loadCanonicalStoredPathConfig.mockReset();
+  mockState.loadCanonicalStoredPathConfig.mockImplementation(
+    ({ rawConfig }: { rawConfig: string }) => JSON.parse(rawConfig)
+  );
 });
 
 afterEach(() => {
@@ -529,19 +526,16 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
         }),
       },
     ];
-    mockState.resolvePortablePathInput.mockImplementation((raw: string) => ({
-      ok: true,
-      value: {
-        pathConfig: JSON.parse(raw),
-        migrationWarnings: [{ code: 'removed_trigger_context_modes_normalized' }],
-      },
-    }));
+    mockState.loadCanonicalStoredPathConfig.mockImplementation(
+      ({ rawConfig }: { rawConfig: string }) => JSON.parse(rawConfig)
+    );
 
     render(<AdminAiPathsTriggerButtonsPage />);
 
     await waitFor(() => {
-      expect(mockState.persistLegacyRepair).toHaveBeenCalledTimes(2);
+      expect(screen.getByText('Alpha Path')).toBeInTheDocument();
     });
+    expect(mockState.persistLegacyRepair).not.toHaveBeenCalled();
     expect(screen.getByText('Alpha Path')).toBeInTheDocument();
     expect(screen.getByText('Beta Path')).toBeInTheDocument();
 

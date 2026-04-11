@@ -8,9 +8,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import {
   getAllAiPathsSettings,
-  upsertAiPathsSettings,
 } from '@/features/ai/ai-paths/server/settings-store';
-import { ensureStarterWorkflowDefaults } from '@/features/ai/ai-paths/server/starter-workflows-settings';
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
@@ -35,7 +33,7 @@ import {
   PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM,
   shouldIncludePlaywrightAiPathsFixtureButtons,
 } from '@/shared/lib/ai-paths/playwright-fixture-scope';
-import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 import { assertTriggerButtonPathExists } from './path-validation';
@@ -45,9 +43,6 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 export { aiTriggerButtonsQuerySchema as querySchema };
 const readAllAiPathsSettings = getAllAiPathsSettings as () => Promise<AiPathsSettingRecord[]>;
-const writeAllAiPathsSettings = upsertAiPathsSettings as (
-  records: AiPathsSettingRecord[]
-) => Promise<void>;
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
   await getAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY);
 
@@ -67,12 +62,7 @@ const readTriggerButtonSettingsSnapshot = async (): Promise<Map<string, string>>
   const existingRecords = await readAllAiPathsSettings();
   const sourceRecords =
     existingRecords.length > 0 ? existingRecords : createMinimalTriggerButtonSettingsSnapshot();
-  const seeded = ensureStarterWorkflowDefaults(sourceRecords);
-  const effectiveRecords = seeded.affectedCount > 0 ? seeded.nextRecords : sourceRecords;
-  if (seeded.affectedCount > 0) {
-    await writeAllAiPathsSettings(seeded.nextRecords);
-  }
-  return buildSettingsValueMap(effectiveRecords);
+  return buildSettingsValueMap(sourceRecords);
 };
 
 const isMalformedPathIndexPayload = (raw: string | null): boolean => {
@@ -108,7 +98,6 @@ const filterButtonsWithExistingPaths = async (
   }
   const indexedPathMetas = parsePathMetas(pathIndexRaw);
   const indexedPathIds = new Set(indexedPathMetas.map((meta) => meta.id));
-  const pathNameById = new Map(indexedPathMetas.map((meta) => [meta.id, meta.name ?? null]));
   const validButtonIds = new Set<string>();
 
   await Promise.all(
@@ -123,14 +112,10 @@ const filterButtonsWithExistingPaths = async (
       if (typeof rawConfig !== 'string' || rawConfig.trim().length === 0) return;
 
       try {
-        const resolved = materializeStoredTriggerPathConfig({
+        loadCanonicalStoredPathConfig({
           pathId,
           rawConfig,
-          fallbackName: pathNameById.get(pathId) ?? null,
         });
-        if (resolved.changed) {
-          await upsertAiPathsSetting(configKey, JSON.stringify(resolved.config));
-        }
         validButtonIds.add(button.id);
       } catch (error) {
         void ErrorSystem.captureException(error);

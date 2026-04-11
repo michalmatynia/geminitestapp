@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T09:41:25.066Z",
+  "generatedAt": "2026-04-11T11:04:43.121Z",
   "defaultTrackIds": [
     "products-parameter-integrity",
     "products-category-schema-normalization",
@@ -47,12 +47,12 @@
       "defaultSelected": true,
       "description": "Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
+      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
       "docDir": "docs/build/improvements/products-parameter-integrity",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T09:24:49.946Z",
+          "generatedAt": "2026-04-11T10:38:42.355Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -82,7 +82,7 @@
               ],
               "instructions": [],
               "script": "products:audit:missing-parameters",
-              "durationMs": 3215
+              "durationMs": 3637
             }
           ],
           "status": "passed"
@@ -244,7 +244,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T09:41:24.964Z",
+          "generatedAt": "2026-04-11T11:04:43.118Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -388,12 +388,12 @@
       "defaultSelected": true,
       "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
+      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
       "docDir": "docs/build/improvements/products-category-schema-normalization",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T09:24:49.946Z",
+          "generatedAt": "2026-04-11T10:38:42.355Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -447,7 +447,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T09:41:24.964Z",
+          "generatedAt": "2026-04-11T11:04:43.118Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -623,12 +623,12 @@
       "defaultSelected": true,
       "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
+      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
       "docDir": "docs/build/improvements/ui-consolidation",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T09:24:49.946Z",
+          "generatedAt": "2026-04-11T10:38:42.355Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -660,7 +660,7 @@
               ],
               "instructions": [],
               "script": "check:ui-consolidation",
-              "durationMs": 10483
+              "durationMs": 8159
             }
           ],
           "status": "failed"
@@ -684,7 +684,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T09:41:24.964Z",
+          "generatedAt": "2026-04-11T11:04:43.118Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -758,12 +758,12 @@
       "defaultSelected": true,
       "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
+      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
       "docDir": "docs/build/improvements/application-performance",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T09:24:49.946Z",
+          "generatedAt": "2026-04-11T10:38:42.355Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -787,7 +787,7 @@
               "outputs": [],
               "instructions": [],
               "script": "perf:ops:fast",
-              "durationMs": 36248
+              "durationMs": 47383
             }
           ],
           "status": "passed"
@@ -841,7 +841,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T09:41:24.964Z",
+          "generatedAt": "2026-04-11T11:04:43.118Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -920,7 +920,7 @@
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T09:24:49.946Z",
+          "generatedAt": "2026-04-11T10:38:42.355Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -954,7 +954,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T09:41:24.964Z",
+          "generatedAt": "2026-04-11T11:04:43.118Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -1012,12 +1012,12 @@
       "defaultSelected": true,
       "description": "Runs the core read-only quality checks that establish the current repository baseline.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
+      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
       "docDir": "docs/build/improvements/repo-quality-baseline",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T09:24:49.946Z",
+          "generatedAt": "2026-04-11T10:38:42.355Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -1047,7 +1047,7 @@
               ],
               "instructions": [],
               "script": "check:api-error-sources",
-              "durationMs": 484
+              "durationMs": 568
             },
             {
               "id": "repo-quality-canonical-sitewide",
@@ -1060,7 +1060,7 @@
               "outputs": [],
               "instructions": [],
               "script": "canonical:check:sitewide",
-              "durationMs": 2706
+              "durationMs": 2140
             }
           ],
           "status": "passed"
@@ -1111,7 +1111,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T09:41:24.964Z",
+          "generatedAt": "2026-04-11T11:04:43.118Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,

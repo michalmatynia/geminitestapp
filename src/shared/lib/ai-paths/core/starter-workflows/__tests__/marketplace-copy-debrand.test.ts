@@ -5,6 +5,7 @@ import {
   materializeStarterWorkflowRecoveryBundle,
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import { handleParser } from '@/shared/lib/ai-paths/core/runtime/handlers/transform/parser';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 
 describe('starter marketplace copy debrand workflow', () => {
@@ -31,6 +32,31 @@ describe('starter marketplace copy debrand workflow', () => {
       (button) => button.id === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4'
     );
 
+    expect(triggerButton).toEqual(
+      expect.objectContaining({
+        name: 'Debrand',
+        pathId: 'path_marketplace_copy_debrand_v1',
+        locations: ['product_marketplace_copy_row'],
+        mode: 'click',
+      })
+    );
+    expect(triggerButton?.display).toEqual(
+      expect.objectContaining({
+        label: 'Debrand',
+        showLabel: true,
+      })
+    );
+  });
+
+  it('restores the canonical Debrand row trigger from the static recovery bundle', () => {
+    const bundle = materializeStarterWorkflowRecoveryBundle('static_recovery');
+    const triggerButton = bundle.triggerButtons.find(
+      (button) => button.id === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4'
+    );
+
+    expect(bundle.pathConfigs.some((config) => config.id === 'path_marketplace_copy_debrand_v1')).toBe(
+      true
+    );
     expect(triggerButton).toEqual(
       expect.objectContaining({
         name: 'Debrand',
@@ -76,6 +102,63 @@ describe('starter marketplace copy debrand workflow', () => {
     expect(resultEdge).toEqual(
       expect.objectContaining({
         toPort: 'bundle',
+      })
+    );
+  });
+
+  it('parses embedded row-level trigger context into the model bundle', async () => {
+    const entry = getStarterWorkflowTemplateById('starter_marketplace_copy_debrand');
+    if (!entry) throw new Error('Missing starter_marketplace_copy_debrand entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_marketplace_copy_debrand_parser_runtime',
+    });
+    const parserNode = config.nodes.find((node) => node.id === 'node-parser-marketplace-copy-debrand');
+    if (!parserNode) throw new Error('Missing marketplace copy debrand parser node');
+
+    const result = await handleParser({
+      node: parserNode,
+      nodeInputs: {
+        context: {
+          entityJson: {
+            id: 'product-1',
+            name_en: 'Warhammer 40,000 Space Marine Figure',
+            description_en: 'Official branded description',
+            images: ['https://example.test/product.jpg'],
+            marketplaceCopyDebrandInput: {
+              sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
+              sourceEnglishDescription: 'Official branded description',
+              targetRow: {
+                id: 'row-1',
+                index: 0,
+                integrationIds: ['integration-tradera'],
+                integrationNames: ['Tradera'],
+                currentAlternateTitle: 'Old branded marketplace title',
+                currentAlternateDescription: 'Old branded marketplace description',
+              },
+            },
+          },
+        },
+      },
+      fetchEntityCached: async () => null,
+      simulationEntityType: null,
+      resolvedEntity: null,
+      reportAiPathsError: () => undefined,
+    } as Parameters<typeof handleParser>[0]);
+
+    expect(result['bundle']).toEqual(
+      expect.objectContaining({
+        sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
+        sourceEnglishDescription: 'Official branded description',
+        productTitle: 'Warhammer 40,000 Space Marine Figure',
+        productDescriptionEn: 'Official branded description',
+        images: ['https://example.test/product.jpg'],
+        rowContext: expect.objectContaining({
+          id: 'row-1',
+          integrationNames: ['Tradera'],
+          currentAlternateTitle: 'Old branded marketplace title',
+          currentAlternateDescription: 'Old branded marketplace description',
+        }),
       })
     );
   });

@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultPathConfig, PATH_INDEX_KEY, type PathConfig, type RuntimeState } from '@/shared/lib/ai-paths';
 import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import {
   fetchAiPathsSettingsByKeysCached,
-  updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 import type { UseAiPathsPersistenceArgs } from '../useAiPathsPersistence.types';
@@ -106,7 +106,6 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
     ...actual,
     fetchAiPathsSettingsByKeysCached: vi.fn(),
     updateAiPathsSettingsBulk: vi.fn(async () => []),
-    updateAiPathsSetting: vi.fn(async (key: string, value: string) => ({ key, value })),
   };
 });
 
@@ -144,8 +143,6 @@ vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
 }));
 
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
-const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
-
 const emptyRuntimeState = (): RuntimeState => ({
   status: 'idle',
   nodeStatuses: {},
@@ -165,6 +162,9 @@ const buildPathMeta = (
   createdAt: '2026-03-01T00:00:00.000Z',
   updatedAt: '2026-03-01T00:00:00.000Z',
 });
+
+const serializeStoredPathConfig = (config: PathConfig): string =>
+  JSON.stringify(sanitizePathConfig(config));
 
 const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
   const pathConfig = createDefaultPathConfig(pathId);
@@ -194,10 +194,6 @@ const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
 describe('useAiPathsPersistence idle prefetch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedUpdateAiPathsSetting.mockImplementation(async (key: string, value: string) => ({
-      key,
-      value,
-    }));
     selectNodeMock.mockReset();
     setConfigOpenSelectionMock.mockReset();
     setNodesGraphMock.mockReset();
@@ -239,7 +235,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(activeConfig),
+            value: serializeStoredPathConfig(activeConfig),
           },
         ];
       }
@@ -317,7 +313,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(activeConfig),
+            value: serializeStoredPathConfig(activeConfig),
           },
         ];
       }
@@ -376,6 +372,79 @@ describe('useAiPathsPersistence idle prefetch', () => {
     });
   });
 
+  it('does not replace an invalid active stored path with a default config during hydration', async () => {
+    const activePathId = 'path_invalid_active';
+    const activeConfig = createDefaultPathConfig(activePathId);
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+
+    mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
+            value: 'not-json',
+          },
+        ];
+      }
+      if (keys.includes(PATH_INDEX_KEY)) {
+        return [
+          {
+            key: PATH_INDEX_KEY,
+            value: JSON.stringify([buildPathMeta(activeConfig)]),
+          },
+        ];
+      }
+      return [];
+    });
+
+    const args: UseAiPathsPersistenceArgs = {
+      activePathId,
+      activeTrigger: activeConfig.trigger,
+      edges: activeConfig.edges,
+      expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
+      isPathActive: true,
+      isPathLocked: false,
+      isPathTreeVisible: true,
+      lastRunAt: null,
+      loadNonce: 0,
+      loading: false,
+      nodes: activeConfig.nodes,
+      paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
+      parserSamples: {},
+      pathConfigs: {},
+      pathDescription: activeConfig.description,
+      pathName: activeConfig.name,
+      paths: [buildPathMeta(activeConfig)],
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'manual',
+      strictFlowMode: true,
+      blockedRunPolicy: 'fail_run',
+      aiPathsValidation: { enabled: true },
+      selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
+      runtimeState: emptyRuntimeState(),
+      updaterSamples: {},
+      normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
+      reportAiPathsError,
+      toast,
+    };
+
+    renderHook(() => useAiPathsPersistence(args));
+
+    await waitFor(() => {
+      expect(reportAiPathsError).toHaveBeenCalled();
+    });
+    expect(setActivePathIdGraphMock).not.toHaveBeenCalledWith(activePathId);
+    expect(setPathConfigsGraphMock).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining('Failed to load AI Paths settings'), {
+      variant: 'error',
+    });
+  });
+
   it('prefetches non-active path configs after initial hydration', async () => {
     const activePathId = 'path_active';
     const secondaryPathId = 'path_secondary';
@@ -390,7 +459,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${secondaryPathId}`,
-            value: JSON.stringify(secondaryConfig),
+            value: serializeStoredPathConfig(secondaryConfig),
           },
         ];
       }
@@ -398,7 +467,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(activeConfig),
+            value: serializeStoredPathConfig(activeConfig),
           },
         ];
       }
@@ -457,7 +526,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
     });
   });
 
-  it('remediates prefetched configs with removed legacy trigger context modes', async () => {
+  it('does not persist trigger-context remediation while prefetching configs', async () => {
     const activePathId = 'path_active';
     const secondaryPathId = 'path_secondary_legacy_trigger';
     const activeConfig = createDefaultPathConfig(activePathId);
@@ -479,7 +548,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(activeConfig),
+            value: serializeStoredPathConfig(activeConfig),
           },
         ];
       }
@@ -540,21 +609,8 @@ describe('useAiPathsPersistence idle prefetch', () => {
       );
     });
 
-    await waitFor(() => {
-      expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(1);
-    });
-    const updatePathConfigs = setPathConfigsGraphMock.mock.calls[0]?.[0] as
-      | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)
-      | undefined;
-    expect(updatePathConfigs).toBeTypeOf('function');
-    const nextPathConfigs = updatePathConfigs?.(pathConfigsState);
-    expect(nextPathConfigs?.[secondaryPathId]?.nodes[0]?.config?.trigger?.contextMode).toBe(
-      'trigger_only'
-    );
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${secondaryPathId}`,
-      expect.any(String)
-    );
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(0);
   });
 
   it('skips prefetch hydration for configs with legacy runtime identity payloads', async () => {
@@ -583,7 +639,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(activeConfig),
+            value: serializeStoredPathConfig(activeConfig),
           },
         ];
       }

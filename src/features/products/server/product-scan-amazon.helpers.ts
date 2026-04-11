@@ -10,6 +10,9 @@ const normalizeOptionalString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const collectCandidateKeys = (...values: Array<string | null | undefined>): string[] =>
+  Array.from(new Set(values.filter((value): value is string => Boolean(value))));
+
 export const normalizeAmazonAsin = (value: unknown): string | null => {
   const normalized = normalizeOptionalString(value)?.toUpperCase() ?? null;
   if (!normalized) return null;
@@ -48,13 +51,14 @@ export const resolveProductScanImageCandidates = (
       continue;
     }
 
-    const key = filepath ?? url ?? id;
+    const candidateKeys = collectCandidateKeys(filepath, url, id);
+    const key = candidateKeys[0] ?? null;
 
-    if (!key || seen.has(key)) {
+    if (!key || candidateKeys.some((candidateKey) => seen.has(candidateKey))) {
       continue;
     }
 
-    seen.add(key);
+    candidateKeys.forEach((candidateKey) => seen.add(candidateKey));
     candidates.push({
       id,
       url,

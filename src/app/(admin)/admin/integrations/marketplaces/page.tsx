@@ -1,7 +1,7 @@
 import { AdminRouteLoading } from '@/features/admin/public';
 import { JSX, Suspense } from 'react';
 
-import { MarketplacesPage } from '@/features/integrations/pages.public';
+import { MarketplacesPage } from '@/features/integrations/admin.public';
 
 export default function Page(): JSX.Element {
   return (

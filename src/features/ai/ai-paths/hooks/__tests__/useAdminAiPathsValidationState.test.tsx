@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AiNode, AiPathsValidationRule, PathConfig } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 
 import { useAdminAiPathsValidationState } from '../useAdminAiPathsValidationState';
 
@@ -52,7 +53,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 const timestamp = '2026-03-09T10:00:00.000Z';
 
 const buildLegacyTriggerConfig = (pathId: string) => {
-  const config = createDefaultPathConfig(pathId);
+  const config = sanitizePathConfig(createDefaultPathConfig(pathId));
   const seedNode = config.nodes[0] as AiNode | undefined;
   if (!seedNode) {
     throw new Error('Expected default path fixture to include at least one node.');
@@ -95,11 +96,12 @@ const buildRule = (overrides: Partial<AiPathsValidationRule> = {}): AiPathsValid
 const buildConfig = (
   pathId: string,
   overrides: Partial<PathConfig> & { aiPathsValidation?: PathConfig['aiPathsValidation'] } = {}
-): PathConfig => ({
-  ...createDefaultPathConfig(pathId),
-  updatedAt: timestamp,
-  ...overrides,
-});
+): PathConfig =>
+  sanitizePathConfig({
+    ...createDefaultPathConfig(pathId),
+    updatedAt: timestamp,
+    ...overrides,
+  });
 
 const buildSettings = (...configs: PathConfig[]) => [
   {
@@ -129,43 +131,32 @@ describe('useAdminAiPathsValidationState', () => {
     vi.unstubAllGlobals();
   });
 
-  it('persists repaired legacy trigger configs back to settings', async () => {
+  it('rejects legacy trigger configs instead of persisting repairs', async () => {
     const config = buildLegacyTriggerConfig('path_validation_legacy_trigger');
     mocks.useAiPathsSettingsQueryMock.mockReturnValue({
       data: buildSettings(config),
     });
 
-    const { rerender } = renderHook(() => useAdminAiPathsValidationState());
+    const { result, rerender } = renderHook(() => useAdminAiPathsValidationState());
 
     await waitFor(() => {
-      expect(mocks.updateAiPathsSettingsBulkMock).toHaveBeenCalledTimes(1);
+      expect(result.current.settingsParseError).toBeInstanceOf(Error);
     });
 
-    const repairedRecords = mocks.updateAiPathsSettingsBulkMock.mock.calls[0]?.[0];
-    expect(repairedRecords).toHaveLength(1);
-    expect(repairedRecords?.[0]?.key).toBe(`${PATH_CONFIG_PREFIX}${config.id}`);
-    expect(JSON.parse(repairedRecords?.[0]?.value ?? '{}')).toMatchObject({
-      id: config.id,
-      nodes: [
-        {
-          config: {
-            trigger: {
-              contextMode: 'trigger_only',
-            },
-          },
-        },
-      ],
+    expect(mocks.updateAiPathsSettingsBulkMock).not.toHaveBeenCalled();
+    expect(mocks.toastMock).toHaveBeenCalledWith('Invalid AI Path config payload.', {
+      variant: 'error',
     });
 
     rerender();
 
     await waitFor(() => {
-      expect(mocks.updateAiPathsSettingsBulkMock).toHaveBeenCalledTimes(1);
+      expect(mocks.toastMock).toHaveBeenCalledTimes(1);
     });
   });
 
   it('does not persist settings when no legacy trigger repair is needed', async () => {
-    const config = createDefaultPathConfig('path_validation_clean');
+    const config = buildConfig('path_validation_clean');
     mocks.useAiPathsSettingsQueryMock.mockReturnValue({
       data: buildSettings(config),
     });
@@ -193,10 +184,9 @@ describe('useAdminAiPathsValidationState', () => {
       expect(result.current.settingsParseError).toBeInstanceOf(Error);
     });
 
-    expect(mocks.toastMock).toHaveBeenCalledWith(
-      'Invalid AI Paths validation path config JSON payload.',
-      { variant: 'error' }
-    );
+    expect(mocks.toastMock).toHaveBeenCalledWith('Invalid AI Path config payload.', {
+      variant: 'error',
+    });
 
     rerender();
 

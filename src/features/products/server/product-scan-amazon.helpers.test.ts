@@ -140,6 +140,41 @@ describe('product Amazon scan helpers', () => {
     ]);
   });
 
+  it('deduplicates imageLinks against image-file URLs even when the file candidate was keyed by filepath', () => {
+    const candidates = resolveProductScanImageCandidates({
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/one.jpg',
+            publicUrl: 'https://cdn.example.com/one.jpg',
+            filename: 'one.jpg',
+          },
+        },
+      ],
+      imageLinks: [
+        'https://cdn.example.com/one.jpg',
+        'https://cdn.example.com/two.jpg',
+      ],
+    } as never);
+
+    expect(candidates).toEqual([
+      {
+        id: 'image-1',
+        filepath: '/tmp/one.jpg',
+        url: 'https://cdn.example.com/one.jpg',
+        filename: 'one.jpg',
+      },
+      {
+        id: null,
+        filepath: null,
+        url: 'https://cdn.example.com/two.jpg',
+        filename: null,
+      },
+    ]);
+  });
+
   it('prefers the localized product name before SKU or id', () => {
     expect(
       resolveProductScanDisplayName({

@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-04-11T09:24:10.292Z",
-    "scannedSourceFiles": 7230,
+    "generatedAt": "2026-04-11T10:37:52.095Z",
+    "scannedSourceFiles": 7231,
     "scannedJsxFiles": 2522,
     "componentCount": 4414,
     "componentsWithForwarding": 120,
@@ -9011,7 +9011,7 @@
           "sourceProp": "marketplacePlaceholder",
           "targetProp": "placeholder",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 40
+          "line": 38
         }
       ]
     },
@@ -9037,7 +9037,7 @@
           "sourceProp": "marketplacePlaceholder",
           "targetProp": "ariaLabel",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 40
+          "line": 38
         }
       ]
     },
@@ -9063,7 +9063,7 @@
           "sourceProp": "marketplacePlaceholder",
           "targetProp": "title",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 40
+          "line": 38
         }
       ]
     },
@@ -9089,7 +9089,7 @@
           "sourceProp": "accountPlaceholder",
           "targetProp": "placeholder",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 52
+          "line": 50
         }
       ]
     },
@@ -9115,7 +9115,7 @@
           "sourceProp": "accountPlaceholder",
           "targetProp": "ariaLabel",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 52
+          "line": 50
         }
       ]
     },
@@ -9141,7 +9141,7 @@
           "sourceProp": "accountPlaceholder",
           "targetProp": "title",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 52
+          "line": 50
         }
       ]
     },
@@ -12339,7 +12339,7 @@
           "sourceProp": "hasUnsavedChanges",
           "targetProp": "isSaveDisabled",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 173
+          "line": 171
         }
       ]
     },
@@ -12365,7 +12365,7 @@
           "sourceProp": "isSaving",
           "targetProp": "isSaveDisabled",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 173
+          "line": 171
         }
       ]
     },
@@ -12391,7 +12391,7 @@
           "sourceProp": "disabled",
           "targetProp": "variant",
           "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 39
+          "line": 37
         }
       ]
     },
@@ -12417,7 +12417,7 @@
           "sourceProp": "disabled",
           "targetProp": "checked",
           "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 55
+          "line": 53
         }
       ]
     },
@@ -12443,7 +12443,7 @@
           "sourceProp": "isSaving",
           "targetProp": "disabled",
           "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 55
+          "line": 53
         }
       ]
     },
@@ -12469,7 +12469,7 @@
           "sourceProp": "isSaving",
           "targetProp": "disabled",
           "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 76
+          "line": 74
         }
       ]
     },
@@ -16447,7 +16447,7 @@
           "sourceProp": "isSaving",
           "targetProp": "isSaving",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 173
+          "line": 171
         }
       ]
     },
@@ -16473,7 +16473,7 @@
           "sourceProp": "hasUnsavedChanges",
           "targetProp": "hasUnsavedChanges",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 173
+          "line": 171
         }
       ]
     },
@@ -17721,7 +17721,7 @@
           "sourceProp": "marketplaceLabel",
           "targetProp": "label",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 39
+          "line": 37
         }
       ]
     },
@@ -17747,7 +17747,7 @@
           "sourceProp": "selectedIntegrationId",
           "targetProp": "value",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 40
+          "line": 38
         }
       ]
     },
@@ -17773,7 +17773,7 @@
           "sourceProp": "onIntegrationChange",
           "targetProp": "onValueChange",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 40
+          "line": 38
         }
       ]
     },
@@ -17799,7 +17799,7 @@
           "sourceProp": "integrationOptions",
           "targetProp": "options",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 40
+          "line": 38
         }
       ]
     },
@@ -17825,7 +17825,7 @@
           "sourceProp": "accountLabel",
           "targetProp": "label",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 51
+          "line": 49
         }
       ]
     },
@@ -17851,7 +17851,7 @@
           "sourceProp": "accountDescription",
           "targetProp": "description",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 51
+          "line": 49
         }
       ]
     },
@@ -17877,7 +17877,7 @@
           "sourceProp": "selectedConnectionId",
           "targetProp": "value",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 52
+          "line": 50
         }
       ]
     },
@@ -17903,7 +17903,7 @@
           "sourceProp": "onConnectionChange",
           "targetProp": "onValueChange",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 52
+          "line": 50
         }
       ]
     },
@@ -17929,7 +17929,7 @@
           "sourceProp": "connectionOptions",
           "targetProp": "options",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
-          "line": 52
+          "line": 50
         }
       ]
     },
@@ -18397,7 +18397,7 @@
           "sourceProp": "onToggleDisabled",
           "targetProp": "onCheckedChange",
           "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 55
+          "line": 53
         }
       ]
     },
@@ -18423,7 +18423,7 @@
           "sourceProp": "onToggleSection",
           "targetProp": "onCheckedChange",
           "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 76
+          "line": 74
         }
       ]
     },
@@ -18553,7 +18553,7 @@
           "sourceProp": "usedPersonaIds",
           "targetProp": "renderItemTags",
           "relativePath": "src/features/playwright/pages/PlaywrightPersonasPage.tsx",
-          "line": 86
+          "line": 84
         }
       ]
     },
@@ -28901,7 +28901,7 @@
           "sourceProp": "className",
           "targetProp": "contentProps",
           "relativePath": "src/shared/ui/dialog.tsx",
-          "line": 39
+          "line": 37
         }
       ]
     },
@@ -29239,7 +29239,7 @@
           "sourceProp": "size",
           "targetProp": "size",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectionLoadingState.tsx",
-          "line": 30
+          "line": 28
         }
       ]
     },
@@ -29265,7 +29265,7 @@
           "sourceProp": "className",
           "targetProp": "className",
           "relativePath": "src/features/integrations/components/listings/IntegrationSelectionLoadingState.tsx",
-          "line": 30
+          "line": 28
         }
       ]
     },
@@ -29291,7 +29291,7 @@
           "sourceProp": "open",
           "targetProp": "open",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 173
+          "line": 171
         }
       ]
     },
@@ -29317,7 +29317,7 @@
           "sourceProp": "onClose",
           "targetProp": "onClose",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 173
+          "line": 171
         }
       ]
     },
@@ -29343,7 +29343,7 @@
           "sourceProp": "onSave",
           "targetProp": "onSave",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 173
+          "line": 171
         }
       ]
     },
@@ -29967,7 +29967,7 @@
           "sourceProp": "logs",
           "targetProp": "logs",
           "relativePath": "src/features/integrations/components/listings/ExportLogsPanel.tsx",
-          "line": 26
+          "line": 24
         }
       ]
     },
@@ -29993,7 +29993,7 @@
           "sourceProp": "isOpen",
           "targetProp": "isOpen",
           "relativePath": "src/features/integrations/components/listings/ExportLogsPanel.tsx",
-          "line": 26
+          "line": 24
         }
       ]
     },
@@ -30019,7 +30019,7 @@
           "sourceProp": "onToggle",
           "targetProp": "onToggle",
           "relativePath": "src/features/integrations/components/listings/ExportLogsPanel.tsx",
-          "line": 26
+          "line": 24
         }
       ]
     },
@@ -30201,7 +30201,7 @@
           "sourceProp": "initialMarketplace",
           "targetProp": "initialMarketplace",
           "relativePath": "src/features/integrations/pages/CategoryMapperPage.tsx",
-          "line": 58
+          "line": 56
         }
       ]
     },

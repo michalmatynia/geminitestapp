@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import { authError } from '@/shared/errors/app-error';
 import {
   PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME,
@@ -13,7 +14,6 @@ const {
   getAiPathsSettingMock,
   requireAiPathsAccessMock,
   requireAiPathsRunAccessMock,
-  ensureStarterWorkflowDefaultsMock,
   upsertAiPathsSettingsMock,
   upsertAiPathsSettingMock,
 } = vi.hoisted(() => ({
@@ -21,7 +21,6 @@ const {
   getAiPathsSettingMock: vi.fn(),
   requireAiPathsAccessMock: vi.fn(),
   requireAiPathsRunAccessMock: vi.fn(),
-  ensureStarterWorkflowDefaultsMock: vi.fn(),
   upsertAiPathsSettingsMock: vi.fn(),
   upsertAiPathsSettingMock: vi.fn(),
 }));
@@ -36,10 +35,6 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 vi.mock('@/features/ai/ai-paths/server/settings-store', () => ({
   getAllAiPathsSettings: getAllAiPathsSettingsMock,
   upsertAiPathsSettings: upsertAiPathsSettingsMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/server/starter-workflows-settings', () => ({
-  ensureStarterWorkflowDefaults: ensureStarterWorkflowDefaultsMock,
 }));
 
 import { GET_handler, POST_handler } from './handler';
@@ -70,7 +65,10 @@ const createSettingsSnapshot = (args?: {
   Object.entries(args?.configs ?? {}).forEach(([pathId, raw]) => {
     records.push({
       key: `ai_paths_config_${pathId}`,
-      value: typeof raw === 'string' ? raw : JSON.stringify(raw),
+      value:
+        typeof raw === 'string'
+          ? raw
+          : JSON.stringify(sanitizePathConfig(raw as ReturnType<typeof createDefaultPathConfig>)),
     });
   });
 
@@ -91,10 +89,6 @@ describe('ai-paths trigger-buttons GET handler', () => {
       isElevated: false,
     });
     getAllAiPathsSettingsMock.mockResolvedValue(createSettingsSnapshot());
-    ensureStarterWorkflowDefaultsMock.mockImplementation((records) => ({
-      nextRecords: records,
-      affectedCount: 0,
-    }));
   });
 
   it('returns buttons when stored payload uses canonical persisted shape', async () => {
@@ -180,7 +174,10 @@ describe('ai-paths trigger-buttons GET handler', () => {
           },
         ],
         configs: {
-          path_live: { id: 'path_live', name: 'Live Path', nodes: [], edges: [] },
+          path_live: {
+            ...createDefaultPathConfig('path_live'),
+            name: 'Live Path',
+          },
         },
       })
     );
@@ -225,10 +222,8 @@ describe('ai-paths trigger-buttons GET handler', () => {
         ],
         configs: {
           path_pw_products_abc123: {
-            id: 'path_pw_products_abc123',
+            ...createDefaultPathConfig('path_pw_products_abc123'),
             name: 'Fixture Path',
-            nodes: [],
-            edges: [],
           },
         },
       })
@@ -309,7 +304,10 @@ describe('ai-paths trigger-buttons GET handler', () => {
           },
         ],
         configs: {
-          'path-live': { id: 'path-live', name: 'Live Path', nodes: [], edges: [] },
+          'path-live': {
+            ...createDefaultPathConfig('path-live'),
+            name: 'Live Path',
+          },
         },
       })
     );
@@ -372,7 +370,10 @@ describe('ai-paths trigger-buttons GET handler', () => {
           },
         ],
         configs: {
-          'path-live': { id: 'path-live', name: 'Live Path', nodes: [], edges: [] },
+          'path-live': {
+            ...createDefaultPathConfig('path-live'),
+            name: 'Live Path',
+          },
         },
       })
     );
@@ -448,8 +449,11 @@ describe('ai-paths trigger-buttons GET handler', () => {
           },
         ],
         configs: {
-          'path-live': { id: 'path-live', name: 'Live Path', nodes: [], edges: [] },
-          [brokenPathId]: brokenConfig,
+          'path-live': {
+            ...createDefaultPathConfig('path-live'),
+            name: 'Live Path',
+          },
+          [brokenPathId]: JSON.stringify(brokenConfig),
         },
       })
     );
@@ -466,7 +470,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     ]);
   });
 
-  it('repairs and keeps BLWo starter buttons when the seeded default config is stale', async () => {
+  it('hides BLWo starter buttons when the bound starter config is stale', async () => {
     const brokenPathId = 'path_base_export_blwo_v1';
     const brokenConfig = {
       ...createDefaultPathConfig(brokenPathId),
@@ -506,7 +510,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
           },
         ],
         configs: {
-          [brokenPathId]: brokenConfig,
+          [brokenPathId]: JSON.stringify(brokenConfig),
         },
       })
     );
@@ -516,16 +520,8 @@ describe('ai-paths trigger-buttons GET handler', () => {
       createRequestContext()
     );
 
-    await expect(response.json()).resolves.toEqual([
-      expect.objectContaining({
-        id: 'btn-blwo',
-        pathId: brokenPathId,
-      }),
-    ]);
-    expect(upsertAiPathsSettingMock).toHaveBeenCalledWith(
-      `ai_paths_config_${brokenPathId}`,
-      expect.any(String)
-    );
+    await expect(response.json()).resolves.toEqual([]);
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });
 
   it('fails open when the AI Paths index payload is malformed', async () => {
@@ -643,41 +639,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });
 
-  it('upgrades a legacy normalize button to the seeded starter workflow when read-time repairs apply', async () => {
-    const repairedSnapshot = createSettingsSnapshot({
-      triggerButtons: [
-        {
-          id: '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27',
-          name: 'Normalize',
-          iconId: null,
-          pathId: 'path_name_normalize_v1',
-          enabled: true,
-          locations: ['product_modal'],
-          mode: 'execute_path',
-          display: 'icon_label',
-          createdAt: '2026-04-09T00:00:00.000Z',
-          updatedAt: '2026-04-09T00:00:00.000Z',
-          sortIndex: 3,
-        },
-      ],
-      pathMetas: [
-        {
-          id: 'path_name_normalize_v1',
-          name: 'Normalize Product Name',
-          createdAt: '2026-04-09T00:00:00.000Z',
-          updatedAt: '2026-04-09T00:00:00.000Z',
-        },
-      ],
-      configs: {
-        path_name_normalize_v1: {
-          id: 'path_name_normalize_v1',
-          name: 'Normalize Product Name',
-          nodes: [],
-          edges: [],
-        },
-      },
-    });
-
+  it('does not upgrade legacy normalize buttons on read', async () => {
     getAllAiPathsSettingsMock.mockResolvedValue(
       createSettingsSnapshot({
         triggerButtons: [
@@ -697,10 +659,6 @@ describe('ai-paths trigger-buttons GET handler', () => {
         ],
       })
     );
-    ensureStarterWorkflowDefaultsMock.mockReturnValue({
-      nextRecords: repairedSnapshot,
-      affectedCount: 1,
-    });
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
@@ -709,56 +667,19 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     const body = await response.json();
     expect(response.status).toBe(200);
-    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith(repairedSnapshot);
+    expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
     expect(body).toEqual([
       expect.objectContaining({
-        id: '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27',
+        id: 'cf9974ae-1fb3-4e61-8a30-8df8af63744f',
         name: 'Normalize',
-        pathId: 'path_name_normalize_v1',
+        pathId: null,
       }),
     ]);
   });
 
-  it('returns the auto-seeded marketplace copy debrand button when starter defaults are materialized on read', async () => {
-    const seededSnapshot = createSettingsSnapshot({
-      triggerButtons: [
-        {
-          id: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
-          name: 'Debrand',
-          iconId: null,
-          pathId: 'path_marketplace_copy_debrand_v1',
-          enabled: true,
-          locations: ['product_marketplace_copy_row'],
-          mode: 'click',
-          display: 'icon_label',
-          createdAt: '2026-04-11T00:00:00.000Z',
-          updatedAt: '2026-04-11T00:00:00.000Z',
-          sortIndex: 35,
-        },
-      ],
-      pathMetas: [
-        {
-          id: 'path_marketplace_copy_debrand_v1',
-          name: 'Debrand Marketplace Copy',
-          createdAt: '2026-04-11T00:00:00.000Z',
-          updatedAt: '2026-04-11T00:00:00.000Z',
-        },
-      ],
-      configs: {
-        path_marketplace_copy_debrand_v1: {
-          id: 'path_marketplace_copy_debrand_v1',
-          name: 'Debrand Marketplace Copy',
-          nodes: [],
-          edges: [],
-        },
-      },
-    });
-
+  it('does not materialize starter defaults on read when settings are empty', async () => {
     getAllAiPathsSettingsMock.mockResolvedValue([]);
-    ensureStarterWorkflowDefaultsMock.mockReturnValue({
-      nextRecords: seededSnapshot,
-      affectedCount: 1,
-    });
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
@@ -767,15 +688,9 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     const body = await response.json();
     expect(response.status).toBe(200);
-    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith(seededSnapshot);
-    expect(body).toEqual([
-      expect.objectContaining({
-        id: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
-        name: 'Debrand',
-        pathId: 'path_marketplace_copy_debrand_v1',
-        locations: ['product_marketplace_copy_row'],
-      }),
-    ]);
+    expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
+    expect(body).toEqual([]);
   });
 
   it('POST rejects missing bound AI Paths', async () => {

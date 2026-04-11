@@ -46,6 +46,7 @@ const PRODUCT_SCAN_URL_MAX_LENGTH = 4_000;
 const PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH = 8_000;
 const PRODUCT_SCAN_ASIN_MAX_LENGTH = 40;
 const PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH = 160;
+const PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS = 2;
 
 type AmazonScanScriptResult = {
   status: 'matched' | 'no_match' | 'failed';
@@ -217,18 +218,27 @@ const persistSynchronizedScan = async (
   scan: ProductScanRecord,
   updates: Partial<ProductScanRecord>
 ): Promise<ProductScanRecord> => {
-  try {
-    return (await updateProductScan(scan.id, updates)) ?? buildSynchronizedScanRecord(scan, updates);
-  } catch (error) {
-    void ErrorSystem.captureException(error, {
-      service: 'product-scans.service',
-      action: 'persistSynchronizedScan',
-      scanId: scan.id,
-      productId: scan.productId,
-      engineRunId: scan.engineRunId,
-    });
-    return buildSynchronizedScanRecord(scan, updates);
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS; attempt += 1) {
+    try {
+      return (
+        (await updateProductScan(scan.id, updates)) ?? buildSynchronizedScanRecord(scan, updates)
+      );
+    } catch (error) {
+      lastError = error;
+    }
   }
+
+  void ErrorSystem.captureException(lastError, {
+    service: 'product-scans.service',
+    action: 'persistSynchronizedScan',
+    scanId: scan.id,
+    productId: scan.productId,
+    engineRunId: scan.engineRunId,
+  });
+
+  return buildSynchronizedScanRecord(scan, updates);
 };
 
 const persistFailedSynchronization = async (
@@ -600,8 +610,11 @@ export async function queueAmazonBatchProductScans(input: {
             productId,
             scanId: saved.id,
             runId: run.runId,
-            status: 'queued',
-            message: 'Amazon reverse image scan queued.',
+            status: queuedRunStatus,
+            message:
+              queuedRunStatus === 'running'
+                ? 'Amazon reverse image scan running.'
+                : 'Amazon reverse image scan queued.',
           };
         } catch (error) {
           const message = normalizeErrorMessage(
@@ -643,6 +656,7 @@ export async function queueAmazonBatchProductScans(input: {
 
   return {
     queued: results.filter((result) => result.status === 'queued').length,
+    running: results.filter((result) => result.status === 'running').length,
     alreadyRunning: results.filter((result) => result.status === 'already_running').length,
     failed: results.filter((result) => result.status === 'failed').length,
     results,

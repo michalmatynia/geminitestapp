@@ -96,6 +96,9 @@ describe('starter workflow registry', () => {
     const databaseNode = (config.nodes ?? []).find(
       (node) => node.type === 'database' && node.id === 'node-update-name-normalize'
     );
+    const mapperNode = (config.nodes ?? []).find(
+      (node) => node.type === 'mapper' && node.id === 'node-mapper-name-normalize'
+    );
     const dbSchemaNode = (config.nodes ?? []).find(
       (node) => node.type === 'db_schema' && node.id === 'node-db-schema-name-normalize'
     );
@@ -109,6 +112,8 @@ describe('starter workflow registry', () => {
     expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
     expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
     expect(databaseNode?.config?.database?.updateTemplate).not.toContain('"name_en"');
+    expect(databaseNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('warn');
+    expect(mapperNode?.config?.mapper?.jsonIntegrityPolicy).toBe('repair');
     expectSuccessfulStrictRunPreflight(report);
   });
 

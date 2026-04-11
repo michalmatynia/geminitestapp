@@ -12,7 +12,6 @@ import {
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
-import { upsertAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   aiPathRunEnqueueRequestSchema,
@@ -24,7 +23,7 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { compileGraph, evaluateAiPathsValidationPreflight, normalizeNodes, normalizeAiPathsValidationConfig, PATH_CONFIG_PREFIX, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
-import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
   remediateRemovedLegacyTriggerContextModes,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
@@ -84,21 +83,19 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
     throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
   }
 
-  const resolved = materializeStoredTriggerPathConfig({
-    pathId,
-    rawConfig: raw,
-    fallbackName: pathId,
-  });
-  if (resolved.changed) {
-    try {
-      await upsertAiPathsSettings([{ key: configKey, value: JSON.stringify(resolved.config) }]);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-    
-      // Best-effort persistence only. The repaired config is still safe to execute for this request.
+  try {
+    return loadCanonicalStoredPathConfig({
+      pathId,
+      rawConfig: raw,
+    });
+  } catch (error) {
+    if (error instanceof Error && /non-canonical persisted values/i.test(error.message)) {
+      throw badRequestError(
+        `Stored AI Path "${pathId}" contains non-canonical persisted values. Repair or restore it explicitly before running it.`
+      );
     }
+    throw error;
   }
-  return resolved.config;
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

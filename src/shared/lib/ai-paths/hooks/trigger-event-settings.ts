@@ -11,13 +11,10 @@ import {
   normalizeLoadedPathMetas,
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
-import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
-  updateAiPathsSetting,
-  updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -195,7 +192,6 @@ export const loadPathConfigsFromSettings = async (
   const configs: Record<string, PathConfig> = {};
   const retainedMetas: PathMeta[] = [];
   let removedMissingConfigEntries = false;
-  const pendingRepairs: Array<{ key: string; value: string }> = [];
 
   normalizedMetas.forEach((meta: PathMeta): void => {
     if (!meta?.id) return;
@@ -206,51 +202,16 @@ export const loadPathConfigsFromSettings = async (
       return;
     }
 
-    const resolvedConfig = materializeStoredTriggerPathConfig({
+    const normalizedConfig = loadCanonicalStoredPathConfig({
       pathId: meta.id,
       rawConfig: configRaw,
-      fallbackName: meta.name,
-    });
-    const normalizedConfig = resolvedConfig.config;
-    if (resolvedConfig.changed) {
-      pendingRepairs.push({
-        key: configKey,
-        value: JSON.stringify(normalizedConfig),
-      });
-    }
-    void persistLegacyTriggerContextModeRepair({
-      pathId: meta.id,
-      rawPayload: configRaw,
-      repairedConfig: resolvedConfig.config,
-      source: 'useAiPathTriggerEvent',
-      action: 'persistLegacyTriggerContextModeRepair',
     });
 
     configs[meta.id] = normalizedConfig;
     retainedMetas.push(meta);
   });
 
-  if (removedMissingConfigEntries) {
-    pendingRepairs.push({
-      key: PATH_INDEX_KEY,
-      value: JSON.stringify(retainedMetas),
-    });
-  }
-
-  if (pendingRepairs.length === 1) {
-    const [repair] = pendingRepairs;
-    if (repair) {
-      void updateAiPathsSetting(repair.key, repair.value).catch(() => {
-        // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
-      });
-    }
-  } else if (pendingRepairs.length > 1) {
-    void updateAiPathsSettingsBulk(pendingRepairs).catch(() => {
-      // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
-    });
-  }
-
-  const settingsPathOrder = retainedMetas
+  const settingsPathOrder = (removedMissingConfigEntries ? retainedMetas : normalizedMetas)
     .map((meta: PathMeta) => meta?.id)
     .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
 

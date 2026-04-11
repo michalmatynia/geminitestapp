@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import {
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
@@ -11,8 +12,6 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factor
 import {
   fetchAiPathsSettingsByKeysCached,
   fetchAiPathsSettingsCached,
-  updateAiPathsSetting,
-  updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 import {
@@ -30,8 +29,6 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
   >('@/shared/lib/ai-paths/settings-store-client');
   return {
     ...actual,
-    updateAiPathsSetting: vi.fn(async (key: string, value: string) => ({ key, value })),
-    updateAiPathsSettingsBulk: vi.fn(async (items: Array<{ key: string; value: string }>) => items),
     fetchAiPathsSettingsCached: vi.fn(async () => []),
     fetchAiPathsSettingsByKeysCached: vi.fn(async () => []),
   };
@@ -45,7 +42,9 @@ const makeIndex = (entries: Array<{ id: string; name: string }>) =>
   JSON.stringify(entries.map((e) => ({ ...e, createdAt: TS, updatedAt: TS, folderPath: '' })));
 
 const makeConfig = (id: string, name: string, extra?: Record<string, unknown>) =>
-  JSON.stringify({ ...createDefaultPathConfig(id), name, ...extra });
+  JSON.stringify(
+    sanitizePathConfig({ ...createDefaultPathConfig(id), name, ...extra })
+  );
 
 const settingsFor = (
   paths: Array<{ id: string; name: string; extra?: Record<string, unknown> }>
@@ -129,14 +128,10 @@ const makeBrokenLiveParameterInferenceConfig = (pathId: string): string => {
   });
 };
 
-const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
-const mockedUpdateAiPathsSettingsBulk = vi.mocked(updateAiPathsSettingsBulk);
 const mockedFetchByKeys = vi.mocked(fetchAiPathsSettingsByKeysCached);
 const mockedFetchAll = vi.mocked(fetchAiPathsSettingsCached);
 
 beforeEach(() => {
-  mockedUpdateAiPathsSetting.mockClear();
-  mockedUpdateAiPathsSettingsBulk.mockClear();
   mockedFetchByKeys.mockClear();
   mockedFetchAll.mockClear();
 });
@@ -259,7 +254,7 @@ describe('loadPathConfigsFromSettings', () => {
 
   // ── config validation errors ──────────────────────────────────────────────
 
-  it('skips index entries whose config payload is missing and repairs the stored index', async () => {
+  it('skips index entries whose config payload is missing without mutating the stored index', async () => {
     const data: Array<{ key: string; value: string }> = [
       {
         key: PATH_INDEX_KEY,
@@ -274,18 +269,9 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
     const result = await loadPathConfigsFromSettings(data);
-    const repairedIndexViaSingleWrite = mockedUpdateAiPathsSetting.mock.calls.find(
-      ([key]) => key === PATH_INDEX_KEY
-    )?.[1];
-    const repairedIndexViaBulkWrite = mockedUpdateAiPathsSettingsBulk.mock.calls
-      .flatMap(([items]) => items)
-      .find((item) => item.key === PATH_INDEX_KEY)?.value;
 
     expect(result.settingsPathOrder).toEqual(['path-valid']);
     expect(Object.keys(result.configs)).toEqual(['path-valid']);
-    expect(repairedIndexViaSingleWrite ?? repairedIndexViaBulkWrite).toBe(
-      makeIndex([{ id: 'path-valid', name: 'Valid' }])
-    );
   });
 
   it('throws when a config value is invalid JSON', async () => {
@@ -325,11 +311,11 @@ describe('loadPathConfigsFromSettings', () => {
     ];
 
     await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /invalid ai path trigger node payload/i
+      /invalid ai path config payload/i
     );
   });
 
-  it('recovers seeded BLWo starter defaults when the stored config payload is broken', async () => {
+  it('does not recover seeded BLWo starter defaults when the stored config payload is broken', async () => {
     const pathId = 'path_base_export_blwo_v1';
     const data: Array<{ key: string; value: string }> = [
       { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: 'Base Export Workflow (BLWo)' }]) },
@@ -344,17 +330,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-
-    expect(loaded.settingsPathOrder).toEqual([pathId]);
-    expect(loaded.configs[pathId]?.nodes.some((node) => node.type === 'trigger')).toBe(true);
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${pathId}`,
-      expect.any(String)
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /invalid ai path config payload/i
     );
   });
 
-  it('preserves an explicit Normalize model selection while loading stored trigger configs', async () => {
+  it('rejects stale Normalize starter configs even when they preserve an explicit model selection', async () => {
     const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
     if (!template) {
       throw new Error('Expected starter_product_name_normalize template');
@@ -395,19 +376,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    const modelNode = loaded.configs[pathId]?.nodes.find(
-      (node) => node.type === 'model'
-    );
-
-    expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${pathId}`,
-      expect.stringContaining('"modelId":"ollama:gemma3"')
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values/i
     );
   });
 
-  it('preserves edited Normalize model settings while repairing stored trigger configs', async () => {
+  it('rejects stale Normalize starter configs even when they preserve edited model settings', async () => {
     const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
     if (!template) {
       throw new Error('Expected starter_product_name_normalize template');
@@ -451,36 +425,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    const modelNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'model');
-
-    expect(modelNode?.config?.model).toEqual(
-      expect.objectContaining({
-        temperature: 0.35,
-        maxTokens: 1337,
-        systemPrompt: 'Only return normalized output.',
-        waitForResult: false,
-      })
-    );
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${pathId}`,
-      expect.stringContaining('"temperature":0.35')
-    );
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${pathId}`,
-      expect.stringContaining('"maxTokens":1337')
-    );
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${pathId}`,
-      expect.stringContaining('"systemPrompt":"Only return normalized output."')
-    );
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${pathId}`,
-      expect.stringContaining('"waitForResult":false')
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values/i
     );
   });
 
-  it('loads partial stored configs without inheriting stale default node references', async () => {
+  it('rejects partial stored configs instead of filling defaults during trigger load', async () => {
     const pathId = 'path-partial-stored-trigger';
     const data: Array<{ key: string; value: string }> = [
       { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: 'Partial Trigger Path' }]) },
@@ -513,13 +463,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    expect(loaded.configs[pathId]?.nodes).toHaveLength(1);
-    expect(loaded.configs[pathId]?.uiState?.selectedNodeId ?? null).toBeNull();
-    expect(loaded.configs[pathId]?.nodes[0]?.config?.trigger?.event).toBe('manual');
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
+    );
   });
 
-  it('remediates removed legacy trigger context modes in stored settings payloads', async () => {
+  it('rejects removed legacy trigger context modes in stored settings payloads', async () => {
     const config = createDefaultPathConfig('path-legacy-trigger-context');
     const seedNode = config.nodes[0] as AiNode | undefined;
     if (!seedNode) {
@@ -547,15 +496,12 @@ describe('loadPathConfigsFromSettings', () => {
       { key: `${PATH_CONFIG_PREFIX}${config.id}`, value: JSON.stringify(config) },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    expect(loaded.configs[config.id]?.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${config.id}`,
-      expect.any(String)
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
     );
   });
 
-  it('refreshes stale seeded starter workflow configs when trigger settings load them', async () => {
+  it('rejects stale seeded starter workflow configs when trigger settings load them', async () => {
     const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
     if (!entry?.seedPolicy?.defaultPathId) {
       throw new Error('Missing seeded default path id for starter_parameter_inference.');
@@ -599,21 +545,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    const refreshedParserNode = loaded.configs[config.id]?.nodes.find(
-      (node) => node.title === 'JSON Parser'
-    );
-    const refreshedParserConfig = JSON.stringify(refreshedParserNode?.config ?? {});
-
-    expect(refreshedParserConfig).toContain('$.name_en');
-    expect(refreshedParserConfig).not.toContain('$.title');
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${config.id}`,
-      expect.any(String)
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
     );
   });
 
-  it('repairs stale live parameter inference configs with legacy mapping-mode updates before trigger preflight', async () => {
+  it('rejects legacy mapping-mode updates until explicitly repaired during trigger preflight', async () => {
     const pathId = 'path-live-parameter-inference-broken';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -626,35 +563,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    const repairedPayload = mockedUpdateAiPathsSetting.mock.calls.find(
-      ([key]) => key === `${PATH_CONFIG_PREFIX}${pathId}`
-    )?.[1];
-
-    const seedRouterNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'router');
-    expect(seedRouterNode).toBeDefined();
-    expect(seedRouterNode?.inputs ?? []).not.toContain('prompt');
-    expect(seedRouterNode?.outputs ?? []).not.toContain('prompt');
-    expect(
-      loaded.configs[pathId]?.nodes.some(
-        (node) =>
-          node.type === 'database' &&
-          node.config?.database?.operation === 'update' &&
-          node.config?.database?.updatePayloadMode === 'mapping'
-      )
-    ).toBe(false);
-    expect(typeof repairedPayload).toBe('string');
-    const repairedConfig = JSON.parse(repairedPayload as string) as {
-      extensions?: {
-        aiPathsStarter?: {
-          templateVersion?: number;
-        };
-      };
-    };
-    expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(16);
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
+    );
   });
 
-  it('repairs legacy database provider aliases before trigger preflight validation', async () => {
+  it('rejects legacy database provider aliases before trigger preflight validation', async () => {
     const pathId = 'path-legacy-trigger-provider-aliases';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -663,7 +577,9 @@ describe('loadPathConfigsFromSettings', () => {
       },
       {
         key: `${PATH_CONFIG_PREFIX}${pathId}`,
-        value: makeConfig(pathId, 'Legacy Trigger Provider Aliases', {
+        value: JSON.stringify({
+          ...createDefaultPathConfig(pathId),
+          name: 'Legacy Trigger Provider Aliases',
           nodes: [
             {
               id: 'node-trigger',
@@ -736,42 +652,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    const repairedPayload = mockedUpdateAiPathsSetting.mock.calls.find(
-      ([key]) => key === `${PATH_CONFIG_PREFIX}${pathId}`
-    )?.[1];
-    const repairedConfig = JSON.parse(repairedPayload as string) as {
-      nodes?: Array<{
-        id?: string;
-        config?: {
-          database?: {
-            query?: {
-              provider?: string;
-            };
-          };
-          db_schema?: {
-            provider?: string;
-          };
-        };
-      }>;
-    };
-
-    expect(
-      loaded.configs[pathId]?.nodes.find((node) => node.type === 'database')?.config?.database?.query
-        ?.provider
-    ).toBe('auto');
-    expect(
-      loaded.configs[pathId]?.nodes.find((node) => node.type === 'db_schema')?.config?.db_schema?.provider
-    ).toBe('auto');
-    expect(
-      repairedConfig.nodes?.find((node) => node.config?.database)?.config?.database?.query?.provider
-    ).toBe('auto');
-    expect(
-      repairedConfig.nodes?.find((node) => node.config?.db_schema)?.config?.db_schema?.provider
-    ).toBe('auto');
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
+    );
   });
 
-  it('derives a fallback name from the path id when both config and index names are empty', async () => {
+  it('rejects configs when both the stored config and index name are empty', async () => {
     const data: Array<{ key: string; value: string }> = [
       {
         key: PATH_INDEX_KEY,
@@ -779,12 +665,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
       { key: `${PATH_CONFIG_PREFIX}path-1`, value: makeConfig('path-1', '') },
     ];
-    const { configs } = await loadPathConfigsFromSettings(data);
-    // normalizeLoadedPathName generates a name from the id when both are empty
-    expect(configs['path-1']?.name).toBeTruthy();
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values|path config name is required/i
+    );
   });
 
-  it('repairs malformed persisted runtimeState strings and persists the healed config', async () => {
+  it('rejects malformed persisted runtimeState strings instead of healing them during trigger load', async () => {
     const parserDefinition = palette.find(
       (definition) => definition.type === 'parser' && definition.title === 'JSON Parser'
     );
@@ -800,7 +686,9 @@ describe('loadPathConfigsFromSettings', () => {
       },
       {
         key: `${PATH_CONFIG_PREFIX}${pathId}`,
-        value: makeConfig(pathId, 'Corrupt Runtime State', {
+        value: JSON.stringify({
+          ...createDefaultPathConfig(pathId),
+          name: 'Corrupt Runtime State',
           nodes: [
             {
               id: 'node-111111111111111111111111',
@@ -824,26 +712,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    const repairedPayload = mockedUpdateAiPathsSetting.mock.calls.find(
-      ([key]) => key === `${PATH_CONFIG_PREFIX}${pathId}`
-    )?.[1];
-
-    expect(loaded.configs[pathId]?.runtimeState).toEqual({
-      inputs: {},
-      outputs: {},
-    });
-    expect(typeof repairedPayload).toBe('string');
-    const repairedConfig = JSON.parse(repairedPayload as string) as {
-      runtimeState?: unknown;
-    };
-    expect(repairedConfig.runtimeState).toEqual({
-      inputs: {},
-      outputs: {},
-    });
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
+    );
   });
 
-  it('batches best-effort config and index repairs into a single bulk settings write', async () => {
+  it('still drops missing index entries without writing repairs during trigger load', async () => {
     const pathId = 'path-corrupt-runtime-state';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -855,34 +729,13 @@ describe('loadPathConfigsFromSettings', () => {
       },
       {
         key: `${PATH_CONFIG_PREFIX}${pathId}`,
-        value: makeConfig(pathId, 'Corrupt Runtime State', {
-          runtimeState: '{"inputs":',
-        }),
+        value: makeConfig(pathId, 'Corrupt Runtime State'),
       },
     ];
 
     const loaded = await loadPathConfigsFromSettings(data);
 
     expect(loaded.settingsPathOrder).toEqual([pathId]);
-    expect(mockedUpdateAiPathsSettingsBulk).toHaveBeenCalledTimes(1);
-    expect(mockedUpdateAiPathsSettingsBulk).toHaveBeenCalledWith([
-      {
-        key: `${PATH_CONFIG_PREFIX}${pathId}`,
-        value: expect.any(String),
-      },
-      {
-        key: PATH_INDEX_KEY,
-        value: makeIndex([{ id: pathId, name: 'Corrupt Runtime State' }]),
-      },
-    ]);
-    expect(mockedUpdateAiPathsSetting).not.toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${pathId}`,
-      expect.any(String)
-    );
-    expect(mockedUpdateAiPathsSetting).not.toHaveBeenCalledWith(
-      PATH_INDEX_KEY,
-      expect.any(String)
-    );
   });
 });
 

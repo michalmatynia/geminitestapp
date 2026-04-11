@@ -89,6 +89,7 @@ export type ProductAmazonBatchScanRequest = z.infer<typeof productAmazonBatchSca
 
 export const productAmazonBatchScanItemStatusSchema = z.enum([
   'queued',
+  'running',
   'already_running',
   'failed',
 ]);
@@ -107,6 +108,7 @@ export type ProductAmazonBatchScanItem = z.infer<typeof productAmazonBatchScanIt
 
 export const productAmazonBatchScanResponseSchema = z.object({
   queued: z.number().int().nonnegative(),
+  running: z.number().int().nonnegative(),
   alreadyRunning: z.number().int().nonnegative(),
   failed: z.number().int().nonnegative(),
   results: z.array(productAmazonBatchScanItemSchema).default([]),

@@ -1,16 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
+import { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-
 import {
   applyProductListAdvancedFilterState,
   applyProductListPageSizeChange,
-  scheduleDeferredProductListDraftBootstrap,
   shouldEnableProductListBackgroundSync,
   shouldEnableProductListBackgroundSyncRuntime,
-  shouldAdoptIncomingEditProductDetail,
-} from './useProductListState';
+  scheduleDeferredProductListDraftBootstrap,
+} from './product-list/productListStateHelpers';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({

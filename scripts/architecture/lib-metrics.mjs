@@ -284,7 +284,7 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   const appFeatureDeepSet = new Set();
   const appFeatureBarrelRegex = /from\s+['"]@\/features\/([^/'"\n]+)['"]/g;
   const appFeatureDeepRegex =
-    /from\s+['"]@\/features\/([^/'"\n]+)\/(?!public(?:['"/])|server(?:['"/]))/g;
+    /from\s+['"]@\/features\/([^/'"\n]+)\/(?!(?:[^/'"\n]+\.)?(?:public|server)(?:['"/]|$))/g;
   for (const record of appUiRecords) {
     const content = record.strippedContent ?? record.content;
     for (const match of content.matchAll(appFeatureBarrelRegex)) {

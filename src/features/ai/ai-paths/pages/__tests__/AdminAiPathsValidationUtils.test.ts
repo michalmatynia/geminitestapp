@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 
 import {
   parseAiPathsSettings,
@@ -9,18 +10,7 @@ import {
   parseDocsSourcesText,
 } from '../AdminAiPathsValidationUtils';
 
-const toCanonicalPathConfig = (pathId: string) => {
-  const config = createDefaultPathConfig(pathId);
-  const timestamp = '2026-03-03T18:00:00.000Z';
-  return {
-    ...config,
-    nodes: config.nodes.map((node) => ({
-      ...node,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    })),
-  };
-};
+const toCanonicalPathConfig = (pathId: string) => sanitizePathConfig(createDefaultPathConfig(pathId));
 
 describe('AdminAiPathsValidationUtils', () => {
   it('parses canonical AI Paths validation settings', () => {
@@ -106,7 +96,7 @@ describe('AdminAiPathsValidationUtils', () => {
           }),
         },
       ])
-    ).toThrowError(/Invalid AI Paths validation path config payload\./i);
+    ).toThrowError(/Invalid AI Path config payload\./i);
   });
 
   it('rejects path config id mismatches', () => {
@@ -119,10 +109,10 @@ describe('AdminAiPathsValidationUtils', () => {
           value: JSON.stringify(config),
         },
       ])
-    ).toThrowError(/path config id does not match its settings key/i);
+    ).toThrowError(/path config id does not match stored path id/i);
   });
 
-  it('remediates removed legacy trigger context modes in stored validation payloads', () => {
+  it('rejects removed legacy trigger context modes in stored validation payloads', () => {
     const config = toCanonicalPathConfig('path_legacy_trigger_mode');
     const seedNode = config.nodes[0];
     expect(seedNode).toBeDefined();
@@ -130,10 +120,6 @@ describe('AdminAiPathsValidationUtils', () => {
     config.nodes = [
       {
         ...seedNode,
-        type: 'trigger',
-        title: 'Trigger',
-        inputs: ['context'],
-        outputs: ['trigger', 'context', 'entityId', 'entityType'],
         config: {
           trigger: {
             event: 'manual',
@@ -144,32 +130,17 @@ describe('AdminAiPathsValidationUtils', () => {
     ];
     config.edges = [];
 
-    const parsed = parseAiPathsSettings([
-      {
-        key: `${PATH_CONFIG_PREFIX}${config.id}`,
-        value: JSON.stringify(config),
-      },
-    ]);
-    expect(parsed.pathConfigs[config.id]?.nodes[0]?.config?.trigger?.contextMode).toBe(
-      'trigger_only'
-    );
-    expect(parsed.repairedPathSettings).toHaveLength(1);
-    expect(parsed.repairedPathSettings[0]?.key).toBe(`${PATH_CONFIG_PREFIX}${config.id}`);
-    expect(JSON.parse(parsed.repairedPathSettings[0]?.value ?? '{}')).toMatchObject({
-      id: config.id,
-      nodes: [
+    expect(() =>
+      parseAiPathsSettings([
         {
-          config: {
-            trigger: {
-              contextMode: 'trigger_only',
-            },
-          },
+          key: `${PATH_CONFIG_PREFIX}${config.id}`,
+          value: JSON.stringify(config),
         },
-      ],
-    });
+      ])
+    ).toThrowError(/Invalid AI Path config payload\./i);
   });
 
-  it('repairs legacy trigger labels in stored path configs', () => {
+  it('preserves legacy trigger labels in stored path configs without rewriting them', () => {
     const config = {
       ...toCanonicalPathConfig('path_legacy_trigger_label'),
       trigger: 'Product Modal - Context Grabber',
@@ -182,13 +153,7 @@ describe('AdminAiPathsValidationUtils', () => {
       },
     ]);
 
-    expect(parsed.pathConfigs[config.id]?.trigger).toBe('Product Modal - Context Filter');
-    expect(parsed.repairedPathSettings).toHaveLength(1);
-    expect(parsed.repairedPathSettings[0]?.key).toBe(`${PATH_CONFIG_PREFIX}${config.id}`);
-    expect(JSON.parse(parsed.repairedPathSettings[0]?.value ?? '{}')).toMatchObject({
-      id: config.id,
-      trigger: 'Product Modal - Context Filter',
-    });
+    expect(parsed.pathConfigs[config.id]?.trigger).toBe('Product Modal - Context Grabber');
   });
 
   it('parses canonical entity:collection lines in collection-map draft', () => {

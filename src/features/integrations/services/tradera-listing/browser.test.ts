@@ -19,7 +19,15 @@ const {
   listParametersMock,
 } = vi.hoisted(() => ({
   getProductByIdMock: vi.fn(),
-  runPlaywrightListingScriptMock: vi.fn(),
+  runPlaywrightListingScriptMock: vi.fn().mockResolvedValue({
+    runId: 'run-stable',
+    status: 'success',
+    externalListingId: 'listing-stable',
+    listingUrl: 'https://www.tradera.com/item/stable',
+    publishVerified: true,
+    logs: [],
+    rawResult: {},
+  }),
   runPlaywrightScrapeScriptMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   accessMock: vi.fn(),
@@ -891,6 +899,15 @@ describe('TRADERA_CHECK_STATUS_SCRIPT', () => {
 describe('runTraderaBrowserListing scripted mode', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-stable',
+      status: 'success',
+      externalListingId: 'listing-stable',
+      listingUrl: 'https://www.tradera.com/item/stable',
+      publishVerified: true,
+      logs: [],
+      rawResult: {},
+    });
     accessMock.mockResolvedValue(undefined);
     copyFileMock.mockResolvedValue(undefined);
     mkdtempMock.mockResolvedValue('/tmp/tradera-browser-test');

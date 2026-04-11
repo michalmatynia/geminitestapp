@@ -60,6 +60,28 @@ const STATUS_CLASSES: Record<ScanModalRow['status'], string> = {
   failed: 'border-destructive/40 text-destructive',
 };
 
+const MISSING_BATCH_RESULT_MESSAGE = 'Amazon scan request did not return a result for this product.';
+const MISSING_SCAN_RECORD_MESSAGE = 'Amazon scan record could not be refreshed.';
+
+const resolveActiveStatusMessage = (
+  status: ProductScanStatus | 'enqueuing',
+  fallback: string | null
+): string | null => {
+  if (status === 'enqueuing') {
+    return fallback;
+  }
+
+  if (status === 'queued') {
+    return 'Amazon reverse image scan queued.';
+  }
+
+  if (status === 'running') {
+    return 'Amazon reverse image scan running.';
+  }
+
+  return fallback;
+};
+
 const formatSummary = (rows: ScanModalRow[]): string => {
   if (rows.length === 0) {
     return 'No products selected';
@@ -208,12 +230,22 @@ export function ProductAmazonScanModal(
 
     const terminalProductIds: string[] = [];
     const nextRows = currentRows.map((row) => {
-      const scan = row.scanId ? (scansById.get(row.scanId) ?? row.scan) : row.scan;
+      const refreshedScan = row.scanId ? (scansById.get(row.scanId) ?? null) : row.scan;
+      const isMissingRefreshedScan = Boolean(row.scanId) && !refreshedScan;
+      const scan = isMissingRefreshedScan ? null : refreshedScan;
       const status = scan?.status ?? row.status;
       const wasTerminal =
         row.status !== 'enqueuing' && isProductScanTerminalStatus(row.status);
-      if (scan && isProductScanTerminalStatus(scan.status) && !wasTerminal) {
+      if ((isMissingRefreshedScan || (scan && isProductScanTerminalStatus(scan.status))) && !wasTerminal) {
         terminalProductIds.push(row.productId);
+      }
+      if (isMissingRefreshedScan) {
+        return {
+          ...row,
+          status: 'failed' as const,
+          message: MISSING_SCAN_RECORD_MESSAGE,
+          scan: null,
+        };
       }
       return {
         ...row,
@@ -221,6 +253,8 @@ export function ProductAmazonScanModal(
         message:
           scan?.status === 'completed'
             ? (scan.asinUpdateMessage ?? null)
+            : scan && isProductScanActiveStatus(scan.status)
+              ? resolveActiveStatusMessage(scan.status, row.message)
             : scan && isProductScanTerminalStatus(scan.status)
               ? null
               : row.message,
@@ -241,6 +275,24 @@ export function ProductAmazonScanModal(
     }
   }, [invalidateProductViews, stopPolling]);
 
+  const handleRefreshFailure = useCallback(
+    (error: unknown, options?: { stopPolling?: boolean; sessionId?: number }) => {
+      if (
+        typeof options?.sessionId === 'number' &&
+        options.sessionId !== modalSessionRef.current
+      ) {
+        return;
+      }
+      if (options?.stopPolling) {
+        stopPolling();
+      }
+      const message =
+        error instanceof Error ? error.message : 'Failed to refresh Amazon scans.';
+      toast(message, { variant: 'error' });
+    },
+    [stopPolling, toast]
+  );
+
   const startPolling = useCallback((sessionId = modalSessionRef.current) => {
     stopPolling();
     if (sessionId !== modalSessionRef.current) {
@@ -248,9 +300,18 @@ export function ProductAmazonScanModal(
     }
     setIsPolling(true);
     pollTimerRef.current = safeSetInterval(() => {
-      void refreshScanRows(sessionId).catch(() => undefined);
+      void refreshScanRows(sessionId).catch((error: unknown) => {
+        handleRefreshFailure(error, { stopPolling: true, sessionId });
+      });
     }, 3000);
-  }, [refreshScanRows, stopPolling]);
+  }, [handleRefreshFailure, refreshScanRows, stopPolling]);
+
+  const handleManualRefresh = useCallback(() => {
+    const sessionId = modalSessionRef.current;
+    void refreshScanRows(sessionId).catch((error: unknown) => {
+      handleRefreshFailure(error, { sessionId });
+    });
+  }, [handleRefreshFailure, refreshScanRows]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -291,7 +352,13 @@ export function ProductAmazonScanModal(
 
         const queuedRows = initialRows.map((row) => {
           const result = resultsByProductId.get(row.productId);
-          if (!result) return row;
+          if (!result) {
+            return {
+              ...row,
+              status: 'failed' as const,
+              message: MISSING_BATCH_RESULT_MESSAGE,
+            };
+          }
           const nextStatus: ScanModalRow['status'] =
             result.status === 'already_running' ? 'running' : result.status;
           return {
@@ -305,15 +372,22 @@ export function ProductAmazonScanModal(
         rowsRef.current = queuedRows;
         setRows(queuedRows);
 
-        if (response.results.some((result) => result.status === 'queued' || result.status === 'already_running')) {
+        if (queuedRows.some((row) => row.status === 'queued' || row.status === 'running')) {
           startPolling(sessionId);
-          void refreshScanRows(sessionId).catch(() => undefined);
+          void refreshScanRows(sessionId).catch((error: unknown) => {
+            handleRefreshFailure(error, { stopPolling: true, sessionId });
+          });
         }
 
+        const missingResultCount = queuedRows.filter(
+          (row) => row.status === 'failed' && row.message === MISSING_BATCH_RESULT_MESSAGE
+        ).length;
+        const totalFailedCount = response.failed + missingResultCount;
         const summary = [
           response.queued > 0 && `${response.queued} queued`,
+          response.running > 0 && `${response.running} running`,
           response.alreadyRunning > 0 && `${response.alreadyRunning} already running`,
-          response.failed > 0 && `${response.failed} failed`,
+          totalFailedCount > 0 && `${totalFailedCount} failed`,
         ]
           .filter(Boolean)
           .join(', ');
@@ -322,7 +396,7 @@ export function ProductAmazonScanModal(
           return;
         }
         toast(summary ? `Amazon scans: ${summary}.` : 'No Amazon scans were queued.', {
-          variant: response.failed > 0 ? 'warning' : 'success',
+          variant: totalFailedCount > 0 ? 'warning' : 'success',
         });
       } catch (error) {
         if (sessionId !== modalSessionRef.current) {
@@ -351,7 +425,7 @@ export function ProductAmazonScanModal(
       }
       stopPolling();
     };
-  }, [isOpen, productIds, productNamesById, refreshScanRows, startPolling, stopPolling, toast]);
+  }, [handleRefreshFailure, isOpen, productIds, productNamesById, refreshScanRows, startPolling, stopPolling, toast]);
 
   return (
     <AppModal
@@ -364,7 +438,7 @@ export function ProductAmazonScanModal(
         <Button
           variant='ghost'
           size='sm'
-          onClick={() => void refreshScanRows(modalSessionRef.current)}
+          onClick={handleManualRefresh}
           disabled={isSubmitting}
           className='h-8 gap-1.5 px-2 text-xs'
         >

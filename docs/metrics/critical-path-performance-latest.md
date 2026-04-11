@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-11T09:25:09.835Z
+Generated at: 2026-04-11T10:39:04.276Z
 
 ## Summary
 
@@ -88,6 +88,7 @@ Generated at: 2026-04-11T09:25:09.835Z
 | --- | ---: |
 | `src/features/integrations/services/tradera-listing/browser.test.ts` | 4399 |
 | `src/features/products/components/ProductModals.test.tsx` | 1543 |
+| `src/features/products/server/product-scans-service.test.ts` | 1382 |
 | `src/features/products/components/list/ProductColumns.test.tsx` | 1246 |
 | `src/features/integrations/services/tradera-listing-service.test.ts` | 1130 |
 | `src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts` | 1095 |
@@ -95,7 +96,6 @@ Generated at: 2026-04-11T09:25:09.835Z
 | `src/shared/lib/products/services/productService.test.ts` | 1048 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx` | 1035 |
 | `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1015 |
-| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1014 |
 
 ## Top API Route Hotspots (Reference)
 

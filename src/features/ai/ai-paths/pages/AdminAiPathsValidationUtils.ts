@@ -8,14 +8,9 @@ import type {
   CentralDocsSnapshotResponse,
   CandidateChangeKind,
 } from '@/shared/contracts/ai-paths';
-import { pathConfigSchema } from '@/shared/contracts/ai-paths';
-import { validationError } from '@/shared/errors/app-error';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
-import {
-  normalizeRemovedTriggerContextModesInDocument,
-} from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
-import { migrateAiPathConfigTriggerLabel } from '@/shared/lib/ai-paths/core/utils/trigger-label-migration';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -23,7 +18,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 export type ParsedAiPathsSettings = {
   pathMetas: PathMeta[];
   pathConfigs: Record<string, PathConfig>;
-  repairedPathSettings: AiPathsSettingRecordDto[];
 };
 
 export type RuleParseResult =
@@ -137,53 +131,15 @@ export const getCandidateTags = (rule: AiPathsValidationRule): string[] =>
 
 export const parsePathConfig = (
   pathId: string,
-  raw: unknown
-): {
-  config: PathConfig;
-  repairedSetting: AiPathsSettingRecordDto | null;
-} => {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw validationError('Invalid AI Paths validation path config payload.', {
-      source: 'ai_paths.validation',
-      reason: 'payload_not_object',
-      pathId,
-    });
-  }
-  const remediated = normalizeRemovedTriggerContextModesInDocument(raw);
-  const result = pathConfigSchema.safeParse(remediated.value);
-  if (!result.success) {
-    throw validationError('Invalid AI Paths validation path config payload.', {
-      source: 'ai_paths.validation',
-      reason: 'schema_validation_failed',
-      pathId,
-      issues: result.error.flatten(),
-    });
-  }
-
-  const config = result.data;
-  if (config.id !== pathId) {
-    throw validationError('AI Paths validation path config id does not match its settings key.', {
-      source: 'ai_paths.validation',
-      reason: 'path_id_mismatch',
-      pathId,
-      configId: config.id,
-    });
-  }
-
-  const migratedTrigger = migrateAiPathConfigTriggerLabel(config);
-  const normalizedConfig: PathConfig = {
-    ...migratedTrigger.config,
-    aiPathsValidation: normalizeAiPathsValidationConfig(config.aiPathsValidation),
-  };
-
+  raw: string
+): PathConfig => {
+  const canonicalConfig = loadCanonicalStoredPathConfig({
+    pathId,
+    rawConfig: raw,
+  });
   return {
-    config: normalizedConfig,
-    repairedSetting: remediated.changed || migratedTrigger.changed
-      ? {
-        key: `${PATH_CONFIG_PREFIX}${pathId}`,
-        value: JSON.stringify(normalizedConfig),
-      }
-      : null,
+    ...canonicalConfig,
+    aiPathsValidation: normalizeAiPathsValidationConfig(canonicalConfig.aiPathsValidation),
   };
 };
 
@@ -219,23 +175,10 @@ export const parseAiPathsSettings = (records: AiPathsSettingRecordDto[]): Parsed
   );
 
   const parsedConfigById = new Map<string, PathConfig>();
-  const repairedPathSettings: AiPathsSettingRecordDto[] = [];
   configEntries.forEach(([key, value]: [string, string]) => {
     const pathId = key.slice(PATH_CONFIG_PREFIX.length).trim();
     if (!pathId) return;
-    const parsed = parseJson(value);
-    if (parsed === null) {
-      throw validationError('Invalid AI Paths validation path config JSON payload.', {
-        source: 'ai_paths.validation',
-        reason: 'invalid_json',
-        pathId,
-      });
-    }
-    const parsedConfig = parsePathConfig(pathId, parsed);
-    parsedConfigById.set(pathId, parsedConfig.config);
-    if (parsedConfig.repairedSetting) {
-      repairedPathSettings.push(parsedConfig.repairedSetting);
-    }
+    parsedConfigById.set(pathId, parsePathConfig(pathId, value));
   });
 
   const indexMetas = parsePathIndex(settingsMap.get(PATH_INDEX_KEY));
@@ -257,6 +200,5 @@ export const parseAiPathsSettings = (records: AiPathsSettingRecordDto[]): Parsed
   return {
     pathMetas,
     pathConfigs,
-    repairedPathSettings,
   };
 };

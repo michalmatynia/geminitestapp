@@ -174,6 +174,8 @@ const tryRepairBrokenRecoverableStarterConfig = (args: {
       pathId: args.pathId,
       rawConfig: args.rawConfig,
       fallbackName: args.pathId,
+      applyStarterWorkflowUpgrade: true,
+      allowStaticRecoveryFallback: true,
     });
     return resolved.changed ? resolved.config : null;
   } catch (error) {

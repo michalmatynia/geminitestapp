@@ -1,75 +1,49 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { auditClientBoundaries } from './scripts/quality/lib/client-boundary-audit.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const args = new Set(process.argv.slice(2));
+const audit = auditClientBoundaries({ root: process.cwd() });
 
-// Hooks and browser APIs that require 'use client'.
-// A file containing any of these MUST keep 'use client'.
-const CLIENT_HOOK_RE =
-  /\b(useState|useEffect|useRef|useMemo|useCallback|useReducer|useContext|useLayoutEffect|usePathname|useRouter|useSearchParams|useTranslations|useLocale|useImperativeHandle|useId|useTransition|useDeferredValue)\b/;
-const BROWSER_API_RE = /\bwindow\.|document\.|localStorage\.|sessionStorage\.|navigator\./;
-// Event handler props on JSX elements (not just type annotations)
-const EVENT_HANDLER_RE = /\bon(?:Click|Change|Submit|Focus|Blur|KeyDown|KeyUp|MouseOver|MouseEnter|MouseLeave)\s*=/;
-const FORWARD_REF_RE = /\bforwardRef\s*\(/;
+const payload = {
+  scannedFiles: audit.filesScanned,
+  missingRequiredUseClient: audit.missingBoundaryResults.map((result) => ({
+    file: result.relativePath,
+    reasons: result.reasons,
+    serverReachablePath: result.serverReachablePath,
+  })),
+  removableCandidates: audit.removableCandidates.map((result) => result.relativePath),
+  protectedUseClientFiles: audit.protectedUseClientFiles.length,
+};
 
-function needsUseClient(content) {
-  return (
-    CLIENT_HOOK_RE.test(content) ||
-    BROWSER_API_RE.test(content) ||
-    EVENT_HANDLER_RE.test(content) ||
-    FORWARD_REF_RE.test(content)
-  );
+if (args.has('--json')) {
+  console.log(JSON.stringify(payload, null, 2));
+  process.exit(0);
 }
 
-function removeUseClientDirective(filePath) {
-  const content = fs.readFileSync(filePath, 'utf8');
+console.log('Client boundary audit only. No files were modified.');
+console.log(`Scanned files: ${payload.scannedFiles}`);
+console.log(`Missing required 'use client': ${payload.missingRequiredUseClient.length}`);
+console.log(`Review candidates for removing 'use client': ${payload.removableCandidates.length}`);
+console.log(`Protected 'use client' files: ${payload.protectedUseClientFiles}`);
 
-  const match = content.match(/^[\s\S]*?['"]use client['"];?\s*\n*/m);
-
-  if (!match || !match[0].includes('use client')) {
-    return false;
+if (payload.missingRequiredUseClient.length > 0) {
+  console.log('');
+  console.log('Files currently missing required client boundaries:');
+  for (const entry of payload.missingRequiredUseClient) {
+    const reasons = entry.reasons.map((reason) => reason.ruleId).join(', ');
+    const trace = entry.serverReachablePath?.length
+      ? ` via ${entry.serverReachablePath.join(' -> ')}`
+      : '';
+    console.log(`- ${entry.file} [${reasons}]${trace}`);
   }
-
-  // Safety check: skip if file needs 'use client' for hooks/browser APIs
-  const contentWithoutDirective = content.replace(match[0], '');
-  if (needsUseClient(contentWithoutDirective)) {
-    return false;
-  }
-
-  const modified = contentWithoutDirective.replace(/^\n+/, '\n');
-
-  if (modified !== content) {
-    fs.writeFileSync(filePath, modified, 'utf8');
-    return true;
-  }
-
-  return false;
 }
 
-function walkDir(dir) {
-  const files = fs.readdirSync(dir);
-  let count = 0;
-
-  files.forEach(file => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-
-    if (stat.isDirectory()) {
-      if (!file.includes('node_modules') && !file.includes('.next')) {
-        count += walkDir(filePath);
-      }
-    } else if (file.endsWith('.ts') || file.endsWith('.tsx')) {
-      if (removeUseClientDirective(filePath)) {
-        count++;
-      }
-    }
-  });
-
-  return count;
+if (payload.removableCandidates.length > 0) {
+  console.log('');
+  console.log('Review candidates for manual verification:');
+  for (const candidate of payload.removableCandidates) {
+    console.log(`- ${candidate}`);
+  }
 }
 
-const srcDir = path.join(__dirname, 'src');
-const removed = walkDir(srcDir);
-console.log(`Total files modified: ${removed}`);
-console.log('Run `node scripts/architecture/check-guardrails.mjs` to verify hooksWithoutUseClient === 0');
+console.log('');
+console.log("Run `node scripts/quality/check-client-boundaries.mjs --strict --no-write` before accepting any boundary removals.");

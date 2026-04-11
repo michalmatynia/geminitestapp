@@ -28,6 +28,18 @@ const STATUS_CLASSES: Record<ProductScanStatus, string> = {
   failed: 'border-destructive/40 text-destructive',
 };
 
+const resolveActiveStatusMessage = (status: ProductScanStatus): string | null => {
+  if (status === 'queued') {
+    return 'Amazon reverse image scan queued.';
+  }
+
+  if (status === 'running') {
+    return 'Amazon reverse image scan running.';
+  }
+
+  return null;
+};
+
 const formatTimestamp = (value: string | null | undefined): string => {
   if (!value) return 'Unknown time';
   const parsed = new Date(value);
@@ -71,6 +83,13 @@ const resolveScanMessages = (
     };
   }
 
+  if (isProductScanActiveStatus(scan.status)) {
+    return {
+      infoMessage: scan.asinUpdateMessage ?? resolveActiveStatusMessage(scan.status),
+      errorMessage: scan.error,
+    };
+  }
+
   return {
     infoMessage: scan.asinUpdateMessage,
     errorMessage: scan.error,
@@ -93,6 +112,7 @@ export default function ProductFormScans(): React.JSX.Element {
       return scans.some((scan) => isProductScanActiveStatus(scan.status)) ? 3000 : false;
     },
   });
+  const scans = scansQuery.data?.scans ?? [];
 
   if (!productId) {
     return (
@@ -111,7 +131,7 @@ export default function ProductFormScans(): React.JSX.Element {
     );
   }
 
-  if (scansQuery.isError) {
+  if (scansQuery.isError && scans.length === 0) {
     return (
       <div className='space-y-3 rounded-md border border-destructive/40 px-4 py-5'>
         <p className='text-sm text-destructive'>
@@ -130,8 +150,6 @@ export default function ProductFormScans(): React.JSX.Element {
       </div>
     );
   }
-
-  const scans = scansQuery.data?.scans ?? [];
 
   return (
     <div className='space-y-4'>
@@ -154,6 +172,12 @@ export default function ProductFormScans(): React.JSX.Element {
           Refresh
         </Button>
       </div>
+
+      {scansQuery.isError ? (
+        <div className='rounded-md border border-amber-500/40 px-4 py-3 text-sm text-amber-300'>
+          {scansQuery.error.message || 'Failed to refresh product scans.'}
+        </div>
+      ) : null}
 
       {scans.length === 0 ? (
         <div className='rounded-md border border-dashed border-border/60 px-4 py-6 text-sm text-muted-foreground'>

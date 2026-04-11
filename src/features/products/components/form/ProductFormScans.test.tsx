@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -129,5 +129,96 @@ describe('ProductFormScans', () => {
     expect(
       await screen.findByText('Google reverse image search did not return a usable Amazon result.')
     ).toBeInTheDocument();
+  });
+
+  it('shows a running status message for active scans without persisted update text', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-3',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-3',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Amazon reverse image scan running.')).toBeInTheDocument();
+  });
+
+  it('keeps the last scan results visible when a refresh fails after initial load', async () => {
+    mocks.apiGetMock
+      .mockResolvedValueOnce({
+        scans: [
+          {
+            id: 'scan-4',
+            productId: 'product-1',
+            provider: 'amazon',
+            scanType: 'google_reverse_image',
+            status: 'completed',
+            productName: 'Product 1',
+            engineRunId: 'run-4',
+            imageCandidates: [],
+            matchedImageId: 'image-1',
+            asin: 'B000123456',
+            title: 'Amazon title',
+            price: '$10.99',
+            url: 'https://www.amazon.com/dp/B000123456',
+            description: 'Amazon description',
+            rawResult: null,
+            error: null,
+            asinUpdateStatus: 'updated',
+            asinUpdateMessage: 'Product ASIN filled from Amazon scan.',
+            createdBy: null,
+            updatedBy: null,
+            completedAt: '2026-04-11T04:00:00.000Z',
+            createdAt: '2026-04-11T03:59:00.000Z',
+            updatedAt: '2026-04-11T04:00:00.000Z',
+          },
+        ],
+      })
+      .mockRejectedValueOnce(new Error('refresh failed'));
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Amazon title')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('refresh failed')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Amazon title')).toBeInTheDocument();
+    expect(screen.getByText('Product ASIN filled from Amazon scan.')).toBeInTheDocument();
   });
 });

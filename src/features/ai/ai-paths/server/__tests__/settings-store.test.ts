@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { __testOnly } from '@/features/ai/ai-paths/server/settings-store';
 import {
@@ -26,7 +26,7 @@ const buildEmptyStarterSettings = () => [
 const buildStaticRecoveryRecords = () =>
   restoreStaticStarterWorkflowBundle(buildEmptyStarterSettings()).nextRecords;
 
-describe('settings-store flag preservation and read-time seeding policy', () => {
+describe('settings-store flag preservation and maintenance-only starter policy', () => {
   it('preserves path activation and lock flags when seeded defaults are rewritten', () => {
     const existingFlags = JSON.stringify({
       id: 'path_custom',
@@ -72,47 +72,8 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     });
   });
 
-  it('does not auto-apply default seed writes during reads by default', async () => {
-    const applyDefaultSeeds = vi
-      .fn<
-        (
-          records: Array<{ key: string; value: string }>
-        ) => Promise<Array<{ key: string; value: string }>>
-      >()
-      .mockResolvedValue([]);
-
-    const records = [{ key: 'ai_paths_index', value: '[]' }];
-    const next = await __testOnly.maybeAutoApplyDefaultSeedsOnRead(['ai_paths_index'], records, {
-      autoApply: false,
-      applyDefaultSeeds,
-    });
-
-    expect(next).toEqual(records);
-    expect(applyDefaultSeeds).not.toHaveBeenCalled();
-  });
-
-  it('can explicitly enable read-time default seeds through policy toggle', async () => {
-    const records = [{ key: 'ai_paths_index', value: '[]' }];
-    const seeded = [{ key: 'ai_paths_index', value: '[{"id":"path_seeded"}]' }];
-    const applyDefaultSeeds = vi
-      .fn<
-        (
-          items: Array<{ key: string; value: string }>
-        ) => Promise<Array<{ key: string; value: string }>>
-      >()
-      .mockResolvedValue(seeded);
-
-    const next = await __testOnly.maybeAutoApplyDefaultSeedsOnRead(['ai_paths_index'], records, {
-      autoApply: true,
-      applyDefaultSeeds,
-    });
-
-    expect(applyDefaultSeeds).toHaveBeenCalledTimes(1);
-    expect(next).toEqual(seeded);
-  });
-
-  it('treats missing env override as no read-time auto-seeding', () => {
-    expect(__testOnly.resolveAutoApplyDefaultSeedsOnRead(undefined)).toBe(false);
+  it('exposes only flag-preservation helpers from settings-store test hooks', () => {
+    expect(Object.keys(__testOnly)).toEqual(['preservePathConfigFlagsOnSeed']);
   });
 
   it('generically seeds auto-seeded starter workflows from the registry', () => {

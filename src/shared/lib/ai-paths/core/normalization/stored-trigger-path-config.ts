@@ -468,6 +468,8 @@ export const materializeStoredTriggerPathConfig = (args: {
   pathId: string;
   rawConfig: string;
   fallbackName?: string | null | undefined;
+  applyStarterWorkflowUpgrade?: boolean | undefined;
+  allowStaticRecoveryFallback?: boolean | undefined;
 }): {
   config: PathConfig;
   changed: boolean;
@@ -491,7 +493,10 @@ export const materializeStoredTriggerPathConfig = (args: {
       parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
         ? (parsedConfig as PathConfig)
         : null;
-    const rawStarterUpgrade = rawParsedConfig ? upgradeStarterWorkflowPathConfig(rawParsedConfig) : null;
+    const rawStarterUpgrade =
+      rawParsedConfig && args.applyStarterWorkflowUpgrade !== false
+        ? upgradeStarterWorkflowPathConfig(rawParsedConfig)
+        : null;
     const triggerPreflightBaseConfig = rawStarterUpgrade?.config ?? rawParsedConfig;
     const providerAliasRepair =
       triggerPreflightBaseConfig ? repairLegacyTriggerProviderAliases(triggerPreflightBaseConfig) : null;
@@ -578,6 +583,9 @@ export const materializeStoredTriggerPathConfig = (args: {
     };
   } catch (error) {
     logClientError(error);
+    if (args.allowStaticRecoveryFallback === false) {
+      throw error;
+    }
     const fallbackConfig = resolveRecoverableStarterFallbackConfig({
       pathId,
       rawConfig,

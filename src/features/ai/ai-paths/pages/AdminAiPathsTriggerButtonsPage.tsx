@@ -10,10 +10,9 @@ import {
   type AiTriggerButtonCreatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
-import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
-import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, type PathConfig, triggerButtonsApi } from '@/shared/lib/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/shared/lib/ai-paths';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import { api } from '@/shared/lib/api-client';
 import { ICON_LIBRARY, IconSelector } from '@/shared/lib/icons';
 import {
@@ -41,11 +40,6 @@ import {
 
 type TriggerButtonDraft = AiTriggerButtonCreatePayload & { id?: string };
 type TriggerButtonPathUsage = { id: string; name: string };
-type TriggerButtonPathRepair = {
-  pathId: string;
-  rawPayload: string;
-  repairedConfig: PathConfig;
-};
 type TriggerButtonFixtureCleanupResult = {
   removedTriggerButtons: number;
   removedPathIndexEntries: number;
@@ -104,13 +98,9 @@ const BUILT_IN_TRIGGER_EVENTS = new Set<string>(['manual', 'scheduled_run']);
 
 const extractTriggerButtonPathUsageMap = (
   settings: Array<{ key: string; value: string }>
-): {
-  usageByButtonId: Map<string, TriggerButtonPathUsage[]>;
-  repairedPaths: TriggerButtonPathRepair[];
-} => {
+): Map<string, TriggerButtonPathUsage[]> => {
   const map = new Map<string, string>(settings.map((item) => [item.key, item.value]));
   const usageByButtonId = new Map<string, TriggerButtonPathUsage[]>();
-  const repairedPaths: TriggerButtonPathRepair[] = [];
   const indexNameById = new Map<string, string>();
   const indexRaw = map.get(PATH_INDEX_KEY);
   if (indexRaw) {
@@ -139,27 +129,14 @@ const extractTriggerButtonPathUsageMap = (
     const pathId = key.slice(PATH_CONFIG_PREFIX.length).trim();
     if (!pathId) return;
 
-    const resolvedConfig = resolvePortablePathInput(value, {
-      repairIdentities: true,
-      includeConnections: false,
-      signingPolicyTelemetrySurface: 'canvas',
-      nodeCodeObjectHashVerificationMode: 'warn',
-    });
-    if (!resolvedConfig.ok) {
-      return;
-    }
-    const parsedConfig = resolvedConfig.value.pathConfig;
-    if (!parsedConfig || typeof parsedConfig !== 'object') return;
-    if (
-      resolvedConfig.value.migrationWarnings.some(
-        (warning) => warning.code === 'removed_trigger_context_modes_normalized'
-      )
-    ) {
-      repairedPaths.push({
+    let parsedConfig;
+    try {
+      parsedConfig = loadCanonicalStoredPathConfig({
         pathId,
-        rawPayload: value,
-        repairedConfig: parsedConfig,
+        rawConfig: value,
       });
+    } catch {
+      return;
     }
 
     const configNameRaw = (parsedConfig as { name?: unknown }).name;
@@ -206,7 +183,7 @@ const extractTriggerButtonPathUsageMap = (
     );
   });
 
-  return { usageByButtonId, repairedPaths };
+  return usageByButtonId;
 };
 
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
@@ -505,21 +482,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     [router]
   );
 
-  const { usageByButtonId: triggerButtonPathUsageMap, repairedPaths } = useMemo(
+  const triggerButtonPathUsageMap = useMemo(
     () => extractTriggerButtonPathUsageMap(aiPathsSettingsQuery.data ?? []),
     [aiPathsSettingsQuery.data]
   );
-  useEffect(() => {
-    repairedPaths.forEach((entry) => {
-      void persistLegacyTriggerContextModeRepair({
-        pathId: entry.pathId,
-        rawPayload: entry.rawPayload,
-        repairedConfig: entry.repairedConfig,
-        source: 'AdminAiPathsTriggerButtonsPage',
-        action: 'persistLegacyTriggerContextModeRepair',
-      });
-    });
-  }, [repairedPaths]);
   const draftPathUsage = useMemo<TriggerButtonPathUsage[]>(
     () => (draft.id ? (triggerButtonPathUsageMap.get(draft.id) ?? []) : []),
     [draft.id, triggerButtonPathUsageMap]

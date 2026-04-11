@@ -28,8 +28,7 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     if (!normalizedValue) {
       return null;
     }
-    const match = normalizedValue.match(/(?:item reference|product id)\s*:\s*([^|
-]+)/i);
+    const match = normalizedValue.match(/(?:item reference|product id)\s*:\s*([^|\n]+)/i);
     if (!match || !match[1]) {
       return null;
     }
@@ -80,15 +79,16 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
 
     const findScopedSearchTrigger = async () => {
       for (const label of ACTIVE_SEARCH_TRIGGER_LABELS) {
-        const escapedLabel = label.replace(/[.*+?^\$()|[\]{}\]/g, '\$&');
+        // Use simpler selection logic without regex literals that trigger parser issues
+        const mainSelector = 'main button, main a, [role="main"] button, [role="main"] a';
         const candidateLocators = [
           page
-            .locator('main button, main a, [role="main"] button, [role="main"] a')
+            .locator(mainSelector)
             .filter({
-              hasText: new RegExp(escapedLabel, 'i'),
+              hasText: label,
             }),
-          page.getByRole('button', { name: new RegExp(escapedLabel, 'i') }),
-          page.getByRole('link', { name: new RegExp(escapedLabel, 'i') }),
+          page.getByRole('button', { name: label }),
+          page.getByRole('link', { name: label }),
         ];
 
         for (const locator of candidateLocators) {
@@ -195,11 +195,10 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
 
   const findSectionTrigger = async (section) => {
     for (const label of section.tabLabels) {
-      const escapedLabel = label.replace(/[.*+?^\$()|[\]{}\]/g, '\$&');
       const locators = [
-        page.getByRole('tab', { name: new RegExp(escapedLabel, 'i') }),
-        page.getByRole('link', { name: new RegExp(escapedLabel, 'i') }),
-        page.getByRole('button', { name: new RegExp(escapedLabel, 'i') }),
+        page.getByRole('tab', { name: label }),
+        page.getByRole('link', { name: label }),
+        page.getByRole('button', { name: label }),
       ];
 
       for (const locator of locators) {

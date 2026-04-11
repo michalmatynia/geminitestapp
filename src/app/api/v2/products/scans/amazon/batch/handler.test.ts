@@ -26,6 +26,7 @@ describe('products/scans/amazon/batch handler', () => {
   it('queues amazon scans with the authenticated user id', async () => {
     queueAmazonBatchProductScansMock.mockResolvedValue({
       queued: 1,
+      running: 0,
       alreadyRunning: 0,
       failed: 0,
       results: [
@@ -56,6 +57,7 @@ describe('products/scans/amazon/batch handler', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       queued: 1,
+      running: 0,
       alreadyRunning: 0,
       failed: 0,
       results: [

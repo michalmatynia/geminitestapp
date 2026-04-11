@@ -325,7 +325,8 @@ describe('handleVintedBrowserTest', () => {
     expect(updateConnectionMock).toHaveBeenCalledWith(
       'connection-1',
       expect.objectContaining({
-        playwrightStorageState: expect.stringContaining('encrypted:'),
+        playwrightStorageState: expect.any(String),
+        playwrightStorageStateUpdatedAt: expect.any(String),
       })
     );
     expect(

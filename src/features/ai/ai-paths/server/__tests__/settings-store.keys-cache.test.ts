@@ -9,7 +9,13 @@ const ensureMongoIndexesMock = vi.fn();
 vi.mock('@/features/ai/ai-paths/server/settings-store.helpers', () => ({
   assertMongoConfigured: assertMongoConfiguredMock,
   isAiPathsKey: (key: string) => key.startsWith('ai_paths_'),
-  parseBooleanEnv: (_raw: string | undefined, defaultValue: boolean) => defaultValue,
+  parseBooleanEnv: (raw: string | undefined, defaultValue: boolean) => {
+    if (raw === undefined) return defaultValue;
+    const normalized = raw.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+    if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+    return defaultValue;
+  },
   parsePositiveInt: (_raw: string | undefined, defaultValue: number) => defaultValue,
 }));
 
@@ -101,37 +107,43 @@ describe('settings-store keyset cache', () => {
     expect(fetchMongoAiPathsSettingsMock).toHaveBeenCalledTimes(1);
   });
 
-  it('falls back to the static recovery bundle when keyset Mongo reads fail', async () => {
+  it('does not fall back to the static recovery bundle by default when keyset Mongo reads fail', async () => {
     fetchMongoAiPathsSettingsMock.mockRejectedValue(new Error('mongo unavailable'));
 
     const { getAiPathsSettings } = await loadSettingsStore();
 
-    const records = await getAiPathsSettings([
-      'ai_paths_index',
-      'ai_paths_config_path_descv3lite',
-      'ai_paths_trigger_buttons',
-    ]);
-
-    const indexRecord = records.find((record) => record.key === 'ai_paths_index');
-    expect(indexRecord).toBeTruthy();
-    expect(indexRecord?.value).toContain('path_marketplace_copy_debrand_v1');
-    expect(records.some((record) => record.key === 'ai_paths_config_path_descv3lite')).toBe(true);
-    expect(records.some((record) => record.key === 'ai_paths_trigger_buttons')).toBe(true);
+    await expect(
+      getAiPathsSettings([
+        'ai_paths_index',
+        'ai_paths_config_path_descv3lite',
+        'ai_paths_trigger_buttons',
+      ])
+    ).rejects.toThrow('mongo unavailable');
   });
 
-  it('falls back to the static recovery bundle when Mongo is not configured', async () => {
+  it('does not fall back to the static recovery bundle even when the legacy fallback env is enabled', async () => {
+    process.env['AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED'] = 'true';
+    fetchMongoAiPathsSettingsMock.mockRejectedValue(new Error('mongo unavailable'));
+
+    const { getAiPathsSettings } = await loadSettingsStore();
+
+    await expect(
+      getAiPathsSettings([
+        'ai_paths_index',
+        'ai_paths_config_path_descv3lite',
+        'ai_paths_trigger_buttons',
+      ])
+    ).rejects.toThrow('mongo unavailable');
+  });
+
+  it('does not fall back to the static recovery bundle when Mongo is not configured', async () => {
+    process.env['AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED'] = 'true';
     assertMongoConfiguredMock.mockImplementation(() => {
       throw new Error('AI Paths settings require MongoDB.');
     });
 
     const { getAllAiPathsSettings } = await loadSettingsStore();
 
-    const records = await getAllAiPathsSettings();
-
-    expect(records.some((record) => record.key === 'ai_paths_config_path_descv3lite')).toBe(true);
-    expect(records.some((record) => record.key === 'ai_paths_config_path_96708d')).toBe(true);
-    expect(
-      records.some((record) => record.key === 'ai_paths_config_path_marketplace_copy_debrand_v1')
-    ).toBe(true);
+    await expect(getAllAiPathsSettings()).rejects.toThrow('AI Paths settings require MongoDB.');
   });
 });

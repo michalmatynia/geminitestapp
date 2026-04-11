@@ -1,9 +1,9 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
-audit,repo-quality-api-error-sources,Check API error source coverage,passed,automatic,false,check:api-error-sources,docs/metrics/api-error-sources-latest.json|docs/metrics/api-error-sources-latest.md,2026-04-11T09:24:49.946Z,artifacts/improvements/audit-report.json
-audit,repo-quality-canonical-sitewide,Check canonical sitewide coverage,passed,automatic,false,canonical:check:sitewide,,2026-04-11T09:24:49.946Z,artifacts/improvements/audit-report.json
+audit,repo-quality-api-error-sources,Check API error source coverage,passed,automatic,false,check:api-error-sources,docs/metrics/api-error-sources-latest.json|docs/metrics/api-error-sources-latest.md,2026-04-11T10:38:42.355Z,artifacts/improvements/audit-report.json
+audit,repo-quality-canonical-sitewide,Check canonical sitewide coverage,passed,automatic,false,canonical:check:sitewide,,2026-04-11T10:38:42.355Z,artifacts/improvements/audit-report.json
 classify,repo-quality-lint,Run source lint baseline,passed,automatic,false,quality:baseline:lint,,2026-04-11T09:41:24.435Z,artifacts/improvements/classify-report.json
 classify,repo-quality-typecheck,Run typecheck baseline,passed,automatic,false,quality:baseline:typecheck,,2026-04-11T09:41:24.435Z,artifacts/improvements/classify-report.json
-plan,repo-quality-baseline-plan,Review baseline results and decide follow-up validation,manual,manual,false,,,2026-04-11T09:41:24.964Z,artifacts/improvements/plan-report.json
+plan,repo-quality-baseline-plan,Review baseline results and decide follow-up validation,manual,manual,false,,,2026-04-11T11:04:43.118Z,artifacts/improvements/plan-report.json
 dry-run,repo-quality-api-error-sources,Check API error source coverage,passed,automatic,false,check:api-error-sources,docs/metrics/api-error-sources-latest.json|docs/metrics/api-error-sources-latest.md,2026-03-14T08:13:11.213Z,artifacts/improvements/dry-run-report.json
 dry-run,repo-quality-canonical-sitewide,Check canonical sitewide coverage,passed,automatic,false,canonical:check:sitewide,,2026-03-14T08:13:11.213Z,artifacts/improvements/dry-run-report.json
 apply,repo-quality-baseline-apply,Apply repo-wide quality fixes manually,manual,manual,true,,,2026-04-02T09:59:31.245Z,artifacts/improvements/apply-report.json

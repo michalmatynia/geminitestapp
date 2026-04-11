@@ -10,20 +10,19 @@ import type { Toast } from '@/shared/contracts/ui/base';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { PATH_TEMPLATES, buildPathConfigFromTemplate } from '@/shared/lib/ai-paths/core/utils/path-templates';
-import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import { PATH_CONFIG_PREFIX, PATH_DEBUG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, DEFAULT_AI_PATHS_VALIDATION_CONFIG, createDefaultPathConfig, createPathId, createPathMeta, duplicatePathConfig, normalizeAiPathsValidationConfig, normalizeNodes, sanitizeEdges, triggers } from '@/shared/lib/ai-paths';
 import {
   canMoveAiPathFolder,
   normalizeAiPathFolderPath,
   rebaseAiPathFolderPath,
 } from '@/shared/lib/ai-paths';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import {
   deleteAiPathsSettings,
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
   normalizeParserSamples,
   normalizeUpdaterSamples,
@@ -113,175 +112,14 @@ export function useAiPathsSettingsPathActions(
   const { setIsPathSwitching } = usePersistenceActions();
   const switchRequestSeqRef = React.useRef(0);
 
-  const sanitizePathConfigWithRuntimeFallback = useCallback(
-    (config: PathConfig, pathId: string): PathConfig => {
-      try {
-        return sanitizePathConfig(config);
-      } catch (error) {
-        logClientError(error);
-        const message = error instanceof Error ? error.message : String(error);
-        const errorMeta =
-          typeof error === 'object' && error !== null && 'meta' in error
-            ? (error as { meta?: unknown }).meta
-            : null;
-        const errorReason =
-          errorMeta && typeof errorMeta === 'object' && !Array.isArray(errorMeta)
-            ? (errorMeta as Record<string, unknown>)['reason']
-            : null;
-        const shouldRetryWithEmptyRuntime =
-          errorReason === 'unsupported_runtime_identity_fields' ||
-          message.includes('Invalid AI Paths runtime state payload');
-        if (!shouldRetryWithEmptyRuntime) {
-          throw error;
-        }
-        void logSystemEvent({
-          source: 'ai.paths.settings',
-          message: 'Recovering selected path from invalid runtime state',
-          level: 'warn',
-          context: {
-            pathId,
-            error: message,
-          },
-        });
-        return sanitizePathConfig({
-          ...config,
-          runtimeState: '',
-        });
-      }
-    },
-    []
-  );
-
-  const resolveStoredPayloadWithRuntimeFallback = useCallback(
-    (payload: string, pathId: string) => {
-      const resolvePayload = (value: unknown) =>
-        resolvePortablePathInput(value, {
-          repairIdentities: true,
-          includeConnections: false,
-          signingPolicyTelemetrySurface: 'canvas',
-          nodeCodeObjectHashVerificationMode: 'warn',
-        });
-      const replaceRuntimeState = (
-        record: Record<string, unknown>
-      ): { value: Record<string, unknown>; changed: boolean } => {
-        let nextRecord = record;
-        let changed = false;
-
-        if ('runtimeState' in record && record['runtimeState'] !== '') {
-          nextRecord = {
-            ...nextRecord,
-            runtimeState: '',
-          };
-          changed = true;
-        }
-
-        const execution = nextRecord['execution'];
-        if (
-          execution &&
-          typeof execution === 'object' &&
-          !Array.isArray(execution) &&
-          'runtimeState' in execution &&
-          execution['runtimeState'] !== ''
-        ) {
-          nextRecord = {
-            ...nextRecord,
-            execution: {
-              ...execution,
-              runtimeState: '',
-            },
-          };
-          changed = true;
-        }
-
-        return { value: nextRecord, changed };
-      };
-
-      const replaceNestedRuntimeState = (
-        parent: Record<string, unknown>,
-        key: 'document' | 'package'
-      ): { value: Record<string, unknown>; changed: boolean } => {
-        const nested = parent[key];
-        if (!nested || typeof nested !== 'object' || Array.isArray(nested)) {
-          return { value: parent, changed: false };
-        }
-        const replaced = replaceRuntimeState(nested as Record<string, unknown>);
-        if (!replaced.changed) {
-          return { value: parent, changed: false };
-        }
-        return {
-          value: {
-            ...parent,
-            [key]: replaced.value,
-          },
-          changed: true,
-        };
-      };
-
-      let resolved = resolvePayload(payload);
-      if (resolved.ok) {
-        return resolved;
-      }
-
-      let parsedPayload: unknown;
-      try {
-        parsedPayload = JSON.parse(payload);
-      } catch (error) {
-        logClientError(error);
-        return resolved;
-      }
-
-      if (!parsedPayload || typeof parsedPayload !== 'object' || Array.isArray(parsedPayload)) {
-        return resolved;
-      }
-
-      const direct = replaceRuntimeState(parsedPayload as Record<string, unknown>);
-      const document = replaceNestedRuntimeState(direct.value, 'document');
-      const portableEnvelope = replaceNestedRuntimeState(document.value, 'package');
-      if (!direct.changed && !document.changed && !portableEnvelope.changed) {
-        return resolved;
-      }
-
-      const recovered = resolvePayload(portableEnvelope.value);
-      if (!recovered.ok) {
-        return resolved;
-      }
-
-      void logSystemEvent({
-        source: 'ai.paths.settings',
-        message: 'Recovering selected path from invalid runtime state',
-        level: 'warn',
-        context: {
-          pathId,
-          error: resolved.error,
-        },
-      });
-      resolved = recovered;
-      return resolved;
-    },
-    []
-  );
-
   const parseLoadedPathConfigPayload = useCallback(
     (payload: string, pathId: string): PathConfig => {
-      const resolved = resolveStoredPayloadWithRuntimeFallback(payload, pathId);
-      if (!resolved.ok) {
-        throw new Error(resolved.error);
-      }
-      const base = createDefaultPathConfig(pathId);
-      const imported = resolved.value.pathConfig;
-      const fallbackName = paths.find((path: PathMeta): boolean => path.id === pathId)?.name;
-      const resolvedName =
-        typeof imported.name === 'string' && imported.name.trim().length > 0
-          ? imported.name
-          : fallbackName || base.name;
-      return {
-        ...base,
-        ...imported,
-        id: pathId,
-        name: resolvedName,
-      };
+      return loadCanonicalStoredPathConfig({
+        pathId,
+        rawConfig: payload,
+      });
     },
-    [paths, resolveStoredPayloadWithRuntimeFallback]
+    []
   );
 
   const resolveDuplicatePathName = useCallback(
@@ -778,30 +616,20 @@ export function useAiPathsSettingsPathActions(
           if (switchRequestSeqRef.current !== nextRequestSeq) return;
 
           const configItem = settings.find((item) => item.key === `${PATH_CONFIG_PREFIX}${value}`);
-          let config: PathConfig = createDefaultPathConfig(value);
-          if (configItem?.value) {
-            try {
-              config = parseLoadedPathConfigPayload(configItem.value, value);
-            } catch (error) {
-              logClientError(error);
-              reportAiPathsError(
-                error,
-                { action: 'switchPathParseConfig', pathId: value },
-                'Failed to parse selected path config:'
-              );
-              throw error;
-            }
+          if (!configItem?.value) {
+            throw new Error(`Stored AI Path config not found for "${value}".`);
           }
-
-          config = sanitizePathConfigWithRuntimeFallback(config, value);
-          if (configItem?.value) {
-            void persistLegacyTriggerContextModeRepair({
-              pathId: value,
-              rawPayload: configItem.value,
-              repairedConfig: config,
-              source: 'useAiPathsSettingsPathActions',
-              action: 'persistSwitchPathLegacyTriggerContextModeRepair',
-            });
+          let config: PathConfig;
+          try {
+            config = parseLoadedPathConfigPayload(configItem.value, value);
+          } catch (error) {
+            logClientError(error);
+            reportAiPathsError(
+              error,
+              { action: 'switchPathParseConfig', pathId: value },
+              'Failed to parse selected path config:'
+            );
+            throw error;
           }
 
           setPathConfigs(
@@ -820,7 +648,7 @@ export function useAiPathsSettingsPathActions(
               (item) => item.key === `${PATH_CONFIG_PREFIX}${value}`
             );
             if (configItem?.value) {
-              let recoveredConfig = createDefaultPathConfig(value);
+              let recoveredConfig: PathConfig;
               try {
                 recoveredConfig = parseLoadedPathConfigPayload(configItem.value, value);
               } catch (parseError) {
@@ -832,14 +660,6 @@ export function useAiPathsSettingsPathActions(
                 );
                 throw parseError;
               }
-              recoveredConfig = sanitizePathConfigWithRuntimeFallback(recoveredConfig, value);
-              void persistLegacyTriggerContextModeRepair({
-                pathId: value,
-                rawPayload: configItem.value,
-                repairedConfig: recoveredConfig,
-                source: 'useAiPathsSettingsPathActions',
-                action: 'persistFallbackSwitchPathLegacyTriggerContextModeRepair',
-              });
               setPathConfigs(
                 (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
                   ...prev,
@@ -883,7 +703,6 @@ export function useAiPathsSettingsPathActions(
       persistActivePathPreference,
       reportAiPathsError,
       parseLoadedPathConfigPayload,
-      sanitizePathConfigWithRuntimeFallback,
       setActivePathId,
       setIsPathSwitching,
       setPathConfigs,

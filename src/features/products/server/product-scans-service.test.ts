@@ -472,6 +472,36 @@ describe('product-scans-service', () => {
     );
   });
 
+  it('retries a transient synchronized-scan write failure before falling back in memory', async () => {
+    const scan = createScan({ status: 'queued' });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+    });
+    mocks.updateProductScanMock
+      .mockRejectedValueOnce(new Error('repository temporarily unavailable'))
+      .mockImplementation(async (id: string, updates: Partial<ProductScanRecord>) => ({
+        ...createScan({ id }),
+        ...updates,
+        id,
+      }));
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledTimes(2);
+    expect(mocks.captureExceptionMock).not.toHaveBeenCalled();
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'scan-1',
+        status: 'running',
+        engineRunId: 'run-1',
+        error: null,
+        asinUpdateStatus: 'pending',
+      })
+    );
+  });
+
   it('marks the scan failed when reading the Playwright engine run throws', async () => {
     const scan = createScan();
 
@@ -757,6 +787,7 @@ describe('product-scans-service', () => {
     expect(mocks.getProductByIdMock).not.toHaveBeenCalled();
     expect(result).toEqual({
       queued: 0,
+      running: 0,
       alreadyRunning: 1,
       failed: 0,
       results: [
@@ -830,6 +861,7 @@ describe('product-scans-service', () => {
     );
     expect(result).toEqual({
       queued: 1,
+      running: 0,
       alreadyRunning: 0,
       failed: 0,
       results: [
@@ -839,6 +871,55 @@ describe('product-scans-service', () => {
           runId: 'run-queued-1',
           status: 'queued',
           message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+  });
+
+  it('returns a running batch result when the Playwright engine starts the scan immediately', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-running-1',
+      status: 'running',
+    });
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result).toEqual({
+      queued: 0,
+      running: 1,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: 'run-running-1',
+          status: 'running',
+          message: 'Amazon reverse image scan running.',
         },
       ],
     });
@@ -882,6 +963,7 @@ describe('product-scans-service', () => {
 
     expect(result).toEqual({
       queued: 1,
+      running: 0,
       alreadyRunning: 0,
       failed: 0,
       results: [
@@ -987,6 +1069,7 @@ describe('product-scans-service', () => {
     expect(mocks.startPlaywrightEngineTaskMock).not.toHaveBeenCalled();
     expect(result).toEqual({
       queued: 0,
+      running: 0,
       alreadyRunning: 0,
       failed: 1,
       results: [
@@ -1034,6 +1117,7 @@ describe('product-scans-service', () => {
 
     expect(result).toEqual({
       queued: 0,
+      running: 0,
       alreadyRunning: 0,
       failed: 1,
       results: [
@@ -1095,6 +1179,7 @@ describe('product-scans-service', () => {
     );
     expect(result).toEqual({
       queued: 0,
+      running: 0,
       alreadyRunning: 0,
       failed: 1,
       results: [
@@ -1153,6 +1238,7 @@ describe('product-scans-service', () => {
     expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
       queued: 1,
+      running: 0,
       alreadyRunning: 0,
       failed: 0,
       results: [
@@ -1213,6 +1299,7 @@ describe('product-scans-service', () => {
     expect(mocks.startPlaywrightEngineTaskMock).not.toHaveBeenCalled();
     expect(result).toEqual({
       queued: 0,
+      running: 0,
       alreadyRunning: 1,
       failed: 0,
       results: [
@@ -1265,6 +1352,7 @@ describe('product-scans-service', () => {
     );
     expect(result).toEqual({
       queued: 1,
+      running: 0,
       alreadyRunning: 0,
       failed: 0,
       results: [
@@ -1320,6 +1408,7 @@ describe('product-scans-service', () => {
     expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
       queued: 1,
+      running: 0,
       alreadyRunning: 0,
       failed: 1,
       results: [

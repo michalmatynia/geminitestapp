@@ -36,6 +36,8 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT = String.raw`export default async 
     }
 
     if (
+      normalizedHost === 'googleadservices.com' ||
+      normalizedHost.endsWith('.googleadservices.com') ||
       normalizedHost === 'googleusercontent.com' ||
       normalizedHost.endsWith('.googleusercontent.com')
     ) {
@@ -61,7 +63,10 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT = String.raw`export default async 
       const parsed = new URL(href, page.url());
       const host = parsed.hostname.toLowerCase();
       if (isGoogleRedirectHost(host)) {
-        const redirected = parsed.searchParams.get('url') || parsed.searchParams.get('q');
+        const redirected =
+          parsed.searchParams.get('url') ||
+          parsed.searchParams.get('q') ||
+          parsed.searchParams.get('adurl');
         if (redirected) {
           return normalizeAmazonUrl(redirected);
         }

@@ -7,7 +7,7 @@
     "name": "Normalize Product Name",
     "description": "Normalize the English product name from title, description, images, and leaf-category context.",
     "trigger": "Product Modal - Normalize",
-    "updatedAt": "2026-04-09T00:00:00.000Z",
+    "updatedAt": "2026-04-11T00:00:00.000Z",
     "executionMode": "server",
     "flowIntensity": "medium",
     "runMode": "block",
@@ -476,7 +476,8 @@
             "result": "value.normalizedName",
             "value": "value.confidence",
             "bundle": "value"
-          }
+          },
+          "jsonIntegrityPolicy": "repair"
         }
       },
       "connections": {
@@ -585,7 +586,7 @@
           "aiPrompt": "",
           "validationRuleIds": [],
           "writeOutcomePolicy": {
-            "onZeroAffected": "pass"
+            "onZeroAffected": "warn"
           }
         },
         "runtime": {
@@ -845,7 +846,7 @@
   },
   "provenance": {
     "source": "ai-paths",
-    "exportedAt": "2026-04-09T00:00:00.000Z",
+    "exportedAt": "2026-04-11T00:00:00.000Z",
     "pathId": "path_name_normalize_v1"
   }
 }

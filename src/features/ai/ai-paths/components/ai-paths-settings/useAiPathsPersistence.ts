@@ -8,10 +8,8 @@ import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
-import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 import { AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY, AI_PATHS_LAST_ERROR_KEY, PATH_CONFIG_PREFIX, PATH_INDEX_KEY, createDefaultPathConfig, normalizeNodes, sanitizeEdges, normalizeAiPathsValidationConfig, stableStringify } from '@/shared/lib/ai-paths';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
-import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
   normalizeParserSamples,
   normalizeUpdaterSamples,
@@ -119,45 +117,12 @@ export function useAiPathsPersistence(
     return promise;
   }, []);
 
-  const sanitizePrefetchedPathConfig = useCallback(
-    (config: PathConfig, pathId: string): PathConfig | null => {
-      try {
-        return sanitizePathConfig(config);
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'useAiPathsPersistence',
-          action: 'sanitizePrefetchedPathConfig',
-          pathId,
-        });
-        return null;
-      }
-    },
-    []
-  );
-
   const resolveLoadedPathConfig = useCallback(
-    (payload: string, pathId: string, fallbackName?: string): PathConfig => {
-      const resolved = resolvePortablePathInput(payload, {
-        repairIdentities: true,
-        includeConnections: false,
-        signingPolicyTelemetrySurface: 'canvas',
-        nodeCodeObjectHashVerificationMode: 'warn',
+    (payload: string, pathId: string): PathConfig => {
+      return loadCanonicalStoredPathConfig({
+        pathId,
+        rawConfig: payload,
       });
-      if (!resolved.ok) {
-        throw new Error(resolved.error);
-      }
-      const base = createDefaultPathConfig(pathId);
-      const resolvedConfig = resolved.value.pathConfig;
-      const resolvedName =
-        typeof resolvedConfig.name === 'string' && resolvedConfig.name.trim().length > 0
-          ? resolvedConfig.name
-          : (fallbackName ?? base.name);
-      return {
-        ...base,
-        ...resolvedConfig,
-        id: pathId,
-        name: resolvedName,
-      };
     },
     []
   );
@@ -255,51 +220,15 @@ export function useAiPathsPersistence(
 
         const activeConfigKey = `${PATH_CONFIG_PREFIX}${resolvedActivePathId}`;
         const stageBStartedAt = Date.now();
-        let config: PathConfig = createDefaultPathConfig(resolvedActivePathId);
-        let activeConfigValue: string | null = null;
-        try {
-          const activeConfigSettings = await fetchAiPathsSettingsByKeysCached([activeConfigKey], {
-            timeoutMs: 10_000,
-          });
-          const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
-          if (configItem?.value) {
-            activeConfigValue = configItem.value;
-            try {
-              const fallbackName = loadedPaths.find(
-                (path: PathMeta): boolean => path.id === resolvedActivePathId
-              )?.name;
-              config = resolveLoadedPathConfig(
-                configItem.value,
-                resolvedActivePathId,
-                fallbackName
-              );
-            } catch (error) {
-              logClientCatch(error, {
-                source: 'useAiPathsPersistence',
-                action: 'parsePathConfig',
-                pathId: resolvedActivePathId,
-              });
-            }
-          }
-        } catch (error) {
-          logClientCatch(error, {
-            source: 'useAiPathsPersistence',
-            action: 'loadActivePathConfig',
-            pathId: resolvedActivePathId,
-            level: 'warn',
-          });
+        const activeConfigSettings = await fetchAiPathsSettingsByKeysCached([activeConfigKey], {
+          timeoutMs: 10_000,
+        });
+        const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
+        if (!configItem?.value) {
+          throw new Error(`Stored AI Path config not found for "${resolvedActivePathId}".`);
         }
+        const config = resolveLoadedPathConfig(configItem.value, resolvedActivePathId);
         const stageBDurationMs = Date.now() - stageBStartedAt;
-        config = sanitizePathConfig(config);
-        if (activeConfigValue) {
-          void persistLegacyTriggerContextModeRepair({
-            pathId: resolvedActivePathId,
-            rawPayload: activeConfigValue,
-            repairedConfig: config,
-            source: 'useAiPathsPersistence',
-            action: 'persistActivePathLegacyTriggerContextModeRepair',
-          });
-        }
 
         setActivePathId(resolvedActivePathId);
         setPathConfigs((prev) => ({ ...prev, [resolvedActivePathId]: config }));
@@ -324,13 +253,17 @@ export function useAiPathsPersistence(
             : 'medium'
         );
         setRunMode(
-          config.runMode === 'automatic' || config.runMode === 'manual' || config.runMode === 'step'
+          config.runMode === 'automatic' ||
+          config.runMode === 'manual' ||
+          config.runMode === 'step'
             ? config.runMode
             : 'manual'
         );
         setStrictFlowMode(config.strictFlowMode !== false);
         setBlockedRunPolicy(
-          config.blockedRunPolicy === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run'
+          config.blockedRunPolicy === 'complete_with_warning'
+            ? 'complete_with_warning'
+            : 'fail_run'
         );
         setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
         setParserSamples(normalizeParserSamples(config.parserSamples));
@@ -501,20 +434,7 @@ export function useAiPathsPersistence(
             const item = settingByKey.get(`${PATH_CONFIG_PREFIX}${pathId}`);
             if (!item?.value) return;
             try {
-              const fallbackName = paths.find(
-                (path: PathMeta): boolean => path.id === pathId
-              )?.name;
-              const parsed = resolveLoadedPathConfig(item.value, pathId, fallbackName);
-              const sanitized = sanitizePrefetchedPathConfig(parsed, pathId);
-              if (!sanitized) return;
-              void persistLegacyTriggerContextModeRepair({
-                pathId,
-                rawPayload: item.value,
-                repairedConfig: sanitized,
-                source: 'useAiPathsPersistence',
-                action: 'persistPrefetchedLegacyTriggerContextModeRepair',
-              });
-              hydratedConfigs[pathId] = sanitized;
+              hydratedConfigs[pathId] = resolveLoadedPathConfig(item.value, pathId);
             } catch (error) {
               logClientCatch(error, {
                 source: 'useAiPathsPersistence',
@@ -602,7 +522,6 @@ export function useAiPathsPersistence(
     pathConfigs,
     paths,
     resolveLoadedPathConfig,
-    sanitizePrefetchedPathConfig,
     setPathConfigs,
   ]);
 

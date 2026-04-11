@@ -85,6 +85,8 @@ describe('useAiPathTriggerEvent settings-load failures shared-lib coverage', () 
       })
     );
     const onProgress = vi.fn();
+    const onError = vi.fn();
+    const onFinished = vi.fn();
 
     const { result } = renderHook(() => useAiPathTriggerEvent(), {
       wrapper: createWrapper(),
@@ -98,6 +100,8 @@ describe('useAiPathTriggerEvent settings-load failures shared-lib coverage', () 
         entityType: 'product',
         entityId: 'product-1',
         onProgress,
+        onError,
+        onFinished,
       });
     });
 
@@ -114,5 +118,7 @@ describe('useAiPathTriggerEvent settings-load failures shared-lib coverage', () 
         message,
       })
     );
+    expect(onError).toHaveBeenCalledWith(message);
+    expect(onFinished).toHaveBeenCalledTimes(1);
   });
 });

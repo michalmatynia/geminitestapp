@@ -18,11 +18,13 @@ import {
   normalizeProductScanRecord,
   type ProductAmazonBatchScanItem,
   type ProductAmazonBatchScanResponse,
+  type ProductScanAmazonEvaluation,
   type ProductScanRecord,
 } from '@/shared/contracts/product-scans';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import { evaluateAmazonScanCandidateMatch } from './product-scan-amazon-evaluator';
 import { AMAZON_REVERSE_IMAGE_SCAN_SCRIPT } from './product-scan-amazon-script';
 import {
   resolveDetectedAmazonAsinOutcome,
@@ -32,6 +34,7 @@ import {
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
+  resolveProductScannerAmazonCandidateEvaluatorConfig,
   resolveProductScannerHeadless,
 } from './product-scanner-settings';
 import {
@@ -74,6 +77,70 @@ const AMAZON_SCAN_DEFAULT_SLOW_MO_MS = 80;
 const AMAZON_SCAN_DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 const AMAZON_SCAN_STEALTH_LAUNCH_ARGS = ['--disable-blink-features=AutomationControlled'];
+
+const formatAmazonEvaluationConfidence = (confidence: number | null | undefined): string | null =>
+  typeof confidence === 'number' && Number.isFinite(confidence)
+    ? `${Math.round(confidence * 100)}%`
+    : null;
+
+const resolveAmazonEvaluationStepStatus = (
+  evaluation: ProductScanAmazonEvaluation
+): ProductScanRecord['steps'][number]['status'] => {
+  if (!evaluation) {
+    return 'failed';
+  }
+  if (evaluation.status === 'approved') {
+    return 'completed';
+  }
+  if (evaluation.status === 'skipped') {
+    return 'skipped';
+  }
+  return 'failed';
+};
+
+const resolveAmazonEvaluationStepResultCode = (
+  evaluation: ProductScanAmazonEvaluation
+): string => {
+  if (!evaluation) {
+    return 'evaluation_failed';
+  }
+  if (evaluation.status === 'approved') {
+    return 'candidate_approved';
+  }
+  if (evaluation.status === 'rejected') {
+    return 'candidate_rejected';
+  }
+  if (evaluation.status === 'skipped') {
+    return 'evaluation_skipped';
+  }
+  return 'evaluation_failed';
+};
+
+const resolveAmazonEvaluationMessage = (
+  evaluation: ProductScanAmazonEvaluation
+): string => {
+  if (!evaluation) {
+    return 'Amazon candidate AI evaluation failed.';
+  }
+  const confidenceLabel = formatAmazonEvaluationConfidence(evaluation.confidence);
+  if (evaluation.status === 'approved') {
+    return confidenceLabel
+      ? `AI evaluator approved the Amazon candidate (${confidenceLabel}).`
+      : 'AI evaluator approved the Amazon candidate.';
+  }
+  if (evaluation.status === 'rejected') {
+    return confidenceLabel
+      ? `AI evaluator rejected the Amazon candidate (${confidenceLabel}).`
+      : 'AI evaluator rejected the Amazon candidate.';
+  }
+  if (evaluation.status === 'skipped') {
+    return (
+      evaluation.reasons[0] ??
+      'Skipped Amazon candidate AI evaluation because deterministic identifiers already matched.'
+    );
+  }
+  return evaluation.error ?? 'Amazon candidate AI evaluation failed.';
+};
 
 const mergeUniqueStringValues = (
   values: ReadonlyArray<string>,
@@ -474,6 +541,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
         amazonDetails: parsedResult.amazonDetails,
+        amazonProbe: parsedResult.amazonProbe,
         steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
         rawResult: resultValue,
         error: parsedResult.message,
@@ -497,6 +565,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
         amazonDetails: parsedResult.amazonDetails,
+        amazonProbe: parsedResult.amazonProbe,
         steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
         rawResult: resultValue,
         error: failureMessage,
@@ -532,7 +601,198 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
         amazonDetails: parsedResult.amazonDetails,
+        amazonProbe: parsedResult.amazonProbe,
         steps: finalizedSteps,
+        rawResult: resultValue,
+        error: message,
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: message,
+        completedAt: run.completedAt ?? new Date().toISOString(),
+      });
+    }
+
+    const resolvedScanUrl = resolvePersistableScanUrl(
+      parsedResult.url,
+      parsedResult.currentUrl,
+      finalUrl
+    );
+    let finalizedAmazonSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+    let amazonEvaluation: ProductScanAmazonEvaluation = null;
+
+    let scannerSettings = createDefaultProductScannerSettings();
+    try {
+      scannerSettings = await getProductScannerSettings();
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'product-scans.service',
+        action: 'synchronizeProductScan.loadScannerSettingsForAmazonEvaluator',
+        scanId: scan.id,
+        productId: scan.productId,
+        engineRunId,
+      });
+    }
+
+    try {
+      const evaluatorConfig =
+        await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings);
+      if (evaluatorConfig.enabled) {
+        amazonEvaluation = await evaluateAmazonScanCandidateMatch({
+          scan,
+          product,
+          parsedResult,
+          run,
+          evaluatorConfig,
+        });
+
+        finalizedAmazonSteps = upsertPersistedProductScanStep(finalizedAmazonSteps, {
+          key: 'amazon_ai_evaluate',
+          label: 'Evaluate Amazon candidate match',
+          group: 'amazon',
+          status: resolveAmazonEvaluationStepStatus(amazonEvaluation),
+          resultCode: resolveAmazonEvaluationStepResultCode(amazonEvaluation),
+          message: resolveAmazonEvaluationMessage(amazonEvaluation),
+          details: [
+            { label: 'Model', value: amazonEvaluation.modelId },
+            {
+              label: 'Confidence',
+              value: formatAmazonEvaluationConfidence(amazonEvaluation.confidence),
+            },
+            {
+              label: 'Same product',
+              value:
+                typeof amazonEvaluation.sameProduct === 'boolean'
+                  ? String(amazonEvaluation.sameProduct)
+                  : null,
+            },
+            {
+              label: 'Image match',
+              value:
+                typeof amazonEvaluation.imageMatch === 'boolean'
+                  ? String(amazonEvaluation.imageMatch)
+                  : null,
+            },
+            {
+              label: 'Description match',
+              value:
+                typeof amazonEvaluation.descriptionMatch === 'boolean'
+                  ? String(amazonEvaluation.descriptionMatch)
+                  : null,
+            },
+            {
+              label: 'Reason',
+              value: amazonEvaluation.reasons[0] ?? amazonEvaluation.mismatches[0] ?? null,
+            },
+          ],
+          url: amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl,
+        });
+
+        if (amazonEvaluation.status === 'failed') {
+          const message = resolveAmazonEvaluationMessage(amazonEvaluation);
+          return await persistSynchronizedScan(scan, {
+            engineRunId,
+            status: 'failed',
+            asin: null,
+            matchedImageId: parsedResult.matchedImageId,
+            title: null,
+            price: null,
+            url: null,
+            description: null,
+            amazonDetails: null,
+            amazonProbe: parsedResult.amazonProbe,
+            amazonEvaluation,
+            steps: finalizedAmazonSteps,
+            rawResult: resultValue,
+            error: message,
+            asinUpdateStatus: 'failed',
+            asinUpdateMessage: message,
+            completedAt: run.completedAt ?? new Date().toISOString(),
+          });
+        }
+
+        if (amazonEvaluation.status === 'rejected') {
+          const message = resolveAmazonEvaluationMessage(amazonEvaluation);
+          const skippedUpdateSteps = upsertPersistedProductScanStep(finalizedAmazonSteps, {
+            key: 'product_asin_update',
+            label: 'Update product ASIN',
+            group: 'product',
+            status: 'skipped',
+            resultCode: 'asin_not_needed',
+            message: 'Skipped product ASIN update because the AI evaluator rejected the Amazon candidate.',
+            details: [{ label: 'Reason', value: message }],
+            url: amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl,
+          });
+          return await persistSynchronizedScan(scan, {
+            engineRunId,
+            status: 'no_match',
+            asin: null,
+            matchedImageId: parsedResult.matchedImageId,
+            title: null,
+            price: null,
+            url: null,
+            description: null,
+            amazonDetails: null,
+            amazonProbe: parsedResult.amazonProbe,
+            amazonEvaluation,
+            steps: skippedUpdateSteps,
+            rawResult: resultValue,
+            error: message,
+            asinUpdateStatus: 'not_needed',
+            asinUpdateMessage: message,
+            completedAt: run.completedAt ?? new Date().toISOString(),
+          });
+        }
+      }
+    } catch (error) {
+      const message = normalizeErrorMessage(
+        error instanceof Error ? error.message : error,
+        'Amazon candidate AI evaluation failed.'
+      );
+      amazonEvaluation = {
+        status: 'failed',
+        sameProduct: null,
+        imageMatch: null,
+        descriptionMatch: null,
+        pageRepresentsSameProduct: null,
+        confidence: null,
+        proceed: false,
+        threshold: null,
+        reasons: [],
+        mismatches: [],
+        modelId: null,
+        brainApplied: null,
+        evidence: {
+          candidateUrl: resolvedScanUrl,
+          pageTitle: parsedResult.title,
+          screenshotArtifactName: null,
+          htmlArtifactName: null,
+          productImageSource: scan.imageCandidates[0]?.url ?? scan.imageCandidates[0]?.filepath ?? null,
+        },
+        error: message,
+        evaluatedAt: new Date().toISOString(),
+      };
+      finalizedAmazonSteps = upsertPersistedProductScanStep(finalizedAmazonSteps, {
+        key: 'amazon_ai_evaluate',
+        label: 'Evaluate Amazon candidate match',
+        group: 'amazon',
+        status: 'failed',
+        resultCode: 'evaluation_failed',
+        message,
+        details: [{ label: 'Error', value: message }],
+        url: resolvedScanUrl,
+      });
+      return await persistSynchronizedScan(scan, {
+        engineRunId,
+        status: 'failed',
+        asin: null,
+        matchedImageId: parsedResult.matchedImageId,
+        title: null,
+        price: null,
+        url: null,
+        description: null,
+        amazonDetails: null,
+        amazonProbe: parsedResult.amazonProbe,
+        amazonEvaluation,
+        steps: finalizedAmazonSteps,
         rawResult: resultValue,
         error: message,
         asinUpdateStatus: 'failed',
@@ -564,7 +824,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
     const nextAsinUpdateStatus = updateFailureMessage ? 'failed' : asinOutcome.asinUpdateStatus;
     const nextMessage = updateFailureMessage ?? asinOutcome.message;
     const finalizedSteps = upsertPersistedProductScanStep(
-      resolvePersistedProductScanSteps(scan, parsedResult.steps),
+      finalizedAmazonSteps,
       {
         key: 'product_asin_update',
         label: 'Update product ASIN',
@@ -596,9 +856,11 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       matchedImageId: parsedResult.matchedImageId,
       title: parsedResult.title,
       price: parsedResult.price,
-      url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
+      url: resolvedScanUrl,
       description: parsedResult.description,
       amazonDetails: parsedResult.amazonDetails,
+      amazonProbe: parsedResult.amazonProbe,
+      amazonEvaluation,
       steps: finalizedSteps,
       rawResult: resultValue,
       error: nextStatus === 'failed' || nextStatus === 'conflict' ? nextMessage : null,

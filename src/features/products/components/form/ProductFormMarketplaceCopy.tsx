@@ -21,9 +21,7 @@ import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { MultiSelectOption } from '@/shared/contracts/ui/controls';
 import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
 import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
-import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useAiPathTriggerEvent } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
-import { useAiPathsTriggerButtonsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import {
   MARKETPLACE_COPY_DEBRAND_PATH_ID,
   MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
@@ -85,6 +83,34 @@ const toErrorMessage = (value: unknown): string | undefined => {
   return typeof message === 'string' ? message : undefined;
 };
 
+const resolveDebrandLaunchErrorMessage = (payload: {
+  error?: string | null | undefined;
+  message?: string | null | undefined;
+}): string => {
+  const explicitMessage =
+    typeof payload.message === 'string' ? payload.message.trim() : '';
+  if (explicitMessage.length > 0) {
+    return explicitMessage.startsWith('Debrand failed:')
+      ? explicitMessage
+      : `Debrand failed: ${explicitMessage}`;
+  }
+
+  switch (payload.error) {
+    case 'preferred_path_missing':
+      return 'Debrand failed: the configured AI Path is missing.';
+    case 'trigger_node_not_found':
+      return 'Debrand failed: the selected AI Path no longer contains the Debrand trigger node.';
+    case 'path_disabled':
+      return 'Debrand failed: all AI Paths for this trigger are disabled.';
+    case 'ambiguous_path_selection':
+      return 'Debrand failed: multiple active AI Paths match this trigger.';
+    case 'no_path_configured':
+      return 'Debrand failed: no AI Path is configured for this trigger.';
+    default:
+      return 'Debrand failed: unable to start the AI Path run.';
+  }
+};
+
 const resolveMarketplaceIntegrationOptions = ({
   integrations,
   selectedIntegrationIds,
@@ -134,9 +160,8 @@ function MarketplaceCopyDebrandTrigger(
   } = props;
   const { product, draft, getValues, setValue } = useProductFormCore();
   const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
-  const triggerButtonsQuery = useAiPathsTriggerButtonsQuery();
   const [pendingRunId, setPendingRunId] = useState<string | null>(null);
-  const [isFallbackTriggerPending, setIsFallbackTriggerPending] = useState(false);
+  const [isTriggerPending, setIsTriggerPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
@@ -211,20 +236,9 @@ function MarketplaceCopyDebrandTrigger(
     []
   );
 
-  const hasVisibleConfiguredRowTrigger = useMemo(
-    () =>
-      (triggerButtonsQuery.data ?? []).some((button: AiTriggerButtonRecord) =>
-        button.enabled !== false &&
-        (button.locations ?? []).includes(MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION)
-      ),
-    [triggerButtonsQuery.data]
-  );
-  const shouldUseFallbackTrigger =
-    triggerButtonsQuery.isLoading !== true && !hasVisibleConfiguredRowTrigger;
-
-  const handleFallbackTrigger = useCallback(async (): Promise<void> => {
+  const handleDebrandTrigger = useCallback(async (): Promise<void> => {
     setError(null);
-    setIsFallbackTriggerPending(true);
+    setIsTriggerPending(true);
 
     const customExtras = getTriggerExtras();
 
@@ -244,6 +258,13 @@ function MarketplaceCopyDebrandTrigger(
           ...(customExtras ?? {}),
           mode: 'click',
         },
+        onError: (launchError): void => {
+          setError(
+            resolveDebrandLaunchErrorMessage({
+              message: launchError,
+            })
+          );
+        },
         onSuccess: (runId: string): void => {
           handleRunQueued({
             button: FALLBACK_MARKETPLACE_COPY_DEBRAND_BUTTON,
@@ -254,7 +275,7 @@ function MarketplaceCopyDebrandTrigger(
         },
       });
     } finally {
-      setIsFallbackTriggerPending(false);
+      setIsTriggerPending(false);
     }
   }, [fireAiPathTriggerEvent, getEntityJson, getTriggerExtras, handleRunQueued, product?.id]);
 
@@ -344,30 +365,18 @@ function MarketplaceCopyDebrandTrigger(
 
   return (
     <div className='flex min-w-0 flex-col items-end gap-2'>
-      {shouldUseFallbackTrigger ? (
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={(): void => {
-            void handleFallbackTrigger();
-          }}
-          disabled={disabled || isFallbackTriggerPending || pendingRunId !== null}
-          className='gap-2'
-        >
-          Debrand
-        </Button>
-      ) : (
-        <TriggerButtonBar
-          location={MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION}
-          entityType='product'
-          entityId={product?.id ?? null}
-          getEntityJson={getEntityJson}
-          getTriggerExtras={getTriggerExtras}
-          disabled={disabled}
-          onRunQueued={handleRunQueued}
-        />
-      )}
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={(): void => {
+          void handleDebrandTrigger();
+        }}
+        disabled={disabled || isTriggerPending || pendingRunId !== null}
+        className='gap-2'
+      >
+        {FALLBACK_MARKETPLACE_COPY_DEBRAND_BUTTON.display.label}
+      </Button>
       {error ? <p className='text-right text-xs text-destructive'>{error}</p> : null}
     </div>
   );

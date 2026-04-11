@@ -516,6 +516,14 @@ export function useTriggerButtons({
               entityType,
             });
           },
+          onError: (): void => {
+            setLastRuns((prev) => {
+              if (prev[button.id]?.status !== 'waiting') return prev;
+              const next = { ...prev };
+              delete next[button.id];
+              return next;
+            });
+          },
           onProgress: (payload: {
             status: 'running' | 'success' | 'error';
             progress: number;

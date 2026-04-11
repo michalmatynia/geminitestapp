@@ -23,7 +23,10 @@ import {
   fetchBaseProductDetails,
   fetchBaseWarehouses,
 } from '@/server/integrations';
-import { DEFAULT_PRODUCT_SYNC_FIELD_RULES } from '@/shared/contracts/product-sync';
+import {
+  buildEffectiveProductSyncFieldRules,
+  getProductSyncAppFieldLabel,
+} from '@/shared/contracts/product-sync';
 import type {
   ProductSyncAppField,
   ProductSyncFieldPreview,
@@ -102,10 +105,6 @@ type ProductSyncBaseFieldPresentationMetadata = {
     }
   >;
 };
-
-const DEFAULT_FIELD_RULE_BY_APP_FIELD = new Map(
-  DEFAULT_PRODUCT_SYNC_FIELD_RULES.map((rule) => [rule.appField, rule])
-);
 
 const isTerminalRunStatus = (status: ProductSyncRunStatus): boolean =>
   status === 'completed' || status === 'partial_success' || status === 'failed';
@@ -274,17 +273,6 @@ const setPathValue = (target: Record<string, unknown>, path: string, value: unkn
   const lastKey = segments[segments.length - 1];
   if (!lastKey) return;
   current[lastKey] = value;
-};
-
-const getProductSyncFieldLabel = (field: ProductSyncAppField): string => {
-  if (field === 'name_en') return 'Name (EN)';
-  if (field === 'description_en') return 'Description (EN)';
-  if (field === 'stock') return 'Stock';
-  if (field === 'price') return 'Price';
-  if (field === 'sku') return 'SKU';
-  if (field === 'ean') return 'EAN';
-  if (field === 'weight') return 'Weight';
-  return field;
 };
 
 const createEmptyBaseFieldPresentationMetadata = (): ProductSyncBaseFieldPresentationMetadata => ({
@@ -532,21 +520,6 @@ const resolveBaseFieldPresentationMetadata = async (input: {
   };
 };
 
-const buildEffectiveFieldRules = (profile: ProductSyncProfile): ProductSyncFieldRule[] => {
-  const configuredRules = Array.isArray(profile.fieldRules) ? profile.fieldRules : [];
-
-  return Array.from(DEFAULT_FIELD_RULE_BY_APP_FIELD.entries()).map(([appField, defaultRule]) => {
-    const configuredRule = configuredRules.find((rule: ProductSyncFieldRule) => rule.appField === appField);
-    if (configuredRule) return configuredRule;
-    return {
-      id: `implicit-${appField}`,
-      appField,
-      baseField: defaultRule?.baseField ?? appField,
-      direction: 'disabled',
-    };
-  });
-};
-
 const buildLinkedProductSyncPlan = (input: {
   product: ProductWithImages;
   baseRecord: Record<string, unknown> | null;
@@ -555,7 +528,7 @@ const buildLinkedProductSyncPlan = (input: {
   persistBaseProductId: boolean;
   baseFieldPresentationMetadata?: ProductSyncBaseFieldPresentationMetadata;
 }): LinkedProductSyncPlan => {
-  const rules = buildEffectiveFieldRules(input.profile);
+  const rules = buildEffectiveProductSyncFieldRules(input.profile.fieldRules);
   const localPatch: Record<string, unknown> = {};
   const basePayload: Record<string, unknown> = {};
   const localChanges: string[] = [];
@@ -593,7 +566,7 @@ const buildLinkedProductSyncPlan = (input: {
 
     return {
       appField: rule.appField,
-      appFieldLabel: getProductSyncFieldLabel(rule.appField),
+      appFieldLabel: getProductSyncAppFieldLabel(rule.appField),
       baseField: rule.baseField,
       baseFieldLabel: baseFieldPresentation.label,
       baseFieldDescription: baseFieldPresentation.description,
@@ -1079,7 +1052,7 @@ export const getProductBaseSyncPreview = async (
 
   const baseFieldPresentationMetadata = await resolveBaseFieldPresentationMetadata({
     connectionContext,
-    rules: buildEffectiveFieldRules(profile),
+    rules: buildEffectiveProductSyncFieldRules(profile.fieldRules),
   });
   const plan = buildLinkedProductSyncPlan({
     product,

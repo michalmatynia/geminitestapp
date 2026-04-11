@@ -175,6 +175,37 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     );
   });
 
+  it('restores the canonical marketplace copy debrand path config with the matching trigger node event', () => {
+    const fullySeeded = ensureStarterWorkflowDefaults(buildEmptyStarterSettings()).nextRecords;
+    const withoutDebrandPath = fullySeeded.filter(
+      (record) => record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}${MARKETPLACE_COPY_DEBRAND_PATH_ID}`
+    );
+
+    expect(countPendingStarterWorkflowDefaults(withoutDebrandPath)).toBeGreaterThan(0);
+
+    const repaired = ensureStarterWorkflowDefaults(withoutDebrandPath);
+    const debrandPathRecord = repaired.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${MARKETPLACE_COPY_DEBRAND_PATH_ID}`
+    );
+    if (!debrandPathRecord) throw new Error('Expected marketplace copy debrand path config');
+
+    const debrandPathConfig = JSON.parse(debrandPathRecord.value) as {
+      nodes?: Array<{
+        type?: string;
+        config?: {
+          trigger?: {
+            event?: string;
+          };
+        };
+      }>;
+    };
+    const triggerNodes = (debrandPathConfig.nodes ?? []).filter((node) => node.type === 'trigger');
+
+    expect(repaired.affectedCount).toBe(1);
+    expect(triggerNodes).toHaveLength(1);
+    expect(triggerNodes[0]?.config?.trigger?.event).toBe(MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID);
+  });
+
   it('restores the broader static recovery bundle from semantic workflow assets', () => {
     const initial = [
       { key: AI_PATHS_INDEX_KEY, value: '[]' },

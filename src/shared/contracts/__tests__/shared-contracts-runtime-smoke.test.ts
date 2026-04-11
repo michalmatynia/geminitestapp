@@ -204,6 +204,26 @@ describe('shared contracts runtime smoke', () => {
       }).batchSize
     ).toBe(50);
 
+    expect(() =>
+      productSyncProfileCreatePayloadSchema.parse({
+        name: 'Base sync',
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        fieldRules: [
+          {
+            appField: 'stock',
+            baseField: 'stock',
+            direction: 'base_to_app',
+          },
+          {
+            appField: 'stock',
+            baseField: 'stock.bl_1',
+            direction: 'app_to_base',
+          },
+        ],
+      })
+    ).toThrow();
+
     expect(
       productSyncProfileSchema.parse({
         id: 'profile-1',

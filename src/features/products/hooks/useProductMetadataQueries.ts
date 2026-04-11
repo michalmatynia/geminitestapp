@@ -185,6 +185,26 @@ export function useTags(
   });
 }
 
+export function useAllTags(options?: ProductMetadataQueryOptions): ListQuery<ProductTag> {
+  const queryKey = productMetadataKeys.tags('__all__');
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductTag[]> =>
+      await api.get<ProductTag[]>('/api/v2/products/tags/all'),
+    enabled: options?.enabled ?? true,
+    ...STABLE_METADATA_QUERY_OPTIONS,
+    meta: {
+      source: 'products.hooks.useAllTags',
+      operation: 'list',
+      resource: 'products.metadata.tags.all',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'metadata', 'tags', 'all'],
+      description: 'Loads all products metadata tags across catalogs.',
+    },
+  });
+}
+
 export function useShippingGroups(
   catalogId?: string,
   options?: ProductMetadataQueryOptions

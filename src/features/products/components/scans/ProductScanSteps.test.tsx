@@ -171,14 +171,17 @@ describe('ProductScanSteps', () => {
       },
     ]);
 
-    expect(summary).toEqual({
+    expect(summary).toMatchObject({
       kind: 'failed',
       phaseLabel: 'Google Lens',
+      sourceLabel: 'Candidate collection',
       stepLabel: 'Collect Amazon candidates from Google results',
       message: 'Timed out while waiting for reverse image results.',
       resultCodeLabel: 'Candidate Collect Timeout',
       attempt: 2,
       inputSource: 'url',
+      url: 'https://www.google.com/searchbyimage?image_url=https://cdn.example.com/image-2.jpg',
     });
+    expect(summary?.timingLabel).toContain('Duration 8.0 s');
   });
 });

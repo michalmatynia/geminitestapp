@@ -7,6 +7,10 @@ import {
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { handleParser } from '@/shared/lib/ai-paths/core/runtime/handlers/transform/parser';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
+import {
+  MARKETPLACE_COPY_DEBRAND_PATH_ID,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+} from '@/shared/lib/ai-paths/marketplace-copy-debrand';
 
 describe('starter marketplace copy debrand workflow', () => {
   it('maps row-level debrand source fields from the trigger payload', () => {
@@ -46,6 +50,20 @@ describe('starter marketplace copy debrand workflow', () => {
         showLabel: true,
       })
     );
+  });
+
+  it('materializes the canonical Debrand path with a matching trigger node event id', () => {
+    const entry = getStarterWorkflowTemplateById('starter_marketplace_copy_debrand');
+    if (!entry) throw new Error('Missing starter_marketplace_copy_debrand entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: MARKETPLACE_COPY_DEBRAND_PATH_ID,
+      seededDefault: true,
+    });
+    const triggerNodes = config.nodes.filter((node) => node.type === 'trigger');
+
+    expect(triggerNodes).toHaveLength(1);
+    expect(triggerNodes[0]?.config?.trigger?.event).toBe(MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID);
   });
 
   it('restores the canonical Debrand row trigger from the static recovery bundle', () => {

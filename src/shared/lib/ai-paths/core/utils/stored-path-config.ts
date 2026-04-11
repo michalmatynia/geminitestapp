@@ -37,10 +37,15 @@ const isStarterBackedPathConfig = (args: {
   return Boolean(starter && typeof starter === 'object' && !Array.isArray(starter));
 };
 
-export const loadCanonicalStoredPathConfig = (args: {
+export type LoadedStoredPathConfig = {
+  config: PathConfig;
+  changed: boolean;
+};
+
+const loadStoredPathConfig = (args: {
   pathId: string;
   rawConfig: string;
-}): PathConfig => {
+}): LoadedStoredPathConfig => {
   let parsedConfig: unknown;
   try {
     parsedConfig = JSON.parse(args.rawConfig) as unknown;
@@ -84,14 +89,10 @@ export const loadCanonicalStoredPathConfig = (args: {
       applyStarterWorkflowUpgrade: false,
       allowStaticRecoveryFallback: false,
     });
-    if (resolvedStarterConfig.changed) {
-      throw validationError('AI Path config contains non-canonical persisted values.', {
-        source: 'ai_paths.path_config',
-        pathId: args.pathId,
-        reason: 'non_canonical_persisted_values',
-      });
-    }
-    return resolvedStarterConfig.config;
+    return {
+      config: resolvedStarterConfig.config,
+      changed: resolvedStarterConfig.changed,
+    };
   }
   const normalizedId =
     typeof sanitizedConfig.id === 'string' ? sanitizedConfig.id.trim() : '';
@@ -114,7 +115,23 @@ export const loadCanonicalStoredPathConfig = (args: {
     });
   }
 
-  if (stableStringify(parsedConfig) !== stableStringify(sanitizedConfig)) {
+  return {
+    config: sanitizedConfig,
+    changed: stableStringify(parsedConfig) !== stableStringify(sanitizedConfig),
+  };
+};
+
+export const loadRepairableStoredPathConfig = (args: {
+  pathId: string;
+  rawConfig: string;
+}): LoadedStoredPathConfig => loadStoredPathConfig(args);
+
+export const loadCanonicalStoredPathConfig = (args: {
+  pathId: string;
+  rawConfig: string;
+}): PathConfig => {
+  const resolved = loadStoredPathConfig(args);
+  if (resolved.changed) {
     throw validationError('AI Path config contains non-canonical persisted values.', {
       source: 'ai_paths.path_config',
       pathId: args.pathId,
@@ -122,5 +139,5 @@ export const loadCanonicalStoredPathConfig = (args: {
     });
   }
 
-  return sanitizedConfig;
+  return resolved.config;
 };

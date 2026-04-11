@@ -179,9 +179,44 @@ export function useAiPathTriggerEvent(): {
 
   const fireAiPathTriggerEvent = useCallback(
     async (args: FireAiPathTriggerEventArgs): Promise<void> => {
+      const finishLaunch = (): void => {
+        args.onFinished?.();
+      };
+      const reportLaunchError = (payload: {
+        toastMessage?: string | null | undefined;
+        toastVariant?: 'default' | 'info' | 'warning' | 'error';
+        errorCode: string;
+        progressMessage?: string | null | undefined;
+      }): void => {
+        const toastMessage =
+          typeof payload.toastMessage === 'string' ? payload.toastMessage.trim() : '';
+        const progressMessage =
+          typeof payload.progressMessage === 'string' ? payload.progressMessage.trim() : '';
+        const callbackMessage = progressMessage || toastMessage || payload.errorCode;
+
+        if (toastMessage.length > 0) {
+          toast(toastMessage, { variant: payload.toastVariant ?? 'error' });
+        }
+        args.onError?.(callbackMessage);
+        args.onProgress?.({
+          status: 'error',
+          error: payload.errorCode,
+          ...(progressMessage.length > 0 ? { message: progressMessage } : {}),
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
+          node: null,
+        });
+        finishLaunch();
+      };
+
       const triggerEventId = args.triggerEventId.trim();
       if (!triggerEventId) {
-        toast('Missing trigger id.', { variant: 'error' });
+        reportLaunchError({
+          toastMessage: 'Missing trigger id.',
+          toastVariant: 'error',
+          errorCode: 'missing_trigger_id',
+        });
         return;
       }
 
@@ -225,24 +260,17 @@ export function useAiPathTriggerEvent(): {
             timeoutCode,
             preferredPathId: args.preferredPathId ?? null,
           });
-          toast(
-            timeoutCode
+          reportLaunchError({
+            toastMessage: timeoutCode
               ? 'Failed to prepare AI Path run (settings_preload_timeout). Please retry.'
               : preferredPathSettingsMissing
                 ? errorMessage
                 : 'Failed to load AI Path settings. Please retry.',
-            { variant: 'error' }
-          );
-          args.onProgress?.({
-            status: 'error',
-            error:
+            toastVariant: 'error',
+            errorCode:
               timeoutCode ||
               (preferredPathSettingsMissing ? 'preferred_path_missing' : 'settings_load_error'),
-            ...(preferredPathSettingsMissing ? { message: errorMessage } : {}),
-            progress: 0,
-            completedNodes: 0,
-            totalNodes: 1,
-            node: null,
+            progressMessage: preferredPathSettingsMissing ? errorMessage : null,
           });
           return;
         }
@@ -274,15 +302,11 @@ export function useAiPathTriggerEvent(): {
             action: 'resolveTriggerSelection',
             triggerEventId,
           });
-          toast(message, { variant: 'error' });
-          args.onProgress?.({
-            status: 'error',
-            error: 'trigger_settings_invalid',
-            message,
-            progress: 0,
-            completedNodes: 0,
-            totalNodes: 1,
-            node: null,
+          reportLaunchError({
+            toastMessage: message,
+            toastVariant: 'error',
+            errorCode: 'trigger_settings_invalid',
+            progressMessage: message,
           });
           return;
         }
@@ -291,52 +315,34 @@ export function useAiPathTriggerEvent(): {
         if (!selectedConfig) {
           if (missingPreferredPathId) {
             const missingPreferredMessage = `Trigger button is bound to missing AI Path "${missingPreferredPathId}". Update the button configuration.`;
-            toast(missingPreferredMessage, { variant: 'error' });
-            args.onProgress?.({
-              status: 'error',
-              error: 'preferred_path_missing',
-              message: missingPreferredMessage,
-              progress: 0,
-              completedNodes: 0,
-              totalNodes: 1,
-              node: null,
+            reportLaunchError({
+              toastMessage: missingPreferredMessage,
+              toastVariant: 'error',
+              errorCode: 'preferred_path_missing',
+              progressMessage: missingPreferredMessage,
             });
             return;
           }
           if (triggerCandidates.length === 0) {
-            toast(`No AI Path configured for trigger: ${triggerEventId}`, { variant: 'warning' });
-            args.onProgress?.({
-              status: 'error',
-              error: 'no_path_configured',
-              progress: 0,
-              completedNodes: 0,
-              totalNodes: 1,
-              node: null,
+            reportLaunchError({
+              toastMessage: `No AI Path configured for trigger: ${triggerEventId}`,
+              toastVariant: 'warning',
+              errorCode: 'no_path_configured',
             });
             return;
           }
           if (activeTriggerCandidates.length === 0) {
-            toast('All AI Paths for this trigger are disabled.', { variant: 'warning' });
-            args.onProgress?.({
-              status: 'error',
-              error: 'path_disabled',
-              progress: 0,
-              completedNodes: 0,
-              totalNodes: 1,
-              node: null,
+            reportLaunchError({
+              toastMessage: 'All AI Paths for this trigger are disabled.',
+              toastVariant: 'warning',
+              errorCode: 'path_disabled',
             });
             return;
           }
-          toast('Multiple active paths for trigger. Please specify preferredPathId.', {
-            variant: 'warning',
-          });
-          args.onProgress?.({
-            status: 'error',
-            error: 'ambiguous_path_selection',
-            progress: 0,
-            completedNodes: 0,
-            totalNodes: 1,
-            node: null,
+          reportLaunchError({
+            toastMessage: 'Multiple active paths for trigger. Please specify preferredPathId.',
+            toastVariant: 'warning',
+            errorCode: 'ambiguous_path_selection',
           });
           return;
         }
@@ -349,14 +355,10 @@ export function useAiPathTriggerEvent(): {
         });
 
         if (!triggerNode) {
-          toast(`Trigger node not found in path: ${selectedConfig.name}`, { variant: 'error' });
-          args.onProgress?.({
-            status: 'error',
-            error: 'trigger_node_not_found',
-            progress: 0,
-            completedNodes: 0,
-            totalNodes: 1,
-            node: null,
+          reportLaunchError({
+            toastMessage: `Trigger node not found in path: ${selectedConfig.name}`,
+            toastVariant: 'error',
+            errorCode: 'trigger_node_not_found',
           });
           return;
         }
@@ -424,15 +426,11 @@ export function useAiPathTriggerEvent(): {
 
         if (preflight.shouldBlock) {
           const preflightMessage = preflight.blockMessage ?? 'Unknown preflight error.';
-          toast(`Path validation failed: ${preflightMessage}`, { variant: 'error' });
-          args.onProgress?.({
-            status: 'error',
-            error: 'preflight_failed',
-            message: preflightMessage,
-            progress: 0,
-            completedNodes: 0,
-            totalNodes: 1,
-            node: null,
+          reportLaunchError({
+            toastMessage: `Path validation failed: ${preflightMessage}`,
+            toastVariant: 'error',
+            errorCode: 'preflight_failed',
+            progressMessage: preflightMessage,
           });
           return;
         }
@@ -530,15 +528,11 @@ export function useAiPathTriggerEvent(): {
         }
 
         if (!runResult.ok && !runId) {
-          toast(`Failed to start AI Path: ${runResult.error || 'API Error'}`, { variant: 'error' });
-          args.onProgress?.({
-            status: 'error',
-            error: 'api_error',
-            message: runResult.error as string | undefined,
-            progress: 0,
-            completedNodes: 0,
-            totalNodes: 1,
-            node: null,
+          reportLaunchError({
+            toastMessage: `Failed to start AI Path: ${runResult.error || 'API Error'}`,
+            toastVariant: 'error',
+            errorCode: 'api_error',
+            progressMessage: runResult.error as string | undefined,
           });
           return;
         }
@@ -562,15 +556,11 @@ export function useAiPathTriggerEvent(): {
         }
 
         if (!runId) {
-          toast('Failed to start AI Path: invalid run identifier from API.', { variant: 'error' });
-          args.onProgress?.({
-            status: 'error',
-            error: 'api_error',
-            message: 'Invalid run identifier returned by enqueue endpoint.',
-            progress: 0,
-            completedNodes: 0,
-            totalNodes: 1,
-            node: null,
+          reportLaunchError({
+            toastMessage: 'Failed to start AI Path: invalid run identifier from API.',
+            toastVariant: 'error',
+            errorCode: 'api_error',
+            progressMessage: 'Invalid run identifier returned by enqueue endpoint.',
           });
           return;
         }
@@ -659,6 +649,7 @@ export function useAiPathTriggerEvent(): {
           totalNodes: 1,
           node: null,
         });
+        finishLaunch();
 
         void listAiPathRuns({
           pathId: selectedConfig.id,
@@ -713,15 +704,11 @@ export function useAiPathTriggerEvent(): {
           action: 'fireError',
           triggerEventId,
         });
-        toast(message, { variant: 'error' });
-        args.onProgress?.({
-          status: 'error',
-          error: 'unexpected_error',
-          message,
-          progress: 0,
-          completedNodes: 0,
-          totalNodes: 1,
-          node: null,
+        reportLaunchError({
+          toastMessage: message,
+          toastVariant: 'error',
+          errorCode: 'unexpected_error',
+          progressMessage: message,
         });
       }
     },

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { usePlaywrightPersonas } from '@/features/playwright/public';
 import { PlaywrightSettingsForm } from '@/features/playwright/ui.public';
 import { useUpdateSetting, useSettingsMap } from '@/shared/hooks/use-settings';
@@ -16,6 +17,7 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 import {
   buildPersistedProductScannerSettings,
   buildProductScannerSettingsDraft,
+  PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS,
   PRODUCT_SCANNER_BROWSER_OPTIONS,
   PRODUCT_SCANNER_CAPTCHA_BEHAVIOR_OPTIONS,
   PRODUCT_SCANNER_SETTINGS_KEY,
@@ -32,10 +34,23 @@ const toPositiveInteger = (value: string, fallback: number): number => {
   return Number.isFinite(normalized) && normalized > 0 ? normalized : fallback;
 };
 
+const toUnitInterval = (value: string, fallback: number): number => {
+  const normalized = Number.parseFloat(value);
+  if (!Number.isFinite(normalized)) {
+    return fallback;
+  }
+
+  return Math.min(1, Math.max(0, normalized));
+};
+
 export function AdminProductScannerSettingsPage(): React.JSX.Element {
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSetting = useUpdateSetting();
   const personasQuery = usePlaywrightPersonas();
+  const brainModelOptions = useBrainModelOptions({
+    capability: 'product.scan.amazon_candidate_match',
+    enabled: settingsQuery.isSuccess,
+  });
   const { toast } = useToast();
 
   const rawSettings = settingsQuery.data?.get(PRODUCT_SCANNER_SETTINGS_KEY) ?? null;
@@ -68,6 +83,20 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
 
   const selectedPersona =
     personasQuery.data?.find((persona) => persona.id === draft.playwrightPersonaId) ?? null;
+  const amazonCandidateEvaluatorModelOptions = useMemo(
+    () =>
+      brainModelOptions.models.map((modelId) => ({
+        value: modelId,
+        label: modelId,
+      })),
+    [brainModelOptions.models]
+  );
+  const effectiveAmazonCandidateEvaluatorModel =
+    draft.amazonCandidateEvaluator.mode === 'disabled'
+      ? 'Disabled'
+      : draft.amazonCandidateEvaluator.mode === 'brain_default'
+        ? brainModelOptions.effectiveModelId.trim() || 'Not configured in AI Brain'
+        : draft.amazonCandidateEvaluator.modelId?.trim() || 'Select a model';
   const persistedDraftForSave = useMemo(
     () => buildPersistedProductScannerSettings(draft, personasQuery.data),
     [draft, personasQuery.data]
@@ -238,6 +267,131 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
             title='Playwright Overrides'
             description='These overrides are applied on top of the selected persona for product scans.'
           />
+        </FormSection>
+
+        <FormSection
+          title='Amazon Candidate Evaluator'
+          description='Optional AI gate that reviews the Amazon page before trusting extracted data.'
+          className='p-6'
+        >
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
+            <FormField
+              label='Evaluator Mode'
+              description='Choose whether this scanner step uses the AI Brain default model or a scanner-specific override.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluator.mode}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluator: {
+                      ...prev.amazonCandidateEvaluator,
+                      mode:
+                        value === 'brain_default' || value === 'model_override'
+                          ? value
+                          : 'disabled',
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS]}
+                placeholder='Select evaluator mode'
+                ariaLabel='Select Amazon candidate evaluator mode'
+                title='Select Amazon candidate evaluator mode'
+              />
+            </FormField>
+            <FormField
+              label='Resolved Model'
+              description='Current effective model for the evaluator checkpoint.'
+            >
+              <Input
+                value={effectiveAmazonCandidateEvaluatorModel}
+                readOnly
+                aria-label='Resolved Amazon candidate evaluator model'
+                title='Resolved Amazon candidate evaluator model'
+              />
+            </FormField>
+            {draft.amazonCandidateEvaluator.mode === 'model_override' ? (
+              <FormField
+                label='Override Model'
+                description='Choose a vision-capable model from the AI Brain catalog.'
+              >
+                <SelectSimple
+                  size='sm'
+                  value={draft.amazonCandidateEvaluator.modelId ?? ''}
+                  onValueChange={(value: string): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluator: {
+                        ...prev.amazonCandidateEvaluator,
+                        modelId: value.trim() || null,
+                      },
+                    }));
+                  }}
+                  options={[...amazonCandidateEvaluatorModelOptions]}
+                  placeholder='Select evaluator model'
+                  ariaLabel='Select Amazon candidate evaluator model'
+                  title='Select Amazon candidate evaluator model'
+                />
+              </FormField>
+            ) : null}
+            <FormField
+              label='Confidence Threshold'
+              description='Minimum evaluator confidence required before trusting the Amazon page.'
+            >
+              <Input
+                type='number'
+                min={0}
+                max={1}
+                step={0.05}
+                value={draft.amazonCandidateEvaluator.threshold}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluator: {
+                      ...prev.amazonCandidateEvaluator,
+                      threshold: toUnitInterval(
+                        event.target.value,
+                        prev.amazonCandidateEvaluator.threshold
+                      ),
+                    },
+                  }));
+                }}
+                aria-label='Amazon candidate evaluator confidence threshold'
+                title='Amazon candidate evaluator confidence threshold'
+              />
+            </FormField>
+            <FormField
+              label='Evaluation Scope'
+              description='Run the evaluator only when Amazon candidates are ambiguous.'
+            >
+              <label className='inline-flex items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  checked={draft.amazonCandidateEvaluator.onlyForAmbiguousCandidates}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluator: {
+                        ...prev.amazonCandidateEvaluator,
+                        onlyForAmbiguousCandidates: event.target.checked,
+                      },
+                    }));
+                  }}
+                  aria-label='Only evaluate ambiguous Amazon candidates'
+                  title='Only evaluate ambiguous Amazon candidates'
+                />
+                Only evaluate ambiguous candidates
+              </label>
+            </FormField>
+          </div>
+
+          <div className='mt-4 text-xs text-muted-foreground'>
+            {brainModelOptions.isLoading
+              ? 'Loading AI Brain model options.'
+              : brainModelOptions.sourceWarnings[0] ||
+                'The evaluator compares the Amazon page image and text against the product in your app before extraction is trusted.'}
+          </div>
         </FormSection>
 
         <Hint variant='info' className='rounded-md border border-blue-500/20 bg-blue-500/5 p-4'>

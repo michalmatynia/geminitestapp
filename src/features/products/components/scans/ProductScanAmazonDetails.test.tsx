@@ -19,6 +19,42 @@ describe('ProductScanAmazonDetails', () => {
           asin: 'B00TEST123',
           title: 'Amazon product title',
           description: 'Amazon product description',
+          amazonProbe: {
+            pageTitle: 'Amazon product title',
+            candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+            canonicalUrl: 'https://www.amazon.com/dp/B00TEST123',
+            heroImageUrl: 'https://m.media-amazon.com/images/I/example.jpg',
+            heroImageAlt: 'Acme product',
+            heroImageArtifactName: 'amazon-scan-probe-image-2-attempt-1-rank-1-hero.png',
+            artifactKey: 'amazon-scan-probe-image-2-attempt-1-rank-1',
+            bulletCount: 2,
+            attributeCount: 2,
+          },
+          amazonEvaluation: {
+            status: 'approved',
+            sameProduct: true,
+            imageMatch: true,
+            descriptionMatch: true,
+            pageRepresentsSameProduct: true,
+            confidence: 0.93,
+            proceed: true,
+            threshold: 0.85,
+            reasons: ['Packaging and title align with the source product.'],
+            mismatches: [],
+            modelId: 'gpt-4o',
+            brainApplied: null,
+            evidence: {
+              candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+              pageTitle: 'Amazon product title',
+              heroImageSource: 'https://m.media-amazon.com/images/I/example.jpg',
+              heroImageArtifactName: 'amazon-scan-probe-image-2-attempt-1-rank-1-hero.png',
+              screenshotArtifactName: 'amazon-scan-match.png',
+              htmlArtifactName: 'amazon-scan-match.html',
+              productImageSource: '/uploads/product-1.jpg',
+            },
+            error: null,
+            evaluatedAt: '2026-04-11T10:00:08.000Z',
+          },
           steps: [
             {
               key: 'google_captcha',
@@ -133,11 +169,22 @@ describe('ProductScanAmazonDetails', () => {
     expect(screen.getByText('Technical Details')).toBeInTheDocument();
     expect(screen.getByText('Product Overview')).toBeInTheDocument();
     expect(screen.getByText('Listing Text')).toBeInTheDocument();
-    expect(screen.getByText('Amazon product title')).toBeInTheDocument();
+    expect(screen.getAllByText('Amazon product title')).toHaveLength(2);
     expect(screen.getByText('Description')).toBeInTheDocument();
     expect(screen.getByText('Amazon product description')).toBeInTheDocument();
     expect(screen.getByText('Showing 2 of 2')).toBeInTheDocument();
     expect(screen.getByText('Scan Provenance')).toBeInTheDocument();
+    expect(screen.getAllByText('AI approved')).toHaveLength(2);
+    expect(screen.getByText('AI confidence 93%')).toBeInTheDocument();
+    expect(screen.getByText('AI Evaluation')).toBeInTheDocument();
+    expect(screen.getByText('Amazon Probe')).toBeInTheDocument();
+    expect(screen.getByText('Acme product')).toBeInTheDocument();
+    expect(screen.getByText('Artifact key')).toBeInTheDocument();
+    expect(screen.getByText('amazon-scan-probe-image-2-attempt-1-rank-1')).toBeInTheDocument();
+    expect(screen.getByText('Hero image source')).toBeInTheDocument();
+    expect(screen.getAllByText('Hero image artifact')).toHaveLength(2);
+    expect(screen.getAllByText('amazon-scan-probe-image-2-attempt-1-rank-1-hero.png')).toHaveLength(2);
+    expect(screen.getByText('Packaging and title align with the source product.')).toBeInTheDocument();
     expect(screen.getAllByText('URL input')).toHaveLength(2);
     expect(screen.getByText('Fallback used')).toBeInTheDocument();
     expect(screen.getByText('Captcha path')).toBeInTheDocument();
@@ -157,6 +204,8 @@ describe('ProductScanAmazonDetails', () => {
           asin: 'B00TEST123',
           title: 'Amazon product title',
           description: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
           steps: [],
           amazonDetails: {
             brand: null,
@@ -225,6 +274,8 @@ describe('ProductScanAmazonDetails', () => {
           asin: 'B00TEST123',
           title: 'Amazon product title',
           description: 'Amazon product description',
+          amazonProbe: null,
+          amazonEvaluation: null,
           steps: [],
           amazonDetails: {
             brand: null,
@@ -270,5 +321,59 @@ describe('ProductScanAmazonDetails', () => {
       expect(writeTextMock).toHaveBeenNthCalledWith(2, 'Amazon product description');
       expect(writeTextMock).toHaveBeenNthCalledWith(3, 'Battery Powered');
     });
+  });
+
+  it('renders AI evaluation details even when extracted Amazon fields were cleared', () => {
+    render(
+      <ProductScanAmazonDetails
+        scan={{
+          asin: null,
+          title: null,
+          description: null,
+          amazonProbe: {
+            pageTitle: 'Wrong Amazon product',
+            candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+            canonicalUrl: 'https://www.amazon.com/dp/B00TEST123',
+            heroImageUrl: 'https://m.media-amazon.com/images/I/wrong.jpg',
+            heroImageAlt: 'Wrong product image',
+            heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+            artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+            bulletCount: 1,
+            attributeCount: 0,
+          },
+          amazonEvaluation: {
+            status: 'rejected',
+            sameProduct: false,
+            imageMatch: false,
+            descriptionMatch: false,
+            pageRepresentsSameProduct: false,
+            confidence: 0.24,
+            proceed: false,
+            threshold: 0.85,
+            reasons: ['The Amazon page shows a different product.'],
+            mismatches: ['Brand and visible image do not match.'],
+            modelId: 'gpt-4o',
+            brainApplied: null,
+            evidence: {
+              candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+              pageTitle: 'Wrong Amazon product',
+              heroImageSource: 'https://m.media-amazon.com/images/I/wrong.jpg',
+              heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
+              screenshotArtifactName: 'amazon-scan-match.png',
+              htmlArtifactName: null,
+              productImageSource: '/uploads/product-1.jpg',
+            },
+            error: null,
+            evaluatedAt: '2026-04-11T10:00:08.000Z',
+          },
+          steps: [],
+          amazonDetails: null,
+        }}
+      />
+    );
+
+    expect(screen.getAllByText('AI rejected')).toHaveLength(2);
+    expect(screen.getByText('AI Evaluation')).toBeInTheDocument();
+    expect(screen.getByText('Brand and visible image do not match.')).toBeInTheDocument();
   });
 });

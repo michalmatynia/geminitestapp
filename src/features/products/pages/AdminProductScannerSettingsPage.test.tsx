@@ -25,6 +25,24 @@ const mocks = vi.hoisted(() => ({
     data: [],
     isPending: false,
   },
+  brainModelOptionsMock: {
+    models: ['gpt-4.1-mini', 'gpt-4.1'],
+    descriptors: {},
+    isLoading: false,
+    assignment: {
+      enabled: true,
+      provider: 'model',
+      modelId: 'gpt-4.1-mini',
+      agentId: '',
+      temperature: 0.2,
+      maxTokens: 1200,
+      systemPrompt: '',
+      notes: null,
+    },
+    effectiveModelId: 'gpt-4.1-mini',
+    sourceWarnings: [],
+    refresh: vi.fn(),
+  },
   toastMock: vi.fn(),
 }));
 
@@ -47,6 +65,10 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 
 vi.mock('@/features/playwright/public', () => ({
   usePlaywrightPersonas: () => mocks.personasQueryMock,
+}));
+
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => mocks.brainModelOptionsMock,
 }));
 
 vi.mock('@/features/playwright/ui.public', () => ({
@@ -186,6 +208,9 @@ describe('AdminProductScannerSettingsPage', () => {
       },
     ];
     mocks.personasQueryMock.isPending = false;
+    mocks.brainModelOptionsMock.isLoading = false;
+    mocks.brainModelOptionsMock.effectiveModelId = 'gpt-4.1-mini';
+    mocks.brainModelOptionsMock.sourceWarnings = [];
   });
 
   it('loads persisted global scanner settings', () => {
@@ -199,6 +224,13 @@ describe('AdminProductScannerSettingsPage', () => {
           manualVerificationTimeoutMs: 180000,
           playwrightSettingsOverrides: {
             headless: false,
+          },
+          amazonCandidateEvaluator: {
+            mode: 'brain_default',
+            modelId: null,
+            threshold: 0.82,
+            onlyForAmbiguousCandidates: false,
+            systemPrompt: null,
           },
         }),
       ],
@@ -219,6 +251,17 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' })).toHaveValue(
       180000
     );
+    expect(
+      screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator mode' })
+    ).toHaveValue('brain_default');
+    expect(
+      screen.getByRole('spinbutton', {
+        name: 'Amazon candidate evaluator confidence threshold',
+      })
+    ).toHaveValue(0.82);
+    expect(
+      screen.getByRole('checkbox', { name: 'Only evaluate ambiguous Amazon candidates' })
+    ).not.toBeChecked();
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
   });
 
@@ -252,6 +295,9 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' })).toHaveValue(
       90000
     );
+    expect(
+      screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator mode' })
+    ).toHaveValue('disabled');
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Saved' })).toBeDisabled();
   });
@@ -271,6 +317,29 @@ describe('AdminProductScannerSettingsPage', () => {
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' }), {
       target: { value: '180000' },
     });
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator mode' }),
+      {
+        target: { value: 'model_override' },
+      }
+    );
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator model' }),
+      {
+        target: { value: 'gpt-4.1' },
+      }
+    );
+    fireEvent.change(
+      screen.getByRole('spinbutton', {
+        name: 'Amazon candidate evaluator confidence threshold',
+      }),
+      {
+        target: { value: '0.9' },
+      }
+    );
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Only evaluate ambiguous Amazon candidates' })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
 
     await waitFor(() => {
@@ -282,6 +351,13 @@ describe('AdminProductScannerSettingsPage', () => {
           captchaBehavior: 'fail',
           manualVerificationTimeoutMs: 180000,
           playwrightSettingsOverrides: {},
+          amazonCandidateEvaluator: {
+            mode: 'model_override',
+            modelId: 'gpt-4.1',
+            threshold: 0.9,
+            onlyForAmbiguousCandidates: false,
+            systemPrompt: null,
+          },
         }),
       });
     });

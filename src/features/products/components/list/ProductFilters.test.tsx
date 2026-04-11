@@ -6,18 +6,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   filterPanelMock,
+  useAllTagsMock,
   useCatalogsMock,
   useProductCategoriesForCatalogsMock,
-  useMultiTagsMock,
   useProductCategoriesMock,
   useProductListFiltersContextMock,
   useProducersMock,
   useTagsMock,
 } = vi.hoisted(() => ({
   filterPanelMock: vi.fn(),
+  useAllTagsMock: vi.fn(),
   useCatalogsMock: vi.fn(),
   useProductCategoriesForCatalogsMock: vi.fn(),
-  useMultiTagsMock: vi.fn(),
   useProductCategoriesMock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
   useProducersMock: vi.fn(),
@@ -35,8 +35,8 @@ vi.mock('@/features/products/hooks/useCategoryQueries', () => ({
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useAllTags: (...args: unknown[]) => useAllTagsMock(...args),
   useCatalogs: (...args: unknown[]) => useCatalogsMock(...args),
-  useMultiTags: (...args: unknown[]) => useMultiTagsMock(...args),
   useProducers: (...args: unknown[]) => useProducersMock(...args),
   useTags: (...args: unknown[]) => useTagsMock(...args),
 }));
@@ -114,9 +114,9 @@ describe('ProductFilters layout contract', () => {
     useProductListFiltersContextMock.mockReturnValue(buildFiltersContextValue());
     useProductCategoriesMock.mockReturnValue({ data: [] });
     useProductCategoriesForCatalogsMock.mockReturnValue({ data: [] });
+    useAllTagsMock.mockReturnValue({ data: [] });
     useCatalogsMock.mockReturnValue({ data: [] });
     useTagsMock.mockReturnValue({ data: [] });
-    useMultiTagsMock.mockReturnValue([]);
     useProducersMock.mockReturnValue({ data: [] });
   });
 
@@ -159,9 +159,9 @@ describe('ProductFilters layout contract', () => {
     expect(filterPanelProps.defaultExpanded).toBe(false);
     expect(useProductCategoriesMock).toHaveBeenCalledWith(undefined, { enabled: false });
     expect(useProductCategoriesForCatalogsMock).toHaveBeenCalledWith([], { enabled: false });
+    expect(useAllTagsMock).toHaveBeenCalledWith({ enabled: false });
     expect(useCatalogsMock).toHaveBeenCalledWith({ enabled: false });
     expect(useTagsMock).toHaveBeenCalledWith(undefined, { enabled: false });
-    expect(useMultiTagsMock).toHaveBeenCalledWith([], { enabled: false });
     expect(useProducersMock).toHaveBeenCalledWith({ enabled: false });
   });
 
@@ -182,18 +182,29 @@ describe('ProductFilters layout contract', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Advanced Filter' }));
 
     await waitFor(() => {
+      expect(useAllTagsMock).toHaveBeenLastCalledWith({ enabled: true });
       expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: true });
       expect(useTagsMock).toHaveBeenLastCalledWith(undefined, { enabled: true });
-      expect(useMultiTagsMock).toHaveBeenLastCalledWith([], { enabled: true });
       expect(useProducersMock).toHaveBeenLastCalledWith({ enabled: true });
       expect(screen.getByTestId('advanced-filter-modal')).toBeInTheDocument();
     });
   });
 
+  it('loads catalog-scoped tags without querying all tags when a catalog is selected', () => {
+    useProductListFiltersContextMock.mockReturnValue(
+      buildFiltersContextValue({ catalogFilter: 'catalog-1' })
+    );
+
+    render(<ProductFilters />);
+
+    expect(useTagsMock).toHaveBeenCalledWith('catalog-1', { enabled: true });
+    expect(useAllTagsMock).toHaveBeenCalledWith({ enabled: false });
+  });
+
   it('stays renderable when metadata hooks return malformed cached payloads', () => {
+    useAllTagsMock.mockReturnValue({ data: { invalid: true } });
     useCatalogsMock.mockReturnValue({ data: { invalid: true } });
     useTagsMock.mockReturnValue({ data: { invalid: true } });
-    useMultiTagsMock.mockReturnValue([{ data: { invalid: true } }]);
     useProducersMock.mockReturnValue({ data: { invalid: true } });
     useProductCategoriesMock.mockReturnValue({ data: { invalid: true } });
     useProductCategoriesForCatalogsMock.mockReturnValue({ data: { invalid: true } });

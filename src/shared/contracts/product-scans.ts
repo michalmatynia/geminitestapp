@@ -134,6 +134,70 @@ export const productScanAmazonDetailsSchema = z
   .default(null);
 export type ProductScanAmazonDetails = z.infer<typeof productScanAmazonDetailsSchema>;
 
+export const productScanAmazonProbeSchema = z
+  .object({
+    asin: optionalTrimmedString(40),
+    pageTitle: optionalTrimmedString(1_000),
+    descriptionSnippet: optionalTrimmedString(4_000),
+    candidateUrl: optionalTrimmedString(4_000),
+    canonicalUrl: optionalTrimmedString(4_000),
+    heroImageUrl: optionalTrimmedString(4_000),
+    heroImageAlt: optionalTrimmedString(1_000),
+    heroImageArtifactName: optionalTrimmedString(260),
+    artifactKey: optionalTrimmedString(260),
+    bulletPoints: z.array(trimmedString.max(1_000)).max(12).default([]),
+    bulletCount: z.number().int().nonnegative().nullable().default(null),
+    attributeCount: z.number().int().nonnegative().nullable().default(null),
+  })
+  .nullable()
+  .default(null);
+export type ProductScanAmazonProbe = z.infer<typeof productScanAmazonProbeSchema>;
+
+export const productScanAmazonEvaluationStatusSchema = z.enum([
+  'approved',
+  'rejected',
+  'skipped',
+  'failed',
+]);
+export type ProductScanAmazonEvaluationStatus = z.infer<
+  typeof productScanAmazonEvaluationStatusSchema
+>;
+
+export const productScanAmazonEvaluationEvidenceSchema = z.object({
+  candidateUrl: optionalTrimmedString(4_000),
+  pageTitle: optionalTrimmedString(1_000),
+  heroImageSource: optionalTrimmedString(4_000),
+  heroImageArtifactName: optionalTrimmedString(260),
+  screenshotArtifactName: optionalTrimmedString(260),
+  htmlArtifactName: optionalTrimmedString(260),
+  productImageSource: optionalTrimmedString(4_000),
+});
+export type ProductScanAmazonEvaluationEvidence = z.infer<
+  typeof productScanAmazonEvaluationEvidenceSchema
+>;
+
+export const productScanAmazonEvaluationSchema = z
+  .object({
+    status: productScanAmazonEvaluationStatusSchema,
+    sameProduct: z.boolean().nullable().default(null),
+    imageMatch: z.boolean().nullable().default(null),
+    descriptionMatch: z.boolean().nullable().default(null),
+    pageRepresentsSameProduct: z.boolean().nullable().default(null),
+    confidence: z.number().min(0).max(1).nullable().default(null),
+    proceed: z.boolean().default(false),
+    threshold: z.number().min(0).max(1).nullable().default(null),
+    reasons: z.array(trimmedString.max(500)).max(10).default([]),
+    mismatches: z.array(trimmedString.max(500)).max(10).default([]),
+    modelId: optionalTrimmedString(200),
+    brainApplied: z.record(z.string(), z.unknown()).nullable().default(null),
+    evidence: productScanAmazonEvaluationEvidenceSchema.nullable().default(null),
+    error: optionalTrimmedString(2_000),
+    evaluatedAt: z.string().datetime().nullable().default(null),
+  })
+  .nullable()
+  .default(null);
+export type ProductScanAmazonEvaluation = z.infer<typeof productScanAmazonEvaluationSchema>;
+
 export const productScanImageCandidateSchema = z.object({
   id: optionalTrimmedString(160),
   url: optionalTrimmedString(4_000),
@@ -158,6 +222,8 @@ export const productScanRecordSchema = z.object({
   url: optionalTrimmedString(4_000),
   description: optionalTrimmedString(8_000),
   amazonDetails: productScanAmazonDetailsSchema,
+  amazonProbe: productScanAmazonProbeSchema,
+  amazonEvaluation: productScanAmazonEvaluationSchema,
   steps: z.array(productScanStepSchema).max(120).default([]),
   rawResult: z.unknown().nullable().default(null),
   error: optionalTrimmedString(2_000),

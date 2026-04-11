@@ -20,6 +20,8 @@ const createScanRecord = (overrides: Partial<ProductScanRecord> = {}): ProductSc
   url: null,
   description: null,
   amazonDetails: null,
+  amazonProbe: null,
+  amazonEvaluation: null,
   steps: [],
   rawResult: null,
   error: null,
@@ -52,5 +54,61 @@ describe('product scan run feedback', () => {
 
     expect(feedback.label).toBe('Running');
     expect(feedback.variant).toBe('processing');
+  });
+
+  it('surfaces AI rejection distinctly from a generic no-match result', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        status: 'no_match',
+        amazonEvaluation: {
+          status: 'rejected',
+          sameProduct: false,
+          imageMatch: false,
+          descriptionMatch: false,
+          pageRepresentsSameProduct: false,
+          confidence: 0.24,
+          proceed: false,
+          threshold: 0.85,
+          reasons: ['Different product.'],
+          mismatches: ['Hero image does not match.'],
+          modelId: 'gpt-4o',
+          brainApplied: null,
+          evidence: null,
+          error: null,
+          evaluatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      })
+    );
+
+    expect(feedback.label).toBe('AI Rejected');
+    expect(feedback.variant).toBe('warning');
+  });
+
+  it('surfaces evaluator failures distinctly from generic scan failures', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        status: 'failed',
+        amazonEvaluation: {
+          status: 'failed',
+          sameProduct: null,
+          imageMatch: null,
+          descriptionMatch: null,
+          pageRepresentsSameProduct: null,
+          confidence: null,
+          proceed: false,
+          threshold: 0.85,
+          reasons: [],
+          mismatches: [],
+          modelId: 'gpt-4o',
+          brainApplied: null,
+          evidence: null,
+          error: 'Evaluator runtime failed.',
+          evaluatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      })
+    );
+
+    expect(feedback.label).toBe('AI Failed');
+    expect(feedback.variant).toBe('error');
   });
 });

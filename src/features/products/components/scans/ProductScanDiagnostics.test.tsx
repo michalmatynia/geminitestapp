@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildProductScanArtifactHref,
   ProductScanDiagnostics,
+  resolveProductScanDiagnosticFailureSummary,
   resolveProductScanDiagnostics,
 } from './ProductScanDiagnostics';
 
@@ -71,5 +72,35 @@ describe('ProductScanDiagnostics', () => {
         mimeType: 'image/png',
       })
     ).toBe('/api/v2/products/scans/scan-1/artifacts/amazon-scan-stage.png');
+  });
+
+  it('builds a compact failure summary from raw diagnostics', () => {
+    expect(
+      resolveProductScanDiagnosticFailureSummary({
+        completedAt: '2026-04-11T04:00:05.000Z',
+        rawResult: {
+          runStatus: 'failed',
+          latestStage: 'google_candidates',
+          logTail: ['lens timeout', 'candidate collection failed'],
+        },
+      } as never)
+    ).toMatchObject({
+      phaseLabel: 'Google Lens',
+      sourceLabel: 'Candidate collection',
+      stepLabel: 'Google Candidates',
+      message: 'candidate collection failed',
+      resultCodeLabel: 'Failed',
+      url: null,
+    });
+    expect(
+      resolveProductScanDiagnosticFailureSummary({
+        completedAt: '2026-04-11T04:00:05.000Z',
+        rawResult: {
+          runStatus: 'failed',
+          latestStage: 'google_candidates',
+          logTail: ['lens timeout', 'candidate collection failed'],
+        },
+      } as never)?.timingLabel
+    ).toContain('Updated ');
   });
 });

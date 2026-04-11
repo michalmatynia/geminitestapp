@@ -631,6 +631,52 @@ describe('useTriggerButtons', () => {
     });
   });
 
+  it('clears the waiting run placeholder when the trigger fails before enqueue', async () => {
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: {
+        onError?: (error: string) => void;
+        onProgress?: (payload: {
+          status: 'running' | 'success' | 'error';
+          progress: number;
+          completedNodes?: number;
+          totalNodes?: number;
+          node?: null;
+          error?: string | null;
+          message?: string | null;
+        }) => void;
+      }) => {
+        args.onError?.('Trigger node not found in path: Trigger');
+        args.onProgress?.({
+          status: 'error',
+          progress: 0,
+          error: 'trigger_node_not_found',
+          message: 'Trigger node not found in path: Trigger',
+          completedNodes: 0,
+          totalNodes: 1,
+          node: null,
+        });
+      }
+    );
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    expect(result.current.lastRuns[BUTTON.id]).toBeUndefined();
+    expect(result.current.runStates[BUTTON.id]).toMatchObject({
+      status: 'idle',
+      progress: 0,
+    });
+  });
+
   it('restores the last completed run feedback after the trigger bar remounts', async () => {
     const modalButton = {
       ...BUTTON,

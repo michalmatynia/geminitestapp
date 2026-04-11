@@ -1,4 +1,8 @@
-import type { ProductScanRecord, ProductScanStatus } from '@/shared/contracts/product-scans';
+import type {
+  ProductScanAmazonEvaluationStatus,
+  ProductScanRecord,
+  ProductScanStatus,
+} from '@/shared/contracts/product-scans';
 import type { TriggerButtonRunFeedbackPresentation } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 
@@ -52,12 +56,15 @@ const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>)
     return false;
   }
 
-  return (rawResult as any)['manualVerificationPending'] === true;
+  return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
 };
 
 export const resolveProductScanRunFeedbackPresentation = (
   status: ProductScanStatus,
-  options?: { manualVerificationPending?: boolean | null }
+  options?: {
+    manualVerificationPending?: boolean | null;
+    amazonEvaluationStatus?: ProductScanAmazonEvaluationStatus | null;
+  }
 ): TriggerButtonRunFeedbackPresentation =>
   status === 'running' && options?.manualVerificationPending
     ? {
@@ -66,11 +73,22 @@ export const resolveProductScanRunFeedbackPresentation = (
         badgeClassName:
           'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
       }
-    :
-  PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS[status] ?? {
-    label: status,
-    variant: 'neutral',
-  };
+    : status === 'no_match' && options?.amazonEvaluationStatus === 'rejected'
+      ? {
+          label: 'AI Rejected',
+          variant: 'warning',
+          badgeClassName:
+            'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25',
+        }
+      : status === 'failed' && options?.amazonEvaluationStatus === 'failed'
+        ? {
+            label: 'AI Failed',
+            variant: 'error',
+          }
+        : PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS[status] ?? {
+            label: status,
+            variant: 'neutral',
+          };
 
 export const buildProductScanRunFeedbackFromRecord = (
   scan: ProductScanRecord
@@ -80,6 +98,7 @@ export const buildProductScanRunFeedbackFromRecord = (
   updatedAt: scan.updatedAt ?? scan.completedAt ?? scan.createdAt ?? null,
   ...resolveProductScanRunFeedbackPresentation(scan.status, {
     manualVerificationPending: isManualVerificationPending(scan),
+    amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
   }),
 });
 

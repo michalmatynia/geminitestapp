@@ -1,5 +1,7 @@
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type {
+  ProductScannerAmazonCandidateEvaluator,
+  ProductScannerAmazonCandidateEvaluatorMode,
   ProductScannerCaptchaBehavior,
   ProductScannerPlaywrightBrowser,
   ProductScannerSettings,
@@ -18,16 +20,27 @@ export const PRODUCT_SCANNER_SETTINGS_KEY = 'product_scanner_settings_v1';
 export const PRODUCT_SCANNER_SETTINGS_HREF = '/admin/settings/scanner';
 export const DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR = 'auto_show_browser' as const;
 export const DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS = 240_000;
+export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE = 'disabled' as const;
+export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD = 0.7;
 export const defaultProductScannerPlaywrightSettings: PlaywrightSettings = {
   ...buildIntegrationConnectionPlaywrightSettings(),
   headless: false,
 };
+
+export const createDefaultProductScannerAmazonCandidateEvaluator = (): ProductScannerAmazonCandidateEvaluator => ({
+  mode: DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE,
+  modelId: null,
+  threshold: DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD,
+  onlyForAmbiguousCandidates: true,
+  systemPrompt: null,
+});
 
 export type ProductScannerSettingsDraft = {
   playwrightPersonaId: string | null;
   playwrightBrowser: ProductScannerPlaywrightBrowser;
   captchaBehavior: ProductScannerCaptchaBehavior;
   manualVerificationTimeoutMs: number;
+  amazonCandidateEvaluator: ProductScannerAmazonCandidateEvaluator;
   playwrightSettings: PlaywrightSettings;
 };
 
@@ -78,12 +91,22 @@ export const PRODUCT_SCANNER_CAPTCHA_BEHAVIOR_OPTIONS: ReadonlyArray<{
   { value: 'fail', label: 'Fail scan on captcha' },
 ];
 
+export const PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS: ReadonlyArray<{
+  value: ProductScannerAmazonCandidateEvaluatorMode;
+  label: string;
+}> = [
+  { value: 'disabled', label: 'Disabled' },
+  { value: 'brain_default', label: 'AI Brain default model' },
+  { value: 'model_override', label: 'Override with scanner model' },
+];
+
 export const createDefaultProductScannerSettings = (): ProductScannerSettings => ({
   playwrightPersonaId: null,
   playwrightBrowser: DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
   captchaBehavior: DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR,
   manualVerificationTimeoutMs: DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
   playwrightSettingsOverrides: {},
+  amazonCandidateEvaluator: createDefaultProductScannerAmazonCandidateEvaluator(),
 });
 
 const normalizeProductScannerBrowser = (
@@ -113,6 +136,55 @@ const normalizeProductScannerManualVerificationTimeoutMs = (value: unknown): num
   }
 
   return Math.min(normalized, 900_000);
+};
+
+const normalizeNullableTrimmedString = (
+  value: unknown,
+  maxLength: number
+): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  return trimmed.slice(0, maxLength);
+};
+
+const normalizeProductScannerAmazonCandidateEvaluatorMode = (
+  value: unknown
+): ProductScannerAmazonCandidateEvaluatorMode =>
+  value === 'brain_default' || value === 'model_override'
+    ? value
+    : DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE;
+
+const normalizeProductScannerAmazonCandidateEvaluatorThreshold = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD;
+  }
+
+  return Math.min(1, Math.max(0, value));
+};
+
+const normalizeProductScannerAmazonCandidateEvaluator = (
+  value: unknown
+): ProductScannerAmazonCandidateEvaluator => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return createDefaultProductScannerAmazonCandidateEvaluator();
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return {
+    mode: normalizeProductScannerAmazonCandidateEvaluatorMode(record['mode']),
+    modelId: normalizeNullableTrimmedString(record['modelId'], 200),
+    threshold: normalizeProductScannerAmazonCandidateEvaluatorThreshold(record['threshold']),
+    onlyForAmbiguousCandidates: record['onlyForAmbiguousCandidates'] !== false,
+    systemPrompt: normalizeNullableTrimmedString(record['systemPrompt'], 4000),
+  };
 };
 
 const normalizeProductScannerSettingsOverrides = (
@@ -174,6 +246,9 @@ export const normalizeProductScannerSettings = (
       Object.keys(normalizedOverrides).length > 0
         ? normalizedOverrides
         : normalizedLegacySettings,
+    amazonCandidateEvaluator: normalizeProductScannerAmazonCandidateEvaluator(
+      record['amazonCandidateEvaluator']
+    ),
   };
 };
 
@@ -210,6 +285,7 @@ export const buildProductScannerSettingsDraft = (
     playwrightBrowser: settings.playwrightBrowser,
     captchaBehavior: settings.captchaBehavior,
     manualVerificationTimeoutMs: settings.manualVerificationTimeoutMs,
+    amazonCandidateEvaluator: settings.amazonCandidateEvaluator,
     playwrightSettings: {
       ...baseline,
       ...settings.playwrightSettingsOverrides,
@@ -262,6 +338,9 @@ export const buildPersistedProductScannerSettings = (
     playwrightSettingsOverrides: buildPlaywrightSettingsOverrides(
       baseline,
       buildIntegrationConnectionPlaywrightSettings(draft.playwrightSettings)
+    ),
+    amazonCandidateEvaluator: normalizeProductScannerAmazonCandidateEvaluator(
+      draft.amazonCandidateEvaluator
     ),
   };
 };

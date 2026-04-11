@@ -82,6 +82,7 @@ import { ProductSyncSettings } from './ProductSyncSettings';
 
 describe('ProductSyncSettings', () => {
   const createMutateAsync = vi.fn();
+  const updateMutateAsync = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -99,7 +100,7 @@ describe('ProductSyncSettings', () => {
     });
     useUpdateProductSyncProfileMutationMock.mockReturnValue({
       isPending: false,
-      mutateAsync: vi.fn(),
+      mutateAsync: updateMutateAsync,
     });
     useDeleteProductSyncProfileMutationMock.mockReturnValue({
       isPending: false,
@@ -187,6 +188,22 @@ describe('ProductSyncSettings', () => {
       createdAt: '2026-04-11T12:00:00.000Z',
       updatedAt: '2026-04-11T12:00:00.000Z',
     });
+    updateMutateAsync.mockResolvedValue({
+      id: 'profile-1',
+      name: 'Base Product Sync',
+      isDefault: true,
+      enabled: true,
+      connectionId: 'connection-1',
+      inventoryId: 'inventory-1',
+      catalogId: null,
+      scheduleIntervalMinutes: 30,
+      batchSize: 100,
+      conflictPolicy: 'skip',
+      fieldRules: [],
+      lastRunAt: null,
+      createdAt: '2026-04-11T12:00:00.000Z',
+      updatedAt: '2026-04-11T12:00:00.000Z',
+    });
   });
 
   it('defaults the first saved profile to the BL modal profile', async () => {
@@ -245,6 +262,126 @@ describe('ProductSyncSettings', () => {
 
     expect(await screen.findByRole('option', { name: 'Standard PLN (PLN_STANDARD)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Retail EUR (EUR_RETAIL)' })).toBeInTheDocument();
+  });
+
+  it('does not save duplicate app-field rules', async () => {
+    useProductSyncProfilesMock.mockReturnValue({
+      data: [
+        {
+          id: 'profile-1',
+          name: 'Manual Base Sync',
+          isDefault: true,
+          enabled: true,
+          connectionId: 'connection-1',
+          inventoryId: 'inventory-1',
+          catalogId: null,
+          scheduleIntervalMinutes: 30,
+          batchSize: 100,
+          conflictPolicy: 'skip',
+          fieldRules: [
+            {
+              id: 'rule-1',
+              appField: 'stock',
+              baseField: 'stock',
+              direction: 'base_to_app',
+            },
+            {
+              id: 'rule-2',
+              appField: 'stock',
+              baseField: 'stock.bl_1',
+              direction: 'app_to_base',
+            },
+          ],
+          lastRunAt: null,
+          createdAt: '2026-04-11T12:00:00.000Z',
+          updatedAt: '2026-04-11T12:00:00.000Z',
+        },
+      ],
+      refetch: vi.fn(),
+    });
+
+    render(<ProductSyncSettings />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Profile' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(
+        'Only one sync rule is allowed for Stock.',
+        expect.objectContaining({ variant: 'error' })
+      );
+    });
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('disables adding another rule when every app field is already configured', () => {
+    useProductSyncProfilesMock.mockReturnValue({
+      data: [
+        {
+          id: 'profile-1',
+          name: 'Complete Base Sync',
+          isDefault: true,
+          enabled: true,
+          connectionId: 'connection-1',
+          inventoryId: 'inventory-1',
+          catalogId: null,
+          scheduleIntervalMinutes: 30,
+          batchSize: 100,
+          conflictPolicy: 'skip',
+          fieldRules: [
+            {
+              id: 'rule-1',
+              appField: 'stock',
+              baseField: 'stock',
+              direction: 'base_to_app',
+            },
+            {
+              id: 'rule-2',
+              appField: 'price',
+              baseField: 'prices.PLN_STANDARD',
+              direction: 'disabled',
+            },
+            {
+              id: 'rule-3',
+              appField: 'name_en',
+              baseField: 'text_fields.name',
+              direction: 'app_to_base',
+            },
+            {
+              id: 'rule-4',
+              appField: 'description_en',
+              baseField: 'text_fields.description',
+              direction: 'app_to_base',
+            },
+            {
+              id: 'rule-5',
+              appField: 'sku',
+              baseField: 'sku',
+              direction: 'disabled',
+            },
+            {
+              id: 'rule-6',
+              appField: 'ean',
+              baseField: 'ean',
+              direction: 'disabled',
+            },
+            {
+              id: 'rule-7',
+              appField: 'weight',
+              baseField: 'weight',
+              direction: 'disabled',
+            },
+          ],
+          lastRunAt: null,
+          createdAt: '2026-04-11T12:00:00.000Z',
+          updatedAt: '2026-04-11T12:00:00.000Z',
+        },
+      ],
+      refetch: vi.fn(),
+    });
+
+    render(<ProductSyncSettings />);
+
+    expect(screen.getByRole('button', { name: 'Add Rule' })).toBeDisabled();
   });
 
   it('keeps unknown persisted Base.com paths editable as custom values', async () => {

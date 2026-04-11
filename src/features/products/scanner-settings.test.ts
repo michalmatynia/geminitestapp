@@ -28,6 +28,13 @@ describe('product scanner settings helpers', () => {
         playwrightBrowser: 'chrome',
         captchaBehavior: 'auto_show_browser',
         manualVerificationTimeoutMs: 180000,
+        amazonCandidateEvaluator: {
+          mode: 'brain_default',
+          modelId: null,
+          threshold: 0.8,
+          onlyForAmbiguousCandidates: false,
+          systemPrompt: null,
+        },
         playwrightSettingsOverrides: {
           timeout: 45000,
         },
@@ -40,6 +47,13 @@ describe('product scanner settings helpers', () => {
       playwrightBrowser: 'chrome',
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 180000,
+      amazonCandidateEvaluator: {
+        mode: 'brain_default',
+        modelId: null,
+        threshold: 0.8,
+        onlyForAmbiguousCandidates: false,
+        systemPrompt: null,
+      },
       playwrightSettings: expect.objectContaining({
         headless: false,
         slowMo: 25,
@@ -55,6 +69,13 @@ describe('product scanner settings helpers', () => {
         playwrightBrowser: 'brave',
         captchaBehavior: 'fail',
         manualVerificationTimeoutMs: 120000,
+        amazonCandidateEvaluator: {
+          mode: 'model_override',
+          modelId: 'gpt-4.1',
+          threshold: 0.9,
+          onlyForAmbiguousCandidates: false,
+          systemPrompt: null,
+        },
         playwrightSettings: {
           ...defaultIntegrationConnectionPlaywrightSettings,
           headless: false,
@@ -70,6 +91,13 @@ describe('product scanner settings helpers', () => {
       captchaBehavior: 'fail',
       manualVerificationTimeoutMs: 120000,
       playwrightSettingsOverrides: {},
+      amazonCandidateEvaluator: {
+        mode: 'model_override',
+        modelId: 'gpt-4.1',
+        threshold: 0.9,
+        onlyForAmbiguousCandidates: false,
+        systemPrompt: null,
+      },
     });
   });
 
@@ -92,6 +120,13 @@ describe('product scanner settings helpers', () => {
       playwrightBrowser: 'chrome',
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 60000,
+      amazonCandidateEvaluator: {
+        mode: 'disabled',
+        modelId: null,
+        threshold: 0.7,
+        onlyForAmbiguousCandidates: true,
+        systemPrompt: null,
+      },
       playwrightSettingsOverrides: expect.objectContaining({
         headless: false,
         timeout: 45000,
@@ -127,6 +162,13 @@ describe('product scanner settings helpers', () => {
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 240000,
       playwrightSettingsOverrides: {},
+      amazonCandidateEvaluator: {
+        mode: 'disabled',
+        modelId: null,
+        threshold: 0.7,
+        onlyForAmbiguousCandidates: true,
+        systemPrompt: null,
+      },
     });
   });
 });

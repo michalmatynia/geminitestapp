@@ -8,6 +8,7 @@ const {
   resolveTriggerSelectionMock,
   enqueueAiPathRunMock,
   listAiPathRunsMock,
+  mergeEnqueuedAiPathRunForCacheMock,
   resolveAiPathRunFromEnqueueResponseDataMock,
   evaluateRunPreflightMock,
   logClientCatchMock,
@@ -18,6 +19,7 @@ const {
   resolveTriggerSelectionMock: vi.fn(),
   enqueueAiPathRunMock: vi.fn(),
   listAiPathRunsMock: vi.fn(),
+  mergeEnqueuedAiPathRunForCacheMock: vi.fn(),
   resolveAiPathRunFromEnqueueResponseDataMock: vi.fn(),
   evaluateRunPreflightMock: vi.fn(),
   logClientCatchMock: vi.fn(),
@@ -63,13 +65,17 @@ vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
 vi.mock('@/shared/lib/ai-paths/api/client', () => ({
   enqueueAiPathRun: (...args: unknown[]) => enqueueAiPathRunMock(...args),
   listAiPathRuns: (...args: unknown[]) => listAiPathRunsMock(...args),
-  mergeEnqueuedAiPathRunForCache: vi.fn(),
+  mergeEnqueuedAiPathRunForCache: (...args: unknown[]) => mergeEnqueuedAiPathRunForCacheMock(...args),
   resolveAiPathRunFromEnqueueResponseData: (...args: unknown[]) =>
     resolveAiPathRunFromEnqueueResponseDataMock(...args),
 }));
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
+  invalidateAiPathQueue: vi.fn(),
   invalidateAiPathSettings: vi.fn(),
+  invalidateIntegrationJobs: vi.fn(),
+  invalidateNotes: vi.fn(),
+  invalidateProductDetail: vi.fn(),
   notifyAiPathRunEnqueued: vi.fn(),
   optimisticallyInsertAiPathRunInQueueCache: vi.fn(),
 }));
@@ -122,6 +128,7 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
     resolveTriggerSelectionMock.mockReset();
     enqueueAiPathRunMock.mockReset();
     listAiPathRunsMock.mockReset();
+    mergeEnqueuedAiPathRunForCacheMock.mockReset();
     resolveAiPathRunFromEnqueueResponseDataMock.mockReset();
     evaluateRunPreflightMock.mockReset();
     logClientCatchMock.mockReset();
@@ -137,6 +144,10 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
       runId: 'run-1',
       runRecord: null,
     });
+    mergeEnqueuedAiPathRunForCacheMock.mockImplementation(
+      (args: { fallbackRun: Record<string, unknown>; runRecord?: Record<string, unknown> | null }) =>
+        args.runRecord ? { ...args.fallbackRun, ...args.runRecord } : args.fallbackRun
+    );
     evaluateRunPreflightMock.mockReturnValue({
       nodeValidationEnabled: true,
       shouldBlock: false,
@@ -233,6 +244,8 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
       missingPreferredPathId: null,
     });
     const onProgress = vi.fn();
+    const onError = vi.fn();
+    const onFinished = vi.fn();
 
     const { result } = renderHook(() => useAiPathTriggerEvent(), {
       wrapper: createWrapper(),
@@ -242,6 +255,8 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
       await result.current.fireAiPathTriggerEvent({
         ...baseArgs,
         onProgress,
+        onError,
+        onFinished,
       });
     });
 
@@ -254,6 +269,8 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
         error: 'no_path_configured',
       })
     );
+    expect(onError).toHaveBeenCalledWith('No AI Path configured for trigger: button-product-row');
+    expect(onFinished).toHaveBeenCalledTimes(1);
   });
 
   it('warns when all paths for the trigger are disabled', async () => {
@@ -408,6 +425,65 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
       }),
       { timeoutMs: 90_000 }
     );
+  });
+
+  it('fires onFinished after a successful enqueue', async () => {
+    const starter = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!starter) throw new Error('Missing starter_parameter_inference template');
+
+    const selectedConfig = materializeStarterWorkflowPathConfig(starter, {
+      pathId: 'path_success_finished_callback',
+      seededDefault: false,
+    });
+    selectedConfig.nodes = selectedConfig.nodes.map((node) =>
+      node.type === 'trigger'
+        ? {
+            ...node,
+            config: {
+              ...node.config,
+              trigger: {
+                ...node.config?.trigger,
+                event: baseArgs.triggerEventId,
+              },
+            },
+          }
+        : node
+    );
+
+    resolveTriggerSelectionMock.mockResolvedValue({
+      triggerCandidates: [selectedConfig],
+      activeTriggerCandidates: [selectedConfig],
+      selectedConfig,
+      uiState: null,
+      missingPreferredPathId: null,
+    });
+    enqueueAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        runId: 'run-success-finished',
+      },
+    });
+    resolveAiPathRunFromEnqueueResponseDataMock.mockReturnValue({
+      runId: 'run-success-finished',
+      runRecord: null,
+    });
+    const onSuccess = vi.fn();
+    const onFinished = vi.fn();
+
+    const { result } = renderHook(() => useAiPathTriggerEvent(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.fireAiPathTriggerEvent({
+        ...baseArgs,
+        onSuccess,
+        onFinished,
+      });
+    });
+
+    expect(onSuccess).toHaveBeenCalledWith('run-success-finished');
+    expect(onFinished).toHaveBeenCalledTimes(1);
   });
 
   it('warns product trigger surfaces when the saved path still relies on the AI Brain default model', async () => {

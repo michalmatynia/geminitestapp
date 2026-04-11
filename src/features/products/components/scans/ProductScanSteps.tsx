@@ -63,11 +63,14 @@ export type ProductScanActiveStepSummary = {
 export type ProductScanLatestOutcomeSummary = {
   kind: 'failed' | 'stalled';
   phaseLabel: string;
+  sourceLabel: string | null;
   stepLabel: string;
   message: string | null;
   resultCodeLabel: string | null;
   attempt: number | null;
   inputSource: ProductScanStep['inputSource'];
+  url: string | null;
+  timingLabel: string | null;
 };
 
 export const resolveProductScanActiveStepSummary = (
@@ -89,6 +92,42 @@ export const resolveProductScanActiveStepSummary = (
   };
 };
 
+export const resolveProductScanFailureSourceLabel = (
+  step: Pick<ProductScanStep, 'group' | 'key'>
+): string | null => {
+  const group = resolveStepGroup(step);
+
+  if (group === 'input') {
+    return 'Input setup';
+  }
+
+  if (group === 'google_lens') {
+    if (step.key === 'google_upload') {
+      return 'Google entry';
+    }
+
+    if (step.key === 'google_candidates') {
+      return 'Candidate collection';
+    }
+
+    return 'Google results';
+  }
+
+  if (group === 'amazon') {
+    if (step.key === 'amazon_open' || step.key === 'amazon_overlays' || step.key === 'amazon_content_ready') {
+      return 'Amazon page';
+    }
+
+    if (step.key === 'amazon_extract') {
+      return 'Amazon extraction';
+    }
+
+    return 'Amazon page';
+  }
+
+  return 'Product update';
+};
+
 export const resolveProductScanLatestOutcomeSummary = (
   steps: ProductScanStep[],
   options?: { allowStalled?: boolean }
@@ -99,11 +138,14 @@ export const resolveProductScanLatestOutcomeSummary = (
     return {
       kind: 'failed',
       phaseLabel: STEP_GROUP_LABELS[resolveStepGroup(failedStep)],
+      sourceLabel: resolveProductScanFailureSourceLabel(failedStep),
       stepLabel: failedStep.label,
       message: failedStep.message ?? failedStep.warning ?? null,
       resultCodeLabel: formatResultCode(failedStep.resultCode),
       attempt: failedStep.attempt ?? null,
       inputSource: failedStep.inputSource ?? null,
+      url: failedStep.url ?? null,
+      timingLabel: formatStepTiming(failedStep),
     };
   }
 
@@ -121,11 +163,14 @@ export const resolveProductScanLatestOutcomeSummary = (
   return {
     kind: 'stalled',
     phaseLabel: STEP_GROUP_LABELS[resolveStepGroup(stalledStep)],
+    sourceLabel: resolveProductScanFailureSourceLabel(stalledStep),
     stepLabel: stalledStep.label,
     message: stalledStep.message ?? stalledStep.warning ?? null,
     resultCodeLabel: formatResultCode(stalledStep.resultCode),
     attempt: stalledStep.attempt ?? null,
     inputSource: stalledStep.inputSource ?? null,
+    url: stalledStep.url ?? null,
+    timingLabel: formatStepTiming(stalledStep),
   };
 };
 

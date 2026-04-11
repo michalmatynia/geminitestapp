@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { Profiler, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ProductFilters } from '@/features/products/components/list/ProductFilters';
 import { ProductListHeader } from '@/features/products/components/list/ProductListHeader';
 import {
   useProductListAlertsContext,
@@ -20,18 +21,6 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 import type { Row } from '@tanstack/react-table';
 
 const PRODUCT_LIST_BOTTOM_GAP = 24;
-
-const ProductFilters = dynamic(
-  () =>
-    import('@/features/products/components/list/ProductFilters').then(
-      (mod: typeof import('@/features/products/components/list/ProductFilters')) =>
-        mod.ProductFilters
-    ),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
 
 const ProductSelectionActions = dynamic(
   () =>
@@ -95,6 +84,7 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
   >(tableProps.maxHeight);
   const actionsContent = useMemo(() => <ProductSelectionActions />, []);
   const alertsContent = useMemo(() => <ProductListAlerts />, []);
+  const headerFiltersContent = useMemo(() => <ProductFilters instanceId='header' />, []);
 
   const updateTableMaxHeight = useCallback(() => {
     try {
@@ -160,8 +150,8 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
   }, [updateTableMaxHeight]);
 
   const headerContent = useMemo(() => {
-    return <ProductListHeader filtersContent={<ProductFilters />} />;
-  }, []);
+    return <ProductListHeader filtersContent={headerFiltersContent} />;
+  }, [headerFiltersContent]);
   const isEmpty = !tableProps.isLoading && tableProps.data.length === 0;
 
   return (

@@ -278,6 +278,43 @@ export const productSyncFieldRulePayloadSchema = z.object({
 });
 export type ProductSyncFieldRulePayload = z.infer<typeof productSyncFieldRulePayloadSchema>;
 
+type ProductSyncRuleFieldCarrier = {
+  appField: ProductSyncAppField;
+};
+
+export const findDuplicateProductSyncAppField = (
+  rules: ProductSyncRuleFieldCarrier[]
+): ProductSyncAppField | null => {
+  const seen = new Set<ProductSyncAppField>();
+  for (const rule of rules) {
+    if (seen.has(rule.appField)) {
+      return rule.appField;
+    }
+    seen.add(rule.appField);
+  }
+  return null;
+};
+
+const buildUniqueProductSyncFieldRulesSchema = <
+  T extends z.ZodType<ProductSyncRuleFieldCarrier[], z.ZodTypeDef, ProductSyncRuleFieldCarrier[]>,
+>(
+  schema: T
+): T =>
+  schema.superRefine((rules, ctx) => {
+    const duplicateAppField = findDuplicateProductSyncAppField(rules);
+    if (!duplicateAppField) return;
+    const duplicateIndex = rules.findIndex(
+      (rule, index) =>
+        rule.appField === duplicateAppField &&
+        rules.findIndex((candidate) => candidate.appField === duplicateAppField) !== index
+    );
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: duplicateIndex >= 0 ? [duplicateIndex, 'appField'] : ['fieldRules'],
+      message: `Only one synchronization rule is allowed for ${duplicateAppField}.`,
+    });
+  }) as T;
+
 export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRule, 'id'>> = [
   {
     appField: 'stock',
@@ -316,6 +353,35 @@ export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRule, 
   },
 ];
 
+export const getProductSyncAppFieldLabel = (field: ProductSyncAppField): string => {
+  if (field === 'name_en') return 'Name (EN)';
+  if (field === 'description_en') return 'Description (EN)';
+  if (field === 'stock') return 'Stock';
+  if (field === 'price') return 'Price';
+  if (field === 'sku') return 'SKU';
+  if (field === 'ean') return 'EAN';
+  if (field === 'weight') return 'Weight';
+  return field;
+};
+
+export const buildEffectiveProductSyncFieldRules = (
+  configuredRules?: ProductSyncFieldRule[] | null
+): ProductSyncFieldRule[] =>
+  PRODUCT_SYNC_APP_FIELDS.map((appField: ProductSyncAppField) => {
+    const configuredRule =
+      configuredRules?.find((rule: ProductSyncFieldRule) => rule.appField === appField) ?? null;
+    if (configuredRule) return configuredRule;
+    const defaultRule = DEFAULT_PRODUCT_SYNC_FIELD_RULES.find(
+      (rule) => rule.appField === appField
+    );
+    return {
+      id: `implicit-${appField}`,
+      appField,
+      baseField: defaultRule?.baseField ?? appField,
+      direction: 'disabled',
+    };
+  });
+
 export const productSyncProfileSchema = namedDtoSchema.extend({
   isDefault: z.boolean(),
   enabled: z.boolean(),
@@ -348,7 +414,9 @@ export const productSyncProfileCreatePayloadSchema = z.object({
   scheduleIntervalMinutes: z.number().int().min(1).max(24 * 60).optional(),
   batchSize: z.number().int().min(1).max(500).optional(),
   conflictPolicy: productSyncConflictPolicySchema.optional(),
-  fieldRules: z.array(productSyncFieldRulePayloadSchema).optional(),
+  fieldRules: buildUniqueProductSyncFieldRulesSchema(
+    z.array(productSyncFieldRulePayloadSchema)
+  ).optional(),
 });
 export type ProductSyncProfileCreatePayload = z.infer<typeof productSyncProfileCreatePayloadSchema>;
 
@@ -362,7 +430,9 @@ export const productSyncProfileUpdatePayloadSchema = z.object({
   scheduleIntervalMinutes: z.number().int().min(1).max(24 * 60).optional(),
   batchSize: z.number().int().min(1).max(500).optional(),
   conflictPolicy: productSyncConflictPolicySchema.optional(),
-  fieldRules: z.array(productSyncFieldRulePayloadSchema).optional(),
+  fieldRules: buildUniqueProductSyncFieldRulesSchema(
+    z.array(productSyncFieldRulePayloadSchema)
+  ).optional(),
 });
 export type ProductSyncProfileUpdatePayload = z.infer<typeof productSyncProfileUpdatePayloadSchema>;
 

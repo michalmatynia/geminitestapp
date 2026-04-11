@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 
 import type {
   ProductScanAmazonDetails as ProductScanAmazonDetailsValue,
+  ProductScanAmazonEvaluation,
   ProductScanRecord,
   ProductScanStep,
 } from '@/shared/contracts/product-scans';
@@ -128,6 +129,21 @@ const resolveInputSourceLabel = (value: string | null | undefined): string | nul
 
   return value === 'url' ? 'URL input' : value === 'file' ? 'File input' : value.trim();
 };
+
+const resolveAmazonEvaluationStatusLabel = (
+  value: ProductScanAmazonEvaluation['status'] | null | undefined
+): string | null => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+  if (value === 'approved') return 'AI approved';
+  if (value === 'rejected') return 'AI rejected';
+  if (value === 'skipped') return 'AI skipped';
+  return 'AI failed';
+};
+
+const formatAmazonEvaluationConfidence = (value: number | null | undefined): string | null =>
+  typeof value === 'number' && Number.isFinite(value) ? `${Math.round(value * 100)}%` : null;
 
 const resolveAmazonExtractionProvenance = (
   steps: readonly ProductScanStep[] | null | undefined
@@ -386,7 +402,10 @@ function TextBlock(props: {
 }
 
 export function ProductScanAmazonDetails(props: {
-  scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails'> & {
+  scan: Pick<
+    ProductScanRecord,
+    'asin' | 'title' | 'description' | 'amazonDetails' | 'amazonProbe' | 'amazonEvaluation'
+  > & {
     steps?: ProductScanStep[];
   };
 }): React.JSX.Element | null {
@@ -415,7 +434,12 @@ export function ProductScanAmazonDetails(props: {
     0
   );
 
-  if (!hasProductScanAmazonDetails(details) && !hasText(scan.asin)) {
+  if (
+    !hasProductScanAmazonDetails(details) &&
+    !hasText(scan.asin) &&
+    !scan.amazonEvaluation &&
+    !scan.amazonProbe
+  ) {
     return null;
   }
 
@@ -475,7 +499,129 @@ export function ProductScanAmazonDetails(props: {
             Amazon candidate #{provenance.candidateRank}
           </span>
         ) : null}
+        {scan.amazonEvaluation ? (
+          <span
+            className={`inline-flex items-center rounded-md border bg-background/70 px-2.5 py-1 text-xs font-medium ${
+              scan.amazonEvaluation.status === 'approved'
+                ? 'border-emerald-500/40 text-emerald-300'
+                : scan.amazonEvaluation.status === 'rejected'
+                  ? 'border-rose-500/40 text-rose-300'
+                  : scan.amazonEvaluation.status === 'skipped'
+                    ? 'border-border/60'
+                    : 'border-amber-500/40 text-amber-300'
+            }`}
+          >
+            {resolveAmazonEvaluationStatusLabel(scan.amazonEvaluation.status)}
+          </span>
+        ) : null}
+        {scan.amazonEvaluation?.confidence != null ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+            AI confidence {formatAmazonEvaluationConfidence(scan.amazonEvaluation.confidence)}
+          </span>
+        ) : null}
       </div>
+
+      {scan.amazonEvaluation ? (
+        <FieldGroup
+          title='AI Evaluation'
+          fields={[
+            {
+              label: 'Verdict',
+              value: resolveAmazonEvaluationStatusLabel(scan.amazonEvaluation.status),
+            },
+            {
+              label: 'Confidence',
+              value: formatAmazonEvaluationConfidence(scan.amazonEvaluation.confidence),
+            },
+            { label: 'Model', value: scan.amazonEvaluation.modelId },
+            {
+              label: 'Threshold',
+              value: formatAmazonEvaluationConfidence(scan.amazonEvaluation.threshold),
+            },
+            {
+              label: 'Same product',
+              value:
+                typeof scan.amazonEvaluation.sameProduct === 'boolean'
+                  ? String(scan.amazonEvaluation.sameProduct)
+                  : null,
+            },
+            {
+              label: 'Image match',
+              value:
+                typeof scan.amazonEvaluation.imageMatch === 'boolean'
+                  ? String(scan.amazonEvaluation.imageMatch)
+                  : null,
+            },
+            {
+              label: 'Description match',
+              value:
+                typeof scan.amazonEvaluation.descriptionMatch === 'boolean'
+                  ? String(scan.amazonEvaluation.descriptionMatch)
+                  : null,
+            },
+            {
+              label: 'Candidate URL',
+              value: scan.amazonEvaluation.evidence?.candidateUrl,
+            },
+            {
+              label: 'Hero image source',
+              value: scan.amazonEvaluation.evidence?.heroImageSource,
+            },
+            {
+              label: 'Hero image artifact',
+              value: scan.amazonEvaluation.evidence?.heroImageArtifactName,
+            },
+            {
+              label: 'Screenshot artifact',
+              value: scan.amazonEvaluation.evidence?.screenshotArtifactName,
+            },
+            {
+              label: 'Evaluator error',
+              value: scan.amazonEvaluation.error,
+            },
+          ]}
+        />
+      ) : null}
+
+      {scan.amazonEvaluation?.reasons.length ? (
+        <TextBlock title='AI Evaluation Reasons' value={scan.amazonEvaluation.reasons.join('\n')} />
+      ) : null}
+
+      {scan.amazonEvaluation?.mismatches.length ? (
+        <TextBlock
+          title='AI Evaluation Mismatches'
+          value={scan.amazonEvaluation.mismatches.join('\n')}
+        />
+      ) : null}
+
+      {scan.amazonProbe ? (
+        <FieldGroup
+          title='Amazon Probe'
+          fields={[
+            { label: 'Probe title', value: scan.amazonProbe.pageTitle },
+            { label: 'Candidate URL', value: scan.amazonProbe.candidateUrl },
+            { label: 'Canonical URL', value: scan.amazonProbe.canonicalUrl },
+            { label: 'Hero image URL', value: scan.amazonProbe.heroImageUrl },
+            { label: 'Hero image alt', value: scan.amazonProbe.heroImageAlt },
+            { label: 'Hero image artifact', value: scan.amazonProbe.heroImageArtifactName },
+            { label: 'Artifact key', value: scan.amazonProbe.artifactKey },
+            {
+              label: 'Bullet count',
+              value:
+                typeof scan.amazonProbe.bulletCount === 'number'
+                  ? String(scan.amazonProbe.bulletCount)
+                  : null,
+            },
+            {
+              label: 'Attribute count',
+              value:
+                typeof scan.amazonProbe.attributeCount === 'number'
+                  ? String(scan.amazonProbe.attributeCount)
+                  : null,
+            },
+          ]}
+        />
+      ) : null}
 
       <FieldGroup
         title='Scan Provenance'

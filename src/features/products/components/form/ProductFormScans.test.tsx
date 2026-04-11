@@ -597,8 +597,20 @@ describe('ProductFormScans', () => {
     expect(await screen.findByText('Last failure')).toBeInTheDocument();
     expect(screen.getByText('Google Lens')).toBeInTheDocument();
     expect(screen.getByText('Collect Amazon candidates from Google results')).toBeInTheDocument();
+    expect(screen.getByText('Candidate collection')).toBeInTheDocument();
     expect(screen.getByText('Candidate Collect Timeout')).toBeInTheDocument();
     expect(screen.getByText('Timed out while waiting for reverse image results.')).toBeInTheDocument();
+    expect(screen.getByText(/Duration 8\.0 s/)).toBeInTheDocument();
+    expect(screen.getByText('1 artifact')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy artifact path' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open latest artifact' })).toHaveAttribute(
+      'href',
+      '/api/v2/products/scans/scan-diagnostics-1/artifacts/google-lens-final.png'
+    );
+    expect(screen.getByRole('link', { name: 'Open stage URL' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/searchbyimage?image_url=https://cdn.example.com/image-2.jpg'
+    );
 
     fireEvent.click(await screen.findByRole('button', { name: 'Show diagnostics' }));
 
@@ -613,6 +625,64 @@ describe('ProductFormScans', () => {
     await waitFor(() => {
       expect(screen.queryByText('Run run-diagnostics-1')).not.toBeInTheDocument();
     });
+  });
+
+  it('falls back to raw diagnostics for the collapsed failure summary when no failed step is persisted', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-diagnostics-fallback-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'failed',
+          productName: 'Product 1',
+          engineRunId: 'run-diagnostics-fallback-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          steps: [],
+          rawResult: {
+            runId: 'run-diagnostics-fallback-1',
+            runStatus: 'failed',
+            latestStage: 'google_candidates',
+            latestStageUrl: 'https://www.google.com/searchbyimage?image_url=https://cdn.example.com/image-2.jpg',
+            failureArtifacts: [],
+            logTail: ['lens timeout', 'candidate collection failed'],
+          },
+          error: 'Amazon scan failed.',
+          asinUpdateStatus: 'failed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T04:00:05.000Z',
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:05.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Last failure')).toBeInTheDocument();
+    expect(screen.getByText('Google Lens')).toBeInTheDocument();
+    expect(screen.getByText('Google Candidates')).toBeInTheDocument();
+    expect(screen.getByText('Candidate collection')).toBeInTheDocument();
+    expect(screen.getAllByText('Failed')).toHaveLength(2);
+    expect(screen.getByText('candidate collection failed')).toBeInTheDocument();
+    expect(screen.getByText(/Updated /)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open stage URL' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/searchbyimage?image_url=https://cdn.example.com/image-2.jpg'
+    );
   });
 
   it('shows and hides extracted Amazon fields for a scan entry', async () => {

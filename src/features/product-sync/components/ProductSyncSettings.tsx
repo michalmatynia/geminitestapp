@@ -17,6 +17,7 @@ import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts
 import type { BaseWarehouse } from '@/shared/contracts/integrations/base-com';
 import type { PriceGroup } from '@/shared/contracts/products/catalogs';
 import {
+  findDuplicateProductSyncAppField,
   getProductSyncBaseFieldOptions,
   PRODUCT_SYNC_APP_FIELDS,
   PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD,
@@ -327,14 +328,6 @@ export function ProductSyncSettings(): React.JSX.Element {
     ],
     [baseConnections]
   );
-  const appFieldOptions = useMemo(
-    (): Array<LabeledOptionDto<ProductSyncAppField>> =>
-      PRODUCT_SYNC_APP_FIELDS.map((field: ProductSyncAppField) => ({
-        value: field,
-        label: appFieldLabel(field),
-      })),
-    []
-  );
   const directionOptions = useMemo(
     (): Array<LabeledOptionDto<ProductSyncDirection>> =>
       PRODUCT_SYNC_DIRECTION_OPTIONS.map((direction: ProductSyncDirection) => ({
@@ -362,6 +355,25 @@ export function ProductSyncSettings(): React.JSX.Element {
   const getDefaultBaseFieldForAppField = (appField: ProductSyncAppField): string => {
     return getKnownBaseFieldOptions(appField)[0]?.value ?? '';
   };
+  const getAppFieldOptionsForRule = (
+    currentRuleId: string,
+    currentAppField: ProductSyncAppField
+  ): Array<LabeledOptionDto<ProductSyncAppField>> =>
+    PRODUCT_SYNC_APP_FIELDS.map((field: ProductSyncAppField) => ({
+      value: field,
+      label: appFieldLabel(field),
+      disabled:
+        field !== currentAppField &&
+        draft.fieldRules.some(
+          (rule: ProductSyncFieldRule) => rule.id !== currentRuleId && rule.appField === field
+        ),
+    }));
+  const getUnusedAppField = (): ProductSyncAppField | null =>
+    PRODUCT_SYNC_APP_FIELDS.find(
+      (field: ProductSyncAppField) =>
+        !draft.fieldRules.some((rule: ProductSyncFieldRule) => rule.appField === field)
+    ) ?? null;
+  const hasUnusedAppField = getUnusedAppField() !== null;
 
   const preferredConnectionId = useMemo(() => {
     const preferredConnection = (defaultExportConnectionQuery.data?.connectionId ?? '').trim();
@@ -450,6 +462,13 @@ export function ProductSyncSettings(): React.JSX.Element {
     );
     if (invalidRule) {
       toast(`Base field is required for ${appFieldLabel(invalidRule.appField)}.`, {
+        variant: 'error',
+      });
+      return;
+    }
+    const duplicateAppField = findDuplicateProductSyncAppField(normalizedFieldRules);
+    if (duplicateAppField) {
+      toast(`Only one sync rule is allowed for ${appFieldLabel(duplicateAppField)}.`, {
         variant: 'error',
       });
       return;
@@ -624,6 +643,17 @@ export function ProductSyncSettings(): React.JSX.Element {
 
   const handleAppFieldChange = (rule: ProductSyncFieldRule, value: string): void => {
     const nextAppField = value as ProductSyncAppField;
+    if (
+      draft.fieldRules.some(
+        (candidate: ProductSyncFieldRule) =>
+          candidate.id !== rule.id && candidate.appField === nextAppField
+      )
+    ) {
+      toast(`Only one sync rule is allowed for ${appFieldLabel(nextAppField)}.`, {
+        variant: 'error',
+      });
+      return;
+    }
     setCustomBaseFieldMode(rule.id, false);
     updateRule(rule.id, {
       appField: nextAppField,
@@ -641,14 +671,19 @@ export function ProductSyncSettings(): React.JSX.Element {
   };
 
   const addRule = (): void => {
+    const nextAppField = getUnusedAppField();
+    if (!nextAppField) {
+      toast('All app fields already have synchronization rules.', { variant: 'info' });
+      return;
+    }
     setDraft((prev: ProductSyncProfileDraft) => ({
       ...prev,
       fieldRules: [
         ...prev.fieldRules,
         {
           id: makeRuleId(),
-          appField: 'stock',
-          baseField: 'stock',
+          appField: nextAppField,
+          baseField: getDefaultBaseFieldForAppField(nextAppField),
           direction: 'disabled',
         },
       ],
@@ -900,7 +935,13 @@ export function ProductSyncSettings(): React.JSX.Element {
         variant='subtle'
         className='p-4'
         actions={
-          <Button size='sm' type='button' variant='outline' onClick={addRule}>
+          <Button
+            size='sm'
+            type='button'
+            variant='outline'
+            onClick={addRule}
+            disabled={!hasUnusedAppField}
+          >
             <Plus className='mr-2 size-3.5' />
             Add Rule
           </Button>
@@ -940,7 +981,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                   size='sm'
                   value={rule.appField}
                   onValueChange={(value: string): void => handleAppFieldChange(rule, value)}
-                  options={appFieldOptions}
+                  options={getAppFieldOptionsForRule(rule.id, rule.appField)}
                   triggerClassName='w-full'
                   ariaLabel={`App field for sync rule ${rule.id}`}
                   title={`App field for ${appFieldLabel(rule.appField)}`}

@@ -418,8 +418,20 @@ describe('ProductAmazonScanModal', () => {
     expect(await screen.findByText('Last failure')).toBeInTheDocument();
     expect(screen.getByText('Amazon')).toBeInTheDocument();
     expect(screen.getByText('Extract Amazon details')).toBeInTheDocument();
+    expect(screen.getByText('Amazon extraction')).toBeInTheDocument();
     expect(screen.getByText('Extract Failed')).toBeInTheDocument();
     expect(screen.getByText('Amazon detail extraction failed.')).toBeInTheDocument();
+    expect(screen.getByText(/Duration 2\.0 s/)).toBeInTheDocument();
+    expect(screen.getByText('1 artifact')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy artifact path' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open latest artifact' })).toHaveAttribute(
+      'href',
+      '/api/v2/products/scans/scan-diagnostics-1/artifacts/amazon-product.html'
+    );
+    expect(screen.getByRole('link', { name: 'Open stage URL' })).toHaveAttribute(
+      'href',
+      'https://www.amazon.com/dp/B000123456'
+    );
 
     fireEvent.click(await screen.findByRole('button', { name: 'Show diagnostics' }));
 
@@ -434,6 +446,88 @@ describe('ProductAmazonScanModal', () => {
     await waitFor(() => {
       expect(screen.queryByText('Run run-diagnostics-1')).not.toBeInTheDocument();
     });
+  });
+
+  it('falls back to raw diagnostics for the collapsed failure summary when no failed step is persisted', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 0,
+      alreadyRunning: 1,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-diagnostics-fallback-1',
+          runId: 'run-diagnostics-fallback-1',
+          status: 'running',
+          currentStatus: 'failed',
+          message: 'Amazon scan already in progress.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-diagnostics-fallback-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'failed',
+          productName: 'Product 1',
+          engineRunId: 'run-diagnostics-fallback-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          steps: [],
+          rawResult: {
+            runId: 'run-diagnostics-fallback-1',
+            runStatus: 'failed',
+            latestStage: 'google_candidates',
+            latestStageUrl: 'https://www.google.com/searchbyimage?image_url=https://cdn.example.com/image-2.jpg',
+            failureArtifacts: [],
+            logTail: ['lens timeout', 'candidate collection failed'],
+          },
+          error: 'Amazon scan failed.',
+          asinUpdateStatus: 'failed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T04:00:05.000Z',
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:05.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Last failure')).toBeInTheDocument();
+    expect(screen.getByText('Google Lens')).toBeInTheDocument();
+    expect(screen.getByText('Google Candidates')).toBeInTheDocument();
+    expect(screen.getByText('Candidate collection')).toBeInTheDocument();
+    expect(screen.getAllByText('Failed')).toHaveLength(2);
+    expect(screen.getByText('candidate collection failed')).toBeInTheDocument();
+    expect(screen.getByText(/Updated /)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open stage URL' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/searchbyimage?image_url=https://cdn.example.com/image-2.jpg'
+    );
   });
 
   it('shows extracted fields in the modal and applies them when product form contexts are present', async () => {

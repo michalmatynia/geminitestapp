@@ -4,6 +4,7 @@ import { ExternalLink } from 'lucide-react';
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
 import { CopyButton } from '@/shared/ui/copy-button';
+import { resolveProductScanFailureSourceLabel } from './ProductScanSteps';
 
 type ScanFailureArtifact = {
   name: string;
@@ -21,6 +22,16 @@ type ScanDiagnostics = {
   logTail: string[];
 };
 
+export type ProductScanDiagnosticFailureSummary = {
+  phaseLabel: string;
+  sourceLabel: string | null;
+  stepLabel: string;
+  message: string | null;
+  resultCodeLabel: string | null;
+  url: string | null;
+  timingLabel: string | null;
+};
+
 const hasText = (value: string | null | undefined): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
@@ -33,6 +44,19 @@ const formatLabel = (value: string | null | undefined): string | null => {
     .trim()
     .replace(/[_-]+/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const formatTimestamp = (value: string | null | undefined): string | null => {
+  if (!hasText(value)) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleString();
 };
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
@@ -104,6 +128,26 @@ const resolveArtifactActionLabel = (artifact: ScanFailureArtifact): string => {
   return 'Open artifact';
 };
 
+const resolveDiagnosticPhaseLabel = (latestStage: string | null): string => {
+  if (!latestStage) {
+    return 'Diagnostics';
+  }
+
+  if (latestStage === 'validate' || latestStage === 'prepare_scan' || latestStage === 'queue_scan') {
+    return 'Input';
+  }
+
+  if (latestStage.startsWith('google_')) {
+    return 'Google Lens';
+  }
+
+  if (latestStage.startsWith('amazon_')) {
+    return 'Amazon';
+  }
+
+  return 'Product Update';
+};
+
 export const resolveProductScanDiagnostics = (
   scan: Pick<ProductScanRecord, 'rawResult'>
 ): ScanDiagnostics | null => {
@@ -137,6 +181,37 @@ export const resolveProductScanDiagnostics = (
     latestStageUrl,
     failureArtifacts,
     logTail,
+  };
+};
+
+export const resolveProductScanDiagnosticFailureSummary = (
+  scan: Pick<ProductScanRecord, 'rawResult' | 'completedAt' | 'updatedAt'>
+): ProductScanDiagnosticFailureSummary | null => {
+  const diagnostics = resolveProductScanDiagnostics(scan);
+  if (!diagnostics) {
+    return null;
+  }
+
+  const stepLabel = formatLabel(diagnostics.latestStage) ?? 'Runtime Diagnostics';
+  const message = diagnostics.logTail.at(-1) ?? null;
+  const resultCodeLabel = formatLabel(diagnostics.runStatus);
+  const latestTimestamp = formatTimestamp(scan.completedAt ?? scan.updatedAt ?? null);
+  const timingLabel = latestTimestamp ? `Updated ${latestTimestamp}` : null;
+
+  if (!stepLabel && !message && !resultCodeLabel && !timingLabel) {
+    return null;
+  }
+
+  return {
+    phaseLabel: resolveDiagnosticPhaseLabel(diagnostics.latestStage),
+    sourceLabel: diagnostics.latestStage
+      ? resolveProductScanFailureSourceLabel({ key: diagnostics.latestStage, group: null })
+      : null,
+    stepLabel,
+    message,
+    resultCodeLabel,
+    url: diagnostics.latestStageUrl,
+    timingLabel,
   };
 };
 

@@ -11,6 +11,11 @@ const {
   useProductListingsUIStateMock,
   useProductListingsModalsMock,
   useProductBaseSyncPreviewMock,
+  usePriceGroupsMock,
+  useBaseInventoriesMock,
+  useBaseWarehousesMock,
+  useIntegrationsWithConnectionsMock,
+  useProductSyncProfilesMock,
   useRunProductBaseSyncMutationMock,
   refetchPreviewMock,
   toastMock,
@@ -19,6 +24,11 @@ const {
   useProductListingsUIStateMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
   useProductBaseSyncPreviewMock: vi.fn(),
+  usePriceGroupsMock: vi.fn(),
+  useBaseInventoriesMock: vi.fn(),
+  useBaseWarehousesMock: vi.fn(),
+  useIntegrationsWithConnectionsMock: vi.fn(),
+  useProductSyncProfilesMock: vi.fn(),
   useRunProductBaseSyncMutationMock: vi.fn(),
   refetchPreviewMock: vi.fn(),
   toastMock: vi.fn(),
@@ -33,6 +43,20 @@ vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
 vi.mock('@/features/product-sync/hooks/useProductBaseSync', () => ({
   useProductBaseSyncPreview: (...args: unknown[]) => useProductBaseSyncPreviewMock(...args),
   useRunProductBaseSyncMutation: () => useRunProductBaseSyncMutationMock(),
+}));
+
+vi.mock('@/features/product-sync/hooks/useProductSyncSettings', () => ({
+  useProductSyncProfiles: () => useProductSyncProfilesMock(),
+}));
+
+vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
+  usePriceGroups: (...args: unknown[]) => usePriceGroupsMock(...args),
+}));
+
+vi.mock('@/shared/hooks/useIntegrationQueries', () => ({
+  useBaseInventories: (...args: unknown[]) => useBaseInventoriesMock(...args),
+  useBaseWarehouses: (...args: unknown[]) => useBaseWarehousesMock(...args),
+  useIntegrationsWithConnections: () => useIntegrationsWithConnectionsMock(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', async () => {
@@ -161,6 +185,91 @@ describe('ProductListingsSyncPanel', () => {
     useProductListingsModalsMock.mockReturnValue({
       setIsSyncImagesConfirmOpen,
     });
+    useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1',
+          name: 'Base.com',
+          slug: 'base-com',
+          connections: [{ id: 'connection-1', name: 'Main Base Connection' }],
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+    useBaseInventoriesMock.mockReturnValue({
+      data: [{ id: 'inventory-1', name: 'Main Inventory', is_default: true }],
+      isLoading: false,
+      error: null,
+    });
+    usePriceGroupsMock.mockReturnValue({
+      data: [
+        {
+          id: 'pg-eur',
+          groupId: 'EUR_RETAIL',
+          name: 'Retail EUR',
+          currencyId: 'EUR',
+          currencyCode: 'EUR',
+          isDefault: false,
+          type: 'standard',
+          basePriceField: 'price',
+          sourceGroupId: null,
+          priceMultiplier: 1,
+          addToPrice: 0,
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+    useBaseWarehousesMock.mockReturnValue({
+      data: {
+        warehouses: [{ id: '1', name: 'Main Warehouse', is_default: true, typedId: 'bl_1' }],
+        allWarehouses: [{ id: '1', name: 'Main Warehouse', is_default: true, typedId: 'bl_1' }],
+      },
+      isLoading: false,
+      error: null,
+    });
+    useProductSyncProfilesMock.mockReturnValue({
+      data: [
+        {
+          id: 'profile-1',
+          name: 'Base Product Sync',
+          isDefault: true,
+          enabled: true,
+          connectionId: 'connection-1',
+          inventoryId: 'inventory-1',
+          catalogId: null,
+          scheduleIntervalMinutes: 30,
+          batchSize: 100,
+          conflictPolicy: 'skip',
+          fieldRules: [
+            {
+              id: 'rule-1',
+              appField: 'stock',
+              baseField: 'stock.bl_1',
+              direction: 'base_to_app',
+            },
+            {
+              id: 'rule-2',
+              appField: 'name_en',
+              baseField: 'text_fields.name',
+              direction: 'app_to_base',
+            },
+            {
+              id: 'rule-3',
+              appField: 'price',
+              baseField: 'prices.EUR_RETAIL',
+              direction: 'disabled',
+            },
+          ],
+          lastRunAt: null,
+          createdAt: '2026-04-11T12:00:00.000Z',
+          updatedAt: '2026-04-11T12:00:00.000Z',
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
     refetchPreviewMock.mockResolvedValue({
       data: createPreviewData(),
       error: null,
@@ -194,7 +303,7 @@ describe('ProductListingsSyncPanel', () => {
       },
       result: {
         status: 'success',
-        localChanges: ['stock'],
+        localChanges: ['baseProductId'],
         baseChanges: ['text_fields.name'],
         message: 'Synchronized successfully.',
         errorMessage: null,
@@ -206,36 +315,53 @@ describe('ProductListingsSyncPanel', () => {
     });
   });
 
-  it('renders live field directions immediately on open and runs the Base sync action', async () => {
+  it('reveals live out-of-sync fields only after Check and then runs the Base sync action', async () => {
     render(<ProductListingsSyncPanel />);
 
-    expect(useProductBaseSyncPreviewMock).toHaveBeenCalledWith('product-1');
+    expect(useProductBaseSyncPreviewMock).toHaveBeenCalledWith('product-1', { enabled: false });
     expect(
-      screen.queryByText(
+      screen.getByText(
         'Click Check to load the live Base.com status for this product and reveal the fields that are currently out of sync.'
       )
-    ).not.toBeInTheDocument();
-    expect(screen.getAllByText('App -> Base').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Base -> App').length).toBeGreaterThan(0);
-    expect(screen.getByText('Base Product Sync')).toBeInTheDocument();
+    ).toBeInTheDocument();
+    expect(screen.getByText('Configured Directions')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'These are the saved field directions. Click Check to load the live out-of-sync fields.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText('Main Base Connection')).toBeInTheDocument();
     expect(screen.getByText('connection-1')).toBeInTheDocument();
+    expect(screen.getByText('Main Inventory')).toBeInTheDocument();
     expect(screen.getByText('inventory-1')).toBeInTheDocument();
     expect(screen.getByText('Never')).toBeInTheDocument();
+    expect(screen.getByText('1 App -> Base, 1 Base -> App, 5 Disabled')).toBeInTheDocument();
+    expect(screen.getByText('Target: Product name (text_fields.name)')).toBeInTheDocument();
+    expect(screen.getByText('Target: Main Warehouse (bl_1)')).toBeInTheDocument();
+    expect(screen.getByText('Target: Retail EUR (EUR_RETAIL)')).toBeInTheDocument();
+    expect(screen.queryByText('Base.com field: Product name (text_fields.name)')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sync' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    await waitFor(() => {
+      expect(refetchPreviewMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(screen.getAllByText('App -> Base').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Base -> App').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Base Product Sync').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Main Base Connection').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('connection-1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Main Inventory').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('inventory-1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Never').length).toBeGreaterThan(0);
     expect(screen.getByText('Saved Link')).toBeInTheDocument();
     expect(screen.getByText('Base.com field: Product name (text_fields.name)')).toBeInTheDocument();
     expect(screen.getByText('Name inside text_fields object.')).toBeInTheDocument();
-    expect(screen.getByText('Weight')).toBeInTheDocument();
-    expect(screen.getByText('SKU')).toBeInTheDocument();
-    expect(screen.getAllByText('In sync').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Disabled').length).toBeGreaterThan(0);
-    expect(
-      screen.getByText('This field is already aligned between the app and Base.com.')
-    ).toBeInTheDocument();
-    expect(screen.getByText('This field is disabled in the active sync profile.')).toBeInTheDocument();
-    expect(
-      screen.getByText('2 field(s) out of sync, 2 already aligned, 1 disabled')
-    ).toBeInTheDocument();
+    expect(screen.queryByText('Base.com field: Weight (weight)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Base.com field: SKU (sku)')).not.toBeInTheDocument();
+    expect(screen.getByText('2 field(s) currently out of sync')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sync' }));
 
@@ -246,20 +372,14 @@ describe('ProductListingsSyncPanel', () => {
       'Synchronization completed: 1 app update(s), 1 Base.com update(s).',
       { variant: 'success' }
     );
+    expect(screen.getByText('Last Manual Sync')).toBeInTheDocument();
+    expect(screen.getByText('App updated')).toBeInTheDocument();
+    expect(screen.getByText('Base.com updated')).toBeInTheDocument();
+    expect(screen.getByText('Base product link')).toBeInTheDocument();
   });
 
-  it('refreshes the live Base.com sync preview on demand', async () => {
-    render(<ProductListingsSyncPanel />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
-
-    await waitFor(() => {
-      expect(refetchPreviewMock).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('explains when the next sync will clear stale values', () => {
-    useProductBaseSyncPreviewMock.mockReturnValue({
+  it('explains when the next sync will clear stale values after Check', async () => {
+    refetchPreviewMock.mockResolvedValue({
       data: createPreviewData({
         resolvedTargetSource: 'sku_backfill',
         fields: [
@@ -291,15 +411,17 @@ describe('ProductListingsSyncPanel', () => {
           },
         ],
       }),
-      refetch: refetchPreviewMock,
-      isFetching: false,
-      isLoading: false,
       error: null,
     });
 
     render(<ProductListingsSyncPanel />);
 
-    expect(screen.getByText('Import SKU')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Import SKU')).toBeInTheDocument();
+    });
+
     expect(
       screen.getByText(
         'Target resolved from the product SKU in the active Base inventory. The first successful sync will save the Base ID and Base listing link locally.'
@@ -315,8 +437,8 @@ describe('ProductListingsSyncPanel', () => {
     expect(screen.getByText('EAN barcode.')).toBeInTheDocument();
   });
 
-  it('shows the disabled reason and blocks sync when preview cannot sync', () => {
-    useProductBaseSyncPreviewMock.mockReturnValue({
+  it('shows the disabled reason and blocks sync when the checked preview cannot sync', async () => {
+    refetchPreviewMock.mockResolvedValue({
       data: createPreviewData({
         status: 'missing_base_link',
         canSync: false,
@@ -326,15 +448,17 @@ describe('ProductListingsSyncPanel', () => {
         resolvedTargetSource: 'none',
         fields: [],
       }),
-      refetch: refetchPreviewMock,
-      isFetching: false,
-      isLoading: false,
       error: null,
     });
 
     render(<ProductListingsSyncPanel />);
 
-    expect(screen.getByRole('button', { name: 'Sync' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Sync' })).toBeDisabled();
+    });
+
     expect(
       screen.getByText(
         'This product is not linked to a Base.com product for the active sync profile connection.'

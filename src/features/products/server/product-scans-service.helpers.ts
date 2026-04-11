@@ -9,9 +9,11 @@ import {
 import {
   normalizeProductScanRecord,
   productScanAmazonDetailsSchema,
+  productScanAmazonProbeSchema,
   productScanStepDetailSchema,
   productScanStepSchema,
   type ProductScanAmazonDetails,
+  type ProductScanAmazonProbe,
   type ProductAmazonBatchScanItem,
   type ProductScanRecord,
   type ProductScanStep,
@@ -53,13 +55,14 @@ export const PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE =
 const nodeFs = getFsPromises();
 
 export type AmazonScanScriptResult = {
-  status: 'matched' | 'no_match' | 'failed' | 'captcha_required' | 'running';
+  status: 'matched' | 'probe_ready' | 'no_match' | 'failed' | 'captcha_required' | 'running';
   asin: string | null;
   title: string | null;
   price: string | null;
   url: string | null;
   description: string | null;
   amazonDetails: ProductScanAmazonDetails;
+  amazonProbe: ProductScanAmazonProbe;
   matchedImageId: string | null;
   message: string | null;
   currentUrl: string | null;
@@ -219,6 +222,11 @@ export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep
 
 export const normalizeParsedAmazonDetails = (value: unknown): ProductScanAmazonDetails => {
   const parsed = productScanAmazonDetailsSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedAmazonProbe = (value: unknown): ProductScanAmazonProbe => {
+  const parsed = productScanAmazonProbeSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 };
 
@@ -503,6 +511,7 @@ export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptRes
   const statusValue = readOptionalString(record?.['status']);
   const status =
     statusValue === 'matched' ||
+    statusValue === 'probe_ready' ||
     statusValue === 'no_match' ||
     statusValue === 'failed' ||
     statusValue === 'captcha_required' ||
@@ -518,6 +527,7 @@ export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptRes
     url: readOptionalString(record?.['url'], PRODUCT_SCAN_URL_MAX_LENGTH),
     description: readOptionalString(record?.['description'], PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH),
     amazonDetails: normalizeParsedAmazonDetails(record?.['amazonDetails']),
+    amazonProbe: normalizeParsedAmazonProbe(record?.['amazonProbe']),
     matchedImageId: readOptionalString(
       record?.['matchedImageId'],
       PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH
@@ -537,6 +547,10 @@ export const buildAmazonScanRequestInput = (input: {
   batchIndex?: number;
   allowManualVerification: boolean;
   manualVerificationTimeoutMs: number;
+  probeOnlyOnAmazonMatch?: boolean;
+  directAmazonCandidateUrl?: string | null;
+  directMatchedImageId?: string | null;
+  directAmazonCandidateRank?: number | null;
 }) => ({
   productId: input.productId,
   productName: input.productName,
@@ -548,6 +562,15 @@ export const buildAmazonScanRequestInput = (input: {
       : 0,
   allowManualVerification: input.allowManualVerification,
   manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
+  probeOnlyOnAmazonMatch: input.probeOnlyOnAmazonMatch === true,
+  directAmazonCandidateUrl: readOptionalString(input.directAmazonCandidateUrl, PRODUCT_SCAN_URL_MAX_LENGTH),
+  directMatchedImageId: readOptionalString(input.directMatchedImageId, PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH),
+  directAmazonCandidateRank:
+    typeof input.directAmazonCandidateRank === 'number' &&
+    Number.isFinite(input.directAmazonCandidateRank) &&
+    input.directAmazonCandidateRank > 0
+      ? Math.trunc(input.directAmazonCandidateRank)
+      : null,
 });
 
 export const createAmazonScanStartedRawResult = (input: {
@@ -599,6 +622,8 @@ export const createAmazonProductScanBaseRecord = (input: {
     url: null,
     description: null,
     amazonDetails: null,
+    amazonProbe: null,
+    amazonEvaluation: null,
     steps: buildPreparedProductScanSteps({
       imageCandidateCount: input.imageCandidates.length,
       status: input.status,

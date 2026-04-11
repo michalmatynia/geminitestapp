@@ -406,6 +406,26 @@ describe('product-scan-amazon-script', () => {
     );
   });
 
+  it('captures dedicated Amazon probe artifacts before detailed extraction', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "key: 'amazon_probe'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'amazon-scan-probe'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("const heroArtifactKey = artifactKey + '-hero';");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('artifacts.file(heroArtifactKey, value, {');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("heroImageArtifactName = toText(heroArtifactPath?.split('/').pop());");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "await artifacts.screenshot(artifactKey).catch(() => undefined);"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "await artifacts.html(artifactKey).catch(() => undefined);"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('artifactKey,');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('heroImageArtifactName,');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("{ label: 'Hero image artifact', value: heroImageArtifactName }");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("{ label: 'Artifact key', value: artifactKey }");
+  });
+
   it('keeps searching past weak Amazon matches and exits early on strong ones', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const scoreAmazonMatchResult = (result) => {'

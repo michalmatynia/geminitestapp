@@ -7,7 +7,9 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { ProductScanAmazonExtractedFieldsPanel } from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
 import { hasProductScanAmazonDetails } from '@/features/products/components/scans/ProductScanAmazonDetails';
 import {
+  buildProductScanArtifactHref,
   ProductScanDiagnostics,
+  resolveProductScanDiagnosticFailureSummary,
   resolveProductScanDiagnostics,
 } from '@/features/products/components/scans/ProductScanDiagnostics';
 import {
@@ -40,6 +42,7 @@ import {
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
+import { CopyButton } from '@/shared/ui/copy-button';
 import { useToast } from '@/shared/ui/toast';
 
 type ProductAmazonScanModalProps = {
@@ -959,7 +962,15 @@ export function ProductAmazonScanModal(
               const extractedFieldsExpanded = expandedExtractedFieldRowIds.has(row.productId);
               const hasExtractedFields =
                 (row.scan && hasProductScanAmazonDetails(row.scan.amazonDetails)) || Boolean(row.scan?.asin);
-              const hasDiagnostics = Boolean(row.scan && resolveProductScanDiagnostics(row.scan));
+              const diagnostics = row.scan ? resolveProductScanDiagnostics(row.scan) : null;
+              const hasDiagnostics = Boolean(diagnostics);
+              const latestFailureArtifact = diagnostics?.failureArtifacts[0] ?? null;
+              const failureArtifactCount = diagnostics?.failureArtifacts.length ?? 0;
+              const latestFailureArtifactPath = latestFailureArtifact?.path ?? null;
+              const latestFailureArtifactHref =
+                row.scan && latestFailureArtifact
+                  ? buildProductScanArtifactHref(row.scan.id, latestFailureArtifact)
+                  : null;
               const progressSummary =
                 (row.status === 'queued' || row.status === 'running') && scanSteps.length > 0
                   ? resolveProductScanActiveStepSummary(scanSteps)
@@ -974,6 +985,12 @@ export function ProductAmazonScanModal(
                   ? resolveProductScanLatestOutcomeSummary(scanSteps, {
                       allowStalled: row.status === 'queued' || row.status === 'running',
                     })
+                  : null;
+              const fallbackFailureSummary =
+                !latestOutcomeSummary &&
+                row.scan &&
+                (row.status === 'failed' || row.status === 'conflict')
+                  ? resolveProductScanDiagnosticFailureSummary(row.scan)
                   : null;
 
               return (
@@ -1069,10 +1086,10 @@ export function ProductAmazonScanModal(
                     </div>
                   ) : null}
 
-                  {latestOutcomeSummary ? (
+                  {latestOutcomeSummary || fallbackFailureSummary ? (
                     <div
                       className={`space-y-1 rounded-md px-3 py-2 ${
-                        latestOutcomeSummary.kind === 'failed'
+                        latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
                           ? 'border border-destructive/20 bg-destructive/5'
                           : 'border border-amber-500/20 bg-amber-500/5'
                       }`}
@@ -1080,37 +1097,88 @@ export function ProductAmazonScanModal(
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span
                           className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${
-                            latestOutcomeSummary.kind === 'failed'
+                            latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
                               ? 'border border-destructive/20 text-destructive'
                               : 'border border-amber-500/20 text-amber-300'
                           }`}
                         >
-                          {latestOutcomeSummary.phaseLabel}
+                          {latestOutcomeSummary?.phaseLabel ?? fallbackFailureSummary?.phaseLabel}
                         </span>
                         <span className='text-muted-foreground'>
-                          {latestOutcomeSummary.kind === 'failed'
+                          {latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
                             ? 'Last failure'
                             : 'Last completed step'}
                         </span>
-                        <span className='font-medium text-foreground'>{latestOutcomeSummary.stepLabel}</span>
-                        {latestOutcomeSummary.resultCodeLabel ? (
+                        <span className='font-medium text-foreground'>
+                          {latestOutcomeSummary?.stepLabel ?? fallbackFailureSummary?.stepLabel}
+                        </span>
+                        {(latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel) ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                            {latestOutcomeSummary.resultCodeLabel}
+                            {latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel}
                           </span>
                         ) : null}
-                        {latestOutcomeSummary.attempt ? (
+                        {(latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel) ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel}
+                          </span>
+                        ) : null}
+                        {latestOutcomeSummary?.attempt ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             Attempt {latestOutcomeSummary.attempt}
                           </span>
                         ) : null}
-                        {latestOutcomeSummary.inputSource ? (
+                        {latestOutcomeSummary?.inputSource ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {latestOutcomeSummary.inputSource === 'url' ? 'URL input' : 'File input'}
                           </span>
                         ) : null}
+                        {failureArtifactCount > 0 ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {failureArtifactCount} artifact{failureArtifactCount === 1 ? '' : 's'}
+                          </span>
+                        ) : null}
+                        {latestFailureArtifactPath ? (
+                          <CopyButton
+                            value={latestFailureArtifactPath}
+                            variant='outline'
+                            size='sm'
+                            showText
+                            className='h-6 px-2 text-[11px]'
+                            ariaLabel='Copy artifact path'
+                          />
+                        ) : null}
                       </div>
-                      {latestOutcomeSummary.message ? (
-                        <p className='text-sm text-muted-foreground'>{latestOutcomeSummary.message}</p>
+                      {(latestOutcomeSummary?.message ?? fallbackFailureSummary?.message) ? (
+                        <p className='text-sm text-muted-foreground'>
+                          {latestOutcomeSummary?.message ?? fallbackFailureSummary?.message}
+                        </p>
+                      ) : null}
+                      {(latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel) ? (
+                        <p className='text-xs text-muted-foreground'>
+                          {latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel}
+                        </p>
+                      ) : null}
+                      {(latestOutcomeSummary?.url ?? fallbackFailureSummary?.url) ? (
+                        <a
+                          href={latestOutcomeSummary?.url ?? fallbackFailureSummary?.url ?? undefined}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+                        >
+                          Open stage URL
+                          <ExternalLink className='h-3.5 w-3.5' />
+                        </a>
+                      ) : null}
+                      {latestFailureArtifactHref ? (
+                        <a
+                          href={latestFailureArtifactHref}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+                        >
+                          Open latest artifact
+                          <ExternalLink className='h-3.5 w-3.5' />
+                        </a>
                       ) : null}
                     </div>
                   ) : null}

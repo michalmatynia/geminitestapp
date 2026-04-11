@@ -495,6 +495,8 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
     description: toText(input.description),
     amazonDetails:
       input.amazonDetails && typeof input.amazonDetails === 'object' ? input.amazonDetails : null,
+    amazonProbe:
+      input.amazonProbe && typeof input.amazonProbe === 'object' ? input.amazonProbe : null,
     matchedImageId: toText(input.matchedImageId),
     currentUrl: toText(input.currentUrl) || page.url(),
     message: toText(input.message),
@@ -716,6 +718,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
     matchedImageId,
     amazonCandidateAttempt,
     candidateRank = null,
+    amazonProbe = null,
   }) => {
     upsertScanStep({
       key: 'amazon_extract',
@@ -802,6 +805,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         url: canonicalUrl || toAbsoluteUrl(currentUrl, candidateUrl) || currentUrl,
         description,
         amazonDetails,
+        amazonProbe,
         matchedImageId: toText(matchedImageId),
         currentUrl,
         message: asin ? null : 'Amazon page opened but ASIN could not be extracted.',
@@ -823,12 +827,150 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
       });
       return buildAmazonCandidateOutcome({
         status: 'failed',
+        amazonProbe,
         matchedImageId: toText(matchedImageId),
         currentUrl: page.url(),
         url: page.url(),
         message: 'Amazon product extraction failed: ' + message,
         stage: 'amazon_extract',
       });
+    }
+  };
+
+  const probeAmazonProductPage = async ({
+    candidateUrl,
+    matchedImageId,
+    amazonCandidateAttempt,
+    candidateRank = null,
+  }) => {
+    upsertScanStep({
+      key: 'amazon_probe',
+      label: 'Probe Amazon product page',
+      attempt: amazonCandidateAttempt,
+      candidateId: toText(matchedImageId),
+      candidateRank,
+      status: 'running',
+      resultCode: 'probe_start',
+      message: 'Collecting candidate page evidence before detailed extraction.',
+      url: page.url(),
+    });
+
+    try {
+      const currentUrl = page.url();
+      const artifactCandidateFragment =
+        toText(matchedImageId)
+          ?.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 80) || 'candidate';
+      const artifactKey = [
+        'amazon-scan-probe',
+        artifactCandidateFragment,
+        'attempt-' + String(resolveComparableAttempt(amazonCandidateAttempt)),
+        typeof candidateRank === 'number' && Number.isFinite(candidateRank) && candidateRank > 0
+          ? 'rank-' + String(Math.trunc(candidateRank))
+          : null,
+      ]
+        .filter(Boolean)
+        .join('-');
+      const canonicalHref = toText(
+        await page.locator('link[rel="canonical"]').first().getAttribute('href').catch(() => null)
+      );
+      const canonicalUrl = toAbsoluteUrl(canonicalHref, currentUrl) || currentUrl;
+      const pageTitle =
+        (await readFirstText(['#productTitle', 'h1.a-size-large', 'h1#title'])) ||
+        toText(await getMetaContent('meta[property="og:title"]'));
+      const heroImageSelectors = [
+        '#landingImage',
+        '#imgTagWrapperId img',
+        '#main-image-container img',
+        '#ebooksImgBlkFront',
+        '#imgBlkFront',
+      ];
+      let heroImageUrl = null;
+      let heroImageAlt = null;
+      let heroImageArtifactName = null;
+      for (const selector of heroImageSelectors) {
+        const locator = page.locator(selector).first();
+        const nextUrl = toText(await locator.getAttribute('src').catch(() => null));
+        const nextAlt = toText(await locator.getAttribute('alt').catch(() => null));
+        if (nextUrl || nextAlt) {
+          heroImageUrl = nextUrl;
+          heroImageAlt = nextAlt;
+          const heroArtifactKey = artifactKey + '-hero';
+          const heroArtifactPath = await locator
+            .screenshot()
+            .then((value) =>
+              artifacts.file(heroArtifactKey, value, {
+                extension: 'png',
+                mimeType: 'image/png',
+                kind: 'screenshot',
+              })
+            )
+            .catch(() => null);
+          heroImageArtifactName = toText(heroArtifactPath?.split('/').pop());
+          break;
+        }
+      }
+      const bulletCount = (await readAmazonBulletPoints()).length;
+      const attributeCount = (await readAmazonAttributePairs()).length;
+      await artifacts.screenshot(artifactKey).catch(() => undefined);
+      await artifacts.html(artifactKey).catch(() => undefined);
+      const amazonProbe = {
+        pageTitle,
+        candidateUrl: toText(candidateUrl),
+        canonicalUrl,
+        heroImageUrl,
+        heroImageAlt,
+        heroImageArtifactName,
+        artifactKey,
+        bulletCount,
+        attributeCount,
+      };
+
+      upsertScanStep({
+        key: 'amazon_probe',
+        label: 'Probe Amazon product page',
+        attempt: amazonCandidateAttempt,
+        candidateId: toText(matchedImageId),
+        candidateRank,
+        status: 'completed',
+        resultCode: 'probe_ready',
+        message: 'Collected Amazon candidate page evidence before extraction.',
+        url: currentUrl,
+        details: [
+          { label: 'Title', value: pageTitle },
+          { label: 'Canonical URL', value: canonicalUrl },
+          { label: 'Hero image URL', value: heroImageUrl },
+          { label: 'Hero image artifact', value: heroImageArtifactName },
+          { label: 'Artifact key', value: artifactKey },
+          { label: 'Bullet count', value: String(bulletCount) },
+          { label: 'Attribute count', value: String(attributeCount) },
+        ],
+      });
+
+      return {
+        success: true,
+        amazonProbe,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      upsertScanStep({
+        key: 'amazon_probe',
+        label: 'Probe Amazon product page',
+        attempt: amazonCandidateAttempt,
+        candidateId: toText(matchedImageId),
+        candidateRank,
+        status: 'failed',
+        resultCode: 'probe_failed',
+        message: 'Failed to collect Amazon candidate evidence: ' + message,
+        url: page.url(),
+        details: [{ label: 'Error', value: message }],
+      });
+      return {
+        success: false,
+        amazonProbe: null,
+      };
     }
   };
 
@@ -887,11 +1029,19 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
       });
     }
 
+    const probeResult = await probeAmazonProductPage({
+      candidateUrl,
+      matchedImageId,
+      amazonCandidateAttempt,
+      candidateRank,
+    });
+
     return await extractAmazonProductFromPage({
       candidateUrl,
       matchedImageId,
       amazonCandidateAttempt,
       candidateRank,
+      amazonProbe: probeResult.amazonProbe,
     });
   };
 

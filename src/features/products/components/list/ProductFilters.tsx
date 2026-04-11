@@ -9,8 +9,8 @@ import {
   useProductCategoriesForCatalogs,
 } from '@/features/products/hooks/useCategoryQueries';
 import {
+  useAllTags,
   useCatalogs,
-  useMultiTags,
   useProducers,
   useTags,
 } from '@/features/products/hooks/useProductMetadataQueries';
@@ -128,6 +128,9 @@ export const ProductFilters = memo(function ProductFilters({
   const { data: rawTags } = useTags(selectedCatalogId, {
     enabled: filterMetadataEnabled,
   });
+  const { data: rawAllTags } = useAllTags({
+    enabled: filterMetadataEnabled && !selectedCatalogId,
+  });
   const categories = useMemo(
     () =>
       Array.isArray(selectedCatalogId ? rawSingleCatalogCategories : rawCrossCatalogCategories)
@@ -136,6 +139,7 @@ export const ProductFilters = memo(function ProductFilters({
     [rawCrossCatalogCategories, rawSingleCatalogCategories, selectedCatalogId]
   );
   const tags = useMemo(() => (Array.isArray(rawTags) ? rawTags : []), [rawTags]);
+  const allTags = useMemo(() => (Array.isArray(rawAllTags) ? rawAllTags : []), [rawAllTags]);
   const catalogNameById = useMemo(
     () =>
       new Map(
@@ -146,9 +150,6 @@ export const ProductFilters = memo(function ProductFilters({
       ),
     [catalogs]
   );
-  const multiTagQueries = useMultiTags(selectedCatalogId ? [] : catalogIds, {
-    enabled: filterMetadataEnabled,
-  });
   const { data: rawProducers } = useProducers({ enabled: filterMetadataEnabled });
   const producers = useMemo(
     () => (Array.isArray(rawProducers) ? rawProducers : []),
@@ -202,18 +203,15 @@ export const ProductFilters = memo(function ProductFilters({
     if (selectedCatalogId) return tags;
 
     const unique = new Map<string, { id: string; name: string }>();
-    multiTagQueries.forEach((query) => {
-      const entries = Array.isArray(query.data) ? query.data : [];
-      entries.forEach((tag) => {
-        if (!tag.id || unique.has(tag.id)) return;
-        unique.set(tag.id, {
-          id: tag.id,
-          name: tag.name || tag.id,
-        });
+    allTags.forEach((tag) => {
+      if (!tag.id || unique.has(tag.id)) return;
+      unique.set(tag.id, {
+        id: tag.id,
+        name: tag.name || tag.id,
       });
     });
     return Array.from(unique.values());
-  }, [multiTagQueries, selectedCatalogId, tags]);
+  }, [allTags, selectedCatalogId, tags]);
 
   const advancedFieldValueOptions = useMemo<
     Partial<Record<ProductAdvancedFilterField, Array<LabeledOptionDto<string>>>>

@@ -9,7 +9,10 @@ import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionCon
 import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY, AI_PATHS_LAST_ERROR_KEY, PATH_CONFIG_PREFIX, PATH_INDEX_KEY, createDefaultPathConfig, normalizeNodes, sanitizeEdges, normalizeAiPathsValidationConfig, stableStringify } from '@/shared/lib/ai-paths';
-import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
+import {
+  loadCanonicalStoredPathConfig,
+  loadRepairableStoredPathConfig,
+} from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
   normalizeParserSamples,
   normalizeUpdaterSamples,
@@ -118,13 +121,39 @@ export function useAiPathsPersistence(
   }, []);
 
   const resolveLoadedPathConfig = useCallback(
-    (payload: string, pathId: string): PathConfig => {
-      return loadCanonicalStoredPathConfig({
+    (payload: string, pathId: string): ReturnType<typeof loadRepairableStoredPathConfig> => {
+      return loadRepairableStoredPathConfig({
         pathId,
         rawConfig: payload,
       });
     },
     []
+  );
+
+  const persistCanonicalPathRepair = useCallback(
+    async (pathId: string, config: PathConfig): Promise<void> => {
+      const serializedConfig = stringifyForStorage(config, `repairPathConfig:${pathId}`);
+      if (!serializedConfig) return;
+
+      try {
+        await enqueueSettingsWrite(async (): Promise<void> => {
+          await updateAiPathsSettingsBulk([
+            {
+              key: `${PATH_CONFIG_PREFIX}${pathId}`,
+              value: serializedConfig,
+            },
+          ]);
+        });
+      } catch (error) {
+        logClientCatch(error, {
+          source: 'useAiPathsPersistence',
+          action: 'persistCanonicalPathRepair',
+          pathId,
+          level: 'warn',
+        });
+      }
+    },
+    [enqueueSettingsWrite, stringifyForStorage]
   );
 
   const persistLastError = useCallback(
@@ -227,8 +256,13 @@ export function useAiPathsPersistence(
         if (!configItem?.value) {
           throw new Error(`Stored AI Path config not found for "${resolvedActivePathId}".`);
         }
-        const config = resolveLoadedPathConfig(configItem.value, resolvedActivePathId);
+        const loadedConfig = resolveLoadedPathConfig(configItem.value, resolvedActivePathId);
+        const config = loadedConfig.config;
         const stageBDurationMs = Date.now() - stageBStartedAt;
+
+        if (loadedConfig.changed) {
+          void persistCanonicalPathRepair(resolvedActivePathId, config);
+        }
 
         setActivePathId(resolvedActivePathId);
         setPathConfigs((prev) => ({ ...prev, [resolvedActivePathId]: config }));
@@ -434,7 +468,10 @@ export function useAiPathsPersistence(
             const item = settingByKey.get(`${PATH_CONFIG_PREFIX}${pathId}`);
             if (!item?.value) return;
             try {
-              hydratedConfigs[pathId] = resolveLoadedPathConfig(item.value, pathId);
+              hydratedConfigs[pathId] = loadCanonicalStoredPathConfig({
+                pathId,
+                rawConfig: item.value,
+              });
             } catch (error) {
               logClientCatch(error, {
                 source: 'useAiPathsPersistence',

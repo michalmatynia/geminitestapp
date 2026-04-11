@@ -6,6 +6,7 @@ import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import {
   fetchAiPathsSettingsByKeysCached,
+  updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 import type { UseAiPathsPersistenceArgs } from '../useAiPathsPersistence.types';
@@ -143,6 +144,7 @@ vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
 }));
 
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
+const mockedUpdateAiPathsSettingsBulk = vi.mocked(updateAiPathsSettingsBulk);
 const emptyRuntimeState = (): RuntimeState => ({
   status: 'idle',
   nodeStatuses: {},
@@ -194,6 +196,7 @@ const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
 describe('useAiPathsPersistence idle prefetch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedUpdateAiPathsSettingsBulk.mockReset().mockResolvedValue([]);
     selectNodeMock.mockReset();
     setConfigOpenSelectionMock.mockReset();
     setNodesGraphMock.mockReset();
@@ -443,6 +446,87 @@ describe('useAiPathsPersistence idle prefetch', () => {
     expect(toast).toHaveBeenCalledWith(expect.stringContaining('Failed to load AI Paths settings'), {
       variant: 'error',
     });
+  });
+
+  it('repairs non-canonical active path payloads during hydration instead of failing the canvas load', async () => {
+    const activePathId = 'path_active_noncanonical';
+    const activeConfig = createDefaultPathConfig(activePathId);
+    activeConfig.uiState = {
+      ...(activeConfig.uiState ?? {}),
+      configOpen: true,
+    };
+    const toast = vi.fn();
+    const reportAiPathsError = vi.fn();
+
+    mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
+            value: JSON.stringify(activeConfig),
+          },
+        ];
+      }
+      if (keys.includes(PATH_INDEX_KEY)) {
+        return [
+          {
+            key: PATH_INDEX_KEY,
+            value: JSON.stringify([buildPathMeta(activeConfig)]),
+          },
+        ];
+      }
+      return [];
+    });
+
+    const args: UseAiPathsPersistenceArgs = {
+      activePathId,
+      activeTrigger: activeConfig.trigger,
+      edges: activeConfig.edges,
+      expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
+      isPathActive: true,
+      isPathLocked: false,
+      isPathTreeVisible: true,
+      lastRunAt: null,
+      loadNonce: 0,
+      loading: false,
+      nodes: activeConfig.nodes,
+      paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
+      parserSamples: {},
+      pathConfigs: {},
+      pathDescription: activeConfig.description,
+      pathName: activeConfig.name,
+      paths: [buildPathMeta(activeConfig)],
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'manual',
+      strictFlowMode: true,
+      blockedRunPolicy: 'fail_run',
+      aiPathsValidation: { enabled: true },
+      selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
+      runtimeState: emptyRuntimeState(),
+      updaterSamples: {},
+      normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
+      reportAiPathsError,
+      toast,
+    };
+
+    renderHook(() => useAiPathsPersistence(args));
+
+    await waitFor(() => {
+      expect(setActivePathIdGraphMock).toHaveBeenCalledWith(activePathId);
+    });
+
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalledWith(
+      expect.stringContaining('Failed to load AI Paths settings'),
+      expect.anything()
+    );
+    const repairEntry = mockedUpdateAiPathsSettingsBulk.mock.calls[0]?.[0]?.[0];
+    expect(repairEntry?.key).toBe(`${PATH_CONFIG_PREFIX}${activePathId}`);
+    expect(JSON.parse(repairEntry?.value ?? 'null')).toEqual(sanitizePathConfig(activeConfig));
   });
 
   it('prefetches non-active path configs after initial hydration', async () => {

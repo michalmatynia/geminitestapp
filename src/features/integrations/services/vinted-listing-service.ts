@@ -2,6 +2,10 @@ import 'server-only';
 
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import {
+  findProductListingByIdAcrossProviders,
+  getIntegrationRepository,
+} from '@/features/integrations/server';
 import { runVintedBrowserListing } from './vinted-listing/vinted-browser-listing';
 import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
 import {
@@ -75,8 +79,14 @@ export const runVintedListing = async (
   let requestedBrowserPreference: PlaywrightBrowserPreference | undefined;
 
   try {
+    const integrationRepository = await getIntegrationRepository();
     const runContext = await resolvePlaywrightListingRunContext({
       listingId,
+      dependencies: {
+        findListingById: findProductListingByIdAcrossProviders,
+        getConnectionById: integrationRepository.getConnectionById.bind(integrationRepository),
+        getIntegrationById: integrationRepository.getIntegrationById.bind(integrationRepository),
+      },
     });
     if (!runContext.ok) {
       return buildPlaywrightServiceListingMissingContextFailure({
@@ -141,6 +151,9 @@ export const processVintedListingJob = async (input: VintedListingJobInput): Pro
   // Update status to 'running' during processing
   const prePersistenceContext = await resolvePlaywrightListingPersistenceContext({
     listingId,
+    dependencies: {
+      findListingById: findProductListingByIdAcrossProviders,
+    },
   });
   if (prePersistenceContext.found) {
     await prePersistenceContext.repository.updateListingStatus(listingId, 'running');
@@ -150,6 +163,9 @@ export const processVintedListingJob = async (input: VintedListingJobInput): Pro
   const persistenceContext = await resolvePlaywrightListingPersistenceContextAfterRun({
     listingId,
     result,
+    dependencies: {
+      findListingById: findProductListingByIdAcrossProviders,
+    },
     missingErrorMessage: 'Listing not found',
   });
   if (!persistenceContext) {

@@ -310,12 +310,13 @@ export const productAiJobActionResponseSchema = z.object({
 export type ProductAiJobActionResponseDto = z.infer<typeof productAiJobActionResponseSchema>;
 export type ProductAiJobActionResponse = ProductAiJobActionResponseDto;
 
+import { type SimpleDeleteResponse } from './base';
+
 export const productAiJobDeleteResponseSchema = z.object({
   success: z.boolean(),
 });
 
-export type ProductAiJobDeleteResponseDto = z.infer<typeof productAiJobDeleteResponseSchema>;
-export type ProductAiJobDeleteResponse = ProductAiJobDeleteResponseDto;
+export type ProductAiJobDeleteResponse = SimpleDeleteResponse;
 
 export const productAiJobsClearResponseSchema = z.object({
   success: z.boolean(),

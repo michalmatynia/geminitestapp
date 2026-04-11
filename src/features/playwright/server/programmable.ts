@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
@@ -21,6 +20,36 @@ import { runPlaywrightListingTask } from './listing-task';
 import { buildPlaywrightEngineRunFailureMeta } from './run-result';
 import type { PlaywrightEngineRunInstance } from './runtime';
 import { runPlaywrightConnectionScriptTask } from './script-task';
+
+const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selling/new';
+const TRADERA_ALLOWED_HOSTS = new Set(['www.tradera.com', 'tradera.com']);
+const TRADERA_NEW_LISTING_PATH_PATTERN =
+  /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/new\/?$/i;
+const TRADERA_LEGACY_LISTING_PATH_PATTERN =
+  /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/?$/i;
+
+const normalizeTraderaListingFormUrl = (value: string | null | undefined): string => {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return TRADERA_DIRECT_LISTING_FORM_URL;
+  }
+
+  try {
+    const parsed = new URL(trimmed, TRADERA_DIRECT_LISTING_FORM_URL);
+    const isAllowedHost = TRADERA_ALLOWED_HOSTS.has(parsed.host.toLowerCase());
+    const isAllowedPath =
+      TRADERA_NEW_LISTING_PATH_PATTERN.test(parsed.pathname) ||
+      (TRADERA_LEGACY_LISTING_PATH_PATTERN.test(parsed.pathname) &&
+        parsed.searchParams.has('redirectToNewIfNoDrafts'));
+    if (!isAllowedHost || !isAllowedPath) {
+      return TRADERA_DIRECT_LISTING_FORM_URL;
+    }
+  } catch {
+    return TRADERA_DIRECT_LISTING_FORM_URL;
+  }
+
+  return TRADERA_DIRECT_LISTING_FORM_URL;
+};
 
 export type PlaywrightListingResult = {
   runId: string;

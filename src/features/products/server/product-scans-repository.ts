@@ -221,6 +221,59 @@ export async function listProductScans(input: {
   return docs.map(toScanRecord);
 }
 
+export async function listLatestProductScansByProductIds(input: {
+  productIds: string[];
+  statuses?: ProductScanStatus[] | null;
+}): Promise<ProductScanRecord[]> {
+  const productIds = normalizeIdList(input.productIds);
+  if (productIds.length === 0) {
+    return [];
+  }
+
+  if (!process.env['MONGODB_URI']) {
+    const latestByProductId = new Map<string, ProductScanRecord>();
+
+    for (const scan of sortByCreatedAtDesc(
+      inMemoryScans.filter((entry) =>
+        matchesFilter(entry, {
+          productIds,
+          statuses: input.statuses,
+        })
+      )
+    )) {
+      if (!latestByProductId.has(scan.productId)) {
+        latestByProductId.set(scan.productId, scan);
+      }
+    }
+
+    return sortByCreatedAtDesc(Array.from(latestByProductId.values()));
+  }
+
+  await ensureIndexes();
+  const collection = await readCollection();
+  const docs = await collection
+    .aggregate<ProductScanDoc>([
+      {
+        $match: buildMongoFilter({
+          productIds,
+          statuses: input.statuses,
+        }),
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: '$productId',
+          doc: { $first: '$$ROOT' },
+        },
+      },
+      { $replaceRoot: { newRoot: '$doc' } },
+      { $sort: { createdAt: -1 } },
+    ])
+    .toArray();
+
+  return docs.map(toScanRecord);
+}
+
 export async function getProductScanById(id: string): Promise<ProductScanRecord | null> {
   const normalizedId = id.trim();
   if (!normalizedId) {

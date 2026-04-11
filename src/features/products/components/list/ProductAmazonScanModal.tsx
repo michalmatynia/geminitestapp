@@ -650,6 +650,11 @@ export function ProductAmazonScanModal(
         });
         rowsRef.current = queuedRows;
         setRows(queuedRows);
+        await Promise.all(
+          Array.from(new Set(queuedRows.map((row) => row.productId))).map(
+            async (productId) => await invalidateProductScans(queryClient, productId)
+          )
+        );
 
         const immediateTerminalProductIds = queuedRows
           .filter((row) => row.status === 'failed')
@@ -728,6 +733,11 @@ export function ProductAmazonScanModal(
         }));
         rowsRef.current = failedRows;
         setRows(failedRows);
+        await Promise.all(
+          Array.from(new Set(initialRows.map((row) => row.productId))).map(
+            async (productId) => await invalidateProductScans(queryClient, productId)
+          )
+        );
         await Promise.all(
           Array.from(new Set(initialRows.map((row) => row.productId))).map(
             async (productId) => await invalidateProductViews(productId)
@@ -833,7 +843,7 @@ export function ProductAmazonScanModal(
                     <a
                       href={row.scan.url}
                       target='_blank'
-                      rel='noreferrer'
+                      rel='noopener noreferrer'
                       className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
                     >
                       Open Amazon Result

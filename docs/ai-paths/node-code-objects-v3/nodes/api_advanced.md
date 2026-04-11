@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # API Operation (Advanced) Migration Sheet (`api_advanced`)
 
-Generated at: 2026-04-10T09:12:39.132Z
+Generated at: 2026-04-11T13:54:16.572Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-10T09:12:39.132Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/api_advanced.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/api_advanced.scaffold.json`
 - v3 object id: `node_obj_api_advanced_portable_v3`
-- v3 object hash: `430bf2f99da467de8f812be5d3fffcfee31fab7889c709e2dbde38b7f51a378b`
+- v3 object hash: `b39e1c423b439577ddee210e5b8987163ea5816fbbe2c5fa8b2e984dc5d24777`
 
 ## Ports
 

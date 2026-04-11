@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T13:40:35.367Z",
+  "generatedAt": "2026-04-11T14:58:40.369Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -18,13 +18,13 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10256,
-    "exportedDeclarationsScanned": 6021,
-    "candidateDeclarationsScanned": 6003,
-    "exactShapeClusters": 1,
+    "filesScanned": 10277,
+    "exportedDeclarationsScanned": 6023,
+    "candidateDeclarationsScanned": 6005,
+    "exactShapeClusters": 2,
     "nearShapeClusters": 2,
-    "clustersAfterFilters": 3,
-    "declarationsInClusters": 9,
+    "clustersAfterFilters": 4,
+    "declarationsInClusters": 12,
     "highestRiskScore": 17
   },
   "clusters": [
@@ -83,6 +83,51 @@
           "line": 10,
           "domain": "app",
           "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 17,
+      "declarationCount": 3,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "63eda5f12b48",
+        "memberCount": 1,
+        "preview": "SimpleDeleteResponse"
+      },
+      "declarations": [
+        {
+          "name": "DeleteResponse",
+          "kind": "type",
+          "path": "src/shared/contracts/ui/api.ts",
+          "line": 62,
+          "domain": "shared:contracts",
+          "usageCount": 4
+        },
+        {
+          "name": "AgentTeachingAgentDeleteResponse",
+          "kind": "type",
+          "path": "src/shared/contracts/agent-teaching.ts",
+          "line": 181,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "ProductAiJobDeleteResponse",
+          "kind": "type",
+          "path": "src/shared/contracts/jobs.ts",
+          "line": 319,
+          "domain": "shared:contracts",
+          "usageCount": 1
         }
       ],
       "notes": [

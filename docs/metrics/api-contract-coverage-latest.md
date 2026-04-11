@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-04-07T16:03:11.968Z
+Generated at: 2026-04-11T14:55:58.733Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 305
-- Route methods scanned: 221
-- Methods with adjacent tests: 212
-- Mutations with body validation: 38
+- Route files scanned: 311
+- Route methods scanned: 223
+- Methods with adjacent tests: 214
+- Mutations with body validation: 39
 - Query routes with validation: 10
 - Errors: 0
 - Warnings: 0
@@ -242,6 +242,8 @@ No API contract coverage gaps detected.
 | v2/integrations/[[...path]] | PUT | protected | yes | - | - |
 | v2/integrations/[[...path]] | PATCH | protected | yes | - | - |
 | v2/integrations/[[...path]] | DELETE | protected | yes | - | - |
+| v2/integrations/product-listings/tradera-status-check | POST | protected | yes | - | - |
+| v2/integrations/tradera/parameter-mapper/catalog/fetch | POST | protected | yes | yes | - |
 | v2/metadata/[type]/[id] | GET | protected | yes | - | - |
 | v2/metadata/[type]/[id] | PUT | protected | yes | - | - |
 | v2/metadata/[type]/[id] | DELETE | protected | yes | - | - |

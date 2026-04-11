@@ -17,7 +17,7 @@ import {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import {
   subscribeToTrackedAiPathRun,
@@ -45,7 +45,7 @@ import {
   normalizeMarketplaceStatus,
 } from '../product-column-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { getBaseExportPreflightError } from '@/features/integrations/utils/baseExportPreflight';
+import { getBaseExportPreflightError } from '@/features/integrations/public';
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();

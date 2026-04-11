@@ -30,6 +30,10 @@ import {
   isVintedBrowserAuthRequiredMessage,
   preflightVintedQuickListSession,
 } from '@/features/integrations/utils/vinted-browser-session';
+import {
+  BASE_EXPORT_MISSING_CATEGORY_MESSAGE,
+  getBaseExportPreflightError,
+} from '@/features/integrations/utils/baseExportPreflight';
 import { normalizeVintedDisplayText } from '@/features/integrations/utils/vinted-display';
 import { massListProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -40,7 +44,7 @@ import { useMassListProductModalViewContext } from '../mass-list-modal/context/M
 type MarketplaceRecoveryTarget = 'tradera' | 'vinted';
 
 export function useMassListForm() {
-  const { productIds, integrationId, connectionId, onSuccess } =
+  const { productIds, products, integrationId, connectionId, onSuccess } =
     useMassListProductModalViewContext();
 
   const {
@@ -322,6 +326,19 @@ export function useMassListForm() {
       return;
     }
 
+    if (isBaseComIntegration) {
+      const selectedProductIds = new Set(productIds);
+      const hasMissingCategory = products.some(
+        (product) =>
+          selectedProductIds.has(product.id) &&
+          Boolean(getBaseExportPreflightError(product.categoryId))
+      );
+      if (hasMissingCategory) {
+        setError(BASE_EXPORT_MISSING_CATEGORY_MESSAGE);
+        return;
+      }
+    }
+
     const shouldResume = authRequired && !isBaseComIntegration;
     await runBatch({
       startIndex: shouldResume ? resumeIndex : 0,
@@ -332,6 +349,8 @@ export function useMassListForm() {
     authRequired,
     isBaseComIntegration,
     progress?.errors,
+    productIds,
+    products,
     resumeIndex,
     runBatch,
     selectedInventoryId,

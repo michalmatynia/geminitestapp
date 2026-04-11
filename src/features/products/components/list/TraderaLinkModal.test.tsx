@@ -20,17 +20,11 @@ const {
   useLinkExistingTraderaListingMutationMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/constants/slugs', () => ({
+vi.mock('@/features/integrations/public', () => ({
   isTraderaIntegrationSlug: (value: string | null | undefined) =>
     ['tradera', 'tradera-api'].includes((value ?? '').trim().toLowerCase()),
-}));
-
-vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
   useDefaultTraderaConnection: () => useDefaultTraderaConnectionMock(),
   useIntegrationsWithConnections: () => useIntegrationsWithConnectionsMock(),
-}));
-
-vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
   useLinkExistingTraderaListingMutation: () => useLinkExistingTraderaListingMutationMock(),
 }));
 

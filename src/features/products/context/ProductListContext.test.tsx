@@ -165,6 +165,8 @@ const createProviderValue = (
     setAdvancedFilterState: vi.fn(),
     baseExported: '',
     setBaseExported: vi.fn(),
+    includeArchived: false,
+    setIncludeArchived: vi.fn(),
     data: [createProduct()],
     isLoading: false,
     loadError: null,
@@ -201,6 +203,7 @@ const createProviderValue = (
     playwrightProgrammableBadgeStatuses: new Map<string, string>(),
     queuedProductIds: new Set<string>(),
     productAiRunStatusByProductId: new Map(),
+    productScanRunStatusByProductId: new Map(),
     categoryNameById: new Map<string, string>(),
     thumbnailSource: 'file',
     showTriggerRunFeedback: true,
@@ -352,5 +355,42 @@ describe('ProductListProvider runtime bridge', () => {
     await waitFor(() => {
       expect(screen.getByTestId('row-runtime-playwright').textContent).toBe('true:queued');
     });
+  });
+
+  it('surfaces product scan feedback through the row runtime bridge', () => {
+    function RowRuntimeProbe(): React.JSX.Element {
+      const runtime = useProductListRowRuntime('product-1', null);
+      return (
+        <div data-testid='row-runtime-scan'>
+          {runtime.productScanRunFeedback?.status ?? 'none'}:
+          {runtime.productScanRunFeedback?.scanId ?? 'none'}
+        </div>
+      );
+    }
+
+    render(
+      <ProductListProvider
+        value={createProviderValue({
+          productScanRunStatusByProductId: new Map([
+            [
+              'product-1',
+              {
+                scanId: 'scan-1',
+                status: 'running',
+                updatedAt: '2026-04-11T12:00:00.000Z',
+                label: 'Running',
+                variant: 'processing',
+                badgeClassName:
+                  'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+              },
+            ],
+          ]),
+        })}
+      >
+        <RowRuntimeProbe />
+      </ProductListProvider>
+    );
+
+    expect(screen.getByTestId('row-runtime-scan').textContent).toBe('running:scan-1');
   });
 });

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-04-07T16:03:07.199Z
+Generated at: 2026-04-11T14:55:52.807Z
 
 ## Summary
 
 - Status: PASSED
-- Routes scanned: 314
-- Method exports scanned: 463
+- Routes scanned: 320
+- Method exports scanned: 469
 - Errors: 0
 - Warnings: 0
-- CSRF exemptions: 54
+- CSRF exemptions: 56
 
 ## Rule Breakdown
 
@@ -74,9 +74,11 @@ No route policy issues detected.
 | v2/integrations/imports/base/sample-product | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/playwright/test | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/product-listings | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/product-listings/tradera-status-check | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/base/link-existing | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/base/sku-check | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/export-to-base | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings/[listingId]/check-status | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings/[listingId]/delete-from-base | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings/[listingId]/purge | DELETE | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings/[listingId]/relist | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |

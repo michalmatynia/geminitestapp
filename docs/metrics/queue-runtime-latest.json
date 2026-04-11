@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-07T16:03:18.353Z",
-  "durationMs": 3879,
+  "generatedAt": "2026-04-11T14:56:07.522Z",
+  "durationMs": 5429,
   "status": "passed",
   "summary": {
     "queueCount": 23,
@@ -30,6 +30,7 @@
         "startAiInsightsQueue",
         "startAiPathRunQueue",
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
@@ -62,6 +63,7 @@
         "startAiInsightsQueue",
         "startAiPathRunQueue",
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
@@ -94,6 +96,7 @@
         "startAiInsightsQueue",
         "startAiPathRunQueue",
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
@@ -121,6 +124,7 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -143,6 +147,7 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -183,6 +188,7 @@
         "startAiInsightsQueue",
         "startAiPathRunQueue",
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
@@ -256,6 +262,7 @@
         "startAiInsightsQueue",
         "startAiPathRunQueue",
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
@@ -288,6 +295,7 @@
         "startAiInsightsQueue",
         "startAiPathRunQueue",
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
@@ -343,6 +351,7 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -434,6 +443,7 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -456,6 +466,7 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -478,6 +489,7 @@
       ],
       "startExports": [
         "startBaseExportQueue",
+        "startBaseImportQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",

@@ -34,7 +34,7 @@ import {
   KANGUR_SOCIAL_PLAYWRIGHT_CAPTURE_TIMEOUT_MS,
 } from '@/features/kangur/social/shared/social-playwright-capture';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
-import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server/request-storage-state';
+import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server';
 
 import {
   findLatestAddonByPresetId,

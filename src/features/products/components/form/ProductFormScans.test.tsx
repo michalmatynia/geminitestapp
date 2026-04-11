@@ -28,11 +28,31 @@ vi.mock('@/shared/lib/query-invalidation', () => ({
     mocks.invalidateProductsCountsAndDetailMock(...args),
 }));
 
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...rest
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
+    asChild,
     ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    asChild?: boolean;
+  }) => {
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, props);
+    }
+    return <button {...props}>{children}</button>;
+  },
 }));
 
 import ProductFormScans from './ProductFormScans';
@@ -191,6 +211,21 @@ describe('ProductFormScans', () => {
     );
 
     expect(await screen.findByText('Amazon reverse image scan running.')).toBeInTheDocument();
+  });
+
+  it('shows a scanner settings shortcut that links to the global settings page', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    const link = await screen.findByRole('link', { name: 'Scanner settings' });
+    expect(link).toHaveAttribute('href', '/admin/settings/scanner');
   });
 
   it('keeps the last scan results visible when a refresh fails after initial load', async () => {

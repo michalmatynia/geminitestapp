@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Archive,
   Copy,
   Download,
   FileUp,
@@ -26,11 +27,14 @@ import {
   useProductListFiltersContext,
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
-import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
+import { TraderaStatusCheckModal } from '@/features/integrations/public';
+import {
+  useBulkSetProductsArchivedState,
+  useBulkConvertImagesToBase64,
+} from '@/features/products/hooks/useProductsMutations';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
 import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
-import { TraderaStatusCheckModal } from '@/features/integrations/components/listings/TraderaStatusCheckModal';
 import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ActionMenu } from '@/shared/ui/ActionMenu';
@@ -70,6 +74,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     advancedFilter,
     activeAdvancedFilterPresetId,
     advancedFilterPresets,
+    includeArchived,
     setAdvancedFilterPresets,
     setAdvancedFilterState,
   } = useProductListFiltersContext();
@@ -84,6 +89,8 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync: convertSelectedToBase64, isPending: isConvertingSelected } =
     useBulkConvertImagesToBase64();
+  const { mutateAsync: setSelectedProductsArchivedState, isPending: isSettingSelectedArchivedState } =
+    useBulkSetProductsArchivedState();
   const { execute: executeTraderaMassExport, isRunning: isTraderaMassExportRunning } =
     useTraderaMassQuickExport();
   const { execute: executeVintedMassExport, isRunning: isVintedMassExportRunning } =
@@ -141,6 +148,44 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     }
     await executeVintedMassExport(selectedProductIds);
   }, [executeVintedMassExport, rowSelection, toast]);
+
+  const handleSetArchivedSelected = useCallback(async (archived: boolean): Promise<void> => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast(`Please select products to ${archived ? 'archive' : 'unarchive'}.`, {
+        variant: 'error',
+      });
+      return;
+    }
+
+    try {
+      const result = await setSelectedProductsArchivedState({
+        productIds: selectedProductIds,
+        archived,
+      });
+      toast(
+        archived
+          ? `Archived ${result.updated} product${result.updated === 1 ? '' : 's'}.`
+          : `Removed ${result.updated} product${result.updated === 1 ? '' : 's'} from archive.`,
+        {
+          variant: 'success',
+        }
+      );
+      setRowSelection({});
+    } catch (error) {
+      logClientError(error);
+      toast(
+        error instanceof Error
+          ? error.message
+          : archived
+            ? 'Failed to archive selected products.'
+            : 'Failed to remove selected products from archive.',
+        {
+          variant: 'error',
+        }
+      );
+    }
+  }, [rowSelection, setRowSelection, setSelectedProductsArchivedState, toast]);
 
   const [statusCheckProducts, setStatusCheckProducts] = useState<typeof data>([]);
   const [amazonScanProducts, setAmazonScanProducts] = useState<typeof data>([]);
@@ -447,6 +492,28 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
               <Store className='h-4 w-4' />
               Add to Marketplace
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                void handleSetArchivedSelected(true);
+              }}
+              className='cursor-pointer gap-2'
+              disabled={isSettingSelectedArchivedState || selectedCount === 0}
+            >
+              <Archive className='h-4 w-4' />
+              {isSettingSelectedArchivedState ? 'Updating archive state...' : 'Send to Archive'}
+            </DropdownMenuItem>
+            {includeArchived ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  void handleSetArchivedSelected(false);
+                }}
+                className='cursor-pointer gap-2'
+                disabled={isSettingSelectedArchivedState || selectedCount === 0}
+              >
+                <Archive className='h-4 w-4' />
+                {isSettingSelectedArchivedState ? 'Updating archive state...' : 'Remove from Archive'}
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem
               onClick={() => {
                 void handleQuickExportTradera();

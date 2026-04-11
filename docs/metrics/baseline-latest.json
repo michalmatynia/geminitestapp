@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-04-11T13:46:44.565Z",
+  "generatedAt": "2026-04-11T14:40:31.111Z",
   "source": {
-    "totalFiles": 10270,
-    "totalLines": 1693220,
-    "useClientFiles": 1749,
+    "totalFiles": 10291,
+    "totalLines": 1696277,
+    "useClientFiles": 1752,
     "hooksWithoutUseClient": 0,
     "filesOver800": 93,
     "filesOver1000": 0,
@@ -34,11 +34,11 @@
         "lines": 124
       },
       {
-        "path": "src/app/api/agentcreator/[[...path]]/route.ts",
-        "lines": 115
+        "path": "src/app/api/v2/products/[[...path]]/route.ts",
+        "lines": 117
       },
       {
-        "path": "src/app/api/v2/products/[[...path]]/route.ts",
+        "path": "src/app/api/agentcreator/[[...path]]/route.ts",
         "lines": 115
       },
       {
@@ -108,35 +108,44 @@
     ]
   },
   "imports": {
-    "appFeatureBarrelImports": 0,
+    "appFeatureBarrelImports": 1,
     "appFeatureDeepImports": 0,
     "featureToSharedTotalImports": 24,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 0
   },
   "architecture": {
-    "crossFeatureEdgePairs": 0,
-    "topCrossFeatureEdges": [],
+    "crossFeatureEdgePairs": 2,
+    "topCrossFeatureEdges": [
+      {
+        "edge": "products -> playwright",
+        "references": 2
+      },
+      {
+        "edge": "products -> integrations",
+        "references": 1
+      }
+    ],
     "featureSizeByLines": [
       {
         "feature": "kangur",
         "files": 2501,
-        "lines": 528531
+        "lines": 528633
       },
       {
         "feature": "ai",
         "files": 1300,
-        "lines": 250278
+        "lines": 250284
       },
       {
         "feature": "integrations",
         "files": 471,
-        "lines": 99462
+        "lines": 99641
       },
       {
         "feature": "products",
-        "files": 417,
-        "lines": 96541
+        "files": 426,
+        "lines": 98388
       },
       {
         "feature": "case-resolver",
@@ -165,23 +174,23 @@
       },
       {
         "feature": "data-import-export",
-        "files": 46,
-        "lines": 11672
+        "files": 49,
+        "lines": 12055
       },
       {
         "feature": "admin",
         "files": 61,
-        "lines": 10324
+        "lines": 10338
       },
       {
         "feature": "database",
         "files": 53,
-        "lines": 8486
+        "lines": 8485
       },
       {
         "feature": "playwright",
-        "files": 88,
-        "lines": 8269
+        "files": 89,
+        "lines": 8435
       },
       {
         "feature": "auth",
@@ -285,9 +294,9 @@
       {
         "path": "src/features/products/hooks/useProductData.ts",
         "useEffectCount": 5,
-        "useCallbackCount": 19,
+        "useCallbackCount": 20,
         "useMemoCount": 3,
-        "total": 27
+        "total": 28
       },
       {
         "path": "src/features/ai/ai-paths/components/useJobQueueRuntime.ts",
@@ -437,15 +446,15 @@
       },
       {
         "path": "src/features/products/server/product-scans-service.test.ts",
-        "lines": 1609
+        "lines": 1732
       },
       {
         "path": "src/features/products/components/ProductModals.test.tsx",
-        "lines": 1543
+        "lines": 1552
       },
       {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
-        "lines": 1246
+        "lines": 1286
       },
       {
         "path": "src/features/integrations/services/tradera-listing-service.test.ts",
@@ -632,7 +641,7 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 230,
+    "candidateChains": 229,
     "depthGte4Chains": 66,
     "forwardingComponents": 120
   }

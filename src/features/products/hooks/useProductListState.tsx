@@ -42,6 +42,7 @@ import { useProductListSelection } from './product-list/useProductListSelection'
 import { useProductListUrlSync } from './product-list/useProductListUrlSync';
 import { useCreateFromDraft } from './useCreateFromDraft';
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
+import { useProductListScanRunSync } from './useProductListScanRunSync';
 import {
   applyProductListAdvancedFilterState,
   applyProductListPageSizeChange,
@@ -178,6 +179,8 @@ export function useProductListState(): ProductListContextType & {
     setCatalogFilter,
     baseExported,
     setBaseExported,
+    includeArchived,
+    setIncludeArchived,
     loadError,
     isLoading,
     isFetching,
@@ -193,6 +196,10 @@ export function useProductListState(): ProductListContextType & {
     searchLanguage: preferences.nameLocale,
   });
   const visibleData = useMemo(() => (isMounted ? data : []), [data, isMounted]);
+  const productScanRunStatusByProductId = useProductListScanRunSync({
+    enabled: rowRuntimeReady,
+    productIds: visibleData.map((product: ProductWithImages) => product.id),
+  });
 
   const visibleProductIdSet = useMemo(
     () => new Set(visibleData.map((product: ProductWithImages) => product.id)),
@@ -227,6 +234,7 @@ export function useProductListState(): ProductListContextType & {
       advancedFilter,
       catalogFilter,
       baseExported,
+      includeArchived,
       page,
       pageSize,
     },
@@ -248,6 +256,7 @@ export function useProductListState(): ProductListContextType & {
               hasAdvancedFilter: advancedFilter.length > 0,
               catalogFilter,
               baseExported,
+              includeArchived,
             },
           },
           {
@@ -530,6 +539,7 @@ export function useProductListState(): ProductListContextType & {
       hasProductId: productId.length > 0,
       hasAdvancedFilter: advancedFilter.length > 0,
       baseExported,
+      includeArchived,
       showTriggerRunFeedback,
       isEditHydrating,
     },
@@ -626,10 +636,12 @@ export function useProductListState(): ProductListContextType & {
       catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
       searchLanguage: preferences.nameLocale,
       baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
+      archived: includeArchived ? undefined : false,
     });
   }, [
     advancedFilter,
     baseExported,
+    includeArchived,
     catalogFilter,
     categoryId,
     description,
@@ -693,6 +705,8 @@ export function useProductListState(): ProductListContextType & {
       setCatalogFilter: handleSetCatalogPreference,
       baseExported,
       setBaseExported,
+      includeArchived,
+      setIncludeArchived,
       catalogs,
       loadError: loadError?.message || null,
       actionError,
@@ -757,6 +771,7 @@ export function useProductListState(): ProductListContextType & {
       vintedBadgeStatuses: EMPTY_VINTED_BADGE_STATUSES,
       queuedProductIds,
       productAiRunStatusByProductId,
+      productScanRunStatusByProductId,
       categoryNameById,
       thumbnailSource: preferences.thumbnailSource ?? 'file',
       showTriggerRunFeedback,
@@ -833,6 +848,8 @@ export function useProductListState(): ProductListContextType & {
       handleSetCatalogPreference,
       baseExported,
       setBaseExported,
+      includeArchived,
+      setIncludeArchived,
       catalogs,
       loadError,
       actionError,
@@ -887,6 +904,7 @@ export function useProductListState(): ProductListContextType & {
       handleOpenExportSettings,
       queuedProductIds,
       productAiRunStatusByProductId,
+      productScanRunStatusByProductId,
       categoryNameById,
       preferences.thumbnailSource,
       showTriggerRunFeedback,

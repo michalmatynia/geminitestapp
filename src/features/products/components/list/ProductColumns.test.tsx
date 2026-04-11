@@ -217,7 +217,47 @@ describe('ProductColumns queued badge', () => {
     const cell = nameColumn.cell({ row: { original: product } } as never);
     render(cell);
 
-    expect(screen.getByText('Queued')).toBeInTheDocument();
+    const pill = screen.getByText('Queued');
+    expect(pill).toBeInTheDocument();
+    expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
+      'data-activity-kind',
+      'trigger-button'
+    );
+  });
+
+  it('renders the scan feedback pill with the scan activity kind', () => {
+    const product = createProduct();
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        productScanRunFeedback: {
+          scanId: 'scan-1',
+          status: 'running',
+          updatedAt: '2026-04-11T12:00:00.000Z',
+          label: 'Running',
+          variant: 'processing',
+          badgeClassName:
+            'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+        },
+      })
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    const pill = screen.getByText('Running');
+    expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
+      'data-activity-kind',
+      'scan'
+    );
   });
 
   it('passes Tradera badge runtime into the quick export button', async () => {
@@ -1014,6 +1054,22 @@ describe('ProductColumns queued badge', () => {
     render(cell);
 
     expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+  });
+
+  it('renders an archived badge for archived products', () => {
+    const product = createProduct({
+      archived: true,
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByText('Archived')).toBeInTheDocument();
   });
 
   it('renders a global trigger run feedback toggle in the integrations header', () => {

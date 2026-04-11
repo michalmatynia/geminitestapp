@@ -97,6 +97,8 @@ export interface ProductDataHookResult {
   setCatalogFilter: (f: string) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
+  includeArchived: boolean;
+  setIncludeArchived: (value: boolean) => void;
   loadError: Error | null;
   isLoading: boolean;
   isFetching: boolean;
@@ -135,6 +137,7 @@ export function useProductData({
   );
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
+  const [includeArchived, setIncludeArchived] = useState(false);
   const hasInitialized = useRef(false);
   const [filtersInitialized, setFiltersInitialized] = useState(true);
 
@@ -200,6 +203,7 @@ export function useProductData({
         | 'name_de'
         | undefined,
       baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
+      archived: includeArchived ? undefined : false,
     }),
     [
       debouncedSearch,
@@ -220,6 +224,7 @@ export function useProductData({
       catalogFilter,
       searchLanguage,
       baseExported,
+      includeArchived,
     ]
   );
 
@@ -257,6 +262,7 @@ export function useProductData({
     advancedFilter,
     catalogFilter,
     baseExported,
+    includeArchived,
     pageSize,
   ]);
 
@@ -314,6 +320,7 @@ export function useProductData({
     (value: '' | 'true' | 'false') => setBaseExported(value),
     []
   );
+  const handleSetIncludeArchived = useCallback((value: boolean) => setIncludeArchived(value), []);
 
   return {
     data: productsWithCountQuery.products,
@@ -354,6 +361,8 @@ export function useProductData({
     setCatalogFilter: handleSetCatalogFilter,
     baseExported,
     setBaseExported: handleSetBaseExported,
+    includeArchived,
+    setIncludeArchived: handleSetIncludeArchived,
     loadError,
     isLoading: productsWithCountQuery.isLoading,
     isFetching: productsWithCountQuery.isFetching,

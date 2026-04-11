@@ -617,6 +617,11 @@ export const buildAdminNav = (handlers: {
             href: '/admin/settings/playwright',
           },
           {
+            id: 'system/settings/scanner',
+            label: 'Scanner',
+            href: '/admin/settings/scanner',
+          },
+          {
             id: 'system/settings/folder-trees',
             label: 'Folder Trees',
             href: '/admin/settings/folder-trees',

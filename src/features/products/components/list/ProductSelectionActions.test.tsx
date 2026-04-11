@@ -1,22 +1,26 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  setSelectedProductsArchivedStateMock,
   executeTraderaMassExportMock,
   executeVintedMassExportMock,
   productAmazonScanModalMock,
   traderaStatusCheckModalMock,
+  useBulkSetProductsArchivedStateMock,
   useBulkConvertImagesToBase64Mock,
   useProductListFiltersContextMock,
   useProductListSelectionContextMock,
   useTraderaMassQuickExportMock,
   useVintedMassQuickExportMock,
 } = vi.hoisted(() => ({
+  setSelectedProductsArchivedStateMock: vi.fn(),
   executeTraderaMassExportMock: vi.fn(),
   executeVintedMassExportMock: vi.fn(),
   productAmazonScanModalMock: vi.fn(),
   traderaStatusCheckModalMock: vi.fn(),
+  useBulkSetProductsArchivedStateMock: vi.fn(),
   useBulkConvertImagesToBase64Mock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
   useProductListSelectionContextMock: vi.fn(),
@@ -35,6 +39,7 @@ vi.mock('@/features/products/context/ProductListContext', async (importOriginal)
 });
 
 vi.mock('@/features/products/hooks/useProductsMutations', () => ({
+  useBulkSetProductsArchivedState: () => useBulkSetProductsArchivedStateMock(),
   useBulkConvertImagesToBase64: () => useBulkConvertImagesToBase64Mock(),
 }));
 
@@ -163,11 +168,16 @@ describe('ProductSelectionActions', () => {
       advancedFilter: '',
       activeAdvancedFilterPresetId: null,
       advancedFilterPresets: [],
+      includeArchived: false,
       setAdvancedFilterPresets: vi.fn(),
       setAdvancedFilterState: vi.fn(),
     });
     useBulkConvertImagesToBase64Mock.mockReturnValue({
       mutateAsync: vi.fn(),
+      isPending: false,
+    });
+    useBulkSetProductsArchivedStateMock.mockReturnValue({
+      mutateAsync: setSelectedProductsArchivedStateMock,
       isPending: false,
     });
     useTraderaMassQuickExportMock.mockReturnValue({
@@ -193,6 +203,79 @@ describe('ProductSelectionActions', () => {
     ]);
   });
 
+  it('archives the selected products and clears the current selection', async () => {
+    const setRowSelectionMock = vi.fn();
+    setSelectedProductsArchivedStateMock.mockResolvedValue({
+      status: 'ok',
+      archived: true,
+      updated: 2,
+    });
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [{ id: 'product-1' }, { id: 'product-2' }],
+      rowSelection: {
+        'product-1': true,
+        'product-2': true,
+      },
+      setRowSelection: setRowSelectionMock,
+      onSelectAllGlobal: vi.fn(),
+      loadingGlobal: false,
+      onDeleteSelected: vi.fn(),
+      onAddToMarketplace: vi.fn(),
+    });
+
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send to Archive' }));
+
+    await waitFor(() => {
+      expect(setSelectedProductsArchivedStateMock).toHaveBeenCalledWith({
+        productIds: ['product-1', 'product-2'],
+        archived: true,
+      });
+      expect(setRowSelectionMock).toHaveBeenCalledWith({});
+    });
+  });
+
+  it('unarchives the selected products when archived items are visible', async () => {
+    const setRowSelectionMock = vi.fn();
+    setSelectedProductsArchivedStateMock.mockResolvedValue({
+      status: 'ok',
+      archived: false,
+      updated: 1,
+    });
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [{ id: 'product-1', archived: true }],
+      rowSelection: {
+        'product-1': true,
+      },
+      setRowSelection: setRowSelectionMock,
+      onSelectAllGlobal: vi.fn(),
+      loadingGlobal: false,
+      onDeleteSelected: vi.fn(),
+      onAddToMarketplace: vi.fn(),
+    });
+    useProductListFiltersContextMock.mockReturnValue({
+      advancedFilter: '',
+      activeAdvancedFilterPresetId: null,
+      advancedFilterPresets: [],
+      includeArchived: true,
+      setAdvancedFilterPresets: vi.fn(),
+      setAdvancedFilterState: vi.fn(),
+    });
+
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove from Archive' }));
+
+    await waitFor(() => {
+      expect(setSelectedProductsArchivedStateMock).toHaveBeenCalledWith({
+        productIds: ['product-1'],
+        archived: false,
+      });
+      expect(setRowSelectionMock).toHaveBeenCalledWith({});
+    });
+  });
+
   it('disables the Vinted mass quick export action when no products are selected', () => {
     useProductListSelectionContextMock.mockReturnValue({
       data: [{ id: 'product-1' }],
@@ -207,6 +290,26 @@ describe('ProductSelectionActions', () => {
     render(<ProductSelectionActions />);
 
     expect(screen.getByRole('button', { name: 'Quick Export to Vinted' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send to Archive' })).toBeDisabled();
+  });
+
+  it('only shows the unarchive action when archived items are included in the list', () => {
+    render(<ProductSelectionActions />);
+
+    expect(screen.queryByRole('button', { name: 'Remove from Archive' })).not.toBeInTheDocument();
+
+    useProductListFiltersContextMock.mockReturnValue({
+      advancedFilter: '',
+      activeAdvancedFilterPresetId: null,
+      advancedFilterPresets: [],
+      includeArchived: true,
+      setAdvancedFilterPresets: vi.fn(),
+      setAdvancedFilterState: vi.fn(),
+    });
+
+    render(<ProductSelectionActions />);
+
+    expect(screen.getByRole('button', { name: 'Remove from Archive' })).toBeInTheDocument();
   });
 
   it('opens the Tradera status check modal with the selected products', () => {

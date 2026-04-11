@@ -459,6 +459,13 @@ export const listKangurLearnersByOwner = cache(async (
   );
 
   if (missingLegacyProfiles.length > 0) {
+    void ErrorSystem.logInfo(`Migrating ${missingLegacyProfiles.length} legacy Kangur profiles to MongoDB`, {
+      service: 'kangur.learner-repository',
+      action: 'migration.legacy-to-mongo',
+      ownerUserId,
+      profileCount: missingLegacyProfiles.length,
+      profileIds: missingLegacyProfiles.map(p => p.id),
+    });
     await upsertMongoStoredLearners(missingLegacyProfiles);
   }
 
@@ -659,6 +666,15 @@ export const createKangurLearner = async (input: {
     await writeLegacyStoredLearners([...profiles, nextProfile]);
   }
 
+  void ErrorSystem.logInfo(`Created new Kangur learner: ${nextProfile.loginName}`, {
+    service: 'kangur.learner-repository',
+    action: 'create',
+    learnerId: nextProfile.id,
+    loginName: nextProfile.loginName,
+    ownerUserId: input.ownerUserId,
+    persistence: useMongoLearnerCollection ? 'mongodb' : 'legacy',
+  });
+
   return toPublicLearnerProfile(nextProfile);
 };
 
@@ -710,6 +726,14 @@ export const updateKangurLearner = async (
     await writeLegacyStoredLearners(nextProfiles);
   }
 
+  void ErrorSystem.logInfo(`Updated Kangur learner profile: ${nextProfile.loginName}`, {
+    service: 'kangur.learner-repository',
+    action: 'update',
+    learnerId,
+    loginName: nextProfile.loginName,
+    persistence: useMongoLearnerCollection ? 'mongodb' : 'legacy',
+  });
+
   return toPublicLearnerProfile(nextProfile);
 };
 
@@ -733,6 +757,14 @@ export const deleteKangurLearner = async (
   if (nextProfiles.length !== profiles.length) {
     await writeLegacyStoredLearners(nextProfiles);
   }
+
+  void ErrorSystem.logInfo(`Deleted Kangur learner: ${current.loginName}`, {
+    service: 'kangur.learner-repository',
+    action: 'delete',
+    learnerId,
+    loginName: current.loginName,
+    ownerUserId: current.ownerUserId,
+  });
 
   return toPublicLearnerProfile(current);
 };
@@ -809,12 +841,37 @@ export const verifyKangurLearnerPassword = async (
   password: string
 ): Promise<KangurLearnerProfile | null> => {
   const profile = await getKangurStoredLearnerByLoginName(loginName);
-  if (!profile || profile.status !== 'active') {
+  if (!profile) {
+    void ErrorSystem.logInfo(`Login attempt for non-existent Kangur learner: ${loginName}`, {
+      service: 'kangur.learner-repository',
+      action: 'verifyPassword',
+      loginName,
+      reason: 'profile_not_found',
+    });
+    return null;
+  }
+
+  if (profile.status !== 'active') {
+    void ErrorSystem.logInfo(`Login attempt for disabled Kangur learner: ${loginName}`, {
+      service: 'kangur.learner-repository',
+      action: 'verifyPassword',
+      loginName,
+      learnerId: profile.id,
+      status: profile.status,
+      reason: 'profile_disabled',
+    });
     return null;
   }
 
   const ok = await bcrypt.compare(password, profile.passwordHash);
   if (!ok) {
+    void ErrorSystem.logInfo(`Failed login attempt for Kangur learner: ${loginName}`, {
+      service: 'kangur.learner-repository',
+      action: 'verifyPassword',
+      loginName,
+      learnerId: profile.id,
+      reason: 'password_mismatch',
+    });
     return null;
   }
 

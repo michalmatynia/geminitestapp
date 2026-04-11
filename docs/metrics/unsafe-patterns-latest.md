@@ -8,22 +8,22 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-04-11T13:44:51.214Z
+Generated at: 2026-04-11T14:55:41.887Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 7252
+- Files scanned: 7265
 - Errors: 0
 - Warnings: 0
-- Info: 10
+- Info: 11
 
 ## Trend Counters
 
 | Metric | Count |
 | --- | ---: |
 | doubleAssertionCount | 0 |
-| anyCount | 5 |
+| anyCount | 6 |
 | eslintDisableCount | 2 |
 | nonNullAssertionCount | 3 |
 | tsIgnoreCount | 0 |
@@ -41,7 +41,7 @@ Generated at: 2026-04-11T13:44:51.214Z
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
 | eslint-disable | 0 | 0 | 2 |
-| explicit-any | 0 | 0 | 5 |
+| explicit-any | 0 | 0 | 6 |
 | non-null-assertion | 0 | 0 | 3 |
 
 ## Issues
@@ -52,6 +52,7 @@ Generated at: 2026-04-11T13:44:51.214Z
 | INFO | non-null-assertion | src/features/integrations/utils/tradera-browser-session.ts:53 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | non-null-assertion | src/features/integrations/utils/tradera-browser-session.ts:66 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | eslint-disable | src/features/kangur/ui/KangurLoginPage.test-support.tsx:6 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-return |
+| INFO | explicit-any | src/features/products/server/product-scanner-settings.ts:36 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | explicit-any | src/shared/contracts/document-editor.ts:31 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | explicit-any | src/shared/contracts/document-editor.ts:32 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | explicit-any | src/shared/contracts/document-editor.ts:33 | Explicit `any` type usage. Consider using a specific type or `unknown`. |

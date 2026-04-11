@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:14.110Z",
+  "generatedAt": "2026-04-11T14:56:01.676Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -11,6 +11,9 @@
   "environment": {
     "nodeEnv": "development",
     "hasMongoUri": true,
+    "hasMongoLocalUri": false,
+    "hasMongoCloudUri": false,
+    "mongoActiveSourceDefault": "cloud",
     "appDbProvider": "mongodb",
     "hasAuthSecret": true,
     "hasNextAuthSecret": false,

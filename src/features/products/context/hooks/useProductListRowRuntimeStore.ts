@@ -13,6 +13,7 @@ export type ProductListRowRuntimeStoreState = Pick<
   | 'vintedBadgeStatuses'
   | 'queuedProductIds'
   | 'productAiRunStatusByProductId'
+  | 'productScanRunStatusByProductId'
 >;
 
 export type ProductListRowRuntimeStore = {
@@ -34,6 +35,7 @@ export const EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT: ProductListRowRuntimeConte
   showPlaywrightProgrammableBadge: false,
   playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,
+  productScanRunFeedback: null,
 });
 
 const areProductAiRunFeedbacksEqual = (
@@ -53,6 +55,23 @@ const areProductAiRunFeedbacksEqual = (
   );
 };
 
+const areProductScanRunFeedbacksEqual = (
+  left: ProductListRowRuntimeContextType['productScanRunFeedback'],
+  right: ProductListRowRuntimeContextType['productScanRunFeedback']
+): boolean => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+
+  return (
+    left.scanId === right.scanId &&
+    left.status === right.status &&
+    left.updatedAt === right.updatedAt &&
+    left.label === right.label &&
+    left.variant === right.variant &&
+    left.badgeClassName === right.badgeClassName
+  );
+};
+
 const areProductListRowRuntimeSnapshotsEqual = (
   left: ProductListRowRuntimeContextType,
   right: ProductListRowRuntimeContextType
@@ -63,7 +82,8 @@ const areProductListRowRuntimeSnapshotsEqual = (
   left.traderaStatus === right.traderaStatus &&
   left.showPlaywrightProgrammableBadge === right.showPlaywrightProgrammableBadge &&
   left.playwrightProgrammableStatus === right.playwrightProgrammableStatus &&
-  areProductAiRunFeedbacksEqual(left.productAiRunFeedback, right.productAiRunFeedback);
+  areProductAiRunFeedbacksEqual(left.productAiRunFeedback, right.productAiRunFeedback) &&
+  areProductScanRunFeedbacksEqual(left.productScanRunFeedback, right.productScanRunFeedback);
 
 const areProductListRowRuntimeStoreStatesEqual = (
   left: ProductListRowRuntimeStoreState,
@@ -76,7 +96,8 @@ const areProductListRowRuntimeStoreStatesEqual = (
   left.playwrightProgrammableBadgeIds === right.playwrightProgrammableBadgeIds &&
   left.playwrightProgrammableBadgeStatuses === right.playwrightProgrammableBadgeStatuses &&
   left.queuedProductIds === right.queuedProductIds &&
-  left.productAiRunStatusByProductId === right.productAiRunStatusByProductId;
+  left.productAiRunStatusByProductId === right.productAiRunStatusByProductId &&
+  left.productScanRunStatusByProductId === right.productScanRunStatusByProductId;
 
 export const createProductListRowRuntimeStore = (
   initialState: ProductListRowRuntimeStoreState
@@ -122,6 +143,8 @@ export const createProductListRowRuntimeStore = (
           queuedProductIds: state.queuedProductIds,
           productAiRunStatusByProductId: state.productAiRunStatusByProductId,
         }),
+        productScanRunFeedback:
+          state.productScanRunStatusByProductId?.get(productId) ?? null,
       };
 
       const cachedSnapshot = snapshotCache.get(cacheKey);

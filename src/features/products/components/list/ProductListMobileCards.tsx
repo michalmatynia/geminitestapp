@@ -1,12 +1,12 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Download } from 'lucide-react';
+import { Archive, Download } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo, useCallback, type ReactNode } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
-import { isMissingProductListingsError } from '@/features/integrations/product-integrations-adapter';
+import { isMissingProductListingsError } from '@/features/integrations/public';
 import {
   useProductListRowActionsContext,
   useProductListRowRuntime,
@@ -41,6 +41,7 @@ import {
   getImageFilepath,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
+import { ProductListActivityPill } from './ProductListActivityPill';
 
 type ProductListRowActionsContextValue = ReturnType<typeof useProductListRowActionsContext>;
 type ProductListRowVisualsContextValue = ReturnType<typeof useProductListRowVisualsContext>;
@@ -279,6 +280,7 @@ const renderProductListMobileCard = ({
     showPlaywrightProgrammableBadge,
     playwrightProgrammableStatus,
     productAiRunFeedback,
+    productScanRunFeedback,
   } = rowRuntime;
 
   return (
@@ -344,20 +346,35 @@ const renderProductListMobileCard = ({
                 <div className='truncate'>{missingManualShippingLabel}</div>
               </div>
             ) : null}
-            {(isImported || productAiRunFeedback) && (
+            {(product.archived || isImported || productAiRunFeedback || productScanRunFeedback) && (
               <div className='flex flex-wrap items-center gap-2'>
+                {product.archived ? (
+                  <Badge variant='removed' icon={<Archive className='size-3' />}>
+                    Archived
+                  </Badge>
+                ) : null}
                 {isImported && (
                   <Badge variant='info' icon={<Download className='size-3' />}>
                     Imported
                   </Badge>
                 )}
                 {productAiRunFeedback ? (
-                  <Badge
+                  <ProductListActivityPill
+                    kind='trigger-button'
+                    label={productAiRunFeedback.label}
                     variant={productAiRunFeedback.variant}
-                    className={productAiRunFeedback.badgeClassName}
-                  >
-                    {productAiRunFeedback.label}
-                  </Badge>
+                    badgeClassName={productAiRunFeedback.badgeClassName}
+                    className='ml-0'
+                  />
+                ) : null}
+                {productScanRunFeedback ? (
+                  <ProductListActivityPill
+                    kind='scan'
+                    label={productScanRunFeedback.label}
+                    variant={productScanRunFeedback.variant}
+                    badgeClassName={productScanRunFeedback.badgeClassName}
+                    className='ml-0'
+                  />
                 ) : null}
               </div>
             )}

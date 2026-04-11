@@ -38,6 +38,11 @@ describe('product io schemas', () => {
     expect(parsed.sku).toBeNull();
   });
 
+  it('parses archived booleans from form-style update payloads', () => {
+    expect(productUpdateInputSchema.parse({ archived: 'true' }).archived).toBe(true);
+    expect(productUpdateInputSchema.parse({ archived: 'false' }).archived).toBe(false);
+  });
+
   it('parses marketplace content overrides from JSON form fields', () => {
     const parsed = productCreateInputSchema.parse({
       sku: 'SKU-1',

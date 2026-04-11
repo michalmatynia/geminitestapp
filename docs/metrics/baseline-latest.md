@@ -8,13 +8,13 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-11T13:46:44.565Z
+Generated at: 2026-04-11T14:40:31.111Z
 
 ## Snapshot
 
-- Source files: 10270
-- Source lines: 1693220
-- use client files: 1749
+- Source files: 10291
+- Source lines: 1696277
+- use client files: 1752
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
 - Largest file: `src/features/ai/ai-paths/services/playwright-node-runner.ts` (992 LOC)
@@ -22,10 +22,10 @@ Generated at: 2026-04-11T13:46:44.565Z
 - API delegated server routes: 185
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 311/30 (1036.7%)
-- Cross-feature dependency pairs: 0
+- Cross-feature dependency pairs: 2
 - Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 230
+- Prop-drilling chains (depth >= 3): 229
 - Prop-drilling chains (depth >= 4): 66
 
 ## Top API Hotspots (by LOC)
@@ -34,8 +34,8 @@ Generated at: 2026-04-11T13:46:44.565Z
 | --- | ---: |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 144 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 117 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 115 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 114 |
 | `src/app/api/databases/[[...path]]/route.ts` | 100 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 80 |
@@ -52,6 +52,8 @@ Generated at: 2026-04-11T13:46:44.565Z
 
 | Edge | References |
 | --- | ---: |
+| `products -> playwright` | 2 |
+| `products -> integrations` | 1 |
 
 ## Top File Hotspots (by LOC)
 
@@ -59,9 +61,9 @@ Generated at: 2026-04-11T13:46:44.565Z
 | --- | ---: |
 | `src/features/integrations/services/tradera-listing/browser.test.ts` | 4416 |
 | `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 1867 |
-| `src/features/products/server/product-scans-service.test.ts` | 1609 |
-| `src/features/products/components/ProductModals.test.tsx` | 1543 |
-| `src/features/products/components/list/ProductColumns.test.tsx` | 1246 |
+| `src/features/products/server/product-scans-service.test.ts` | 1732 |
+| `src/features/products/components/ProductModals.test.tsx` | 1552 |
+| `src/features/products/components/list/ProductColumns.test.tsx` | 1286 |
 | `src/features/integrations/services/tradera-listing-service.test.ts` | 1130 |
 | `src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts` | 1095 |
 | `src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx` | 1055 |

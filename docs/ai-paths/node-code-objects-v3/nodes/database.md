@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Database Query Migration Sheet (`database`)
 
-Generated at: 2026-04-10T09:12:39.132Z
+Generated at: 2026-04-11T13:54:16.572Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-10T09:12:39.132Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/database.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/database.scaffold.json`
 - v3 object id: `node_obj_database_portable_v3`
-- v3 object hash: `68bdd970676e9a8026b7854443262bafee92efb051b5e71636fb591e488f0298`
+- v3 object hash: `b855395956b6c2dd631c22ac68345e813b91ced9343bc25ca86bda9cd6eeb261`
 
 ## Ports
 

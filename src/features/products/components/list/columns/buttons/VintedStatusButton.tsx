@@ -5,7 +5,7 @@ import React from 'react';
 import {
   createVintedRecoveryContext,
   readPersistedVintedQuickListFeedback,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import { Button } from '@/shared/ui/button';
 

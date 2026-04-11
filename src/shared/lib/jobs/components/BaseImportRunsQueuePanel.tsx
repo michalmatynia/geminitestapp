@@ -224,7 +224,7 @@ export function BaseImportRunsQueuePanel({
             <Link
               href={`/api/v2/integrations/imports/base/runs/${encodeURIComponent(row.original.id)}/report?format=csv`}
               target='_blank'
-              rel='noreferrer'
+              rel='noopener noreferrer'
               className='text-gray-300 hover:text-white'
             >
               Download CSV report

@@ -1,4 +1,5 @@
 import { normalizeTraderaListingFormUrl, TraderaSystemSettings } from '@/features/integrations/constants/tradera';
+import { getIntegrationRepository } from '@/features/integrations/server';
 import {
   buildPlaywrightNativeTaskResult,
   createPlaywrightNativeTaskInternalError,
@@ -235,6 +236,7 @@ export const runTraderaBrowserListingStandard = async ({
         connectionId: connection.id,
         storageState: nextStorageState,
         updatedAt: completedAt,
+        repo: await getIntegrationRepository(),
       });
       markStep('publish', {
         status: 'success',

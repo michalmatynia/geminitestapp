@@ -296,6 +296,7 @@ export const productSchema = dtoBaseSchema.extend({
   weight: z.number().nullable(),
   length: z.number().nullable(),
   published: z.boolean(),
+  archived: z.boolean().default(false),
   categoryId: z.string().nullable(),
   shippingGroupId: z.string().nullable().optional(),
   catalogId: z.string(),
@@ -359,6 +360,21 @@ export const productBulkImagesBase64ResponseSchema = z.object({
 export type ProductBulkImagesBase64Response = z.infer<
   typeof productBulkImagesBase64ResponseSchema
 >;
+
+export const productBulkArchiveRequestSchema = z.object({
+  productIds: z.array(z.string().min(1)).min(1),
+  archived: z.boolean().default(true),
+});
+
+export type ProductBulkArchiveRequest = z.infer<typeof productBulkArchiveRequestSchema>;
+
+export const productBulkArchiveResponseSchema = z.object({
+  status: z.literal('ok'),
+  archived: z.boolean(),
+  updated: z.number().int().min(0),
+});
+
+export type ProductBulkArchiveResponse = z.infer<typeof productBulkArchiveResponseSchema>;
 
 /**
  * Product API Paged Result

@@ -11,6 +11,7 @@ import {
   startPlaywrightEngineTask,
 } from '@/features/playwright/server';
 import { CachedProductService } from '@/features/products/performance/cached-service';
+import { createDefaultProductScannerSettings } from '@/features/products/scanner-settings';
 import {
   isProductScanActiveStatus,
   isProductScanTerminalStatus,
@@ -29,8 +30,13 @@ import {
   resolveProductScanImageCandidates,
 } from './product-scan-amazon.helpers';
 import {
+  buildProductScannerEngineRequestOptions,
+  getProductScannerSettings,
+} from './product-scanner-settings';
+import {
   findLatestActiveProductScan,
   getProductScanById,
+  listLatestProductScansByProductIds,
   listProductScans,
   updateProductScan,
   upsertProductScan,
@@ -506,6 +512,16 @@ export async function listProductScansWithSync(input: {
   );
 }
 
+export async function listLatestProductScansByProductIdsWithSync(input: {
+  productIds: string[];
+}): Promise<ProductScanRecord[]> {
+  return await synchronizeProductScans(
+    await listLatestProductScansByProductIds({
+      productIds: input.productIds,
+    })
+  );
+}
+
 export async function getProductScanByIdWithSync(
   id: string
 ): Promise<ProductScanRecord | null> {
@@ -527,6 +543,15 @@ export async function queueAmazonBatchProductScans(input: {
         .filter((entry) => entry.length > 0)
     )
   );
+  let scannerSettings = createDefaultProductScannerSettings();
+  try {
+    scannerSettings = await getProductScannerSettings();
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'product-scans.service',
+      action: 'queueAmazonBatchProductScans.loadScannerSettings',
+    });
+  }
 
   const results = await Promise.all(
     productIds.map(async (productId): Promise<ProductAmazonBatchScanItem> => {
@@ -576,6 +601,8 @@ export async function queueAmazonBatchProductScans(input: {
         }
 
         try {
+          const scannerEngineRequestOptions =
+            buildProductScannerEngineRequestOptions(scannerSettings);
           const run = await startPlaywrightEngineTask({
             request: {
               script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
@@ -587,6 +614,7 @@ export async function queueAmazonBatchProductScans(input: {
               },
               timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
               browserEngine: 'chromium',
+              ...scannerEngineRequestOptions,
               capture: {
                 screenshot: true,
                 html: true,

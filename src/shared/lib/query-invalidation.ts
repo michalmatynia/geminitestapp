@@ -350,9 +350,14 @@ export const invalidateProductScans = async (
   queryClient: QueryClient,
   productId: string
 ): Promise<void> => {
-  await queryClient.invalidateQueries({
-    queryKey: QUERY_KEYS.products.scans(productId),
-  });
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.scans(productId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.scansLatestAll(),
+    }),
+  ]);
 };
 
 export const invalidateProductsCountsAndDetail = async (

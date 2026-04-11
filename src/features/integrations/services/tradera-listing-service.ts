@@ -21,8 +21,10 @@ export * from './tradera-listing/api';
 
 import { isTraderaApiIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
+  findProductListingByIdAcrossProviders,
+  getIntegrationRepository,
   listProductListingsByProductIdAcrossProviders,
-} from '@/features/integrations/services/product-listing-repository';
+} from '@/features/integrations/server';
 import {
   loadTraderaSystemSettings,
   toTruthyBoolean,
@@ -146,9 +148,15 @@ export const runTraderaListing = async (
   const action = input.action ?? 'list';
 
   try {
+    const integrationRepository = await getIntegrationRepository();
     const runContext = await resolvePlaywrightListingRunContext({
       listingId,
       includeIntegration: true,
+      dependencies: {
+        findListingById: findProductListingByIdAcrossProviders,
+        getConnectionById: integrationRepository.getConnectionById.bind(integrationRepository),
+        getIntegrationById: integrationRepository.getIntegrationById.bind(integrationRepository),
+      },
     });
     if (!runContext.ok) {
       return buildPlaywrightServiceListingMissingContextFailure({
@@ -318,6 +326,9 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
   const persistenceContext = await resolvePlaywrightListingPersistenceContextAfterRun({
     listingId: input.listingId,
     result,
+    dependencies: {
+      findListingById: findProductListingByIdAcrossProviders,
+    },
     allowMissingOnSuccess: false,
     missingErrorMessage: `Listing not found after job execution: ${input.listingId}`,
   });

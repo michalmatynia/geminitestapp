@@ -5,6 +5,7 @@ import { useState } from 'react';
 import {
   useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { FormModal } from '@/shared/ui/forms-and-actions.public';
 import { Alert, Button } from '@/shared/ui/primitives.public';
@@ -26,6 +27,7 @@ import { resolveIntegrationDisplayName } from './product-listings-labels';
 interface MassListProductModalProps extends EntityModalProps<string[]> {
   integrationId: string;
   connectionId: string;
+  products?: ProductWithImages[];
 }
 
 function MassListProductModalContent(): React.JSX.Element {
@@ -149,7 +151,15 @@ function MassListProductModalContent(): React.JSX.Element {
 }
 
 export function MassListProductModal(props: MassListProductModalProps): React.JSX.Element | null {
-  const { isOpen, integrationId, connectionId, item: productIds, onClose, onSuccess } = props;
+  const {
+    isOpen,
+    integrationId,
+    connectionId,
+    item: productIds,
+    products,
+    onClose,
+    onSuccess,
+  } = props;
 
   if (!productIds || !isOpen) return null;
 
@@ -161,6 +171,7 @@ export function MassListProductModal(props: MassListProductModalProps): React.JS
       <MassListProductModalViewProvider
         value={{
           productIds,
+          products: products ?? [],
           integrationId,
           connectionId,
           onClose,

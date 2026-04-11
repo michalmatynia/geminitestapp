@@ -11,7 +11,7 @@ import {
   isVintedBrowserAuthRequiredMessage,
   preflightVintedQuickListSession,
   ensureVintedBrowserSession,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
@@ -37,7 +37,7 @@ import {
   useVintedQuickExportFeedback,
   useVintedQuickExportPolling,
   type ResolvedVintedQuickListContext,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 
 export function VintedQuickListButton(props: {
   product: ProductWithImages;

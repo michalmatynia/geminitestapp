@@ -125,6 +125,7 @@ export const buildListProjectStage = (filters: ProductFilters): Document | null 
     parameters: 1,
     price: 1,
     stock: 1,
+    archived: 1,
     createdAt: 1,
     updatedAt: 1,
     imageLinks: { $slice: ['$imageLinks', 1] },

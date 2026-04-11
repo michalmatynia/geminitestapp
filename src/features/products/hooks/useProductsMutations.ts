@@ -1,7 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 
-import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
-import type { ProductBulkImagesBase64Response, ProductWithImages } from '@/shared/contracts/products/product';
+import {
+  bulkSetProductsArchivedState,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from '@/features/products/api/products';
+import type {
+  ProductBulkArchiveResponse,
+  ProductBulkImagesBase64Response,
+  ProductWithImages,
+} from '@/shared/contracts/products/product';
 import type { ProductPatchInput } from '@/shared/contracts/products/io';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { AppError, operationFailedError } from '@/shared/errors/app-error';
@@ -195,6 +204,43 @@ export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
     },
     invalidate: async (queryClient) => {
       await invalidateProductsAndCounts(queryClient);
+    },
+  });
+}
+
+export type BulkSetProductsArchivedStateInput = {
+  productIds: string[];
+  archived: boolean;
+};
+
+export function useBulkSetProductsArchivedState(): UpdateMutation<
+  ProductBulkArchiveResponse,
+  BulkSetProductsArchivedStateInput
+> {
+  return createUpdateMutationV2({
+    mutationFn: async ({
+      productIds,
+      archived,
+    }: BulkSetProductsArchivedStateInput): Promise<ProductBulkArchiveResponse> =>
+      bulkSetProductsArchivedState(productIds, archived),
+    mutationKey: QUERY_KEYS.products.all,
+    meta: {
+      source: 'products.hooks.useBulkSetProductsArchivedState',
+      operation: 'update',
+      resource: 'products.archived-state.bulk',
+      domain: 'products',
+      mutationKey: QUERY_KEYS.products.all,
+      tags: ['products', 'archive', 'bulk'],
+      description: 'Sets archived state for products in bulk.',
+    },
+    invalidate: async (queryClient) => {
+      await Promise.all([
+        invalidateProductsAndCounts(queryClient),
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.products.details(),
+          refetchType: 'none',
+        }),
+      ]);
     },
   });
 }

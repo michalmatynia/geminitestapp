@@ -1,33 +1,92 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-11T10:38:42.355Z",
+  "generatedAt": "2026-04-11T14:40:26.131Z",
   "phase": "audit",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-parameter-integrity",
-    "products-category-schema-normalization",
     "ui-consolidation",
     "application-performance",
-    "repo-quality-baseline"
+    "testing-quality-baseline",
+    "repo-quality-baseline",
+    "ui-consolidation"
   ],
   "reportPath": "artifacts/improvements/audit-report.json",
   "steps": [
     {
-      "id": "products-parameter-audit",
-      "title": "Audit products with missing parameters",
-      "trackId": "products-parameter-integrity",
+      "id": "ui-consolidation-guardrail",
+      "title": "Run UI consolidation guardrail",
+      "trackId": "ui-consolidation",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "failed",
+      "outputs": [
+        "docs/ui-consolidation/scan-latest.md",
+        "docs/ui-consolidation/scan-latest.json",
+        "docs/ui-consolidation/inventory-latest.csv"
+      ],
+      "instructions": [],
+      "script": "check:ui-consolidation",
+      "durationMs": 12332
+    },
+    {
+      "id": "application-performance-fast-gate",
+      "title": "Run the fast performance operations gate",
+      "trackId": "application-performance",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [],
+      "instructions": [],
+      "script": "perf:ops:fast",
+      "durationMs": 46069
+    },
+    {
+      "id": "testing-quality-suite-inventory",
+      "title": "Refresh the testing suite inventory",
+      "trackId": "testing-quality-baseline",
       "phase": "audit",
       "mode": "automatic",
       "writes": false,
       "status": "passed",
       "outputs": [
-        "/tmp/product-missing-parameters-audit-*.json",
-        "/tmp/product-missing-parameters-audit-latest.json"
+        "docs/metrics/testing-suite-inventory-latest.md",
+        "docs/metrics/testing-suite-inventory-latest.json"
       ],
       "instructions": [],
-      "script": "products:audit:missing-parameters",
-      "durationMs": 3637
+      "script": "metrics:test-suite-inventory",
+      "durationMs": 419
+    },
+    {
+      "id": "repo-quality-api-error-sources",
+      "title": "Check API error source coverage",
+      "trackId": "repo-quality-baseline",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "docs/metrics/api-error-sources-latest.json",
+        "docs/metrics/api-error-sources-latest.md"
+      ],
+      "instructions": [],
+      "script": "check:api-error-sources",
+      "durationMs": 451
+    },
+    {
+      "id": "repo-quality-canonical-sitewide",
+      "title": "Check canonical sitewide coverage",
+      "trackId": "repo-quality-baseline",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [],
+      "instructions": [],
+      "script": "canonical:check:sitewide",
+      "durationMs": 2375
     },
     {
       "id": "ui-consolidation-guardrail",
@@ -44,49 +103,7 @@
       ],
       "instructions": [],
       "script": "check:ui-consolidation",
-      "durationMs": 8159
-    },
-    {
-      "id": "application-performance-fast-gate",
-      "title": "Run the fast performance operations gate",
-      "trackId": "application-performance",
-      "phase": "audit",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [],
-      "instructions": [],
-      "script": "perf:ops:fast",
-      "durationMs": 47383
-    },
-    {
-      "id": "repo-quality-api-error-sources",
-      "title": "Check API error source coverage",
-      "trackId": "repo-quality-baseline",
-      "phase": "audit",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "docs/metrics/api-error-sources-latest.json",
-        "docs/metrics/api-error-sources-latest.md"
-      ],
-      "instructions": [],
-      "script": "check:api-error-sources",
-      "durationMs": 568
-    },
-    {
-      "id": "repo-quality-canonical-sitewide",
-      "title": "Check canonical sitewide coverage",
-      "trackId": "repo-quality-baseline",
-      "phase": "audit",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [],
-      "instructions": [],
-      "script": "canonical:check:sitewide",
-      "durationMs": 2140
+      "durationMs": 6042
     }
   ]
 }

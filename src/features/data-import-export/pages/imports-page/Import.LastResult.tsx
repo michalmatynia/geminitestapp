@@ -67,7 +67,7 @@ export function ImportLastResultSection(): React.JSX.Element | null {
           <Link
             href={`/api/v2/integrations/imports/base/runs/${encodeURIComponent(effectiveResult.runId)}?includeItems=true&page=1&pageSize=250`}
             target='_blank'
-            rel='noreferrer'
+            rel='noopener noreferrer'
             className='text-gray-300 hover:text-white'
           >
             Open JSON detail

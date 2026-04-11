@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import { renderAccessibleKangurAliasRoute } from '@/features/kangur/server';
+import { renderAccessibleKangurAliasRoute } from '@/features/kangur/server/alias-shell-page';
 
 type KangurAliasPageProps = {
   params: Promise<{ slug?: string[] }>;

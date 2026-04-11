@@ -57,6 +57,10 @@ type PersistedImportRuntimeState = {
   uniqueOnly: boolean;
   allowDuplicateSku: boolean;
   importTemplateId: string;
+  importNameSearch: string;
+  importSkuSearch: string;
+  importDirectTargetType: BaseImportDirectTargetType;
+  importDirectTargetValue: string;
   importListPage: number;
   importListPageSize: number;
   importListEnabled: boolean;
@@ -130,6 +134,16 @@ const readPersistedImportRuntimeState = (): PersistedImportRuntimeState | null =
       uniqueOnly: parsed['uniqueOnly'] !== false,
       allowDuplicateSku: parsed['allowDuplicateSku'] === true,
       importTemplateId: typeof parsed['importTemplateId'] === 'string' ? parsed['importTemplateId'] : '',
+      importNameSearch:
+        typeof parsed['importNameSearch'] === 'string' ? parsed['importNameSearch'] : '',
+      importSkuSearch:
+        typeof parsed['importSkuSearch'] === 'string' ? parsed['importSkuSearch'] : '',
+      importDirectTargetType:
+        parsed['importDirectTargetType'] === 'sku' ? 'sku' : 'base_product_id',
+      importDirectTargetValue:
+        typeof parsed['importDirectTargetValue'] === 'string'
+          ? parsed['importDirectTargetValue']
+          : '',
       importListPage:
         typeof parsed['importListPage'] === 'number' && parsed['importListPage'] > 0
           ? Math.floor(parsed['importListPage'])
@@ -220,6 +234,17 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   const skipNextExportActiveTemplatePersist = useRef(false);
   const lastHydratedImportSchemaKey = useRef('');
   const importSettingsHydrated = useRef(false);
+  const selectedBaseConnectionIdRef = useRef(selectedBaseConnectionId);
+  const inventoryIdRef = useRef(inventoryId);
+  const exportInventoryIdRef = useRef(exportInventoryId);
+  const catalogIdRef = useRef(catalogId);
+  const importTemplateIdRef = useRef(importTemplateId);
+
+  selectedBaseConnectionIdRef.current = selectedBaseConnectionId;
+  inventoryIdRef.current = inventoryId;
+  exportInventoryIdRef.current = exportInventoryId;
+  catalogIdRef.current = catalogId;
+  importTemplateIdRef.current = importTemplateId;
 
   const {
     activeImportRun,
@@ -251,7 +276,9 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
   } = useImportExportRuntimeResources({
     activeImportRunId,
     catalogId,
+    catalogIdRef,
     exportInventoryId,
+    exportInventoryIdRef,
     hasInitializedCatalog,
     importListEnabled,
     importListPage,
@@ -261,8 +288,10 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
     importDirectTargetValue,
     importSkuSearch,
     importTemplateId,
+    importTemplateIdRef,
     inventoriesEnabled,
     inventoryId,
+    inventoryIdRef,
     includeAllWarehouses,
     lastHydratedExportActiveTemplateScope,
     lastHydratedImportActiveTemplateScope,
@@ -273,6 +302,7 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
     limit,
     pollImportRun,
     selectedBaseConnectionId,
+    selectedBaseConnectionIdRef,
     setBaseConnections,
     setCatalogId,
     setExportInventoryId,
@@ -312,6 +342,10 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
         uniqueOnly,
         allowDuplicateSku,
         importTemplateId,
+        importNameSearch,
+        importSkuSearch,
+        importDirectTargetType,
+        importDirectTargetValue,
         importListPage,
         importListPageSize,
         importListEnabled,
@@ -326,6 +360,8 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
       importListPageSize,
       importMode,
       importNameSearch,
+      importDirectTargetType,
+      importDirectTargetValue,
       importSkuSearch,
       importTemplateId,
       importsPageTab,
@@ -363,6 +399,10 @@ export function useImportExportRuntime(): ImportExportRuntimeResult {
       setUniqueOnly(persisted.uniqueOnly);
       setAllowDuplicateSku(persisted.allowDuplicateSku);
       setImportTemplateId(persisted.importTemplateId);
+      setImportNameSearch(persisted.importNameSearch);
+      setImportSkuSearch(persisted.importSkuSearch);
+      setImportDirectTargetType(persisted.importDirectTargetType);
+      setImportDirectTargetValue(persisted.importDirectTargetValue);
       setImportListPage(persisted.importListPage);
       setImportListPageSize(persisted.importListPageSize);
       setImportListEnabled(persisted.importListEnabled);

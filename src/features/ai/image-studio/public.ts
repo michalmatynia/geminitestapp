@@ -1,4 +1,4 @@
-export { useStudioProjects } from './hooks/useImageStudioQueries';
+export { fetchStudioProjects, useStudioProjects } from './hooks/useImageStudioQueries';
 export { getImageStudioSlotImageSrc } from './image-src';
 export { SplitVariantPreview } from './components/center-preview/SplitVariantPreview';
 export {

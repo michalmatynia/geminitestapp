@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:21.615Z",
+  "generatedAt": "2026-04-11T14:56:12.150Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 7078,
+    "fileCount": 7239,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -1043,6 +1043,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/(admin)/admin/integrations/marketplaces/tradera/parameter-mapping/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/(admin)/admin/integrations/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -1289,6 +1295,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/(admin)/admin/products/import/loading.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/(admin)/admin/products/import/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/(admin)/admin/products/jobs/loading.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -1350,6 +1368,12 @@
     },
     {
       "file": "src/app/(admin)/admin/products/settings/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/(admin)/admin/products/title-terms/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -1512,6 +1536,12 @@
     },
     {
       "file": "src/app/(admin)/admin/settings/recovery/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/(admin)/admin/settings/scanner/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -4043,6 +4073,42 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/databases/engine/source/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/databases/engine/source/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/databases/engine/source/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/databases/engine/source/sync/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/databases/engine/source/sync/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/databases/engine/source/sync/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/databases/engine/status/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -5987,6 +6053,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/marketplace/mappings/validation.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/marketplace/marketplace-api.types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -6833,6 +6905,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/integrations/_shared/tradera-browser-session-preflight.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/integrations/base/setting-params.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -7253,6 +7331,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/integrations/product-listings/tradera-status-check/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/product-listings/tradera-status-check/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/product-listings/tradera-status-check/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/integrations/products/[id]/base/link-existing/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -7362,6 +7458,24 @@
     },
     {
       "file": "src/app/api/v2/integrations/products/[id]/export-to-base/segments/stock.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/check-status/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/check-status/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/products/[id]/listings/[listingId]/check-status/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -7517,6 +7631,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/integrations/queues/base-import/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/queues/base-import/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/queues/base-import/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/integrations/queues/tradera/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -7536,6 +7668,24 @@
     },
     {
       "file": "src/app/api/v2/integrations/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/tradera/parameter-mapper/catalog/fetch/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/tradera/parameter-mapper/catalog/fetch/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/tradera/parameter-mapper/catalog/fetch/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -7674,6 +7824,18 @@
     },
     {
       "file": "src/app/api/v2/products/[id]/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/[id]/scans/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/[id]/scans/route-handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -7829,6 +7991,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/products/archive/batch/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/archive/batch/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/products/categories/[id]/handler.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -7938,6 +8112,30 @@
     },
     {
       "file": "src/app/api/v2/products/count/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/custom-fields/[id]/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/custom-fields/[id]/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/custom-fields/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/custom-fields/route-handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -8255,6 +8453,42 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/products/scans/amazon/batch/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/amazon/batch/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/latest/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/latest/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/products/shipping-groups/[id]/handler.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -8454,6 +8688,30 @@
     },
     {
       "file": "src/app/api/v2/products/tags/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/title-terms/[id]/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/title-terms/[id]/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/title-terms/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/title-terms/route-handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -8796,6 +9054,12 @@
     },
     {
       "file": "src/features/admin/context/useAdminMenuSettingsDerivedState.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/admin/hooks/useAdminDataPrefetch.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -9887,12 +10151,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/ai/ai-paths/components/CanvasBoard.types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -10014,6 +10272,12 @@
     },
     {
       "file": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.fixtures.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -10236,6 +10500,12 @@
     },
     {
       "file": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasName.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasPathTree.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -11345,6 +11615,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/ai-paths/context/RuntimeContext.status-reducer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/ai-paths/context/RuntimeContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -11663,24 +11939,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/ai/ai-paths/server/settings-store-cache.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/ai/ai-paths/server/settings-store.cache/index.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/ai/ai-paths/server/settings-store.cache.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/ai/ai-paths/server/settings-store.compaction.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -11957,7 +12215,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/ai-paths/utils/ai-paths-master-tree-adapter.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/ai-paths/utils/database-node-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/utils/master-folder-tree.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18233,6 +18503,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/data-import-export/pages/ExportsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/data-import-export/pages/ImportsPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -18318,6 +18594,12 @@
     },
     {
       "file": "src/features/data-import-export/utils/image-retry-presets.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/utils/import-run-feedback.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -19583,6 +19865,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/admin.public.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/components/connections/AllegroApiConsole.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19835,7 +20123,31 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/components/listings/TraderaExecutionSteps.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/components/listings/TraderaListingSettings.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/components/listings/TraderaStatusCheckModal.utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20052,6 +20364,12 @@
     },
     {
       "file": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20381,7 +20699,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/hooks/useMarketplaceQuickExportFeedback.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/hooks/useProductListingMutations.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/hooks/useTraderaParameterMapper.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20525,7 +20855,31 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/integrations/pages.public.ts",
+      "file": "src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/pages/marketplaces/tradera/components/tradera-mapping-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20807,7 +21161,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/services/imports/base-import-custom-fields.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/services/imports/base-import-error-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/imports/base-import-fixtures.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/imports/base-import-item-processor-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20850,6 +21222,12 @@
     },
     {
       "file": "src/features/integrations/services/imports/base-import-service.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/imports/base-mapper-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20977,7 +21355,7 @@
     {
       "file": "src/features/integrations/services/tradera-browser-test-utils.ts",
       "dynamicPublicResolvers": 0,
-      "readOps": 1,
+      "readOps": 0,
       "strongRootGuard": false
     },
     {
@@ -21011,6 +21389,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/services/tradera-listing/check-status-script.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/services/tradera-listing/config.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21036,6 +21420,18 @@
     },
     {
       "file": "src/features/integrations/services/tradera-listing/manual-link.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/tradera-listing/parameter-mapper-catalog.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/tradera-listing/parameter-mapper.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21084,6 +21480,12 @@
     },
     {
       "file": "src/features/integrations/services/tradera-listing/script-partials/part-3b.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/tradera-listing/script-partials/part-4-extra.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21143,6 +21545,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/services/tradera-listing/status-check-partials/constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/tradera-listing/status-check-partials/core-logic.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/services/tradera-listing/tradera-browser-auth.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21159,6 +21573,12 @@
       "dynamicPublicResolvers": 0,
       "readOps": 1,
       "strongRootGuard": true
+    },
+    {
+      "file": "src/features/integrations/services/tradera-listing/tradera-browser-scripted-relist.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
     },
     {
       "file": "src/features/integrations/services/tradera-listing/tradera-browser-scripted.ts",
@@ -21227,9 +21647,21 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/services/vinted-listing/vinted-browser-runtime.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/services/vinted-listing/vinted-browser-test-utils.ts",
       "dynamicPublicResolvers": 0,
-      "readOps": 1,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/vinted-listing/vinted-product-mapping.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
       "strongRootGuard": false
     },
     {
@@ -21246,6 +21678,12 @@
     },
     {
       "file": "src/features/integrations/utils/baseExportFeedback.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/utils/baseExportPreflight.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21269,6 +21707,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/utils/marketplace-feedback-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/utils/marketplace-status.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21276,6 +21720,12 @@
     },
     {
       "file": "src/features/integrations/utils/playwright-connection-payload.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/utils/playwright-connection-settings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21293,7 +21743,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/utils/tradera-execution-steps.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/utils/tradera-listing-client-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/utils/tradera-status-check.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -31745,96 +32207,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/observability/client/public.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/context/SystemLogsContext.shared.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/context/SystemLogsContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/entry-server.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/hooks/useLogMutations.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/hooks/useLogQueries.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/lib/system-log-filter-url-state.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/pages/SystemLogsPage.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/public.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/server/index.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/server/runtime-context/hydrate-system-log-runtime-context.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/server/runtime-context/sanitize-system-log-for-ai.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/types.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/utils/formatTimestamp.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/utils/logHelpers.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/playwright/components/PlaywrightEngineLogoButton.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -31944,6 +32316,210 @@
     },
     {
       "file": "src/features/playwright/public.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/browser-session.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/connection-runtime.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/connection-settings-shared.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/connection-test-debug.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/connection-test-persistence.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/connection-test-response.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/connection-test-runtime.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/connection-test-session.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/connection-test-steps.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/execution-settings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/import-task.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/instance-task.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/instances.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/listing-context.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/listing-job.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/listing-outcome.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/listing-persistence-context.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/listing-persistence.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/listing-result.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/listing-service-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/listing-task.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/marketplace-data.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/native-task.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/programmable.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/request-storage-state.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/run-result.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/runtime.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/scrape-task.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/scrape.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/script-task.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/service-result.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/settings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/server/storage-state.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32177,6 +32753,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/components/form/ProductFormCustomFields.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/components/form/ProductFormFooter.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32207,6 +32789,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/components/form/ProductFormMarketplaceCopy.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/components/form/ProductFormNoteLink.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32220,6 +32808,12 @@
     },
     {
       "file": "src/features/products/components/form/ProductFormParameters.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/form/ProductFormScans.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32256,6 +32850,12 @@
     },
     {
       "file": "src/features/products/components/form/ProductMetadataMultiSelectField.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/form/StructuredProductNameField.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32315,6 +32915,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/components/list/ProductColumns.fixtures.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32328,6 +32934,12 @@
     },
     {
       "file": "src/features/products/components/list/ProductFilters.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/list/ProductListActivityPill.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32496,6 +33108,12 @@
     },
     {
       "file": "src/features/products/components/settings/CategoryTreeNodeRuntimeContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/settings/CustomFieldsSettings.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32879,6 +33497,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/context/ProductFormCustomFieldContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/context/ProductFormImageContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32898,6 +33522,12 @@
     },
     {
       "file": "src/features/products/context/ProductFormStudioContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/context/ProductImagePreviewContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32957,6 +33587,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/context-registry/ProductLeafCategoriesContextRegistrySource.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/context-registry/server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32999,6 +33635,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/hooks/product-list/productListStateHelpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/hooks/product-list/useProductEditHydration.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -33006,6 +33648,12 @@
     },
     {
       "file": "src/features/products/hooks/product-list/useProductListCategories.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/hooks/product-list/useProductListDebugLogging.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33155,6 +33803,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/hooks/useProductListScanRunSync.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/hooks/useProductListState.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -33210,6 +33864,12 @@
     },
     {
       "file": "src/features/products/hooks/useProductsMutations.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/hooks/useProductsPagedDebugLogging.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33281,6 +33941,30 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/lib/buildMarketplaceCopyDebrandTriggerInput.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/lib/extractDebrandedMarketplaceCopyFromAiPathRunDetail.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/lib/extractNormalizeProductNameFromAiPathRunDetail.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/lib/leafCategoryHierarchy.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/lib/product-ai-run-feedback.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -33299,6 +33983,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/lib/product-scan-run-feedback.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/lib/resolveValidatorCategoryReplacement.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -33306,6 +33996,12 @@
     },
     {
       "file": "src/features/products/lib/resolveValidatorFieldReplacement.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/lib/validateNormalizedProductName.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33365,7 +34061,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/pages/AdminProductScannerSettingsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/pages/AdminProductTitleTermsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/pages/AdminProductsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/pages/AdminProductsPageRuntime.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33455,6 +34169,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/public/admin-product-title-terms-page.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/public/admin-products-page.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -33480,6 +34200,12 @@
     },
     {
       "file": "src/features/products/public/product-settings-page.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/scanner-settings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33516,6 +34242,36 @@
     },
     {
       "file": "src/features/products/server/product-orders-import-preview.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scan-amazon-script.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scan-amazon.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scanner-settings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scans-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scans-service.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -34469,6 +35225,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/viewer3d/admin.public.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/viewer3d/api/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -34650,6 +35412,12 @@
     },
     {
       "file": "src/features/viewer3d/utils/asset3dUploader.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/viewer3d/utils/formatAssetDate.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -35327,6 +36095,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/integrations/import-template-targets.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/integrations/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -35400,6 +36174,12 @@
     },
     {
       "file": "src/shared/contracts/integrations/templates.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/integrations/tradera-parameter-mapper.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -35783,6 +36563,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/product-scans.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/product-sync.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -35802,6 +36588,12 @@
     },
     {
       "file": "src/shared/contracts/products/categories.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/products/custom-fields.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -35867,6 +36659,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/products/scanner-settings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/products/shipping-groups.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -35880,6 +36678,12 @@
     },
     {
       "file": "src/shared/contracts/products/tags.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/products/title-terms.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -37793,7 +38597,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/ai-paths/core/utils/model-capability-preflight.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/ai-paths/core/utils/node-identity.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-paths/core/utils/path-config-sanitization.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-paths/core/utils/path-folders.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -37823,13 +38645,31 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/ai-paths/core/utils/runtime-state.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/ai-paths/core/utils/runtime.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/ai-paths/core/utils/stored-path-config.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/ai-paths/core/utils/template.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-paths/core/utils/trigger-label-migration.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -38741,6 +39581,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/db/mongo-source.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/db/mongo-write-retry.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -38796,6 +39642,12 @@
     },
     {
       "file": "src/shared/lib/db/services/database-sync-types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/db/services/mongo-source-sync.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -38886,6 +39738,12 @@
     },
     {
       "file": "src/shared/lib/db/utils/backup-schedule-time.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/db/utils/database-cache.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -39593,6 +40451,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/integrations/base-marketplace-checkboxes.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/integrations/services/integration-provider.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -39624,6 +40488,12 @@
     },
     {
       "file": "src/shared/lib/jobs/api/segments/product-ai-jobs.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/jobs/components/BaseImportRunsQueuePanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -39761,6 +40631,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/next/cache-life.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/observability/activity-repository/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -39858,6 +40734,12 @@
     },
     {
       "file": "src/shared/lib/observability/critical-error-notifier.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/observability/entry-server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -40031,7 +40913,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/observability/types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/observability/utils/formatTimestamp.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/observability/utils/log-parsing.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/observability/utils/logHelpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -40097,6 +40997,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/playwright/browser-launch.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/playwright/personas.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -40152,6 +41058,18 @@
     },
     {
       "file": "src/shared/lib/products/services/category-repository/mongo-category-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/products/services/custom-field-repository/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/products/services/custom-field-repository/mongo-product-custom-field-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -40379,6 +41297,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/products/services/title-term-repository/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/products/services/title-term-repository/mongo-title-term-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/products/services/validation-pattern-repository/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -40409,6 +41339,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/products/title-terms.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/products/utils/custom-field-values.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/products/utils/effective-shipping-group.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -40422,6 +41364,12 @@
     },
     {
       "file": "src/shared/lib/products/utils/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/products/utils/marketplace-content-overrides.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -40626,6 +41574,12 @@
     },
     {
       "file": "src/shared/lib/react/createStrictContext.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/react/types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -40908,6 +41862,12 @@
     },
     {
       "file": "src/shared/providers/AppFontProvider.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/providers/AppIntlProvider.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -42293,6 +43253,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/utils/observability/client-error-dispatch.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/utils/observability/client-error-logger.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -42511,5 +43477,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2738
+  "durationMs": 4017
 }

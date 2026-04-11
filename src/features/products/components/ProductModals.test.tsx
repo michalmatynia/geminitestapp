@@ -12,9 +12,14 @@ import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 
-const { useProductListHeaderActionsContextMock, useProductListModalsContextMock } = vi.hoisted(() => ({
+const {
+  useProductListHeaderActionsContextMock,
+  useProductListModalsContextMock,
+  useProductListSelectionContextMock,
+} = vi.hoisted(() => ({
   useProductListHeaderActionsContextMock: vi.fn(),
   useProductListModalsContextMock: vi.fn(),
+  useProductListSelectionContextMock: vi.fn(),
 }));
 
 const {
@@ -53,6 +58,7 @@ const {
 vi.mock('@/features/products/context/ProductListContext', () => ({
   useProductListHeaderActionsContext: useProductListHeaderActionsContextMock,
   useProductListModalsContext: useProductListModalsContextMock,
+  useProductListSelectionContext: useProductListSelectionContextMock,
 }));
 
 vi.mock('@/features/products/context/ProductFormContext', () => ({
@@ -247,6 +253,9 @@ describe('ProductModals', () => {
     useProductListHeaderActionsContextMock.mockReturnValue({
       showTriggerRunFeedback: false,
       setShowTriggerRunFeedback: vi.fn(),
+    });
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [],
     });
     useProductFormCoreMock.mockReturnValue({
       product: null,

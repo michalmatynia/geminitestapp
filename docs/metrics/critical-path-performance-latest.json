@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T10:39:04.276Z",
+  "generatedAt": "2026-04-11T14:40:40.997Z",
   "strictMode": false,
   "summary": {
     "total": 10,
@@ -383,24 +383,28 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-11T10:39:04.269Z",
+    "generatedAt": "2026-04-11T14:40:40.989Z",
     "hotspots": {
       "topFilesByLines": [
         {
           "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-          "lines": 4399
+          "lines": 4416
         },
         {
-          "path": "src/features/products/components/ProductModals.test.tsx",
-          "lines": 1543
+          "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
+          "lines": 1867
         },
         {
           "path": "src/features/products/server/product-scans-service.test.ts",
-          "lines": 1382
+          "lines": 1732
+        },
+        {
+          "path": "src/features/products/components/ProductModals.test.tsx",
+          "lines": 1552
         },
         {
           "path": "src/features/products/components/list/ProductColumns.test.tsx",
-          "lines": 1246
+          "lines": 1286
         },
         {
           "path": "src/features/integrations/services/tradera-listing-service.test.ts",
@@ -419,12 +423,12 @@
           "lines": 1048
         },
         {
-          "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx",
-          "lines": 1035
+          "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
+          "lines": 1037
         },
         {
-          "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
-          "lines": 1015
+          "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx",
+          "lines": 1035
         },
         {
           "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
@@ -444,10 +448,6 @@
         },
         {
           "path": "src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx",
-          "lines": 991
-        },
-        {
-          "path": "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
           "lines": 991
         },
         {
@@ -519,11 +519,11 @@
           "lines": 124
         },
         {
-          "path": "src/app/api/agentcreator/[[...path]]/route.ts",
-          "lines": 115
+          "path": "src/app/api/v2/products/[[...path]]/route.ts",
+          "lines": 117
         },
         {
-          "path": "src/app/api/v2/products/[[...path]]/route.ts",
+          "path": "src/app/api/agentcreator/[[...path]]/route.ts",
           "lines": 115
         },
         {

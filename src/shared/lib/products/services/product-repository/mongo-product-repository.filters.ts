@@ -571,6 +571,15 @@ export const buildMongoWhere = async (
     } as Filter<ProductDocument>);
   }
 
+  if (filters.archived !== undefined) {
+    filter = appendAndCondition(
+      filter,
+      (filters.archived
+        ? { archived: true }
+        : { archived: { $ne: true } }) as Filter<ProductDocument>
+    );
+  }
+
   if (filters.baseExported !== undefined || filters.advancedFilter) {
     const exportContext = await loadMongoBaseExportLookupContext();
 

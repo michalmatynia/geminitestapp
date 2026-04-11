@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T11:04:43.121Z",
+  "generatedAt": "2026-04-11T14:40:26.139Z",
   "track": {
     "id": "application-performance",
     "title": "Application performance",
@@ -114,12 +114,12 @@
     "defaultSelected": true,
     "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
     "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
+    "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
     "docDir": "docs/build/improvements/application-performance",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-11T10:38:42.355Z",
+        "generatedAt": "2026-04-11T14:40:26.131Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -143,7 +143,7 @@
             "outputs": [],
             "instructions": [],
             "script": "perf:ops:fast",
-            "durationMs": 47383
+            "durationMs": 46069
           }
         ],
         "status": "passed"
@@ -197,36 +197,20 @@
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-11T11:04:43.118Z",
+        "generatedAt": "2026-04-11T14:20:03.230Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
-        "stepCount": 1,
+        "stepCount": 0,
         "automaticStepCount": 0,
-        "manualStepCount": 1,
+        "manualStepCount": 0,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "application-performance-plan",
-            "title": "Review the latest performance baseline outputs before optimization work",
-            "trackId": "application-performance",
-            "phase": "plan",
-            "mode": "manual",
-            "writes": false,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "Use docs/metrics/critical-path-performance-latest.md and docs/metrics/critical-flow-tests-latest.md as the default review surfaces.",
-              "Treat docs/metrics/route-hotspots.md as the next-level investigation when baseline output suggests route-level regressions.",
-              "Use the weekly lane only when you need trend context, not for every local improvement pass."
-            ]
-          }
-        ],
-        "status": "manual"
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "dry-run",

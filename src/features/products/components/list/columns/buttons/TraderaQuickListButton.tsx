@@ -11,7 +11,7 @@ import {
   ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
@@ -38,7 +38,7 @@ import {
   useTraderaQuickExportPolling,
   type ResolvedTraderaQuickListContext,
   type ResolvedTraderaBrowserConnection,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 
 export function TraderaQuickListButton(props: {
   product: ProductWithImages;

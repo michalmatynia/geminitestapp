@@ -89,6 +89,8 @@ export const ProductFilters = memo(function ProductFilters({
     setAdvancedFilterState,
     baseExported,
     setBaseExported,
+    includeArchived,
+    setIncludeArchived,
     filtersCollapsedByDefault,
   } = useProductListFiltersContext();
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
@@ -225,6 +227,12 @@ export const ProductFilters = memo(function ProductFilters({
         width: '16rem',
       },
       {
+        key: 'includeArchived',
+        label: 'Show Archived',
+        type: 'checkbox',
+        width: '12rem',
+      },
+      {
         key: 'minPrice',
         label: 'Min Price',
         type: 'number',
@@ -267,6 +275,7 @@ export const ProductFilters = memo(function ProductFilters({
       description,
       categoryId,
       baseExported,
+      includeArchived,
       minPrice,
       maxPrice,
       stockOperator,
@@ -280,6 +289,7 @@ export const ProductFilters = memo(function ProductFilters({
       description,
       categoryId,
       baseExported,
+      includeArchived,
       minPrice,
       maxPrice,
       stockOperator,
@@ -313,6 +323,9 @@ export const ProductFilters = memo(function ProductFilters({
         } else {
           setBaseExported('');
         }
+        break;
+      case 'includeArchived':
+        setIncludeArchived(value === true);
         break;
       case 'minPrice':
         setMinPrice(
@@ -384,6 +397,7 @@ export const ProductFilters = memo(function ProductFilters({
           setDescription('');
           setCategoryId('');
           setBaseExported('');
+          setIncludeArchived(false);
           setMinPrice(undefined);
           setMaxPrice(undefined);
           setStockOperator('');

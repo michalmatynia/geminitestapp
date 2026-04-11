@@ -710,7 +710,7 @@ export function StructuredProductNameField({
       id={fieldName}
       actions={
         <Button size='xs' variant='outline' asChild>
-          <a href={titleTermsHref} target='_blank' rel='noreferrer'>
+          <a href={titleTermsHref} target='_blank' rel='noopener noreferrer'>
             <BookType className='size-3.5' />
             <span>Open Title Terms</span>
           </a>

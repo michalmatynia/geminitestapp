@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
-import { findProductListingByIdAcrossProviders } from '@/features/integrations/services/product-listing-repository';
 import type {
   IntegrationConnectionRecord,
   IntegrationRecord,
@@ -48,22 +46,34 @@ export type PlaywrightListingRunContextResult =
   | PlaywrightResolvedListingRunContext
   | PlaywrightMissingListingRunContext;
 
+export type PlaywrightListingRunContextDependencies = {
+  findListingById: (
+    listingId: string
+  ) => Promise<{ listing: ProductListing; repository: ProductListingRepository } | null>;
+  getConnectionById: (connectionId: string) => Promise<IntegrationConnectionRecord | null>;
+  getIntegrationById: (integrationId: string) => Promise<IntegrationRecord | null>;
+};
+
 export function resolvePlaywrightListingRunContext(input: {
   listingId: string;
   includeIntegration: true;
+  dependencies: PlaywrightListingRunContextDependencies;
 }): Promise<PlaywrightResolvedListingRunContextWithIntegration | PlaywrightMissingListingRunContext>;
 export function resolvePlaywrightListingRunContext(input: {
   listingId: string;
   includeIntegration?: false;
+  dependencies: PlaywrightListingRunContextDependencies;
 }): Promise<PlaywrightResolvedListingRunContext | PlaywrightMissingListingRunContext>;
 export async function resolvePlaywrightListingRunContext({
   listingId,
   includeIntegration = false,
+  dependencies,
 }: {
   listingId: string;
   includeIntegration?: boolean;
+  dependencies: PlaywrightListingRunContextDependencies;
 }): Promise<PlaywrightListingRunContextResult> {
-  const resolvedListing = await findProductListingByIdAcrossProviders(listingId);
+  const resolvedListing = await dependencies.findListingById(listingId);
   if (!resolvedListing) {
     return {
       ok: false,
@@ -73,8 +83,7 @@ export async function resolvePlaywrightListingRunContext({
   }
 
   const { listing, repository } = resolvedListing;
-  const integrationRepo = await getIntegrationRepository();
-  const connection = await integrationRepo.getConnectionById(listing.connectionId);
+  const connection = await dependencies.getConnectionById(listing.connectionId);
   if (!connection) {
     return {
       ok: false,
@@ -94,7 +103,7 @@ export async function resolvePlaywrightListingRunContext({
     };
   }
 
-  const integration = await integrationRepo.getIntegrationById(connection.integrationId);
+  const integration = await dependencies.getIntegrationById(connection.integrationId);
   if (!integration) {
     return {
       ok: false,

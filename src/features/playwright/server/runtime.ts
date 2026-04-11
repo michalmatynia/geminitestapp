@@ -4,8 +4,8 @@ import {
   enqueuePlaywrightNodeRun,
   readPlaywrightNodeArtifact,
   readPlaywrightNodeRun,
-} from '@/features/ai/ai-paths/services/playwright-node-runner';
-import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
+} from '@/features/ai/server';
+import { validatePlaywrightNodeScript } from '@/features/ai/server';
 import type {
   PlaywrightNodeArtifactReadResult,
   PlaywrightNodeRunArtifact,
@@ -14,7 +14,7 @@ import type {
   PlaywrightNodeRunInstanceKind,
   PlaywrightNodeRunRecord,
   PlaywrightNodeRunRequest,
-} from '@/features/ai/ai-paths/services/playwright-node-runner.types';
+} from '@/features/ai/server';
 
 export type PlaywrightEngineRunRequest = PlaywrightNodeRunRequest;
 export type PlaywrightEngineRunArtifact = PlaywrightNodeRunArtifact;

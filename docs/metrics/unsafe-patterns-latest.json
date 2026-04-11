@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-11T13:44:51.214Z",
+  "generatedAt": "2026-04-11T14:55:41.887Z",
   "status": "passed",
   "summary": {
-    "total": 10,
+    "total": 11,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 10,
+    "infoCount": 11,
     "status": "passed",
-    "fileCount": 7252
+    "fileCount": 7265
   },
   "scope": {
     "root": "src",
@@ -16,7 +16,7 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 5,
+    "anyCount": 6,
     "eslintDisableCount": 2,
     "nonNullAssertionCount": 3,
     "tsIgnoreCount": 0,
@@ -63,6 +63,16 @@
       "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
       "file": "src/features/kangur/ui/KangurLoginPage.test-support.tsx",
       "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/products/server/product-scanner-settings.ts",
+      "line": 36,
       "column": null,
       "snippet": null,
       "context": null
@@ -139,7 +149,7 @@
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 5
+      "infoCount": 6
     },
     {
       "ruleId": "non-null-assertion",
@@ -148,5 +158,5 @@
       "infoCount": 3
     }
   ],
-  "durationMs": 2380
+  "durationMs": 1846
 }

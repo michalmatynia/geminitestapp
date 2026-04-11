@@ -61,11 +61,13 @@ export interface ColumnDef<T> {
 // Panel State & Events
 // ============================================================
 
+import type { SortOrder } from '../base';
+
 export interface PanelState {
   page: number;
   pageSize: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: SortOrder;
   filters: Record<string, unknown>;
   search?: string;
 }
@@ -76,7 +78,7 @@ export interface PanelCallbacks {
   onFilterChange?: (key: string, value: unknown) => void;
   onSearchChange?: (search: string) => void;
   onRefresh?: () => void | Promise<void>;
-  onSort?: (key: string, order: 'asc' | 'desc') => void;
+  onSort?: (key: string, order: SortOrder) => void;
   onRowClick?: (row: unknown) => void;
 }
 

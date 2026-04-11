@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 
-import { useIntegrationListingBadges } from '@/features/integrations/product-integrations-adapter';
+import { useIntegrationListingBadges } from '@/features/integrations/public';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
@@ -188,6 +188,7 @@ export function ProductListProvider({
       vintedBadgeStatuses: badgeState.vintedBadgeStatuses,
       queuedProductIds: value.queuedProductIds,
       productAiRunStatusByProductId: value.productAiRunStatusByProductId,
+      productScanRunStatusByProductId: value.productScanRunStatusByProductId,
     }),
     [
       badgeState.integrationBadgeIds,
@@ -198,6 +199,7 @@ export function ProductListProvider({
       badgeState.playwrightProgrammableBadgeStatuses,
       value.queuedProductIds,
       value.productAiRunStatusByProductId,
+      value.productScanRunStatusByProductId,
     ]
   );
 

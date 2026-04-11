@@ -273,6 +273,7 @@ export type TransactionalProductRepository = {
   bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
   bulkAddProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
   bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
+  bulkSetArchived(productIds: string[], archived: boolean): Promise<number>;
 };
 export type ProductRepository = TransactionalProductRepository & {
   getProductIds(filters: ProductFilters): Promise<string[]>;

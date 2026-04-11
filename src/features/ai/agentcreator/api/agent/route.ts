@@ -303,7 +303,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   });
   const ids = runs.map((run: AgentRunIdRecord) => run.id);
   if (ids.length === 0) {
-    const response: AgentRunsDeleteResponse = { deleted: 0 };
+    const response: AgentRunsDeleteResponse = { success: true, deletedCount: 0, deleted: 0 };
     return NextResponse.json(response);
   }
   await chatbotAgentRun.deleteMany({
@@ -324,7 +324,11 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
       durationMs: Date.now() - requestStart,
     });
   }
-  const response: AgentRunsDeleteResponse = { deleted: ids.length };
+  const response: AgentRunsDeleteResponse = {
+    success: true,
+    deletedCount: ids.length,
+    deleted: ids.length,
+  };
   return NextResponse.json(response);
 }
 

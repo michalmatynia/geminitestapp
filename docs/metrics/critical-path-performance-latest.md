@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-11T10:39:04.276Z
+Generated at: 2026-04-11T14:40:40.997Z
 
 ## Summary
 
@@ -86,16 +86,16 @@ Generated at: 2026-04-11T10:39:04.276Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/integrations/services/tradera-listing/browser.test.ts` | 4399 |
-| `src/features/products/components/ProductModals.test.tsx` | 1543 |
-| `src/features/products/server/product-scans-service.test.ts` | 1382 |
-| `src/features/products/components/list/ProductColumns.test.tsx` | 1246 |
+| `src/features/integrations/services/tradera-listing/browser.test.ts` | 4416 |
+| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 1867 |
+| `src/features/products/server/product-scans-service.test.ts` | 1732 |
+| `src/features/products/components/ProductModals.test.tsx` | 1552 |
+| `src/features/products/components/list/ProductColumns.test.tsx` | 1286 |
 | `src/features/integrations/services/tradera-listing-service.test.ts` | 1130 |
 | `src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts` | 1095 |
 | `src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx` | 1055 |
 | `src/shared/lib/products/services/productService.test.ts` | 1048 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx` | 1035 |
-| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1015 |
+| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1037 |
 
 ## Top API Route Hotspots (Reference)
 
@@ -103,8 +103,8 @@ Generated at: 2026-04-11T10:39:04.276Z
 | --- | ---: |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 144 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 117 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 115 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 114 |
 | `src/app/api/databases/[[...path]]/route.ts` | 100 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 80 |

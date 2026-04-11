@@ -3,6 +3,8 @@ import 'server-only';
 import { isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
 import {
   decryptSecret,
+  findProductListingByIdAcrossProviders,
+  getIntegrationRepository,
 } from '@/features/integrations/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
@@ -113,9 +115,15 @@ export const runPlaywrightListing = async (
 ): Promise<PlaywrightListingExecutionResult> => {
   const requestedBrowserMode = resolveRequestedBrowserMode(input.browserMode);
   try {
+    const integrationRepository = await getIntegrationRepository();
     const runContext = await resolvePlaywrightListingRunContext({
       listingId: input.listingId,
       includeIntegration: true,
+      dependencies: {
+        findListingById: findProductListingByIdAcrossProviders,
+        getConnectionById: integrationRepository.getConnectionById.bind(integrationRepository),
+        getIntegrationById: integrationRepository.getIntegrationById.bind(integrationRepository),
+      },
     });
     if (!runContext.ok) {
       return buildPlaywrightServiceListingMissingContextFailure({
@@ -195,6 +203,9 @@ export const processPlaywrightListingJob = async (input: PlaywrightListingJobInp
   const persistenceContext = await resolvePlaywrightListingPersistenceContextAfterRun({
     listingId: input.listingId,
     result,
+    dependencies: {
+      findListingById: findProductListingByIdAcrossProviders,
+    },
     missingErrorMessage: `Listing not found: ${input.listingId}`,
   });
   if (!persistenceContext) {

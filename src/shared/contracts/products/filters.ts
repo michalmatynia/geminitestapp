@@ -440,6 +440,17 @@ export const productFilterSchema = commonListQuerySchema.extend({
   stockOperator: productStockOperatorSchema.optional(),
   catalogId: z.string().trim().optional(),
   searchLanguage: z.enum(['name_en', 'name_pl', 'name_de']).optional(),
+  archived: z.preprocess((value: unknown) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (!normalized) return undefined;
+      if (normalized === 'true' || normalized === '1') return true;
+      if (normalized === 'false' || normalized === '0') return false;
+    }
+    return value;
+  }, z.boolean().optional()),
   advancedFilter: z.preprocess(
     (value: unknown) => {
       if (value === undefined || value === null) return undefined;

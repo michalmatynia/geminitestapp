@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T11:04:43.121Z",
+  "generatedAt": "2026-04-11T14:40:26.139Z",
   "track": {
     "id": "products-parameter-integrity",
     "title": "Products parameter integrity",
@@ -235,45 +235,25 @@
     "defaultSelected": true,
     "description": "Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.",
     "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
+    "latestGeneratedAt": "2026-04-11T09:41:24.435Z",
     "docDir": "docs/build/improvements/products-parameter-integrity",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-11T10:38:42.355Z",
+        "generatedAt": "2026-04-11T14:40:26.131Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 1,
+        "stepCount": 0,
+        "automaticStepCount": 0,
         "manualStepCount": 0,
-        "passedStepCount": 1,
+        "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [
-          "/tmp/product-missing-parameters-audit-*.json",
-          "/tmp/product-missing-parameters-audit-latest.json"
-        ],
-        "steps": [
-          {
-            "id": "products-parameter-audit",
-            "title": "Audit products with missing parameters",
-            "trackId": "products-parameter-integrity",
-            "phase": "audit",
-            "mode": "automatic",
-            "writes": false,
-            "status": "passed",
-            "outputs": [
-              "/tmp/product-missing-parameters-audit-*.json",
-              "/tmp/product-missing-parameters-audit-latest.json"
-            ],
-            "instructions": [],
-            "script": "products:audit:missing-parameters",
-            "durationMs": 3637
-          }
-        ],
-        "status": "passed"
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "classify",
@@ -432,35 +412,20 @@
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-11T11:04:43.118Z",
+        "generatedAt": "2026-04-11T14:20:03.230Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
-        "stepCount": 1,
+        "stepCount": 0,
         "automaticStepCount": 0,
-        "manualStepCount": 1,
+        "manualStepCount": 0,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "products-parameter-integrity-plan-review",
-            "title": "Review the refreshed parameter recovery workspace",
-            "trackId": "products-parameter-integrity",
-            "phase": "plan",
-            "mode": "manual",
-            "writes": false,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "Confirm the latest unresolved count from /tmp/product-parameter-source-recovery-summary-latest.json.",
-              "Review the generated batch manifest and family mapping checklist before any write-side recovery step."
-            ]
-          }
-        ],
-        "status": "manual"
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "dry-run",

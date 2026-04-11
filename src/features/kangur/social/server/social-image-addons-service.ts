@@ -26,7 +26,7 @@ import { operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
 import { logger } from '@/shared/utils/logger';
-import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server/request-storage-state';
+import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server';
 
 import { upsertKangurSocialImageAddon } from './social-image-addons-repository';
 

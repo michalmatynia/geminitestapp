@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Toast Notification Migration Sheet (`notification`)
 
-Generated at: 2026-04-10T09:12:39.132Z
+Generated at: 2026-04-11T13:54:16.572Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-10T09:12:39.132Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/notification.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/notification.scaffold.json`
 - v3 object id: `node_obj_notification_portable_v3`
-- v3 object hash: `f350d714d27be53bebe3c4206fabfcce5e961c81dacf0fe99561d6b1dc75e751`
+- v3 object hash: `4b663cda4c0b0369833e36874c012d61431b50a2774e9f4af1b470aa4ad90bf2`
 
 ## Ports
 

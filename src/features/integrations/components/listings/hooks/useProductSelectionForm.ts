@@ -24,6 +24,7 @@ import {
   preflightVintedQuickListSession,
 } from '@/features/integrations/utils/vinted-browser-session';
 import { normalizeVintedDisplayText } from '@/features/integrations/utils/vinted-display';
+import { getBaseExportPreflightError } from '@/features/integrations/utils/baseExportPreflight';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -40,7 +41,9 @@ type UseProductSelectionFormResult = {
   handleSubmit: (onSuccess: () => void) => Promise<void>;
 };
 
-export function useProductSelectionForm(): UseProductSelectionFormResult {
+export function useProductSelectionForm(
+  getSelectedProductCategoryId: () => string | null = () => null
+): UseProductSelectionFormResult {
   const [productSearch, setProductSearch] = useState('');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +86,14 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
     }
 
     try {
+      if (isBaseComIntegration) {
+        const preflightError = getBaseExportPreflightError(getSelectedProductCategoryId());
+        if (preflightError) {
+          setError(preflightError);
+          return;
+        }
+      }
+
       setError(null);
       if (isBaseComIntegration) {
         const exportData: ExportToBaseVariables = {

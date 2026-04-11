@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:11.407Z",
+  "generatedAt": "2026-04-11T14:55:57.987Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,10 +7,10 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeFileCount": 305,
-    "methodCount": 221,
+    "routeFileCount": 311,
+    "methodCount": 223,
     "publicRouteCount": 15,
-    "protectedRouteCount": 205,
+    "protectedRouteCount": 207,
     "signedRouteCount": 0,
     "actorRouteCount": 1
   },
@@ -1582,6 +1582,20 @@
       "evidence": []
     },
     {
+      "route": "v2/integrations/product-listings/tradera-status-check",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "v2/integrations/tradera/parameter-mapper/catalog/fetch",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
       "route": "v2/metadata/[type]/[id]",
       "method": "GET",
       "policyId": "default-protected",
@@ -1682,5 +1696,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 165
+  "durationMs": 214
 }

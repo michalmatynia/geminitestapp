@@ -17,3 +17,4 @@ export * from './studio';
 export * from './drafts';
 export * from './errors';
 export * from './orders-import';
+export * from './scanner-settings';

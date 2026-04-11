@@ -1,6 +1,6 @@
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightBrowserPreference } from '@/shared/lib/playwright/browser-launch';
-import { buildPlaywrightListingHistoryFields } from '@/features/playwright/server/listing-service-utils';
+import { buildPlaywrightListingHistoryFields } from '@/features/playwright/server';
 
 export type VintedListingSource = 'manual' | 'scheduler' | 'api';
 

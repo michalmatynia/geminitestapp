@@ -13,6 +13,7 @@ if (typeof logAgentAudit === 'function') {
 }
 
 export * from './ai-context-registry/server';
+export * from './ai-paths/server';
 export * from './ai-context-registry/services/runtime-providers/kangur-recent-features';
 export * from './ai-paths/workers/aiPathRunQueue';
 export {

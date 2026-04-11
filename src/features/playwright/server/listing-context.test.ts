@@ -1,28 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  findProductListingByIdAcrossProvidersMock,
-  getConnectionByIdMock,
-  getIntegrationByIdMock,
-} = vi.hoisted(() => ({
-  findProductListingByIdAcrossProvidersMock: vi.fn(),
-  getConnectionByIdMock: vi.fn(),
-  getIntegrationByIdMock: vi.fn(),
-}));
-
-vi.mock('@/features/integrations/services/product-listing-repository', () => ({
-  findProductListingByIdAcrossProviders: (...args: unknown[]) =>
-    findProductListingByIdAcrossProvidersMock(...args),
-}));
-
-vi.mock('@/features/integrations/services/integration-repository', () => ({
-  getIntegrationRepository: async () => ({
-    getConnectionById: (...args: unknown[]) => getConnectionByIdMock(...args),
-    getIntegrationById: (...args: unknown[]) => getIntegrationByIdMock(...args),
-  }),
-}));
+const findProductListingByIdAcrossProvidersMock = vi.fn();
+const getConnectionByIdMock = vi.fn();
+const getIntegrationByIdMock = vi.fn();
 
 import { resolvePlaywrightListingRunContext } from './listing-context';
+
+const createDependencies = () => ({
+  findListingById: findProductListingByIdAcrossProvidersMock,
+  getConnectionById: getConnectionByIdMock,
+  getIntegrationById: getIntegrationByIdMock,
+});
 
 describe('playwright listing context helper', () => {
   beforeEach(() => {
@@ -35,6 +23,7 @@ describe('playwright listing context helper', () => {
     await expect(
       resolvePlaywrightListingRunContext({
         listingId: 'listing-1',
+        dependencies: createDependencies(),
       })
     ).resolves.toEqual({
       ok: false,
@@ -60,6 +49,7 @@ describe('playwright listing context helper', () => {
 
     const result = await resolvePlaywrightListingRunContext({
       listingId: 'listing-1',
+      dependencies: createDependencies(),
     });
 
     expect(result).toMatchObject({
@@ -96,6 +86,7 @@ describe('playwright listing context helper', () => {
       resolvePlaywrightListingRunContext({
         listingId: 'listing-1',
         includeIntegration: true,
+        dependencies: createDependencies(),
       })
     ).resolves.toMatchObject({
       ok: false,

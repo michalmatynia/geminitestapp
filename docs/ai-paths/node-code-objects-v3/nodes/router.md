@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Router Migration Sheet (`router`)
 
-Generated at: 2026-04-10T09:12:39.132Z
+Generated at: 2026-04-11T13:54:16.572Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-10T09:12:39.132Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/router.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/router.scaffold.json`
 - v3 object id: `node_obj_router_portable_v3`
-- v3 object hash: `790f1d79bbc61a4ab67ef795cb9dfbb93a62480111fbf10e709bc51346d2f96f`
+- v3 object hash: `7da7bdabcd3e56313d225a59d23b345615398c27134df68424fb02a432a01758`
 
 ## Ports
 

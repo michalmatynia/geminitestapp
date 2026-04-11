@@ -17,6 +17,8 @@ const mocks = vi.hoisted(() => ({
   listProductScansMock: vi.fn(),
   updateProductScanMock: vi.fn(),
   upsertProductScanMock: vi.fn(),
+  getProductScannerSettingsMock: vi.fn(),
+  buildProductScannerEngineRequestOptionsMock: vi.fn(),
   captureExceptionMock: vi.fn(),
 }));
 
@@ -59,6 +61,13 @@ vi.mock('./product-scans-repository', () => ({
   listProductScans: (...args: unknown[]) => mocks.listProductScansMock(...args),
   updateProductScan: (...args: unknown[]) => mocks.updateProductScanMock(...args),
   upsertProductScan: (...args: unknown[]) => mocks.upsertProductScanMock(...args),
+}));
+
+vi.mock('./product-scanner-settings', () => ({
+  getProductScannerSettings: (...args: unknown[]) =>
+    mocks.getProductScannerSettingsMock(...args),
+  buildProductScannerEngineRequestOptions: (...args: unknown[]) =>
+    mocks.buildProductScannerEngineRequestOptionsMock(...args),
 }));
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
@@ -113,6 +122,31 @@ describe('product-scans-service', () => {
       family: 'scrape',
       label: 'Amazon reverse image ASIN scan',
     });
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      playwrightSettings: {
+        headless: true,
+        slowMo: 0,
+        timeout: 30000,
+        navigationTimeout: 30000,
+        humanizeMouse: true,
+        mouseJitter: 5,
+        clickDelayMin: 50,
+        clickDelayMax: 150,
+        inputDelayMin: 20,
+        inputDelayMax: 80,
+        actionDelayMin: 500,
+        actionDelayMax: 1500,
+        proxyEnabled: false,
+        proxyServer: '',
+        proxyUsername: '',
+        proxyPassword: '',
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+    });
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
     mocks.updateProductScanMock.mockImplementation(
       async (id: string, updates: Partial<ProductScanRecord>) => ({
         ...createScan({ id }),
@@ -904,6 +938,95 @@ describe('product-scans-service', () => {
         },
       ],
     });
+  });
+
+  it('applies the global scanner settings when starting a new scan run', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+    });
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: 'persona-1',
+      playwrightBrowser: 'chrome',
+      playwrightSettings: {
+        headless: false,
+        slowMo: 25,
+        timeout: 45000,
+        navigationTimeout: 35000,
+        humanizeMouse: true,
+        mouseJitter: 9,
+        clickDelayMin: 50,
+        clickDelayMax: 150,
+        inputDelayMin: 20,
+        inputDelayMax: 80,
+        actionDelayMin: 500,
+        actionDelayMax: 1500,
+        proxyEnabled: false,
+        proxyServer: '',
+        proxyUsername: '',
+        proxyPassword: '',
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+    });
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({
+      personaId: 'persona-1',
+      settingsOverrides: {
+        headless: false,
+        slowMo: 25,
+      },
+      launchOptions: {
+        channel: 'chrome',
+      },
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-scanner-1',
+      status: 'queued',
+    });
+
+    await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.getProductScannerSettingsMock).toHaveBeenCalledTimes(1);
+    expect(mocks.buildProductScannerEngineRequestOptionsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playwrightPersonaId: 'persona-1',
+        playwrightBrowser: 'chrome',
+      })
+    );
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          browserEngine: 'chromium',
+          personaId: 'persona-1',
+          settingsOverrides: {
+            headless: false,
+            slowMo: 25,
+          },
+          launchOptions: {
+            channel: 'chrome',
+          },
+        }),
+      })
+    );
   });
 
   it('returns a running batch result when the Playwright engine starts the scan immediately', async () => {

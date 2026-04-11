@@ -2,8 +2,7 @@ import 'server-only';
 
 import type { NextRequest } from 'next/server';
 
-import { isCollectionAllowed } from '@/features/ai/ai-paths/server/collection-allowlist';
-import { isAiPathsInternalRequest } from '@/features/ai/ai-paths/server/access';
+import { isCollectionAllowed, isAiPathsInternalRequest } from '@/features/ai/server';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { forbiddenError } from '@/shared/errors/app-error';
 

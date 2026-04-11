@@ -168,6 +168,10 @@ export const mongoProductRepository: ProductRepository = {
     );
   },
 
+  async bulkSetArchived(productIds: string[], archived: boolean): Promise<number> {
+    return mongoProductWriteImpl.bulkSetArchived(productIds, archived, getProductCollection);
+  },
+
   async createProductInTransaction<T>(callback: (tx: ProductRepository) => Promise<T>): Promise<T> {
     return callback(this);
   },

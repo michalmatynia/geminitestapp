@@ -420,6 +420,22 @@ describe('mongo-product-repository.filters', () => {
     expect(serialized).toContain('"$in":["product-1"]');
   });
 
+  it('filters archived products explicitly when the archived flag is provided', async () => {
+    const archivedFalseFilter = await buildMongoWhere({
+      archived: false,
+    });
+    const archivedTrueFilter = await buildMongoWhere({
+      archived: true,
+    });
+
+    expect(archivedFalseFilter).toEqual({
+      archived: { $ne: true },
+    });
+    expect(archivedTrueFilter).toEqual({
+      archived: true,
+    });
+  });
+
   it('compiles the remaining string, id, and empty-state advanced operators', () => {
     const payload = JSON.stringify({
       type: 'group',

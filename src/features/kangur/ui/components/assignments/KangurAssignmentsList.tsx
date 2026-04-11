@@ -83,12 +83,16 @@ type KangurAssignmentsListProgressMetaProps = {
 };
 
 type KangurAssignmentsListShellProps = {
-  compact: boolean;
   emptyStateDescription: string;
-  items: KangurAssignmentListItem[];
   summary?: string;
   title: string;
   translations: ReturnType<typeof useTranslations<'KangurAssignmentsList'>>;
+};
+
+type KangurAssignmentsListLayoutContextValue = {
+  compact: boolean;
+  items: KangurAssignmentListItem[];
+  showTimeCountdown: boolean;
 };
 
 const KangurAssignmentsListItemContext = createContext<KangurAssignmentsListItemContextValue | null>(
@@ -98,18 +102,26 @@ const KangurAssignmentsListActionContext =
   createContext<{ onItemActionClick?: (item: KangurAssignmentListItem) => void } | null>(null);
 const KangurAssignmentsListArchiveContext =
   createContext<KangurAssignmentsListArchiveContextValue | null>(null);
+const KangurAssignmentsListLayoutContext =
+  createContext<KangurAssignmentsListLayoutContextValue | null>(null);
 const KangurAssignmentsListRuntimeContext =
   createContext<KangurAssignmentsListRuntimeContextValue | null>(null);
 
-const useKangurAssignmentsListItem = (): KangurAssignmentListItem => {
-  const context = useContext(KangurAssignmentsListItemContext);
+function useKangurAssignmentsListLayout(): KangurAssignmentsListLayoutContextValue {
+  const context = useContext(KangurAssignmentsListLayoutContext);
+  if (!context) {
+    throw new Error('useKangurAssignmentsListLayout must be used within KangurAssignmentsList.');
+  }
+  return context;
+}
 
+function useKangurAssignmentsListItem(): KangurAssignmentListItem {
+  const context = useContext(KangurAssignmentsListItemContext);
   if (!context) {
     throw new Error('useKangurAssignmentsListItem must be used within KangurAssignmentsList.');
   }
-
   return context.item;
-};
+}
 
 const useKangurAssignmentsListArchive = (): KangurAssignmentsListArchiveContextValue => {
   return useContext(KangurAssignmentsListArchiveContext) ?? {};
@@ -122,10 +134,12 @@ const useKangurAssignmentsListActions = (): {
 };
 
 const useKangurAssignmentsListRuntime = (): KangurAssignmentsListRuntimeContextValue => {
-  return useContext(KangurAssignmentsListRuntimeContext) ?? {
-    now: Date.now(),
-    showTimeCountdown: false,
-  };
+  return (
+    useContext(KangurAssignmentsListRuntimeContext) ?? {
+      now: Date.now(),
+      showTimeCountdown: false,
+    }
+  );
 };
 
 const formatAssignmentCountLabel = (
@@ -338,13 +352,12 @@ function KangurAssignmentsListArchiveAction({
 }
 
 function KangurAssignmentsListShell({
-  compact,
   emptyStateDescription,
-  items,
   summary,
   title,
   translations,
 }: KangurAssignmentsListShellProps): React.JSX.Element {
+  const { compact, items } = useKangurAssignmentsListLayout();
   const CardComponent = compact ? KangurAssignmentsListCompactCard : KangurAssignmentsListStandardCard;
   const countLabel = formatAssignmentCountLabel(items.length, translations);
   const shellSurface = compact ? 'mist' : 'mistStrong';
@@ -404,7 +417,8 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
-  const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
+  const { showTimeCountdown } = useKangurAssignmentsListLayout();
+  const { now } = useKangurAssignmentsListRuntime();
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown, {
     locale,
     translate: runtimeTranslations,
@@ -495,7 +509,8 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const { onItemActionClick } = useKangurAssignmentsListActions();
   const { onArchive, onTimeLimitClick, onReassign, reassigningId } =
     useKangurAssignmentsListArchive();
-  const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
+  const { showTimeCountdown } = useKangurAssignmentsListLayout();
+  const { now } = useKangurAssignmentsListRuntime();
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown, {
     locale,
     translate: runtimeTranslations,
@@ -620,6 +635,14 @@ export function KangurAssignmentsList({
     () => ({ onItemActionClick }),
     [onItemActionClick]
   );
+  const layoutContextValue = useMemo(
+    () => ({
+      compact,
+      items,
+      showTimeCountdown,
+    }),
+    [compact, items, showTimeCountdown]
+  );
 
   useEffect(() => {
     if (!shouldTick) {
@@ -634,20 +657,20 @@ export function KangurAssignmentsList({
   }, shouldTick ? 1000 : null);
 
   return (
-    <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
+    <KangurAssignmentsListLayoutContext.Provider value={layoutContextValue}>
       <KangurAssignmentsListActionContext.Provider value={actionContextValue}>
         <KangurAssignmentsListArchiveContext.Provider value={archiveContextValue}>
-          <KangurAssignmentsListShell
-            compact={compact}
-            emptyStateDescription={emptyStateDescription}
-            items={items}
-            summary={summary}
-            title={title}
-            translations={translations}
-          />
+          <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
+            <KangurAssignmentsListShell
+              emptyStateDescription={emptyStateDescription}
+              summary={summary}
+              title={title}
+              translations={translations}
+            />
+          </KangurAssignmentsListRuntimeContext.Provider>
         </KangurAssignmentsListArchiveContext.Provider>
       </KangurAssignmentsListActionContext.Provider>
-    </KangurAssignmentsListRuntimeContext.Provider>
+    </KangurAssignmentsListLayoutContext.Provider>
   );
 }
 

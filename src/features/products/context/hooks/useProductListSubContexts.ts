@@ -68,6 +68,8 @@ export function useProductListSubContexts(
       setAdvancedFilterState: value.setAdvancedFilterState,
       baseExported: value.baseExported,
       setBaseExported: value.setBaseExported,
+      includeArchived: value.includeArchived,
+      setIncludeArchived: value.setIncludeArchived,
     }),
     [
       value.page,
@@ -117,6 +119,8 @@ export function useProductListSubContexts(
       value.setAdvancedFilterState,
       value.baseExported,
       value.setBaseExported,
+      value.includeArchived,
+      value.setIncludeArchived,
     ]
   );
 

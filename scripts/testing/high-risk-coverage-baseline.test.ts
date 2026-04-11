@@ -18,7 +18,7 @@ import {
 describe('high-risk coverage baseline helper', () => {
   it('builds a vitest coverage command with the expected report path and include globs', () => {
     const args = buildHighRiskCoverageVitestArgs({
-      coverageIncludeGlobs: ['src/app/api/**'],
+      coverageIncludeGlobs: ['src/app/api/**/*.{ts,tsx}'],
       testFiles: ['src/app/api/example/handler.test.ts', 'src/features/kangur/example.test.tsx'],
     });
 
@@ -42,7 +42,7 @@ describe('high-risk coverage baseline helper', () => {
 
     expect(args).toContain('src/app/api/example/handler.test.ts');
     expect(args).toContain('src/features/kangur/example.test.tsx');
-    expect(args).toContain('src/app/api/**');
+    expect(args).toContain('src/app/api/**/*.{ts,tsx}');
     expect(args).toEqual(
       expect.arrayContaining(['--coverage.exclude', '**/*.md', '--coverage.exclude', '**/*.markdown'])
     );
@@ -76,17 +76,17 @@ describe('high-risk coverage baseline helper', () => {
         expect.objectContaining({
           id: 'api-routes',
           reportsDirectory: 'coverage/high-risk/api',
-          coverageIncludeGlobs: ['src/app/api/**'],
+          coverageIncludeGlobs: ['src/app/api/**/*.{ts,tsx}'],
         }),
         expect.objectContaining({
           id: 'shared-lib',
           reportsDirectory: 'coverage/high-risk/shared-lib',
-          coverageIncludeGlobs: ['src/shared/lib/**'],
+          coverageIncludeGlobs: ['src/shared/lib/**/*.{ts,tsx}'],
         }),
         expect.objectContaining({
           id: 'kangur',
           reportsDirectory: 'coverage/high-risk/kangur',
-          coverageIncludeGlobs: ['src/features/kangur/**'],
+          coverageIncludeGlobs: ['src/features/kangur/**/*.{ts,tsx}'],
         }),
       ])
     );

@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-04-10T09:12:39.416Z",
+  "generatedAt": "2026-04-11T13:54:15.455Z",
   "id": "node_obj_db_schema_portable_v2",
   "nodeType": "db_schema",
   "nodeDocVersion": "2026-04-09.v1",
@@ -206,7 +206,8 @@
           "contextLimit": 20,
           "includeFields": true,
           "includeRelations": true,
-          "formatAs": "text"
+          "formatAs": "text",
+          "contextTransform": "none"
         },
         "runtime": {
           "cache": {
@@ -252,7 +253,8 @@
               "contextLimit": 20,
               "includeFields": true,
               "includeRelations": true,
-              "formatAs": "text"
+              "formatAs": "text",
+              "contextTransform": "none"
             },
             "runtime": {
               "cache": {
@@ -271,8 +273,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/db_schema.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "56956207074969f36d8750610fedc5877d6b3b873ad8f5048fdcf2d09dfa11af"
+    "semanticNodeHash": "bcf4fb4c3f3303862da09171a296efabba74c9cc0d8a960ef6decd4466dd5fc6"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "9e571a06c5e186a7b587428d459122bdddbb7e3b4184f30c9e67949669932355"
+  "objectHash": "9a59353b93d2fe5d4e76b93759f2981cbeb58e893f1140e1a5f5922e6d150d91"
 }

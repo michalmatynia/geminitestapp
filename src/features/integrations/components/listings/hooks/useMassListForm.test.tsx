@@ -3,6 +3,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BASE_EXPORT_MISSING_CATEGORY_MESSAGE } from '@/features/integrations/utils/baseExportPreflight';
+
 const {
   exportToBaseMutateAsyncMock,
   createListingMutateAsyncMock,
@@ -105,6 +107,10 @@ describe('useMassListForm', () => {
 
     useMassListProductModalViewContextMock.mockReturnValue({
       productIds: ['product-1', 'product-2'],
+      products: [
+        { id: 'product-1', categoryId: 'category-1' },
+        { id: 'product-2', categoryId: 'category-2' },
+      ],
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
       onSuccess: onSuccessMock,
@@ -150,6 +156,10 @@ describe('useMassListForm', () => {
   it('exports every selected product to Base.com when bulk export is chosen', async () => {
     useMassListProductModalViewContextMock.mockReturnValue({
       productIds: ['product-1', 'product-2'],
+      products: [
+        { id: 'product-1', categoryId: 'category-1' },
+        { id: 'product-2', categoryId: 'category-2' },
+      ],
       integrationId: 'integration-base-1',
       connectionId: 'conn-base-1',
       onSuccess: onSuccessMock,
@@ -191,6 +201,10 @@ describe('useMassListForm', () => {
   it('runs Vinted quick preflight for each product and persists the preferred connection once', async () => {
     useMassListProductModalViewContextMock.mockReturnValue({
       productIds: ['product-1', 'product-2'],
+      products: [
+        { id: 'product-1', categoryId: 'category-1' },
+        { id: 'product-2', categoryId: 'category-2' },
+      ],
       integrationId: 'integration-vinted-1',
       connectionId: 'conn-vinted-1',
       onSuccess: onSuccessMock,
@@ -240,6 +254,11 @@ describe('useMassListForm', () => {
   it('pauses a Tradera batch on auth-required, then resumes from the failed product after login', async () => {
     useMassListProductModalViewContextMock.mockReturnValue({
       productIds: ['product-1', 'product-2', 'product-3'],
+      products: [
+        { id: 'product-1', categoryId: 'category-1' },
+        { id: 'product-2', categoryId: 'category-2' },
+        { id: 'product-3', categoryId: 'category-3' },
+      ],
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
       onSuccess: onSuccessMock,
@@ -309,6 +328,10 @@ describe('useMassListForm', () => {
   it('keeps Vinted bulk recovery blocked when the manual login flow cannot save a session', async () => {
     useMassListProductModalViewContextMock.mockReturnValue({
       productIds: ['product-1', 'product-2'],
+      products: [
+        { id: 'product-1', categoryId: 'category-1' },
+        { id: 'product-2', categoryId: 'category-2' },
+      ],
       integrationId: 'integration-vinted-1',
       connectionId: 'conn-vinted-1',
       onSuccess: onSuccessMock,
@@ -355,6 +378,35 @@ describe('useMassListForm', () => {
     expect(result.current.authRequired).toBe(true);
     expect(result.current.authRequiredMarketplace).toBe('vinted');
     expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccessMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks Base.com bulk export when a selected product has no internal category assigned', async () => {
+    useMassListProductModalViewContextMock.mockReturnValue({
+      productIds: ['product-1', 'product-2'],
+      products: [
+        { id: 'product-1', categoryId: 'category-1' },
+        { id: 'product-2', categoryId: null },
+      ],
+      integrationId: 'integration-base-1',
+      connectionId: 'conn-base-1',
+      onSuccess: onSuccessMock,
+    });
+    useListingSelectionMock.mockReturnValue({
+      selectedConnectionId: 'conn-base-1',
+      selectedIntegration: { id: 'integration-base-1', slug: 'baselinker' },
+      isBaseComIntegration: true,
+      isTraderaIntegration: false,
+    });
+
+    const { result } = renderHook(() => useMassListForm());
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(result.current.error).toBe(BASE_EXPORT_MISSING_CATEGORY_MESSAGE);
+    expect(exportToBaseMutateAsyncMock).not.toHaveBeenCalled();
     expect(onSuccessMock).not.toHaveBeenCalled();
   });
 });

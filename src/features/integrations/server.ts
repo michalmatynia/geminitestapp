@@ -30,6 +30,7 @@ export * from './services/tag-mapping-repository';
 export * from './services/tradera-listing-service';
 export * from './services/vinted-listing-service';
 export * from './services/base-token-resolver';
+export * from './utils/playwright-connection-settings';
 export * from './workers/baseExportQueue';
 export * from './workers/baseImportQueue';
 export * from './workers/playwrightListingQueue';

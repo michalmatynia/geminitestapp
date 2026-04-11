@@ -20,6 +20,20 @@ export const QUERY_KEYS = {
     detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const,
     detailEdit: (id: string) => [...QUERY_KEYS.products.detail(id), 'edit'] as const,
     scans: (productId: string) => [...QUERY_KEYS.products.detail(productId), 'scans'] as const,
+    scansLatestAll: () => [...QUERY_KEYS.products.all, 'scans-latest'] as const,
+    scansLatest: (productIds: string[]) =>
+      [
+        ...QUERY_KEYS.products.scansLatestAll(),
+        {
+          productIds: Array.from(
+            new Set(
+              productIds
+                .map((productId) => productId.trim())
+                .filter((productId) => productId.length > 0)
+            )
+          ).sort(),
+        },
+      ] as const,
     enhanced: () => [...QUERY_KEYS.products.all, 'enhanced'] as const,
     enhancedCount: () => [...QUERY_KEYS.products.all, 'enhanced-count'] as const,
     categoriesAll: () => [...QUERY_KEYS.products.all, 'categories'] as const,

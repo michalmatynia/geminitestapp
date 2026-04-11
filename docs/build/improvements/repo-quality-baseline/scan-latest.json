@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T11:04:43.121Z",
+  "generatedAt": "2026-04-11T14:40:26.139Z",
   "track": {
     "id": "repo-quality-baseline",
     "title": "Repository quality baseline",
@@ -142,12 +142,12 @@
     "defaultSelected": true,
     "description": "Runs the core read-only quality checks that establish the current repository baseline.",
     "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
+    "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
     "docDir": "docs/build/improvements/repo-quality-baseline",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-11T10:38:42.355Z",
+        "generatedAt": "2026-04-11T14:40:26.131Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -177,7 +177,7 @@
             ],
             "instructions": [],
             "script": "check:api-error-sources",
-            "durationMs": 568
+            "durationMs": 451
           },
           {
             "id": "repo-quality-canonical-sitewide",
@@ -190,7 +190,7 @@
             "outputs": [],
             "instructions": [],
             "script": "canonical:check:sitewide",
-            "durationMs": 2140
+            "durationMs": 2375
           }
         ],
         "status": "passed"
@@ -241,35 +241,20 @@
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-11T11:04:43.118Z",
+        "generatedAt": "2026-04-11T14:20:03.230Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
-        "stepCount": 1,
+        "stepCount": 0,
         "automaticStepCount": 0,
-        "manualStepCount": 1,
+        "manualStepCount": 0,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "repo-quality-baseline-plan",
-            "title": "Review baseline results and decide follow-up validation",
-            "trackId": "repo-quality-baseline",
-            "phase": "plan",
-            "mode": "manual",
-            "writes": false,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "Use the lint and typecheck outputs to decide whether a wider repo quality sweep is needed.",
-              "Escalate to bazel:smoke or bazel:ci only when the baseline checks indicate broader instability."
-            ]
-          }
-        ],
-        "status": "manual"
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "dry-run",

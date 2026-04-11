@@ -15,7 +15,7 @@ import {
   type PlaywrightEngineRunRecord,
   type PlaywrightEngineRunRequest,
 } from './runtime';
-import { normalizeIntegrationConnectionPlaywrightPersonaId } from '@/features/integrations/utils/playwright-connection-settings';
+import { normalizeIntegrationConnectionPlaywrightPersonaId } from './connection-settings-shared';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import {
   resolvePlaywrightBrowserLaunchOptions,

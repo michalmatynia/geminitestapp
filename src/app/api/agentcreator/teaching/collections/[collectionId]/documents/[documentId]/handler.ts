@@ -11,6 +11,6 @@ export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext):
     throw badRequestError('Missing documentId.');
   }
   const deleted = await deleteEmbeddingDocument(documentId);
-  const response: AgentTeachingDocumentDeleteResponse = { ok: true, deleted };
+  const response: AgentTeachingDocumentDeleteResponse = { success: true, ok: true, deleted };
   return NextResponse.json(response);
 }

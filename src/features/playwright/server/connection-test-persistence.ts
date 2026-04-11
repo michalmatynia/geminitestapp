@@ -11,7 +11,7 @@ import type { PlaywrightConnectionTestPushStep } from './connection-test-steps';
 export type PersistPlaywrightConnectionTestSessionInput = {
   connectionId: string;
   page: Page;
-  repo?: Pick<IntegrationRepository, 'updateConnection'>;
+  repo: Pick<IntegrationRepository, 'updateConnection'>;
   pushStep: PlaywrightConnectionTestPushStep;
   stepName?: string;
   pendingDetail: string;
@@ -32,7 +32,7 @@ export const persistPlaywrightConnectionTestSession = async (
       connectionId: input.connectionId,
       storageState,
       updatedAt: new Date().toISOString(),
-      ...(input.repo ? { repo: input.repo } : {}),
+      repo: input.repo,
     });
     input.pushStep(stepName, 'ok', input.successDetail);
     return true;

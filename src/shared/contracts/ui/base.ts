@@ -13,6 +13,8 @@ export type {
   LabeledOptionWithDescription,
   LabeledOptionWithDisabledDto,
   LabeledOptionWithDisabled,
+  LabeledOptionWithGroupDto,
+  LabeledOptionWithGroup,
   ListResponse,
   IdDataDto,
   OptionalIdDataDto,

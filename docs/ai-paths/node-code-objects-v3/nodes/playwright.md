@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Playwright: Batch Capture Migration Sheet (`playwright`)
 
-Generated at: 2026-04-10T09:12:39.132Z
+Generated at: 2026-04-11T13:54:16.572Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-10T09:12:39.132Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/playwright.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/playwright.scaffold.json`
 - v3 object id: `node_obj_playwright_portable_v3`
-- v3 object hash: `2a20d91e30acef0a6b29920569e177bbfac213e9ca182b48ce037ac55c8b0c35`
+- v3 object hash: `24f4878ae7239a28d34b15f3fc0cdda2aa0accadb332f94a77308f295e29eee2`
 
 ## Ports
 

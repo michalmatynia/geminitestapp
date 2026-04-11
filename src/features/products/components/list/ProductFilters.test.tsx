@@ -98,6 +98,8 @@ const buildFiltersContextValue = (
   setAdvancedFilterState: vi.fn(),
   baseExported: '',
   setBaseExported: vi.fn(),
+  includeArchived: false,
+  setIncludeArchived: vi.fn(),
   filtersCollapsedByDefault: false,
   ...overrides,
 });
@@ -124,6 +126,18 @@ describe('ProductFilters layout contract', () => {
       toggleButtonAlignment: 'start',
       showHeader: false,
     });
+    expect(filterPanelProps.values).toMatchObject({
+      includeArchived: false,
+    });
+    expect(filterPanelProps.filters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'includeArchived',
+          label: 'Show Archived',
+          type: 'checkbox',
+        }),
+      ])
+    );
 
     const advancedFilterButton = screen.getByRole('button', { name: 'Advanced Filter' });
     expect(advancedFilterButton.className).toContain('h-8 w-full sm:w-auto');

@@ -43,6 +43,27 @@ const optionalNonNegativeIntFromFormSchema = z.preprocess(
   z.number().int().min(0).optional()
 );
 
+const optionalBooleanFromFormSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return undefined;
+    if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on') {
+      return true;
+    }
+    if (
+      normalized === 'false' ||
+      normalized === '0' ||
+      normalized === 'no' ||
+      normalized === 'off'
+    ) {
+      return false;
+    }
+  }
+  return value;
+}, z.boolean().optional());
+
 const preprocessStringArrayField = (value: unknown): unknown => {
   if (value === undefined || value === null) return undefined;
   if (Array.isArray(value)) return value;
@@ -168,6 +189,7 @@ const productInputFieldsSchema = z.object({
   sizeWidth: optionalNonNegativeNumberFromFormSchema,
   weight: optionalNonNegativeNumberFromFormSchema,
   length: optionalNonNegativeNumberFromFormSchema,
+  archived: optionalBooleanFromFormSchema,
   categoryId: z.string().nullable().optional(),
   shippingGroupId: z.string().nullable().optional(),
   catalogIds: optionalStringArrayFromFormSchema,

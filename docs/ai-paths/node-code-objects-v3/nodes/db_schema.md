@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Database Schema Migration Sheet (`db_schema`)
 
-Generated at: 2026-04-10T09:12:39.132Z
+Generated at: 2026-04-11T13:54:16.572Z
 
 ## Status
 
@@ -25,11 +25,11 @@ Generated at: 2026-04-10T09:12:39.132Z
 ## Node Contract Files
 
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/db_schema.json`
-- Semantic hash: `56956207074969f36d8750610fedc5877d6b3b873ad8f5048fdcf2d09dfa11af`
+- Semantic hash: `bcf4fb4c3f3303862da09171a296efabba74c9cc0d8a960ef6decd4466dd5fc6`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/db_schema.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json`
 - v3 object id: `node_obj_db_schema_portable_v3`
-- v3 object hash: `8f9157a45b9a06fcd60c38661e0ba1ea219452a8d111e5c7e4a87f8ed5288905`
+- v3 object hash: `9947c1f51f2019b9adb10a957dede8e148e0c23cdbd22cc31377c5b4871624fc`
 
 ## Ports
 

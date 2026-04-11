@@ -4,6 +4,7 @@ import type { PriceGroupWithDetails, ProductWithImages } from '@/shared/contract
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductAiRunFeedback } from '@/features/products/lib/product-ai-run-feedback';
+import type { ProductScanRunFeedback } from '@/features/products/lib/product-scan-run-feedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
@@ -60,6 +61,8 @@ export interface ProductListContextType {
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
+  includeArchived: boolean;
+  setIncludeArchived: (value: boolean) => void;
   data: ProductWithImages[];
   isLoading: boolean;
   loadError: string | null;
@@ -102,6 +105,9 @@ export interface ProductListContextType {
   vintedBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
   productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
+  productScanRunStatusByProductId?:
+    | ReadonlyMap<string, ProductScanRunFeedback>
+    | undefined;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
   showTriggerRunFeedback: boolean;
@@ -196,6 +202,8 @@ export interface ProductListFiltersContextType {
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
+  includeArchived: boolean;
+  setIncludeArchived: (value: boolean) => void;
 }
 
 export interface ProductListSelectionContextType {
@@ -296,6 +304,7 @@ export interface ProductListRowRuntimeContextType {
   showPlaywrightProgrammableBadge: boolean;
   playwrightProgrammableStatus: string;
   productAiRunFeedback: ProductAiRunFeedback | null;
+  productScanRunFeedback: ProductScanRunFeedback | null;
 }
 
 export interface ProductListModalsContextType {

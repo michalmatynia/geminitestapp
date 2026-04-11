@@ -1,10 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { PRODUCT_SCANNER_SETTINGS_HREF } from '@/features/products/scanner-settings';
 import type { ProductScanListResponse, ProductScanRecord, ProductScanStatus } from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
@@ -235,17 +237,22 @@ export default function ProductFormScans(): React.JSX.Element {
             Amazon reverse image scans for this product.
           </p>
         </div>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={() => void scansQuery.refetch()}
-          disabled={scansQuery.isFetching}
-          className='h-8 gap-1.5 px-3 text-xs'
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${scansQuery.isFetching ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className='flex items-center gap-2'>
+          <Button type='button' variant='outline' size='sm' asChild className='h-8 px-3 text-xs'>
+            <Link href={PRODUCT_SCANNER_SETTINGS_HREF}>Scanner settings</Link>
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => void scansQuery.refetch()}
+            disabled={scansQuery.isFetching}
+            className='h-8 gap-1.5 px-3 text-xs'
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${scansQuery.isFetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {scansQuery.isError ? (
@@ -288,7 +295,7 @@ export default function ProductFormScans(): React.JSX.Element {
                   <a
                     href={scan.url}
                     target='_blank'
-                    rel='noreferrer'
+                    rel='noopener noreferrer'
                     className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
                   >
                     Open Result

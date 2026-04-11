@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-04-07T16:03:11.407Z
+Generated at: 2026-04-11T14:55:57.987Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 305
-- Route methods scanned: 221
+- Route files scanned: 311
+- Route methods scanned: 223
 - Public methods: 15
-- Protected methods: 205
+- Protected methods: 207
 - Signed ingress methods: 0
 - Actor-scoped methods: 1
 - Errors: 0
@@ -233,6 +233,8 @@ Generated at: 2026-04-07T16:03:11.407Z
 | v2/integrations/[[...path]] | PUT | protected | - |
 | v2/integrations/[[...path]] | PATCH | protected | - |
 | v2/integrations/[[...path]] | DELETE | protected | - |
+| v2/integrations/product-listings/tradera-status-check | POST | protected | - |
+| v2/integrations/tradera/parameter-mapper/catalog/fetch | POST | protected | - |
 | v2/metadata/[type]/[id] | GET | protected | - |
 | v2/metadata/[type]/[id] | PUT | protected | - |
 | v2/metadata/[type]/[id] | DELETE | protected | - |

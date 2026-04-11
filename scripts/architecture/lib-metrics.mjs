@@ -233,13 +233,15 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
 
   const USE_CLIENT_RE = /^\s*['"]use client['"]\s*;?/m;
   const CLIENT_HOOK_RE =
-    /\b(useState|useEffect|useRef|useMemo|useCallback|useReducer|useContext|useLayoutEffect|usePathname|useRouter|useSearchParams|useTranslations|useLocale|useImperativeHandle|useId|useTransition|useDeferredValue)\b/;
+    /\b(useState|useEffect|useRef|useMemo|useCallback|useReducer|useContext|useLayoutEffect|usePathname|useRouter|useSearchParams|useTranslations|useLocale|useImperativeHandle|useId|useTransition|useDeferredValue)\s*\(/;
 
   const useClientFiles = sourceScopeRecords.filter((record) => USE_CLIENT_RE.test(record.content));
 
   const hooksWithoutUseClient = sourceScopeRecords.filter(
     (record) =>
-      CLIENT_HOOK_RE.test(record.strippedContent) && !USE_CLIENT_RE.test(record.content)
+      !record.path.includes('.data.') &&
+      CLIENT_HOOK_RE.test(record.strippedContent) &&
+      !USE_CLIENT_RE.test(record.content)
   );
 
   const apiRouteRecords = sourceRecords.filter(

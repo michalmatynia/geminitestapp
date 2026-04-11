@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:07.199Z",
+  "generatedAt": "2026-04-11T14:55:52.807Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,16 +7,16 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeCount": 314,
-    "methodCount": 463,
-    "csrfExemptionCount": 54,
+    "routeCount": 320,
+    "methodCount": 469,
+    "csrfExemptionCount": 56,
     "csrfExemptionsByPolicy": {
       "webhook-ingest": 1,
       "telemetry-ingest": 3,
       "auth-bootstrap": 11,
       "public-campaign-links": 2,
       "deprecated-public-auth": 2,
-      "external-integrations": 35
+      "external-integrations": 37
     }
   },
   "routeRoots": [
@@ -279,6 +279,12 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     },
     {
+      "routePath": "v2/integrations/product-listings/tradera-status-check",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
       "routePath": "v2/integrations/products/[id]/base/link-existing",
       "method": "POST",
       "policy": "external-integrations",
@@ -292,6 +298,12 @@
     },
     {
       "routePath": "v2/integrations/products/[id]/export-to-base",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/check-status",
       "method": "POST",
       "policy": "external-integrations",
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
@@ -351,5 +363,5 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 98
+  "durationMs": 101
 }

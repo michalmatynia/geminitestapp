@@ -77,6 +77,7 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   const catalogId = toOptionalString(filters['catalogId']);
   const searchLanguage = toOptionalString(filters['searchLanguage']);
   const baseExported = toOptionalBoolean(filters['baseExported']);
+  const archived = toOptionalBoolean(filters['archived']);
 
   if (search !== undefined) normalized.search = search;
   if (id !== undefined) normalized.id = id;
@@ -105,6 +106,7 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   if (catalogId !== undefined) normalized.catalogId = catalogId;
   if (isValidLanguageCode(searchLanguage)) normalized.searchLanguage = searchLanguage;
   if (baseExported !== undefined) normalized.baseExported = baseExported;
+  if (archived !== undefined) normalized.archived = archived;
 
   return normalized;
 }

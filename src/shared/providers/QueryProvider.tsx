@@ -144,7 +144,7 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 
   useGlobalQueryErrorHandler({
     showToast: true,
-    logErrors: false,
+    logErrors: true,
     retryOnError: false,
     toastDedupeWindowMs: 20000,
   });

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:06.519Z",
+  "generatedAt": "2026-04-11T14:55:46.638Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -7,12 +7,12 @@
     "warningCount": 0,
     "infoCount": 32,
     "status": "passed",
-    "featureCount": 25,
-    "featuresWithTestCount": 25,
+    "featureCount": 24,
+    "featuresWithTestCount": 24,
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 3380,
+    "totalTestFiles": 3528,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -35,24 +35,24 @@
     },
     {
       "feature": "ai",
-      "testCount": 386,
-      "fastTestCount": 386,
+      "testCount": 402,
+      "fastTestCount": 402,
       "e2eTestCount": 0,
-      "negativePathTestCount": 163
+      "negativePathTestCount": 170
     },
     {
       "feature": "products",
-      "testCount": 154,
-      "fastTestCount": 146,
+      "testCount": 183,
+      "fastTestCount": 175,
       "e2eTestCount": 8,
-      "negativePathTestCount": 54
+      "negativePathTestCount": 69
     },
     {
       "feature": "integrations",
-      "testCount": 150,
-      "fastTestCount": 149,
+      "testCount": 173,
+      "fastTestCount": 172,
       "e2eTestCount": 1,
-      "negativePathTestCount": 52
+      "negativePathTestCount": 63
     },
     {
       "feature": "case-resolver",
@@ -77,31 +77,38 @@
     },
     {
       "feature": "filemaker",
-      "testCount": 40,
-      "fastTestCount": 40,
+      "testCount": 41,
+      "fastTestCount": 41,
       "e2eTestCount": 0,
       "negativePathTestCount": 15
     },
     {
+      "feature": "playwright",
+      "testCount": 35,
+      "fastTestCount": 35,
+      "e2eTestCount": 0,
+      "negativePathTestCount": 18
+    },
+    {
       "feature": "admin",
-      "testCount": 25,
-      "fastTestCount": 22,
+      "testCount": 26,
+      "fastTestCount": 23,
       "e2eTestCount": 3,
       "negativePathTestCount": 4
     },
     {
-      "feature": "observability",
+      "feature": "database",
       "testCount": 24,
       "fastTestCount": 23,
       "e2eTestCount": 1,
-      "negativePathTestCount": 3
+      "negativePathTestCount": 14
     },
     {
-      "feature": "database",
-      "testCount": 20,
-      "fastTestCount": 19,
+      "feature": "data-import-export",
+      "testCount": 18,
+      "fastTestCount": 17,
       "e2eTestCount": 1,
-      "negativePathTestCount": 12
+      "negativePathTestCount": 4
     },
     {
       "feature": "notesapp",
@@ -112,8 +119,8 @@
     },
     {
       "feature": "auth",
-      "testCount": 16,
-      "fastTestCount": 16,
+      "testCount": 17,
+      "fastTestCount": 17,
       "e2eTestCount": 0,
       "negativePathTestCount": 8
     },
@@ -153,25 +160,11 @@
       "negativePathTestCount": 5
     },
     {
-      "feature": "data-import-export",
-      "testCount": 7,
-      "fastTestCount": 6,
-      "e2eTestCount": 1,
-      "negativePathTestCount": 2
-    },
-    {
       "feature": "jobs",
       "testCount": 7,
       "fastTestCount": 7,
       "e2eTestCount": 0,
       "negativePathTestCount": 3
-    },
-    {
-      "feature": "playwright",
-      "testCount": 6,
-      "fastTestCount": 6,
-      "e2eTestCount": 0,
-      "negativePathTestCount": 4
     },
     {
       "feature": "app-embeds",
@@ -188,16 +181,16 @@
       "negativePathTestCount": 1
     },
     {
-      "feature": "tooltip-engine",
+      "feature": "product-sync",
       "testCount": 3,
       "fastTestCount": 3,
       "e2eTestCount": 0,
-      "negativePathTestCount": 2
+      "negativePathTestCount": 3
     },
     {
-      "feature": "product-sync",
-      "testCount": 2,
-      "fastTestCount": 2,
+      "feature": "tooltip-engine",
+      "testCount": 3,
+      "fastTestCount": 3,
       "e2eTestCount": 0,
       "negativePathTestCount": 2
     }
@@ -535,5 +528,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 633
+  "durationMs": 1225
 }

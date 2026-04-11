@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,17 +8,17 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-04-07T16:03:06.519Z
+Generated at: 2026-04-11T14:55:46.638Z
 
 ## Summary
 
 - Status: PASSED
-- Total features: 25
-- Features with tests: 25
+- Total features: 24
+- Features with tests: 24
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 3380
+- Total test files: 3528
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -28,30 +28,29 @@ Generated at: 2026-04-07T16:03:06.519Z
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
 | kangur | 948 | 928 | 20 | 181 |
-| ai | 386 | 386 | 0 | 163 |
-| products | 154 | 146 | 8 | 54 |
-| integrations | 150 | 149 | 1 | 52 |
+| ai | 402 | 402 | 0 | 170 |
+| products | 183 | 175 | 8 | 69 |
+| integrations | 173 | 172 | 1 | 63 |
 | case-resolver | 94 | 93 | 1 | 42 |
 | cms | 85 | 84 | 1 | 21 |
 | prompt-exploder | 54 | 54 | 0 | 29 |
-| filemaker | 40 | 40 | 0 | 15 |
-| admin | 25 | 22 | 3 | 4 |
-| observability | 24 | 23 | 1 | 3 |
-| database | 20 | 19 | 1 | 12 |
+| filemaker | 41 | 41 | 0 | 15 |
+| playwright | 35 | 35 | 0 | 18 |
+| admin | 26 | 23 | 3 | 4 |
+| database | 24 | 23 | 1 | 14 |
+| data-import-export | 18 | 17 | 1 | 4 |
 | notesapp | 18 | 16 | 2 | 6 |
-| auth | 16 | 16 | 0 | 8 |
+| auth | 17 | 17 | 0 | 8 |
 | files | 12 | 11 | 1 | 6 |
 | viewer3d | 12 | 11 | 1 | 5 |
 | prompt-engine | 9 | 9 | 0 | 3 |
 | drafter | 8 | 7 | 1 | 3 |
 | internationalization | 8 | 8 | 0 | 5 |
-| data-import-export | 7 | 6 | 1 | 2 |
 | jobs | 7 | 7 | 0 | 3 |
-| playwright | 6 | 6 | 0 | 4 |
 | app-embeds | 3 | 3 | 0 | 1 |
 | gsap | 3 | 3 | 0 | 1 |
+| product-sync | 3 | 3 | 0 | 3 |
 | tooltip-engine | 3 | 3 | 0 | 2 |
-| product-sync | 2 | 2 | 0 | 2 |
 
 ## Rule Breakdown
 

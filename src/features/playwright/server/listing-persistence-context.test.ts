@@ -1,18 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { findProductListingByIdAcrossProvidersMock } = vi.hoisted(() => ({
-  findProductListingByIdAcrossProvidersMock: vi.fn(),
-}));
-
-vi.mock('@/features/integrations/services/product-listing-repository', () => ({
-  findProductListingByIdAcrossProviders: (...args: unknown[]) =>
-    findProductListingByIdAcrossProvidersMock(...args),
-}));
+const findProductListingByIdAcrossProvidersMock = vi.fn();
 
 import {
   resolvePlaywrightListingPersistenceContext,
   resolvePlaywrightListingPersistenceContextAfterRun,
 } from './listing-persistence-context';
+
+const createDependencies = () => ({
+  findListingById: findProductListingByIdAcrossProvidersMock,
+});
 
 describe('playwright listing persistence context helper', () => {
   beforeEach(() => {
@@ -25,6 +22,7 @@ describe('playwright listing persistence context helper', () => {
     await expect(
       resolvePlaywrightListingPersistenceContext({
         listingId: 'listing-1',
+        dependencies: createDependencies(),
       })
     ).resolves.toEqual({
       found: false,
@@ -48,6 +46,7 @@ describe('playwright listing persistence context helper', () => {
     await expect(
       resolvePlaywrightListingPersistenceContext({
         listingId: 'listing-1',
+        dependencies: createDependencies(),
       })
     ).resolves.toEqual({
       found: true,
@@ -68,6 +67,7 @@ describe('playwright listing persistence context helper', () => {
           ok: true,
           error: null,
         },
+        dependencies: createDependencies(),
       })
     ).resolves.toBeNull();
   });
@@ -82,6 +82,7 @@ describe('playwright listing persistence context helper', () => {
           ok: false,
           error: 'Listing execution failed.',
         },
+        dependencies: createDependencies(),
       })
     ).rejects.toThrow('Listing execution failed.');
   });
@@ -96,6 +97,7 @@ describe('playwright listing persistence context helper', () => {
           ok: true,
           error: null,
         },
+        dependencies: createDependencies(),
         allowMissingOnSuccess: false,
         missingErrorMessage: 'Listing not found after job execution: listing-1',
       })

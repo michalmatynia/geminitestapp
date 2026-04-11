@@ -69,9 +69,8 @@ vi.mock('@/shared/utils/observability/client-error-logger', async (importOrigina
   };
 });
 
-vi.mock('@/features/integrations/product-integrations-adapter', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/features/integrations/product-integrations-adapter')>();
+vi.mock('@/features/integrations/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/integrations/public')>();
   return {
     ...actual,
     useCreateListingMutation: () => ({

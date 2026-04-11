@@ -109,13 +109,14 @@ export const chatbotSessionsDeleteBodySchema = z.union([
 export type ChatbotSessionsDeleteBodyDto = z.infer<typeof chatbotSessionsDeleteBodySchema>;
 export type ChatbotSessionsDeleteBody = ChatbotSessionsDeleteBodyDto;
 
+import { type BatchDeleteResponse } from '../base';
+
 export const chatbotSessionDeleteResponseSchema = z.object({
   success: z.literal(true),
-  deletedCount: z.number().int().nonnegative().optional(),
+  deletedCount: z.number().int().nonnegative().default(0),
 });
 
-export type ChatbotSessionDeleteResponseDto = z.infer<typeof chatbotSessionDeleteResponseSchema>;
-export type ChatbotSessionDeleteResponse = ChatbotSessionDeleteResponseDto;
+export type ChatbotSessionDeleteResponse = BatchDeleteResponse;
 
 export const createChatSessionSchema = chatSessionSchema.omit({
   id: true,

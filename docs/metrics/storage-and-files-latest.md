@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Storage And Files Health Report
 
-Generated at: 2026-04-07T16:03:21.615Z
+Generated at: 2026-04-11T14:56:12.150Z
 
 ## Summary
 
 - Status: PASSED
-- Source files scanned: 7078
+- Source files scanned: 7239
 - Code upload roots: 10
 - Runtime upload roots: 9
 - Dynamic public-path read risks: 0

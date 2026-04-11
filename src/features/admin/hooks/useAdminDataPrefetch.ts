@@ -3,9 +3,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { fetchStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import { getProductsWithCount } from '@/features/products/api/products';
-import { loadProductColumns } from '@/features/products/components/list/product-columns-loader';
+import { fetchStudioProjects } from '@/features/ai/public';
+import { getProductsWithCount, loadProductColumns } from '@/features/products';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { studioKeys } from '@/shared/lib/query-key-exports';

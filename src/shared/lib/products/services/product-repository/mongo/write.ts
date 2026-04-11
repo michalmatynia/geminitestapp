@@ -52,6 +52,7 @@ export const mongoProductWriteImpl = {
       weight: data.weight ?? null,
       length: data.length ?? null,
       published: true,
+      archived: data.archived ?? false,
       categoryId: data.categoryId || null,
       shippingGroupId: data.shippingGroupId || null,
       catalogId: storageInput.catalogId || 'default',
@@ -130,6 +131,7 @@ export const mongoProductWriteImpl = {
     if (data.sizeWidth !== undefined) set['sizeWidth'] = data.sizeWidth;
     if (data.weight !== undefined) set['weight'] = data.weight;
     if (data.length !== undefined) set['length'] = data.length;
+    if (data.archived !== undefined) set['archived'] = data.archived;
     if (data.categoryId !== undefined) {
       set['categoryId'] = data.categoryId;
     }
@@ -182,6 +184,29 @@ export const mongoProductWriteImpl = {
       count += 1;
     }
     return count;
+  },
+
+  async bulkSetArchived(
+    productIds: string[],
+    archived: boolean,
+    getCollection: () => Promise<Collection<ProductDocument>>
+  ): Promise<number> {
+    if (productIds.length === 0) return 0;
+
+    const collection = await getCollection();
+    const result = await collection.updateMany(
+      {
+        $or: [{ id: { $in: productIds } }, { _id: { $in: productIds } }],
+      },
+      {
+        $set: {
+          archived,
+          updatedAt: new Date(),
+        },
+      } as UpdateFilter<ProductDocument>
+    );
+
+    return result.modifiedCount;
   },
 
   async duplicateProduct(

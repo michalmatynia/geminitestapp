@@ -33,6 +33,9 @@ describe('persistPlaywrightConnectionTestSession', () => {
           storageState: storageStateMock,
         }),
       } as never,
+      repo: {
+        updateConnection: vi.fn(),
+      },
       pushStep,
       pendingDetail: 'Capturing cookies and local storage',
       successDetail: 'Playwright session updated',
@@ -53,6 +56,9 @@ describe('persistPlaywrightConnectionTestSession', () => {
         origins: [],
       },
       updatedAt: '2026-04-10T12:00:00.000Z',
+      repo: {
+        updateConnection: expect.any(Function),
+      },
     });
     expect(pushStep).toHaveBeenNthCalledWith(
       2,
@@ -76,6 +82,9 @@ describe('persistPlaywrightConnectionTestSession', () => {
           }),
         }),
       } as never,
+      repo: {
+        updateConnection: vi.fn(),
+      },
       pushStep,
       pendingDetail: 'Storing Vinted Playwright session',
       successDetail: 'Session stored for reuse',

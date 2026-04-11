@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, type MutableRefObject } from 'react';
 
 import {
   useInventories,
@@ -18,8 +18,10 @@ export function useImportExportData({
   isBaseConnected,
   inventoriesEnabled,
   inventoryId,
+  inventoryIdRef,
   setInventoryId,
   exportInventoryId,
+  exportInventoryIdRef,
   setExportInventoryId,
   includeAllWarehouses,
   warehousesEnabled,
@@ -41,8 +43,10 @@ export function useImportExportData({
   isBaseConnected: boolean;
   inventoriesEnabled: boolean;
   inventoryId: string;
+  inventoryIdRef: MutableRefObject<string>;
   setInventoryId: (id: string) => void;
   exportInventoryId: string;
+  exportInventoryIdRef: MutableRefObject<string>;
   setExportInventoryId: (id: string) => void;
   includeAllWarehouses: boolean;
   warehousesEnabled: boolean;
@@ -96,10 +100,10 @@ export function useImportExportData({
       if (firstInventory?.id) {
         const firstInventoryId = firstInventory.id;
         const timer = setTimeout(() => {
-          if (!inventoryId) {
+          if (!inventoryIdRef.current.trim()) {
             setInventoryId(firstInventoryId);
           }
-          if (!exportInventoryId) {
+          if (!exportInventoryIdRef.current.trim()) {
             setExportInventoryId(firstInventoryId);
           }
           setHasInitializedInventories(true);
@@ -112,6 +116,8 @@ export function useImportExportData({
     inventories,
     inventoryId,
     exportInventoryId,
+    inventoryIdRef,
+    exportInventoryIdRef,
     hasInitializedInventories,
     setInventoryId,
     setExportInventoryId,

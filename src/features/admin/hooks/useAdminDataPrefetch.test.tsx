@@ -11,7 +11,7 @@ const prefetchQueryV2Mock = vi.fn();
 const fetchStudioProjectsMock = vi.fn();
 const fetchAiPathsSettingsCachedMock = vi.fn();
 
-vi.mock('@/features/ai/image-studio/hooks/useImageStudioQueries', () => ({
+vi.mock('@/features/ai/public', () => ({
   fetchStudioProjects: (...args: unknown[]) => fetchStudioProjectsMock(...args),
 }));
 

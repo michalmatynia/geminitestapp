@@ -9,12 +9,12 @@ import { useProductFormCore } from '@/features/products/context/ProductFormCoreC
 import { buildMarketplaceCopyDebrandTriggerInput } from '@/features/products/lib/buildMarketplaceCopyDebrandTriggerInput';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import { extractDebrandedMarketplaceCopyResultFromAiPathRunDetail } from '@/features/products/lib/extractDebrandedMarketplaceCopyFromAiPathRunDetail';
-import { resolveIntegrationDisplayName } from '@/features/integrations/components/listings/product-listings-labels';
+import { resolveIntegrationDisplayName } from '@/features/integrations/public';
 import {
   isBaseIntegrationSlug,
   isLinkedInIntegrationSlug,
-} from '@/features/integrations/constants/slugs';
-import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
+} from '@/features/integrations/public';
+import { useIntegrations } from '@/features/integrations/public';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { Integration } from '@/shared/contracts/integrations/base';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';

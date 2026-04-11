@@ -20,6 +20,7 @@ import type { IntegrationConnectionRecord } from '@/shared/contracts/integration
 import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { logger } from '@/shared/utils/logger';
+import { getIntegrationRepository } from '@/features/integrations/server';
 import {
   buildPlaywrightNativeTaskResult,
   createPlaywrightNativeTaskInternalError,
@@ -541,6 +542,7 @@ export const runVintedBrowserListing = async ({
         connectionId: connection.id,
         storageState: nextStorageState,
         updatedAt: completedAt,
+        repo: await getIntegrationRepository(),
       });
 
       return buildPlaywrightNativeTaskResult({

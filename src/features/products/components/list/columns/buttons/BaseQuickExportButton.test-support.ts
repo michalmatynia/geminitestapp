@@ -35,6 +35,7 @@ export const baseQuickExportTestProduct = {
   ean: null,
   baseProductId: null,
   published: true,
+  archived: false,
   images: [],
   imageLinks: [],
   imageBase64s: [],

@@ -178,6 +178,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     weight: null,
     length: null,
     published: false,
+    archived: false,
     categoryId: 'category-1',
     catalogId: 'catalog-1',
     tags: [],
@@ -227,9 +228,12 @@ describe('ProductListMobileCards', () => {
       integrationStatus: 'completed',
       showTraderaBadge: false,
       traderaStatus: 'not_started',
+      showVintedBadge: false,
+      vintedStatus: 'not_started',
       showPlaywrightProgrammableBadge: false,
       playwrightProgrammableStatus: 'not_started',
       productAiRunFeedback: null,
+      productScanRunFeedback: null,
     });
 
     ({ ProductListMobileCards } = await import('./ProductListMobileCards'));
@@ -450,6 +454,8 @@ describe('ProductListMobileCards', () => {
       integrationStatus: 'completed',
       showTraderaBadge: false,
       traderaStatus: 'not_started',
+      showVintedBadge: false,
+      vintedStatus: 'not_started',
       showPlaywrightProgrammableBadge: false,
       playwrightProgrammableStatus: 'not_started',
       productAiRunFeedback: {
@@ -461,12 +467,49 @@ describe('ProductListMobileCards', () => {
         badgeClassName:
           'border-emerald-500/40 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/25',
       },
+      productScanRunFeedback: null,
     });
 
     render(<ProductListMobileCards />);
 
-    expect(screen.getByText('Completed')).toBeInTheDocument();
+    const pill = screen.getByText('Completed');
+    expect(pill).toBeInTheDocument();
+    expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
+      'data-activity-kind',
+      'trigger-button'
+    );
     expect(screen.queryByText('Queued')).not.toBeInTheDocument();
+  });
+
+  it('renders the scan feedback pill on mobile cards', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: false,
+      traderaStatus: 'not_started',
+      showVintedBadge: false,
+      vintedStatus: 'not_started',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+      productScanRunFeedback: {
+        scanId: 'scan-1',
+        status: 'running',
+        updatedAt: '2026-04-11T12:00:00.000Z',
+        label: 'Running',
+        variant: 'processing',
+        badgeClassName:
+          'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+      },
+    });
+
+    render(<ProductListMobileCards />);
+
+    const pill = screen.getByText('Running');
+    expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
+      'data-activity-kind',
+      'scan'
+    );
   });
 
   it('does not render the imported badge when a product only has Base linkage', () => {
@@ -518,6 +561,22 @@ describe('ProductListMobileCards', () => {
     render(<ProductListMobileCards />);
 
     expect(screen.getByText('Imported')).toBeInTheDocument();
+  });
+
+  it('renders the archived badge for archived products', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          archived: true,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Archived')).toBeInTheDocument();
   });
 
   it('shows the auto-assigned shipping group on mobile cards', () => {

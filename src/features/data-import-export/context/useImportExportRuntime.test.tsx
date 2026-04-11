@@ -209,6 +209,8 @@ describe('useImportExportRuntime', () => {
         importTemplateId: 'tpl-1',
         importNameSearch: 'hoodie',
         importSkuSearch: 'SKU-1',
+        importDirectTargetType: 'sku',
+        importDirectTargetValue: 'SKU-1',
         importListPage: 3,
         importListPageSize: 50,
         importListEnabled: true,
@@ -247,8 +249,10 @@ describe('useImportExportRuntime', () => {
       expect(result.current.stateValue.uniqueOnly).toBe(false);
       expect(result.current.stateValue.allowDuplicateSku).toBe(true);
       expect(result.current.stateValue.importTemplateId).toBe('tpl-1');
-      expect(result.current.stateValue.importNameSearch).toBe('');
-      expect(result.current.stateValue.importSkuSearch).toBe('');
+      expect(result.current.stateValue.importNameSearch).toBe('hoodie');
+      expect(result.current.stateValue.importSkuSearch).toBe('SKU-1');
+      expect(result.current.stateValue.importDirectTargetType).toBe('sku');
+      expect(result.current.stateValue.importDirectTargetValue).toBe('SKU-1');
       expect(result.current.stateValue.importListPage).toBe(3);
       expect(result.current.stateValue.importListPageSize).toBe(50);
       expect(result.current.stateValue.importListEnabled).toBe(true);
@@ -272,6 +276,8 @@ describe('useImportExportRuntime', () => {
       result.current.stateValue.setImportTemplateId('tpl-2');
       result.current.stateValue.setImportNameSearch('pin');
       result.current.stateValue.setImportSkuSearch('PIN-2');
+      result.current.stateValue.setImportDirectTargetType('sku');
+      result.current.stateValue.setImportDirectTargetValue('PIN-2');
       result.current.stateValue.setImportListPage(4);
       result.current.stateValue.setImportListPageSize(100);
       result.current.stateValue.setImportListEnabled(true);
@@ -302,6 +308,10 @@ describe('useImportExportRuntime', () => {
           uniqueOnly: false,
           allowDuplicateSku: true,
           importTemplateId: 'tpl-2',
+          importNameSearch: 'pin',
+          importSkuSearch: 'PIN-2',
+          importDirectTargetType: 'sku',
+          importDirectTargetValue: 'PIN-2',
           importListPage: 4,
           importListPageSize: 100,
           importListEnabled: true,

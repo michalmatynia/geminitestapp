@@ -1,21 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  encryptSecretMock,
-  updateConnectionMock,
-} = vi.hoisted(() => ({
-  encryptSecretMock: vi.fn(),
-  updateConnectionMock: vi.fn(),
-}));
+const encryptSecretMock = vi.fn();
+const updateConnectionMock = vi.fn();
 
 vi.mock('@/shared/lib/security/encryption', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
-}));
-
-vi.mock('@/features/integrations/services/integration-repository', () => ({
-  getIntegrationRepository: async () => ({
-    updateConnection: (...args: unknown[]) => updateConnectionMock(...args),
-  }),
 }));
 
 import { persistPlaywrightConnectionStorageState } from './storage-state';
@@ -34,6 +23,9 @@ describe('persistPlaywrightConnectionStorageState', () => {
         origins: [],
       },
       updatedAt: '2026-04-10T10:00:00.000Z',
+      repo: {
+        updateConnection: updateConnectionMock,
+      },
     });
 
     expect(encryptSecretMock).toHaveBeenCalledWith(

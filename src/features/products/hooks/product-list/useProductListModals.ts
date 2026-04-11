@@ -11,7 +11,7 @@ import {
   isVintedIntegrationSlug,
   readPersistedTraderaQuickListFeedback,
   readPersistedVintedQuickListFeedback,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';

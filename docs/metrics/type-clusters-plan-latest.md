@@ -8,7 +8,7 @@ canonical: true
 ---
 # Type Cluster Consolidation Plan
 
-Generated at: 2026-04-11T13:40:35.367Z
+Generated at: 2026-04-11T14:58:40.369Z
 
 ## Prioritized Worklist
 
@@ -19,14 +19,21 @@ Suggested DTO: TBD
 Signature: type-expression (e28f1cd680b5)
 Notes: Validate semantic equivalence before migration.
 
-2. [ ] near-0001 (near-shape)
+2. [ ] exact-0002 (exact-shape)
+Risk: 17 | Declarations: 3
+Domains: shared:contracts
+Suggested DTO: TBD
+Signature: type-expression (63eda5f12b48)
+Notes: Validate semantic equivalence before migration.
+
+3. [ ] near-0001 (near-shape)
 Risk: 11 | Declarations: 2
 Domains: shared, shared:contracts
 Suggested DTO: TBD
 Signature: structural-members (62b064e5be79)
 Notes: Validate semantic equivalence before migration.
 
-3. [ ] near-0002 (near-shape)
+4. [ ] near-0002 (near-shape)
 Risk: 11 | Declarations: 2
 Domains: shared, shared:contracts
 Suggested DTO: TBD

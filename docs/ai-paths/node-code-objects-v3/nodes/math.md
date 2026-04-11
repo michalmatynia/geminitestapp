@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Math Migration Sheet (`math`)
 
-Generated at: 2026-04-10T09:12:39.132Z
+Generated at: 2026-04-11T13:54:16.572Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-10T09:12:39.132Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/math.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/math.scaffold.json`
 - v3 object id: `node_obj_math_portable_v3`
-- v3 object hash: `38dbe06f1e130678a7a59009e495809c1bd826332581d7ce1264e104dd439101`
+- v3 object hash: `1a91f74b9dc6f509e007feb597fcffd95bd8895f691f3ad0d5862535ed6e3593`
 
 ## Ports
 

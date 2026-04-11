@@ -26,6 +26,7 @@ export type ProductDocument = Omit<
   | 'name'
   | 'description'
   | 'published'
+  | 'archived'
   | 'catalogId'
   | 'tags'
   | 'images'
@@ -38,6 +39,7 @@ export type ProductDocument = Omit<
   name?: ProductRecord['name'];
   description?: ProductRecord['description'];
   published?: boolean;
+  archived?: boolean;
   catalogId?: string;
   images?: ProductWithImages['images'];
   catalogs?: ProductWithImages['catalogs'];
@@ -517,6 +519,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     weight: doc.weight ?? null,
     length: doc.length ?? null,
     published: doc.published ?? false,
+    archived: doc.archived ?? false,
     catalogId,
     category,
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
@@ -596,6 +599,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     weight: doc.weight ?? null,
     length: doc.length ?? null,
     published: doc.published ?? false,
+    archived: doc.archived ?? false,
     catalogId,
     category,
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,

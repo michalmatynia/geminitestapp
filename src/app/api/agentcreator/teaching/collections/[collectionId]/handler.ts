@@ -52,6 +52,11 @@ export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext):
     throw badRequestError('Missing collectionId.');
   }
   const result = await deleteEmbeddingCollection(collectionId);
-  const response: AgentTeachingCollectionDeleteResponse = { ok: true, ...result };
+  const response: AgentTeachingCollectionDeleteResponse = {
+    success: true,
+    deletedCount: result.deletedDocuments,
+    ok: true,
+    ...result,
+  };
   return NextResponse.json(response);
 }

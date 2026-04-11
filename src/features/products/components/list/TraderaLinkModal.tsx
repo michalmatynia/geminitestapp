@@ -7,7 +7,7 @@ import {
   useDefaultTraderaConnection,
   useIntegrationsWithConnections,
   useLinkExistingTraderaListingMutation,
-} from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { TraderaProductLinkExistingCandidate } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';

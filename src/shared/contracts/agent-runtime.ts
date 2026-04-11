@@ -377,12 +377,15 @@ export const agentRunEnqueueResponseSchema = z.object({
 export type AgentRunEnqueueResponseDto = z.infer<typeof agentRunEnqueueResponseSchema>;
 export type AgentRunEnqueueResponse = AgentRunEnqueueResponseDto;
 
+import { type BatchDeleteResponse } from './base';
+
 export const agentRunsDeleteResponseSchema = z.object({
-  deleted: z.number(),
+  success: z.boolean(),
+  deletedCount: z.number(),
+  deleted: z.number().optional(), // Legacy alias
 });
 
-export type AgentRunsDeleteResponseDto = z.infer<typeof agentRunsDeleteResponseSchema>;
-export type AgentRunsDeleteResponse = AgentRunsDeleteResponseDto;
+export type AgentRunsDeleteResponse = BatchDeleteResponse & { deleted?: number };
 
 export const agentRunDeleteResponseSchema = z.object({
   deleted: z.boolean(),

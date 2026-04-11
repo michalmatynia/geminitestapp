@@ -44,6 +44,8 @@ export type CaseResolverRuntimePersistenceSlice = {
   queuedExpectedRevision: number | null;
 };
 
+import { type SortOrder } from '@/shared/contracts/base';
+
 export type CaseResolverRuntimeCaseListSlice = {
   searchQuery: string;
   searchScope: 'all' | 'name' | 'folder' | 'content';
@@ -56,7 +58,7 @@ export type CaseResolverRuntimeCaseListSlice = {
     | 'signature'
     | 'locked'
     | 'sent';
-  sortOrder: 'asc' | 'desc';
+  sortOrder: SortOrder;
 };
 
 export type CaseResolverRuntimeState = {

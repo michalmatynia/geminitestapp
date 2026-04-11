@@ -1,5 +1,9 @@
 import { type ProductFilter } from '@/shared/contracts/products/filters';
-import { type ProductWithImages, type ProductsPagedResult } from '@/shared/contracts/products/product';
+import {
+  type ProductBulkArchiveResponse,
+  type ProductWithImages,
+  type ProductsPagedResult,
+} from '@/shared/contracts/products/product';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -113,6 +117,18 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
     });
     return { success: false };
   }
+}
+
+export async function bulkSetProductsArchivedState(
+  productIds: string[],
+  archived: boolean
+): Promise<ProductBulkArchiveResponse> {
+  return api.post<ProductBulkArchiveResponse>('/api/v2/products/archive/batch', {
+    productIds,
+    archived,
+  }, {
+    timeout: PRODUCT_WRITE_TIMEOUT_MS,
+  });
 }
 
 export async function getProductById(id: string): Promise<ProductWithImages> {

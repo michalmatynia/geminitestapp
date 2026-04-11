@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T11:04:43.121Z",
+  "generatedAt": "2026-04-11T14:40:26.139Z",
   "defaultTrackIds": [
     "products-parameter-integrity",
     "products-category-schema-normalization",
@@ -47,45 +47,25 @@
       "defaultSelected": true,
       "description": "Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
+      "latestGeneratedAt": "2026-04-11T09:41:24.435Z",
       "docDir": "docs/build/improvements/products-parameter-integrity",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T10:38:42.355Z",
+          "generatedAt": "2026-04-11T14:40:26.131Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
-          "stepCount": 1,
-          "automaticStepCount": 1,
+          "stepCount": 0,
+          "automaticStepCount": 0,
           "manualStepCount": 0,
-          "passedStepCount": 1,
+          "passedStepCount": 0,
           "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
-          "outputs": [
-            "/tmp/product-missing-parameters-audit-*.json",
-            "/tmp/product-missing-parameters-audit-latest.json"
-          ],
-          "steps": [
-            {
-              "id": "products-parameter-audit",
-              "title": "Audit products with missing parameters",
-              "trackId": "products-parameter-integrity",
-              "phase": "audit",
-              "mode": "automatic",
-              "writes": false,
-              "status": "passed",
-              "outputs": [
-                "/tmp/product-missing-parameters-audit-*.json",
-                "/tmp/product-missing-parameters-audit-latest.json"
-              ],
-              "instructions": [],
-              "script": "products:audit:missing-parameters",
-              "durationMs": 3637
-            }
-          ],
-          "status": "passed"
+          "outputs": [],
+          "steps": [],
+          "status": "not-selected"
         },
         {
           "phase": "classify",
@@ -244,35 +224,20 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T11:04:43.118Z",
+          "generatedAt": "2026-04-11T14:20:03.230Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
-          "stepCount": 1,
+          "stepCount": 0,
           "automaticStepCount": 0,
-          "manualStepCount": 1,
+          "manualStepCount": 0,
           "passedStepCount": 0,
           "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
           "outputs": [],
-          "steps": [
-            {
-              "id": "products-parameter-integrity-plan-review",
-              "title": "Review the refreshed parameter recovery workspace",
-              "trackId": "products-parameter-integrity",
-              "phase": "plan",
-              "mode": "manual",
-              "writes": false,
-              "status": "manual",
-              "outputs": [],
-              "instructions": [
-                "Confirm the latest unresolved count from /tmp/product-parameter-source-recovery-summary-latest.json.",
-                "Review the generated batch manifest and family mapping checklist before any write-side recovery step."
-              ]
-            }
-          ],
-          "status": "manual"
+          "steps": [],
+          "status": "not-selected"
         },
         {
           "phase": "dry-run",
@@ -388,12 +353,12 @@
       "defaultSelected": true,
       "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
+      "latestGeneratedAt": "2026-04-11T09:41:24.435Z",
       "docDir": "docs/build/improvements/products-category-schema-normalization",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T10:38:42.355Z",
+          "generatedAt": "2026-04-11T14:40:26.131Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -406,7 +371,7 @@
           "plannedStepCount": 0,
           "outputs": [],
           "steps": [],
-          "status": "not-configured"
+          "status": "not-selected"
         },
         {
           "phase": "classify",
@@ -447,38 +412,20 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T11:04:43.118Z",
+          "generatedAt": "2026-04-11T14:20:03.230Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
-          "stepCount": 1,
+          "stepCount": 0,
           "automaticStepCount": 0,
-          "manualStepCount": 1,
+          "manualStepCount": 0,
           "passedStepCount": 0,
           "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
           "outputs": [],
-          "steps": [
-            {
-              "id": "products-category-schema-plan",
-              "title": "Plan category and schema normalization decisions",
-              "trackId": "products-category-schema-normalization",
-              "phase": "plan",
-              "mode": "manual",
-              "writes": false,
-              "status": "manual",
-              "outputs": [],
-              "instructions": [
-                "Assign missing categories only when a defensible family/category match exists.",
-                "Choose final parameter ids for the unresolved families before generating any curated override file.",
-                "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.",
-                "Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.",
-                "Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply."
-              ]
-            }
-          ],
-          "status": "manual"
+          "steps": [],
+          "status": "not-selected"
         },
         {
           "phase": "dry-run",
@@ -623,20 +570,20 @@
       "defaultSelected": true,
       "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
+      "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
       "docDir": "docs/build/improvements/ui-consolidation",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T10:38:42.355Z",
+          "generatedAt": "2026-04-11T14:40:26.131Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
-          "stepCount": 1,
-          "automaticStepCount": 1,
+          "stepCount": 2,
+          "automaticStepCount": 2,
           "manualStepCount": 0,
           "passedStepCount": 0,
-          "failedStepCount": 1,
+          "failedStepCount": 2,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
           "outputs": [
@@ -660,7 +607,24 @@
               ],
               "instructions": [],
               "script": "check:ui-consolidation",
-              "durationMs": 8159
+              "durationMs": 12332
+            },
+            {
+              "id": "ui-consolidation-guardrail",
+              "title": "Run UI consolidation guardrail",
+              "trackId": "ui-consolidation",
+              "phase": "audit",
+              "mode": "automatic",
+              "writes": false,
+              "status": "failed",
+              "outputs": [
+                "docs/ui-consolidation/scan-latest.md",
+                "docs/ui-consolidation/scan-latest.json",
+                "docs/ui-consolidation/inventory-latest.csv"
+              ],
+              "instructions": [],
+              "script": "check:ui-consolidation",
+              "durationMs": 6042
             }
           ],
           "status": "failed"
@@ -684,7 +648,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T11:04:43.118Z",
+          "generatedAt": "2026-04-11T14:20:03.230Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -758,12 +722,12 @@
       "defaultSelected": true,
       "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
+      "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
       "docDir": "docs/build/improvements/application-performance",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T10:38:42.355Z",
+          "generatedAt": "2026-04-11T14:40:26.131Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -787,7 +751,7 @@
               "outputs": [],
               "instructions": [],
               "script": "perf:ops:fast",
-              "durationMs": 47383
+              "durationMs": 46069
             }
           ],
           "status": "passed"
@@ -841,36 +805,20 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T11:04:43.118Z",
+          "generatedAt": "2026-04-11T14:20:03.230Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
-          "stepCount": 1,
+          "stepCount": 0,
           "automaticStepCount": 0,
-          "manualStepCount": 1,
+          "manualStepCount": 0,
           "passedStepCount": 0,
           "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
           "outputs": [],
-          "steps": [
-            {
-              "id": "application-performance-plan",
-              "title": "Review the latest performance baseline outputs before optimization work",
-              "trackId": "application-performance",
-              "phase": "plan",
-              "mode": "manual",
-              "writes": false,
-              "status": "manual",
-              "outputs": [],
-              "instructions": [
-                "Use docs/metrics/critical-path-performance-latest.md and docs/metrics/critical-flow-tests-latest.md as the default review surfaces.",
-                "Treat docs/metrics/route-hotspots.md as the next-level investigation when baseline output suggests route-level regressions.",
-                "Use the weekly lane only when you need trend context, not for every local improvement pass."
-              ]
-            }
-          ],
-          "status": "manual"
+          "steps": [],
+          "status": "not-selected"
         },
         {
           "phase": "dry-run",
@@ -914,26 +862,46 @@
       "category": "testing",
       "defaultSelected": false,
       "description": "Tracks the testing inventory and quality snapshot so broader improvement work stays anchored to the current test-system health.",
-      "overallStatus": "no-data",
-      "latestGeneratedAt": null,
+      "overallStatus": "passed",
+      "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
       "docDir": "docs/build/improvements/testing-quality-baseline",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T10:38:42.355Z",
+          "generatedAt": "2026-04-11T14:40:26.131Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
-          "stepCount": 0,
-          "automaticStepCount": 0,
+          "stepCount": 1,
+          "automaticStepCount": 1,
           "manualStepCount": 0,
-          "passedStepCount": 0,
+          "passedStepCount": 1,
           "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
-          "outputs": [],
-          "steps": [],
-          "status": "not-selected"
+          "outputs": [
+            "docs/metrics/testing-suite-inventory-latest.md",
+            "docs/metrics/testing-suite-inventory-latest.json"
+          ],
+          "steps": [
+            {
+              "id": "testing-quality-suite-inventory",
+              "title": "Refresh the testing suite inventory",
+              "trackId": "testing-quality-baseline",
+              "phase": "audit",
+              "mode": "automatic",
+              "writes": false,
+              "status": "passed",
+              "outputs": [
+                "docs/metrics/testing-suite-inventory-latest.md",
+                "docs/metrics/testing-suite-inventory-latest.json"
+              ],
+              "instructions": [],
+              "script": "metrics:test-suite-inventory",
+              "durationMs": 419
+            }
+          ],
+          "status": "passed"
         },
         {
           "phase": "classify",
@@ -954,7 +922,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T11:04:43.118Z",
+          "generatedAt": "2026-04-11T14:20:03.230Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -1012,12 +980,12 @@
       "defaultSelected": true,
       "description": "Runs the core read-only quality checks that establish the current repository baseline.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-11T11:04:43.118Z",
+      "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
       "docDir": "docs/build/improvements/repo-quality-baseline",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T10:38:42.355Z",
+          "generatedAt": "2026-04-11T14:40:26.131Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -1047,7 +1015,7 @@
               ],
               "instructions": [],
               "script": "check:api-error-sources",
-              "durationMs": 568
+              "durationMs": 451
             },
             {
               "id": "repo-quality-canonical-sitewide",
@@ -1060,7 +1028,7 @@
               "outputs": [],
               "instructions": [],
               "script": "canonical:check:sitewide",
-              "durationMs": 2140
+              "durationMs": 2375
             }
           ],
           "status": "passed"
@@ -1111,35 +1079,20 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T11:04:43.118Z",
+          "generatedAt": "2026-04-11T14:20:03.230Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
-          "stepCount": 1,
+          "stepCount": 0,
           "automaticStepCount": 0,
-          "manualStepCount": 1,
+          "manualStepCount": 0,
           "passedStepCount": 0,
           "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
           "outputs": [],
-          "steps": [
-            {
-              "id": "repo-quality-baseline-plan",
-              "title": "Review baseline results and decide follow-up validation",
-              "trackId": "repo-quality-baseline",
-              "phase": "plan",
-              "mode": "manual",
-              "writes": false,
-              "status": "manual",
-              "outputs": [],
-              "instructions": [
-                "Use the lint and typecheck outputs to decide whether a wider repo quality sweep is needed.",
-                "Escalate to bazel:smoke or bazel:ci only when the baseline checks indicate broader instability."
-              ]
-            }
-          ],
-          "status": "manual"
+          "steps": [],
+          "status": "not-selected"
         },
         {
           "phase": "dry-run",

@@ -8,18 +8,18 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-04-11T13:40:35.367Z
+Generated at: 2026-04-11T14:58:40.369Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 10256
-- Exported declarations scanned: 6021
-- Candidate declarations scanned: 6003
-- Exact-shape clusters: 1
+- Files scanned: 10277
+- Exported declarations scanned: 6023
+- Candidate declarations scanned: 6005
+- Exact-shape clusters: 2
 - Near-shape clusters: 2
-- Clusters after filters: 3
-- Declarations in clusters: 9
+- Clusters after filters: 4
+- Declarations in clusters: 12
 - Highest risk score: 17
 
 ## Top Cluster Candidates
@@ -27,6 +27,7 @@ Status: ok
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
 | `exact-0001` | exact-shape | 17 | 5 | app | `TBD` |
+| `exact-0002` | exact-shape | 17 | 3 | shared:contracts | `TBD` |
 | `near-0001` | near-shape | 11 | 2 | shared, shared:contracts | `TBD` |
 | `near-0002` | near-shape | 11 | 2 | shared, shared:contracts | `TBD` |
 

@@ -1,13 +1,13 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowUpDown, Download, Eye, EyeOff } from 'lucide-react';
+import { Archive, ArrowUpDown, Download, Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo, useMemo, useState } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
-import { isMissingProductListingsError } from '@/features/integrations/product-integrations-adapter';
+import { isMissingProductListingsError } from '@/features/integrations/public';
 import {
   useProductListHeaderActionsContext,
   useProductListRowActionsContext,
@@ -46,6 +46,7 @@ import {
   getImageFilepath,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
+import { ProductListActivityPill } from './ProductListActivityPill';
 
 import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
 
@@ -300,7 +301,7 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
   const product: ProductWithImages = row.original;
   const { onProductNameClick, onPrefetchProductDetail } = useProductListRowActionsContext();
   const { productNameKey, categoryNameById } = useProductListRowVisualsContext();
-  const { productAiRunFeedback } = useProductListRowRuntime(
+  const { productAiRunFeedback, productScanRunFeedback } = useProductListRowRuntime(
     product.id,
     product.baseProductId
   );
@@ -485,14 +486,27 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
             </button>
           </Tooltip>
         )}
-        {productAiRunFeedback && (
-          <Badge
-            variant={productAiRunFeedback.variant}
-            className={cn('ml-1', productAiRunFeedback.badgeClassName)}
-          >
-            {productAiRunFeedback.label}
+        {product.archived ? (
+          <Badge variant='removed' icon={<Archive className='size-3' />}>
+            Archived
           </Badge>
-        )}
+        ) : null}
+        {productAiRunFeedback ? (
+          <ProductListActivityPill
+            kind='trigger-button'
+            label={productAiRunFeedback.label}
+            variant={productAiRunFeedback.variant}
+            badgeClassName={productAiRunFeedback.badgeClassName}
+          />
+        ) : null}
+        {productScanRunFeedback ? (
+          <ProductListActivityPill
+            kind='scan'
+            label={productScanRunFeedback.label}
+            variant={productScanRunFeedback.variant}
+            badgeClassName={productScanRunFeedback.badgeClassName}
+          />
+        ) : null}
       </div>
     </div>
   );

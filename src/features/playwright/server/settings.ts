@@ -7,7 +7,7 @@ import {
   extractIntegrationConnectionPlaywrightSettingsOverrides,
   normalizeIntegrationConnectionPlaywrightPersonaId,
   resolveIntegrationConnectionPlaywrightBrowserOverride,
-} from '@/features/integrations/utils/playwright-connection-settings';
+} from './connection-settings-shared';
 import {
   type IntegrationConnectionRecord,
   type PlaywrightStorageState,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:11.968Z",
+  "generatedAt": "2026-04-11T14:55:58.733Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,10 +7,10 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeFileCount": 305,
-    "methodCount": 221,
-    "methodsWithTests": 212,
-    "mutationValidationCount": 38,
+    "routeFileCount": 311,
+    "methodCount": 223,
+    "methodsWithTests": 214,
+    "mutationValidationCount": 39,
     "queryValidationCount": 10
   },
   "routes": [
@@ -2022,7 +2022,8 @@
         "src/app/api/marketplace/mappings/bulk/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/marketplace/mappings/bulk/route.test.ts"
+        "src/app/api/marketplace/mappings/bulk/route.test.ts",
+        "src/app/api/marketplace/mappings/bulk/handler.test.ts"
       ]
     },
     {
@@ -3098,6 +3099,38 @@
       ]
     },
     {
+      "route": "v2/integrations/product-listings/tradera-status-check",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/v2/integrations/product-listings/tradera-status-check/route.ts",
+        "src/app/api/v2/integrations/product-listings/tradera-status-check/route-handler.ts",
+        "src/app/api/v2/integrations/product-listings/tradera-status-check/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/v2/integrations/product-listings/tradera-status-check/handler.test.ts"
+      ]
+    },
+    {
+      "route": "v2/integrations/tradera/parameter-mapper/catalog/fetch",
+      "method": "POST",
+      "expectedAccess": "protected",
+      "hasTests": true,
+      "bodyValidated": true,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/v2/integrations/tradera/parameter-mapper/catalog/fetch/route.ts",
+        "src/app/api/v2/integrations/tradera/parameter-mapper/catalog/fetch/route-handler.ts",
+        "src/app/api/v2/integrations/tradera/parameter-mapper/catalog/fetch/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/v2/integrations/tradera/parameter-mapper/catalog/fetch/handler.test.ts"
+      ]
+    },
+    {
       "route": "v2/metadata/[type]/[id]",
       "method": "GET",
       "expectedAccess": "protected",
@@ -3309,5 +3342,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 185
+  "durationMs": 217
 }

@@ -4,6 +4,7 @@ import path from 'node:path';
 export const HIGH_RISK_COVERAGE_REPORTS_DIRECTORY = 'coverage/high-risk';
 export const HIGH_RISK_COVERAGE_SUMMARY_PATH = `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/coverage-summary.json`;
 const highRiskCoverageExcludeGlobs = ['**/*.md', '**/*.markdown'];
+const buildCodeCoverageIncludeGlob = (directory) => `${directory}/**/*.{ts,tsx}`;
 
 const METRIC_KEYS = ['lines', 'statements', 'functions', 'branches'];
 
@@ -12,35 +13,35 @@ export const highRiskCoverageDomains = [
     id: 'api-routes',
     label: 'API',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/api`,
-    coverageIncludeGlobs: ['src/app/api/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/app/api')],
     testRoots: ['__tests__/api', '__tests__/app/api', 'src/app/api'],
   },
   {
     id: 'shared-contracts',
     label: 'Shared contracts',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/shared-contracts`,
-    coverageIncludeGlobs: ['src/shared/contracts/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/shared/contracts')],
     testRoots: ['__tests__/shared/contracts', 'src/shared/contracts'],
   },
   {
     id: 'shared-lib',
     label: 'Shared lib',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/shared-lib`,
-    coverageIncludeGlobs: ['src/shared/lib/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/shared/lib')],
     testRoots: ['__tests__/shared', 'src/shared/lib'],
   },
   {
     id: 'kangur',
     label: 'Kangur',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/kangur`,
-    coverageIncludeGlobs: ['src/features/kangur/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/features/kangur')],
     testRoots: ['__tests__/features/kangur', 'src/features/kangur'],
   },
   {
     id: 'ai-paths',
     label: 'AI Paths',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/ai-paths`,
-    coverageIncludeGlobs: ['src/features/ai/ai-paths/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/features/ai/ai-paths')],
     testRoots: ['__tests__/api/ai-paths', '__tests__/features/ai/ai-paths', 'src/features/ai/ai-paths'],
   },
 ];

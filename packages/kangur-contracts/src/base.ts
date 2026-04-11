@@ -113,6 +113,12 @@ export type LabeledOptionWithDisabledDto<TValue = string> = LabeledOptionDto<TVa
 };
 export type LabeledOptionWithDisabled<TValue = string> = LabeledOptionWithDisabledDto<TValue>;
 
+export type LabeledOptionWithGroupDto<TValue = string> = LabeledOptionWithDisabledDto<TValue> & {
+  description?: string;
+  group?: string;
+};
+export type LabeledOptionWithGroup<TValue = string> = LabeledOptionWithGroupDto<TValue>;
+
 export type IdDto = {
   id: string;
 };
@@ -294,6 +300,50 @@ export const paginationQuerySchema = z.object({
 export type PaginationQueryDto = z.infer<typeof paginationQuerySchema>;
 export type PaginationQuery = PaginationQueryDto;
 
+/**
+ * Standard sort order
+ */
+export type SortOrder = 'asc' | 'desc';
+
+/**
+ * Base pagination parameters for database queries
+ */
+export type PaginationParamsDto = {
+  page: number;
+  pageSize: number;
+  skip: number;
+};
+export type PaginationParams = PaginationParamsDto;
+
+/**
+ * Common schema for search query parameters.
+ */
+export const searchQuerySchema = z.object({
+  search: z.string().trim().optional(),
+});
+
+/**
+ * Common schema for date range query parameters.
+ */
+export const dateRangeQuerySchema = z.object({
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+});
+
+/**
+ * Combined common list query parameters.
+ */
+export const commonListQuerySchema = paginationQuerySchema
+  .merge(searchQuerySchema)
+  .merge(dateRangeQuerySchema);
+
+/**
+ * Common schema for a single ID parameter.
+ */
+export const idParamSchema = z.object({
+  id: z.string().trim().min(1, 'ID is required'),
+});
+
 export type CodeMessageIssueDto<TCode extends string = string> = {
   code: TCode;
   message: string;
@@ -342,6 +392,25 @@ export interface BaseEntity {
   createdAt: string | Date;
   updatedAt: string | Date | null;
 }
+
+/**
+ * Result of a single resource deletion
+ */
+export type SimpleDeleteResponseDto = {
+  success: boolean;
+  message?: string;
+};
+export type SimpleDeleteResponse = SimpleDeleteResponseDto;
+
+/**
+ * Result of a batch resource deletion
+ */
+export type BatchDeleteResponseDto = {
+  success: boolean;
+  deletedCount: number;
+  message?: string;
+};
+export type BatchDeleteResponse = BatchDeleteResponseDto;
 
 /**
  * Base interface for named entities.

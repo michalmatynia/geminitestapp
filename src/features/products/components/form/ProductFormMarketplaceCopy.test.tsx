@@ -22,9 +22,13 @@ const {
   useProductFormCoreMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
-  useIntegrations: () => useIntegrationsMock(),
-}));
+vi.mock('@/features/integrations/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/integrations/public')>();
+  return {
+    ...actual,
+    useIntegrations: () => useIntegrationsMock(),
+  };
+});
 
 vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
   useProductFormCore: () => useProductFormCoreMock(),

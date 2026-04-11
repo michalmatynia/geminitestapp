@@ -22,6 +22,7 @@ export type ProductListDebugSnapshot = {
   hasProductId: boolean;
   hasAdvancedFilter: boolean;
   baseExported: '' | 'true' | 'false';
+  includeArchived: boolean;
   showTriggerRunFeedback: boolean;
   isEditHydrating: boolean;
 };

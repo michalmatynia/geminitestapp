@@ -61,6 +61,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
   } = useDatabaseEngineActionsContext();
   const activeMongoSource = mongoSourceState?.activeSource ?? null;
   const lastMongoSync = mongoSourceState?.lastSync ?? null;
+  const lastMongoSyncBackups = lastMongoSync?.preSyncBackups ?? [];
   const mongoSources = mongoSourceState
     ? [mongoSourceState.local, mongoSourceState.cloud]
     : [];
@@ -82,10 +83,11 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
   const cloudMongoUriExample =
     mongoSourceState?.cloud.maskedUri ?? 'mongodb+srv://cluster.example/app_cloud';
   const cloudMongoDbExample = mongoSourceState?.cloud.dbName ?? 'app_cloud';
+  const effectiveEnvFileHint = '.env.local overrides .env in development';
   const mongoSourceTip =
     nextMongoSource !== null
-      ? `To switch, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource} in .env and restart the server.`
-      : 'Add MONGODB_ACTIVE_SOURCE_DEFAULT=local or MONGODB_ACTIVE_SOURCE_DEFAULT=cloud to .env, then restart the server.';
+      ? `To switch, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource} in the effective env file (${effectiveEnvFileHint}) and restart the server.`
+      : `Add MONGODB_ACTIVE_SOURCE_DEFAULT=local or MONGODB_ACTIVE_SOURCE_DEFAULT=cloud to the effective env file (${effectiveEnvFileHint}), then restart the server.`;
 
   const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(
     () => [
@@ -196,11 +198,12 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
               <div className='space-y-3'>
                 <div>
                   <p className='text-xs uppercase tracking-[0.24em] text-muted-foreground'>
-                    .env Example
+                    Effective Env Example
                   </p>
                   <p className='text-sm text-muted-foreground'>
-                    Keep both targets in `.env`, then change only
-                    {' '}`MONGODB_ACTIVE_SOURCE_DEFAULT` and restart.
+                    Keep both targets in the effective env files. In Next.js development,
+                    {' '}`.env.local` overrides `.env`. Change only
+                    {' '}`MONGODB_ACTIVE_SOURCE_DEFAULT` in the winning file, then restart.
                   </p>
                 </div>
                 <pre className='overflow-x-auto rounded-md border border-white/10 bg-black/20 p-3 font-mono text-xs text-gray-200'>
@@ -228,15 +231,18 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                 className='font-medium capitalize'
               />
               <Badge variant='outline' className='border-white/10 text-gray-300'>
-                Controlled by `.env`: MONGODB_ACTIVE_SOURCE_DEFAULT
+                Controlled by effective env: MONGODB_ACTIVE_SOURCE_DEFAULT
               </Badge>
               <Badge variant='outline' className='border-white/10 text-gray-300'>
-                Restart required after `.env` changes
+                Restart required after env file changes
+              </Badge>
+              <Badge variant='outline' className='border-white/10 text-gray-300'>
+                In dev: `.env.local` overrides `.env`
               </Badge>
               {!mongoSourceState?.canSwitch ? (
                 <Badge variant='outline' className='border-amber-400/30 text-amber-200'>
-                  Configure both local and cloud URIs and set MONGODB_ACTIVE_SOURCE_DEFAULT in
-                  `.env` to use dual-source mode.
+                  Configure both local and cloud URIs in the effective env and set
+                  MONGODB_ACTIVE_SOURCE_DEFAULT in the winning file to use dual-source mode.
                 </Badge>
               ) : null}
               {!manualFullSyncEnabled ? (
@@ -261,7 +267,9 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                       void syncMongoSources('cloud_to_local');
                     }}
                   >
-                    {isSyncingMongoSources ? 'Syncing...' : 'Pull Cloud -> Local'}
+                    {isSyncingMongoSources
+                      ? 'Syncing...'
+                      : 'Pull Cloud -> Local (backup both first)'}
                   </Button>
                   <Button
                     type='button'
@@ -273,7 +281,9 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                       void syncMongoSources('local_to_cloud');
                     }}
                   >
-                    {isSyncingMongoSources ? 'Syncing...' : 'Push Local -> Cloud'}
+                    {isSyncingMongoSources
+                      ? 'Syncing...'
+                      : 'Push Local -> Cloud (backup both first)'}
                   </Button>
                 </>
               ) : null}
@@ -300,12 +310,33 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                 {lastMongoSync ? (
                   <div className='space-y-1 text-xs text-muted-foreground'>
                     <p>Direction: {lastMongoSync.direction}</p>
-                    <p>Archive: {lastMongoSync.archivePath ?? 'Not retained'}</p>
-                    <p>Log: {lastMongoSync.logPath ?? 'Not available'}</p>
+                    <p>Transfer archive: {lastMongoSync.archivePath ?? 'Not retained'}</p>
+                    <p>Transfer log: {lastMongoSync.logPath ?? 'Not available'}</p>
+                    {lastMongoSyncBackups.length > 0 ? (
+                      <>
+                        <p>Pre-sync backups: {lastMongoSyncBackups.length}</p>
+                        {lastMongoSyncBackups.map((backup) => (
+                          <div
+                            key={`${backup.role}-${backup.source}-${backup.backupName}`}
+                            className='rounded-md border border-white/10 bg-white/5 px-3 py-2'
+                          >
+                            <p className='font-medium text-gray-200'>
+                              {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${backup.source}): ${backup.backupName}`}
+                            </p>
+                            <p>Backup file: {backup.backupPath}</p>
+                            <p>Backup log: {backup.logPath}</p>
+                            {backup.warning ? <p>Backup warning: {backup.warning}</p> : null}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <p>Pre-sync backups: Not recorded</p>
+                    )}
                   </div>
                 ) : (
                   <p className='text-xs text-muted-foreground'>
-                    Run a cloud/local sync to persist the latest archive and log reference here.
+                    Run a cloud/local sync to create two pre-sync backups and persist the latest
+                    transfer archive and log reference here.
                   </p>
                 )}
               </Card>
@@ -379,7 +410,7 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                     <div className='rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-muted-foreground'>
                       {entry.isActive
                         ? 'This target is active for the current server process.'
-                        : `To activate this target, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=${entry.source} in .env and restart the server.`}
+                        : `To activate this target, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=${entry.source} in the effective env file (${effectiveEnvFileHint}) and restart the server.`}
                     </div>
                   </Card>
                 );

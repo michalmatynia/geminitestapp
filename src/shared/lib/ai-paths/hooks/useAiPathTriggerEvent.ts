@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import type { AiNode, AiPathRunRecord, PathConfig } from '@/shared/contracts/ai-paths';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths-core/nodes';
@@ -49,8 +49,10 @@ import {
   isRecoverableTriggerEnqueueError,
   createAiPathTriggerRequestId,
 } from './trigger-event-utils';
+import { shouldEmbedTriggerEntitySnapshot } from './trigger-event-sanitization';
 
 const TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
+const PREFLIGHT_CACHE_MAX_ENTRIES = 32;
 const PRODUCT_SAVED_CONFIG_WARNING_LOCATIONS = new Set([
   'product_form_footer',
   'product_form_header',
@@ -114,12 +116,55 @@ export const resolveCurrentActivePathId = (args: {
   return uiStateActivePathId.length > 0 ? uiStateActivePathId : null;
 };
 
+type CachedPreflightReport = ReturnType<typeof evaluateRunPreflight>;
+
+const resolvePreflightCacheKey = (args: {
+  selectedConfig: PathConfig;
+  triggerNodeId: string;
+}): string => {
+  const updatedAt =
+    typeof args.selectedConfig.updatedAt === 'string' && args.selectedConfig.updatedAt.trim().length > 0
+      ? args.selectedConfig.updatedAt.trim()
+      : 'unknown';
+  return `${args.selectedConfig.id}::${updatedAt}::${args.triggerNodeId}`;
+};
+
+const readCachedPreflight = (
+  cache: Map<string, CachedPreflightReport>,
+  cacheKey: string
+): CachedPreflightReport | null => {
+  const cached = cache.get(cacheKey) ?? null;
+  if (!cached) return null;
+  cache.delete(cacheKey);
+  cache.set(cacheKey, cached);
+  return cached;
+};
+
+const writeCachedPreflight = (
+  cache: Map<string, CachedPreflightReport>,
+  cacheKey: string,
+  report: CachedPreflightReport
+): void => {
+  if (cache.has(cacheKey)) {
+    cache.delete(cacheKey);
+  }
+  cache.set(cacheKey, report);
+  if (cache.size <= PREFLIGHT_CACHE_MAX_ENTRIES) {
+    return;
+  }
+  const oldestKey = cache.keys().next().value;
+  if (typeof oldestKey === 'string') {
+    cache.delete(oldestKey);
+  }
+};
+
 export function useAiPathTriggerEvent(): {
   fireAiPathTriggerEvent: (args: FireAiPathTriggerEventArgs) => Promise<void>;
   } {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
+  const preflightCacheRef = useRef<Map<string, CachedPreflightReport>>(new Map());
 
   const resolvePreferredActivePathId = useCallback((): string | null => {
     const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
@@ -296,19 +341,6 @@ export function useAiPathTriggerEvent(): {
           return;
         }
 
-        let entityJson: Record<string, unknown> | null = null;
-        if (typeof args.getEntityJson === 'function') {
-          try {
-            entityJson = args.getEntityJson();
-          } catch (entityJsonError) {
-            logClientCatch(entityJsonError, {
-              source: 'useAiPathTriggerEvent',
-              action: 'getEntityJson',
-              triggerEventId,
-            });
-          }
-        }
-
         const historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
         const triggerNode = selectedConfig.nodes.find((node: AiNode) => {
           if (node.type !== 'trigger') return false;
@@ -329,6 +361,27 @@ export function useAiPathTriggerEvent(): {
           return;
         }
 
+        let entityJson: Record<string, unknown> | null = null;
+        if (
+          typeof args.getEntityJson === 'function' &&
+          shouldEmbedTriggerEntitySnapshot({
+            mode: triggerNode.config?.trigger?.entitySnapshotMode,
+            entityType: args.entityType,
+            entityId: args.entityId,
+            sourceLocation: args.source?.location,
+          })
+        ) {
+          try {
+            entityJson = args.getEntityJson();
+          } catch (entityJsonError) {
+            logClientCatch(entityJsonError, {
+              source: 'useAiPathTriggerEvent',
+              action: 'getEntityJson',
+              triggerEventId,
+            });
+          }
+        }
+
         const savedDefaultModelWarning = resolveSavedDefaultModelWarning({
           entityType: args.entityType,
           source: args.source,
@@ -347,16 +400,26 @@ export function useAiPathTriggerEvent(): {
         const updaterSamples = coerceSampleStateMap<UpdaterSampleState>(
           selectedConfig.updaterSamples
         );
-        const preflight = evaluateRunPreflight({
-          nodes: selectedConfig.nodes,
-          edges: selectedConfig.edges,
-          aiPathsValidation: validationConfig,
-          strictFlowMode: selectedConfig.strictFlowMode ?? true,
+        const preflightCacheKey = resolvePreflightCacheKey({
+          selectedConfig,
           triggerNodeId: triggerNode.id,
-          ...(parserSamples ? { parserSamples } : {}),
-          ...(updaterSamples ? { updaterSamples } : {}),
-          mode: 'full',
         });
+        const preflight =
+          readCachedPreflight(preflightCacheRef.current, preflightCacheKey) ??
+          (() => {
+            const computed = evaluateRunPreflight({
+              nodes: selectedConfig.nodes,
+              edges: selectedConfig.edges,
+              aiPathsValidation: validationConfig,
+              strictFlowMode: selectedConfig.strictFlowMode ?? true,
+              triggerNodeId: triggerNode.id,
+              ...(parserSamples ? { parserSamples } : {}),
+              ...(updaterSamples ? { updaterSamples } : {}),
+              mode: 'full',
+            });
+            writeCachedPreflight(preflightCacheRef.current, preflightCacheKey, computed);
+            return computed;
+          })();
         const preflightDurationMs = performance.now() - preflightStartedAt;
 
         if (preflight.shouldBlock) {

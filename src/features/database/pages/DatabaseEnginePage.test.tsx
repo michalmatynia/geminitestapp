@@ -54,6 +54,26 @@ const mocks = vi.hoisted(() => ({
         source: 'cloud',
         target: 'local',
         syncedAt: '2026-04-09T04:30:00.000Z',
+        preSyncBackups: [
+          {
+            role: 'source',
+            source: 'cloud',
+            backupName: 'cloud-source-pre-sync.archive',
+            backupPath: '/tmp/backups/cloud-source-pre-sync.archive',
+            logPath: '/tmp/backups/cloud-source-pre-sync.archive.log',
+            createdAt: '2026-04-09T04:29:00.000Z',
+            warning: null,
+          },
+          {
+            role: 'target',
+            source: 'local',
+            backupName: 'local-target-pre-sync.archive',
+            backupPath: '/tmp/backups/local-target-pre-sync.archive',
+            logPath: '/tmp/backups/local-target-pre-sync.archive.log',
+            createdAt: '2026-04-09T04:29:30.000Z',
+            warning: null,
+          },
+        ],
         archivePath: '/tmp/mongo-sync.archive',
         logPath: '/tmp/mongo-sync.log',
       },
@@ -152,6 +172,26 @@ const createState = () => ({
       source: 'cloud' as const,
       target: 'local' as const,
       syncedAt: '2026-04-09T04:30:00.000Z',
+      preSyncBackups: [
+        {
+          role: 'source' as const,
+          source: 'cloud' as const,
+          backupName: 'cloud-source-pre-sync.archive',
+          backupPath: '/tmp/backups/cloud-source-pre-sync.archive',
+          logPath: '/tmp/backups/cloud-source-pre-sync.archive.log',
+          createdAt: '2026-04-09T04:29:00.000Z',
+          warning: null,
+        },
+        {
+          role: 'target' as const,
+          source: 'local' as const,
+          backupName: 'local-target-pre-sync.archive',
+          backupPath: '/tmp/backups/local-target-pre-sync.archive',
+          logPath: '/tmp/backups/local-target-pre-sync.archive.log',
+          createdAt: '2026-04-09T04:29:30.000Z',
+          warning: null,
+        },
+      ],
       archivePath: '/tmp/mongo-sync.archive',
       logPath: '/tmp/mongo-sync.log',
     },
@@ -370,10 +410,10 @@ describe('DatabaseEnginePage', () => {
     expect(screen.getByRole('heading', { name: 'Mongo Source' })).toBeInTheDocument();
     expect(screen.getByText('Current Database')).toBeInTheDocument();
     expect(screen.getByText('Local Database')).toBeInTheDocument();
-    expect(screen.getByText('.env Example')).toBeInTheDocument();
+    expect(screen.getByText('Effective Env Example')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Keep both targets in `.env`, then change only `MONGODB_ACTIVE_SOURCE_DEFAULT` and restart.'
+        'Keep both targets in the effective env files. In Next.js development, `.env.local` overrides `.env`. Change only `MONGODB_ACTIVE_SOURCE_DEFAULT` in the winning file, then restart.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText(/MONGODB_LOCAL_URI=mongodb:\/\/localhost:27017\/app_local/)).toBeInTheDocument();
@@ -384,23 +424,37 @@ describe('DatabaseEnginePage', () => {
     expect(screen.getByText(/# To switch:\s*MONGODB_ACTIVE_SOURCE_DEFAULT=cloud/)).toBeInTheDocument();
     expect(
       screen.getByText(
-        'To switch, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=cloud in .env and restart the server.'
+        'To switch, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=cloud in the effective env file (.env.local overrides .env in development) and restart the server.'
       )
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Controlled by `.env`: MONGODB_ACTIVE_SOURCE_DEFAULT')
+      screen.getByText('Controlled by effective env: MONGODB_ACTIVE_SOURCE_DEFAULT')
     ).toBeInTheDocument();
-    expect(screen.getByText('Restart required after `.env` changes')).toBeInTheDocument();
+    expect(screen.getByText('Restart required after env file changes')).toBeInTheDocument();
+    expect(screen.getByText('In dev: `.env.local` overrides `.env`')).toBeInTheDocument();
     expect(screen.getByText('Synced at: 2026-04-09T04:30:00.000Z')).toBeInTheDocument();
     expect(screen.getByText('Direction: cloud_to_local')).toBeInTheDocument();
-    expect(screen.getByText('Archive: /tmp/mongo-sync.archive')).toBeInTheDocument();
-    expect(screen.getByText('Log: /tmp/mongo-sync.log')).toBeInTheDocument();
+    expect(screen.getByText('Transfer archive: /tmp/mongo-sync.archive')).toBeInTheDocument();
+    expect(screen.getByText('Transfer log: /tmp/mongo-sync.log')).toBeInTheDocument();
+    expect(screen.getByText('Pre-sync backups: 2')).toBeInTheDocument();
+    expect(
+      screen.getByText('Source backup (cloud): cloud-source-pre-sync.archive')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Target backup (local): local-target-pre-sync.archive')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Backup file: /tmp/backups/cloud-source-pre-sync.archive')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Backup log: /tmp/backups/local-target-pre-sync.archive.log')
+    ).toBeInTheDocument();
     expect(screen.getAllByText('Connection: Reachable')).toHaveLength(2);
     expect(screen.getByText('mongodb://localhost:27017/app_local')).toBeInTheDocument();
     expect(screen.getByText('mongodb+srv://cluster.example/app_cloud')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'To activate this target, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=cloud in .env and restart the server.'
+        'To activate this target, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=cloud in the effective env file (.env.local overrides .env in development) and restart the server.'
       )
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Switch to cloud' })).not.toBeInTheDocument();
@@ -409,8 +463,12 @@ describe('DatabaseEnginePage', () => {
   it('runs manual Mongo sync actions from the header controls', () => {
     render(<DatabaseEnginePage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Pull Cloud -> Local' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Push Local -> Cloud' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+    );
 
     expect(mocks.actions.syncMongoSources).toHaveBeenNthCalledWith(1, 'cloud_to_local');
     expect(mocks.actions.syncMongoSources).toHaveBeenNthCalledWith(2, 'local_to_cloud');
@@ -445,11 +503,15 @@ describe('DatabaseEnginePage', () => {
 
     expect(
       screen.getByText(
-        'Configure both local and cloud URIs and set MONGODB_ACTIVE_SOURCE_DEFAULT in `.env` to use dual-source mode.'
+        'Configure both local and cloud URIs in the effective env and set MONGODB_ACTIVE_SOURCE_DEFAULT in the winning file to use dual-source mode.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Pull Cloud -> Local' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Push Local -> Cloud' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+    ).not.toBeInTheDocument();
   });
 
   it('shows an empty last-sync state when no sync has been recorded', () => {
@@ -465,7 +527,9 @@ describe('DatabaseEnginePage', () => {
 
     expect(screen.getByText('No sync recorded yet')).toBeInTheDocument();
     expect(
-      screen.getByText('Run a cloud/local sync to persist the latest archive and log reference here.')
+      screen.getByText(
+        'Run a cloud/local sync to create two pre-sync backups and persist the latest transfer archive and log reference here.'
+      )
     ).toBeInTheDocument();
   });
 
@@ -483,8 +547,12 @@ describe('DatabaseEnginePage', () => {
     expect(
       screen.getByText('Manual full sync is disabled by Database Engine controls.')
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Pull Cloud -> Local' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Push Local -> Cloud' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+    ).not.toBeInTheDocument();
   });
 
   it('hides sync actions and explains why when local and cloud point to the same target', () => {
@@ -505,8 +573,12 @@ describe('DatabaseEnginePage', () => {
         'MongoDB source sync is disabled because "local" and "cloud" point to the same URI and database.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Pull Cloud -> Local' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Push Local -> Cloud' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+    ).not.toBeInTheDocument();
   });
 
   it('shows connection errors for unreachable Mongo targets', () => {
@@ -534,7 +606,11 @@ describe('DatabaseEnginePage', () => {
         'MongoDB source sync is disabled because "cloud" is unreachable: cloud ping failed'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Pull Cloud -> Local' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Push Local -> Cloud' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+    ).not.toBeInTheDocument();
   });
 });

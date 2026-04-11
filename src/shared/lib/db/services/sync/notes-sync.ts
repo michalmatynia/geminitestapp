@@ -1,9 +1,8 @@
 import { ObjectId } from 'mongodb';
 
+import { BatchCountResult } from '@/shared/contracts/base';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
-
-type BatchResult = { count: number };
 
 type EntityWithId = { id: string };
 type RawMongoDoc = Record<string, unknown>;
@@ -165,11 +164,11 @@ export const syncNotebooks: DatabaseSyncHandler = async ({ mongo, prisma, normal
       };
     })
     .filter((item): item is NotebookSeed => item !== null);
-  const deleted = (await prisma.notebook.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.notebook.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.notebook.createMany({
       data: data as Prisma.NotebookCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -223,11 +222,11 @@ export const syncThemes: DatabaseSyncHandler = async ({ mongo, prisma, normalize
       };
     })
     .filter((item): item is ThemeSeed => item !== null);
-  const deleted = (await prisma.theme.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.theme.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.theme.createMany({
       data: data as Prisma.ThemeCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -274,11 +273,11 @@ export const syncTags: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId
       };
     })
     .filter((item): item is TagSeed => item !== null);
-  const deleted = (await prisma.tag.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.tag.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.tag.createMany({
       data: data as Prisma.TagCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -357,9 +356,9 @@ export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, norma
       themeId: resolvedThemeId,
     };
   });
-  const deleted = (await prisma.category.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
-    ? ((await prisma.category.createMany({ data })) as BatchResult)
+  const deleted = (await prisma.category.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
+    ? ((await prisma.category.createMany({ data })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -404,13 +403,13 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   await prisma.noteCategory.deleteMany();
   await prisma.noteRelation.deleteMany();
   await prisma.noteFile.deleteMany();
-  const deleted = (await prisma.note.deleteMany()) as BatchResult;
+  const deleted = (await prisma.note.deleteMany()) as BatchCountResult;
 
   const noteData = data.map(({ tags: _t, categories: _c, relationsFrom: _r, ...rest }) => rest);
-  const created: BatchResult = noteData.length
+  const created: BatchCountResult = noteData.length
     ? ((await prisma.note.createMany({
       data: noteData as Prisma.NoteCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
 
   const tagRows = data.flatMap((note) =>
@@ -478,11 +477,11 @@ export const syncNoteFiles: DatabaseSyncHandler = async ({ mongo, prisma, normal
       };
     })
     .filter((item): item is NoteFileSeed => item !== null);
-  const deleted = (await prisma.noteFile.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.noteFile.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.noteFile.createMany({
       data: data as Prisma.NoteFileCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };

@@ -19,6 +19,7 @@ const createScanRecord = (overrides: Partial<ProductScanRecord> = {}): ProductSc
   price: null,
   url: null,
   description: null,
+  amazonDetails: null,
   steps: [],
   rawResult: null,
   error: null,

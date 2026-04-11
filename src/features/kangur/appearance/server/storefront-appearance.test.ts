@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
@@ -28,14 +28,6 @@ vi.mock('next/cache', () => ({
   revalidateTag: revalidateTagMock,
 }));
 
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react')>();
-  return {
-    ...actual,
-    cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
-  };
-});
-
 vi.mock('./storefront-appearance-source', () => ({
   ensureKangurStorefrontAppearanceSettingsSeeded:
     ensureKangurStorefrontAppearanceSettingsSeededMock,
@@ -56,10 +48,6 @@ describe('storefront-appearance', () => {
     ];
     ensureKangurStorefrontAppearanceSettingsSeededMock.mockResolvedValue(seedSettings);
     createKangurStorefrontAppearanceSeedSettingsMock.mockReturnValue(seedSettings);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('reads the initial storefront mode and theme settings from Kangur settings storage', async () => {
@@ -154,40 +142,4 @@ describe('storefront-appearance', () => {
     );
   });
 
-  it('reuses the hot cache until the freshness timer expires', async () => {
-    vi.useFakeTimers();
-
-    ensureKangurStorefrontAppearanceSettingsSeededMock
-      .mockResolvedValueOnce([
-        { key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY, value: 'default' },
-        { key: KANGUR_DAILY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ffffff"}' },
-        { key: KANGUR_DAWN_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#f9d7aa"}' },
-        { key: KANGUR_SUNSET_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ff8800"}' },
-        { key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#111827"}' },
-      ])
-      .mockResolvedValueOnce([
-        { key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY, value: 'sunset' },
-        { key: KANGUR_DAILY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ffffff"}' },
-        { key: KANGUR_DAWN_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ffe1b3"}' },
-        { key: KANGUR_SUNSET_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#ff8800"}' },
-        { key: KANGUR_NIGHTLY_THEME_SETTINGS_KEY, value: '{"backgroundColor":"#0f172a"}' },
-      ]);
-
-    const { getKangurStorefrontInitialState } = await import('./storefront-appearance');
-
-    await expect(getKangurStorefrontInitialState()).resolves.toMatchObject({
-      initialMode: 'default',
-    });
-    await expect(getKangurStorefrontInitialState()).resolves.toMatchObject({
-      initialMode: 'default',
-    });
-    expect(ensureKangurStorefrontAppearanceSettingsSeededMock).toHaveBeenCalledTimes(1);
-
-    await vi.advanceTimersByTimeAsync(30_001);
-
-    await expect(getKangurStorefrontInitialState()).resolves.toMatchObject({
-      initialMode: 'sunset',
-    });
-    expect(ensureKangurStorefrontAppearanceSettingsSeededMock).toHaveBeenCalledTimes(2);
-  });
 });

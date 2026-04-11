@@ -38,6 +38,7 @@ import { cn } from '@/shared/utils/ui-utils';
 
 import { ValidatedField } from './ValidatedField';
 import { StructuredProductNameField } from './StructuredProductNameField';
+import ProductFormLatestAmazonExtraction from './ProductFormLatestAmazonExtraction';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const PRODUCT_IDENTIFIER_OPTIONS = [
@@ -663,6 +664,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
           </Tabs>
         </FormSection>
       )}
+
+      <ProductFormLatestAmazonExtraction />
 
       <FormSection title='Identifiers' gridClassName='md:grid-cols-2'>
         <ValidatedField name='sku' label='SKU' required placeholder='Unique stock keeping unit' />

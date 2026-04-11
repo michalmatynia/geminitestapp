@@ -56,7 +56,9 @@ import {
   DEFAULT_PRODUCT_SYNC_FIELD_RULES,
   productSyncProfileCreatePayloadSchema,
   productSyncProfileSchema,
+  productSyncPreviewSchema,
   productSyncRunListQuerySchema,
+  productSyncSingleProductResponseSchema,
 } from '@/shared/contracts/product-sync';
 import {
   productCatalogRecordSchema,
@@ -207,6 +209,7 @@ describe('shared contracts runtime smoke', () => {
         id: 'profile-1',
         name: 'Base sync',
         description: null,
+        isDefault: true,
         enabled: true,
         connectionId: 'connection-1',
         inventoryId: 'inventory-1',
@@ -220,6 +223,73 @@ describe('shared contracts runtime smoke', () => {
         updatedAt: null,
       }).fieldRules
     ).toHaveLength(fieldRules.length);
+
+    expect(
+      productSyncPreviewSchema.parse({
+        status: 'ready',
+        canSync: true,
+        disabledReason: null,
+        profile: {
+          id: 'profile-1',
+          name: 'Base sync',
+          isDefault: true,
+          enabled: true,
+          connectionId: 'connection-1',
+          connectionName: 'Main Base Connection',
+          inventoryId: 'inventory-1',
+          catalogId: null,
+          lastRunAt: null,
+        },
+        linkedBaseProductId: 'base-1',
+        resolvedTargetSource: 'product',
+        fields: [
+          {
+            appField: 'stock',
+            appFieldLabel: 'Stock',
+            baseField: 'stock',
+            baseFieldLabel: 'Inventory stock (stock)',
+            baseFieldDescription: 'Inventory-level stock (no warehouse).',
+            direction: 'base_to_app',
+            appValue: 5,
+            baseValue: 8,
+            hasDifference: true,
+            willWriteToApp: true,
+            willWriteToBase: false,
+          },
+        ],
+      }).fields[0]?.direction
+    ).toBe('base_to_app');
+
+    expect(
+      productSyncSingleProductResponseSchema.parse({
+        preview: {
+          status: 'ready',
+          canSync: true,
+          disabledReason: null,
+          profile: {
+            id: 'profile-1',
+            name: 'Base sync',
+            isDefault: true,
+            enabled: true,
+            connectionId: 'connection-1',
+            connectionName: 'Main Base Connection',
+            inventoryId: 'inventory-1',
+            catalogId: null,
+            lastRunAt: null,
+          },
+          linkedBaseProductId: 'base-1',
+          resolvedTargetSource: 'product',
+          fields: [],
+        },
+        result: {
+          status: 'success',
+          localChanges: ['stock'],
+          baseChanges: [],
+          message: 'Synchronized successfully.',
+          errorMessage: null,
+        },
+      }).result.status
+    ).toBe('success');
 
     expect(productSyncRunListQuerySchema.parse({ limit: '25' }).limit).toBe(25);
   });

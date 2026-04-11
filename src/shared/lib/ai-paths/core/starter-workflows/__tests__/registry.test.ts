@@ -102,12 +102,18 @@ describe('starter workflow registry', () => {
     const dbSchemaNode = (config.nodes ?? []).find(
       (node) => node.type === 'db_schema' && node.id === 'node-db-schema-name-normalize'
     );
+    const modelNode = (config.nodes ?? []).find(
+      (node) => node.type === 'model' && node.id === 'node-model-name-normalize'
+    );
 
     expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
     expect(hasNodeId(config, 'node-db-schema-name-normalize')).toBe(true);
     expect(hasNodeId(config, 'node-category-context-name-normalize')).toBe(true);
     expect(hasNodeId(config, 'node-update-name-normalize')).toBe(true);
     expect(dbSchemaNode?.config?.db_schema?.contextTransform).toBe('product_categories_leaf_only');
+    expect(dbSchemaNode?.config?.db_schema?.contextReuseMode).toBe('prefer_transformed_input');
+    expect(modelNode?.config?.model?.vision).toBe(false);
+    expect(modelNode?.config?.model?.maxTokens).toBe(500);
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
     expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');

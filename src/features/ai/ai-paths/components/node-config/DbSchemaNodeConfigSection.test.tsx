@@ -38,6 +38,7 @@ const buildDbSchemaNode = (overrides: Record<string, unknown> = {}): Record<stri
       contextQuery: '',
       contextLimit: 20,
       contextTransform: 'none',
+      contextReuseMode: 'never',
       includeFields: true,
       includeRelations: true,
       formatAs: 'text',
@@ -247,6 +248,7 @@ describe('DbSchemaNodeConfigSection', () => {
           contextQuery: '',
           contextLimit: 20,
           contextTransform: 'none',
+          contextReuseMode: 'never',
           includeFields: true,
           includeRelations: true,
           formatAs: 'text',
@@ -345,6 +347,7 @@ describe('DbSchemaNodeConfigSection', () => {
           contextQuery: '',
           contextLimit: 20,
           contextTransform: 'none',
+          contextReuseMode: 'never',
           includeFields: true,
           includeRelations: true,
           formatAs: 'text',
@@ -399,6 +402,15 @@ describe('DbSchemaNodeConfigSection', () => {
     expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
       db_schema: expect.objectContaining({
         contextTransform: 'product_categories_leaf_only',
+      }),
+    });
+
+    fireEvent.change(screen.getByLabelText('Live context reuse mode'), {
+      target: { value: 'prefer_transformed_input' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextReuseMode: 'prefer_transformed_input',
       }),
     });
 

@@ -8,14 +8,14 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-04-11T15:52:10.181Z
+Generated at: 2026-04-11T17:11:08.898Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 10281
-- Exported declarations scanned: 6020
-- Candidate declarations scanned: 6002
+- Files scanned: 10284
+- Exported declarations scanned: 5961
+- Candidate declarations scanned: 5943
 - Exact-shape clusters: 2
 - Near-shape clusters: 2
 - Clusters after filters: 4

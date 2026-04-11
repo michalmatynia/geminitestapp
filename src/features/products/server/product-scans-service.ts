@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { randomUUID } from 'crypto';
-
 import {
   buildPlaywrightEngineRunFailureMeta,
   collectPlaywrightEngineRunFailureMessages,
@@ -12,18 +10,15 @@ import {
 } from '@/features/playwright/server';
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import {
-  DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
   createDefaultProductScannerSettings,
 } from '@/features/products/scanner-settings';
 import {
   isProductScanActiveStatus,
   isProductScanTerminalStatus,
   normalizeProductScanRecord,
-  productScanStepSchema,
   type ProductAmazonBatchScanItem,
   type ProductAmazonBatchScanResponse,
   type ProductScanRecord,
-  type ProductScanStep,
 } from '@/shared/contracts/product-scans';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -44,363 +39,142 @@ import {
   getProductScanById,
   listLatestProductScansByProductIds,
   listProductScans,
-  updateProductScan,
   upsertProductScan,
 } from './product-scans-repository';
 
-const AMAZON_SCAN_TIMEOUT_MS = 180_000;
-const PRODUCT_SCAN_ORPHANED_ACTIVE_MAX_AGE_MS = 60_000;
-const PRODUCT_SCAN_ERROR_MAX_LENGTH = 2_000;
-const PRODUCT_SCAN_BATCH_MESSAGE_MAX_LENGTH = 1_000;
-const PRODUCT_SCAN_TITLE_MAX_LENGTH = 1_000;
-const PRODUCT_SCAN_PRICE_MAX_LENGTH = 200;
-const PRODUCT_SCAN_URL_MAX_LENGTH = 4_000;
-const PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH = 8_000;
-const PRODUCT_SCAN_ASIN_MAX_LENGTH = 40;
-const PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH = 160;
-const PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS = 2;
-const PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE =
-  'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
+import {
+  AMAZON_SCAN_TIMEOUT_MS,
+  PRODUCT_SCAN_ORPHANED_ACTIVE_MAX_AGE_MS,
+  toRecord,
+  readOptionalString,
+  normalizeErrorMessage,
+  resolveManualVerificationMessage,
+  resolvePersistableScanUrl,
+  sanitizeProductScanImageCandidates,
+  resolveIsoAgeMs,
+  resolveScanEngineRunId,
+  resolveScanManualVerificationTimeoutMs,
+  shouldAutoShowScannerCaptchaBrowser,
+  areProductScanStepsEqual,
+  resolvePersistedProductScanSteps,
+  upsertPersistedProductScanStep,
+  resolveAsinUpdateStepStatus,
+  parseAmazonScanScriptResult,
+  buildAmazonScanRequestInput,
+  createAmazonScanStartedRawResult,
+  createAmazonProductScanBaseRecord,
+  createFailedBatchResult,
+  persistSynchronizedScan,
+  persistFailedSynchronization,
+  tryDirectQueuedScanUpdate,
+} from './product-scans-service.helpers';
 
-type AmazonScanScriptResult = {
-  status: 'matched' | 'no_match' | 'failed' | 'captcha_required' | 'running';
-  asin: string | null;
-  title: string | null;
-  price: string | null;
-  url: string | null;
-  description: string | null;
-  matchedImageId: string | null;
-  message: string | null;
-  currentUrl: string | null;
-  stage: string | null;
-  steps: ProductScanStep[];
+const AMAZON_BATCH_SCAN_START_CONCURRENCY = 1;
+const AMAZON_SCAN_DEFAULT_SLOW_MO_MS = 80;
+const AMAZON_SCAN_DEFAULT_USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+const AMAZON_SCAN_STEALTH_LAUNCH_ARGS = ['--disable-blink-features=AutomationControlled'];
+
+const mergeUniqueStringValues = (
+  values: ReadonlyArray<string>,
+  nextValues: ReadonlyArray<string>
+): string[] => {
+  const merged = new Set(values.filter((value) => value.trim().length > 0));
+  for (const value of nextValues) {
+    const normalized = value.trim();
+    if (normalized.length > 0) {
+      merged.add(normalized);
+    }
+  }
+  return Array.from(merged);
 };
 
-const toRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
+const buildAmazonScannerRequestRuntimeOptions = (input: {
+  scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
+  scannerEngineRequestOptions: ReturnType<typeof buildProductScannerEngineRequestOptions>;
+  forceHeadless?: boolean;
+}): Pick<
+  Parameters<typeof startPlaywrightEngineTask>[0]['request'],
+  'personaId' | 'settingsOverrides' | 'launchOptions' | 'contextOptions'
+> => {
+  const existingSettingsOverrides =
+    toRecord(input.scannerEngineRequestOptions.settingsOverrides) ?? {};
+  const existingLaunchOptions = toRecord(input.scannerEngineRequestOptions.launchOptions) ?? {};
+  const existingContextOptions =
+    toRecord(
+      (input.scannerEngineRequestOptions as { contextOptions?: unknown }).contextOptions
+    ) ?? {};
 
-const readOptionalString = (value: unknown, maxLength?: number): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    return null;
+  const settingsOverrides: Record<string, unknown> = {
+    ...existingSettingsOverrides,
+  };
+
+  if (typeof input.forceHeadless === 'boolean') {
+    settingsOverrides['headless'] = input.forceHeadless;
   }
 
-  return typeof maxLength === 'number' ? trimmed.slice(0, maxLength) : trimmed;
-};
-
-const normalizeErrorMessage = (
-  value: unknown,
-  fallback: string
-): string => readOptionalString(value, PRODUCT_SCAN_ERROR_MAX_LENGTH) ?? fallback;
-
-const resolveManualVerificationMessage = (value: unknown): string => {
-  const normalized = normalizeErrorMessage(value, PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE);
-  return /continue automatically/i.test(normalized)
-    ? normalized
-    : PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE;
-};
-
-const readOptionalPositiveInt = (value: unknown): number | null => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null;
-  }
-
-  const normalized = Math.trunc(value);
-  return normalized > 0 ? normalized : null;
-};
-
-const resolvePersistableScanUrl = (...values: unknown[]): string | null => {
-  for (const value of values) {
-    const normalized = readOptionalString(value, PRODUCT_SCAN_URL_MAX_LENGTH);
-    if (normalized) {
-      return normalized;
+  if (!input.scannerSettings.playwrightPersonaId) {
+    if (typeof settingsOverrides['humanizeMouse'] !== 'boolean') {
+      settingsOverrides['humanizeMouse'] = true;
+    }
+    const slowMo = settingsOverrides['slowMo'];
+    if (typeof slowMo !== 'number' || !Number.isFinite(slowMo) || slowMo <= 0) {
+      settingsOverrides['slowMo'] = AMAZON_SCAN_DEFAULT_SLOW_MO_MS;
     }
   }
 
-  return null;
-};
+  const existingLaunchArgs = Array.isArray(existingLaunchOptions['args'])
+    ? existingLaunchOptions['args'].filter((entry): entry is string => typeof entry === 'string')
+    : [];
 
-const resolveIsoAgeMs = (value: string | null | undefined): number | null => {
-  if (!value) {
-    return null;
+  const launchOptions: Record<string, unknown> = {
+    ...existingLaunchOptions,
+    args: mergeUniqueStringValues(existingLaunchArgs, AMAZON_SCAN_STEALTH_LAUNCH_ARGS),
+  };
+
+  const contextOptions: Record<string, unknown> = {
+    ...existingContextOptions,
+  };
+  if (typeof contextOptions['userAgent'] !== 'string' || contextOptions['userAgent'].trim().length === 0) {
+    contextOptions['userAgent'] = AMAZON_SCAN_DEFAULT_USER_AGENT;
   }
 
-  const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) {
-    return null;
-  }
-
-  return Date.now() - parsed;
+  return {
+    ...(input.scannerEngineRequestOptions.personaId
+      ? { personaId: input.scannerEngineRequestOptions.personaId }
+      : {}),
+    settingsOverrides,
+    launchOptions,
+    contextOptions,
+  };
 };
 
-const resolveScanEngineRunId = (scan: ProductScanRecord): string | null =>
-  readOptionalString(scan.engineRunId, 160) ??
-  readOptionalString(toRecord(scan.rawResult)?.['runId'], 160);
-
-const resolveScanManualVerificationTimeoutMs = (
-  settingsOrRawResult: { manualVerificationTimeoutMs?: unknown } | null | undefined
-): number =>
-  readOptionalPositiveInt(settingsOrRawResult?.manualVerificationTimeoutMs) ??
-  DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS;
-
-const shouldAutoShowScannerCaptchaBrowser = (
-  settings: { captchaBehavior?: unknown } | null | undefined
-): boolean => settings?.captchaBehavior !== 'fail';
-
-const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep[] => {
-  if (!Array.isArray(value)) {
+async function mapWithConcurrencyLimit<TInput, TOutput>(
+  values: readonly TInput[],
+  concurrency: number,
+  mapper: (value: TInput, index: number) => Promise<TOutput>
+): Promise<TOutput[]> {
+  if (values.length === 0) {
     return [];
   }
 
-  return value
-    .map((entry) => productScanStepSchema.safeParse(entry))
-    .filter((entry) => entry.success)
-    .map((entry) => entry.data);
-};
+  const normalizedConcurrency = Math.max(1, Math.trunc(concurrency));
+  const workerCount = Math.min(values.length, normalizedConcurrency);
+  const results = new Array<TOutput>(values.length);
+  let nextIndex = 0;
 
-const areProductScanStepsEqual = (
-  left: ProductScanStep[] | null | undefined,
-  right: ProductScanStep[] | null | undefined
-): boolean => JSON.stringify(left ?? []) === JSON.stringify(right ?? []);
-
-const resolvePersistedProductScanSteps = (
-  scan: Pick<ProductScanRecord, 'steps'>,
-  parsedSteps: ProductScanStep[]
-): ProductScanStep[] => (parsedSteps.length > 0 ? parsedSteps : scan.steps);
-
-const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptResult => {
-  const record = toRecord(value);
-  const statusValue = readOptionalString(record?.['status']);
-  const status =
-    statusValue === 'matched' ||
-    statusValue === 'no_match' ||
-    statusValue === 'failed' ||
-    statusValue === 'captcha_required' ||
-    statusValue === 'running'
-      ? statusValue
-      : 'failed';
-
-  return {
-    status,
-    asin: readOptionalString(record?.['asin'], PRODUCT_SCAN_ASIN_MAX_LENGTH),
-    title: readOptionalString(record?.['title'], PRODUCT_SCAN_TITLE_MAX_LENGTH),
-    price: readOptionalString(record?.['price'], PRODUCT_SCAN_PRICE_MAX_LENGTH),
-    url: readOptionalString(record?.['url'], PRODUCT_SCAN_URL_MAX_LENGTH),
-    description: readOptionalString(record?.['description'], PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH),
-    matchedImageId: readOptionalString(
-      record?.['matchedImageId'],
-      PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH
-    ),
-    message: readOptionalString(record?.['message'], PRODUCT_SCAN_ERROR_MAX_LENGTH),
-    currentUrl: readOptionalString(record?.['currentUrl'], PRODUCT_SCAN_URL_MAX_LENGTH),
-    stage: readOptionalString(record?.['stage']),
-    steps: normalizeParsedProductScanSteps(record?.['steps']),
-  };
-};
-
-const buildAmazonScanRequestInput = (input: {
-  productId: string;
-  productName: string | null;
-  existingAsin: string | null | undefined;
-  imageCandidates: ProductScanRecord['imageCandidates'];
-  allowManualVerification: boolean;
-  manualVerificationTimeoutMs: number;
-}) => ({
-  productId: input.productId,
-  productName: input.productName,
-  existingAsin: input.existingAsin ?? null,
-  imageCandidates: input.imageCandidates,
-  allowManualVerification: input.allowManualVerification,
-  manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
-});
-
-const createAmazonScanStartedRawResult = (input: {
-  runId: string;
-  status: string;
-  allowManualVerification: boolean;
-  manualVerificationTimeoutMs: number;
-  previousRunId?: string | null;
-  previousResult?: unknown;
-  manualVerificationPending?: boolean;
-  manualVerificationMessage?: string | null;
-}) => ({
-  runId: input.runId,
-  status: input.status,
-  allowManualVerification: input.allowManualVerification,
-  manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
-  ...(input.previousRunId ? { previousRunId: input.previousRunId } : {}),
-  ...(input.previousResult !== undefined ? { previousResult: input.previousResult } : {}),
-  ...(input.manualVerificationPending
-    ? {
-        manualVerificationPending: true,
-        manualVerificationMessage:
-          input.manualVerificationMessage ?? PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE,
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < values.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        results[index] = await mapper(values[index], index);
       }
-    : {}),
-});
+    })
+  );
 
-const createAmazonProductScanBaseRecord = (input: {
-  productId: string;
-  productName: string;
-  userId?: string | null;
-  imageCandidates: ProductScanRecord['imageCandidates'];
-  status: ProductScanRecord['status'];
-  error?: string | null;
-}): ProductScanRecord =>
-  normalizeProductScanRecord({
-    id: randomUUID(),
-    productId: input.productId,
-    provider: 'amazon',
-    scanType: 'google_reverse_image',
-    status: input.status,
-    productName: input.productName,
-    engineRunId: null,
-    imageCandidates: input.imageCandidates,
-    matchedImageId: null,
-    asin: null,
-    title: null,
-    price: null,
-    url: null,
-    description: null,
-    rawResult: null,
-    error: input.error ?? null,
-    asinUpdateStatus: input.status === 'failed' ? 'not_needed' : 'pending',
-    asinUpdateMessage: null,
-    createdBy: input.userId?.trim() || null,
-    updatedBy: input.userId?.trim() || null,
-    completedAt: input.status === 'failed' ? new Date().toISOString() : null,
-  });
-
-const createFailedBatchResult = (
-  productId: string,
-  message: string,
-  scanId: string | null = null,
-  currentStatus: ProductScanRecord['status'] | null = scanId ? 'failed' : null
-): ProductAmazonBatchScanItem => ({
-  productId,
-  scanId,
-  runId: null,
-  status: 'failed',
-  currentStatus,
-  message: readOptionalString(message, PRODUCT_SCAN_BATCH_MESSAGE_MAX_LENGTH),
-});
-
-const resolveAlreadyRunningBatchResult = async (
-  productId: string
-): Promise<ProductAmazonBatchScanItem | null> => {
-  const existingActiveScan = await findLatestActiveProductScan({
-    productId,
-    provider: 'amazon',
-  });
-  if (!existingActiveScan) {
-    return null;
-  }
-
-  const synchronized = await synchronizeProductScan(existingActiveScan);
-  if (!isProductScanActiveStatus(synchronized.status)) {
-    return null;
-  }
-
-  return {
-    productId,
-    scanId: synchronized.id,
-    runId: resolveScanEngineRunId(synchronized),
-    status: 'already_running',
-    currentStatus: synchronized.status,
-    message: 'Amazon scan already in progress for this product.',
-  };
-};
-
-const buildSynchronizedScanRecord = (
-  scan: ProductScanRecord,
-  updates: Partial<ProductScanRecord>
-): ProductScanRecord =>
-  normalizeProductScanRecord({
-    ...scan,
-    ...updates,
-    id: scan.id,
-    productId: scan.productId,
-  });
-
-const persistSynchronizedScan = async (
-  scan: ProductScanRecord,
-  updates: Partial<ProductScanRecord>
-): Promise<ProductScanRecord> => {
-  let lastError: unknown = null;
-
-  for (let attempt = 0; attempt < PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS; attempt += 1) {
-    try {
-      return (
-        (await updateProductScan(scan.id, updates)) ?? buildSynchronizedScanRecord(scan, updates)
-      );
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  void ErrorSystem.captureException(lastError, {
-    service: 'product-scans.service',
-    action: 'persistSynchronizedScan',
-    scanId: scan.id,
-    productId: scan.productId,
-    engineRunId: scan.engineRunId,
-  });
-
-  return buildSynchronizedScanRecord(scan, updates);
-};
-
-const persistFailedSynchronization = async (
-  scan: ProductScanRecord,
-  message: string
-): Promise<ProductScanRecord> => {
-  const normalizedMessage = normalizeErrorMessage(message, 'Amazon reverse image scan failed.');
-
-  return await persistSynchronizedScan(scan, {
-    status: 'failed',
-    error: normalizedMessage,
-    asinUpdateStatus: 'failed',
-    asinUpdateMessage: normalizedMessage,
-    completedAt: new Date().toISOString(),
-  });
-};
-
-const tryDirectQueuedScanUpdate = async (
-  scan: ProductScanRecord,
-  updates: Partial<ProductScanRecord>,
-  context: {
-    action: string;
-    productId: string;
-    runId?: string | null;
-  }
-): Promise<ProductScanRecord | null> => {
-  let lastError: unknown = null;
-
-  for (let attempt = 0; attempt < PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS; attempt += 1) {
-    try {
-      const updated = await updateProductScan(scan.id, updates);
-      if (updated) {
-        return updated;
-      }
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  if (lastError) {
-    void ErrorSystem.captureException(lastError, {
-      service: 'product-scans.service',
-      action: context.action,
-      scanId: scan.id,
-      productId: context.productId,
-      runId: context.runId ?? null,
-    });
-  }
-
-  return null;
-};
+  return results;
+}
 
 export async function synchronizeProductScan(scan: ProductScanRecord): Promise<ProductScanRecord> {
   if (isProductScanTerminalStatus(scan.status)) {
@@ -515,6 +289,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       return await persistSynchronizedScan(scan, {
         engineRunId,
         status: 'failed',
+        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
         error: failureMessage,
         rawResult: buildPlaywrightEngineRunFailureMeta(run, { includeRawResult: true }),
         asinUpdateStatus: 'failed',
@@ -594,6 +369,11 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       try {
         const scannerEngineRequestOptions =
           buildProductScannerEngineRequestOptions(scannerSettings);
+        const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
+          scannerSettings,
+          scannerEngineRequestOptions,
+          forceHeadless: false,
+        });
         const runRetry = await startPlaywrightEngineTask({
           request: {
             script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
@@ -610,11 +390,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
               manualVerificationTimeoutMs + 60_000
             ),
             browserEngine: 'chromium',
-            ...scannerEngineRequestOptions,
-            settingsOverrides: {
-              ...(scannerEngineRequestOptions.settingsOverrides ?? {}),
-              headless: false,
-            },
+            ...scannerRuntimeOptions,
             capture: {
               screenshot: true,
               html: true,
@@ -697,6 +473,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         price: parsedResult.price,
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
+        amazonDetails: parsedResult.amazonDetails,
         steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
         rawResult: resultValue,
         error: parsedResult.message,
@@ -719,6 +496,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         price: parsedResult.price,
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
+        amazonDetails: parsedResult.amazonDetails,
         steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
         rawResult: resultValue,
         error: failureMessage,
@@ -731,6 +509,19 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
     const product = await productService.getProductById(scan.productId);
     if (!product) {
       const message = 'Product not found while finalizing the Amazon scan.';
+      const finalizedSteps = upsertPersistedProductScanStep(
+        resolvePersistedProductScanSteps(scan, parsedResult.steps),
+        {
+          key: 'product_asin_update',
+          label: 'Update product ASIN',
+          group: 'product',
+          status: 'failed',
+          resultCode: 'product_not_found',
+          message,
+          details: [{ label: 'Reason', value: 'Product not found' }],
+          url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
+        }
+      );
       return await persistSynchronizedScan(scan, {
         engineRunId,
         status: 'failed',
@@ -740,7 +531,8 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         price: parsedResult.price,
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
-        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
+        amazonDetails: parsedResult.amazonDetails,
+        steps: finalizedSteps,
         rawResult: resultValue,
         error: message,
         asinUpdateStatus: 'failed',
@@ -771,6 +563,31 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
     const nextStatus = updateFailureMessage ? 'failed' : asinOutcome.scanStatus;
     const nextAsinUpdateStatus = updateFailureMessage ? 'failed' : asinOutcome.asinUpdateStatus;
     const nextMessage = updateFailureMessage ?? asinOutcome.message;
+    const finalizedSteps = upsertPersistedProductScanStep(
+      resolvePersistedProductScanSteps(scan, parsedResult.steps),
+      {
+        key: 'product_asin_update',
+        label: 'Update product ASIN',
+        group: 'product',
+        status: resolveAsinUpdateStepStatus(nextAsinUpdateStatus),
+        resultCode:
+          nextAsinUpdateStatus === 'updated'
+            ? 'asin_updated'
+            : nextAsinUpdateStatus === 'unchanged'
+              ? 'asin_unchanged'
+              : nextAsinUpdateStatus === 'conflict'
+                ? 'asin_conflict'
+                : nextAsinUpdateStatus === 'not_needed'
+                  ? 'asin_not_needed'
+                  : 'asin_update_failed',
+        message: nextMessage,
+        details: [
+          { label: 'Detected ASIN', value: asinOutcome.normalizedDetectedAsin },
+          { label: 'Existing ASIN', value: product.asin ?? null },
+        ],
+        url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
+      }
+    );
 
     return await persistSynchronizedScan(scan, {
       engineRunId,
@@ -781,7 +598,8 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       price: parsedResult.price,
       url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
       description: parsedResult.description,
-      steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
+      amazonDetails: parsedResult.amazonDetails,
+      steps: finalizedSteps,
       rawResult: resultValue,
       error: nextStatus === 'failed' || nextStatus === 'conflict' ? nextMessage : null,
       asinUpdateStatus: nextAsinUpdateStatus,
@@ -794,6 +612,32 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
     return await persistFailedSynchronization(scan, message);
   }
 }
+
+const resolveAlreadyRunningBatchResult = async (
+  productId: string
+): Promise<ProductAmazonBatchScanItem | null> => {
+  const existingActiveScan = await findLatestActiveProductScan({
+    productId,
+    provider: 'amazon',
+  });
+  if (!existingActiveScan) {
+    return null;
+  }
+
+  const synchronized = await synchronizeProductScan(existingActiveScan);
+  if (!isProductScanActiveStatus(synchronized.status)) {
+    return null;
+  }
+
+  return {
+    productId,
+    scanId: synchronized.id,
+    runId: resolveScanEngineRunId(synchronized),
+    status: 'already_running',
+    currentStatus: synchronized.status,
+    message: 'Amazon scan already in progress for this product.',
+  };
+};
 
 export async function synchronizeProductScans(
   scans: ProductScanRecord[]
@@ -868,8 +712,10 @@ export async function queueAmazonBatchProductScans(input: {
     });
   }
 
-  const results = await Promise.all(
-    productIds.map(async (productId): Promise<ProductAmazonBatchScanItem> => {
+  const results = await mapWithConcurrencyLimit(
+    productIds,
+    AMAZON_BATCH_SCAN_START_CONCURRENCY,
+    async (productId, batchIndex): Promise<ProductAmazonBatchScanItem> => {
       try {
         const alreadyRunningResult = await resolveAlreadyRunningBatchResult(productId);
         if (alreadyRunningResult) {
@@ -881,7 +727,9 @@ export async function queueAmazonBatchProductScans(input: {
           return createFailedBatchResult(productId, 'Product not found.');
         }
 
-        const imageCandidates = resolveProductScanImageCandidates(product);
+        const imageCandidates = await sanitizeProductScanImageCandidates(
+          resolveProductScanImageCandidates(product)
+        );
         const productName = resolveProductScanDisplayName(product);
         const baseRecord = createAmazonProductScanBaseRecord({
           productId,
@@ -918,6 +766,10 @@ export async function queueAmazonBatchProductScans(input: {
         try {
           const scannerEngineRequestOptions =
             buildProductScannerEngineRequestOptions(scannerSettings);
+          const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
+            scannerSettings,
+            scannerEngineRequestOptions,
+          });
           const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(
             scannerSettings
           );
@@ -931,6 +783,7 @@ export async function queueAmazonBatchProductScans(input: {
                 productName,
                 existingAsin: product.asin,
                 imageCandidates,
+                batchIndex,
                 allowManualVerification,
                 manualVerificationTimeoutMs,
               }),
@@ -941,7 +794,7 @@ export async function queueAmazonBatchProductScans(input: {
                   )
                 : AMAZON_SCAN_TIMEOUT_MS,
               browserEngine: 'chromium',
-              ...scannerEngineRequestOptions,
+              ...scannerRuntimeOptions,
               capture: {
                 screenshot: true,
                 html: true,
@@ -971,6 +824,23 @@ export async function queueAmazonBatchProductScans(input: {
                 ...savedBaseRecord,
                 engineRunId: run.runId,
                 status: queuedRunStatus,
+                steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
+                  key: 'queue_scan',
+                  label: 'Start Playwright scan',
+                  group: 'input',
+                  status: 'completed',
+                  resultCode:
+                    queuedRunStatus === 'running' ? 'run_started' : 'run_queued',
+                  message:
+                    queuedRunStatus === 'running'
+                      ? 'Playwright Amazon scan started immediately.'
+                      : 'Playwright Amazon scan queued.',
+                  details: [
+                    { label: 'Run status', value: queuedRunStatus },
+                    { label: 'Run id', value: run.runId },
+                  ],
+                  url: null,
+                }),
                 rawResult: startedRunRawResult,
               })
             );
@@ -988,6 +858,23 @@ export async function queueAmazonBatchProductScans(input: {
                 normalizeProductScanRecord({
                   ...savedBaseRecord,
                   status: queuedRunStatus,
+                  steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
+                    key: 'queue_scan',
+                    label: 'Start Playwright scan',
+                    group: 'input',
+                    status: 'completed',
+                    resultCode:
+                      queuedRunStatus === 'running' ? 'run_started' : 'run_queued',
+                    message:
+                      queuedRunStatus === 'running'
+                        ? 'Playwright Amazon scan started immediately.'
+                        : 'Playwright Amazon scan queued.',
+                    details: [
+                      { label: 'Run status', value: queuedRunStatus },
+                      { label: 'Run id', value: run.runId },
+                    ],
+                    url: null,
+                  }),
                   rawResult: {
                     ...startedRunRawResult,
                     linkError: normalizeErrorMessage(
@@ -1011,6 +898,23 @@ export async function queueAmazonBatchProductScans(input: {
               {
                 engineRunId: run.runId,
                 status: queuedRunStatus,
+                steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
+                  key: 'queue_scan',
+                  label: 'Start Playwright scan',
+                  group: 'input',
+                  status: 'completed',
+                  resultCode:
+                    queuedRunStatus === 'running' ? 'run_started' : 'run_queued',
+                  message:
+                    queuedRunStatus === 'running'
+                      ? 'Playwright Amazon scan started immediately.'
+                      : 'Playwright Amazon scan queued.',
+                  details: [
+                    { label: 'Run status', value: queuedRunStatus },
+                    { label: 'Run id', value: run.runId },
+                  ],
+                  url: null,
+                }),
                 rawResult: {
                   ...startedRunRawResult,
                   linkError: normalizeErrorMessage(
@@ -1049,6 +953,16 @@ export async function queueAmazonBatchProductScans(input: {
               savedBaseRecord,
               {
                 status: 'failed',
+                steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
+                  key: 'queue_scan',
+                  label: 'Start Playwright scan',
+                  group: 'input',
+                  status: 'failed',
+                  resultCode: 'run_link_failed',
+                  message: failureMessage,
+                  details: [{ label: 'Run id', value: run.runId }],
+                  url: null,
+                }),
                 rawResult: {
                   ...startedRunRawResult,
                   linkError: normalizeErrorMessage(
@@ -1108,6 +1022,15 @@ export async function queueAmazonBatchProductScans(input: {
                 ...savedBaseRecord,
                 status: 'failed',
                 error: message,
+                steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
+                  key: 'queue_scan',
+                  label: 'Start Playwright scan',
+                  group: 'input',
+                  status: 'failed',
+                  resultCode: 'run_start_failed',
+                  message,
+                  url: null,
+                }),
                 asinUpdateStatus: 'failed',
                 asinUpdateMessage: message,
                 completedAt: new Date().toISOString(),
@@ -1126,6 +1049,15 @@ export async function queueAmazonBatchProductScans(input: {
               {
                 status: 'failed',
                 error: message,
+                steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
+                  key: 'queue_scan',
+                  label: 'Start Playwright scan',
+                  group: 'input',
+                  status: 'failed',
+                  resultCode: 'run_start_failed',
+                  message,
+                  url: null,
+                }),
                 asinUpdateStatus: 'failed',
                 asinUpdateMessage: message,
                 completedAt: new Date().toISOString(),
@@ -1157,7 +1089,7 @@ export async function queueAmazonBatchProductScans(input: {
         });
         return createFailedBatchResult(productId, message);
       }
-    })
+    }
   );
 
   return {

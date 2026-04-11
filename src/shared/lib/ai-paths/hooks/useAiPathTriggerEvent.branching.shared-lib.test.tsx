@@ -9,6 +9,7 @@ const {
   enqueueAiPathRunMock,
   listAiPathRunsMock,
   resolveAiPathRunFromEnqueueResponseDataMock,
+  evaluateRunPreflightMock,
   logClientCatchMock,
   pageContextRegistryMock,
   toastMock,
@@ -18,6 +19,7 @@ const {
   enqueueAiPathRunMock: vi.fn(),
   listAiPathRunsMock: vi.fn(),
   resolveAiPathRunFromEnqueueResponseDataMock: vi.fn(),
+  evaluateRunPreflightMock: vi.fn(),
   logClientCatchMock: vi.fn(),
   pageContextRegistryMock: vi.fn(),
   toastMock: vi.fn(),
@@ -40,6 +42,17 @@ vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-selection', async () => {
   return {
     ...actual,
     resolveTriggerSelection: (...args: unknown[]) => resolveTriggerSelectionMock(...args),
+  };
+});
+
+vi.mock('@/shared/lib/ai-paths/core/utils/run-preflight', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/shared/lib/ai-paths/core/utils/run-preflight')
+  >('@/shared/lib/ai-paths/core/utils/run-preflight');
+  return {
+    ...actual,
+    evaluateRunPreflight: (...args: Parameters<typeof actual.evaluateRunPreflight>) =>
+      evaluateRunPreflightMock(...args),
   };
 });
 
@@ -110,6 +123,7 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
     enqueueAiPathRunMock.mockReset();
     listAiPathRunsMock.mockReset();
     resolveAiPathRunFromEnqueueResponseDataMock.mockReset();
+    evaluateRunPreflightMock.mockReset();
     logClientCatchMock.mockReset();
     pageContextRegistryMock.mockReset();
     toastMock.mockReset();
@@ -122,6 +136,38 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
     resolveAiPathRunFromEnqueueResponseDataMock.mockReturnValue({
       runId: 'run-1',
       runRecord: null,
+    });
+    evaluateRunPreflightMock.mockReturnValue({
+      nodeValidationEnabled: true,
+      shouldBlock: false,
+      blockReason: null,
+      blockMessage: null,
+      validationReport: {
+        enabled: true,
+        blocked: false,
+        shouldWarn: false,
+        findings: [],
+        score: 100,
+        failedRules: 0,
+        blockThreshold: 0,
+      },
+      compileReport: {
+        ok: true,
+        errors: 0,
+        warnings: 0,
+        findings: [],
+      },
+      dependencyReport: {
+        errors: 0,
+        warnings: 0,
+        findings: [],
+      },
+      dataContractReport: {
+        errors: 0,
+        warnings: 0,
+        issues: [],
+      },
+      warnings: [],
     });
   });
 
@@ -424,6 +470,125 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
     expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
         pathId: 'path_name_normalize_v1',
+      }),
+      { timeoutMs: 90_000 }
+    );
+  });
+
+  it('reuses cached preflight results for repeated runs on the same selected path version', async () => {
+    const starter = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!starter) throw new Error('Missing starter_parameter_inference template');
+
+    const selectedConfig = materializeStarterWorkflowPathConfig(starter, {
+      pathId: 'path_cached_preflight',
+      seededDefault: false,
+    });
+    selectedConfig.updatedAt = '2026-04-11T20:30:00.000Z';
+    selectedConfig.nodes = selectedConfig.nodes.map((node) =>
+      node.type === 'trigger'
+        ? {
+            ...node,
+            config: {
+              ...node.config,
+              trigger: {
+                ...node.config?.trigger,
+                event: baseArgs.triggerEventId,
+              },
+            },
+          }
+        : node
+    );
+
+    resolveTriggerSelectionMock.mockResolvedValue({
+      triggerCandidates: [selectedConfig],
+      activeTriggerCandidates: [selectedConfig],
+      selectedConfig,
+      uiState: null,
+      missingPreferredPathId: null,
+    });
+    enqueueAiPathRunMock
+      .mockResolvedValueOnce({ ok: true, data: { runId: 'run-1' } })
+      .mockResolvedValueOnce({ ok: true, data: { runId: 'run-2' } });
+    resolveAiPathRunFromEnqueueResponseDataMock
+      .mockReturnValueOnce({ runId: 'run-1', runRecord: null })
+      .mockReturnValueOnce({ runId: 'run-2', runRecord: null });
+
+    const { result } = renderHook(() => useAiPathTriggerEvent(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.fireAiPathTriggerEvent(baseArgs);
+    });
+
+    await act(async () => {
+      await result.current.fireAiPathTriggerEvent(baseArgs);
+    });
+
+    expect(evaluateRunPreflightMock).toHaveBeenCalledTimes(1);
+    expect(enqueueAiPathRunMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips getEntityJson when the trigger workflow disables entity snapshot embedding', async () => {
+    const starter = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!starter) throw new Error('Missing starter_product_name_normalize template');
+
+    const selectedConfig = materializeStarterWorkflowPathConfig(starter, {
+      pathId: 'path_name_normalize_v1',
+      seededDefault: false,
+    });
+    selectedConfig.nodes = selectedConfig.nodes.map((node) =>
+      node.type === 'trigger'
+        ? {
+            ...node,
+            config: {
+              ...node.config,
+              trigger: {
+                ...node.config?.trigger,
+                event: baseArgs.triggerEventId,
+                entitySnapshotMode: 'never',
+              },
+            },
+          }
+        : node
+    );
+
+    resolveTriggerSelectionMock.mockResolvedValue({
+      triggerCandidates: [selectedConfig],
+      activeTriggerCandidates: [selectedConfig],
+      selectedConfig,
+      uiState: null,
+      missingPreferredPathId: null,
+    });
+    enqueueAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        runId: 'run-1',
+      },
+    });
+
+    const getEntityJson = vi.fn(() => ({ id: 'product-1', name_en: 'Test Product' }));
+    const { result } = renderHook(() => useAiPathTriggerEvent(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.fireAiPathTriggerEvent({
+        ...baseArgs,
+        source: {
+          location: 'product_modal',
+          tab: 'product',
+        },
+        getEntityJson,
+      });
+    });
+
+    expect(getEntityJson).not.toHaveBeenCalled();
+    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        triggerContext: expect.not.objectContaining({
+          entityJson: expect.anything(),
+        }),
       }),
       { timeoutMs: 90_000 }
     );

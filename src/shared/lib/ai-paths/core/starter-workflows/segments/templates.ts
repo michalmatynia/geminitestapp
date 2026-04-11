@@ -1,4 +1,12 @@
 import type { CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
+import {
+  MARKETPLACE_COPY_DEBRAND_PATH_ID,
+  MARKETPLACE_COPY_DEBRAND_STARTER_TEMPLATE_ID,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_SORT_INDEX,
+} from '@/shared/lib/ai-paths/marketplace-copy-debrand';
 import baseExportBlwoAsset from '../assets/base-export-blwo.canvas.json';
 import descriptionInferenceLiteAsset from '../assets/description-inference-lite.canvas.json';
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
@@ -137,29 +145,29 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
   },
   {
-    templateId: 'starter_marketplace_copy_debrand',
+    templateId: MARKETPLACE_COPY_DEBRAND_STARTER_TEMPLATE_ID,
     name: 'Debrand Marketplace Copy',
     description:
       'Generate debranded alternate marketplace title and description from English product copy and images.',
     semanticAsset: marketplaceCopyDebrandAsset as CanvasSemanticDocument,
     seedPolicy: {
       autoSeed: true,
-      defaultPathId: 'path_marketplace_copy_debrand_v1',
+      defaultPathId: MARKETPLACE_COPY_DEBRAND_PATH_ID,
       isActive: true,
       isLocked: false,
-      sortOrder: 35,
+      sortOrder: MARKETPLACE_COPY_DEBRAND_TRIGGER_SORT_INDEX,
       restoreOnStaticRecovery: true,
     },
     triggerButtonPresets: [
       {
-        id: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
-        name: 'Debrand',
-        pathId: 'path_marketplace_copy_debrand_v1',
-        locations: ['product_marketplace_copy_row'],
-        display: buildTriggerDisplay('Debrand'),
+        id: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+        name: MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
+        pathId: MARKETPLACE_COPY_DEBRAND_PATH_ID,
+        locations: [MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION],
+        display: buildTriggerDisplay(MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME),
         enabled: true,
         mode: 'click',
-        sortIndex: 35,
+        sortIndex: MARKETPLACE_COPY_DEBRAND_TRIGGER_SORT_INDEX,
       },
     ],
     starterLineage: {

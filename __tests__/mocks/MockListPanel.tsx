@@ -52,7 +52,13 @@ export function MockListPanel(props: MockListPanelProps): React.JSX.Element {
       <div data-testid="list-panel-filters">{filters}</div>
       <div data-testid="list-panel-actions">{actions}</div>
       <div data-testid="list-panel-footer">{footer}</div>
-      {children}
+      {isLoading ? (
+        <div role="status" aria-live="polite" aria-atomic="true">
+          {loadingMessage ?? 'Loading...'}
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }

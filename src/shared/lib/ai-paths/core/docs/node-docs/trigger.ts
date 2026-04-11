@@ -15,6 +15,12 @@ export const triggerDocs: NodeConfigDocField[] = [
       'Trigger context policy. Canonical value is trigger_only; resolve entity context downstream with Fetcher or Simulation nodes.',
     defaultValue: 'trigger_only',
   },
+  {
+    path: 'trigger.entitySnapshotMode',
+    description:
+      'Whether the trigger payload embeds a sanitized entity snapshot. Use never to force downstream Fetcher/Simulation nodes to resolve entity data.',
+    defaultValue: 'auto',
+  },
   ...COMMON_RUNTIME_FIELDS,
 ];
 

@@ -4,7 +4,10 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AdvancedFilterModal } from '@/features/products/components/list/advanced-filter';
 import { useProductListFiltersContext } from '@/features/products/context/ProductListContext';
-import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
+import {
+  useProductCategories,
+  useProductCategoriesForCatalogs,
+} from '@/features/products/hooks/useCategoryQueries';
 import {
   useCatalogs,
   useMultiTags,
@@ -104,24 +107,43 @@ export const ProductFilters = memo(function ProductFilters({
 
   const selectedCatalogId =
     catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : undefined;
-  const { data: rawCategories } = useProductCategories(selectedCatalogId, {
-    enabled: isFilterPanelExpanded,
-  });
   const { data: rawCatalogs } = useCatalogs({ enabled: filterMetadataEnabled });
-  const { data: rawTags } = useTags(selectedCatalogId, {
-    enabled: filterMetadataEnabled,
-  });
-  const categories = useMemo(
-    () => (Array.isArray(rawCategories) ? rawCategories : []),
-    [rawCategories]
-  );
   const catalogs = useMemo(
     () => (Array.isArray(rawCatalogs) ? rawCatalogs : []),
     [rawCatalogs]
   );
-  const tags = useMemo(() => (Array.isArray(rawTags) ? rawTags : []), [rawTags]);
   const catalogIds = useMemo(
     () => catalogs.map((catalog) => catalog.id).filter((id) => id.trim().length > 0),
+    [catalogs]
+  );
+  const { data: rawSingleCatalogCategories } = useProductCategories(selectedCatalogId, {
+    enabled: isFilterPanelExpanded,
+  });
+  const { data: rawCrossCatalogCategories } = useProductCategoriesForCatalogs(
+    selectedCatalogId || catalogFilter === 'unassigned' ? [] : catalogIds,
+    {
+      enabled: isFilterPanelExpanded,
+    }
+  );
+  const { data: rawTags } = useTags(selectedCatalogId, {
+    enabled: filterMetadataEnabled,
+  });
+  const categories = useMemo(
+    () =>
+      Array.isArray(selectedCatalogId ? rawSingleCatalogCategories : rawCrossCatalogCategories)
+        ? (selectedCatalogId ? rawSingleCatalogCategories : rawCrossCatalogCategories)
+        : [],
+    [rawCrossCatalogCategories, rawSingleCatalogCategories, selectedCatalogId]
+  );
+  const tags = useMemo(() => (Array.isArray(rawTags) ? rawTags : []), [rawTags]);
+  const catalogNameById = useMemo(
+    () =>
+      new Map(
+        catalogs.map(
+          (catalog) =>
+            [catalog.id, (catalog.name || catalog.id).trim() || catalog.id] as const
+        )
+      ),
     [catalogs]
   );
   const multiTagQueries = useMultiTags(selectedCatalogId ? [] : catalogIds, {
@@ -134,18 +156,47 @@ export const ProductFilters = memo(function ProductFilters({
   );
 
   const categoryOptions = useMemo(() => {
-    const options = [{ value: '__all__', label: 'All categories' }];
-    categories.forEach((category: ProductCategory) => {
+    const options: Array<LabeledOptionDto<string>> = [
+      { value: '__all__', label: 'All categories' },
+    ];
+    const categoryEntries = categories.map((category: ProductCategory) => {
       const localizedName = category[nameLocale];
       const fallbackName =
         category.name_en || category.name || category.name_pl || category.name_de;
-      options.push({
-        value: category.id,
+      return {
+        category,
         label: localizedName || fallbackName || category.id,
-      });
+      };
     });
+    const duplicateCountByLabel = new Map<string, number>();
+
+    categoryEntries.forEach(({ label }) => {
+      duplicateCountByLabel.set(label, (duplicateCountByLabel.get(label) ?? 0) + 1);
+    });
+
+    categoryEntries
+      .sort((left, right) => {
+        const labelComparison = left.label.localeCompare(right.label);
+        if (labelComparison !== 0) return labelComparison;
+
+        const leftCatalog =
+          catalogNameById.get(left.category.catalogId) ?? left.category.catalogId;
+        const rightCatalog =
+          catalogNameById.get(right.category.catalogId) ?? right.category.catalogId;
+        return leftCatalog.localeCompare(rightCatalog);
+      })
+      .forEach(({ category, label }) => {
+        const catalogLabel = catalogNameById.get(category.catalogId) ?? category.catalogId;
+        const isDuplicateLabel = (duplicateCountByLabel.get(label) ?? 0) > 1;
+
+        options.push({
+          value: category.id,
+          label: !selectedCatalogId && isDuplicateLabel ? `${label} (${catalogLabel})` : label,
+        });
+      });
+
     return options;
-  }, [categories, nameLocale]);
+  }, [catalogNameById, categories, nameLocale, selectedCatalogId]);
 
   const fallbackTagOptions = useMemo(() => {
     if (selectedCatalogId) return tags;

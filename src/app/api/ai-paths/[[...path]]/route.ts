@@ -25,6 +25,7 @@ import * as runsQueueStatus from '../runs/queue-status/route-handler';
 import * as runsEnqueue from '../runs/enqueue/route-handler';
 import * as runsDeadLetterRequeue from '../runs/dead-letter/requeue/route-handler';
 import * as runById from '../runs/[runId]/route-handler';
+import * as runResult from '../runs/[runId]/result/route-handler';
 import * as runStream from '../runs/[runId]/stream/route-handler';
 import * as runCancel from '../runs/[runId]/cancel/route-handler';
 import * as runResume from '../runs/[runId]/resume/route-handler';
@@ -49,6 +50,7 @@ const ROUTES = [
   { pattern: ['runs', 'queue-status'], module: runsQueueStatus },
   { pattern: ['runs', 'enqueue'], module: runsEnqueue },
   { pattern: ['runs', 'dead-letter', 'requeue'], module: runsDeadLetterRequeue },
+  { pattern: ['runs', { param: 'runId' }, 'result'], module: runResult },
   { pattern: ['runs', { param: 'runId' }, 'stream'], module: runStream },
   { pattern: ['runs', { param: 'runId' }, 'cancel'], module: runCancel },
   { pattern: ['runs', { param: 'runId' }, 'resume'], module: runResume },

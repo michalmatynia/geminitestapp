@@ -5,6 +5,7 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 
 import {
+  useCategoriesForCatalogs as useMetadataCategoriesForCatalogs,
   type ProductMetadataQueryOptions,
   useCategories as useMetadataCategories,
 } from './useProductMetadataQueries';
@@ -17,6 +18,16 @@ export function useProductCategories(
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductCategory> {
   return useMetadataCategories(catalogId, options);
+}
+
+/**
+ * Hook to fetch product categories for multiple catalogs.
+ */
+export function useProductCategoriesForCatalogs(
+  catalogIds: string[],
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCategory> {
+  return useMetadataCategoriesForCatalogs(catalogIds, options);
 }
 
 /**

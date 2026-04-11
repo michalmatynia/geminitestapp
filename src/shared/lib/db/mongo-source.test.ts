@@ -35,8 +35,8 @@ describe('mongo-source', () => {
         command: vi.fn(async () => ({ ok: 1 })),
       }),
     });
-    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/app';
-    process.env['MONGODB_DB'] = 'app';
+    delete process.env['MONGODB_URI'];
+    delete process.env['MONGODB_DB'];
     process.env['MONGODB_LOCAL_URI'] = 'mongodb://localhost:27017/app_local';
     process.env['MONGODB_LOCAL_DB'] = 'app_local';
     process.env['MONGODB_CLOUD_URI'] = 'mongodb+srv://cluster.example/app_cloud';
@@ -148,6 +148,28 @@ describe('mongo-source', () => {
     expect(state.canSync).toBe(false);
     expect(state.syncIssue).toBe(
       'MongoDB source sync is disabled because "cloud" is unreachable: cloud ping failed'
+    );
+  });
+
+  it('throws when the env-selected Mongo source is not configured', async () => {
+    delete process.env['MONGODB_CLOUD_URI'];
+    delete process.env['MONGODB_CLOUD_DB'];
+    process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+
+    await expect(import('./mongo-source')).rejects.toThrow(
+      'MongoDB source "cloud" is not configured. Set MONGODB_CLOUD_URI.'
+    );
+  });
+
+  it('throws when a preferred Mongo source is requested but not configured', async () => {
+    delete process.env['MONGODB_CLOUD_URI'];
+    delete process.env['MONGODB_CLOUD_DB'];
+    delete process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'];
+
+    const module = await import('./mongo-source');
+
+    await expect(module.resolveMongoSourceConfig('cloud')).rejects.toThrow(
+      'MongoDB source "cloud" is not configured. Set MONGODB_CLOUD_URI.'
     );
   });
 });

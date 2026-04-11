@@ -6,7 +6,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 const { kangurAliasAppLayoutMock } = vi.hoisted(() => ({
-  kangurAliasAppLayoutMock: vi.fn(async ({ children }: { children: unknown }) => (
+  kangurAliasAppLayoutMock: vi.fn(({ children }: { children: unknown }) => (
     <div data-testid='kangur-alias-app-layout'>{children}</div>
   )),
 }));
@@ -20,7 +20,7 @@ describe('kangur app layout', () => {
     const { default: KangurAppLayout } = await import('@/app/(frontend)/kangur/(app)/layout');
 
     render(
-      await KangurAppLayout({
+      KangurAppLayout({
         children: <div data-testid='kangur-route-child' />,
       })
     );
@@ -29,6 +29,8 @@ describe('kangur app layout', () => {
       expect.objectContaining({
         children: expect.anything(),
       })
+      ,
+      undefined
     );
     expect(screen.getByTestId('kangur-alias-app-layout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-child')).toBeInTheDocument();
@@ -49,6 +51,8 @@ describe('kangur app layout', () => {
       expect.objectContaining({
         children: expect.anything(),
       })
+      ,
+      undefined
     );
     expect(screen.getByTestId('kangur-alias-app-layout')).toBeInTheDocument();
     expect(screen.getByTestId('localized-kangur-route-child')).toBeInTheDocument();

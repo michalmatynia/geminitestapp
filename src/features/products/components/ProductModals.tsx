@@ -16,7 +16,7 @@ import {
   useProductListSelectionContext,
   useProductListModalsContext,
 } from '@/features/products/context/ProductListContext';
-import { resolveProductListingsIntegrationScope } from '@/features/integrations/public';
+import { resolveProductListingsIntegrationScope } from '@/features/integrations/utils/product-listings-recovery';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import {
@@ -30,7 +30,7 @@ import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-button
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
+import { getAiPathRunResult } from '@/shared/lib/ai-paths/api/client';
 import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
 import {
   useDefaultExportConnection,
@@ -160,8 +160,9 @@ function ProductFormModalBody(props: {
       product,
       draft,
       values: getValues(),
+      categories,
     });
-  }, [getValues, product, draft]);
+  }, [categories, getValues, product, draft]);
 
   const handleRunQueued = useCallback(
     (args: {
@@ -517,7 +518,20 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
           return;
         }
 
-        const response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
+        const streamedNormalizeResult = snapshot.run
+          ? extractNormalizeProductNameResultFromAiPathRunDetail({ run: snapshot.run })
+          : null;
+        if (streamedNormalizeResult) {
+          setPendingNormalizeCompletion({
+            kind: 'result',
+            runId: trackedRunId,
+            result: streamedNormalizeResult,
+          });
+          setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        const response = await getAiPathRunResult(trackedRunId, { timeoutMs: 60_000 });
         if (!active) return;
         if (!response.ok) {
           setPendingNormalizeCompletion({
@@ -525,7 +539,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
             runId: trackedRunId,
             error:
               response.error ||
-              'Normalize failed: unable to load the completed AI Path run details.',
+              'Normalize failed: unable to load the completed AI Path run result.',
           });
           setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
           return;

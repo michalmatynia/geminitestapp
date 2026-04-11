@@ -52,16 +52,87 @@ export const productScanStepStatusSchema = z.enum([
 ]);
 export type ProductScanStepStatus = z.infer<typeof productScanStepStatusSchema>;
 
+export const productScanStepGroupSchema = z.enum([
+  'input',
+  'google_lens',
+  'amazon',
+  'product',
+]);
+export type ProductScanStepGroup = z.infer<typeof productScanStepGroupSchema>;
+
+export const productScanStepInputSourceSchema = z.enum(['url', 'file']);
+export type ProductScanStepInputSource = z.infer<typeof productScanStepInputSourceSchema>;
+
+export const productScanStepDetailSchema = z.object({
+  label: trimmedString.min(1).max(120),
+  value: optionalTrimmedString(500),
+});
+export type ProductScanStepDetail = z.infer<typeof productScanStepDetailSchema>;
+
 export const productScanStepSchema = z.object({
   key: trimmedString.min(1).max(120),
   label: trimmedString.min(1).max(160),
+  group: productScanStepGroupSchema.nullable().default(null),
+  attempt: z.number().int().positive().nullable().default(null),
+  candidateId: optionalTrimmedString(160),
+  candidateRank: z.number().int().positive().nullable().optional(),
+  inputSource: productScanStepInputSourceSchema.nullable().default(null),
+  retryOf: optionalTrimmedString(160).optional(),
+  resultCode: optionalTrimmedString(120).optional(),
   status: productScanStepStatusSchema,
   message: optionalTrimmedString(2_000),
+  warning: optionalTrimmedString(500),
+  details: z.array(productScanStepDetailSchema).max(12).default([]),
   url: optionalTrimmedString(4_000),
   startedAt: z.string().datetime().nullable().default(null),
   completedAt: z.string().datetime().nullable().default(null),
+  durationMs: z.number().int().nonnegative().nullable().default(null),
 });
 export type ProductScanStep = z.infer<typeof productScanStepSchema>;
+
+export const productScanAmazonAttributeSchema = z.object({
+  key: trimmedString.min(1).max(160),
+  label: trimmedString.min(1).max(200),
+  value: trimmedString.min(1).max(2_000),
+  source: optionalTrimmedString(120),
+});
+export type ProductScanAmazonAttribute = z.infer<typeof productScanAmazonAttributeSchema>;
+
+export const productScanAmazonRankingSchema = z.object({
+  rank: trimmedString.min(1).max(120),
+  category: optionalTrimmedString(500),
+  source: optionalTrimmedString(120),
+});
+export type ProductScanAmazonRanking = z.infer<typeof productScanAmazonRankingSchema>;
+
+export const productScanAmazonDetailsSchema = z
+  .object({
+    brand: optionalTrimmedString(300),
+    manufacturer: optionalTrimmedString(300),
+    modelNumber: optionalTrimmedString(300),
+    partNumber: optionalTrimmedString(300),
+    color: optionalTrimmedString(300),
+    style: optionalTrimmedString(300),
+    material: optionalTrimmedString(300),
+    size: optionalTrimmedString(300),
+    pattern: optionalTrimmedString(300),
+    finish: optionalTrimmedString(300),
+    itemDimensions: optionalTrimmedString(500),
+    packageDimensions: optionalTrimmedString(500),
+    itemWeight: optionalTrimmedString(200),
+    packageWeight: optionalTrimmedString(200),
+    bestSellersRank: optionalTrimmedString(2_000),
+    ean: optionalTrimmedString(120),
+    gtin: optionalTrimmedString(120),
+    upc: optionalTrimmedString(120),
+    isbn: optionalTrimmedString(120),
+    bulletPoints: z.array(trimmedString.max(1_000)).max(30).default([]),
+    attributes: z.array(productScanAmazonAttributeSchema).max(100).default([]),
+    rankings: z.array(productScanAmazonRankingSchema).max(20).default([]),
+  })
+  .nullable()
+  .default(null);
+export type ProductScanAmazonDetails = z.infer<typeof productScanAmazonDetailsSchema>;
 
 export const productScanImageCandidateSchema = z.object({
   id: optionalTrimmedString(160),
@@ -86,7 +157,8 @@ export const productScanRecordSchema = z.object({
   price: optionalTrimmedString(200),
   url: optionalTrimmedString(4_000),
   description: optionalTrimmedString(8_000),
-  steps: z.array(productScanStepSchema).max(40).default([]),
+  amazonDetails: productScanAmazonDetailsSchema,
+  steps: z.array(productScanStepSchema).max(120).default([]),
   rawResult: z.unknown().nullable().default(null),
   error: optionalTrimmedString(2_000),
   asinUpdateStatus: productScanAsinUpdateStatusSchema.nullable().default(null),

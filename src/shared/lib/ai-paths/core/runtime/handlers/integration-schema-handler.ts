@@ -190,6 +190,219 @@ const transformLiveContextDocuments = ({
   return documents;
 };
 
+type EmbeddedNormalizeCategoryLeaf = {
+  id: string;
+  label: string;
+  fullPath: string | null;
+  parentId: string | null;
+  catalogId: string | null;
+};
+
+type EmbeddedNormalizeCategoryContext = {
+  catalogId: string | null;
+  currentCategoryId: string | null;
+  currentCategory: {
+    id: string;
+    label: string;
+    fullPath: string | null;
+    isLeaf: boolean | null;
+  } | null;
+  leafCategories: EmbeddedNormalizeCategoryLeaf[];
+  fetchedAt: string | null;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  isObjectRecord(value) ? value : null;
+
+const resolveEmbeddedNormalizeCategoryLeaf = (
+  value: unknown
+): EmbeddedNormalizeCategoryLeaf | null => {
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const id = resolveRecordString(record['id']) || resolveRecordString(record['_id']);
+  const label = resolveRecordString(record['label']) || resolveRecordString(record['name']);
+  if (!id || !label) return null;
+
+  return {
+    id,
+    label,
+    fullPath: resolveRecordString(record['fullPath']) || null,
+    parentId: resolveRecordString(record['parentId']) || null,
+    catalogId: resolveRecordString(record['catalogId']) || null,
+  };
+};
+
+const resolveEmbeddedNormalizeCategoryContext = (
+  value: unknown
+): EmbeddedNormalizeCategoryContext | null => {
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const leafCategories = Array.isArray(record['leafCategories'])
+    ? record['leafCategories']
+        .map((entry: unknown) => resolveEmbeddedNormalizeCategoryLeaf(entry))
+        .filter(
+          (entry): entry is EmbeddedNormalizeCategoryLeaf => entry !== null
+        )
+    : [];
+
+  const currentCategoryRecord = asRecord(record['currentCategory']);
+  const currentCategoryId =
+    resolveRecordString(record['currentCategoryId']) ||
+    resolveRecordString(currentCategoryRecord?.['id']) ||
+    null;
+  const currentCategory =
+    currentCategoryRecord && currentCategoryId
+      ? {
+          id: currentCategoryId,
+          label:
+            resolveRecordString(currentCategoryRecord['label']) ||
+            resolveRecordString(currentCategoryRecord['name']) ||
+            currentCategoryId,
+          fullPath: resolveRecordString(currentCategoryRecord['fullPath']) || null,
+          isLeaf:
+            typeof currentCategoryRecord['isLeaf'] === 'boolean'
+              ? currentCategoryRecord['isLeaf']
+              : null,
+        }
+      : null;
+
+  if (leafCategories.length === 0 && currentCategory === null) {
+    return null;
+  }
+
+  return {
+    catalogId: resolveRecordString(record['catalogId']) || null,
+    currentCategoryId,
+    currentCategory,
+    leafCategories,
+    fetchedAt: resolveRecordString(record['fetchedAt']) || null,
+  };
+};
+
+const resolveEmbeddedCategoryContextFromInputs = (
+  nodeInputs: RuntimePortValues
+): EmbeddedNormalizeCategoryContext | null => {
+  const contextRecord = asRecord(coerceInput(nodeInputs['context']));
+  const bundleRecord = asRecord(coerceInput(nodeInputs['bundle']));
+  const entityRecord = asRecord(coerceInput(nodeInputs['entityJson']));
+
+  return (
+    resolveEmbeddedNormalizeCategoryContext(contextRecord?.['categoryContext']) ??
+    resolveEmbeddedNormalizeCategoryContext(bundleRecord?.['categoryContext']) ??
+    resolveEmbeddedNormalizeCategoryContext(entityRecord?.['categoryContext']) ??
+    null
+  );
+};
+
+const resolveEmbeddedCategoryQueryCompatibility = (args: {
+  config: DbSchemaConfig;
+  selectedCollections: string[];
+  query: string | null;
+  embeddedContext: EmbeddedNormalizeCategoryContext;
+  nodeInputs: RuntimePortValues;
+}): boolean => {
+  if (args.config.contextReuseMode !== 'prefer_transformed_input') {
+    return false;
+  }
+
+  if (args.config.contextTransform !== 'product_categories_leaf_only') {
+    return false;
+  }
+
+  const fetchedCollections = args.selectedCollections.map((value: string) =>
+    toFetchCollectionName(value)
+  );
+  if (
+    fetchedCollections.length !== 1 ||
+    fetchedCollections[0] !== PRODUCT_CATEGORIES_COLLECTION
+  ) {
+    return false;
+  }
+
+  if (!args.query) {
+    return true;
+  }
+
+  try {
+    const parsedQuery = JSON.parse(args.query) as Record<string, unknown>;
+    const queryKeys = Object.keys(parsedQuery);
+    if (queryKeys.length !== 1 || queryKeys[0] !== 'catalogId') {
+      return false;
+    }
+
+    const requestedCatalogId = resolveRecordString(parsedQuery['catalogId']);
+    const contextRecord = asRecord(coerceInput(args.nodeInputs['context']));
+    const inputCatalogId = resolveRecordString(contextRecord?.['catalogId']);
+    const embeddedCatalogId = args.embeddedContext.catalogId ?? inputCatalogId;
+
+    return Boolean(requestedCatalogId) && requestedCatalogId === embeddedCatalogId;
+  } catch {
+    return false;
+  }
+};
+
+const buildLiveContextFromEmbeddedCategoryContext = (args: {
+  embeddedContext: EmbeddedNormalizeCategoryContext;
+  limitPerCollection: number;
+  query: string | null;
+}): LiveContextPayload => {
+  const documentsById = new Map<string, Record<string, unknown>>();
+
+  args.embeddedContext.leafCategories.forEach((category: EmbeddedNormalizeCategoryLeaf) => {
+    documentsById.set(category.id, {
+      id: category.id,
+      catalogId: category.catalogId ?? args.embeddedContext.catalogId,
+      parentId: category.parentId,
+      name: category.label,
+      name_en: category.label,
+      fullPath: category.fullPath ?? category.label,
+      leafLabel: category.label,
+      isLeaf: true,
+    });
+  });
+
+  const currentCategory = args.embeddedContext.currentCategory;
+  if (currentCategory && !documentsById.has(currentCategory.id)) {
+    documentsById.set(currentCategory.id, {
+      id: currentCategory.id,
+      catalogId: args.embeddedContext.catalogId,
+      parentId: null,
+      name: currentCategory.label,
+      name_en: currentCategory.label,
+      fullPath: currentCategory.fullPath ?? currentCategory.label,
+      leafLabel: currentCategory.label,
+      isLeaf: currentCategory.isLeaf ?? false,
+    });
+  }
+
+  const documents = Array.from(documentsById.values()).sort((left, right) =>
+    resolveRecordString(left['fullPath']).localeCompare(resolveRecordString(right['fullPath']))
+  );
+  const collection: LiveContextCollection = {
+    name: PRODUCT_CATEGORIES_COLLECTION,
+    provider: 'mongodb',
+    documents,
+    total: documents.length,
+    limit: args.limitPerCollection,
+    skip: 0,
+    query: args.query,
+  };
+
+  return {
+    fetchedAt: args.embeddedContext.fetchedAt ?? new Date().toISOString(),
+    selectedCollections: [PRODUCT_CATEGORIES_COLLECTION],
+    limitPerCollection: args.limitPerCollection,
+    query: args.query,
+    collections: [collection],
+    collectionMap: {
+      [PRODUCT_CATEGORIES_COLLECTION]: collection,
+    },
+    errors: [],
+  };
+};
+
 export const getCachedSchema = async (): Promise<HttpResult<unknown>> => {
   const now = Date.now();
   if (schemaCacheResult && schemaCacheResult.ok && now - schemaCacheTs < SCHEMA_CACHE_TTL_MS) {
@@ -396,14 +609,33 @@ const loadLiveContext = async ({
   const query =
     rawQuery && rawQuery.length > 0
       ? renderJsonTemplate(
-        rawQuery,
-        nodeInputs,
-        coerceInput(nodeInputs['context']) ??
+          rawQuery,
+          nodeInputs,
+          coerceInput(nodeInputs['context']) ??
             coerceInput(nodeInputs['bundle']) ??
             coerceInput(nodeInputs['value']) ??
             ''
-      ).trim()
+        ).trim()
       : null;
+
+  const embeddedCategoryContext = resolveEmbeddedCategoryContextFromInputs(nodeInputs);
+  if (
+    embeddedCategoryContext &&
+    resolveEmbeddedCategoryQueryCompatibility({
+      config,
+      selectedCollections,
+      query,
+      embeddedContext: embeddedCategoryContext,
+      nodeInputs,
+    })
+  ) {
+    return buildLiveContextFromEmbeddedCategoryContext({
+      embeddedContext: embeddedCategoryContext,
+      limitPerCollection,
+      query,
+    });
+  }
+
   const provider = config.provider === 'mongodb' ? 'mongodb' : 'auto';
 
   const collections = await Promise.all(
@@ -492,6 +724,7 @@ export const handleDbSchema: NodeHandler = async ({
     includeFields: true,
     includeRelations: true,
     formatAs: 'text',
+    contextReuseMode: 'never',
   };
 
   const config: DbSchemaConfig = {

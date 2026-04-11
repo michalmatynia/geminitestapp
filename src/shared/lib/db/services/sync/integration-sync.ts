@@ -1,7 +1,7 @@
+import { BatchCountResult } from '@/shared/contracts/base';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
-type BatchResult = { count: number };
 type EntityWithId = { id: string };
 type RawMongoDoc = Record<string, unknown>;
 type IntegrationDoc = RawMongoDoc & Partial<IntegrationSeed>;
@@ -133,11 +133,11 @@ export const syncIntegrations: DatabaseSyncHandler = async ({ mongo, prisma, nor
     .filter((item): item is IntegrationSeed => item !== null);
   await prisma.productListing.deleteMany();
   await prisma.integrationConnection.deleteMany();
-  const deleted = (await prisma.integration.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.integration.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.integration.createMany({
       data: data as Prisma.IntegrationCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -249,11 +249,11 @@ export const syncIntegrationConnections: DatabaseSyncHandler = async ({
       updatedAt: toDate(doc.updatedAt as Date | string) ?? new Date(),
     })
   );
-  const deleted = (await prisma.integrationConnection.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.integrationConnection.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.integrationConnection.createMany({
       data: data as Prisma.IntegrationConnectionCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -342,11 +342,11 @@ export const syncProductListings: DatabaseSyncHandler = async ({
       updatedAt: (doc.updatedAt as Date) ?? new Date(),
     };
   });
-  const deleted = (await prisma.productListing.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.productListing.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.productListing.createMany({
       data: data as Prisma.ProductListingCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,

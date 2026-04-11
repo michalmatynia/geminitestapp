@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { revalidateTag, unstable_cache } from 'next/cache';
-import { cache } from 'react';
 
 import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
@@ -31,7 +30,6 @@ export { ensureKangurThemeCatalogSeeded } from './theme-catalog-source';
 export { ensureKangurThemePresetManifestSeeded } from './theme-preset-manifest-source';
 export { ensureKangurThemeSlotAssignmentsSeeded } from './theme-slot-assignments-source';
 
-const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS = 30_000;
 export const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG = 'kangur-storefront-initial-state';
 const KANGUR_STOREFRONT_APPEARANCE_LOAD_ERROR_MESSAGE =
   'Failed to load Kangur storefront appearance settings.';
@@ -42,15 +40,6 @@ const KANGUR_STOREFRONT_INITIAL_STATE_DEPENDENCY_KEYS = new Set<string>([
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
 ]);
-
-type KangurStorefrontInitialStateCacheEntry = {
-  value: KangurStorefrontInitialState;
-};
-
-let kangurStorefrontInitialStateCacheEntry: KangurStorefrontInitialStateCacheEntry | null = null;
-let kangurStorefrontInitialStateInFlight: Promise<KangurStorefrontInitialState> | null = null;
-let kangurStorefrontInitialStateCacheIsFresh = false;
-let kangurStorefrontInitialStateCacheExpiryTimer: ReturnType<typeof setTimeout> | null = null;
 
 const normalizeKangurStorefrontAppearanceLoadError = (error: unknown): Error => {
   if (error instanceof Error) {
@@ -78,35 +67,10 @@ const normalizeKangurStorefrontAppearanceLoadError = (error: unknown): Error => 
   return normalizedError;
 };
 
-const clearKangurStorefrontInitialStateCacheExpiryTimer = (): void => {
-  if (kangurStorefrontInitialStateCacheExpiryTimer) {
-    clearTimeout(kangurStorefrontInitialStateCacheExpiryTimer);
-    kangurStorefrontInitialStateCacheExpiryTimer = null;
-  }
-};
-
-const scheduleKangurStorefrontInitialStateHotCacheExpiry = (): void => {
-  clearKangurStorefrontInitialStateCacheExpiryTimer();
-  kangurStorefrontInitialStateCacheIsFresh = true;
-  kangurStorefrontInitialStateCacheExpiryTimer = setTimeout(() => {
-    kangurStorefrontInitialStateCacheIsFresh = false;
-    kangurStorefrontInitialStateCacheExpiryTimer = null;
-  }, KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS);
-  kangurStorefrontInitialStateCacheExpiryTimer.unref?.();
-};
-
-const clearKangurStorefrontInitialStateHotCache = (): void => {
-  clearKangurStorefrontInitialStateCacheExpiryTimer();
-  kangurStorefrontInitialStateCacheEntry = null;
-  kangurStorefrontInitialStateInFlight = null;
-  kangurStorefrontInitialStateCacheIsFresh = false;
-};
-
 export const isKangurStorefrontInitialStateDependencyKey = (key: string): boolean =>
   KANGUR_STOREFRONT_INITIAL_STATE_DEPENDENCY_KEYS.has(key);
 
 export const invalidateKangurStorefrontInitialStateCache = (): void => {
-  clearKangurStorefrontInitialStateHotCache();
   revalidateTag(KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG, 'max');
 };
 
@@ -156,40 +120,11 @@ const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefro
   };
 };
 
-const getKangurStorefrontInitialStateHotCached = async (): Promise<KangurStorefrontInitialState> => {
-  if (
-    kangurStorefrontInitialStateCacheEntry &&
-    kangurStorefrontInitialStateCacheIsFresh
-  ) {
-    return kangurStorefrontInitialStateCacheEntry.value;
+export const getKangurStorefrontInitialState = unstable_cache(
+  getKangurStorefrontInitialStateUncached,
+  [KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG],
+  {
+    revalidate: 300,
+    tags: [KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG],
   }
-
-  if (kangurStorefrontInitialStateInFlight) {
-    return kangurStorefrontInitialStateInFlight;
-  }
-
-  kangurStorefrontInitialStateInFlight = getKangurStorefrontInitialStateUncached()
-    .then((value) => {
-      kangurStorefrontInitialStateCacheEntry = {
-        value,
-      };
-      scheduleKangurStorefrontInitialStateHotCacheExpiry();
-      return value;
-    })
-    .finally(() => {
-      kangurStorefrontInitialStateInFlight = null;
-    });
-
-  return kangurStorefrontInitialStateInFlight;
-};
-
-export const getKangurStorefrontInitialState = cache(
-  unstable_cache(
-    getKangurStorefrontInitialStateHotCached,
-    [KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG],
-    {
-      revalidate: 300,
-      tags: [KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG],
-    }
-  )
 );

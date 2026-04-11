@@ -109,6 +109,9 @@ const getErrorMessage = (error: unknown): string => {
   return String(error);
 };
 
+const getMongoSourceUriEnvKey = (source: MongoSource): 'MONGODB_LOCAL_URI' | 'MONGODB_CLOUD_URI' =>
+  source === 'local' ? 'MONGODB_LOCAL_URI' : 'MONGODB_CLOUD_URI';
+
 const getMongoSourceConfig = (source: MongoSource): MongoSourceConfig => {
   const explicitUri = getExplicitMongoUri(source);
   const explicitDbName = getExplicitMongoDb(source);
@@ -190,12 +193,7 @@ const probeMongoSourceReachability = async (
   }
 };
 
-const resolveConfiguredMongoSource = (requested: MongoSource | null): MongoSource | null => {
-  if (requested) {
-    const requestedConfig = getMongoSourceConfig(requested);
-    if (requestedConfig.configured) return requested;
-  }
-
+const resolveAvailableMongoSource = (): MongoSource | null => {
   const localConfig = getMongoSourceConfig('local');
   const cloudConfig = getMongoSourceConfig('cloud');
   if (localConfig.configured && !cloudConfig.configured) return 'local';
@@ -205,10 +203,21 @@ const resolveConfiguredMongoSource = (requested: MongoSource | null): MongoSourc
   return null;
 };
 
-const resolveDefaultMongoSource = (): MongoSource | null =>
-  resolveConfiguredMongoSource(
-    normalizeMongoSource(process.env[MONGODB_ACTIVE_SOURCE_DEFAULT_ENV]?.trim())
+const resolveRequestedMongoSource = (requested: MongoSource): MongoSource => {
+  const requestedConfig = getMongoSourceConfig(requested);
+  if (requestedConfig.configured) return requested;
+  throw configurationError(
+    `MongoDB source "${requested}" is not configured. Set ${getMongoSourceUriEnvKey(requested)}.`
   );
+};
+
+const resolveDefaultMongoSource = (): MongoSource | null => {
+  const requested = normalizeMongoSource(process.env[MONGODB_ACTIVE_SOURCE_DEFAULT_ENV]?.trim());
+  if (requested) {
+    return resolveRequestedMongoSource(requested);
+  }
+  return resolveAvailableMongoSource();
+};
 
 const applyMongoSourceEnvSnapshot = (source: MongoSource | null): void => {
   if (!source) return;
@@ -229,8 +238,9 @@ export const getActiveMongoSource = async (): Promise<MongoSource | null> => {
 export const resolveMongoSourceConfig = async (
   preferredSource?: MongoSource
 ): Promise<MongoSourceConfig> => {
-  const source =
-    resolveConfiguredMongoSource(preferredSource ?? null) ?? (await getActiveMongoSource());
+  const source = preferredSource
+    ? resolveRequestedMongoSource(preferredSource)
+    : (await getActiveMongoSource()) ?? resolveAvailableMongoSource();
   if (!source) {
     throw configurationError(
       'No MongoDB source is configured. Set MONGODB_LOCAL_URI or MONGODB_CLOUD_URI.'
@@ -333,7 +343,8 @@ export const __testOnly = {
   isLikelyLocalMongoUri,
   maskMongoUri,
   normalizeMongoSource,
-  resolveConfiguredMongoSource,
+  resolveAvailableMongoSource,
+  resolveRequestedMongoSource,
   resolveDefaultMongoSource,
   normalizeMongoSyncComparisonUri,
   probeMongoSourceReachability,

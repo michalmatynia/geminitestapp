@@ -32,7 +32,7 @@ const {
   getNextProviderInstanceIdMock,
   resetProviderInstanceCounterMock,
   subscribeToTrackedAiPathRunMock,
-  getAiPathRunMock,
+  getAiPathRunResultMock,
 } = vi.hoisted(() => {
   let providerInstanceCounter = 0;
 
@@ -44,7 +44,7 @@ const {
     listProductModalPropsMock: vi.fn(),
     productListingsModalPropsMock: vi.fn(),
     subscribeToTrackedAiPathRunMock: vi.fn(),
-    getAiPathRunMock: vi.fn(),
+    getAiPathRunResultMock: vi.fn(),
     getNextProviderInstanceIdMock: (): number => {
       providerInstanceCounter += 1;
       return providerInstanceCounter;
@@ -92,6 +92,7 @@ vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
 
 vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
   useProductFormMetadata: () => useProductFormMetadataMock(),
+  useProductFormMetadataState: () => useProductFormMetadataMock(),
 }));
 
 vi.mock('@/features/products/context/ProductFormImageContext', () => ({
@@ -105,12 +106,19 @@ vi.mock('@/features/products/context-registry/ProductLeafCategoriesContextRegist
   ProductLeafCategoriesContextRegistrySource: () => null,
 }));
 
+vi.mock('./product-form-preload', () => ({
+  loadProductForm: async () => ({
+    default: () => <div data-testid='product-form' />,
+  }),
+  preloadProductFormChunk: vi.fn(),
+}));
+
 vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
   subscribeToTrackedAiPathRun: (...args: unknown[]) => subscribeToTrackedAiPathRunMock(...args),
 }));
 
 vi.mock('@/shared/lib/ai-paths/api/client', () => ({
-  getAiPathRun: (...args: unknown[]) => getAiPathRunMock(...args),
+  getAiPathRunResult: (...args: unknown[]) => getAiPathRunResultMock(...args),
 }));
 
 vi.mock('@/features/products/hooks/editingProductHydration', () => ({
@@ -164,6 +172,18 @@ vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () 
     triggerButtonBarMock(props);
     return <div data-testid='trigger-button-bar' />;
   },
+}));
+
+vi.mock('@/features/integrations/public', () => ({
+  ProductListingsModal: (props: any) => {
+    productListingsModalPropsMock(props);
+    return <div data-testid='product-listings-modal' />;
+  },
+  ListProductModal: (props: any) => {
+    listProductModalPropsMock(props);
+    return <div data-testid='list-product-modal' />;
+  },
+  MassListProductModal: () => <div data-testid='mass-list-product-modal' />,
 }));
 
 vi.mock('@/features/integrations/components/listings/ProductListingsModal', () => ({
@@ -244,7 +264,7 @@ describe('ProductModals', () => {
     vi.clearAllMocks();
     resetProviderInstanceCounterMock();
     subscribeToTrackedAiPathRunMock.mockReturnValue(() => {});
-    getAiPathRunMock.mockResolvedValue({
+    getAiPathRunResultMock.mockResolvedValue({
       ok: true,
       data: {
         nodes: [],
@@ -552,7 +572,7 @@ describe('ProductModals', () => {
           initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         })
       );
-      getAiPathRunMock.mockResolvedValue({
+      getAiPathRunResultMock.mockResolvedValue({
         ok: true,
         data: {
           nodes: [
@@ -616,7 +636,9 @@ describe('ProductModals', () => {
       });
 
       await waitFor(() => {
-        expect(getAiPathRunMock).toHaveBeenCalledWith('run-normalize-1', { timeoutMs: 60_000 });
+        expect(getAiPathRunResultMock).toHaveBeenCalledWith('run-normalize-1', {
+          timeoutMs: 60_000,
+        });
       });
       expect(setValue).toHaveBeenCalledWith(
         'name_en',
@@ -627,6 +649,120 @@ describe('ProductModals', () => {
           shouldValidate: true,
         }
       );
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('applies streamed normalize results into create-mode name_en without fetching the run result endpoint', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-2',
+        },
+        draft: { id: 'draft-2', name: 'Draft 2' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-2', name: 'Draft 2' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-2',
+          entityId: 'transient-product-2',
+          entityType: 'product',
+        });
+      });
+
+      await waitFor(() => {
+        expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+          'run-normalize-2',
+          expect.any(Function)
+        );
+      });
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-2',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-2',
+          entityType: 'product',
+          run: {
+            id: 'run-normalize-2',
+            status: 'completed',
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:05.000Z',
+            startedAt: null,
+            finishedAt: '2026-04-09T00:00:05.000Z',
+            errorMessage: null,
+            pathId: 'path_name_normalize_v1',
+            pathName: 'Normalize',
+            triggerEvent: 'button-normalize',
+            triggerNodeId: 'node-trigger',
+            entityId: 'transient-product-2',
+            entityType: 'product',
+            requestId: null,
+            meta: null,
+            graph: null,
+            triggerContext: null,
+            runtimeState: {
+              outputs: {
+                'node-mapper': {
+                  bundle: {
+                    normalizedName: 'Streamed Name | 4 cm | Metal | Anime Pins | Anime',
+                    isValid: true,
+                  },
+                },
+              },
+            },
+          },
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Streamed Name | 4 cm | Metal | Anime Pins | Anime',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(getAiPathRunResultMock).not.toHaveBeenCalled();
       expect(setNormalizeNameError).toHaveBeenCalledWith(null);
     });
 
@@ -650,7 +786,7 @@ describe('ProductModals', () => {
           editingProduct: product,
         })
       );
-      getAiPathRunMock.mockResolvedValue({
+      getAiPathRunResultMock.mockResolvedValue({
         ok: true,
         data: {
           nodes: [
@@ -751,7 +887,7 @@ describe('ProductModals', () => {
           initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         })
       );
-      getAiPathRunMock.mockResolvedValue({
+      getAiPathRunResultMock.mockResolvedValue({
         ok: true,
         data: {
           nodes: [
@@ -877,7 +1013,7 @@ describe('ProductModals', () => {
           initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         })
       );
-      getAiPathRunMock.mockResolvedValue({
+      getAiPathRunResultMock.mockResolvedValue({
         ok: true,
         data: {
           nodes: [
@@ -975,7 +1111,7 @@ describe('ProductModals', () => {
           initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         })
       );
-      getAiPathRunMock.mockResolvedValue({
+      getAiPathRunResultMock.mockResolvedValue({
         ok: true,
         data: {
           nodes: [
@@ -1099,7 +1235,7 @@ describe('ProductModals', () => {
           isEditHydrating: true,
         })
       );
-      getAiPathRunMock.mockResolvedValue({
+      getAiPathRunResultMock.mockResolvedValue({
         ok: true,
         data: {
           nodes: [
@@ -1217,7 +1353,7 @@ describe('ProductModals', () => {
           initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         })
       );
-      getAiPathRunMock.mockResolvedValue({
+      getAiPathRunResultMock.mockResolvedValue({
         ok: true,
         data: {
           nodes: [

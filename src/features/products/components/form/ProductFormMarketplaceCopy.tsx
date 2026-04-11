@@ -22,6 +22,15 @@ import type { MultiSelectOption } from '@/shared/contracts/ui/controls';
 import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
 import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { useAiPathTriggerEvent } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+import { useAiPathsTriggerButtonsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
+import {
+  MARKETPLACE_COPY_DEBRAND_PATH_ID,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_SORT_INDEX,
+} from '@/shared/lib/ai-paths/marketplace-copy-debrand';
 import { Alert } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { FormField, FormSection } from '@/shared/ui/form-section';
@@ -46,7 +55,21 @@ type MarketplaceCopyDebrandTriggerProps = {
   resolveCurrentRowIndex: (rowId: string) => number | null;
 };
 
-const MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION = 'product_marketplace_copy_row';
+const FALLBACK_MARKETPLACE_COPY_DEBRAND_BUTTON: AiTriggerButtonRecord = {
+  id: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+  name: MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
+  pathId: MARKETPLACE_COPY_DEBRAND_PATH_ID,
+  locations: [MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION],
+  mode: 'click',
+  display: {
+    label: MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
+    showLabel: true,
+  },
+  enabled: true,
+  sortIndex: MARKETPLACE_COPY_DEBRAND_TRIGGER_SORT_INDEX,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
 
 const createEmptyMarketplaceCopyOverride = (): NonNullable<
   ProductFormData['marketplaceContentOverrides']
@@ -110,7 +133,10 @@ function MarketplaceCopyDebrandTrigger(
     resolveCurrentRowIndex,
   } = props;
   const { product, draft, getValues, setValue } = useProductFormCore();
+  const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
+  const triggerButtonsQuery = useAiPathsTriggerButtonsQuery();
   const [pendingRunId, setPendingRunId] = useState<string | null>(null);
+  const [isFallbackTriggerPending, setIsFallbackTriggerPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
@@ -184,6 +210,53 @@ function MarketplaceCopyDebrandTrigger(
     },
     []
   );
+
+  const hasVisibleConfiguredRowTrigger = useMemo(
+    () =>
+      (triggerButtonsQuery.data ?? []).some((button: AiTriggerButtonRecord) =>
+        button.enabled !== false &&
+        (button.locations ?? []).includes(MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION)
+      ),
+    [triggerButtonsQuery.data]
+  );
+  const shouldUseFallbackTrigger =
+    triggerButtonsQuery.isLoading !== true && !hasVisibleConfiguredRowTrigger;
+
+  const handleFallbackTrigger = useCallback(async (): Promise<void> => {
+    setError(null);
+    setIsFallbackTriggerPending(true);
+
+    const customExtras = getTriggerExtras();
+
+    try {
+      await fireAiPathTriggerEvent({
+        triggerEventId: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+        triggerLabel: FALLBACK_MARKETPLACE_COPY_DEBRAND_BUTTON.name,
+        preferredPathId: MARKETPLACE_COPY_DEBRAND_PATH_ID,
+        entityType: 'product',
+        entityId: product?.id ?? null,
+        getEntityJson,
+        source: {
+          tab: 'product',
+          location: MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION,
+        },
+        extras: {
+          ...(customExtras ?? {}),
+          mode: 'click',
+        },
+        onSuccess: (runId: string): void => {
+          handleRunQueued({
+            button: FALLBACK_MARKETPLACE_COPY_DEBRAND_BUTTON,
+            runId,
+            entityId: product?.id ?? null,
+            entityType: 'product',
+          });
+        },
+      });
+    } finally {
+      setIsFallbackTriggerPending(false);
+    }
+  }, [fireAiPathTriggerEvent, getEntityJson, getTriggerExtras, handleRunQueued, product?.id]);
 
   useEffect(() => {
     if (!pendingRunId) return;
@@ -271,15 +344,30 @@ function MarketplaceCopyDebrandTrigger(
 
   return (
     <div className='flex min-w-0 flex-col items-end gap-2'>
-      <TriggerButtonBar
-        location={MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION}
-        entityType='product'
-        entityId={product?.id ?? null}
-        getEntityJson={getEntityJson}
-        getTriggerExtras={getTriggerExtras}
-        disabled={disabled}
-        onRunQueued={handleRunQueued}
-      />
+      {shouldUseFallbackTrigger ? (
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={(): void => {
+            void handleFallbackTrigger();
+          }}
+          disabled={disabled || isFallbackTriggerPending || pendingRunId !== null}
+          className='gap-2'
+        >
+          Debrand
+        </Button>
+      ) : (
+        <TriggerButtonBar
+          location={MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION}
+          entityType='product'
+          entityId={product?.id ?? null}
+          getEntityJson={getEntityJson}
+          getTriggerExtras={getTriggerExtras}
+          disabled={disabled}
+          onRunQueued={handleRunQueued}
+        />
+      )}
       {error ? <p className='text-right text-xs text-destructive'>{error}</p> : null}
     </div>
   );
@@ -287,7 +375,6 @@ function MarketplaceCopyDebrandTrigger(
 
 export default function ProductFormMarketplaceCopy(): React.JSX.Element {
   const { control, register, formState } = useFormContext<ProductFormData>();
-  const { product } = useProductFormCore();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'marketplaceContentOverrides',
@@ -332,8 +419,6 @@ export default function ProductFormMarketplaceCopy(): React.JSX.Element {
     ? (overrideErrors as MarketplaceCopyErrorEntry[])
     : [];
   const rootOverrideError = toErrorMessage(overrideErrors);
-  const hasPersistedEntity = Boolean(product?.id);
-
   return (
     <FormSection
       title='Marketplace Copy'
@@ -404,7 +489,7 @@ export default function ProductFormMarketplaceCopy(): React.JSX.Element {
                   integrationLabels={selectedLabels}
                   currentTitle={currentEntry?.title ?? ''}
                   currentDescription={currentEntry?.description ?? ''}
-                  disabled={!hasPersistedEntity}
+                  disabled={formState.isSubmitting}
                   resolveCurrentRowIndex={resolveCurrentMarketplaceCopyRowIndex}
                 />
                 <Button

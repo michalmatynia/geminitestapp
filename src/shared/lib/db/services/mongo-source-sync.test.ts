@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => ({
     syncIssue: null,
   })),
   resolveMongoSourceConfig: vi.fn(),
+  createMongoSourceBackup: vi.fn(),
   recordMongoSourceSync: vi.fn(async () => undefined),
   execFileAsync: vi.fn(),
   getMongoDumpCommand: vi.fn(() => 'mongodump'),
@@ -57,6 +58,10 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   execFileAsync: mocks.execFileAsync,
   getMongoDumpCommand: mocks.getMongoDumpCommand,
   getMongoRestoreCommand: mocks.getMongoRestoreCommand,
+}));
+
+vi.mock('@/shared/lib/db/services/database-backup', () => ({
+  createMongoSourceBackup: mocks.createMongoSourceBackup,
 }));
 
 import { syncMongoSources } from './mongo-source-sync';
@@ -94,6 +99,18 @@ describe('mongo-source-sync', () => {
       syncIssue: null,
     });
     process.env['NODE_ENV'] = 'test';
+    mocks.createMongoSourceBackup.mockImplementation(async ({ source, role, direction, timestamp }) => ({
+      role,
+      source,
+      backupName: `${source}-${role}-pre-sync-${direction}.archive`,
+      backupPath: `/tmp/backups/${source}-${role}-pre-sync-${direction}.archive`,
+      logPath: `/tmp/backups/${source}-${role}-pre-sync-${direction}.archive.log`,
+      createdAt:
+        typeof timestamp === 'number'
+          ? new Date(timestamp).toISOString()
+          : '2026-04-09T04:30:00.000Z',
+      warning: null,
+    }));
   });
 
   it('rejects sync when local and cloud resolve to the same Mongo target', async () => {
@@ -133,6 +150,19 @@ describe('mongo-source-sync', () => {
 
     expect(result.success).toBe(true);
     expect(result.direction).toBe('cloud_to_local');
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(1, {
+      source: 'cloud',
+      role: 'source',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(2, {
+      source: 'local',
+      role: 'target',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(result.preSyncBackups).toHaveLength(2);
     expect(result.archivePath).toContain('mongo-sync-cloud_to_local-');
     expect(result.logPath).toContain('mongo-sync-cloud_to_local-');
     expect(result.syncedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
@@ -141,6 +171,10 @@ describe('mongo-source-sync', () => {
         direction: 'cloud_to_local',
         source: 'cloud',
         target: 'local',
+        preSyncBackups: expect.arrayContaining([
+          expect.objectContaining({ role: 'source', source: 'cloud' }),
+          expect.objectContaining({ role: 'target', source: 'local' }),
+        ]),
       })
     );
   });
@@ -181,6 +215,29 @@ describe('mongo-source-sync', () => {
       /"cloud" is unreachable: cloud ping failed/i
     );
     expect(mocks.resolveMongoSourceConfig).not.toHaveBeenCalled();
+    expect(mocks.createMongoSourceBackup).not.toHaveBeenCalled();
     expect(mocks.execFileAsync).not.toHaveBeenCalled();
+  });
+
+  it('aborts sync before transfer when a pre-sync backup fails', async () => {
+    mocks.resolveMongoSourceConfig
+      .mockResolvedValueOnce({
+        configured: true,
+        source: 'local',
+        uri: 'mongodb://localhost:27017/app_local',
+        dbName: 'app_local',
+      })
+      .mockResolvedValueOnce({
+        configured: true,
+        source: 'cloud',
+        uri: 'mongodb+srv://cluster.example/app_cloud',
+        dbName: 'app_cloud',
+      });
+    mocks.createMongoSourceBackup.mockReset();
+    mocks.createMongoSourceBackup.mockRejectedValueOnce(new Error('backup failed'));
+
+    await expect(syncMongoSources('local_to_cloud')).rejects.toThrow('backup failed');
+    expect(mocks.execFileAsync).not.toHaveBeenCalled();
+    expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
   });
 });

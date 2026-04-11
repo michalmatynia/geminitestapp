@@ -172,6 +172,11 @@ describe('mongo product repository mappers shared-lib coverage', () => {
           description: ' Alternate description ',
         },
         {
+          integrationIds: [' integration-ebay '],
+          title: '   ',
+          description: null,
+        },
+        {
           integrationIds: [],
           title: null,
           description: null,
@@ -185,12 +190,22 @@ describe('mongo product repository mappers shared-lib coverage', () => {
         title: 'Alternate title',
         description: 'Alternate description',
       },
+      {
+        integrationIds: ['integration-ebay'],
+        title: null,
+        description: null,
+      },
     ]);
     expect(toProductBase(doc).marketplaceContentOverrides).toEqual([
       {
         integrationIds: ['integration-tradera', 'integration-vinted'],
         title: 'Alternate title',
         description: 'Alternate description',
+      },
+      {
+        integrationIds: ['integration-ebay'],
+        title: null,
+        description: null,
       },
     ]);
   });

@@ -1,8 +1,7 @@
+import { BatchCountResult } from '@/shared/contracts/base';
 import type { MongoCurrencyDoc, MongoCountryDoc, MongoLanguageDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma, CurrencyCode } from '@prisma/client';
-
-type BatchResult = { count: number };
 
 type CurrencySeed = {
   id: string;
@@ -67,11 +66,11 @@ export const syncCurrencies: DatabaseSyncHandler = async ({ mongo, prisma, curre
       };
     })
     .filter((item): item is CurrencySeed => item !== null);
-  const deleted = (await prisma.currency.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.currency.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.currency.createMany({
       data: data as Prisma.CurrencyCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -106,11 +105,11 @@ export const syncCountries: DatabaseSyncHandler = async ({ mongo, prisma, countr
     })
     .filter((item): item is CountrySeed => item !== null);
 
-  const deleted = (await prisma.country.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.country.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.country.createMany({
       data: data.map(({ currencyIds: _, ...rest }) => rest) as Prisma.CountryCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
 
   const joinRows = data.flatMap((country) =>
@@ -155,11 +154,11 @@ export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
     })
     .filter((item): item is LanguageSeed => item !== null);
 
-  const deleted = (await prisma.language.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.language.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.language.createMany({
       data: data.map(({ countries: _, ...rest }) => rest) as Prisma.LanguageCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
 
   const joinRows = data.flatMap((lang) =>

@@ -27,6 +27,7 @@ const DEFAULT_DB_SCHEMA_CONFIG: DbSchemaConfig = {
   contextQuery: '',
   contextLimit: 20,
   contextTransform: 'none',
+  contextReuseMode: 'never',
   includeFields: true,
   includeRelations: true,
   formatAs: 'text',

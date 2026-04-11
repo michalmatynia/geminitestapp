@@ -26,6 +26,11 @@ export const aiPathRunRecordSchema = aiPathRunSchema.extend({
 });
 export type AiPathRunRecord = z.infer<typeof aiPathRunRecordSchema>;
 
+export const aiPathRunResultResponseSchema = z.object({
+  run: aiPathRunRecordSchema,
+});
+export type AiPathRunResultResponse = z.infer<typeof aiPathRunResultResponseSchema>;
+
 const nonEmptyTrimmedStringSchema = z
   .string()
   .transform((value) => value.trim())

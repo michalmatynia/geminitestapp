@@ -1,9 +1,28 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, Loader2, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ProductScanAmazonExtractedFieldsPanel } from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
+import { hasProductScanAmazonDetails } from '@/features/products/components/scans/ProductScanAmazonDetails';
+import {
+  ProductScanDiagnostics,
+  resolveProductScanDiagnostics,
+} from '@/features/products/components/scans/ProductScanDiagnostics';
+import {
+  ProductFormCustomFieldContext,
+} from '@/features/products/context/ProductFormCustomFieldContext';
+import {
+  ProductFormCoreActionsContext,
+  ProductFormCoreStateContext,
+} from '@/features/products/context/ProductFormCoreContext';
+import { ProductFormParameterContext } from '@/features/products/context/ProductFormParameterContext';
+import {
+  ProductScanSteps,
+  resolveProductScanActiveStepSummary,
+  resolveProductScanLatestOutcomeSummary,
+} from '@/features/products/components/scans/ProductScanSteps';
 import type {
   ProductAmazonBatchScanResponse,
   ProductScanListResponse,
@@ -67,7 +86,7 @@ const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'> 
     return false;
   }
 
-  return (rawResult as any)['manualVerificationPending'] === true;
+  return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
 };
 
 const resolveRowStatusLabel = (row: ScanModalRow): string =>
@@ -239,6 +258,15 @@ export function ProductAmazonScanModal(
   const [rows, setRows] = useState<ScanModalRow[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
+  const [expandedDiagnosticRowIds, setExpandedDiagnosticRowIds] = useState<Set<string>>(new Set());
+  const [expandedExtractedFieldRowIds, setExpandedExtractedFieldRowIds] = useState<Set<string>>(
+    new Set()
+  );
+  const productFormCoreState = useContext(ProductFormCoreStateContext);
+  const productFormCoreActions = useContext(ProductFormCoreActionsContext);
+  const productFormParameters = useContext(ProductFormParameterContext);
+  const productFormCustomFields = useContext(ProductFormCustomFieldContext);
 
   const productNamesById = useMemo(
     () =>
@@ -576,6 +604,9 @@ export function ProductAmazonScanModal(
       rowsRef.current = [];
       setRows([]);
       setIsSubmitting(false);
+      setExpandedRowIds(new Set());
+      setExpandedDiagnosticRowIds(new Set());
+      setExpandedExtractedFieldRowIds(new Set());
       stopPolling();
       return;
     }
@@ -587,6 +618,9 @@ export function ProductAmazonScanModal(
       rowsRef.current = [];
       setRows([]);
       setIsSubmitting(false);
+      setExpandedRowIds(new Set());
+      setExpandedDiagnosticRowIds(new Set());
+      setExpandedExtractedFieldRowIds(new Set());
       stopPolling();
       return;
     }
@@ -800,6 +834,95 @@ export function ProductAmazonScanModal(
     };
   }, [ensurePollingForTrackedActiveRows, handleRefreshFailure, isOpen, refreshScanRows, selectedProductIdsKey, startPolling, stopPolling, toast]);
 
+  const toggleRowSteps = useCallback((productId: string) => {
+    setExpandedRowIds((current) => {
+      const next = new Set(current);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleRowDiagnostics = useCallback((productId: string) => {
+    setExpandedDiagnosticRowIds((current) => {
+      const next = new Set(current);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleRowExtractedFields = useCallback((productId: string) => {
+    setExpandedExtractedFieldRowIds((current) => {
+      const next = new Set(current);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  }, []);
+
+  const productFormBindings = useMemo(() => {
+    if (
+      !productFormCoreState ||
+      !productFormCoreActions ||
+      !productFormParameters ||
+      !productFormCustomFields
+    ) {
+      return null;
+    }
+
+    return {
+      getTextFieldValue: (field: 'asin' | 'ean' | 'gtin') => {
+        const value = productFormCoreState.getValues(field);
+        return typeof value === 'string' ? value : null;
+      },
+      getNumberFieldValue: (field: 'weight' | 'sizeLength' | 'sizeWidth' | 'length') => {
+        const value = productFormCoreState.getValues(field);
+        return typeof value === 'number' ? value : null;
+      },
+      applyTextField: (field: 'asin' | 'ean' | 'gtin', value: string) => {
+        productFormCoreActions.setValue(field, value, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      },
+      applyNumberField: (
+        field: 'weight' | 'sizeLength' | 'sizeWidth' | 'length',
+        value: number
+      ) => {
+        productFormCoreActions.setValue(field, value, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      },
+      parameters: productFormParameters.parameters,
+      parameterValues: productFormParameters.parameterValues,
+      addParameterValue: productFormParameters.addParameterValue,
+      updateParameterId: productFormParameters.updateParameterId,
+      updateParameterValue: productFormParameters.updateParameterValue,
+      customFields: productFormCustomFields.customFields,
+      customFieldValues: productFormCustomFields.customFieldValues,
+      setTextValue: productFormCustomFields.setTextValue,
+      toggleSelectedOption: productFormCustomFields.toggleSelectedOption,
+    };
+  }, [
+    productFormCoreActions,
+    productFormCoreState,
+    productFormCustomFields,
+    productFormParameters,
+  ]);
+
   return (
     <AppModal
       isOpen={isOpen}
@@ -830,6 +953,28 @@ export function ProductAmazonScanModal(
           {rows.map((row) => (
             (() => {
               const { infoMessage, errorMessage } = resolveRowDisplayMessages(row);
+              const scanSteps = Array.isArray(row.scan?.steps) ? row.scan.steps : [];
+              const isExpanded = expandedRowIds.has(row.productId);
+              const diagnosticsExpanded = expandedDiagnosticRowIds.has(row.productId);
+              const extractedFieldsExpanded = expandedExtractedFieldRowIds.has(row.productId);
+              const hasExtractedFields =
+                (row.scan && hasProductScanAmazonDetails(row.scan.amazonDetails)) || Boolean(row.scan?.asin);
+              const hasDiagnostics = Boolean(row.scan && resolveProductScanDiagnostics(row.scan));
+              const progressSummary =
+                (row.status === 'queued' || row.status === 'running') && scanSteps.length > 0
+                  ? resolveProductScanActiveStepSummary(scanSteps)
+                  : null;
+              const latestOutcomeSummary =
+                scanSteps.length > 0 &&
+                !progressSummary &&
+                (row.status === 'failed' ||
+                  row.status === 'conflict' ||
+                  row.status === 'queued' ||
+                  row.status === 'running')
+                  ? resolveProductScanLatestOutcomeSummary(scanSteps, {
+                      allowStalled: row.status === 'queued' || row.status === 'running',
+                    })
+                  : null;
 
               return (
                 <section
@@ -850,6 +995,125 @@ export function ProductAmazonScanModal(
                       {formatTimestamp(row.scan?.createdAt)}
                     </span>
                   </div>
+
+                  <div className='flex items-center justify-end gap-1'>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => toggleRowExtractedFields(row.productId)}
+                      disabled={!hasExtractedFields}
+                      className='h-7 gap-1.5 px-2 text-xs'
+                    >
+                      {extractedFieldsExpanded ? (
+                        <ChevronUp className='h-3.5 w-3.5' />
+                      ) : (
+                        <ChevronDown className='h-3.5 w-3.5' />
+                      )}
+                      {extractedFieldsExpanded ? 'Hide extracted fields' : 'Show extracted fields'}
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => toggleRowDiagnostics(row.productId)}
+                      disabled={!hasDiagnostics}
+                      className='h-7 gap-1.5 px-2 text-xs'
+                    >
+                      {diagnosticsExpanded ? (
+                        <ChevronUp className='h-3.5 w-3.5' />
+                      ) : (
+                        <ChevronDown className='h-3.5 w-3.5' />
+                      )}
+                      {diagnosticsExpanded ? 'Hide diagnostics' : 'Show diagnostics'}
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => toggleRowSteps(row.productId)}
+                      disabled={scanSteps.length === 0}
+                      className='h-7 gap-1.5 px-2 text-xs'
+                    >
+                      {isExpanded ? (
+                        <ChevronUp className='h-3.5 w-3.5' />
+                      ) : (
+                        <ChevronDown className='h-3.5 w-3.5' />
+                      )}
+                      {isExpanded ? 'Hide steps' : 'Show steps'}
+                    </Button>
+                  </div>
+
+                  {progressSummary ? (
+                    <div className='space-y-1 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2'>
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span className='inline-flex items-center rounded-md border border-blue-500/20 px-2 py-0.5 font-medium text-foreground'>
+                          {progressSummary.phaseLabel}
+                        </span>
+                        <span className='text-muted-foreground'>Current step</span>
+                        <span className='font-medium text-foreground'>{progressSummary.stepLabel}</span>
+                        {progressSummary.attempt ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            Attempt {progressSummary.attempt}
+                          </span>
+                        ) : null}
+                        {progressSummary.inputSource ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {progressSummary.inputSource === 'url' ? 'URL input' : 'File input'}
+                          </span>
+                        ) : null}
+                      </div>
+                      {progressSummary.message ? (
+                        <p className='text-sm text-muted-foreground'>{progressSummary.message}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {latestOutcomeSummary ? (
+                    <div
+                      className={`space-y-1 rounded-md px-3 py-2 ${
+                        latestOutcomeSummary.kind === 'failed'
+                          ? 'border border-destructive/20 bg-destructive/5'
+                          : 'border border-amber-500/20 bg-amber-500/5'
+                      }`}
+                    >
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${
+                            latestOutcomeSummary.kind === 'failed'
+                              ? 'border border-destructive/20 text-destructive'
+                              : 'border border-amber-500/20 text-amber-300'
+                          }`}
+                        >
+                          {latestOutcomeSummary.phaseLabel}
+                        </span>
+                        <span className='text-muted-foreground'>
+                          {latestOutcomeSummary.kind === 'failed'
+                            ? 'Last failure'
+                            : 'Last completed step'}
+                        </span>
+                        <span className='font-medium text-foreground'>{latestOutcomeSummary.stepLabel}</span>
+                        {latestOutcomeSummary.resultCodeLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {latestOutcomeSummary.resultCodeLabel}
+                          </span>
+                        ) : null}
+                        {latestOutcomeSummary.attempt ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            Attempt {latestOutcomeSummary.attempt}
+                          </span>
+                        ) : null}
+                        {latestOutcomeSummary.inputSource ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {latestOutcomeSummary.inputSource === 'url' ? 'URL input' : 'File input'}
+                          </span>
+                        ) : null}
+                      </div>
+                      {latestOutcomeSummary.message ? (
+                        <p className='text-sm text-muted-foreground'>{latestOutcomeSummary.message}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {row.scan?.title ? <p className='text-sm font-medium'>{row.scan.title}</p> : null}
                   {row.scan?.asin || row.scan?.price ? (
@@ -875,6 +1139,14 @@ export function ProductAmazonScanModal(
                   ) : null}
                   {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
                   {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
+                  {extractedFieldsExpanded && row.scan ? (
+                    <ProductScanAmazonExtractedFieldsPanel
+                      scan={row.scan}
+                      formBindings={productFormBindings}
+                    />
+                  ) : null}
+                  {diagnosticsExpanded && row.scan ? <ProductScanDiagnostics scan={row.scan} /> : null}
+                  {isExpanded && scanSteps.length > 0 ? <ProductScanSteps steps={scanSteps} /> : null}
                 </section>
               );
             })()

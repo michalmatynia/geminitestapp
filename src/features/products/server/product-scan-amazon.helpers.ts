@@ -38,7 +38,8 @@ export const resolveProductScanImageCandidates = (
   limit = PRODUCT_SCAN_IMAGE_CANDIDATE_LIMIT
 ): ProductScanImageCandidate[] => {
   const seen = new Set<string>();
-  const candidates: ProductScanImageCandidate[] = [];
+  const urlBackedCandidates: ProductScanImageCandidate[] = [];
+  const fileOnlyCandidates: ProductScanImageCandidate[] = [];
 
   for (const image of Array.isArray(product.images) ? product.images : []) {
     const imageFile = image.imageFile;
@@ -59,15 +60,16 @@ export const resolveProductScanImageCandidates = (
     }
 
     candidateKeys.forEach((candidateKey) => seen.add(candidateKey));
-    candidates.push({
+    const candidate = {
       id,
       url,
       filepath,
       filename: normalizeOptionalString(imageFile?.filename),
-    });
-
-    if (candidates.length >= limit) {
-      break;
+    };
+    if (url) {
+      urlBackedCandidates.push(candidate);
+    } else {
+      fileOnlyCandidates.push(candidate);
     }
   }
 
@@ -78,19 +80,15 @@ export const resolveProductScanImageCandidates = (
     }
 
     seen.add(normalizedUrl);
-    candidates.push({
+    urlBackedCandidates.push({
       id: null,
       url: normalizedUrl,
       filepath: null,
       filename: null,
     });
-
-    if (candidates.length >= limit) {
-      break;
-    }
   }
 
-  return candidates;
+  return [...urlBackedCandidates, ...fileOnlyCandidates].slice(0, limit);
 };
 
 export type AmazonAsinResolution = {

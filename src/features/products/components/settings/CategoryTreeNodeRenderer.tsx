@@ -12,6 +12,30 @@ import { useCategoryTreeNodeRuntimeContext } from './CategoryTreeNodeRuntimeCont
 
 export type { CategoryTreeNodeRendererProps };
 
+const normalizeTranslatedLabel = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveCategoryTranslatedSubtext = (args: {
+  name: string;
+  namePl?: string | null;
+  nameDe?: string | null;
+  nameEn?: string | null;
+}): string | null => {
+  const baseName = normalizeTranslatedLabel(args.name) ?? args.name.trim();
+  const translatedCandidates = [args.namePl, args.nameDe, args.nameEn]
+    .map((value) => normalizeTranslatedLabel(value))
+    .filter((value): value is string => Boolean(value));
+
+  return (
+    translatedCandidates.find(
+      (candidate: string) => candidate.localeCompare(baseName, undefined, { sensitivity: 'accent' }) !== 0
+    ) ?? null
+  );
+};
+
 export function CategoryTreeNodeRenderer(
   props: CategoryTreeNodeRendererProps
 ): React.JSX.Element | null {
@@ -32,6 +56,13 @@ export function CategoryTreeNodeRenderer(
   if (!category) return null;
 
   const showDropLine = dropPosition === 'before' || dropPosition === 'after';
+  const translatedSubtext = resolveCategoryTranslatedSubtext({
+    name: category.name,
+    namePl: category.name_pl,
+    nameDe: category.name_de,
+    nameEn: category.name_en,
+  });
+  const title = translatedSubtext ? `${category.name}\n${translatedSubtext}` : category.name;
 
   return (
     <div className='relative'>
@@ -51,7 +82,7 @@ export function CategoryTreeNodeRenderer(
           dropPosition === 'inside' ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/45' : ''
         )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
-        title={category.name}
+        title={title}
       >
         <span
           data-master-tree-drag-handle='category'
@@ -69,7 +100,14 @@ export function CategoryTreeNodeRenderer(
           buttonClassName='hover:bg-gray-700'
           iconClassName='size-3.5'
         />
-        <span className='flex-1 truncate'>{category.name}</span>
+        <div className='min-w-0 flex-1'>
+          <div className='truncate leading-tight'>{category.name}</div>
+          {translatedSubtext ? (
+            <div className='truncate pt-0.5 text-[11px] leading-tight text-gray-400'>
+              {translatedSubtext}
+            </div>
+          ) : null}
+        </div>
 
         <TreeActionSlot show='hover' align='inline'>
           <TreeActionButton

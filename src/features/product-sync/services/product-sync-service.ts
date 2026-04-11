@@ -3,8 +3,10 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import {
+  getDefaultProductSyncProfile,
   getProductSyncProfile,
   getProductSyncRun,
+  hasActiveProductSyncRun,
   putProductSyncRunItem,
   touchProductSyncProfileLastRunAt,
   updateProductSyncRun,
@@ -19,18 +21,28 @@ import {
   resolveBaseConnectionToken,
   callBaseApi,
   fetchBaseProductDetails,
+  fetchBaseWarehouses,
 } from '@/server/integrations';
+import { DEFAULT_PRODUCT_SYNC_FIELD_RULES } from '@/shared/contracts/product-sync';
 import type {
   ProductSyncAppField,
+  ProductSyncFieldPreview,
   ProductSyncFieldRule,
   ProductSyncProfile,
+  ProductSyncPreview,
+  ProductSyncTargetSource,
+  ProductSyncSingleProductResponse,
   ProductSyncRunItemRecord,
   ProductSyncRunRecord,
   ProductSyncRunStats,
   ProductSyncRunStatus,
 } from '@/shared/contracts/product-sync';
+import { getProductSyncBaseFieldPresentation } from '@/shared/contracts/product-sync';
+import type { BaseWarehouse } from '@/shared/contracts/integrations/base-com';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { UpdateProductInput } from '@/shared/contracts/products/io';
+import type { MongoPriceGroupDoc } from '@/shared/lib/db/services/database-sync-types';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -42,6 +54,7 @@ const RUN_PROGRESS_FLUSH_EVERY_MS = 20_000;
 type BaseConnectionContext = {
   integrationId: string;
   connectionId: string;
+  connectionName: string | null;
   inventoryId: string;
   token: string;
 };
@@ -53,6 +66,46 @@ type LinkedProductSyncResult = {
   message: string | null;
   errorMessage: string | null;
 };
+
+type LinkedProductSyncPlan = {
+  fields: ProductSyncFieldPreview[];
+  localPatch: Record<string, unknown>;
+  basePayload: Record<string, unknown>;
+  localChanges: string[];
+  baseChanges: string[];
+};
+
+type BaseSyncResolvedTarget = {
+  baseProductId: string | null;
+  linkedVia: 'product' | 'listing' | 'sku_backfill' | 'none';
+};
+
+type ResolvedProductSyncTarget = {
+  product: ProductWithImages;
+  target: BaseSyncResolvedTarget;
+};
+
+type ProductSyncBaseFieldPresentationMetadata = {
+  warehousesByIdentifier: Map<
+    string,
+    {
+      name: string;
+      isDefault: boolean;
+    }
+  >;
+  priceGroupsByIdentifier: Map<
+    string,
+    {
+      name: string;
+      currencyCode: string | null;
+      isDefault: boolean;
+    }
+  >;
+};
+
+const DEFAULT_FIELD_RULE_BY_APP_FIELD = new Map(
+  DEFAULT_PRODUCT_SYNC_FIELD_RULES.map((rule) => [rule.appField, rule])
+);
 
 const isTerminalRunStatus = (status: ProductSyncRunStatus): boolean =>
   status === 'completed' || status === 'partial_success' || status === 'failed';
@@ -223,8 +276,405 @@ const setPathValue = (target: Record<string, unknown>, path: string, value: unkn
   current[lastKey] = value;
 };
 
+const getProductSyncFieldLabel = (field: ProductSyncAppField): string => {
+  if (field === 'name_en') return 'Name (EN)';
+  if (field === 'description_en') return 'Description (EN)';
+  if (field === 'stock') return 'Stock';
+  if (field === 'price') return 'Price';
+  if (field === 'sku') return 'SKU';
+  if (field === 'ean') return 'EAN';
+  if (field === 'weight') return 'Weight';
+  return field;
+};
+
+const createEmptyBaseFieldPresentationMetadata = (): ProductSyncBaseFieldPresentationMetadata => ({
+  warehousesByIdentifier: new Map(),
+  priceGroupsByIdentifier: new Map(),
+});
+
+const getDynamicStockIdentifier = (rule: ProductSyncFieldRule): string | null => {
+  if (rule.appField !== 'stock') return null;
+  const normalizedBaseField = toTrimmedString(rule.baseField);
+  if (!normalizedBaseField.startsWith('stock.')) return null;
+  return toTrimmedString(normalizedBaseField.slice('stock.'.length)) || null;
+};
+
+const getDynamicPriceGroupIdentifier = (rule: ProductSyncFieldRule): string | null => {
+  if (rule.appField !== 'price') return null;
+  const normalizedBaseField = toTrimmedString(rule.baseField);
+  if (!normalizedBaseField.startsWith('prices.')) return null;
+  return toTrimmedString(normalizedBaseField.slice('prices.'.length)) || null;
+};
+
+const resolveWarehouseBaseFieldPresentation = (input: {
+  identifier: string;
+  warehouse: {
+    name: string;
+    isDefault: boolean;
+  };
+}): { label: string; description: string | null; isKnown: boolean } => {
+  const suffix = input.warehouse.isDefault ? ' [default]' : '';
+  return {
+    label: `Warehouse stock: ${input.warehouse.name} (${input.identifier})`,
+    description: `Stock for Base.com warehouse ${input.warehouse.name} (${input.identifier})${suffix}.`,
+    isKnown: true,
+  };
+};
+
+const resolvePriceGroupBaseFieldPresentation = (input: {
+  identifier: string;
+  priceGroup: {
+    name: string;
+    currencyCode: string | null;
+    isDefault: boolean;
+  };
+}): { label: string; description: string | null; isKnown: boolean } => {
+  const details = [
+    input.priceGroup.currencyCode,
+    input.priceGroup.isDefault ? 'default' : null,
+  ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+  const suffix = details.length > 0 ? ` [${details.join(', ')}]` : '';
+  return {
+    label: `Price group: ${input.priceGroup.name} (${input.identifier})`,
+    description: `Price for Base.com price group ${input.priceGroup.name} (${input.identifier})${suffix}.`,
+    isKnown: true,
+  };
+};
+
+const getEffectiveBaseFieldPresentation = (
+  rule: ProductSyncFieldRule,
+  metadata?: ProductSyncBaseFieldPresentationMetadata
+): { label: string; description: string | null; isKnown: boolean } => {
+  const fallbackPresentation = getProductSyncBaseFieldPresentation(rule.appField, rule.baseField);
+  if (!metadata) return fallbackPresentation;
+
+  const warehouseIdentifier = getDynamicStockIdentifier(rule);
+  if (warehouseIdentifier) {
+    const warehouse = metadata.warehousesByIdentifier.get(warehouseIdentifier);
+    if (warehouse) {
+      return resolveWarehouseBaseFieldPresentation({
+        identifier: warehouseIdentifier,
+        warehouse,
+      });
+    }
+  }
+
+  const priceGroupIdentifier = getDynamicPriceGroupIdentifier(rule);
+  if (priceGroupIdentifier) {
+    const priceGroup = metadata.priceGroupsByIdentifier.get(priceGroupIdentifier);
+    if (priceGroup) {
+      return resolvePriceGroupBaseFieldPresentation({
+        identifier: priceGroupIdentifier,
+        priceGroup,
+      });
+    }
+  }
+
+  return fallbackPresentation;
+};
+
+const loadWarehousePresentationMetadata = async (input: {
+  token: string;
+  inventoryId: string;
+  identifiers: string[];
+}): Promise<ProductSyncBaseFieldPresentationMetadata['warehousesByIdentifier']> => {
+  if (input.identifiers.length === 0) {
+    return new Map();
+  }
+
+  const wantedIdentifiers = new Set(input.identifiers.map(toTrimmedString).filter(Boolean));
+
+  try {
+    const warehouses = await fetchBaseWarehouses(input.token, input.inventoryId);
+    const warehousesByIdentifier: ProductSyncBaseFieldPresentationMetadata['warehousesByIdentifier'] =
+      new Map();
+
+    warehouses.forEach((warehouse: BaseWarehouse) => {
+      const identifiers = [
+        toTrimmedString(warehouse.id),
+        toTrimmedString(warehouse.typedId),
+      ].filter(Boolean);
+      if (identifiers.length === 0) return;
+
+      const name = toTrimmedString(warehouse.name) || identifiers[0];
+      identifiers.forEach((identifier: string) => {
+        if (!wantedIdentifiers.has(identifier)) return;
+        warehousesByIdentifier.set(identifier, {
+          name,
+          isDefault: warehouse.is_default === true,
+        });
+      });
+    });
+
+    return warehousesByIdentifier;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return new Map();
+  }
+};
+
+const loadPriceGroupPresentationMetadata = async (
+  identifiers: string[]
+): Promise<ProductSyncBaseFieldPresentationMetadata['priceGroupsByIdentifier']> => {
+  if (identifiers.length === 0) {
+    return new Map();
+  }
+
+  const wantedIdentifiers = Array.from(new Set(identifiers.map(toTrimmedString).filter(Boolean)));
+  if (wantedIdentifiers.length === 0) {
+    return new Map();
+  }
+
+  try {
+    const mongo = await getMongoDb();
+    const priceGroups = (await mongo
+      .collection<MongoPriceGroupDoc>('price_groups')
+      .find(
+        {
+          $or: [{ id: { $in: wantedIdentifiers } }, { groupId: { $in: wantedIdentifiers } }],
+        },
+        {
+          projection: {
+            id: 1,
+            groupId: 1,
+            name: 1,
+            currencyId: 1,
+            isDefault: 1,
+          },
+        }
+      )
+      .toArray()) as MongoPriceGroupDoc[];
+
+    const currencyIds = Array.from(
+      new Set(
+        priceGroups
+          .map((group: MongoPriceGroupDoc) => toTrimmedString(group.currencyId))
+          .filter(Boolean)
+      )
+    );
+    const currencyDocs = currencyIds.length
+      ? ((await mongo
+          .collection<{ id?: string; code?: string }>('currencies')
+          .find({ id: { $in: currencyIds } }, { projection: { id: 1, code: 1 } })
+          .toArray()) as Array<{ id?: string; code?: string }>)
+      : [];
+    const currencyCodeById = new Map(
+      currencyDocs.map((currency: { id?: string; code?: string }) => [
+        toTrimmedString(currency.id),
+        toTrimmedString(currency.code) || null,
+      ])
+    );
+
+    const priceGroupsByIdentifier: ProductSyncBaseFieldPresentationMetadata['priceGroupsByIdentifier'] =
+      new Map();
+
+    priceGroups.forEach((group: MongoPriceGroupDoc) => {
+      const identifiersForGroup = [
+        toTrimmedString(group.groupId),
+        toTrimmedString(group.id),
+      ].filter(Boolean);
+      if (identifiersForGroup.length === 0) return;
+
+      const name = toTrimmedString(group.name) || identifiersForGroup[0];
+      const currencyCode = currencyCodeById.get(toTrimmedString(group.currencyId)) ?? null;
+      identifiersForGroup.forEach((identifier: string) => {
+        if (!wantedIdentifiers.includes(identifier)) return;
+        priceGroupsByIdentifier.set(identifier, {
+          name,
+          currencyCode,
+          isDefault: group.isDefault === true,
+        });
+      });
+    });
+
+    return priceGroupsByIdentifier;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return new Map();
+  }
+};
+
+const resolveBaseFieldPresentationMetadata = async (input: {
+  connectionContext: BaseConnectionContext;
+  rules: ProductSyncFieldRule[];
+}): Promise<ProductSyncBaseFieldPresentationMetadata> => {
+  const warehouseIdentifiers = Array.from(
+    new Set(
+      input.rules
+        .map((rule: ProductSyncFieldRule) => getDynamicStockIdentifier(rule))
+        .filter((value: string | null): value is string => typeof value === 'string' && value.length > 0)
+    )
+  );
+  const priceGroupIdentifiers = Array.from(
+    new Set(
+      input.rules
+        .map((rule: ProductSyncFieldRule) => getDynamicPriceGroupIdentifier(rule))
+        .filter((value: string | null): value is string => typeof value === 'string' && value.length > 0)
+    )
+  );
+
+  if (warehouseIdentifiers.length === 0 && priceGroupIdentifiers.length === 0) {
+    return createEmptyBaseFieldPresentationMetadata();
+  }
+
+  const [warehousesByIdentifier, priceGroupsByIdentifier] = await Promise.all([
+    loadWarehousePresentationMetadata({
+      token: input.connectionContext.token,
+      inventoryId: input.connectionContext.inventoryId,
+      identifiers: warehouseIdentifiers,
+    }),
+    loadPriceGroupPresentationMetadata(priceGroupIdentifiers),
+  ]);
+
+  return {
+    warehousesByIdentifier,
+    priceGroupsByIdentifier,
+  };
+};
+
+const buildEffectiveFieldRules = (profile: ProductSyncProfile): ProductSyncFieldRule[] => {
+  const configuredRules = Array.isArray(profile.fieldRules) ? profile.fieldRules : [];
+
+  return Array.from(DEFAULT_FIELD_RULE_BY_APP_FIELD.entries()).map(([appField, defaultRule]) => {
+    const configuredRule = configuredRules.find((rule: ProductSyncFieldRule) => rule.appField === appField);
+    if (configuredRule) return configuredRule;
+    return {
+      id: `implicit-${appField}`,
+      appField,
+      baseField: defaultRule?.baseField ?? appField,
+      direction: 'disabled',
+    };
+  });
+};
+
+const buildLinkedProductSyncPlan = (input: {
+  product: ProductWithImages;
+  baseRecord: Record<string, unknown> | null;
+  profile: ProductSyncProfile;
+  baseProductId: string;
+  persistBaseProductId: boolean;
+  baseFieldPresentationMetadata?: ProductSyncBaseFieldPresentationMetadata;
+}): LinkedProductSyncPlan => {
+  const rules = buildEffectiveFieldRules(input.profile);
+  const localPatch: Record<string, unknown> = {};
+  const basePayload: Record<string, unknown> = {};
+  const localChanges: string[] = [];
+  const baseChanges: string[] = [];
+
+  const fields = rules.map((rule: ProductSyncFieldRule): ProductSyncFieldPreview => {
+    const appValue = normalizeFieldValue(rule.appField, getProductFieldValue(input.product, rule.appField));
+    const baseValue = input.baseRecord
+      ? normalizeFieldValue(rule.appField, resolveBaseValueByRule(rule, input.baseRecord))
+      : null;
+    const baseFieldPresentation = getEffectiveBaseFieldPresentation(
+      rule,
+      input.baseFieldPresentationMetadata
+    );
+    const hasDifference =
+      input.baseRecord !== null ? !valuesEqual(rule.appField, appValue, baseValue) : false;
+    const willWriteToApp =
+      rule.direction === 'base_to_app' &&
+      input.baseRecord !== null &&
+      hasDifference;
+    const willWriteToBase =
+      rule.direction === 'app_to_base' &&
+      input.baseRecord !== null &&
+      hasDifference;
+
+    if (willWriteToApp) {
+      localPatch[rule.appField] = baseValue;
+      localChanges.push(rule.appField);
+    }
+
+    if (willWriteToBase) {
+      setPathValue(basePayload, rule.baseField, appValue);
+      baseChanges.push(rule.baseField);
+    }
+
+    return {
+      appField: rule.appField,
+      appFieldLabel: getProductSyncFieldLabel(rule.appField),
+      baseField: rule.baseField,
+      baseFieldLabel: baseFieldPresentation.label,
+      baseFieldDescription: baseFieldPresentation.description,
+      direction: rule.direction,
+      appValue,
+      baseValue,
+      hasDifference,
+      willWriteToApp,
+      willWriteToBase,
+    };
+  });
+
+  if (input.persistBaseProductId && !toTrimmedString(input.product.baseProductId)) {
+    localPatch['baseProductId'] = input.baseProductId;
+    localChanges.push('baseProductId');
+  }
+
+  return {
+    fields,
+    localPatch,
+    basePayload,
+    localChanges,
+    baseChanges,
+  };
+};
+
+const buildBlockedSyncPreview = (input: {
+  status: ProductSyncPreview['status'];
+  disabledReason: string;
+  profile: ProductSyncProfile | null;
+  product: ProductWithImages;
+  linkedBaseProductId?: string | null;
+  connectionName?: string | null;
+  resolvedTargetSource?: ProductSyncTargetSource;
+}): ProductSyncPreview => ({
+  status: input.status,
+  canSync: false,
+  disabledReason: input.disabledReason,
+  profile: input.profile
+    ? {
+        id: input.profile.id,
+        name: input.profile.name,
+        isDefault: input.profile.isDefault,
+        enabled: input.profile.enabled,
+        connectionId: input.profile.connectionId,
+        connectionName: input.connectionName ?? null,
+        inventoryId: input.profile.inventoryId,
+        catalogId: input.profile.catalogId,
+        lastRunAt: input.profile.lastRunAt,
+      }
+    : null,
+  linkedBaseProductId: toTrimmedString(input.linkedBaseProductId) || null,
+  resolvedTargetSource: input.resolvedTargetSource ?? 'none',
+  fields: input.profile
+    ? buildLinkedProductSyncPlan({
+        product: input.product,
+        baseRecord: null,
+        profile: input.profile,
+        baseProductId: toTrimmedString(input.linkedBaseProductId) || '',
+        persistBaseProductId: false,
+      }).fields
+    : [],
+});
+
+const toProductSyncPreviewProfile = (
+  profile: ProductSyncProfile,
+  options?: { connectionName?: string | null }
+): ProductSyncPreview['profile'] => ({
+  id: profile.id,
+  name: profile.name,
+  isDefault: profile.isDefault,
+  enabled: profile.enabled,
+  connectionId: profile.connectionId,
+  connectionName: options?.connectionName ?? null,
+  inventoryId: profile.inventoryId,
+  catalogId: profile.catalogId,
+  lastRunAt: profile.lastRunAt,
+});
+
 const summarizeRun = (stats: ProductSyncRunStats): string => {
-  return `Processed ${stats.processed}/${stats.total} linked products. Success: ${stats.success}, skipped: ${stats.skipped}, failed: ${stats.failed}, local updates: ${stats.localUpdated}, Base updates: ${stats.baseUpdated}.`;
+  return `Processed ${stats.processed}/${stats.total} Base-targeted products. Success: ${stats.success}, skipped: ${stats.skipped}, failed: ${stats.failed}, local updates: ${stats.localUpdated}, Base updates: ${stats.baseUpdated}.`;
 };
 
 const resolveBaseConnectionContext = async (
@@ -254,6 +704,7 @@ const resolveBaseConnectionContext = async (
   return {
     integrationId: integration.id,
     connectionId: connection.id,
+    connectionName: toTrimmedString(connection.name) || null,
     inventoryId: profile.inventoryId,
     token: tokenResolution.token,
   };
@@ -286,6 +737,88 @@ const fetchBaseDetailsMap = async (
   }
 
   return map;
+};
+
+const resolveLinkedBaseSyncTarget = async (input: {
+  product: ProductWithImages;
+  connectionId: string;
+}): Promise<BaseSyncResolvedTarget> => {
+  const persistedBaseProductId = toTrimmedString(input.product.baseProductId);
+  if (persistedBaseProductId) {
+    return {
+      baseProductId: persistedBaseProductId,
+      linkedVia: 'product',
+    };
+  }
+
+  const listingLink = await findProductListingByProductAndConnectionAcrossProviders(
+    input.product.id,
+    input.connectionId
+  );
+  const listingBaseProductId = toTrimmedString(listingLink?.listing.externalListingId);
+
+  if (listingBaseProductId) {
+    return {
+      baseProductId: listingBaseProductId,
+      linkedVia: 'listing',
+    };
+  }
+
+  return {
+    baseProductId: null,
+    linkedVia: 'none',
+  };
+};
+
+const resolveManualBaseSyncTarget = async (input: {
+  product: ProductWithImages;
+  connectionId: string;
+  token: string;
+  inventoryId: string;
+}): Promise<BaseSyncResolvedTarget> => {
+  const linkedTarget = await resolveLinkedBaseSyncTarget({
+    product: input.product,
+    connectionId: input.connectionId,
+  });
+  if (linkedTarget.baseProductId) {
+    return linkedTarget;
+  }
+
+  const backfilledBaseProductId = await resolveBackfillBaseProductId({
+    product: input.product,
+    token: input.token,
+    inventoryId: input.inventoryId,
+  });
+  if (backfilledBaseProductId) {
+    return {
+      baseProductId: backfilledBaseProductId,
+      linkedVia: 'sku_backfill',
+    };
+  }
+
+  return linkedTarget;
+};
+
+const resolveBatchProductSyncTargets = async (input: {
+  products: ProductWithImages[];
+  connectionId: string;
+  token: string;
+  inventoryId: string;
+}): Promise<ResolvedProductSyncTarget[]> => {
+  const resolvedTargets: ResolvedProductSyncTarget[] = [];
+
+  for (const product of input.products) {
+    const target = await resolveManualBaseSyncTarget({
+      product,
+      connectionId: input.connectionId,
+      token: input.token,
+      inventoryId: input.inventoryId,
+    });
+    if (!target.baseProductId) continue;
+    resolvedTargets.push({ product, target });
+  }
+
+  return resolvedTargets;
 };
 
 const ensureBaseListingLink = async (input: {
@@ -367,6 +900,7 @@ const resolveBackfillBaseProductId = async (input: {
 
 const syncSingleLinkedProduct = async (input: {
   product: ProductWithImages;
+  baseProductId: string;
   baseRecord: Record<string, unknown> | null;
   profile: ProductSyncProfile;
   integrationId: string;
@@ -374,7 +908,7 @@ const syncSingleLinkedProduct = async (input: {
   inventoryId: string;
   token: string;
 }): Promise<LinkedProductSyncResult> => {
-  const baseProductId = toTrimmedString(input.product.baseProductId);
+  const baseProductId = toTrimmedString(input.baseProductId);
   if (!baseProductId) {
     return {
       status: 'skipped',
@@ -395,47 +929,14 @@ const syncSingleLinkedProduct = async (input: {
     };
   }
 
-  const rules = input.profile.fieldRules.filter(
-    (rule: ProductSyncFieldRule) => rule.direction !== 'disabled'
-  );
-
-  const localPatch: Record<string, unknown> = {};
-  const basePayload: Record<string, unknown> = {};
-  const localChanges: string[] = [];
-  const baseChanges: string[] = [];
-
-  for (const rule of rules) {
-    const direction = rule.direction;
-
-    if (direction === 'base_to_app') {
-      const nextValue = normalizeFieldValue(
-        rule.appField,
-        resolveBaseValueByRule(rule, input.baseRecord)
-      );
-      if (nextValue === null) continue;
-
-      const currentValue = getProductFieldValue(input.product, rule.appField);
-      if (valuesEqual(rule.appField, currentValue, nextValue)) continue;
-
-      localPatch[rule.appField] = nextValue;
-      localChanges.push(rule.appField);
-      continue;
-    }
-
-    if (direction === 'app_to_base') {
-      const localValue = normalizeFieldValue(
-        rule.appField,
-        getProductFieldValue(input.product, rule.appField)
-      );
-      if (localValue === null) continue;
-
-      const currentBaseValue = resolveBaseValueByRule(rule, input.baseRecord);
-      if (valuesEqual(rule.appField, currentBaseValue, localValue)) continue;
-
-      setPathValue(basePayload, rule.baseField, localValue);
-      baseChanges.push(rule.baseField);
-    }
-  }
+  const plan = buildLinkedProductSyncPlan({
+    product: input.product,
+    baseRecord: input.baseRecord,
+    profile: input.profile,
+    baseProductId,
+    persistBaseProductId: !toTrimmedString(input.product.baseProductId),
+  });
+  const { localPatch, basePayload, localChanges, baseChanges } = plan;
 
   if (localChanges.length === 0 && baseChanges.length === 0) {
     await ensureBaseListingLink({
@@ -498,6 +999,172 @@ const syncSingleLinkedProduct = async (input: {
     baseChanges,
     message: 'Synchronized successfully.',
     errorMessage: null,
+  };
+};
+
+export const getProductBaseSyncPreview = async (
+  productId: string
+): Promise<ProductSyncPreview | null> => {
+  const normalizedProductId = toTrimmedString(productId);
+  if (!normalizedProductId) return null;
+
+  const productRepository = await getProductRepository();
+  const product = await productRepository.getProductById(normalizedProductId);
+  if (!product) return null;
+
+  const profile = await getDefaultProductSyncProfile();
+  if (!profile) {
+    return buildBlockedSyncPreview({
+      status: 'missing_profile',
+      disabledReason:
+        'No Base.com sync profile is configured. Create one in Synchronization Engine settings.',
+      profile: null,
+      product,
+      resolvedTargetSource: 'none',
+    });
+  }
+
+  let connectionContext: BaseConnectionContext;
+  try {
+    connectionContext = await resolveBaseConnectionContext(profile);
+  } catch (error) {
+    return buildBlockedSyncPreview({
+      status: 'connection_error',
+      disabledReason:
+        error instanceof Error ? error.message : 'Base.com connection resolution failed.',
+      profile,
+      product,
+      linkedBaseProductId: toTrimmedString(product.baseProductId) || null,
+      resolvedTargetSource: toTrimmedString(product.baseProductId) ? 'product' : 'none',
+    });
+  }
+
+  const resolvedTarget = await resolveManualBaseSyncTarget({
+    product,
+    connectionId: profile.connectionId,
+    token: connectionContext.token,
+    inventoryId: connectionContext.inventoryId,
+  });
+  if (!resolvedTarget.baseProductId) {
+    return buildBlockedSyncPreview({
+      status: 'missing_base_link',
+      disabledReason:
+        'This product is not linked to a Base.com product for the active sync profile connection.',
+      profile,
+      product,
+      connectionName: connectionContext.connectionName,
+      resolvedTargetSource: 'none',
+    });
+  }
+
+  const baseRecord = (
+    await fetchBaseDetailsMap(
+      connectionContext.token,
+      connectionContext.inventoryId,
+      [resolvedTarget.baseProductId]
+    )
+  ).get(resolvedTarget.baseProductId) ?? null;
+
+  if (!baseRecord) {
+    return buildBlockedSyncPreview({
+      status: 'missing_base_record',
+      disabledReason: `Base product ${resolvedTarget.baseProductId} was not found in inventory ${connectionContext.inventoryId}.`,
+      profile,
+      product,
+      linkedBaseProductId: resolvedTarget.baseProductId,
+      connectionName: connectionContext.connectionName,
+      resolvedTargetSource: resolvedTarget.linkedVia,
+    });
+  }
+
+  const baseFieldPresentationMetadata = await resolveBaseFieldPresentationMetadata({
+    connectionContext,
+    rules: buildEffectiveFieldRules(profile),
+  });
+  const plan = buildLinkedProductSyncPlan({
+    product,
+    baseRecord,
+    profile,
+    baseProductId: resolvedTarget.baseProductId,
+    persistBaseProductId:
+      resolvedTarget.linkedVia === 'listing' || resolvedTarget.linkedVia === 'sku_backfill',
+    baseFieldPresentationMetadata,
+  });
+  const hasActiveRun = await hasActiveProductSyncRun(profile.id);
+
+  return {
+    status: hasActiveRun ? 'profile_run_active' : 'ready',
+    canSync: !hasActiveRun,
+    disabledReason: hasActiveRun
+      ? 'A scheduled or queued sync run is already using this Base.com sync profile.'
+      : null,
+    profile: toProductSyncPreviewProfile(profile, {
+      connectionName: connectionContext.connectionName,
+    }),
+    linkedBaseProductId: resolvedTarget.baseProductId,
+    resolvedTargetSource: resolvedTarget.linkedVia,
+    fields: plan.fields,
+  };
+};
+
+export const runProductBaseSync = async (
+  productId: string
+): Promise<ProductSyncSingleProductResponse | null> => {
+  const normalizedProductId = toTrimmedString(productId);
+  if (!normalizedProductId) return null;
+
+  const productRepository = await getProductRepository();
+  const product = await productRepository.getProductById(normalizedProductId);
+  if (!product) return null;
+
+  const profile = await getDefaultProductSyncProfile();
+  if (!profile) {
+    throw new Error('No Base.com sync profile is configured.');
+  }
+
+  const hasActiveRun = await hasActiveProductSyncRun(profile.id);
+  if (hasActiveRun) {
+    throw new Error('A scheduled or queued sync run is already using this Base.com sync profile.');
+  }
+
+  const connectionContext = await resolveBaseConnectionContext(profile);
+  const resolvedTarget = await resolveManualBaseSyncTarget({
+    product,
+    connectionId: profile.connectionId,
+    token: connectionContext.token,
+    inventoryId: connectionContext.inventoryId,
+  });
+  if (!resolvedTarget.baseProductId) {
+    throw new Error(
+      'This product is not linked to a Base.com product for the active sync profile connection.'
+    );
+  }
+
+  const baseRecord = (
+    await fetchBaseDetailsMap(
+      connectionContext.token,
+      connectionContext.inventoryId,
+      [resolvedTarget.baseProductId]
+    )
+  ).get(resolvedTarget.baseProductId) ?? null;
+
+  const result = await syncSingleLinkedProduct({
+    product,
+    baseProductId: resolvedTarget.baseProductId,
+    baseRecord,
+    profile,
+    integrationId: connectionContext.integrationId,
+    connectionId: connectionContext.connectionId,
+    inventoryId: connectionContext.inventoryId,
+    token: connectionContext.token,
+  });
+
+  const preview = await getProductBaseSyncPreview(normalizedProductId);
+  if (!preview) return null;
+
+  return {
+    preview,
+    result,
   };
 };
 
@@ -589,27 +1256,31 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
         break;
       }
 
-      const linkedProducts = products.filter((product: ProductWithImages) =>
-        Boolean(toTrimmedString(product.baseProductId))
-      );
+      const resolvedProducts = await resolveBatchProductSyncTargets({
+        products,
+        connectionId: connectionContext.connectionId,
+        token: connectionContext.token,
+        inventoryId: connectionContext.inventoryId,
+      });
 
-      if (linkedProducts.length > 0) {
-        stats.total += linkedProducts.length;
+      if (resolvedProducts.length > 0) {
+        stats.total += resolvedProducts.length;
         const baseDetailsById = await fetchBaseDetailsMap(
           connectionContext.token,
           connectionContext.inventoryId,
-          linkedProducts
-            .map((product: ProductWithImages) => toTrimmedString(product.baseProductId))
+          resolvedProducts
+            .map(({ target }: ResolvedProductSyncTarget) => toTrimmedString(target.baseProductId))
             .filter((id: string) => id.length > 0)
         );
 
-        for (const product of linkedProducts) {
-          const baseProductId = toTrimmedString(product.baseProductId);
+        for (const { product, target } of resolvedProducts) {
+          const baseProductId = toTrimmedString(target.baseProductId);
           itemCounter += 1;
 
           try {
             const result = await syncSingleLinkedProduct({
               product,
+              baseProductId,
               baseRecord: baseDetailsById.get(baseProductId) ?? null,
               profile,
               integrationId: connectionContext.integrationId,

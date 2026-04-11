@@ -452,11 +452,32 @@ export type DatabaseEngineMongoSyncDirection = z.infer<
   typeof databaseEngineMongoSyncDirectionSchema
 >;
 
+export const databaseEngineMongoSyncBackupRoleSchema = z.enum(['source', 'target']);
+
+export type DatabaseEngineMongoSyncBackupRole = z.infer<
+  typeof databaseEngineMongoSyncBackupRoleSchema
+>;
+
+export const databaseEngineMongoSyncBackupSchema = z.object({
+  role: databaseEngineMongoSyncBackupRoleSchema,
+  source: mongoSourceSchema,
+  backupName: z.string(),
+  backupPath: z.string(),
+  logPath: z.string(),
+  createdAt: z.string(),
+  warning: z.string().nullable().default(null),
+});
+
+export type DatabaseEngineMongoSyncBackup = z.infer<
+  typeof databaseEngineMongoSyncBackupSchema
+>;
+
 export const databaseEngineMongoLastSyncSchema = z.object({
   direction: databaseEngineMongoSyncDirectionSchema,
   source: mongoSourceSchema,
   target: mongoSourceSchema,
   syncedAt: z.string(),
+  preSyncBackups: z.array(databaseEngineMongoSyncBackupSchema).default([]),
   archivePath: z.string().nullable(),
   logPath: z.string().nullable(),
 });
@@ -496,6 +517,7 @@ export const databaseEngineMongoSyncResponseSchema = z.object({
   source: mongoSourceSchema,
   target: mongoSourceSchema,
   syncedAt: z.string(),
+  preSyncBackups: z.array(databaseEngineMongoSyncBackupSchema).default([]),
   archivePath: z.string().nullable(),
   logPath: z.string().nullable(),
 });

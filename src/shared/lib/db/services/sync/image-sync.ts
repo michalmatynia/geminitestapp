@@ -1,8 +1,8 @@
+import { BatchCountResult } from '@/shared/contracts/base';
 import type { MongoImageFileDoc, MongoImageStudioSlotDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
-type BatchResult = { count: number };
 type EntityWithId = { id: string };
 
 type ImageFileSeed = {
@@ -60,11 +60,11 @@ export const syncImageFiles: DatabaseSyncHandler = async ({ mongo, prisma, norma
       };
     })
     .filter((item): item is ImageFileSeed => item !== null);
-  const deleted = (await prisma.imageFile.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.imageFile.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.imageFile.createMany({
       data: data as Prisma.ImageFileCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -136,11 +136,11 @@ export const syncImageStudioSlots: DatabaseSyncHandler = async ({
       };
     })
     .filter((item): item is ImageStudioSlotSeed => item !== null);
-  const deleted = (await prisma.imageStudioSlot.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.imageStudioSlot.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.imageStudioSlot.createMany({
       data: data as Prisma.ImageStudioSlotCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,

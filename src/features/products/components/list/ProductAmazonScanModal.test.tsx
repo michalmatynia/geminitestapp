@@ -17,6 +17,13 @@ const mocks = vi.hoisted(() => ({
   invalidateProductsAndDetail: vi.fn().mockResolvedValue(undefined),
   invalidateProductsAndCounts: vi.fn().mockResolvedValue(undefined),
   invalidateProductScans: vi.fn().mockResolvedValue(undefined),
+  setValueMock: vi.fn(),
+  getValuesMock: vi.fn(),
+  addParameterValueMock: vi.fn(),
+  updateParameterIdMock: vi.fn(),
+  updateParameterValueMock: vi.fn(),
+  setTextValueMock: vi.fn(),
+  toggleSelectedOptionMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -86,6 +93,12 @@ vi.mock('@/shared/ui/button', () => ({
 }));
 
 import { ProductAmazonScanModal } from './ProductAmazonScanModal';
+import {
+  ProductFormCoreActionsContext,
+  ProductFormCoreStateContext,
+} from '@/features/products/context/ProductFormCoreContext';
+import { ProductFormParameterContext } from '@/features/products/context/ProductFormParameterContext';
+import { ProductFormCustomFieldContext } from '@/features/products/context/ProductFormCustomFieldContext';
 
 const createQueryClient = (): QueryClient =>
   new QueryClient({
@@ -111,6 +124,18 @@ describe('ProductAmazonScanModal', () => {
     mocks.safeSetInterval.mockImplementation(() => 1);
     mocks.safeClearInterval.mockImplementation(() => undefined);
     mocks.pollCallback = null;
+    mocks.getValuesMock.mockImplementation((field?: string) => {
+      const values: Record<string, unknown> = {
+        asin: '',
+        ean: '',
+        gtin: '',
+        weight: 0,
+        sizeLength: 0,
+        sizeWidth: 0,
+        length: 0,
+      };
+      return field ? values[field] : values;
+    });
   });
 
   it('replaces the queued message with the completed ASIN update message and invalidates scans', async () => {
@@ -196,6 +221,370 @@ describe('ProductAmazonScanModal', () => {
         'product-1'
       );
     });
+  });
+
+  it('shows and hides persisted scan steps for a modal scan row', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'completed',
+          productName: 'Product 1',
+          engineRunId: 'run-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: 'B000123456',
+          title: 'Amazon title',
+          price: '$10.99',
+          url: 'https://www.amazon.com/dp/B000123456',
+          description: 'Amazon description',
+          steps: [
+            {
+              key: 'google_candidates',
+              label: 'Collect Amazon candidates from Google Lens',
+              status: 'completed',
+              message: 'Found 3 Amazon candidates.',
+              url: 'https://lens.google.com/search',
+              startedAt: '2026-04-11T04:00:00.000Z',
+              completedAt: '2026-04-11T04:00:01.000Z',
+            },
+            {
+              key: 'amazon_extract',
+              label: 'Extract Amazon details',
+              status: 'completed',
+              message: 'Extracted Amazon ASIN B000123456.',
+              url: 'https://www.amazon.com/dp/B000123456',
+              startedAt: '2026-04-11T04:00:02.000Z',
+              completedAt: '2026-04-11T04:00:03.000Z',
+            },
+          ],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'updated',
+          asinUpdateMessage: 'Product ASIN filled from Amazon scan.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T04:00:00.000Z',
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Show steps' }));
+
+    expect(await screen.findByText('Collect Amazon candidates from Google Lens')).toBeInTheDocument();
+    expect(screen.getByText('Found 3 Amazon candidates.')).toBeInTheDocument();
+    expect(screen.getByText('Extract Amazon details')).toBeInTheDocument();
+    expect(screen.getByText('Extracted Amazon ASIN B000123456.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide steps' }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Collect Amazon candidates from Google Lens')
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows and hides diagnostics for a failed scan in the modal', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 0,
+      alreadyRunning: 1,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-diagnostics-1',
+          runId: 'run-diagnostics-1',
+          status: 'running',
+          currentStatus: 'failed',
+          message: 'Amazon scan already in progress.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-diagnostics-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'failed',
+          productName: 'Product 1',
+          engineRunId: 'run-diagnostics-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          steps: [
+            {
+              key: 'amazon_extract',
+              label: 'Extract Amazon details',
+              group: 'amazon',
+              attempt: 1,
+              candidateId: 'image-1',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'extract_failed',
+              status: 'failed',
+              message: 'Amazon detail extraction failed.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B000123456',
+              startedAt: '2026-04-11T04:00:02.000Z',
+              completedAt: '2026-04-11T04:00:04.000Z',
+              durationMs: 2000,
+            },
+          ],
+          rawResult: {
+            runId: 'run-diagnostics-1',
+            runStatus: 'failed',
+            latestStage: 'amazon_extract',
+            latestStageUrl: 'https://www.amazon.com/dp/B000123456',
+            failureArtifacts: [
+              {
+                name: 'Amazon HTML',
+                path: '/tmp/amazon-product.html',
+                kind: 'html',
+                mimeType: 'text/html',
+              },
+            ],
+            logTail: ['opened amazon page', 'extract failed'],
+          },
+          error: 'Extract failed.',
+          asinUpdateStatus: 'failed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T04:00:05.000Z',
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:05.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Last failure')).toBeInTheDocument();
+    expect(screen.getByText('Amazon')).toBeInTheDocument();
+    expect(screen.getByText('Extract Amazon details')).toBeInTheDocument();
+    expect(screen.getByText('Extract Failed')).toBeInTheDocument();
+    expect(screen.getByText('Amazon detail extraction failed.')).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Show diagnostics' }));
+
+    expect(await screen.findByText('Run run-diagnostics-1')).toBeInTheDocument();
+    expect(screen.getByText('Stage: Amazon Extract')).toBeInTheDocument();
+    expect(screen.getByText('Amazon HTML')).toBeInTheDocument();
+    expect(screen.getByText('/tmp/amazon-product.html')).toBeInTheDocument();
+    expect(screen.getByText(/extract failed/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide diagnostics' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Run run-diagnostics-1')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows extracted fields in the modal and applies them when product form contexts are present', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'completed',
+          productName: 'Product 1',
+          engineRunId: 'run-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: 'B000123456',
+          title: 'Amazon title',
+          price: '$10.99',
+          url: 'https://www.amazon.com/dp/B000123456',
+          description: 'Amazon description',
+          amazonDetails: {
+            brand: null,
+            manufacturer: 'Acme Manufacturing',
+            modelNumber: null,
+            partNumber: null,
+            color: null,
+            style: null,
+            material: null,
+            size: null,
+            pattern: null,
+            finish: null,
+            itemDimensions: null,
+            packageDimensions: null,
+            itemWeight: null,
+            packageWeight: null,
+            bestSellersRank: null,
+            ean: '5901234567890',
+            gtin: null,
+            upc: null,
+            isbn: null,
+            bulletPoints: [],
+            attributes: [],
+            rankings: [],
+          },
+          steps: [],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'updated',
+          asinUpdateMessage: 'Product ASIN filled from Amazon scan.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T04:00:00.000Z',
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductFormCoreStateContext.Provider
+          value={
+            {
+              getValues: mocks.getValuesMock,
+            } as never
+          }
+        >
+          <ProductFormCoreActionsContext.Provider
+            value={
+              {
+                setValue: mocks.setValueMock,
+              } as never
+            }
+          >
+            <ProductFormParameterContext.Provider
+              value={
+                {
+                  parameters: [
+                    {
+                      id: 'param-manufacturer',
+                      name_en: 'Manufacturer',
+                      name_pl: null,
+                      name_de: null,
+                    },
+                  ],
+                  parametersLoading: false,
+                  parameterValues: [],
+                  addParameterValue: mocks.addParameterValueMock,
+                  updateParameterId: mocks.updateParameterIdMock,
+                  updateParameterValue: mocks.updateParameterValueMock,
+                  updateParameterValueByLanguage: vi.fn(),
+                  removeParameterValue: vi.fn(),
+                } as never
+              }
+            >
+              <ProductFormCustomFieldContext.Provider
+                value={
+                  {
+                    customFields: [],
+                    customFieldsLoading: false,
+                    customFieldValues: [],
+                    setTextValue: mocks.setTextValueMock,
+                    toggleSelectedOption: mocks.toggleSelectedOptionMock,
+                  } as never
+                }
+              >
+                <ProductAmazonScanModal
+                  isOpen
+                  onClose={vi.fn()}
+                  productIds={['product-1']}
+                  products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+                />
+              </ProductFormCustomFieldContext.Provider>
+            </ProductFormParameterContext.Provider>
+          </ProductFormCoreActionsContext.Provider>
+        </ProductFormCoreStateContext.Provider>
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Show extracted fields' }));
+
+    expect(await screen.findByRole('button', { name: 'Use EAN' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply Manufacturer mapping' })).toBeInTheDocument();
+    expect(screen.getByText('Current: Not set')).toBeInTheDocument();
+    expect(screen.getByText('Amazon: Acme Manufacturing')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use EAN' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply Manufacturer mapping' }));
+
+    expect(mocks.setValueMock).toHaveBeenCalledWith('ean', '5901234567890', expect.any(Object));
+    expect(mocks.addParameterValueMock).toHaveBeenCalled();
+    expect(mocks.updateParameterIdMock).toHaveBeenCalledWith(0, 'param-manufacturer');
+    expect(mocks.updateParameterValueMock).toHaveBeenCalledWith(0, 'Acme Manufacturing');
   });
 
   it('replaces the queued message with a running message after sync advances the scan', async () => {
@@ -397,6 +786,116 @@ describe('ProductAmazonScanModal', () => {
     expect(mocks.toast).toHaveBeenCalledWith('Amazon scans: 1 running.', {
       variant: 'success',
     });
+  });
+
+  it('shows the current phase and step for an active scan row without expanding steps', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 1,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'running',
+          message: 'Amazon reverse image scan running.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          steps: [
+            {
+              key: 'prepare_scan',
+              label: 'Prepare Amazon scan',
+              group: 'input',
+              attempt: 1,
+              candidateId: null,
+              candidateRank: null,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'prepared',
+              status: 'completed',
+              message: 'Prepared 2 image candidates.',
+              warning: null,
+              details: [],
+              url: null,
+              startedAt: '2026-04-11T03:59:00.000Z',
+              completedAt: '2026-04-11T03:59:01.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'google_candidates',
+              label: 'Collect Amazon candidates from Google results',
+              group: 'google_lens',
+              attempt: 2,
+              candidateId: 'image-2',
+              candidateRank: null,
+              inputSource: 'url',
+              retryOf: null,
+              resultCode: 'collecting',
+              status: 'running',
+              message: 'Waiting for reverse image results.',
+              warning: null,
+              details: [],
+              url: 'https://www.google.com/searchbyimage?image_url=https://cdn.example.com/image-2.jpg',
+              startedAt: '2026-04-11T03:59:02.000Z',
+              completedAt: null,
+              durationMs: null,
+            },
+          ],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText('Amazon reverse image scan running.');
+    expect(screen.getByText('Current step')).toBeInTheDocument();
+    expect(screen.getByText('Google Lens')).toBeInTheDocument();
+    expect(screen.getByText('Collect Amazon candidates from Google results')).toBeInTheDocument();
+    expect(screen.getByText('Attempt 2')).toBeInTheDocument();
+    expect(screen.getByText('URL input')).toBeInTheDocument();
+    expect(screen.getByText('Waiting for reverse image results.')).toBeInTheDocument();
+    expect(screen.queryByText('Show steps')).toBeInTheDocument();
   });
 
   it('fails an active batch result immediately when it has no scan id to refresh', async () => {

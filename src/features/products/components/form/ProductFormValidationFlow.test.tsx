@@ -108,6 +108,10 @@ vi.mock('./ValidatedField', () => ({
   ),
 }));
 
+vi.mock('./ProductFormLatestAmazonExtraction', () => ({
+  default: () => null,
+}));
+
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useTitleTerms: () => ({
     data: [],

@@ -5,6 +5,7 @@ import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/integ
 import {
   buildPersistedProductScannerSettings,
   buildProductScannerSettingsDraft,
+  createDefaultProductScannerSettings,
   parseProductScannerSettings,
 } from './scanner-settings';
 
@@ -106,5 +107,26 @@ describe('product scanner settings helpers', () => {
         timeout: 45000,
       })
     );
+  });
+
+  it('uses headed Amazon scanner defaults when no persona is selected', () => {
+    const draft = buildProductScannerSettingsDraft(createDefaultProductScannerSettings(), null);
+
+    expect(draft.playwrightBrowser).toBe('auto');
+    expect(draft.playwrightSettings).toEqual(
+      expect.objectContaining({
+        headless: false,
+        humanizeMouse: true,
+        deviceName: 'Desktop Chrome',
+      })
+    );
+
+    expect(buildPersistedProductScannerSettings(draft, null)).toEqual({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 240000,
+      playwrightSettingsOverrides: {},
+    });
   });
 });

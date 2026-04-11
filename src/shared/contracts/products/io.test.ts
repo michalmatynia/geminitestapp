@@ -64,6 +64,27 @@ describe('product io schemas', () => {
     ]);
   });
 
+  it('allows marketplace content overrides with integrations selected and blank copy fields', () => {
+    const parsed = productCreateInputSchema.parse({
+      sku: 'SKU-1',
+      marketplaceContentOverrides: JSON.stringify([
+        {
+          integrationIds: [' integration-tradera '],
+          title: '   ',
+          description: '',
+        },
+      ]),
+    });
+
+    expect(parsed.marketplaceContentOverrides).toEqual([
+      {
+        integrationIds: ['integration-tradera'],
+        title: null,
+        description: null,
+      },
+    ]);
+  });
+
   it('rejects duplicate marketplace integration assignments across overrides', () => {
     expect(() =>
       productCreateInputSchema.parse({

@@ -18,8 +18,7 @@ const {
 
 import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
-vi.mock('@/shared/ui/list-panel', () => ({
-
+vi.mock('@/shared/lib/api-client', () => ({
   api: {
     get: (...args: unknown[]) => apiGetMock(...args),
     post: (...args: unknown[]) => apiPostMock(...args),

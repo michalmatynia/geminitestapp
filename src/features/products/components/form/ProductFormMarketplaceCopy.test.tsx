@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -9,15 +9,19 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 
 const {
+  fireAiPathTriggerEventMock,
   getAiPathRunMock,
   subscribeToTrackedAiPathRunMock,
   triggerButtonBarMock,
+  useAiPathsTriggerButtonsQueryMock,
   useIntegrationsMock,
   useProductFormCoreMock,
 } = vi.hoisted(() => ({
+  fireAiPathTriggerEventMock: vi.fn(),
   getAiPathRunMock: vi.fn(),
   subscribeToTrackedAiPathRunMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
+  useAiPathsTriggerButtonsQueryMock: vi.fn(),
   useIntegrationsMock: vi.fn(),
   useProductFormCoreMock: vi.fn(),
 }));
@@ -40,6 +44,16 @@ vi.mock('@/shared/lib/ai-paths/api/client', () => ({
 
 vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
   subscribeToTrackedAiPathRun: (...args: unknown[]) => subscribeToTrackedAiPathRunMock(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
+  useAiPathsTriggerButtonsQuery: () => useAiPathsTriggerButtonsQueryMock(),
+}));
+
+vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
+  useAiPathTriggerEvent: () => ({
+    fireAiPathTriggerEvent: (...args: unknown[]) => fireAiPathTriggerEventMock(...args),
+  }),
 }));
 
 vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
@@ -210,6 +224,22 @@ vi.mock('@/shared/ui/multi-select', () => ({
 
 import ProductFormMarketplaceCopy from './ProductFormMarketplaceCopy';
 
+const ROW_TRIGGER_BUTTON = {
+  id: 'trigger-debrand-marketplace-copy',
+  name: 'Debrand',
+  pathId: 'path-debrand-marketplace-copy',
+  locations: ['product_marketplace_copy_row'],
+  mode: 'click' as const,
+  display: {
+    label: 'Debrand',
+    showLabel: true,
+  },
+  sortIndex: 0,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  enabled: true,
+};
+
 function renderMarketplaceCopy(
   defaultValues: Partial<ProductFormData> = {},
   options?: {
@@ -256,12 +286,17 @@ function renderMarketplaceCopy(
 describe('ProductFormMarketplaceCopy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    fireAiPathTriggerEventMock.mockResolvedValue(undefined);
     useIntegrationsMock.mockReturnValue({
       data: [
         { id: 'integration-tradera', name: 'Tradera', slug: 'tradera' },
         { id: 'integration-vinted', name: 'Vinted', slug: 'vinted' },
         { id: 'integration-base', name: 'Base', slug: 'base' },
       ],
+      isLoading: false,
+    });
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: [ROW_TRIGGER_BUTTON],
       isLoading: false,
     });
     subscribeToTrackedAiPathRunMock.mockImplementation(() => vi.fn());
@@ -519,7 +554,7 @@ describe('ProductFormMarketplaceCopy', () => {
     ).toBeInTheDocument();
   });
 
-  it('disables the row debrand trigger until the product has a real product id', () => {
+  it('keeps the row debrand trigger available for draft-only products while using a null product entity id', () => {
     renderMarketplaceCopy(
       {
         marketplaceContentOverrides: [
@@ -538,13 +573,122 @@ describe('ProductFormMarketplaceCopy', () => {
       }
     );
 
-    expect(screen.getByRole('button', { name: 'Mock Debrand Trigger' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Mock Debrand Trigger' })).not.toBeDisabled();
 
     const triggerProps = triggerButtonBarMock.mock.calls[0]?.[0] as {
       entityId?: string | null;
       disabled?: boolean;
     };
     expect(triggerProps.entityId).toBeNull();
-    expect(triggerProps.disabled).toBe(true);
+    expect(triggerProps.disabled).toBe(false);
+  });
+
+  it('renders and runs the canonical fallback debrand trigger when no row trigger button is configured', async () => {
+    const user = userEvent.setup();
+    const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (runId: string, callback: (snapshot: Record<string, unknown>) => void) => {
+        trackedCallbacks.set(runId, callback);
+        return vi.fn();
+      }
+    );
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: {
+        onSuccess?: (runId: string) => void;
+      }) => {
+        args.onSuccess?.('run-debrand-marketplace-copy');
+      }
+    );
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        nodes: [
+          {
+            outputs: {
+              bundle: {
+                debrandedTitle: 'Fallback debranded title',
+                debrandedDescription: 'Fallback debranded description',
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderMarketplaceCopy(
+      {
+        marketplaceContentOverrides: [
+          {
+            integrationIds: ['integration-tradera'],
+            title: '',
+            description: '',
+          },
+        ],
+      },
+      {
+        coreValue: {
+          product: undefined,
+          draft: { id: 'draft-1' },
+        },
+      }
+    );
+
+    expect(triggerButtonBarMock).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Debrand' }));
+
+    expect(fireAiPathTriggerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        triggerEventId: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
+        triggerLabel: 'Debrand',
+        preferredPathId: 'path_marketplace_copy_debrand_v1',
+        entityType: 'product',
+        entityId: null,
+        source: {
+          tab: 'product',
+          location: 'product_marketplace_copy_row',
+        },
+      })
+    );
+
+    await waitFor(() =>
+      expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+        'run-debrand-marketplace-copy',
+        expect.any(Function)
+      )
+    );
+
+    trackedCallbacks.get('run-debrand-marketplace-copy')?.({
+      trackingState: 'stopped',
+      status: 'completed',
+      errorMessage: null,
+    });
+
+    expect(await screen.findByDisplayValue('Fallback debranded title')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Fallback debranded description')).toBeInTheDocument();
+  });
+
+  it('renders the fallback debrand trigger when the configured row trigger is disabled', async () => {
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: [{ ...ROW_TRIGGER_BUTTON, enabled: false }],
+      isLoading: false,
+    });
+
+    renderMarketplaceCopy({
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-tradera'],
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    expect(triggerButtonBarMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Debrand' })).toBeInTheDocument();
   });
 });

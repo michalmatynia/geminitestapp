@@ -1,3 +1,4 @@
+import { BatchCountResult } from '@/shared/contracts/base';
 import type {
   MongoSettingDoc,
   MongoUserPreferencesDoc,
@@ -7,8 +8,6 @@ import type {
 } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
-
-type BatchResult = { count: number };
 
 type MongoRecordWithStringId<TDoc> = Omit<TDoc, '_id'> & { _id: string };
 
@@ -135,12 +134,12 @@ export const syncSettings: DatabaseSyncHandler = async ({ mongo, prisma, toDate 
     }
   });
   const data = Array.from(byKey.values());
-  const deleted = (await prisma.setting.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.setting.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.setting.createMany({
       data: data as Prisma.SettingCreateManyInput[],
       skipDuplicates: true,
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -175,11 +174,11 @@ export const syncUserPreferences: DatabaseSyncHandler = async ({ mongo, prisma, 
       };
     })
     .filter((item): item is UserPreferencesSeed => item !== null);
-  const deleted = (await prisma.userPreferences.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.userPreferences.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.userPreferences.createMany({
       data: data as Prisma.UserPreferencesCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -221,11 +220,11 @@ export const syncSystemLogs: DatabaseSyncHandler = async ({
       };
     })
     .filter((item): item is SystemLogSeed => item !== null);
-  const deleted = (await prisma.systemLog.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.systemLog.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.systemLog.createMany({
       data: data as Prisma.SystemLogCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -270,11 +269,11 @@ export const syncFileUploadEvents: DatabaseSyncHandler = async ({
       };
     })
     .filter((item): item is FileUploadEventSeed => item !== null);
-  const deleted = (await prisma.fileUploadEvent.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.fileUploadEvent.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.fileUploadEvent.createMany({
       data: data as Prisma.FileUploadEventCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -310,11 +309,11 @@ export const syncAiConfigurations: DatabaseSyncHandler = async ({ mongo, prisma,
       };
     })
     .filter((item): item is AiConfigurationSeed => item !== null);
-  const deleted = (await prisma.aiConfiguration.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.aiConfiguration.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.aiConfiguration.createMany({
       data: data as Prisma.AiConfigurationCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };

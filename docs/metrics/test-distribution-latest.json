@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T16:18:16.379Z",
+  "generatedAt": "2026-04-11T17:22:03.377Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -45,7 +45,7 @@
       "testCount": 184,
       "fastTestCount": 176,
       "e2eTestCount": 8,
-      "negativePathTestCount": 69
+      "negativePathTestCount": 70
     },
     {
       "feature": "integrations",
@@ -528,5 +528,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 891
+  "durationMs": 442
 }

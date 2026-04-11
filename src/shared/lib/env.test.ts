@@ -7,6 +7,15 @@ vi.mock('@/shared/utils/observability/runtime-error-reporting', () => ({
 }));
 
 const ORIGINAL_ENV = { ...process.env };
+const MONGO_ENV_KEYS = [
+  'MONGODB_URI',
+  'MONGODB_DB',
+  'MONGODB_LOCAL_URI',
+  'MONGODB_LOCAL_DB',
+  'MONGODB_CLOUD_URI',
+  'MONGODB_CLOUD_DB',
+  'MONGODB_ACTIVE_SOURCE_DEFAULT',
+] as const;
 
 async function loadEnvModule(envPatch: NodeJS.ProcessEnv) {
   vi.resetModules();
@@ -14,6 +23,11 @@ async function loadEnvModule(envPatch: NodeJS.ProcessEnv) {
     ...ORIGINAL_ENV,
     ...envPatch,
   };
+  MONGO_ENV_KEYS.forEach((key) => {
+    if (!(key in envPatch)) {
+      delete process.env[key];
+    }
+  });
   Object.keys(envPatch).forEach((key) => {
     if (envPatch[key] === undefined) {
       delete process.env[key];
@@ -60,6 +74,46 @@ describe('env', () => {
 
     expect(() => validateDatabaseConfig()).toThrow(
       'Split MongoDB configuration requires MONGODB_ACTIVE_SOURCE_DEFAULT to be set to "local" or "cloud".'
+    );
+  });
+
+  it('rejects mixing legacy and split MongoDB env configuration', async () => {
+    const { validateDatabaseConfig } = await loadEnvModule({
+      NODE_ENV: 'test',
+      MONGODB_URI: 'https://legacy.example.com',
+      MONGODB_LOCAL_URI: 'https://local.example.com',
+      MONGODB_ACTIVE_SOURCE_DEFAULT: 'local',
+      NEXT_PUBLIC_APP_URL: 'https://app.example.com',
+    });
+
+    expect(() => validateDatabaseConfig()).toThrow(
+      'Do not mix legacy MONGODB_URI with split MongoDB source envs. Use either MONGODB_URI alone or MONGODB_LOCAL_URI / MONGODB_CLOUD_URI with MONGODB_ACTIVE_SOURCE_DEFAULT.'
+    );
+  });
+
+  it('rejects source switching when only the legacy MongoDB env is configured', async () => {
+    const { validateDatabaseConfig } = await loadEnvModule({
+      NODE_ENV: 'test',
+      MONGODB_URI: 'https://legacy.example.com',
+      MONGODB_ACTIVE_SOURCE_DEFAULT: 'cloud',
+      NEXT_PUBLIC_APP_URL: 'https://app.example.com',
+    });
+
+    expect(() => validateDatabaseConfig()).toThrow(
+      'MONGODB_ACTIVE_SOURCE_DEFAULT requires split MongoDB source envs. Configure MONGODB_LOCAL_URI / MONGODB_CLOUD_URI instead of relying on legacy MONGODB_URI.'
+    );
+  });
+
+  it('requires the selected split-source MongoDB target to be configured', async () => {
+    const { validateDatabaseConfig } = await loadEnvModule({
+      NODE_ENV: 'test',
+      MONGODB_LOCAL_URI: 'https://local.example.com',
+      MONGODB_ACTIVE_SOURCE_DEFAULT: 'cloud',
+      NEXT_PUBLIC_APP_URL: 'https://app.example.com',
+    });
+
+    expect(() => validateDatabaseConfig()).toThrow(
+      'MONGODB_ACTIVE_SOURCE_DEFAULT=cloud requires MONGODB_CLOUD_URI to be configured.'
     );
   });
 

@@ -1,10 +1,40 @@
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
-import { AI_PATHS_UI_STATE_KEY, TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
+import {
+  AI_PATHS_UI_STATE_KEY,
+  PATH_CONFIG_PREFIX,
+  TRIGGER_EVENTS,
+} from '@/shared/lib/ai-paths/core/constants';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 
-import { loadPathConfigsFromSettings } from './trigger-event-settings';
+import { loadPathConfigsFromSettings, loadTriggerPathConfigCached } from './trigger-event-settings';
 
 export type TriggerSelectionCandidate = Pick<PathConfig, 'id' | 'isActive'>;
+
+const parseUiState = (
+  settingsData: Array<{ key: string; value: string }>
+): Record<string, unknown> | null => {
+  const map = new Map<string, string>(
+    settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
+  );
+  const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
+  const uiStateEnvelope = uiStateRaw ? safeParseJson<{ value?: unknown }>(uiStateRaw).value : null;
+  const uiStateParsed =
+    uiStateEnvelope && typeof uiStateEnvelope === 'object' ? uiStateEnvelope['value'] : null;
+  return uiStateParsed && typeof uiStateParsed === 'object'
+    ? (uiStateParsed as Record<string, unknown>)
+    : null;
+};
+
+const matchesTriggerEvent = (config: PathConfig, triggerEventId: string): boolean => {
+  const fallbackTriggerEventId = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
+  return Array.isArray(config?.nodes)
+    ? config.nodes.some((node: AiNode) => {
+      if (node.type !== 'trigger') return false;
+      const configuredEvent = node.config?.trigger?.event ?? fallbackTriggerEventId;
+      return configuredEvent === triggerEventId;
+    })
+    : false;
+};
 
 export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(args: {
   triggerCandidates: T[];
@@ -74,42 +104,44 @@ export const resolveTriggerSelection = async (
   uiState: Record<string, unknown> | null;
   missingPreferredPathId: string | null;
 }> => {
-  const { configs, settingsPathOrder } = await loadPathConfigsFromSettings(settingsData);
-  const configsList: PathConfig[] = Object.values(configs);
-  const pathOrder: string[] = settingsPathOrder;
-  const map = new Map<string, string>(
-    settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
-  );
-  const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
-  const uiStateEnvelope = uiStateRaw ? safeParseJson<{ value?: unknown }>(uiStateRaw).value : null;
-  const uiStateParsed =
-    uiStateEnvelope && typeof uiStateEnvelope === 'object' ? uiStateEnvelope['value'] : null;
-  const uiState =
-    uiStateParsed && typeof uiStateParsed === 'object'
-      ? (uiStateParsed as Record<string, unknown>)
-      : null;
-
-  const orderedConfigs: PathConfig[] = pathOrder.length
-    ? pathOrder
-      .map((id: string) => configs[id])
-      .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
-    : configsList;
-
-  const fallbackTriggerEventId = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
-  const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
-    Array.isArray(config?.nodes)
-      ? config.nodes.some((node: AiNode) => {
-        if (node.type !== 'trigger') return false;
-        const configuredEvent = node.config?.trigger?.event ?? fallbackTriggerEventId;
-        return configuredEvent === triggerEventId;
-      })
-      : false
-  );
-
   const preferredPathId =
     typeof options?.preferredPathId === 'string' && options.preferredPathId.trim().length > 0
       ? options.preferredPathId.trim()
       : null;
+  const uiState = parseUiState(settingsData);
+
+  if (preferredPathId) {
+    const configKey = `${PATH_CONFIG_PREFIX}${preferredPathId}`;
+    const configRaw =
+      settingsData.find((item: { key: string }) => item.key === configKey)?.value ?? null;
+    if (!configRaw?.trim()) {
+      return {
+        triggerCandidates: [],
+        activeTriggerCandidates: [],
+        selectedConfig: null,
+        uiState,
+        missingPreferredPathId: preferredPathId,
+      };
+    }
+
+    const selectedConfig = loadTriggerPathConfigCached({
+      pathId: preferredPathId,
+      rawConfig: configRaw,
+    });
+    const triggerCandidates = matchesTriggerEvent(selectedConfig, triggerEventId)
+      ? [selectedConfig]
+      : [];
+
+    return {
+      triggerCandidates,
+      activeTriggerCandidates:
+        selectedConfig.isActive !== false && triggerCandidates.length > 0 ? [selectedConfig] : [],
+      selectedConfig: triggerCandidates[0] ?? null,
+      uiState,
+      missingPreferredPathId: triggerCandidates.length > 0 ? null : preferredPathId,
+    };
+  }
+
   const activePathId =
     (typeof options?.preferredActivePathId === 'string' &&
     options.preferredActivePathId.trim().length > 0
@@ -119,9 +151,20 @@ export const resolveTriggerSelection = async (
       ? uiState['activePathId'].trim()
       : null);
 
+  const { configs, settingsPathOrder } = await loadPathConfigsFromSettings(settingsData);
+  const configsList: PathConfig[] = Object.values(configs);
+  const pathOrder: string[] = settingsPathOrder;
+  const orderedConfigs: PathConfig[] = pathOrder.length
+    ? pathOrder
+      .map((id: string) => configs[id])
+      .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
+    : configsList;
+  const triggerCandidates = orderedConfigs.filter((config: PathConfig) =>
+    matchesTriggerEvent(config, triggerEventId)
+  );
   const selection = selectTriggerCandidates<PathConfig>({
     triggerCandidates,
-    preferredPathId,
+    preferredPathId: null,
     activePathId,
   });
 

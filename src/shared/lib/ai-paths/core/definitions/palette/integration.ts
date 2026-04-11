@@ -58,6 +58,7 @@ export const integrationPalette: NodeDefinition[] = [
         contextQuery: '',
         contextLimit: 20,
         contextTransform: 'none',
+        contextReuseMode: 'never',
         includeFields: true,
         includeRelations: true,
         formatAs: 'text',

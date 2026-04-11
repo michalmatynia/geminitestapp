@@ -180,6 +180,12 @@ export const dbSchemaDocs: NodeConfigDocField[] = [
     defaultValue: '20',
   },
   {
+    path: 'db_schema.contextReuseMode',
+    description:
+      'never = always fetch live context; prefer_transformed_input = reuse matching transformed input context when available, then fall back to fetch.',
+    defaultValue: 'never',
+  },
+  {
     path: 'db_schema.includeFields',
     description: 'Include field lists for each collection.',
     defaultValue: 'true',

@@ -206,14 +206,6 @@ export const productMarketplaceContentOverrideSchema =
         message: 'Select at least one marketplace integration.',
       });
     }
-
-    if (!entry.title && !entry.description) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['title'],
-        message: 'Provide an alternate title or description.',
-      });
-    }
   });
 
 export type ProductMarketplaceContentOverride = z.infer<
@@ -225,7 +217,7 @@ export const normalizeProductMarketplaceContentOverrides = (
 ): ProductMarketplaceContentOverride[] =>
   normalizeProductMarketplaceContentOverrideDrafts(value).filter(
     (entry: ProductMarketplaceContentOverrideDraft): entry is ProductMarketplaceContentOverride =>
-      entry.integrationIds.length > 0 && Boolean(entry.title || entry.description)
+      entry.integrationIds.length > 0
   );
 
 const validateMarketplaceContentOverrideUniqueness = (

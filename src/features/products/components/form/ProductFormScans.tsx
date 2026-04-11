@@ -6,213 +6,64 @@ import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw, Search } from
 import { useEffect, useRef, useState } from 'react';
 
 import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
+import {
+  hasProductScanAmazonDetails,
+  ProductScanAmazonQualitySummary,
+  ProductScanAmazonProvenanceSummary,
+  ProductScanAmazonDetails,
+} from '@/features/products/components/scans/ProductScanAmazonDetails';
+import {
+  ProductScanDiagnostics,
+  resolveProductScanDiagnostics,
+} from '@/features/products/components/scans/ProductScanDiagnostics';
+import {
+  ProductScanSteps,
+  resolveProductScanActiveStepSummary,
+  resolveProductScanLatestOutcomeSummary,
+} from '@/features/products/components/scans/ProductScanSteps';
+import { useProductFormCustomFields } from '@/features/products/context/ProductFormCustomFieldContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
 import { PRODUCT_SCANNER_SETTINGS_HREF } from '@/features/products/scanner-settings';
-import type {
-  ProductScanListResponse,
-  ProductScanRecord,
-  ProductScanStatus,
-  ProductScanStep,
-} from '@/shared/contracts/product-scans';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductScanListResponse, ProductScanRecord } from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductsCountsAndDetail } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button } from '@/shared/ui/button';
-
-const STATUS_LABELS: Record<ProductScanStatus, string> = {
-  enqueuing: 'Enqueuing...',
-  queued: 'Queued',
-  running: 'Running',
-  completed: 'Completed',
-  no_match: 'No Match',
-  conflict: 'Conflict',
-  failed: 'Failed',
-};
-
-const STATUS_CLASSES: Record<ProductScanStatus, string> = {
-  enqueuing: 'border-border/70 text-muted-foreground',
-  queued: 'border-border/70 text-muted-foreground',
-  running: 'border-blue-500/40 text-blue-300',
-  completed: 'border-emerald-500/40 text-emerald-300',
-  no_match: 'border-amber-500/40 text-amber-300',
-  conflict: 'border-orange-500/40 text-orange-300',
-  failed: 'border-destructive/40 text-destructive',
-};
-
-const STEP_STATUS_LABELS: Record<ProductScanStep['status'], string> = {
-  pending: 'Pending',
-  running: 'Running',
-  completed: 'Completed',
-  failed: 'Failed',
-  skipped: 'Skipped',
-};
-
-const STEP_STATUS_CLASSES: Record<ProductScanStep['status'], string> = {
-  pending: 'border-border/70 text-muted-foreground',
-  running: 'border-blue-500/40 text-blue-300',
-  completed: 'border-emerald-500/40 text-emerald-300',
-  failed: 'border-destructive/40 text-destructive',
-  skipped: 'border-border/70 text-muted-foreground',
-};
-
-const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>): boolean => {
-  const rawResult = scan.rawResult;
-  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
-    return false;
-  }
-
-  return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
-};
-
-const resolveStatusLabel = (scan: ProductScanRecord): string =>
-  scan.status === 'running' && isManualVerificationPending(scan)
-    ? 'Captcha'
-    : STATUS_LABELS[scan.status];
-
-const resolveStatusClassName = (scan: ProductScanRecord): string =>
-  scan.status === 'running' && isManualVerificationPending(scan)
-    ? 'border-amber-500/40 text-amber-300'
-    : STATUS_CLASSES[scan.status];
-
-const resolveActiveStatusMessage = (status: ProductScanStatus): string | null => {
-  if (status === 'queued') {
-    return 'Amazon reverse image scan queued.';
-  }
-
-  if (status === 'running') {
-    return 'Amazon reverse image scan running.';
-  }
-
-  return null;
-};
-
-const normalizeComparableAsin = (value: string | null | undefined): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  const normalized = value.trim().toUpperCase();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const formatTimestamp = (value: string | null | undefined): string => {
-  if (!value) return 'Unknown time';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleString();
-};
-
-const formatStepTiming = (step: ProductScanStep): string | null => {
-  const startedAt = step.startedAt ? formatTimestamp(step.startedAt) : null;
-  const completedAt = step.completedAt ? formatTimestamp(step.completedAt) : null;
-
-  if (startedAt && completedAt) {
-    return `Started ${startedAt} · Completed ${completedAt}`;
-  }
-
-  if (startedAt) {
-    return `Started ${startedAt}`;
-  }
-
-  if (completedAt) {
-    return `Completed ${completedAt}`;
-  }
-
-  return null;
-};
-
-function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX.Element {
-  const { steps } = props;
-
-  return (
-    <div className='space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3'>
-      {steps.map((step, index) => {
-        const timing = formatStepTiming(step);
-        return (
-          <div
-            key={`${step.key}-${index}`}
-            className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'
-          >
-            <div className='flex flex-wrap items-center gap-2'>
-              <span className='text-sm font-medium'>{step.label}</span>
-              <span
-                className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${STEP_STATUS_CLASSES[step.status]}`}
-              >
-                {STEP_STATUS_LABELS[step.status]}
-              </span>
-            </div>
-            {step.message ? <p className='text-sm text-muted-foreground'>{step.message}</p> : null}
-            {step.url ? (
-              <a
-                href={step.url}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
-              >
-                Open Step URL
-                <ExternalLink className='h-3.5 w-3.5' />
-              </a>
-            ) : null}
-            {timing ? <p className='text-xs text-muted-foreground'>{timing}</p> : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-const renderScanMeta = (scan: ProductScanRecord): React.JSX.Element | null => {
-  const parts = [scan.asin && `ASIN ${scan.asin}`, scan.price && `Price ${scan.price}`].filter(
-    Boolean
-  );
-
-  if (parts.length === 0) {
-    return null;
-  }
-
-  return <p className='text-xs text-muted-foreground'>{parts.join(' · ')}</p>;
-};
-
-const resolveScanMessages = (
-  scan: ProductScanRecord
-): { infoMessage: string | null; errorMessage: string | null } => {
-  if (scan.status === 'completed') {
-    return {
-      infoMessage: scan.asinUpdateMessage,
-      errorMessage: null,
-    };
-  }
-
-  if (scan.status === 'no_match') {
-    return {
-      infoMessage: scan.asinUpdateMessage ?? scan.error,
-      errorMessage: null,
-    };
-  }
-
-  if (scan.status === 'conflict' || scan.status === 'failed') {
-    return {
-      infoMessage: null,
-      errorMessage: scan.error ?? scan.asinUpdateMessage,
-    };
-  }
-
-  if (isProductScanActiveStatus(scan.status)) {
-    return {
-      infoMessage: scan.asinUpdateMessage ?? resolveActiveStatusMessage(scan.status),
-      errorMessage: scan.error,
-    };
-  }
-
-  return {
-    infoMessage: scan.asinUpdateMessage,
-    errorMessage: scan.error,
-  };
-};
+import {
+  resolveStatusLabel,
+  resolveStatusClassName,
+  normalizeComparableAsin,
+  normalizeComparableText,
+  normalizeMetadataLabel,
+  ScanAttributeMapping,
+  parseAmazonWeightKg,
+  parseAmazonDimensionsCm,
+  buildAmazonMappedFields,
+  resolveAmazonMappedFieldKey,
+  resolveUnmappedAmazonFields,
+  resolveCheckboxSetOptionMatch,
+  haveSameSelectedOptions,
+  formatCustomFieldSelectedOptionLabels,
+  formatTimestamp,
+  renderScanMeta,
+  resolveScanMessages,
+} from './ProductFormScans.helpers';
 
 export default function ProductFormScans(): React.JSX.Element {
-  const { product } = useProductFormCore();
+  const { product, getValues, setValue } = useProductFormCore();
+  const {
+    parameters,
+    parameterValues,
+    addParameterValue,
+    updateParameterId,
+    updateParameterValue,
+  } = useProductFormParameters();
+  const { customFields, customFieldValues, setTextValue, toggleSelectedOption } =
+    useProductFormCustomFields();
   const productId = product?.id?.trim() || '';
   const queryClient = useQueryClient();
   const invalidatedUpdatedScanIdsRef = useRef<Set<string>>(new Set());
@@ -220,6 +71,10 @@ export default function ProductFormScans(): React.JSX.Element {
   const invalidationSessionRef = useRef(0);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [expandedScanIds, setExpandedScanIds] = useState<Set<string>>(new Set());
+  const [expandedDiagnosticScanIds, setExpandedDiagnosticScanIds] = useState<Set<string>>(new Set());
+  const [expandedExtractedFieldScanIds, setExpandedExtractedFieldScanIds] = useState<Set<string>>(
+    new Set()
+  );
 
   const scansQuery = useQuery<ProductScanListResponse, Error>({
     queryKey: QUERY_KEYS.products.scans(productId),
@@ -241,6 +96,8 @@ export default function ProductFormScans(): React.JSX.Element {
     invalidatedUpdatedScanIdsRef.current = new Set();
     pendingUpdatedScanIdsRef.current = new Set();
     setExpandedScanIds(new Set());
+    setExpandedDiagnosticScanIds(new Set());
+    setExpandedExtractedFieldScanIds(new Set());
   }, [productId]);
 
   const toggleScanSteps = (scanId: string): void => {
@@ -253,6 +110,228 @@ export default function ProductFormScans(): React.JSX.Element {
       }
       return next;
     });
+  };
+
+  const toggleExtractedFields = (scanId: string): void => {
+    setExpandedExtractedFieldScanIds((current) => {
+      const next = new Set(current);
+      if (next.has(scanId)) {
+        next.delete(scanId);
+      } else {
+        next.add(scanId);
+      }
+      return next;
+    });
+  };
+
+  const toggleDiagnostics = (scanId: string): void => {
+    setExpandedDiagnosticScanIds((current) => {
+      const next = new Set(current);
+      if (next.has(scanId)) {
+        next.delete(scanId);
+      } else {
+        next.add(scanId);
+      }
+      return next;
+    });
+  };
+
+  const applyProductFormValue = <TField extends keyof ProductFormData>(
+    field: TField,
+    value: ProductFormData[TField]
+  ): void => {
+    if (typeof setValue !== 'function') {
+      return;
+    }
+    setValue(field, value as never, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  };
+
+  const getCurrentProductFormValue = <TField extends keyof ProductFormData>(
+    field: TField
+  ): ProductFormData[TField] | undefined =>
+    typeof getValues === 'function' ? getValues(field) : undefined;
+
+  const buildAttributeMappings = (
+    scan: Pick<ProductScanRecord, 'amazonDetails'>
+  ): ScanAttributeMapping[] => {
+    const sourceEntries = buildAmazonMappedFields(scan);
+    if (sourceEntries.length === 0) {
+      return [];
+    }
+
+    const parameterByLabel = new Map(
+      parameters
+        .map((parameter) => {
+          const normalizedLabel =
+            normalizeMetadataLabel(parameter.name_en) ??
+            normalizeMetadataLabel(parameter.name_pl) ??
+            normalizeMetadataLabel(parameter.name_de);
+          return normalizedLabel
+            ? [
+                normalizedLabel,
+                {
+                  id: parameter.id,
+                  label: parameter.name_en || parameter.name_pl || parameter.name_de || 'Parameter',
+                },
+              ]
+            : null;
+        })
+        .filter((entry): entry is [string, { id: string; label: string }] => Boolean(entry))
+    );
+
+    const customFieldByLabel = new Map(
+      customFields
+        .map((field) => {
+          const normalizedLabel = normalizeMetadataLabel(field.name);
+          return normalizedLabel ? [normalizedLabel, field] : null;
+        })
+        .filter((entry): entry is [string, ProductCustomFieldDefinition] => Boolean(entry))
+    );
+
+    const usedTargets = new Set<string>();
+    const mappings: ScanAttributeMapping[] = [];
+
+    for (const entry of sourceEntries) {
+      const normalizedSourceLabel = normalizeMetadataLabel(entry.sourceLabel);
+      if (!normalizedSourceLabel) {
+        continue;
+      }
+
+      const parameterMatch = parameterByLabel.get(normalizedSourceLabel);
+      if (parameterMatch) {
+        const targetKey = `parameter:${parameterMatch.id}`;
+        if (!usedTargets.has(targetKey)) {
+          usedTargets.add(targetKey);
+          mappings.push({
+            targetType: 'parameter',
+            targetId: parameterMatch.id,
+            targetLabel: parameterMatch.label,
+            sourceLabel: entry.sourceLabel,
+            value: entry.value,
+          });
+        }
+        continue;
+      }
+
+      const customFieldMatch = customFieldByLabel.get(normalizedSourceLabel);
+      if (customFieldMatch) {
+        const targetKey = `custom_field:${customFieldMatch.id}`;
+        if (!usedTargets.has(targetKey)) {
+          usedTargets.add(targetKey);
+          if (customFieldMatch.type === 'checkbox_set') {
+            const optionMatch = resolveCheckboxSetOptionMatch(customFieldMatch, entry.value);
+            if (optionMatch) {
+              mappings.push({
+                targetType: 'custom_field_checkbox_set',
+                targetId: customFieldMatch.id,
+                targetLabel: customFieldMatch.name,
+                sourceLabel: entry.sourceLabel,
+                value: entry.value,
+                targetOptionIds: optionMatch.optionIds,
+                targetOptionLabels: optionMatch.optionLabels,
+              });
+            } else {
+              usedTargets.delete(targetKey);
+            }
+          } else {
+            mappings.push({
+              targetType: 'custom_field_text',
+              targetId: customFieldMatch.id,
+              targetLabel: customFieldMatch.name,
+              sourceLabel: entry.sourceLabel,
+              value: entry.value,
+            });
+          }
+        }
+      }
+    }
+
+    return mappings;
+  };
+
+  const applyMatchedAttributeMappings = (mappings: ScanAttributeMapping[]): void => {
+    const parameterValueCount = parameterValues.length;
+    let queuedParameterAdds = 0;
+
+    for (const mapping of mappings) {
+      if (mapping.targetType === 'parameter') {
+        const existingIndex = parameterValues.findIndex(
+          (entry) => entry.parameterId === mapping.targetId
+        );
+        if (existingIndex >= 0) {
+          updateParameterValue(existingIndex, mapping.value);
+          continue;
+        }
+
+        const nextIndex = parameterValueCount + queuedParameterAdds;
+        queuedParameterAdds += 1;
+        addParameterValue();
+        updateParameterId(nextIndex, mapping.targetId);
+        updateParameterValue(nextIndex, mapping.value);
+        continue;
+      }
+
+      if (mapping.targetType === 'custom_field_text') {
+        setTextValue(mapping.targetId, mapping.value);
+        continue;
+      }
+
+      const currentSelectedOptionIds =
+        customFieldValues.find((entry) => entry.fieldId === mapping.targetId)?.selectedOptionIds ?? [];
+      const currentSelectedOptionIdSet = new Set(currentSelectedOptionIds);
+      const targetOptionIdSet = new Set(mapping.targetOptionIds);
+      const targetField = customFields.find((field) => field.id === mapping.targetId);
+      if (targetField?.type !== 'checkbox_set') {
+        continue;
+      }
+
+      for (const option of targetField.options) {
+        const shouldBeChecked = targetOptionIdSet.has(option.id);
+        if (currentSelectedOptionIdSet.has(option.id) !== shouldBeChecked) {
+          toggleSelectedOption(mapping.targetId, option.id, shouldBeChecked);
+        }
+      }
+    }
+  };
+
+  const isAttributeMappingPending = (mapping: ScanAttributeMapping): boolean => {
+    if (mapping.targetType === 'parameter') {
+      const existingValue = parameterValues.find((entry) => entry.parameterId === mapping.targetId)?.value;
+      return normalizeComparableText(existingValue) !== normalizeComparableText(mapping.value);
+    }
+
+    const existingValue = customFieldValues.find((entry) => entry.fieldId === mapping.targetId);
+    if (mapping.targetType === 'custom_field_text') {
+      return normalizeComparableText(existingValue?.textValue) !== normalizeComparableText(mapping.value);
+    }
+
+    return !haveSameSelectedOptions(existingValue?.selectedOptionIds, mapping.targetOptionIds);
+  };
+
+  const getAttributeMappingCurrentValue = (mapping: ScanAttributeMapping): string | null => {
+    if (mapping.targetType === 'parameter') {
+      return (
+        normalizeComparableText(
+          parameterValues.find((entry) => entry.parameterId === mapping.targetId)?.value
+        ) ?? null
+      );
+    }
+
+    const existingValue = customFieldValues.find((entry) => entry.fieldId === mapping.targetId);
+    if (mapping.targetType === 'custom_field_text') {
+      return normalizeComparableText(existingValue?.textValue) ?? null;
+    }
+
+    const targetField = customFields.find((field) => field.id === mapping.targetId);
+    if (targetField?.type !== 'checkbox_set') {
+      return null;
+    }
+
+    return formatCustomFieldSelectedOptionLabels(targetField, existingValue?.selectedOptionIds);
   };
 
   useEffect(() => {
@@ -396,6 +475,54 @@ export default function ProductFormScans(): React.JSX.Element {
             const { infoMessage, errorMessage } = resolveScanMessages(scan);
             const scanSteps = Array.isArray(scan.steps) ? scan.steps : [];
             const isExpanded = expandedScanIds.has(scan.id);
+            const diagnosticsExpanded = expandedDiagnosticScanIds.has(scan.id);
+            const hasExtractedFields = hasProductScanAmazonDetails(scan.amazonDetails) || Boolean(scan.asin);
+            const hasDiagnostics = Boolean(resolveProductScanDiagnostics(scan));
+            const extractedFieldsExpanded = expandedExtractedFieldScanIds.has(scan.id);
+            const progressSummary =
+              isProductScanActiveStatus(scan.status) && scanSteps.length > 0
+                ? resolveProductScanActiveStepSummary(scanSteps)
+                : null;
+            const latestOutcomeSummary =
+              scanSteps.length > 0 &&
+              !progressSummary &&
+              (scan.status === 'failed' ||
+                scan.status === 'conflict' ||
+                isProductScanActiveStatus(scan.status))
+                ? resolveProductScanLatestOutcomeSummary(scanSteps, {
+                    allowStalled: isProductScanActiveStatus(scan.status),
+                  })
+                : null;
+            const currentAsin = normalizeComparableText(getCurrentProductFormValue('asin'));
+            const currentEan = normalizeComparableText(getCurrentProductFormValue('ean'));
+            const currentGtin = normalizeComparableText(getCurrentProductFormValue('gtin'));
+            const currentWeightValue = getCurrentProductFormValue('weight');
+            const currentWeight = typeof currentWeightValue === 'number' ? currentWeightValue : null;
+            const currentSizeLengthValue = getCurrentProductFormValue('sizeLength');
+            const currentSizeLength =
+              typeof currentSizeLengthValue === 'number' ? currentSizeLengthValue : null;
+            const currentSizeWidthValue = getCurrentProductFormValue('sizeWidth');
+            const currentSizeWidth =
+              typeof currentSizeWidthValue === 'number' ? currentSizeWidthValue : null;
+            const currentHeightValue = getCurrentProductFormValue('length');
+            const currentHeight = typeof currentHeightValue === 'number' ? currentHeightValue : null;
+            const parsedDimensions = parseAmazonDimensionsCm(
+              scan.amazonDetails?.itemDimensions ?? scan.amazonDetails?.packageDimensions ?? null
+            );
+            const parsedWeight = parseAmazonWeightKg(
+              scan.amazonDetails?.itemWeight ?? scan.amazonDetails?.packageWeight ?? null
+            );
+            const attributeMappings = buildAttributeMappings(scan);
+            const unmappedFields = resolveUnmappedAmazonFields(scan, attributeMappings);
+            const pendingAttributeMappings = attributeMappings.filter((mapping) =>
+              isAttributeMappingPending(mapping)
+            );
+            const canApplyDimensions =
+              parsedDimensions != null &&
+              (currentSizeLength !== parsedDimensions.sizeLength ||
+                currentSizeWidth !== parsedDimensions.sizeWidth ||
+                currentHeight !== parsedDimensions.length);
+            const canApplyWeight = parsedWeight != null && currentWeight !== parsedWeight;
 
             return (
               <section
@@ -416,7 +543,37 @@ export default function ProductFormScans(): React.JSX.Element {
                   </span>
                 </div>
 
-                <div className='flex items-center justify-end'>
+                <div className='flex items-center justify-end gap-1'>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => toggleExtractedFields(scan.id)}
+                    disabled={!hasExtractedFields}
+                    className='h-7 gap-1.5 px-2 text-xs'
+                  >
+                    {extractedFieldsExpanded ? (
+                      <ChevronUp className='h-3.5 w-3.5' />
+                    ) : (
+                      <ChevronDown className='h-3.5 w-3.5' />
+                    )}
+                    {extractedFieldsExpanded ? 'Hide extracted fields' : 'Show extracted fields'}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => toggleDiagnostics(scan.id)}
+                    disabled={!hasDiagnostics}
+                    className='h-7 gap-1.5 px-2 text-xs'
+                  >
+                    {diagnosticsExpanded ? (
+                      <ChevronUp className='h-3.5 w-3.5' />
+                    ) : (
+                      <ChevronDown className='h-3.5 w-3.5' />
+                    )}
+                    {diagnosticsExpanded ? 'Hide diagnostics' : 'Show diagnostics'}
+                  </Button>
                   <Button
                     type='button'
                     variant='ghost'
@@ -433,6 +590,77 @@ export default function ProductFormScans(): React.JSX.Element {
                     {isExpanded ? 'Hide steps' : 'Show steps'}
                   </Button>
                 </div>
+
+                {progressSummary ? (
+                  <div className='space-y-1 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2'>
+                    <div className='flex flex-wrap items-center gap-2 text-xs'>
+                      <span className='inline-flex items-center rounded-md border border-blue-500/20 px-2 py-0.5 font-medium text-foreground'>
+                        {progressSummary.phaseLabel}
+                      </span>
+                      <span className='text-muted-foreground'>Current step</span>
+                      <span className='font-medium text-foreground'>{progressSummary.stepLabel}</span>
+                      {progressSummary.attempt ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          Attempt {progressSummary.attempt}
+                        </span>
+                      ) : null}
+                      {progressSummary.inputSource ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {progressSummary.inputSource === 'url' ? 'URL input' : 'File input'}
+                        </span>
+                      ) : null}
+                    </div>
+                    {progressSummary.message ? (
+                      <p className='text-sm text-muted-foreground'>{progressSummary.message}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {latestOutcomeSummary ? (
+                  <div
+                    className={`space-y-1 rounded-md px-3 py-2 ${
+                      latestOutcomeSummary.kind === 'failed'
+                        ? 'border border-destructive/20 bg-destructive/5'
+                        : 'border border-amber-500/20 bg-amber-500/5'
+                    }`}
+                  >
+                    <div className='flex flex-wrap items-center gap-2 text-xs'>
+                      <span
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${
+                          latestOutcomeSummary.kind === 'failed'
+                            ? 'border border-destructive/20 text-destructive'
+                            : 'border border-amber-500/20 text-amber-300'
+                        }`}
+                      >
+                        {latestOutcomeSummary.phaseLabel}
+                      </span>
+                      <span className='text-muted-foreground'>
+                        {latestOutcomeSummary.kind === 'failed'
+                          ? 'Last failure'
+                          : 'Last completed step'}
+                      </span>
+                      <span className='font-medium text-foreground'>{latestOutcomeSummary.stepLabel}</span>
+                      {latestOutcomeSummary.resultCodeLabel ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {latestOutcomeSummary.resultCodeLabel}
+                        </span>
+                      ) : null}
+                      {latestOutcomeSummary.attempt ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          Attempt {latestOutcomeSummary.attempt}
+                        </span>
+                      ) : null}
+                      {latestOutcomeSummary.inputSource ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {latestOutcomeSummary.inputSource === 'url' ? 'URL input' : 'File input'}
+                        </span>
+                      ) : null}
+                    </div>
+                    {latestOutcomeSummary.message ? (
+                      <p className='text-sm text-muted-foreground'>{latestOutcomeSummary.message}</p>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 {scan.title ? <p className='text-sm font-medium'>{scan.title}</p> : null}
                 {renderScanMeta(scan)}
@@ -452,6 +680,167 @@ export default function ProductFormScans(): React.JSX.Element {
                 ) : null}
                 {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
                 {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
+                {extractedFieldsExpanded ? (
+                  <div className='space-y-3'>
+                    <ProductScanAmazonQualitySummary scan={scan} />
+                    <ProductScanAmazonProvenanceSummary scan={scan} />
+                    <div className='flex flex-wrap gap-2'>
+                      {scan.asin ? (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          disabled={currentAsin === scan.asin}
+                          onClick={() => applyProductFormValue('asin', scan.asin ?? '')}
+                          className='h-7 px-2 text-xs'
+                        >
+                          Use ASIN
+                        </Button>
+                      ) : null}
+                      {scan.amazonDetails?.ean ? (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          disabled={currentEan === scan.amazonDetails.ean}
+                          onClick={() => applyProductFormValue('ean', scan.amazonDetails?.ean ?? '')}
+                          className='h-7 px-2 text-xs'
+                        >
+                          Use EAN
+                        </Button>
+                      ) : null}
+                      {scan.amazonDetails?.gtin ? (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          disabled={currentGtin === scan.amazonDetails.gtin}
+                          onClick={() =>
+                            applyProductFormValue('gtin', scan.amazonDetails?.gtin ?? '')
+                          }
+                          className='h-7 px-2 text-xs'
+                        >
+                          Use GTIN
+                        </Button>
+                      ) : null}
+                      {parsedWeight != null ? (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          disabled={!canApplyWeight}
+                          onClick={() => applyProductFormValue('weight', parsedWeight)}
+                          className='h-7 px-2 text-xs'
+                        >
+                          Use Weight
+                        </Button>
+                      ) : null}
+                      {parsedDimensions ? (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          disabled={!canApplyDimensions}
+                          onClick={() => {
+                            applyProductFormValue('sizeLength', parsedDimensions.sizeLength);
+                            applyProductFormValue('sizeWidth', parsedDimensions.sizeWidth);
+                            applyProductFormValue('length', parsedDimensions.length);
+                          }}
+                          className='h-7 px-2 text-xs'
+                        >
+                          Use Dimensions
+                        </Button>
+                      ) : null}
+                      {attributeMappings.length > 0 ? (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          disabled={pendingAttributeMappings.length === 0}
+                          onClick={() => applyMatchedAttributeMappings(pendingAttributeMappings)}
+                          className='h-7 px-2 text-xs'
+                        >
+                          Apply matched attributes
+                        </Button>
+                      ) : null}
+                    </div>
+                    {attributeMappings.length > 0 ? (
+                      <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
+                        <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                          Matched product metadata targets
+                        </p>
+                        <ul className='space-y-1 text-xs text-muted-foreground'>
+                          {attributeMappings.map((mapping) => {
+                            const isPending = isAttributeMappingPending(mapping);
+                            const currentValue = getAttributeMappingCurrentValue(mapping);
+                            const mappingLabel = `${mapping.sourceLabel} -> ${
+                              mapping.targetType === 'parameter' ? 'Parameter' : 'Custom field'
+                            }: ${mapping.targetLabel}${
+                              mapping.targetType === 'custom_field_checkbox_set' &&
+                              mapping.targetOptionLabels.length > 0
+                                ? ` [${mapping.targetOptionLabels.join(', ')}]`
+                                : ''
+                            }`;
+
+                            return (
+                              <li
+                                key={`${mapping.targetType}-${mapping.targetId}`}
+                                className='flex items-start justify-between gap-3'
+                              >
+                                <div className='min-w-0 space-y-1'>
+                                  <p>{mappingLabel}</p>
+                                  <p className='text-[11px] text-muted-foreground'>
+                                    Current: {currentValue ?? 'Not set'}
+                                  </p>
+                                  <p className='text-[11px] text-muted-foreground'>
+                                    Amazon: {mapping.value}
+                                  </p>
+                                </div>
+                                <Button
+                                  type='button'
+                                  variant='ghost'
+                                  size='sm'
+                                  disabled={!isPending}
+                                  onClick={() => applyMatchedAttributeMappings([mapping])}
+                                  aria-label={`Apply ${mapping.sourceLabel} mapping`}
+                                  className='h-6 px-2 text-[11px]'
+                                >
+                                  Apply
+                                </Button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {unmappedFields.length > 0 ? (
+                      <div className='space-y-1 rounded-md border border-amber-500/30 bg-background/70 px-3 py-2'>
+                        <div className='flex flex-wrap items-center justify-between gap-2'>
+                          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                            Unmapped extracted attributes
+                          </p>
+                          <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
+                            {unmappedFields.length} unmapped
+                          </span>
+                        </div>
+                        <ul className='space-y-1 text-xs text-muted-foreground'>
+                          {unmappedFields.map((field, index) => (
+                            <li
+                              key={`${resolveAmazonMappedFieldKey(field)}-${index}`}
+                              className='space-y-1 rounded-md border border-border/40 bg-muted/20 px-2 py-2'
+                            >
+                              <p>{field.sourceLabel}</p>
+                              <p className='text-[11px] text-muted-foreground'>Amazon: {field.value}</p>
+                              <p className='text-[11px] text-amber-300'>No matching product target yet.</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    <ProductScanAmazonDetails scan={scan} />
+                  </div>
+                ) : null}
+                {diagnosticsExpanded ? <ProductScanDiagnostics scan={scan} /> : null}
                 {isExpanded && scanSteps.length > 0 ? <ProductScanSteps steps={scanSteps} /> : null}
               </section>
             );

@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import {
   getKangurLaunchTarget,
   type KangurLaunchTarget,
@@ -37,7 +39,7 @@ const readBootstrappedKangurLaunchRoute = async (): Promise<KangurLaunchRoute | 
     if (!setting) {
       return null;
     }
-    return commitKangurLaunchRouteSnapshot(parseKangurLaunchRouteSettings(setting.value).route);
+    return parseKangurLaunchRouteSettings(setting.value).route;
   } catch {
     return null;
   }
@@ -53,7 +55,7 @@ const readDevelopmentKangurLaunchRouteSnapshot = async (): Promise<KangurLaunchR
     return null;
   }
 
-  return commitKangurLaunchRouteSnapshot(snapshot);
+  return snapshot;
 };
 
 export const primeKangurLaunchRouteRuntime = (
@@ -62,7 +64,7 @@ export const primeKangurLaunchRouteRuntime = (
   return commitKangurLaunchRouteSnapshot(parseKangurLaunchRouteSettings(value).route);
 };
 
-const readKangurConfiguredLaunchRouteCached = async (): Promise<KangurLaunchRoute> => {
+const readKangurConfiguredLaunchRouteCached = cache(async (): Promise<KangurLaunchRoute> => {
   'use cache';
   applyCacheLife('swr60');
 
@@ -73,23 +75,19 @@ const readKangurConfiguredLaunchRouteCached = async (): Promise<KangurLaunchRout
 
   const rawSetting = await readKangurSettingValue(KANGUR_LAUNCH_ROUTE_SETTINGS_KEY);
   return parseKangurLaunchRouteSettings(rawSetting).route;
-};
+});
 
 export const getKangurConfiguredLaunchRoute = async (): Promise<KangurLaunchRoute> => {
-  if (cachedKangurLaunchRoute && isDevelopmentEnvironment()) {
+  if (cachedKangurLaunchRoute) {
     return cachedKangurLaunchRoute;
   }
 
   const developmentSnapshot = await readDevelopmentKangurLaunchRouteSnapshot();
   if (developmentSnapshot) {
-    return developmentSnapshot;
+    return commitKangurLaunchRouteSnapshot(developmentSnapshot);
   }
 
-  if (cachedKangurLaunchRoute) {
-    return cachedKangurLaunchRoute;
-  }
-
-  return commitKangurLaunchRouteSnapshot(await readKangurConfiguredLaunchRouteCached());
+  return readKangurConfiguredLaunchRouteCached();
 };
 
 export const getKangurConfiguredLaunchTarget = async (

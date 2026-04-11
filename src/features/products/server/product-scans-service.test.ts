@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 
 const mocks = vi.hoisted(() => ({
+  statMock: vi.fn(),
   readPlaywrightEngineRunMock: vi.fn(),
   collectPlaywrightEngineRunFailureMessagesMock: vi.fn(),
   buildPlaywrightEngineRunFailureMetaMock: vi.fn(),
@@ -21,6 +22,12 @@ const mocks = vi.hoisted(() => ({
   resolveProductScannerHeadlessMock: vi.fn(),
   buildProductScannerEngineRequestOptionsMock: vi.fn(),
   captureExceptionMock: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/files/runtime-fs', () => ({
+  getFsPromises: () => ({
+    stat: (...args: unknown[]) => mocks.statMock(...args),
+  }),
 }));
 
 vi.mock('@/features/playwright/server', () => ({
@@ -102,6 +109,7 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
   price: null,
   url: null,
   description: null,
+  amazonDetails: null,
   steps: [],
   rawResult: null,
   error: null,
@@ -118,6 +126,10 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
 describe('product-scans-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.statMock.mockResolvedValue({
+      isFile: () => true,
+      size: 1024,
+    });
     mocks.collectPlaywrightEngineRunFailureMessagesMock.mockReturnValue([
       'Amazon reverse image scan failed.',
     ]);
@@ -164,6 +176,43 @@ describe('product-scans-service', () => {
         price: '$19.99',
         url: 'https://www.amazon.com/dp/B00TEST123',
         description: 'Amazon description',
+        amazonDetails: {
+          brand: 'Acme',
+          manufacturer: 'Acme Manufacturing',
+          modelNumber: 'MODEL-1',
+          partNumber: 'PART-1',
+          color: 'Blue',
+          style: 'Modern',
+          material: 'Steel',
+          size: 'Large',
+          pattern: null,
+          finish: 'Matte',
+          itemDimensions: '12 x 8 x 4 inches',
+          packageDimensions: '14 x 10 x 5 inches',
+          itemWeight: '1.2 pounds',
+          packageWeight: '1.5 pounds',
+          bestSellersRank: '#42 in Home & Kitchen',
+          ean: '5901234567890',
+          gtin: '5901234567890',
+          upc: null,
+          isbn: null,
+          bulletPoints: ['Steel frame', 'Blue finish'],
+          attributes: [
+            {
+              key: 'manufacturer',
+              label: 'Manufacturer',
+              value: 'Acme Manufacturing',
+              source: 'technical_details',
+            },
+          ],
+          rankings: [
+            {
+              rank: '#42',
+              category: 'Home & Kitchen',
+              source: 'best_sellers_rank',
+            },
+          ],
+        },
         matchedImageId: 'image-1',
       },
       finalUrl: 'https://www.amazon.com/dp/B00TEST123',
@@ -189,6 +238,19 @@ describe('product-scans-service', () => {
         asin: 'B00TEST123',
         asinUpdateStatus: 'updated',
         asinUpdateMessage: 'Product ASIN filled from Amazon scan.',
+        amazonDetails: expect.objectContaining({
+          manufacturer: 'Acme Manufacturing',
+          ean: '5901234567890',
+          itemDimensions: '12 x 8 x 4 inches',
+          bulletPoints: ['Steel frame', 'Blue finish'],
+        }),
+        steps: [
+          expect.objectContaining({
+            key: 'product_asin_update',
+            status: 'completed',
+            message: 'Product ASIN filled from Amazon scan.',
+          }),
+        ],
         error: null,
       })
     );
@@ -197,6 +259,10 @@ describe('product-scans-service', () => {
         status: 'completed',
         asin: 'B00TEST123',
         asinUpdateStatus: 'updated',
+        amazonDetails: expect.objectContaining({
+          manufacturer: 'Acme Manufacturing',
+          ean: '5901234567890',
+        }),
       })
     );
   });
@@ -204,7 +270,26 @@ describe('product-scans-service', () => {
   it('persists structured scan steps from a running Playwright scan result', async () => {
     const scan = createScan({
       status: 'running',
-      steps: [],
+      steps: [
+        {
+          key: 'prepare_scan',
+          label: 'Prepare Amazon scan',
+          status: 'completed',
+          message: 'Prepared 1 image candidate for Amazon reverse image scan.',
+          url: null,
+          startedAt: '2026-04-11T03:59:58.000Z',
+          completedAt: '2026-04-11T03:59:58.000Z',
+        },
+        {
+          key: 'queue_scan',
+          label: 'Start Playwright scan',
+          status: 'completed',
+          message: 'Playwright Amazon scan queued.',
+          url: null,
+          startedAt: '2026-04-11T03:59:59.000Z',
+          completedAt: '2026-04-11T03:59:59.000Z',
+        },
+      ],
       rawResult: {
         runId: 'run-1',
         runStatus: 'running',
@@ -253,6 +338,14 @@ describe('product-scans-service', () => {
         status: 'running',
         steps: [
           expect.objectContaining({
+            key: 'prepare_scan',
+            status: 'completed',
+          }),
+          expect.objectContaining({
+            key: 'queue_scan',
+            status: 'completed',
+          }),
+          expect.objectContaining({
             key: 'validate',
             status: 'completed',
           }),
@@ -263,7 +356,7 @@ describe('product-scans-service', () => {
         ],
       })
     );
-    expect(result.steps).toHaveLength(2);
+    expect(result.steps).toHaveLength(4);
   });
 
   it('marks conflicting ASIN results without overwriting the product', async () => {
@@ -302,6 +395,14 @@ describe('product-scans-service', () => {
         status: 'conflict',
         asin: 'B00TEST999',
         asinUpdateStatus: 'conflict',
+        asinUpdateMessage: 'Detected ASIN B00TEST999 differs from existing ASIN B00TEST123.',
+        steps: [
+          expect.objectContaining({
+            key: 'product_asin_update',
+            status: 'failed',
+            message: 'Detected ASIN B00TEST999 differs from existing ASIN B00TEST123.',
+          }),
+        ],
         error: 'Detected ASIN B00TEST999 differs from existing ASIN B00TEST123.',
       })
     );
@@ -504,8 +605,13 @@ describe('product-scans-service', () => {
             timeout: 45000,
             headless: false,
           },
-          launchOptions: {
+          launchOptions: expect.objectContaining({
             channel: 'chrome',
+            args: ['--disable-blink-features=AutomationControlled'],
+          }),
+          contextOptions: {
+            userAgent:
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           },
           input: expect.objectContaining({
             productId: 'product-1',
@@ -715,13 +821,51 @@ describe('product-scans-service', () => {
   });
 
   it('stores failed engine runs with failure metadata', async () => {
-    const scan = createScan();
+    const scan = createScan({
+      steps: [
+        {
+          key: 'google_upload',
+          label: 'Upload image to Google Lens',
+          status: 'completed',
+          message: 'Uploaded image image-1 to Google Lens.',
+          url: 'https://lens.google.com/search',
+          startedAt: '2026-04-11T04:00:00.000Z',
+          completedAt: '2026-04-11T04:00:02.000Z',
+        },
+      ],
+    });
 
     mocks.readPlaywrightEngineRunMock.mockResolvedValue({
       runId: 'run-1',
       status: 'failed',
       completedAt: '2026-04-11T04:05:00.000Z',
-      result: null,
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'running',
+        steps: [
+          {
+            key: 'google_upload',
+            label: 'Upload image to Google Lens',
+            status: 'completed',
+            message: 'Uploaded image image-1 to Google Lens.',
+            url: 'https://lens.google.com/search',
+            startedAt: '2026-04-11T04:00:00.000Z',
+            completedAt: '2026-04-11T04:00:02.000Z',
+          },
+          {
+            key: 'google_candidates',
+            label: 'Collect Amazon candidates from Google Lens',
+            status: 'running',
+            message: 'Collecting Amazon result candidates from Google Lens.',
+            url: 'https://lens.google.com/search',
+            startedAt: '2026-04-11T04:00:03.000Z',
+            completedAt: null,
+          },
+        ],
+      },
+      finalUrl: 'https://lens.google.com/search',
     });
     mocks.collectPlaywrightEngineRunFailureMessagesMock.mockReturnValue([
       'Engine run failed before producing a result.',
@@ -739,6 +883,16 @@ describe('product-scans-service', () => {
         error: 'Engine run failed before producing a result.',
         asinUpdateStatus: 'failed',
         asinUpdateMessage: 'Engine run failed before producing a result.',
+        steps: [
+          expect.objectContaining({
+            key: 'google_upload',
+            status: 'completed',
+          }),
+          expect.objectContaining({
+            key: 'google_candidates',
+            status: 'running',
+          }),
+        ],
         rawResult: {
           reason: 'Engine run failed before producing a result.',
         },
@@ -748,6 +902,16 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         status: 'failed',
         asinUpdateStatus: 'failed',
+        steps: [
+          expect.objectContaining({
+            key: 'google_upload',
+            status: 'completed',
+          }),
+          expect.objectContaining({
+            key: 'google_candidates',
+            status: 'running',
+          }),
+        ],
       })
     );
   });
@@ -1349,6 +1513,158 @@ describe('product-scans-service', () => {
         },
       ],
     });
+    expect(mocks.upsertProductScanMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        steps: [
+          expect.objectContaining({
+            key: 'prepare_scan',
+            status: 'completed',
+          }),
+          expect.objectContaining({
+            key: 'queue_scan',
+            status: 'completed',
+            message: 'Playwright Amazon scan queued.',
+          }),
+        ],
+      })
+    );
+  });
+
+  it('serializes batch scan startup and preserves product order', async () => {
+    const createProduct = (id: string) => ({
+      id,
+      asin: null,
+      name_en: `Product ${id}`,
+      name_pl: null,
+      name_de: null,
+      sku: `SKU-${id}`,
+      images: [
+        {
+          imageFileId: `image-${id}`,
+          imageFile: {
+            id: `image-${id}`,
+            filepath: `/tmp/${id}.jpg`,
+            publicUrl: `https://cdn.example.com/${id}.jpg`,
+            filename: `${id}.jpg`,
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    const deferredRuns = new Map<
+      string,
+      {
+        resolve: (value: { runId: string; status: 'queued' }) => void;
+      }
+    >();
+    const flush = async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    };
+    const waitForStartCalls = async (expectedCount: number) => {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        if (mocks.startPlaywrightEngineTaskMock.mock.calls.length >= expectedCount) {
+          break;
+        }
+        await flush();
+      }
+      expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledTimes(expectedCount);
+    };
+
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockImplementation(async (productId: string) => createProduct(productId));
+    mocks.startPlaywrightEngineTaskMock.mockImplementation(
+      ({ request }: { request: { input: { productId: string; batchIndex: number } } }) =>
+        new Promise<{ runId: string; status: 'queued' }>((resolve) => {
+          deferredRuns.set(request.input.productId, { resolve });
+        })
+    );
+
+    const resultPromise = queueAmazonBatchProductScans({
+      productIds: ['product-1', 'product-2', 'product-3', 'product-4'],
+      userId: 'user-1',
+    });
+
+    await waitForStartCalls(1);
+
+    deferredRuns.get('product-1')?.resolve({
+      runId: 'run-product-1',
+      status: 'queued',
+    });
+    await waitForStartCalls(2);
+
+    deferredRuns.get('product-2')?.resolve({
+      runId: 'run-product-2',
+      status: 'queued',
+    });
+    await waitForStartCalls(3);
+    deferredRuns.get('product-3')?.resolve({
+      runId: 'run-product-3',
+      status: 'queued',
+    });
+    await waitForStartCalls(4);
+    deferredRuns.get('product-4')?.resolve({
+      runId: 'run-product-4',
+      status: 'queued',
+    });
+
+    const result = await resultPromise;
+
+    expect(
+      mocks.startPlaywrightEngineTaskMock.mock.calls.map(
+        ([input]: [{ request: { input: { batchIndex: number } } }]) =>
+          input.request.input.batchIndex
+      )
+    ).toEqual([0, 1, 2, 3]);
+
+    expect(result.results.map((entry) => entry.productId)).toEqual([
+      'product-1',
+      'product-2',
+      'product-3',
+      'product-4',
+    ]);
+    expect(result).toEqual({
+      queued: 4,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: 'run-product-1',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+        {
+          productId: 'product-2',
+          scanId: expect.any(String),
+          runId: 'run-product-2',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+        {
+          productId: 'product-3',
+          scanId: expect.any(String),
+          runId: 'run-product-3',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+        {
+          productId: 'product-4',
+          scanId: expect.any(String),
+          runId: 'run-product-4',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
   });
 
   it('applies the global scanner settings when starting a new scan run', async () => {
@@ -1421,13 +1737,89 @@ describe('product-scans-service', () => {
             headless: false,
             slowMo: 25,
           },
-          launchOptions: {
+          launchOptions: expect.objectContaining({
             channel: 'chrome',
+            args: ['--disable-blink-features=AutomationControlled'],
+          }),
+          contextOptions: {
+            userAgent:
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           },
           input: expect.objectContaining({
             allowManualVerification: true,
             manualVerificationTimeoutMs: 240000,
           }),
+        }),
+      })
+    );
+  });
+
+  it('adds scanner anti-detection defaults when no persona is configured', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+    });
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'chrome',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 240000,
+      playwrightSettingsOverrides: {},
+    });
+    mocks.resolveProductScannerHeadlessMock.mockResolvedValue(false);
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({
+      settingsOverrides: {
+        headless: false,
+        slowMo: 0,
+      },
+      launchOptions: {
+        channel: 'chrome',
+      },
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-scanner-stealth-1',
+      status: 'queued',
+    });
+
+    await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          browserEngine: 'chromium',
+          timeoutMs: 300000,
+          settingsOverrides: {
+            headless: false,
+            slowMo: 80,
+            humanizeMouse: true,
+          },
+          launchOptions: expect.objectContaining({
+            channel: 'chrome',
+            args: ['--disable-blink-features=AutomationControlled'],
+          }),
+          contextOptions: {
+            userAgent:
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          },
         }),
       })
     );
@@ -1772,6 +2164,18 @@ describe('product-scans-service', () => {
         },
       ],
     });
+    expect(mocks.upsertProductScanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'failed',
+        steps: [
+          expect.objectContaining({
+            key: 'prepare_scan',
+            status: 'failed',
+            message: 'No product image available for Amazon reverse image scan.',
+          }),
+        ],
+      })
+    );
   });
 
   it('returns a failed batch result when enqueueing the Playwright run throws', async () => {
@@ -2115,6 +2519,207 @@ describe('product-scans-service', () => {
           productId: 'product-1',
           scanId: expect.any(String),
           runId: 'run-queued-link-only',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+  });
+
+  it('drops an invalid local filepath and falls back to the image URL candidate', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.statMock.mockRejectedValueOnce(new Error('missing file'));
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-queued-fallback',
+      status: 'queued',
+    });
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            imageCandidates: [
+              expect.objectContaining({
+                id: 'image-1',
+                filepath: null,
+                url: 'https://cdn.example.com/product-1.jpg',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+    expect(result).toEqual({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: 'run-queued-fallback',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+  });
+
+  it('drops a zero-byte local filepath and falls back to the image URL candidate', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.statMock.mockResolvedValueOnce({
+      isFile: () => true,
+      size: 0,
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-queued-zero-byte-fallback',
+      status: 'queued',
+    });
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            imageCandidates: [
+              expect.objectContaining({
+                id: 'image-1',
+                filepath: null,
+                url: 'https://cdn.example.com/product-1.jpg',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+    expect(result).toEqual({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: 'run-queued-zero-byte-fallback',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+  });
+
+  it('drops an unsupported local file extension and falls back to the image URL candidate', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.txt',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.txt',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-queued-extension-fallback',
+      status: 'queued',
+    });
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.statMock).not.toHaveBeenCalled();
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            imageCandidates: [
+              expect.objectContaining({
+                id: 'image-1',
+                filepath: null,
+                url: 'https://cdn.example.com/product-1.jpg',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+    expect(result).toEqual({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: 'run-queued-extension-fallback',
           status: 'queued',
           currentStatus: 'queued',
           message: 'Amazon reverse image scan queued.',

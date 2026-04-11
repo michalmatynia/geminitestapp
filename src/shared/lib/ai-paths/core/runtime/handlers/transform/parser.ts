@@ -199,6 +199,19 @@ const normalizeParserBundle = (source: ParserSourceRecord): ParserSourceRecord =
   return bundle;
 };
 
+const preserveBundleSourceFields = (
+  source: ParserSourceRecord,
+  parsed: ParserSourceRecord
+): ParserSourceRecord => {
+  const bundle = { ...parsed };
+
+  if (source['categoryContext'] !== undefined && bundle['categoryContext'] === undefined) {
+    bundle['categoryContext'] = source['categoryContext'];
+  }
+
+  return bundle;
+};
+
 const hasParserMappings = (mappings: Record<string, string | undefined>): boolean =>
   Object.keys(mappings).some((key: string): boolean => !!key.trim());
 
@@ -214,12 +227,16 @@ const buildBundleParserResult = (args: {
     return { bundle: fullBundle, ...declaredOutputs };
   }
 
+  const preservedBundle = preserveBundleSourceFields(
+    args.source,
+    args.parsed as ParserSourceRecord
+  );
   const extraOutputs = buildDeclaredOutputs(
     args.outputs,
-    args.parsed as ParserSourceRecord,
+    preservedBundle,
     args.source
   );
-  return { bundle: args.parsed, ...extraOutputs };
+  return { bundle: preservedBundle, ...extraOutputs };
 };
 
 export const handleParser: NodeHandler = async ({

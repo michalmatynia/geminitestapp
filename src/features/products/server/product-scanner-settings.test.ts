@@ -13,7 +13,7 @@ import {
 } from './product-scanner-settings';
 
 describe('product scanner engine request options', () => {
-  it('uses integration-style default settings when no persona is selected', () => {
+  it('uses Amazon scanner defaults when no persona is selected', () => {
     const result = buildProductScannerEngineRequestOptions({
       playwrightPersonaId: null,
       playwrightBrowser: 'chromium',
@@ -24,7 +24,7 @@ describe('product scanner engine request options', () => {
 
     expect(result).toEqual({
       settingsOverrides: expect.objectContaining({
-        headless: true,
+        headless: false,
         slowMo: 0,
         timeout: 30000,
         navigationTimeout: 30000,

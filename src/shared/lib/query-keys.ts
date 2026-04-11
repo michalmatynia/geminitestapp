@@ -19,6 +19,7 @@ export const QUERY_KEYS = {
     details: () => [...QUERY_KEYS.products.all, 'detail'] as const,
     detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const,
     detailEdit: (id: string) => [...QUERY_KEYS.products.detail(id), 'edit'] as const,
+    baseSyncPreview: (id: string) => [...QUERY_KEYS.products.detail(id), 'base-sync-preview'] as const,
     scans: (productId: string) => [...QUERY_KEYS.products.detail(productId), 'scans'] as const,
     scansLatestAll: () => [...QUERY_KEYS.products.all, 'scans-latest'] as const,
     scansLatest: (productIds: string[]) =>

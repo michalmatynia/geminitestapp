@@ -76,6 +76,7 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['sync', 'runs'], loader: () => import('../sync/runs/route-handler') },
   { pattern: ['sync', 'runs', param('runId')], loader: () => import('../sync/runs/[runId]/route-handler') },
   { pattern: ['sync', 'relink'], loader: () => import('../sync/relink/route-handler') },
+  { pattern: [param('id'), 'sync', 'base'], loader: () => import('../[id]/sync/base/route-handler') },
   { pattern: [param('id')], loader: () => import('../[id]/route-handler') },
   { pattern: [param('id'), 'duplicate'], loader: () => import('../[id]/duplicate/route-handler') },
   { pattern: [param('id'), 'images', 'base64'], loader: () => import('../[id]/images/base64/route-handler') },

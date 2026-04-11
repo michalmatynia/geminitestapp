@@ -241,7 +241,8 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
         </FormSection>
 
         <Hint variant='info' className='rounded-md border border-blue-500/20 bg-blue-500/5 p-4'>
-          Product scan settings are global. The shortcut in the product Scans tab links here for
+          Product scan settings are global. By default, Amazon scans start in a visible browser on
+          the auto browser profile. The shortcut in the product Scans tab links here for
           convenience.
         </Hint>
 

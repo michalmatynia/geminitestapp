@@ -14,8 +14,7 @@ const { useSocialPostContextMock, useKangurSocialPostsPageMock } = vi.hoisted(()
 
 import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
-vi.mock('@/shared/ui/list-panel', () => ({
-
+vi.mock('@/features/kangur/shared/ui', () => ({
   ActionMenu: ({
     ariaLabel,
     children,

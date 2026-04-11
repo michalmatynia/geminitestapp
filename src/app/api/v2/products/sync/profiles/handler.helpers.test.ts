@@ -22,6 +22,7 @@ describe('product-sync profiles handler helpers', () => {
     expect(
       buildProductSyncProfileCreateInput(
         {
+          isDefault: true,
           connectionId: 'connection-1',
           inventoryId: 'inventory-1',
           fieldRules: [
@@ -41,6 +42,7 @@ describe('product-sync profiles handler helpers', () => {
         createId
       )
     ).toEqual({
+      isDefault: true,
       connectionId: 'connection-1',
       inventoryId: 'inventory-1',
       fieldRules: [

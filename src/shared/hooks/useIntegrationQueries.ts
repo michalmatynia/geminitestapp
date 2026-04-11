@@ -1,4 +1,9 @@
-import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from '@/shared/contracts/integrations/import-export';
+import type {
+  BaseImportInventoriesPayload,
+  BaseImportInventoriesResponse,
+  BaseImportWarehousesPayload,
+  BaseImportWarehousesResponse,
+} from '@/shared/contracts/integrations/import-export';
 import type {
   BaseDefaultConnectionPreferenceResponse,
   BaseDefaultInventoryPreferenceResponse,
@@ -182,6 +187,52 @@ export function useBaseInventories(
       queryKey,
       tags: ['integrations', 'inventories'],
       description: 'Loads integrations base inventories.',
+    },
+  });
+}
+
+export function useBaseWarehouses(
+  connectionId: string,
+  inventoryId: string,
+  includeAllWarehouses: boolean = false,
+  enabled: boolean = true
+): SingleQuery<BaseImportWarehousesResponse> {
+  const queryKey = [
+    ...integrationKeys.baseInventories(connectionId),
+    'warehouses',
+    inventoryId || 'all',
+    includeAllWarehouses,
+  ] as const;
+  const queryFn = async (): Promise<BaseImportWarehousesResponse> => {
+    const normalizedConnectionId = connectionId.trim();
+    const normalizedInventoryId = inventoryId.trim();
+    if (!normalizedConnectionId) {
+      throw new Error('Base.com connection is required to load warehouses.');
+    }
+    if (!normalizedInventoryId) {
+      throw new Error('Base.com inventory is required to load warehouses.');
+    }
+    return api.post<BaseImportWarehousesResponse>('/api/v2/integrations/imports/base', {
+      action: 'warehouses',
+      connectionId: normalizedConnectionId,
+      inventoryId: normalizedInventoryId,
+      includeAllWarehouses,
+    } satisfies BaseImportWarehousesPayload);
+  };
+
+  return createSingleQueryV2({
+    id: inventoryId || null,
+    queryKey,
+    queryFn,
+    enabled: enabled && !!connectionId.trim() && !!inventoryId.trim(),
+    meta: {
+      source: 'shared.hooks.useBaseWarehouses',
+      operation: 'detail',
+      resource: 'integrations.base-warehouses',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'warehouses'],
+      description: 'Loads Base.com warehouses for an inventory.',
     },
   });
 }

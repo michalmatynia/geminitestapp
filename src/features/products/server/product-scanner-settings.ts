@@ -55,7 +55,8 @@ export const buildProductScannerEngineRequestOptions = (
         ...settings.playwrightSettingsOverrides,
       }
     : {
-        ...buildIntegrationConnectionPlaywrightSettings(settings.playwrightSettingsOverrides),
+        ...resolveProductScannerSettingsBaseline([], null),
+        ...settings.playwrightSettingsOverrides,
       };
 
   return {

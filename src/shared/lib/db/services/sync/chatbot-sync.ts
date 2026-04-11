@@ -1,11 +1,10 @@
+import { BatchCountResult } from '@/shared/contracts/base';
 import type { DatabaseSyncHandler } from './types';
 import type {
   MongoChatbotSessionDoc,
   MongoChatbotJobDoc,
 } from '../database-sync-types';
 import type { Prisma, ChatbotJobStatus } from '@prisma/client';
-
-type BatchResult = { count: number };
 
 type MongoRecordWithStringId<TDoc> = Omit<TDoc, '_id'> & { _id: string };
 
@@ -78,11 +77,11 @@ export const syncChatbotSessions: DatabaseSyncHandler = async ({ mongo, prisma, 
   });
 
   await prisma.chatbotMessage.deleteMany();
-  const deleted = (await prisma.chatbotSession.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.chatbotSession.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.chatbotSession.createMany({
       data: data as Prisma.ChatbotSessionCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   if (messages.length) {
     await prisma.chatbotMessage.createMany({
@@ -119,11 +118,11 @@ export const syncChatbotJobs: DatabaseSyncHandler = async ({
       };
     })
     .filter((item): item is ChatbotJobSeed => item !== null);
-  const deleted = (await prisma.chatbotJob.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.chatbotJob.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.chatbotJob.createMany({
       data: data as Prisma.ChatbotJobCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };

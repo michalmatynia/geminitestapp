@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-11T15:56:52.015Z",
+  "generatedAt": "2026-04-11T17:42:38.020Z",
   "source": {
-    "totalFiles": 10295,
-    "totalLines": 1697479,
-    "useClientFiles": 1752,
+    "totalFiles": 10301,
+    "totalLines": 1701932,
+    "useClientFiles": 1756,
     "hooksWithoutUseClient": 0,
-    "filesOver800": 93,
-    "filesOver1000": 1,
-    "filesOver1500": 0,
+    "filesOver800": 94,
+    "filesOver1000": 4,
+    "filesOver1500": 1,
     "largestFile": {
-      "path": "src/features/products/server/product-scans-service.ts",
-      "lines": 1069
+      "path": "src/features/products/server/product-scan-amazon-script.ts",
+      "lines": 1708
     }
   },
   "api": {
@@ -130,22 +130,22 @@
       {
         "feature": "kangur",
         "files": 2501,
-        "lines": 528415
+        "lines": 528229
       },
       {
         "feature": "ai",
         "files": 1301,
-        "lines": 250364
+        "lines": 250370
+      },
+      {
+        "feature": "products",
+        "files": 433,
+        "lines": 104792
       },
       {
         "feature": "integrations",
         "files": 472,
         "lines": 99692
-      },
-      {
-        "feature": "products",
-        "files": 427,
-        "lines": 99290
       },
       {
         "feature": "case-resolver",
@@ -441,16 +441,28 @@
         "lines": 4416
       },
       {
-        "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
-        "lines": 1937
+        "path": "src/features/products/server/product-scans-service.test.ts",
+        "lines": 2454
       },
       {
-        "path": "src/features/products/server/product-scans-service.test.ts",
-        "lines": 1892
+        "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
+        "lines": 2210
+      },
+      {
+        "path": "src/features/products/server/product-scan-amazon-script.ts",
+        "lines": 1708
       },
       {
         "path": "src/features/products/components/ProductModals.test.tsx",
         "lines": 1552
+      },
+      {
+        "path": "src/features/products/server/product-scans-service.ts",
+        "lines": 1427
+      },
+      {
+        "path": "src/features/products/components/form/ProductFormScans.test.tsx",
+        "lines": 1319
       },
       {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
@@ -465,8 +477,8 @@
         "lines": 1095
       },
       {
-        "path": "src/features/products/server/product-scans-service.ts",
-        "lines": 1069
+        "path": "src/features/products/components/form/ProductFormScans.tsx",
+        "lines": 1060
       },
       {
         "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
@@ -483,6 +495,10 @@
       {
         "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx",
         "lines": 1035
+      },
+      {
+        "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+        "lines": 1032
       },
       {
         "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
@@ -539,22 +555,6 @@
       {
         "path": "src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx",
         "lines": 976
-      },
-      {
-        "path": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-        "lines": 974
-      },
-      {
-        "path": "src/features/integrations/services/imports/base-import-service.ts",
-        "lines": 971
-      },
-      {
-        "path": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx",
-        "lines": 970
-      },
-      {
-        "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
-        "lines": 970
       }
     ],
     "topPagesByLines": [

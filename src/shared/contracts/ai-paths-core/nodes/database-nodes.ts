@@ -43,6 +43,13 @@ export const dbSchemaContextTransformSchema = z.enum([
 export type DbSchemaContextTransformDto = z.infer<typeof dbSchemaContextTransformSchema>;
 export type DbSchemaContextTransform = DbSchemaContextTransformDto;
 
+export const dbSchemaContextReuseModeSchema = z.enum([
+  'never',
+  'prefer_transformed_input',
+]);
+export type DbSchemaContextReuseModeDto = z.infer<typeof dbSchemaContextReuseModeSchema>;
+export type DbSchemaContextReuseMode = DbSchemaContextReuseModeDto;
+
 export const dbSchemaConfigSchema = z.object({
   provider: dbSchemaProviderSchema,
   mode: z.enum(['all', 'selected']),
@@ -52,6 +59,7 @@ export const dbSchemaConfigSchema = z.object({
   contextQuery: z.string().optional(),
   contextLimit: z.number().int().min(1).max(100).optional(),
   contextTransform: dbSchemaContextTransformSchema.optional(),
+  contextReuseMode: dbSchemaContextReuseModeSchema.optional(),
   includeFields: z.boolean(),
   includeRelations: z.boolean(),
   formatAs: z.enum(['json', 'text']),

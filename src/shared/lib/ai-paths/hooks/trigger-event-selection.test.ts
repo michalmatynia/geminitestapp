@@ -1,8 +1,49 @@
 import { describe, expect, it } from 'vitest';
 
-import { selectTriggerCandidates, type TriggerSelectionCandidate } from './trigger-event-selection';
+import { AI_PATHS_UI_STATE_KEY, PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths/core/constants';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+
+import {
+  resolveTriggerSelection,
+  selectTriggerCandidates,
+  type TriggerSelectionCandidate,
+} from './trigger-event-selection';
 
 const cfg = (id: string, isActive = true): TriggerSelectionCandidate => ({ id, isActive });
+const makeConfig = (id: string, name: string, extra?: Record<string, unknown>) =>
+  JSON.stringify(sanitizePathConfig({ ...createDefaultPathConfig(id), name, ...extra }));
+const makeTriggeredConfig = (id: string, name: string, event = 'manual'): string => {
+  const baseConfig = createDefaultPathConfig(id);
+  const seedNode = baseConfig.nodes[0];
+  if (!seedNode) {
+    throw new Error('Expected default path config to include at least one canonical node.');
+  }
+
+  return JSON.stringify(
+    sanitizePathConfig({
+      ...baseConfig,
+      name,
+      nodes: [
+        {
+          ...seedNode,
+          type: 'trigger',
+          title: 'Trigger',
+          description: '',
+          inputs: [],
+          outputs: ['trigger', 'triggerName'],
+          config: {
+            trigger: {
+              event,
+              contextMode: 'trigger_only',
+            },
+          },
+        },
+      ],
+      edges: [],
+    })
+  );
+};
 
 describe('selectTriggerCandidates', () => {
   // ── preferred path found ──────────────────────────────────────────────────
@@ -120,5 +161,55 @@ describe('selectTriggerCandidates', () => {
       activePathId: null,
     });
     expect(result.activeTriggerCandidates.map((c) => c.id)).toEqual(['path-b', 'path-c']);
+  });
+});
+
+describe('resolveTriggerSelection', () => {
+  it('resolves a preferred path directly from selective settings without requiring an index', async () => {
+    const configValue = makeTriggeredConfig('path-pref', 'Preferred Path');
+    const settingsData = [
+      {
+        key: `${PATH_CONFIG_PREFIX}path-pref`,
+        value: configValue,
+      },
+      {
+        key: AI_PATHS_UI_STATE_KEY,
+        value: JSON.stringify({ value: { activePathId: 'path-other' } }),
+      },
+    ];
+    const triggerEventId =
+      (
+        JSON.parse(configValue) as {
+          nodes?: Array<{ type?: string; config?: { trigger?: { event?: string } } }>;
+        }
+      ).nodes?.find((node) => node.type === 'trigger')?.config?.trigger?.event ?? 'manual';
+
+    const result = await resolveTriggerSelection(settingsData, triggerEventId, {
+      preferredPathId: 'path-pref',
+    });
+
+    expect(result.triggerCandidates.map((config) => config.id)).toEqual(['path-pref']);
+    expect(result.activeTriggerCandidates.map((config) => config.id)).toEqual(['path-pref']);
+    expect(result.selectedConfig?.id).toBe('path-pref');
+    expect(result.missingPreferredPathId).toBeNull();
+    expect(result.uiState).toEqual({ activePathId: 'path-other' });
+  });
+
+  it('treats a preferred path with no matching trigger as missing for this trigger binding', async () => {
+    const settingsData = [
+      {
+        key: `${PATH_CONFIG_PREFIX}path-pref`,
+        value: makeConfig('path-pref', 'Preferred Path'),
+      },
+    ];
+
+    const result = await resolveTriggerSelection(settingsData, 'product_row_name_normalize', {
+      preferredPathId: 'path-pref',
+    });
+
+    expect(result.triggerCandidates).toEqual([]);
+    expect(result.activeTriggerCandidates).toEqual([]);
+    expect(result.selectedConfig).toBeNull();
+    expect(result.missingPreferredPathId).toBe('path-pref');
   });
 });

@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   filterPanelMock,
   useCatalogsMock,
+  useProductCategoriesForCatalogsMock,
   useMultiTagsMock,
   useProductCategoriesMock,
   useProductListFiltersContextMock,
@@ -15,6 +16,7 @@ const {
 } = vi.hoisted(() => ({
   filterPanelMock: vi.fn(),
   useCatalogsMock: vi.fn(),
+  useProductCategoriesForCatalogsMock: vi.fn(),
   useMultiTagsMock: vi.fn(),
   useProductCategoriesMock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
@@ -28,6 +30,8 @@ vi.mock('@/features/products/context/ProductListContext', () => ({
 
 vi.mock('@/features/products/hooks/useCategoryQueries', () => ({
   useProductCategories: (...args: unknown[]) => useProductCategoriesMock(...args),
+  useProductCategoriesForCatalogs: (...args: unknown[]) =>
+    useProductCategoriesForCatalogsMock(...args),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
@@ -109,6 +113,7 @@ describe('ProductFilters layout contract', () => {
     vi.clearAllMocks();
     useProductListFiltersContextMock.mockReturnValue(buildFiltersContextValue());
     useProductCategoriesMock.mockReturnValue({ data: [] });
+    useProductCategoriesForCatalogsMock.mockReturnValue({ data: [] });
     useCatalogsMock.mockReturnValue({ data: [] });
     useTagsMock.mockReturnValue({ data: [] });
     useMultiTagsMock.mockReturnValue([]);
@@ -153,6 +158,7 @@ describe('ProductFilters layout contract', () => {
     const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(filterPanelProps.defaultExpanded).toBe(false);
     expect(useProductCategoriesMock).toHaveBeenCalledWith(undefined, { enabled: false });
+    expect(useProductCategoriesForCatalogsMock).toHaveBeenCalledWith([], { enabled: false });
     expect(useCatalogsMock).toHaveBeenCalledWith({ enabled: false });
     expect(useTagsMock).toHaveBeenCalledWith(undefined, { enabled: false });
     expect(useMultiTagsMock).toHaveBeenCalledWith([], { enabled: false });
@@ -190,9 +196,95 @@ describe('ProductFilters layout contract', () => {
     useMultiTagsMock.mockReturnValue([{ data: { invalid: true } }]);
     useProducersMock.mockReturnValue({ data: { invalid: true } });
     useProductCategoriesMock.mockReturnValue({ data: { invalid: true } });
+    useProductCategoriesForCatalogsMock.mockReturnValue({ data: { invalid: true } });
 
     render(<ProductFilters />);
 
     expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
+  });
+
+  it('builds category options across all catalogs when Product List is scoped to all catalogs', () => {
+    useCatalogsMock.mockReturnValue({
+      data: [
+        { id: 'catalog-1', name: 'Catalog One' },
+        { id: 'catalog-2', name: 'Catalog Two' },
+      ],
+    });
+    useProductCategoriesForCatalogsMock.mockReturnValue({
+      data: [
+        {
+          id: 'cat-1',
+          catalogId: 'catalog-1',
+          name: 'Keychains',
+          name_en: 'Keychains',
+          name_pl: 'Breloki',
+          name_de: null,
+          color: null,
+          parentId: null,
+        },
+        {
+          id: 'cat-2',
+          catalogId: 'catalog-2',
+          name: 'Keychains',
+          name_en: 'Keychains',
+          name_pl: 'Breloki',
+          name_de: null,
+          color: null,
+          parentId: null,
+        },
+        {
+          id: 'cat-3',
+          catalogId: 'catalog-2',
+          name: 'Stickers',
+          name_en: 'Stickers',
+          name_pl: 'Naklejki',
+          name_de: null,
+          color: null,
+          parentId: null,
+        },
+      ],
+    });
+
+    render(<ProductFilters />);
+
+    const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as {
+      filters: Array<{
+        key: string;
+        options?: Array<{ value: string; label: string }>;
+      }>;
+    };
+    const categoryFilter = filterPanelProps.filters.find((field) => field.key === 'categoryId');
+
+    expect(useProductCategoriesForCatalogsMock).toHaveBeenCalledWith(
+      ['catalog-1', 'catalog-2'],
+      { enabled: true }
+    );
+    expect(categoryFilter?.options).toEqual(
+      expect.arrayContaining([
+        { value: '__all__', label: 'All categories' },
+        { value: 'cat-1', label: 'Keychains (Catalog One)' },
+        { value: 'cat-2', label: 'Keychains (Catalog Two)' },
+        { value: 'cat-3', label: 'Stickers' },
+      ])
+    );
+  });
+
+  it('maps category option selection back to setCategoryId', () => {
+    const setCategoryId = vi.fn();
+    useProductListFiltersContextMock.mockReturnValue(
+      buildFiltersContextValue({ setCategoryId })
+    );
+
+    render(<ProductFilters />);
+
+    const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as {
+      onFilterChange: (key: string, value: unknown) => void;
+    };
+
+    filterPanelProps.onFilterChange('categoryId', 'cat-123');
+    filterPanelProps.onFilterChange('categoryId', '__all__');
+
+    expect(setCategoryId).toHaveBeenNthCalledWith(1, 'cat-123');
+    expect(setCategoryId).toHaveBeenNthCalledWith(2, '');
   });
 });

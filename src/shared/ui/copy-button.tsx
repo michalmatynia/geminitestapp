@@ -17,6 +17,7 @@ type CopyButtonProps = {
   showText?: boolean;
   disabled?: boolean | undefined;
   children?: React.ReactNode;
+  ariaLabel?: string;
 };
 
 export function CopyButton(props: CopyButtonProps): React.JSX.Element {
@@ -29,6 +30,7 @@ export function CopyButton(props: CopyButtonProps): React.JSX.Element {
     showText = false,
     disabled,
     children,
+    ariaLabel,
   } = props;
 
   const [isCopied, setIsCopied] = useState(false);
@@ -38,7 +40,7 @@ export function CopyButton(props: CopyButtonProps): React.JSX.Element {
     if (!value) return;
 
     try {
-      if (navigator.clipboard && window.isSecureContext) {
+      if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(value);
       } else {
         // Fallback for non-secure contexts
@@ -70,6 +72,7 @@ export function CopyButton(props: CopyButtonProps): React.JSX.Element {
       }}
       className={className}
       disabled={disabled}
+      aria-label={ariaLabel}
       title={isCopied ? 'Copied!' : 'Copy to clipboard'}
     >
       {children ?? (

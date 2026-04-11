@@ -45,6 +45,13 @@ const CONTEXT_TRANSFORM_OPTIONS = [
   LabeledOptionDto<'none' | 'product_categories_leaf_only'>
 >;
 
+const CONTEXT_REUSE_MODE_OPTIONS = [
+  { value: 'never', label: 'Always Fetch Live Context' },
+  { value: 'prefer_transformed_input', label: 'Prefer Matching Input Context' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'never' | 'prefer_transformed_input'>
+>;
+
 const DEFAULT_CONTEXT_LIMIT = 20;
 const MAX_CONTEXT_LIMIT = 100;
 
@@ -119,6 +126,7 @@ interface SchemaConfig {
   contextQuery: string;
   contextLimit: number;
   contextTransform: 'none' | 'product_categories_leaf_only';
+  contextReuseMode: 'never' | 'prefer_transformed_input';
   includeFields: boolean;
   includeRelations: boolean;
   formatAs: 'json' | 'text';
@@ -151,6 +159,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     contextQuery: selectedNode.config?.db_schema?.contextQuery ?? '',
     contextLimit: selectedNode.config?.db_schema?.contextLimit ?? DEFAULT_CONTEXT_LIMIT,
     contextTransform: selectedNode.config?.db_schema?.contextTransform ?? 'none',
+    contextReuseMode: selectedNode.config?.db_schema?.contextReuseMode ?? 'never',
     includeFields: selectedNode.config?.db_schema?.includeFields ?? true,
     includeRelations: selectedNode.config?.db_schema?.includeRelations ?? true,
     formatAs: selectedNode.config?.db_schema?.formatAs ?? 'text',
@@ -561,6 +570,28 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                     <code>fullPath</code>
                     {' '}
                     field for disambiguation.
+                  </div>
+                </div>
+
+                <div>
+                  <Label className='text-xs text-gray-400'>Live Context Reuse</Label>
+                  <SelectSimple
+                    size='sm'
+                    value={schemaConfig.contextReuseMode}
+                    onValueChange={(value: string) =>
+                      updateSchemaConfig({
+                        contextReuseMode: value as SchemaConfig['contextReuseMode'],
+                      })
+                    }
+                    ariaLabel='Live context reuse mode'
+                    options={CONTEXT_REUSE_MODE_OPTIONS}
+                    triggerClassName='mt-2 border-border bg-card/70'
+                   title='Select option'/>
+                  <div className='mt-2 text-[10px] text-gray-500'>
+                    When enabled, runtime may reuse matching transformed context already supplied by
+                    upstream inputs before fetching live documents again. This keeps the behavior
+                    workflow-driven and only applies when the incoming payload matches the selected
+                    transform.
                   </div>
                 </div>
               </Card>

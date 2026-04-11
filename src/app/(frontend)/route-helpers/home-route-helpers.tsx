@@ -160,24 +160,49 @@ export const renderHomeRoute = async ({
     redirect(localizePublicPath(getKangurPublicLaunchHref(kangurLaunchRoute ?? undefined), resolvedLocale));
   }
 
-  const zoningEnabled = await isDomainZoningEnabled();
-  const hdrs = zoningEnabled ? await withTiming('headers', readOptionalRequestHeaders) : null;
-  const domain = await withTiming('cmsDomain', () => resolveHomeDomainWithRecovery(hdrs));
-  const slugs = await withTiming('cmsSlugs', () =>
-    getHomeSlugsForDomainCached({
-      domainId: domain.id,
-      locale: resolvedLocale,
-    })
-  );
+  let hdrs:
+    | Headers
+    | { get?: (key: string) => string | null }
+    | Record<string, unknown>
+    | null
+    | undefined = null;
 
-  const content = await withTiming('homeContent', () =>
-    HomeContent({
-      domainId: domain.id,
-      slugs,
-      withTiming,
-      locale: resolvedLocale,
-    })
-  );
+  let content: JSX.Element;
+
+  try {
+    const zoningEnabled = await isDomainZoningEnabled();
+    hdrs = zoningEnabled ? await withTiming('headers', readOptionalRequestHeaders) : null;
+    const domain = await withTiming('cmsDomain', () => resolveHomeDomainWithRecovery(hdrs));
+    const slugs = await withTiming('cmsSlugs', () =>
+      getHomeSlugsForDomainCached({
+        domainId: domain.id,
+        locale: resolvedLocale,
+      })
+    );
+
+    content = await withTiming('homeContent', () =>
+      HomeContent({
+        domainId: domain.id,
+        slugs,
+        withTiming,
+        locale: resolvedLocale,
+      })
+    );
+  } catch (error) {
+    if (!isTransientMongoConnectionError(error)) {
+      throw error;
+    }
+
+    const fallbackDomain = buildFallbackHomeDomain(hdrs);
+    content = await withTiming('homeContentTransientFallback', () =>
+      HomeContent({
+        domainId: fallbackDomain.id,
+        slugs: [],
+        withTiming,
+        locale: resolvedLocale,
+      })
+    );
+  }
 
   await flush();
   return content;

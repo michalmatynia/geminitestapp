@@ -127,6 +127,10 @@ vi.mock('./StructuredProductNameField', () => ({
   },
 }));
 
+vi.mock('./ProductFormLatestAmazonExtraction', () => ({
+  default: () => null,
+}));
+
 import ProductFormGeneral from './ProductFormGeneral';
 
 const createPattern = (

@@ -1,4 +1,5 @@
 import { type UseQueryResult } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { getLanguages } from '@/features/internationalization/public';
 import type { Language } from '@/shared/contracts/internationalization';
@@ -106,6 +107,55 @@ export function useCategories(
       queryKey,
       tags: ['products', 'metadata', 'categories'],
       description: 'Loads products metadata categories.'},
+  });
+}
+
+export function useCategoriesForCatalogs(
+  catalogIds: string[],
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCategory> {
+  const normalizedCatalogIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          catalogIds
+            .map((catalogId) => catalogId.trim())
+            .filter((catalogId) => catalogId.length > 0)
+        )
+      ).sort(),
+    [catalogIds]
+  );
+  const queryKey = normalizeQueryKey([
+    ...productMetadataKeys.all,
+    'categories-batch',
+    normalizedCatalogIds,
+  ]);
+
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductCategory[]> => {
+      if (normalizedCatalogIds.length === 0) return [];
+
+      const grouped = await api.get<Record<string, ProductCategory[]>>(
+        `/api/v2/products/categories/batch?catalogIds=${normalizedCatalogIds.map(encodeURIComponent).join(',')}`
+      );
+
+      return normalizedCatalogIds.flatMap((catalogId) => {
+        const categories = grouped[catalogId];
+        return Array.isArray(categories) ? categories : [];
+      });
+    },
+    enabled: normalizedCatalogIds.length > 0 && (options?.enabled ?? true),
+    ...STABLE_METADATA_QUERY_OPTIONS,
+    meta: {
+      source: 'products.hooks.useCategoriesForCatalogs',
+      operation: 'list',
+      resource: 'products.metadata.categories.batch',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'metadata', 'categories', 'batch'],
+      description: 'Loads products metadata categories for multiple catalogs.',
+    },
   });
 }
 

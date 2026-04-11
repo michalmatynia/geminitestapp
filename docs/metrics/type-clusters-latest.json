@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T15:52:10.181Z",
+  "generatedAt": "2026-04-11T17:11:08.898Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -18,9 +18,9 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10281,
-    "exportedDeclarationsScanned": 6020,
-    "candidateDeclarationsScanned": 6002,
+    "filesScanned": 10284,
+    "exportedDeclarationsScanned": 5961,
+    "candidateDeclarationsScanned": 5943,
     "exactShapeClusters": 2,
     "nearShapeClusters": 2,
     "clustersAfterFilters": 4,

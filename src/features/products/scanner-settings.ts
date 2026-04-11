@@ -12,12 +12,16 @@ import {
   normalizeIntegrationConnectionPlaywrightPersonaId,
   resolveIntegrationPlaywrightPersonaSettings,
   type IntegrationConnectionPlaywrightBrowser,
-} from '@/features/integrations/public';
+} from '@/features/integrations/utils/playwright-connection-settings';
 
 export const PRODUCT_SCANNER_SETTINGS_KEY = 'product_scanner_settings_v1';
 export const PRODUCT_SCANNER_SETTINGS_HREF = '/admin/settings/scanner';
 export const DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR = 'auto_show_browser' as const;
 export const DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS = 240_000;
+export const defaultProductScannerPlaywrightSettings: PlaywrightSettings = {
+  ...buildIntegrationConnectionPlaywrightSettings(),
+  headless: false,
+};
 
 export type ProductScannerSettingsDraft = {
   playwrightPersonaId: string | null;
@@ -186,9 +190,11 @@ export const resolveProductScannerSettingsBaseline = (
   personas: PersonaSettingsSource | null | undefined,
   personaId: string | null | undefined
 ): PlaywrightSettings =>
-  buildIntegrationConnectionPlaywrightSettings(
-    resolveIntegrationPlaywrightPersonaSettings(personas, personaId)
-  );
+  personaId
+    ? buildIntegrationConnectionPlaywrightSettings(
+        resolveIntegrationPlaywrightPersonaSettings(personas, personaId)
+      )
+    : defaultProductScannerPlaywrightSettings;
 
 export const buildProductScannerSettingsDraft = (
   settings: ProductScannerSettings,

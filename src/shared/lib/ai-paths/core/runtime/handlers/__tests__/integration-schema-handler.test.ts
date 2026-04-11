@@ -283,4 +283,161 @@ describe('handleDbSchema', () => {
       })
     );
   });
+
+  it('reuses embedded normalize category context instead of browsing live product categories', async () => {
+    schemaMock.mockResolvedValue({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collections: [
+          {
+            name: 'product_categories',
+            fields: [{ name: 'name_en', type: 'string' }],
+          },
+        ],
+      },
+    });
+
+    const { handleDbSchema } = await import(
+      '@/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler'
+    );
+
+    const node = buildNode({
+      mode: 'selected',
+      collections: ['product_categories'],
+      sourceMode: 'live_context',
+      contextCollections: ['product_categories'],
+      contextQuery: '{\n  "catalogId": "{{context.catalogId}}"\n}',
+      contextLimit: 25,
+      includeFields: true,
+      includeRelations: true,
+      formatAs: 'json',
+      contextTransform: 'product_categories_leaf_only',
+      contextReuseMode: 'prefer_transformed_input',
+    });
+
+    const result = await handleDbSchema(
+      buildContextWithInputs(node, {
+        context: {
+          catalogId: 'catalog-1',
+          categoryId: 'leaf-anime-pins',
+          categoryContext: {
+            catalogId: 'catalog-1',
+            currentCategoryId: 'leaf-anime-pins',
+            currentCategory: {
+              id: 'leaf-anime-pins',
+              label: 'Anime Pins',
+              fullPath: 'Pins > Anime Pins',
+              isLeaf: true,
+            },
+            leafCategories: [
+              {
+                id: 'leaf-anime-pins',
+                label: 'Anime Pins',
+                fullPath: 'Pins > Anime Pins',
+                parentId: 'parent-pins',
+                catalogId: 'catalog-1',
+              },
+            ],
+            allowedLeafLabels: ['Anime Pins'],
+          },
+        },
+      })
+    );
+
+    expect(browseMock).not.toHaveBeenCalled();
+    expect(result['context']).toEqual(
+      expect.objectContaining({
+        liveContext: expect.objectContaining({
+          selectedCollections: ['product_categories'],
+          query: '{\n  "catalogId": "catalog-1"\n}',
+        }),
+      })
+    );
+    expect(
+      (
+        result['context'] as {
+          liveContext: { collectionMap: Record<string, { documents: Array<Record<string, unknown>> }> };
+        }
+      ).liveContext.collectionMap['product_categories'].documents
+    ).toEqual([
+      expect.objectContaining({
+        id: 'leaf-anime-pins',
+        leafLabel: 'Anime Pins',
+        fullPath: 'Pins > Anime Pins',
+        catalogId: 'catalog-1',
+      }),
+    ]);
+  });
+
+  it('still fetches live context when transformed input reuse is disabled', async () => {
+    schemaMock.mockResolvedValue({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collections: [
+          {
+            name: 'product_categories',
+            fields: [{ name: 'name_en', type: 'string' }],
+          },
+        ],
+      },
+    });
+    browseMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collection: 'product_categories',
+        documents: [{ _id: 'cat-1', catalogId: 'catalog-1', name_en: 'Pins' }],
+        total: 1,
+        limit: 25,
+        skip: 0,
+      },
+    });
+
+    const { handleDbSchema } = await import(
+      '@/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler'
+    );
+
+    const node = buildNode({
+      mode: 'selected',
+      collections: ['product_categories'],
+      sourceMode: 'live_context',
+      contextCollections: ['product_categories'],
+      contextQuery: '{\n  "catalogId": "{{context.catalogId}}"\n}',
+      contextLimit: 25,
+      includeFields: true,
+      includeRelations: true,
+      formatAs: 'json',
+      contextTransform: 'product_categories_leaf_only',
+      contextReuseMode: 'never',
+    });
+
+    await handleDbSchema(
+      buildContextWithInputs(node, {
+        context: {
+          catalogId: 'catalog-1',
+          categoryContext: {
+            catalogId: 'catalog-1',
+            leafCategories: [
+              {
+                id: 'leaf-anime-pins',
+                label: 'Anime Pins',
+                fullPath: 'Pins > Anime Pins',
+              },
+            ],
+          },
+        },
+      })
+    );
+
+    expect(browseMock).toHaveBeenCalledWith(
+      'product_categories',
+      expect.objectContaining({
+        provider: 'auto',
+        limit: 25,
+        query: '{\n  "catalogId": "catalog-1"\n}',
+      })
+    );
+  });
 });

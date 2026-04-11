@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-11T16:18:11.492Z",
+  "generatedAt": "2026-04-11T17:22:00.537Z",
   "status": "passed",
   "summary": {
-    "total": 13,
+    "total": 11,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 13,
+    "infoCount": 11,
     "status": "passed",
-    "fileCount": 7268
+    "fileCount": 7270
   },
   "scope": {
     "root": "src",
@@ -16,7 +16,7 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 8,
+    "anyCount": 6,
     "eslintDisableCount": 2,
     "nonNullAssertionCount": 3,
     "tsIgnoreCount": 0,
@@ -63,26 +63,6 @@
       "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
       "file": "src/features/kangur/ui/KangurLoginPage.test-support.tsx",
       "line": 6,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/products/components/form/ProductFormScans.tsx",
-      "line": 43,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/products/components/list/ProductAmazonScanModal.tsx",
-      "line": 70,
       "column": null,
       "snippet": null,
       "context": null
@@ -169,7 +149,7 @@
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 8
+      "infoCount": 6
     },
     {
       "ruleId": "non-null-assertion",
@@ -178,5 +158,5 @@
       "infoCount": 3
     }
   ],
-  "durationMs": 2734
+  "durationMs": 1498
 }

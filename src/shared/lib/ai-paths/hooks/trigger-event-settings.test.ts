@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
-import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import {
+  AI_PATHS_HISTORY_RETENTION_KEY,
+  AI_PATHS_UI_STATE_KEY,
+  PATH_CONFIG_PREFIX,
+  PATH_INDEX_KEY,
+} from '@/shared/lib/ai-paths/core/constants';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import {
@@ -15,8 +20,10 @@ import {
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 import {
+  __resetTriggerPathConfigCacheForTests,
   buildSelectiveTriggerSettingsData,
   coerceSampleStateMap,
+  loadTriggerPathConfigCached,
   loadPathConfigsFromSettings,
   loadTriggerSettingsData,
   resolvePreferredPathId,
@@ -134,6 +141,7 @@ const mockedFetchAll = vi.mocked(fetchAiPathsSettingsCached);
 beforeEach(() => {
   mockedFetchByKeys.mockClear();
   mockedFetchAll.mockClear();
+  __resetTriggerPathConfigCacheForTests();
 });
 
 // ── resolvePreferredPathId ────────────────────────────────────────────────────
@@ -762,36 +770,47 @@ describe('buildSelectiveTriggerSettingsData', () => {
     );
   });
 
-  it('returns records including a synthetic index entry containing only the preferred path', async () => {
+  it('returns only the preferred path config plus required helper records', async () => {
     const configValue = makeConfig('path-sel', 'Selective Path');
     mockedFetchByKeys.mockResolvedValue([
+      { key: AI_PATHS_HISTORY_RETENTION_KEY, value: '2' },
+      { key: AI_PATHS_UI_STATE_KEY, value: '{"value":{"activePathId":"path-sel"}}' },
       { key: `${PATH_CONFIG_PREFIX}path-sel`, value: configValue },
     ]);
 
     const records = await buildSelectiveTriggerSettingsData('path-sel');
 
-    const indexRecord = records.find((r) => r.key === PATH_INDEX_KEY);
-    expect(indexRecord).toBeDefined();
-    const parsedIndex = JSON.parse(indexRecord!.value) as Array<{ id: string; name: string }>;
-    expect(parsedIndex).toHaveLength(1);
-    expect(parsedIndex[0]?.id).toBe('path-sel');
-    expect(parsedIndex[0]?.name).toBe('Selective Path');
-
-    const configRecord = records.find((r) => r.key === `${PATH_CONFIG_PREFIX}path-sel`);
-    expect(configRecord?.value).toBe(configValue);
+    expect(records).toEqual([
+      { key: AI_PATHS_HISTORY_RETENTION_KEY, value: '2' },
+      { key: AI_PATHS_UI_STATE_KEY, value: '{"value":{"activePathId":"path-sel"}}' },
+      { key: `${PATH_CONFIG_PREFIX}path-sel`, value: configValue },
+    ]);
+    expect(records.some((record) => record.key === PATH_INDEX_KEY)).toBe(false);
   });
 
-  it('derives path name from config when available, falling back to a short id-based name', async () => {
+  it('drops unrelated selective records that are not needed for trigger execution', async () => {
+    const configValue = makeConfig('path-sel', 'Selective Path');
+    mockedFetchByKeys.mockResolvedValue([
+      { key: 'ai_paths_unrelated', value: 'noop' },
+      { key: `${PATH_CONFIG_PREFIX}path-sel`, value: configValue },
+    ]);
+
+    const records = await buildSelectiveTriggerSettingsData('path-sel');
+
+    expect(records).toEqual([{ key: `${PATH_CONFIG_PREFIX}path-sel`, value: configValue }]);
+  });
+
+  it('keeps malformed configs untouched for downstream canonical validation', async () => {
     const malformedConfigWithNoName = JSON.stringify({ id: 'path-noname', nodes: [], edges: [] });
     mockedFetchByKeys.mockResolvedValue([
       { key: `${PATH_CONFIG_PREFIX}path-noname`, value: malformedConfigWithNoName },
     ]);
 
     const records = await buildSelectiveTriggerSettingsData('path-noname');
-    const indexRecord = records.find((r) => r.key === PATH_INDEX_KEY);
-    const parsedIndex = JSON.parse(indexRecord!.value) as Array<{ id: string; name: string }>;
-    // Fallback name is based on the first 6 chars of the id
-    expect(parsedIndex[0]?.name).toMatch(/path-n/);
+
+    expect(records).toEqual([
+      { key: `${PATH_CONFIG_PREFIX}path-noname`, value: malformedConfigWithNoName },
+    ]);
   });
 });
 
@@ -841,5 +860,42 @@ describe('loadTriggerSettingsData', () => {
     );
 
     expect(mockedFetchAll).not.toHaveBeenCalled();
+  });
+});
+
+describe('loadTriggerPathConfigCached', () => {
+  it('reuses the same parsed config instance for identical stored payloads', () => {
+    const rawConfig = makeConfig('path-cache', 'Cached Path');
+
+    const first = loadTriggerPathConfigCached({
+      pathId: 'path-cache',
+      rawConfig,
+    });
+    const second = loadTriggerPathConfigCached({
+      pathId: 'path-cache',
+      rawConfig,
+    });
+
+    expect(second).toBe(first);
+  });
+
+  it('refreshes the cached config when the raw payload changes for the same path', () => {
+    const first = loadTriggerPathConfigCached({
+      pathId: 'path-cache-refresh',
+      rawConfig: makeConfig('path-cache-refresh', 'First Name'),
+    });
+    const secondRawConfig = makeConfig('path-cache-refresh', 'Second Name');
+    const second = loadTriggerPathConfigCached({
+      pathId: 'path-cache-refresh',
+      rawConfig: secondRawConfig,
+    });
+    const third = loadTriggerPathConfigCached({
+      pathId: 'path-cache-refresh',
+      rawConfig: secondRawConfig,
+    });
+
+    expect(second).not.toBe(first);
+    expect(second.name).toBe('Second Name');
+    expect(third).toBe(second);
   });
 });

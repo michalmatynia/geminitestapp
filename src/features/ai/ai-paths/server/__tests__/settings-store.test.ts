@@ -17,6 +17,12 @@ import {
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import {
+  MARKETPLACE_COPY_DEBRAND_PATH_ID,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION,
+  MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
+} from '@/shared/lib/ai-paths/marketplace-copy-debrand';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 
 const buildEmptyStarterSettings = () => [
@@ -131,6 +137,44 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     ).toBe(true);
   });
 
+  it('restores the canonical marketplace copy debrand row trigger when it is removed from auto-seeded settings', () => {
+    const fullySeeded = ensureStarterWorkflowDefaults(buildEmptyStarterSettings()).nextRecords;
+    const withoutDebrandTrigger = fullySeeded.map((record) => {
+      if (record.key !== AI_PATHS_TRIGGER_BUTTONS_KEY) return record;
+      const parsed = JSON.parse(record.value) as Array<Record<string, unknown>>;
+      return {
+        ...record,
+        value: JSON.stringify(
+          parsed.filter(
+            (button) => button['id'] !== MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID
+          )
+        ),
+      };
+    });
+
+    expect(countPendingStarterWorkflowDefaults(withoutDebrandTrigger)).toBeGreaterThan(0);
+
+    const repaired = ensureStarterWorkflowDefaults(withoutDebrandTrigger);
+    const triggerButtonsRecord = repaired.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    const debrandButton = triggerButtons.find(
+      (button) => button['id'] === MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID
+    );
+
+    expect(repaired.affectedCount).toBe(1);
+    expect(debrandButton).toEqual(
+      expect.objectContaining({
+        id: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+        name: MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
+        pathId: MARKETPLACE_COPY_DEBRAND_PATH_ID,
+        locations: [MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION],
+      })
+    );
+  });
+
   it('restores the broader static recovery bundle from semantic workflow assets', () => {
     const initial = [
       { key: AI_PATHS_INDEX_KEY, value: '[]' },
@@ -177,6 +221,44 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(
       triggerButtons.some((button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')
     ).toBe(true);
+  });
+
+  it('restores the canonical marketplace copy debrand row trigger when it is removed from the static recovery bundle', () => {
+    const restored = buildStaticRecoveryRecords();
+    const withoutDebrandTrigger = restored.map((record) => {
+      if (record.key !== AI_PATHS_TRIGGER_BUTTONS_KEY) return record;
+      const parsed = JSON.parse(record.value) as Array<Record<string, unknown>>;
+      return {
+        ...record,
+        value: JSON.stringify(
+          parsed.filter(
+            (button) => button['id'] !== MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID
+          )
+        ),
+      };
+    });
+
+    expect(countPendingStaticStarterWorkflowBundle(withoutDebrandTrigger)).toBeGreaterThan(0);
+
+    const repaired = restoreStaticStarterWorkflowBundle(withoutDebrandTrigger);
+    const triggerButtonsRecord = repaired.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    const debrandButton = triggerButtons.find(
+      (button) => button['id'] === MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID
+    );
+
+    expect(repaired.affectedCount).toBe(1);
+    expect(debrandButton).toEqual(
+      expect.objectContaining({
+        id: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+        name: MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
+        pathId: MARKETPLACE_COPY_DEBRAND_PATH_ID,
+        locations: [MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION],
+      })
+    );
   });
 
   it('rejects invalid trigger button payloads during starter seeding', () => {

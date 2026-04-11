@@ -43,6 +43,7 @@ vi.mock('@/features/products/hooks/useUserPreferences', () => ({
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useCategories: () => ({ data: [] }),
+  useCategoriesForCatalogs: () => ({ data: [] }),
   useCatalogs: () => ({ data: [] }),
   useMultiTags: () => [],
   useTags: () => ({ data: [] }),

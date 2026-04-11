@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T16:18:37.727Z",
+  "generatedAt": "2026-04-11T17:22:24.772Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 7242,
+    "fileCount": 7244,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -33090,6 +33090,18 @@
     },
     {
       "file": "src/features/products/components/product-list-table-surface-loader.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/scans/ProductScanSteps.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false

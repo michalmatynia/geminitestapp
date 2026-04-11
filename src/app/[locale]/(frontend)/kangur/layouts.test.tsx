@@ -5,39 +5,19 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  getKangurStorefrontInitialStateMock,
-  getKangurSurfaceBootstrapStyleMock,
-  shouldRenderVercelAnalyticsMock,
-  KangurAliasAppLayoutMock,
+  SharedKangurLayoutMock,
+  SharedKangurAppLayoutMock,
 } = vi.hoisted(() => ({
-  getKangurStorefrontInitialStateMock: vi.fn(),
-  getKangurSurfaceBootstrapStyleMock: vi.fn(),
-  shouldRenderVercelAnalyticsMock: vi.fn(),
-  KangurAliasAppLayoutMock: vi.fn(),
+  SharedKangurLayoutMock: vi.fn(),
+  SharedKangurAppLayoutMock: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/server', () => ({
-  getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
-  getKangurSurfaceBootstrapStyle: getKangurSurfaceBootstrapStyleMock,
-  KANGUR_SURFACE_HINT_SCRIPT: 'window.__KANGUR_SURFACE_HINT__=1;',
-  KangurAliasAppLayout: KangurAliasAppLayoutMock,
+vi.mock('@/app/(frontend)/kangur/layout', () => ({
+  default: SharedKangurLayoutMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
-  KangurStorefrontAppearanceProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid='kangur-storefront-appearance-provider'>{children}</div>
-  ),
-  KangurSurfaceClassSync: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid='kangur-surface-class-sync'>{children}</div>
-  ),
-}));
-
-vi.mock('@/shared/lib/analytics/vercel-analytics', () => ({
-  shouldRenderVercelAnalytics: shouldRenderVercelAnalyticsMock,
-}));
-
-vi.mock('@vercel/analytics/next', () => ({
-  Analytics: () => <div data-testid='vercel-analytics' />,
+vi.mock('@/app/(frontend)/kangur/(app)/layout', () => ({
+  default: SharedKangurAppLayoutMock,
 }));
 
 import LocalizedKangurLayout from '@/app/[locale]/(frontend)/kangur/layout';
@@ -46,45 +26,40 @@ import LocalizedKangurAppLayout from '@/app/[locale]/(frontend)/kangur/(app)/lay
 describe('localized kangur layouts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getKangurStorefrontInitialStateMock.mockResolvedValue({
-      initialMode: 'light',
-      initialThemeSettings: {
-        default: '{"theme":"day"}',
-        dawn: null,
-        sunset: null,
-        dark: null,
-      },
-    });
-    getKangurSurfaceBootstrapStyleMock.mockReturnValue(':root{color-scheme:light;}');
-    shouldRenderVercelAnalyticsMock.mockReturnValue(false);
-    KangurAliasAppLayoutMock.mockResolvedValue(<div data-testid='kangur-alias-app-layout' />);
+    SharedKangurLayoutMock.mockImplementation(
+      ({ children }: { children: React.ReactNode }) => (
+        <div data-testid='shared-kangur-layout'>{children}</div>
+      )
+    );
+    SharedKangurAppLayoutMock.mockImplementation(
+      ({ children }: { children: React.ReactNode }) => (
+        <div data-testid='shared-kangur-app-layout'>{children}</div>
+      )
+    );
   });
 
-  it('renders the localized storefront layout through feature helpers', async () => {
+  it('renders the localized storefront layout through the shared route wrapper', async () => {
+    const child = <div data-testid='localized-kangur-child' />;
     const result = await LocalizedKangurLayout({
-      children: <div data-testid='localized-kangur-child' />,
+      children: child,
     });
 
     expect(React.isValidElement(result)).toBe(true);
-    expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
-    expect(getKangurSurfaceBootstrapStyleMock).toHaveBeenCalledWith({
-      mode: 'light',
-      themeSettings: {
-        default: '{"theme":"day"}',
-        dawn: null,
-        sunset: null,
-        dark: null,
-      },
+    expect(result).toMatchObject({
+      type: SharedKangurLayoutMock,
+      props: { children: child },
     });
-    expect(shouldRenderVercelAnalyticsMock).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the localized app layout through the alias shell helper', async () => {
+  it('renders the localized app layout through the shared app wrapper', async () => {
     const child = <div data-testid='localized-kangur-app-child' />;
 
     const result = await LocalizedKangurAppLayout({ children: child });
 
     expect(React.isValidElement(result)).toBe(true);
-    expect(KangurAliasAppLayoutMock).toHaveBeenCalledWith({ children: child });
+    expect(result).toMatchObject({
+      type: SharedKangurAppLayoutMock,
+      props: { children: child },
+    });
   });
 });

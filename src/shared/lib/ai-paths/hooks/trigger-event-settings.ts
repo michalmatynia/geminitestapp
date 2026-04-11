@@ -19,6 +19,53 @@ import {
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
+const TRIGGER_PATH_CONFIG_CACHE_MAX_ENTRIES = 64;
+const triggerPathConfigCache = new Map<string, { rawConfig: string; config: PathConfig }>();
+
+const readTriggerPathConfigCache = (pathId: string, rawConfig: string): PathConfig | null => {
+  const cached = triggerPathConfigCache.get(pathId) ?? null;
+  if (cached?.rawConfig !== rawConfig) {
+    return null;
+  }
+  triggerPathConfigCache.delete(pathId);
+  triggerPathConfigCache.set(pathId, cached);
+  return cached.config;
+};
+
+const writeTriggerPathConfigCache = (
+  pathId: string,
+  rawConfig: string,
+  config: PathConfig
+): void => {
+  if (triggerPathConfigCache.has(pathId)) {
+    triggerPathConfigCache.delete(pathId);
+  }
+  triggerPathConfigCache.set(pathId, { rawConfig, config });
+  if (triggerPathConfigCache.size <= TRIGGER_PATH_CONFIG_CACHE_MAX_ENTRIES) {
+    return;
+  }
+  const oldestKey = triggerPathConfigCache.keys().next().value;
+  if (typeof oldestKey === 'string') {
+    triggerPathConfigCache.delete(oldestKey);
+  }
+};
+
+export const __resetTriggerPathConfigCacheForTests = (): void => {
+  triggerPathConfigCache.clear();
+};
+
+export const loadTriggerPathConfigCached = (args: {
+  pathId: string;
+  rawConfig: string;
+}): PathConfig => {
+  const cached = readTriggerPathConfigCache(args.pathId, args.rawConfig);
+  if (cached) {
+    return cached;
+  }
+  const config = loadCanonicalStoredPathConfig(args);
+  writeTriggerPathConfigCache(args.pathId, args.rawConfig, config);
+  return config;
+};
 
 export const resolveRuntimeStateHint = (value: unknown): RuntimeState | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -60,40 +107,12 @@ export const buildSelectiveTriggerSettingsData = async (
       }
     );
   }
-
-  let preferredPathName = `Path ${preferredPathId.slice(0, 6)}`;
-  try {
-    const parsed = JSON.parse(configRecord.value) as { name?: unknown };
-    if (typeof parsed?.name === 'string' && parsed.name.trim().length > 0) {
-      preferredPathName = parsed.name.trim();
-    }
-  } catch (error) {
-    logClientCatch(error, {
-      source: 'useAiPathTriggerEvent',
-      action: 'parsePreferredPathConfigName',
-      preferredPathId,
-    });
-
-    // Keep fallback name when config is malformed.
-  }
-
-  const timestamp = new Date().toISOString();
-  const syntheticIndex = JSON.stringify([
-    {
-      id: preferredPathId,
-      name: preferredPathName,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    },
-  ]);
-  const baseRecords = selectiveRecords.filter(
-    (item: { key: string }) => item.key !== PATH_INDEX_KEY && item.key !== preferredConfigKey
+  return selectiveRecords.filter(
+    (item: { key: string }) =>
+      item.key === AI_PATHS_HISTORY_RETENTION_KEY ||
+      item.key === AI_PATHS_UI_STATE_KEY ||
+      item.key === preferredConfigKey
   );
-  return [
-    ...baseRecords,
-    { key: PATH_INDEX_KEY, value: syntheticIndex },
-    { key: preferredConfigKey, value: configRecord.value },
-  ];
 };
 
 export const loadTriggerSettingsData = async (args: {
@@ -202,7 +221,7 @@ export const loadPathConfigsFromSettings = async (
       return;
     }
 
-    const normalizedConfig = loadCanonicalStoredPathConfig({
+    const normalizedConfig = loadTriggerPathConfigCached({
       pathId: meta.id,
       rawConfig: configRaw,
     });

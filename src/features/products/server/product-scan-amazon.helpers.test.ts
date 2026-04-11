@@ -140,6 +140,52 @@ describe('product Amazon scan helpers', () => {
     ]);
   });
 
+  it('prioritizes URL-backed candidates ahead of file-only candidates', () => {
+    const candidates = resolveProductScanImageCandidates({
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/file-only.jpg',
+            filename: 'file-only.jpg',
+          },
+        },
+        {
+          imageFileId: 'image-2',
+          imageFile: {
+            id: 'image-2',
+            filepath: '/tmp/url-backed.jpg',
+            publicUrl: 'https://cdn.example.com/url-backed.jpg',
+            filename: 'url-backed.jpg',
+          },
+        },
+      ],
+      imageLinks: ['https://cdn.example.com/from-link.jpg'],
+    } as never);
+
+    expect(candidates).toEqual([
+      {
+        id: 'image-2',
+        filepath: '/tmp/url-backed.jpg',
+        url: 'https://cdn.example.com/url-backed.jpg',
+        filename: 'url-backed.jpg',
+      },
+      {
+        id: null,
+        filepath: null,
+        url: 'https://cdn.example.com/from-link.jpg',
+        filename: null,
+      },
+      {
+        id: 'image-1',
+        filepath: '/tmp/file-only.jpg',
+        url: null,
+        filename: 'file-only.jpg',
+      },
+    ]);
+  });
+
   it('deduplicates imageLinks against image-file URLs even when the file candidate was keyed by filepath', () => {
     const candidates = resolveProductScanImageCandidates({
       images: [

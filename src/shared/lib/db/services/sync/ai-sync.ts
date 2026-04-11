@@ -1,3 +1,4 @@
+import { BatchCountResult } from '@/shared/contracts/base';
 import type { DatabaseSyncHandler } from './types';
 import type {
   MongoProductAiJobDoc,
@@ -12,8 +13,6 @@ import type {
   AiPathNodeStatus,
   AiPathRunEventLevel,
 } from '@prisma/client';
-
-type BatchResult = { count: number };
 
 type MongoRecordWithStringId<TDoc> = Omit<TDoc, '_id'> & { _id: string };
 
@@ -108,11 +107,11 @@ export const syncProductAiJobs: DatabaseSyncHandler = async ({ mongo, prisma, no
       };
     })
     .filter((item): item is ProductAiJobSeed => item !== null);
-  const deleted = (await prisma.productAiJob.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.productAiJob.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.productAiJob.createMany({
       data: data as Prisma.ProductAiJobCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -157,11 +156,11 @@ export const syncAiPathRuns: DatabaseSyncHandler = async ({
     .filter((item): item is AiPathRunSeed => item !== null);
   await prisma.aiPathRunNode.deleteMany();
   await prisma.aiPathRunEvent.deleteMany();
-  const deleted = (await prisma.aiPathRun.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.aiPathRun.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.aiPathRun.createMany({
       data: data as Prisma.AiPathRunCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -197,11 +196,11 @@ export const syncAiPathRunNodes: DatabaseSyncHandler = async ({
       };
     })
     .filter((item): item is AiPathRunNodeSeed => item !== null);
-  const deleted = (await prisma.aiPathRunNode.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.aiPathRunNode.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.aiPathRunNode.createMany({
       data: data as Prisma.AiPathRunNodeCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -231,11 +230,11 @@ export const syncAiPathRunEvents: DatabaseSyncHandler = async ({
       };
     })
     .filter((item): item is AiPathRunEventSeed => item !== null);
-  const deleted = (await prisma.aiPathRunEvent.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.aiPathRunEvent.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.aiPathRunEvent.createMany({
       data: data as Prisma.AiPathRunEventCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };

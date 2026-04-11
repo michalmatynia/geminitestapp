@@ -174,4 +174,57 @@ describe('buildTriggeredProductEntityJson', () => {
       expect(result['catalogs']).toBeUndefined();
     });
   });
+
+  describe('normalize category context', () => {
+    it('embeds leaf-category context when modal category metadata is provided', () => {
+      const result = buildTriggeredProductEntityJson({
+        values: {
+          catalogIds: ['catalog-a'],
+          categoryId: 'leaf-anime-pins',
+        },
+        categories: [
+          {
+            id: 'parent-pins',
+            name: 'Pins',
+            color: null,
+            parentId: null,
+            catalogId: 'catalog-a',
+          },
+          {
+            id: 'leaf-anime-pins',
+            name: 'Anime Pins',
+            color: null,
+            parentId: 'parent-pins',
+            catalogId: 'catalog-a',
+          },
+        ] as never,
+      });
+
+      expect(result['categoryContext']).toEqual({
+        collection: 'product_categories',
+        catalogId: 'catalog-a',
+        currentCategoryId: 'leaf-anime-pins',
+        currentCategory: {
+          id: 'leaf-anime-pins',
+          label: 'Anime Pins',
+          fullPath: 'Pins > Anime Pins',
+          isLeaf: true,
+        },
+        leafCategories: [
+          {
+            id: 'leaf-anime-pins',
+            label: 'Anime Pins',
+            fullPath: 'Pins > Anime Pins',
+            parentId: 'parent-pins',
+            catalogId: 'catalog-a',
+            isCurrent: true,
+          },
+        ],
+        allowedLeafLabels: ['Anime Pins'],
+        totalCategories: 2,
+        totalLeafCategories: 1,
+        fetchedAt: null,
+      });
+    });
+  });
 });

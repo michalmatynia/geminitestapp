@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import { BASE_EXPORT_FIELD_DOCS } from './integrations/base-export-fields';
 
 /**
  * Product Sync DTOs
@@ -35,6 +36,228 @@ export const PRODUCT_SYNC_DIRECTION_OPTIONS: ProductSyncDirection[] = [
   'base_to_app',
   'app_to_base',
 ];
+
+export type ProductSyncBaseFieldOption = {
+  value: string;
+  label: string;
+  description?: string;
+  group?: string;
+  disabled?: boolean;
+};
+
+export type ProductSyncBaseFieldPatternHint = {
+  value: string;
+  description: string;
+};
+
+const BASE_EXPORT_FIELD_DESCRIPTION_BY_KEY = new Map(
+  BASE_EXPORT_FIELD_DOCS.map((entry) => [entry.key, entry.description])
+);
+
+const describeBaseExportField = (key: string): string | undefined =>
+  BASE_EXPORT_FIELD_DESCRIPTION_BY_KEY.get(key);
+
+const createProductSyncBaseFieldOption = (input: {
+  value: string;
+  label: string;
+  group: string;
+}): ProductSyncBaseFieldOption => ({
+  value: input.value,
+  label: input.label,
+  group: input.group,
+  description: describeBaseExportField(input.value),
+});
+
+const createProductSyncBaseFieldPatternHint = (value: string): ProductSyncBaseFieldPatternHint => ({
+  value,
+  description: describeBaseExportField(value) ?? value,
+});
+
+export const PRODUCT_SYNC_BASE_FIELD_OPTIONS_BY_APP_FIELD: Record<
+  ProductSyncAppField,
+  ProductSyncBaseFieldOption[]
+> = {
+  stock: [
+    createProductSyncBaseFieldOption({
+      value: 'stock',
+      label: 'Inventory stock (stock)',
+      group: 'Inventory',
+    }),
+  ],
+  price: [
+    createProductSyncBaseFieldOption({
+      value: 'prices.0',
+      label: 'Price group 0 (prices.0)',
+      group: 'Pricing',
+    }),
+  ],
+  name_en: [
+    createProductSyncBaseFieldOption({
+      value: 'text_fields.name',
+      label: 'Product name (text_fields.name)',
+      group: 'Text Fields',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'text_fields.name|en',
+      label: 'English name (text_fields.name|en)',
+      group: 'Text Fields',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'name',
+      label: 'Legacy name (name)',
+      group: 'Legacy fields',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'name|en',
+      label: 'Legacy English name (name|en)',
+      group: 'Legacy fields',
+    }),
+  ],
+  description_en: [
+    createProductSyncBaseFieldOption({
+      value: 'text_fields.description',
+      label: 'Product description (text_fields.description)',
+      group: 'Text Fields',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'text_fields.description|en',
+      label: 'English description (text_fields.description|en)',
+      group: 'Text Fields',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'description',
+      label: 'Legacy description (description)',
+      group: 'Legacy fields',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'description|en',
+      label: 'Legacy English description (description|en)',
+      group: 'Legacy fields',
+    }),
+  ],
+  sku: [
+    createProductSyncBaseFieldOption({
+      value: 'sku',
+      label: 'SKU (sku)',
+      group: 'Identifiers',
+    }),
+  ],
+  ean: [
+    createProductSyncBaseFieldOption({
+      value: 'ean',
+      label: 'EAN (ean)',
+      group: 'Identifiers',
+    }),
+  ],
+  weight: [
+    createProductSyncBaseFieldOption({
+      value: 'weight',
+      label: 'Weight (weight)',
+      group: 'Physical',
+    }),
+  ],
+};
+
+export const PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD: Record<
+  ProductSyncAppField,
+  ProductSyncBaseFieldPatternHint[]
+> = {
+  stock: [
+    createProductSyncBaseFieldPatternHint('stock.<warehouse_id>'),
+    createProductSyncBaseFieldPatternHint('stock.bl_<warehouse_id>'),
+  ],
+  price: [createProductSyncBaseFieldPatternHint('prices.<price_group_id>')],
+  name_en: [],
+  description_en: [],
+  sku: [],
+  ean: [],
+  weight: [],
+};
+
+export const getProductSyncBaseFieldOptions = (
+  appField: ProductSyncAppField
+): ProductSyncBaseFieldOption[] => PRODUCT_SYNC_BASE_FIELD_OPTIONS_BY_APP_FIELD[appField];
+
+export const isKnownProductSyncBaseField = (
+  appField: ProductSyncAppField,
+  value: string
+): boolean => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) return false;
+  return PRODUCT_SYNC_BASE_FIELD_OPTIONS_BY_APP_FIELD[appField].some(
+    (option) => option.value === normalizedValue
+  );
+};
+
+export const resolveProductSyncBaseFieldOption = (
+  appField: ProductSyncAppField,
+  value: string
+): ProductSyncBaseFieldOption | null => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) return null;
+  return (
+    PRODUCT_SYNC_BASE_FIELD_OPTIONS_BY_APP_FIELD[appField].find(
+      (option) => option.value === normalizedValue
+    ) ?? null
+  );
+};
+
+const resolveDynamicProductSyncBaseFieldOption = (
+  appField: ProductSyncAppField,
+  value: string
+): ProductSyncBaseFieldOption | null => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) return null;
+
+  if (appField === 'stock' && normalizedValue.startsWith('stock.')) {
+    const warehouseId = normalizedValue.slice('stock.'.length).trim();
+    if (!warehouseId) return null;
+    return {
+      value: normalizedValue,
+      label: `Warehouse stock (${warehouseId})`,
+      description: `Stock for Base.com warehouse ${warehouseId}.`,
+      group: 'Inventory',
+    };
+  }
+
+  if (appField === 'price' && normalizedValue.startsWith('prices.')) {
+    const priceGroupId = normalizedValue.slice('prices.'.length).trim();
+    if (!priceGroupId) return null;
+    return {
+      value: normalizedValue,
+      label: `Price group (${priceGroupId})`,
+      description: `Price for Base.com price group ${priceGroupId}.`,
+      group: 'Pricing',
+    };
+  }
+
+  return null;
+};
+
+export const getProductSyncBaseFieldPresentation = (
+  appField: ProductSyncAppField,
+  value: string
+): { label: string; description: string | null; isKnown: boolean } => {
+  const normalizedValue = value.trim();
+  const knownOption = resolveProductSyncBaseFieldOption(appField, normalizedValue);
+  const dynamicOption =
+    knownOption === null
+      ? resolveDynamicProductSyncBaseFieldOption(appField, normalizedValue)
+      : null;
+  const effectiveOption = knownOption ?? dynamicOption;
+  if (effectiveOption) {
+    return {
+      label: effectiveOption.label,
+      description: effectiveOption.description ?? null,
+      isKnown: true,
+    };
+  }
+  return {
+    label: normalizedValue || 'Custom path',
+    description: normalizedValue ? null : 'Custom Base.com field path.',
+    isKnown: false,
+  };
+};
 
 export const productSyncConflictPolicySchema = z.enum(['skip']);
 export type ProductSyncConflictPolicy = z.infer<typeof productSyncConflictPolicySchema>;
@@ -94,6 +317,7 @@ export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRule, 
 ];
 
 export const productSyncProfileSchema = namedDtoSchema.extend({
+  isDefault: z.boolean(),
   enabled: z.boolean(),
   connectionId: z.string(),
   inventoryId: z.string(),
@@ -116,6 +340,7 @@ export type UpdateProductSyncProfileInput = Partial<CreateProductSyncProfileInpu
 
 export const productSyncProfileCreatePayloadSchema = z.object({
   name: z.string().trim().min(1).optional(),
+  isDefault: z.boolean().optional(),
   enabled: z.boolean().optional(),
   connectionId: z.string().trim().min(1),
   inventoryId: z.string().trim().min(1),
@@ -129,6 +354,7 @@ export type ProductSyncProfileCreatePayload = z.infer<typeof productSyncProfileC
 
 export const productSyncProfileUpdatePayloadSchema = z.object({
   name: z.string().trim().min(1).optional(),
+  isDefault: z.boolean().optional(),
   enabled: z.boolean().optional(),
   connectionId: z.string().trim().min(1).optional(),
   inventoryId: z.string().trim().min(1).optional(),
@@ -144,6 +370,81 @@ export const productSyncProfilesResponseSchema = z.object({
   profiles: z.array(productSyncProfileSchema),
 });
 export type ProductSyncProfilesResponse = z.infer<typeof productSyncProfilesResponseSchema>;
+
+export const productSyncPreviewValueSchema = z.union([z.string(), z.number(), z.null()]);
+export type ProductSyncPreviewValue = z.infer<typeof productSyncPreviewValueSchema>;
+
+export const productSyncPreviewStatusSchema = z.enum([
+  'ready',
+  'missing_profile',
+  'profile_run_active',
+  'missing_base_link',
+  'missing_base_record',
+  'connection_error',
+]);
+export type ProductSyncPreviewStatus = z.infer<typeof productSyncPreviewStatusSchema>;
+
+export const productSyncTargetSourceSchema = z.enum([
+  'product',
+  'listing',
+  'sku_backfill',
+  'none',
+]);
+export type ProductSyncTargetSource = z.infer<typeof productSyncTargetSourceSchema>;
+
+export const productSyncPreviewProfileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  isDefault: z.boolean(),
+  enabled: z.boolean(),
+  connectionId: z.string(),
+  connectionName: z.string().nullable().optional(),
+  inventoryId: z.string(),
+  catalogId: z.string().nullable(),
+  lastRunAt: z.string().nullable(),
+});
+export type ProductSyncPreviewProfile = z.infer<typeof productSyncPreviewProfileSchema>;
+
+export const productSyncFieldPreviewSchema = z.object({
+  appField: productSyncAppFieldSchema,
+  appFieldLabel: z.string(),
+  baseField: z.string(),
+  baseFieldLabel: z.string(),
+  baseFieldDescription: z.string().nullable(),
+  direction: productSyncDirectionSchema,
+  appValue: productSyncPreviewValueSchema,
+  baseValue: productSyncPreviewValueSchema,
+  hasDifference: z.boolean(),
+  willWriteToApp: z.boolean(),
+  willWriteToBase: z.boolean(),
+});
+export type ProductSyncFieldPreview = z.infer<typeof productSyncFieldPreviewSchema>;
+
+export const productSyncPreviewSchema = z.object({
+  status: productSyncPreviewStatusSchema,
+  canSync: z.boolean(),
+  disabledReason: z.string().nullable(),
+  profile: productSyncPreviewProfileSchema.nullable(),
+  linkedBaseProductId: z.string().nullable(),
+  resolvedTargetSource: productSyncTargetSourceSchema,
+  fields: z.array(productSyncFieldPreviewSchema),
+});
+export type ProductSyncPreview = z.infer<typeof productSyncPreviewSchema>;
+
+export const productSyncSingleProductResultSchema = z.object({
+  status: z.enum(['success', 'skipped', 'failed']),
+  localChanges: z.array(z.string()),
+  baseChanges: z.array(z.string()),
+  message: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+});
+export type ProductSyncSingleProductResult = z.infer<typeof productSyncSingleProductResultSchema>;
+
+export const productSyncSingleProductResponseSchema = z.object({
+  preview: productSyncPreviewSchema,
+  result: productSyncSingleProductResultSchema,
+});
+export type ProductSyncSingleProductResponse = z.infer<typeof productSyncSingleProductResponseSchema>;
 
 export const productSyncRunStatusSchema = z.enum([
   'queued',

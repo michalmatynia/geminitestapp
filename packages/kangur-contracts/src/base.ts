@@ -450,6 +450,14 @@ export type BatchDeleteResponseDto = {
 export type BatchDeleteResponse = BatchDeleteResponseDto;
 
 /**
+ * Simple result for batch operations returns a count
+ */
+export type BatchCountResultDto = {
+  count: number;
+};
+export type BatchCountResult = BatchCountResultDto;
+
+/**
  * Base interface for named entities.
  */
 export interface NamedEntity extends BaseEntity, NamedFields {}

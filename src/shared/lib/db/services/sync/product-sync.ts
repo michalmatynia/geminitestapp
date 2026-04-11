@@ -1,8 +1,8 @@
+import { BatchCountResult } from '@/shared/contracts/base';
 import type { MongoProductDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
-type BatchResult = { count: number };
 type EntityWithId = { id: string };
 
 type ProductDraftSeed = {
@@ -121,15 +121,15 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
   await prisma.productProducerAssignment.deleteMany();
   await prisma.productListing.deleteMany();
   await prisma.productAiJob.deleteMany();
-  const deleted = (await prisma.product.deleteMany()) as BatchResult;
+  const deleted = (await prisma.product.deleteMany()) as BatchCountResult;
 
   const productData = data.map(
     ({ images: _i, catalogs: _cat, categories: _c, tags: _t, producers: _p, ...rest }) => rest
   );
-  const created: BatchResult = productData.length
+  const created: BatchCountResult = productData.length
     ? ((await prisma.product.createMany({
       data: productData as Prisma.ProductCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
 
   type SyncedProduct = (typeof data)[number];
@@ -267,11 +267,11 @@ export const syncProductDrafts: DatabaseSyncHandler = async ({ mongo, prisma, no
       };
     })
     .filter((item): item is ProductDraftSeed => item !== null);
-  const deleted = (await prisma.productDraft.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.productDraft.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.productDraft.createMany({
       data: data as Prisma.ProductDraftCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };

@@ -104,6 +104,26 @@ describe('ProductListingsEmpty', () => {
     expect(screen.getByText('run-base-failed-99')).toBeInTheDocument();
   });
 
+  it('shows the Base sync panel in the empty BL modal state when scoped to Base.com', () => {
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'base-com',
+          isScopedMarketplaceFlow: true,
+          isBaseFilter: true,
+          showSync: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Base.com status')).toBeInTheDocument();
+    expect(screen.getByText('Not connected.')).toBeInTheDocument();
+    expect(screen.getByTestId('sync-panel')).toBeInTheDocument();
+  });
+
   it('renders Tradera quick-export recovery details when no listing record exists yet', async () => {
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: onStartListingMock,

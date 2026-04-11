@@ -1,9 +1,9 @@
 import { ObjectId } from 'mongodb';
 
+import { BatchCountResult } from '@/shared/contracts/base';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
-type BatchResult = { count: number };
 type RawMongoDoc = Record<string, unknown>;
 type SlugDoc = RawMongoDoc & Partial<SlugSeed>;
 type CmsThemeDoc = RawMongoDoc & Partial<CmsThemeSeed>;
@@ -103,11 +103,11 @@ export const syncCmsSlugs: DatabaseSyncHandler = async ({ mongo, prisma, normali
       };
     })
     .filter((item): item is SlugSeed => item !== null);
-  const deleted = (await prisma.slug.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.slug.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.slug.createMany({
       data: data as Prisma.SlugCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -130,11 +130,11 @@ export const syncCmsThemes: DatabaseSyncHandler = async ({ mongo, prisma, normal
       };
     })
     .filter((item): item is CmsThemeSeed => item !== null);
-  const deleted = (await prisma.cmsTheme.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.cmsTheme.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.cmsTheme.createMany({
       data: data as Prisma.CmsThemeCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -167,13 +167,13 @@ export const syncCmsPages: DatabaseSyncHandler = async ({ mongo, prisma, normali
     .filter((item): item is PageSeed => item !== null);
 
   await prisma.pageComponent.deleteMany();
-  const deleted = (await prisma.page.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.page.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.page.createMany({
       data: data.map(
         ({ components: _components, ...rest }) => rest
       ) as Prisma.PageCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
 
   const componentRows = data.flatMap((page) =>
@@ -208,11 +208,11 @@ export const syncCmsPageSlugs: DatabaseSyncHandler = async ({ mongo, prisma }) =
       };
     })
     .filter((item): item is PageSlugSeed => item !== null);
-  const deleted = (await prisma.pageSlug.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.pageSlug.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.pageSlug.createMany({
       data: data as Prisma.PageSlugCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -232,11 +232,11 @@ export const syncCmsDomains: DatabaseSyncHandler = async ({ mongo, prisma, norma
       };
     })
     .filter((item): item is CmsDomainSeed => item !== null);
-  const deleted = (await prisma.cmsDomain.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.cmsDomain.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.cmsDomain.createMany({
       data: data as Prisma.CmsDomainCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -257,11 +257,11 @@ export const syncCmsDomainSlugs: DatabaseSyncHandler = async ({ mongo, prisma })
       };
     })
     .filter((item): item is CmsDomainSlugSeed => item !== null);
-  const deleted = (await prisma.cmsDomainSlug.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.cmsDomainSlug.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.cmsDomainSlug.createMany({
       data: data as Prisma.CmsDomainSlugCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };

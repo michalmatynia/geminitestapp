@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 
+import { BatchCountResult } from '@/shared/contracts/base';
 import type {
   MongoUserDoc,
   MongoAccountDoc,
@@ -9,8 +10,6 @@ import type {
 } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
-
-type BatchResult = { count: number };
 
 type UserSeed = {
   id: string;
@@ -85,11 +84,11 @@ export const syncUsers: DatabaseSyncHandler = async ({ mongo, prisma, normalizeI
     })
     .filter((item): item is UserSeed => item !== null);
 
-  const deleted = (await prisma.user.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.user.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.user.createMany({
       data: data as Prisma.UserCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
 
   return {
@@ -124,11 +123,11 @@ export const syncAccounts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     })
     .filter((item): item is AccountSeed => item !== null);
 
-  const deleted = (await prisma.account.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.account.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.account.createMany({
       data: data as Prisma.AccountCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -155,11 +154,11 @@ export const syncSessions: DatabaseSyncHandler = async ({ mongo, prisma, normali
     })
     .filter((item): item is SessionSeed => item !== null);
 
-  const deleted = (await prisma.session.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.session.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.session.createMany({
       data: data as Prisma.SessionCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -179,11 +178,11 @@ export const syncVerificationTokens: DatabaseSyncHandler = async ({ mongo, prism
     })
     .filter((item): item is VerificationTokenSeed => item !== null);
 
-  const deleted = (await prisma.verificationToken.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.verificationToken.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.verificationToken.createMany({
       data: data as Prisma.VerificationTokenCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -215,11 +214,11 @@ export const syncAuthSecurityProfiles: DatabaseSyncHandler = async ({
     })
     .filter((item): item is AuthSecurityProfileSeed => item !== null);
 
-  const deleted = (await prisma.authSecurityProfile.deleteMany()) as BatchResult;
-  const created: BatchResult = data.length
+  const deleted = (await prisma.authSecurityProfile.deleteMany()) as BatchCountResult;
+  const created: BatchCountResult = data.length
     ? ((await prisma.authSecurityProfile.createMany({
       data: data as Prisma.AuthSecurityProfileCreateManyInput[],
-    })) as BatchResult)
+    })) as BatchCountResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };

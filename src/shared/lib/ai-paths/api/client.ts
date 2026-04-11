@@ -12,9 +12,11 @@ import type {
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import {
   aiPathRunEnqueueResponseSchema,
+  aiPathRunResultResponseSchema,
   type AiPathRunListResult,
   type AiPathRunEnqueueResponse,
   type AiPathRunRecord,
+  type AiPathRunResultResponse,
   type AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
@@ -570,6 +572,40 @@ export async function getAiPathRun(
   );
 }
 
+export async function getAiPathRunResult(
+  runId: string,
+  options?: RequestInit & { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
+): Promise<HttpResult<AiPathRunResultResponse>> {
+  const response = await apiFetch<unknown>(
+    `/api/ai-paths/runs/${encodeURIComponent(runId)}/result`,
+    {
+      ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),
+      ...(options?.signal ? { signal: options.signal } : {}),
+      ...(options?.cache ? { cache: options.cache } : {}),
+      ...(options?.credentials ? { credentials: options.credentials } : {}),
+      ...(options?.headers ? { headers: options.headers } : {}),
+      ...(options?.integrity ? { integrity: options.integrity } : {}),
+      ...(options?.keepalive ? { keepalive: options.keepalive } : {}),
+      ...(options?.mode ? { mode: options.mode } : {}),
+      ...(options?.redirect ? { redirect: options.redirect } : {}),
+      ...(options?.referrer ? { referrer: options.referrer } : {}),
+      ...(options?.referrerPolicy ? { referrerPolicy: options.referrerPolicy } : {}),
+    }
+  );
+  if (!response.ok) return response;
+  const parsed = aiPathRunResultResponseSchema.safeParse(response.data);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: 'Failed to parse AI Path run result.',
+    };
+  }
+  return {
+    ok: true,
+    data: parsed.data,
+  };
+}
+
 export function streamAiPathRun(runId: string, options?: { since?: string | null }): EventSource {
   const params = new URLSearchParams();
   const since = options?.since;
@@ -679,6 +715,7 @@ export const runsApi = {
   enqueue: enqueueAiPathRun,
   list: listAiPathRuns,
   get: getAiPathRun,
+  getResult: getAiPathRunResult,
   stream: streamAiPathRun,
   remove: removeAiPathRun,
   queueStatus: getAiPathQueueStatus,

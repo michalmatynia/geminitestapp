@@ -38,6 +38,7 @@ import {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
   aiPathRunRecordSchema,
+  aiPathRunResultResponseSchema,
   createAiPathRunSchema,
   extractAiPathRunIdFromEnqueueContractPayload,
   parseAiPathRunEnqueuedEventPayload,
@@ -45,6 +46,7 @@ import {
   type AiPathRunEnqueueRequest,
   type AiPathRunEnqueueResponse,
   type AiPathRunRecord,
+  type AiPathRunResultResponse,
   type AiPathRunUpdateInput,
 } from './ai-paths-run-contract';
 import { dtoBaseSchema, namedDtoSchema } from './base';
@@ -59,6 +61,7 @@ export {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
   aiPathRunRecordSchema,
+  aiPathRunResultResponseSchema,
   aiPathRunSchema,
   aiPathRunStatusSchema,
   createAiPathRunSchema,
@@ -69,6 +72,7 @@ export {
   type AiPathRunEnqueueRequest,
   type AiPathRunEnqueueResponse,
   type AiPathRunRecord,
+  type AiPathRunResultResponse,
   type AiPathRun,
   type AiPathRunStatus,
   type AiPathRunUpdateInput,

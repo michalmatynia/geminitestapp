@@ -1,5 +1,3 @@
-'use client';
-
 import type { ComponentType } from 'react';
 
 let productListTableSurfacePromise: Promise<ComponentType> | null = null;

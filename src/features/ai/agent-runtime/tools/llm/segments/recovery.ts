@@ -1,9 +1,10 @@
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { LLMContext, runStructuredAgentRuntimeTask } from './shared';
+import { type AgentLlmContext } from '@/shared/contracts/agent-runtime';
+import { runStructuredAgentRuntimeTask } from './shared';
 
 export const buildFailureRecoveryPlan = async (
-  context: LLMContext,
+  context: AgentLlmContext,
   request: {
     type: 'bad_selectors' | 'login_stuck' | 'missing_extraction';
     prompt: string;

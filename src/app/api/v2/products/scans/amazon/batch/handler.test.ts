@@ -66,6 +66,7 @@ describe('products/scans/amazon/batch handler', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
+          currentStatus: null,
           message: 'Amazon reverse image scan queued.',
         },
       ],

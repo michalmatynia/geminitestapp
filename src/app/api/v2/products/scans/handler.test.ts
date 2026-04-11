@@ -48,7 +48,22 @@ describe('products/scans handler', () => {
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      scans: [{ id: 'scan-1', productId: 'product-1', status: 'completed' }],
+      scans: [
+        expect.objectContaining({
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'completed',
+          engineRunId: null,
+          imageCandidates: [],
+          asin: null,
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: null,
+          completedAt: null,
+        }),
+      ],
     });
   });
 

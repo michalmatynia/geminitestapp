@@ -1,5 +1,3 @@
-'use client';
-
 import type { LastErrorInfo, RuntimeRunStatus, RuntimeStatusState } from './RuntimeContext.shared';
 
 export type RuntimeStatusReducerState = Pick<

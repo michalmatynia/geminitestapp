@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 import type {
   KangurMusicSynthGlideMode,
   KangurMusicKeyboardMode,
@@ -148,9 +149,27 @@ export type KangurMusicPianoRollContextValue<NoteId extends string = string> = {
   syncActiveSynthGestures: () => void;
 };
 
-const KangurMusicPianoRollContext = createContext<KangurMusicPianoRollContextValue<string> | null>(
-  null
-);
+const KangurMusicPianoRollContext = createContext<unknown>(null);
+
+function isPianoRollContextValue(
+  value: unknown
+): value is KangurMusicPianoRollContextValue<string> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  return (
+    'activePressesRef' in value &&
+    'activeSynthGesturesRef' in value &&
+    'keys' in value &&
+    'laneKeys' in value &&
+    'keyTestIdPrefix' in value &&
+    'stepTestIdPrefix' in value &&
+    'onStartPress' in value &&
+    'onTriggerPress' in value &&
+    'syncActiveSynthGestures' in value
+  );
+}
 
 export function KangurMusicPianoRollProvider<NoteId extends string>({
   children,
@@ -159,21 +178,13 @@ export function KangurMusicPianoRollProvider<NoteId extends string>({
   children: React.ReactNode;
   value: KangurMusicPianoRollContextValue<NoteId>;
 }) {
-  return (
-    <KangurMusicPianoRollContext.Provider
-      value={value as unknown as KangurMusicPianoRollContextValue<string>}
-    >
-      {children}
-    </KangurMusicPianoRollContext.Provider>
-  );
+  return <KangurMusicPianoRollContext.Provider value={value}>{children}</KangurMusicPianoRollContext.Provider>;
 }
 
-import { internalError } from '@/shared/errors/app-error';
-
-export function useKangurMusicPianoRollContext<NoteId extends string = string>(): KangurMusicPianoRollContextValue<NoteId> {
+export function useKangurMusicPianoRollContext(): KangurMusicPianoRollContextValue<string> {
   const context = useContext(KangurMusicPianoRollContext);
-  if (!context) {
+  if (!isPianoRollContextValue(context)) {
     throw internalError('useKangurMusicPianoRollContext must be used within a KangurMusicPianoRollProvider');
   }
-  return context as unknown as KangurMusicPianoRollContextValue<NoteId>;
+  return context;
 }

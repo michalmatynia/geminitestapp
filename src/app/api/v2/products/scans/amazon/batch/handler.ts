@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queueAmazonBatchProductScans } from '@/features/products/server/product-scans-service';
 import {
   productAmazonBatchScanRequestSchema,
+  productAmazonBatchScanResponseSchema,
   type ProductAmazonBatchScanRequest,
 } from '@/shared/contracts/product-scans';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -17,5 +18,5 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     userId: ctx.userId ?? null,
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json(productAmazonBatchScanResponseSchema.parse(result));
 }

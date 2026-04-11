@@ -1,5 +1,3 @@
-import { existsSync } from 'fs';
-
 import { chromium } from 'playwright';
 import type { Browser, LaunchOptions } from 'playwright';
 
@@ -12,15 +10,24 @@ const BRAVE_PATHS: Record<string, string> = {
   linux: '/usr/bin/brave-browser',
 };
 
+const BRAVE_EXECUTABLE_PATH_ENV = 'PLAYWRIGHT_BRAVE_EXECUTABLE_PATH';
+
 type LaunchAttempt = {
   label: string;
   options: LaunchOptions;
 };
 
 const getBravePath = (): string | null => {
-  const path = BRAVE_PATHS[process.platform];
-  return path && existsSync(path) ? path : null;
+  const overridePath = process.env[BRAVE_EXECUTABLE_PATH_ENV]?.trim();
+  if (overridePath) {
+    return overridePath;
+  }
+
+  return BRAVE_PATHS[process.platform] ?? null;
 };
+
+const getBravePathErrorMessage = (): string =>
+  `Brave browser path is not available for this platform. Set ${BRAVE_EXECUTABLE_PATH_ENV} or switch to a different browser in connection settings.`;
 
 export const resolvePlaywrightBrowserLaunchOptions = (
   preference: PlaywrightBrowserPreference
@@ -30,9 +37,7 @@ export const resolvePlaywrightBrowserLaunchOptions = (
   switch (preference) {
     case 'brave': {
       if (!bravePath) {
-        throw new Error(
-          `Brave browser not found at expected path (${BRAVE_PATHS[process.platform] ?? 'unsupported platform'}). Install Brave or switch to a different browser in connection settings.`
-        );
+        throw new Error(getBravePathErrorMessage());
       }
       return { executablePath: bravePath };
     }
@@ -64,9 +69,7 @@ const buildLaunchAttempts = (
   switch (preference) {
     case 'brave': {
       if (!bravePath) {
-        throw new Error(
-          `Brave browser not found at expected path (${BRAVE_PATHS[process.platform] ?? 'unsupported platform'}). Install Brave or switch to a different browser in connection settings.`
-        );
+        throw new Error(getBravePathErrorMessage());
       }
       return [{ label: 'Brave', options: { ...baseOptions, executablePath: bravePath } }];
     }

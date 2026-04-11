@@ -6,6 +6,4 @@ import type {
   AgentLlmContext,
 } from '@/shared/contracts/agent-runtime';
 
-export type { AgentToolRequest, ToolOutput, AgentToolResult, FailureRecoveryPlan };
-
-export type ToolLlmContext = AgentLlmContext;
+export type { AgentToolRequest, ToolOutput, AgentToolResult, FailureRecoveryPlan, AgentLlmContext };

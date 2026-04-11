@@ -5,8 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const {
   createSingleQueryV2Mock,
@@ -220,5 +222,105 @@ describe('useProductEditHydration missing-product cleanup', () => {
       { variant: 'warning' }
     );
     expect(setRefreshTrigger).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it('subscribes the live editor to detailEdit query keys', () => {
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    renderHook(
+      () =>
+        useProductEditHydration({
+          editingProduct: createProduct({ id: 'live-product' }),
+          setEditingProduct: vi.fn(),
+          setActionError: vi.fn(),
+          setRefreshTrigger: vi.fn(),
+          clearProductEditorQueryParams: vi.fn(),
+        }),
+      { wrapper }
+    );
+
+    const config = createSingleQueryV2Mock.mock.calls[0]?.[0] as
+      | { queryKey?: (id: string) => readonly unknown[] }
+      | undefined;
+
+    expect(config?.queryKey?.('live-product')).toEqual(
+      QUERY_KEYS.products.detailEdit('live-product')
+    );
+    expect(config?.queryKey?.('none')).toEqual([
+      ...QUERY_KEYS.products.details(),
+      'edit',
+      'inactive',
+    ]);
+  });
+
+  it('hydrates detailEdit from cached detail and refreshes with an explicit detailEdit fetch', async () => {
+    const queryClient = createQueryClient();
+    const refetchQueriesSpy = vi.spyOn(queryClient, 'refetchQueries');
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const cachedProduct = createProduct({
+      id: 'cached-product',
+      sku: 'PINVIN0001A',
+      updatedAt: '2026-04-11T13:00:00.000Z',
+    });
+    const freshProduct = createProduct({
+      id: 'cached-product',
+      sku: 'PINVIN0001A',
+      updatedAt: '2026-04-11T13:05:00.000Z',
+    });
+
+    queryClient.setQueryData(QUERY_KEYS.products.detail(cachedProduct.id), cachedProduct);
+    fetchQueryV2Mock.mockImplementation(() => () => Promise.resolve(freshProduct));
+
+    const setEditingProduct = vi.fn();
+    const setActionError = vi.fn();
+    const setRefreshTrigger = vi.fn();
+    const clearProductEditorQueryParams = vi.fn();
+
+    const { result } = renderHook(
+      () =>
+        useProductEditHydration({
+          editingProduct: null,
+          setEditingProduct,
+          setActionError,
+          setRefreshTrigger,
+          clearProductEditorQueryParams,
+        }),
+      { wrapper }
+    );
+
+    await act(async () => {
+      result.current.handleOpenEditModal(cachedProduct);
+      await Promise.resolve();
+    });
+
+    expect(setActionError).toHaveBeenCalledWith(null);
+    const openedWithCachedProduct = setEditingProduct.mock.calls.find(
+      ([value]) =>
+        value &&
+        typeof value === 'object' &&
+        'id' in (value as ProductWithImages) &&
+        (value as ProductWithImages).id === cachedProduct.id
+      )?.[0] as ProductWithImages | undefined;
+    expect(openedWithCachedProduct).toBeDefined();
+    expect(isEditingProductHydrated(openedWithCachedProduct)).toBe(true);
+    expect(queryClient.getQueryData(QUERY_KEYS.products.detailEdit(cachedProduct.id))).toEqual(
+      cachedProduct
+    );
+    expect(fetchQueryV2Mock).toHaveBeenCalledWith(
+      queryClient,
+      expect.objectContaining({
+        queryKey: QUERY_KEYS.products.detailEdit(cachedProduct.id),
+      })
+    );
+    expect(queryClient.getQueryData(QUERY_KEYS.products.detail(cachedProduct.id))).toEqual(
+      freshProduct
+    );
+    expect(refetchQueriesSpy).not.toHaveBeenCalled();
   });
 });

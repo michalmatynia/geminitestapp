@@ -5,12 +5,9 @@ import type { CodeNameDto } from '@/shared/contracts/base';
 
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';
 
-export type CountryFormState = CodeNameDto;
-export type CountryCodeOption = CodeNameDto;
-
 export const resolveCountryModalDefaults = (
-  options: readonly CountryCodeOption[]
-): CountryFormState => {
+  options: readonly CodeNameDto[]
+): CodeNameDto => {
   const defaultOption = options[0];
   return {
     code: defaultOption?.code ?? '',

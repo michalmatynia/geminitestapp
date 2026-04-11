@@ -10,6 +10,7 @@ import {
 } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
+import type { ResolvedBrowserConnection } from '@/shared/contracts/integrations/connections';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -18,10 +19,7 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 
 type BasicTraderaConnection = IntegrationWithConnections['connections'][number];
 
-export type ResolvedTraderaBrowserConnection = {
-  integrationId: string;
-  connection: BasicTraderaConnection;
-};
+export type ResolvedTraderaBrowserConnection = ResolvedBrowserConnection<BasicTraderaConnection>;
 
 export type ResolvedTraderaQuickListContext = {
   preferredConnectionId: string | null;

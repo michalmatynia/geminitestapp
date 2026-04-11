@@ -1,6 +1,6 @@
 import type { FileUploadEventsFilters } from '@/shared/contracts/files';
 
-type FileUploadEventsQueryParamValue = string | number | null | undefined;
+type FileUploadEventsQueryParamValue = string | number | Date | null | undefined;
 
 type FileUploadEventsQueryParamBuilder = {
   key: string;
@@ -8,12 +8,14 @@ type FileUploadEventsQueryParamBuilder = {
   shouldInclude?: (value: FileUploadEventsQueryParamValue) => boolean;
 };
 
-const hasNonEmptyQueryParamValue = (value: FileUploadEventsQueryParamValue): boolean =>
-  typeof value === 'number'
+const hasNonEmptyQueryParamValue = (value: FileUploadEventsQueryParamValue): boolean => {
+  if (value instanceof Date) return !Number.isNaN(value.getTime());
+  return typeof value === 'number'
     ? Boolean(value)
     : typeof value === 'string'
       ? value.length > 0
       : false;
+};
 
 const isNonDefaultStatusQueryParamValue = (value: FileUploadEventsQueryParamValue): boolean =>
   typeof value === 'string' && value.length > 0 && value !== 'all';
@@ -40,7 +42,8 @@ export const buildQueryParams = (filters: FileUploadEventsFilters): string => {
     ({ key, read, shouldInclude = hasNonEmptyQueryParamValue }): void => {
       const value = read(filters);
       if (!shouldInclude(value)) return;
-      params.set(key, String(value));
+      const stringValue = value instanceof Date ? value.toISOString() : String(value);
+      params.set(key, stringValue);
     }
   );
 

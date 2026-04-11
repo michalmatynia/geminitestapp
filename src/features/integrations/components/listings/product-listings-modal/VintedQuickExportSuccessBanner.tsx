@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { PersistedVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';

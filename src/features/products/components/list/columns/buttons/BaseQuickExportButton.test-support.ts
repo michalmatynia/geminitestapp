@@ -38,7 +38,7 @@ export const baseQuickExportTestProduct = {
   images: [],
   imageLinks: [],
   imageBase64s: [],
-  categoryId: null,
+  categoryId: 'category-1',
   catalogId: 'catalog-1',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

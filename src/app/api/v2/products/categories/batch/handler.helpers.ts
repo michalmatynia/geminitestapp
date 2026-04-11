@@ -3,15 +3,14 @@ import { z } from 'zod';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
-  optionalBooleanQuerySchema,
-  optionalTrimmedQueryString,
-} from '@/shared/lib/api/query-schema';
+  catalogIdsQuerySchema,
+  freshQuerySchema,
+} from '@/shared/validations/product-metadata-api-schemas';
 
 const MAX_CATALOG_IDS = 25;
 
-export const querySchema = z.object({
-  catalogIds: optionalTrimmedQueryString(),
-  fresh: optionalBooleanQuerySchema().default(false),
+export const querySchema = catalogIdsQuerySchema.extend({
+  fresh: freshQuerySchema.default(false),
 });
 
 export const productCategoryBatchQuerySchema = querySchema;

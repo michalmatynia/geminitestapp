@@ -169,12 +169,14 @@ const createAmazonProductScanBaseRecord = (input: {
 const createFailedBatchResult = (
   productId: string,
   message: string,
-  scanId: string | null = null
+  scanId: string | null = null,
+  currentStatus: ProductScanRecord['status'] | null = scanId ? 'failed' : null
 ): ProductAmazonBatchScanItem => ({
   productId,
   scanId,
   runId: null,
   status: 'failed',
+  currentStatus,
   message: readOptionalString(message, PRODUCT_SCAN_BATCH_MESSAGE_MAX_LENGTH),
 });
 
@@ -197,8 +199,9 @@ const resolveAlreadyRunningBatchResult = async (
   return {
     productId,
     scanId: synchronized.id,
-    runId: synchronized.engineRunId,
+    runId: resolveScanEngineRunId(synchronized),
     status: 'already_running',
+    currentStatus: synchronized.status,
     message: 'Amazon scan already in progress for this product.',
   };
 };
@@ -256,6 +259,41 @@ const persistFailedSynchronization = async (
   });
 };
 
+const tryDirectQueuedScanUpdate = async (
+  scan: ProductScanRecord,
+  updates: Partial<ProductScanRecord>,
+  context: {
+    action: string;
+    productId: string;
+    runId?: string | null;
+  }
+): Promise<ProductScanRecord | null> => {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS; attempt += 1) {
+    try {
+      const updated = await updateProductScan(scan.id, updates);
+      if (updated) {
+        return updated;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (lastError) {
+    void ErrorSystem.captureException(lastError, {
+      service: 'product-scans.service',
+      action: context.action,
+      scanId: scan.id,
+      productId: context.productId,
+      runId: context.runId ?? null,
+    });
+  }
+
+  return null;
+};
+
 export async function synchronizeProductScan(scan: ProductScanRecord): Promise<ProductScanRecord> {
   if (isProductScanTerminalStatus(scan.status)) {
     return scan;
@@ -282,7 +320,20 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
   }
 
   try {
-    const run = await readPlaywrightEngineRun(engineRunId);
+    let run;
+    try {
+      run = await readPlaywrightEngineRun(engineRunId);
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'product-scans.service',
+        action: 'synchronizeProductScan.readRun',
+        scanId: scan.id,
+        productId: scan.productId,
+        engineRunId,
+      });
+      return scan;
+    }
+
     if (!run) {
       const message = `Playwright engine run ${engineRunId} was not found.`;
       return await persistFailedSynchronization(scan, message);
@@ -589,28 +640,95 @@ export async function queueAmazonBatchProductScans(input: {
                   },
                 })
               );
-            } catch (fallbackError) {
-              void ErrorSystem.captureException(fallbackError, {
-                service: 'product-scans.service',
-                action: 'queueAmazonBatchProductScans.persistRunFallback',
-                productId,
+          } catch (fallbackError) {
+            void ErrorSystem.captureException(fallbackError, {
+              service: 'product-scans.service',
+              action: 'queueAmazonBatchProductScans.persistRunFallback',
+              productId,
                 scanId: savedBaseRecord.id,
-                runId: run.runId,
-              });
+              runId: run.runId,
+            });
 
-              return createFailedBatchResult(
+            const recovered = await tryDirectQueuedScanUpdate(
+              savedBaseRecord,
+              {
+                engineRunId: run.runId,
+                status: queuedRunStatus,
+                rawResult: {
+                  ...startedRunRawResult,
+                  linkError: normalizeErrorMessage(
+                    error instanceof Error ? error.message : error,
+                    'Failed to persist Amazon scan run link.'
+                  ),
+                  fallbackError: normalizeErrorMessage(
+                    fallbackError instanceof Error ? fallbackError.message : fallbackError,
+                    'Failed to persist Amazon scan run link fallback.'
+                  ),
+                },
+              },
+              {
+                action: 'queueAmazonBatchProductScans.persistRunFallbackUpdate',
                 productId,
-                'Amazon scan started, but the scan record could not be updated with its run link.',
-                savedBaseRecord.id
-              );
+                runId: run.runId,
+              }
+            );
+            if (recovered) {
+              return {
+                productId,
+                scanId: recovered.id,
+                runId: run.runId,
+                status: queuedRunStatus,
+                currentStatus: queuedRunStatus,
+                message:
+                  queuedRunStatus === 'running'
+                    ? 'Amazon reverse image scan running.'
+                    : 'Amazon reverse image scan queued.',
+              };
             }
+
+            const failureMessage =
+              'Amazon scan started, but the scan record could not be updated with its run link.';
+            const failedRecord = await tryDirectQueuedScanUpdate(
+              savedBaseRecord,
+              {
+                status: 'failed',
+                rawResult: {
+                  ...startedRunRawResult,
+                  linkError: normalizeErrorMessage(
+                    error instanceof Error ? error.message : error,
+                    'Failed to persist Amazon scan run link.'
+                  ),
+                  fallbackError: normalizeErrorMessage(
+                    fallbackError instanceof Error ? fallbackError.message : fallbackError,
+                    'Failed to persist Amazon scan run link fallback.'
+                  ),
+                },
+                error: failureMessage,
+                asinUpdateStatus: 'failed',
+                asinUpdateMessage: failureMessage,
+                completedAt: new Date().toISOString(),
+              },
+              {
+                action: 'queueAmazonBatchProductScans.persistRunFallbackFailed',
+                productId,
+                runId: run.runId,
+              }
+            );
+
+            return createFailedBatchResult(
+              productId,
+              failureMessage,
+              failedRecord?.id ?? savedBaseRecord.id
+            );
           }
+        }
 
           return {
             productId,
             scanId: saved.id,
             runId: run.runId,
             status: queuedRunStatus,
+            currentStatus: queuedRunStatus,
             message:
               queuedRunStatus === 'running'
                 ? 'Amazon reverse image scan running.'
@@ -626,16 +744,47 @@ export async function queueAmazonBatchProductScans(input: {
             action: 'queueAmazonBatchProductScans.startRun',
             productId,
           });
-          const failed = await upsertProductScan(
-            normalizeProductScanRecord({
-              ...savedBaseRecord,
-              status: 'failed',
-              error: message,
-              asinUpdateStatus: 'failed',
-              asinUpdateMessage: message,
-              completedAt: new Date().toISOString(),
-            })
-          );
+          let failed: ProductScanRecord;
+          try {
+            failed = await upsertProductScan(
+              normalizeProductScanRecord({
+                ...savedBaseRecord,
+                status: 'failed',
+                error: message,
+                asinUpdateStatus: 'failed',
+                asinUpdateMessage: message,
+                completedAt: new Date().toISOString(),
+              })
+            );
+          } catch (persistFailureError) {
+            void ErrorSystem.captureException(persistFailureError, {
+              service: 'product-scans.service',
+              action: 'queueAmazonBatchProductScans.persistStartRunFailure',
+              productId,
+              scanId: savedBaseRecord.id,
+            });
+
+            const failedRecord = await tryDirectQueuedScanUpdate(
+              savedBaseRecord,
+              {
+                status: 'failed',
+                error: message,
+                asinUpdateStatus: 'failed',
+                asinUpdateMessage: message,
+                completedAt: new Date().toISOString(),
+              },
+              {
+                action: 'queueAmazonBatchProductScans.persistStartRunFailureUpdate',
+                productId,
+              }
+            );
+
+            return createFailedBatchResult(
+              productId,
+              message,
+              failedRecord?.id ?? savedBaseRecord.id
+            );
+          }
 
           return createFailedBatchResult(productId, message, failed.id);
         }

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-04-07T16:03:03.895Z
+Generated at: 2026-04-11T13:44:51.214Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 7104
+- Files scanned: 7252
 - Errors: 0
 - Warnings: 0
 - Info: 10
@@ -23,9 +23,9 @@ Generated at: 2026-04-07T16:03:03.895Z
 | Metric | Count |
 | --- | ---: |
 | doubleAssertionCount | 0 |
-| anyCount | 3 |
-| eslintDisableCount | 6 |
-| nonNullAssertionCount | 1 |
+| anyCount | 5 |
+| eslintDisableCount | 2 |
+| nonNullAssertionCount | 3 |
 | tsIgnoreCount | 0 |
 | tsExpectErrorCount | 0 |
 
@@ -33,35 +33,31 @@ Generated at: 2026-04-07T16:03:03.895Z
 
 | Rule | Count |
 | --- | ---: |
-| @typescript-eslint/no-unsafe-assignment | 4 |
-| @typescript-eslint/no-unsafe-call | 2 |
-| @typescript-eslint/no-unsafe-return | 2 |
-| @typescript-eslint/no-unnecessary-type-assertion | 2 |
-| @typescript-eslint/no-unsafe-argument | 1 |
-| @typescript-eslint/no-unsafe-member-access | 1 |
+| @typescript-eslint/no-unsafe-return | 1 |
+| @typescript-eslint/no-explicit-any | 1 |
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| eslint-disable | 0 | 0 | 6 |
-| explicit-any | 0 | 0 | 3 |
-| non-null-assertion | 0 | 0 | 1 |
+| eslint-disable | 0 | 0 | 2 |
+| explicit-any | 0 | 0 | 5 |
+| non-null-assertion | 0 | 0 | 3 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| INFO | explicit-any | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts:133 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
-| INFO | explicit-any | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts:28 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
-| INFO | explicit-any | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts:29 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
-| INFO | eslint-disable | src/app/api/v2/integrations/products/[id]/listings/handler.ts:213 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call |
-| INFO | eslint-disable | src/app/api/v2/integrations/products/[id]/listings/handler.ts:234 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment |
 | INFO | non-null-assertion | src/features/filemaker/server/filemaker-mail-service.ts:712 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/integrations/utils/tradera-browser-session.ts:53 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/features/integrations/utils/tradera-browser-session.ts:66 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | eslint-disable | src/features/kangur/ui/KangurLoginPage.test-support.tsx:6 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-return |
-| INFO | eslint-disable | src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx:399 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call |
-| INFO | eslint-disable | src/shared/lib/jobs/context/JobsContext.tsx:149 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion |
-| INFO | eslint-disable | src/shared/lib/jobs/context/JobsContext.tsx:158 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion |
+| INFO | explicit-any | src/shared/contracts/document-editor.ts:31 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/shared/contracts/document-editor.ts:32 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/shared/contracts/document-editor.ts:33 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/shared/contracts/document-editor.ts:40 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | eslint-disable | src/shared/lib/react/types.ts:5 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any |
+| INFO | explicit-any | src/shared/lib/react/types.ts:6 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 
 ## Notes
 

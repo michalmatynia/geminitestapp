@@ -3,6 +3,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BASE_EXPORT_MISSING_CATEGORY_MESSAGE } from '@/features/integrations/utils/baseExportPreflight';
+
 const {
   toastMock,
   preflightTraderaQuickListSessionMock,
@@ -141,9 +143,62 @@ describe('useListProductForm', () => {
     });
   });
 
+  it('blocks Base.com listing when the product has no internal category assigned', async () => {
+    useListingSelectionMock.mockReturnValue({
+      selectedIntegrationId: 'integration-base-1',
+      selectedConnectionId: 'conn-base-1',
+      selectedIntegration: { id: 'integration-base-1', slug: 'base' },
+      isBaseComIntegration: true,
+      isTraderaIntegration: false,
+    });
+    useListingBaseComSettingsMock.mockReturnValue({
+      selectedInventoryId: 'inventory-base-1',
+      selectedTemplateId: 'template-base-1',
+    });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1', null));
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(result.current.error).toBe(BASE_EXPORT_MISSING_CATEGORY_MESSAGE);
+    expect(exportToBaseMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('blocks Base.com image retry when the product has no internal category assigned', async () => {
+    useListingSelectionMock.mockReturnValue({
+      selectedIntegrationId: 'integration-base-1',
+      selectedConnectionId: 'conn-base-1',
+      selectedIntegration: { id: 'integration-base-1', slug: 'base' },
+      isBaseComIntegration: true,
+      isTraderaIntegration: false,
+    });
+    useListingBaseComSettingsMock.mockReturnValue({
+      selectedInventoryId: 'inventory-base-1',
+      selectedTemplateId: 'template-base-1',
+    });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1', null));
+
+    await act(async () => {
+      await result.current.handleImageRetry(
+        { id: 'preset-1', label: 'Base64', imageBase64Mode: 'base-only' },
+        onSuccess
+      );
+    });
+
+    expect(result.current.error).toBe(BASE_EXPORT_MISSING_CATEGORY_MESSAGE);
+    expect(exportToBaseMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
   it('runs fast Tradera quick preflight and persists the preferred connection for browser Tradera', async () => {
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useListProductForm('product-1'));
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
 
     await act(async () => {
       await result.current.handleSubmit(onSuccess);
@@ -181,7 +236,7 @@ describe('useListProductForm', () => {
     });
 
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useListProductForm('product-1'));
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
 
     await act(async () => {
       await result.current.handleSubmit(onSuccess);
@@ -210,7 +265,7 @@ describe('useListProductForm', () => {
     );
 
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useListProductForm('product-1'));
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
 
     await act(async () => {
       await result.current.handleSubmit(onSuccess);
@@ -232,7 +287,7 @@ describe('useListProductForm', () => {
     );
 
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useListProductForm('product-1'));
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
 
     await act(async () => {
       await result.current.handleSubmit(onSuccess);
@@ -258,7 +313,7 @@ describe('useListProductForm', () => {
     });
 
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useListProductForm('product-1'));
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
 
     await act(async () => {
       await result.current.handleSubmit(onSuccess);
@@ -304,7 +359,7 @@ describe('useListProductForm', () => {
     });
 
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useListProductForm('product-1'));
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
 
     await act(async () => {
       await result.current.handleSubmit(onSuccess);

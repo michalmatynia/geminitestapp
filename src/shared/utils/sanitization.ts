@@ -1,4 +1,4 @@
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { dispatchClientCatch } from '@/shared/utils/observability/client-error-dispatch';
 const HTML_SCRIPT_FALLBACK_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
 const DANGEROUS_HTML_TAG_NAMES = new Set(['SCRIPT', 'OBJECT', 'EMBED', 'IFRAME']);
 
@@ -59,7 +59,7 @@ export function sanitizeHtml(html: string): string {
     sanitizeHtmlNode(doc.body);
     return doc.body.innerHTML;
   } catch (error) {
-    logClientCatch(error instanceof Error ? error : new Error('HTML Sanitization failed'), {
+    dispatchClientCatch(error instanceof Error ? error : new Error('HTML Sanitization failed'), {
       source: 'sanitization',
       action: 'sanitizeHtml',
       htmlLength: html.length,
@@ -164,7 +164,7 @@ export function sanitizeSvg(svg: string, options?: { viewBox?: string }): string
 
     return new XMLSerializer().serializeToString(root);
   } catch (error) {
-    logClientCatch(error instanceof Error ? error : new Error('SVG Sanitization failed'), {
+    dispatchClientCatch(error instanceof Error ? error : new Error('SVG Sanitization failed'), {
       source: 'sanitization',
       action: 'sanitizeSvg',
       svgLength: svg.length,

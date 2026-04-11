@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import { FolderTreeShellRuntimePreviewClient } from '@/shared/lib/foldertree/public';
+import FolderTreeShellRuntimePreviewClient from '@/shared/lib/foldertree/pages/FolderTreeShellRuntimePreviewClient';
 
 export default function FolderTreeShellRuntimePreviewPage(): React.JSX.Element {
   return (

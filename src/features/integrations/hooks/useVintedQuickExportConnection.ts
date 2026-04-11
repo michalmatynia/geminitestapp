@@ -9,6 +9,7 @@ import {
   integrationSelectionQueryKeys,
 } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import { isVintedIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { type ResolvedBrowserConnection } from '@/shared/contracts/integrations/connections';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -16,10 +17,7 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 
 type BasicVintedConnection = IntegrationWithConnections['connections'][number];
 
-export type ResolvedVintedBrowserConnection = {
-  integrationId: string;
-  connection: BasicVintedConnection;
-};
+export type ResolvedVintedBrowserConnection = ResolvedBrowserConnection<BasicVintedConnection>;
 
 export type ResolvedVintedQuickListContext = {
   preferredConnectionId: string | null;

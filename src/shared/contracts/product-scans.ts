@@ -14,6 +14,7 @@ export type ProductScanType = z.infer<typeof productScanTypeSchema>;
 
 export const productScanStatusSchema = z.enum([
   'queued',
+  'enqueuing',
   'running',
   'completed',
   'no_match',
@@ -22,11 +23,11 @@ export const productScanStatusSchema = z.enum([
 ]);
 export type ProductScanStatus = z.infer<typeof productScanStatusSchema>;
 
-export const PRODUCT_SCAN_ACTIVE_STATUSES = ['queued', 'running'] as const;
+export const PRODUCT_SCAN_ACTIVE_STATUSES = ['queued', 'enqueuing', 'running'] as const;
 
 export const isProductScanActiveStatus = (
   value: ProductScanStatus | null | undefined
-): boolean => value === 'queued' || value === 'running';
+): boolean => value === 'queued' || value === 'enqueuing' || value === 'running';
 
 export const isProductScanTerminalStatus = (
   value: ProductScanStatus | null | undefined
@@ -102,6 +103,7 @@ export const productAmazonBatchScanItemSchema = z.object({
   scanId: optionalTrimmedString(160),
   runId: optionalTrimmedString(160),
   status: productAmazonBatchScanItemStatusSchema,
+  currentStatus: productScanStatusSchema.nullable().default(null),
   message: optionalTrimmedString(1_000),
 });
 export type ProductAmazonBatchScanItem = z.infer<typeof productAmazonBatchScanItemSchema>;

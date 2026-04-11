@@ -25,7 +25,7 @@ import {
 } from '../utils';
 import { resolveToolContext } from './tool-context';
 import { createToolLogger } from './tool-logging';
-import { type AgentToolRequest, type AgentToolResult, type ToolLlmContext } from './types';
+import { type AgentToolRequest, type AgentToolResult, type AgentLlmContext } from './types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -164,7 +164,7 @@ export async function runAgentTool(
 
   let finalUrl: string;
 
-  const llmContext: ToolLlmContext = {
+  const llmContext: AgentLlmContext = {
     model: resolvedModel,
     runId,
     log,

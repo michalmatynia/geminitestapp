@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-11T09:28:54.578Z",
+  "generatedAt": "2026-04-11T13:44:51.986Z",
   "status": "failed",
   "summary": {
-    "total": 63,
-    "errorCount": 63,
+    "total": 64,
+    "errorCount": 64,
     "warningCount": 0,
     "infoCount": 0,
     "status": "failed",
-    "fileCount": 7248,
+    "fileCount": 7252,
     "featureCount": 11,
     "circularDependencyCount": 1
   },
@@ -452,6 +452,16 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/baseExportPreflight. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
+      "line": 48,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
       "message": "Imports internal path from feature \"integrations\": @/features/integrations/product-integrations-adapter. Use the barrel export instead.",
       "file": "src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx",
       "line": 7,
@@ -713,7 +723,7 @@
   "rules": [
     {
       "ruleId": "cross-feature-internal-import",
-      "errorCount": 62,
+      "errorCount": 63,
       "warningCount": 0,
       "infoCount": 0
     },
@@ -724,5 +734,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 1398
+  "durationMs": 477
 }

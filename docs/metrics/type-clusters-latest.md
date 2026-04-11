@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-09'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,18 +8,18 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-04-09T01:47:47.847Z
+Generated at: 2026-04-11T13:40:35.367Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 10072
-- Exported declarations scanned: 5936
-- Candidate declarations scanned: 5915
-- Exact-shape clusters: 4
-- Near-shape clusters: 3
-- Clusters after filters: 7
-- Declarations in clusters: 18
+- Files scanned: 10256
+- Exported declarations scanned: 6021
+- Candidate declarations scanned: 6003
+- Exact-shape clusters: 1
+- Near-shape clusters: 2
+- Clusters after filters: 3
+- Declarations in clusters: 9
 - Highest risk score: 17
 
 ## Top Cluster Candidates
@@ -27,12 +27,8 @@ Status: ok
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
 | `exact-0001` | exact-shape | 17 | 5 | app | `TBD` |
-| `exact-0002` | exact-shape | 14 | 3 | feature:internationalization, shared:contracts | `TBD` |
-| `exact-0003` | exact-shape | 13 | 2 | feature:ai | `TBD` |
-| `exact-0004` | exact-shape | 10 | 2 | shared:contracts | `TBD` |
-| `near-0001` | near-shape | 10 | 2 | app, shared | `TBD` |
-| `near-0002` | near-shape | 8 | 2 | feature:integrations | `TBD` |
-| `near-0003` | near-shape | 8 | 2 | shared | `TBD` |
+| `near-0001` | near-shape | 11 | 2 | shared, shared:contracts | `TBD` |
+| `near-0002` | near-shape | 11 | 2 | shared, shared:contracts | `TBD` |
 
 ## Initial DTO Consolidation Workflow
 

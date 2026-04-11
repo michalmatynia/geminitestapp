@@ -2,9 +2,10 @@ import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { productService } from '@/shared/lib/products/services/productService';
-import type { Slug } from '@/shared/contracts/cms';
+import type { Page, Slug } from '@/shared/contracts/cms';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
+import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 
@@ -72,6 +73,34 @@ const buildFallbackHomeClientProps = ({
   },
 });
 
+const readHomeCmsPageBySlugWithRecovery = async (
+  defaultSlug: string,
+  locale?: string
+): Promise<Page | null> => {
+  try {
+    const cmsRepository = await getCmsRepository();
+    return await cmsRepository.getPageBySlug(defaultSlug, { locale });
+  } catch (error) {
+    if (isTransientMongoConnectionError(error)) {
+      return null;
+    }
+    throw error;
+  }
+};
+
+const readHomeProductsWithRecovery = async (): Promise<
+  Awaited<ReturnType<typeof productService.getProducts>> | null
+> => {
+  try {
+    return await productService.getProducts({ page: 1, pageSize: 20 });
+  } catch (error) {
+    if (isTransientMongoConnectionError(error)) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 const getPublishedHomeCmsClientPropsCached = async ({
   domainId,
   defaultSlug,
@@ -84,12 +113,11 @@ const getPublishedHomeCmsClientPropsCached = async ({
   'use cache';
   applyCacheLife('swr300');
 
-  const [cmsRepository, themeSettings, menuSettings] = await Promise.all([
-    getCmsRepository(),
+  const [themeSettings, menuSettings] = await Promise.all([
     getCmsThemeSettings(),
     getCmsMenuSettings(domainId, locale),
   ]);
-  const cmsPage = await cmsRepository.getPageBySlug(defaultSlug, { locale });
+  const cmsPage = await readHomeCmsPageBySlugWithRecovery(defaultSlug, locale);
   if (cmsPage?.status !== 'published') {
     return null;
   }
@@ -119,9 +147,7 @@ const getFallbackHomeClientPropsCached = async ({
     getCmsMenuSettings(domainId, locale),
   ]);
   const hasDatabase = typeof process.env['MONGODB_URI'] === 'string';
-  const productsRaw = hasDatabase
-    ? await productService.getProducts({ page: 1, pageSize: 20 })
-    : null;
+  const productsRaw = hasDatabase ? await readHomeProductsWithRecovery() : null;
 
   return buildFallbackHomeClientProps({
     menuSettings,
@@ -152,13 +178,12 @@ export async function HomeContent({
       return <HomeContentClient {...publishedHomeProps} />;
     }
 
-    const [cmsRepository, themeSettings, menuSettings] = await Promise.all([
-      withTiming('cmsRepository', getCmsRepository),
+    const [themeSettings, menuSettings] = await Promise.all([
       withTiming('cmsTheme', () => getCmsThemeSettings()),
       withTiming('cmsMenu', () => getCmsMenuSettings(domainId, resolvedLocale)),
     ]);
     const cmsPage = await withTiming('cmsPageBySlug', () =>
-      cmsRepository.getPageBySlug(defaultSlug.slug, { locale: resolvedLocale })
+      readHomeCmsPageBySlugWithRecovery(defaultSlug.slug, resolvedLocale)
     );
     let allowDrafts = false;
 

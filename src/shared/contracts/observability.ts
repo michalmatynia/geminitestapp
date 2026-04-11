@@ -519,3 +519,60 @@ export type SystemLogRuntimeContextHydrationResult = {
   analysisContextPatch?: Record<string, unknown> | null;
   adapterMeta?: Record<string, unknown> | null;
 };
+
+/**
+ * Context Registry Display DTOs
+ */
+export type ContextDocumentSectionDisplay = {
+  id: string | null;
+  kind: string | null;
+  title: string;
+  summary: string | null;
+  text: string | null;
+  items: Array<Record<string, string>>;
+};
+
+export type ContextDocumentDisplay = {
+  id: string;
+  entityType: string | null;
+  title: string;
+  summary: string | null;
+  status: string | null;
+  tags: string[];
+  facts: Array<{ label: string; value: string }>;
+  sections: ContextDocumentSectionDisplay[];
+};
+
+export type ContextRegistryNodeDisplay = {
+  id: string;
+  kind: string | null;
+  name: string;
+};
+
+export type ContextRegistryDisplay = {
+  refs: string[];
+  documents: ContextDocumentDisplay[];
+  nodes: ContextRegistryNodeDisplay[];
+};
+
+/**
+ * Alert Evidence Display DTOs
+ */
+export type AlertEvidenceSampleDisplay = {
+  logId: string | null;
+  createdAt: string | null;
+  level: string | null;
+  source: string | null;
+  message: string | null;
+  fingerprint: string | null;
+  contextRegistry: ContextRegistryDisplay | null;
+};
+
+export type AlertEvidenceDisplay = {
+  matchedCount: number | null;
+  sampleSize: number | null;
+  windowStart: string | null;
+  windowEnd: string | null;
+  lastObservedLog: AlertEvidenceSampleDisplay | null;
+  samples: AlertEvidenceSampleDisplay[];
+};

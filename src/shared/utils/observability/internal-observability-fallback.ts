@@ -1,4 +1,4 @@
-import { type ClientErrorContext, logClientCatch } from './client-error-logger';
+import { dispatchClientCatch, type ClientErrorContext } from './client-error-dispatch';
 
 export type InternalObservabilityErrorContext = ClientErrorContext & {
   source: string;
@@ -18,7 +18,7 @@ export const reportObservabilityInternalError = (
   context: InternalObservabilityErrorContext
 ): void => {
   if (typeof window !== 'undefined') {
-    logClientCatch(error, context);
+    dispatchClientCatch(error, context);
     return;
   }
 

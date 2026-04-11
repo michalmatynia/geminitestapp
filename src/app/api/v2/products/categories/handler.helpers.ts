@@ -5,25 +5,8 @@ import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import {
   catalogIdQuerySchema,
   type CatalogIdQuery,
+  freshQuerySchema,
 } from '@/shared/validations/product-metadata-api-schemas';
-
-export const normalizeFreshQueryValue = (value: unknown): unknown => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value !== 'string') return undefined;
-
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return undefined;
-  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
-    return true;
-  }
-  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
-    return false;
-  }
-
-  return value;
-};
-
-const freshQuerySchema = z.preprocess(normalizeFreshQueryValue, z.boolean().optional());
 
 export const querySchema = catalogIdQuerySchema.extend({
   fresh: freshQuerySchema,

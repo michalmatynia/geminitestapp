@@ -1,5 +1,3 @@
-'use client';
-
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 
 export type DeferredDraftBootstrapTarget = {

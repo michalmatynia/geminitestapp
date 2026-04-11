@@ -30,6 +30,7 @@ import {
   preflightVintedQuickListSession,
 } from '@/features/integrations/utils/vinted-browser-session';
 import { normalizeVintedDisplayText } from '@/features/integrations/utils/vinted-display';
+import { getBaseExportPreflightError } from '@/features/integrations/utils/baseExportPreflight';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -52,7 +53,10 @@ type UseListProductFormResult = {
   handleImageRetry: (preset: ImageRetryPreset, onSuccess: () => void) => Promise<void>;
 };
 
-export function useListProductForm(productId: string): UseListProductFormResult {
+export function useListProductForm(
+  productId: string,
+  productCategoryId: string | null
+): UseListProductFormResult {
   const [error, setError] = useState<string | null>(null);
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
@@ -134,6 +138,14 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     }
 
     try {
+      if (isBaseComIntegration) {
+        const preflightError = getBaseExportPreflightError(productCategoryId);
+        if (preflightError) {
+          setError(preflightError);
+          return;
+        }
+      }
+
       setError(null);
       setAuthRequired(false);
       setAuthRequiredMarketplace(null);
@@ -285,6 +297,12 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       return;
     }
     try {
+      const preflightError = getBaseExportPreflightError(productCategoryId);
+      if (preflightError) {
+        setError(preflightError);
+        return;
+      }
+
       setError(null);
       setExportLogs([]);
       setLogsOpen(true);

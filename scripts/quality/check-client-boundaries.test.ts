@@ -119,6 +119,88 @@ describe('client boundary audit', () => {
     );
   });
 
+  it('flags app router error entrypoints that omit use client', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/app/admin/error.tsx',
+      [
+        'export default function ErrorFallback() {',
+        '  return <div>Something went wrong.</div>;',
+        '}',
+        '',
+      ].join('\n')
+    );
+
+    const report = analyzeClientBoundaries({ root });
+
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: 'missing-use-client:app-router-error-entrypoint',
+          file: 'src/app/admin/error.tsx',
+        }),
+      ])
+    );
+  });
+
+  it('flags missing use client for imported strict context factories', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/app/admin/page.tsx',
+      [
+        "import { CategoryFormContext } from '@/features/products/components/settings/CategoryFormContext';",
+        '',
+        'export default function Page() {',
+        '  return <CategoryFormContext.Provider value={null} />;',
+        '}',
+        '',
+      ].join('\n')
+    );
+    writeSource(
+      root,
+      'src/shared/lib/react/createStrictContext.ts',
+      [
+        "'use client';",
+        '',
+        "import { createContext, useContext } from 'react';",
+        '',
+        'export function createStrictContext() {',
+        '  const Context = createContext(null);',
+        '  return {',
+        '    Context,',
+        '    useStrictContext() {',
+        '      return useContext(Context);',
+        '    },',
+        '  };',
+        '}',
+        '',
+      ].join('\n')
+    );
+    writeSource(
+      root,
+      'src/features/products/components/settings/CategoryFormContext.tsx',
+      [
+        "import { createStrictContext } from '@/shared/lib/react/createStrictContext';",
+        '',
+        'export const CategoryFormContext = createStrictContext();',
+        '',
+      ].join('\n')
+    );
+
+    const report = analyzeClientBoundaries({ root });
+
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: 'missing-use-client:context-factory',
+          file: 'src/features/products/components/settings/CategoryFormContext.tsx',
+        }),
+      ])
+    );
+  });
+
   it('does not flag server components that only render imported client components', () => {
     const file = analyzeClientBoundaryFile({
       root: '/repo',
@@ -143,13 +225,14 @@ describe('client boundary audit', () => {
       absolutePath: '/repo/src/app/layout.tsx',
       content: [
         'const fallbackScript = Promise.resolve(\'window.__BOOTSTRAP__=null;\');',
+        'const isBrowser = typeof window !== \'undefined\';',
         '',
         'function formatWindow(window: { currentStartMs: number }) {',
         '  return window.currentStartMs;',
         '}',
         '',
         'export default async function Layout() {',
-        '  return fallbackScript;',
+        '  return isBrowser ? fallbackScript : Promise.resolve(null);',
         '}',
         '',
       ].join('\n'),
@@ -164,20 +247,20 @@ describe('client boundary audit', () => {
       root,
       'src/app/page.tsx',
       [
-        "import { readLocation } from '@/features/example/runtime';",
+        "import { RuntimeWidget } from '@/features/example/runtime';",
         '',
         'export default function Page() {',
-        '  return <div>{readLocation()}</div>;',
+        '  return <RuntimeWidget />;',
         '}',
         '',
       ].join('\n')
     );
     writeSource(
       root,
-      'src/features/example/runtime.ts',
+      'src/features/example/runtime.tsx',
       [
-        'export function readLocation() {',
-        '  return window.location.href;',
+        'export function RuntimeWidget() {',
+        '  return <div>{window.location.href}</div>;',
         '}',
         '',
       ].join('\n')
@@ -208,7 +291,7 @@ describe('client boundary audit', () => {
     expect(report.issues).toEqual([
       expect.objectContaining({
         ruleId: 'missing-use-client:browser-api',
-        file: 'src/features/example/runtime.ts',
+        file: 'src/features/example/runtime.tsx',
       }),
     ]);
   });
@@ -237,5 +320,77 @@ describe('client boundary audit', () => {
         relativePath: 'src/features/products/pages/AdminProductsPageView.tsx',
       }),
     ]);
+  });
+
+  it('does not report strict context modules as removable candidates', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/shared/lib/react/createStrictContext.ts',
+      [
+        "'use client';",
+        '',
+        "import { createContext, useContext } from 'react';",
+        '',
+        'export function createStrictContext() {',
+        '  const Context = createContext(null);',
+        '  return {',
+        '    Context,',
+        '    useStrictContext() {',
+        '      return useContext(Context);',
+        '    },',
+        '  };',
+        '}',
+        '',
+      ].join('\n')
+    );
+    writeSource(
+      root,
+      'src/features/products/components/settings/CategoryFormContext.tsx',
+      [
+        "'use client';",
+        '',
+        "import { createStrictContext } from '@/shared/lib/react/createStrictContext';",
+        '',
+        'export const CategoryFormContext = createStrictContext();',
+        '',
+      ].join('\n')
+    );
+
+    const audit = auditClientBoundaries({ root });
+
+    expect(audit.removableCandidates).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          relativePath: 'src/features/products/components/settings/CategoryFormContext.tsx',
+        }),
+      ])
+    );
+  });
+
+  it('does not report app router error entrypoints as removable candidates', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/app/admin/error.tsx',
+      [
+        "'use client';",
+        '',
+        'export default function ErrorFallback() {',
+        '  return <div>Something went wrong.</div>;',
+        '}',
+        '',
+      ].join('\n')
+    );
+
+    const audit = auditClientBoundaries({ root });
+
+    expect(audit.removableCandidates).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          relativePath: 'src/app/admin/error.tsx',
+        }),
+      ])
+    );
   });
 });

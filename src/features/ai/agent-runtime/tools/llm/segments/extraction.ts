@@ -1,9 +1,10 @@
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { LLMContext, runStructuredAgentRuntimeTask } from './shared';
+import { type AgentLlmContext } from '@/shared/contracts/agent-runtime';
+import { runStructuredAgentRuntimeTask } from './shared';
 
 export const validateExtractionWithLLM = async (
-  context: LLMContext,
+  context: AgentLlmContext,
   params: {
     prompt: string;
     url: string;
@@ -103,7 +104,7 @@ export const validateExtractionWithLLM = async (
 };
 
 export const normalizeExtractionItemsWithLLM = async (
-  _context: LLMContext,
+  _context: AgentLlmContext,
   params: {
     prompt: string;
     extractionType: 'product_names' | 'emails';
@@ -138,7 +139,7 @@ export const normalizeExtractionItemsWithLLM = async (
 };
 
 export const buildExtractionPlan = async (
-  context: LLMContext,
+  context: AgentLlmContext,
   request: {
     type: 'product_names' | 'emails';
     domTextSample: string;

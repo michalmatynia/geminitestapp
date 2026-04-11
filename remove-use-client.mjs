@@ -2,6 +2,8 @@ import { auditClientBoundaries } from './scripts/quality/lib/client-boundary-aud
 
 const args = new Set(process.argv.slice(2));
 const audit = auditClientBoundaries({ root: process.cwd() });
+const shouldListCandidates = args.has('--list-candidates');
+const reviewCandidates = audit.removableCandidates.map((result) => result.relativePath);
 
 const payload = {
   scannedFiles: audit.filesScanned,
@@ -10,7 +12,8 @@ const payload = {
     reasons: result.reasons,
     serverReachablePath: result.serverReachablePath,
   })),
-  removableCandidates: audit.removableCandidates.map((result) => result.relativePath),
+  reviewCandidates,
+  removableCandidates: reviewCandidates,
   protectedUseClientFiles: audit.protectedUseClientFiles.length,
 };
 
@@ -22,7 +25,7 @@ if (args.has('--json')) {
 console.log('Client boundary audit only. No files were modified.');
 console.log(`Scanned files: ${payload.scannedFiles}`);
 console.log(`Missing required 'use client': ${payload.missingRequiredUseClient.length}`);
-console.log(`Review candidates for removing 'use client': ${payload.removableCandidates.length}`);
+console.log(`Review candidates for removing 'use client': ${payload.reviewCandidates.length}`);
 console.log(`Protected 'use client' files: ${payload.protectedUseClientFiles}`);
 
 if (payload.missingRequiredUseClient.length > 0) {
@@ -37,12 +40,18 @@ if (payload.missingRequiredUseClient.length > 0) {
   }
 }
 
-if (payload.removableCandidates.length > 0) {
+if (payload.reviewCandidates.length > 0 && shouldListCandidates) {
   console.log('');
   console.log('Review candidates for manual verification:');
-  for (const candidate of payload.removableCandidates) {
+  for (const candidate of payload.reviewCandidates) {
     console.log(`- ${candidate}`);
   }
+}
+
+if (payload.reviewCandidates.length > 0 && !shouldListCandidates) {
+  console.log('');
+  console.log('Candidate paths omitted by default.');
+  console.log('Re-run with `node remove-use-client.mjs --list-candidates` after manual review planning.');
 }
 
 console.log('');

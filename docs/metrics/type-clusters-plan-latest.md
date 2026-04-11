@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-09'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Type Cluster Consolidation Plan
 
-Generated at: 2026-04-09T01:47:47.847Z
+Generated at: 2026-04-11T13:40:35.367Z
 
 ## Prioritized Worklist
 
@@ -19,46 +19,18 @@ Suggested DTO: TBD
 Signature: type-expression (e28f1cd680b5)
 Notes: Validate semantic equivalence before migration.
 
-2. [ ] exact-0002 (exact-shape)
-Risk: 14 | Declarations: 3
-Domains: feature:internationalization, shared:contracts
+2. [ ] near-0001 (near-shape)
+Risk: 11 | Declarations: 2
+Domains: shared, shared:contracts
 Suggested DTO: TBD
-Signature: type-expression (d2a8fe8b3537)
+Signature: structural-members (62b064e5be79)
 Notes: Validate semantic equivalence before migration.
 
-3. [ ] exact-0003 (exact-shape)
-Risk: 13 | Declarations: 2
-Domains: feature:ai
+3. [ ] near-0002 (near-shape)
+Risk: 11 | Declarations: 2
+Domains: shared, shared:contracts
 Suggested DTO: TBD
-Signature: type-expression (2463fe15c097)
-Notes: Validate semantic equivalence before migration.
-
-4. [ ] exact-0004 (exact-shape)
-Risk: 10 | Declarations: 2
-Domains: shared:contracts
-Suggested DTO: TBD
-Signature: type-expression (0510fd54775b)
-Notes: Validate semantic equivalence before migration.
-
-5. [ ] near-0001 (near-shape)
-Risk: 10 | Declarations: 2
-Domains: app, shared
-Suggested DTO: TBD
-Signature: structural-members (07c67cb48755)
-Notes: Validate semantic equivalence before migration.
-
-6. [ ] near-0002 (near-shape)
-Risk: 8 | Declarations: 2
-Domains: feature:integrations
-Suggested DTO: TBD
-Signature: structural-members (a87c53e3f39f)
-Notes: Validate semantic equivalence before migration.
-
-7. [ ] near-0003 (near-shape)
-Risk: 8 | Declarations: 2
-Domains: shared
-Suggested DTO: TBD
-Signature: structural-members (5276e0acfc17)
+Signature: structural-members (9d072c6361f1)
 Notes: Validate semantic equivalence before migration.
 
 ## Execution Checklist

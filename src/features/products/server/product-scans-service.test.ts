@@ -502,29 +502,25 @@ describe('product-scans-service', () => {
     );
   });
 
-  it('marks the scan failed when reading the Playwright engine run throws', async () => {
+  it('keeps the scan active when reading the Playwright engine run throws', async () => {
     const scan = createScan();
 
     mocks.readPlaywrightEngineRunMock.mockRejectedValue(new Error('engine read failed'));
 
     const result = await synchronizeProductScan(scan);
 
-    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
-      'scan-1',
+    expect(mocks.updateProductScanMock).not.toHaveBeenCalled();
+    expect(mocks.captureExceptionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'engine read failed' }),
       expect.objectContaining({
-        status: 'failed',
-        error: 'engine read failed',
-        asinUpdateStatus: 'failed',
-        asinUpdateMessage: 'engine read failed',
+        service: 'product-scans.service',
+        action: 'synchronizeProductScan.readRun',
+        scanId: 'scan-1',
+        productId: 'product-1',
+        engineRunId: 'run-1',
       })
     );
-    expect(result).toEqual(
-      expect.objectContaining({
-        status: 'failed',
-        error: 'engine read failed',
-        asinUpdateStatus: 'failed',
-      })
-    );
+    expect(result).toEqual(scan);
   });
 
   it('marks the scan failed when updating the product ASIN throws', async () => {
@@ -700,10 +696,10 @@ describe('product-scans-service', () => {
     );
   });
 
-  it('returns an in-memory failed scan when persisting a synchronization failure also throws', async () => {
+  it('returns an in-memory failed scan when persisting a missing-run failure also throws', async () => {
     const scan = createScan();
 
-    mocks.readPlaywrightEngineRunMock.mockRejectedValue(new Error('engine read failed'));
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue(null);
     mocks.updateProductScanMock.mockRejectedValue(new Error('repository unavailable'));
 
     const result = await synchronizeProductScan(scan);
@@ -712,9 +708,9 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         id: 'scan-1',
         status: 'failed',
-        error: 'engine read failed',
+        error: 'Playwright engine run run-1 was not found.',
         asinUpdateStatus: 'failed',
-        asinUpdateMessage: 'engine read failed',
+        asinUpdateMessage: 'Playwright engine run run-1 was not found.',
       })
     );
     expect(result.completedAt).not.toBeNull();
@@ -796,6 +792,39 @@ describe('product-scans-service', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'already_running',
+          currentStatus: 'running',
+          message: 'Amazon scan already in progress for this product.',
+        },
+      ],
+    });
+  });
+
+  it('returns already_running with queued currentStatus when the existing scan is still queued', async () => {
+    const activeScan = createScan({ status: 'queued' });
+
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(activeScan);
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'queued',
+    });
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result).toEqual({
+      queued: 0,
+      running: 0,
+      alreadyRunning: 1,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'already_running',
+          currentStatus: 'queued',
           message: 'Amazon scan already in progress for this product.',
         },
       ],
@@ -870,6 +899,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: 'run-queued-1',
           status: 'queued',
+          currentStatus: 'queued',
           message: 'Amazon reverse image scan queued.',
         },
       ],
@@ -919,6 +949,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: 'run-running-1',
           status: 'running',
+          currentStatus: 'running',
           message: 'Amazon reverse image scan running.',
         },
       ],
@@ -972,6 +1003,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: 'run-queued-link-recovery',
           status: 'queued',
+          currentStatus: 'queued',
           message: 'Amazon reverse image scan queued.',
         },
       ],
@@ -996,6 +1028,73 @@ describe('product-scans-service', () => {
         }),
       })
     );
+  });
+
+  it('recovers a started scan with a direct update when both run-link upserts fail', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-queued-direct-recovery',
+      status: 'queued',
+    });
+    mocks.upsertProductScanMock
+      .mockImplementationOnce(async (scan: ProductScanRecord) => scan)
+      .mockRejectedValueOnce(new Error('persist link failed'))
+      .mockRejectedValueOnce(new Error('persist fallback failed'));
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        engineRunId: 'run-queued-direct-recovery',
+        status: 'queued',
+        rawResult: expect.objectContaining({
+          runId: 'run-queued-direct-recovery',
+          status: 'queued',
+          linkError: 'persist link failed',
+          fallbackError: 'persist fallback failed',
+        }),
+      })
+    );
+    expect(result).toEqual({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: 'run-queued-direct-recovery',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
   });
 
   it('truncates long product names before persisting and queueing scans', async () => {
@@ -1078,6 +1177,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: null,
           status: 'failed',
+          currentStatus: 'failed',
           message: 'No product image available for Amazon reverse image scan.',
         },
       ],
@@ -1126,6 +1226,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: null,
           status: 'failed',
+          currentStatus: 'failed',
           message: 'playwright engine unavailable',
         },
       ],
@@ -1138,6 +1239,67 @@ describe('product-scans-service', () => {
         productId: 'product-1',
       })
     );
+  });
+
+  it('marks the saved base scan failed with a direct update when start-run failure persistence upsert throws', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockRejectedValue(
+      new Error('playwright engine unavailable')
+    );
+    mocks.upsertProductScanMock
+      .mockImplementationOnce(async (scan: ProductScanRecord) => scan)
+      .mockRejectedValueOnce(new Error('persist failed state failed'));
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        status: 'failed',
+        error: 'playwright engine unavailable',
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: 'playwright engine unavailable',
+      })
+    );
+    expect(result).toEqual({
+      queued: 0,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 1,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: null,
+          status: 'failed',
+          currentStatus: 'failed',
+          message: 'playwright engine unavailable',
+        },
+      ],
+    });
   });
 
   it('truncates oversized enqueue failure messages for persistence and batch results', async () => {
@@ -1188,6 +1350,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: null,
           status: 'failed',
+          currentStatus: 'failed',
           message: 'E'.repeat(1_000),
         },
       ],
@@ -1247,6 +1410,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: 'run-queued-2',
           status: 'queued',
+          currentStatus: 'queued',
           message: 'Amazon reverse image scan queued.',
         },
       ],
@@ -1308,6 +1472,7 @@ describe('product-scans-service', () => {
           scanId: 'scan-concurrent',
           runId: 'run-concurrent',
           status: 'already_running',
+          currentStatus: 'queued',
           message: 'Amazon scan already in progress for this product.',
         },
       ],
@@ -1361,6 +1526,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: 'run-queued-link-only',
           status: 'queued',
+          currentStatus: 'queued',
           message: 'Amazon reverse image scan queued.',
         },
       ],
@@ -1417,6 +1583,7 @@ describe('product-scans-service', () => {
           scanId: null,
           runId: null,
           status: 'failed',
+          currentStatus: null,
           message: 'database temporarily unavailable',
         },
         {
@@ -1424,6 +1591,7 @@ describe('product-scans-service', () => {
           scanId: expect.any(String),
           runId: 'run-queued-3',
           status: 'queued',
+          currentStatus: 'queued',
           message: 'Amazon reverse image scan queued.',
         },
       ],

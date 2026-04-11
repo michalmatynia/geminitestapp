@@ -89,6 +89,7 @@
       "contextCollections": [],
       "contextQuery": "",
       "contextLimit": 20,
+      "contextTransform": "none",
       "includeFields": true,
       "includeRelations": true,
       "formatAs": "text"
@@ -120,6 +121,7 @@
         "contextCollections": [],
         "contextQuery": "",
         "contextLimit": 20,
+        "contextTransform": "none",
         "includeFields": true,
         "includeRelations": true,
         "formatAs": "text"
@@ -132,5 +134,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "56956207074969f36d8750610fedc5877d6b3b873ad8f5048fdcf2d09dfa11af"
+  "nodeHash": "bcf4fb4c3f3303862da09171a296efabba74c9cc0d8a960ef6decd4466dd5fc6"
 }

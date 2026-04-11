@@ -37,6 +37,7 @@ import { safeHtml } from '@/shared/lib/security/safe-html';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { JSX } from 'react';
+import { Suspense } from 'react';
 
 import './kangur/kangur.css';
 
@@ -96,6 +97,43 @@ const isRootPublicRequest = (pathname: string | null): boolean => {
 };
 
 export default async function FrontendLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}): Promise<JSX.Element> {
+  return (
+    <Suspense fallback={<FrontendLayoutFallback>{children}</FrontendLayoutFallback>}>
+      <FrontendLayoutRuntime>{children}</FrontendLayoutRuntime>
+    </Suspense>
+  );
+}
+
+function FrontendLayoutFallback({
+  children,
+}: {
+  children: React.ReactNode;
+}): JSX.Element {
+  return (
+    <main
+      id='kangur-main-content'
+      tabIndex={-1}
+      className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+      data-frontend-public-route-family='cms'
+    >
+      <FrontendPublicOwnerProvider publicOwner='cms' routeFamily='cms'>
+        <QueryErrorBoundary>
+          <FrontendPublicOwnerShellClient publicOwner='cms'>
+            <CmsStorefrontAppearanceProvider initialMode='default'>
+              <>{children}</>
+            </CmsStorefrontAppearanceProvider>
+          </FrontendPublicOwnerShellClient>
+        </QueryErrorBoundary>
+      </FrontendPublicOwnerProvider>
+    </main>
+  );
+}
+
+async function FrontendLayoutRuntime({
   children,
 }: {
   children: React.ReactNode;

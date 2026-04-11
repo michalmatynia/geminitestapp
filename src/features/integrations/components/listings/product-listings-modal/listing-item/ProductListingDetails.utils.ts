@@ -1,5 +1,3 @@
-'use client';
-
 import {
   resolveTraderaExecutionStepsFromMarketplaceData,
 } from '@/features/integrations/utils/tradera-execution-steps';

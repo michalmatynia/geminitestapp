@@ -34,6 +34,7 @@ const DIRECT_CLIENT_HOOK_NAMES = new Set([
   'useTranslations',
   'useLocale',
 ]);
+const CLIENT_CONTEXT_FACTORY_NAMES = new Set(['createStrictContext', 'createStrictViewContext']);
 const HOOK_NAME_RE = /^use[A-Z][A-Za-z0-9_]*$/;
 const EVENT_HANDLER_RE = /^on[A-Z]/;
 const CLIENT_GLOBAL_LABELS = new Map([
@@ -55,6 +56,7 @@ const SERVER_ENTRY_BASENAMES = new Set([
   'forbidden',
   'unauthorized',
 ]);
+const APP_ROUTER_CLIENT_ENTRY_BASENAMES = new Set(['error', 'global-error']);
 const SOURCE_EXTENSION_LIST = [...SOURCE_EXTENSIONS];
 
 const toRepoRelativePath = (root, absolutePath) =>
@@ -77,6 +79,11 @@ const getScriptKind = (absolutePath) => {
     default:
       return ts.ScriptKind.TS;
   }
+};
+
+const isBrowserApiBoundaryFile = (absolutePath) => {
+  const ext = path.extname(absolutePath);
+  return ext === '.tsx' || ext === '.jsx';
 };
 
 const getLine = (sourceFile, nodeOrPosition) => {
@@ -135,6 +142,20 @@ const isServerEntrypointPath = (relativePath) => {
   const extension = path.extname(relativePath);
   const basename = path.basename(relativePath, extension);
   return SERVER_ENTRY_BASENAMES.has(basename);
+};
+
+const getFrameworkClientBoundaryReason = (relativePath) => {
+  if (!relativePath.startsWith('src/app/')) return null;
+  const extension = path.extname(relativePath);
+  const basename = path.basename(relativePath, extension);
+  if (!APP_ROUTER_CLIENT_ENTRY_BASENAMES.has(basename)) return null;
+
+  return {
+    ruleId: 'app-router-error-entrypoint',
+    line: 1,
+    message:
+      'Next.js app router error entrypoints must remain Client Components with `use client`.',
+  };
 };
 
 const resolveSourcePath = (candidatePath) => {
@@ -204,6 +225,7 @@ const getPropertyNameText = (nameNode) => {
 
 const collectImportMetadata = (sourceFile) => {
   const importedHookNames = new Set();
+  const importedContextFactoryNames = new Set();
   const dynamicImportNames = new Set();
   const nextIntlProviderNames = new Set();
 
@@ -237,14 +259,21 @@ const collectImportMetadata = (sourceFile) => {
       if (HOOK_NAME_RE.test(localName) && !DIRECT_CLIENT_HOOK_NAMES.has(localName)) {
         importedHookNames.add(localName);
       }
+      if (CLIENT_CONTEXT_FACTORY_NAMES.has(localName)) {
+        importedContextFactoryNames.add(localName);
+      }
     }
 
     if (importClause.namedBindings && ts.isNamedImports(importClause.namedBindings)) {
       for (const element of importClause.namedBindings.elements) {
         if (element.isTypeOnly) continue;
+        const importedName = element.propertyName?.text ?? element.name.text;
         const localName = element.name.text;
         if (HOOK_NAME_RE.test(localName) && !DIRECT_CLIENT_HOOK_NAMES.has(localName)) {
           importedHookNames.add(localName);
+        }
+        if (CLIENT_CONTEXT_FACTORY_NAMES.has(importedName)) {
+          importedContextFactoryNames.add(localName);
         }
       }
     }
@@ -252,6 +281,7 @@ const collectImportMetadata = (sourceFile) => {
 
   return {
     importedHookNames,
+    importedContextFactoryNames,
     dynamicImportNames,
     nextIntlProviderNames,
   };
@@ -286,7 +316,12 @@ const collectLocalDependencies = ({ sourceFile, absolutePath, root }) => {
 const collectReasons = ({ sourceFile }) => {
   const reasons = [];
   const scope = createScope();
-  const { importedHookNames, dynamicImportNames, nextIntlProviderNames } =
+  const {
+    importedHookNames,
+    importedContextFactoryNames,
+    dynamicImportNames,
+    nextIntlProviderNames,
+  } =
     collectImportMetadata(sourceFile);
 
   const addReason = (ruleId, line, message) => {
@@ -363,6 +398,14 @@ const collectReasons = ({ sourceFile }) => {
             'custom-hook',
             getLine(sourceFile, expression),
             `Calls custom hook \`${calleeName}\`.`
+          );
+        }
+
+        if (importedContextFactoryNames.has(calleeName)) {
+          addReason(
+            'context-factory',
+            getLine(sourceFile, expression),
+            `Calls client-only context factory \`${calleeName}\`.`
           );
         }
 
@@ -459,19 +502,6 @@ const collectReasons = ({ sourceFile }) => {
       );
     }
 
-    if (
-      ts.isTypeOfExpression(node) &&
-      ts.isIdentifier(node.expression) &&
-      CLIENT_GLOBAL_LABELS.has(node.expression.text) &&
-      !isNameDeclared(currentScope, node.expression.text)
-    ) {
-      addReason(
-        'browser-api',
-        getLine(sourceFile, node.expression),
-        `Uses browser API \`${CLIENT_GLOBAL_LABELS.get(node.expression.text)}\`.`
-      );
-    }
-
     if (ts.isJsxAttribute(node) && EVENT_HANDLER_RE.test(node.name.text)) {
       addReason(
         'jsx-event-handler',
@@ -520,6 +550,13 @@ export const analyzeClientBoundaryFile = ({ root = process.cwd(), absolutePath, 
   );
   const hasUseClient = hasUseClientDirective(sourceFile);
   const reasons = collectReasons({ sourceFile });
+  const frameworkReason = getFrameworkClientBoundaryReason(relativePath);
+  if (frameworkReason) {
+    reasons.unshift(frameworkReason);
+  }
+  const blockingReasons = reasons.filter(
+    (reason) => reason.ruleId !== 'browser-api' || isBrowserApiBoundaryFile(absolutePath)
+  );
   const dependencies = collectLocalDependencies({ sourceFile, absolutePath, root });
 
   return {
@@ -528,8 +565,9 @@ export const analyzeClientBoundaryFile = ({ root = process.cwd(), absolutePath, 
     dependencies,
     hasUseClient,
     reasons,
+    blockingReasons,
     isRemovableCandidate: hasUseClient && reasons.length === 0,
-    requiresUseClient: reasons.length > 0,
+    requiresUseClient: blockingReasons.length > 0,
     isServerEntrypoint: isServerEntrypointPath(relativePath),
   };
 };
@@ -590,6 +628,7 @@ export const auditClientBoundaries = ({ root = process.cwd() } = {}) => {
     )
     .map((result) => ({
       ...result,
+      reasons: result.blockingReasons,
       serverReachablePath: buildServerReachablePath(result.absolutePath),
     }));
   const removableCandidates = results.filter((result) => result.isRemovableCandidate);

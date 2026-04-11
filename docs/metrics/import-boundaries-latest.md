@@ -8,15 +8,15 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-04-11T09:28:54.578Z
+Generated at: 2026-04-11T13:44:51.986Z
 
 ## Summary
 
 - Status: FAILED
-- Files scanned: 7248
+- Files scanned: 7252
 - Features tracked: 11
 - Circular dependencies: 1
-- Errors: 63
+- Errors: 64
 - Warnings: 0
 - Info: 0
 
@@ -44,7 +44,7 @@ Generated at: 2026-04-11T09:28:54.578Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| cross-feature-internal-import | 62 | 0 | 0 |
+| cross-feature-internal-import | 63 | 0 | 0 |
 | circular-feature-dep | 1 | 0 | 0 |
 
 ## Issues
@@ -88,6 +88,7 @@ Generated at: 2026-04-11T09:28:54.578Z
 | ERROR | cross-feature-internal-import | src/features/products/components/form/ProductFormMarketplaceCopy.tsx:17 | Imports internal path from feature "integrations": @/features/integrations/hooks/useIntegrationQueries. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/products/components/form/ProductImagesTabContent.tsx:19 | Imports internal path from feature "files": @/features/files/client/public. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx:12 | Imports internal path from feature "integrations": @/features/integrations/product-integrations-adapter. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx:48 | Imports internal path from feature "integrations": @/features/integrations/utils/baseExportPreflight. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx:7 | Imports internal path from feature "integrations": @/features/integrations/product-integrations-adapter. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx:35 | Imports internal path from feature "integrations": @/features/integrations/product-integrations-adapter. Use the barrel export instead. |
 | ERROR | cross-feature-internal-import | src/features/products/components/list/columns/buttons/TraderaStatusButton.tsx:5 | Imports internal path from feature "integrations": @/features/integrations/product-integrations-adapter. Use the barrel export instead. |

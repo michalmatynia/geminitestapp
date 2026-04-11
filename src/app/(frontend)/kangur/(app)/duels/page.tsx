@@ -1,5 +1,5 @@
 import { renderAccessibleKangurAliasRoute } from '@/features/kangur/server';
 
-export default async function Page(): Promise<null> {
+export default function Page(): React.JSX.Element {
   return renderAccessibleKangurAliasRoute(['duels']);
 }

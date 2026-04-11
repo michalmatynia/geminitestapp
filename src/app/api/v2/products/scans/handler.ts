@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listProductScansWithSync } from '@/features/products/server/product-scans-service';
+import { productScanListResponseSchema } from '@/shared/contracts/product-scans';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const csvStringArraySchema = z.preprocess(
@@ -44,5 +45,5 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
     limit: query.limit ?? 50,
   });
 
-  return NextResponse.json({ scans });
+  return NextResponse.json(productScanListResponseSchema.parse({ scans }));
 }

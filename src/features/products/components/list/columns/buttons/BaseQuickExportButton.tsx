@@ -45,6 +45,7 @@ import {
   normalizeMarketplaceStatus,
 } from '../product-column-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { getBaseExportPreflightError } from '@/features/integrations/utils/baseExportPreflight';
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();
@@ -596,6 +597,12 @@ export function BaseQuickExportButton(props: {
   };
 
   const runQuickExport = async (): Promise<void> => {
+    const preflightError = getBaseExportPreflightError(product.categoryId);
+    if (preflightError) {
+      toast(preflightError, { variant: 'error' });
+      return;
+    }
+
     if (
       quickExportLockRef.current ||
       quickExportMutation.isPending ||

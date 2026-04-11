@@ -1,6 +1,4 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
+import type { useTranslations } from 'next-intl';
 import type {
   KangurDrawingEngineCatalogEntry,
   KangurGameEngineCatalogEntry,

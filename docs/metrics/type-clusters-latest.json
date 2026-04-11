@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-09T01:47:47.847Z",
+  "generatedAt": "2026-04-11T13:40:35.367Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -18,13 +18,13 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10072,
-    "exportedDeclarationsScanned": 5936,
-    "candidateDeclarationsScanned": 5915,
-    "exactShapeClusters": 4,
-    "nearShapeClusters": 3,
-    "clustersAfterFilters": 7,
-    "declarationsInClusters": 18,
+    "filesScanned": 10256,
+    "exportedDeclarationsScanned": 6021,
+    "candidateDeclarationsScanned": 6003,
+    "exactShapeClusters": 1,
+    "nearShapeClusters": 2,
+    "clustersAfterFilters": 3,
+    "declarationsInClusters": 9,
     "highestRiskScore": 17
   },
   "clusters": [
@@ -48,7 +48,7 @@
           "name": "ProductCategoryBatchQuery",
           "kind": "type",
           "path": "src/app/api/v2/products/categories/batch/handler.helpers.ts",
-          "line": 19,
+          "line": 18,
           "domain": "app",
           "usageCount": 0
         },
@@ -56,7 +56,7 @@
           "name": "ProductCategoriesQuery",
           "kind": "type",
           "path": "src/app/api/v2/products/categories/handler.helpers.ts",
-          "line": 32,
+          "line": 15,
           "domain": "app",
           "usageCount": 0
         },
@@ -64,7 +64,7 @@
           "name": "ProductCategoryTreeQuery",
           "kind": "type",
           "path": "src/app/api/v2/products/categories/tree/handler.helpers.ts",
-          "line": 11,
+          "line": 13,
           "domain": "app",
           "usageCount": 0
         },
@@ -72,7 +72,7 @@
           "name": "ProductSyncRunDetailQuery",
           "kind": "type",
           "path": "src/app/api/v2/products/sync/runs/[runId]/handler.helpers.ts",
-          "line": 15,
+          "line": 14,
           "domain": "app",
           "usageCount": 0
         },
@@ -90,156 +90,36 @@
       ]
     },
     {
-      "clusterId": "exact-0002",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 14,
-      "declarationCount": 3,
-      "domains": [
-        "feature:internationalization",
-        "shared:contracts"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "d2a8fe8b3537",
-        "memberCount": 1,
-        "preview": "CodeNameDto"
-      },
-      "declarations": [
-        {
-          "name": "CountryFormState",
-          "kind": "type",
-          "path": "src/features/internationalization/components/country-modal/CountryModal.helpers.tsx",
-          "line": 8,
-          "domain": "feature:internationalization",
-          "usageCount": 1
-        },
-        {
-          "name": "CountryCodeOption",
-          "kind": "type",
-          "path": "src/features/internationalization/components/country-modal/CountryModal.helpers.tsx",
-          "line": 9,
-          "domain": "feature:internationalization",
-          "usageCount": 0
-        },
-        {
-          "name": "CodeName",
-          "kind": "type",
-          "path": "src/shared/contracts/base.ts",
-          "line": 62,
-          "domain": "shared:contracts",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0003",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 13,
-      "declarationCount": 2,
-      "domains": [
-        "feature:ai"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "2463fe15c097",
-        "memberCount": 1,
-        "preview": "AgentLlmContext"
-      },
-      "declarations": [
-        {
-          "name": "LLMContext",
-          "kind": "type",
-          "path": "src/features/ai/agent-runtime/tools/llm/segments/shared.ts",
-          "line": 7,
-          "domain": "feature:ai",
-          "usageCount": 4
-        },
-        {
-          "name": "ToolLlmContext",
-          "kind": "type",
-          "path": "src/features/ai/agent-runtime/tools/segments/types.ts",
-          "line": 11,
-          "domain": "feature:ai",
-          "usageCount": 1
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0004",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 10,
-      "declarationCount": 2,
-      "domains": [
-        "shared:contracts"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "0510fd54775b",
-        "memberCount": 1,
-        "preview": "BaseFilters"
-      },
-      "declarations": [
-        {
-          "name": "CustomFieldFilters",
-          "kind": "type",
-          "path": "src/shared/contracts/products/drafts.ts",
-          "line": 185,
-          "domain": "shared:contracts",
-          "usageCount": 1
-        },
-        {
-          "name": "ProducerFilters",
-          "kind": "type",
-          "path": "src/shared/contracts/products/drafts.ts",
-          "line": 186,
-          "domain": "shared:contracts",
-          "usageCount": 1
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
       "clusterId": "near-0001",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 10,
+      "riskScore": 11,
       "declarationCount": 2,
       "domains": [
-        "app",
-        "shared"
+        "shared",
+        "shared:contracts"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "07c67cb48755",
-        "memberCount": 8,
-        "preview": "prop:category?:string | undefined; prop:from?:string | undefined; prop:page:number; prop:pageSize:number; prop:projectId?:string | undefined; prop:query?:string | undefined; prop:status?:UploadEventStatus; prop:to?:string | undefined"
+        "normalizedShapeHash": "62b064e5be79",
+        "memberCount": 7,
+        "preview": "prop:contextRegistry:ContextRegistryDisplay | null; prop:createdAt:string | null; prop:fingerprint:string | null; prop:level:string | null; prop:logId:string | null; prop:message:string | null; prop:source:string | null"
       },
       "declarations": [
         {
-          "name": "UploadEventsQueryInput",
+          "name": "AlertEvidenceSample",
           "kind": "type",
-          "path": "src/app/api/system/upload-events/handler.helpers.ts",
-          "line": 6,
-          "domain": "app",
-          "usageCount": 0
+          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
+          "line": 21,
+          "domain": "shared",
+          "usageCount": 1
         },
         {
-          "name": "ListFileUploadEventsInput",
+          "name": "AlertEvidenceSampleDisplay",
           "kind": "type",
-          "path": "src/shared/lib/files/services/file-upload-events.ts",
-          "line": 27,
-          "domain": "shared",
+          "path": "src/shared/contracts/observability.ts",
+          "line": 561,
+          "domain": "shared:contracts",
           "usageCount": 0
         }
       ],
@@ -251,69 +131,33 @@
       "clusterId": "near-0002",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 8,
+      "riskScore": 11,
       "declarationCount": 2,
       "domains": [
-        "feature:integrations"
+        "shared",
+        "shared:contracts"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "a87c53e3f39f",
-        "memberCount": 2,
-        "preview": "prop:connection:BasicTraderaConnection; prop:integrationId:string"
+        "normalizedShapeHash": "9d072c6361f1",
+        "memberCount": 6,
+        "preview": "prop:lastObservedLog:AlertEvidenceSampleDisplay | null; prop:matchedCount:number | null; prop:sampleSize:number | null; prop:samples:AlertEvidenceSampleDisplay[]; prop:windowEnd:string | null; prop:windowStart:string | null"
       },
       "declarations": [
         {
-          "name": "ResolvedTraderaBrowserConnection",
+          "name": "AlertEvidenceContext",
           "kind": "type",
-          "path": "src/features/integrations/hooks/useTraderaQuickExportConnection.ts",
-          "line": 21,
-          "domain": "feature:integrations",
-          "usageCount": 0
+          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
+          "line": 31,
+          "domain": "shared",
+          "usageCount": 1
         },
         {
-          "name": "ResolvedVintedBrowserConnection",
+          "name": "AlertEvidenceDisplay",
           "kind": "type",
-          "path": "src/features/integrations/hooks/useVintedQuickExportConnection.ts",
-          "line": 19,
-          "domain": "feature:integrations",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0003",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "shared"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "5276e0acfc17",
-        "memberCount": 23,
-        "preview": "prop:contentBackground?:string | undefined; prop:contentTextColor?:string | undefined; prop:debounceMs?:number | undefined; prop:editorWidth?:number | null | undefined; prop:isCodeMode?:boolean | undefined; prop:isDraggingSplitter?:boolean | undefined; prop:isPasting?:boolean | undefined; prop:onChange?:(nextValue: string) => void"
-      },
-      "declarations": [
-        {
-          "name": "MarkdownSplitEditorProps",
-          "kind": "interface",
-          "path": "src/shared/lib/document-editor/components/MarkdownSplitEditor.tsx",
-          "line": 14,
-          "domain": "shared",
-          "usageCount": 0
-        },
-        {
-          "name": "MarkdownSplitEditorContextValue",
-          "kind": "interface",
-          "path": "src/shared/lib/document-editor/context/MarkdownSplitEditorContext.tsx",
-          "line": 8,
-          "domain": "shared",
+          "path": "src/shared/contracts/observability.ts",
+          "line": 571,
+          "domain": "shared:contracts",
           "usageCount": 0
         }
       ],

@@ -33,6 +33,7 @@ type ProductAmazonScanModalProps = {
 type ScanModalRow = {
   productId: string;
   productName: string;
+  requestedAt: string;
   scanId: string | null;
   runId: string | null;
   status: ProductScanStatus | 'enqueuing';
@@ -62,6 +63,8 @@ const STATUS_CLASSES: Record<ScanModalRow['status'], string> = {
 
 const MISSING_BATCH_RESULT_MESSAGE = 'Amazon scan request did not return a result for this product.';
 const MISSING_SCAN_RECORD_MESSAGE = 'Amazon scan record could not be refreshed.';
+const UNTRACKABLE_ACTIVE_SCAN_MESSAGE =
+  'Amazon scan request returned an active scan without a trackable scan id.';
 
 const resolveActiveStatusMessage = (
   status: ProductScanStatus | 'enqueuing',
@@ -111,11 +114,61 @@ const formatSummary = (rows: ScanModalRow[]): string => {
     .join(' · ');
 };
 
+const buildToastSummaryFromRows = (
+  rows: ScanModalRow[]
+): { message: string; variant: 'success' | 'warning' } => {
+  const counts = {
+    queued: rows.filter((row) => row.status === 'queued').length,
+    running: rows.filter((row) => row.status === 'running').length,
+    completed: rows.filter((row) => row.status === 'completed').length,
+    noMatch: rows.filter((row) => row.status === 'no_match').length,
+    conflict: rows.filter((row) => row.status === 'conflict').length,
+    failed: rows.filter((row) => row.status === 'failed').length,
+  };
+
+  const summary = [
+    counts.queued > 0 && `${counts.queued} queued`,
+    counts.running > 0 && `${counts.running} running`,
+    counts.completed > 0 && `${counts.completed} completed`,
+    counts.noMatch > 0 && `${counts.noMatch} no match`,
+    counts.conflict > 0 && `${counts.conflict} conflicts`,
+    counts.failed > 0 && `${counts.failed} failed`,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  return {
+    message: summary ? `Amazon scans: ${summary}.` : 'No Amazon scans were queued.',
+    variant: counts.failed > 0 || counts.conflict > 0 ? 'warning' : 'success',
+  };
+};
+
 const formatTimestamp = (value: string | null | undefined): string => {
   if (!value) return 'Unknown time';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return parsed.toLocaleString();
+};
+
+const isDiscoveredScanCurrentForRow = (
+  row: ScanModalRow,
+  discoveredScan: ProductScanRecord | null
+): discoveredScan is ProductScanRecord => {
+  if (!discoveredScan) {
+    return false;
+  }
+
+  if (isProductScanActiveStatus(discoveredScan.status)) {
+    return true;
+  }
+
+  const requestedAtTs = Date.parse(row.requestedAt);
+  const createdAtTs = Date.parse(discoveredScan.createdAt || '');
+  if (!Number.isFinite(requestedAtTs) || !Number.isFinite(createdAtTs)) {
+    return false;
+  }
+
+  return createdAtTs >= requestedAtTs - 1_000;
 };
 
 const resolveRowDisplayMessages = (
@@ -163,6 +216,7 @@ export function ProductAmazonScanModal(
   const pollTimerRef = useRef<SafeTimerId | null>(null);
   const modalSessionRef = useRef(0);
   const rowsRef = useRef<ScanModalRow[]>([]);
+  const selectedProductsRef = useRef<Array<{ productId: string; productName: string }>>([]);
   const [rows, setRows] = useState<ScanModalRow[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
@@ -178,6 +232,30 @@ export function ProductAmazonScanModal(
     [products]
   );
 
+  const selectedProducts = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          productIds
+            .map((productId) => productId.trim())
+            .filter((productId) => productId.length > 0)
+        )
+      ).map((productId) => ({
+        productId,
+        productName: productNamesById.get(productId) ?? productId,
+      })),
+    [productIds, productNamesById]
+  );
+  const selectedProductIdsKey = useMemo(
+    () =>
+      selectedProducts
+        .map((entry) => entry.productId)
+        .slice()
+        .sort()
+        .join('\u0000'),
+    [selectedProducts]
+  );
+
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
       safeClearInterval(pollTimerRef.current);
@@ -190,9 +268,40 @@ export function ProductAmazonScanModal(
     rowsRef.current = rows;
   }, [rows]);
 
+  useEffect(() => {
+    selectedProductsRef.current = selectedProducts;
+  }, [selectedProducts]);
+
+  useEffect(() => {
+    const selectedProductNames = new Map(
+      selectedProducts.map(({ productId, productName }) => [productId, productName])
+    );
+
+    setRows((currentRows) => {
+      let didChange = false;
+      const nextRows = currentRows.map((row) => {
+        const nextProductName = selectedProductNames.get(row.productId);
+        if (!nextProductName || nextProductName === row.productName) {
+          return row;
+        }
+        didChange = true;
+        return {
+          ...row,
+          productName: nextProductName,
+        };
+      });
+
+      if (didChange) {
+        rowsRef.current = nextRows;
+      }
+
+      return didChange ? nextRows : currentRows;
+    });
+  }, [selectedProducts]);
+
   const invalidateProductViews = useCallback(
     async (productId: string) => {
-      await Promise.all([
+      await Promise.allSettled([
         invalidateProductsAndDetail(queryClient, productId),
         invalidateProductsAndCounts(queryClient),
         invalidateProductScans(queryClient, productId),
@@ -210,38 +319,147 @@ export function ProductAmazonScanModal(
     const scanIds = currentRows
       .map((row) => row.scanId)
       .filter((scanId): scanId is string => Boolean(scanId));
-    if (scanIds.length === 0) {
+    const untrackedProductIds = Array.from(
+      new Set(
+        currentRows
+          .filter((row) => !row.scanId)
+          .map((row) => row.productId.trim())
+          .filter((productId) => productId.length > 0)
+      )
+    );
+    const scansById = new Map<string, ProductScanRecord>();
+    const scansByProductId = new Map<string, ProductScanRecord | null>();
+    const discoveryFailedProductIds = new Set<string>();
+    let trackedLookupFailed = false;
+    let refreshError: unknown = null;
+
+    if (scanIds.length === 0 && untrackedProductIds.length === 0) {
       stopPolling();
       return;
     }
 
-    const response = await api.get<ProductScanListResponse>('/api/v2/products/scans', {
-      cache: 'no-store',
-      params: {
-        ids: scanIds.join(','),
-        limit: scanIds.length,
-      },
-    });
-    if (sessionId !== modalSessionRef.current) {
-      return;
+    if (scanIds.length > 0) {
+      try {
+        const response = await api.get<ProductScanListResponse>('/api/v2/products/scans', {
+          cache: 'no-store',
+          params: {
+            ids: scanIds.join(','),
+            limit: scanIds.length,
+          },
+        });
+        if (sessionId !== modalSessionRef.current) {
+          return;
+        }
+
+        response.scans.forEach((scan) => {
+          scansById.set(scan.id, scan);
+        });
+      } catch (error) {
+        trackedLookupFailed = true;
+        refreshError ??= error;
+      }
     }
 
-    const scansById = new Map(response.scans.map((scan) => [scan.id, scan]));
+    const missingTrackedProductIds = Array.from(
+      new Set(
+        currentRows
+          .filter((row) => row.scanId && !scansById.has(row.scanId))
+          .map((row) => row.productId.trim())
+          .filter((productId) => productId.length > 0)
+      )
+    );
+    const productIdsForDiscovery = Array.from(
+      new Set([...untrackedProductIds, ...missingTrackedProductIds])
+    );
+
+    if (productIdsForDiscovery.length > 0) {
+      const discoveredScans = await Promise.all(
+        productIdsForDiscovery.map(async (productId) => {
+          try {
+            return {
+              productId,
+              response: await api.get<ProductScanListResponse>(
+                `/api/v2/products/${productId}/scans`,
+                {
+                  cache: 'no-store',
+                  params: { limit: 1 },
+                }
+              ),
+              error: null,
+            };
+          } catch (error) {
+            return {
+              productId,
+              response: null,
+              error,
+            };
+          }
+        })
+      );
+      if (sessionId !== modalSessionRef.current) {
+        return;
+      }
+
+      discoveredScans.forEach(({ productId, response, error }) => {
+        if (error) {
+          discoveryFailedProductIds.add(productId);
+          refreshError ??= error;
+          return;
+        }
+
+        if (response?.scans) {
+          scansByProductId.set(
+            productId,
+            response.scans.find((scan) => scan.productId === productId) ?? null
+          );
+        }
+      });
+    }
+
+    const hadSuccessfulLookup =
+      (scanIds.length > 0 && !trackedLookupFailed) ||
+      scansByProductId.size > 0 ||
+      (productIdsForDiscovery.length > 0 &&
+        discoveryFailedProductIds.size < productIdsForDiscovery.length);
+    if (!hadSuccessfulLookup && refreshError) {
+      throw refreshError;
+    }
 
     const terminalProductIds: string[] = [];
     const nextRows = currentRows.map((row) => {
-      const refreshedScan = row.scanId ? (scansById.get(row.scanId) ?? null) : row.scan;
-      const isMissingRefreshedScan = Boolean(row.scanId) && !refreshedScan;
+      const currentDiscoveredScan = isDiscoveredScanCurrentForRow(
+        row,
+        scansByProductId.get(row.productId) ?? null
+      )
+        ? (scansByProductId.get(row.productId) ?? null)
+        : null;
+      const lookupUnavailable =
+        (Boolean(row.scanId) && trackedLookupFailed && !scansById.has(row.scanId ?? '')) ||
+        discoveryFailedProductIds.has(row.productId);
+      if (lookupUnavailable && !currentDiscoveredScan && !scansById.get(row.scanId ?? '')) {
+        return row;
+      }
+      const refreshedScan = row.scanId
+        ? (scansById.get(row.scanId) ?? currentDiscoveredScan ?? null)
+        : (currentDiscoveredScan ?? row.scan);
+      const isMissingRefreshedScan =
+        Boolean(row.scanId) && !scansById.get(row.scanId ?? '') && !currentDiscoveredScan;
       const scan = isMissingRefreshedScan ? null : refreshedScan;
       const status = scan?.status ?? row.status;
       const wasTerminal =
         row.status !== 'enqueuing' && isProductScanTerminalStatus(row.status);
-      if ((isMissingRefreshedScan || (scan && isProductScanTerminalStatus(scan.status))) && !wasTerminal) {
+      const hasNewTerminalScan =
+        scan &&
+        isProductScanTerminalStatus(scan.status) &&
+        (!wasTerminal || scan.id !== row.scan?.id);
+      if (isMissingRefreshedScan || hasNewTerminalScan) {
         terminalProductIds.push(row.productId);
       }
       if (isMissingRefreshedScan) {
         return {
           ...row,
+          scanId: null,
+          runId: null,
           status: 'failed' as const,
           message: MISSING_SCAN_RECORD_MESSAGE,
           scan: null,
@@ -249,6 +467,8 @@ export function ProductAmazonScanModal(
       }
       return {
         ...row,
+        scanId: scan?.id ?? row.scanId,
+        runId: scan?.engineRunId ?? row.runId,
         status,
         message:
           scan?.status === 'completed'
@@ -306,12 +526,29 @@ export function ProductAmazonScanModal(
     }, 3000);
   }, [handleRefreshFailure, refreshScanRows, stopPolling]);
 
+  const ensurePollingForTrackedActiveRows = useCallback((sessionId = modalSessionRef.current) => {
+    if (sessionId !== modalSessionRef.current) {
+      return;
+    }
+
+    if (
+      !pollTimerRef.current &&
+      rowsRef.current.some((row) => Boolean(row.scanId) && isProductScanActiveStatus(row.status))
+    ) {
+      startPolling(sessionId);
+    }
+  }, [startPolling]);
+
   const handleManualRefresh = useCallback(() => {
     const sessionId = modalSessionRef.current;
-    void refreshScanRows(sessionId).catch((error: unknown) => {
-      handleRefreshFailure(error, { sessionId });
-    });
-  }, [handleRefreshFailure, refreshScanRows]);
+    void refreshScanRows(sessionId)
+      .then(() => {
+        ensurePollingForTrackedActiveRows(sessionId);
+      })
+      .catch((error: unknown) => {
+        handleRefreshFailure(error, { sessionId });
+      });
+  }, [ensurePollingForTrackedActiveRows, handleRefreshFailure, refreshScanRows]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -325,9 +562,19 @@ export function ProductAmazonScanModal(
 
     const sessionId = modalSessionRef.current + 1;
     modalSessionRef.current = sessionId;
-    const initialRows = productIds.map((productId) => ({
+    const selectedProductEntries = selectedProductsRef.current;
+    if (selectedProductEntries.length === 0) {
+      rowsRef.current = [];
+      setRows([]);
+      setIsSubmitting(false);
+      stopPolling();
+      return;
+    }
+
+    const initialRows = selectedProductEntries.map(({ productId, productName }) => ({
       productId,
-      productName: productNamesById.get(productId) ?? productId,
+      productName,
+      requestedAt: new Date().toISOString(),
       scanId: null,
       runId: null,
       status: 'enqueuing' as const,
@@ -342,25 +589,57 @@ export function ProductAmazonScanModal(
       try {
         const response = await api.post<ProductAmazonBatchScanResponse>(
           '/api/v2/products/scans/amazon/batch',
-          { productIds }
+          { productIds: selectedProductEntries.map(({ productId }) => productId) }
         );
         if (sessionId !== modalSessionRef.current) {
           return;
         }
 
         const resultsByProductId = new Map(response.results.map((result) => [result.productId, result]));
+        const summaryCounts = {
+          queued: response.queued,
+          running: response.running,
+          alreadyRunning: response.alreadyRunning,
+          failed: response.failed,
+        };
+        let toastMessage: string | null = null;
+        let toastVariant: 'success' | 'warning' = 'success';
 
-        const queuedRows = initialRows.map((row) => {
+        const queuedRows: ScanModalRow[] = initialRows.map((row) => {
           const result = resultsByProductId.get(row.productId);
           if (!result) {
+            summaryCounts.failed += 1;
             return {
               ...row,
               status: 'failed' as const,
               message: MISSING_BATCH_RESULT_MESSAGE,
             };
           }
+          const resultIsActive =
+            result.status === 'queued' ||
+            result.status === 'running' ||
+            result.status === 'already_running';
+          if (resultIsActive && !result.scanId) {
+            if (result.status === 'queued') {
+              summaryCounts.queued = Math.max(0, summaryCounts.queued - 1);
+            } else if (result.status === 'running') {
+              summaryCounts.running = Math.max(0, summaryCounts.running - 1);
+            } else {
+              summaryCounts.alreadyRunning = Math.max(0, summaryCounts.alreadyRunning - 1);
+            }
+            summaryCounts.failed += 1;
+            return {
+              ...row,
+              status: 'failed' as const,
+              message: UNTRACKABLE_ACTIVE_SCAN_MESSAGE,
+            };
+          }
           const nextStatus: ScanModalRow['status'] =
-            result.status === 'already_running' ? 'running' : result.status;
+            result.status === 'already_running'
+              ? (result.currentStatus && isProductScanActiveStatus(result.currentStatus)
+                  ? result.currentStatus
+                  : 'running')
+              : result.status;
           return {
             ...row,
             scanId: result.scanId,
@@ -372,31 +651,69 @@ export function ProductAmazonScanModal(
         rowsRef.current = queuedRows;
         setRows(queuedRows);
 
+        const immediateTerminalProductIds = queuedRows
+          .filter((row) => row.status === 'failed')
+          .map((row) => row.productId);
+        if (immediateTerminalProductIds.length > 0) {
+          await Promise.all(
+            immediateTerminalProductIds.map(
+              async (productId) => await invalidateProductViews(productId)
+            )
+          );
+        }
+
         if (queuedRows.some((row) => row.status === 'queued' || row.status === 'running')) {
           startPolling(sessionId);
           void refreshScanRows(sessionId).catch((error: unknown) => {
             handleRefreshFailure(error, { stopPolling: true, sessionId });
           });
+        } else if (queuedRows.some((row) => !row.scanId)) {
+          let recoveredRows = queuedRows;
+          try {
+            await refreshScanRows(sessionId);
+            ensurePollingForTrackedActiveRows(sessionId);
+            recoveredRows = rowsRef.current;
+          } catch {
+            recoveredRows = queuedRows;
+          }
+
+          const recoveredState = recoveredRows.some((row, index) => {
+            const queuedRow = queuedRows[index];
+            return (
+              queuedRow?.scan !== row.scan ||
+              queuedRow?.scanId !== row.scanId ||
+              queuedRow?.runId !== row.runId ||
+              queuedRow?.status !== row.status ||
+              queuedRow?.message !== row.message
+            );
+          });
+          if (recoveredState) {
+            const recoveredSummary = buildToastSummaryFromRows(recoveredRows);
+            toastMessage = recoveredSummary.message;
+            toastVariant = recoveredSummary.variant;
+          }
         }
 
-        const missingResultCount = queuedRows.filter(
-          (row) => row.status === 'failed' && row.message === MISSING_BATCH_RESULT_MESSAGE
-        ).length;
-        const totalFailedCount = response.failed + missingResultCount;
-        const summary = [
-          response.queued > 0 && `${response.queued} queued`,
-          response.running > 0 && `${response.running} running`,
-          response.alreadyRunning > 0 && `${response.alreadyRunning} already running`,
-          totalFailedCount > 0 && `${totalFailedCount} failed`,
-        ]
-          .filter(Boolean)
-          .join(', ');
+        if (!toastMessage) {
+          const totalFailedCount = summaryCounts.failed;
+          const summary = [
+            summaryCounts.queued > 0 && `${summaryCounts.queued} queued`,
+            summaryCounts.running > 0 && `${summaryCounts.running} running`,
+            summaryCounts.alreadyRunning > 0 &&
+              `${summaryCounts.alreadyRunning} already in progress`,
+            totalFailedCount > 0 && `${totalFailedCount} failed`,
+          ]
+            .filter(Boolean)
+            .join(', ');
+          toastMessage = summary ? `Amazon scans: ${summary}.` : 'No Amazon scans were queued.';
+          toastVariant = totalFailedCount > 0 ? 'warning' : 'success';
+        }
 
         if (sessionId !== modalSessionRef.current) {
           return;
         }
-        toast(summary ? `Amazon scans: ${summary}.` : 'No Amazon scans were queued.', {
-          variant: totalFailedCount > 0 ? 'warning' : 'success',
+        toast(toastMessage, {
+          variant: toastVariant,
         });
       } catch (error) {
         if (sessionId !== modalSessionRef.current) {
@@ -411,6 +728,32 @@ export function ProductAmazonScanModal(
         }));
         rowsRef.current = failedRows;
         setRows(failedRows);
+        await Promise.all(
+          Array.from(new Set(initialRows.map((row) => row.productId))).map(
+            async (productId) => await invalidateProductViews(productId)
+          )
+        );
+        let recoveredState = false;
+        try {
+          await refreshScanRows(sessionId);
+          ensurePollingForTrackedActiveRows(sessionId);
+          const latestRows = rowsRef.current;
+          recoveredState = latestRows.some((row, index) => {
+            const failedRow = failedRows[index];
+            return (
+              failedRow?.scan !== row.scan ||
+              failedRow?.scanId !== row.scanId ||
+              failedRow?.runId !== row.runId ||
+              failedRow?.status !== row.status ||
+              failedRow?.message !== row.message
+            );
+          });
+        } catch {
+          // Keep the original enqueue failure visible when recovery probing also fails.
+        }
+        if (sessionId !== modalSessionRef.current || recoveredState) {
+          return;
+        }
         toast(message, { variant: 'error' });
       } finally {
         if (sessionId === modalSessionRef.current) {
@@ -425,7 +768,7 @@ export function ProductAmazonScanModal(
       }
       stopPolling();
     };
-  }, [handleRefreshFailure, isOpen, productIds, productNamesById, refreshScanRows, startPolling, stopPolling, toast]);
+  }, [ensurePollingForTrackedActiveRows, handleRefreshFailure, isOpen, refreshScanRows, selectedProductIdsKey, startPolling, stopPolling, toast]);
 
   return (
     <AppModal

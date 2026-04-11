@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-04-11T10:56:42.233Z
+Generated at: 2026-04-11T13:46:49.084Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -48,19 +48,19 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/(frontend)/[...slug]/page.tsx` | 30 |
 | `src/app/(admin)/admin/products/settings/page.tsx` | 29 |
 | `src/app/[locale]/(frontend)/login/page.tsx` | 26 |
+| `src/app/[locale]/(frontend)/kangur/(app)/[...slug]/page.tsx` | 25 |
 | `src/app/(admin)/admin/filemaker/campaigns/preferences/page.tsx` | 24 |
 | `src/app/(admin)/admin/filemaker/campaigns/unsubscribe/page.tsx` | 24 |
+| `src/app/(frontend)/kangur/(app)/[...slug]/page.tsx` | 23 |
 | `src/app/[locale]/(frontend)/kangur/login/page.tsx` | 20 |
 | `src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx` | 19 |
 | `src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx` | 17 |
-| `src/app/[locale]/(frontend)/page.tsx` | 17 |
 | `src/app/(admin)/admin/kangur/[...slug]/page.tsx` | 16 |
 | `src/app/(frontend)/kangur/login/page.tsx` | 16 |
 | `src/app/(admin)/admin/ai-paths/queue/page.tsx` | 15 |
+| `src/app/[locale]/(frontend)/page.tsx` | 15 |
 | `src/app/[locale]/(frontend)/products/[id]/page.tsx` | 15 |
 | `src/app/(admin)/admin/3d-assets/list/page.tsx` | 13 |
-| `src/app/(admin)/admin/3d-assets/page.tsx` | 13 |
-| `src/app/(admin)/admin/chatbot/context/page.tsx` | 13 |
 
 ## Recommended First Runtime Profiling Targets
 

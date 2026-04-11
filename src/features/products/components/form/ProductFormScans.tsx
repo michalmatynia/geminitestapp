@@ -1,16 +1,19 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, Loader2, RefreshCw } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import type { ProductScanListResponse, ProductScanRecord, ProductScanStatus } from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
+import { invalidateProductsCountsAndDetail } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button } from '@/shared/ui/button';
 
 const STATUS_LABELS: Record<ProductScanStatus, string> = {
+  enqueuing: 'Enqueuing...',
   queued: 'Queued',
   running: 'Running',
   completed: 'Completed',
@@ -20,6 +23,7 @@ const STATUS_LABELS: Record<ProductScanStatus, string> = {
 };
 
 const STATUS_CLASSES: Record<ProductScanStatus, string> = {
+  enqueuing: 'border-border/70 text-muted-foreground',
   queued: 'border-border/70 text-muted-foreground',
   running: 'border-blue-500/40 text-blue-300',
   completed: 'border-emerald-500/40 text-emerald-300',
@@ -38,6 +42,15 @@ const resolveActiveStatusMessage = (status: ProductScanStatus): string | null =>
   }
 
   return null;
+};
+
+const normalizeComparableAsin = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim().toUpperCase();
+  return normalized.length > 0 ? normalized : null;
 };
 
 const formatTimestamp = (value: string | null | undefined): string => {
@@ -99,6 +112,10 @@ const resolveScanMessages = (
 export default function ProductFormScans(): React.JSX.Element {
   const { product } = useProductFormCore();
   const productId = product?.id?.trim() || '';
+  const queryClient = useQueryClient();
+  const invalidatedUpdatedScanIdsRef = useRef<Set<string>>(new Set());
+  const pendingUpdatedScanIdsRef = useRef<Set<string>>(new Set());
+  const invalidationSessionRef = useRef(0);
 
   const scansQuery = useQuery<ProductScanListResponse, Error>({
     queryKey: QUERY_KEYS.products.scans(productId),
@@ -113,6 +130,64 @@ export default function ProductFormScans(): React.JSX.Element {
     },
   });
   const scans = scansQuery.data?.scans ?? [];
+  const scansDataUpdatedAt = scansQuery.dataUpdatedAt;
+
+  useEffect(() => {
+    invalidationSessionRef.current += 1;
+    invalidatedUpdatedScanIdsRef.current = new Set();
+    pendingUpdatedScanIdsRef.current = new Set();
+  }, [productId]);
+
+  useEffect(() => {
+    if (!productId || scans.length === 0) {
+      return;
+    }
+
+    const currentProductAsin = normalizeComparableAsin(product?.asin);
+    const unseenUpdatedScanIds = scans
+      .filter((scan) => {
+        if (scan.asinUpdateStatus !== 'updated') {
+          return false;
+        }
+
+        const scanAsin = normalizeComparableAsin(scan.asin);
+        return !scanAsin || scanAsin !== currentProductAsin;
+      })
+      .map((scan) => scan.id)
+      .filter(
+        (scanId) =>
+          !invalidatedUpdatedScanIdsRef.current.has(scanId) &&
+          !pendingUpdatedScanIdsRef.current.has(scanId)
+      );
+
+    if (unseenUpdatedScanIds.length === 0) {
+      return;
+    }
+
+    unseenUpdatedScanIds.forEach((scanId) => {
+      pendingUpdatedScanIdsRef.current.add(scanId);
+    });
+
+    const invalidationSession = invalidationSessionRef.current;
+    void invalidateProductsCountsAndDetail(queryClient, productId)
+      .then(() => {
+        if (invalidationSession !== invalidationSessionRef.current) {
+          return;
+        }
+        unseenUpdatedScanIds.forEach((scanId) => {
+          pendingUpdatedScanIdsRef.current.delete(scanId);
+          invalidatedUpdatedScanIdsRef.current.add(scanId);
+        });
+      })
+      .catch(() => {
+        if (invalidationSession !== invalidationSessionRef.current) {
+          return;
+        }
+        unseenUpdatedScanIds.forEach((scanId) => {
+          pendingUpdatedScanIdsRef.current.delete(scanId);
+        });
+      });
+  }, [product?.asin, productId, queryClient, scans, scansDataUpdatedAt]);
 
   if (!productId) {
     return (

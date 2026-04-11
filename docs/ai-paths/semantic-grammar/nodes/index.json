@@ -138,7 +138,7 @@
     "nodeType": "db_schema",
     "title": "Database Schema",
     "file": "docs/ai-paths/semantic-grammar/nodes/db_schema.json",
-    "nodeHash": "56956207074969f36d8750610fedc5877d6b3b873ad8f5048fdcf2d09dfa11af",
+    "nodeHash": "bcf4fb4c3f3303862da09171a296efabba74c9cc0d8a960ef6decd4466dd5fc6",
     "nodeHashAlgorithm": "sha256",
     "inputCount": 2,
     "outputCount": 2,

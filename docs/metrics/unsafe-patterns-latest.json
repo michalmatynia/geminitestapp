@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:03.895Z",
+  "generatedAt": "2026-04-11T13:44:51.214Z",
   "status": "passed",
   "summary": {
     "total": 10,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 10,
     "status": "passed",
-    "fileCount": 7104
+    "fileCount": 7252
   },
   "scope": {
     "root": "src",
@@ -16,67 +16,23 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 3,
-    "eslintDisableCount": 6,
-    "nonNullAssertionCount": 1,
+    "anyCount": 5,
+    "eslintDisableCount": 2,
+    "nonNullAssertionCount": 3,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {
-    "@typescript-eslint/no-unsafe-assignment": 4,
-    "@typescript-eslint/no-unsafe-call": 2,
-    "@typescript-eslint/no-unsafe-return": 2,
-    "@typescript-eslint/no-unnecessary-type-assertion": 2,
-    "@typescript-eslint/no-unsafe-argument": 1,
-    "@typescript-eslint/no-unsafe-member-access": 1
+    "@typescript-eslint/no-unsafe-return": 1,
+    "@typescript-eslint/no-explicit-any": 1
   },
   "issues": [
     {
       "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
-      "line": 133,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts",
-      "line": 28,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.vinted-browser.ts",
-      "line": 29,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call",
-      "file": "src/app/api/v2/integrations/products/[id]/listings/handler.ts",
-      "line": 213,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
-      "file": "src/app/api/v2/integrations/products/[id]/listings/handler.ts",
-      "line": 234,
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/filemaker/server/filemaker-mail-service.ts",
+      "line": 712,
       "column": null,
       "snippet": null,
       "context": null
@@ -85,8 +41,18 @@
       "severity": "info",
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
-      "file": "src/features/filemaker/server/filemaker-mail-service.ts",
-      "line": 712,
+      "file": "src/features/integrations/utils/tradera-browser-session.ts",
+      "line": 53,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/integrations/utils/tradera-browser-session.ts",
+      "line": 66,
       "column": null,
       "snippet": null,
       "context": null
@@ -103,10 +69,40 @@
     },
     {
       "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call",
-      "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
-      "line": 399,
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/contracts/document-editor.ts",
+      "line": 31,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/contracts/document-editor.ts",
+      "line": 32,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/contracts/document-editor.ts",
+      "line": 33,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/contracts/document-editor.ts",
+      "line": 40,
       "column": null,
       "snippet": null,
       "context": null
@@ -114,19 +110,19 @@
     {
       "severity": "info",
       "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion",
-      "file": "src/shared/lib/jobs/context/JobsContext.tsx",
-      "line": 149,
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/react/types.ts",
+      "line": 5,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
       "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion",
-      "file": "src/shared/lib/jobs/context/JobsContext.tsx",
-      "line": 158,
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/react/types.ts",
+      "line": 6,
       "column": null,
       "snippet": null,
       "context": null
@@ -137,20 +133,20 @@
       "ruleId": "eslint-disable",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 6
+      "infoCount": 2
     },
     {
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 3
+      "infoCount": 5
     },
     {
       "ruleId": "non-null-assertion",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 1
+      "infoCount": 3
     }
   ],
-  "durationMs": 2095
+  "durationMs": 2380
 }

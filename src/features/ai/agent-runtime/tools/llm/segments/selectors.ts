@@ -1,9 +1,10 @@
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { LLMContext, runStructuredAgentRuntimeTask } from './shared';
+import { type AgentLlmContext } from '@/shared/contracts/agent-runtime';
+import { runStructuredAgentRuntimeTask } from './shared';
 
 export const inferSelectorsFromLLM = async (
-  context: LLMContext,
+  context: AgentLlmContext,
   uiInventory: unknown,
   domTextSample: string,
   task: string,

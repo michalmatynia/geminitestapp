@@ -57,12 +57,14 @@ vi.mock('@/shared/utils/observability/internal-observability-fallback', () => ({
 
 describe('system-logger', () => {
   const originalNodeEnv = process.env['NODE_ENV'];
+  const originalNextPhase = process.env['NEXT_PHASE'];
 
   beforeEach(() => {
     vi.clearAllMocks();
     reportObservabilityInternalErrorMock.mockReset();
     vi.mocked(isServerLoggingEnabled).mockResolvedValue(true);
     process.env['NODE_ENV'] = 'test';
+    delete process.env['NEXT_PHASE'];
     delete process.env['ENABLE_DEV_SYSTEM_LOG_PERSISTENCE'];
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -77,10 +79,16 @@ describe('system-logger', () => {
   afterAll(() => {
     if (originalNodeEnv === undefined) {
       delete process.env['NODE_ENV'];
+    } else {
+      process.env['NODE_ENV'] = originalNodeEnv;
+    }
+
+    if (originalNextPhase === undefined) {
+      delete process.env['NEXT_PHASE'];
       return;
     }
 
-    process.env['NODE_ENV'] = originalNodeEnv;
+    process.env['NEXT_PHASE'] = originalNextPhase;
   });
 
   describe('normalizeErrorInfo', () => {
@@ -174,6 +182,15 @@ describe('system-logger', () => {
         );
       });
       expect(createSystemLog).not.toHaveBeenCalled();
+    });
+
+    it('skips async persistence side effects during the production build phase', async () => {
+      process.env['NEXT_PHASE'] = 'phase-production-build';
+
+      await logSystemEvent({ message: 'Build-time log', source: 'test' });
+
+      expect(createSystemLog).not.toHaveBeenCalled();
+      expect(emitOtelLogRecord).not.toHaveBeenCalled();
     });
 
     it('should skip info logs when info logging is disabled', async () => {

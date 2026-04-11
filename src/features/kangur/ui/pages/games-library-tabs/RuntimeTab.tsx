@@ -1,7 +1,5 @@
-'use client';
-
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import type { useTranslations } from 'next-intl';
 import type {
   KangurGameRuntimeSerializationAudit,
 } from '@/features/kangur/games';

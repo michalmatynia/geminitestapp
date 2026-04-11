@@ -1,3 +1,5 @@
+'use client';
+
 import type { FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree';
 import { useFolderTreeProfile } from '../hooks/useFolderTreeProfile';
 import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';

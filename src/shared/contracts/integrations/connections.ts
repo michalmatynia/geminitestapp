@@ -136,3 +136,11 @@ export type SaveConnectionOptions = {
   connectionId?: string | null;
   formData?: ConnectionFormState;
 };
+
+/**
+ * Generic container for a resolved browser connection in UI hooks.
+ */
+export type ResolvedBrowserConnection<TConnection> = {
+  integrationId: string;
+  connection: TConnection;
+};

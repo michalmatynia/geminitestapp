@@ -31,6 +31,7 @@ import {
   createTraderaRecoveryContext,
   createVintedRecoveryContext,
 } from '@/features/integrations/utils/product-listings-recovery';
+import { getBaseExportPreflightError } from '@/features/integrations/utils/baseExportPreflight';
 import { resolveBaseExportSuccessMessage } from '@/features/integrations/utils/baseExportFeedback';
 import type {
   PlaywrightRelistBrowserMode,
@@ -61,6 +62,7 @@ export const useProductListingsActionsImpl = ({
   lastExportListingId,
   listings,
   onListingsUpdated,
+  productCategoryId,
   productId,
   refetchListingsQuery,
   setDeletingFromBase,
@@ -87,6 +89,7 @@ export const useProductListingsActionsImpl = ({
   lastExportListingId: string | null;
   listings: ProductListingWithDetails[];
   onListingsUpdated?: (() => void) | undefined;
+  productCategoryId: string | null;
   productId: string;
   refetchListingsQuery: () => Promise<unknown>;
   setDeletingFromBase: Dispatch<SetStateAction<string | null>>;
@@ -621,6 +624,11 @@ export const useProductListingsActionsImpl = ({
         setError('Inventory ID is required.');
         return;
       }
+      const preflightError = getBaseExportPreflightError(productCategoryId);
+      if (preflightError) {
+        setError(preflightError);
+        return;
+      }
       try {
         setExportingListing(listingId);
         setLastExportListingId(listingId);
@@ -642,7 +650,7 @@ export const useProductListingsActionsImpl = ({
         setExportingListing(null);
       }
     },
-    [exportListingToBase, inventoryOverrides, listings, onListingsUpdated, productId, setError, setExportLogs, setExportingListing, setLastExportListingId, setLogsOpen]
+    [exportListingToBase, inventoryOverrides, listings, onListingsUpdated, productCategoryId, productId, setError, setExportLogs, setExportingListing, setLastExportListingId, setLogsOpen]
   );
 
   const handleExportImagesOnly = useCallback(
@@ -702,6 +710,11 @@ export const useProductListingsActionsImpl = ({
   const handleImageRetry = useCallback(
     async (preset: ImageRetryPreset) => {
       if (!lastExportListingId) return;
+      const preflightError = getBaseExportPreflightError(productCategoryId);
+      if (preflightError) {
+        setError(preflightError);
+        return;
+      }
       try {
         setExportingListing(lastExportListingId);
         setError(null);
@@ -728,7 +741,7 @@ export const useProductListingsActionsImpl = ({
         setExportingListing(null);
       }
     },
-    [exportListingToBase, lastExportListingId, onListingsUpdated, productId, setError, setExportLogs, setExportingListing, setLogsOpen]
+    [exportListingToBase, lastExportListingId, onListingsUpdated, productCategoryId, productId, setError, setExportLogs, setExportingListing, setLogsOpen]
   );
 
   const refetchListings = useCallback(async () => {

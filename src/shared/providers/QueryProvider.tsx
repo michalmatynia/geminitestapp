@@ -87,6 +87,7 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
 // Stable query key arrays for persistence — avoids re-running effects on every render.
 const PERSISTED_PREFERENCES_KEYS = [[...QUERY_KEYS.userPreferences.all]];
 const PERSISTED_SETTINGS_KEYS = [[...QUERY_KEYS.settings.scope('lite')]];
+type WindowLiteSettingsHydration = typeof globalThis & { __LITE_SETTINGS__?: unknown[] };
 
 // Deferred persistence — mounts useQueryPersistence after the initial render
 // to keep localStorage reads off the critical hydration path.
@@ -132,7 +133,7 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const initialSettings = (window as unknown as { __LITE_SETTINGS__?: unknown[] }).__LITE_SETTINGS__;
+    const initialSettings = (globalThis as WindowLiteSettingsHydration).__LITE_SETTINGS__;
     if (Array.isArray(initialSettings) && initialSettings.length > 0) {
       const queryKey = QUERY_KEYS.settings.scope('lite');
       if (!queryClient.getQueryData(queryKey)) {

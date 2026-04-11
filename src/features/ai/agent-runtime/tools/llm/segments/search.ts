@@ -1,9 +1,10 @@
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { LLMContext, runStructuredAgentRuntimeTask } from './shared';
+import { type AgentLlmContext } from '@/shared/contracts/agent-runtime';
+import { runStructuredAgentRuntimeTask } from './shared';
 
 export const buildSearchQueryWithLLM = async (
-  context: LLMContext,
+  context: AgentLlmContext,
   prompt: string
 ): Promise<string | null> => {
   const { model, log, activeStepId } = context;
@@ -30,7 +31,7 @@ export const buildSearchQueryWithLLM = async (
 };
 
 export const pickSearchResultWithLLM = async (
-  context: LLMContext,
+  context: AgentLlmContext,
   query: string,
   prompt: string,
   results: Array<{ title: string; url: string }>
@@ -58,7 +59,7 @@ export const pickSearchResultWithLLM = async (
 };
 
 export const decideSearchFirstWithLLM = async (
-  context: LLMContext,
+  context: AgentLlmContext,
   prompt: string,
   targetUrl: string | null,
   hasExplicitUrl: boolean,

@@ -39,6 +39,20 @@ export const catalogIdQuerySchema = z.object({
 
 export type CatalogIdQuery = z.infer<typeof catalogIdQuerySchema>;
 
+export const catalogIdsQuerySchema = z.object({
+  catalogIds: z.preprocess(
+    normalizeOptionalEntityId,
+    z
+      .string()
+      .min(1, 'catalogIds query parameter is required')
+      .max(1024, 'catalogIds query parameter is too long')
+  ),
+});
+
+export type CatalogIdsQuery = z.infer<typeof catalogIdsQuerySchema>;
+
+export const freshQuerySchema = z.preprocess(parseBooleanQueryValue, z.boolean().optional());
+
 export const connectionIdQuerySchema = z.object({
   connectionId: z.preprocess(
     normalizeOptionalEntityId,

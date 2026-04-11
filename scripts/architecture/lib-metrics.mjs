@@ -48,8 +48,13 @@ const IMPORT_SPECIFIER_PATTERNS = [
 
 const stripTypeOnlyStatements = (content) =>
   content
+    .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')
     .replace(/(^|\n)\s*import\s+type[\s\S]*?;\s*/g, '$1')
-    .replace(/(^|\n)\s*export\s+type[\s\S]*?;\s*/g, '$1');
+    .replace(/(^|\n)\s*export\s+type[\s\S]*?;\s*/g, '$1')
+    .replace(/\btype\s+\w+[\s\S]*?;\s*/g, '')
+    .replace(/\binterface\s+\w+[\s\S]*?\}\s*/g, '')
+    .replace(/\btypeof\b/g, 'any')
+    .replace(/\bReturnType\b/g, 'any');
 
 const resolveImportTargetPath = (importerPath, specifier) => {
   if (!specifier) return null;
@@ -233,7 +238,8 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   const useClientFiles = sourceScopeRecords.filter((record) => USE_CLIENT_RE.test(record.content));
 
   const hooksWithoutUseClient = sourceScopeRecords.filter(
-    (record) => CLIENT_HOOK_RE.test(record.content) && !USE_CLIENT_RE.test(record.content)
+    (record) =>
+      CLIENT_HOOK_RE.test(record.strippedContent) && !USE_CLIENT_RE.test(record.content)
   );
 
   const apiRouteRecords = sourceRecords.filter(

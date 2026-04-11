@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listProductScansWithSync } from '@/features/products/server/product-scans-service';
+import { productScanListResponseSchema } from '@/shared/contracts/product-scans';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const positiveIntSchema = z.preprocess(
@@ -33,5 +34,5 @@ export async function GET_handler(
     limit: query.limit ?? 50,
   });
 
-  return NextResponse.json({ scans });
+  return NextResponse.json(productScanListResponseSchema.parse({ scans }));
 }

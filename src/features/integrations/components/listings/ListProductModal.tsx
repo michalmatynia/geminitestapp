@@ -57,7 +57,7 @@ function ListProductModalContent(): React.JSX.Element {
     handleSubmit,
     handleMarketplaceLogin,
     handleImageRetry,
-  } = useListProductForm(product.id);
+  } = useListProductForm(product.id, product.categoryId);
 
   const productName = resolveProductListingsProductName(product);
   const selectedIntegrationName = resolveIntegrationDisplayName(

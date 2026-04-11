@@ -6,4 +6,4 @@ export * from './utils.public';
 export * from './utils/vinted-browser-session';
 export * from './services.public';
 export * from './constants.public';
-export * from './pages.public';
+export * from './admin.public';

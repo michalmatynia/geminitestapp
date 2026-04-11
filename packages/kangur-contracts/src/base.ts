@@ -22,6 +22,8 @@ export type LocalizedDto = z.infer<typeof localizedSchema>;
 export type Localized<T = string> = Record<string, T | null>;
 export type UnknownRecordDto = Record<string, unknown>;
 export type UnknownRecord = UnknownRecordDto;
+export type StringRecordDto = Record<string, string>;
+export type StringRecord = StringRecordDto;
 
 export const dtoBaseSchema = z.object({
   id: z.string(),
@@ -52,6 +54,28 @@ export interface IdNameDto {
   name: string;
 }
 export type IdName = IdNameDto;
+
+export interface CodeNameDto {
+  code: string;
+  name: string;
+}
+export type CodeName = CodeNameDto;
+
+/**
+ * Generic lookup DTOs
+ */
+export type NameLookupDto = {
+  name: string;
+};
+
+export type TitleDescriptionDto = {
+  title: string;
+  description: string;
+};
+
+export type CatalogNameLookupDto = NameLookupDto & {
+  catalogId: string;
+};
 
 export type LabeledOptionDto<TValue = string> = {
   label: string;
@@ -239,9 +263,19 @@ export const listResponseSchema = z.object({
   hasMore: z.boolean().optional(),
 });
 
-export type ListResponseDto<T> = {
+/**
+ * Simple list result structure
+ */
+export type ListResultDto<T> = {
   items: T[];
   total: number;
+};
+export type ListResult<T> = ListResultDto<T>;
+
+/**
+ * Standard paginated list response
+ */
+export type ListResponseDto<T> = ListResultDto<T> & {
   page: number;
   pageSize: number;
   totalPages?: number;
@@ -303,7 +337,7 @@ export type UpdatePayload<T extends DtoBase> = UpdatePayloadDto<T>;
 /**
  * Base interface for all entities in the system.
  */
-interface BaseEntity {
+export interface BaseEntity {
   id: string;
   createdAt: string | Date;
   updatedAt: string | Date | null;
@@ -324,3 +358,14 @@ export type MongoSettingRecordDto<TId = string, TValue = string> = {
 };
 export type MongoSettingRecord = MongoSettingRecordDto;
 export type MongoDocument<T> = T & { _id: string };
+
+/**
+ * Common progress tracking structure
+ */
+export type ProgressSnapshotDto = {
+  current: number;
+  total: number;
+  errors: number;
+  metadata?: Record<string, unknown>;
+};
+export type ProgressSnapshot = ProgressSnapshotDto;

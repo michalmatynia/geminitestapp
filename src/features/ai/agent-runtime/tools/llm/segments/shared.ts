@@ -2,9 +2,6 @@ import 'server-only';
 
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { AgentLlmContext } from '@/shared/contracts/agent-runtime';
-
-export type LLMContext = AgentLlmContext;
 
 export const parseJsonObject = (raw: string): Record<string, unknown> | null => {
   if (!raw) return null;

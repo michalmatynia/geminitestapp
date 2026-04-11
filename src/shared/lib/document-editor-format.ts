@@ -1,4 +1,5 @@
 import { sanitizeHtml } from '@/shared/utils/sanitization';
+import { dispatchClientError } from '@/shared/utils/observability/client-error-dispatch';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { DocumentEditorMode } from '@/shared/contracts/document-editor';
 
@@ -48,7 +49,7 @@ const decodeHtmlEntity = (value: string): string => {
     textarea.innerHTML = result;
     return textarea.value;
   } catch (error) {
-    logClientError(error);
+    dispatchClientError(error);
     return result;
   }
 };

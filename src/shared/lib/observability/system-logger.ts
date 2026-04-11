@@ -49,6 +49,9 @@ const shouldPersistSystemLogsToDatabase = (env: NodeJS.ProcessEnv = process.env)
   return env['NODE_ENV'] !== 'development';
 };
 
+const isProductionBuildPhase = (env: NodeJS.ProcessEnv = process.env): boolean =>
+  env['NEXT_PHASE'] === 'phase-production-build';
+
 type CreateSystemLogFn = (input: {
   level: SystemLogLevel;
   message: string;
@@ -581,7 +584,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       console.log(consoleMsg, context);
     }
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' || isProductionBuildPhase()) {
       return;
     }
 

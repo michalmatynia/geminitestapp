@@ -370,6 +370,7 @@ export function ProductListingsProvider({
     lastExportListingId,
     listings,
     onListingsUpdated,
+    productCategoryId: product.categoryId,
     productId: product.id,
     refetchListingsQuery: listingsQuery.refetch,
     setDeletingFromBase,

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';

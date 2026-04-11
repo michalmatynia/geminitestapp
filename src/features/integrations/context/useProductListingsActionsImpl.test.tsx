@@ -83,6 +83,7 @@ const buildBaseParams = (overrides?: {
   lastExportListingId: null,
   listings: (overrides?.listings ?? []) as never,
   onListingsUpdated: vi.fn(),
+  productCategoryId: 'category-1',
   productId: 'product-1',
   refetchListingsQuery: vi.fn(),
   setDeletingFromBase: vi.fn(),
@@ -884,5 +885,48 @@ describe('useProductListingsActionsImpl', () => {
     expect(onListingsUpdated).toHaveBeenCalled();
     expect(setExportingListing).toHaveBeenNthCalledWith(1, 'listing-base-1');
     expect(setExportingListing).toHaveBeenLastCalledWith(null);
+  });
+
+  it('blocks Base re-export when the product has no internal category assigned', async () => {
+    const setError = vi.fn();
+    const setExportLogs = vi.fn();
+    const setLogsOpen = vi.fn();
+    const setLastExportListingId = vi.fn();
+    const setExportingListing = vi.fn();
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams({
+          listings: [
+            {
+              id: 'listing-base-1',
+              connectionId: 'connection-base-1',
+              inventoryId: 'inventory-base-1',
+              externalListingId: 'base-product-123',
+              exportHistory: [],
+            },
+          ],
+        }),
+        productCategoryId: null,
+        setError,
+        setExportLogs,
+        setLogsOpen,
+        setLastExportListingId,
+        setExportingListing,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleExportAgain('listing-base-1');
+    });
+
+    expect(setError).toHaveBeenCalledWith(
+      'Product has no internal category assigned. Assign a category before exporting with category mapping.'
+    );
+    expect(setExportLogs).not.toHaveBeenCalled();
+    expect(setLogsOpen).not.toHaveBeenCalled();
+    expect(setLastExportListingId).not.toHaveBeenCalled();
+    expect(setExportingListing).not.toHaveBeenCalled();
+    expect(exportToBaseMutateAsyncMock).not.toHaveBeenCalled();
   });
 });

@@ -8,13 +8,13 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-11T10:56:39.430Z
+Generated at: 2026-04-11T13:46:44.565Z
 
 ## Snapshot
 
-- Source files: 10265
-- Source lines: 1690342
-- use client files: 1644
+- Source files: 10270
+- Source lines: 1693220
+- use client files: 1749
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
 - Largest file: `src/features/ai/ai-paths/services/playwright-node-runner.ts` (992 LOC)
@@ -57,22 +57,22 @@ Generated at: 2026-04-11T10:56:39.430Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/integrations/services/tradera-listing/browser.test.ts` | 4399 |
+| `src/features/integrations/services/tradera-listing/browser.test.ts` | 4416 |
+| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 1867 |
+| `src/features/products/server/product-scans-service.test.ts` | 1609 |
 | `src/features/products/components/ProductModals.test.tsx` | 1543 |
-| `src/features/products/server/product-scans-service.test.ts` | 1441 |
 | `src/features/products/components/list/ProductColumns.test.tsx` | 1246 |
 | `src/features/integrations/services/tradera-listing-service.test.ts` | 1130 |
 | `src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts` | 1095 |
 | `src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx` | 1055 |
 | `src/shared/lib/products/services/productService.test.ts` | 1048 |
+| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1037 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx` | 1035 |
-| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1015 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1014 |
 | `src/features/integrations/services/imports/base-mapper.test.ts` | 1004 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 992 |
 | `src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx` | 991 |
-| `src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts` | 991 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
 | `src/app/api/settings/handler.ts` | 983 |

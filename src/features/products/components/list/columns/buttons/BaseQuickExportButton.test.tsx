@@ -352,6 +352,28 @@ describe('BaseQuickExportButton', () => {
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
+  it('blocks one-click export when the product has no internal category assigned', async () => {
+    renderButton({
+      product: {
+        ...product,
+        categoryId: null,
+      } satisfies ProductWithImages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(
+        'Product has no internal category assigned. Assign a category before exporting with category mapping.',
+        { variant: 'error' }
+      );
+    });
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+    expect(apiPostMock).not.toHaveBeenCalled();
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
   it('continues one-click export when SKU does not exist in Base.com', async () => {
     apiPostMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/imports/base') {

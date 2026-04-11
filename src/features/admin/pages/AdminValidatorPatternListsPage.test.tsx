@@ -17,22 +17,7 @@ const mocks = vi.hoisted(() => ({
   toastMock: vi.fn(),
 }));
 
-type ListPanelMockProps = {
-  header?: React.ReactNode;
-  filters?: React.ReactNode;
-  children?: React.ReactNode;
-};
-
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { header, filters, children } = props;
-  return (
-    <div data-testid='list-panel'>
-      {header}
-      {filters}
-      {children}
-    </div>
-  );
-}
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
 vi.mock('next/link', () => ({
   default: ({

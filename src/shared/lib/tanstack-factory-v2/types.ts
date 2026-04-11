@@ -12,6 +12,7 @@ import {
   type UseSuspenseQueryResult,
 } from '@tanstack/react-query';
 
+import { type ListResult } from '@/shared/contracts/base';
 import { TanstackFactoryMeta } from '../tanstack-factory-v2.types';
 
 export type QueryFactoryFn<TQueryFnData, TQueryKey extends QueryKey> =
@@ -234,10 +235,7 @@ export type SaveMutationFactoryV2Config<
   updateFn: (id: string, variables: TVariables) => Promise<TData>;
 };
 
-export type PaginatedResult<TItem> = {
-  items: TItem[];
-  total: number;
-};
+export type PaginatedResult<TItem> = ListResult<TItem>;
 
 export type ManualQueryExecutorInput<TQueryFnData, TQueryKey extends QueryKey> = {
   queryClient: QueryClient;

@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-11T10:56:39.430Z",
+  "generatedAt": "2026-04-11T13:46:44.565Z",
   "source": {
-    "totalFiles": 10265,
-    "totalLines": 1690342,
-    "useClientFiles": 1644,
+    "totalFiles": 10270,
+    "totalLines": 1693220,
+    "useClientFiles": 1749,
     "hooksWithoutUseClient": 0,
-    "filesOver800": 92,
+    "filesOver800": 93,
     "filesOver1000": 0,
     "filesOver1500": 0,
     "largestFile": {
@@ -121,67 +121,67 @@
       {
         "feature": "kangur",
         "files": 2501,
-        "lines": 528473
+        "lines": 528531
       },
       {
         "feature": "ai",
         "files": 1300,
-        "lines": 250613
+        "lines": 250278
       },
       {
         "feature": "integrations",
-        "files": 470,
-        "lines": 99260
+        "files": 471,
+        "lines": 99462
       },
       {
         "feature": "products",
         "files": 417,
-        "lines": 93674
+        "lines": 96541
       },
       {
         "feature": "case-resolver",
         "files": 327,
-        "lines": 67287
+        "lines": 67303
       },
       {
         "feature": "cms",
         "files": 358,
-        "lines": 53451
+        "lines": 53479
       },
       {
         "feature": "filemaker",
         "files": 161,
-        "lines": 38172
+        "lines": 38182
       },
       {
         "feature": "prompt-exploder",
         "files": 135,
-        "lines": 26822
+        "lines": 26824
       },
       {
         "feature": "notesapp",
         "files": 98,
-        "lines": 13493
+        "lines": 13499
       },
       {
         "feature": "data-import-export",
         "files": 46,
-        "lines": 11670
+        "lines": 11672
       },
       {
         "feature": "admin",
         "files": 61,
-        "lines": 10356
+        "lines": 10324
       },
       {
         "feature": "database",
         "files": 53,
-        "lines": 8478
+        "lines": 8486
       },
       {
         "feature": "playwright",
         "files": 88,
-        "lines": 8265
+        "lines": 8269
       },
       {
         "feature": "auth",
@@ -191,12 +191,12 @@
       {
         "feature": "viewer3d",
         "files": 40,
-        "lines": 5255
+        "lines": 5261
       },
       {
         "feature": "prompt-engine",
         "files": 32,
-        "lines": 4368
+        "lines": 4374
       },
       {
         "feature": "product-sync",
@@ -211,12 +211,12 @@
       {
         "feature": "files",
         "files": 36,
-        "lines": 2769
+        "lines": 2776
       },
       {
         "feature": "internationalization",
         "files": 29,
-        "lines": 2278
+        "lines": 2271
       },
       {
         "feature": "jobs",
@@ -249,10 +249,10 @@
     "hookComplexity": [
       {
         "path": "src/features/ai/ai-paths/hooks/useAdminAiPathsValidationState.ts",
-        "useEffectCount": 4,
+        "useEffectCount": 3,
         "useCallbackCount": 16,
         "useMemoCount": 20,
-        "total": 40
+        "total": 39
       },
       {
         "path": "src/features/ai/image-studio/context/useVersionGraphRuntime.ts",
@@ -395,13 +395,6 @@
         "total": 16
       },
       {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts",
-        "useEffectCount": 0,
-        "useCallbackCount": 16,
-        "useMemoCount": 0,
-        "total": 16
-      },
-      {
         "path": "src/features/filemaker/hooks/useAdminFilemakerPageState.ts",
         "useEffectCount": 0,
         "useCallbackCount": 14,
@@ -421,6 +414,13 @@
         "useCallbackCount": 11,
         "useMemoCount": 1,
         "total": 16
+      },
+      {
+        "path": "src/features/kangur/ui/pages/duels/useDuelsLobby.ts",
+        "useEffectCount": 1,
+        "useCallbackCount": 15,
+        "useMemoCount": 0,
+        "total": 16
       }
     ],
     "highComplexityHooksCount": 170
@@ -429,15 +429,19 @@
     "topFilesByLines": [
       {
         "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-        "lines": 4399
+        "lines": 4416
+      },
+      {
+        "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
+        "lines": 1867
+      },
+      {
+        "path": "src/features/products/server/product-scans-service.test.ts",
+        "lines": 1609
       },
       {
         "path": "src/features/products/components/ProductModals.test.tsx",
         "lines": 1543
-      },
-      {
-        "path": "src/features/products/server/product-scans-service.test.ts",
-        "lines": 1441
       },
       {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
@@ -460,12 +464,12 @@
         "lines": 1048
       },
       {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx",
-        "lines": 1035
+        "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
+        "lines": 1037
       },
       {
-        "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
-        "lines": 1015
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx",
+        "lines": 1035
       },
       {
         "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
@@ -485,10 +489,6 @@
       },
       {
         "path": "src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx",
-        "lines": 991
-      },
-      {
-        "path": "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
         "lines": 991
       },
       {
@@ -578,12 +578,20 @@
         "lines": 26
       },
       {
+        "path": "src/app/[locale]/(frontend)/kangur/(app)/[...slug]/page.tsx",
+        "lines": 25
+      },
+      {
         "path": "src/app/(admin)/admin/filemaker/campaigns/preferences/page.tsx",
         "lines": 24
       },
       {
         "path": "src/app/(admin)/admin/filemaker/campaigns/unsubscribe/page.tsx",
         "lines": 24
+      },
+      {
+        "path": "src/app/(frontend)/kangur/(app)/[...slug]/page.tsx",
+        "lines": 23
       },
       {
         "path": "src/app/[locale]/(frontend)/kangur/login/page.tsx",
@@ -595,10 +603,6 @@
       },
       {
         "path": "src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx",
-        "lines": 17
-      },
-      {
-        "path": "src/app/[locale]/(frontend)/page.tsx",
         "lines": 17
       },
       {
@@ -614,19 +618,15 @@
         "lines": 15
       },
       {
+        "path": "src/app/[locale]/(frontend)/page.tsx",
+        "lines": 15
+      },
+      {
         "path": "src/app/[locale]/(frontend)/products/[id]/page.tsx",
         "lines": 15
       },
       {
         "path": "src/app/(admin)/admin/3d-assets/list/page.tsx",
-        "lines": 13
-      },
-      {
-        "path": "src/app/(admin)/admin/3d-assets/page.tsx",
-        "lines": 13
-      },
-      {
-        "path": "src/app/(admin)/admin/chatbot/context/page.tsx",
         "lines": 13
       }
     ]

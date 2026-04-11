@@ -22,6 +22,13 @@ vi.mock('../canvas-minimap', () => ({
   CanvasMinimap: () => null,
 }));
 
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => ({
+    effectiveModelId: 'test-model',
+    descriptors: [],
+  }),
+}));
+
 const noop = (): void => {};
 
 const connectorInfoStub: ConnectorInfo = {

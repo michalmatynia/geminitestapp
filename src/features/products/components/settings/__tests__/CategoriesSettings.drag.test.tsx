@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -281,5 +281,73 @@ describe('CategoriesSettings drag and drop', () => {
         value: originalElementFromPoint,
       });
     }
+  });
+
+  it('submits Polish category names from the create form', async () => {
+    render(<CategoriesSettings />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Category' }));
+    fireEvent.change(screen.getByLabelText('English category name'), {
+      target: { value: 'Keychains' },
+    });
+    fireEvent.change(screen.getByLabelText('Polish category name'), {
+      target: { value: ' Breloki ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mocks.saveMutateAsync).toHaveBeenCalledWith({
+        id: undefined,
+        data: expect.objectContaining({
+          name: 'Keychains',
+          name_pl: 'Breloki',
+          catalogId: 'catalog-1',
+        }),
+      });
+    });
+  });
+
+  it('prefills and submits Polish category names from the edit form', async () => {
+    vi.mocked(useProductSettingsCategoriesContext).mockReturnValue({
+      loadingCategories: false,
+      categories: [
+        createCategory({ id: 'root-a', name: 'Root A', name_pl: 'Korzen A', sortIndex: 0 }),
+      ],
+      catalogs: [catalog],
+      selectedCategoryCatalogId: 'catalog-1',
+      onCategoryCatalogChange: vi.fn(),
+      onRefreshCategories: mocks.onRefreshCategories,
+    });
+
+    const { container } = render(<CategoriesSettings />);
+    const editButton = container.querySelector(
+      '[data-master-tree-node-id="category:root-a"] button[title="Edit category"]'
+    ) as HTMLButtonElement | null;
+
+    expect(editButton).toBeTruthy();
+    if (!editButton) {
+      throw new Error('Expected inline edit button to render.');
+    }
+
+    fireEvent.click(editButton);
+
+    const polishNameInput = screen.getByLabelText('Polish category name') as HTMLInputElement;
+    expect(polishNameInput.value).toBe('Korzen A');
+
+    fireEvent.change(polishNameInput, {
+      target: { value: ' Zmieniony korzen ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mocks.saveMutateAsync).toHaveBeenCalledWith({
+        id: 'root-a',
+        data: expect.objectContaining({
+          name: 'Root A',
+          name_pl: 'Zmieniony korzen',
+          catalogId: 'catalog-1',
+        }),
+      });
+    });
   });
 });

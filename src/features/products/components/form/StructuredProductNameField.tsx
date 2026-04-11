@@ -9,7 +9,12 @@ import { useProductFormMetadata } from '@/features/products/context/ProductFormM
 import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueries';
 import { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
-import type { ProductTitleTermType } from '@/shared/contracts/products/title-terms';
+import type { ProductTitleTerm, ProductTitleTermType } from '@/shared/contracts/products/title-terms';
+import {
+  resolveLocalizedCategoryName,
+  resolveLocalizedTitleTermName,
+  type StructuredProductTitleLocale,
+} from '@/shared/lib/products/title-terms';
 import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-section';
 import { Input } from '@/shared/ui/input';
@@ -20,6 +25,8 @@ type TitleSegmentStage = 1 | 2 | 3 | 4;
 type SuggestionOption = {
   value: string;
   label: string;
+  aliases: string[];
+  searchText: string;
   description?: string;
   disabled?: boolean;
   categoryId?: string;
@@ -46,6 +53,8 @@ const SUGGESTION_MIN_WIDTH = 164;
 const SUGGESTION_MAX_WIDTH = 320;
 
 const normalizeSegmentValue = (value: string): string => value.trim().replace(/\s+/g, ' ');
+
+const normalizeSuggestionKey = (value: string): string => normalizeSegmentValue(value).toLowerCase();
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
@@ -165,7 +174,39 @@ const replaceStructuredSegment = (
   return nextValue;
 };
 
-const buildCategorySuggestions = (categories: ProductCategory[]): SuggestionOption[] => {
+const uniqueSuggestionValues = (values: Array<string | null | undefined>): string[] =>
+  Array.from(
+    new Set(
+      values
+        .map((value: string | null | undefined): string => normalizeSegmentValue(value ?? ''))
+        .filter((value: string): boolean => value.length > 0)
+    )
+  );
+
+const buildTitleTermSuggestion = (
+  term: ProductTitleTerm,
+  locale: StructuredProductTitleLocale
+): SuggestionOption => {
+  const value = resolveLocalizedTitleTermName(term, locale);
+  const aliases = uniqueSuggestionValues([term.name_en, term.name_pl, value]);
+  return {
+    value,
+    label: value,
+    aliases,
+    searchText: aliases.join(' '),
+    description:
+      locale === 'pl' && term.name_en && term.name_en !== value
+        ? term.name_en
+        : term.name_pl && term.name_pl !== value
+          ? term.name_pl
+          : undefined,
+  };
+};
+
+const buildCategorySuggestions = (
+  categories: ProductCategory[],
+  locale: StructuredProductTitleLocale
+): SuggestionOption[] => {
   const byParentId = new Map<string | null, ProductCategory[]>();
   const hasChildren = new Set<string>();
 
@@ -187,22 +228,34 @@ const buildCategorySuggestions = (categories: ProductCategory[]): SuggestionOpti
       if (leftSortIndex !== rightSortIndex) {
         return leftSortIndex - rightSortIndex;
       }
-      return left.name.localeCompare(right.name);
+      return resolveLocalizedCategoryName(left, locale).localeCompare(
+        resolveLocalizedCategoryName(right, locale)
+      );
     });
 
   const collected: SuggestionOption[] = [];
   const walk = (parentId: string | null, path: string[]): void => {
     const siblings = sortCategories(byParentId.get(parentId) ?? []);
     siblings.forEach((category) => {
-      const label = [...path, category.name].join(' / ');
+      const value = resolveLocalizedCategoryName(category, locale);
+      const label = [...path, value].join(' / ');
+      const aliases = uniqueSuggestionValues([
+        value,
+        category.name,
+        category.name_en,
+        category.name_pl,
+        category.name_de,
+      ]);
       collected.push({
-        value: category.name,
+        value,
         label,
+        aliases,
+        searchText: [...aliases, label].join(' '),
         disabled: hasChildren.has(category.id),
         categoryId: category.id,
         description: hasChildren.has(category.id) ? 'Parent category' : undefined,
       });
-      walk(category.id, [...path, category.name]);
+      walk(category.id, [...path, value]);
     });
   };
 
@@ -216,15 +269,34 @@ const resolveUniqueLeafCategorySuggestion = (
 ): SuggestionOption | null => {
   const normalizedValue = normalizeSegmentValue(value);
   if (!normalizedValue) return null;
+  const normalizedKey = normalizeSuggestionKey(normalizedValue);
 
   const exactLeafMatches = suggestions.filter(
-    (option) => !option.disabled && option.value === normalizedValue
+    (option) =>
+      !option.disabled &&
+      option.aliases.some((alias: string): boolean => normalizeSuggestionKey(alias) === normalizedKey)
   );
 
   return exactLeafMatches.length === 1 ? exactLeafMatches[0] ?? null : null;
 };
 
-export function StructuredProductNameField(): React.JSX.Element {
+type StructuredProductNameFieldProps = {
+  fieldName?: 'name_en' | 'name_pl';
+  locale?: StructuredProductTitleLocale;
+  label?: string;
+  description?: string;
+  placeholder?: string;
+};
+
+export function StructuredProductNameField({
+  fieldName = 'name_en',
+  locale = 'en',
+  label = fieldName === 'name_pl' ? 'Polish Name' : 'English Name',
+  description = 'Format: <name> | <size> | <material> | <category> | <lore or theme>',
+  placeholder = locale === 'pl'
+    ? 'Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan'
+    : 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+}: StructuredProductNameFieldProps = {}): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const measurementCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previousSelectedCategoryIdRef = useRef<string | null>(null);
@@ -232,7 +304,7 @@ export function StructuredProductNameField(): React.JSX.Element {
   const { control, getValues, setValue } = useFormContext<ProductFormData>();
   const { field } = useController<ProductFormData>({
     control,
-    name: 'name_en',
+    name: fieldName,
     defaultValue: '',
   });
   const { errors, normalizeNameError, setNormalizeNameError } = useProductFormCore();
@@ -262,11 +334,12 @@ export function StructuredProductNameField(): React.JSX.Element {
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [overlayMetrics, setOverlayMetrics] = useState<SuggestionOverlayMetrics | null>(null);
 
-  const error = normalizeNameError ?? errors.name_en?.message;
+  const fieldError = errors[fieldName]?.message;
+  const error = fieldName === 'name_en' ? normalizeNameError ?? fieldError : fieldError;
 
   const categorySuggestions = useMemo(
-    (): SuggestionOption[] => buildCategorySuggestions(categories),
-    [categories]
+    (): SuggestionOption[] => buildCategorySuggestions(categories, locale),
+    [categories, locale]
   );
   const selectedCategoryOption = useMemo(
     (): SuggestionOption | null =>
@@ -344,7 +417,7 @@ export function StructuredProductNameField(): React.JSX.Element {
     if (activeStage === CATEGORY_STAGE) {
       const normalizedQueryLower = normalizedQuery.toLowerCase();
       return categorySuggestions.filter((option) =>
-        option.label.toLowerCase().includes(normalizedQueryLower)
+        option.searchText.toLowerCase().includes(normalizedQueryLower)
       );
     }
 
@@ -356,18 +429,13 @@ export function StructuredProductNameField(): React.JSX.Element {
           ? materialTermsQuery.data ?? []
           : themeTermsQuery.data ?? [];
     const baseSuggestions = sourceTerms
-      .map(
-        (term): SuggestionOption => ({
-          value: term.name_en,
-          label: term.name_en,
-          description: term.name_pl && term.name_pl !== term.name_en ? term.name_pl : undefined,
-        })
-      )
-      .filter((option) => option.label.toLowerCase().includes(normalizedQuery.toLowerCase()));
+      .map((term: ProductTitleTerm): SuggestionOption => buildTitleTermSuggestion(term, locale))
+      .filter((option) => option.searchText.toLowerCase().includes(normalizedQuery.toLowerCase()));
     return sortSuggestionOptions(baseSuggestions);
   }, [
     activeStage,
     categorySuggestions,
+    locale,
     materialTermsQuery.data,
     segmentQuery,
     sizeTermsQuery.data,
@@ -473,8 +541,10 @@ export function StructuredProductNameField(): React.JSX.Element {
   const applySuggestion = (option: SuggestionOption): void => {
     if (!activeStage || option.disabled) return;
     const nextValue = replaceStructuredSegment(nameValue, activeStage, option.value);
-    setNormalizeNameError(null);
-    setValue('name_en', nextValue, {
+    if (fieldName === 'name_en') {
+      setNormalizeNameError(null);
+    }
+    setValue(fieldName, nextValue, {
       shouldDirty: true,
       shouldTouch: true,
       shouldValidate: true,
@@ -513,12 +583,12 @@ export function StructuredProductNameField(): React.JSX.Element {
     if (!selectedCategoryChanged && categorySegment) return;
 
     const nextValue = replaceStructuredSegment(nameValue, CATEGORY_STAGE, selectedCategoryOption.value);
-    setValue('name_en', nextValue, {
+    setValue(fieldName, nextValue, {
       shouldDirty: true,
       shouldTouch: true,
       shouldValidate: true,
     });
-  }, [categorySuggestions, nameValue, selectedCategoryId, selectedCategoryOption, setValue]);
+  }, [categorySuggestions, fieldName, nameValue, selectedCategoryId, selectedCategoryOption, setValue]);
 
   useEffect(() => {
     previousSelectedCategoryIdRef.current = selectedCategoryId;
@@ -634,10 +704,10 @@ export function StructuredProductNameField(): React.JSX.Element {
 
   return (
     <FormField
-      label='English Name'
+      label={label}
       error={typeof error === 'string' ? error : undefined}
-      description='Format: <name> | <size> | <material> | <category> | <lore or theme>'
-      id='name_en'
+      description={description}
+      id={fieldName}
       actions={
         <Button size='xs' variant='outline' asChild>
           <a href={titleTermsHref} target='_blank' rel='noreferrer'>
@@ -659,12 +729,12 @@ export function StructuredProductNameField(): React.JSX.Element {
             inputRef.current = node;
             field.ref(node);
           }}
-          id='name_en'
+          id={fieldName}
           name={field.name}
           value={nameValue}
           onChange={(event) => {
             const nextValue = event.target.value;
-            if (normalizeNameError) {
+            if (fieldName === 'name_en' && normalizeNameError) {
               setNormalizeNameError(null);
             }
             field.onChange(event);
@@ -728,7 +798,7 @@ export function StructuredProductNameField(): React.JSX.Element {
               setSegmentQuery('');
             }, 120);
           }}
-          placeholder='Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan'
+          placeholder={placeholder}
           autoComplete='off'
           autoCorrect='off'
           autoCapitalize='off'

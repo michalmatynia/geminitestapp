@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   useSystemLogsActionsMock: vi.fn(),
 }));
 
-vi.mock('@/features/observability/context/SystemLogsContext', () => ({
+vi.mock('@/shared/lib/observability/context/SystemLogsContext', () => ({
   useSystemLogsState: mocks.useSystemLogsStateMock,
   useSystemLogsActions: mocks.useSystemLogsActionsMock,
 }));

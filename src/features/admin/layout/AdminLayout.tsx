@@ -419,9 +419,9 @@ export function AdminLayout({
 
   return (
     <SessionProvider session={session} refetchOnWindowFocus={false}>
-      <QueryProvider>
-        <SettingsStoreProvider mode='admin' canReadAdminSettings={canReadAdminSettings}>
-          <ToastProvider>
+      <ToastProvider>
+        <QueryProvider>
+          <SettingsStoreProvider mode='admin' canReadAdminSettings={canReadAdminSettings}>
             <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
               <AdminFavoritesRuntimeProvider>
                 <AdminLayoutContent hasInitialMenuPreference={hasInitialMenuPreference}>
@@ -429,9 +429,9 @@ export function AdminLayout({
                 </AdminLayoutContent>
               </AdminFavoritesRuntimeProvider>
             </AdminLayoutProvider>
-          </ToastProvider>
-        </SettingsStoreProvider>
-      </QueryProvider>
+          </SettingsStoreProvider>
+        </QueryProvider>
+      </ToastProvider>
     </SessionProvider>
   );
 }

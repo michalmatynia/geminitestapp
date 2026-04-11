@@ -35,7 +35,7 @@ vi.mock('@/shared/lib/api/handle-api-error', () => ({
   createErrorResponse: (...args: unknown[]) => createErrorResponseMock(...args),
 }));
 
-vi.mock('@/features/observability/entry-server', () => ({
+vi.mock('@/shared/lib/observability/entry-server', () => ({
   hydrateLogRuntimeContext: (...args: unknown[]) => hydrateLogRuntimeContextMock(...args),
   hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));

@@ -57,6 +57,13 @@ describe('mongo product repository mappers', () => {
     }));
 
     expect(result.catalogId).toBe('catalog-mentios');
+    expect(result.catalogs).toEqual([
+      {
+        productId: 'product-catalog-1',
+        catalogId: 'catalog-mentios',
+        assignedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
   });
 
   it('normalizes duplicate parameter entries by merging sibling localized values', () => {

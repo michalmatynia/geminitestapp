@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-04-10T11:36:47.677Z",
-    "scannedFileCount": 2563,
+    "generatedAt": "2026-04-11T02:57:40.020Z",
+    "scannedFileCount": 2572,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1874
+        "count": 1879
       },
       {
         "family": "Page",
@@ -27,7 +27,7 @@
       },
       {
         "family": "Modal",
-        "count": 69
+        "count": 70
       },
       {
         "family": "Tab",
@@ -58,6 +58,10 @@
         "count": 8
       },
       {
+        "family": "Table",
+        "count": 8
+      },
+      {
         "family": "Dialog",
         "count": 7
       },
@@ -70,10 +74,6 @@
         "count": 6
       },
       {
-        "family": "Table",
-        "count": 5
-      },
-      {
         "family": "Drawer",
         "count": 2
       }
@@ -81,15 +81,15 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 1986
+        "count": 1992
       },
       {
         "domain": "app",
-        "count": 339
+        "count": 341
       },
       {
         "domain": "shared-ui",
-        "count": 182
+        "count": 183
       },
       {
         "domain": "shared",
@@ -126,7 +126,7 @@
       "imports": [
         "react",
         "@/features/admin/public",
-        "@/features/viewer3d/public"
+        "@/features/viewer3d/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -162,7 +162,7 @@
       "imports": [
         "react",
         "@/features/admin/public",
-        "@/features/viewer3d/public"
+        "@/features/viewer3d/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2635,7 +2635,7 @@
       "imports": [
         "@/features/admin/public",
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2653,7 +2653,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2776,7 +2776,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2794,7 +2794,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2812,7 +2812,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2847,7 +2847,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2865,7 +2865,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2883,7 +2883,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2901,7 +2901,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2936,7 +2936,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2972,7 +2972,7 @@
       "imports": [
         "@/features/admin/public",
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2990,7 +2990,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3008,7 +3008,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3026,7 +3026,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3045,7 +3045,7 @@
       "imports": [
         "react",
         "@/features/admin/public",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3064,7 +3064,7 @@
       "imports": [
         "@/features/admin/public",
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3099,7 +3099,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/integrations/public"
+        "@/features/integrations/pages.public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3504,6 +3504,23 @@
       "imports": [
         "react",
         "@/features/kangur/public"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(admin)/admin/loading.tsx",
+      "basename": "loading.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Unknown",
+      "lines": 6,
+      "useClient": false,
+      "imports": [
+        "@/features/admin/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -4690,7 +4707,7 @@
       "imports": [
         "@/features/admin/public",
         "react",
-        "@/features/observability/public"
+        "@/shared/lib/observability/components/system-logs/SystemLogsPage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -4802,6 +4819,23 @@
         "@/shared/lib/request/optional-cookies",
         "@/shared/lib/request/optional-headers",
         "@/shared/utils/observability/error-system"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/(admin)/loading.tsx",
+      "basename": "loading.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Unknown",
+      "lines": 6,
+      "useClient": false,
+      "imports": [
+        "@/features/admin/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -5195,7 +5229,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Page",
-      "lines": 8,
+      "lines": 10,
       "useClient": false,
       "imports": [
         "react",
@@ -5845,7 +5879,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Page",
-      "lines": 15,
+      "lines": 17,
       "useClient": false,
       "imports": [
         "react",
@@ -6310,7 +6344,7 @@
       "domain": "feature",
       "scope": "feature:admin",
       "family": "Unknown",
-      "lines": 174,
+      "lines": 178,
       "useClient": false,
       "imports": [
         "react",
@@ -7232,7 +7266,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 682,
+      "lines": 730,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -7256,7 +7290,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 3,
       "tokenSet": {},
-      "propsSignature": "activePathId|bodyClassName|emptyLabel|handleCreatePath|handleDeletePath|handleDuplicatePath|handleMoveFolder|handleMovePathToFolder|handleRenameFolder|handleSwitchPath|headerDescription|headerTitle|onCopyPathJson|onPathOpen|panelClassName|paths|renderHeaderActions|searchAriaLabel|searchPlaceholder|toast|viewportClassName",
+      "propsSignature": "activePathId|bodyClassName|emptyLabel|handleCreatePath|handleDeletePath|handleDuplicatePath|handleMoveFolder|handleMovePathToFolder|handleRenameFolder|handleSwitchPath|headerDescription|headerTitle|onCopyPathJson|onPathOpen|panelClassName|pathClickBehavior|paths|renderHeaderActions|searchAriaLabel|searchPlaceholder|showPathHoverActions|toast|viewportClassName",
       "thinReExportWrapper": false
     },
     {
@@ -8160,7 +8194,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 457,
+      "lines": 469,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -8180,7 +8214,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 872,
+      "lines": 916,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -10027,7 +10061,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 198,
+      "lines": 229,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -10048,7 +10082,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 297,
+      "lines": 299,
       "useClient": true,
       "imports": [
         "react",
@@ -14708,7 +14742,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 201,
+      "lines": 198,
       "useClient": true,
       "imports": [
         "react",
@@ -20210,7 +20244,7 @@
       "domain": "feature",
       "scope": "feature:data-import-export",
       "family": "List",
-      "lines": 498,
+      "lines": 624,
       "useClient": true,
       "imports": [
         "react",
@@ -20222,6 +20256,7 @@
         "@/shared/ui/data-display.public",
         "@/shared/utils/ui-utils",
         "@/features/data-import-export/context/ImportExportContext",
+        "@/shared/contracts/integrations/base-com",
         "@/shared/contracts/integrations/import-export",
         "@/shared/contracts/ui/panels",
         "@/shared/lib/documentation/tooltips",
@@ -20324,7 +20359,7 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Unknown",
-      "lines": 122,
+      "lines": 128,
       "useClient": false,
       "imports": [
         "react",
@@ -20615,7 +20650,7 @@
       "domain": "feature",
       "scope": "feature:drafter",
       "family": "Unknown",
-      "lines": 739,
+      "lines": 740,
       "useClient": true,
       "imports": [
         "react",
@@ -22875,6 +22910,30 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
+      "basename": "TraderaStatusCheckModal.RowItem.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 252,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "@/features/integrations/constants/slugs",
+        "@/features/integrations/utils/tradera-browser-session",
+        "@/features/integrations/utils/tradera-execution-steps",
+        "@/shared/ui/button",
+        "@/shared/ui/data-display.public",
+        "./TraderaExecutionSteps",
+        "./TraderaStatusCheckModal.utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 2,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/integrations/components/listings/TraderaStatusCheckModal.test.tsx",
       "basename": "TraderaStatusCheckModal.test.tsx",
       "domain": "feature",
@@ -22902,16 +22961,14 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 1085,
+      "lines": 664,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
         "lucide-react",
         "react",
         "@/features/integrations/constants/slugs",
-        "@/features/integrations/utils/tradera-status-check",
         "@/features/integrations/utils/tradera-browser-session",
-        "@/features/integrations/utils/tradera-execution-steps",
         "@/shared/lib/timers",
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
@@ -22919,12 +22976,12 @@
         "@/shared/lib/query-invalidation",
         "@/shared/ui/app-modal",
         "@/shared/ui/button",
-        "@/shared/ui/data-display.public",
         "@/shared/ui/toast",
-        "./TraderaExecutionSteps"
+        "./TraderaStatusCheckModal.utils",
+        "./TraderaStatusCheckModal.RowItem"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 4,
+      "uiPrimitiveImports": 3,
       "tokenSet": {},
       "propsSignature": null,
       "thinReExportWrapper": false
@@ -23869,7 +23926,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 1045,
+      "lines": 806,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -23881,10 +23938,10 @@
         "@/shared/ui/primitives.public",
         "@/shared/ui/navigation-and-layout.public",
         "@/shared/ui/forms-and-actions.public",
-        "@/features/integrations/utils/tradera-execution-steps",
         "@/features/integrations/components/listings/TraderaExecutionSteps",
         "../../product-listings-labels",
-        "./types"
+        "./types",
+        "./ProductListingDetails.utils"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 4,
@@ -24305,6 +24362,67 @@
       "uiPrimitiveImports": 2,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx",
+      "basename": "CatalogCategoryTable.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Table",
+      "lines": 96,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "react",
+        "@/shared/ui/primitives.public"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": "categories|fetchingCategoryId|isFetching|onFetch",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx",
+      "basename": "CatalogEntriesTable.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Table",
+      "lines": 79,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "react",
+        "@/shared/contracts/integrations/tradera-parameter-mapper",
+        "@/shared/ui/primitives.public",
+        "./tradera-mapping-utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": "entries|isRefetching|onRefetch|refetchingCategoryId",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx",
+      "basename": "MappingsRulesTable.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Table",
+      "lines": 102,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "react",
+        "@/shared/contracts/integrations/tradera-parameter-mapper",
+        "@/shared/ui/primitives.public",
+        "./tradera-mapping-utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": "isDeleting|onDelete|onReview|ruleStatuses|rules",
       "thinReExportWrapper": false
     },
     {
@@ -38365,7 +38483,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 150,
+      "lines": 154,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -46654,25 +46772,6 @@
       "thinReExportWrapper": false
     },
     {
-      "path": "src/features/observability/components/RootProvidersClient.test.tsx",
-      "basename": "RootProvidersClient.test.tsx",
-      "domain": "feature",
-      "scope": "feature:observability",
-      "family": "Unknown",
-      "lines": 169,
-      "useClient": false,
-      "imports": [
-        "@testing-library/react",
-        "vitest",
-        "@/shared/providers/RootProvidersClient"
-      ],
-      "templateImports": 0,
-      "uiPrimitiveImports": 0,
-      "tokenSet": {},
-      "propsSignature": null,
-      "thinReExportWrapper": false
-    },
-    {
       "path": "src/features/playwright/components/PlaywrightEngineLogoButton.tsx",
       "basename": "PlaywrightEngineLogoButton.tsx",
       "domain": "feature",
@@ -46921,7 +47020,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 266,
+      "lines": 267,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -46941,7 +47040,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Form",
-      "lines": 489,
+      "lines": 499,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -46962,6 +47061,7 @@
         "./form/ProductFormGeneral",
         "../hooks/useProductFormValidator",
         "./form/ProductFormImages",
+        "./form/ProductFormScans",
         "./form/ProductFormOther",
         "./form/ProductFormMarketplaceCopy",
         "./form/ProductFormParameters",
@@ -47104,7 +47204,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1535,
+      "lines": 1543,
       "useClient": false,
       "imports": [
         "@/__tests__/test-utils",
@@ -47308,7 +47408,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 192,
+      "lines": 245,
       "useClient": false,
       "imports": [
         "react",
@@ -47332,7 +47432,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 118,
+      "lines": 120,
       "useClient": true,
       "imports": [
         "react",
@@ -47399,7 +47499,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 276,
+      "lines": 379,
       "useClient": false,
       "imports": [
         "react",
@@ -47422,7 +47522,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 594,
+      "lines": 606,
       "useClient": false,
       "imports": [
         "react",
@@ -47446,18 +47546,20 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 643,
+      "lines": 703,
       "useClient": true,
       "imports": [
         "react",
         "react-hook-form",
         "@/features/products/context/ProductFormMetadataContext",
+        "@/features/products/hooks/useProductMetadataQueries",
         "@/features/products/context/ProductValidationSettingsContext",
         "@/features/products/lib/validatorTargetAdapters",
         "@/features/products/validation-engine/core",
         "@/shared/contracts/base",
         "@/shared/contracts/products/drafts",
         "@/shared/contracts/products/validation",
+        "@/shared/lib/products/title-terms",
         "@/shared/lib/products/utils/validator-replacement-recipe",
         "@/shared/lib/products/utils/validator-instance-behavior",
         "@/shared/ui/alert",
@@ -47749,6 +47851,29 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/products/components/form/ProductFormScans.tsx",
+      "basename": "ProductFormScans.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 177,
+      "useClient": true,
+      "imports": [
+        "@tanstack/react-query",
+        "lucide-react",
+        "@/features/products/context/ProductFormCoreContext",
+        "@/shared/contracts/product-scans",
+        "@/shared/lib/api-client",
+        "@/shared/lib/query-keys",
+        "@/shared/ui/button"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/products/components/form/ProductFormStudio.tsx",
       "basename": "ProductFormStudio.tsx",
       "domain": "feature",
@@ -48003,7 +48128,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 565,
+      "lines": 646,
       "useClient": false,
       "imports": [
         "react",
@@ -48025,7 +48150,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 870,
+      "lines": 940,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -48037,6 +48162,7 @@
         "@/shared/contracts/products/drafts",
         "@/shared/contracts/products/categories",
         "@/shared/contracts/products/title-terms",
+        "@/shared/lib/products/title-terms",
         "@/shared/ui/button",
         "@/shared/ui/form-section",
         "@/shared/ui/input",
@@ -48045,7 +48171,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 3,
       "tokenSet": {},
-      "propsSignature": null,
+      "propsSignature": "description|fieldName|label|locale",
       "thinReExportWrapper": false
     },
     {
@@ -48309,12 +48435,59 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
+      "basename": "ProductAmazonScanModal.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 171,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@tanstack/react-query",
+        "@testing-library/react",
+        "vitest",
+        "./ProductAmazonScanModal"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+      "basename": "ProductAmazonScanModal.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Modal",
+      "lines": 407,
+      "useClient": true,
+      "imports": [
+        "@tanstack/react-query",
+        "lucide-react",
+        "react",
+        "@/shared/contracts/product-scans",
+        "@/shared/contracts/products/product",
+        "@/shared/lib/api-client",
+        "@/shared/lib/query-invalidation",
+        "@/shared/ui/app-modal",
+        "@/shared/ui/button",
+        "@/shared/ui/toast"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 3,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/products/components/list/ProductColumns.test.tsx",
       "basename": "ProductColumns.test.tsx",
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1208,
+      "lines": 1246,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -48337,7 +48510,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 868,
+      "lines": 881,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -48492,7 +48665,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 593,
+      "lines": 627,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -48514,7 +48687,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 684,
+      "lines": 703,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -48558,7 +48731,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 217,
+      "lines": 240,
       "useClient": false,
       "imports": [
         "react",
@@ -48579,7 +48752,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 670,
+      "lines": 702,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -48589,6 +48762,7 @@
         "@/features/products/hooks/useProductsMutations",
         "@/features/products/hooks/product-list/useTraderaMassQuickExport",
         "@/features/products/hooks/product-list/useVintedMassQuickExport",
+        "@/features/products/components/list/ProductAmazonScanModal",
         "@/features/integrations/components/listings/TraderaStatusCheckModal",
         "@/shared/contracts/products/filters",
         "@/shared/contracts/products/product",
@@ -49081,7 +49255,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Settings",
-      "lines": 600,
+      "lines": 604,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -49124,7 +49298,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Form",
-      "lines": 178,
+      "lines": 198,
       "useClient": true,
       "imports": [
         "react",
@@ -49169,7 +49343,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 55,
+      "lines": 56,
       "useClient": true,
       "imports": [
         "react",
@@ -52170,7 +52344,7 @@
       "useClient": true,
       "imports": [
         "react",
-        "@/features/observability/context/SystemLogsContext",
+        "@/shared/lib/observability/context/SystemLogsContext",
         "@/shared/lib/observability/runtime-context/system-logs-workspace",
         "@/shared/lib/ai-context-registry/page-context"
       ],
@@ -52191,13 +52365,13 @@
       "imports": [
         "react",
         "@tanstack/react-table",
-        "@/features/observability/context/SystemLogsContext",
+        "@/shared/lib/observability/context/SystemLogsContext",
         "@/shared/contracts/observability",
         "@/shared/ui/primitives.public",
         "@/shared/ui/forms-and-actions.public",
         "@/shared/ui/templates.public",
         "@/shared/ui/data-display.public",
-        "@/features/observability/utils/formatTimestamp"
+        "@/shared/lib/observability/utils/formatTimestamp"
       ],
       "templateImports": 1,
       "uiPrimitiveImports": 4,
@@ -52215,13 +52389,13 @@
       "useClient": true,
       "imports": [
         "react",
-        "@/features/observability/context/SystemLogsContext",
+        "@/shared/lib/observability/context/SystemLogsContext",
         "@/shared/ui/primitives.public",
         "@/shared/ui/forms-and-actions.public",
         "@/shared/ui/navigation-and-layout.public",
         "@/shared/ui/data-display.public",
         "@/shared/contracts/ai-insights",
-        "@/features/observability/utils/formatTimestamp"
+        "@/shared/lib/observability/utils/formatTimestamp"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 4,
@@ -52260,7 +52434,7 @@
       "imports": [
         "react",
         "lucide-react",
-        "@/features/observability/context/SystemLogsContext",
+        "@/shared/lib/observability/context/SystemLogsContext",
         "@/shared/lib/observability/log-triage-presets",
         "@/shared/ui/primitives.public",
         "@/shared/ui/forms-and-actions.public",
@@ -52352,7 +52526,7 @@
         "react",
         "lucide-react",
         "@tanstack/react-table",
-        "@/features/observability/context/SystemLogsContext",
+        "@/shared/lib/observability/context/SystemLogsContext",
         "@/shared/lib/documentation/tooltips",
         "@/shared/contracts/documentation",
         "@/shared/contracts/observability",
@@ -52364,9 +52538,9 @@
         "@/shared/ui/data-display.public",
         "@/shared/ui/templates/modals",
         "@/shared/utils/ui-utils",
-        "@/features/observability/types",
-        "@/features/observability/utils/formatTimestamp",
-        "@/features/observability/utils/logHelpers"
+        "@/shared/lib/observability/types",
+        "@/shared/lib/observability/utils/formatTimestamp",
+        "@/shared/lib/observability/utils/logHelpers"
       ],
       "templateImports": 2,
       "uiPrimitiveImports": 6,
@@ -52409,7 +52583,7 @@
         "@/shared/contracts/ui/panels",
         "@/shared/contracts/ui/controls",
         "lucide-react",
-        "@/features/observability/context/SystemLogsContext",
+        "@/shared/lib/observability/context/SystemLogsContext",
         "@/shared/contracts/observability",
         "@/shared/lib/analytics/components/AnalyticsEventsTable",
         "@/shared/lib/analytics/hooks/useAnalyticsQueries",
@@ -52443,7 +52617,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/observability/context/SystemLogsContext",
+        "@/shared/lib/observability/context/SystemLogsContext",
         "@/shared/lib/observability/runtime-context/system-logs-workspace",
         "@/shared/lib/ai-context-registry/page-context",
         "@/shared/ui/navigation-and-layout.public",
@@ -54320,12 +54494,35 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/shared/ui/image-slot-manager/ProductImageManager.test.tsx",
+      "basename": "ProductImageManager.test.tsx",
+      "domain": "shared-ui",
+      "scope": "shared-ui",
+      "family": "Unknown",
+      "lines": 96,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "@/shared/contracts/product-image-manager",
+        "@/shared/contracts/image-slots",
+        "./ProductImageManager",
+        "./ProductImageManagerUIContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/shared/ui/image-slot-manager/ProductImageManager.tsx",
       "basename": "ProductImageManager.tsx",
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 66,
+      "lines": 71,
       "useClient": false,
       "imports": [
         "@/shared/contracts/product-image-manager",
@@ -55698,7 +55895,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 494,
+      "lines": 506,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -55915,7 +56112,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 110,
+      "lines": 129,
       "useClient": false,
       "imports": [
         "react",
@@ -55935,7 +56132,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 195,
+      "lines": 215,
       "useClient": true,
       "imports": [
         "react",

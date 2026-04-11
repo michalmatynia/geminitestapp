@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-07T13:17:43.971Z
+Generated at: 2026-04-11T02:58:06.632Z
 
 ## Summary
 
@@ -86,31 +86,31 @@ Generated at: 2026-04-07T13:17:43.971Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/integrations/services/tradera-listing/browser.test.ts` | 3606 |
-| `src/features/products/components/list/ProductColumns.test.tsx` | 1084 |
-| `src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx` | 1027 |
+| `src/features/integrations/services/tradera-listing/browser.test.ts` | 4399 |
+| `src/features/products/components/ProductModals.test.tsx` | 1543 |
+| `src/features/products/components/list/ProductColumns.test.tsx` | 1246 |
+| `src/features/integrations/services/tradera-listing-service.test.ts` | 1130 |
+| `src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts` | 1095 |
+| `src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx` | 1055 |
+| `src/shared/lib/products/services/productService.test.ts` | 1048 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx` | 1035 |
 | `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1015 |
-| `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
-| `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts` | 997 |
-| `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 993 |
-| `src/features/integrations/services/tradera-listing/script-partials/part-4.ts` | 992 |
-| `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
-| `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
+| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1014 |
 
 ## Top API Route Hotspots (Reference)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 237 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
-| `src/app/api/databases/[[...path]]/route.ts` | 203 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 188 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 171 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 168 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 126 |
-| `src/app/api/kangur/[[...path]]/route.ts` | 62 |
-| `src/app/api/marketplace/[resource]/route.ts` | 38 |
-| `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 32 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 144 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 115 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 114 |
+| `src/app/api/databases/[[...path]]/route.ts` | 100 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 80 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 60 |
+| `src/app/api/marketplace/[resource]/route.ts` | 37 |
+| `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 30 |
 
 ## Notes
 

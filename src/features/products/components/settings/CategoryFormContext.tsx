@@ -8,6 +8,7 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type CategoryFormData = {
   name: string;
+  namePl: string;
   description: string;
   color: string;
   parentId: string | null;

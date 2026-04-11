@@ -7,14 +7,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
-
-// This hook composes a large products runtime with query wrappers, URL-sync
-// helpers, and edit hydration. Opt out of React Compiler memoization here to
-// avoid dev-only hook-order mismatches in the compiled admin products page.
 
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
 import { loadProductColumns } from '@/features/products/components/list/product-columns-loader';
@@ -34,7 +29,6 @@ import {
   type BackgroundSyncEvent,
   useProductListSync,
 } from '@/shared/hooks/sync/useBackgroundSync';
-import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui/toast';
 
@@ -48,6 +42,13 @@ import { useProductListSelection } from './product-list/useProductListSelection'
 import { useProductListUrlSync } from './product-list/useProductListUrlSync';
 import { useCreateFromDraft } from './useCreateFromDraft';
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
+import {
+  applyProductListAdvancedFilterState,
+  applyProductListPageSizeChange,
+  shouldEnableProductListBackgroundSyncRuntime,
+  scheduleDeferredProductListDraftBootstrap,
+} from './product-list/productListStateHelpers';
+import { useProductListDebugLogging } from './product-list/useProductListDebugLogging';
 
 import type { ProductListContextType } from '../context/ProductListContext';
 import type { ColumnDef, Row } from '@tanstack/react-table';
@@ -67,36 +68,6 @@ function useStableSearchParams(): URLSearchParams {
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
-type ProductListDebugSnapshot = {
-  page: number;
-  pageSize: number;
-  visibleCount: number;
-  rowSelectionCount: number;
-  isLoading: boolean;
-  isFetching: boolean;
-  hasLoadError: boolean;
-  loadErrorMessage: string | null;
-  queuedProductIdsCount: number;
-  trackedAiRunsCount: number;
-  backgroundSyncEnabled: boolean;
-  catalogFilter: string;
-  hasSearch: boolean;
-  hasSku: boolean;
-  hasDescription: boolean;
-  hasProductId: boolean;
-  hasAdvancedFilter: boolean;
-  baseExported: '' | 'true' | 'false';
-  showTriggerRunFeedback: boolean;
-  isEditHydrating: boolean;
-};
-
-type DeferredDraftBootstrapTarget = {
-  requestIdleCallback?: (callback: () => void) => number;
-  cancelIdleCallback?: (handle: number) => void;
-  setTimeout: (handler: () => void, timeout?: number) => number;
-  clearTimeout: (handle: number) => void;
-};
-
 const EMPTY_INTEGRATION_BADGE_IDS = new Set<string>();
 const EMPTY_INTEGRATION_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_TRADERA_BADGE_IDS = new Set<string>();
@@ -106,92 +77,6 @@ const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_VINTED_BADGE_IDS = new Set<string>();
 const EMPTY_VINTED_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_PRODUCT_TABLE_COLUMNS: ColumnDef<ProductWithImages>[] = [];
-
-const buildProductListDebugSnapshot = (args: ProductListDebugSnapshot): ProductListDebugSnapshot => args;
-
-const collectProductListDebugSnapshotChanges = (
-  previous: ProductListDebugSnapshot,
-  next: ProductListDebugSnapshot
-): Record<string, { previous: unknown; next: unknown }> => {
-  const changes: Record<string, { previous: unknown; next: unknown }> = {};
-  (Object.keys(next) as Array<keyof ProductListDebugSnapshot>).forEach((key) => {
-    if (previous[key] !== next[key]) {
-      changes[String(key)] = {
-        previous: previous[key],
-        next: next[key],
-      };
-    }
-  });
-  return changes;
-};
-
-export function applyProductListAdvancedFilterState(args: {
-  value: string;
-  presetId: string | null;
-  setLocalState: (value: string, presetId: string | null) => void;
-  persistState: (state: { advancedFilter: string; presetId: string | null }) => Promise<void>;
-}): void {
-  const normalizedValue = args.value.trim();
-  const normalizedPresetId = normalizedValue.length > 0 ? args.presetId : null;
-
-  args.setLocalState(normalizedValue, normalizedPresetId);
-  void args.persistState({
-    advancedFilter: normalizedValue,
-    presetId: normalizedPresetId,
-  });
-}
-
-export function applyProductListPageSizeChange(args: {
-  size: number;
-  setLocalPageSize: (size: number) => void;
-  persistPageSize: (size: number) => Promise<void>;
-}): void {
-  const normalizedPageSize = normalizeProductPageSize(args.size, 12);
-  args.setLocalPageSize(normalizedPageSize);
-  void args.persistPageSize(normalizedPageSize);
-}
-
-export function shouldEnableProductListBackgroundSync(args: {
-  queuedProductIdsCount: number;
-  activeTrackedProductAiRunsCount: number;
-}): boolean {
-  return args.queuedProductIdsCount > 0 || args.activeTrackedProductAiRunsCount > 0;
-}
-
-export function shouldEnableProductListBackgroundSyncRuntime(args: {
-  rowRuntimeReady: boolean;
-  isLoading: boolean;
-  queuedProductIdsCount: number;
-  activeTrackedProductAiRunsCount: number;
-}): boolean {
-  if (!args.rowRuntimeReady) return false;
-  if (args.isLoading) return false;
-  return shouldEnableProductListBackgroundSync({
-    queuedProductIdsCount: args.queuedProductIdsCount,
-    activeTrackedProductAiRunsCount: args.activeTrackedProductAiRunsCount,
-  });
-}
-
-export function scheduleDeferredProductListDraftBootstrap(
-  target: DeferredDraftBootstrapTarget,
-  onReady: () => void
-): () => void {
-  if (typeof target.requestIdleCallback === 'function') {
-    const idleHandle = target.requestIdleCallback(() => {
-      onReady();
-    });
-    return (): void => {
-      target.cancelIdleCallback?.(idleHandle);
-    };
-  }
-
-  const timeoutHandle = target.setTimeout(() => {
-    onReady();
-  }, 1);
-  return (): void => {
-    target.clearTimeout(timeoutHandle);
-  };
-}
 
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
@@ -244,8 +129,6 @@ export function useProductListState(): ProductListContextType & {
 
   const { catalogs, currencyCode, setCurrencyCode, currencyOptions, priceGroups, languageOptions } =
     useCatalogSync(preferences.catalogFilter || 'all', {
-      // The products table can render a usable first paint with default language/currency state
-      // and then hydrate catalog metadata after the deferred row-runtime bootstrap.
       enabled: rowRuntimeReady,
     });
 
@@ -618,81 +501,31 @@ export function useProductListState(): ProductListContextType & {
     ]
   );
 
-  const previousDebugSnapshotRef = useRef<ProductListDebugSnapshot | null>(null);
-  const debugSnapshot = useMemo(
-    () =>
-      buildProductListDebugSnapshot({
-        page,
-        pageSize,
-        visibleCount: visibleData.length,
-        rowSelectionCount: Object.keys(rowSelection).filter((id: string) => rowSelection[id]).length,
-        isLoading,
-        isFetching,
-        hasLoadError: Boolean(loadError),
-        loadErrorMessage: loadError?.message ?? null,
-        queuedProductIdsCount: queuedProductIds.size,
-        trackedAiRunsCount: productAiRunStatusByProductId.size,
-        backgroundSyncEnabled: shouldEnableListBackgroundSync,
-        catalogFilter,
-        hasSearch: search.length > 0,
-        hasSku: sku.length > 0,
-        hasDescription: description.length > 0,
-        hasProductId: productId.length > 0,
-        hasAdvancedFilter: advancedFilter.length > 0,
-        baseExported,
-        showTriggerRunFeedback,
-        isEditHydrating,
-      }),
-    [
-      advancedFilter,
-      baseExported,
-      catalogFilter,
-      isEditHydrating,
-      isFetching,
-      isLoading,
-      loadError,
+  useProductListDebugLogging({
+    enabled: isProductListDebugOpen,
+    snapshot: {
       page,
       pageSize,
-      productAiRunStatusByProductId.size,
-      productId,
-      queuedProductIds.size,
-      rowSelection,
-      search,
-      shouldEnableListBackgroundSync,
+      visibleCount: visibleData.length,
+      rowSelectionCount: Object.keys(rowSelection).filter((id: string) => rowSelection[id]).length,
+      isLoading,
+      isFetching,
+      hasLoadError: Boolean(loadError),
+      loadErrorMessage: loadError?.message ?? null,
+      queuedProductIdsCount: queuedProductIds.size,
+      trackedAiRunsCount: productAiRunStatusByProductId.size,
+      backgroundSyncEnabled: shouldEnableListBackgroundSync,
+      catalogFilter,
+      hasSearch: search.length > 0,
+      hasSku: sku.length > 0,
+      hasDescription: description.length > 0,
+      hasProductId: productId.length > 0,
+      hasAdvancedFilter: advancedFilter.length > 0,
+      baseExported,
       showTriggerRunFeedback,
-      sku,
-      description,
-      visibleData.length,
-    ]
-  );
-
-  useEffect(() => {
-    if (!isProductListDebugOpen) {
-      previousDebugSnapshotRef.current = null;
-      return;
-    }
-
-    const previousSnapshot = previousDebugSnapshotRef.current;
-    const changes = previousSnapshot
-      ? collectProductListDebugSnapshotChanges(previousSnapshot, debugSnapshot)
-      : {};
-    if (previousSnapshot && Object.keys(changes).length === 0) {
-      return;
-    }
-
-    logProductListDebug(
-      previousSnapshot ? 'product-list-state-change' : 'product-list-state-init',
-      {
-        snapshot: debugSnapshot,
-        ...(previousSnapshot ? { changes } : {}),
-      },
-      {
-        dedupeKey: previousSnapshot ? 'product-list-state-change' : 'product-list-state-init',
-        throttleMs: previousSnapshot ? 400 : 0,
-      }
-    );
-    previousDebugSnapshotRef.current = debugSnapshot;
-  }, [debugSnapshot, isProductListDebugOpen]);
+      isEditHydrating,
+    },
+  });
 
   const draftQueries = useDraftQueries as (
     notebookId?: string,

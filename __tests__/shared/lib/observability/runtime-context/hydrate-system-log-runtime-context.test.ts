@@ -88,7 +88,7 @@ describe('hydrate-system-log-runtime-context', () => {
     inferRefsMock.mockReturnValue([]);
 
     const { hydrateLogRuntimeContext } = await import(
-      '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
+      '@/shared/lib/observability/entry-server'
     );
 
     const context = {
@@ -103,7 +103,7 @@ describe('hydrate-system-log-runtime-context', () => {
 
   it('preserves top-level keys while attaching canonical context registry refs', async () => {
     const { hydrateLogRuntimeContext } = await import(
-      '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
+      '@/shared/lib/observability/entry-server'
     );
 
     const result = await hydrateLogRuntimeContext({
@@ -131,7 +131,7 @@ describe('hydrate-system-log-runtime-context', () => {
 
   it('strips legacy AI-path snapshots from new write-time context while keeping canonical refs', async () => {
     const { hydrateLogRuntimeContext } = await import(
-      '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
+      '@/shared/lib/observability/entry-server'
     );
 
     const result = await hydrateLogRuntimeContext({
@@ -155,7 +155,7 @@ describe('hydrate-system-log-runtime-context', () => {
 
   it('hydrates canonical refs into resolved runtime documents for read-time consumers', async () => {
     const { hydrateSystemLogRecordRuntimeContext } = await import(
-      '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
+      '@/shared/lib/observability/entry-server'
     );
 
     const result = await hydrateSystemLogRecordRuntimeContext({
@@ -201,7 +201,7 @@ describe('hydrate-system-log-runtime-context', () => {
     inferRefsMock.mockReturnValue([]);
 
     const { hydrateSystemLogRecordRuntimeContext } = await import(
-      '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
+      '@/shared/lib/observability/entry-server'
     );
 
     const result = await hydrateSystemLogRecordRuntimeContext({

@@ -55,6 +55,13 @@ describe('mongo product repository mappers shared-lib coverage', () => {
     expect(result.description).toEqual({ en: 'Desc EN', pl: 'Desc PL', de: null });
     expect(result.importSource).toBe('base');
     expect(result.catalogId).toBe('catalog-mentios');
+    expect(result.catalogs).toEqual([
+      {
+        productId: 'product-1',
+        catalogId: 'catalog-mentios',
+        assignedAt: '2026-01-02T00:00:00.000Z',
+      },
+    ]);
     expect(result.categoryId).toBe('category-1');
     expect(result.parameters).toEqual([
       {

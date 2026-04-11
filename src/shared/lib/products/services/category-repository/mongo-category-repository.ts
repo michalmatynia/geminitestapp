@@ -349,7 +349,7 @@ export const mongoCategoryRepository: CategoryRepository = {
     const doc: Omit<ProductCategoryDoc, '_id'> = {
       name: data.name,
       name_en: data.name,
-      name_pl: null,
+      name_pl: toOptionalTrimmedString(data.name_pl),
       name_de: null,
       description: data.description ?? null,
       color: data.color ?? null,
@@ -383,6 +383,7 @@ export const mongoCategoryRepository: CategoryRepository = {
 
     if (data.name !== undefined) set.name = data.name;
     if (data.name !== undefined) set.name_en = data.name;
+    if (data.name_pl !== undefined) set.name_pl = toOptionalTrimmedString(data.name_pl);
     if (data.description !== undefined) set.description = data.description;
     if (data.color !== undefined) set.color = data.color;
     if (data.parentId !== undefined) {

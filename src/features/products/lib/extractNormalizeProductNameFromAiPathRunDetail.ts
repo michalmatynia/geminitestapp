@@ -247,7 +247,7 @@ const normalizeCategoryUnavailableValidationError = (args: {
     return `Category context unavailable: ${collection.error}`;
   }
 
-  if (collection && collection.documentsCount === 0) {
+  if (collection?.documentsCount === 0) {
     const catalogId = args.categoryContext?.catalogId;
     if (catalogId) {
       return `Category context unavailable: no product_categories rows matched catalog "${catalogId}".`;

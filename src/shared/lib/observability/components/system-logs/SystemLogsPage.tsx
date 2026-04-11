@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 
 import {
   SystemLogsProvider,
-} from '@/features/observability/context/SystemLogsContext';
+} from '@/shared/lib/observability/context/SystemLogsContext';
 import {
   SYSTEM_LOGS_CONTEXT_ROOT_IDS,
 } from '@/shared/lib/observability/runtime-context/system-logs-workspace';

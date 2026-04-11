@@ -6,7 +6,7 @@ import { GET, POST } from '@/app/api/system/logs/route';
 import {
   hydrateLogRuntimeContext,
   hydrateSystemLogRecordRuntimeContext,
-} from '@/features/observability/entry-server';
+} from '@/shared/lib/observability/entry-server';
 import {
   clearSystemLogs,
   createSystemLog,
@@ -32,7 +32,7 @@ vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   clearSystemLogs: vi.fn(),
 }));
 
-vi.mock('@/features/observability/entry-server', () => ({
+vi.mock('@/shared/lib/observability/entry-server', () => ({
   hydrateLogRuntimeContext: vi.fn().mockImplementation(async (context) => context),
   hydrateSystemLogRecordRuntimeContext: vi.fn().mockImplementation(async (log) => log),
 }));

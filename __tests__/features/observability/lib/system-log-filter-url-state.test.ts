@@ -4,7 +4,7 @@ import { SYSTEM_LOG_FILTER_DEFAULTS } from '@/shared/lib/observability/log-triag
 import {
   readSystemLogUrlState,
   writeSystemLogUrlState,
-} from '@/features/observability/lib/system-log-filter-url-state';
+} from '@/shared/lib/observability/utils/system-log-filter-url-state';
 
 describe('system-log-filter-url-state', () => {
   it('parses URL query into filter state with safe defaults', () => {

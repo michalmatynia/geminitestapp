@@ -2,11 +2,13 @@ import { describe, it, expect } from 'vitest';
 
 import { productCreateSchema, productUpdateSchema } from '@/shared/lib/products/validations';
 
+const VALID_NAME = 'Product | 5 cm | Metal | Pins | Theme';
+
 describe('product validations', () => {
   describe('productCreateSchema', () => {
     it('should allow valid product data', () => {
       const data = {
-        name_en: 'Product',
+        name_en: VALID_NAME,
         sku: 'PROD-123',
         price: 100,
       };
@@ -20,7 +22,7 @@ describe('product validations', () => {
 
     it('should handle empty price correctly', () => {
       const data = {
-        name_en: 'Product',
+        name_en: VALID_NAME,
         sku: 'PROD-123',
         price: '',
       };
@@ -33,22 +35,22 @@ describe('product validations', () => {
     });
 
     it('should handle SKU preprocessing', () => {
-      const r1 = productCreateSchema.safeParse({ name_en: 'P', sku: '' });
+      const r1 = productCreateSchema.safeParse({ name_en: VALID_NAME, sku: '' });
       // productCreateSchema requires sku.min(1), so empty string should fail
       expect(r1.success).toBe(false);
 
-      const r2 = productCreateSchema.safeParse({ name_en: 'P', sku: '  ' });
+      const r2 = productCreateSchema.safeParse({ name_en: VALID_NAME, sku: '  ' });
       // trimmed empty string should also fail
       expect(r2.success).toBe(false);
 
-      const r3 = productCreateSchema.safeParse({ name_en: 'P', sku: 'VALID' });
+      const r3 = productCreateSchema.safeParse({ name_en: VALID_NAME, sku: 'VALID' });
       expect(r3.success).toBe(true);
     });
 
     it('should handle imageLinks preprocessing (CSV/JSON/Array)', () => {
       // CSV
       const csvResult = productCreateSchema.safeParse({
-        name_en: 'P',
+        name_en: VALID_NAME,
         sku: 'S1',
         imageLinks: 'a.jpg, b.jpg',
       });
@@ -59,7 +61,7 @@ describe('product validations', () => {
 
       // JSON
       const jsonResult = productCreateSchema.safeParse({
-        name_en: 'P',
+        name_en: VALID_NAME,
         sku: 'S1',
         imageLinks: '["c.jpg", "d.jpg"]',
       });
@@ -70,7 +72,7 @@ describe('product validations', () => {
 
       // Array
       const arrayResult = productCreateSchema.safeParse({
-        name_en: 'P',
+        name_en: VALID_NAME,
         sku: 'S1',
         imageLinks: ['e.jpg'],
       });
@@ -84,7 +86,7 @@ describe('product validations', () => {
       const params = [{ parameterId: 'p1', value: 'v1' }];
       const jsonParams = JSON.stringify(params);
       const result = productCreateSchema.safeParse({
-        name_en: 'P',
+        name_en: VALID_NAME,
         sku: 'S1',
         parameters: jsonParams,
       });

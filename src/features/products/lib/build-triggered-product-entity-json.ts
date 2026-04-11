@@ -81,7 +81,7 @@ export const buildTriggeredProductEntityJson = (args: {
       ) ?? null;
     if (existing && typeof existing === 'object') {
       return {
-        ...(existing as Record<string, unknown>),
+        ...existing,
         catalogId,
       };
     }

@@ -140,6 +140,7 @@ describe('ProductForm', () => {
     expect(marketplaceCopyTab).toHaveAttribute('data-state', 'active');
     expect(marketplaceCopyLabel.className).not.toContain('max-w-0');
     expect(marketplaceCopyLabel.className).not.toContain('opacity-0');
+    expect(screen.getByRole('tab', { name: 'Scans' })).toBeInTheDocument();
     expect(screen.getAllByTestId('dynamic-tab-stub').length).toBeGreaterThan(0);
   });
 

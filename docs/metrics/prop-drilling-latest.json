@@ -1,18 +1,18 @@
 {
   "summary": {
-    "generatedAt": "2026-04-10T11:36:50.619Z",
-    "scannedSourceFiles": 7186,
-    "scannedJsxFiles": 2516,
-    "componentCount": 4402,
+    "generatedAt": "2026-04-11T02:57:47.495Z",
+    "scannedSourceFiles": 7227,
+    "scannedJsxFiles": 2522,
+    "componentCount": 4413,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 304,
-    "resolvedTransitionCount": 1279,
-    "depth2CandidateChainCount": 1279,
+    "componentsWithAnyForwarding": 308,
+    "resolvedTransitionCount": 1298,
+    "depth2CandidateChainCount": 1298,
     "candidateChainCount": 230,
     "highPriorityChainCount": 66,
     "unknownSpreadForwardingCount": 12,
     "highPropCountComponentCount": 48,
-    "passThroughHotspotCount": 90,
+    "passThroughHotspotCount": 92,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
@@ -20,7 +20,7 @@
       },
       {
         "scope": "feature:integrations",
-        "count": 10
+        "count": 13
       },
       {
         "scope": "shared-ui",
@@ -35,11 +35,11 @@
         "count": 6
       },
       {
-        "scope": "feature:admin",
-        "count": 4
+        "scope": "feature:products",
+        "count": 5
       },
       {
-        "scope": "feature:products",
+        "scope": "feature:admin",
         "count": 4
       },
       {
@@ -9150,6 +9150,84 @@
       "depth": 2,
       "rootFanout": 3,
       "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+      "sinkComponentId": "src/shared/ui/form-section.tsx#FormField",
+      "componentPath": [
+        "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+        "src/shared/ui/form-section.tsx#FormField"
+      ],
+      "propPath": [
+        "fieldName",
+        "id"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+          "toComponentId": "src/shared/ui/form-section.tsx#FormField",
+          "sourceProp": "fieldName",
+          "targetProp": "id",
+          "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
+          "line": 706
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "fieldName",
+        "id"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "fieldName",
+          "targetProp": "id",
+          "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
+          "line": 727
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "fieldName",
+        "onChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "fieldName",
+          "targetProp": "onChange",
+          "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
+          "line": 727
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
       "rootComponentId": "src/shared/lib/text-editor-engine/pages/AdminTextEditorSettingsPage.tsx#InstanceSettingsPanel",
       "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
       "componentPath": [
@@ -11117,7 +11195,7 @@
           "sourceProp": "searchPlaceholder",
           "targetProp": "header",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 566
+          "line": 612
         }
       ]
     },
@@ -11143,7 +11221,7 @@
           "sourceProp": "searchAriaLabel",
           "targetProp": "header",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 566
+          "line": 612
         }
       ]
     },
@@ -11169,7 +11247,7 @@
           "sourceProp": "handleCreatePath",
           "targetProp": "header",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 566
+          "line": 612
         }
       ]
     },
@@ -11195,7 +11273,7 @@
           "sourceProp": "searchPlaceholder",
           "targetProp": "placeholder",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 581
+          "line": 627
         }
       ]
     },
@@ -11221,7 +11299,7 @@
           "sourceProp": "searchAriaLabel",
           "targetProp": "aria-label",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 581
+          "line": 627
         }
       ]
     },
@@ -11247,7 +11325,7 @@
           "sourceProp": "handleCreatePath",
           "targetProp": "onClick",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 592
+          "line": 638
         }
       ]
     },
@@ -11273,7 +11351,7 @@
           "sourceProp": "activePathId",
           "targetProp": "renderNode",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
         }
       ]
     },
@@ -11299,7 +11377,7 @@
           "sourceProp": "handleDeletePath",
           "targetProp": "renderNode",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
         }
       ]
     },
@@ -11325,7 +11403,7 @@
           "sourceProp": "handleDuplicatePath",
           "targetProp": "renderNode",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
         }
       ]
     },
@@ -11351,7 +11429,7 @@
           "sourceProp": "handleMoveFolder",
           "targetProp": "renderNode",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
         }
       ]
     },
@@ -11377,7 +11455,7 @@
           "sourceProp": "handleMovePathToFolder",
           "targetProp": "renderNode",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
         }
       ]
     },
@@ -11403,7 +11481,7 @@
           "sourceProp": "handleRenameFolder",
           "targetProp": "renderNode",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
         }
       ]
     },
@@ -11429,7 +11507,59 @@
           "sourceProp": "onCopyPathJson",
           "targetProp": "renderNode",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "pathClickBehavior",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "pathClickBehavior",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 664
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "showPathHoverActions",
+        "renderNode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "showPathHoverActions",
+          "targetProp": "renderNode",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 664
         }
       ]
     },
@@ -11455,7 +11585,7 @@
           "sourceProp": "toast",
           "targetProp": "renderNode",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
         }
       ]
     },
@@ -16447,7 +16577,7 @@
           "sourceProp": "panelClassName",
           "targetProp": "className",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 566
+          "line": 612
         }
       ]
     },
@@ -16473,7 +16603,7 @@
           "sourceProp": "headerTitle",
           "targetProp": "header",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 566
+          "line": 612
         }
       ]
     },
@@ -16499,7 +16629,7 @@
           "sourceProp": "headerDescription",
           "targetProp": "header",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 566
+          "line": 612
         }
       ]
     },
@@ -16525,7 +16655,7 @@
           "sourceProp": "renderHeaderActions",
           "targetProp": "header",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 566
+          "line": 612
         }
       ]
     },
@@ -17808,10 +17938,10 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
-        "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+        "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
         "src/shared/ui/button.tsx#Button"
       ],
       "propPath": [
@@ -17820,12 +17950,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
           "toComponentId": "src/shared/ui/button.tsx#Button",
           "sourceProp": "onRelist",
           "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
-          "line": 377
+          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
+          "line": 173
         }
       ]
     },
@@ -17834,10 +17964,10 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
-        "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+        "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
         "src/shared/ui/button.tsx#Button"
       ],
       "propPath": [
@@ -17846,12 +17976,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
           "toComponentId": "src/shared/ui/button.tsx#Button",
           "sourceProp": "isRefreshingSession",
           "targetProp": "disabled",
-          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
-          "line": 403
+          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
+          "line": 199
         }
       ]
     },
@@ -17860,10 +17990,10 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
-        "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+        "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
         "src/shared/ui/button.tsx#Button"
       ],
       "propPath": [
@@ -17872,12 +18002,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
           "toComponentId": "src/shared/ui/button.tsx#Button",
           "sourceProp": "onLiveCheck",
           "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
-          "line": 403
+          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
+          "line": 199
         }
       ]
     },
@@ -17886,10 +18016,10 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
-        "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+        "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
         "src/shared/ui/button.tsx#Button"
       ],
       "propPath": [
@@ -17898,12 +18028,246 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
           "toComponentId": "src/shared/ui/button.tsx#Button",
           "sourceProp": "onRefreshSession",
           "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
-          "line": 427
+          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
+          "line": 223
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onFetch",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onFetch",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "isFetching",
+        "loading"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "isFetching",
+          "targetProp": "loading",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "fetchingCategoryId",
+        "loading"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "fetchingCategoryId",
+          "targetProp": "loading",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onRefetch",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onRefetch",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "isRefetching",
+        "loading"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "isRefetching",
+          "targetProp": "loading",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "refetchingCategoryId",
+        "loading"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "refetchingCategoryId",
+          "targetProp": "loading",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onReview",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onReview",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onDelete",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onDelete",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx",
+          "line": 85
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "isDeleting",
+        "loading"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "isDeleting",
+          "targetProp": "loading",
+          "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx",
+          "line": 85
         }
       ]
     },
@@ -18709,7 +19073,7 @@
           "sourceProp": "activePathId",
           "targetProp": "activePathId",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 657
+          "line": 703
         }
       ]
     },
@@ -18735,7 +19099,7 @@
           "sourceProp": "handleDeletePath",
           "targetProp": "handleDeletePath",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 657
+          "line": 703
         }
       ]
     },
@@ -18761,7 +19125,7 @@
           "sourceProp": "handleDuplicatePath",
           "targetProp": "handleDuplicatePath",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 657
+          "line": 703
         }
       ]
     },
@@ -18787,7 +19151,7 @@
           "sourceProp": "handleMoveFolder",
           "targetProp": "handleMoveFolder",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 657
+          "line": 703
         }
       ]
     },
@@ -18813,7 +19177,7 @@
           "sourceProp": "handleMovePathToFolder",
           "targetProp": "handleMovePathToFolder",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 657
+          "line": 703
         }
       ]
     },
@@ -18839,7 +19203,7 @@
           "sourceProp": "handleRenameFolder",
           "targetProp": "handleRenameFolder",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 657
+          "line": 703
         }
       ]
     },
@@ -18865,7 +19229,59 @@
           "sourceProp": "onCopyPathJson",
           "targetProp": "onCopyPathJson",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 657
+          "line": 703
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "pathClickBehavior",
+        "pathClickBehavior"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "pathClickBehavior",
+          "targetProp": "pathClickBehavior",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 703
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+      "sinkComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+      "componentPath": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode"
+      ],
+      "propPath": [
+        "showPathHoverActions",
+        "showPathHoverActions"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
+          "toComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsTreeNode",
+          "sourceProp": "showPathHoverActions",
+          "targetProp": "showPathHoverActions",
+          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
+          "line": 703
         }
       ]
     },
@@ -18891,7 +19307,7 @@
           "sourceProp": "toast",
           "targetProp": "toast",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 657
+          "line": 703
         }
       ]
     },
@@ -28589,7 +29005,7 @@
           "sourceProp": "canReadAdminSettings",
           "targetProp": "canReadAdminSettings",
           "relativePath": "src/features/admin/layout/AdminLayout.tsx",
-          "line": 423
+          "line": 424
         }
       ]
     },
@@ -28615,7 +29031,7 @@
           "sourceProp": "bodyClassName",
           "targetProp": "bodyClassName",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 566
+          "line": 612
         }
       ]
     },
@@ -28641,7 +29057,7 @@
           "sourceProp": "emptyLabel",
           "targetProp": "emptyLabel",
           "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 618
+          "line": 664
         }
       ]
     },
@@ -29032,6 +29448,84 @@
           "targetProp": "open",
           "relativePath": "src/features/playwright/components/PlaywrightEngineSettingsModal.tsx",
           "line": 25
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+      "sinkComponentId": "src/shared/ui/form-section.tsx#FormField",
+      "componentPath": [
+        "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+        "src/shared/ui/form-section.tsx#FormField"
+      ],
+      "propPath": [
+        "label",
+        "label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+          "toComponentId": "src/shared/ui/form-section.tsx#FormField",
+          "sourceProp": "label",
+          "targetProp": "label",
+          "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
+          "line": 706
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+      "sinkComponentId": "src/shared/ui/form-section.tsx#FormField",
+      "componentPath": [
+        "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+        "src/shared/ui/form-section.tsx#FormField"
+      ],
+      "propPath": [
+        "description",
+        "description"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+          "toComponentId": "src/shared/ui/form-section.tsx#FormField",
+          "sourceProp": "description",
+          "targetProp": "description",
+          "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
+          "line": 706
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "placeholder",
+        "placeholder"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "placeholder",
+          "targetProp": "placeholder",
+          "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
+          "line": 727
         }
       ]
     },
@@ -36972,8 +37466,8 @@
       "name": "AiPathsMasterTreePanel",
       "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
       "feature": "feature:ai",
-      "forwardedPropCount": 17,
-      "outgoingTransitionCount": 28,
+      "forwardedPropCount": 19,
+      "outgoingTransitionCount": 32,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -37553,6 +38047,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+      "name": "StructuredProductNameField",
+      "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 6,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
       "name": "AiPathsCanvasToolbar",
       "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
@@ -37616,9 +38119,9 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "componentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
       "name": "ListingRowView",
-      "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+      "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
       "feature": "feature:integrations",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -37880,6 +38383,33 @@
       "componentId": "src/features/integrations/components/listings/ExportLogsPanel.tsx#ExportLogsPanel",
       "name": "ExportLogsPanel",
       "relativePath": "src/features/integrations/components/listings/ExportLogsPanel.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+      "name": "CatalogCategoryTable",
+      "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+      "name": "CatalogEntriesTable",
+      "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+      "name": "MappingsRulesTable",
+      "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx",
       "feature": "feature:integrations",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
@@ -38010,42 +38540,6 @@
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/game-setup/KangurGameOperationPracticeAssignmentBanner.tsx#KangurGameOperationPracticeAssignmentBanner",
-      "name": "KangurGameOperationPracticeAssignmentBanner",
-      "relativePath": "src/features/kangur/ui/components/game-setup/KangurGameOperationPracticeAssignmentBanner.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityEditorPreview",
-      "name": "KangurLessonActivityEditorPreview",
-      "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorPanelHeader",
-      "name": "AiTutorPanelHeader",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardAuthenticatedBody",
-      "name": "KangurParentDashboardAuthenticatedBody",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
     }
   ],
   "forwardingComponentBacklog": [
@@ -38054,8 +38548,8 @@
       "name": "AiPathsMasterTreePanel",
       "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
       "feature": "feature:ai",
-      "forwardedPropCount": 17,
-      "outgoingTransitionCount": 28,
+      "forwardedPropCount": 19,
+      "outgoingTransitionCount": 32,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -38635,6 +39129,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
+      "name": "StructuredProductNameField",
+      "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 6,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
       "name": "AiPathsCanvasToolbar",
       "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
@@ -38698,9 +39201,9 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx#ListingRowView",
+      "componentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
       "name": "ListingRowView",
-      "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.tsx",
+      "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
       "feature": "feature:integrations",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -38962,6 +39465,33 @@
       "componentId": "src/features/integrations/components/listings/ExportLogsPanel.tsx#ExportLogsPanel",
       "name": "ExportLogsPanel",
       "relativePath": "src/features/integrations/components/listings/ExportLogsPanel.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx#CatalogCategoryTable",
+      "name": "CatalogCategoryTable",
+      "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogCategoryTable.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx#CatalogEntriesTable",
+      "name": "CatalogEntriesTable",
+      "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/CatalogEntriesTable.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx#MappingsRulesTable",
+      "name": "MappingsRulesTable",
+      "relativePath": "src/features/integrations/pages/marketplaces/tradera/components/MappingsRulesTable.tsx",
       "feature": "feature:integrations",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,

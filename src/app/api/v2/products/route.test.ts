@@ -25,4 +25,18 @@ describe('products route module', () => {
     expect(collectionIndex).toBeLessThan(productIdIndex);
     expect(itemIndex).toBeLessThan(productIdIndex);
   });
+
+  it('registers scans routes before the generic product id route', () => {
+    const scansIndex = catchAllRouteSource.indexOf("../scans/route-handler");
+    const scanBatchIndex = catchAllRouteSource.indexOf("../scans/amazon/batch/route-handler");
+    const productScanIndex = catchAllRouteSource.indexOf("../[id]/scans/route-handler");
+    const productIdIndex = catchAllRouteSource.indexOf("../[id]/route-handler");
+
+    expect(scansIndex).toBeGreaterThan(-1);
+    expect(scanBatchIndex).toBeGreaterThan(-1);
+    expect(productScanIndex).toBeGreaterThan(-1);
+    expect(productIdIndex).toBeGreaterThan(-1);
+    expect(scansIndex).toBeLessThan(productIdIndex);
+    expect(scanBatchIndex).toBeLessThan(productIdIndex);
+  });
 });

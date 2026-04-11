@@ -2,4 +2,3 @@
 // their route components directly so regular CMS/frontend consumers don't pull
 // page-level modules into the same Turbopack resolution surface.
 export * from './client/public';
-export * from './pages.public';

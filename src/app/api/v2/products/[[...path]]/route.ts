@@ -55,6 +55,8 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['images', 'base64'], loader: () => import('../images/base64/route-handler') },
   { pattern: ['images', 'base64', 'all'], loader: () => import('../images/base64/all/route-handler') },
   { pattern: ['images', 'upload'], loader: () => import('../images/upload/route-handler') },
+  { pattern: ['scans'], loader: () => import('../scans/route-handler') },
+  { pattern: ['scans', 'amazon', 'batch'], loader: () => import('../scans/amazon/batch/route-handler') },
   { pattern: ['import', 'csv'], loader: () => import('../import/csv/route-handler') },
   { pattern: ['title-terms'], loader: () => import('../title-terms/route-handler') },
   { pattern: ['title-terms', param('id')], loader: () => import('../title-terms/[id]/route-handler') },
@@ -77,6 +79,7 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: [param('id'), 'images', 'base64'], loader: () => import('../[id]/images/base64/route-handler') },
   { pattern: [param('id'), 'images', 'link-to-file'], loader: () => import('../[id]/images/link-to-file/route-handler') },
   { pattern: [param('id'), 'images', param('imageFileId')], loader: () => import('../[id]/images/[imageFileId]/route-handler') },
+  { pattern: [param('id'), 'scans'], loader: () => import('../[id]/scans/route-handler') },
   { pattern: [param('id'), 'studio'], loader: () => import('../[id]/studio/route-handler') },
   { pattern: [param('id'), 'studio', param('action')], loader: () => import('../[id]/studio/[action]/route-handler') },
 ];

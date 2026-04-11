@@ -346,6 +346,15 @@ export const invalidateProductsAndDetail = async (
   ]);
 };
 
+export const invalidateProductScans = async (
+  queryClient: QueryClient,
+  productId: string
+): Promise<void> => {
+  await queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.products.scans(productId),
+  });
+};
+
 export const invalidateProductsCountsAndDetail = async (
   queryClient: QueryClient,
   productId: string

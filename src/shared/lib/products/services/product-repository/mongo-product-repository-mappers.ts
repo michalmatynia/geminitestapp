@@ -1,5 +1,10 @@
 import type { ProductCategory } from '@/shared/contracts/products/categories';
-import type { ProductParameterValue, ProductRecord, ProductWithImages } from '@/shared/contracts/products/product';
+import { catalogSchema } from '@/shared/contracts/products/catalogs';
+import type {
+  ProductParameterValue,
+  ProductRecord,
+  ProductWithImages,
+} from '@/shared/contracts/products/product';
 import { normalizeProductMarketplaceContentOverrides } from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
@@ -11,6 +16,8 @@ import {
 import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 
 import type { WithId } from 'mongodb';
+
+type ProductCatalogRelation = NonNullable<ProductWithImages['catalogs']>[number];
 
 export type ProductDocument = Omit<
   ProductRecord,
@@ -162,6 +169,49 @@ const normalizeProductCategory = (
   }
 
   return normalized;
+};
+
+const normalizeCatalogRelations = (
+  value: unknown,
+  rootProductId: string
+): NonNullable<ProductWithImages['catalogs']> => {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry: unknown, index: number): ProductCatalogRelation | null => {
+      const record = toPlainRecord(entry);
+      if (!record) return null;
+
+      const embeddedCatalog = toPlainRecord(record['catalog']);
+      const productId = toTrimmedString(record['productId']) ?? rootProductId;
+      const catalogId =
+        toTrimmedString(record['catalogId']) ?? toTrimmedString(embeddedCatalog?.['id']);
+      const assignedAt = toOptionalIsoString(record['assignedAt']);
+
+      if (!productId || !catalogId || !assignedAt) {
+        throw validationError('Invalid product catalog relation payload.', {
+          productId: rootProductId,
+          field: 'catalogs',
+          index,
+          reason: 'missing_required_fields',
+        });
+      }
+
+      const relation: ProductCatalogRelation = {
+        productId,
+        catalogId,
+        assignedAt,
+      };
+      const parsedCatalog = catalogSchema.safeParse(record['catalog']);
+      if (parsedCatalog.success) {
+        relation.catalog = parsedCatalog.data;
+      }
+      return relation;
+    })
+    .filter(
+      (relation: ProductCatalogRelation | null): relation is ProductCatalogRelation =>
+        relation !== null
+    );
 };
 
 const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
@@ -405,7 +455,7 @@ const normalizeTagRelations = (
 export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => {
   const productId = doc.id ?? doc._id;
   const images = Array.isArray(doc.images) ? doc.images : [];
-  const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
+  const catalogs = normalizeCatalogRelations(doc.catalogs, productId);
   assertNoUnsupportedLocalizedObjectShape(doc.name, 'name', productId);
   assertNoUnsupportedLocalizedObjectShape(doc.description, 'description', productId);
   assertCanonicalLocalizedScalarField(doc.name_en, 'name_en', productId);
@@ -482,7 +532,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt),
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : String(doc.updatedAt),
     images: images.map((img) => ({ ...img, assignedAt: img.assignedAt })),
-    catalogs: catalogs.map((cat) => ({ ...cat, assignedAt: cat.assignedAt })),
+    catalogs,
     categoryId: resolveCanonicalCategoryId(doc, productId),
     tags,
     producers,

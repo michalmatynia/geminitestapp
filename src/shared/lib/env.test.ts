@@ -14,6 +14,11 @@ async function loadEnvModule(envPatch: NodeJS.ProcessEnv) {
     ...ORIGINAL_ENV,
     ...envPatch,
   };
+  Object.keys(envPatch).forEach((key) => {
+    if (envPatch[key] === undefined) {
+      delete process.env[key];
+    }
+  });
   return import('./env');
 }
 
@@ -49,6 +54,7 @@ describe('env', () => {
       NODE_ENV: 'test',
       MONGODB_LOCAL_URI: 'https://local.example.com',
       MONGODB_CLOUD_URI: 'https://cloud.example.com',
+      MONGODB_ACTIVE_SOURCE_DEFAULT: undefined,
       NEXT_PUBLIC_APP_URL: 'https://app.example.com',
     });
 

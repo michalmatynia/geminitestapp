@@ -7,8 +7,8 @@ import React from 'react';
 import {
   useSystemLogsActions,
   useSystemLogsState,
-} from '@/features/observability/context/SystemLogsContext';
-import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
+} from '@/shared/lib/observability/context/SystemLogsContext';
+import SystemLogsPage from '@/shared/lib/observability/components/system-logs/SystemLogsPage';
 
 type ListPanelMockProps = {
   children?: React.ReactNode;
@@ -47,7 +47,7 @@ vi.mock('nextjs-toploader/app', () => ({
 }));
 
 // Mock SystemLogsContext
-vi.mock('@/features/observability/context/SystemLogsContext', async (importOriginal) => {
+vi.mock('@/shared/lib/observability/context/SystemLogsContext', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,

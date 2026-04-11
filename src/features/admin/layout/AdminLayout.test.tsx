@@ -24,11 +24,25 @@ let adminLayoutActionsMock = {
   setIsProgrammaticallyCollapsed: vi.fn(),
 };
 
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({
-    setQueryData: queryClientSetQueryDataMock,
-  }),
-}));
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return {
+    ...actual,
+    useQueryClient: () => ({
+      setQueryData: queryClientSetQueryDataMock,
+      getQueryCache: () => ({
+        subscribe: vi.fn(() => vi.fn()),
+        findAll: vi.fn(() => []),
+        getAll: vi.fn(() => []),
+        find: vi.fn(),
+      }),
+      getDefaultOptions: () => ({}),
+      getMutationCache: () => ({
+        subscribe: vi.fn(() => vi.fn()),
+      }),
+    }),
+  };
+});
 
 vi.mock('next/navigation', () => ({
   usePathname: () => pathnameMock,
@@ -47,6 +61,7 @@ vi.mock('lucide-react', () => ({
   ChevronLeftIcon: () => <svg data-testid='chevron-left-icon' />,
   Menu: () => <svg data-testid='menu-icon' />,
   X: () => <svg data-testid='close-icon' />,
+  AlertCircle: () => <svg data-testid='alert-circle-icon' />,
 }));
 
 vi.mock('@/features/admin/components/AiInsightsNotificationsDrawer', () => ({
@@ -117,17 +132,26 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   },
 }));
 
-vi.mock('@/shared/ui/primitives.public', () => ({
-  Button: ({
-    children,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
-    <button type='button' {...props}>
-      {children}
-    </button>
-  ),
-  ToastProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
+  return {
+    ...actual,
+    Button: ({
+      children,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
+      <button type='button' {...props}>
+        {children}
+      </button>
+    ),
+    ToastProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useToast: () => ({
+      toast: vi.fn(),
+      dismiss: vi.fn(),
+      toasts: [],
+    }),
+  };
+});
 
 vi.mock('@/shared/ui/QueryErrorBoundary', () => ({
   QueryErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -219,7 +243,7 @@ describe('AdminLayout', () => {
     expect(useUserPreferencesMock.mock.calls[0]?.[0]).toEqual({ enabled: false });
 
     await act(async () => {
-      vi.runAllTimers();
+      vi.runOnlyPendingTimers();
     });
 
     const lastCall = useUserPreferencesMock.mock.calls.at(-1);
@@ -234,7 +258,7 @@ describe('AdminLayout', () => {
     );
 
     act(() => {
-      vi.runAllTimers();
+      vi.runOnlyPendingTimers();
     });
 
     expect(

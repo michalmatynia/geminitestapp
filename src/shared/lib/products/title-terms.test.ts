@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   PRODUCT_TITLE_SEPARATOR,
+  composeStructuredProductNameSegments,
   composeStructuredProductName,
   normalizeStructuredProductName,
   normalizeTitleTermName,
   parseStructuredProductName,
   splitStructuredProductName,
+  translateStructuredProductName,
 } from './title-terms';
 
 describe('product title term helpers', () => {
@@ -42,6 +44,7 @@ describe('product title term helpers', () => {
 
   it('splits and composes segments with trimmed values', () => {
     expect(splitStructuredProductName(' Name |  4 cm|Metal ')).toEqual(['Name', '4 cm', 'Metal']);
+    expect(composeStructuredProductNameSegments(['Name', '', 'Metal'])).toBe('Name |  | Metal');
     expect(
       composeStructuredProductName({
         baseName: ' Scout Regiment ',
@@ -51,5 +54,58 @@ describe('product title term helpers', () => {
         theme: ' Attack On Titan ',
       })
     ).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+  });
+
+  it('translates structured names segment-by-segment with English fallbacks', () => {
+    expect(
+      translateStructuredProductName({
+        englishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        locale: 'pl',
+        sizeTerms: [
+          {
+            id: 'size-4',
+            name: '4 cm',
+            name_en: '4 cm',
+            name_pl: null,
+            catalogId: 'catalog-1',
+            type: 'size',
+          },
+        ],
+        materialTerms: [
+          {
+            id: 'material-metal',
+            name: 'Metal',
+            name_en: 'Metal',
+            name_pl: 'Metal PL',
+            catalogId: 'catalog-1',
+            type: 'material',
+          },
+        ],
+        categories: [
+          {
+            id: 'category-pin',
+            name: 'Anime Pin',
+            name_en: 'Anime Pin',
+            name_pl: 'Przypinka Anime',
+            name_de: null,
+            description: null,
+            color: null,
+            parentId: null,
+            catalogId: 'catalog-1',
+            sortIndex: 0,
+          },
+        ],
+        themeTerms: [
+          {
+            id: 'theme-aot',
+            name: 'Attack On Titan',
+            name_en: 'Attack On Titan',
+            name_pl: 'Atak Tytanow',
+            catalogId: 'catalog-1',
+            type: 'theme',
+          },
+        ],
+      })
+    ).toBe('Scout Regiment | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow');
   });
 });

@@ -310,8 +310,15 @@ describe('AI Path Run Queue Worker', () => {
 
       expect(globalStatus.queuedCount).toBe(1);
       expect(scopedStatus.queuedCount).toBe(2);
-      expect(mockRepo.getQueueStats).toHaveBeenNthCalledWith(1, undefined);
-      expect(mockRepo.getQueueStats).toHaveBeenNthCalledWith(2, { userId: 'user-1' });
+      expect(mockRepo.getQueueStats).toHaveBeenNthCalledWith(1, {
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
+      });
+      expect(mockRepo.getQueueStats).toHaveBeenNthCalledWith(2, {
+        userId: 'user-1',
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
+      });
     });
 
     it('passes the scoped user id through to queue stats reads', async () => {
@@ -321,7 +328,11 @@ describe('AI Path Run Queue Worker', () => {
         userId: 'user-123',
       });
 
-      expect(mockRepo.getQueueStats).toHaveBeenCalledWith({ userId: 'user-123' });
+      expect(mockRepo.getQueueStats).toHaveBeenCalledWith({
+        userId: 'user-123',
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
+      });
     });
 
     it('throws service unavailable when worker is not running', async () => {

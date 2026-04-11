@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-10T11:37:21.555Z",
+  "generatedAt": "2026-04-11T03:03:06.007Z",
   "track": {
     "id": "repo-quality-baseline",
     "title": "Repository quality baseline",
@@ -142,12 +142,12 @@
     "defaultSelected": true,
     "description": "Runs the core read-only quality checks that establish the current repository baseline.",
     "overallStatus": "failed",
-    "latestGeneratedAt": "2026-04-10T11:37:21.499Z",
+    "latestGeneratedAt": "2026-04-11T02:59:25.778Z",
     "docDir": "docs/build/improvements/repo-quality-baseline",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-10T11:36:59.778Z",
+        "generatedAt": "2026-04-11T02:59:25.778Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -177,7 +177,7 @@
             ],
             "instructions": [],
             "script": "check:api-error-sources",
-            "durationMs": 545
+            "durationMs": 1306
           },
           {
             "id": "repo-quality-canonical-sitewide",
@@ -190,22 +190,22 @@
             "outputs": [],
             "instructions": [],
             "script": "canonical:check:sitewide",
-            "durationMs": 2181
+            "durationMs": 5406
           }
         ],
         "status": "passed"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-10T11:37:20.871Z",
+        "generatedAt": "2026-04-11T02:30:35.208Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
         "stepCount": 2,
         "automaticStepCount": 2,
         "manualStepCount": 0,
-        "passedStepCount": 0,
-        "failedStepCount": 2,
+        "passedStepCount": 1,
+        "failedStepCount": 1,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
@@ -221,7 +221,7 @@
             "outputs": [],
             "instructions": [],
             "script": "quality:baseline:lint",
-            "durationMs": 1882
+            "durationMs": 282389
           },
           {
             "id": "repo-quality-typecheck",
@@ -230,18 +230,18 @@
             "phase": "classify",
             "mode": "automatic",
             "writes": false,
-            "status": "failed",
+            "status": "passed",
             "outputs": [],
             "instructions": [],
             "script": "quality:baseline:typecheck",
-            "durationMs": 422
+            "durationMs": 86428
           }
         ],
         "status": "failed"
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-10T11:37:21.499Z",
+        "generatedAt": "2026-04-11T01:46:37.028Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,

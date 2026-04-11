@@ -65,6 +65,7 @@ export function CategoriesSettings(): React.JSX.Element {
   const [editingCategory, setEditingCategory] = useState<ProductCategoryWithChildren | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: '',
+    namePl: '',
     description: '',
     color: '#10b981',
     parentId: null,
@@ -165,6 +166,7 @@ export function CategoriesSettings(): React.JSX.Element {
       setEditingCategory(null);
       setFormData({
         name: '',
+        namePl: '',
         description: '',
         color: '#10b981',
         parentId,
@@ -179,7 +181,8 @@ export function CategoriesSettings(): React.JSX.Element {
   const handleOpenEditModal = useCallback((category: ProductCategoryWithChildren): void => {
     setEditingCategory(category);
     setFormData({
-      name: category.name,
+      name: category.name_en ?? category.name,
+      namePl: category.name_pl ?? '',
       description: category.description || '',
       color: category.color || '#10b981',
       parentId: category.parentId ?? null,
@@ -231,6 +234,7 @@ export function CategoriesSettings(): React.JSX.Element {
     try {
       const payload: Partial<ProductCategory> = {
         name: formData.name.trim(),
+        name_pl: formData.namePl.trim() || null,
         description: formData.description.trim() || null,
         color: formData.color,
         parentId: formData.parentId ?? null,

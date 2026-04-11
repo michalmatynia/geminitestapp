@@ -60,6 +60,7 @@ import {
 } from '@/shared/contracts/product-sync';
 import {
   productCatalogRecordSchema,
+  productWithImagesSchema,
   productProducerRelationSchema,
   productTagRelationSchema,
 } from '@/shared/contracts/products/product';
@@ -468,6 +469,41 @@ describe('shared contracts runtime smoke', () => {
         ],
       }).sections
     ).toHaveLength(1);
+  });
+
+  it('parses product list rows with catalog relations that omit nested catalog details', () => {
+    const product = productWithImagesSchema.parse({
+      id: 'product-1',
+      sku: 'KEYCHA329',
+      baseProductId: null,
+      defaultPriceGroupId: null,
+      ean: null,
+      gtin: null,
+      asin: null,
+      name: { en: 'Keychain' },
+      description: { en: '' },
+      supplierName: null,
+      supplierLink: null,
+      priceComment: null,
+      stock: null,
+      price: null,
+      sizeLength: null,
+      sizeWidth: null,
+      weight: null,
+      length: null,
+      published: false,
+      categoryId: null,
+      catalogId: 'catalog-1',
+      catalogs: [
+        {
+          productId: 'product-1',
+          catalogId: 'catalog-1',
+          assignedAt: ISO_TIMESTAMP,
+        },
+      ],
+    });
+
+    expect(product.catalogs[0]?.catalogId).toBe('catalog-1');
   });
 
   it('parses product relation records with nested catalog, tag, and producer payloads', () => {

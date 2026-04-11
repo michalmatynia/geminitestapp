@@ -124,6 +124,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   const category = await repository.createCategory({
     name: normalizedName,
+    ...(data.name_pl !== undefined ? { name_pl: data.name_pl } : {}),
     catalogId,
     color: data.color ?? null,
     parentId: data.parentId ?? null,

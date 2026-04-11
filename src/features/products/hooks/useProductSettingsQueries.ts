@@ -78,6 +78,7 @@ const toCategoryUpdatePayload = (
   const payload: ProductCategoryUpdateInput = {};
 
   if (data.name !== undefined) payload.name = data.name;
+  if (data.name_pl !== undefined) payload.name_pl = data.name_pl;
   if (data.description !== undefined) payload.description = data.description;
   if (data.color !== undefined) payload.color = data.color;
   if (data.parentId !== undefined) payload.parentId = data.parentId;

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Products category and schema normalization Improvement Track
 
-Generated at: 2026-04-10T11:37:21.555Z
+Generated at: 2026-04-11T03:03:06.007Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-10T11:37:21.555Z
 - Category: `data`
 - Included in default read-only bundle: yes
 - Overall status: `failed`
-- Latest report timestamp: 2026-04-02T09:59:31.245Z
+- Latest report timestamp: 2026-04-11T02:59:25.778Z
 
 ## Purpose
 
@@ -38,9 +38,9 @@ Surfaces the remaining category and parameter-schema decisions that cannot be au
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `not-configured` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `passed` | 1 | 1 | 0 | 0 | 0 |
+| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `passed` | 3 | 2 | 1 | 0 | 0 |
 | `apply` | `failed` | 3 | 2 | 1 | 2 | 0 |
 
@@ -48,6 +48,8 @@ Surfaces the remaining category and parameter-schema decisions that cannot be au
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `classify` | `passed` | `automatic` | `products-category-manual-remediation-report` | `products:report:parameter-remediation` |
+| `plan` | `manual` | `manual` | `products-category-schema-plan` | manual |
 | `dry-run` | `manual` | `manual` | `products-category-schema-curate-family-mappings` | manual |
 | `dry-run` | `passed` | `automatic` | `products-category-schema-build-ready-curated-overrides` | `products:build:ready-parameter-curated-overrides` |
 | `dry-run` | `passed` | `automatic` | `products-category-schema-preview-ready-curated-overrides` | `products:apply:parameter-curated-overrides` |

@@ -75,6 +75,7 @@ export const buildProductCategoryCreateInput = (
   normalizedName: string
 ): ProductCategoryCreateInput => ({
   name: normalizedName,
+  ...(data.name_pl !== undefined ? { name_pl: data.name_pl } : {}),
   catalogId: data.catalogId,
   color: data.color ?? null,
   parentId: data.parentId ?? null,

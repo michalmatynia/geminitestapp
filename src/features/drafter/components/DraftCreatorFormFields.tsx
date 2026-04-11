@@ -43,6 +43,7 @@ const OPEN_PRODUCT_FORM_TAB_LABELS: Record<ProductDraftOpenFormTab, string> = {
   'custom-fields': 'Custom Fields',
   parameters: 'Parameters',
   images: 'Images',
+  scans: 'Scans',
   studio: 'Studio',
   'import-info': 'Import Info',
   'note-link': 'Note Link',

@@ -149,10 +149,14 @@ describe('mongo-client', () => {
     const { module } = await loadMongoClientModule({
       env: {
         MONGODB_URI: undefined,
+        MONGODB_LOCAL_URI: undefined,
+        MONGODB_CLOUD_URI: undefined,
       },
     });
 
-    await expect(module.getMongoClient()).rejects.toThrow('MONGODB_URI is not set.');
+    await expect(module.getMongoClient()).rejects.toThrow(
+      'No MongoDB source is configured. Set MONGODB_LOCAL_URI or MONGODB_CLOUD_URI.'
+    );
   });
 
   it('caches the connected client and resolves the configured database', async () => {
@@ -188,16 +192,17 @@ describe('mongo-client', () => {
     });
   });
 
-  it('creates a new client when the configured URI changes', async () => {
+  it('creates a new client when the configured source changes', async () => {
     const { module, instances } = await loadMongoClientModule({
       env: {
-        MONGODB_URI: 'mongodb://first-host:27017/app',
+        MONGODB_LOCAL_URI: 'mongodb://first-host:27017/app',
+        MONGODB_CLOUD_URI: 'mongodb://second-host:27017/app',
+        MONGODB_ACTIVE_SOURCE_DEFAULT: 'local',
       },
     });
 
-    const firstClient = await module.getMongoClient();
-    process.env['MONGODB_URI'] = 'mongodb://second-host:27017/app';
-    const secondClient = await module.getMongoClient();
+    const firstClient = await module.getMongoClient('local');
+    const secondClient = await module.getMongoClient('cloud');
 
     expect(firstClient).not.toBe(secondClient);
     expect(instances).toHaveLength(2);

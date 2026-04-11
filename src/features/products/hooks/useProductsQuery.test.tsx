@@ -269,6 +269,54 @@ describe('useProductsWithCount', () => {
     );
   });
 
+  it('accepts SKU search results with legacy catalog id-only payloads', async () => {
+    getProductsWithCountMock.mockResolvedValue({
+      products: [
+        {
+          ...createProduct('keycha-329'),
+          sku: 'KEYCHA329',
+          catalogId: 'catalog-mentios',
+          catalogs: [
+            {
+              productId: 'keycha-329',
+              catalogId: 'catalog-mentios',
+              assignedAt: '2026-01-01T00:00:00.000Z',
+              catalog: { id: 'catalog-mentios' },
+            },
+          ],
+        },
+      ],
+      total: 1,
+    });
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(
+      () =>
+        useProductsWithCount({
+          sku: 'KEYCHA329',
+          page: 1,
+          pageSize: 20,
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(result.current.products[0]?.sku).toBe('KEYCHA329');
+    });
+
+    expect(result.current.products[0]?.catalogs).toEqual([
+      {
+        productId: 'keycha-329',
+        catalogId: 'catalog-mentios',
+        assignedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
+  });
+
   it('passes the TanStack abort signal into the paged product request', async () => {
     getProductsWithCountMock.mockResolvedValue({
       products: [createProduct('signal-1')],

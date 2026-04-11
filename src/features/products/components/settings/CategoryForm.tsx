@@ -29,6 +29,7 @@ export function CategoryForm(): React.JSX.Element | null {
   } = useCategoryFormContext();
   const fieldId = React.useId().replace(/:/g, '');
   const nameId = `category-name-${fieldId}`;
+  const polishNameId = `category-polish-name-${fieldId}`;
   const descriptionId = `category-description-${fieldId}`;
   const colorPickerId = `category-color-picker-${fieldId}`;
   const colorValueId = `category-color-value-${fieldId}`;
@@ -66,7 +67,7 @@ export function CategoryForm(): React.JSX.Element | null {
       <div className='space-y-4'>
         <div>
           <Label htmlFor={nameId} className='text-xs text-gray-400'>
-            Name
+            English Name
           </Label>
           <Input
             id={nameId}
@@ -75,8 +76,27 @@ export function CategoryForm(): React.JSX.Element | null {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               onFormDataChange((prev) => ({ ...prev, name: e.target.value }))
             }
-            placeholder='Category name'
-           aria-label='Category name' title='Category name'/>
+            placeholder='Category name in English'
+            aria-label='English category name'
+            title='English category name'
+          />
+        </div>
+
+        <div>
+          <Label htmlFor={polishNameId} className='text-xs text-gray-400'>
+            Polish Name
+          </Label>
+          <Input
+            id={polishNameId}
+            className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
+            value={formData.namePl}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              onFormDataChange((prev) => ({ ...prev, namePl: e.target.value }))
+            }
+            placeholder='Category name in Polish'
+            aria-label='Polish category name'
+            title='Polish category name'
+          />
         </div>
 
         <div>

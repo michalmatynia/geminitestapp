@@ -24,6 +24,27 @@ vi.mock('@/features/ai/ai-paths/hooks/useLocalRunsTableProps', () => ({
 
 vi.mock('lucide-react', () => ({
   Trash2: () => <span data-testid='trash-icon' />,
+  AlertCircle: () => <span data-testid='alert-circle-icon' />,
+  RefreshCcw: () => <span data-testid='refresh-icon' />,
+  Loader2: () => <span data-testid='loader-icon' />,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  MetadataItem: ({
+    label,
+    value,
+    hint,
+  }: {
+    label: React.ReactNode;
+    value: React.ReactNode;
+    hint?: React.ReactNode;
+  }): React.JSX.Element => (
+    <div>
+      <div>{label}</div>
+      <div>{value}</div>
+      {hint ? <div>{hint}</div> : null}
+    </div>
+  ),
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -33,6 +54,9 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
     <button {...props}>{children}</button>
   ),
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
   StandardDataTablePanel: ({
     title,
     description,
@@ -66,21 +90,6 @@ vi.mock('@/shared/ui/primitives.public', () => ({
       {alerts}
       <div data-testid='table-loading'>{String(Boolean(isLoading))}</div>
       <div data-testid='table-data'>{JSON.stringify(data ?? null)}</div>
-    </div>
-  ),
-  MetadataItem: ({
-    label,
-    value,
-    hint,
-  }: {
-    label: React.ReactNode;
-    value: React.ReactNode;
-    hint?: React.ReactNode;
-  }): React.JSX.Element => (
-    <div>
-      <div>{label}</div>
-      <div>{value}</div>
-      {hint ? <div>{hint}</div> : null}
     </div>
   ),
 }));
@@ -163,7 +172,8 @@ describe('LocalRunsPanel', () => {
     expect(screen.getByText('9')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
     expect(screen.getByText('450ms')).toBeInTheDocument();
-    expect(screen.getByText('3/19/2026, 11:00:00 AM')).toBeInTheDocument();
+    // Use a more flexible matcher for date to avoid locale issues in different environments
+    expect(screen.getByText(/3\/19\/2026/)).toBeInTheDocument();
     expect(screen.getByText('Visible in this tab')).toBeInTheDocument();
     expect(screen.getByText('75% success rate')).toBeInTheDocument();
     expect(screen.getByText('Failures in this list')).toBeInTheDocument();

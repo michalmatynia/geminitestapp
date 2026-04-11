@@ -116,14 +116,22 @@ const createPattern = (
     ...overrides,
   }) as ProductValidationPattern;
 
-function renderProductFormGeneral(initialNameEn: string): {
+function NameValueProbe(): React.JSX.Element {
+  const { watch } = useFormContext<ProductFormData>();
+  return <output data-testid='polish-name-value'>{watch('name_pl') ?? ''}</output>;
+}
+
+function renderProductFormGeneral(
+  initialNameEn: string,
+  initialNamePl: string = ''
+): {
   rerenderForm: () => void;
 } {
   function Wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
     const methods = useForm<ProductFormData>({
       defaultValues: {
         name_en: initialNameEn,
-        name_pl: '',
+        name_pl: initialNamePl,
         name_de: '',
         description_en: '',
         description_pl: '',
@@ -151,6 +159,7 @@ function renderProductFormGeneral(initialNameEn: string): {
   const createUi = (): React.JSX.Element => (
     <Wrapper>
       <ProductFormGeneral />
+      <NameValueProbe />
     </Wrapper>
   );
 
@@ -270,6 +279,100 @@ describe('ProductFormGeneral structured name editing', () => {
 
     await waitFor(() => {
       expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Lo');
+    });
+  });
+
+  it('auto-fills Polish title segments from the English title with translated values', async () => {
+    useProductFormMetadataMock.mockReturnValue({
+      filteredLanguages: [
+        { code: 'en', name: 'English' },
+        { code: 'pl', name: 'Polish' },
+      ],
+      selectedCatalogIds: ['catalog-a'],
+      categories: [
+        {
+          id: 'category-anime-pin',
+          name: 'Anime Pin',
+          name_en: 'Anime Pin',
+          name_pl: 'Przypinka Anime',
+          color: null,
+          parentId: null,
+          catalogId: 'catalog-a',
+          sortIndex: 0,
+        },
+      ],
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+    });
+    useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({
+      data:
+        type === 'size'
+          ? [
+              {
+                id: 'size-4',
+                name: '4 cm',
+                name_en: '4 cm',
+                name_pl: null,
+                catalogId: 'catalog-a',
+                type,
+              },
+            ]
+          : type === 'material'
+            ? [
+                {
+                  id: 'material-metal',
+                  name: 'Metal',
+                  name_en: 'Metal',
+                  name_pl: 'Metal PL',
+                  catalogId: 'catalog-a',
+                  type,
+                },
+              ]
+            : [
+                {
+                  id: 'theme-aot',
+                  name: 'Attack On Titan',
+                  name_en: 'Attack On Titan',
+                  name_pl: 'Atak Tytanow',
+                  catalogId: 'catalog-a',
+                  type,
+                },
+              ],
+      isLoading: false,
+    }));
+
+    renderProductFormGeneral('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'Scout Regiment | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow'
+      );
+    });
+  });
+
+  it('does not overwrite a manually populated Polish title', async () => {
+    useProductFormMetadataMock.mockReturnValue({
+      filteredLanguages: [
+        { code: 'en', name: 'English' },
+        { code: 'pl', name: 'Polish' },
+      ],
+      selectedCatalogIds: ['catalog-a'],
+      categories: [],
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+    });
+    useTitleTermsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    renderProductFormGeneral(
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      'Manual Polish Title'
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent('Manual Polish Title');
     });
   });
 });

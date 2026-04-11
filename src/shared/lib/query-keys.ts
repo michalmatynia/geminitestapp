@@ -19,6 +19,7 @@ export const QUERY_KEYS = {
     details: () => [...QUERY_KEYS.products.all, 'detail'] as const,
     detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const,
     detailEdit: (id: string) => [...QUERY_KEYS.products.detail(id), 'edit'] as const,
+    scans: (productId: string) => [...QUERY_KEYS.products.detail(productId), 'scans'] as const,
     enhanced: () => [...QUERY_KEYS.products.all, 'enhanced'] as const,
     enhancedCount: () => [...QUERY_KEYS.products.all, 'enhanced-count'] as const,
     categoriesAll: () => [...QUERY_KEYS.products.all, 'categories'] as const,

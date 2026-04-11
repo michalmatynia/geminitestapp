@@ -101,6 +101,7 @@ export const buildCategoryUpdatePayload = (
   placement: ResolvedCategoryPlacement
 ): ProductCategoryUpdateInput => ({
   ...(normalizedName !== undefined ? { name: normalizedName } : {}),
+  ...(data.name_pl !== undefined ? { name_pl: data.name_pl } : {}),
   ...(data.description !== undefined ? { description: data.description } : {}),
   ...(data.color !== undefined ? { color: data.color } : {}),
   ...(data.parentId !== undefined || placement.placementChanged

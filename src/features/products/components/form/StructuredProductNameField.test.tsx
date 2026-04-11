@@ -35,15 +35,38 @@ type RenderFieldOptions = {
   categories?: Array<{
     id: string;
     name: string;
+    name_en?: string | null;
+    name_pl?: string | null;
+    name_de?: string | null;
     color: string | null;
     parentId: string | null;
     catalogId: string;
   }>;
   initialName?: string;
+  initialNamePl?: string;
+  fieldName?: 'name_en' | 'name_pl';
+  locale?: 'en' | 'pl';
   selectedCategoryId?: string | null;
-  sizeTerms?: string[];
-  materialTerms?: string[];
-  themeTerms?: string[];
+  sizeTerms?: Array<string | { name_en: string; name_pl?: string | null }>;
+  materialTerms?: Array<string | { name_en: string; name_pl?: string | null }>;
+  themeTerms?: Array<string | { name_en: string; name_pl?: string | null }>;
+};
+
+const toTitleTermFixture = (
+  term: string | { name_en: string; name_pl?: string | null },
+  type: 'size' | 'material' | 'theme',
+  index: number
+) => {
+  const nameEn = typeof term === 'string' ? term : term.name_en;
+  const namePl = typeof term === 'string' ? term : (term.name_pl ?? null);
+  return {
+    id: `${type}-${index}`,
+    name: nameEn,
+    name_en: nameEn,
+    name_pl: namePl,
+    catalogId: 'catalog-a',
+    type,
+  };
 };
 
 function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnType<typeof vi.fn> } {
@@ -72,6 +95,7 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
     const methods = useForm<ProductFormData>({
       defaultValues: {
         name_en: options.initialName ?? '',
+        name_pl: options.initialNamePl ?? '',
         categoryId: '',
       } as ProductFormData,
     });
@@ -100,38 +124,20 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
     (_catalogId: string, type: 'size' | 'material' | 'theme') => ({
       data:
         type === 'size'
-          ? sizeTerms.map((term, index) => ({
-              id: `size-${index}`,
-              name: term,
-              name_en: term,
-              name_pl: term,
-              catalogId: 'catalog-a',
-              type,
-            }))
+          ? sizeTerms.map((term, index) => toTitleTermFixture(term, type, index))
           : type === 'material'
-            ? materialTerms.map((term, index) => ({
-                id: `material-${index}`,
-                name: term,
-                name_en: term,
-                name_pl: term,
-                catalogId: 'catalog-a',
-                type,
-              }))
-            : themeTerms.map((term, index) => ({
-                id: `theme-${index}`,
-                name: term,
-                name_en: term,
-                name_pl: term,
-                catalogId: 'catalog-a',
-                type,
-              })),
+            ? materialTerms.map((term, index) => toTitleTermFixture(term, type, index))
+            : themeTerms.map((term, index) => toTitleTermFixture(term, type, index)),
       isLoading: false,
     })
   );
 
   render(
     <Wrapper>
-      <StructuredProductNameField />
+      <StructuredProductNameField
+        fieldName={options.fieldName ?? 'name_en'}
+        locale={options.locale ?? 'en'}
+      />
       <CategoryValueProbe />
     </Wrapper>
   );
@@ -560,5 +566,80 @@ describe('StructuredProductNameField', () => {
     fireEvent.keyUp(input, { key: 't' });
 
     expect(await screen.findByRole('listbox', { name: 'Theme suggestions' })).toBeInTheDocument();
+  });
+
+  it('uses translated Polish title term suggestions with English fallback', async () => {
+    renderField({
+      fieldName: 'name_pl',
+      locale: 'pl',
+      initialNamePl: 'Scout Regiment | du',
+      sizeTerms: [
+        { name_en: 'Large', name_pl: 'Duzy' },
+        { name_en: '4 cm', name_pl: null },
+      ],
+    });
+    const input = screen.getByLabelText('Polish Name');
+
+    input.setSelectionRange('Scout Regiment | du'.length, 'Scout Regiment | du'.length);
+    fireEvent.keyUp(input, { key: 'u' });
+
+    const listbox = await screen.findByRole('listbox', { name: 'Size suggestions' });
+    expect(within(listbox).getByText('Duzy')).toBeInTheDocument();
+    expect(within(listbox).getByText('Large')).toBeInTheDocument();
+
+    fireEvent.click(within(listbox).getByText('Duzy').closest('button') as HTMLButtonElement);
+
+    await waitFor(() => {
+      expect((input as HTMLInputElement).value).toBe('Scout Regiment | Duzy | ');
+    });
+  });
+
+  it('uses translated Polish category suggestions and syncs the selected category', async () => {
+    const { setCategoryId } = renderField({
+      fieldName: 'name_pl',
+      locale: 'pl',
+      initialNamePl: 'Scout Regiment | 4 cm | Metal | przy',
+      categories: [
+        {
+          id: 'parent',
+          name: 'Pins',
+          name_en: 'Pins',
+          name_pl: 'Przypinki',
+          color: null,
+          parentId: null,
+          catalogId: 'catalog-a',
+        },
+        {
+          id: 'child',
+          name: 'Anime Pin',
+          name_en: 'Anime Pin',
+          name_pl: 'Przypinka Anime',
+          color: null,
+          parentId: 'parent',
+          catalogId: 'catalog-a',
+        },
+      ],
+    });
+    const input = screen.getByLabelText('Polish Name');
+
+    input.setSelectionRange(
+      'Scout Regiment | 4 cm | Metal | przy'.length,
+      'Scout Regiment | 4 cm | Metal | przy'.length
+    );
+    fireEvent.keyUp(input, { key: 'y' });
+
+    const listbox = await screen.findByRole('listbox', { name: 'Category suggestions' });
+    const childCategoryButton = within(listbox)
+      .getByText('Przypinki / Przypinka Anime')
+      .closest('button');
+
+    fireEvent.click(childCategoryButton as HTMLButtonElement);
+
+    await waitFor(() => {
+      expect((input as HTMLInputElement).value).toBe(
+        'Scout Regiment | 4 cm | Metal | Przypinka Anime | '
+      );
+    });
+    expect(setCategoryId).toHaveBeenCalledWith('child');
   });
 });

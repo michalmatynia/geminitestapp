@@ -8,6 +8,7 @@ import {
   Link2,
   ListFilter,
   Package,
+  Search,
   Settings2,
   ShieldAlert,
   Sparkles,
@@ -56,6 +57,11 @@ const DeferredTabPlaceholder = (): React.JSX.Element => (
 );
 
 const ProductFormImages = dynamic(() => import('./form/ProductFormImages'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
+const ProductFormScans = dynamic(() => import('./form/ProductFormScans'), {
   ssr: false,
   loading: DeferredTabPlaceholder,
 });
@@ -137,6 +143,7 @@ const PRODUCT_FORM_TABS: ProductFormTabDefinition[] = [
   { value: 'custom-fields', label: 'Custom Fields', icon: LayoutGrid },
   { value: 'parameters', label: 'Parameters', icon: ListFilter },
   { value: 'images', label: 'Images', icon: ImageIcon },
+  { value: 'scans', label: 'Scans', icon: Search },
   { value: 'studio', label: 'Studio', icon: Sparkles },
   { value: 'import-info', label: 'Import Info', icon: Database },
   { value: 'note-link', label: 'Note Link', icon: Link2 },
@@ -465,6 +472,9 @@ export default function ProductForm({
             </TabsContent>
             <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('images') && <ProductFormImages />}
+            </TabsContent>
+            <TabsContent value='scans' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('scans') && <ProductFormScans />}
             </TabsContent>
             <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('studio') && <ProductFormStudio />}

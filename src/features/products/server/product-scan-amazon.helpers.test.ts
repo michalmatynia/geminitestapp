@@ -1,0 +1,159 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  normalizeAmazonAsin,
+  resolveDetectedAmazonAsinOutcome,
+  resolveProductScanDisplayName,
+  resolveProductScanImageCandidates,
+} from './product-scan-amazon.helpers';
+
+describe('product Amazon scan helpers', () => {
+  it('normalizes and validates Amazon ASIN values', () => {
+    expect(normalizeAmazonAsin(' b00test123 ')).toBe('B00TEST123');
+    expect(normalizeAmazonAsin('not-an-asin')).toBeNull();
+    expect(normalizeAmazonAsin(null)).toBeNull();
+  });
+
+  it('returns up to three usable image candidates in order', () => {
+    const candidates = resolveProductScanImageCandidates({
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/one.jpg',
+            publicUrl: 'https://cdn.example.com/one.jpg',
+            filename: 'one.jpg',
+          },
+        },
+        {
+          imageFileId: 'image-2',
+          imageFile: {
+            id: 'image-2',
+            filepath: '',
+            url: 'https://cdn.example.com/two.jpg',
+            filename: 'two.jpg',
+          },
+        },
+        {
+          imageFileId: 'image-3',
+          imageFile: {
+            id: 'image-3',
+            filepath: '/tmp/three.jpg',
+            filename: 'three.jpg',
+          },
+        },
+        {
+          imageFileId: 'image-4',
+          imageFile: {
+            id: 'image-4',
+            filepath: '/tmp/four.jpg',
+            filename: 'four.jpg',
+          },
+        },
+      ],
+    } as never);
+
+    expect(candidates).toEqual([
+      {
+        id: 'image-1',
+        filepath: '/tmp/one.jpg',
+        url: 'https://cdn.example.com/one.jpg',
+        filename: 'one.jpg',
+      },
+      {
+        id: 'image-2',
+        filepath: null,
+        url: 'https://cdn.example.com/two.jpg',
+        filename: 'two.jpg',
+      },
+      {
+        id: 'image-3',
+        filepath: '/tmp/three.jpg',
+        url: null,
+        filename: 'three.jpg',
+      },
+    ]);
+  });
+
+  it('falls back to imageLinks when image file records are unavailable', () => {
+    const candidates = resolveProductScanImageCandidates({
+      images: [],
+      imageLinks: [
+        ' https://cdn.example.com/from-link.jpg ',
+        '',
+        'https://cdn.example.com/from-link.jpg',
+        'https://cdn.example.com/second-link.jpg',
+      ],
+    } as never);
+
+    expect(candidates).toEqual([
+      {
+        id: null,
+        filepath: null,
+        url: 'https://cdn.example.com/from-link.jpg',
+        filename: null,
+      },
+      {
+        id: null,
+        filepath: null,
+        url: 'https://cdn.example.com/second-link.jpg',
+        filename: null,
+      },
+    ]);
+  });
+
+  it('prefers the localized product name before SKU or id', () => {
+    expect(
+      resolveProductScanDisplayName({
+        id: 'product-1',
+        name_en: '',
+        name_pl: 'Polish name',
+        name_de: null,
+        sku: 'SKU-1',
+      } as never)
+    ).toBe('Polish name');
+  });
+
+  it('marks an empty product ASIN as updatable', () => {
+    expect(
+      resolveDetectedAmazonAsinOutcome({
+        existingAsin: null,
+        detectedAsin: 'b00test123',
+      })
+    ).toEqual({
+      scanStatus: 'completed',
+      asinUpdateStatus: 'updated',
+      normalizedDetectedAsin: 'B00TEST123',
+      message: 'Product ASIN filled from Amazon scan.',
+    });
+  });
+
+  it('keeps matching ASINs unchanged', () => {
+    expect(
+      resolveDetectedAmazonAsinOutcome({
+        existingAsin: 'B00TEST123',
+        detectedAsin: 'b00test123',
+      })
+    ).toEqual({
+      scanStatus: 'completed',
+      asinUpdateStatus: 'unchanged',
+      normalizedDetectedAsin: 'B00TEST123',
+      message: 'Product already had the detected ASIN.',
+    });
+  });
+
+  it('surfaces ASIN conflicts instead of overwriting them', () => {
+    expect(
+      resolveDetectedAmazonAsinOutcome({
+        existingAsin: 'B00TEST123',
+        detectedAsin: 'B00TEST999',
+      })
+    ).toEqual({
+      scanStatus: 'conflict',
+      asinUpdateStatus: 'conflict',
+      normalizedDetectedAsin: 'B00TEST999',
+      message: 'Detected ASIN B00TEST999 differs from existing ASIN B00TEST123.',
+    });
+  });
+});

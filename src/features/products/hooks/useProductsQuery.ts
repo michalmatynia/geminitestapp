@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
 import { logProductListDebug } from '@/features/products/lib/product-list-observability';
+import { catalogSchema } from '@/shared/contracts/products/catalogs';
 import { type ProductFilter as UseProductsFilters } from '@/shared/contracts/products/filters';
 import {
   type ProductWithImages,
@@ -79,6 +80,21 @@ const normalizePagedImageFileRecord = (input: unknown): Record<string, unknown> 
   };
 };
 
+const normalizePagedProductCatalogRelation = (input: unknown): Record<string, unknown> => {
+  const record = toRecord(input) ?? {};
+  const parsedCatalog = catalogSchema.safeParse(record['catalog']);
+  if (parsedCatalog.success) {
+    return {
+      ...record,
+      catalog: parsedCatalog.data,
+    };
+  }
+
+  const relation = { ...record };
+  delete relation['catalog'];
+  return relation;
+};
+
 const normalizePagedProductRecord = (input: unknown): Record<string, unknown> => {
   const record = toRecord(input) ?? {};
   const images = Array.isArray(record['images'])
@@ -90,10 +106,14 @@ const normalizePagedProductRecord = (input: unknown): Record<string, unknown> =>
         };
       })
     : record['images'];
+  const catalogs = Array.isArray(record['catalogs'])
+    ? record['catalogs'].map(normalizePagedProductCatalogRelation)
+    : record['catalogs'];
 
   return {
     ...record,
     images,
+    catalogs,
   };
 };
 

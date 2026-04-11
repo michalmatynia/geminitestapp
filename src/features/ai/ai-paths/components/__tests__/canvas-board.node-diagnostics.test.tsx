@@ -9,6 +9,13 @@ import { renderNodeDiagnosticsTooltipContent } from '../CanvasBoard.utils';
 import { CanvasMinimap } from '../canvas-minimap';
 import { CanvasSvgNodeLayer } from '../canvas-svg-node-layer';
 
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => ({
+    effectiveModelId: 'test-model',
+    descriptors: [],
+  }),
+}));
+
 const baseRuntimeState: RuntimeState = {
   status: 'idle',
   nodeStatuses: {},

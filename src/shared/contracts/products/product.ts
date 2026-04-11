@@ -329,7 +329,7 @@ export type Product = ProductRecord;
 export const productWithImagesSchema = productSchema.extend({
   duplicateSkuCount: z.number().int().min(0).optional(),
   images: z.array(productImageRecordSchema).default([]),
-  catalogs: z.array(productCatalogRecordSchema).default([]),
+  catalogs: z.array(productCatalogSchema).default([]),
   tags: z.array(productTagRelationSchema).default([]),
   producers: z.array(productProducerRelationSchema).default([]),
 });

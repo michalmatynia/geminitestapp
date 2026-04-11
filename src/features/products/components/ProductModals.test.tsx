@@ -310,7 +310,7 @@ describe('ProductModals', () => {
       expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled();
     });
 
-    it('disables product-modal AI trigger buttons while edit hydration is in progress', () => {
+    it('disables product-modal AI trigger buttons while edit hydration is in progress', async () => {
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
           editingProduct: createProduct(),
@@ -320,12 +320,14 @@ describe('ProductModals', () => {
 
       render(<ProductModals />);
 
-      expect(triggerButtonBarMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          location: 'product_modal',
-          disabled: true,
-        })
-      );
+      await waitFor(() => {
+        expect(triggerButtonBarMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            location: 'product_modal',
+            disabled: true,
+          })
+        );
+      });
       expect(
         screen.getByText('AI actions are unavailable until full product details finish loading.')
       ).toBeInTheDocument();

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
+import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueries';
 import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import { coerceProductValidationTargetValue } from '@/features/products/lib/validatorTargetAdapters';
 import {
@@ -23,6 +24,7 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
+import { translateStructuredProductName } from '@/shared/lib/products/title-terms';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { isPatternReplacementEnabledForValidationScope } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { Alert } from '@/shared/ui/alert';
@@ -65,7 +67,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
     validatorPatterns,
     latestProductValues,
   } = useProductValidationState();
-  const { filteredLanguages } = useProductFormMetadata();
+  const productFormMetadata = useProductFormMetadata();
+  const categories = productFormMetadata.categories ?? [];
+  const filteredLanguages = productFormMetadata.filteredLanguages ?? [];
+  const selectedCatalogIds = productFormMetadata.selectedCatalogIds ?? [];
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const [activeNameTab, setActiveNameTab] = useState<string>('');
@@ -76,6 +81,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     recentSignatures: [],
     cycleHits: 0,
   });
+  const lastGeneratedPolishNameRef = useRef<string>('');
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>(
     (): 'ean' | 'gtin' | 'asin' => {
@@ -174,6 +180,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
       ),
     [filteredLanguages]
   );
+  const primaryCatalogId = selectedCatalogIds[0];
+  const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
+  const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
+  const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
   const firstLanguageTab = languageTabValues[0] ?? '';
   const resolvedActiveNameTab = activeNameTab || firstLanguageTab;
   const resolvedActiveDescriptionTab = activeDescriptionTab || firstLanguageTab;
@@ -191,6 +201,49 @@ export default function ProductFormGeneral(): React.JSX.Element {
       prev && languageTabValues.includes(prev) ? prev : firstLanguageTab
     );
   }, [firstLanguageTab, languageTabValues]);
+
+  const generatedPolishName = useMemo(
+    (): string =>
+      languageTabValues.includes('pl')
+        ? translateStructuredProductName({
+            englishTitle: typeof nameEn === 'string' ? nameEn : '',
+            locale: 'pl',
+            sizeTerms: sizeTermsQuery.data,
+            materialTerms: materialTermsQuery.data,
+            categories,
+            themeTerms: themeTermsQuery.data,
+          })
+        : '',
+    [
+      categories,
+      languageTabValues,
+      materialTermsQuery.data,
+      nameEn,
+      sizeTermsQuery.data,
+      themeTermsQuery.data,
+    ]
+  );
+
+  useEffect(() => {
+    if (!languageTabValues.includes('pl')) return;
+
+    const rawNamePl = getValues('name_pl');
+    const currentNamePl = typeof rawNamePl === 'string' ? rawNamePl : '';
+    const previousGeneratedPolishName = lastGeneratedPolishNameRef.current;
+    const shouldSync =
+      currentNamePl.trim().length === 0 || currentNamePl === previousGeneratedPolishName;
+
+    if (!shouldSync) return;
+
+    lastGeneratedPolishNameRef.current = generatedPolishName;
+    if (currentNamePl === generatedPolishName) return;
+
+    setValue('name_pl', generatedPolishName, {
+      shouldDirty: true,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  }, [generatedPolishName, getValues, languageTabValues, namePl, setValue]);
 
   useEffect(() => {
     const syncFocusedField = (): void => {
@@ -536,6 +589,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
                 <TabsContent key={language.code} value={language.code.toLowerCase()}>
                   {fieldName === 'name_en' ? (
                     <StructuredProductNameField />
+                  ) : fieldName === 'name_pl' ? (
+                    <StructuredProductNameField
+                      fieldName='name_pl'
+                      locale='pl'
+                      label={`${language.name} Name`}
+                      placeholder='Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan'
+                    />
                   ) : (
                     <ValidatedField
                       name={fieldName}

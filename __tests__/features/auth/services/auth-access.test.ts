@@ -30,11 +30,19 @@ const setSettings = (settings: Record<string, string | null>): void => {
   }
 
   mockFind.mockImplementation((query: { $or?: Array<{ _id?: string; key?: string }> }) => {
-    const key = query?.$or?.[0]?._id ?? query?.$or?.[1]?.key;
-    const value = key ? map.get(key) : undefined;
-    const docs = value
-      ? [{ _id: key, key, value, updatedAt: new Date().toISOString() }]
-      : [];
+    const requestedKeys = new Set<string>();
+    (query?.$or ?? []).forEach((q) => {
+      if (q._id) requestedKeys.add(q._id);
+      if (q.key) requestedKeys.add(q.key);
+    });
+
+    const docs: any[] = [];
+    map.forEach((value, key) => {
+      if (requestedKeys.has(key)) {
+        docs.push({ _id: key, key, value, updatedAt: new Date().toISOString() });
+      }
+    });
+
     return {
       toArray: async () => docs,
     };

@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest';
 
 import {
   mapBaseProduct,
-  extractBaseImageUrls,
 } from '@/features/integrations/services/imports/base-mapper';
+import {
+  extractBaseImageUrls,
+} from '@/features/integrations/services/imports/base-mapper-utils';
 
 
 describe('Base Mapper', () => {

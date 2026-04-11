@@ -47,6 +47,7 @@ describe('product categories handler helpers', () => {
       buildProductCategoryCreateInput(
         {
           name: 'Priority',
+          name_pl: ' Priorytet ',
           catalogId: 'catalog-1',
           color: undefined,
           parentId: undefined,
@@ -57,6 +58,7 @@ describe('product categories handler helpers', () => {
       )
     ).toEqual({
       name: 'Priority',
+      name_pl: ' Priorytet ',
       catalogId: 'catalog-1',
       color: null,
       parentId: null,

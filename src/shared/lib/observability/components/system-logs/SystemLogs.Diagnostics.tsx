@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
-import { useSystemLogsState, useSystemLogsActions } from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsState, useSystemLogsActions } from '@/shared/lib/observability/context/SystemLogsContext';
 import {
   type MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
   type MongoIndexInfoDto as MongoIndexInfo,
@@ -11,7 +11,7 @@ import { Button } from '@/shared/ui/primitives.public';
 import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
-import { formatTimestamp } from '@/features/observability/utils/formatTimestamp';
+import { formatTimestamp } from '@/shared/lib/observability/utils/formatTimestamp';
 
 export function LogDiagnostics(): React.JSX.Element {
   const { diagnostics, diagnosticsUpdatedAt, mongoDiagnosticsQuery } = useSystemLogsState();

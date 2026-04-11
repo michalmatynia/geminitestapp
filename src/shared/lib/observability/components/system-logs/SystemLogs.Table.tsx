@@ -4,7 +4,7 @@ import React from 'react';
 import { AlertTriangle, Eye, Monitor, SearchIcon } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { useSystemLogsActions, useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsActions, useSystemLogsState } from '@/shared/lib/observability/context/SystemLogsContext';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
@@ -20,8 +20,8 @@ import type {
   ContextDocumentDisplay,
   ContextDocumentSectionDisplay,
   ContextRegistryNodeDisplay,
-} from '@/features/observability/types';
-import { formatTimestamp } from '@/features/observability/utils/formatTimestamp';
+} from '@/shared/lib/observability/types';
+import { formatTimestamp } from '@/shared/lib/observability/utils/formatTimestamp';
 import {
   getLogCategory,
   getPrimaryContextDocument,
@@ -29,7 +29,7 @@ import {
   readAlertEvidence,
   readContextString,
   readLogContextRegistry,
-} from '@/features/observability/utils/logHelpers';
+} from '@/shared/lib/observability/utils/logHelpers';
 
 export function ContextDocumentCard(props: {
   document: ContextDocumentDisplay;

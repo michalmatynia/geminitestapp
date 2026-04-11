@@ -5,6 +5,7 @@ import {
   Download,
   FileUp,
   Image as ImageIcon,
+  Search,
   Pencil,
   Save,
   Send,
@@ -28,6 +29,7 @@ import {
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
+import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
 import { TraderaStatusCheckModal } from '@/features/integrations/components/listings/TraderaStatusCheckModal';
 import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -88,6 +90,8 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     useVintedMassQuickExport();
   const [isTraderaStatusCheckOpen, setIsTraderaStatusCheckOpen] = useState(false);
   const [statusCheckProductIds, setStatusCheckProductIds] = useState<string[]>([]);
+  const [isAmazonScanOpen, setIsAmazonScanOpen] = useState(false);
+  const [amazonScanProductIds, setAmazonScanProductIds] = useState<string[]>([]);
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]
@@ -139,6 +143,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   }, [executeVintedMassExport, rowSelection, toast]);
 
   const [statusCheckProducts, setStatusCheckProducts] = useState<typeof data>([]);
+  const [amazonScanProducts, setAmazonScanProducts] = useState<typeof data>([]);
 
   const handleCheckTraderaStatus = useCallback((): void => {
     const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
@@ -151,6 +156,19 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     setStatusCheckProductIds(selectedProductIds);
     setStatusCheckProducts(data.filter((p) => selectedSet.has(p.id)));
     setIsTraderaStatusCheckOpen(true);
+  }, [data, rowSelection, toast]);
+
+  const handleScanAmazonAsin = useCallback((): void => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to scan.', { variant: 'error' });
+      return;
+    }
+
+    const selectedSet = new Set(selectedProductIds);
+    setAmazonScanProductIds(selectedProductIds);
+    setAmazonScanProducts(data.filter((product) => selectedSet.has(product.id)));
+    setIsAmazonScanOpen(true);
   }, [data, rowSelection, toast]);
 
   const selectedCount = useMemo(
@@ -458,6 +476,14 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
               Check Tradera Listing Status
             </DropdownMenuItem>
             <DropdownMenuItem
+              onClick={handleScanAmazonAsin}
+              className='cursor-pointer gap-2'
+              disabled={selectedCount === 0}
+            >
+              <Search className='h-4 w-4' />
+              Scan Amazon ASIN
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => {
                 void handleConvertSelected();
               }}
@@ -661,6 +687,12 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         onClose={() => setIsTraderaStatusCheckOpen(false)}
         productIds={statusCheckProductIds}
         products={statusCheckProducts}
+      />
+      <ProductAmazonScanModal
+        isOpen={isAmazonScanOpen}
+        onClose={() => setIsAmazonScanOpen(false)}
+        productIds={amazonScanProductIds}
+        products={amazonScanProducts}
       />
     </>
   );

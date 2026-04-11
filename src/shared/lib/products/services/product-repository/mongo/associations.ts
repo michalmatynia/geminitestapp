@@ -187,7 +187,6 @@ export const mongoProductAssociationsImpl = {
       productId,
       catalogId: c.id,
       assignedAt: now,
-      catalog: { id: c.id },
     }));
     const primaryCatalogId = newCatalogs[0]?.catalogId ?? '';
     const update = {
@@ -307,7 +306,6 @@ export const mongoProductAssociationsImpl = {
             productId: pid,
             catalogId: c.id,
             assignedAt: now,
-            catalog: { id: c.id },
           })),
           catalogId: primaryCatalogId,
           updatedAt: new Date(),
@@ -345,7 +343,6 @@ export const mongoProductAssociationsImpl = {
               productId: pid,
               catalogId: c.id,
               assignedAt: now,
-              catalog: { id: c.id },
             })),
           },
         },

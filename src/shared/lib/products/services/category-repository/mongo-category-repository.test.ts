@@ -284,6 +284,7 @@ describe('mongo-category-repository shared-lib', () => {
 
     const created = await mongoCategoryRepository.createCategory({
       name: 'Created',
+      name_pl: ' Utworzona ',
       description: 'Description',
       color: '#0f0',
       parentId: parentId.toString(),
@@ -296,7 +297,7 @@ describe('mongo-category-repository shared-lib', () => {
     expect(mocks.categoryInsertOne).toHaveBeenCalledWith({
       name: 'Created',
       name_en: 'Created',
-      name_pl: null,
+      name_pl: 'Utworzona',
       name_de: null,
       description: 'Description',
       color: '#0f0',
@@ -324,6 +325,7 @@ describe('mongo-category-repository shared-lib', () => {
       expect.objectContaining({
         id: createdId.toString(),
         name: 'Created',
+        name_pl: 'Utworzona',
         parentId: parentId.toString(),
       })
     );
@@ -356,7 +358,7 @@ describe('mongo-category-repository shared-lib', () => {
         _id: categoryId,
         name: 'Updated',
         name_en: 'Updated',
-        name_pl: null,
+        name_pl: 'Zaktualizowana',
         name_de: null,
         description: null,
         description_en: null,
@@ -378,6 +380,7 @@ describe('mongo-category-repository shared-lib', () => {
 
     const updated = await mongoCategoryRepository.updateCategory(categoryId.toString(), {
       name: 'Updated',
+      name_pl: ' Zaktualizowana ',
       color: null,
       sortIndex: 0,
     });
@@ -391,6 +394,7 @@ describe('mongo-category-repository shared-lib', () => {
       $set: expect.objectContaining({
         name: 'Updated',
         name_en: 'Updated',
+        name_pl: 'Zaktualizowana',
         color: null,
         sortIndex: 0,
         updatedAt: expect.any(Date),
@@ -411,6 +415,7 @@ describe('mongo-category-repository shared-lib', () => {
       },
     ]);
     expect(updated.name).toBe('Updated');
+    expect(updated.name_pl).toBe('Zaktualizowana');
 
     await expect(
       mongoCategoryRepository.updateCategory(categoryId.toString(), {

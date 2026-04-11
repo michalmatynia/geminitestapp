@@ -218,7 +218,7 @@ const preserveNonCanonicalStarterNodeConfigById = (
     }
 
     const currentNode = currentNodesById.get(node.id);
-    if (!currentNode || currentNode.type !== node.type) {
+    if (currentNode?.type !== node.type) {
       return node;
     }
 

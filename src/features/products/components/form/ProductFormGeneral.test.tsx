@@ -9,13 +9,17 @@ import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
-const { useProductFormMetadataMock, useProductValidationStateMock, setValueSpy } = vi.hoisted(
-  () => ({
+const {
+  useProductFormMetadataMock,
+  useProductValidationStateMock,
+  useTitleTermsMock,
+  setValueSpy,
+} = vi.hoisted(() => ({
     useProductFormMetadataMock: vi.fn(),
     useProductValidationStateMock: vi.fn(),
+    useTitleTermsMock: vi.fn(),
     setValueSpy: vi.fn(),
-  })
-);
+  }));
 
 vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
   useProductFormMetadata: () => useProductFormMetadataMock(),
@@ -23,6 +27,10 @@ vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
 
 vi.mock('@/features/products/context/ProductValidationSettingsContext', () => ({
   useProductValidationState: () => useProductValidationStateMock(),
+}));
+
+vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useTitleTerms: (...args: unknown[]) => useTitleTermsMock(...args),
 }));
 
 vi.mock('@/features/products/ui', () => ({
@@ -243,6 +251,10 @@ describe('ProductFormGeneral formatter auto-apply', () => {
     vi.clearAllMocks();
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [],
+    });
+    useTitleTermsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
     });
     useProductValidationStateMock.mockReturnValue({
       validationInstanceScope: 'product_create',

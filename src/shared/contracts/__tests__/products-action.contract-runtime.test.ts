@@ -57,16 +57,28 @@ describe('product action contract runtime', () => {
     expect(
       createProductCategorySchema.parse({
         name: 'Primary',
+        name_pl: 'Glowna',
         catalogId: 'catalog-1',
         parentId: null,
-      }).catalogId
-    ).toBe('catalog-1');
+      })
+    ).toEqual(
+      expect.objectContaining({
+        catalogId: 'catalog-1',
+        name_pl: 'Glowna',
+      })
+    );
 
     expect(
       updateProductCategorySchema.parse({
         name: 'Renamed',
+        name_pl: null,
         sortIndex: 4,
-      }).sortIndex
-    ).toBe(4);
+      })
+    ).toEqual(
+      expect.objectContaining({
+        name_pl: null,
+        sortIndex: 4,
+      })
+    );
   });
 });

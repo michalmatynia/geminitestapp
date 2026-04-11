@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-11'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Testing quality baseline Improvement Track
 
-Generated at: 2026-04-10T11:37:21.555Z
+Generated at: 2026-04-11T03:03:06.007Z
 
 ## Snapshot
 
 - Track id: `testing-quality-baseline`
 - Category: `testing`
 - Included in default read-only bundle: no
-- Overall status: `passed`
-- Latest report timestamp: 2026-04-10T11:37:21.499Z
+- Overall status: `no-data`
+- Latest report timestamp: not available
 
 ## Purpose
 
@@ -38,19 +38,15 @@ Tracks the testing inventory and quality snapshot so broader improvement work st
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `classify` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
+| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 
 ## Latest Steps
 
-| Phase | Status | Mode | Step | Command |
-| --- | --- | --- | --- | --- |
-| `audit` | `passed` | `automatic` | `testing-quality-suite-inventory` | `metrics:test-suite-inventory` |
-| `classify` | `passed` | `automatic` | `testing-quality-snapshot` | `check:test-quality` |
-| `plan` | `manual` | `manual` | `testing-quality-plan` | manual |
+- No step data is available for this track yet.
 
 ## Related Docs
 

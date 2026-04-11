@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   executeTraderaMassExportMock,
   executeVintedMassExportMock,
+  productAmazonScanModalMock,
   traderaStatusCheckModalMock,
   useBulkConvertImagesToBase64Mock,
   useProductListFiltersContextMock,
@@ -14,6 +15,7 @@ const {
 } = vi.hoisted(() => ({
   executeTraderaMassExportMock: vi.fn(),
   executeVintedMassExportMock: vi.fn(),
+  productAmazonScanModalMock: vi.fn(),
   traderaStatusCheckModalMock: vi.fn(),
   useBulkConvertImagesToBase64Mock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
@@ -47,6 +49,13 @@ vi.mock('@/features/products/hooks/product-list/useVintedMassQuickExport', () =>
 vi.mock('@/features/integrations/components/listings/TraderaStatusCheckModal', () => ({
   TraderaStatusCheckModal: (props: unknown) => {
     traderaStatusCheckModalMock(props);
+    return null;
+  },
+}));
+
+vi.mock('@/features/products/components/list/ProductAmazonScanModal', () => ({
+  ProductAmazonScanModal: (props: unknown) => {
+    productAmazonScanModalMock(props);
     return null;
   },
 }));
@@ -206,6 +215,20 @@ describe('ProductSelectionActions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check Tradera Listing Status' }));
 
     expect(traderaStatusCheckModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+        productIds: ['product-1', 'product-2'],
+        products: [{ id: 'product-1' }, { id: 'product-2' }],
+      })
+    );
+  });
+
+  it('opens the Amazon scan modal with the selected products', () => {
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scan Amazon ASIN' }));
+
+    expect(productAmazonScanModalMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         isOpen: true,
         productIds: ['product-1', 'product-2'],

@@ -74,8 +74,8 @@ describe('trend report scripts summary-json mode', () => {
 
   it('returns weekly lane trend envelopes without writing artifacts', () => {
     const root = createTempRoot();
-    writeJson(root, 'docs/metrics/weekly-quality-2026-03-09T10-30-00-000Z.json', {
-      generatedAt: '2026-03-09T10:30:00.000Z',
+    writeJson(root, 'docs/metrics/weekly-quality-2026-04-10T10-30-00-000Z.json', {
+      generatedAt: '2026-04-10T10:30:00.000Z',
       summary: {
         passed: 2,
         failed: 0,
@@ -202,7 +202,7 @@ describe('trend report scripts summary-json mode', () => {
       ],
     });
     writeJson(root, 'docs/metrics/weekly-quality-latest.json', {
-      generatedAt: '2026-03-09T10:30:00.000Z',
+      generatedAt: '2026-04-10T10:30:00.000Z',
       summary: {
         passed: 2,
         failed: 0,
@@ -364,8 +364,8 @@ describe('trend report scripts summary-json mode', () => {
 
   it('writes weekly lane trend markdown with explicit bridge alert and signal lines', () => {
     const root = createTempRoot();
-    writeJson(root, 'docs/metrics/weekly-quality-2026-03-09T10-30-00-000Z.json', {
-      generatedAt: '2026-03-09T10:30:00.000Z',
+    writeJson(root, 'docs/metrics/weekly-quality-2026-04-10T10-30-00-000Z.json', {
+      generatedAt: '2026-04-10T10:30:00.000Z',
       summary: {
         passed: 2,
         failed: 0,
@@ -438,8 +438,8 @@ describe('trend report scripts summary-json mode', () => {
 
   it('keeps the most recent bridge-bearing run in weekly trend summary when the latest run has no bridge data', () => {
     const root = createTempRoot();
-    writeJson(root, 'docs/metrics/weekly-quality-2026-03-09T10-30-00-000Z.json', {
-      generatedAt: '2026-03-09T10:30:00.000Z',
+    writeJson(root, 'docs/metrics/weekly-quality-2026-04-10T10-30-00-000Z.json', {
+      generatedAt: '2026-04-10T10:30:00.000Z',
       summary: {
         passed: 2,
         failed: 0,
@@ -468,8 +468,8 @@ describe('trend report scripts summary-json mode', () => {
       },
       checks: [{ id: 'build', status: 'pass', durationMs: 1_200, exitCode: 0 }],
     });
-    writeJson(root, 'docs/metrics/weekly-quality-2026-03-09T11-30-00-000Z.json', {
-      generatedAt: '2026-03-09T11:30:00.000Z',
+    writeJson(root, 'docs/metrics/weekly-quality-2026-04-10T11-30-00-000Z.json', {
+      generatedAt: '2026-04-10T11:30:00.000Z',
       summary: {
         passed: 3,
         failed: 0,
@@ -489,7 +489,7 @@ describe('trend report scripts summary-json mode', () => {
       latestAvailableKangurAiTutorBridgeAlertStatus: 'warning',
       latestAvailableKangurAiTutorBridgeSummaryText:
         'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
-      latestAvailableKangurAiTutorBridgeRun: '2026-03-09T10:30:00.000Z',
+      latestAvailableKangurAiTutorBridgeRun: '2026-04-10T10:30:00.000Z',
       latestAvailableKangurAiTutorBridgeState: 'stale',
       latestAvailableKangurAiTutorBridgeAgeMs: 3_600_000,
       latestAvailableKangurAiTutorBridgeAgeRuns: 1,
@@ -498,8 +498,8 @@ describe('trend report scripts summary-json mode', () => {
 
   it('returns domain suite trend envelopes without writing artifacts', () => {
     const root = createTempRoot();
-    writeJson(root, 'docs/metrics/unit-domain-timings-2026-03-09T10-30-00-000Z.json', {
-      generatedAt: '2026-03-09T10:30:00.000Z',
+    writeJson(root, 'docs/metrics/unit-domain-timings-2026-04-10T10-30-00-000Z.json', {
+      generatedAt: '2026-04-10T10:30:00.000Z',
       summary: {
         total: 2,
         passed: 1,
@@ -552,27 +552,27 @@ describe('trend report scripts summary-json mode', () => {
   it('returns trend index envelopes without writing artifacts', () => {
     const root = createTempRoot();
     writeJson(root, 'docs/metrics/weekly-quality-trend-latest.json', {
-      generatedAt: '2026-03-09T11:00:00.000Z',
+      generatedAt: '2026-04-10T11:00:00.000Z',
       summary: {
         latestAvailableKangurAiTutorBridgeSummaryText:
           'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
         latestAvailableKangurAiTutorBridgeAlertStatus: 'warning',
-        latestAvailableKangurAiTutorBridgeRun: '2026-03-09T10:30:00.000Z',
+        latestAvailableKangurAiTutorBridgeRun: '2026-04-10T10:30:00.000Z',
         latestAvailableKangurAiTutorBridgeAgeMs: 3_600_000,
         latestAvailableKangurAiTutorBridgeAgeRuns: 1,
       },
       runs: [
         {
-          generatedAt: '2026-03-09T11:30:00.000Z',
+          generatedAt: '2026-04-10T11:30:00.000Z',
           totalDurationMs: 23_678,
         },
       ],
     });
     writeJson(root, 'docs/metrics/unit-domain-timings-trend-latest.json', {
-      generatedAt: '2026-03-09T11:05:00.000Z',
+      generatedAt: '2026-04-10T11:05:00.000Z',
       runs: [
         {
-          generatedAt: '2026-03-09T10:35:00.000Z',
+          generatedAt: '2026-04-10T10:35:00.000Z',
           totalDurationMs: 42_000,
         },
       ],
@@ -593,7 +593,7 @@ describe('trend report scripts summary-json mode', () => {
       latestWeeklyLaneSignal:
         'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
       latestWeeklyLaneAlertStatus: 'warning',
-      latestWeeklyLaneSignalRun: '2026-03-09T10:30:00.000Z',
+      latestWeeklyLaneSignalRun: '2026-04-10T10:30:00.000Z',
       latestWeeklyLaneSignalState: 'stale',
       latestWeeklyLaneSignalAgeMs: 3_600_000,
       latestWeeklyLaneSignalAgeRuns: 1,
@@ -603,10 +603,10 @@ describe('trend report scripts summary-json mode', () => {
       expect.objectContaining({
         id: 'weekly-lane',
         status: 'ready',
-        latestRun: '2026-03-09T11:30:00.000Z',
+        latestRun: '2026-04-10T11:30:00.000Z',
         latestSignal: 'bridge funnel degraded (33.3%) · graph=66.7% · vector=75%',
         latestAlertStatus: 'warning',
-        latestSignalRun: '2026-03-09T10:30:00.000Z',
+        latestSignalRun: '2026-04-10T10:30:00.000Z',
         latestSignalState: 'stale',
         latestSignalAgeMs: 3_600_000,
         latestSignalAgeRuns: 1,
@@ -625,10 +625,10 @@ describe('trend report scripts summary-json mode', () => {
   it('writes trend index markdown with explicit alert severity when signals are present', () => {
     const root = createTempRoot();
     writeJson(root, 'docs/metrics/weekly-quality-trend-latest.json', {
-      generatedAt: '2026-03-09T11:00:00.000Z',
+      generatedAt: '2026-04-10T11:00:00.000Z',
       runs: [
         {
-          generatedAt: '2026-03-09T10:30:00.000Z',
+          generatedAt: '2026-04-10T10:30:00.000Z',
           totalDurationMs: 23_678,
           kangurAiTutorBridge: {
             bridgeSuggestionCount: 6,
@@ -650,10 +650,10 @@ describe('trend report scripts summary-json mode', () => {
       ],
     });
     writeJson(root, 'docs/metrics/unit-domain-timings-trend-latest.json', {
-      generatedAt: '2026-03-09T11:05:00.000Z',
+      generatedAt: '2026-04-10T11:05:00.000Z',
       runs: [
         {
-          generatedAt: '2026-03-09T10:35:00.000Z',
+          generatedAt: '2026-04-10T10:35:00.000Z',
           totalDurationMs: 42_000,
         },
       ],
@@ -667,7 +667,7 @@ describe('trend report scripts summary-json mode', () => {
       '| Trend | Status | Latest Run | Signal Run | Signal State | Signal Age | Runs Analyzed | Delta vs Prev | Alert | Latest Signal | JSON | Markdown |'
     );
     expect(markdown).toContain(
-      '| Weekly Lane Trend | READY | 2026-03-09T10:30:00.000Z | 2026-03-09T10:30:00.000Z | current | 0 runs | 1 | - | warning | bridge funnel degraded (33.3%) · graph=66.7% · vector=75% | `weekly-quality-trend-latest.json` | `weekly-quality-trend-latest.md` |'
+      '| Weekly Lane Trend | READY | 2026-04-10T10:30:00.000Z | 2026-04-10T10:30:00.000Z | current | 0 runs | 1 | - | warning | bridge funnel degraded (33.3%) · graph=66.7% · vector=75% | `weekly-quality-trend-latest.json` | `weekly-quality-trend-latest.md` |'
     );
     expect(markdown).toContain(
       'Weekly lane entries surface Kangur AI Tutor bridge alert severity when weekly trend artifacts include that signal.'
@@ -682,8 +682,8 @@ describe('trend report scripts summary-json mode', () => {
 
   it('returns recalibration envelopes without writing artifacts or applying budgets', () => {
     const root = createTempRoot();
-    writeJson(root, 'docs/metrics/weekly-quality-2026-03-09T10-30-00-000Z.json', {
-      generatedAt: '2026-03-09T10:30:00.000Z',
+    writeJson(root, 'docs/metrics/weekly-quality-2026-04-10T10-30-00-000Z.json', {
+      generatedAt: '2026-04-10T10:30:00.000Z',
       checks: [
         { id: 'build', status: 'pass', durationMs: 120_000, exitCode: 0 },
         { id: 'lintDomains', status: 'pass', durationMs: 150_000, exitCode: 0 },

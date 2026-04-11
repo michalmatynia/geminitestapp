@@ -160,6 +160,7 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   useToast: () => ({
     toast: mocks.toastMock,
   }),
@@ -194,6 +195,8 @@ describe('AdminProductScannerSettingsPage', () => {
         serializeProductScannerSettings({
           playwrightPersonaId: 'persona-1',
           playwrightBrowser: 'chrome',
+          captchaBehavior: 'fail',
+          manualVerificationTimeoutMs: 180000,
           playwrightSettingsOverrides: {
             headless: false,
           },
@@ -210,6 +213,12 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(screen.getByRole('combobox', { name: 'Select scanner browser' })).toHaveValue(
       'chrome'
     );
+    expect(screen.getByRole('combobox', { name: 'Select scanner captcha handling' })).toHaveValue(
+      'fail'
+    );
+    expect(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' })).toHaveValue(
+      180000
+    );
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
   });
 
@@ -220,6 +229,7 @@ describe('AdminProductScannerSettingsPage', () => {
         JSON.stringify({
           playwrightPersonaId: 'persona-1',
           playwrightBrowser: 'chrome',
+          manualVerificationTimeoutMs: 90000,
           playwrightSettings: {
             ...defaultIntegrationConnectionPlaywrightSettings,
             headless: false,
@@ -236,6 +246,12 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(screen.getByRole('combobox', { name: 'Select scanner browser' })).toHaveValue(
       'chrome'
     );
+    expect(
+      screen.getByRole('combobox', { name: 'Select scanner captcha handling' })
+    ).toHaveValue('auto_show_browser');
+    expect(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' })).toHaveValue(
+      90000
+    );
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Saved' })).toBeDisabled();
   });
@@ -249,6 +265,12 @@ describe('AdminProductScannerSettingsPage', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Select scanner browser' }), {
       target: { value: 'brave' },
     });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Select scanner captcha handling' }), {
+      target: { value: 'fail' },
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' }), {
+      target: { value: '180000' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
 
     await waitFor(() => {
@@ -257,6 +279,8 @@ describe('AdminProductScannerSettingsPage', () => {
         value: serializeProductScannerSettings({
           playwrightPersonaId: 'persona-1',
           playwrightBrowser: 'brave',
+          captchaBehavior: 'fail',
+          manualVerificationTimeoutMs: 180000,
           playwrightSettingsOverrides: {},
         }),
       });

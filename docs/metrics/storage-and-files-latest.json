@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T14:56:12.150Z",
+  "generatedAt": "2026-04-11T16:18:37.727Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 7239,
+    "fileCount": 7242,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -11603,6 +11603,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/ai-paths/context/RuntimeContext.external-actions.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/ai-paths/context/RuntimeContext.hooks.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -20502,6 +20508,12 @@
     },
     {
       "file": "src/features/integrations/constants.public.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/context/CategoryMapperContext.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33485,6 +33497,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/context/ProductFormContext.dirty-tracking.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/context/ProductFormContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -43477,5 +43495,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 4017
+  "durationMs": 2880
 }

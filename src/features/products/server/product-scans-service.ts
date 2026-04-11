@@ -11,14 +11,19 @@ import {
   startPlaywrightEngineTask,
 } from '@/features/playwright/server';
 import { CachedProductService } from '@/features/products/performance/cached-service';
-import { createDefaultProductScannerSettings } from '@/features/products/scanner-settings';
+import {
+  DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
+  createDefaultProductScannerSettings,
+} from '@/features/products/scanner-settings';
 import {
   isProductScanActiveStatus,
   isProductScanTerminalStatus,
   normalizeProductScanRecord,
+  productScanStepSchema,
   type ProductAmazonBatchScanItem,
   type ProductAmazonBatchScanResponse,
   type ProductScanRecord,
+  type ProductScanStep,
 } from '@/shared/contracts/product-scans';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -32,6 +37,7 @@ import {
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
+  resolveProductScannerHeadless,
 } from './product-scanner-settings';
 import {
   findLatestActiveProductScan,
@@ -53,9 +59,11 @@ const PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH = 8_000;
 const PRODUCT_SCAN_ASIN_MAX_LENGTH = 40;
 const PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH = 160;
 const PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS = 2;
+const PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE =
+  'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
 
 type AmazonScanScriptResult = {
-  status: 'matched' | 'no_match' | 'failed';
+  status: 'matched' | 'no_match' | 'failed' | 'captcha_required' | 'running';
   asin: string | null;
   title: string | null;
   price: string | null;
@@ -65,6 +73,7 @@ type AmazonScanScriptResult = {
   message: string | null;
   currentUrl: string | null;
   stage: string | null;
+  steps: ProductScanStep[];
 };
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>
@@ -86,6 +95,22 @@ const normalizeErrorMessage = (
   value: unknown,
   fallback: string
 ): string => readOptionalString(value, PRODUCT_SCAN_ERROR_MAX_LENGTH) ?? fallback;
+
+const resolveManualVerificationMessage = (value: unknown): string => {
+  const normalized = normalizeErrorMessage(value, PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE);
+  return /continue automatically/i.test(normalized)
+    ? normalized
+    : PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE;
+};
+
+const readOptionalPositiveInt = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const normalized = Math.trunc(value);
+  return normalized > 0 ? normalized : null;
+};
 
 const resolvePersistableScanUrl = (...values: unknown[]): string | null => {
   for (const value of values) {
@@ -115,11 +140,46 @@ const resolveScanEngineRunId = (scan: ProductScanRecord): string | null =>
   readOptionalString(scan.engineRunId, 160) ??
   readOptionalString(toRecord(scan.rawResult)?.['runId'], 160);
 
+const resolveScanManualVerificationTimeoutMs = (
+  settingsOrRawResult: { manualVerificationTimeoutMs?: unknown } | null | undefined
+): number =>
+  readOptionalPositiveInt(settingsOrRawResult?.manualVerificationTimeoutMs) ??
+  DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS;
+
+const shouldAutoShowScannerCaptchaBrowser = (
+  settings: { captchaBehavior?: unknown } | null | undefined
+): boolean => settings?.captchaBehavior !== 'fail';
+
+const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => productScanStepSchema.safeParse(entry))
+    .filter((entry) => entry.success)
+    .map((entry) => entry.data);
+};
+
+const areProductScanStepsEqual = (
+  left: ProductScanStep[] | null | undefined,
+  right: ProductScanStep[] | null | undefined
+): boolean => JSON.stringify(left ?? []) === JSON.stringify(right ?? []);
+
+const resolvePersistedProductScanSteps = (
+  scan: Pick<ProductScanRecord, 'steps'>,
+  parsedSteps: ProductScanStep[]
+): ProductScanStep[] => (parsedSteps.length > 0 ? parsedSteps : scan.steps);
+
 const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptResult => {
   const record = toRecord(value);
   const statusValue = readOptionalString(record?.['status']);
   const status =
-    statusValue === 'matched' || statusValue === 'no_match' || statusValue === 'failed'
+    statusValue === 'matched' ||
+    statusValue === 'no_match' ||
+    statusValue === 'failed' ||
+    statusValue === 'captcha_required' ||
+    statusValue === 'running'
       ? statusValue
       : 'failed';
 
@@ -137,8 +197,50 @@ const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptResult => 
     message: readOptionalString(record?.['message'], PRODUCT_SCAN_ERROR_MAX_LENGTH),
     currentUrl: readOptionalString(record?.['currentUrl'], PRODUCT_SCAN_URL_MAX_LENGTH),
     stage: readOptionalString(record?.['stage']),
+    steps: normalizeParsedProductScanSteps(record?.['steps']),
   };
 };
+
+const buildAmazonScanRequestInput = (input: {
+  productId: string;
+  productName: string | null;
+  existingAsin: string | null | undefined;
+  imageCandidates: ProductScanRecord['imageCandidates'];
+  allowManualVerification: boolean;
+  manualVerificationTimeoutMs: number;
+}) => ({
+  productId: input.productId,
+  productName: input.productName,
+  existingAsin: input.existingAsin ?? null,
+  imageCandidates: input.imageCandidates,
+  allowManualVerification: input.allowManualVerification,
+  manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
+});
+
+const createAmazonScanStartedRawResult = (input: {
+  runId: string;
+  status: string;
+  allowManualVerification: boolean;
+  manualVerificationTimeoutMs: number;
+  previousRunId?: string | null;
+  previousResult?: unknown;
+  manualVerificationPending?: boolean;
+  manualVerificationMessage?: string | null;
+}) => ({
+  runId: input.runId,
+  status: input.status,
+  allowManualVerification: input.allowManualVerification,
+  manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
+  ...(input.previousRunId ? { previousRunId: input.previousRunId } : {}),
+  ...(input.previousResult !== undefined ? { previousResult: input.previousResult } : {}),
+  ...(input.manualVerificationPending
+    ? {
+        manualVerificationPending: true,
+        manualVerificationMessage:
+          input.manualVerificationMessage ?? PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE,
+      }
+    : {}),
+});
 
 const createAmazonProductScanBaseRecord = (input: {
   productId: string;
@@ -345,14 +447,63 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       return await persistFailedSynchronization(scan, message);
     }
 
-    if (
-      (run.status === 'queued' || run.status === 'running') &&
-      (scan.status !== run.status || scan.engineRunId !== engineRunId)
-    ) {
-      return await persistSynchronizedScan(scan, {
-        engineRunId,
-        status: run.status,
-      });
+    const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
+    const parsedResult = parseAmazonScanScriptResult(resultValue);
+
+    if (run.status === 'queued' || run.status === 'running') {
+      const existingRawResult = toRecord(scan.rawResult) ?? {};
+      const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(
+        existingRawResult
+      );
+      const nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+      const activeMessage =
+        parsedResult.status === 'captcha_required'
+          ? resolveManualVerificationMessage(parsedResult.message)
+          : null;
+      const nextRawResult =
+        parsedResult.status === 'captcha_required'
+          ? {
+              ...existingRawResult,
+              ...resultValue,
+              runId: engineRunId,
+              runStatus: run.status,
+              manualVerificationPending: true,
+              manualVerificationMessage: activeMessage,
+              manualVerificationTimeoutMs,
+            }
+          : {
+              ...existingRawResult,
+              runId: engineRunId,
+              runStatus: run.status,
+              manualVerificationPending: false,
+              manualVerificationMessage: null,
+              manualVerificationTimeoutMs,
+            };
+      const shouldPersistActiveState =
+        scan.status !== run.status ||
+        scan.engineRunId !== engineRunId ||
+        !areProductScanStepsEqual(scan.steps, nextSteps) ||
+        (activeMessage ?? null) !== (scan.asinUpdateMessage ?? null) ||
+        (parsedResult.status === 'captcha_required' &&
+          existingRawResult['manualVerificationPending'] !== true) ||
+        (parsedResult.status !== 'captcha_required' &&
+          (existingRawResult['manualVerificationPending'] === true ||
+            readOptionalString(existingRawResult['manualVerificationMessage']) != null));
+
+      if (shouldPersistActiveState) {
+        return await persistSynchronizedScan(scan, {
+          engineRunId,
+          status: run.status,
+          steps: nextSteps,
+          rawResult: nextRawResult,
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: activeMessage,
+          completedAt: null,
+        });
+      }
+
+      return scan;
     }
 
     if (run.status === 'failed') {
@@ -376,8 +527,166 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       return scan;
     }
 
-    const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
-    const parsedResult = parseAmazonScanScriptResult(resultValue);
+    if (parsedResult.status === 'captcha_required') {
+      const manualVerificationMessage = resolveManualVerificationMessage(
+        parsedResult.message
+      );
+      const existingRawResult = toRecord(scan.rawResult) ?? {};
+      const nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+
+      if (existingRawResult['captchaRetryStarted'] === true) {
+        return await persistFailedSynchronization(
+          scan,
+          'Google Lens captcha verification was still required after reopening the browser.'
+        );
+      }
+
+      const product = await productService.getProductById(scan.productId);
+      if (!product) {
+        return await persistFailedSynchronization(
+          scan,
+          'Product not found while reopening the Amazon scan for captcha verification.'
+        );
+      }
+
+      let scannerSettings = createDefaultProductScannerSettings();
+      try {
+        scannerSettings = await getProductScannerSettings();
+      } catch (error) {
+        void ErrorSystem.captureException(error, {
+          service: 'product-scans.service',
+          action: 'synchronizeProductScan.loadScannerSettingsForCaptchaRetry',
+          scanId: scan.id,
+          productId: scan.productId,
+          engineRunId,
+        });
+      }
+
+      const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(
+        scannerSettings
+      );
+      if (!shouldAutoShowScannerCaptchaBrowser(scannerSettings)) {
+        return await persistFailedSynchronization(
+          scan,
+          'Google Lens requested captcha verification, and scanner settings are configured to fail instead of reopening a visible browser.'
+        );
+      }
+
+      const claimedScan = await persistSynchronizedScan(scan, {
+        engineRunId: null,
+        status: 'running',
+        steps: nextSteps,
+        rawResult: {
+          ...existingRawResult,
+          ...resultValue,
+          previousRunId: engineRunId,
+          captchaRetryStarted: true,
+          manualVerificationPending: true,
+          manualVerificationMessage,
+          manualVerificationTimeoutMs,
+        },
+        error: null,
+        asinUpdateStatus: 'pending',
+        asinUpdateMessage: manualVerificationMessage,
+        completedAt: null,
+      });
+
+      try {
+        const scannerEngineRequestOptions =
+          buildProductScannerEngineRequestOptions(scannerSettings);
+        const runRetry = await startPlaywrightEngineTask({
+          request: {
+            script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
+            input: buildAmazonScanRequestInput({
+              productId: product.id,
+              productName: claimedScan.productName,
+              existingAsin: product.asin,
+              imageCandidates: claimedScan.imageCandidates,
+              allowManualVerification: true,
+              manualVerificationTimeoutMs,
+            }),
+            timeoutMs: Math.max(
+              AMAZON_SCAN_TIMEOUT_MS,
+              manualVerificationTimeoutMs + 60_000
+            ),
+            browserEngine: 'chromium',
+            ...scannerEngineRequestOptions,
+            settingsOverrides: {
+              ...(scannerEngineRequestOptions.settingsOverrides ?? {}),
+              headless: false,
+            },
+            capture: {
+              screenshot: true,
+              html: true,
+            },
+            preventNewPages: true,
+          },
+          ownerUserId: claimedScan.updatedBy?.trim() || null,
+          instance: createCustomPlaywrightInstance({
+            family: 'scrape',
+            label: 'Amazon reverse image ASIN scan',
+            tags: ['product', 'amazon', 'scan', 'google-reverse-image', 'manual-verification'],
+          }),
+        });
+
+        const retryRunStatus = runRetry.status === 'running' ? 'running' : 'queued';
+        const retryManualVerificationPending = retryRunStatus === 'running';
+
+        return await persistSynchronizedScan(claimedScan, {
+          engineRunId: runRetry.runId,
+          status: retryRunStatus,
+          steps: claimedScan.steps,
+          rawResult: {
+            ...toRecord(claimedScan.rawResult),
+            ...createAmazonScanStartedRawResult({
+              runId: runRetry.runId,
+              status: runRetry.status,
+              allowManualVerification: true,
+              manualVerificationTimeoutMs,
+              previousRunId: engineRunId,
+              previousResult: resultValue,
+              manualVerificationPending: retryManualVerificationPending,
+              manualVerificationMessage: retryManualVerificationPending
+                ? manualVerificationMessage
+                : null,
+            }),
+            captchaRetryStarted: true,
+            ...(retryManualVerificationPending
+              ? {
+                  manualVerificationPending: true,
+                  manualVerificationMessage,
+                }
+              : {
+                  manualVerificationPending: false,
+                  manualVerificationMessage: null,
+                }),
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: retryManualVerificationPending
+            ? manualVerificationMessage
+            : null,
+          completedAt: null,
+        });
+      } catch (error) {
+        const message = normalizeErrorMessage(
+          error instanceof Error ? error.message : error,
+          'Failed to reopen the Amazon scan in a visible browser for captcha verification.'
+        );
+        return await persistSynchronizedScan(claimedScan, {
+          status: 'failed',
+          steps: claimedScan.steps,
+          rawResult: {
+            ...toRecord(claimedScan.rawResult),
+            retryStartError: message,
+          },
+          error: message,
+          asinUpdateStatus: 'failed',
+          asinUpdateMessage: message,
+          completedAt: new Date().toISOString(),
+        });
+      }
+    }
 
     if (parsedResult.status === 'no_match') {
       return await persistSynchronizedScan(scan, {
@@ -388,6 +697,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         price: parsedResult.price,
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
+        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
         rawResult: resultValue,
         error: parsedResult.message,
         asinUpdateStatus: 'not_needed',
@@ -409,6 +719,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         price: parsedResult.price,
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
+        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
         rawResult: resultValue,
         error: failureMessage,
         asinUpdateStatus: 'failed',
@@ -429,6 +740,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         price: parsedResult.price,
         url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
         description: parsedResult.description,
+        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
         rawResult: resultValue,
         error: message,
         asinUpdateStatus: 'failed',
@@ -469,6 +781,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       price: parsedResult.price,
       url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
       description: parsedResult.description,
+      steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
       rawResult: resultValue,
       error: nextStatus === 'failed' || nextStatus === 'conflict' ? nextMessage : null,
       asinUpdateStatus: nextAsinUpdateStatus,
@@ -544,8 +857,10 @@ export async function queueAmazonBatchProductScans(input: {
     )
   );
   let scannerSettings = createDefaultProductScannerSettings();
+  let scannerHeadless = true;
   try {
     scannerSettings = await getProductScannerSettings();
+    scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'product-scans.service',
@@ -603,16 +918,28 @@ export async function queueAmazonBatchProductScans(input: {
         try {
           const scannerEngineRequestOptions =
             buildProductScannerEngineRequestOptions(scannerSettings);
+          const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(
+            scannerSettings
+          );
+          const allowManualVerification =
+            shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless;
           const run = await startPlaywrightEngineTask({
             request: {
               script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
-              input: {
+              input: buildAmazonScanRequestInput({
                 productId: product.id,
                 productName,
                 existingAsin: product.asin,
                 imageCandidates,
-              },
-              timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+                allowManualVerification,
+                manualVerificationTimeoutMs,
+              }),
+              timeoutMs: allowManualVerification
+                ? Math.max(
+                    AMAZON_SCAN_TIMEOUT_MS,
+                    manualVerificationTimeoutMs + 60_000
+                  )
+                : AMAZON_SCAN_TIMEOUT_MS,
               browserEngine: 'chromium',
               ...scannerEngineRequestOptions,
               capture: {
@@ -630,10 +957,12 @@ export async function queueAmazonBatchProductScans(input: {
           });
 
           const queuedRunStatus = run.status === 'running' ? 'running' : 'queued';
-          const startedRunRawResult = {
+          const startedRunRawResult = createAmazonScanStartedRawResult({
             runId: run.runId,
             status: run.status,
-          };
+            allowManualVerification,
+            manualVerificationTimeoutMs,
+          });
 
           let saved: ProductScanRecord;
           try {

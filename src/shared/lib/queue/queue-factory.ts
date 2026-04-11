@@ -146,14 +146,18 @@ export function createManagedQueue<TJobData>(
         ? jobTimeoutMs + 60_000
         : ((config.workerOptions?.['lockDuration'] as number | undefined) ?? 30_000);
 
-    worker = new Worker(
+    worker = new Worker<TJobData>(
       config.name,
-      async (job: Job) => {
+      async (job: Job<TJobData>) => {
         lastProcessTime = Date.now();
-        const data = job.data as TJobData;
+        const data = job.data;
 
         if (!jobTimeoutMs) {
-          return config.processor(data, job.id ?? 'unknown');
+          return config.processor(data, job.id ?? 'unknown', undefined, {
+            updateProgress: async (progress: unknown) => {
+              await job.updateProgress(progress as object | number);
+            },
+          });
         }
 
         // Per-job wall-clock timeout.  Abort the processor signal; the engine
@@ -200,25 +204,52 @@ export function createManagedQueue<TJobData>(
       }
     );
 
-    if (config.onCompleted) {
-      worker.on('completed', (job: Job, result: unknown) => {
-        void config.onCompleted!(job.id ?? 'unknown', result, job.data as TJobData);
-      });
-    }
+    worker.on('completed', (job: Job<TJobData>, result: unknown) => {
+      const durationMs = Date.now() - (job.processedOn ?? Date.now());
+      if (durationMs > 10000) {
+        void logSystemEvent({
+          level: 'warn',
+          source: 'queue-factory',
+          message: `[queue-factory:${config.name}] slow job ${job.id ?? 'unknown'} completed in ${durationMs}ms`,
+          context: {
+            queueName: config.name,
+            jobId: job.id,
+            durationMs,
+          },
+        });
+      }
+      if (config.onCompleted) {
+        void config.onCompleted(job.id ?? 'unknown', result, job.data);
+      }
+    });
 
-    if (config.onFailed) {
-      worker.on('failed', (job: Job | undefined, error: Error) => {
+    const onFailedCallback = config.onFailed;
+    if (onFailedCallback) {
+      worker.on('failed', (job: Job<TJobData> | undefined, error: Error) => {
         if (job) {
           const maxAttempts =
             typeof job.opts.attempts === 'number' && Number.isFinite(job.opts.attempts)
               ? Math.max(1, Math.floor(job.opts.attempts))
               : 1;
           const attemptsMade = Math.max(1, Math.floor(job.attemptsMade || 0));
-          void config.onFailed!(job.id ?? 'unknown', error, job.data as TJobData, {
+          void onFailedCallback(job.id ?? 'unknown', error, job.data, {
             attemptsMade,
             maxAttempts,
           });
         }
+      });
+    } else {
+      worker.on('failed', (job: Job<TJobData> | undefined, error: Error) => {
+        void ErrorSystem.captureException(error, {
+          service: `queue-worker:${config.name}`,
+          category: 'SYSTEM',
+          action: 'job-failed',
+          jobId: job?.id,
+          context: {
+            queueName: config.name,
+            attemptsMade: job?.attemptsMade,
+          },
+        });
       });
     }
 

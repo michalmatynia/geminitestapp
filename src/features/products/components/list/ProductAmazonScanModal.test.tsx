@@ -262,6 +262,77 @@ describe('ProductAmazonScanModal', () => {
     expect(screen.queryByText('Amazon reverse image scan queued.')).not.toBeInTheDocument();
   });
 
+  it('shows the manual verification guidance when a running scan is waiting on captcha resolution', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          rawResult: {
+            status: 'captcha_required',
+            manualVerificationPending: true,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage:
+            'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText(
+      'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.'
+    );
+    expect(screen.getByText('Captcha')).toBeInTheDocument();
+    expect(screen.queryByText('Amazon reverse image scan queued.')).not.toBeInTheDocument();
+  });
+
   it('shows a running state immediately when the batch response returns a started scan', async () => {
     mocks.apiPost.mockResolvedValue({
       queued: 0,

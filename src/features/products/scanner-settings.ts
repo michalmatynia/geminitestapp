@@ -1,5 +1,6 @@
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type {
+  ProductScannerCaptchaBehavior,
   ProductScannerPlaywrightBrowser,
   ProductScannerSettings,
 } from '@/shared/contracts/products/scanner-settings';
@@ -15,10 +16,14 @@ import {
 
 export const PRODUCT_SCANNER_SETTINGS_KEY = 'product_scanner_settings_v1';
 export const PRODUCT_SCANNER_SETTINGS_HREF = '/admin/settings/scanner';
+export const DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR = 'auto_show_browser' as const;
+export const DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS = 240_000;
 
 export type ProductScannerSettingsDraft = {
   playwrightPersonaId: string | null;
   playwrightBrowser: ProductScannerPlaywrightBrowser;
+  captchaBehavior: ProductScannerCaptchaBehavior;
+  manualVerificationTimeoutMs: number;
   playwrightSettings: PlaywrightSettings;
 };
 
@@ -61,9 +66,19 @@ export const PRODUCT_SCANNER_BROWSER_OPTIONS: ReadonlyArray<{
   { value: 'chromium', label: 'Chromium (bundled)' },
 ];
 
+export const PRODUCT_SCANNER_CAPTCHA_BEHAVIOR_OPTIONS: ReadonlyArray<{
+  value: ProductScannerCaptchaBehavior;
+  label: string;
+}> = [
+  { value: 'auto_show_browser', label: 'Show browser and continue' },
+  { value: 'fail', label: 'Fail scan on captcha' },
+];
+
 export const createDefaultProductScannerSettings = (): ProductScannerSettings => ({
   playwrightPersonaId: null,
   playwrightBrowser: DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
+  captchaBehavior: DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR,
+  manualVerificationTimeoutMs: DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
   playwrightSettingsOverrides: {},
 });
 
@@ -76,6 +91,24 @@ const normalizeProductScannerBrowser = (
     value === 'chromium'
     ? value
     : DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER;
+};
+
+const normalizeProductScannerCaptchaBehavior = (
+  value: unknown
+): ProductScannerCaptchaBehavior =>
+  value === 'fail' ? 'fail' : DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR;
+
+const normalizeProductScannerManualVerificationTimeoutMs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS;
+  }
+
+  const normalized = Math.trunc(value);
+  if (normalized <= 0) {
+    return DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS;
+  }
+
+  return Math.min(normalized, 900_000);
 };
 
 const normalizeProductScannerSettingsOverrides = (
@@ -129,6 +162,10 @@ export const normalizeProductScannerSettings = (
       record['playwrightPersonaId'] as string | null | undefined
     ),
     playwrightBrowser: normalizeProductScannerBrowser(record['playwrightBrowser']),
+    captchaBehavior: normalizeProductScannerCaptchaBehavior(record['captchaBehavior']),
+    manualVerificationTimeoutMs: normalizeProductScannerManualVerificationTimeoutMs(
+      record['manualVerificationTimeoutMs']
+    ),
     playwrightSettingsOverrides:
       Object.keys(normalizedOverrides).length > 0
         ? normalizedOverrides
@@ -165,6 +202,8 @@ export const buildProductScannerSettingsDraft = (
   return {
     playwrightPersonaId: settings.playwrightPersonaId,
     playwrightBrowser: settings.playwrightBrowser,
+    captchaBehavior: settings.captchaBehavior,
+    manualVerificationTimeoutMs: settings.manualVerificationTimeoutMs,
     playwrightSettings: {
       ...baseline,
       ...settings.playwrightSettingsOverrides,
@@ -210,6 +249,10 @@ export const buildPersistedProductScannerSettings = (
       draft.playwrightPersonaId
     ),
     playwrightBrowser: normalizeProductScannerBrowser(draft.playwrightBrowser),
+    captchaBehavior: normalizeProductScannerCaptchaBehavior(draft.captchaBehavior),
+    manualVerificationTimeoutMs: normalizeProductScannerManualVerificationTimeoutMs(
+      draft.manualVerificationTimeoutMs
+    ),
     playwrightSettingsOverrides: buildPlaywrightSettingsOverrides(
       baseline,
       buildIntegrationConnectionPlaywrightSettings(draft.playwrightSettings)

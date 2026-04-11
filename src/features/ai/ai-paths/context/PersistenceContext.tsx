@@ -12,6 +12,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { type AutoSaveStatus } from '@/shared/contracts/ui/base';
 
 import type { PathSaveOptions as SavePathConfigOptions } from '../components/ai-paths-settings/useAiPathsPersistence.types';
 
@@ -19,9 +20,7 @@ import type { PathSaveOptions as SavePathConfigOptions } from '../components/ai-
 // Types
 // ---------------------------------------------------------------------------
 
-export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-
-export type { SavePathConfigOptions };
+export type { AutoSaveStatus, SavePathConfigOptions };
 
 export interface PersistenceOperationHandlers {
   savePathConfig?: (options?: SavePathConfigOptions) => Promise<boolean>;

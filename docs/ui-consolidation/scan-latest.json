@@ -1,17 +1,17 @@
 {
   "summary": {
-    "generatedAt": "2026-04-11T14:40:25.170Z",
-    "scannedFileCount": 2576,
+    "generatedAt": "2026-04-11T15:55:59.962Z",
+    "scannedFileCount": 2577,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
-    "thinReExportWrapperCount": 37,
+    "thinReExportWrapperCount": 35,
     "totalOpportunities": 0,
     "highPriorityCount": 0,
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1882
+        "count": 1883
       },
       {
         "family": "Page",
@@ -85,7 +85,7 @@
       },
       {
         "domain": "app",
-        "count": 343
+        "count": 344
       },
       {
         "domain": "shared-ui",
@@ -5686,16 +5686,17 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 2,
+      "lines": 12,
       "useClient": false,
       "imports": [
-        "@/app/(frontend)/kangur/(app)/layout"
+        "@/features/kangur/server",
+        "react"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
-      "thinReExportWrapper": true
+      "thinReExportWrapper": false
     },
     {
       "path": "src/app/[locale]/(frontend)/kangur/(app)/lessons/page.tsx",
@@ -5788,16 +5789,41 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 2,
+      "lines": 47,
       "useClient": false,
       "imports": [
-        "@/app/(frontend)/kangur/layout"
+        "@/features/kangur/server",
+        "@/features/kangur/public",
+        "@/shared/lib/analytics/vercel-analytics",
+        "@/shared/lib/security/safe-html",
+        "@vercel/analytics/next",
+        "react"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
-      "thinReExportWrapper": true
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/app/[locale]/(frontend)/kangur/layouts.test.tsx",
+      "basename": "layouts.test.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Unknown",
+      "lines": 91,
+      "useClient": false,
+      "imports": [
+        "react",
+        "vitest",
+        "@/app/[locale]/(frontend)/kangur/layout",
+        "@/app/[locale]/(frontend)/kangur/(app)/layout"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
     },
     {
       "path": "src/app/[locale]/(frontend)/kangur/loading.tsx",
@@ -7314,7 +7340,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 730,
+      "lines": 742,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -7367,7 +7393,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 502,
+      "lines": 494,
       "useClient": true,
       "imports": [
         "react",
@@ -24620,7 +24646,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Panel",
-      "lines": 702,
+      "lines": 701,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -24639,7 +24665,8 @@
         "@/features/kangur/ui/design/tokens",
         "@/features/kangur/observability/client",
         "./content-creator-insights",
-        "./context/LessonContentEditorContext"
+        "./context/LessonContentEditorContext",
+        "@/shared/contracts/ui/base"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -28562,12 +28589,12 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 566,
+      "lines": 551,
       "useClient": true,
       "imports": [
         "@hello-pangea/dnd",
-        "react-dom",
         "react",
+        "react-dom",
         "@/features/kangur/ui/components/KangurDragDropContext",
         "@/features/kangur/ui/components/KangurCheckButton",
         "@/features/kangur/ui/design/primitives",
@@ -28579,7 +28606,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "accent|checked|dragHandleProps|draggableProps|index|innerRef|isCoarsePointer|isComplete|isCorrect|isDragging|isIncorrect|isSelected|item|onItemClick",
+      "propsSignature": "dragHandleProps|draggableProps|index|innerRef|isCorrect|isDragging|isIncorrect|isSelected|item|onItemClick",
       "thinReExportWrapper": false
     },
     {
@@ -29484,7 +29511,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 352,
+      "lines": 358,
       "useClient": true,
       "imports": [
         "react",
@@ -29548,7 +29575,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 596,
+      "lines": 589,
       "useClient": true,
       "imports": [
         "@hello-pangea/dnd",
@@ -30275,7 +30302,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 757,
+      "lines": 632,
       "useClient": true,
       "imports": [
         "@hello-pangea/dnd",
@@ -30297,7 +30324,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "finishLabel|onFinish|onRestart|percent|score|translations|xpBreakdown|xpEarned",
+      "propsSignature": "finishLabel|onFinish",
       "thinReExportWrapper": false
     },
     {
@@ -38231,7 +38258,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 709,
+      "lines": 681,
       "useClient": true,
       "imports": [
         "@/features/kangur/ui/hooks/useKangurProgressOwnerKey",
@@ -40393,7 +40420,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 563,
+      "lines": 529,
       "useClient": true,
       "imports": [
         "react",
@@ -40412,7 +40439,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "acceptedGroupPair|round|total",
+      "propsSignature": "onResult|round",
       "thinReExportWrapper": false
     },
     {
@@ -41747,7 +41774,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "List",
-      "lines": 678,
+      "lines": 690,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -41827,7 +41854,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 282,
+      "lines": 291,
       "useClient": true,
       "imports": [
         "next-intl",
@@ -44734,7 +44761,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 696,
+      "lines": 716,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -45026,7 +45053,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 579,
+      "lines": 531,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -45138,7 +45165,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 674,
+      "lines": 667,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -47600,7 +47627,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 703,
+      "lines": 715,
       "useClient": true,
       "imports": [
         "react",
@@ -48527,7 +48554,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1867,
+      "lines": 1937,
       "useClient": false,
       "imports": [
         "react",
@@ -48548,7 +48575,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 867,
+      "lines": 868,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -48575,7 +48602,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1286,
+      "lines": 1302,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -48598,7 +48625,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 889,
+      "lines": 895,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -48607,7 +48634,7 @@
         "react",
         "@/features/products/components/cells/ProductImageCell",
         "@/features/products/components/EditableCell",
-        "@/features/integrations/hooks/useListingQueries",
+        "@/features/integrations/public",
         "@/features/products/context/ProductListContext",
         "@/features/products/lib/build-triggered-product-entity-json",
         "@/features/products/lib/product-integrations-adapter-loader",
@@ -48618,6 +48645,7 @@
         "@/shared/lib/query-key-utils",
         "@/shared/lib/query-factories-v2",
         "@/shared/ui/ActionMenu",
+        "@/shared/ui/badge",
         "@/shared/ui/button",
         "@/shared/ui/checkbox",
         "@/shared/ui/dropdown-menu",
@@ -48638,7 +48666,7 @@
         "./TraderaLinkModal"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 5,
+      "uiPrimitiveImports": 6,
       "tokenSet": {},
       "propsSignature": null,
       "thinReExportWrapper": false
@@ -48698,8 +48726,8 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 56,
-      "useClient": true,
+      "lines": 54,
+      "useClient": false,
       "imports": [
         "react",
         "lucide-react",
@@ -48773,7 +48801,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 669,
+      "lines": 686,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -48795,7 +48823,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 715,
+      "lines": 720,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -48803,7 +48831,7 @@
         "next/dynamic",
         "react",
         "@/features/products/components/cells/ProductImageCell",
-        "@/features/integrations/hooks/useListingQueries",
+        "@/features/integrations/public",
         "@/features/products/context/ProductListContext",
         "@/features/products/lib/build-triggered-product-entity-json",
         "@/features/products/lib/product-integrations-adapter-loader",
@@ -48840,7 +48868,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 280,
+      "lines": 343,
       "useClient": false,
       "imports": [
         "react",
@@ -48861,14 +48889,14 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 739,
+      "lines": 769,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/features/products/components/list/advanced-filter",
         "@/features/products/context/ProductListContext",
-        "@/features/integrations/components/listings/TraderaStatusCheckModal",
+        "@/features/integrations/public",
         "@/features/products/hooks/useProductsMutations",
         "@/features/products/hooks/product-list/useTraderaMassQuickExport",
         "@/features/products/hooks/product-list/useVintedMassQuickExport",

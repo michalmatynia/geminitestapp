@@ -257,6 +257,19 @@ export const logClientCatch = (
   });
 };
 
+export const logClientEvent = (payload: {
+  message: string;
+  level?: SystemLogLevel;
+  context?: ClientErrorContext;
+}): void => {
+  logClientError(payload.message, {
+    context: {
+      ...(payload.context ?? {}),
+      level: payload.level ?? 'info',
+    },
+  });
+};
+
 let handlerAttached = false;
 
 export const initClientErrorReporting = (): void => {

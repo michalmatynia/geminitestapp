@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
 
+import { internalError } from '@/shared/errors/app-error';
+
 const PREVIEW_SIZE = 136;
 const OFFSET_X = 72;
 const OFFSET_Y = -90;
@@ -128,7 +130,7 @@ export const ProductImagePreviewProvider = ({ children }: { children: React.Reac
 export const useProductImagePreview = () => {
   const context = useContext(ProductImagePreviewContext);
   if (!context) {
-    throw new Error('useProductImagePreview must be used within a ProductImagePreviewProvider');
+    throw internalError('useProductImagePreview must be used within a ProductImagePreviewProvider');
   }
   return context;
 };

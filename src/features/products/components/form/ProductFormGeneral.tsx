@@ -82,6 +82,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     cycleHits: 0,
   });
   const lastGeneratedPolishNameRef = useRef<string>('');
+  const focusOutSyncTimeoutRef = useRef<number | null>(null);
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>(
     (): 'ean' | 'gtin' | 'asin' => {
@@ -255,7 +256,14 @@ export default function ProductFormGeneral(): React.JSX.Element {
     };
 
     const handleFocusOut = (): void => {
-      window.setTimeout(syncFocusedField, 0);
+      if (focusOutSyncTimeoutRef.current !== null) {
+        window.clearTimeout(focusOutSyncTimeoutRef.current);
+      }
+
+      focusOutSyncTimeoutRef.current = window.setTimeout(() => {
+        focusOutSyncTimeoutRef.current = null;
+        syncFocusedField();
+      }, 0);
     };
 
     syncFocusedField();
@@ -263,6 +271,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
     document.addEventListener('focusout', handleFocusOut);
 
     return () => {
+      if (focusOutSyncTimeoutRef.current !== null) {
+        window.clearTimeout(focusOutSyncTimeoutRef.current);
+        focusOutSyncTimeoutRef.current = null;
+      }
       document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('focusout', handleFocusOut);
     };

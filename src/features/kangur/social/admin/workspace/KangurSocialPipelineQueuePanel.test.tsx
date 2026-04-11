@@ -16,22 +16,10 @@ const {
   apiDeleteMock: vi.fn(),
 }));
 
-type ListPanelMockProps = {
-  header?: ReactNode;
-  children: ReactNode;
-};
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { header, children } = props;
-  return (
-    <section>
-      <div>{header}</div>
-      <div>{children}</div>
-    </section>
-  );
-}
+vi.mock('@/shared/ui/list-panel', () => ({
 
-vi.mock('@/shared/lib/api-client', () => ({
   api: {
     get: (...args: unknown[]) => apiGetMock(...args),
     post: (...args: unknown[]) => apiPostMock(...args),

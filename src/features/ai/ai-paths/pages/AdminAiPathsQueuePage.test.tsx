@@ -9,32 +9,10 @@ const mocks = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
 }));
 
-type ListPanelMockProps = {
-  eyebrow?: React.ReactNode;
-  header?: React.ReactNode;
-  title?: React.ReactNode;
-  headerActions?: React.ReactNode;
-  filters?: React.ReactNode;
-  actions?: React.ReactNode;
-  children?: React.ReactNode;
-};
-
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { eyebrow, header, title, headerActions, filters, actions, children } = props;
-  return (
-    <div data-testid='list-panel'>
-      {eyebrow}
-      {header}
-      <div>{title}</div>
-      {headerActions}
-      {filters}
-      {actions}
-      {children}
-    </div>
-  );
-}
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
 vi.mock('next/navigation', () => ({
+
   useSearchParams: mocks.useSearchParamsMock,
   usePathname: mocks.usePathnameMock,
 }));

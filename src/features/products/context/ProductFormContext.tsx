@@ -8,15 +8,9 @@ import {
   warnNonHydratedEditProduct,
 } from '@/features/products/hooks/editingProductHydration';
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
-import { ProductParameterValue } from '@/shared/contracts/products/product';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
-import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
-import {
-  normalizeParameterValuesByLanguage,
-  resolveStoredParameterValue,
-} from '@/shared/lib/products/utils/parameter-values';
 
 import {
   ProductFormCoreProvider,
@@ -34,113 +28,7 @@ import {
   useProductFormParameters,
 } from './ProductFormParameterContext';
 import { ProductFormStudioProvider, useProductFormStudio } from './ProductFormStudioContext';
-import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
-
-type ComparableParameterValue = {
-  parameterId: string;
-  value: string;
-  valuesByLanguage?: Record<string, string>;
-};
-
-type ComparableCustomFieldValue = {
-  fieldId: string;
-  textValue?: string | null;
-  selectedOptionIds?: string[];
-};
-
-type NonFormComparableState = {
-  selectedCatalogIds: string[];
-  selectedCategoryId: string | null;
-  selectedTagIds: string[];
-  selectedProducerIds: string[];
-  selectedNoteIds: string[];
-  customFieldValues: ComparableCustomFieldValue[];
-  parameterValues: ComparableParameterValue[];
-  imageSlots: string[];
-  imageLinks: string[];
-  imageBase64s: string[];
-};
-
-const normalizeComparableString = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim();
-};
-
-const normalizeComparableStringList = (values: ReadonlyArray<unknown>): string[] => {
-  const unique = new Set<string>();
-  values.forEach((value: unknown) => {
-    const normalized = normalizeComparableString(value);
-    if (!normalized) return;
-    unique.add(normalized);
-  });
-  return Array.from(unique);
-};
-
-const normalizeComparableNullableString = (value: unknown): string | null => {
-  const normalized = normalizeComparableString(value);
-  return normalized || null;
-};
-
-const normalizeComparableParameterValues = (
-  input: ProductParameterValue[]
-): ComparableParameterValue[] => {
-  return input
-    .map((entry: ProductParameterValue): ComparableParameterValue => {
-      const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
-      const directValue = normalizeComparableString(entry.value);
-      const normalizedParameterId = decodeSimpleParameterStorageId(
-        normalizeComparableString(entry.parameterId)
-      );
-      return {
-        parameterId: normalizedParameterId || '',
-        value: resolveStoredParameterValue(valuesByLanguage, directValue),
-        ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
-      };
-    })
-    .filter((entry: ComparableParameterValue): boolean => entry.parameterId.length > 0);
-};
-
-const normalizeComparableCustomFieldValues = (
-  input: ComparableCustomFieldValue[]
-): ComparableCustomFieldValue[] =>
-  normalizeProductCustomFieldValues(input).map(
-    (entry: ComparableCustomFieldValue): ComparableCustomFieldValue => ({
-      fieldId: entry.fieldId,
-      ...(typeof entry.textValue === 'string' ? { textValue: entry.textValue } : {}),
-      ...(Array.isArray(entry.selectedOptionIds)
-        ? { selectedOptionIds: entry.selectedOptionIds }
-        : {}),
-    })
-  );
-
-const toComparableImageSlot = (slot: unknown): string => {
-  if (!slot || typeof slot !== 'object') return '';
-  const slotRecord = slot as { type?: unknown; data?: unknown };
-  if (slotRecord.type === 'existing') {
-    const existingRecord =
-      slotRecord.data && typeof slotRecord.data === 'object'
-        ? (slotRecord.data as Record<string, unknown>)
-        : {};
-    return `existing:${normalizeComparableString(existingRecord['id'])}`;
-  }
-  const fileRecord =
-    slotRecord.data && typeof slotRecord.data === 'object'
-      ? (slotRecord.data as Record<string, unknown>)
-      : {};
-  const sizeValue = fileRecord['size'];
-  const lastModifiedValue = fileRecord['lastModified'];
-  return [
-    'file',
-    normalizeComparableString(fileRecord['name']),
-    typeof sizeValue === 'number' && Number.isFinite(sizeValue) ? String(sizeValue) : '0',
-    normalizeComparableString(fileRecord['type']),
-    typeof lastModifiedValue === 'number' && Number.isFinite(lastModifiedValue)
-      ? String(lastModifiedValue)
-      : '0',
-  ].join(':');
-};
-
-const serializeComparableState = (value: NonFormComparableState): string => JSON.stringify(value);
+import { serializeNonFormComparableState } from './ProductFormContext.dirty-tracking';
 
 export type ProductFormSubmitContextType = {
   handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
@@ -274,32 +162,33 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
   const lastEntityIdentityRef = useRef<string>('');
   const lastUploadSuccessRef = useRef<boolean>(false);
 
-  const nonFormComparableKey = useMemo(() => {
-    const comparableState: NonFormComparableState = {
-      selectedCatalogIds: normalizeComparableStringList(selectedCatalogIds),
-      selectedCategoryId: normalizeComparableNullableString(selectedCategoryId),
-      selectedTagIds: normalizeComparableStringList(selectedTagIds),
-      selectedProducerIds: normalizeComparableStringList(selectedProducerIds),
-      selectedNoteIds: normalizeComparableStringList(selectedNoteIds),
-      customFieldValues: normalizeComparableCustomFieldValues(customFieldValues),
-      parameterValues: normalizeComparableParameterValues(parameterValues),
-      imageSlots: imageSlots.map(toComparableImageSlot),
-      imageLinks: imageLinks.map((value: string) => normalizeComparableString(value)),
-      imageBase64s: imageBase64s.map((value: string) => normalizeComparableString(value)),
-    };
-    return serializeComparableState(comparableState);
-  }, [
-    imageBase64s,
-    imageLinks,
-    imageSlots,
+  const nonFormComparableKey = useMemo(
+    () =>
+      serializeNonFormComparableState({
+        selectedCatalogIds,
+        selectedCategoryId,
+        selectedTagIds,
+        selectedProducerIds,
+        selectedNoteIds,
+        customFieldValues,
+        parameterValues,
+        imageSlots,
+        imageLinks,
+        imageBase64s,
+      }),
+    [
+      imageBase64s,
+      imageLinks,
+      imageSlots,
     customFieldValues,
     parameterValues,
     selectedCatalogIds,
-    selectedCategoryId,
-    selectedNoteIds,
-    selectedProducerIds,
-    selectedTagIds,
-  ]);
+      selectedCategoryId,
+      selectedNoteIds,
+      selectedProducerIds,
+      selectedTagIds,
+    ]
+  );
 
   const [nonFormBaselineKey, setNonFormBaselineKey] = useState<string>(nonFormComparableKey);
 

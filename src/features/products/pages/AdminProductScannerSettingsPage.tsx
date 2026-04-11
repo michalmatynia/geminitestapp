@@ -9,7 +9,7 @@ import { useUpdateSetting, useSettingsMap } from '@/shared/hooks/use-settings';
 import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
 import { Button } from '@/shared/ui/button';
 import { FormActions, FormField, FormSection, SelectSimple, Hint } from '@/shared/ui/forms-and-actions.public';
-import { useToast } from '@/shared/ui/primitives.public';
+import { Input, useToast } from '@/shared/ui/primitives.public';
 import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/layout';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -17,6 +17,7 @@ import {
   buildPersistedProductScannerSettings,
   buildProductScannerSettingsDraft,
   PRODUCT_SCANNER_BROWSER_OPTIONS,
+  PRODUCT_SCANNER_CAPTCHA_BEHAVIOR_OPTIONS,
   PRODUCT_SCANNER_SETTINGS_KEY,
   parseProductScannerSettings,
   resolveProductScannerSettingsBaseline,
@@ -25,6 +26,11 @@ import {
 } from '../scanner-settings';
 
 const CUSTOM_PERSONA_VALUE = 'custom';
+
+const toPositiveInteger = (value: string, fallback: number): number => {
+  const normalized = Number.parseInt(value, 10);
+  return Number.isFinite(normalized) && normalized > 0 ? normalized : fallback;
+};
 
 export function AdminProductScannerSettingsPage(): React.JSX.Element {
   const settingsQuery = useSettingsMap({ scope: 'light' });
@@ -159,6 +165,47 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 placeholder='Select browser'
                 ariaLabel='Select scanner browser'
                 title='Select scanner browser'
+              />
+            </FormField>
+            <FormField
+              label='Captcha Handling'
+              description='Choose whether Google Lens captcha pages should reopen in a visible browser and wait for manual resolution.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.captchaBehavior}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    captchaBehavior: value === 'fail' ? 'fail' : 'auto_show_browser',
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_CAPTCHA_BEHAVIOR_OPTIONS]}
+                placeholder='Select captcha handling'
+                ariaLabel='Select scanner captcha handling'
+                title='Select scanner captcha handling'
+              />
+            </FormField>
+            <FormField
+              label='Manual Verification Timeout (ms)'
+              description='How long a visible-browser scan should wait for captcha resolution before failing.'
+            >
+              <Input
+                type='number'
+                min={1}
+                step={1}
+                value={draft.manualVerificationTimeoutMs}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    manualVerificationTimeoutMs: toPositiveInteger(
+                      event.target.value,
+                      prev.manualVerificationTimeoutMs
+                    ),
+                  }));
+                }}
+                aria-label='Manual verification timeout (ms)'
+                title='Manual verification timeout (ms)'
               />
             </FormField>
           </div>

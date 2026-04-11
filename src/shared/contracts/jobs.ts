@@ -338,7 +338,8 @@ export type ProductAiJobEnqueueResponse = ProductAiJobEnqueueResponseDto;
  * Product AI Job Repository Types
  */
 
-export type ProductAiJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
+import { type Status as ProductAiJobStatus } from './base';
+export type { ProductAiJobStatus };
 
 export type ProductAiJobRecord = {
   id: string;

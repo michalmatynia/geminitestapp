@@ -2,6 +2,10 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import {
+  getStarterWorkflowTemplateById,
+  materializeStarterWorkflowPathConfig,
+} from '@/shared/lib/ai-paths/core/starter-workflows';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import { authError } from '@/shared/errors/app-error';
 import {
@@ -16,6 +20,7 @@ const {
   requireAiPathsRunAccessMock,
   upsertAiPathsSettingsMock,
   upsertAiPathsSettingMock,
+  captureExceptionMock,
 } = vi.hoisted(() => ({
   getAllAiPathsSettingsMock: vi.fn(),
   getAiPathsSettingMock: vi.fn(),
@@ -23,6 +28,7 @@ const {
   requireAiPathsRunAccessMock: vi.fn(),
   upsertAiPathsSettingsMock: vi.fn(),
   upsertAiPathsSettingMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -35,6 +41,12 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 vi.mock('@/features/ai/ai-paths/server/settings-store', () => ({
   getAllAiPathsSettings: getAllAiPathsSettingsMock,
   upsertAiPathsSettings: upsertAiPathsSettingsMock,
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
 }));
 
 import { GET_handler, POST_handler } from './handler';
@@ -691,6 +703,82 @@ describe('ai-paths trigger-buttons GET handler', () => {
     expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
     expect(body).toEqual([]);
+  });
+
+  it('silences recoverable non-canonical starter configs while keeping the bound trigger hidden', async () => {
+    const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
+    if (!template) {
+      throw new Error('Missing starter_product_name_normalize template');
+    }
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path_name_normalize_v1',
+      seededDefault: true,
+    });
+    const randomIdConfig = {
+      ...config,
+      nodes: (config.nodes ?? []).map((node, index) => ({
+        ...node,
+        id: `node-normalize-random-${index + 1}`,
+      })),
+      edges: (config.edges ?? []).map((edge, index) => {
+        const fromIndex = (config.nodes ?? []).findIndex((node) => node.id === edge.from);
+        const toIndex = (config.nodes ?? []).findIndex((node) => node.id === edge.to);
+        return {
+          ...edge,
+          id: `edge-normalize-random-${index + 1}`,
+          from: fromIndex >= 0 ? `node-normalize-random-${fromIndex + 1}` : edge.from,
+          to: toIndex >= 0 ? `node-normalize-random-${toIndex + 1}` : edge.to,
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'product_name_normalize',
+          templateId: 'starter_product_name_normalize',
+          templateVersion: 3,
+          seededDefault: true,
+        },
+      },
+    };
+
+    getAllAiPathsSettingsMock.mockResolvedValue(
+      createSettingsSnapshot({
+        triggerButtons: [
+          {
+            id: 'btn-normalize',
+            name: 'Normalize',
+            iconId: null,
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            locations: ['product_modal'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+        ],
+        pathMetas: [
+          {
+            id: 'path_name_normalize_v1',
+            name: 'Normalize',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ],
+        configs: {
+          path_name_normalize_v1: JSON.stringify(randomIdConfig),
+        },
+      })
+    );
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([]);
+    expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 
   it('POST rejects missing bound AI Paths', async () => {

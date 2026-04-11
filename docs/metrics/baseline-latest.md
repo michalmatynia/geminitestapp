@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-11T14:40:31.111Z
+Generated at: 2026-04-11T15:56:52.015Z
 
 ## Snapshot
 
-- Source files: 10291
-- Source lines: 1696277
+- Source files: 10295
+- Source lines: 1697479
 - use client files: 1752
-- Files >= 1000 LOC: 0
+- Files >= 1000 LOC: 1
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/ai/ai-paths/services/playwright-node-runner.ts` (992 LOC)
+- Largest file: `src/features/products/server/product-scans-service.ts` (1069 LOC)
 - API routes: 30
 - API delegated server routes: 185
 - API routes without apiHandler/delegation: 0
@@ -25,8 +25,8 @@ Generated at: 2026-04-11T14:40:31.111Z
 - Cross-feature dependency pairs: 2
 - Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 229
-- Prop-drilling chains (depth >= 4): 66
+- Prop-drilling chains (depth >= 3): 88
+- Prop-drilling chains (depth >= 4): 0
 
 ## Top API Hotspots (by LOC)
 
@@ -60,12 +60,13 @@ Generated at: 2026-04-11T14:40:31.111Z
 | File | LOC |
 | --- | ---: |
 | `src/features/integrations/services/tradera-listing/browser.test.ts` | 4416 |
-| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 1867 |
-| `src/features/products/server/product-scans-service.test.ts` | 1732 |
+| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 1937 |
+| `src/features/products/server/product-scans-service.test.ts` | 1892 |
 | `src/features/products/components/ProductModals.test.tsx` | 1552 |
-| `src/features/products/components/list/ProductColumns.test.tsx` | 1286 |
+| `src/features/products/components/list/ProductColumns.test.tsx` | 1302 |
 | `src/features/integrations/services/tradera-listing-service.test.ts` | 1130 |
 | `src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts` | 1095 |
+| `src/features/products/server/product-scans-service.ts` | 1069 |
 | `src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx` | 1055 |
 | `src/shared/lib/products/services/productService.test.ts` | 1048 |
 | `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1037 |
@@ -78,4 +79,3 @@ Generated at: 2026-04-11T14:40:31.111Z
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
 | `src/app/api/settings/handler.ts` | 983 |
-| `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx` | 982 |

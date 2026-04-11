@@ -61,6 +61,25 @@ const STATUS_CLASSES: Record<ScanModalRow['status'], string> = {
   failed: 'border-destructive/40 text-destructive',
 };
 
+const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'> | null): boolean => {
+  const rawResult = scan?.rawResult;
+  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
+    return false;
+  }
+
+  return (rawResult as any)['manualVerificationPending'] === true;
+};
+
+const resolveRowStatusLabel = (row: ScanModalRow): string =>
+  row.status === 'running' && isManualVerificationPending(row.scan)
+    ? 'Captcha'
+    : STATUS_LABELS[row.status];
+
+const resolveRowStatusClassName = (row: ScanModalRow): string =>
+  row.status === 'running' && isManualVerificationPending(row.scan)
+    ? 'border-amber-500/40 text-amber-300'
+    : STATUS_CLASSES[row.status];
+
 const MISSING_BATCH_RESULT_MESSAGE = 'Amazon scan request did not return a result for this product.';
 const MISSING_SCAN_RECORD_MESSAGE = 'Amazon scan record could not be refreshed.';
 const UNTRACKABLE_ACTIVE_SCAN_MESSAGE =
@@ -474,8 +493,9 @@ export function ProductAmazonScanModal(
           scan?.status === 'completed'
             ? (scan.asinUpdateMessage ?? null)
             : scan && isProductScanActiveStatus(scan.status)
-              ? resolveActiveStatusMessage(scan.status, row.message)
-            : scan && isProductScanTerminalStatus(scan.status)
+              ? (scan.asinUpdateMessage ??
+                resolveActiveStatusMessage(scan.status, row.message))
+              : scan && isProductScanTerminalStatus(scan.status)
               ? null
               : row.message,
         scan,
@@ -820,10 +840,10 @@ export function ProductAmazonScanModal(
                     <div className='flex flex-wrap items-center gap-2'>
                       <span className='text-sm font-medium'>{row.productName}</span>
                       <span
-                        className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${STATUS_CLASSES[row.status]}`}
+                        className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${resolveRowStatusClassName(row)}`}
                       >
                         {row.status === 'running' ? <Loader2 className='mr-1 h-3 w-3 animate-spin' /> : null}
-                        {STATUS_LABELS[row.status]}
+                        {resolveRowStatusLabel(row)}
                       </span>
                     </div>
                     <span className='text-xs text-muted-foreground'>

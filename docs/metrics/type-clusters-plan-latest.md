@@ -8,7 +8,7 @@ canonical: true
 ---
 # Type Cluster Consolidation Plan
 
-Generated at: 2026-04-11T14:58:40.369Z
+Generated at: 2026-04-11T15:52:10.181Z
 
 ## Prioritized Worklist
 

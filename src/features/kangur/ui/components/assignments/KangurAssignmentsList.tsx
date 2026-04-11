@@ -84,15 +84,14 @@ type KangurAssignmentsListProgressMetaProps = {
 
 type KangurAssignmentsListShellProps = {
   emptyStateDescription: string;
-  summary?: string;
-  title: string;
-  translations: ReturnType<typeof useTranslations<'KangurAssignmentsList'>>;
 };
 
 type KangurAssignmentsListLayoutContextValue = {
   compact: boolean;
   items: KangurAssignmentListItem[];
   showTimeCountdown: boolean;
+  summary?: string;
+  title: string;
 };
 
 const KangurAssignmentsListItemContext = createContext<KangurAssignmentsListItemContextValue | null>(
@@ -106,6 +105,8 @@ const KangurAssignmentsListLayoutContext =
   createContext<KangurAssignmentsListLayoutContextValue | null>(null);
 const KangurAssignmentsListRuntimeContext =
   createContext<KangurAssignmentsListRuntimeContextValue | null>(null);
+const KangurAssignmentsListTranslationsContext =
+  createContext<ReturnType<typeof useTranslations<'KangurAssignmentsList'>> | null>(null);
 
 function useKangurAssignmentsListLayout(): KangurAssignmentsListLayoutContextValue {
   const context = useContext(KangurAssignmentsListLayoutContext);
@@ -122,6 +123,18 @@ function useKangurAssignmentsListItem(): KangurAssignmentListItem {
   }
   return context.item;
 }
+
+const useKangurAssignmentsListTranslations = (): ReturnType<
+  typeof useTranslations<'KangurAssignmentsList'>
+> => {
+  const context = useContext(KangurAssignmentsListTranslationsContext);
+  if (!context) {
+    throw new Error(
+      'useKangurAssignmentsListTranslations must be used within KangurAssignmentsList.'
+    );
+  }
+  return context;
+};
 
 const useKangurAssignmentsListArchive = (): KangurAssignmentsListArchiveContextValue => {
   return useContext(KangurAssignmentsListArchiveContext) ?? {};
@@ -353,11 +366,9 @@ function KangurAssignmentsListArchiveAction({
 
 function KangurAssignmentsListShell({
   emptyStateDescription,
-  summary,
-  title,
-  translations,
 }: KangurAssignmentsListShellProps): React.JSX.Element {
-  const { compact, items } = useKangurAssignmentsListLayout();
+  const { compact, items, summary, title } = useKangurAssignmentsListLayout();
+  const translations = useKangurAssignmentsListTranslations();
   const CardComponent = compact ? KangurAssignmentsListCompactCard : KangurAssignmentsListStandardCard;
   const countLabel = formatAssignmentCountLabel(items.length, translations);
   const shellSurface = compact ? 'mist' : 'mistStrong';
@@ -412,7 +423,7 @@ function KangurAssignmentsListShell({
 
 function KangurAssignmentsListCompactCard(): React.JSX.Element {
   const locale = useLocale();
-  const translations = useTranslations('KangurAssignmentsList');
+  const translations = useKangurAssignmentsListTranslations();
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
@@ -502,7 +513,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
 
 function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const locale = useLocale();
-  const translations = useTranslations('KangurAssignmentsList');
+  const translations = useKangurAssignmentsListTranslations();
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
@@ -640,8 +651,10 @@ export function KangurAssignmentsList({
       compact,
       items,
       showTimeCountdown,
+      summary,
+      title,
     }),
-    [compact, items, showTimeCountdown]
+    [compact, items, showTimeCountdown, summary, title]
   );
 
   useEffect(() => {
@@ -661,12 +674,11 @@ export function KangurAssignmentsList({
       <KangurAssignmentsListActionContext.Provider value={actionContextValue}>
         <KangurAssignmentsListArchiveContext.Provider value={archiveContextValue}>
           <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
-            <KangurAssignmentsListShell
-              emptyStateDescription={emptyStateDescription}
-              summary={summary}
-              title={title}
-              translations={translations}
-            />
+            <KangurAssignmentsListTranslationsContext.Provider value={translations}>
+              <KangurAssignmentsListShell
+                emptyStateDescription={emptyStateDescription}
+              />
+            </KangurAssignmentsListTranslationsContext.Provider>
           </KangurAssignmentsListRuntimeContext.Provider>
         </KangurAssignmentsListArchiveContext.Provider>
       </KangurAssignmentsListActionContext.Provider>

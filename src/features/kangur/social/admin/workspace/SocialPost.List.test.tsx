@@ -12,24 +12,10 @@ const { useSocialPostContextMock, useKangurSocialPostsPageMock } = vi.hoisted(()
   useKangurSocialPostsPageMock: vi.fn(),
 }));
 
-type ListPanelMockProps = {
-  header?: React.ReactNode;
-  children?: React.ReactNode;
-  isLoading?: boolean;
-  loadingMessage?: string;
-};
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { header, children, isLoading, loadingMessage } = props;
-  return (
-    <div>
-      {header}
-      {isLoading ? <div role='status'>{loadingMessage ?? 'Loading...'}</div> : children}
-    </div>
-  );
-}
+vi.mock('@/shared/ui/list-panel', () => ({
 
-vi.mock('@/features/kangur/shared/ui', () => ({
   ActionMenu: ({
     ariaLabel,
     children,

@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -48,41 +43,32 @@ export type {
   GraphState,
 } from './GraphContext.shared';
 
+const createGraphStrictContext = <T,>(hookName: string) =>
+  createStrictContext<T>({
+    hookName,
+    providerName: 'a GraphProvider',
+    errorFactory: internalError,
+  });
+
 const {
   Context: GraphDataStateContext,
   useStrictContext: useGraphDataState,
-} = createStrictContext<GraphDataState>({
-  hookName: 'useGraphDataState',
-  providerName: 'a GraphProvider',
-  errorFactory: internalError,
-});
+} = createGraphStrictContext<GraphDataState>('useGraphDataState');
 
 const {
   Context: PathMetadataStateContext,
   useStrictContext: usePathMetadataState,
-} = createStrictContext<PathMetadataState>({
-  hookName: 'usePathMetadataState',
-  providerName: 'a GraphProvider',
-  errorFactory: internalError,
-});
+} = createGraphStrictContext<PathMetadataState>('usePathMetadataState');
 
 const {
   Context: GraphActionsContext,
   useStrictContext: useGraphActions,
-} = createStrictContext<GraphActions>({
-  hookName: 'useGraphActions',
-  providerName: 'a GraphProvider',
-  errorFactory: internalError,
-});
+} = createGraphStrictContext<GraphActions>('useGraphActions');
 
 const {
   Context: GraphStateContext,
   useStrictContext: useGraphState,
-} = createStrictContext<GraphState>({
-  hookName: 'useGraphState',
-  providerName: 'a GraphProvider',
-  errorFactory: internalError,
-});
+} = createGraphStrictContext<GraphState>('useGraphState');
 
 export { useGraphDataState, usePathMetadataState, useGraphState, useGraphActions };
 

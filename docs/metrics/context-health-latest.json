@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-04-11T14:55:44.151Z",
-  "status": "warn",
+  "generatedAt": "2026-04-11T16:18:14.475Z",
+  "status": "passed",
   "summary": {
-    "total": 15,
+    "total": 9,
     "errorCount": 0,
-    "warningCount": 6,
+    "warningCount": 0,
     "infoCount": 9,
-    "status": "warn",
+    "status": "passed",
     "contextFileCount": 263
   },
   "scope": {
@@ -18,66 +18,6 @@
     "oversizedLocThreshold": 500
   },
   "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 502 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsPageContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 511 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/ai/ai-paths/context/GraphContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 568 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/ai/ai-paths/context/RuntimeContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 627 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/integrations/context/CategoryMapperContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 542 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/products/context/ProductFormContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-generic-error",
-      "message": "Context uses generic `throw new Error()`. Consider using a structured AppError for better error tracking.",
-      "file": "src/features/products/context/ProductImagePreviewContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
     {
       "severity": "info",
       "ruleId": "context-missing-split",
@@ -171,23 +111,11 @@
   ],
   "rules": [
     {
-      "ruleId": "context-oversized",
-      "errorCount": 0,
-      "warningCount": 5,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "context-generic-error",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    },
-    {
       "ruleId": "context-missing-split",
       "errorCount": 0,
       "warningCount": 0,
       "infoCount": 9
     }
   ],
-  "durationMs": 472
+  "durationMs": 475
 }

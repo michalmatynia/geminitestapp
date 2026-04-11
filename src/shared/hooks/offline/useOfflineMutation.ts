@@ -16,7 +16,11 @@ import { useCallback } from 'react';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 import { useToast } from '@/shared/ui/primitives.public';
-import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+  logClientEvent,
+} from '@/shared/utils/observability/client-error-logger';
 
 interface QueuedMutation {
   id: string;
@@ -42,6 +46,13 @@ class OfflineMutationQueue {
     if (this.isProcessing || this.queue.length === 0) return;
 
     this.isProcessing = true;
+    const initialQueueLength = this.queue.length;
+
+    logClientEvent({
+      level: 'info',
+      message: `Processing offline mutation queue (${initialQueueLength} items)`,
+      context: { source: 'offline-queue', action: 'process-start', queueLength: initialQueueLength },
+    });
 
     while (this.queue.length > 0) {
       const mutation = this.queue.shift();
@@ -49,6 +60,11 @@ class OfflineMutationQueue {
 
       try {
         await mutation.mutationFn();
+        logClientEvent({
+          level: 'info',
+          message: `Successfully processed offline mutation: ${mutation.id}`,
+          context: { source: 'offline-queue', action: 'processed-item', mutationId: mutation.id, queryKey: mutation.queryKey },
+        });
         void queryClient.invalidateQueries({ queryKey: mutation.queryKey });
         if (mutation.invalidateKeys) {
           mutation.invalidateKeys.forEach((key: readonly unknown[]) => {

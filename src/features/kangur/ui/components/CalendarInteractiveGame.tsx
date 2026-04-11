@@ -529,13 +529,7 @@ function CalendarInteractiveRoundView(): React.JSX.Element {
   );
 }
 
-function CalendarInteractiveGameContent({
-  onFinish,
-  stage,
-}: {
-  onFinish?: () => void;
-  stage?: { onFinish: () => void };
-}): React.JSX.Element {
+function CalendarInteractiveGameContent(): React.JSX.Element {
   const {
     translations,
     score,
@@ -544,6 +538,8 @@ function CalendarInteractiveGameContent({
     handleNext,
     handleRestart,
     TOTAL_ROUNDS,
+    onFinish,
+    stage,
   } = useCalendarInteractiveContext();
 
   const handleFinish = onFinish ?? stage?.onFinish ?? (() => undefined);
@@ -582,10 +578,7 @@ function CalendarInteractiveGameContent({
 export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): React.JSX.Element {
   return (
     <CalendarInteractiveProvider {...props}>
-      <CalendarInteractiveGameContent
-        onFinish={props.onFinish}
-        stage={props.stage}
-      />
+      <CalendarInteractiveGameContent />
     </CalendarInteractiveProvider>
   );
 }

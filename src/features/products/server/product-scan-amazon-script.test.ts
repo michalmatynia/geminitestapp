@@ -101,4 +101,105 @@ describe('product-scan-amazon-script', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('uploadedCandidateCount === 0 && lastUploadError');
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("stage: 'google_upload'");
   });
+
+  it('detects Google Lens captcha pages and supports manual verification waiting', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const allowManualVerification = input?.allowManualVerification === true;'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const manualVerificationTimeoutMs ='
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "const detectGoogleLensCaptcha = async () => {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'unusual traffic'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'iframe[src*=\"recaptcha\"]'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("status: 'captcha_required'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'Solve it in the opened browser window and the scan will continue automatically.'
+    );
+  });
+
+  it('dismisses Amazon cookie and delivery overlays before extraction', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const dismissAmazonOverlaysIfPresent = async () => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const AMAZON_PRODUCT_CONTENT_SELECTORS = ['
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const readVisibleBodyText = async () =>'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'#productTitle'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'input#ASIN'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'#sp-cc-accept'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'button:has-text(\"Accept\")'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'#glow-toaster button:has-text(\"Dismiss\")'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      `"we're showing you items that dispatch to poland"`
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "'select your cookie preferences'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('return node.innerText;');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('await locator.scrollIntoViewIfNeeded()');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('element.click();');
+  });
+
+  it('does not treat the delivery banner as blocking when Amazon product content is already visible', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('productContentReady');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      '(!state.addressVisible || state.productContentReady)'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      '(!finalState.addressVisible || finalState.productContentReady)'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "Amazon page remained blocked before product content became available."
+    );
+  });
+
+  it('waits briefly for Amazon product content after overlays clear', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const waitForAmazonProductContent = async () => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const productContentReady = await waitForAmazonProductContent();'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('Promise.any(');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('AMAZON_PRODUCT_CONTENT_SELECTORS.map');
+  });
+
+  it('treats missing Amazon product content as an extraction failure instead of no_match', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('if (!productContentReady) {');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "Amazon product content did not become available after overlays were cleared."
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("stage: 'amazon_content_unavailable'");
+  });
+
+  it('treats persistent Amazon overlays as a candidate-level extraction failure', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "const overlayState = await dismissAmazonOverlaysIfPresent();"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("stage: 'amazon_overlay_blocked'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "Amazon page remained blocked by overlays."
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "log('amazon.scan.amazon_overlay_blocked', {"
+    );
+  });
+
+  it('emits structured scan steps and running progress snapshots', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('const scanSteps = [];');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('const upsertScanStep = (input) => {');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("steps: scanSteps.map((step) => ({ ...step }))");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("status: 'running'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("key: 'validate'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("key: 'google_upload'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("key: 'google_candidates'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("key: 'amazon_overlays'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("key: 'amazon_extract'");
+  });
 });

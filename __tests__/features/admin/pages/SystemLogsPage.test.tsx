@@ -10,22 +10,10 @@ import {
 } from '@/shared/lib/observability/context/SystemLogsContext';
 import SystemLogsPage from '@/shared/lib/observability/components/system-logs/SystemLogsPage';
 
-type ListPanelMockProps = {
-  children?: React.ReactNode;
-  header?: React.ReactNode;
-};
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { children, header } = props;
-  return (
-    <div data-testid='mock-list-panel'>
-      <div data-testid='mock-list-panel-header'>{header}</div>
-      <div data-testid='mock-list-panel-children'>{children}</div>
-    </div>
-  );
-}
+vi.mock('@/shared/ui/list-panel', () => ({
 
-// Mock next/navigation
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
   usePathname: vi.fn(() => '/'),

@@ -33,6 +33,8 @@ import {
   PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM,
   shouldIncludePlaywrightAiPathsFixtureButtons,
 } from '@/shared/lib/ai-paths/playwright-fixture-scope';
+import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
+import { getStaticRecoveryStarterWorkflowEntryByDefaultPathId } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -81,6 +83,37 @@ const isMalformedPathIndexPayload = (raw: string | null): boolean => {
   }
 };
 
+const shouldSilenceRecoverableStarterPathConfigError = (args: {
+  pathId: string;
+  rawConfig: string;
+  error: unknown;
+}): boolean => {
+  if (
+    !isAppError(args.error) ||
+    args.error.code !== AppErrorCodes.validation ||
+    args.error.meta?.['source'] !== 'ai_paths.path_config' ||
+    args.error.meta?.['reason'] !== 'non_canonical_persisted_values'
+  ) {
+    return false;
+  }
+  if (!getStaticRecoveryStarterWorkflowEntryByDefaultPathId(args.pathId)) {
+    return false;
+  }
+
+  try {
+    materializeStoredTriggerPathConfig({
+      pathId: args.pathId,
+      rawConfig: args.rawConfig,
+      fallbackName: args.pathId,
+      applyStarterWorkflowUpgrade: true,
+      allowStaticRecoveryFallback: true,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const filterButtonsWithExistingPaths = async (
   buttons: AiTriggerButtonRecord[],
   settingsSnapshot?: Map<string, string>
@@ -118,8 +151,17 @@ const filterButtonsWithExistingPaths = async (
         });
         validButtonIds.add(button.id);
       } catch (error) {
+        if (
+          shouldSilenceRecoverableStarterPathConfigError({
+            pathId,
+            rawConfig,
+            error,
+          })
+        ) {
+          return;
+        }
         void ErrorSystem.captureException(error);
-      
+
         // Hide buttons bound to malformed or otherwise invalid path configs.
       }
     })

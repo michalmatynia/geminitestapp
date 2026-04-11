@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   useProductFormCoreMock: vi.fn(),
   apiGetMock: vi.fn(),
   invalidateProductsCountsAndDetailMock: vi.fn().mockResolvedValue(undefined),
+  productAmazonScanModalMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
@@ -26,6 +27,20 @@ vi.mock('@/shared/lib/api-client', () => ({
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateProductsCountsAndDetail: (...args: unknown[]) =>
     mocks.invalidateProductsCountsAndDetailMock(...args),
+}));
+
+vi.mock('@/features/products/components/list/ProductAmazonScanModal', () => ({
+  ProductAmazonScanModal: (props: {
+    isOpen: boolean;
+    productIds: string[];
+    products: Array<{ id: string }>;
+    onClose: () => void;
+  }) => {
+    mocks.productAmazonScanModalMock(props);
+    return props.isOpen ? (
+      <div data-testid='product-amazon-scan-modal'>{props.productIds.join(',')}</div>
+    ) : null;
+  },
 }));
 
 vi.mock('next/link', () => ({
@@ -213,6 +228,54 @@ describe('ProductFormScans', () => {
     expect(await screen.findByText('Amazon reverse image scan running.')).toBeInTheDocument();
   });
 
+  it('shows a captcha badge and guidance when manual verification is pending', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-3b',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-3b',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          rawResult: {
+            manualVerificationPending: true,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage:
+            'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Captcha')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('shows a scanner settings shortcut that links to the global settings page', async () => {
     mocks.apiGetMock.mockResolvedValue({
       scans: [],
@@ -226,6 +289,100 @@ describe('ProductFormScans', () => {
 
     const link = await screen.findByRole('link', { name: 'Scanner settings' });
     expect(link).toHaveAttribute('href', '/admin/settings/scanner');
+  });
+
+  it('opens the Amazon scan modal for the current product from the Scans tab', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Scan Amazon' }));
+
+    expect(await screen.findByTestId('product-amazon-scan-modal')).toHaveTextContent('product-1');
+    expect(mocks.productAmazonScanModalMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+        productIds: ['product-1'],
+        products: [expect.objectContaining({ id: 'product-1' })],
+      })
+    );
+  });
+
+  it('shows and hides persisted scan steps for a scan entry', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-steps-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'completed',
+          productName: 'Product 1',
+          engineRunId: 'run-steps-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: 'B000123456',
+          title: 'Amazon title',
+          price: '$10.99',
+          url: 'https://www.amazon.com/dp/B000123456',
+          description: 'Amazon description',
+          steps: [
+            {
+              key: 'google_upload',
+              label: 'Upload image to Google Lens',
+              status: 'completed',
+              message: 'Uploaded image image-1 to Google Lens.',
+              url: 'https://lens.google.com/search',
+              startedAt: '2026-04-11T04:00:00.000Z',
+              completedAt: '2026-04-11T04:00:02.000Z',
+            },
+            {
+              key: 'amazon_extract',
+              label: 'Extract Amazon details',
+              status: 'completed',
+              message: 'Extracted Amazon ASIN B000123456.',
+              url: 'https://www.amazon.com/dp/B000123456',
+              startedAt: '2026-04-11T04:00:03.000Z',
+              completedAt: '2026-04-11T04:00:04.000Z',
+            },
+          ],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'updated',
+          asinUpdateMessage: 'Product ASIN filled from Amazon scan.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T04:00:05.000Z',
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:05.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Show steps' }));
+
+    expect(await screen.findByText('Upload image to Google Lens')).toBeInTheDocument();
+    expect(screen.getByText('Uploaded image image-1 to Google Lens.')).toBeInTheDocument();
+    expect(screen.getByText('Extract Amazon details')).toBeInTheDocument();
+    expect(screen.getByText('Extracted Amazon ASIN B000123456.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide steps' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Upload image to Google Lens')).not.toBeInTheDocument();
+    });
   });
 
   it('keeps the last scan results visible when a refresh fails after initial load', async () => {

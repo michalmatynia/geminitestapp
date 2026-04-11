@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-11T14:55:41.887Z",
+  "generatedAt": "2026-04-11T16:18:11.492Z",
   "status": "passed",
   "summary": {
-    "total": 11,
+    "total": 13,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 11,
+    "infoCount": 13,
     "status": "passed",
-    "fileCount": 7265
+    "fileCount": 7268
   },
   "scope": {
     "root": "src",
@@ -16,7 +16,7 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 6,
+    "anyCount": 8,
     "eslintDisableCount": 2,
     "nonNullAssertionCount": 3,
     "tsIgnoreCount": 0,
@@ -71,8 +71,28 @@
       "severity": "info",
       "ruleId": "explicit-any",
       "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/products/server/product-scanner-settings.ts",
-      "line": 36,
+      "file": "src/features/products/components/form/ProductFormScans.tsx",
+      "line": 43,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+      "line": 70,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/products/lib/product-scan-run-feedback.ts",
+      "line": 55,
       "column": null,
       "snippet": null,
       "context": null
@@ -149,7 +169,7 @@
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 6
+      "infoCount": 8
     },
     {
       "ruleId": "non-null-assertion",
@@ -158,5 +178,5 @@
       "infoCount": 3
     }
   ],
-  "durationMs": 1846
+  "durationMs": 2734
 }

@@ -16,6 +16,9 @@ export type {
   LabeledOptionWithGroupDto,
   LabeledOptionWithGroup,
   ListResponse,
+  StatusVariant,
+  RequestStatus,
+  AutoSaveStatus,
   IdDataDto,
   OptionalIdDataDto,
 } from '../base';
@@ -166,15 +169,3 @@ export type ToastOptions = {
 };
 
 export type Toast = (message: string, options?: ToastOptions) => void;
-
-export type StatusVariant =
-  | 'pending'
-  | 'active'
-  | 'failed'
-  | 'removed'
-  | 'neutral'
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'processing';

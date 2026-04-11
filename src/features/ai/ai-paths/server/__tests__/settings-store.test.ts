@@ -17,6 +17,7 @@ import {
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 
 const buildEmptyStarterSettings = () => [
   { key: AI_PATHS_INDEX_KEY, value: '[]' },
@@ -708,7 +709,18 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     const nodes = Array.isArray(parsed['nodes'])
       ? (parsed['nodes'] as Array<Record<string, unknown>>)
       : [];
-    const normalizeModelNode = nodes.find((node) => node['id'] === 'node-model-name-normalize');
+    const normalizeModelNode = nodes.find((node) => {
+      if (node['type'] !== 'model') return false;
+      const config =
+        node['config'] && typeof node['config'] === 'object'
+          ? (node['config'] as Record<string, unknown>)
+          : null;
+      const modelConfig =
+        config?.['model'] && typeof config['model'] === 'object'
+          ? (config['model'] as Record<string, unknown>)
+          : null;
+      return modelConfig?.['systemPrompt'] === 'Only return normalized output.';
+    });
     const modelConfig =
       normalizeModelNode?.['config'] &&
       typeof normalizeModelNode['config'] === 'object' &&
@@ -733,5 +745,11 @@ describe('settings-store flag preservation and maintenance-only starter policy',
       })
     );
     expect(starterExtension?.['templateVersion']).not.toBe(2);
+    expect(
+      loadCanonicalStoredPathConfig({
+        pathId: 'path_name_normalize_v1',
+        rawConfig: normalizeRecord.value,
+      }).id
+    ).toBe('path_name_normalize_v1');
   });
 });

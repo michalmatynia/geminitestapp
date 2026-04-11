@@ -169,83 +169,75 @@ export type AiPathsSettingsPageDiagnosticsContextValue = Pick<
   | 'setDataContractInspectorNodeId'
 >;
 
-const { Context: AiPathsSettingsPageContext, useStrictContext: useAiPathsSettingsPageContext } =
-  createStrictContext<AiPathsSettingsPageContextValue>({
-    hookName: 'useAiPathsSettingsPageContext',
+const createAiPathsSettingsPageStrictContext = <T,>(hookName: string, displayName: string) =>
+  createStrictContext<T>({
+    hookName,
     providerName: 'AiPathsSettingsPageProvider',
-    displayName: 'AiPathsSettingsPageContext',
+    displayName,
     errorFactory: internalError,
   });
+
+const { Context: AiPathsSettingsPageContext, useStrictContext: useAiPathsSettingsPageContext } =
+  createAiPathsSettingsPageStrictContext<AiPathsSettingsPageContextValue>(
+    'useAiPathsSettingsPageContext',
+    'AiPathsSettingsPageContext'
+  );
 
 const {
   Context: AiPathsSettingsPageWorkspaceContext,
   useStrictContext: useAiPathsSettingsPageWorkspaceContext,
-} = createStrictContext<AiPathsSettingsPageWorkspaceContextValue>({
-  hookName: 'useAiPathsSettingsPageWorkspaceContext',
-  providerName: 'AiPathsSettingsPageProvider',
-  displayName: 'AiPathsSettingsPageWorkspaceContext',
-  errorFactory: internalError,
-});
+} = createAiPathsSettingsPageStrictContext<AiPathsSettingsPageWorkspaceContextValue>(
+  'useAiPathsSettingsPageWorkspaceContext',
+  'AiPathsSettingsPageWorkspaceContext'
+);
 
 const {
   Context: AiPathsSettingsPageCanvasInteractionsContext,
   useStrictContext: useAiPathsSettingsPageCanvasInteractionsContext,
-} = createStrictContext<AiPathsSettingsPageCanvasInteractionsContextValue>({
-  hookName: 'useAiPathsSettingsPageCanvasInteractionsContext',
-  providerName: 'AiPathsSettingsPageProvider',
-  displayName: 'AiPathsSettingsPageCanvasInteractionsContext',
-  errorFactory: internalError,
-});
+} = createAiPathsSettingsPageStrictContext<AiPathsSettingsPageCanvasInteractionsContextValue>(
+  'useAiPathsSettingsPageCanvasInteractionsContext',
+  'AiPathsSettingsPageCanvasInteractionsContext'
+);
 
 const {
   Context: AiPathsSettingsPagePresetsContext,
   useStrictContext: useAiPathsSettingsPagePresetsContext,
-} = createStrictContext<AiPathsSettingsPagePresetsContextValue>({
-  hookName: 'useAiPathsSettingsPagePresetsContext',
-  providerName: 'AiPathsSettingsPageProvider',
-  displayName: 'AiPathsSettingsPagePresetsContext',
-  errorFactory: internalError,
-});
+} = createAiPathsSettingsPageStrictContext<AiPathsSettingsPagePresetsContextValue>(
+  'useAiPathsSettingsPagePresetsContext',
+  'AiPathsSettingsPagePresetsContext'
+);
 
 const {
   Context: AiPathsSettingsPageRuntimeContext,
   useStrictContext: useAiPathsSettingsPageRuntimeContext,
-} = createStrictContext<AiPathsSettingsPageRuntimeContextValue>({
-  hookName: 'useAiPathsSettingsPageRuntimeContext',
-  providerName: 'AiPathsSettingsPageProvider',
-  displayName: 'AiPathsSettingsPageRuntimeContext',
-  errorFactory: internalError,
-});
+} = createAiPathsSettingsPageStrictContext<AiPathsSettingsPageRuntimeContextValue>(
+  'useAiPathsSettingsPageRuntimeContext',
+  'AiPathsSettingsPageRuntimeContext'
+);
 
 const {
   Context: AiPathsSettingsPagePathActionsContext,
   useStrictContext: useAiPathsSettingsPagePathActionsContext,
-} = createStrictContext<AiPathsSettingsPagePathActionsContextValue>({
-  hookName: 'useAiPathsSettingsPagePathActionsContext',
-  providerName: 'AiPathsSettingsPageProvider',
-  displayName: 'AiPathsSettingsPagePathActionsContext',
-  errorFactory: internalError,
-});
+} = createAiPathsSettingsPageStrictContext<AiPathsSettingsPagePathActionsContextValue>(
+  'useAiPathsSettingsPagePathActionsContext',
+  'AiPathsSettingsPagePathActionsContext'
+);
 
 const {
   Context: AiPathsSettingsPagePersistenceContext,
   useStrictContext: useAiPathsSettingsPagePersistenceContext,
-} = createStrictContext<AiPathsSettingsPagePersistenceContextValue>({
-  hookName: 'useAiPathsSettingsPagePersistenceContext',
-  providerName: 'AiPathsSettingsPageProvider',
-  displayName: 'AiPathsSettingsPagePersistenceContext',
-  errorFactory: internalError,
-});
+} = createAiPathsSettingsPageStrictContext<AiPathsSettingsPagePersistenceContextValue>(
+  'useAiPathsSettingsPagePersistenceContext',
+  'AiPathsSettingsPagePersistenceContext'
+);
 
 const {
   Context: AiPathsSettingsPageDiagnosticsContext,
   useStrictContext: useAiPathsSettingsPageDiagnosticsContext,
-} = createStrictContext<AiPathsSettingsPageDiagnosticsContextValue>({
-  hookName: 'useAiPathsSettingsPageDiagnosticsContext',
-  providerName: 'AiPathsSettingsPageProvider',
-  displayName: 'AiPathsSettingsPageDiagnosticsContext',
-  errorFactory: internalError,
-});
+} = createAiPathsSettingsPageStrictContext<AiPathsSettingsPageDiagnosticsContextValue>(
+  'useAiPathsSettingsPageDiagnosticsContext',
+  'AiPathsSettingsPageDiagnosticsContext'
+);
 
 export function AiPathsSettingsPageProvider({
   value,

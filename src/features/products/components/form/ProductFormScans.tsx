@@ -2,12 +2,18 @@
 
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, Loader2, RefreshCw } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw, Search } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
+import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { PRODUCT_SCANNER_SETTINGS_HREF } from '@/features/products/scanner-settings';
-import type { ProductScanListResponse, ProductScanRecord, ProductScanStatus } from '@/shared/contracts/product-scans';
+import type {
+  ProductScanListResponse,
+  ProductScanRecord,
+  ProductScanStatus,
+  ProductScanStep,
+} from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductsCountsAndDetail } from '@/shared/lib/query-invalidation';
@@ -33,6 +39,41 @@ const STATUS_CLASSES: Record<ProductScanStatus, string> = {
   conflict: 'border-orange-500/40 text-orange-300',
   failed: 'border-destructive/40 text-destructive',
 };
+
+const STEP_STATUS_LABELS: Record<ProductScanStep['status'], string> = {
+  pending: 'Pending',
+  running: 'Running',
+  completed: 'Completed',
+  failed: 'Failed',
+  skipped: 'Skipped',
+};
+
+const STEP_STATUS_CLASSES: Record<ProductScanStep['status'], string> = {
+  pending: 'border-border/70 text-muted-foreground',
+  running: 'border-blue-500/40 text-blue-300',
+  completed: 'border-emerald-500/40 text-emerald-300',
+  failed: 'border-destructive/40 text-destructive',
+  skipped: 'border-border/70 text-muted-foreground',
+};
+
+const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>): boolean => {
+  const rawResult = scan.rawResult;
+  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
+    return false;
+  }
+
+  return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
+};
+
+const resolveStatusLabel = (scan: ProductScanRecord): string =>
+  scan.status === 'running' && isManualVerificationPending(scan)
+    ? 'Captcha'
+    : STATUS_LABELS[scan.status];
+
+const resolveStatusClassName = (scan: ProductScanRecord): string =>
+  scan.status === 'running' && isManualVerificationPending(scan)
+    ? 'border-amber-500/40 text-amber-300'
+    : STATUS_CLASSES[scan.status];
 
 const resolveActiveStatusMessage = (status: ProductScanStatus): string | null => {
   if (status === 'queued') {
@@ -61,6 +102,65 @@ const formatTimestamp = (value: string | null | undefined): string => {
   if (Number.isNaN(parsed.getTime())) return value;
   return parsed.toLocaleString();
 };
+
+const formatStepTiming = (step: ProductScanStep): string | null => {
+  const startedAt = step.startedAt ? formatTimestamp(step.startedAt) : null;
+  const completedAt = step.completedAt ? formatTimestamp(step.completedAt) : null;
+
+  if (startedAt && completedAt) {
+    return `Started ${startedAt} · Completed ${completedAt}`;
+  }
+
+  if (startedAt) {
+    return `Started ${startedAt}`;
+  }
+
+  if (completedAt) {
+    return `Completed ${completedAt}`;
+  }
+
+  return null;
+};
+
+function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX.Element {
+  const { steps } = props;
+
+  return (
+    <div className='space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3'>
+      {steps.map((step, index) => {
+        const timing = formatStepTiming(step);
+        return (
+          <div
+            key={`${step.key}-${index}`}
+            className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'
+          >
+            <div className='flex flex-wrap items-center gap-2'>
+              <span className='text-sm font-medium'>{step.label}</span>
+              <span
+                className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${STEP_STATUS_CLASSES[step.status]}`}
+              >
+                {STEP_STATUS_LABELS[step.status]}
+              </span>
+            </div>
+            {step.message ? <p className='text-sm text-muted-foreground'>{step.message}</p> : null}
+            {step.url ? (
+              <a
+                href={step.url}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+              >
+                Open Step URL
+                <ExternalLink className='h-3.5 w-3.5' />
+              </a>
+            ) : null}
+            {timing ? <p className='text-xs text-muted-foreground'>{timing}</p> : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 const renderScanMeta = (scan: ProductScanRecord): React.JSX.Element | null => {
   const parts = [scan.asin && `ASIN ${scan.asin}`, scan.price && `Price ${scan.price}`].filter(
@@ -118,6 +218,8 @@ export default function ProductFormScans(): React.JSX.Element {
   const invalidatedUpdatedScanIdsRef = useRef<Set<string>>(new Set());
   const pendingUpdatedScanIdsRef = useRef<Set<string>>(new Set());
   const invalidationSessionRef = useRef(0);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [expandedScanIds, setExpandedScanIds] = useState<Set<string>>(new Set());
 
   const scansQuery = useQuery<ProductScanListResponse, Error>({
     queryKey: QUERY_KEYS.products.scans(productId),
@@ -138,7 +240,20 @@ export default function ProductFormScans(): React.JSX.Element {
     invalidationSessionRef.current += 1;
     invalidatedUpdatedScanIdsRef.current = new Set();
     pendingUpdatedScanIdsRef.current = new Set();
+    setExpandedScanIds(new Set());
   }, [productId]);
+
+  const toggleScanSteps = (scanId: string): void => {
+    setExpandedScanIds((current) => {
+      const next = new Set(current);
+      if (next.has(scanId)) {
+        next.delete(scanId);
+      } else {
+        next.add(scanId);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!productId || scans.length === 0) {
@@ -238,6 +353,16 @@ export default function ProductFormScans(): React.JSX.Element {
           </p>
         </div>
         <div className='flex items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => setIsScanModalOpen(true)}
+            className='h-8 gap-1.5 px-3 text-xs'
+          >
+            <Search className='h-3.5 w-3.5' />
+            Scan Amazon
+          </Button>
           <Button type='button' variant='outline' size='sm' asChild className='h-8 px-3 text-xs'>
             <Link href={PRODUCT_SCANNER_SETTINGS_HREF}>Scanner settings</Link>
           </Button>
@@ -269,6 +394,8 @@ export default function ProductFormScans(): React.JSX.Element {
         <div className='space-y-3'>
           {scans.map((scan) => {
             const { infoMessage, errorMessage } = resolveScanMessages(scan);
+            const scanSteps = Array.isArray(scan.steps) ? scan.steps : [];
+            const isExpanded = expandedScanIds.has(scan.id);
 
             return (
               <section
@@ -279,14 +406,32 @@ export default function ProductFormScans(): React.JSX.Element {
                   <div className='flex flex-wrap items-center gap-2'>
                     <span className='text-sm font-medium'>Amazon</span>
                     <span
-                      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${STATUS_CLASSES[scan.status]}`}
+                      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${resolveStatusClassName(scan)}`}
                     >
-                      {STATUS_LABELS[scan.status]}
+                      {resolveStatusLabel(scan)}
                     </span>
                   </div>
                   <span className='text-xs text-muted-foreground'>
                     {formatTimestamp(scan.createdAt)}
                   </span>
+                </div>
+
+                <div className='flex items-center justify-end'>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => toggleScanSteps(scan.id)}
+                    disabled={scanSteps.length === 0}
+                    className='h-7 gap-1.5 px-2 text-xs'
+                  >
+                    {isExpanded ? (
+                      <ChevronUp className='h-3.5 w-3.5' />
+                    ) : (
+                      <ChevronDown className='h-3.5 w-3.5' />
+                    )}
+                    {isExpanded ? 'Hide steps' : 'Show steps'}
+                  </Button>
                 </div>
 
                 {scan.title ? <p className='text-sm font-medium'>{scan.title}</p> : null}
@@ -307,11 +452,19 @@ export default function ProductFormScans(): React.JSX.Element {
                 ) : null}
                 {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
                 {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
+                {isExpanded && scanSteps.length > 0 ? <ProductScanSteps steps={scanSteps} /> : null}
               </section>
             );
           })}
         </div>
       )}
+
+      <ProductAmazonScanModal
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        productIds={productId ? [productId] : []}
+        products={product ? [product] : []}
+      />
     </div>
   );
 }

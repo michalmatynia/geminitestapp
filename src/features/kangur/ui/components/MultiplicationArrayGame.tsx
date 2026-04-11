@@ -3,7 +3,7 @@
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -79,6 +79,27 @@ const ROW_GLOW = [
   'bg-fuchsia-500 shadow-fuchsia-300',
   'bg-pink-500 shadow-pink-300',
 ] as const;
+
+type MultiplicationArrayGameContextValue = {
+  a: number;
+  b: number;
+  celebrating: boolean;
+  collected: Set<number>;
+  isCoarsePointer: boolean;
+  onTapGroup: (groupIndex: number) => void;
+  translations: ReturnType<typeof useTranslations>;
+};
+
+const MultiplicationArrayGameContext =
+  React.createContext<MultiplicationArrayGameContextValue | null>(null);
+
+function useMultiplicationArrayGame(): MultiplicationArrayGameContextValue {
+  const context = React.useContext(MultiplicationArrayGameContext);
+  if (!context) {
+    throw new Error('useMultiplicationArrayGame must be used within MultiplicationArrayGame.');
+  }
+  return context;
+}
 
 function pickProblem(excludePrev?: MultiplicationArrayProblem): MultiplicationArrayProblem {
   const candidates = GROUP_SIZES.filter(([a, b]) => a !== excludePrev?.[0] || b !== excludePrev[1]);
@@ -367,24 +388,17 @@ function MultiplicationArrayCounters({
 }
 
 function MultiplicationArrayGroupCard({
-  b,
-  celebrating,
   color,
   glow,
   groupIndex,
-  isCoarsePointer,
-  isCollected,
-  onTap,
 }: {
-  b: number;
-  celebrating: boolean;
   color: string;
   glow: string;
   groupIndex: number;
-  isCoarsePointer: boolean;
-  isCollected: boolean;
-  onTap: (groupIndex: number) => void;
 }): React.JSX.Element {
+  const { b, celebrating, collected, isCoarsePointer, onTapGroup } = useMultiplicationArrayGame();
+  const isCollected = collected.has(groupIndex);
+
   return (
     <KangurAnswerChoiceCard
       accent='violet'
@@ -398,7 +412,7 @@ function MultiplicationArrayGroupCard({
       emphasis={isCollected ? 'accent' : 'neutral'}
       hoverScale={1.03}
       interactive={!isCollected && !celebrating}
-      onClick={() => onTap(groupIndex)}
+      onClick={() => onTapGroup(groupIndex)}
       tapScale={0.97}
       type='button'
     >
@@ -427,23 +441,9 @@ function MultiplicationArrayGroupCard({
   );
 }
 
-function MultiplicationArrayGroups({
-  a,
-  b,
-  celebrating,
-  collected,
-  isCoarsePointer,
-  onTap,
-  translations,
-}: {
-  a: number;
-  b: number;
-  celebrating: boolean;
-  collected: Set<number>;
-  isCoarsePointer: boolean;
-  onTap: (groupIndex: number) => void;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function MultiplicationArrayGroups(): React.JSX.Element {
+  const { a, isCoarsePointer, translations } = useMultiplicationArrayGame();
+
   return (
     <div className='grid w-full gap-3 lg:grid-cols-2 xl:grid-cols-3'>
       {isCoarsePointer ? (
@@ -456,15 +456,10 @@ function MultiplicationArrayGroups({
       ) : null}
       {Array.from({ length: a }).map((_, groupIndex) => (
         <MultiplicationArrayGroupCard
-          b={b}
-          celebrating={celebrating}
           color={ROW_COLORS[groupIndex % ROW_COLORS.length] ?? ROW_COLORS[0]}
           glow={ROW_GLOW[groupIndex % ROW_GLOW.length] ?? ROW_GLOW[0]}
           groupIndex={groupIndex}
-          isCoarsePointer={isCoarsePointer}
-          isCollected={collected.has(groupIndex)}
           key={groupIndex}
-          onTap={onTap}
         />
       ))}
     </div>
@@ -472,32 +467,17 @@ function MultiplicationArrayGroups({
 }
 
 function MultiplicationArrayRoundView({
-  a,
-  allCollected,
-  b,
-  celebrating,
-  collected,
-  collectedCount,
-  isCoarsePointer,
-  onTapGroup,
   roundIndex,
   roundMotionProps,
-  total,
-  translations,
 }: {
-  a: number;
-  allCollected: boolean;
-  b: number;
-  celebrating: boolean;
-  collected: Set<number>;
-  collectedCount: number;
-  isCoarsePointer: boolean;
-  onTapGroup: (groupIndex: number) => void;
   roundIndex: number;
   roundMotionProps: ReturnType<typeof createKangurPageTransitionMotionProps>;
-  total: number;
-  translations: ReturnType<typeof useTranslations>;
 }): React.JSX.Element {
+  const { a, b, collected, translations } = useMultiplicationArrayGame();
+  const total = a * b;
+  const collectedCount = collected.size * b;
+  const allCollected = collected.size === a;
+
   return (
     <KangurPracticeGameShell
       className='w-full max-w-4xl'
@@ -536,15 +516,7 @@ function MultiplicationArrayRoundView({
               translations={translations}
             />
 
-            <MultiplicationArrayGroups
-              a={a}
-              b={b}
-              celebrating={celebrating}
-              collected={collected}
-              isCoarsePointer={isCoarsePointer}
-              onTap={onTapGroup}
-              translations={translations}
-            />
+            <MultiplicationArrayGroups />
 
             <AnimatePresence>
               {allCollected ? (
@@ -610,8 +582,6 @@ export default function MultiplicationArrayGame({
   const sessionStartedAtRef = useRef(Date.now());
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const total = a * b;
-  const collectedCount = collected.size * b;
   const allCollected = collected.size === a;
 
   useEffect(() => {
@@ -690,19 +660,21 @@ export default function MultiplicationArrayGame({
   }
 
   return (
-    <MultiplicationArrayRoundView
-      a={a}
-      allCollected={allCollected}
-      b={b}
-      celebrating={celebrating}
-      collected={collected}
-      collectedCount={collectedCount}
-      isCoarsePointer={isCoarsePointer}
-      onTapGroup={handleTapGroup}
-      roundIndex={roundIndex}
-      roundMotionProps={roundMotionProps}
-      total={total}
-      translations={translations}
-    />
+    <MultiplicationArrayGameContext.Provider
+      value={{
+        a,
+        b,
+        celebrating,
+        collected,
+        isCoarsePointer,
+        onTapGroup: handleTapGroup,
+        translations,
+      }}
+    >
+      <MultiplicationArrayRoundView
+        roundIndex={roundIndex}
+        roundMotionProps={roundMotionProps}
+      />
+    </MultiplicationArrayGameContext.Provider>
   );
 }

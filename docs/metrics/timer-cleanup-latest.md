@@ -8,26 +8,23 @@ canonical: true
 ---
 # Timer Cleanup Check
 
-Generated at: 2026-04-11T14:55:44.995Z
+Generated at: 2026-04-11T16:18:15.154Z
 
 ## Summary
 
-- Status: WARN
+- Status: PASSED
 - Files scanned: 3064
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| settimeout-no-cleanup | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | settimeout-no-cleanup | src/features/products/components/form/ProductFormGeneral.tsx:258 | setTimeout() in a component with useEffect but no clearTimeout(). Consider cleaning up timers on unmount. |
+All timers and event listeners have proper cleanup.
 
 ## Notes
 

@@ -7,20 +7,36 @@ import {
   updateProductTitleTermSchema,
 } from '@/shared/contracts/products/title-terms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { conflictError, notFoundError } from '@/shared/errors/app-error';
+import { conflictError, notFoundError, validationError } from '@/shared/errors/app-error';
 
 export { updateProductTitleTermSchema as titleTermUpdateSchema };
+
+const paramsSchema = z.object({
+  id: z.string().trim().min(1, 'Title term id is required'),
+});
+
+const parseTitleTermId = (params: { id: string }): string => {
+  const parsed = paramsSchema.safeParse(params);
+  if (!parsed.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsed.error.flatten(),
+    });
+  }
+
+  return parsed.data.id;
+};
 
 export async function PUT_handler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const id = parseTitleTermId(params);
   const repository = await getTitleTermRepository();
-  const current = await repository.getTitleTermById(params.id);
+  const current = await repository.getTitleTermById(id);
 
   if (!current) {
-    throw notFoundError('Title term not found', { titleTermId: params.id });
+    throw notFoundError('Title term not found', { titleTermId: id });
   }
 
   const data = ctx.body as z.infer<typeof updateProductTitleTermSchema>;
@@ -38,7 +54,7 @@ export async function PUT_handler(
     });
   }
 
-  const updated = await repository.updateTitleTerm(params.id, data);
+  const updated = await repository.updateTitleTerm(id, data);
   return NextResponse.json(updated);
 }
 
@@ -47,7 +63,8 @@ export async function DELETE_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const id = parseTitleTermId(params);
   const repository = await getTitleTermRepository();
-  await repository.deleteTitleTerm(params.id);
+  await repository.deleteTitleTerm(id);
   return NextResponse.json({ success: true });
 }

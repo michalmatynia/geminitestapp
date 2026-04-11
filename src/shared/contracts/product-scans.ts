@@ -43,6 +43,26 @@ export const productScanAsinUpdateStatusSchema = z.enum([
 ]);
 export type ProductScanAsinUpdateStatus = z.infer<typeof productScanAsinUpdateStatusSchema>;
 
+export const productScanStepStatusSchema = z.enum([
+  'pending',
+  'running',
+  'completed',
+  'failed',
+  'skipped',
+]);
+export type ProductScanStepStatus = z.infer<typeof productScanStepStatusSchema>;
+
+export const productScanStepSchema = z.object({
+  key: trimmedString.min(1).max(120),
+  label: trimmedString.min(1).max(160),
+  status: productScanStepStatusSchema,
+  message: optionalTrimmedString(2_000),
+  url: optionalTrimmedString(4_000),
+  startedAt: z.string().datetime().nullable().default(null),
+  completedAt: z.string().datetime().nullable().default(null),
+});
+export type ProductScanStep = z.infer<typeof productScanStepSchema>;
+
 export const productScanImageCandidateSchema = z.object({
   id: optionalTrimmedString(160),
   url: optionalTrimmedString(4_000),
@@ -66,6 +86,7 @@ export const productScanRecordSchema = z.object({
   price: optionalTrimmedString(200),
   url: optionalTrimmedString(4_000),
   description: optionalTrimmedString(8_000),
+  steps: z.array(productScanStepSchema).max(40).default([]),
   rawResult: z.unknown().nullable().default(null),
   error: optionalTrimmedString(2_000),
   asinUpdateStatus: productScanAsinUpdateStatusSchema.nullable().default(null),

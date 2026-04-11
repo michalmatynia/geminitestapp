@@ -1,5 +1,6 @@
 import { logAgentAudit } from './agent-runtime/audit';
 import { registerErrorEnricher } from '@/shared/utils/observability/error-enricher-registry';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 // Register AI-specific error enricher to ErrorSystem without circular dependencies
 if (typeof logAgentAudit === 'function') {
@@ -11,6 +12,31 @@ if (typeof logAgentAudit === 'function') {
     }
   });
 }
+
+// Register AI Paths specific error enricher
+registerErrorEnricher(async (error, context) => {
+  const runId = context['runId'] as string | undefined;
+  if (!runId) return;
+
+  try {
+    const repository = await getPathRunRepository();
+    const message = error instanceof Error ? error.message : String(error);
+    const level = context['level'] === 'warn' ? 'warn' : 'error';
+
+    await repository.createRunEvent({
+      runId,
+      level,
+      message: `[GlobalError] ${message}`,
+      metadata: {
+        ...context,
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+      },
+    });
+  } catch (enrichError) {
+    // Avoid infinite recursion or noisy errors during enrichment
+    console.error('[ai-paths-enricher] Failed to enrich error', enrichError);
+  }
+});
 
 export * from './ai-context-registry/server';
 export * from './ai-paths/server';

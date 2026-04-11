@@ -1,6 +1,6 @@
 'use client';
 
-import type * as React from 'react';
+import * as React from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -23,6 +23,36 @@ import { translateClockTrainingWithFallback } from './clock-training-i18n';
 export type DraggableClockSubmitNextStep = 'next-stage' | 'next-task' | 'summary' | null;
 type DraggableClockTranslations = ReturnType<typeof useTranslations>;
 type DraggableClockPointerDownHandler = (event: ReactPointerEvent<SVGElement>) => void;
+
+export type DraggableClockContextValue = {
+  activeHand: Hand | null;
+  challengeRingCircumference: number;
+  challengeRingColor: string;
+  challengeRingOffset: number;
+  hourHandEnabled: boolean;
+  hourHandX: number;
+  hourHandY: number;
+  minuteHandEnabled: boolean;
+  minuteHandX: number;
+  minuteHandY: number;
+  onHourPointerDown: DraggableClockPointerDownHandler;
+  onMinutePointerDown: DraggableClockPointerDownHandler;
+  showChallengeRing: boolean;
+  showHourHand: boolean;
+  showMinuteHand: boolean;
+  translations: DraggableClockTranslations;
+};
+
+export const DraggableClockContext =
+  React.createContext<DraggableClockContextValue | null>(null);
+
+function useDraggableClock(): DraggableClockContextValue {
+  const context = React.useContext(DraggableClockContext);
+  if (!context) {
+    throw new Error('useDraggableClock must be used within DraggableClockContext.Provider.');
+  }
+  return context;
+}
 
 export const resolveDraggableClockChallengeRingColor = (
   challengeProgress: number
@@ -347,15 +377,13 @@ export function DraggableClockInteractionHint({
   );
 }
 
-function DraggableClockChallengeRing({
-  challengeRingCircumference,
-  challengeRingColor,
-  challengeRingOffset,
-}: {
-  challengeRingCircumference: number;
-  challengeRingColor: string;
-  challengeRingOffset: number;
-}): React.JSX.Element {
+function DraggableClockChallengeRing(): React.JSX.Element {
+  const {
+    challengeRingCircumference,
+    challengeRingColor,
+    challengeRingOffset,
+  } = useDraggableClock();
+
   return (
     <>
       <circle
@@ -433,24 +461,29 @@ function DraggableClockFaceNumbers(): React.JSX.Element {
 }
 
 function DraggableClockHand({
-  activeHand,
   color,
   dataTestId,
-  enabled,
   hand,
-  onPointerDown,
   x,
   y,
 }: {
-  activeHand: Hand | null;
   color: string;
   dataTestId: string;
-  enabled: boolean;
   hand: Hand;
-  onPointerDown: DraggableClockPointerDownHandler;
   x: number;
   y: number;
 }): React.JSX.Element {
+  const {
+    activeHand,
+    hourHandEnabled,
+    minuteHandEnabled,
+    onHourPointerDown,
+    onMinutePointerDown,
+  } = useDraggableClock();
+
+  const enabled = hand === 'hour' ? hourHandEnabled : minuteHandEnabled;
+  const onPointerDown = hand === 'hour' ? onHourPointerDown : onMinutePointerDown;
+
   const interactionStyle = resolveDraggableClockHandInteractionStyle({
     activeHand,
     enabled,
@@ -500,35 +533,19 @@ function DraggableClockHand({
 }
 
 export function DraggableClockFace({
-  activeHand,
-  challengeRingCircumference,
-  challengeRingColor,
-  challengeRingOffset,
-  hourHandEnabled,
   hourHandX,
   hourHandY,
-  minuteHandEnabled,
   minuteHandX,
   minuteHandY,
-  onHourPointerDown,
-  onMinutePointerDown,
   showChallengeRing,
   showHourHand,
   showMinuteHand,
   svgRef,
 }: {
-  activeHand: Hand | null;
-  challengeRingCircumference: number;
-  challengeRingColor: string;
-  challengeRingOffset: number;
-  hourHandEnabled: boolean;
   hourHandX: number;
   hourHandY: number;
-  minuteHandEnabled: boolean;
   minuteHandX: number;
   minuteHandY: number;
-  onHourPointerDown: DraggableClockPointerDownHandler;
-  onMinutePointerDown: DraggableClockPointerDownHandler;
   showChallengeRing: boolean;
   showHourHand: boolean;
   showMinuteHand: boolean;
@@ -544,12 +561,9 @@ export function DraggableClockFace({
       style={{ cursor: 'crosshair', touchAction: 'none' }}
     >
       {showChallengeRing ? (
-        <DraggableClockChallengeRing
-          challengeRingCircumference={challengeRingCircumference}
-          challengeRingColor={challengeRingColor}
-          challengeRingOffset={challengeRingOffset}
-        />
+        <DraggableClockChallengeRing />
       ) : null}
+
       <circle
         cx='100'
         cy='100'
@@ -562,24 +576,18 @@ export function DraggableClockFace({
       <DraggableClockFaceNumbers />
       {showHourHand ? (
         <DraggableClockHand
-          activeHand={activeHand}
           color={KANGUR_CLOCK_THEME_COLORS.interactiveHourHand}
           dataTestId='clock-hour-hand'
-          enabled={hourHandEnabled}
           hand='hour'
-          onPointerDown={onHourPointerDown}
           x={hourHandX}
           y={hourHandY}
         />
       ) : null}
       {showMinuteHand ? (
         <DraggableClockHand
-          activeHand={activeHand}
           color={KANGUR_CLOCK_THEME_COLORS.interactiveMinuteHand}
           dataTestId='clock-minute-hand'
-          enabled={minuteHandEnabled}
           hand='minute'
-          onPointerDown={onMinutePointerDown}
           x={minuteHandX}
           y={minuteHandY}
         />

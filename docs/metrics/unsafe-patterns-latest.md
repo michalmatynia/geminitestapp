@@ -8,22 +8,22 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-04-11T14:55:41.887Z
+Generated at: 2026-04-11T16:18:11.492Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 7265
+- Files scanned: 7268
 - Errors: 0
 - Warnings: 0
-- Info: 11
+- Info: 13
 
 ## Trend Counters
 
 | Metric | Count |
 | --- | ---: |
 | doubleAssertionCount | 0 |
-| anyCount | 6 |
+| anyCount | 8 |
 | eslintDisableCount | 2 |
 | nonNullAssertionCount | 3 |
 | tsIgnoreCount | 0 |
@@ -41,7 +41,7 @@ Generated at: 2026-04-11T14:55:41.887Z
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
 | eslint-disable | 0 | 0 | 2 |
-| explicit-any | 0 | 0 | 6 |
+| explicit-any | 0 | 0 | 8 |
 | non-null-assertion | 0 | 0 | 3 |
 
 ## Issues
@@ -52,7 +52,9 @@ Generated at: 2026-04-11T14:55:41.887Z
 | INFO | non-null-assertion | src/features/integrations/utils/tradera-browser-session.ts:53 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | non-null-assertion | src/features/integrations/utils/tradera-browser-session.ts:66 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | eslint-disable | src/features/kangur/ui/KangurLoginPage.test-support.tsx:6 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-return |
-| INFO | explicit-any | src/features/products/server/product-scanner-settings.ts:36 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/products/components/form/ProductFormScans.tsx:43 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/products/components/list/ProductAmazonScanModal.tsx:70 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/products/lib/product-scan-run-feedback.ts:55 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | explicit-any | src/shared/contracts/document-editor.ts:31 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | explicit-any | src/shared/contracts/document-editor.ts:32 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | explicit-any | src/shared/contracts/document-editor.ts:33 | Explicit `any` type usage. Consider using a specific type or `unknown`. |

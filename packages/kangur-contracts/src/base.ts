@@ -2,12 +2,35 @@ import { z } from 'zod';
 
 import { type ApiEnvelopeDto } from './api-envelope';
 
+export type StatusVariant =
+  | 'pending'
+  | 'active'
+  | 'failed'
+  | 'removed'
+  | 'neutral'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'processing';
+
+/**
+ * Standard status for asynchronous requests
+ */
+export type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
+
+/**
+ * Standard status for auto-saving operations
+ */
+export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 /**
  * Foundation schemas used across all contracts
  */
 
 export const statusSchema = z.enum([
   'pending',
+  'queued',
   'running',
   'completed',
   'failed',
@@ -299,6 +322,20 @@ export const paginationQuerySchema = z.object({
 
 export type PaginationQueryDto = z.infer<typeof paginationQuerySchema>;
 export type PaginationQuery = PaginationQueryDto;
+
+/**
+ * Standard HTTP methods
+ */
+export const httpMethodSchema = z.enum([
+  'GET',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'HEAD',
+  'OPTIONS',
+]);
+export type HttpMethod = z.infer<typeof httpMethodSchema>;
 
 /**
  * Standard sort order

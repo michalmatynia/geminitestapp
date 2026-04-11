@@ -40,7 +40,7 @@ type TreeNodeToast = Toast;
 
 type PathClickBehavior = 'open' | 'select';
 
-type AiPathsTreeNodeProps = FolderTreeViewportRenderNodeInput & {
+type AiPathsMasterTreeContextValue = {
   activePathId: string | null;
   controller: MasterFolderTreeController;
   handleDeletePath: (pathId?: string) => Promise<void>;
@@ -64,7 +64,17 @@ type AiPathsTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   toast: TreeNodeToast;
 };
 
-function AiPathsTreeNode(props: AiPathsTreeNodeProps): React.JSX.Element | null {
+const AiPathsMasterTreeContext = React.createContext<AiPathsMasterTreeContextValue | null>(null);
+
+function useAiPathsMasterTree(): AiPathsMasterTreeContextValue {
+  const context = React.useContext(AiPathsMasterTreeContext);
+  if (!context) {
+    throw new Error('useAiPathsMasterTree must be used within AiPathsMasterTreePanel.');
+  }
+  return context;
+}
+
+function AiPathsTreeNode(props: FolderTreeViewportRenderNodeInput): React.JSX.Element | null {
   const {
     node,
     depth,
@@ -77,6 +87,9 @@ function AiPathsTreeNode(props: AiPathsTreeNodeProps): React.JSX.Element | null 
     select,
     toggleExpand,
     startRename,
+  } = props;
+
+  const {
     activePathId,
     controller,
     handleDeletePath,
@@ -93,7 +106,7 @@ function AiPathsTreeNode(props: AiPathsTreeNodeProps): React.JSX.Element | null 
     setSelectedTreeNodeId,
     showPathHoverActions,
     toast,
-  } = props;
+  } = useAiPathsMasterTree();
 
   const folderPath = fromAiPathFolderNodeId(node.id);
   const pathId = fromAiPathNodeId(node.id);
@@ -608,7 +621,26 @@ export function AiPathsMasterTreePanel({
   }, [handleCreatePath, prompt, selectedFolderPath, toast]);
 
   return (
-    <>
+    <AiPathsMasterTreeContext.Provider
+      value={{
+        activePathId,
+        controller,
+        handleDeletePath,
+        handleDuplicatePath,
+        handleMoveFolder,
+        handleMovePathToFolder,
+        handleRenameFolder,
+        icons,
+        onCopyPathJson,
+        openPath,
+        pathClickBehavior,
+        profile,
+        selectedPathFolderById,
+        setSelectedTreeNodeId,
+        showPathHoverActions,
+        toast,
+      }}
+    >
       <FolderTreePanel
         className={panelClassName ?? 'h-full border-r border-border/60 bg-card/35'}
         bodyClassName={bodyClassName ?? 'flex min-h-0 flex-1 flex-col'}
@@ -699,31 +731,11 @@ export function AiPathsMasterTreePanel({
                 controller: ctlr,
               });
             }}
-            renderNode={(nodeProps) => (
-              <AiPathsTreeNode
-                {...nodeProps}
-                activePathId={activePathId}
-                controller={controller}
-                handleDeletePath={handleDeletePath}
-                handleDuplicatePath={handleDuplicatePath}
-                handleMoveFolder={handleMoveFolder}
-                handleMovePathToFolder={handleMovePathToFolder}
-                handleRenameFolder={handleRenameFolder}
-                icons={icons}
-                onCopyPathJson={onCopyPathJson}
-                openPath={openPath}
-                pathClickBehavior={pathClickBehavior}
-                profile={profile}
-                selectedPathFolderById={selectedPathFolderById}
-                setSelectedTreeNodeId={setSelectedTreeNodeId}
-                showPathHoverActions={showPathHoverActions}
-                toast={toast}
-              />
-            )}
+            renderNode={(nodeProps) => <AiPathsTreeNode {...nodeProps} />}
           />
         </div>
       </FolderTreePanel>
       <PromptInputModal />
-    </>
+    </AiPathsMasterTreeContext.Provider>
   );
 }

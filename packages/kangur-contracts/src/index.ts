@@ -3,6 +3,7 @@ export * from './api-envelope';
 export * from './base';
 export * from './kangur-learner-password';
 export * from './kangur-lesson-constants';
+export * from './kangur-lesson-sections';
 export * from './kangur-ai-tutor-mood';
 export * from './kangur-settings-keys';
 export * from './system';

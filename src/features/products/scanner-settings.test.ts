@@ -25,6 +25,8 @@ describe('product scanner settings helpers', () => {
       {
         playwrightPersonaId: 'persona-1',
         playwrightBrowser: 'chrome',
+        captchaBehavior: 'auto_show_browser',
+        manualVerificationTimeoutMs: 180000,
         playwrightSettingsOverrides: {
           timeout: 45000,
         },
@@ -35,6 +37,8 @@ describe('product scanner settings helpers', () => {
     expect(draft).toEqual({
       playwrightPersonaId: 'persona-1',
       playwrightBrowser: 'chrome',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 180000,
       playwrightSettings: expect.objectContaining({
         headless: false,
         slowMo: 25,
@@ -48,6 +52,8 @@ describe('product scanner settings helpers', () => {
       {
         playwrightPersonaId: 'persona-1',
         playwrightBrowser: 'brave',
+        captchaBehavior: 'fail',
+        manualVerificationTimeoutMs: 120000,
         playwrightSettings: {
           ...defaultIntegrationConnectionPlaywrightSettings,
           headless: false,
@@ -60,6 +66,8 @@ describe('product scanner settings helpers', () => {
     expect(persisted).toEqual({
       playwrightPersonaId: 'persona-1',
       playwrightBrowser: 'brave',
+      captchaBehavior: 'fail',
+      manualVerificationTimeoutMs: 120000,
       playwrightSettingsOverrides: {},
     });
   });
@@ -69,6 +77,7 @@ describe('product scanner settings helpers', () => {
       JSON.stringify({
         playwrightPersonaId: 'persona-1',
         playwrightBrowser: 'chrome',
+        manualVerificationTimeoutMs: 60000,
         playwrightSettings: {
           ...defaultIntegrationConnectionPlaywrightSettings,
           headless: false,
@@ -80,6 +89,8 @@ describe('product scanner settings helpers', () => {
     expect(settings).toEqual({
       playwrightPersonaId: 'persona-1',
       playwrightBrowser: 'chrome',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 60000,
       playwrightSettingsOverrides: expect.objectContaining({
         headless: false,
         timeout: 45000,

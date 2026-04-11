@@ -1,5 +1,3 @@
-'use client';
-
 import type React from 'react';
 import { RectangleHorizontal, Search } from 'lucide-react';
 

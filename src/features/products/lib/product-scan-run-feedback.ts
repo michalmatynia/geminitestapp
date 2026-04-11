@@ -46,9 +46,27 @@ const PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS: Record<
   failed: { label: 'Failed', variant: 'error' },
 };
 
+const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>): boolean => {
+  const rawResult = scan.rawResult;
+  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
+    return false;
+  }
+
+  return (rawResult as any)['manualVerificationPending'] === true;
+};
+
 export const resolveProductScanRunFeedbackPresentation = (
-  status: ProductScanStatus
+  status: ProductScanStatus,
+  options?: { manualVerificationPending?: boolean | null }
 ): TriggerButtonRunFeedbackPresentation =>
+  status === 'running' && options?.manualVerificationPending
+    ? {
+        label: 'Captcha',
+        variant: 'warning',
+        badgeClassName:
+          'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+      }
+    :
   PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS[status] ?? {
     label: status,
     variant: 'neutral',
@@ -60,7 +78,9 @@ export const buildProductScanRunFeedbackFromRecord = (
   scanId: scan.id,
   status: scan.status,
   updatedAt: scan.updatedAt ?? scan.completedAt ?? scan.createdAt ?? null,
-  ...resolveProductScanRunFeedbackPresentation(scan.status),
+  ...resolveProductScanRunFeedbackPresentation(scan.status, {
+    manualVerificationPending: isManualVerificationPending(scan),
+  }),
 });
 
 export const resolveProductScanFeedbackAgeMs = (

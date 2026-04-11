@@ -21,6 +21,68 @@ import type { VerificationCardState } from './KangurLoginPage.utils';
 type KangurLoginPageState = ReturnType<typeof useKangurLoginPageState>;
 type KangurLoginTranslations = ReturnType<typeof useTranslations>;
 
+type KangurLoginPageContextValue = {
+  activeFormNotice: string | null;
+  authMode: KangurLoginPageState['authMode'];
+  authModeHint: string;
+  captchaContainerRef: KangurLoginPageState['captchaContainerRef'];
+  clearInlineFeedback: KangurLoginPageState['clearInlineFeedback'];
+  continueToSignInLabel: string | null;
+  formError: string | null;
+  formErrorId: string;
+  formNoticeId: string;
+  formRef: React.RefObject<HTMLFormElement | null>;
+  handleChangeEmail: () => void;
+  handleContinueToSignIn: (() => void) | null;
+  handleIdentifierBlur: () => void;
+  handleModeSwitch: KangurLoginPageState['handleModeSwitch'];
+  handleResendVerification: KangurLoginPageState['handleResendVerification'];
+  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  identifier: string;
+  identifierDescribedBy: string;
+  identifierInputRef: KangurLoginPageState['identifierInputRef'];
+  identifierInputType: 'email' | 'text';
+  identifierLabel: string;
+  identifierPlaceholder: string;
+  isEmailIdentifierField: boolean;
+  isIdentifierInvalid: boolean;
+  isLoading: boolean;
+  isPasswordInvalid: boolean;
+  isPasswordVisible: boolean;
+  loginFormEntry: KangurLoginPageState['loginFormEntry'];
+  loginKind: KangurLoginPageState['loginKind'];
+  password: string;
+  passwordDescribedBy: string;
+  passwordHintId: string;
+  passwordHelperText: string;
+  passwordInputRef: KangurLoginPageState['passwordInputRef'];
+  resendCooldownLabel: KangurLoginPageState['resendCooldownLabel'];
+  resendHelper: string | null;
+  resendLabel: string;
+  setIdentifier: KangurLoginPageState['setIdentifier'];
+  setIsPasswordVisible: KangurLoginPageState['setIsPasswordVisible'];
+  setPassword: KangurLoginPageState['setPassword'];
+  showCaptcha: boolean;
+  showForm: boolean;
+  showParentAuthModeTabs: KangurLoginPageProps['showParentAuthModeTabs'];
+  submitButtonLabel: string;
+  submitDisabled: boolean;
+  successMessage: string | null;
+  successMessageId: string;
+  translations: KangurLoginTranslations;
+  verificationCard: KangurLoginPageState['verificationCard'];
+};
+
+const KangurLoginPageContext = React.createContext<KangurLoginPageContextValue | null>(null);
+
+function useKangurLoginPage(): KangurLoginPageContextValue {
+  const context = React.useContext(KangurLoginPageContext);
+  if (!context) {
+    throw new Error('useKangurLoginPage must be used within KangurLoginPageLayout.');
+  }
+  return context;
+}
+
 const KANGUR_LOGIN_PRIMARY_TEXT_STYLE: React.CSSProperties = {
   color: 'var(--kangur-page-text, #0f172a)',
 };
@@ -200,20 +262,8 @@ export const ParentVerificationCard = ({
   );
 };
 
-type KangurLoginFormStatusProps = {
-  activeFormNotice: string | null;
-  formError: string | null;
-  formErrorId: string;
-  formNoticeId: string;
-  successMessage: string | null;
-  successMessageId: string;
-};
-
-function KangurLoginHero(props: {
-  loginFormEntry: KangurLoginPageState['loginFormEntry'];
-  translations: KangurLoginTranslations;
-}): React.JSX.Element {
-  const { loginFormEntry, translations } = props;
+function KangurLoginHero(): React.JSX.Element {
+  const { loginFormEntry, translations } = useKangurLoginPage();
 
   return (
     <div className='flex flex-1 flex-col gap-4'>
@@ -247,13 +297,8 @@ function KangurLoginHero(props: {
   );
 }
 
-function KangurLoginModeTabs(props: {
-  authMode: KangurLoginPageState['authMode'];
-  handleModeSwitch: KangurLoginPageState['handleModeSwitch'];
-  showParentAuthModeTabs: KangurLoginPageProps['showParentAuthModeTabs'];
-  translations: KangurLoginTranslations;
-}): React.JSX.Element | null {
-  const { authMode, handleModeSwitch, showParentAuthModeTabs, translations } = props;
+function KangurLoginModeTabs(): React.JSX.Element | null {
+  const { authMode, handleModeSwitch, showParentAuthModeTabs, translations } = useKangurLoginPage();
 
   if (showParentAuthModeTabs === false) {
     return null;
@@ -283,7 +328,8 @@ function KangurLoginModeTabs(props: {
   );
 }
 
-function KangurLoginModeHint(props: { authModeHint: string }): React.JSX.Element {
+function KangurLoginModeHint(): React.JSX.Element {
+  const { authModeHint } = useKangurLoginPage();
   return (
     <div
       data-testid='kangur-login-mode-hint'
@@ -293,28 +339,15 @@ function KangurLoginModeHint(props: { authModeHint: string }): React.JSX.Element
         ...KANGUR_LOGIN_MUTED_TEXT_STYLE,
       }}
     >
-      {props.authModeHint}
+      {authModeHint}
     </div>
   );
 }
 
-function KangurLoginIdentifierField(props: {
-  clearInlineFeedback: KangurLoginPageState['clearInlineFeedback'];
-  disabled: boolean;
-  identifier: string;
-  identifierDescribedBy: string;
-  identifierInputRef: KangurLoginPageState['identifierInputRef'];
-  identifierInputType: 'email' | 'text';
-  identifierLabel: string;
-  identifierPlaceholder: string;
-  isEmailIdentifierField: boolean;
-  isIdentifierInvalid: boolean;
-  onBlur: () => void;
-  setIdentifier: KangurLoginPageState['setIdentifier'];
-}): React.JSX.Element {
+function KangurLoginIdentifierField(): React.JSX.Element {
   const {
     clearInlineFeedback,
-    disabled,
+    isLoading: disabled,
     identifier,
     identifierDescribedBy,
     identifierInputRef,
@@ -323,9 +356,9 @@ function KangurLoginIdentifierField(props: {
     identifierPlaceholder,
     isEmailIdentifierField,
     isIdentifierInvalid,
-    onBlur,
+    handleIdentifierBlur: onBlur,
     setIdentifier,
-  } = props;
+  } = useKangurLoginPage();
 
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
@@ -359,23 +392,10 @@ function KangurLoginIdentifierField(props: {
   );
 }
 
-function KangurLoginPasswordField(props: {
-  clearInlineFeedback: KangurLoginPageState['clearInlineFeedback'];
-  disabled: boolean;
-  isPasswordInvalid: boolean;
-  isPasswordVisible: boolean;
-  password: string;
-  passwordDescribedBy: string;
-  passwordHintId: string;
-  passwordHelperText: string;
-  passwordInputRef: KangurLoginPageState['passwordInputRef'];
-  setIsPasswordVisible: KangurLoginPageState['setIsPasswordVisible'];
-  setPassword: KangurLoginPageState['setPassword'];
-  translations: KangurLoginTranslations;
-}): React.JSX.Element {
+function KangurLoginPasswordField(): React.JSX.Element {
   const {
     clearInlineFeedback,
-    disabled,
+    isLoading: disabled,
     isPasswordInvalid,
     isPasswordVisible,
     password,
@@ -386,7 +406,7 @@ function KangurLoginPasswordField(props: {
     setIsPasswordVisible,
     setPassword,
     translations,
-  } = props;
+  } = useKangurLoginPage();
 
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
@@ -442,7 +462,7 @@ function KangurLoginPasswordField(props: {
   );
 }
 
-function KangurLoginFormStatus(props: KangurLoginFormStatusProps): React.JSX.Element {
+function KangurLoginFormStatus(): React.JSX.Element {
   const {
     activeFormNotice,
     formError,
@@ -450,7 +470,7 @@ function KangurLoginFormStatus(props: KangurLoginFormStatusProps): React.JSX.Ele
     formNoticeId,
     successMessage,
     successMessageId,
-  } = props;
+  } = useKangurLoginPage();
 
   return (
     <>
@@ -485,82 +505,18 @@ function KangurLoginFormStatus(props: KangurLoginFormStatusProps): React.JSX.Ele
   );
 }
 
-function KangurLoginFormPanel(props: {
-  activeFormNotice: string | null;
-  authMode: KangurLoginPageState['authMode'];
-  captchaContainerRef: KangurLoginPageState['captchaContainerRef'];
-  clearInlineFeedback: KangurLoginPageState['clearInlineFeedback'];
-  formError: string | null;
-  formErrorId: string;
-  formNoticeId: string;
-  formRef: React.RefObject<HTMLFormElement | null>;
-  handleIdentifierBlur: () => void;
-  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  identifier: string;
-  identifierDescribedBy: string;
-  identifierInputRef: KangurLoginPageState['identifierInputRef'];
-  identifierInputType: 'email' | 'text';
-  identifierLabel: string;
-  identifierPlaceholder: string;
-  isEmailIdentifierField: boolean;
-  isIdentifierInvalid: boolean;
-  isLoading: boolean;
-  isPasswordInvalid: boolean;
-  isPasswordVisible: boolean;
-  loginKind: KangurLoginPageState['loginKind'];
-  password: string;
-  passwordDescribedBy: string;
-  passwordHintId: string;
-  passwordHelperText: string;
-  passwordInputRef: KangurLoginPageState['passwordInputRef'];
-  setIdentifier: KangurLoginPageState['setIdentifier'];
-  setIsPasswordVisible: KangurLoginPageState['setIsPasswordVisible'];
-  setPassword: KangurLoginPageState['setPassword'];
-  showCaptcha: boolean;
-  submitButtonLabel: string;
-  submitDisabled: boolean;
-  successMessage: string | null;
-  successMessageId: string;
-  translations: KangurLoginTranslations;
-}): React.JSX.Element {
+function KangurLoginFormPanel(): React.JSX.Element {
   const {
-    activeFormNotice,
     authMode,
     captchaContainerRef,
-    clearInlineFeedback,
-    formError,
-    formErrorId,
-    formNoticeId,
     formRef,
-    handleIdentifierBlur,
     handleSubmit,
-    identifier,
-    identifierDescribedBy,
-    identifierInputRef,
-    identifierInputType,
-    identifierLabel,
-    identifierPlaceholder,
-    isEmailIdentifierField,
-    isIdentifierInvalid,
     isLoading,
-    isPasswordInvalid,
-    isPasswordVisible,
     loginKind,
-    password,
-    passwordDescribedBy,
-    passwordHintId,
-    passwordHelperText,
-    passwordInputRef,
-    setIdentifier,
-    setIsPasswordVisible,
-    setPassword,
     showCaptcha,
     submitButtonLabel,
     submitDisabled,
-    successMessage,
-    successMessageId,
-    translations,
-  } = props;
+  } = useKangurLoginPage();
 
   return (
     <form
@@ -574,45 +530,12 @@ function KangurLoginFormPanel(props: {
       className={`mt-6 ${KANGUR_STACK_RELAXED_CLASSNAME}`}
       aria-busy={isLoading}
     >
-      <KangurLoginIdentifierField
-        clearInlineFeedback={clearInlineFeedback}
-        disabled={isLoading}
-        identifier={identifier}
-        identifierDescribedBy={identifierDescribedBy}
-        identifierInputRef={identifierInputRef}
-        identifierInputType={identifierInputType}
-        identifierLabel={identifierLabel}
-        identifierPlaceholder={identifierPlaceholder}
-        isEmailIdentifierField={isEmailIdentifierField}
-        isIdentifierInvalid={isIdentifierInvalid}
-        onBlur={handleIdentifierBlur}
-        setIdentifier={setIdentifier}
-      />
-      <KangurLoginPasswordField
-        clearInlineFeedback={clearInlineFeedback}
-        disabled={isLoading}
-        isPasswordInvalid={isPasswordInvalid}
-        isPasswordVisible={isPasswordVisible}
-        password={password}
-        passwordDescribedBy={passwordDescribedBy}
-        passwordHintId={passwordHintId}
-        passwordHelperText={passwordHelperText}
-        passwordInputRef={passwordInputRef}
-        setIsPasswordVisible={setIsPasswordVisible}
-        setPassword={setPassword}
-        translations={translations}
-      />
+      <KangurLoginIdentifierField />
+      <KangurLoginPasswordField />
       {showCaptcha && authMode === 'create-account' ? (
         <div ref={captchaContainerRef} className='min-h-[65px] self-center' />
       ) : null}
-      <KangurLoginFormStatus
-        activeFormNotice={activeFormNotice}
-        formError={formError}
-        formErrorId={formErrorId}
-        formNoticeId={formNoticeId}
-        successMessage={successMessage}
-        successMessageId={successMessageId}
-      />
+      <KangurLoginFormStatus />
       <KangurButton
         type='submit'
         variant='primary'
@@ -627,19 +550,7 @@ function KangurLoginFormPanel(props: {
   );
 }
 
-function KangurLoginVerificationSection(props: {
-  continueToSignInLabel: string | null;
-  handleChangeEmail: () => void;
-  handleContinueToSignIn: (() => void) | null;
-  handleResendVerification: KangurLoginPageState['handleResendVerification'];
-  isLoading: boolean;
-  resendCooldownLabel: KangurLoginPageState['resendCooldownLabel'];
-  resendHelper: string | null;
-  resendLabel: string;
-  showParentAuthModeTabs: KangurLoginPageProps['showParentAuthModeTabs'];
-  translations: KangurLoginTranslations;
-  verificationCard: KangurLoginPageState['verificationCard'];
-}): React.JSX.Element | null {
+function KangurLoginVerificationSection(): React.JSX.Element | null {
   const {
     continueToSignInLabel,
     handleChangeEmail,
@@ -652,7 +563,7 @@ function KangurLoginVerificationSection(props: {
     showParentAuthModeTabs,
     translations,
     verificationCard,
-  } = props;
+  } = useKangurLoginPage();
 
   if (!verificationCard) {
     return null;
@@ -728,136 +639,29 @@ export function KangurLoginPageLayout(props: {
   translations: KangurLoginTranslations;
   verificationCard: KangurLoginPageState['verificationCard'];
 }): React.JSX.Element {
-  const {
-    activeFormNotice,
-    authMode,
-    authModeHint,
-    captchaContainerRef,
-    clearInlineFeedback,
-    continueToSignInLabel,
-    formError,
-    formErrorId,
-    formNoticeId,
-    formRef,
-    handleChangeEmail,
-    handleContinueToSignIn,
-    handleIdentifierBlur,
-    handleModeSwitch,
-    handleResendVerification,
-    handleSubmit,
-    identifier,
-    identifierDescribedBy,
-    identifierInputRef,
-    identifierInputType,
-    identifierLabel,
-    identifierPlaceholder,
-    isEmailIdentifierField,
-    isIdentifierInvalid,
-    isLoading,
-    isPasswordInvalid,
-    isPasswordVisible,
-    loginFormEntry,
-    loginKind,
-    password,
-    passwordDescribedBy,
-    passwordHintId,
-    passwordHelperText,
-    passwordInputRef,
-    resendCooldownLabel,
-    resendHelper,
-    resendLabel,
-    setIdentifier,
-    setIsPasswordVisible,
-    setPassword,
-    showCaptcha,
-    showForm,
-    showParentAuthModeTabs,
-    submitButtonLabel,
-    submitDisabled,
-    successMessage,
-    successMessageId,
-    translations,
-    verificationCard,
-  } = props;
-
   return (
-    <div className='flex w-full justify-center py-12'>
-      <KangurGlassPanel
-        variant='soft'
-        padding='xl'
-        className='w-full max-w-4xl overflow-hidden'
-        data-testid='kangur-login-shell'
-      >
-        <div className={`${KANGUR_PANEL_GAP_CLASSNAME} flex flex-col lg:flex-row`}>
-          <KangurLoginHero
-            loginFormEntry={loginFormEntry}
-            translations={translations}
-          />
+    <KangurLoginPageContext.Provider value={props}>
+      <div className='flex w-full justify-center py-12'>
+        <KangurGlassPanel
+          variant='soft'
+          padding='xl'
+          className='w-full max-w-4xl overflow-hidden'
+          data-testid='kangur-login-shell'
+        >
+          <div className={`${KANGUR_PANEL_GAP_CLASSNAME} flex flex-col lg:flex-row`}>
+            <KangurLoginHero />
 
-          <div className='flex-1'>
-            <KangurLoginModeTabs
-              authMode={authMode}
-              handleModeSwitch={handleModeSwitch}
-              showParentAuthModeTabs={showParentAuthModeTabs}
-              translations={translations}
-            />
-            <KangurLoginModeHint authModeHint={authModeHint} />
-            {showForm ? (
-              <KangurLoginFormPanel
-                activeFormNotice={activeFormNotice}
-                authMode={authMode}
-                captchaContainerRef={captchaContainerRef}
-                clearInlineFeedback={clearInlineFeedback}
-                formError={formError}
-                formErrorId={formErrorId}
-                formNoticeId={formNoticeId}
-                formRef={formRef}
-                handleIdentifierBlur={handleIdentifierBlur}
-                handleSubmit={handleSubmit}
-                identifier={identifier}
-                identifierDescribedBy={identifierDescribedBy}
-                identifierInputRef={identifierInputRef}
-                identifierInputType={identifierInputType}
-                identifierLabel={identifierLabel}
-                identifierPlaceholder={identifierPlaceholder}
-                isEmailIdentifierField={isEmailIdentifierField}
-                isIdentifierInvalid={isIdentifierInvalid}
-                isLoading={isLoading}
-                isPasswordInvalid={isPasswordInvalid}
-                isPasswordVisible={isPasswordVisible}
-                loginKind={loginKind}
-                password={password}
-                passwordDescribedBy={passwordDescribedBy}
-                passwordHintId={passwordHintId}
-                passwordHelperText={passwordHelperText}
-                passwordInputRef={passwordInputRef}
-                setIdentifier={setIdentifier}
-                setIsPasswordVisible={setIsPasswordVisible}
-                setPassword={setPassword}
-                showCaptcha={showCaptcha}
-                submitButtonLabel={submitButtonLabel}
-                submitDisabled={submitDisabled}
-                successMessage={successMessage}
-                successMessageId={successMessageId}
-                translations={translations}
-              />
-            ) : null}
-            <KangurLoginVerificationSection
-              continueToSignInLabel={continueToSignInLabel}
-              handleChangeEmail={handleChangeEmail}
-              handleContinueToSignIn={handleContinueToSignIn}
-              handleResendVerification={handleResendVerification}
-              isLoading={isLoading}
-              resendCooldownLabel={resendCooldownLabel}
-              resendHelper={resendHelper}
-              resendLabel={resendLabel}
-              showParentAuthModeTabs={showParentAuthModeTabs}
-              translations={translations}
-              verificationCard={verificationCard}
-            />
+            <div className='flex-1'>
+              <KangurLoginModeTabs />
+              <KangurLoginModeHint />
+              {props.showForm ? (
+                <KangurLoginFormPanel />
+              ) : null}
+              <KangurLoginVerificationSection />
+            </div>
           </div>
-        </div>
-      </KangurGlassPanel>
-    </div>
+        </KangurGlassPanel>
+      </div>
+    </KangurLoginPageContext.Provider>
   );
 }

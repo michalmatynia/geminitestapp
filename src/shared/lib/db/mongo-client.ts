@@ -109,31 +109,38 @@ const attachMongoObservability = (client: MongoClient): void => {
     });
   }
 
-  // --- Command monitoring (opt-in via MONGODB_MONITOR_COMMANDS=true) ---
-  if (MONITOR_COMMANDS) {
-    observableClient.on('commandFailed', (e) => {
-      mongoLog('warn', `MongoDB command failed: ${e.commandName} (${e.duration}ms)`, {
-        event: 'commandFailed',
-        commandName: e.commandName,
-        durationMs: e.duration,
-        address: e.address,
-        error: e.failure?.message,
-      });
+  // --- Command monitoring (Always enabled for failures, opt-in for all successes) ---
+  observableClient.on('commandFailed', (e) => {
+    mongoLog('error', `MongoDB command failed: ${e.commandName} (${e.duration}ms)`, {
+      event: 'commandFailed',
+      commandName: e.commandName,
+      durationMs: e.duration,
+      address: e.address,
+      error: e.failure?.message,
+      stack: e.failure?.stack,
     });
+  });
 
-    observableClient.on('commandSucceeded', (e) => {
-      if (e.duration < SLOW_COMMAND_THRESHOLD_MS) return;
-      const key = `slowCmd:${e.commandName}`;
-      if (!shouldEmit(key)) return;
-      mongoLog('warn', `MongoDB slow command: ${e.commandName} took ${e.duration}ms`, {
+  observableClient.on('commandSucceeded', (e) => {
+    const isSlow = e.duration >= SLOW_COMMAND_THRESHOLD_MS;
+    if (!isSlow && !MONITOR_COMMANDS) return;
+
+    const key = `cmdSucceeded:${e.commandName}:${isSlow ? 'slow' : 'normal'}`;
+    if (isSlow && !shouldEmit(key)) return;
+
+    mongoLog(
+      isSlow ? 'warn' : 'info',
+      `MongoDB command ${isSlow ? 'slow' : 'succeeded'}: ${e.commandName} (${e.duration}ms)`,
+      {
         event: 'commandSucceeded',
         commandName: e.commandName,
         durationMs: e.duration,
         address: e.address,
         thresholdMs: SLOW_COMMAND_THRESHOLD_MS,
-      });
-    });
-  }
+        isSlow,
+      }
+    );
+  });
 };
 
 type MongoClientCtor = new (uri: string, options?: MongoClientOptions) => MongoClient;
@@ -186,8 +193,8 @@ const getMongoClientOptions = (): MongoClientOptions => {
     socketTimeoutMS: parsePositiveInt(process.env['MONGODB_SOCKET_TIMEOUT_MS'], 120_000),
     retryWrites: true,
     ...(isSingleNodeLocalMongoUri(uri) ? { directConnection: true } : {}),
-    // Enable command monitoring only when explicitly opted in (adds minor overhead).
-    ...(MONITOR_COMMANDS ? { monitorCommands: true } : {}),
+    // Always enable command monitoring to capture failures and slow queries.
+    monitorCommands: true,
   };
 };
 

@@ -59,6 +59,15 @@ type LessonActivityShellContextValue = {
   title: string;
   titleId?: string;
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
+  panelAriaLabel?: string;
+  panelDescribedBy?: string;
+  panelLabelledBy?: string;
+  panelRef: React.RefObject<HTMLDivElement | null>;
+  printInteractiveHint: string;
+  shellPanelClassName: string;
+  shellPanelTestId?: string;
+  shouldRenderShellHeader: boolean;
+  shellVariant: 'panel' | 'plain';
 };
 
 const LessonActivityShellContext = createContext<LessonActivityShellContextValue | null>(null);
@@ -352,33 +361,23 @@ function LessonActivityShellPrintSummary({
 
 function LessonActivityShellBody({
   children,
-  description,
-  panelAriaLabel,
-  panelDescribedBy,
-  panelLabelledBy,
-  panelRef,
-  printInteractiveHint,
-  printPanelId,
-  shellPanelClassName,
-  shellPanelTestId,
-  shouldRenderShellHeader,
-  shellVariant,
-  title,
 }: {
   children: React.ReactNode;
-  description?: React.ReactNode;
-  panelAriaLabel: string | undefined;
-  panelDescribedBy: string | undefined;
-  panelLabelledBy: string | undefined;
-  panelRef: React.RefObject<HTMLDivElement | null>;
-  printInteractiveHint: string;
-  printPanelId: string;
-  shellPanelClassName: string;
-  shellPanelTestId?: string;
-  shouldRenderShellHeader: boolean;
-  shellVariant: 'panel' | 'plain';
-  title: string;
 }): React.JSX.Element {
+  const {
+    description,
+    panelAriaLabel,
+    panelDescribedBy,
+    panelLabelledBy,
+    panelRef,
+    printInteractiveHint,
+    printPanelId,
+    shellPanelClassName,
+    shellPanelTestId,
+    shouldRenderShellHeader,
+    shellVariant,
+    title,
+  } = useLessonActivityShellContext();
   const header = shouldRenderShellHeader ? <LessonActivityShellHeader /> : null;
   const content = (
     <>
@@ -442,10 +441,18 @@ function resolveLessonActivityShellContextValue({
   icon,
   navigationPills,
   onBack,
+  panelAriaLabel,
+  panelDescribedBy,
+  panelLabelledBy,
+  panelRef,
+  printInteractiveHint,
   printPanelId,
   resolvePrintPanelId,
   secretLessonPill,
+  shellPanelClassName,
+  shellPanelTestId,
   shouldRenderShellHeader,
+  shellVariant,
   title,
   titleId,
 }: {
@@ -457,10 +464,18 @@ function resolveLessonActivityShellContextValue({
   icon: string;
   navigationPills?: React.ReactNode;
   onBack: () => void;
+  panelAriaLabel?: string;
+  panelDescribedBy?: string;
+  panelLabelledBy?: string;
+  panelRef: React.RefObject<HTMLDivElement | null>;
+  printInteractiveHint: string;
   printPanelId: string;
   resolvePrintPanelId: () => string;
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
+  shellPanelClassName: string;
+  shellPanelTestId?: string;
   shouldRenderShellHeader: boolean;
+  shellVariant: 'panel' | 'plain';
   title: string;
   titleId: string;
 }): LessonActivityShellContextValue {
@@ -478,6 +493,15 @@ function resolveLessonActivityShellContextValue({
     title,
     titleId: shouldRenderShellHeader ? titleId : undefined,
     secretLessonPill,
+    panelAriaLabel,
+    panelDescribedBy,
+    panelLabelledBy,
+    panelRef,
+    printInteractiveHint,
+    shellPanelClassName,
+    shellPanelTestId,
+    shouldRenderShellHeader,
+    shellVariant,
   };
 }
 
@@ -648,10 +672,18 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
     icon,
     navigationPills,
     onBack,
+    panelAriaLabel,
+    panelDescribedBy,
+    panelLabelledBy,
+    panelRef: shellPanelRef,
+    printInteractiveHint,
     printPanelId,
     resolvePrintPanelId,
     secretLessonPill,
+    shellPanelClassName,
+    shellPanelTestId: shellTestId,
     shouldRenderShellHeader,
+    shellVariant,
     title,
     titleId,
   });
@@ -673,21 +705,9 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
         )}
       >
         <LessonActivityShellTopBar />
-        <LessonActivityShellBody
-          children={children}
-          description={description}
-          panelAriaLabel={panelAriaLabel}
-          panelDescribedBy={panelDescribedBy}
-          panelLabelledBy={panelLabelledBy}
-          panelRef={shellPanelRef}
-          printInteractiveHint={printInteractiveHint}
-          printPanelId={printPanelId}
-          shellPanelClassName={shellPanelClassName}
-          shellPanelTestId={shellTestId}
-          shouldRenderShellHeader={shouldRenderShellHeader}
-          shellVariant={shellVariant}
-          title={title}
-        />
+        <LessonActivityShellBody>
+          {children}
+        </LessonActivityShellBody>
         {resolveLessonActivityShellFooter(footerNavigation)}
       </div>
     </LessonActivityShellContext.Provider>

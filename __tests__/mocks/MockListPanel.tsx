@@ -20,17 +20,39 @@ export interface MockListPanelProps {
 }
 
 export function MockListPanel(props: MockListPanelProps): React.JSX.Element {
-  const { title, description, header, filters, actions, alerts, footer, children } = props;
+  const {
+    title,
+    description,
+    header,
+    filters,
+    actions,
+    alerts,
+    footer,
+    children,
+    isLoading,
+    loadingMessage,
+    className,
+    contentClassName,
+    variant,
+  } = props;
+
   return (
-    <div data-testid="list-panel">
+    <div
+      data-testid="list-panel"
+      data-class-name={className}
+      data-content-class-name={contentClassName}
+      data-is-loading={String(isLoading)}
+      data-loading-message={loadingMessage}
+      data-variant={variant}
+    >
       {title && <h1>{title}</h1>}
       {description && <p>{description}</p>}
-      {header}
-      {filters}
-      {actions}
-      {alerts}
+      <div data-testid="list-panel-header">{header}</div>
+      <div data-testid="list-panel-alerts">{alerts}</div>
+      <div data-testid="list-panel-filters">{filters}</div>
+      <div data-testid="list-panel-actions">{actions}</div>
+      <div data-testid="list-panel-footer">{footer}</div>
       {children}
-      {footer}
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   resolveStarterWorkflowForPathConfig,
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import type {
   AiPathTemplateRegistryEntry,
   StarterWorkflowTriggerPreset,
@@ -159,7 +160,16 @@ const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | n
   if (!resolution) return null;
 
   const upgraded = upgradeStarterWorkflowPathConfig(config);
-  return upgraded.changed ? upgraded.config : null;
+  if (!upgraded.changed) return null;
+
+  const canonicalized = materializeStoredTriggerPathConfig({
+    pathId: upgraded.config.id,
+    rawConfig: JSON.stringify(upgraded.config),
+    fallbackName: upgraded.config.name,
+    applyStarterWorkflowUpgrade: false,
+    allowStaticRecoveryFallback: false,
+  }).config;
+  return sanitizePathConfig(canonicalized);
 };
 
 const tryRepairBrokenRecoverableStarterConfig = (args: {
@@ -177,7 +187,7 @@ const tryRepairBrokenRecoverableStarterConfig = (args: {
       applyStarterWorkflowUpgrade: true,
       allowStaticRecoveryFallback: true,
     });
-    return resolved.changed ? resolved.config : null;
+    return resolved.changed ? sanitizePathConfig(resolved.config) : null;
   } catch (error) {
     void ErrorSystem.captureException(error);
     return null;

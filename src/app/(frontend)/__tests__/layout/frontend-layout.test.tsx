@@ -56,7 +56,7 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurSurfaceBootstrapStyle: vi.fn(
     () => ':root{--kangur-soft-card-border:rgba(15,23,42,0.18);}'
   ),
-  KANGUR_SURFACE_HINT_SCRIPT: "document.documentElement.classList.add('kangur-surface-active')",
+  KANGUR_SURFACE_HINT_SCRIPT: 'document.documentElement.classList.add(\'kangur-surface-active\')',
 }));
 
 vi.mock('@/shared/lib/request/server-request-context', () => ({

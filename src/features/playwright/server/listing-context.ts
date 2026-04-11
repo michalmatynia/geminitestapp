@@ -1,9 +1,7 @@
 import 'server-only';
 
-import {
-  findProductListingByIdAcrossProviders,
-  getIntegrationRepository,
-} from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
+import { findProductListingByIdAcrossProviders } from '@/features/integrations/services/product-listing-repository';
 import type {
   IntegrationConnectionRecord,
   IntegrationRecord,

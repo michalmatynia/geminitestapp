@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   listProductScansMock: vi.fn(),
   updateProductScanMock: vi.fn(),
   upsertProductScanMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
 }));
 
 vi.mock('@/features/playwright/server', () => ({
@@ -42,6 +43,12 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
   productService: {
     getProductById: (...args: unknown[]) => mocks.getProductByIdMock(...args),
     updateProduct: (...args: unknown[]) => mocks.updateProductMock(...args),
+  },
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: (...args: unknown[]) => mocks.captureExceptionMock(...args),
   },
 }));
 
@@ -324,6 +331,172 @@ describe('product-scans-service', () => {
     );
   });
 
+  it('fails stale active scans that are missing an engine run id', async () => {
+    const scan = createScan({
+      status: 'queued',
+      engineRunId: null,
+      createdAt: new Date(Date.now() - 120_000).toISOString(),
+      updatedAt: new Date(Date.now() - 120_000).toISOString(),
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.readPlaywrightEngineRunMock).not.toHaveBeenCalled();
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'failed',
+        error: 'Amazon scan is missing its Playwright engine run id.',
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: 'Amazon scan is missing its Playwright engine run id.',
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        asinUpdateStatus: 'failed',
+      })
+    );
+  });
+
+  it('keeps recent active scans without an engine run id in queued state', async () => {
+    const scan = createScan({
+      status: 'queued',
+      engineRunId: null,
+      createdAt: new Date(Date.now() - 5_000).toISOString(),
+      updatedAt: new Date(Date.now() - 5_000).toISOString(),
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.readPlaywrightEngineRunMock).not.toHaveBeenCalled();
+    expect(mocks.updateProductScanMock).not.toHaveBeenCalled();
+    expect(result).toEqual(scan);
+  });
+
+  it('recovers an active scan engine run id from rawResult metadata', async () => {
+    const scan = createScan({
+      status: 'queued',
+      engineRunId: null,
+      rawResult: {
+        runId: 'run-from-raw-result',
+        status: 'queued',
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-from-raw-result',
+      status: 'running',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.readPlaywrightEngineRunMock).toHaveBeenCalledWith('run-from-raw-result');
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        engineRunId: 'run-from-raw-result',
+        status: 'running',
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        engineRunId: 'run-from-raw-result',
+        status: 'running',
+      })
+    );
+  });
+
+  it('persists a recovered engine run id even when the run status is still queued', async () => {
+    const scan = createScan({
+      status: 'queued',
+      engineRunId: null,
+      rawResult: {
+        runId: 'run-still-queued',
+        status: 'queued',
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-still-queued',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.readPlaywrightEngineRunMock).toHaveBeenCalledWith('run-still-queued');
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        engineRunId: 'run-still-queued',
+        status: 'queued',
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        engineRunId: 'run-still-queued',
+        status: 'queued',
+      })
+    );
+  });
+
+  it('returns an in-memory running scan when persisting a queued-to-running sync fails', async () => {
+    const scan = createScan({ status: 'queued' });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+    });
+    mocks.updateProductScanMock.mockRejectedValue(new Error('repository unavailable'));
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'scan-1',
+        status: 'running',
+        engineRunId: 'run-1',
+        error: null,
+        asinUpdateStatus: 'pending',
+      })
+    );
+    expect(mocks.captureExceptionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'repository unavailable' }),
+      expect.objectContaining({
+        service: 'product-scans.service',
+        action: 'persistSynchronizedScan',
+        scanId: 'scan-1',
+        productId: 'product-1',
+        engineRunId: 'run-1',
+      })
+    );
+  });
+
+  it('marks the scan failed when reading the Playwright engine run throws', async () => {
+    const scan = createScan();
+
+    mocks.readPlaywrightEngineRunMock.mockRejectedValue(new Error('engine read failed'));
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'failed',
+        error: 'engine read failed',
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: 'engine read failed',
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        error: 'engine read failed',
+        asinUpdateStatus: 'failed',
+      })
+    );
+  });
+
   it('marks the scan failed when updating the product ASIN throws', async () => {
     const scan = createScan();
 
@@ -368,6 +541,194 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         status: 'failed',
         asinUpdateStatus: 'failed',
+      })
+    );
+  });
+
+  it('truncates oversized Amazon result fields before persisting the scan', async () => {
+    const scan = createScan();
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'matched',
+        asin: 'B00TEST123',
+        title: 'T'.repeat(1_200),
+        price: '$'.repeat(250),
+        url: `https://www.amazon.com/dp/B00TEST123?${'x'.repeat(4_200)}`,
+        description: 'D'.repeat(8_500),
+        matchedImageId: 'M'.repeat(200),
+      },
+      finalUrl: `https://www.amazon.com/dp/B00TEST123?${'y'.repeat(4_200)}`,
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+    });
+    mocks.updateProductMock.mockResolvedValue({ id: 'product-1', asin: 'B00TEST123' });
+
+    await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        matchedImageId: 'M'.repeat(160),
+        title: 'T'.repeat(1_000),
+        price: '$'.repeat(200),
+        url: expect.stringMatching(/^https:\/\/www\.amazon\.com\/dp\/B00TEST123\?/),
+        description: 'D'.repeat(8_000),
+      })
+    );
+  });
+
+  it('truncates long finalUrl fallbacks when the script result does not provide a URL', async () => {
+    const scan = createScan();
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'no_match',
+        asin: null,
+        title: null,
+        price: null,
+        url: null,
+        description: null,
+        matchedImageId: null,
+        message: 'No Amazon result matched.',
+        currentUrl: null,
+      },
+      finalUrl: `https://lens.google.com/?${'z'.repeat(4_200)}`,
+    });
+
+    await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'no_match',
+        url: expect.stringMatching(/^https:\/\/lens\.google\.com\/\?/),
+        asinUpdateStatus: 'not_needed',
+      })
+    );
+    expect(
+      (mocks.updateProductScanMock.mock.calls.at(-1)?.[1] as { url?: string | null } | undefined)?.url
+        ?.length
+    ).toBe(4_000);
+  });
+
+  it('marks the scan failed when loading the product during finalization throws', async () => {
+    const scan = createScan();
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'matched',
+        asin: 'B00TEST123',
+        title: 'Amazon title',
+        price: '$19.99',
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        description: 'Amazon description',
+        matchedImageId: 'image-1',
+      },
+      finalUrl: 'https://www.amazon.com/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockRejectedValue(new Error('product lookup failed'));
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductMock).not.toHaveBeenCalled();
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'failed',
+        error: 'product lookup failed',
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: 'product lookup failed',
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        error: 'product lookup failed',
+        asinUpdateStatus: 'failed',
+      })
+    );
+  });
+
+  it('returns an in-memory failed scan when persisting a synchronization failure also throws', async () => {
+    const scan = createScan();
+
+    mocks.readPlaywrightEngineRunMock.mockRejectedValue(new Error('engine read failed'));
+    mocks.updateProductScanMock.mockRejectedValue(new Error('repository unavailable'));
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'scan-1',
+        status: 'failed',
+        error: 'engine read failed',
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: 'engine read failed',
+      })
+    );
+    expect(result.completedAt).not.toBeNull();
+  });
+
+  it('returns an in-memory completed scan when final persistence fails after a successful ASIN update', async () => {
+    const scan = createScan();
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'matched',
+        asin: 'B00TEST123',
+        title: 'Amazon title',
+        price: '$19.99',
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        description: 'Amazon description',
+        matchedImageId: 'image-1',
+      },
+      finalUrl: 'https://www.amazon.com/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+    });
+    mocks.updateProductMock.mockResolvedValue({ id: 'product-1', asin: 'B00TEST123' });
+    mocks.updateProductScanMock.mockRejectedValue(new Error('repository unavailable'));
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.invalidateProductMock).toHaveBeenCalledWith('product-1');
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'scan-1',
+        status: 'completed',
+        asin: 'B00TEST123',
+        asinUpdateStatus: 'updated',
+        asinUpdateMessage: 'Product ASIN filled from Amazon scan.',
+        error: null,
       })
     );
   });
@@ -483,6 +844,128 @@ describe('product-scans-service', () => {
     });
   });
 
+  it('keeps a started scan recoverable when persisting the run link fails once', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-queued-link-recovery',
+      status: 'queued',
+    });
+    mocks.upsertProductScanMock
+      .mockImplementationOnce(async (scan: ProductScanRecord) => scan)
+      .mockRejectedValueOnce(new Error('persist link failed'))
+      .mockImplementationOnce(async (scan: ProductScanRecord) => scan);
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result).toEqual({
+      queued: 1,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: 'run-queued-link-recovery',
+          status: 'queued',
+          message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+    expect(mocks.captureExceptionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'persist link failed' }),
+      expect.objectContaining({
+        service: 'product-scans.service',
+        action: 'queueAmazonBatchProductScans.persistRunLink',
+        productId: 'product-1',
+        runId: 'run-queued-link-recovery',
+      })
+    );
+    expect(mocks.upsertProductScanMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        engineRunId: null,
+        status: 'queued',
+        rawResult: expect.objectContaining({
+          runId: 'run-queued-link-recovery',
+          status: 'queued',
+          linkError: 'persist link failed',
+        }),
+      })
+    );
+  });
+
+  it('truncates long product names before persisting and queueing scans', async () => {
+    const longName = 'A'.repeat(340);
+
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: longName,
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-queued-long-name',
+      status: 'queued',
+    });
+
+    await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.upsertProductScanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productName: 'A'.repeat(300),
+      })
+    );
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            productName: 'A'.repeat(300),
+          }),
+        }),
+      })
+    );
+  });
+
   it('returns a failed batch result when the product has no usable images', async () => {
     mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
     mocks.getProductByIdMock.mockResolvedValue({
@@ -563,6 +1046,67 @@ describe('product-scans-service', () => {
         },
       ],
     });
+    expect(mocks.captureExceptionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'playwright engine unavailable' }),
+      expect.objectContaining({
+        service: 'product-scans.service',
+        action: 'queueAmazonBatchProductScans.startRun',
+        productId: 'product-1',
+      })
+    );
+  });
+
+  it('truncates oversized enqueue failure messages for persistence and batch results', async () => {
+    const longMessage = 'E'.repeat(2_500);
+
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockRejectedValue(new Error(longMessage));
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.upsertProductScanMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        error: 'E'.repeat(2_000),
+        asinUpdateMessage: 'E'.repeat(2_000),
+      })
+    );
+    expect(result).toEqual({
+      queued: 0,
+      alreadyRunning: 0,
+      failed: 1,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: null,
+          status: 'failed',
+          message: 'E'.repeat(1_000),
+        },
+      ],
+    });
   });
 
   it('re-enqueues a fresh scan when the previous active run record is missing', async () => {
@@ -618,6 +1162,66 @@ describe('product-scans-service', () => {
           runId: 'run-queued-2',
           status: 'queued',
           message: 'Amazon reverse image scan queued.',
+        },
+      ],
+    });
+  });
+
+  it('returns already_running when a concurrent active scan appears during base-record insert', async () => {
+    const activeScan = createScan({
+      id: 'scan-concurrent',
+      status: 'queued',
+      engineRunId: 'run-concurrent',
+    });
+
+    mocks.findLatestActiveProductScanMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(activeScan);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SKU-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.upsertProductScanMock.mockRejectedValueOnce(
+      Object.assign(new Error('duplicate key'), { code: 11000 })
+    );
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-concurrent',
+      status: 'queued',
+    });
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.startPlaywrightEngineTaskMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      queued: 0,
+      alreadyRunning: 1,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-concurrent',
+          runId: 'run-concurrent',
+          status: 'already_running',
+          message: 'Amazon scan already in progress for this product.',
         },
       ],
     });
@@ -735,5 +1339,13 @@ describe('product-scans-service', () => {
         },
       ],
     });
+    expect(mocks.captureExceptionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'database temporarily unavailable' }),
+      expect.objectContaining({
+        service: 'product-scans.service',
+        action: 'queueAmazonBatchProductScans.product',
+        productId: 'product-1',
+      })
+    );
   });
 });

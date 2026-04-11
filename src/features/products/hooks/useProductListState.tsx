@@ -45,6 +45,7 @@ import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
 import {
   applyProductListAdvancedFilterState,
   applyProductListPageSizeChange,
+  shouldEnableProductListBackgroundSync,
   shouldEnableProductListBackgroundSyncRuntime,
   scheduleDeferredProductListDraftBootstrap,
 } from './product-list/productListStateHelpers';
@@ -54,6 +55,13 @@ import type { ProductListContextType } from '../context/ProductListContext';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
+export {
+  applyProductListAdvancedFilterState,
+  applyProductListPageSizeChange,
+  shouldEnableProductListBackgroundSync,
+  shouldEnableProductListBackgroundSyncRuntime,
+  scheduleDeferredProductListDraftBootstrap,
+};
 
 const subscribeToSearchParams = (callback: () => void): (() => void) => {
   window.addEventListener('popstate', callback);

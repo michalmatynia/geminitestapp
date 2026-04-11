@@ -2,18 +2,26 @@
 'use no memo';
 
 import { Languages, Plus, Trash2 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { buildMarketplaceCopyDebrandTriggerInput } from '@/features/products/lib/buildMarketplaceCopyDebrandTriggerInput';
+import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
+import { extractDebrandedMarketplaceCopyResultFromAiPathRunDetail } from '@/features/products/lib/extractDebrandedMarketplaceCopyFromAiPathRunDetail';
 import { resolveIntegrationDisplayName } from '@/features/integrations/components/listings/product-listings-labels';
 import {
   isBaseIntegrationSlug,
   isLinkedInIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { Integration } from '@/shared/contracts/integrations/base';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { MultiSelectOption } from '@/shared/contracts/ui/controls';
+import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
+import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { Alert } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { FormField, FormSection } from '@/shared/ui/form-section';
@@ -27,6 +35,18 @@ type MarketplaceCopyErrorEntry = {
   title?: unknown;
   description?: unknown;
 };
+type MarketplaceCopyDebrandTriggerProps = {
+  rowId: string;
+  rowIndex: number;
+  integrationIds: string[];
+  integrationLabels: string[];
+  currentTitle: string;
+  currentDescription: string;
+  disabled: boolean;
+  resolveCurrentRowIndex: (rowId: string) => number | null;
+};
+
+const MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION = 'product_marketplace_copy_row';
 
 const createEmptyMarketplaceCopyOverride = (): NonNullable<
   ProductFormData['marketplaceContentOverrides']
@@ -76,8 +96,198 @@ const resolveMarketplaceIntegrationOptions = ({
   );
 };
 
+function MarketplaceCopyDebrandTrigger(
+  props: MarketplaceCopyDebrandTriggerProps
+): React.JSX.Element | null {
+  const {
+    rowId,
+    rowIndex,
+    integrationIds,
+    integrationLabels,
+    currentTitle,
+    currentDescription,
+    disabled,
+    resolveCurrentRowIndex,
+  } = props;
+  const { product, draft, getValues, setValue } = useProductFormCore();
+  const [pendingRunId, setPendingRunId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const getEntityJson = useCallback((): Record<string, unknown> => {
+    const values = getValues();
+    const entityJson = buildTriggeredProductEntityJson({
+      product,
+      draft,
+      values,
+    });
+
+    entityJson['marketplaceCopyDebrandInput'] = buildMarketplaceCopyDebrandTriggerInput({
+      values,
+      row: {
+        id: rowId,
+        index: rowIndex,
+        integrationIds,
+        integrationNames: integrationLabels,
+        currentAlternateTitle: currentTitle,
+        currentAlternateDescription: currentDescription,
+      },
+    });
+
+    return entityJson;
+  }, [
+    currentDescription,
+    currentTitle,
+    draft,
+    getValues,
+    integrationIds,
+    integrationLabels,
+    product,
+    rowId,
+    rowIndex,
+  ]);
+
+  const getTriggerExtras = useCallback((): Record<string, unknown> => {
+    const values = getValues();
+    return {
+      marketplaceCopyDebrandInput: buildMarketplaceCopyDebrandTriggerInput({
+        values,
+        row: {
+          id: rowId,
+          index: rowIndex,
+          integrationIds,
+          integrationNames: integrationLabels,
+          currentAlternateTitle: currentTitle,
+          currentAlternateDescription: currentDescription,
+        },
+      }),
+    };
+  }, [
+    currentDescription,
+    currentTitle,
+    getValues,
+    integrationIds,
+    integrationLabels,
+    rowId,
+    rowIndex,
+  ]);
+
+  const handleRunQueued = useCallback(
+    (args: {
+      button: AiTriggerButtonRecord;
+      runId: string;
+      entityId?: string | null | undefined;
+      entityType: 'product' | 'note' | 'custom';
+    }): void => {
+      if (args.entityType !== 'product') return;
+      setError(null);
+      setPendingRunId(args.runId);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!pendingRunId) return;
+
+    let active = true;
+    let terminalHandled = false;
+    const trackedRunId = pendingRunId;
+
+    const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
+      if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
+      terminalHandled = true;
+
+      void (async (): Promise<void> => {
+        if (snapshot.status !== 'completed') {
+          if (!active) return;
+          setError(
+            snapshot.errorMessage ??
+              `Debrand failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
+          );
+          setPendingRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        let response: Awaited<ReturnType<typeof getAiPathRun>>;
+        try {
+          response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
+        } catch {
+          if (!active) return;
+          setError('Debrand failed: unable to load the completed AI Path run details.');
+          setPendingRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+        if (!active) return;
+        if (!response.ok) {
+          setError(
+            response.error ||
+              'Debrand failed: unable to load the completed AI Path run details.'
+          );
+          setPendingRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        const result = extractDebrandedMarketplaceCopyResultFromAiPathRunDetail(response.data);
+        if (!result || (!result.title && !result.description)) {
+          setError(
+            'Debrand failed: the AI Path did not return an alternate title or description.'
+          );
+          setPendingRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        const currentRowIndex = resolveCurrentRowIndex(rowId);
+        if (currentRowIndex === null) {
+          setPendingRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        if (result.title !== null) {
+          const titleFieldName = `marketplaceContentOverrides.${currentRowIndex}.title` as const;
+          setValue(titleFieldName, result.title, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (result.description !== null) {
+          const descriptionFieldName =
+            `marketplaceContentOverrides.${currentRowIndex}.description` as const;
+          setValue(descriptionFieldName, result.description, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        setError(null);
+        setPendingRunId((current) => (current === trackedRunId ? null : current));
+      })();
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [pendingRunId, resolveCurrentRowIndex, rowId, setValue]);
+
+  return (
+    <div className='flex min-w-0 flex-col items-end gap-2'>
+      <TriggerButtonBar
+        location={MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION}
+        entityType='product'
+        entityId={product?.id ?? null}
+        getEntityJson={getEntityJson}
+        getTriggerExtras={getTriggerExtras}
+        disabled={disabled}
+        onRunQueued={handleRunQueued}
+      />
+      {error ? <p className='text-right text-xs text-destructive'>{error}</p> : null}
+    </div>
+  );
+}
+
 export default function ProductFormMarketplaceCopy(): React.JSX.Element {
   const { control, register, formState } = useFormContext<ProductFormData>();
+  const { product } = useProductFormCore();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'marketplaceContentOverrides',
@@ -109,11 +319,20 @@ export default function ProductFormMarketplaceCopy(): React.JSX.Element {
     () => new Map(integrationOptions.map((option) => [option.value, option.label] as const)),
     [integrationOptions]
   );
+  const marketplaceCopyRowIndexByIdRef = useRef<Map<string, number>>(new Map());
+  marketplaceCopyRowIndexByIdRef.current = new Map(
+    fields.map((field, index) => [field.id, index] as const)
+  );
+  const resolveCurrentMarketplaceCopyRowIndex = useCallback(
+    (rowId: string): number | null => marketplaceCopyRowIndexByIdRef.current.get(rowId) ?? null,
+    []
+  );
   const overrideErrors = formState.errors.marketplaceContentOverrides;
   const overrideErrorEntries: MarketplaceCopyErrorEntry[] = Array.isArray(overrideErrors)
     ? (overrideErrors as MarketplaceCopyErrorEntry[])
     : [];
   const rootOverrideError = toErrorMessage(overrideErrors);
+  const hasPersistedEntity = Boolean(product?.id);
 
   return (
     <FormSection
@@ -177,18 +396,30 @@ export default function ProductFormMarketplaceCopy(): React.JSX.Element {
                 <div className='text-sm font-semibold text-foreground'>Alternate Copy {index + 1}</div>
                 <p className='text-xs text-muted-foreground'>{summary}</p>
               </div>
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                onClick={(): void => remove(index)}
-                className='gap-2 text-muted-foreground hover:text-foreground'
-                aria-label={`Remove alternate copy ${index + 1}`}
-                title='Remove alternate copy'
-              >
-                <Trash2 className='h-4 w-4' />
-                Remove
-              </Button>
+              <div className='flex flex-wrap items-start justify-end gap-2'>
+                <MarketplaceCopyDebrandTrigger
+                  rowId={field.id}
+                  rowIndex={index}
+                  integrationIds={selectedIds}
+                  integrationLabels={selectedLabels}
+                  currentTitle={currentEntry?.title ?? ''}
+                  currentDescription={currentEntry?.description ?? ''}
+                  disabled={!hasPersistedEntity}
+                  resolveCurrentRowIndex={resolveCurrentMarketplaceCopyRowIndex}
+                />
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  onClick={(): void => remove(index)}
+                  className='gap-2 text-muted-foreground hover:text-foreground'
+                  aria-label={`Remove alternate copy ${index + 1}`}
+                  title='Remove alternate copy'
+                >
+                  <Trash2 className='h-4 w-4' />
+                  Remove
+                </Button>
+              </div>
             </div>
 
             <div className='grid gap-4 md:grid-cols-2'>

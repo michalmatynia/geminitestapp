@@ -19,20 +19,20 @@ describe('v2 products catch-all route module', () => {
 
   it('registers shipping-groups routes before the generic product id route', () => {
     expect(routeSource).toContain(
-      "{ pattern: ['shipping-groups'], loader: () => import('../shipping-groups/route-handler') },"
+      '{ pattern: [\'shipping-groups\'], loader: () => import(\'../shipping-groups/route-handler\') },'
     );
     expect(routeSource).toContain(
-      "{ pattern: ['shipping-groups', param('id')], loader: () => import('../shipping-groups/[id]/route-handler') },"
+      '{ pattern: [\'shipping-groups\', param(\'id\')], loader: () => import(\'../shipping-groups/[id]/route-handler\') },'
     );
 
     const shippingGroupsIndex = routeSource.indexOf(
-      "{ pattern: ['shipping-groups'], loader: () => import('../shipping-groups/route-handler') },"
+      '{ pattern: [\'shipping-groups\'], loader: () => import(\'../shipping-groups/route-handler\') },'
     );
     const shippingGroupsByIdIndex = routeSource.indexOf(
-      "{ pattern: ['shipping-groups', param('id')], loader: () => import('../shipping-groups/[id]/route-handler') },"
+      '{ pattern: [\'shipping-groups\', param(\'id\')], loader: () => import(\'../shipping-groups/[id]/route-handler\') },'
     );
     const genericProductIdIndex = routeSource.indexOf(
-      "{ pattern: [param('id')], loader: () => import('../[id]/route-handler') },"
+      '{ pattern: [param(\'id\')], loader: () => import(\'../[id]/route-handler\') },'
     );
 
     expect(shippingGroupsIndex).toBeGreaterThan(-1);
@@ -44,20 +44,20 @@ describe('v2 products catch-all route module', () => {
 
   it('registers custom-fields routes before the generic product id route', () => {
     expect(routeSource).toContain(
-      "{ pattern: ['custom-fields'], loader: () => import('../custom-fields/route-handler') },"
+      '{ pattern: [\'custom-fields\'], loader: () => import(\'../custom-fields/route-handler\') },'
     );
     expect(routeSource).toContain(
-      "{ pattern: ['custom-fields', param('id')], loader: () => import('../custom-fields/[id]/route-handler') },"
+      '{ pattern: [\'custom-fields\', param(\'id\')], loader: () => import(\'../custom-fields/[id]/route-handler\') },'
     );
 
     const customFieldsIndex = routeSource.indexOf(
-      "{ pattern: ['custom-fields'], loader: () => import('../custom-fields/route-handler') },"
+      '{ pattern: [\'custom-fields\'], loader: () => import(\'../custom-fields/route-handler\') },'
     );
     const customFieldsByIdIndex = routeSource.indexOf(
-      "{ pattern: ['custom-fields', param('id')], loader: () => import('../custom-fields/[id]/route-handler') },"
+      '{ pattern: [\'custom-fields\', param(\'id\')], loader: () => import(\'../custom-fields/[id]/route-handler\') },'
     );
     const genericProductIdIndex = routeSource.indexOf(
-      "{ pattern: [param('id')], loader: () => import('../[id]/route-handler') },"
+      '{ pattern: [param(\'id\')], loader: () => import(\'../[id]/route-handler\') },'
     );
 
     expect(customFieldsIndex).toBeGreaterThan(-1);

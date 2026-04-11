@@ -29,6 +29,16 @@ describe('shouldEmbedTriggerEntitySnapshot', () => {
     ).toBe(true);
   });
 
+  it('embeds entity snapshots for marketplace-copy row triggers even when entityId exists', () => {
+    expect(
+      shouldEmbedTriggerEntitySnapshot({
+        entityType: 'product',
+        entityId: 'product-1',
+        sourceLocation: 'product_marketplace_copy_row',
+      })
+    ).toBe(true);
+  });
+
   it('embeds for note_modal source location', () => {
     expect(
       shouldEmbedTriggerEntitySnapshot({

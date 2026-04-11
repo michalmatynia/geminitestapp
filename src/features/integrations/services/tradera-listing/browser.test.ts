@@ -48,7 +48,7 @@ vi.mock('node:fs/promises', () => ({
   },
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/security/encryption', () => ({
   decryptSecret: (value: string) => `decrypted:${value}`,
 }));
 

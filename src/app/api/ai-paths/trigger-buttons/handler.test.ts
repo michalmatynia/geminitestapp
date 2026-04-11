@@ -719,6 +719,65 @@ describe('ai-paths trigger-buttons GET handler', () => {
     ]);
   });
 
+  it('returns the auto-seeded marketplace copy debrand button when starter defaults are materialized on read', async () => {
+    const seededSnapshot = createSettingsSnapshot({
+      triggerButtons: [
+        {
+          id: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
+          name: 'Debrand',
+          iconId: null,
+          pathId: 'path_marketplace_copy_debrand_v1',
+          enabled: true,
+          locations: ['product_marketplace_copy_row'],
+          mode: 'click',
+          display: 'icon_label',
+          createdAt: '2026-04-11T00:00:00.000Z',
+          updatedAt: '2026-04-11T00:00:00.000Z',
+          sortIndex: 35,
+        },
+      ],
+      pathMetas: [
+        {
+          id: 'path_marketplace_copy_debrand_v1',
+          name: 'Debrand Marketplace Copy',
+          createdAt: '2026-04-11T00:00:00.000Z',
+          updatedAt: '2026-04-11T00:00:00.000Z',
+        },
+      ],
+      configs: {
+        path_marketplace_copy_debrand_v1: {
+          id: 'path_marketplace_copy_debrand_v1',
+          name: 'Debrand Marketplace Copy',
+          nodes: [],
+          edges: [],
+        },
+      },
+    });
+
+    getAllAiPathsSettingsMock.mockResolvedValue([]);
+    ensureStarterWorkflowDefaultsMock.mockReturnValue({
+      nextRecords: seededSnapshot,
+      affectedCount: 1,
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
+
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith(seededSnapshot);
+    expect(body).toEqual([
+      expect.objectContaining({
+        id: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
+        name: 'Debrand',
+        pathId: 'path_marketplace_copy_debrand_v1',
+        locations: ['product_marketplace_copy_row'],
+      }),
+    ]);
+  });
+
   it('POST rejects missing bound AI Paths', async () => {
     getAiPathsSettingMock.mockImplementation(async (key: string) => {
       if (key === 'ai_paths_index') {
@@ -832,6 +891,55 @@ describe('ai-paths trigger-buttons GET handler', () => {
       expect.objectContaining({
         name: 'Run Path',
         pathId: 'path-live',
+      })
+    );
+    expect(upsertAiPathsSettingMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('POST accepts marketplace-copy row trigger button locations', async () => {
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path-live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_config_path-live') {
+        return JSON.stringify({
+          id: 'path-live',
+          name: 'Live Path',
+          nodes: [],
+          edges: [],
+        });
+      }
+      if (key === 'ai_paths_trigger_buttons') {
+        return '[]';
+      }
+      return null;
+    });
+
+    const request = new NextRequest('http://localhost/api/ai-paths/trigger-buttons', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Debrand Marketplace Copy',
+        pathId: 'path-live',
+        locations: ['product_marketplace_copy_row'],
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const response = await POST_handler(request, {} as Parameters<typeof POST_handler>[1]);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        name: 'Debrand Marketplace Copy',
+        pathId: 'path-live',
+        locations: ['product_marketplace_copy_row'],
       })
     );
     expect(upsertAiPathsSettingMock).toHaveBeenCalledTimes(1);

@@ -56,6 +56,10 @@ const LOCATION_OPTIONS: Array<LabeledOptionDto<AiTriggerButtonLocation>> = [
   { value: 'product_modal', label: 'Products: Product Modal' },
   { value: 'product_list', label: 'Products: Product List (Footer)' },
   { value: 'product_row', label: 'Products: Product Row' },
+  {
+    value: 'product_marketplace_copy_row',
+    label: 'Products: Marketplace Copy Row',
+  },
   { value: 'product_list_header', label: 'Products: List Header' },
   { value: 'product_list_item', label: 'Products: List Item (Context)' },
   { value: 'product_form_header', label: 'Products: Form Header' },

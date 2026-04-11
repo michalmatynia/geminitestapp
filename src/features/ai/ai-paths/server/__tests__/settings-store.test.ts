@@ -141,6 +141,11 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
         (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
       )
     ).toBe(true);
+    expect(
+      seeded.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_marketplace_copy_debrand_v1`
+      )
+    ).toBe(true);
 
     const triggerButtonsRecord = seeded.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
@@ -158,6 +163,9 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     ).toBe(true);
     expect(
       triggerButtons.some((button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')
+    ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')
     ).toBe(true);
   });
 
@@ -185,6 +193,11 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       )
     ).toBe(true);
     expect(
+      restored.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_marketplace_copy_debrand_v1`
+      )
+    ).toBe(true);
+    expect(
       restored.nextRecords.some((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`)
     ).toBe(true);
 
@@ -199,6 +212,9 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     expect(
       triggerButtons.some((button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')
     ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')
+    ).toBe(true);
   });
 
   it('rejects invalid trigger button payloads during starter seeding', () => {
@@ -208,6 +224,64 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
         { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '{"invalid":"shape"}' },
       ])
     ).toThrowError('Invalid AI trigger button settings payload.');
+  });
+
+  it('refreshes stale starter trigger button fields while preserving user state', () => {
+    const fullySeeded = ensureStarterWorkflowDefaults([
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: '[]',
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: '[]',
+      },
+    ]).nextRecords;
+    const staleRecords = fullySeeded.map((record) => {
+      if (record.key !== AI_PATHS_TRIGGER_BUTTONS_KEY) return record;
+      const parsed = JSON.parse(record.value) as Array<Record<string, unknown>>;
+      return {
+        ...record,
+        value: JSON.stringify(
+          parsed.map((button) =>
+            button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4'
+              ? {
+                  ...button,
+                  name: 'Debrand Copy',
+                  enabled: false,
+                  display: 'icon_label',
+                  sortIndex: 99,
+                  updatedAt: '2026-04-01T00:00:00.000Z',
+                }
+              : button
+          )
+        ),
+      };
+    });
+
+    const refreshed = ensureStarterWorkflowDefaults(staleRecords);
+    const triggerButtonsRecord = refreshed.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    const debrandButton = triggerButtons.find(
+      (button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4'
+    );
+
+    expect(refreshed.affectedCount).toBe(1);
+    expect(debrandButton).toEqual(
+      expect.objectContaining({
+        name: 'Debrand',
+        pathId: 'path_marketplace_copy_debrand_v1',
+        locations: ['product_marketplace_copy_row'],
+        mode: 'click',
+        display: 'icon_label',
+        enabled: false,
+        sortIndex: 99,
+      })
+    );
+    expect(debrandButton?.['updatedAt']).not.toBe('2026-04-01T00:00:00.000Z');
   });
 
   it('does not rewrite existing starter configs without explicit upgrade actions', () => {

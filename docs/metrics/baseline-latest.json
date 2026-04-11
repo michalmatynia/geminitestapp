@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-04-11T02:14:58.811Z",
+  "generatedAt": "2026-04-11T09:25:02.858Z",
   "source": {
-    "totalFiles": 10250,
-    "totalLines": 1685446,
+    "totalFiles": 10264,
+    "totalLines": 1688699,
     "useClientFiles": 1780,
     "hooksWithoutUseClient": 0,
     "filesOver800": 92,
@@ -109,7 +109,7 @@
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 1,
+    "appFeatureDeepImports": 2,
     "featureToSharedTotalImports": 24,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 0
@@ -126,17 +126,17 @@
       {
         "feature": "ai",
         "files": 1300,
-        "lines": 250569
+        "lines": 250657
       },
       {
         "feature": "integrations",
         "files": 470,
-        "lines": 99330
+        "lines": 99338
       },
       {
         "feature": "products",
-        "files": 408,
-        "lines": 89390
+        "files": 417,
+        "lines": 91935
       },
       {
         "feature": "case-resolver",
@@ -181,7 +181,7 @@
       {
         "feature": "playwright",
         "files": 88,
-        "lines": 8267
+        "lines": 8269
       },
       {
         "feature": "auth",
@@ -206,7 +206,7 @@
       {
         "feature": "drafter",
         "files": 19,
-        "lines": 3021
+        "lines": 3022
       },
       {
         "feature": "files",
@@ -468,6 +468,10 @@
         "lines": 1014
       },
       {
+        "path": "src/features/products/server/product-scans-service.test.ts",
+        "lines": 1012
+      },
+      {
         "path": "src/features/integrations/services/imports/base-mapper.test.ts",
         "lines": 1004
       },
@@ -542,10 +546,6 @@
       {
         "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts",
         "lines": 969
-      },
-      {
-        "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx",
-        "lines": 968
       }
     ],
     "topPagesByLines": [

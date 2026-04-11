@@ -26,12 +26,20 @@ vi.mock('@/features/ai/ai-paths/server/starter-workflows-settings', () => ({
     nextRecords: records,
   }),
   restoreStaticStarterWorkflowBundle: () => ({
-    affectedCount: 4,
+    affectedCount: 5,
     nextRecords: [
-      { key: 'ai_paths_index', value: '[{"id":"path_descv3lite"},{"id":"path_96708d"}]' },
+      {
+        key: 'ai_paths_index',
+        value:
+          '[{"id":"path_descv3lite"},{"id":"path_96708d"},{"id":"path_marketplace_copy_debrand_v1"}]',
+      },
       { key: 'ai_paths_trigger_buttons', value: '[]' },
       { key: 'ai_paths_config_path_descv3lite', value: '{"id":"path_descv3lite"}' },
       { key: 'ai_paths_config_path_96708d', value: '{"id":"path_96708d"}' },
+      {
+        key: 'ai_paths_config_path_marketplace_copy_debrand_v1',
+        value: '{"id":"path_marketplace_copy_debrand_v1"}',
+      },
     ],
   }),
 }));
@@ -104,7 +112,9 @@ describe('settings-store keyset cache', () => {
       'ai_paths_trigger_buttons',
     ]);
 
-    expect(records.some((record) => record.key === 'ai_paths_index')).toBe(true);
+    const indexRecord = records.find((record) => record.key === 'ai_paths_index');
+    expect(indexRecord).toBeTruthy();
+    expect(indexRecord?.value).toContain('path_marketplace_copy_debrand_v1');
     expect(records.some((record) => record.key === 'ai_paths_config_path_descv3lite')).toBe(true);
     expect(records.some((record) => record.key === 'ai_paths_trigger_buttons')).toBe(true);
   });
@@ -120,5 +130,8 @@ describe('settings-store keyset cache', () => {
 
     expect(records.some((record) => record.key === 'ai_paths_config_path_descv3lite')).toBe(true);
     expect(records.some((record) => record.key === 'ai_paths_config_path_96708d')).toBe(true);
+    expect(
+      records.some((record) => record.key === 'ai_paths_config_path_marketplace_copy_debrand_v1')
+    ).toBe(true);
   });
 });

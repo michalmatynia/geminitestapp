@@ -18,6 +18,7 @@ import {
   invalidateProductsAndDetail,
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
+import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
@@ -137,7 +138,8 @@ export function ProductAmazonScanModal(
   const { isOpen, onClose, productIds, products } = props;
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimerRef = useRef<SafeTimerId | null>(null);
+  const modalSessionRef = useRef(0);
   const rowsRef = useRef<ScanModalRow[]>([]);
   const [rows, setRows] = useState<ScanModalRow[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,7 +158,7 @@ export function ProductAmazonScanModal(
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
-      clearInterval(pollTimerRef.current);
+      safeClearInterval(pollTimerRef.current);
       pollTimerRef.current = null;
     }
     setIsPolling(false);
@@ -177,7 +179,11 @@ export function ProductAmazonScanModal(
     [queryClient]
   );
 
-  const refreshScanRows = useCallback(async () => {
+  const refreshScanRows = useCallback(async (sessionId = modalSessionRef.current) => {
+    if (sessionId !== modalSessionRef.current) {
+      return;
+    }
+
     const currentRows = rowsRef.current;
     const scanIds = currentRows
       .map((row) => row.scanId)
@@ -194,6 +200,9 @@ export function ProductAmazonScanModal(
         limit: scanIds.length,
       },
     });
+    if (sessionId !== modalSessionRef.current) {
+      return;
+    }
 
     const scansById = new Map(response.scans.map((scan) => [scan.id, scan]));
 
@@ -222,6 +231,9 @@ export function ProductAmazonScanModal(
     rowsRef.current = nextRows;
     setRows(nextRows);
 
+    if (sessionId !== modalSessionRef.current) {
+      return;
+    }
     await Promise.all(terminalProductIds.map(async (productId) => await invalidateProductViews(productId)));
 
     if (!nextRows.some((row) => row.status === 'enqueuing' || isProductScanActiveStatus(row.status))) {
@@ -229,22 +241,29 @@ export function ProductAmazonScanModal(
     }
   }, [invalidateProductViews, stopPolling]);
 
-  const startPolling = useCallback(() => {
+  const startPolling = useCallback((sessionId = modalSessionRef.current) => {
     stopPolling();
+    if (sessionId !== modalSessionRef.current) {
+      return;
+    }
     setIsPolling(true);
-    pollTimerRef.current = setInterval(() => {
-      void refreshScanRows().catch(() => undefined);
+    pollTimerRef.current = safeSetInterval(() => {
+      void refreshScanRows(sessionId).catch(() => undefined);
     }, 3000);
   }, [refreshScanRows, stopPolling]);
 
   useEffect(() => {
     if (!isOpen) {
+      modalSessionRef.current += 1;
+      rowsRef.current = [];
       setRows([]);
       setIsSubmitting(false);
       stopPolling();
       return;
     }
 
+    const sessionId = modalSessionRef.current + 1;
+    modalSessionRef.current = sessionId;
     const initialRows = productIds.map((productId) => ({
       productId,
       productName: productNamesById.get(productId) ?? productId,
@@ -264,6 +283,9 @@ export function ProductAmazonScanModal(
           '/api/v2/products/scans/amazon/batch',
           { productIds }
         );
+        if (sessionId !== modalSessionRef.current) {
+          return;
+        }
 
         const resultsByProductId = new Map(response.results.map((result) => [result.productId, result]));
 
@@ -284,8 +306,8 @@ export function ProductAmazonScanModal(
         setRows(queuedRows);
 
         if (response.results.some((result) => result.status === 'queued' || result.status === 'already_running')) {
-          startPolling();
-          void refreshScanRows().catch(() => undefined);
+          startPolling(sessionId);
+          void refreshScanRows(sessionId).catch(() => undefined);
         }
 
         const summary = [
@@ -296,10 +318,16 @@ export function ProductAmazonScanModal(
           .filter(Boolean)
           .join(', ');
 
+        if (sessionId !== modalSessionRef.current) {
+          return;
+        }
         toast(summary ? `Amazon scans: ${summary}.` : 'No Amazon scans were queued.', {
           variant: response.failed > 0 ? 'warning' : 'success',
         });
       } catch (error) {
+        if (sessionId !== modalSessionRef.current) {
+          return;
+        }
         const message =
           error instanceof Error ? error.message : 'Failed to enqueue Amazon scans.';
         const failedRows = initialRows.map((row) => ({
@@ -311,11 +339,16 @@ export function ProductAmazonScanModal(
         setRows(failedRows);
         toast(message, { variant: 'error' });
       } finally {
-        setIsSubmitting(false);
+        if (sessionId === modalSessionRef.current) {
+          setIsSubmitting(false);
+        }
       }
     })();
 
     return () => {
+      if (modalSessionRef.current === sessionId) {
+        modalSessionRef.current += 1;
+      }
       stopPolling();
     };
   }, [isOpen, productIds, productNamesById, refreshScanRows, startPolling, stopPolling, toast]);
@@ -331,7 +364,7 @@ export function ProductAmazonScanModal(
         <Button
           variant='ghost'
           size='sm'
-          onClick={() => void refreshScanRows()}
+          onClick={() => void refreshScanRows(modalSessionRef.current)}
           disabled={isSubmitting}
           className='h-8 gap-1.5 px-2 text-xs'
         >

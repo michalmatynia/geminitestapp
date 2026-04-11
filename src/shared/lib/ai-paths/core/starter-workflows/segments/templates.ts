@@ -3,6 +3,7 @@ import baseExportBlwoAsset from '../assets/base-export-blwo.canvas.json';
 import descriptionInferenceLiteAsset from '../assets/description-inference-lite.canvas.json';
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
+import marketplaceCopyDebrandAsset from '../assets/marketplace-copy-debrand.canvas.json';
 import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
 import productNameNormalizeAsset from '../assets/product-name-normalize.canvas.json';
 import translationEnPlAsset from '../assets/translation-en-pl.canvas.json';
@@ -129,6 +130,41 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'description_inference_lite',
       templateVersion: 6,
+      canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+    },
+  },
+  {
+    templateId: 'starter_marketplace_copy_debrand',
+    name: 'Debrand Marketplace Copy',
+    description:
+      'Generate debranded alternate marketplace title and description from English product copy and images.',
+    semanticAsset: marketplaceCopyDebrandAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: 'path_marketplace_copy_debrand_v1',
+      isActive: true,
+      isLocked: false,
+      sortOrder: 35,
+      restoreOnStaticRecovery: true,
+    },
+    triggerButtonPresets: [
+      {
+        id: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
+        name: 'Debrand',
+        pathId: 'path_marketplace_copy_debrand_v1',
+        locations: ['product_marketplace_copy_row'],
+        display: buildTriggerDisplay('Debrand'),
+        enabled: true,
+        mode: 'click',
+        sortIndex: 35,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'marketplace_copy_debrand',
+      templateVersion: 1,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

@@ -608,6 +608,30 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
     });
   });
 
+  it('allows selecting the marketplace-copy row location when creating a trigger button', async () => {
+    render(<AdminAiPathsTriggerButtonsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'New Trigger Button' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Icon' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select Sparkles' }));
+    fireEvent.change(screen.getByLabelText('Button Name'), {
+      target: { value: 'Debrand Marketplace Copy' },
+    });
+    fireEvent.click(screen.getByLabelText('Products: Marketplace Copy Row'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mockState.triggerButtonsApi.create).toHaveBeenCalledWith({
+        name: 'Debrand Marketplace Copy',
+        iconId: 'sparkles',
+        enabled: true,
+        locations: ['product_modal', 'product_marketplace_copy_row'],
+        mode: 'click',
+        display: 'icon_label',
+      });
+    });
+  });
+
   it('edits, toggles, reorders, and deletes trigger buttons', async () => {
     mockState.triggerButtonsQuery.data = [
       buildRow({

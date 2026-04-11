@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -78,6 +78,16 @@ const createQueryClient = (): QueryClient =>
       mutations: { retry: false },
     },
   });
+
+const createDeferred = <T,>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
 
 describe('ProductAmazonScanModal', () => {
   beforeEach(() => {
@@ -166,5 +176,110 @@ describe('ProductAmazonScanModal', () => {
         'product-1'
       );
     });
+  });
+
+  it('ignores stale enqueue responses from a previous modal session', async () => {
+    const firstResponse = createDeferred<{
+      queued: number;
+      alreadyRunning: number;
+      failed: number;
+      results: Array<{
+        productId: string;
+        scanId: string | null;
+        runId: string | null;
+        status: 'failed';
+        message: string;
+      }>;
+    }>();
+
+    mocks.apiPost
+      .mockImplementationOnce(async () => await firstResponse.promise)
+      .mockResolvedValueOnce({
+        queued: 0,
+        alreadyRunning: 0,
+        failed: 1,
+        results: [
+          {
+            productId: 'product-2',
+            scanId: null,
+            runId: null,
+            status: 'failed',
+            message: 'fresh failure',
+          },
+        ],
+      });
+
+    const queryClient = createQueryClient();
+
+    const { rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(mocks.apiPost).toHaveBeenNthCalledWith(1, '/api/v2/products/scans/amazon/batch', {
+        productIds: ['product-1'],
+      });
+    });
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen={false}
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-2']}
+          products={[{ id: 'product-2', name_en: 'Product 2', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(mocks.apiPost).toHaveBeenNthCalledWith(2, '/api/v2/products/scans/amazon/batch', {
+        productIds: ['product-2'],
+      });
+    });
+
+    await screen.findByText('fresh failure');
+    expect(screen.getByText('Product 2')).toBeInTheDocument();
+    expect(screen.queryByText('Product 1')).not.toBeInTheDocument();
+
+    await act(async () => {
+      firstResponse.resolve({
+        queued: 0,
+        alreadyRunning: 0,
+        failed: 1,
+        results: [
+          {
+            productId: 'product-1',
+            scanId: null,
+            runId: null,
+            status: 'failed',
+            message: 'stale failure',
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText('Product 2')).toBeInTheDocument();
+    expect(screen.queryByText('Product 1')).not.toBeInTheDocument();
+    expect(screen.queryByText('stale failure')).not.toBeInTheDocument();
   });
 });

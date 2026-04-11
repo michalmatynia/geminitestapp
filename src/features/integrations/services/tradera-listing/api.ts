@@ -1,4 +1,4 @@
-import { decryptSecret } from '@/features/integrations/server';
+import { decryptSecret } from '@/shared/lib/security/encryption';
 import { getExternalCategoryRepository } from '@/features/integrations/services/external-category-repository';
 import {
   addTraderaShopItem,

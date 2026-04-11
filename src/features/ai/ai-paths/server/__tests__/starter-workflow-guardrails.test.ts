@@ -157,6 +157,7 @@ describe('starter workflow guardrails', () => {
       "'parameter_inference'",
       "'product_name_normalize'",
       "'description_inference_lite'",
+      "'marketplace_copy_debrand'",
       "'translation_en_pl'",
     ].forEach((starterKeyLiteral) => {
       expect(upgradeSource.includes(`starterLineage.starterKey === ${starterKeyLiteral}`)).toBe(false);

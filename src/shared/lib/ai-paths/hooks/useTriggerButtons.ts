@@ -163,6 +163,7 @@ interface UseTriggerButtonsOptions {
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
   getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  getTriggerExtras?: (() => Record<string, unknown> | null) | undefined;
   onRunQueued?:
     | ((args: {
         button: AiTriggerButtonRecord;
@@ -178,6 +179,7 @@ export function useTriggerButtons({
   entityType,
   entityId,
   getEntityJson,
+  getTriggerExtras,
   onRunQueued,
 }: UseTriggerButtonsOptions) {
   const { toast } = useToast();
@@ -395,6 +397,7 @@ export function useTriggerButtons({
       }));
       const resolvedEntityId = resolveTriggerEntityId(entityId, getEntityJson);
       const feedbackAliasButtonIds = feedbackAliasButtonIdsById.get(button.id) ?? [button.id];
+      let customExtras: Record<string, unknown> | null = null;
 
       // Guard: if the caller signals an entity context (via explicit entityId prop or getEntityJson)
       // but resolution yields null, abort early rather than firing with no entity context.
@@ -410,6 +413,33 @@ export function useTriggerButtons({
         );
         setRunStates((prev) => ({ ...prev, [button.id]: { status: 'idle', progress: 0 } }));
         return;
+      }
+
+      if (getTriggerExtras) {
+        try {
+          const resolvedTriggerExtras = getTriggerExtras();
+          if (
+            resolvedTriggerExtras &&
+            typeof resolvedTriggerExtras === 'object' &&
+            !Array.isArray(resolvedTriggerExtras)
+          ) {
+            customExtras = resolvedTriggerExtras;
+          }
+        } catch (error) {
+          logClientCatch(error, {
+            source: 'useTriggerButtons',
+            action: 'getTriggerExtras',
+            buttonId: button.id,
+            pathId: button.pathId,
+            location,
+            entityType,
+          });
+          toast('Could not build trigger context for this AI Path trigger.', {
+            variant: 'error',
+          });
+          setRunStates((prev) => ({ ...prev, [button.id]: { status: 'idle', progress: 0 } }));
+          return;
+        }
       }
 
       try {
@@ -443,6 +473,7 @@ export function useTriggerButtons({
           event: options.event,
           source: { tab: entityType, location },
           extras: {
+            ...(customExtras ?? {}),
             mode: options.mode,
             ...(options.mode === 'toggle' ? { checked: options.checked } : {}),
           },
@@ -557,6 +588,7 @@ export function useTriggerButtons({
       fireAiPathTriggerEvent,
       feedbackAliasButtonIdsById,
       getEntityJson,
+      getTriggerExtras,
       location,
       onRunQueued,
       startRunSubscription,

@@ -40,7 +40,7 @@ vi.mock('@/features/kangur/server', () => ({
     () => ':root{--kangur-soft-card-border:rgba(51,65,85,0.4);}'
   ),
   KANGUR_SURFACE_HINT_SCRIPT:
-    "document.documentElement.classList.add('kangur-surface-active')",
+    'document.documentElement.classList.add(\'kangur-surface-active\')',
 }));
 
 vi.mock('@/shared/lib/security/safe-html', () => ({

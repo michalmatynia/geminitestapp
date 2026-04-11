@@ -57,6 +57,7 @@ const PRODUCT_SAVED_CONFIG_WARNING_LOCATIONS = new Set([
   'product_list',
   'product_list_header',
   'product_list_item',
+  'product_marketplace_copy_row',
   'product_modal',
   'product_row',
 ]);

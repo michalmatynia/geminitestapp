@@ -2,6 +2,7 @@ import type { ProductScanAsinUpdateStatus, ProductScanImageCandidate, ProductSca
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 export const PRODUCT_SCAN_IMAGE_CANDIDATE_LIMIT = 3;
+const PRODUCT_SCAN_DISPLAY_NAME_MAX_LENGTH = 300;
 
 const normalizeOptionalString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -18,12 +19,16 @@ export const normalizeAmazonAsin = (value: unknown): string | null => {
 export const resolveProductScanDisplayName = (product: Pick<
   ProductWithImages,
   'id' | 'name_en' | 'name_pl' | 'name_de' | 'sku'
->): string =>
-  product.name_en?.trim() ||
-  product.name_pl?.trim() ||
-  product.name_de?.trim() ||
-  product.sku?.trim() ||
-  product.id;
+>): string => {
+  const rawName =
+    product.name_en?.trim() ||
+    product.name_pl?.trim() ||
+    product.name_de?.trim() ||
+    product.sku?.trim() ||
+    product.id;
+
+  return rawName.slice(0, PRODUCT_SCAN_DISPLAY_NAME_MAX_LENGTH);
+};
 
 export const resolveProductScanImageCandidates = (
   product: Pick<ProductWithImages, 'images' | 'imageLinks'>,
@@ -38,6 +43,11 @@ export const resolveProductScanImageCandidates = (
       normalizeOptionalString(imageFile?.publicUrl) ?? normalizeOptionalString(imageFile?.url);
     const filepath = normalizeOptionalString(imageFile?.filepath);
     const id = normalizeOptionalString(imageFile?.id) ?? normalizeOptionalString(image.imageFileId);
+
+    if (!filepath && !url) {
+      continue;
+    }
+
     const key = filepath ?? url ?? id;
 
     if (!key || seen.has(key)) {

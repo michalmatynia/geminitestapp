@@ -1,10 +1,8 @@
 import 'server-only';
 
-import {
-  encryptSecret,
-  getIntegrationRepository,
-} from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import type { IntegrationRepository } from '@/shared/contracts/integrations/repositories';
+import { encryptSecret } from '@/shared/lib/security/encryption';
 import type { PersistedStorageState } from './settings';
 
 export const persistPlaywrightConnectionStorageState = async (input: {

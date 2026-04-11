@@ -225,4 +225,17 @@ describe('PathsTabPanel', () => {
       { folderPath: 'drafts/seo' }
     );
   });
+
+  it('surfaces the marketplace copy debrand starter in the template menu', () => {
+    render(<PathsTabPanel />);
+
+    const debrandTemplate = PATH_TEMPLATES.find(
+      (template) => template.templateId === 'starter_marketplace_copy_debrand'
+    );
+
+    expect(debrandTemplate).toBeTruthy();
+    expect(
+      screen.getByRole('menuitem', { name: debrandTemplate?.name ?? 'Debrand Marketplace Copy' })
+    ).toBeInTheDocument();
+  });
 });

@@ -40,6 +40,15 @@ describe('trigger button validation', () => {
     expect(parsed.enabled).toBe(true);
   });
 
+  it('accepts marketplace-copy row locations on create payloads', () => {
+    const parsed = aiTriggerButtonCreateSchema.parse({
+      name: 'Debrand Marketplace Copy',
+      locations: ['product_marketplace_copy_row'],
+    });
+
+    expect(parsed.locations).toEqual(['product_marketplace_copy_row']);
+  });
+
   it('keeps explicit enabled=false on create payloads', () => {
     const parsed = aiTriggerButtonCreateSchema.parse({
       name: 'Run Path',

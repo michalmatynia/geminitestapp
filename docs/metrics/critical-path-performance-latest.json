@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-11T02:58:06.632Z",
-  "strictMode": true,
+  "generatedAt": "2026-04-11T09:25:09.835Z",
+  "strictMode": false,
   "summary": {
     "total": 10,
     "passed": 10,
@@ -383,7 +383,7 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-11T02:58:06.604Z",
+    "generatedAt": "2026-04-11T09:25:09.827Z",
     "hotspots": {
       "topFilesByLines": [
         {
@@ -425,6 +425,10 @@
         {
           "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
           "lines": 1014
+        },
+        {
+          "path": "src/features/products/server/product-scans-service.test.ts",
+          "lines": 1012
         },
         {
           "path": "src/features/integrations/services/imports/base-mapper.test.ts",
@@ -501,10 +505,6 @@
         {
           "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts",
           "lines": 969
-        },
-        {
-          "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx",
-          "lines": 968
         }
       ]
     },

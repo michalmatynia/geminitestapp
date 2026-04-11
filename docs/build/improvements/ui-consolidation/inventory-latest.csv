@@ -1,3 +1,3 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
-audit,ui-consolidation-guardrail,Run UI consolidation guardrail,failed,automatic,false,check:ui-consolidation,docs/ui-consolidation/scan-latest.md|docs/ui-consolidation/scan-latest.json|docs/ui-consolidation/inventory-latest.csv,2026-04-11T02:59:25.778Z,artifacts/improvements/audit-report.json
-plan,ui-consolidation-plan,Review the latest shared UI convergence surface,manual,manual,false,,,2026-04-11T01:46:37.028Z,artifacts/improvements/plan-report.json
+audit,ui-consolidation-guardrail,Run UI consolidation guardrail,failed,automatic,false,check:ui-consolidation,docs/ui-consolidation/scan-latest.md|docs/ui-consolidation/scan-latest.json|docs/ui-consolidation/inventory-latest.csv,2026-04-11T09:24:49.946Z,artifacts/improvements/audit-report.json
+plan,ui-consolidation-plan,Review the latest shared UI convergence surface,manual,manual,false,,,2026-04-11T09:41:24.964Z,artifacts/improvements/plan-report.json

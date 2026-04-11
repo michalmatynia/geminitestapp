@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
+import { findProductListingByIdAcrossProviders } from '@/features/integrations/services/product-listing-repository';
 import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightServiceListingExecutionBase } from './service-result';

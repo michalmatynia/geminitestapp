@@ -1,6 +1,6 @@
 import type { Page } from 'playwright';
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
-import { decryptSecret } from '@/features/integrations/server';
+import { decryptSecret } from '@/shared/lib/security/encryption';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { internalError } from '@/shared/errors/app-error';
 import {

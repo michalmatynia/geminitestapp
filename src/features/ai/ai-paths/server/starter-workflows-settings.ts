@@ -76,6 +76,54 @@ const hasEquivalentStarterTriggerButton = (
     return (button.locations ?? []).some((location) => preset.locations.includes(location));
   });
 
+const areStringArraysEqual = (left: readonly string[], right: readonly string[]): boolean => {
+  if (left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
+};
+
+const areTriggerButtonDisplaysEqual = (
+  left: AiTriggerButtonRecord['display'],
+  right: AiTriggerButtonRecord['display']
+): boolean =>
+  left.label === right.label &&
+  left.icon === right.icon &&
+  left.color === right.color &&
+  left.variant === right.variant &&
+  left.size === right.size &&
+  left.showLabel === right.showLabel &&
+  left.tooltip === right.tooltip;
+
+const buildRefreshedStarterTriggerButton = (
+  button: AiTriggerButtonRecord,
+  preset: StarterWorkflowTriggerPreset,
+  timestamp: string
+): AiTriggerButtonRecord | null => {
+  const nextDisplay = preset.display ?? {
+    label: preset.name,
+    showLabel: true,
+  };
+  const nextMode = preset.mode ?? 'click';
+  const nextLocations = [...preset.locations];
+  const isCurrent =
+    button.name === preset.name &&
+    (button.pathId ?? null) === preset.pathId &&
+    button.mode === nextMode &&
+    areStringArraysEqual(button.locations ?? [], nextLocations) &&
+    areTriggerButtonDisplaysEqual(button.display, nextDisplay);
+
+  if (isCurrent) return null;
+
+  return {
+    ...button,
+    name: preset.name,
+    pathId: preset.pathId,
+    locations: nextLocations,
+    mode: nextMode,
+    display: nextDisplay,
+    updatedAt: timestamp,
+  };
+};
+
 const normalizeTriggerButtonName = (value: string | null | undefined): string =>
   typeof value === 'string' ? value.trim().toLowerCase() : '';
 
@@ -240,6 +288,21 @@ const ensureStarterWorkflowEntries = (
     }
 
     (entry.triggerButtonPresets ?? []).forEach((preset) => {
+      const existingStarterIndex = nextButtons.findIndex((button) => button.id === preset.id);
+      if (existingStarterIndex >= 0) {
+        const existingStarterButton = nextButtons[existingStarterIndex];
+        if (!existingStarterButton) return;
+        const refreshed = buildRefreshedStarterTriggerButton(
+          existingStarterButton,
+          preset,
+          now
+        );
+        if (refreshed) {
+          nextButtons[existingStarterIndex] = refreshed;
+          affectedCount += 1;
+        }
+        return;
+      }
       if (hasEquivalentStarterTriggerButton(nextButtons, preset)) return;
       const legacyUpgradeIndex = findLegacyStarterTriggerButtonUpgradeIndex(nextButtons, preset);
       if (legacyUpgradeIndex >= 0) {

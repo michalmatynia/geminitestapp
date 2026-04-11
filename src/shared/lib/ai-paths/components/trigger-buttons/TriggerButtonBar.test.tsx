@@ -159,6 +159,30 @@ describe('TriggerButtonBar', () => {
     );
   });
 
+  it('forwards getTriggerExtras into useTriggerButtons', () => {
+    const getTriggerExtras = vi.fn(() => ({
+      marketplaceCopyDebrandInput: { rowId: 'row-1' },
+    }));
+
+    render(
+      <TriggerButtonBar
+        location='product_marketplace_copy_row'
+        entityType='product'
+        entityId='product-1'
+        getTriggerExtras={getTriggerExtras}
+      />
+    );
+
+    expect(useTriggerButtonsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        location: 'product_marketplace_copy_row',
+        entityType: 'product',
+        entityId: 'product-1',
+        getTriggerExtras,
+      })
+    );
+  });
+
   it('hides inline run feedback when showRunFeedback is false', () => {
     useTriggerButtonsMock.mockReturnValue({
       buttons: [BUTTON],
@@ -224,6 +248,37 @@ describe('TriggerButtonBar', () => {
     );
     expect(screen.queryByRole('link', { name: 'Job Queue' })).not.toBeInTheDocument();
     expect(screen.queryByText(/waiting:button-product-row:1/i)).not.toBeInTheDocument();
+  });
+
+  it('shows product run feedback for marketplace-copy row locations', () => {
+    useTriggerButtonsMock.mockReturnValue({
+      buttons: [{ ...BUTTON, locations: ['product_marketplace_copy_row'] }],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {
+        [BUTTON.id]: {
+          runId: 'run-product-marketplace-copy-feedback',
+          status: 'completed',
+          updatedAt: '2026-03-11T12:00:00.000Z',
+          finishedAt: '2026-03-11T12:00:00.000Z',
+          errorMessage: null,
+        },
+      },
+      handleTrigger: vi.fn(),
+      isLoading: false,
+    });
+
+    render(
+      <TriggerButtonBar
+        location='product_marketplace_copy_row'
+        entityType='product'
+        entityId='product-1'
+      />
+    );
+
+    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Job Queue' })).toBeInTheDocument();
   });
 
   it('uses distinct styling for queued and running feedback pills', () => {

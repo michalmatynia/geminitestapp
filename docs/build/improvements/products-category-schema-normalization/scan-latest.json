@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T03:03:06.007Z",
+  "generatedAt": "2026-04-11T09:41:25.066Z",
   "track": {
     "id": "products-category-schema-normalization",
     "title": "Products category and schema normalization",
@@ -154,12 +154,12 @@
     "defaultSelected": true,
     "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
     "overallStatus": "failed",
-    "latestGeneratedAt": "2026-04-11T02:59:25.778Z",
+    "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
     "docDir": "docs/build/improvements/products-category-schema-normalization",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-11T02:59:25.778Z",
+        "generatedAt": "2026-04-11T09:24:49.946Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -176,7 +176,7 @@
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-11T02:30:35.208Z",
+        "generatedAt": "2026-04-11T09:41:24.435Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -206,14 +206,14 @@
             ],
             "instructions": [],
             "script": "products:report:parameter-remediation",
-            "durationMs": 635
+            "durationMs": 681
           }
         ],
         "status": "passed"
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-11T01:46:37.028Z",
+        "generatedAt": "2026-04-11T09:41:24.964Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,

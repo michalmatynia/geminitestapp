@@ -10,9 +10,12 @@ const {
   getIntegrationByIdMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/features/integrations/services/product-listing-repository', () => ({
   findProductListingByIdAcrossProviders: (...args: unknown[]) =>
     findProductListingByIdAcrossProvidersMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/integration-repository', () => ({
   getIntegrationRepository: async () => ({
     getConnectionById: (...args: unknown[]) => getConnectionByIdMock(...args),
     getIntegrationById: (...args: unknown[]) => getIntegrationByIdMock(...args),

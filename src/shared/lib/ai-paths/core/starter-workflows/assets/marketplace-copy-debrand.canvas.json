@@ -1,0 +1,594 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_marketplace_copy_debrand_v1",
+    "version": 1,
+    "name": "Debrand Marketplace Copy",
+    "description": "Generate debranded alternate marketplace title and description from English product copy and images.",
+    "trigger": "Marketplace Copy Row - Debrand",
+    "updatedAt": "2026-04-11T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-trigger-marketplace-copy-debrand",
+      "type": "trigger",
+      "title": "Trigger: Debrand",
+      "description": "Fire row-level marketplace copy debranding from trigger context.",
+      "position": {
+        "x": 24,
+        "y": 240
+      },
+      "inputs": [],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
+      "config": {
+        "trigger": {
+          "event": "bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4",
+          "contextMode": "trigger_only"
+        }
+      },
+      "connections": {
+        "incoming": [],
+        "outgoing": [
+          {
+            "edgeId": "edge-trigger-fetcher-marketplace-copy-debrand",
+            "fromNodeId": "node-trigger-marketplace-copy-debrand",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-marketplace-copy-debrand",
+            "toPort": "trigger"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-fetcher-marketplace-copy-debrand",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve the current product snapshot and trigger metadata.",
+      "position": {
+        "x": 240,
+        "y": 240
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "product",
+          "entityId": "",
+          "productId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-trigger-fetcher-marketplace-copy-debrand",
+            "fromNodeId": "node-trigger-marketplace-copy-debrand",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-marketplace-copy-debrand",
+            "toPort": "trigger"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-fetcher-parser-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "context",
+            "toNodeId": "node-parser-marketplace-copy-debrand",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-fetcher-context-model-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "context",
+            "toNodeId": "node-model-marketplace-copy-debrand",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-fetcher-context-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "context",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-fetcher-entity-id-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "entityId",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-fetcher-entity-type-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "entityType",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-fetcher-meta-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "meta",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "meta"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-parser-marketplace-copy-debrand",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract row-level English source copy, fallback product copy, and images.",
+      "position": {
+        "x": 500,
+        "y": 240
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "bundle",
+        "sourceEnglishTitle",
+        "sourceEnglishDescription",
+        "productTitle",
+        "productDescriptionEn",
+        "rowContext",
+        "images"
+      ],
+      "config": {
+        "parser": {
+          "mappings": {
+            "sourceEnglishTitle": "$.marketplaceCopyDebrandInput.sourceEnglishTitle",
+            "sourceEnglishDescription": "$.marketplaceCopyDebrandInput.sourceEnglishDescription",
+            "productTitle": "$.name_en",
+            "productDescriptionEn": "$.description_en",
+            "rowContext": "$.marketplaceCopyDebrandInput.targetRow",
+            "images": ""
+          },
+          "outputMode": "bundle",
+          "presetId": "product_core"
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-fetcher-parser-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "context",
+            "toNodeId": "node-parser-marketplace-copy-debrand",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-parser-prompt-marketplace-copy-debrand",
+            "fromNodeId": "node-parser-marketplace-copy-debrand",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-marketplace-copy-debrand",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-parser-images-marketplace-copy-debrand",
+            "fromNodeId": "node-parser-marketplace-copy-debrand",
+            "fromPort": "images",
+            "toNodeId": "node-prompt-marketplace-copy-debrand",
+            "toPort": "images"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-prompt-marketplace-copy-debrand",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Rewrite alternate marketplace copy into a debranded but natural English listing.",
+      "position": {
+        "x": 930,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "images"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "config": {
+        "prompt": {
+          "template": "You rewrite marketplace product copy into a debranded English version.\\nUse the current product fields, row context, and images as evidence.\\n\\nPreferred source English title: \"{{bundle.sourceEnglishTitle}}\"\\nPreferred source English description: \"{{bundle.sourceEnglishDescription}}\"\\nFallback product English title: \"{{bundle.productTitle}}\"\\nFallback product English description: \"{{bundle.productDescriptionEn}}\"\\nRow context JSON: {{bundle.rowContext}}\\nFull product bundle JSON: {{bundle}}\\n\\nReturn ONLY valid JSON with this exact schema:\\n{\"debrandedTitle\":\"\",\"debrandedDescription\":\"\"}\\n\\nRules:\\n1. Output language: English only.\\n2. Keep the title and description natural, readable, and marketplace-ready.\\n3. Preserve supported facts such as product type, size, material, theme, and compatibility hints when the evidence supports them.\\n4. Remove or rewrite direct branded, franchise, copyrighted, or proprietary names into neutral substitutes, abbreviations, or indirect hints.\\n5. When a short neutral abbreviation is widely legible, prefer it. Examples: Warhammer -> WH, Warhammer 40,000 -> WH 40k.\\n6. For brands such as Disney or Pokemon, hint indirectly when needed but do not output the exact protected brand name.\\n7. Do not add official, licensed, authentic, original, or trademark claims.\\n8. Do not invent characters, materials, dimensions, publishers, or lore not supported by the inputs or images.\\n9. Keep the debrandedTitle concise and title-like.\\n10. Keep the debrandedDescription aligned with the source structure when possible, but without branded names.\\n11. If the preferred row-level source fields are empty, use the fallback product English fields instead.\\n12. JSON only. No markdown, no code fences, no commentary."
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-parser-prompt-marketplace-copy-debrand",
+            "fromNodeId": "node-parser-marketplace-copy-debrand",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-marketplace-copy-debrand",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-parser-images-marketplace-copy-debrand",
+            "fromNodeId": "node-parser-marketplace-copy-debrand",
+            "fromPort": "images",
+            "toNodeId": "node-prompt-marketplace-copy-debrand",
+            "toPort": "images"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-prompt-model-marketplace-copy-debrand",
+            "fromNodeId": "node-prompt-marketplace-copy-debrand",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-marketplace-copy-debrand",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-prompt-images-model-marketplace-copy-debrand",
+            "fromNodeId": "node-prompt-marketplace-copy-debrand",
+            "fromPort": "images",
+            "toNodeId": "node-model-marketplace-copy-debrand",
+            "toPort": "images"
+          },
+          {
+            "edgeId": "edge-prompt-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-prompt-marketplace-copy-debrand",
+            "fromPort": "prompt",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "prompt"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-model-marketplace-copy-debrand",
+      "type": "model",
+      "title": "Model",
+      "description": "Generate debranded alternate title and description in one vision-enabled pass.",
+      "position": {
+        "x": 1320,
+        "y": 240
+      },
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "temperature": 0.1,
+          "maxTokens": 1000,
+          "vision": true,
+          "waitForResult": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-prompt-model-marketplace-copy-debrand",
+            "fromNodeId": "node-prompt-marketplace-copy-debrand",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-marketplace-copy-debrand",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-prompt-images-model-marketplace-copy-debrand",
+            "fromNodeId": "node-prompt-marketplace-copy-debrand",
+            "fromPort": "images",
+            "toNodeId": "node-model-marketplace-copy-debrand",
+            "toPort": "images"
+          },
+          {
+            "edgeId": "edge-fetcher-context-model-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "context",
+            "toNodeId": "node-model-marketplace-copy-debrand",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-model-regex-marketplace-copy-debrand",
+            "fromNodeId": "node-model-marketplace-copy-debrand",
+            "fromPort": "result",
+            "toNodeId": "node-regex-marketplace-copy-debrand",
+            "toPort": "value"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-regex-marketplace-copy-debrand",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Parse the model JSON response.",
+      "position": {
+        "x": 1710,
+        "y": 240
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-model-regex-marketplace-copy-debrand",
+            "fromNodeId": "node-model-marketplace-copy-debrand",
+            "fromPort": "result",
+            "toNodeId": "node-regex-marketplace-copy-debrand",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-regex-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-regex-marketplace-copy-debrand",
+            "fromPort": "value",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "bundle"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-view-marketplace-copy-debrand",
+      "type": "viewer",
+      "title": "Result Viewer",
+      "description": "Inspect the debranded copy result and source context.",
+      "position": {
+        "x": 2090,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "context",
+        "prompt",
+        "entityId",
+        "entityType",
+        "meta"
+      ],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "bundle": "",
+            "context": "",
+            "prompt": "",
+            "entityId": "",
+            "entityType": "",
+            "meta": ""
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-regex-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-regex-marketplace-copy-debrand",
+            "fromPort": "value",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-fetcher-context-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "context",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-prompt-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-prompt-marketplace-copy-debrand",
+            "fromPort": "prompt",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-fetcher-entity-id-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "entityId",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-fetcher-entity-type-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "entityType",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-fetcher-meta-viewer-marketplace-copy-debrand",
+            "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+            "fromPort": "meta",
+            "toNodeId": "node-view-marketplace-copy-debrand",
+            "toPort": "meta"
+          }
+        ],
+        "outgoing": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-trigger-fetcher-marketplace-copy-debrand",
+      "fromNodeId": "node-trigger-marketplace-copy-debrand",
+      "toNodeId": "node-fetcher-marketplace-copy-debrand",
+      "fromPort": "trigger",
+      "toPort": "trigger"
+    },
+    {
+      "id": "edge-fetcher-parser-marketplace-copy-debrand",
+      "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+      "toNodeId": "node-parser-marketplace-copy-debrand",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-parser-prompt-marketplace-copy-debrand",
+      "fromNodeId": "node-parser-marketplace-copy-debrand",
+      "toNodeId": "node-prompt-marketplace-copy-debrand",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-parser-images-marketplace-copy-debrand",
+      "fromNodeId": "node-parser-marketplace-copy-debrand",
+      "toNodeId": "node-prompt-marketplace-copy-debrand",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-prompt-model-marketplace-copy-debrand",
+      "fromNodeId": "node-prompt-marketplace-copy-debrand",
+      "toNodeId": "node-model-marketplace-copy-debrand",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-prompt-images-model-marketplace-copy-debrand",
+      "fromNodeId": "node-prompt-marketplace-copy-debrand",
+      "toNodeId": "node-model-marketplace-copy-debrand",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-fetcher-context-model-marketplace-copy-debrand",
+      "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+      "toNodeId": "node-model-marketplace-copy-debrand",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-model-regex-marketplace-copy-debrand",
+      "fromNodeId": "node-model-marketplace-copy-debrand",
+      "toNodeId": "node-regex-marketplace-copy-debrand",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-regex-viewer-marketplace-copy-debrand",
+      "fromNodeId": "node-regex-marketplace-copy-debrand",
+      "toNodeId": "node-view-marketplace-copy-debrand",
+      "fromPort": "value",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-fetcher-context-viewer-marketplace-copy-debrand",
+      "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+      "toNodeId": "node-view-marketplace-copy-debrand",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-prompt-viewer-marketplace-copy-debrand",
+      "fromNodeId": "node-prompt-marketplace-copy-debrand",
+      "toNodeId": "node-view-marketplace-copy-debrand",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-fetcher-entity-id-viewer-marketplace-copy-debrand",
+      "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+      "toNodeId": "node-view-marketplace-copy-debrand",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-fetcher-entity-type-viewer-marketplace-copy-debrand",
+      "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+      "toNodeId": "node-view-marketplace-copy-debrand",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-fetcher-meta-viewer-marketplace-copy-debrand",
+      "fromNodeId": "node-fetcher-marketplace-copy-debrand",
+      "toNodeId": "node-view-marketplace-copy-debrand",
+      "fromPort": "meta",
+      "toPort": "meta"
+    }
+  ],
+  "execution": {},
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-04-11T00:00:00.000Z",
+    "pathId": "path_marketplace_copy_debrand_v1"
+  }
+}

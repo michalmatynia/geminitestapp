@@ -47,6 +47,36 @@ const renderScanMeta = (scan: ProductScanRecord): React.JSX.Element | null => {
   return <p className='text-xs text-muted-foreground'>{parts.join(' · ')}</p>;
 };
 
+const resolveScanMessages = (
+  scan: ProductScanRecord
+): { infoMessage: string | null; errorMessage: string | null } => {
+  if (scan.status === 'completed') {
+    return {
+      infoMessage: scan.asinUpdateMessage,
+      errorMessage: null,
+    };
+  }
+
+  if (scan.status === 'no_match') {
+    return {
+      infoMessage: scan.asinUpdateMessage ?? scan.error,
+      errorMessage: null,
+    };
+  }
+
+  if (scan.status === 'conflict' || scan.status === 'failed') {
+    return {
+      infoMessage: null,
+      errorMessage: scan.error ?? scan.asinUpdateMessage,
+    };
+  }
+
+  return {
+    infoMessage: scan.asinUpdateMessage,
+    errorMessage: scan.error,
+  };
+};
+
 export default function ProductFormScans(): React.JSX.Element {
   const { product } = useProductFormCore();
   const productId = product?.id?.trim() || '';
@@ -131,44 +161,49 @@ export default function ProductFormScans(): React.JSX.Element {
         </div>
       ) : (
         <div className='space-y-3'>
-          {scans.map((scan) => (
-            <section
-              key={scan.id}
-              className='space-y-2 rounded-md border border-border/60 px-4 py-4'
-            >
-              <div className='flex flex-wrap items-center justify-between gap-2'>
-                <div className='flex flex-wrap items-center gap-2'>
-                  <span className='text-sm font-medium'>Amazon</span>
-                  <span
-                    className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${STATUS_CLASSES[scan.status]}`}
-                  >
-                    {STATUS_LABELS[scan.status]}
+          {scans.map((scan) => {
+            const { infoMessage, errorMessage } = resolveScanMessages(scan);
+
+            return (
+              <section
+                key={scan.id}
+                className='space-y-2 rounded-md border border-border/60 px-4 py-4'
+              >
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <span className='text-sm font-medium'>Amazon</span>
+                    <span
+                      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${STATUS_CLASSES[scan.status]}`}
+                    >
+                      {STATUS_LABELS[scan.status]}
+                    </span>
+                  </div>
+                  <span className='text-xs text-muted-foreground'>
+                    {formatTimestamp(scan.createdAt)}
                   </span>
                 </div>
-                <span className='text-xs text-muted-foreground'>
-                  {formatTimestamp(scan.createdAt)}
-                </span>
-              </div>
 
-              {scan.title ? <p className='text-sm font-medium'>{scan.title}</p> : null}
-              {renderScanMeta(scan)}
-              {scan.url ? (
-                <a
-                  href={scan.url}
-                  target='_blank'
-                  rel='noreferrer'
-                  className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
-                >
-                  Open Result
-                  <ExternalLink className='h-3.5 w-3.5' />
-                </a>
-              ) : null}
-              {scan.description ? (
-                <p className='line-clamp-3 text-sm text-muted-foreground'>{scan.description}</p>
-              ) : null}
-              {scan.error ? <p className='text-sm text-destructive'>{scan.error}</p> : null}
-            </section>
-          ))}
+                {scan.title ? <p className='text-sm font-medium'>{scan.title}</p> : null}
+                {renderScanMeta(scan)}
+                {scan.url ? (
+                  <a
+                    href={scan.url}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+                  >
+                    Open Result
+                    <ExternalLink className='h-3.5 w-3.5' />
+                  </a>
+                ) : null}
+                {scan.description ? (
+                  <p className='line-clamp-3 text-sm text-muted-foreground'>{scan.description}</p>
+                ) : null}
+                {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
+                {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
+              </section>
+            );
+          })}
         </div>
       )}
     </div>

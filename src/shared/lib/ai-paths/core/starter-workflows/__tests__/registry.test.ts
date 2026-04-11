@@ -581,9 +581,11 @@ describe('starter workflow registry', () => {
 
     expect(bundle.pathConfigs.some((config) => config.id === 'path_descv3lite')).toBe(true);
     expect(bundle.pathConfigs.some((config) => config.id === 'path_name_normalize_v1')).toBe(true);
+    expect(bundle.pathConfigs.some((config) => config.id === 'path_marketplace_copy_debrand_v1')).toBe(true);
     expect(bundle.pathConfigs.some((config) => config.id === 'path_96708d')).toBe(true);
     expect(bundle.triggerButtons.some((button) => button.id === '4c07d35b-ea92-4d1f-b86b-c586359f68de')).toBe(true);
     expect(bundle.triggerButtons.some((button) => button.id === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')).toBe(true);
+    expect(bundle.triggerButtons.some((button) => button.id === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')).toBe(true);
   });
 
   it('decouples starter upgrade scope from auto-seed policy', () => {
@@ -617,6 +619,7 @@ describe('starter workflow registry', () => {
         'starter_parameter_inference',
         'starter_product_name_normalize',
         'starter_description_inference_lite',
+        'starter_marketplace_copy_debrand',
         'starter_base_export_blwo',
       ])
     );

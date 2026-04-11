@@ -224,7 +224,7 @@ describe('settings lite handler', () => {
   });
 
   it('returns a degraded empty response for transient mongo connectivity failures', async () => {
-    const error = new Error("Socket 'secureConnect' timed out after 11640ms (connectTimeoutMS: 1000)");
+    const error = new Error('Socket \'secureConnect\' timed out after 11640ms (connectTimeoutMS: 1000)');
     error.name = 'MongoServerSelectionError';
     getMongoDbMock.mockRejectedValue(error);
 
@@ -241,7 +241,7 @@ describe('settings lite handler', () => {
   });
 
   it('suppresses transient mongo connectivity failures during SSR prewarm', async () => {
-    const error = new Error("Socket 'secureConnect' timed out after 11640ms (connectTimeoutMS: 1000)");
+    const error = new Error('Socket \'secureConnect\' timed out after 11640ms (connectTimeoutMS: 1000)');
     error.name = 'MongoServerSelectionError';
     getMongoDbMock.mockRejectedValue(error);
 

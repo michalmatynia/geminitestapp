@@ -43,8 +43,11 @@ vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
     resolveConnectionPlaywrightSettingsMock(...args),
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/security/encryption', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/integration-repository', () => ({
   getIntegrationRepository: async () => ({
     updateConnection: (...args: unknown[]) => updateConnectionMock(...args),
   }),

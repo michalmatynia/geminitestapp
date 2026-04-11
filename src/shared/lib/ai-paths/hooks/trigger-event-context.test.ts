@@ -141,6 +141,29 @@ describe('buildTriggerContext', () => {
     expect(ctx['productId']).toBe('product-1');
   });
 
+  it('embeds sanitized entity snapshot for product_marketplace_copy_row', () => {
+    const ctx = buildTriggerContext({
+      triggerNode: TRIGGER_NODE,
+      triggerEventId: 'manual',
+      entityType: 'product',
+      entityId: 'product-1',
+      entityJson: {
+        id: 'product-1',
+        name_en: 'Test',
+        imageBase64s: ['data:image/png;base64,abc'],
+      },
+      source: { location: 'product_marketplace_copy_row' },
+    });
+    const entity = ctx['entity'] as Record<string, unknown> | null;
+    const entityJson = ctx['entityJson'] as Record<string, unknown> | null;
+
+    expect(entity).not.toBeNull();
+    expect(entity?.['id']).toBe('product-1');
+    expect(entity?.['imageBase64s']).toBeUndefined();
+    expect(entityJson).toEqual(entity);
+    expect(ctx['productId']).toBe('product-1');
+  });
+
   it('sets entity to null when entityJson is not provided', () => {
     const ctx = buildTriggerContext({
       triggerNode: TRIGGER_NODE,

@@ -4,7 +4,7 @@ const { findProductListingByIdAcrossProvidersMock } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/features/integrations/services/product-listing-repository', () => ({
   findProductListingByIdAcrossProviders: (...args: unknown[]) =>
     findProductListingByIdAcrossProvidersMock(...args),
 }));

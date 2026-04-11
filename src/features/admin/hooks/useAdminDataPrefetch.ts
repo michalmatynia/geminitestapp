@@ -37,6 +37,7 @@ export function useAdminDataPrefetch() {
         operation: 'list',
         resource: 'products.metadata.catalogs',
         domain: 'products',
+        description: 'Prefetch product catalogs for admin navigation intent',
       },
     })();
 
@@ -49,6 +50,7 @@ export function useAdminDataPrefetch() {
         operation: 'list',
         resource: 'products.metadata.price-groups',
         domain: 'products',
+        description: 'Prefetch product price groups for admin navigation intent',
       },
     })();
 
@@ -65,6 +67,7 @@ export function useAdminDataPrefetch() {
         resource: 'products.paged',
         domain: 'products',
         tags: ['prefetch', 'navigation'],
+        description: 'Prefetch first page of products for admin navigation intent',
       },
     })();
   }, [queryClient]);
@@ -80,6 +83,7 @@ export function useAdminDataPrefetch() {
         operation: 'detail',
         resource: 'health',
         domain: 'global',
+        description: 'Prefetch health status for dashboard navigation intent',
       },
     })();
 
@@ -94,6 +98,7 @@ export function useAdminDataPrefetch() {
         operation: 'list',
         resource: 'system.activity',
         domain: 'global',
+        description: 'Prefetch recent system activity for dashboard navigation intent',
       },
     })();
   }, [queryClient]);
@@ -113,6 +118,7 @@ export function useAdminDataPrefetch() {
           operation: 'list',
           resource: 'integrations',
           domain: 'integrations',
+          description: 'Prefetch integrations list for navigation intent',
         },
       })();
     } else if (href === '/admin/cms' || href === '/admin/cms/pages') {
@@ -125,6 +131,7 @@ export function useAdminDataPrefetch() {
           operation: 'list',
           resource: 'cms.pages',
           domain: 'cms',
+          description: 'Prefetch CMS pages list for navigation intent',
         },
       })();
     } else if (href === '/admin/image-studio') {
@@ -137,6 +144,7 @@ export function useAdminDataPrefetch() {
           operation: 'list',
           resource: 'image-studio.projects',
           domain: 'ai',
+          description: 'Prefetch image studio projects for navigation intent',
         },
       })();
     } else if (href === '/admin/ai-paths') {
@@ -149,6 +157,7 @@ export function useAdminDataPrefetch() {
           operation: 'list',
           resource: 'ai-paths',
           domain: 'ai',
+          description: 'Prefetch AI paths settings for navigation intent',
         },
       })();
     }
@@ -166,6 +175,7 @@ export function useAdminDataPrefetch() {
         operation: 'list',
         resource: 'settings.lite',
         domain: 'global',
+        description: 'Warmup lite settings cache for common page consumption',
       },
     })();
   }, [queryClient]);

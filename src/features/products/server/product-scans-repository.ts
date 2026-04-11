@@ -19,10 +19,17 @@ type ProductScanDoc = Omit<ProductScanRecord, 'createdAt' | 'updatedAt' | 'compl
 };
 
 const ENGINE_RUN_ID_INDEX_NAME = 'product_scans_engineRunId_unique';
+const ACTIVE_PRODUCT_PROVIDER_INDEX_NAME = 'product_scans_active_product_provider_unique';
 const LEGACY_ENGINE_RUN_ID_INDEX_NAME = 'engineRunId_1';
 
 let indexesEnsured: Promise<void> | null = null;
 let inMemoryScans: ProductScanRecord[] = [];
+
+const createDuplicateConstraintError = (message: string): Error => {
+  const error = new Error(message) as Error & { code?: number };
+  error.code = 11000;
+  return error;
+};
 
 const ensureIndexes = async (): Promise<void> => {
   if (!process.env['MONGODB_URI']) {
@@ -34,35 +41,45 @@ const ensureIndexes = async (): Promise<void> => {
   }
 
   indexesEnsured = (async () => {
-    const db = await getMongoDb();
-    const collection = db.collection<ProductScanDoc>(PRODUCT_SCANS_COLLECTION);
-    const existingIndexes = await collection.indexes();
+    try {
+      const db = await getMongoDb();
+      const collection = db.collection<ProductScanDoc>(PRODUCT_SCANS_COLLECTION);
+      const existingIndexes = await collection.indexes();
 
-    if (existingIndexes.some((index) => index.name === LEGACY_ENGINE_RUN_ID_INDEX_NAME)) {
-      await collection.dropIndex(LEGACY_ENGINE_RUN_ID_INDEX_NAME);
+      if (existingIndexes.some((index) => index.name === LEGACY_ENGINE_RUN_ID_INDEX_NAME)) {
+        await collection.dropIndex(LEGACY_ENGINE_RUN_ID_INDEX_NAME);
+      }
+
+      await Promise.all([
+        collection.createIndex({ id: 1 }, { unique: true }),
+        collection.createIndex({ productId: 1, createdAt: -1 }),
+        collection.createIndex(
+          { engineRunId: 1 },
+          {
+            name: ENGINE_RUN_ID_INDEX_NAME,
+            unique: true,
+            partialFilterExpression: { engineRunId: { $type: 'string' } },
+          }
+        ),
+        collection.createIndex(
+          { productId: 1, provider: 1 },
+          {
+            name: ACTIVE_PRODUCT_PROVIDER_INDEX_NAME,
+            unique: true,
+            partialFilterExpression: { status: { $in: ['queued', 'running'] } },
+          }
+        ),
+        collection.createIndex({ status: 1, updatedAt: -1 }),
+      ]);
+    } catch (error) {
+      // Scans reads and writes should stay available even if index bootstrap
+      // hits legacy data or an already-conflicting index definition.
+      void ErrorSystem.captureException(error, {
+        service: 'product-scans.repository',
+        action: 'ensureIndexes',
+      });
     }
-
-    await Promise.all([
-      collection.createIndex({ id: 1 }, { unique: true }),
-      collection.createIndex({ productId: 1, createdAt: -1 }),
-      collection.createIndex(
-        { engineRunId: 1 },
-        {
-          name: ENGINE_RUN_ID_INDEX_NAME,
-          unique: true,
-          partialFilterExpression: { engineRunId: { $type: 'string' } },
-        }
-      ),
-      collection.createIndex({ status: 1, updatedAt: -1 }),
-    ]);
-  })().catch((error) => {
-    void ErrorSystem.captureException(error, {
-      service: 'product-scans.repository',
-      action: 'ensureIndexes',
-    });
-    indexesEnsured = null;
-    throw error;
-  });
+  })();
 
   return indexesEnsured;
 };
@@ -263,6 +280,32 @@ export async function upsertProductScan(scan: ProductScanRecord): Promise<Produc
   const now = new Date();
 
   if (!process.env['MONGODB_URI']) {
+    const conflictingActiveScan = inMemoryScans.find(
+      (entry) =>
+        entry.id !== normalized.id &&
+        entry.productId === normalized.productId &&
+        entry.provider === normalized.provider &&
+        (entry.status === 'queued' || entry.status === 'running') &&
+        (normalized.status === 'queued' || normalized.status === 'running')
+    );
+    if (conflictingActiveScan) {
+      throw createDuplicateConstraintError(
+        'Another active product scan already exists for this product and provider.'
+      );
+    }
+
+    const normalizedEngineRunId = normalized.engineRunId?.trim() || null;
+    if (normalizedEngineRunId) {
+      const conflictingEngineRunScan = inMemoryScans.find(
+        (entry) => entry.id !== normalized.id && entry.engineRunId === normalizedEngineRunId
+      );
+      if (conflictingEngineRunScan) {
+        throw createDuplicateConstraintError(
+          `Another product scan already uses engine run id ${normalizedEngineRunId}.`
+        );
+      }
+    }
+
     const next = {
       ...normalized,
       createdAt: normalized.createdAt ?? now.toISOString(),

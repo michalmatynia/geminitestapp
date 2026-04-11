@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-04-11T02:57:40.020Z",
-    "scannedFileCount": 2572,
+    "generatedAt": "2026-04-11T09:24:06.827Z",
+    "scannedFileCount": 2573,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1879
+        "count": 1880
       },
       {
         "family": "Page",
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 1992
+        "count": 1993
       },
       {
         "domain": "app",
@@ -10061,7 +10061,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 229,
+      "lines": 242,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -47640,7 +47640,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 214,
+      "lines": 452,
       "useClient": false,
       "imports": [
         "react",
@@ -47663,18 +47663,26 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 252,
+      "lines": 458,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "react-hook-form",
+        "@/features/products/context/ProductFormCoreContext",
+        "@/features/products/lib/buildMarketplaceCopyDebrandTriggerInput",
+        "@/features/products/lib/build-triggered-product-entity-json",
+        "@/features/products/lib/extractDebrandedMarketplaceCopyFromAiPathRunDetail",
         "@/features/integrations/components/listings/product-listings-labels",
         "@/features/integrations/constants/slugs",
         "@/features/integrations/hooks/useIntegrationQueries",
+        "@/shared/contracts/ai-trigger-buttons",
         "@/shared/contracts/integrations/base",
         "@/shared/contracts/products/drafts",
         "@/shared/contracts/ui/controls",
+        "@/shared/lib/ai-paths/api/client",
+        "@/shared/lib/ai-paths/client-run-tracker",
+        "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar",
         "@/shared/ui/alert",
         "@/shared/ui/button",
         "@/shared/ui/form-section",
@@ -47851,12 +47859,33 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/products/components/form/ProductFormScans.test.tsx",
+      "basename": "ProductFormScans.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 134,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@tanstack/react-query",
+        "@testing-library/react",
+        "vitest",
+        "./ProductFormScans"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/products/components/form/ProductFormScans.tsx",
       "basename": "ProductFormScans.tsx",
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 177,
+      "lines": 212,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -51512,7 +51541,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 391,
+      "lines": 446,
       "useClient": false,
       "imports": [
         "react",
@@ -51533,7 +51562,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 491,
+      "lines": 499,
       "useClient": true,
       "imports": [
         "lucide-react",

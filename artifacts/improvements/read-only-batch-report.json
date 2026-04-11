@@ -1,6 +1,6 @@
 {
   "kind": "general-improvement-batch-report",
-  "generatedAt": "2026-04-11T01:46:37.061Z",
+  "generatedAt": "2026-04-11T09:41:24.982Z",
   "selectedTrackIds": [
     "products-parameter-integrity",
     "products-category-schema-normalization",
@@ -12,19 +12,19 @@
     {
       "phase": "audit",
       "status": "failed",
-      "durationMs": 12265,
+      "durationMs": 53483,
       "reportPath": "artifacts/improvements/audit-report.json"
     },
     {
       "phase": "classify",
-      "status": "failed",
-      "durationMs": 333320,
+      "status": "passed",
+      "durationMs": 994611,
       "reportPath": "artifacts/improvements/classify-report.json"
     },
     {
       "phase": "plan",
       "status": "passed",
-      "durationMs": 464,
+      "durationMs": 354,
       "reportPath": "artifacts/improvements/plan-report.json"
     }
   ]

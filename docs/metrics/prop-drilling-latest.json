@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generatedAt": "2026-04-11T02:57:47.495Z",
-    "scannedSourceFiles": 7227,
+    "generatedAt": "2026-04-11T09:24:10.292Z",
+    "scannedSourceFiles": 7230,
     "scannedJsxFiles": 2522,
-    "componentCount": 4413,
+    "componentCount": 4414,
     "componentsWithForwarding": 120,
     "componentsWithAnyForwarding": 308,
     "resolvedTransitionCount": 1298,
@@ -7815,7 +7815,7 @@
           "sourceProp": "disabled",
           "targetProp": "onClick",
           "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
-          "line": 373
+          "line": 381
         }
       ]
     },
@@ -7841,7 +7841,7 @@
           "sourceProp": "disabled",
           "targetProp": "className",
           "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
-          "line": 373
+          "line": 381
         }
       ]
     },
@@ -7867,7 +7867,7 @@
           "sourceProp": "disabled",
           "targetProp": "onSelect",
           "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
-          "line": 435
+          "line": 443
         }
       ]
     },
@@ -8985,7 +8985,7 @@
           "sourceProp": "disabled",
           "targetProp": "disabled",
           "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
-          "line": 373
+          "line": 381
         }
       ]
     },

@@ -381,6 +381,11 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(
       result.nextRecords.some((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`)
     ).toBe(true);
+    expect(
+      result.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_marketplace_copy_debrand_v1`
+      )
+    ).toBe(true);
 
     const triggerButtonsRecord = result.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
@@ -389,6 +394,9 @@ describe('AI Paths maintenance forward-only action ids', () => {
     const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
     expect(
       triggerButtons.some((button) => button['id'] === '4c07d35b-ea92-4d1f-b86b-c586359f68de')
+    ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')
     ).toBe(true);
   });
 

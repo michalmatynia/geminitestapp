@@ -103,6 +103,43 @@ describe('product Amazon scan helpers', () => {
     ]);
   });
 
+  it('skips unusable image-file records so fallback imageLinks can still be used', () => {
+    const candidates = resolveProductScanImageCandidates({
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '',
+            url: '',
+            filename: 'missing-source.jpg',
+          },
+        },
+        {
+          imageFileId: 'image-2',
+          imageFile: {
+            id: 'image-2',
+            filepath: null,
+            url: null,
+            filename: 'also-missing.jpg',
+          },
+        },
+      ],
+      imageLinks: [
+        'https://cdn.example.com/usable-link.jpg',
+      ],
+    } as never);
+
+    expect(candidates).toEqual([
+      {
+        id: null,
+        filepath: null,
+        url: 'https://cdn.example.com/usable-link.jpg',
+        filename: null,
+      },
+    ]);
+  });
+
   it('prefers the localized product name before SKU or id', () => {
     expect(
       resolveProductScanDisplayName({
@@ -113,6 +150,18 @@ describe('product Amazon scan helpers', () => {
         sku: 'SKU-1',
       } as never)
     ).toBe('Polish name');
+  });
+
+  it('truncates overly long display names to the scan contract limit', () => {
+    expect(
+      resolveProductScanDisplayName({
+        id: 'product-1',
+        name_en: ` ${'A'.repeat(340)} `,
+        name_pl: null,
+        name_de: null,
+        sku: 'SKU-1',
+      } as never)
+    ).toBe('A'.repeat(300));
   });
 
   it('marks an empty product ASIN as updatable', () => {

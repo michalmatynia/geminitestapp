@@ -2,7 +2,6 @@ import 'server-only';
 
 import type { BrowserContextOptions } from 'playwright';
 
-import { decryptSecret } from '@/features/integrations/server';
 import {
   defaultIntegrationConnectionPlaywrightSettings,
   extractIntegrationConnectionPlaywrightSettingsOverrides,
@@ -16,6 +15,7 @@ import {
 import { playwrightStorageStateSchema } from '@/shared/contracts/integrations/session-testing';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { decryptSecret } from '@/shared/lib/security/encryption';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

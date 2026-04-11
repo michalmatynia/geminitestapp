@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-11T02:14:58.811Z
+Generated at: 2026-04-11T09:25:02.858Z
 
 ## Snapshot
 
-- Source files: 10250
-- Source lines: 1685446
+- Source files: 10264
+- Source lines: 1688699
 - use client files: 1780
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -67,6 +67,7 @@ Generated at: 2026-04-11T02:14:58.811Z
 | `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx` | 1035 |
 | `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1015 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1014 |
+| `src/features/products/server/product-scans-service.test.ts` | 1012 |
 | `src/features/integrations/services/imports/base-mapper.test.ts` | 1004 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 993 |
@@ -76,4 +77,3 @@ Generated at: 2026-04-11T02:14:58.811Z
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
 | `src/app/api/settings/handler.ts` | 983 |
 | `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx` | 982 |
-| `src/features/kangur/ui/services/geometry-drawing.ts` | 981 |

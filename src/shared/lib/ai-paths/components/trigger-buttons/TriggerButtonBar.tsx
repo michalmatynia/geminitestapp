@@ -22,6 +22,7 @@ type TriggerButtonBarProps = {
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
   getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  getTriggerExtras?: (() => Record<string, unknown> | null) | undefined;
   disabled?: boolean | undefined;
   showRunFeedback?: boolean | undefined;
   onRunQueued?:
@@ -56,10 +57,12 @@ const {
 });
 const PRODUCT_RUN_FEEDBACK_LOCATIONS = new Set<AiTriggerButtonLocation>([
   'product_row',
+  'product_marketplace_copy_row',
   'product_modal',
 ]);
 const COMPACT_TRIGGER_BUTTON_INLINE_LIMITS: Partial<Record<AiTriggerButtonLocation, number>> = {
   product_row: 1,
+  product_marketplace_copy_row: 1,
   product_list: 1,
   product_list_header: 1,
 };
@@ -163,7 +166,10 @@ function TriggerRunFeedback(props: {
     run.status === 'failed' || run.status === 'dead_lettered'
       ? 'text-amber-200'
       : 'text-gray-400';
-  const summaryWidthClassName = location === 'product_row' ? 'max-w-[220px]' : 'max-w-[320px]';
+  const summaryWidthClassName =
+    location === 'product_row' || location === 'product_marketplace_copy_row'
+      ? 'max-w-[220px]'
+      : 'max-w-[320px]';
   const timestamp = resolveRunTimestamp(run);
   const timestampLabel = formatRunTimestampLabel(run);
   const showQueueLink = run.status !== 'waiting';
@@ -254,6 +260,7 @@ export function TriggerButtonBar({
   entityType,
   entityId,
   getEntityJson,
+  getTriggerExtras,
   disabled,
   showRunFeedback,
   onRunQueued,
@@ -264,6 +271,7 @@ export function TriggerButtonBar({
     entityType,
     entityId,
     getEntityJson,
+    getTriggerExtras,
     onRunQueued,
   });
   const feedbackLocation = location;

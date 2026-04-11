@@ -10,12 +10,18 @@ import {
   type DatabaseEngineProvider,
 } from './database-engine-constants';
 import { getDatabaseEnginePolicy } from './database-engine-policy';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
+import { SafeDatabaseCache } from './utils/database-cache';
 
 
 const CACHE_TTL_MS = 30_000;
-let mapCache: { value: Record<string, DatabaseEngineProvider>; ts: number } | null = null;
-let mapInflight: Promise<Record<string, DatabaseEngineProvider>> | null = null;
+
+const collectionRouteMapCache = new SafeDatabaseCache<Record<string, DatabaseEngineProvider>>({
+  ttlMs: CACHE_TTL_MS,
+  source: 'db.collection-provider-map',
+  action: 'getCollectionRouteMap',
+  defaultValue: {},
+});
 
 const parseMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
   if (!raw) return {};
@@ -30,7 +36,10 @@ const parseMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
     }
     return result;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void reportRuntimeCatch(error, {
+      source: 'db.collection-provider-map',
+      action: 'parseMap',
+    });
     return {};
   }
 };
@@ -59,7 +68,11 @@ const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEng
       });
     return parseMap(doc?.value);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void reportRuntimeCatch(error, {
+      source: 'db.collection-provider-map',
+      action: 'readMapFromMongo',
+      settingKey: key,
+    });
     return {};
   }
 };
@@ -70,22 +83,9 @@ const readCollectionRouteMap = async (): Promise<Record<string, DatabaseEnginePr
 
 /** Returns the full per-collection routing map (supports mongodb/redis). */
 export async function getCollectionRouteMap(): Promise<Record<string, DatabaseEngineProvider>> {
-  const now = Date.now();
-  if (mapCache && now - mapCache.ts < CACHE_TTL_MS) {
-    return mapCache.value;
-  }
-  if (mapInflight) {
-    return mapInflight;
-  }
-
-  mapInflight = (async (): Promise<Record<string, DatabaseEngineProvider>> => {
+  return collectionRouteMapCache.get(async () => {
     return readCollectionRouteMap();
-  })();
-
-  const value = await mapInflight;
-  mapCache = { value, ts: Date.now() };
-  mapInflight = null;
-  return value;
+  });
 }
 
 /** Returns the primary-provider map only (mongodb). */
@@ -132,6 +132,6 @@ export async function resolveCollectionProviderForRequest(
 }
 
 export const invalidateCollectionProviderMapCache = (): void => {
-  mapCache = null;
-  mapInflight = null;
+  collectionRouteMapCache.invalidate();
 };
+

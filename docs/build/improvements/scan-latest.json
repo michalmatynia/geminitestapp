@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T03:03:06.007Z",
+  "generatedAt": "2026-04-11T09:41:25.066Z",
   "defaultTrackIds": [
     "products-parameter-integrity",
     "products-category-schema-normalization",
@@ -10,7 +10,7 @@
   ],
   "batchReport": {
     "kind": "general-improvement-batch-report",
-    "generatedAt": "2026-04-11T01:46:37.061Z",
+    "generatedAt": "2026-04-11T09:41:24.982Z",
     "selectedTrackIds": [
       "products-parameter-integrity",
       "products-category-schema-normalization",
@@ -22,19 +22,19 @@
       {
         "phase": "audit",
         "status": "failed",
-        "durationMs": 12265,
+        "durationMs": 53483,
         "reportPath": "artifacts/improvements/audit-report.json"
       },
       {
         "phase": "classify",
-        "status": "failed",
-        "durationMs": 333320,
+        "status": "passed",
+        "durationMs": 994611,
         "reportPath": "artifacts/improvements/classify-report.json"
       },
       {
         "phase": "plan",
         "status": "passed",
-        "durationMs": 464,
+        "durationMs": 354,
         "reportPath": "artifacts/improvements/plan-report.json"
       }
     ]
@@ -47,12 +47,12 @@
       "defaultSelected": true,
       "description": "Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-11T02:59:25.778Z",
+      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
       "docDir": "docs/build/improvements/products-parameter-integrity",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T02:59:25.778Z",
+          "generatedAt": "2026-04-11T09:24:49.946Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -82,14 +82,14 @@
               ],
               "instructions": [],
               "script": "products:audit:missing-parameters",
-              "durationMs": 5687
+              "durationMs": 3215
             }
           ],
           "status": "passed"
         },
         {
           "phase": "classify",
-          "generatedAt": "2026-04-11T02:30:35.208Z",
+          "generatedAt": "2026-04-11T09:41:24.435Z",
           "reportPath": "artifacts/improvements/classify-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -129,7 +129,7 @@
               ],
               "instructions": [],
               "script": "products:classify:parameter-recovery",
-              "durationMs": 3598
+              "durationMs": 3631
             },
             {
               "id": "products-parameter-source-report",
@@ -145,7 +145,7 @@
               ],
               "instructions": [],
               "script": "products:report:parameter-source-recovery",
-              "durationMs": 6933
+              "durationMs": 3133
             },
             {
               "id": "products-parameter-source-summary",
@@ -161,7 +161,7 @@
               ],
               "instructions": [],
               "script": "products:summarize:parameter-source-recovery",
-              "durationMs": 371
+              "durationMs": 323
             },
             {
               "id": "products-parameter-source-template",
@@ -177,7 +177,7 @@
               ],
               "instructions": [],
               "script": "products:generate:parameter-source-recovery-template",
-              "durationMs": 299
+              "durationMs": 308
             },
             {
               "id": "products-parameter-source-batch-split",
@@ -192,7 +192,7 @@
               ],
               "instructions": [],
               "script": "products:split:parameter-source-recovery-template",
-              "durationMs": 538
+              "durationMs": 303
             },
             {
               "id": "products-parameter-family-mapping-packs",
@@ -207,7 +207,7 @@
               ],
               "instructions": [],
               "script": "products:generate:parameter-family-mapping-pack",
-              "durationMs": 303
+              "durationMs": 306
             },
             {
               "id": "products-parameter-family-mapping-index",
@@ -222,7 +222,7 @@
               ],
               "instructions": [],
               "script": "products:build:parameter-family-mapping-index",
-              "durationMs": 453
+              "durationMs": 308
             },
             {
               "id": "products-parameter-family-mapping-checklist",
@@ -237,14 +237,14 @@
               ],
               "instructions": [],
               "script": "products:render:parameter-family-mapping-checklist",
-              "durationMs": 307
+              "durationMs": 311
             }
           ],
           "status": "passed"
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T01:46:37.028Z",
+          "generatedAt": "2026-04-11T09:41:24.964Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -388,12 +388,12 @@
       "defaultSelected": true,
       "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-11T02:59:25.778Z",
+      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
       "docDir": "docs/build/improvements/products-category-schema-normalization",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T02:59:25.778Z",
+          "generatedAt": "2026-04-11T09:24:49.946Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -410,7 +410,7 @@
         },
         {
           "phase": "classify",
-          "generatedAt": "2026-04-11T02:30:35.208Z",
+          "generatedAt": "2026-04-11T09:41:24.435Z",
           "reportPath": "artifacts/improvements/classify-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -440,14 +440,14 @@
               ],
               "instructions": [],
               "script": "products:report:parameter-remediation",
-              "durationMs": 635
+              "durationMs": 681
             }
           ],
           "status": "passed"
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T01:46:37.028Z",
+          "generatedAt": "2026-04-11T09:41:24.964Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -623,12 +623,12 @@
       "defaultSelected": true,
       "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-11T02:59:25.778Z",
+      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
       "docDir": "docs/build/improvements/ui-consolidation",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T02:59:25.778Z",
+          "generatedAt": "2026-04-11T09:24:49.946Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -660,14 +660,14 @@
               ],
               "instructions": [],
               "script": "check:ui-consolidation",
-              "durationMs": 22300
+              "durationMs": 10483
             }
           ],
           "status": "failed"
         },
         {
           "phase": "classify",
-          "generatedAt": "2026-04-11T02:30:35.208Z",
+          "generatedAt": "2026-04-11T09:41:24.435Z",
           "reportPath": "artifacts/improvements/classify-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -684,7 +684,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T01:46:37.028Z",
+          "generatedAt": "2026-04-11T09:41:24.964Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -758,12 +758,12 @@
       "defaultSelected": true,
       "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-11T02:59:25.778Z",
+      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
       "docDir": "docs/build/improvements/application-performance",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T02:59:25.778Z",
+          "generatedAt": "2026-04-11T09:24:49.946Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -787,14 +787,14 @@
               "outputs": [],
               "instructions": [],
               "script": "perf:ops:fast",
-              "durationMs": 91256
+              "durationMs": 36248
             }
           ],
           "status": "passed"
         },
         {
           "phase": "classify",
-          "generatedAt": "2026-04-11T02:30:35.208Z",
+          "generatedAt": "2026-04-11T09:41:24.435Z",
           "reportPath": "artifacts/improvements/classify-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -834,14 +834,14 @@
               ],
               "instructions": [],
               "script": "perf:ops:baseline",
-              "durationMs": 570234
+              "durationMs": 652336
             }
           ],
           "status": "passed"
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T01:46:37.028Z",
+          "generatedAt": "2026-04-11T09:41:24.964Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -920,7 +920,7 @@
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T02:59:25.778Z",
+          "generatedAt": "2026-04-11T09:24:49.946Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -937,7 +937,7 @@
         },
         {
           "phase": "classify",
-          "generatedAt": "2026-04-11T02:30:35.208Z",
+          "generatedAt": "2026-04-11T09:41:24.435Z",
           "reportPath": "artifacts/improvements/classify-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -954,7 +954,7 @@
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T01:46:37.028Z",
+          "generatedAt": "2026-04-11T09:41:24.964Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,
@@ -1011,13 +1011,13 @@
       "category": "quality",
       "defaultSelected": true,
       "description": "Runs the core read-only quality checks that establish the current repository baseline.",
-      "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-11T02:59:25.778Z",
+      "overallStatus": "passed",
+      "latestGeneratedAt": "2026-04-11T09:41:24.964Z",
       "docDir": "docs/build/improvements/repo-quality-baseline",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-11T02:59:25.778Z",
+          "generatedAt": "2026-04-11T09:24:49.946Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -1047,7 +1047,7 @@
               ],
               "instructions": [],
               "script": "check:api-error-sources",
-              "durationMs": 1306
+              "durationMs": 484
             },
             {
               "id": "repo-quality-canonical-sitewide",
@@ -1060,22 +1060,22 @@
               "outputs": [],
               "instructions": [],
               "script": "canonical:check:sitewide",
-              "durationMs": 5406
+              "durationMs": 2706
             }
           ],
           "status": "passed"
         },
         {
           "phase": "classify",
-          "generatedAt": "2026-04-11T02:30:35.208Z",
+          "generatedAt": "2026-04-11T09:41:24.435Z",
           "reportPath": "artifacts/improvements/classify-report.json",
           "executionMode": "executed",
           "allowWrite": false,
           "stepCount": 2,
           "automaticStepCount": 2,
           "manualStepCount": 0,
-          "passedStepCount": 1,
-          "failedStepCount": 1,
+          "passedStepCount": 2,
+          "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
           "outputs": [],
@@ -1087,11 +1087,11 @@
               "phase": "classify",
               "mode": "automatic",
               "writes": false,
-              "status": "failed",
+              "status": "passed",
               "outputs": [],
               "instructions": [],
               "script": "quality:baseline:lint",
-              "durationMs": 282389
+              "durationMs": 238798
             },
             {
               "id": "repo-quality-typecheck",
@@ -1104,14 +1104,14 @@
               "outputs": [],
               "instructions": [],
               "script": "quality:baseline:typecheck",
-              "durationMs": 86428
+              "durationMs": 93634
             }
           ],
-          "status": "failed"
+          "status": "passed"
         },
         {
           "phase": "plan",
-          "generatedAt": "2026-04-11T01:46:37.028Z",
+          "generatedAt": "2026-04-11T09:41:24.964Z",
           "reportPath": "artifacts/improvements/plan-report.json",
           "executionMode": "planned",
           "allowWrite": false,

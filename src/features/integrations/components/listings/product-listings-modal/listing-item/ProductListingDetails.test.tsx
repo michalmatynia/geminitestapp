@@ -697,6 +697,49 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
+  it('shows a linked status badge for duplicate-linked Tradera rows with stale failed status', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-duplicate-linked-stale-status',
+            status: 'failed',
+            externalListingId: '725447805',
+            inventoryId: null,
+            listedAt: '2026-04-02T11:30:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T11:15:00.000Z',
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('linked')).toBeInTheDocument();
+    expect(screen.queryByText(/^failed$/i)).toBeNull();
+  });
+
   it('shows pending Tradera relist metadata while a recovery relist is queued', () => {
     render(
       <ProductListingDetails

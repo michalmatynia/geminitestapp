@@ -543,6 +543,235 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
         </FormSection>
 
         <FormSection
+          title='Amazon Candidate Triage'
+          description='Lightweight AI review of Google-returned Amazon candidates before any Amazon page is opened.'
+          className='p-6'
+        >
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
+            <FormField
+              label='Triage Mode'
+              description='Choose whether this scanner step uses the AI Brain default model or a scanner-specific override.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluatorTriage.mode}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorTriage: {
+                      ...prev.amazonCandidateEvaluatorTriage,
+                      mode:
+                        value === 'brain_default' || value === 'model_override'
+                          ? value
+                          : 'disabled',
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS]}
+                placeholder='Select evaluator mode'
+                ariaLabel='Select Amazon candidate triage mode'
+                title='Select Amazon candidate triage mode'
+              />
+            </FormField>
+            <FormField
+              label='Resolved Model'
+              description='Current effective model for the triage checkpoint.'
+            >
+              <Input
+                value={effectiveAmazonCandidateEvaluatorTriageModel}
+                readOnly
+                aria-label='Resolved Amazon candidate triage model'
+                title='Resolved Amazon candidate triage model'
+              />
+            </FormField>
+            {draft.amazonCandidateEvaluatorTriage.mode === 'model_override' ? (
+              <FormField
+                label='Override Model'
+                description='Choose a lightweight text-capable model from the AI Brain catalog.'
+              >
+                <SelectSimple
+                  size='sm'
+                  value={draft.amazonCandidateEvaluatorTriage.modelId ?? ''}
+                  onValueChange={(value: string): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluatorTriage: {
+                        ...prev.amazonCandidateEvaluatorTriage,
+                        modelId: value.trim() || null,
+                      },
+                    }));
+                  }}
+                  options={[...amazonCandidateEvaluatorModelOptions]}
+                  placeholder='Select evaluator model'
+                  ariaLabel='Select Amazon candidate triage model'
+                  title='Select Amazon candidate triage model'
+                />
+              </FormField>
+            ) : null}
+            <FormField
+              label='Confidence Threshold'
+              description='Minimum evaluator confidence required before a Google candidate stays in the queue.'
+            >
+              <Input
+                type='number'
+                min={0}
+                max={1}
+                step={0.05}
+                value={draft.amazonCandidateEvaluatorTriage.threshold}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorTriage: {
+                      ...prev.amazonCandidateEvaluatorTriage,
+                      threshold: toUnitInterval(
+                        event.target.value,
+                        prev.amazonCandidateEvaluatorTriage.threshold
+                      ),
+                    },
+                  }));
+                }}
+                aria-label='Amazon candidate triage confidence threshold'
+                title='Amazon candidate triage confidence threshold'
+              />
+            </FormField>
+            <FormField
+              label='Similarity Decision'
+              description='Choose whether deterministic identifier matches can bypass AI review.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluatorTriage.candidateSimilarityMode}
+                onValueChange={(value: string): void => {
+                  const nextMode =
+                    value === 'deterministic_then_ai'
+                      ? 'deterministic_then_ai'
+                      : 'ai_only';
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorTriage: {
+                      ...prev.amazonCandidateEvaluatorTriage,
+                      candidateSimilarityMode: nextMode,
+                      onlyForAmbiguousCandidates:
+                        nextMode === 'ai_only'
+                          ? false
+                          : prev.amazonCandidateEvaluatorTriage.onlyForAmbiguousCandidates,
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_SIMILARITY_MODE_OPTIONS]}
+                placeholder='Select similarity decision mode'
+                ariaLabel='Select Amazon candidate triage similarity decision mode'
+                title='Select Amazon candidate triage similarity decision mode'
+              />
+            </FormField>
+            <FormField
+              label='Evaluation Scope'
+              description='Run triage only when Google-returned Amazon candidates are ambiguous.'
+            >
+              <label className='inline-flex items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  checked={draft.amazonCandidateEvaluatorTriage.onlyForAmbiguousCandidates}
+                  disabled={draft.amazonCandidateEvaluatorTriage.candidateSimilarityMode === 'ai_only'}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluatorTriage: {
+                        ...prev.amazonCandidateEvaluatorTriage,
+                        onlyForAmbiguousCandidates: event.target.checked,
+                      },
+                    }));
+                  }}
+                  aria-label='Only evaluate ambiguous Amazon triage candidates'
+                  title='Only evaluate ambiguous Amazon triage candidates'
+                />
+                Only evaluate ambiguous candidates
+              </label>
+              {draft.amazonCandidateEvaluatorTriage.candidateSimilarityMode === 'ai_only' ? (
+                <Hint>AI-only similarity review always evaluates every Amazon candidate.</Hint>
+              ) : null}
+            </FormField>
+            <FormField
+              label='Allowed Content Language'
+              description='Trusted extraction currently targets English product fields.'
+            >
+              <Input value='English' readOnly aria-label='Allowed Amazon triage content language' />
+            </FormField>
+            <FormField
+              label='Language Gate'
+              description='Discard Amazon candidates from non-English marketplaces when visible content is unlikely to be acceptable.'
+            >
+              <label className='inline-flex items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  checked={draft.amazonCandidateEvaluatorTriage.rejectNonEnglishContent}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluatorTriage: {
+                        ...prev.amazonCandidateEvaluatorTriage,
+                        rejectNonEnglishContent: event.target.checked,
+                      },
+                    }));
+                  }}
+                  aria-label='Reject non-English Amazon content in triage stage'
+                  title='Reject non-English Amazon content in triage stage'
+                />
+                Reject non-English Amazon content
+              </label>
+            </FormField>
+            <FormField
+              label='Language Detection'
+              description='Choose whether marketplace/domain hints can reject non-English candidates before AI runs.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluatorTriage.languageDetectionMode}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorTriage: {
+                      ...prev.amazonCandidateEvaluatorTriage,
+                      languageDetectionMode:
+                        value === 'ai_only' ? 'ai_only' : 'deterministic_then_ai',
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_OPTIONS]}
+                placeholder='Select language detection mode'
+                ariaLabel='Select Amazon candidate triage language detection mode'
+                title='Select Amazon candidate triage language detection mode'
+              />
+            </FormField>
+          </div>
+
+          <div className='mt-4 text-xs text-muted-foreground'>
+            {brainModelOptions.isLoading
+              ? 'Loading AI Brain model options.'
+              : brainModelOptions.sourceWarnings[0] ||
+                'The triage evaluator reviews only Google result metadata so cost and latency stay below full Amazon page evaluation.'}
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-background/70 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>Evaluator Summary</p>
+            <ul className='space-y-1'>
+              {amazonTriageEvaluatorSummaryLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>Runtime Policy</p>
+            <ul className='space-y-1'>
+              {amazonTriageEvaluatorPolicyLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        </FormSection>
+
+        <FormSection
           title='Amazon Probe Evaluator'
           description='Optional AI gate that reviews each Amazon candidate before extraction is attempted.'
           className='p-6'

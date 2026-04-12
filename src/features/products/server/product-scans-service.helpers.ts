@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 import { tmpdir } from 'node:os';
-import { extname, join } from 'node:path';
+import { extname, join, resolve, sep } from 'node:path';
 
 import {
   DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
@@ -66,6 +66,54 @@ export const PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE =
 const nodeFs = getFsPromises();
 const PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY = join(tmpdir(), 'geminitestapp-product-scan-images');
 const PRODUCT_SCAN_HTTP_URL_PATTERN = /^https?:\/\//i;
+const PRODUCT_SCAN_PUBLIC_UPLOADS_PATH_PATTERN = /^\/uploads\//i;
+
+const isLoopbackProductScanHost = (hostname: string): boolean => {
+  const normalized = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  return (
+    normalized === 'localhost' ||
+    normalized === '127.0.0.1' ||
+    normalized === '0.0.0.0' ||
+    normalized === '::1'
+  );
+};
+
+const resolveLocalPublicPathFromScanImageUrl = (value: unknown): string | null => {
+  const normalized = readOptionalString(value);
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.startsWith('/')) {
+    return normalized;
+  }
+
+  try {
+    const parsed = new URL(normalized);
+    if (!isLoopbackProductScanHost(parsed.hostname)) {
+      return null;
+    }
+    return parsed.pathname || null;
+  } catch {
+    return null;
+  }
+};
+
+const resolvePublicUploadsFallbackDiskPath = (value: unknown): string | null => {
+  const normalized = readOptionalString(value);
+  if (!normalized || !PRODUCT_SCAN_PUBLIC_UPLOADS_PATH_PATTERN.test(normalized)) {
+    return null;
+  }
+
+  const publicUploadsRoot = resolve(process.cwd(), 'public', 'uploads');
+  const cleaned = normalized.replace(/^\/uploads\/+/, '');
+  const resolved = resolve(publicUploadsRoot, cleaned);
+  if (resolved !== publicUploadsRoot && !resolved.startsWith(`${publicUploadsRoot}${sep}`)) {
+    return null;
+  }
+
+  return resolved;
+};
 
 export type AmazonScanScriptResult = {
   status:
@@ -211,6 +259,14 @@ export const resolveLocalScanImageCandidatePath = async (
     } catch {
       // Ignore path-conversion failures and fall back to the raw filepath only.
     }
+
+    const publicUploadsFallbackPath = resolvePublicUploadsFallbackDiskPath(normalizedFilepath);
+    if (
+      publicUploadsFallbackPath &&
+      !diskPathCandidates.includes(publicUploadsFallbackPath)
+    ) {
+      diskPathCandidates.push(publicUploadsFallbackPath);
+    }
   } else if (!PRODUCT_SCAN_HTTP_URL_PATTERN.test(normalizedFilepath)) {
     try {
       const publicDiskPath = getDiskPathFromPublicPath(`/${normalizedFilepath}`);
@@ -236,6 +292,20 @@ export const resolveLocalScanImageCandidatePath = async (
   return null;
 };
 
+const resolveLocalScanImageCandidateUrlPath = async (
+  candidate: Pick<ProductScanRecord['imageCandidates'][number], 'url' | 'filename'>
+): Promise<string | null> => {
+  const publicPath = resolveLocalPublicPathFromScanImageUrl(candidate.url);
+  if (!publicPath) {
+    return null;
+  }
+
+  return await resolveLocalScanImageCandidatePath({
+    filepath: publicPath,
+    filename: candidate.filename,
+  });
+};
+
 export const sanitizeProductScanImageCandidates = async (
   imageCandidates: ProductScanRecord['imageCandidates'],
   options: { materializeUrlCandidates?: boolean; requireLocalFile?: boolean } = {}
@@ -254,6 +324,14 @@ export const sanitizeProductScanImageCandidates = async (
 
       if (!hasUrl) {
         return null;
+      }
+
+      const localUrlFilepath = await resolveLocalScanImageCandidateUrlPath(candidate);
+      if (localUrlFilepath) {
+        return {
+          ...candidate,
+          filepath: localUrlFilepath,
+        };
       }
 
       if (options.materializeUrlCandidates) {

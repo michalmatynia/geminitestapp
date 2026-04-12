@@ -14,6 +14,7 @@ import {
   useProductListingsModals,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
+import { resolveDuplicateLinkedFromListing } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { Button, DropdownMenuItem, Label, Input } from '@/shared/ui/primitives.public';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
@@ -106,8 +107,10 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const traderaLastExecutionAction = (readString(traderaLastExecution['action']) ?? '').trim().toLowerCase();
   const traderaExecutionError = readString(traderaLastExecution['error']);
   const traderaFailureReason = (listing.failureReason ?? '').trim().toLowerCase();
+  const isTraderaDuplicateLinked = isTraderaListing && resolveDuplicateLinkedFromListing(listing);
   const traderaNeedsManualLogin =
     isTraderaBrowserListing &&
+    !isTraderaDuplicateLinked &&
     ['failed', 'needs_login', 'auth_required'].includes(normalizedListingStatus) &&
     (traderaErrorCategory === 'auth' ||
       hasTraderaAuthSignal(traderaFailureReason) ||

@@ -550,8 +550,10 @@ export const PART_4D = String.raw`
       return false;
     }
 
-    const normalizedCandidateTitle = normalizeWhitespace(candidate?.title || '').toLowerCase();
-    const normalizedCandidateText = normalizeWhitespace(candidate?.text || candidate?.title || '').toLowerCase();
+    const normalizedCandidateTitle = normalizeListingMatchValue(candidate?.title || '');
+    const normalizedCandidateText = normalizeListingMatchValue(
+      [candidate?.text || '', candidate?.title || ''].filter(Boolean).join(' ')
+    );
     const candidateTitle = normalizedCandidateTitle;
     const candidateText = normalizedCandidateText;
 
@@ -580,10 +582,15 @@ export const PART_4D = String.raw`
       return false;
     }
 
-    const candidateTokens = candidateText.split(' ');
+    const candidateTokens = new Set(
+      normalizeWhitespace([candidateTitle, candidateText].filter(Boolean).join(' '))
+        .split(' ')
+        .map((token) => token.trim())
+        .filter((token) => token.length >= 3)
+    );
     let matchCount = 0;
     for (const token of searchTokens) {
-      if (candidateTokens.includes(token)) {
+      if (candidateTokens.has(token)) {
         matchCount += 1;
       }
     }
@@ -592,7 +599,7 @@ export const PART_4D = String.raw`
   };
 
   const collectDuplicateCandidates = async (searchTerm, visibleCandidates = []) => {
-    const normalizedSearchTerm = normalizeWhitespace(searchTerm).toLowerCase();
+    const normalizedSearchTerm = normalizeListingMatchValue(searchTerm);
     if (!normalizedSearchTerm) {
       return {
         exactTitleMatches: [],
@@ -602,7 +609,15 @@ export const PART_4D = String.raw`
       };
     }
 
-    const exactTitleMatches = await collectListingLinksForTerm(searchTerm);
+    const sourceCandidates =
+      Array.isArray(visibleCandidates) && visibleCandidates.length > 0
+        ? visibleCandidates
+        : await collectVisibleListingCandidates(8);
+    const exactTitleMatches = await collectListingLinksForTerm(
+      searchTerm,
+      null,
+      sourceCandidates
+    );
     if (exactTitleMatches.length > 0) {
       return {
         exactTitleMatches,
@@ -612,9 +627,6 @@ export const PART_4D = String.raw`
       };
     }
 
-    const sourceCandidates = Array.isArray(visibleCandidates) && visibleCandidates.length > 0
-      ? visibleCandidates
-      : await collectVisibleListingCandidates(8);
     const fallbackTitleMatches = [];
 
     for (const candidate of sourceCandidates) {
@@ -737,11 +749,20 @@ export const PART_4D = String.raw`
       const fallbackMatches = duplicateCandidateSet.fallbackTitleMatches;
       const inspectionCandidates = duplicateCandidateSet.inspectionCandidates;
       const candidateScanMode = duplicateCandidateSet.candidateScanMode;
+      const singleVisibleFallbackCandidate =
+        listingAction === 'relist' &&
+        inspectionCandidates.length === 0 &&
+        visibleCandidates.length === 1 &&
+        isLikelyDuplicateMatchByText(visibleCandidates[0], normalizedSearchTerm)
+          ? visibleCandidates[0]
+          : null;
+      const effectiveInspectionCandidates = singleVisibleFallbackCandidate
+        ? [singleVisibleFallbackCandidate]
+        : inspectionCandidates;
       const exactTitleSingleCandidate =
         listingAction === 'relist' &&
-        duplicateMatches.length === 1 &&
-        inspectionCandidates.length === 1
-          ? inspectionCandidates[0]
+        duplicateMatches.length === 1
+          ? duplicateMatches[0]
           : null;
       const knownExistingCandidate = visibleCandidates.find(matchesKnownExistingListing) || null;
       const nonExactVisibleCandidateCount = visibleCandidates.filter(
@@ -757,7 +778,7 @@ export const PART_4D = String.raw`
         normalizeWhitespace(searchInputValue).toLowerCase() ===
           normalizeWhitespace(searchTerm).toLowerCase() &&
         !searchStateChanged &&
-        inspectionCandidates.length === 0 &&
+        effectiveInspectionCandidates.length === 0 &&
         hadVisibleCandidates;
 
       log?.('tradera.quicklist.duplicate.search', {
@@ -768,10 +789,11 @@ export const PART_4D = String.raw`
         candidateCount: duplicateMatches.length,
         visibleCandidateCount: visibleCandidates.length,
         exactTitleCandidateCount: duplicateMatches.length,
-        inspectionCandidateCount: inspectionCandidates.length,
+        inspectionCandidateCount: effectiveInspectionCandidates.length,
         nonExactVisibleCandidateCount,
         fallbackCandidateCount,
         candidateScanMode,
+        singleVisibleFallbackCandidateFound: Boolean(singleVisibleFallbackCandidate),
         searchStateChanged,
         uncertainSearch,
         knownExistingListingCandidateFound: Boolean(knownExistingCandidate),
@@ -816,7 +838,7 @@ export const PART_4D = String.raw`
         hadTrustedNoDuplicateSignal = true;
       }
 
-      for (const candidate of inspectionCandidates) {
+      for (const candidate of effectiveInspectionCandidates) {
         let inspectedCandidate = null;
         try {
           inspectedCandidate = await inspectDuplicateCandidateListing(candidate);
@@ -852,7 +874,7 @@ export const PART_4D = String.raw`
             term: searchTerm,
             duplicateFound: true,
             matchStrategy: 'title+description',
-            candidateCount: inspectionCandidates.length,
+            candidateCount: effectiveInspectionCandidates.length,
             listingUrl: resolvedListingUrl,
             listingId: resolvedListingId,
             matchedProductId: inspectedCandidate?.matchedProductId || null,
@@ -864,7 +886,7 @@ export const PART_4D = String.raw`
             listingId: resolvedListingId,
             matchStrategy: 'title+description',
             matchedProductId: inspectedCandidate?.matchedProductId || null,
-            candidateCount: inspectionCandidates.length,
+            candidateCount: effectiveInspectionCandidates.length,
             searchTitle: searchTerm,
           };
         }
@@ -874,7 +896,7 @@ export const PART_4D = String.raw`
             term: searchTerm,
             duplicateFound: true,
             matchStrategy: 'title+product-id',
-            candidateCount: inspectionCandidates.length,
+            candidateCount: effectiveInspectionCandidates.length,
             listingUrl: resolvedListingUrl,
             listingId: resolvedListingId,
             matchedProductId: inspectedCandidate?.matchedProductId || null,
@@ -886,7 +908,7 @@ export const PART_4D = String.raw`
             listingId: resolvedListingId,
             matchStrategy: 'title+product-id',
             matchedProductId: inspectedCandidate?.matchedProductId || null,
-            candidateCount: inspectionCandidates.length,
+            candidateCount: effectiveInspectionCandidates.length,
             searchTitle: searchTerm,
           };
         }
@@ -905,7 +927,7 @@ export const PART_4D = String.raw`
           term: searchTerm,
           duplicateFound: true,
           matchStrategy: 'exact-title-single-candidate',
-          candidateCount: inspectionCandidates.length,
+          candidateCount: effectiveInspectionCandidates.length,
           listingUrl: exactTitleListingUrl,
           listingId: exactTitleListingId,
           matchedProductId: null,
@@ -918,7 +940,7 @@ export const PART_4D = String.raw`
           listingId: exactTitleListingId,
           matchStrategy: 'exact-title-single-candidate',
           matchedProductId: null,
-          candidateCount: inspectionCandidates.length,
+          candidateCount: effectiveInspectionCandidates.length,
           searchTitle: searchTerm,
         };
       }

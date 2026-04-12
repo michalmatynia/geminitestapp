@@ -38,9 +38,26 @@ type ScanDiagnostics = {
   imageSearchProvider: string | null;
   latestStage: string | null;
   latestStageUrl: string | null;
+  amazonAiStages: AmazonAiStageEvidence[];
   failureArtifacts: ScanFailureArtifact[];
   runtimePosture: ScanRuntimePosture | null;
   logTail: string[];
+};
+
+type AmazonAiStageEvidence = {
+  stage: 'candidate_triage' | 'probe_evaluate' | 'extraction_evaluate';
+  status: string | null;
+  model: string | null;
+  threshold: number | null;
+  candidateRankBefore: number | null;
+  candidateRankAfter: number | null;
+  recommendedAction: string | null;
+  rejectionCategory: string | null;
+  pageLanguage: string | null;
+  languageAccepted: boolean | null;
+  topReasons: string[];
+  provider: string | null;
+  evaluatedAt: string | null;
 };
 
 export type ProductScanDiagnosticFailureSummary = {
@@ -115,6 +132,76 @@ const normalizeFailureArtifacts = (value: unknown): ScanFailureArtifact[] => {
     .filter((entry): entry is ScanFailureArtifact => Boolean(entry));
 };
 
+const normalizeAmazonAiStages = (value: unknown): AmazonAiStageEvidence[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      if (!isObjectRecord(entry)) {
+        return null;
+      }
+
+      const stage = hasText(String(entry['stage'] ?? ''))
+        ? String(entry['stage']).trim()
+        : null;
+      if (
+        stage !== 'candidate_triage' &&
+        stage !== 'probe_evaluate' &&
+        stage !== 'extraction_evaluate'
+      ) {
+        return null;
+      }
+
+      const thresholdValue = entry['threshold'];
+      const candidateRankBeforeValue = entry['candidateRankBefore'];
+      const candidateRankAfterValue = entry['candidateRankAfter'];
+      const languageAcceptedValue = entry['languageAccepted'];
+      return {
+        stage,
+        status: hasText(String(entry['status'] ?? '')) ? String(entry['status']).trim() : null,
+        model: hasText(String(entry['model'] ?? '')) ? String(entry['model']).trim() : null,
+        threshold:
+          typeof thresholdValue === 'number' && Number.isFinite(thresholdValue)
+            ? thresholdValue
+            : null,
+        candidateRankBefore:
+          typeof candidateRankBeforeValue === 'number' && Number.isFinite(candidateRankBeforeValue)
+            ? candidateRankBeforeValue
+            : null,
+        candidateRankAfter:
+          typeof candidateRankAfterValue === 'number' && Number.isFinite(candidateRankAfterValue)
+            ? candidateRankAfterValue
+            : null,
+        recommendedAction: hasText(String(entry['recommendedAction'] ?? ''))
+          ? String(entry['recommendedAction']).trim()
+          : null,
+        rejectionCategory: hasText(String(entry['rejectionCategory'] ?? ''))
+          ? String(entry['rejectionCategory']).trim()
+          : null,
+        pageLanguage: hasText(String(entry['pageLanguage'] ?? ''))
+          ? String(entry['pageLanguage']).trim()
+          : null,
+        languageAccepted:
+          typeof languageAcceptedValue === 'boolean' ? languageAcceptedValue : null,
+        topReasons: Array.isArray(entry['topReasons'])
+          ? entry['topReasons']
+              .map((reason) => (typeof reason === 'string' ? reason.trim() : ''))
+              .filter((reason) => reason.length > 0)
+              .slice(0, 3)
+          : [],
+        provider: hasText(String(entry['provider'] ?? ''))
+          ? String(entry['provider']).trim()
+          : null,
+        evaluatedAt: hasText(String(entry['evaluatedAt'] ?? ''))
+          ? String(entry['evaluatedAt']).trim()
+          : null,
+      } satisfies AmazonAiStageEvidence;
+    })
+    .filter((entry): entry is AmazonAiStageEvidence => Boolean(entry));
+};
+
 const normalizeLogTail = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -142,6 +229,48 @@ const formatAmazonImageSearchProvider = (value: string | null | undefined): stri
   }
 
   return formatLabel(value);
+};
+
+const formatAmazonAiStage = (value: AmazonAiStageEvidence['stage']): string => {
+  if (value === 'candidate_triage') {
+    return 'Candidate triage';
+  }
+  if (value === 'probe_evaluate') {
+    return 'Probe evaluator';
+  }
+  return 'Extraction evaluator';
+};
+
+const formatAmazonAiStageStatus = (value: string | null | undefined): string | null => {
+  if (!hasText(value)) {
+    return null;
+  }
+
+  if (value === 'approved') return 'Approved';
+  if (value === 'rejected') return 'Rejected';
+  if (value === 'skipped') return 'Skipped';
+  if (value === 'failed') return 'Failed';
+  return formatLabel(value);
+};
+
+const formatAmazonAiThreshold = (value: number | null | undefined): string | null =>
+  typeof value === 'number' && Number.isFinite(value) ? `${Math.round(value * 100)}%` : null;
+
+const formatAmazonAiStageLanguage = (value: string | null | undefined): string | null => {
+  if (!hasText(value)) {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'en') return 'English';
+  if (normalized === 'en-us') return 'English (US)';
+  if (normalized === 'en-gb') return 'English (UK)';
+  if (normalized === 'de') return 'German';
+  if (normalized === 'fr') return 'French';
+  if (normalized === 'es') return 'Spanish';
+  if (normalized === 'it') return 'Italian';
+  if (normalized === 'pl') return 'Polish';
+  return normalized.toUpperCase();
 };
 
 const resolveArtifactFileName = (artifact: ScanFailureArtifact): string | null => {
@@ -315,6 +444,10 @@ export const resolveProductScanDiagnostics = (
   const latestStageUrl = hasText(String(scan.rawResult['latestStageUrl'] ?? ''))
     ? String(scan.rawResult['latestStageUrl']).trim()
     : null;
+  const amazonAiEvidence = isObjectRecord(scan.rawResult['amazonAiEvidence'])
+    ? scan.rawResult['amazonAiEvidence']
+    : null;
+  const amazonAiStages = normalizeAmazonAiStages(amazonAiEvidence?.['stages']);
   const failureArtifacts = normalizeFailureArtifacts(scan.rawResult['failureArtifacts']);
   const runtimePosture = normalizeRuntimePosture(scan.rawResult['runtimePosture']);
   const logTail = normalizeLogTail(scan.rawResult['logTail']);
@@ -325,6 +458,7 @@ export const resolveProductScanDiagnostics = (
     !imageSearchProvider &&
     !latestStage &&
     !latestStageUrl &&
+    amazonAiStages.length === 0 &&
     failureArtifacts.length === 0 &&
     !runtimePosture &&
     logTail.length === 0
@@ -338,6 +472,7 @@ export const resolveProductScanDiagnostics = (
     imageSearchProvider,
     latestStage,
     latestStageUrl,
+    amazonAiStages,
     failureArtifacts,
     runtimePosture,
     logTail,
@@ -505,6 +640,94 @@ export function ProductScanDiagnostics(props: {
                 </div>
               ))}
           </div>
+        </div>
+      ) : null}
+
+      {diagnostics.amazonAiStages.length > 0 ? (
+        <div className='space-y-2'>
+          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+            Amazon AI Chain
+          </p>
+          <ul className='space-y-2'>
+            {diagnostics.amazonAiStages.map((stage, index) => (
+              <li
+                key={`${stage.stage}-${stage.evaluatedAt ?? 'na'}-${index}`}
+                className='space-y-2 rounded-md border border-border/40 bg-background/70 px-3 py-2'
+              >
+                <div className='flex flex-wrap items-center gap-2'>
+                  <span className='text-sm font-medium'>{formatAmazonAiStage(stage.stage)}</span>
+                  {formatAmazonAiStageStatus(stage.status) ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                      {formatAmazonAiStageStatus(stage.status)}
+                    </span>
+                  ) : null}
+                  {stage.model ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                      {stage.model}
+                    </span>
+                  ) : null}
+                  {formatAmazonAiThreshold(stage.threshold) ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                      Threshold {formatAmazonAiThreshold(stage.threshold)}
+                    </span>
+                  ) : null}
+                  {stage.candidateRankBefore != null ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                      Rank before #{stage.candidateRankBefore}
+                    </span>
+                  ) : null}
+                  {stage.candidateRankAfter != null ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                      Rank after #{stage.candidateRankAfter}
+                    </span>
+                  ) : null}
+                </div>
+                <div className='grid gap-2 sm:grid-cols-2'>
+                  {[
+                    { label: 'Recommended action', value: formatLabel(stage.recommendedAction) },
+                    { label: 'Rejection category', value: formatLabel(stage.rejectionCategory) },
+                    { label: 'Language', value: formatAmazonAiStageLanguage(stage.pageLanguage) },
+                    {
+                      label: 'Language accepted',
+                      value:
+                        typeof stage.languageAccepted === 'boolean'
+                          ? String(stage.languageAccepted)
+                          : null,
+                    },
+                    {
+                      label: 'Image search provider',
+                      value: formatAmazonImageSearchProvider(stage.provider),
+                    },
+                    { label: 'Evaluated at', value: formatTimestamp(stage.evaluatedAt) },
+                  ]
+                    .filter((entry): entry is { label: string; value: string } => hasText(entry.value))
+                    .map((entry) => (
+                      <div
+                        key={`${stage.stage}-${entry.label}`}
+                        className='space-y-1 rounded-md border border-border/40 bg-muted/20 px-3 py-2'
+                      >
+                        <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                          {entry.label}
+                        </p>
+                        <p className='break-words text-sm'>{entry.value}</p>
+                      </div>
+                    ))}
+                </div>
+                {stage.topReasons.length > 0 ? (
+                  <div className='space-y-1'>
+                    <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                      Top reasons
+                    </p>
+                    <ul className='space-y-1 text-sm text-muted-foreground'>
+                      {stage.topReasons.map((reason) => (
+                        <li key={`${stage.stage}-${reason}`}>{reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 

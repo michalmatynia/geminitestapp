@@ -70,6 +70,7 @@ describe('product scanner settings helpers', () => {
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 180000,
       amazonImageSearchProvider: 'google_images_upload',
+      amazonImageSearchFallbackProvider: null,
       amazonCandidateEvaluator: {
         mode: 'brain_default',
         modelId: null,
@@ -81,6 +82,7 @@ describe('product scanner settings helpers', () => {
         languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
       },
+      amazonCandidateEvaluatorTriage: defaultAmazonEvaluator,
       amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
       amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
       scanner1688: {
@@ -151,6 +153,7 @@ describe('product scanner settings helpers', () => {
       captchaBehavior: 'fail',
       manualVerificationTimeoutMs: 120000,
       amazonImageSearchProvider: 'google_images_url',
+      amazonImageSearchFallbackProvider: null,
       playwrightSettingsOverrides: {},
       amazonCandidateEvaluator: {
         mode: 'model_override',
@@ -163,6 +166,7 @@ describe('product scanner settings helpers', () => {
         languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
       },
+      amazonCandidateEvaluatorTriage: defaultAmazonEvaluator,
       amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
       amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
       scanner1688: {
@@ -202,6 +206,7 @@ describe('product scanner settings helpers', () => {
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 60000,
       amazonImageSearchProvider: 'google_lens_upload',
+      amazonImageSearchFallbackProvider: null,
       amazonCandidateEvaluator: {
         mode: 'disabled',
         modelId: null,
@@ -213,6 +218,7 @@ describe('product scanner settings helpers', () => {
         languageDetectionMode: 'ai_only',
         systemPrompt: null,
       },
+      amazonCandidateEvaluatorTriage: defaultAmazonEvaluator,
       amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
       amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
       scanner1688: {
@@ -257,6 +263,7 @@ describe('product scanner settings helpers', () => {
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 240000,
       amazonImageSearchProvider: 'google_images_upload',
+      amazonImageSearchFallbackProvider: null,
       playwrightSettingsOverrides: {},
       amazonCandidateEvaluator: {
         mode: 'disabled',
@@ -269,6 +276,7 @@ describe('product scanner settings helpers', () => {
         languageDetectionMode: 'ai_only',
         systemPrompt: null,
       },
+      amazonCandidateEvaluatorTriage: defaultAmazonEvaluator,
       amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
       amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
       scanner1688: {

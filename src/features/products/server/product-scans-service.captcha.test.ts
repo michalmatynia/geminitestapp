@@ -292,6 +292,81 @@ describe('product-scans-service', () => {
     );
   });
 
+  it('does not keep manual verification pending after the active run reaches Amazon stages', async () => {
+    const now = Date.now();
+    const scan = createScan({
+      status: 'running',
+      engineRunId: 'run-1',
+      rawResult: {
+        runId: 'run-1',
+        manualVerificationPending: true,
+        manualVerificationMessage:
+          'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+        manualVerificationTimeoutMs: 180000,
+      },
+      asinUpdateMessage:
+        'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+      completedAt: null,
+      result: {
+        outputs: {
+          result: {
+            status: 'captcha_required',
+            stage: 'google_candidates',
+            currentUrl: 'https://www.google.com/search',
+          },
+        },
+      },
+      updatedAt: new Date(now - 5_000).toISOString(),
+      startedAt: new Date(now - 30_000).toISOString(),
+      createdAt: new Date(now - 30_000).toISOString(),
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'captcha_required',
+        stage: 'google_candidates',
+        currentUrl: 'https://www.google.com/search',
+      },
+      finalUrl: 'https://www.amazon.com/dp/B000123456',
+    });
+    mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({
+      latestStage: 'amazon_content_ready',
+      latestStageUrl: 'https://www.amazon.com/dp/B000123456',
+      runId: 'run-1',
+      runStatus: 'running',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'running',
+        asinUpdateStatus: 'pending',
+        asinUpdateMessage: null,
+        rawResult: expect.objectContaining({
+          runId: 'run-1',
+          runStatus: 'running',
+          latestStage: 'amazon_content_ready',
+          latestStageUrl: 'https://www.amazon.com/dp/B000123456',
+          manualVerificationPending: false,
+          manualVerificationMessage: null,
+          manualVerificationTimeoutMs: 180000,
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'running',
+        asinUpdateMessage: null,
+      })
+    );
+  });
+
   it('relaunches a captcha-blocked headless run in headed mode and keeps the scan active', async () => {
     const scan = createScan({
       status: 'running',

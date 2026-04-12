@@ -60,6 +60,40 @@ describe('ProductScanDiagnostics', () => {
               imageSearchProvider: 'google_images_url',
               latestStage: 'google_upload',
               latestStageUrl: 'https://lens.google.com/search',
+              amazonAiEvidence: {
+                stages: [
+                  {
+                    stage: 'candidate_triage',
+                    status: 'rejected',
+                    model: 'gpt-4.1-mini',
+                    threshold: 0.7,
+                    candidateRankBefore: 2,
+                    candidateRankAfter: null,
+                    recommendedAction: 'fallback_provider',
+                    rejectionCategory: 'wrong_product',
+                    pageLanguage: 'de',
+                    languageAccepted: false,
+                    topReasons: ['Google results were dominated by wrong-language marketplace pages.'],
+                    provider: 'google_images_url',
+                    evaluatedAt: '2026-04-11T10:00:04.000Z',
+                  },
+                  {
+                    stage: 'probe_evaluate',
+                    status: 'rejected',
+                    model: 'gpt-4.1',
+                    threshold: 0.85,
+                    candidateRankBefore: 1,
+                    candidateRankAfter: null,
+                    recommendedAction: 'try_next_candidate',
+                    rejectionCategory: 'variant',
+                    pageLanguage: 'en',
+                    languageAccepted: true,
+                    topReasons: ['Brand matched, but size and pack count did not match the source product.'],
+                    provider: 'google_lens_upload',
+                    evaluatedAt: '2026-04-11T10:00:09.000Z',
+                  },
+                ],
+              },
               failureArtifacts: [
                 {
                   name: 'Stage Screenshot',
@@ -106,7 +140,7 @@ describe('ProductScanDiagnostics', () => {
 
     expect(screen.getByText('Run run-123')).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
-    expect(screen.getByText('Google Images URL')).toBeInTheDocument();
+    expect(screen.getAllByText('Google Images URL').length).toBeGreaterThan(0);
     expect(screen.getByText('Stage: Google Upload')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open URL' })).toHaveAttribute(
       'href',
@@ -132,10 +166,23 @@ describe('ProductScanDiagnostics', () => {
     expect(screen.getByText('Brightdata · Sticky · Applied · proxy.local:8080')).toBeInTheDocument();
     expect(screen.getByText('Loaded sticky state')).toBeInTheDocument();
     expect(screen.getByText('AI Evaluator Policy')).toBeInTheDocument();
+    expect(screen.getByText('Amazon AI Chain')).toBeInTheDocument();
+    expect(screen.getByText('Candidate triage')).toBeInTheDocument();
+    expect(screen.getByText('Probe evaluator')).toBeInTheDocument();
+    expect(screen.getByText('Fallback Provider')).toBeInTheDocument();
+    expect(screen.getByText('Try Next Candidate')).toBeInTheDocument();
+    expect(screen.getByText('Wrong Product')).toBeInTheDocument();
+    expect(screen.getByText('Variant')).toBeInTheDocument();
+    expect(screen.getByText('German')).toBeInTheDocument();
+    expect(screen.getByText('Rank before #2')).toBeInTheDocument();
+    expect(screen.getByText('Threshold 70%')).toBeInTheDocument();
+    expect(
+      screen.getByText('Google results were dominated by wrong-language marketplace pages.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Execution')).toBeInTheDocument();
     expect(screen.getByText('Reviewed by AI')).toBeInTheDocument();
     expect(screen.getAllByText('AI Brain default').length).toBeGreaterThan(0);
-    expect(screen.getByText('gpt-4.1-mini')).toBeInTheDocument();
+    expect(screen.getAllByText('gpt-4.1-mini').length).toBeGreaterThan(0);
     expect(screen.getAllByText('85%').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Every Amazon candidate').length).toBeGreaterThan(0);
     expect(screen.getAllByText('AI only').length).toBeGreaterThan(0);

@@ -544,6 +544,17 @@ describe('product-scans-service batch operations', () => {
         settings: expect.objectContaining({
           headless: false,
           identityProfile: 'marketplace',
+          locale: 'zh-CN',
+          timezoneId: 'Asia/Shanghai',
+          humanizeMouse: true,
+          mouseJitter: true,
+          slowMo: 140,
+          clickDelayMin: 80,
+          clickDelayMax: 220,
+          inputDelayMin: 50,
+          inputDelayMax: 160,
+          actionDelayMin: 250,
+          actionDelayMax: 900,
         }),
       })
     );
@@ -617,6 +628,59 @@ describe('product-scans-service batch operations', () => {
     );
   });
 
+  it('resolves app-local product image URLs without remote materialization for 1688 scans', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Local URL Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'remote.jpg',
+            filepath: '',
+            publicUrl: 'http://localhost:3000/uploads/remote.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-1688-local-url',
+      })
+    );
+
+    const result = await queue1688BatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result.queued).toBe(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mocks.writeFileMock).not.toHaveBeenCalled();
+    expect(mocks.startPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            imageCandidates: [
+              expect.objectContaining({
+                id: 'file-1',
+                filepath: expect.stringContaining('remote.jpg'),
+                url: 'http://localhost:3000/uploads/remote.jpg',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+  });
+
   it('does not launch a 1688 scan with URL-only images when local materialization fails', async () => {
     vi.stubGlobal(
       'fetch',
@@ -672,6 +736,70 @@ describe('product-scans-service batch operations', () => {
     );
     expect(mocks.startPlaywrightConnectionEngineTaskMock).not.toHaveBeenCalled();
     expect(mocks.startPlaywrightEngineTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to base64 product images when 1688 URL image materialization fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: false,
+        headers: {
+          get: () => null,
+        },
+        arrayBuffer: async () => new Uint8Array([]).buffer,
+      }))
+    );
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Base64 Fallback Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'remote.jpg',
+            filepath: '',
+            publicUrl: 'https://cdn.example.com/remote.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+      imageBase64s: ['data:image/png;base64,AQID'],
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-1688-base64-fallback',
+      })
+    );
+
+    const result = await queue1688BatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result.queued).toBe(1);
+    expect(mocks.writeFileMock).toHaveBeenCalledWith(
+      expect.stringContaining('geminitestapp-product-scan-images'),
+      expect.any(Buffer)
+    );
+    expect(mocks.startPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            imageCandidates: [
+              expect.objectContaining({
+                id: 'base64-slot-1',
+                filepath: expect.stringContaining('geminitestapp-product-scan-images'),
+                url: null,
+              }),
+            ],
+          }),
+        }),
+      })
+    );
   });
 
   it('queues a new Amazon reverse-image scan from base64-backed product images', async () => {

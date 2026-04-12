@@ -434,6 +434,45 @@ describe('product-scans-service 1688 synchronization', () => {
     expect(mocks.updateProductScanMock).toHaveBeenCalled();
   });
 
+  it('normalizes legacy 1688 unusable image input failures', async () => {
+    const scan = createScan({
+      provider: '1688',
+      scanType: 'supplier_reverse_image',
+      asinUpdateStatus: 'pending',
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'failed',
+        message:
+          'Product image candidate did not include a usable filepath or URL for 1688 scanning.',
+        steps: [],
+      },
+      finalUrl: null,
+    });
+    mocks.updateProductScanMock.mockImplementation(async (_id: string, updates: any) => ({
+      ...scan,
+      ...updates,
+    }));
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        error: 'No local product image file available for 1688 supplier reverse image scan.',
+        asinUpdateMessage:
+          'No local product image file available for 1688 supplier reverse image scan.',
+      })
+    );
+  });
+
   it('upgrades a borderline 1688 supplier result through the AI evaluator', async () => {
     const scan = createScan({
       provider: '1688',

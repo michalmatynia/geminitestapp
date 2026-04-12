@@ -5,6 +5,21 @@ import { SCAN_1688_REVERSE_IMAGE_SCRIPT } from './product-scan-1688-script';
 describe('SCAN_1688_REVERSE_IMAGE_SCRIPT', () => {
   it('waits for a stage-specific ready state after captcha before resuming', () => {
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const DEFAULT_1688_IMAGE_SEARCH_START_URL ='
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'https://s.1688.com/youyuan/index.htm?tab=imageSearch'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const scanner1688StartUrl = resolve1688ImageSearchStartUrl(input?.scanner1688StartUrl);'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "waitUntil: 'commit'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      '1688 image search navigation timed out; continuing with the partially loaded page.'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       'const detect1688ReadyState = async (stage) => {'
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
@@ -30,6 +45,12 @@ describe('SCAN_1688_REVERSE_IMAGE_SCRIPT', () => {
       'const hasStrongReadySignal ='
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const pageTitleText ='
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "'captcha interception'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       'const hardBlockingSelectors = ['
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
@@ -49,6 +70,45 @@ describe('SCAN_1688_REVERSE_IMAGE_SCRIPT', () => {
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       '1688 returned to the image-search entry page after captcha. Re-uploading the product image.'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const selectedLocalImageCandidate = imageCandidates.find'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const selectedImageCandidate = selectedLocalImageCandidate || selectedUrlImageCandidate;'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const imageUrl = selectedImageUrl || toText(selectedUrlImageCandidate?.url);'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "resultCode: 'missing_image_source'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const apply1688NaturalBrowserSetup = async () => {'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "Object.defineProperty(navigator, 'webdriver'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'await moveMouseNaturally();'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const submit1688UploadedImageSearch = async () => {'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'window.location.assign(url);'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'await submit1688UploadedImageSearch();'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "resultCode: 'file_input_missing'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      '1688 image upload control did not become available after opening image search.'
     );
   });
 });

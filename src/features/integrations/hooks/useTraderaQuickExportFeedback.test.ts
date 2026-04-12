@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildTrackedTraderaFeedbackOptions,
   findTrackedTraderaListing,
+  isTrackedTraderaListingSuccess,
 } from './useTraderaQuickExportFeedback';
 
 describe('findTrackedTraderaListing', () => {
@@ -149,5 +150,60 @@ describe('buildTrackedTraderaFeedbackOptions', () => {
         duplicateMatchStrategy: 'exact-title-single-candidate',
       },
     });
+  });
+});
+
+describe('isTrackedTraderaListingSuccess', () => {
+  it('treats duplicate-linked Tradera metadata as success even before the listing status is normalized', () => {
+    expect(
+      isTrackedTraderaListingSuccess(
+        {
+          id: 'listing-1',
+          status: 'failed',
+          marketplaceData: {
+            tradera: {
+              lastExecution: {
+                metadata: {
+                  latestStage: 'duplicate_linked',
+                },
+              },
+            },
+          },
+        } as never,
+        {
+          productId: 'product-1',
+          status: 'processing',
+          expiresAt: Date.now() + 60_000,
+        }
+      )
+    ).toBe(true);
+  });
+
+  it('treats duplicate-linked persisted feedback as success when the synced listing row still looks failed', () => {
+    expect(
+      isTrackedTraderaListingSuccess(
+        {
+          id: 'listing-1',
+          status: 'failed',
+          marketplaceData: {
+            tradera: {
+              lastExecution: {
+                metadata: {},
+              },
+            },
+          },
+        } as never,
+        {
+          productId: 'product-1',
+          status: 'processing',
+          expiresAt: Date.now() + 60_000,
+          metadata: {
+            rawResult: {
+              duplicateMatchStrategy: 'exact-title-single-candidate',
+            },
+          },
+        }
+      )
+    ).toBe(true);
   });
 });

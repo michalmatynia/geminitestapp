@@ -10,6 +10,7 @@ import {
   isVintedGoogleSignInBlockedMessage,
   resolveVintedGoogleSignInBlockedRecoveryDescription,
 } from './vinted-browser-messages';
+import { resolveDuplicateLinkedFromListing } from './tradera-listing-client-utils';
 
 export type TraderaRecoveryContext = Extract<
   ProductListingsRecoveryContext,
@@ -350,6 +351,10 @@ const compareTraderaRecoveryListings = (
   return rightTimestamp - leftTimestamp;
 };
 
+const isTraderaDuplicateLinkedListing = (
+  listing: ProductListingWithDetails
+): boolean => resolveDuplicateLinkedFromListing(listing);
+
 export const findTraderaRecoveryListing = (
   listings: ProductListingWithDetails[],
   recoveryRequestId: string | null,
@@ -363,7 +368,10 @@ export const findTraderaRecoveryListing = (
   if (recoveryRequestId) {
     const requestMatch = traderaListings.find((listing) => {
       const metadata = resolveTraderaRecoveryMetadata(listing);
-      return metadata.requestId === recoveryRequestId;
+      return (
+        metadata.requestId === recoveryRequestId &&
+        !isTraderaDuplicateLinkedListing(listing)
+      );
     });
     if (requestMatch) return requestMatch;
   }
@@ -371,17 +379,22 @@ export const findTraderaRecoveryListing = (
   if (recoveryRunId) {
     const runMatch = traderaListings.find((listing) => {
       const metadata = resolveTraderaRecoveryMetadata(listing);
-      return metadata.runId === recoveryRunId;
+      return metadata.runId === recoveryRunId && !isTraderaDuplicateLinkedListing(listing);
     });
     if (runMatch) return runMatch;
   }
 
   const recoveryCandidates = traderaListings
-    .filter((listing) => isTraderaRecoveryStatus(listing.status))
+    .filter(
+      (listing) =>
+        isTraderaRecoveryStatus(listing.status) && !isTraderaDuplicateLinkedListing(listing)
+    )
     .sort(compareTraderaRecoveryListings);
   if (recoveryCandidates.length > 0) return recoveryCandidates[0] ?? null;
 
-  return [...traderaListings].sort(compareTraderaRecoveryListings)[0] ?? null;
+  return [...traderaListings]
+    .filter((listing) => !isTraderaDuplicateLinkedListing(listing))
+    .sort(compareTraderaRecoveryListings)[0] ?? null;
 };
 
 export const resolveTraderaRecoveryTarget = ({

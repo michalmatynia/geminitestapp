@@ -387,6 +387,32 @@ describe('product-listings-recovery', () => {
     ).toBe('listing-2');
   });
 
+  it('does not return a duplicate-linked Tradera listing when the queue job matches a relinked row', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  requestId: 'job-target',
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never,
+        ],
+        'job-target',
+        null
+      )
+    ).toBeNull();
+  });
+
   it('finds the Tradera recovery listing by run id when queue job is unavailable', () => {
     expect(
       findTraderaRecoveryListing(
@@ -424,6 +450,32 @@ describe('product-listings-recovery', () => {
         'run-target'
       )?.id
     ).toBe('listing-2');
+  });
+
+  it('does not return a duplicate-linked Tradera listing when the run id matches a relinked row', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  metadata: {
+                    runId: 'run-target',
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never,
+        ],
+        null,
+        'run-target'
+      )
+    ).toBeNull();
   });
 
   it('prefers the freshest failed Tradera listing when recovery ids are unavailable', () => {
@@ -471,6 +523,70 @@ describe('product-listings-recovery', () => {
         null
       )?.id
     ).toBe('listing-2');
+  });
+
+  it('skips duplicate-linked Tradera listings when selecting fallback recovery candidates', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T19:00:00.000Z',
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never,
+          {
+            id: 'listing-2',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T18:00:00.000Z',
+                },
+              },
+            },
+          } as never,
+        ],
+        null,
+        null
+      )?.id
+    ).toBe('listing-2');
+  });
+
+  it('returns null when every Tradera fallback candidate is already duplicate-linked', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T19:00:00.000Z',
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never,
+        ],
+        null,
+        null
+      )
+    ).toBeNull();
   });
 
   it('extracts Tradera recovery metadata from listing execution details', () => {

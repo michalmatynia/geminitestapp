@@ -356,7 +356,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v131',
+        scriptMarker: 'tradera-quicklist-default:v134',
         scriptStoredOnConnection: false,
         runId: 'run-connection-default-relist',
         requestedBrowserMode: 'connection_default',

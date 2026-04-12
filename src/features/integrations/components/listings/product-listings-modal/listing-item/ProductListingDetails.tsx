@@ -28,6 +28,7 @@ import {
   formatListValue,
   formatTraderaDuplicateMatchStrategy,
   normalizeIntegrationSlug,
+  resolveTraderaStatusBadge,
   resolveHistoryBrowserMode,
   resolveDisplayHistoryFields,
   resolveTraderaExecutionSummary,
@@ -58,6 +59,9 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
     isTraderaListing &&
     traderaExecution.scriptSource === 'connection' &&
     traderaExecution.scriptKind === 'custom';
+  const traderaStatusBadge = isTraderaListing
+    ? resolveTraderaStatusBadge(listing.status, traderaExecution.duplicateLinked)
+    : null;
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
@@ -80,7 +84,10 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
     <div className='flex-1 min-w-0'>
       <div className='flex items-center gap-2 mb-2'>
         <span className='font-semibold text-white truncate'>{integrationDisplayName}</span>
-        <StatusBadge status={listing.status} />
+        <StatusBadge
+          status={traderaStatusBadge?.status ?? listing.status}
+          label={traderaStatusBadge?.label}
+        />
       </div>
 
       <div className='grid gap-y-1.5'>

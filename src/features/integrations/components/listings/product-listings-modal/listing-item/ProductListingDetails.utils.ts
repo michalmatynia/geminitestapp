@@ -67,6 +67,25 @@ export const formatTraderaDuplicateMatchStrategy = (
   }
 };
 
+export const resolveTraderaStatusBadge = (
+  status: string | null | undefined,
+  duplicateLinked: boolean | null | undefined
+): {
+  status: string;
+  label?: string;
+} => {
+  if (duplicateLinked) {
+    return {
+      status: 'active',
+      label: 'linked',
+    };
+  }
+
+  return {
+    status: formatListValue(status),
+  };
+};
+
 export const resolveTraderaExecutionSummary = (
   marketplaceData: Record<string, unknown> | null | undefined
 ): {
@@ -143,6 +162,8 @@ export const resolveTraderaExecutionSummary = (
   const rawResult = toRecord(metadata['rawResult']);
   const playwrightSettings = toRecord(metadata['playwrightSettings']);
   const traderaExecutionTrace = resolveTraderaExecutionStepsFromMarketplaceData(marketplaceData);
+  const latestStage =
+    readString(metadata['latestStage']) ?? readString(rawResult['stage']);
   const duplicateMatchStrategy =
     readString(metadata['duplicateMatchStrategy']) ??
     readString(rawResult['duplicateMatchStrategy']);
@@ -164,7 +185,7 @@ export const resolveTraderaExecutionSummary = (
     requestId: readString(lastExecution['requestId']),
     publishVerified: readBoolean(metadata['publishVerified']),
     listingUrl: readString(marketplaceRecord['listingUrl']),
-    latestStage: readString(metadata['latestStage']) ?? readString(rawResult['stage']),
+    latestStage,
     latestStageUrl:
       readString(metadata['latestStageUrl']) ??
       readString(rawResult['currentUrl']),
@@ -191,6 +212,7 @@ export const resolveTraderaExecutionSummary = (
     duplicateLinked:
       readBoolean(metadata['duplicateLinked']) ??
       readBoolean(rawResult['duplicateLinked']) ??
+      (latestStage === 'duplicate_linked' ? true : null) ??
       (duplicateMatchStrategy ? true : null),
     duplicateMatchStrategy,
     duplicateMatchedProductId:

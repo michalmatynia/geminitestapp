@@ -502,6 +502,50 @@ describe('ProductScanSteps', () => {
     });
   });
 
+  it('resolves the persisted AI evaluator policy summary from the latest Amazon triage step', () => {
+    const summary = resolveProductScanEvaluationPolicySummary([
+      {
+        key: 'amazon_ai_triage',
+        label: 'Triage Amazon candidates',
+        group: 'amazon',
+        attempt: 1,
+        candidateId: 'image-2',
+        candidateRank: 2,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidates_triaged',
+        status: 'completed',
+        message: 'Amazon candidate triage selected the best candidate.',
+        warning: null,
+        details: [
+          { label: 'Model source', value: 'AI Brain default' },
+          { label: 'Model', value: 'gpt-4.1-mini' },
+          { label: 'Threshold', value: '70%' },
+          { label: 'Evaluation scope', value: 'Every Amazon candidate' },
+          { label: 'Similarity decision', value: 'AI only' },
+          { label: 'Allowed content language', value: 'English' },
+          { label: 'Language policy', value: 'Reject non-English content' },
+          { label: 'Language detection', value: 'AI only' },
+        ],
+        url: 'https://www.amazon.de/dp/B00TEST123',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      executionLabel: 'Reviewed by AI',
+      modelSource: 'AI Brain default',
+      modelLabel: 'gpt-4.1-mini',
+      thresholdLabel: '70%',
+      scopeLabel: 'Every Amazon candidate',
+      similarityDecisionLabel: 'AI only',
+      languageGateLabel: 'English only',
+      languageDetectionLabel: 'AI only',
+    });
+  });
+
   it('resolves the persisted AI evaluator policy summary for 1688 supplier scans', () => {
     const summary = resolveProductScanEvaluationPolicySummary([
       {

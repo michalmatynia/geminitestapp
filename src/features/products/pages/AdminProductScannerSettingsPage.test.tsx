@@ -307,6 +307,9 @@ describe('AdminProductScannerSettingsPage', () => {
       screen.getByRole('combobox', { name: 'Select Amazon probe evaluator mode' })
     ).toHaveValue('brain_default');
     expect(
+      screen.getByRole('combobox', { name: 'Select Amazon candidate triage mode' })
+    ).toHaveValue('disabled');
+    expect(
       screen.getByRole('spinbutton', {
         name: 'Amazon probe evaluator confidence threshold',
       })
@@ -376,7 +379,7 @@ describe('AdminProductScannerSettingsPage', () => {
         'AI review runs on every Amazon candidate after deterministic identifier hints are gathered.'
       )
     ).toHaveLength(2);
-    expect(screen.getAllByText('Evaluator Summary')).toHaveLength(2);
+    expect(screen.getAllByText('Evaluator Summary')).toHaveLength(3);
     expect(screen.getAllByText('Model source: AI Brain default')).toHaveLength(3);
     expect(screen.getAllByText('Resolved model: gpt-4.1-mini')).toHaveLength(3);
     expect(screen.getAllByText('Trust threshold: 82% confidence')).toHaveLength(2);
@@ -472,6 +475,9 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(
       screen.getByRole('combobox', { name: 'Select Amazon extraction evaluator mode' })
     ).toHaveValue('disabled');
+    expect(
+      screen.getByRole('combobox', { name: 'Select Amazon candidate triage mode' })
+    ).toHaveValue('disabled');
     expect(screen.getByRole('spinbutton', { name: '1688 candidate result limit' })).toHaveValue(8);
     expect(screen.getByRole('spinbutton', { name: '1688 minimum candidate score' })).toHaveValue(4);
     expect(screen.getByRole('spinbutton', { name: '1688 max extracted images' })).toHaveValue(12);
@@ -484,13 +490,13 @@ describe('AdminProductScannerSettingsPage', () => {
       screen.getAllByText(
         'AI review is disabled. The scanner trusts the Amazon candidate flow without an evaluator gate.'
       )
-    ).toHaveLength(2);
-    expect(screen.getAllByText('Model: Disabled')).toHaveLength(3);
+    ).toHaveLength(3);
+    expect(screen.getAllByText('Model: Disabled')).toHaveLength(4);
     expect(
       screen.getAllByText('Trust policy: Amazon pages are trusted without AI review.')
-    ).toHaveLength(2);
-    expect(screen.getAllByText('Language gate: Inactive')).toHaveLength(2);
-    expect(screen.getAllByText('Continuation: No AI rejection recovery path')).toHaveLength(3);
+    ).toHaveLength(3);
+    expect(screen.getAllByText('Language gate: Inactive')).toHaveLength(3);
+    expect(screen.getAllByText('Continuation: No AI rejection recovery path')).toHaveLength(4);
     expect(screen.getByText('1688 Evaluator Summary')).toBeInTheDocument();
     expect(screen.getByText('Trust policy: 1688 supplier candidates are trusted without AI review.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Saved' })).toBeDisabled();
@@ -639,8 +645,12 @@ describe('AdminProductScannerSettingsPage', () => {
           captchaBehavior: 'fail',
           manualVerificationTimeoutMs: 180000,
           amazonImageSearchProvider: 'google_lens_upload',
+          amazonImageSearchFallbackProvider: null,
           playwrightSettingsOverrides: {},
           amazonCandidateEvaluator: {
+            ...defaultAmazonEvaluator,
+          },
+          amazonCandidateEvaluatorTriage: {
             ...defaultAmazonEvaluator,
           },
           amazonCandidateEvaluatorProbe: {

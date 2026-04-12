@@ -52,18 +52,111 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     input.manualVerificationTimeoutMs > 0
       ? Math.trunc(input.manualVerificationTimeoutMs)
       : 240000;
-  const scanner1688StartUrl =
-    typeof input?.scanner1688StartUrl === 'string' && input.scanner1688StartUrl.trim()
-      ? input.scanner1688StartUrl.trim()
-      : 'https://www.1688.com/';
+  const DEFAULT_1688_IMAGE_SEARCH_START_URL =
+    'https://s.1688.com/youyuan/index.htm?tab=imageSearch';
+  const resolve1688ImageSearchStartUrl = (value) => {
+    const raw =
+      typeof value === 'string' && value.trim()
+        ? value.trim()
+        : DEFAULT_1688_IMAGE_SEARCH_START_URL;
+    try {
+      const parsed = new URL(raw);
+      const host = parsed.hostname.toLowerCase();
+      const path = parsed.pathname.toLowerCase();
+      const isGeneric1688Home =
+        host === '1688.com' ||
+        host === 'www.1688.com' ||
+        (host.endsWith('.1688.com') && (path === '' || path === '/'));
+      if (isGeneric1688Home) {
+        return DEFAULT_1688_IMAGE_SEARCH_START_URL;
+      }
+    } catch {
+      return DEFAULT_1688_IMAGE_SEARCH_START_URL;
+    }
+    return raw;
+  };
+  const scanner1688StartUrl = resolve1688ImageSearchStartUrl(input?.scanner1688StartUrl);
   const scanSteps = [];
   const nowIso = () => new Date().toISOString();
+  const randomBetween = (min, max) =>
+    Math.floor(min + Math.random() * Math.max(1, max - min + 1));
   const wait = async (ms) => {
     if (helpers && typeof helpers.sleep === 'function') {
       await helpers.sleep(ms);
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, ms));
+  };
+  const humanWait = async (minMs, maxMs) => {
+    await wait(randomBetween(minMs, maxMs));
+  };
+  const moveMouseNaturally = async () => {
+    if (!page.mouse) {
+      return;
+    }
+    const points = [
+      [randomBetween(120, 260), randomBetween(120, 240)],
+      [randomBetween(320, 540), randomBetween(180, 360)],
+      [randomBetween(620, 900), randomBetween(220, 520)],
+    ];
+    for (const [x, y] of points) {
+      await page.mouse.move(x, y, { steps: randomBetween(8, 18) }).catch(() => undefined);
+      await humanWait(180, 520);
+    }
+  };
+  const apply1688NaturalBrowserSetup = async () => {
+    await page.setExtraHTTPHeaders?.({
+      'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Upgrade-Insecure-Requests': '1',
+    }).catch(() => undefined);
+    await page.setViewportSize?.({
+      width: randomBetween(1366, 1512),
+      height: randomBetween(820, 940),
+    }).catch(() => undefined);
+    await page.addInitScript?.(() => {
+      try {
+        Object.defineProperty(navigator, 'webdriver', {
+          get: () => undefined,
+          configurable: true,
+        });
+      } catch {}
+      try {
+        Object.defineProperty(navigator, 'languages', {
+          get: () => ['zh-CN', 'zh', 'en-US', 'en'],
+          configurable: true,
+        });
+      } catch {}
+      try {
+        Object.defineProperty(navigator, 'plugins', {
+          get: () => [
+            { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
+            { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
+          ],
+          configurable: true,
+        });
+      } catch {}
+      try {
+        const originalQuery = navigator.permissions?.query?.bind(navigator.permissions);
+        if (originalQuery) {
+          navigator.permissions.query = (parameters) =>
+            parameters?.name === 'notifications'
+              ? Promise.resolve({ state: Notification.permission })
+              : originalQuery(parameters);
+        }
+      } catch {}
+      try {
+        Object.defineProperty(navigator, 'hardwareConcurrency', {
+          get: () => 8,
+          configurable: true,
+        });
+      } catch {}
+      try {
+        Object.defineProperty(navigator, 'deviceMemory', {
+          get: () => 8,
+          configurable: true,
+        });
+      } catch {}
+    }).catch(() => undefined);
   };
   const toText = (value) => {
     if (typeof value !== 'string') {
@@ -345,6 +438,49 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     }
     return false;
   };
+  const submit1688UploadedImageSearch = async () => {
+    const submittedSearchSelectors = [
+      '.search-btn',
+      'div:has-text("Search for Image")',
+      'button:has-text("Search for Image")',
+      'div:has-text("搜图")',
+      'button:has-text("搜图")',
+      'div:has-text("搜索图片")',
+      'button:has-text("搜索图片")',
+    ];
+    const hasUploadedImage = await page.evaluate(() => {
+      const bodyText = document.body?.innerText || '';
+      return /File uploaded|已上传|图片预览|Search for Image|搜图|搜索图片/i.test(bodyText);
+    }).catch(() => false);
+    if (!hasUploadedImage) {
+      return false;
+    }
+
+    await page.evaluate(() => {
+      try {
+        window.open = (url) => {
+          if (typeof url === 'string' && url.trim()) {
+            window.location.assign(url);
+          }
+          return null;
+        };
+      } catch {}
+      try {
+        document.querySelectorAll('form[target="_blank"], a[target="_blank"]').forEach((element) => {
+          element.setAttribute('target', '_self');
+        });
+      } catch {}
+    }).catch(() => undefined);
+
+    const clicked = await clickFirstVisible(submittedSearchSelectors);
+    if (!clicked) {
+      return false;
+    }
+    await humanWait(1800, 3600);
+    await page.waitForLoadState('domcontentloaded', { timeout: 8000 }).catch(() => undefined);
+    await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => undefined);
+    return true;
+  };
   const findFirstVisibleSelector = async (selectors) => {
     for (const selector of Array.isArray(selectors) ? selectors : []) {
       const locator = page.locator(selector).first();
@@ -374,6 +510,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
   const detect1688AccessBarrier = async (stage = null) => {
     const currentUrl = page.url();
     const normalizedUrl = currentUrl.toLowerCase();
+    const pageTitleText = (toText(await page.title().catch(() => null)) || '').toLowerCase();
     const bodyText = (
       toText(await page.locator('body').first().innerText().catch(() => null)) || ''
     ).toLowerCase();
@@ -401,6 +538,20 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       (expectsSupplierReady &&
         Boolean(normalizedOfferUrl) &&
         Boolean(supplierReadySelector || hasPriceSignal || supplierBodySignal));
+    const titleSuggestsBarrier = [
+      'captcha interception',
+      'captcha',
+      '安全验证',
+      '访问受限',
+      '登录',
+    ].some((hint) => pageTitleText.includes(hint.toLowerCase()));
+    if (titleSuggestsBarrier && candidateUrls.length === 0) {
+      return {
+        blocked: true,
+        currentUrl,
+        message: '1688 requested login or captcha verification before image search could continue.',
+      };
+    }
     const hardBlockingSelectors = [
       'input[type="password"]',
       '[class*="login"] input',
@@ -1186,9 +1337,53 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     return;
   }
 
-  const selectedImageCandidate = imageCandidates.find(
-    (candidate) => toText(candidate?.filepath) || toText(candidate?.url)
+  await apply1688NaturalBrowserSetup();
+  await humanWait(600, 1600);
+
+  let candidateUrls = dedupeStrings(
+    [directCandidateUrl].concat(directCandidateUrls),
+    CANDIDATE_RESULT_LIMIT
+  )
+    .map((candidateUrl) => normalize1688OfferUrl(candidateUrl) || candidateUrl)
+    .filter(Boolean);
+
+  const selectedLocalImageCandidate = imageCandidates.find(
+    (candidate) => toText(candidate?.filepath)
   ) || null;
+  const selectedUrlImageCandidate = imageCandidates.find(
+    (candidate) => toText(candidate?.url)
+  ) || null;
+  const selectedImageCandidate = selectedLocalImageCandidate || selectedUrlImageCandidate;
+  const selectedImageFilePath = toText(selectedImageCandidate?.filepath);
+  const selectedImageUrl = toText(selectedImageCandidate?.url);
+  if (!selectedImageCandidate && candidateUrls.length === 0) {
+    const missingInputMessage =
+      'Product image candidate did not include a usable filepath or URL for 1688 scanning.';
+    upsertScanStep({
+      key: 'validate',
+      label: 'Validate 1688 supplier scan input',
+      status: 'failed',
+      resultCode: 'missing_image_source',
+      message: missingInputMessage,
+      url: page.url(),
+    });
+    await emitResult({
+      status: 'failed',
+      title: null,
+      price: null,
+      url: null,
+      description: null,
+      supplierDetails: null,
+      supplierProbe: null,
+      supplierEvaluation: null,
+      candidateUrls: [],
+      matchedImageId: null,
+      message: missingInputMessage,
+      currentUrl: page.url(),
+      stage: 'validate',
+    });
+    return;
+  }
   const matchedImageId =
     directMatchedImageId || toText(selectedImageCandidate?.id) || null;
   upsertScanStep({
@@ -1198,9 +1393,9 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     resultCode: 'scan_ready',
     message: 'Prepared 1688 supplier reverse image scan input.',
     candidateId: matchedImageId,
-    inputSource: toText(selectedImageCandidate?.filepath)
+    inputSource: selectedImageFilePath
       ? 'file'
-      : toText(selectedImageCandidate?.url)
+      : selectedImageUrl
         ? 'url'
         : null,
     details: [
@@ -1215,16 +1410,9 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     message: 'Prepared 1688 supplier reverse image scan input.',
   });
 
-  let candidateUrls = dedupeStrings(
-    [directCandidateUrl].concat(directCandidateUrls),
-    CANDIDATE_RESULT_LIMIT
-  )
-    .map((candidateUrl) => normalize1688OfferUrl(candidateUrl) || candidateUrl)
-    .filter(Boolean);
-
   if (candidateUrls.length === 0) {
-    const imageFilePath = toText(selectedImageCandidate?.filepath);
-    const imageUrl = toText(selectedImageCandidate?.url);
+    const imageFilePath = selectedImageFilePath;
+    const imageUrl = selectedImageUrl || toText(selectedUrlImageCandidate?.url);
     upsertScanStep({
       key: '1688_open',
       label: 'Open 1688 image search',
@@ -1236,12 +1424,19 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       message: 'Opening 1688 image search.',
       url: scanner1688StartUrl,
     });
+    let openNavigationWarning = null;
     await page.goto(scanner1688StartUrl, {
-      waitUntil: 'domcontentloaded',
+      waitUntil: 'commit',
       timeout: 30000,
+    }).catch(async (error) => {
+      openNavigationWarning =
+        toText(error?.message) ||
+        '1688 image search navigation did not complete before timeout.';
+      await page.evaluate(() => window.stop()).catch(() => undefined);
     });
     await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => undefined);
-    await wait(1200);
+    await humanWait(1200, 2600);
+    await moveMouseNaturally();
     upsertScanStep({
       key: '1688_open',
       label: 'Open 1688 image search',
@@ -1250,7 +1445,10 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       inputSource: imageFilePath ? 'file' : imageUrl ? 'url' : null,
       status: 'completed',
       resultCode: 'search_opened',
-      message: 'Opened 1688 image search.',
+      message: openNavigationWarning
+        ? '1688 image search navigation timed out; continuing with the partially loaded page.'
+        : 'Opened 1688 image search.',
+      warning: openNavigationWarning,
       url: page.url(),
     });
     await emitProgress({
@@ -1294,7 +1492,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       return;
     }
 
-    const fileInput =
+    let fileInput =
       (await findFirstVisibleFileInput()) ||
       (await clickFirstVisible(IMAGE_SEARCH_ENTRY_SELECTORS).then(async (clicked) => {
         if (clicked) {
@@ -1303,6 +1501,31 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         }
         return null;
       }));
+
+    if (!fileInput && imageFilePath) {
+      const captchaStateBeforeUpload = await handle1688CaptchaIfPresent('1688_upload', { matchedImageId });
+      if (!captchaStateBeforeUpload.resolved) {
+        await emitResult({
+          status: captchaStateBeforeUpload.captchaRequired ? 'captcha_required' : 'failed',
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          supplierDetails: null,
+          supplierProbe: null,
+          supplierEvaluation: null,
+          candidateUrls: [],
+          matchedImageId,
+          message: captchaStateBeforeUpload.message,
+          currentUrl: captchaStateBeforeUpload.currentUrl,
+          stage: '1688_upload',
+        });
+        return;
+      }
+      if (captchaStateBeforeUpload.resolved) {
+        fileInput = await findFirstVisibleFileInput();
+      }
+    }
 
     if (fileInput && imageFilePath) {
       upsertScanStep({
@@ -1317,6 +1540,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         url: page.url(),
       });
       await fileInput.setInputFiles(imageFilePath);
+      await submit1688UploadedImageSearch();
       let candidateState = await waitFor1688Candidates(page.url());
       while (!candidateState.ready && candidateState.blocked) {
         const captchaStateAfterUpload = await handle1688CaptchaIfPresent('1688_upload', { matchedImageId });
@@ -1333,6 +1557,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
                 currentUrl: page.url(),
               });
               await retryFileInput.setInputFiles(imageFilePath);
+              await submit1688UploadedImageSearch();
               candidateState = await waitFor1688Candidates(page.url(), 15000);
               continue;
             }
@@ -1502,6 +1727,38 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         });
         return;
       }
+    } else if (imageFilePath) {
+      const missingFileInputMessage =
+        '1688 image upload control did not become available after opening image search.';
+      upsertScanStep({
+        key: '1688_upload',
+        label: 'Upload image to 1688 search',
+        attempt: 1,
+        candidateId: matchedImageId,
+        inputSource: 'file',
+        status: 'failed',
+        resultCode: 'file_input_missing',
+        message: missingFileInputMessage,
+        url: page.url(),
+      });
+      await artifacts.screenshot('1688-scan-error').catch(() => undefined);
+      await artifacts.html('1688-scan-error').catch(() => undefined);
+      await emitResult({
+        status: 'failed',
+        title: null,
+        price: null,
+        url: null,
+        description: null,
+        supplierDetails: null,
+        supplierProbe: null,
+        supplierEvaluation: null,
+        candidateUrls: [],
+        matchedImageId,
+        message: missingFileInputMessage,
+        currentUrl: page.url(),
+        stage: '1688_upload',
+      });
+      return;
     } else {
       const missingInputMessage =
         imageUrl && !allowUrlImageSearchFallback

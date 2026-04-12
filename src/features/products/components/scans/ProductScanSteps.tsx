@@ -151,6 +151,14 @@ export const resolveProductScanFailureSourceLabel = (
   }
 
   if (group === 'amazon') {
+    if (step.key === 'amazon_ai_triage') {
+      return 'Amazon triage';
+    }
+
+    if (step.key === 'amazon_ai_evaluate') {
+      return 'Amazon evaluator';
+    }
+
     if (step.key === 'amazon_open' || step.key === 'amazon_overlays' || step.key === 'amazon_content_ready') {
       return 'Amazon page';
     }
@@ -372,7 +380,11 @@ export const resolveProductScanRejectedCandidateSummary = (
 const resolveProductScanEvaluationPolicySummaryFromStep = (
   step: Pick<ProductScanStep, 'key' | 'details' | 'resultCode' | 'status'> | null | undefined
 ): ProductScanEvaluationPolicySummary | null => {
-  if (step?.key !== 'amazon_ai_evaluate' && step?.key !== 'supplier_ai_evaluate') {
+  if (
+    step?.key !== 'amazon_ai_triage' &&
+    step?.key !== 'amazon_ai_evaluate' &&
+    step?.key !== 'supplier_ai_evaluate'
+  ) {
     return null;
   }
 
@@ -423,14 +435,17 @@ const resolveProductScanEvaluationPolicySummaryFromStep = (
 const resolveAmazonEvaluationExecutionSummary = (
   step: Pick<ProductScanStep, 'key' | 'resultCode' | 'status'>
 ): AmazonEvaluationExecutionSummary | null => {
-  if (step.key !== 'amazon_ai_evaluate') {
+  if (step.key !== 'amazon_ai_triage' && step.key !== 'amazon_ai_evaluate') {
     return null;
   }
 
   if (step.resultCode === 'evaluation_skipped' || step.status === 'skipped') {
     return {
       badgeLabel: 'Deterministic bypass',
-      detailLabel: 'Bypassed on deterministic match',
+      detailLabel:
+        step.key === 'amazon_ai_triage'
+          ? 'Bypassed on deterministic candidate ranking'
+          : 'Bypassed on deterministic match',
     };
   }
 
@@ -471,7 +486,10 @@ export const resolveProductScanEvaluationPolicySummary = (
 ): ProductScanEvaluationPolicySummary | null =>
   resolveProductScanEvaluationPolicySummaryFromStep(
     [...steps].reverse().find(
-      (step) => step.key === 'amazon_ai_evaluate' || step.key === 'supplier_ai_evaluate'
+      (step) =>
+        step.key === 'amazon_ai_triage' ||
+        step.key === 'amazon_ai_evaluate' ||
+        step.key === 'supplier_ai_evaluate'
     ) ?? null
   );
 

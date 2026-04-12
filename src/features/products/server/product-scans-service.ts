@@ -105,6 +105,13 @@ const SCANNER_1688_MISSING_PROFILE_MESSAGE =
   'No 1688 browser profile is configured. Create or select a 1688 connection before scanning.';
 const SCANNER_1688_MANUAL_VERIFICATION_MESSAGE =
   '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
+const SCANNER_1688_MISSING_LOCAL_IMAGE_MESSAGE =
+  'No local product image file available for 1688 supplier reverse image scan.';
+const SCANNER_1688_UNUSABLE_IMAGE_INPUT_PATTERN =
+  /Product image candidate did not include a usable filepath or URL for 1688 scanning/i;
+const SCANNER_1688_DEFAULT_LOCALE = 'zh-CN';
+const SCANNER_1688_DEFAULT_TIMEZONE_ID = 'Asia/Shanghai';
+const SCANNER_1688_DEFAULT_SLOW_MO_MS = 140;
 
 const resolve1688ManualVerificationMessage = (
   value: unknown,
@@ -117,6 +124,47 @@ const resolve1688ManualVerificationMessage = (
   return /continue automatically/i.test(normalized)
     ? normalized
     : SCANNER_1688_MANUAL_VERIFICATION_MESSAGE;
+};
+
+const normalize1688ScanFailureMessage = (value: unknown, fallback: string): string => {
+  const normalized = normalizeErrorMessage(value, fallback);
+  return SCANNER_1688_UNUSABLE_IMAGE_INPUT_PATTERN.test(normalized)
+    ? SCANNER_1688_MISSING_LOCAL_IMAGE_MESSAGE
+    : normalized;
+};
+
+const resolve1688ConnectionEngineSettings = (
+  settings: Record<string, unknown>,
+  options: { forceVisible: boolean }
+): Record<string, unknown> => {
+  const slowMo = settings['slowMo'];
+  return {
+    ...settings,
+    ...(options.forceVisible ? { headless: false } : {}),
+    locale: readOptionalString(settings['locale']) ?? SCANNER_1688_DEFAULT_LOCALE,
+    timezoneId:
+      readOptionalString(settings['timezoneId']) ?? SCANNER_1688_DEFAULT_TIMEZONE_ID,
+    humanizeMouse:
+      typeof settings['humanizeMouse'] === 'boolean' ? settings['humanizeMouse'] : true,
+    mouseJitter:
+      typeof settings['mouseJitter'] === 'boolean' ? settings['mouseJitter'] : true,
+    slowMo:
+      typeof slowMo === 'number' && Number.isFinite(slowMo) && slowMo > 0
+        ? slowMo
+        : SCANNER_1688_DEFAULT_SLOW_MO_MS,
+    clickDelayMin:
+      typeof settings['clickDelayMin'] === 'number' ? settings['clickDelayMin'] : 80,
+    clickDelayMax:
+      typeof settings['clickDelayMax'] === 'number' ? settings['clickDelayMax'] : 220,
+    inputDelayMin:
+      typeof settings['inputDelayMin'] === 'number' ? settings['inputDelayMin'] : 50,
+    inputDelayMax:
+      typeof settings['inputDelayMax'] === 'number' ? settings['inputDelayMax'] : 160,
+    actionDelayMin:
+      typeof settings['actionDelayMin'] === 'number' ? settings['actionDelayMin'] : 250,
+    actionDelayMax:
+      typeof settings['actionDelayMax'] === 'number' ? settings['actionDelayMax'] : 900,
+  };
 };
 
 const resolveAmazonImageSearchProvider = (
@@ -367,6 +415,31 @@ const resolveAmazonActiveRunStallMessage = ({
   return displayStage
     ? `Amazon reverse image scan timed out at ${displayStage}.`
     : 'Amazon reverse image scan exceeded its runtime limit.';
+};
+
+const shouldKeepAmazonManualVerificationPending = (input: {
+  parsedStatus: string | null;
+  existingPending: boolean;
+  latestStage: string | null;
+}): boolean => {
+  const waitingForManualVerification =
+    input.parsedStatus === 'captcha_required' ||
+    (input.existingPending &&
+      (input.parsedStatus === 'running' || input.parsedStatus == null));
+  if (!waitingForManualVerification) {
+    return false;
+  }
+
+  const normalizedStage = input.latestStage?.trim().toLowerCase() ?? null;
+  if (!normalizedStage) {
+    return true;
+  }
+
+  return !(
+    normalizedStage.startsWith('amazon_') ||
+    normalizedStage.startsWith('supplier_') ||
+    normalizedStage === 'product_asin_update'
+  );
 };
 
 const resolveAmazonEvaluationStepResultCode = (
@@ -1181,10 +1254,15 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       );
       const activeRunDiagnostics = buildAmazonActiveRunDiagnostics(run);
       const nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+      const latestActiveStage =
+        readOptionalString(activeRunDiagnostics['latestStage']) ??
+        readOptionalString(toRecord(resultValue)?.['stage']);
       const manualVerificationPending =
-        parsedResult.status === 'captcha_required' ||
-        (existingRawResult['manualVerificationPending'] === true &&
-          (parsedResult.status === 'running' || parsedResult.status == null));
+        shouldKeepAmazonManualVerificationPending({
+          parsedStatus: parsedResult.status ?? null,
+          existingPending: existingRawResult['manualVerificationPending'] === true,
+          latestStage: latestActiveStage,
+        });
       const activeMessage =
         manualVerificationPending
           ? resolveManualVerificationMessage(parsedResult.message)
@@ -1231,8 +1309,8 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         const staleMessage = resolveAmazonActiveRunStallMessage({
           reason: staleActiveReason,
           latestStage:
-            readOptionalString((nextRawResult as any)['latestStage']) ??
-            readOptionalString((nextRawResult as any)['stage']),
+            readOptionalString((nextRawResult as { latestStage?: unknown })['latestStage']) ??
+            readOptionalString((nextRawResult as { stage?: unknown })['stage']),
         });
         return await persistSynchronizedScan(scan, {
           engineRunId,
@@ -3340,7 +3418,10 @@ async function synchronize1688ProductScan(scan: ProductScanRecord): Promise<Prod
     if (parsedResult.status === 'failed') {
       return await persistFailedSynchronization(
         scan,
-        parsedResult.message ?? '1688 supplier reverse image scan failed.',
+        normalize1688ScanFailureMessage(
+          parsedResult.message,
+          '1688 supplier reverse image scan failed.'
+        ),
         '1688 supplier reverse image scan failed.'
       );
     }
@@ -3802,7 +3883,7 @@ const queueProviderBatchProductScans = async (input: {
                 scannerSettings.scanner1688?.allowUrlImageSearchFallback
               ) !== false
             : true;
-        const imageCandidates = await sanitizeProductScanImageCandidates(
+        let imageCandidates = await sanitizeProductScanImageCandidates(
           hydratedImageCandidates,
           {
             materializeUrlCandidates: input.config.provider === '1688',
@@ -3810,6 +3891,23 @@ const queueProviderBatchProductScans = async (input: {
               input.config.provider === '1688' && !allow1688UrlImageSearchFallback,
           }
         );
+        if (
+          input.config.provider === '1688' &&
+          imageCandidates.length === 0 &&
+          hydratedImageCandidates.length > 0
+        ) {
+          const base64FallbackCandidates = await hydrateProductScanImageCandidates({
+            product,
+            imageCandidates: [],
+          });
+          imageCandidates = await sanitizeProductScanImageCandidates(
+            base64FallbackCandidates,
+            {
+              materializeUrlCandidates: true,
+              requireLocalFile: !allow1688UrlImageSearchFallback,
+            }
+          );
+        }
         const productName = input.config.runtime.resolveDisplayName(product);
         const providerPreflightError =
           input.config.provider === '1688'
@@ -3926,12 +4024,10 @@ const queueProviderBatchProductScans = async (input: {
                     ownerUserId: input.userId?.trim() || null,
                     instance,
                     resolveEngineRequestConfig: (runtime) => ({
-                      settings: allowManualVerification
-                        ? {
-                            ...runtime.settings,
-                            headless: false,
-                          }
-                        : runtime.settings,
+                      settings: resolve1688ConnectionEngineSettings(
+                        runtime.settings as Record<string, unknown>,
+                        { forceVisible: allowManualVerification }
+                      ),
                       browserPreference: runtime.browserPreference,
                     }),
                   })
@@ -4319,8 +4415,7 @@ export async function queue1688BatchProductScans(input: {
       instanceLabel: '1688 supplier reverse image scan',
       instanceTags: ['product', '1688', 'scan', 'supplier-reverse-image'],
       resultStatusLabel: '1688 supplier reverse image scan',
-      noImageMessage:
-        'No local product image file available for 1688 supplier reverse image scan.',
+      noImageMessage: SCANNER_1688_MISSING_LOCAL_IMAGE_MESSAGE,
       alreadyRunningMessage: '1688 supplier scan already in progress for this product.',
       queueFailureMessage: 'Failed to queue 1688 supplier reverse image scan.',
       enqueueFailureMessage: 'Failed to enqueue 1688 supplier reverse image scan.',

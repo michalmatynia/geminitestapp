@@ -354,7 +354,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v131',
+        scriptMarker: 'tradera-quicklist-default:v134',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -478,7 +478,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v131',
+        scriptMarker: 'tradera-quicklist-default:v134',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -1072,7 +1072,7 @@ beforeEach(() => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v131',
+      'tradera-quicklist-default:v134',
       'tradera-quicklist-default:v89'
     );
 
@@ -1256,7 +1256,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v131',
+        scriptMarker: 'tradera-quicklist-default:v134',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',

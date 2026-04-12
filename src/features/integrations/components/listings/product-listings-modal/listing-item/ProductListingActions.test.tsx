@@ -330,6 +330,40 @@ describe('ProductListingActions', () => {
     expect(screen.getByRole('button', { name: 'Login and retry relist' })).toBeInTheDocument();
   });
 
+  it('does not show manual-login recovery for duplicate-linked Tradera listings with stale failed status', () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'failed',
+            failureReason: 'Listing failed.',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  errorCategory: 'AUTH',
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Login and retry relist' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Sync with Tradera' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Relist now' })).toBeInTheDocument();
+  });
+
   it('keeps the persisted queued Tradera relist mode visible after the local spinner clears', () => {
     render(
       <ProductListingActions

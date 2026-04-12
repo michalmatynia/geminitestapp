@@ -79,6 +79,46 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     return match && match[1] ? match[1] : null;
   };
 
+  const inferListingTitleFromUrl = (value) => {
+    if (typeof value !== 'string' || !value.trim()) {
+      return '';
+    }
+
+    try {
+      const pathname = new URL(value, 'https://www.tradera.com').pathname || '';
+      const segments = pathname
+        .split('/')
+        .map((segment) => {
+          try {
+            return decodeURIComponent(segment);
+          } catch {
+            return segment;
+          }
+        })
+        .filter((segment) => typeof segment === 'string' && segment.trim().length > 0);
+      const lastSegment = segments[segments.length - 1] || '';
+      if (!lastSegment || /^\d{6,}$/.test(lastSegment)) {
+        return '';
+      }
+
+      return normalizeWhitespace(
+        lastSegment
+          .replace(/\.[a-z0-9]{2,5}$/i, '')
+          .replace(/[-_]+/g, ' ')
+      );
+    } catch {
+      return '';
+    }
+  };
+
+  const normalizeListingMatchValue = (value) =>
+    normalizeWhitespace(value)
+      .toLowerCase()
+      .replace(/[\u0060'’"]/g, '')
+      .replace(/[^0-9a-z\u00c0-\u024f]+/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
   const collectVisibleListingCandidates = async (limit = null) => {
     const candidates = page.locator('a[href*="/item/"], a[href*="/listing/"]');
     const count = await candidates.count().catch(() => 0);
@@ -123,6 +163,7 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
         listingUrl = new URL(candidateInfo.href, page.url()).toString();
       } catch {}
 
+      const inferredTitleFromUrl = inferListingTitleFromUrl(listingUrl);
       const listingId = extractListingId(listingUrl);
       const dedupeKey = listingId || listingUrl;
       if (!dedupeKey || seen.has(dedupeKey)) continue;
@@ -131,8 +172,10 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       collected.push({
         listingUrl,
         listingId,
-        title: normalizeWhitespace(candidateInfo.titleText || ''),
-        text: normalizeWhitespace(candidateInfo.containerText || candidateInfo.text || ''),
+        title: normalizeWhitespace(candidateInfo.titleText || '') || inferredTitleFromUrl,
+        text:
+          normalizeWhitespace(candidateInfo.containerText || candidateInfo.text || '') ||
+          inferredTitleFromUrl,
       });
     }
 
@@ -150,24 +193,27 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
   };
 
   const titlesExactlyMatch = (left, right) => {
-    const normalizedLeft = normalizeWhitespace(left).toLowerCase();
-    const normalizedRight = normalizeWhitespace(right).toLowerCase();
+    const normalizedLeft = normalizeListingMatchValue(left);
+    const normalizedRight = normalizeListingMatchValue(right);
     return Boolean(normalizedLeft) && normalizedLeft === normalizedRight;
   };
 
-  const collectListingLinksForTerm = async (term, maxMatches = null) => {
-    const normalizedTerm = typeof term === 'string' ? term.trim().toLowerCase() : '';
+  const collectListingLinksForTerm = async (term, maxMatches = null, sourceCandidates = null) => {
+    const normalizedTerm = normalizeListingMatchValue(term);
     if (!normalizedTerm) return [];
 
     const matchLimit =
       typeof maxMatches === 'number' && Number.isFinite(maxMatches) && maxMatches > 0
         ? Math.max(1, Math.floor(maxMatches))
         : null;
-    const candidates = await collectVisibleListingCandidates();
+    const candidates =
+      Array.isArray(sourceCandidates) && sourceCandidates.length > 0
+        ? sourceCandidates
+        : await collectVisibleListingCandidates();
     const matches = [];
 
     for (const candidate of candidates) {
-      const normalizedCandidateTitle = normalizeWhitespace(candidate.title || '').toLowerCase();
+      const normalizedCandidateTitle = normalizeListingMatchValue(candidate.title || '');
       if (!normalizedCandidateTitle || normalizedCandidateTitle !== normalizedTerm) continue;
       matches.push(candidate);
       if (matchLimit !== null && matches.length >= matchLimit) {

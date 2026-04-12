@@ -34,6 +34,7 @@ describe('ProductScan1688Details', () => {
     render(
       <ProductScan1688Details
         scanId='scan-1688-1'
+        connectionLabel='Main 1688 Browser'
         scan={{
           id: 'scan-1688-1',
           title: '1688 supplier listing',
@@ -111,6 +112,7 @@ describe('ProductScan1688Details', () => {
     );
 
     expect(screen.getByText('1688 supplier details')).toBeInTheDocument();
+    expect(screen.getAllByText('Profile Main 1688 Browser').length).toBeGreaterThan(0);
     expect(screen.getByText('Supplier result')).toBeInTheDocument();
     expect(screen.getByText('AI-approved supplier match')).toBeInTheDocument();
     expect(screen.getByText('Pricing extracted')).toBeInTheDocument();
@@ -119,6 +121,7 @@ describe('ProductScan1688Details', () => {
     expect(screen.getByText('Yiwu Supplier Co.')).toBeInTheDocument();
     expect(screen.getByText('Supplier product')).toBeInTheDocument();
     expect(screen.getByText('Supplier store')).toBeInTheDocument();
+    expect(screen.getByText('Browser profile')).toBeInTheDocument();
     expect(screen.getByText('Extracted prices')).toBeInTheDocument();
     expect(screen.getByText('Candidate supplier URLs')).toBeInTheDocument();
     expect(screen.getByText('https://detail.1688.com/offer/987654321.html')).toBeInTheDocument();

@@ -10,6 +10,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   apiPost: vi.fn(),
   apiGet: vi.fn(),
+  useIntegrationsWithConnectionsMock: vi.fn(),
+  useDefault1688ConnectionMock: vi.fn(),
   toast: vi.fn(),
   safeSetInterval: vi.fn(),
   safeClearInterval: vi.fn(),
@@ -61,6 +63,11 @@ vi.mock('@/shared/lib/timers', () => ({
     return mocks.safeSetInterval(...args);
   },
   safeClearInterval: (...args: unknown[]) => mocks.safeClearInterval(...args),
+}));
+
+vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
+  useIntegrationsWithConnections: () => mocks.useIntegrationsWithConnectionsMock(),
+  useDefault1688Connection: () => mocks.useDefault1688ConnectionMock(),
 }));
 
 vi.mock('@/shared/ui/toast', () => ({
@@ -131,6 +138,26 @@ describe('ProductAmazonScanModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1688',
+          slug: '1688',
+          connections: [
+            {
+              id: 'connection-1688-default',
+              name: 'Default 1688',
+              hasPlaywrightStorageState: true,
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    mocks.useDefault1688ConnectionMock.mockReturnValue({
+      data: { connectionId: 'connection-1688-default' },
+      isLoading: false,
+    });
     mocks.safeSetInterval.mockImplementation(() => 1);
     mocks.safeClearInterval.mockImplementation(() => undefined);
     mocks.pollCallback = null;
@@ -236,6 +263,100 @@ describe('ProductAmazonScanModal', () => {
     });
   });
 
+  it('uses the resolved 1688 browser profile when queueing supplier scans', async () => {
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1688',
+          slug: '1688',
+          connections: [
+            { id: 'connection-1', name: 'Primary 1688', hasPlaywrightStorageState: true },
+            { id: 'connection-2', name: 'Fallback 1688', hasPlaywrightStorageState: true },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    mocks.useDefault1688ConnectionMock.mockReturnValue({
+      data: { connectionId: 'connection-2' },
+      isLoading: false,
+    });
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-1',
+          runId: 'run-1688-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product', images: [] } as never]}
+          provider='1688'
+        />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/v2/products/scans/1688/batch', {
+        productIds: ['product-1'],
+        connectionId: 'connection-2',
+      });
+    });
+
+    expect(screen.getByText('Fallback 1688')).toBeInTheDocument();
+    expect(screen.getByText('Profile Fallback 1688')).toBeInTheDocument();
+  });
+
+  it('blocks 1688 scans when the resolved browser profile has no stored session', async () => {
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1688',
+          slug: '1688',
+          connections: [
+            { id: 'connection-1', name: 'Primary 1688', hasPlaywrightStorageState: false },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    mocks.useDefault1688ConnectionMock.mockReturnValue({
+      data: { connectionId: 'connection-1' },
+      isLoading: false,
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          provider='1688'
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('1688 login required for profile Primary 1688. Refresh the saved browser session before scanning.')).toBeInTheDocument();
+    expect(mocks.apiPost).not.toHaveBeenCalled();
+    expect(screen.getByText('Profile Primary 1688')).toBeInTheDocument();
+  });
+
   it('queues 1688 supplier scans through the provider-specific batch endpoint', async () => {
     mocks.apiPost.mockResolvedValue({
       queued: 1,
@@ -274,6 +395,7 @@ describe('ProductAmazonScanModal', () => {
 
     await waitFor(() => {
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/v2/products/scans/1688/batch', {
+        connectionId: 'connection-1688-default',
         productIds: ['product-1'],
       });
     });
@@ -409,6 +531,7 @@ describe('ProductAmazonScanModal', () => {
     );
 
     expect(await screen.findByText('1688 supplier details')).toBeInTheDocument();
+    expect(screen.getAllByText('Profile Default 1688').length).toBeGreaterThan(0);
     expect(screen.getByText('1688 supplier result')).toBeInTheDocument();
     expect(screen.getAllByText('AI-approved supplier match').length).toBeGreaterThan(0);
     expect(screen.getByText('Yiwu Supplier Co.')).toBeInTheDocument();

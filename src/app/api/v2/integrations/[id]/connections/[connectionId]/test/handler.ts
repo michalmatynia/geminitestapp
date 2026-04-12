@@ -2,9 +2,11 @@ import { handleLinkedinApiTest } from './handler.linkedin';
 import { handleTraderaApiTest } from './handler.tradera-api';
 import { handleVintedBrowserTest } from './handler.vinted-browser';
 import { handleTraderaBrowserTest } from './handler.tradera-browser';
+import { handle1688BrowserTest } from './handler.1688-browser';
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
+  is1688IntegrationSlug,
   isTraderaApiIntegrationSlug,
   isTraderaBrowserIntegrationSlug,
   isVintedIntegrationSlug,
@@ -117,6 +119,19 @@ export async function postTestConnectionHandler(
 
   if (isVintedIntegrationSlug(integration.slug)) {
     return handleVintedBrowserTest(
+      connection,
+      repo,
+      manualMode,
+      quicklistPreflightMode,
+      manualLoginTimeoutMs,
+      steps,
+      pushStep,
+      fail
+    );
+  }
+
+  if (is1688IntegrationSlug(integration.slug)) {
+    return handle1688BrowserTest(
       connection,
       repo,
       manualMode,

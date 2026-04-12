@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation';
 import { SessionProvider } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useFocusTrap } from '@/shared/hooks/useFocusTrap';
+
 import { AdminFavoritesRuntimeProvider } from '@/features/admin/components/AdminFavoritesRuntimeProvider';
 import Menu from '@/features/admin/components/Menu';
 import {
@@ -24,6 +26,7 @@ import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { Button, ToastProvider } from '@/shared/ui/primitives.public';
+import { SkipToContentLink } from '@/shared/ui/navigation-and-layout.public';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
@@ -271,6 +274,8 @@ function AdminLayoutContent({
   };
 
   const isOverlayMenu = isMobileViewport;
+  const shouldTrapFocus = isOverlayMenu && !isMenuHidden;
+  useFocusTrap(shouldTrapFocus);
   const sidebarClassName = isMenuHidden
     ? 'w-0 p-0 opacity-0 pointer-events-none overflow-hidden'
     : isOverlayMenu
@@ -319,6 +324,7 @@ function AdminLayoutContent({
 
   return (
     <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-background text-white'>
+      <SkipToContentLink>Skip to content</SkipToContentLink>
       {isOverlayMenu && !isMenuHidden ? (
         <button
           type='button'

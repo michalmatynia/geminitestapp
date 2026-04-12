@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-04-12T13:28:09.273Z",
+    "generatedAt": "2026-04-12T15:27:59.556Z",
     "scannedFileCount": 2593,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
@@ -5492,7 +5492,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 210,
+      "lines": 200,
       "useClient": false,
       "imports": [
         "next/navigation",
@@ -21766,7 +21766,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "List",
-      "lines": 162,
+      "lines": 171,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21810,7 +21810,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 180,
+      "lines": 183,
       "useClient": true,
       "imports": [
         "react",
@@ -21981,7 +21981,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 19,
+      "lines": 20,
       "useClient": false,
       "imports": [
         "react",
@@ -22019,7 +22019,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 45,
+      "lines": 46,
       "useClient": true,
       "imports": [
         "react",
@@ -22057,7 +22057,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 301,
+      "lines": 436,
       "useClient": true,
       "imports": [
         "react",
@@ -22145,7 +22145,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 133,
+      "lines": 163,
       "useClient": false,
       "imports": [
         "react",
@@ -22166,7 +22166,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 478,
+      "lines": 630,
       "useClient": true,
       "imports": [
         "react",
@@ -22210,7 +22210,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "List",
-      "lines": 125,
+      "lines": 130,
       "useClient": true,
       "imports": [
         "react",
@@ -48052,7 +48052,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 2862,
+      "lines": 2977,
       "useClient": false,
       "imports": [
         "react",
@@ -48075,7 +48075,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1513,
+      "lines": 1542,
       "useClient": true,
       "imports": [
         "next/link",
@@ -48094,6 +48094,7 @@
         "@/features/products/context/ProductFormImageContext",
         "@/features/products/context/ProductFormParameterContext",
         "@/features/products/scanner-settings",
+        "@/shared/hooks/useIntegrationQueries",
         "@/shared/contracts/products/custom-fields",
         "@/shared/contracts/products/drafts",
         "@/shared/contracts/product-scans",
@@ -48678,7 +48679,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 3708,
+      "lines": 3831,
       "useClient": false,
       "imports": [
         "react",
@@ -48704,12 +48705,13 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 1668,
+      "lines": 1790,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
         "lucide-react",
         "react",
+        "@/features/integrations/hooks/useIntegrationQueries",
         "@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel",
         "@/features/products/components/scans/ProductScan1688ApplyPanel",
         "@/features/products/components/scans/ProductScanAmazonDetails",
@@ -49576,7 +49578,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 501,
+      "lines": 504,
       "useClient": false,
       "imports": [
         "react",
@@ -49596,7 +49598,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1018,
+      "lines": 1035,
       "useClient": true,
       "imports": [
         "lucide-react",

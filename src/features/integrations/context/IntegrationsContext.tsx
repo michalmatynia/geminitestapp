@@ -216,6 +216,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       handleTestConnection: actions.handleTestConnection,
       handleTraderaManualLogin: actions.handleTraderaManualLogin,
       handleVintedManualLogin: actions.handleVintedManualLogin,
+      handle1688ManualLogin: actions.handle1688ManualLogin,
       handleSelectPlaywrightPersona: actions.handleSelectPlaywrightPersona,
       handleSavePlaywrightSettings: actions.handleSavePlaywrightSettings,
       handleAllegroAuthorize: actions.handleAllegroAuthorize,

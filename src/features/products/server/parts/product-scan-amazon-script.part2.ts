@@ -1322,6 +1322,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
     let bestMatchedCandidateUrls = [];
     let bestNoMatchResult = null;
     let bestNoMatchCandidateUrls = [];
+    let googleCaptchaEncountered = false;
 
     for (const candidate of imageCandidates) {
       const candidateId = toText(candidate?.id);
@@ -1341,9 +1342,47 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
           transitionReason: null,
         };
       });
+      googleCaptchaEncountered =
+        googleCaptchaEncountered || uploadResult.captchaEncountered === true;
 
       if (!uploadResult.submitted) {
         if (uploadResult.captchaRequired) {
+          return;
+        }
+        if (googleCaptchaEncountered) {
+          await artifacts.screenshot('amazon-scan-error').catch(() => undefined);
+          await artifacts.html('amazon-scan-error').catch(() => undefined);
+          await emitResult({
+            status: 'failed',
+            asin: null,
+            title: null,
+            price: null,
+            url: null,
+            description: null,
+            matchedImageId: candidateId,
+            currentUrl: page.url(),
+            message:
+              uploadResult.error ||
+              'Google captcha interrupted the Amazon scan before the image upload could complete.',
+            stage: 'google_captcha',
+          });
+          return;
+        }
+        if (uploadResult.failureCode === 'captcha_timeout') {
+          await artifacts.screenshot('amazon-scan-error').catch(() => undefined);
+          await artifacts.html('amazon-scan-error').catch(() => undefined);
+          await emitResult({
+            status: 'failed',
+            asin: null,
+            title: null,
+            price: null,
+            url: null,
+            description: null,
+            matchedImageId: candidateId,
+            currentUrl: page.url(),
+            message: uploadResult.error,
+            stage: 'google_captcha',
+          });
           return;
         }
         lastUploadError = uploadResult.error;
@@ -1362,7 +1401,49 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         candidateId,
         inputSource: uploadResult.inputSourceUsed ?? null,
       });
+      googleCaptchaEncountered =
+        googleCaptchaEncountered || amazonCandidateResult.captchaEncountered === true;
+      const candidateCaptchaEncountered =
+        googleCaptchaEncountered ||
+        uploadResult.captchaEncountered === true ||
+        amazonCandidateResult.captchaEncountered === true;
       if (amazonCandidateResult.captchaRequired) {
+        return;
+      }
+      if (candidateCaptchaEncountered && amazonCandidateResult.candidates.length === 0) {
+        await artifacts.screenshot('amazon-scan-error').catch(() => undefined);
+        await artifacts.html('amazon-scan-error').catch(() => undefined);
+        await emitResult({
+          status: 'failed',
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          matchedImageId: candidateId,
+          currentUrl: page.url(),
+          message:
+            amazonCandidateResult.error ||
+            'Google captcha interrupted candidate collection before Amazon results became available.',
+          stage: 'google_captcha',
+        });
+        return;
+      }
+      if (amazonCandidateResult.failureCode === 'captcha_timeout') {
+        await artifacts.screenshot('amazon-scan-error').catch(() => undefined);
+        await artifacts.html('amazon-scan-error').catch(() => undefined);
+        await emitResult({
+          status: 'failed',
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          matchedImageId: candidateId,
+          currentUrl: page.url(),
+          message: amazonCandidateResult.error,
+          stage: 'google_captcha',
+        });
         return;
       }
       const amazonCandidates = amazonCandidateResult.candidates;

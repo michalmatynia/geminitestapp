@@ -8,15 +8,15 @@ canonical: true
 ---
 # Testing quality baseline Improvement Track
 
-Generated at: 2026-04-12T13:47:05.832Z
+Generated at: 2026-04-12T15:40:31.457Z
 
 ## Snapshot
 
 - Track id: `testing-quality-baseline`
 - Category: `testing`
 - Included in default read-only bundle: no
-- Overall status: `no-data`
-- Latest report timestamp: not available
+- Overall status: `passed`
+- Latest report timestamp: 2026-04-12T15:40:31.397Z
 
 ## Purpose
 
@@ -38,15 +38,19 @@ Tracks the testing inventory and quality snapshot so broader improvement work st
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `passed` | 1 | 1 | 0 | 0 | 0 |
+| `classify` | `passed` | 1 | 1 | 0 | 0 | 0 |
+| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 
 ## Latest Steps
 
-- No step data is available for this track yet.
+| Phase | Status | Mode | Step | Command |
+| --- | --- | --- | --- | --- |
+| `audit` | `passed` | `automatic` | `testing-quality-suite-inventory` | `metrics:test-suite-inventory` |
+| `classify` | `passed` | `automatic` | `testing-quality-snapshot` | `check:test-quality` |
+| `plan` | `manual` | `manual` | `testing-quality-plan` | manual |
 
 ## Related Docs
 

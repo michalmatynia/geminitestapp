@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-12T13:47:05.832Z",
+  "generatedAt": "2026-04-12T15:40:31.457Z",
   "track": {
     "id": "testing-quality-baseline",
     "title": "Testing quality baseline",
@@ -110,60 +110,110 @@
     "category": "testing",
     "defaultSelected": false,
     "description": "Tracks the testing inventory and quality snapshot so broader improvement work stays anchored to the current test-system health.",
-    "overallStatus": "no-data",
-    "latestGeneratedAt": null,
+    "overallStatus": "passed",
+    "latestGeneratedAt": "2026-04-12T15:40:31.397Z",
     "docDir": "docs/build/improvements/testing-quality-baseline",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-12T13:28:47.600Z",
+        "generatedAt": "2026-04-12T15:28:32.010Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 0,
-        "automaticStepCount": 0,
+        "stepCount": 1,
+        "automaticStepCount": 1,
         "manualStepCount": 0,
-        "passedStepCount": 0,
+        "passedStepCount": 1,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "outputs": [
+          "docs/metrics/testing-suite-inventory-latest.md",
+          "docs/metrics/testing-suite-inventory-latest.json"
+        ],
+        "steps": [
+          {
+            "id": "testing-quality-suite-inventory",
+            "title": "Refresh the testing suite inventory",
+            "trackId": "testing-quality-baseline",
+            "phase": "audit",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "docs/metrics/testing-suite-inventory-latest.md",
+              "docs/metrics/testing-suite-inventory-latest.json"
+            ],
+            "instructions": [],
+            "script": "metrics:test-suite-inventory",
+            "durationMs": 254
+          }
+        ],
+        "status": "passed"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-12T13:47:05.142Z",
+        "generatedAt": "2026-04-12T15:40:30.860Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 0,
-        "automaticStepCount": 0,
+        "stepCount": 1,
+        "automaticStepCount": 1,
         "manualStepCount": 0,
-        "passedStepCount": 0,
+        "passedStepCount": 1,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": [
+          {
+            "id": "testing-quality-snapshot",
+            "title": "Collect the testing quality snapshot",
+            "trackId": "testing-quality-baseline",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [],
+            "instructions": [],
+            "script": "check:test-quality",
+            "durationMs": 1041
+          }
+        ],
+        "status": "passed"
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-12T13:47:05.749Z",
+        "generatedAt": "2026-04-12T15:40:31.397Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
-        "stepCount": 0,
+        "stepCount": 1,
         "automaticStepCount": 0,
-        "manualStepCount": 0,
+        "manualStepCount": 1,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": [
+          {
+            "id": "testing-quality-plan",
+            "title": "Review testing quality drift before changing validation scope",
+            "trackId": "testing-quality-baseline",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Use docs/metrics/testing-suite-inventory-latest.md to confirm lane and suite ownership.",
+              "Use docs/metrics/testing-quality-snapshot-latest.md to identify inventory, quality, or ledger follow-up work.",
+              "Escalate to canonical lanes from docs/runbooks/testing-operations.md when a broad validation pass is required."
+            ]
+          }
+        ],
+        "status": "manual"
       },
       {
         "phase": "dry-run",

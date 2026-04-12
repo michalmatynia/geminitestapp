@@ -372,19 +372,19 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
         : CONNECTION_DEFAULTS.scanner1688DefaultSearchMode,
     scanner1688CandidateResultLimit:
       typeof d['scanner1688CandidateResultLimit'] === 'number'
-        ? (d['scanner1688CandidateResultLimit'] as number)
+        ? (d['scanner1688CandidateResultLimit'])
         : CONNECTION_DEFAULTS.scanner1688CandidateResultLimit,
     scanner1688MinimumCandidateScore:
       typeof d['scanner1688MinimumCandidateScore'] === 'number'
-        ? (d['scanner1688MinimumCandidateScore'] as number)
+        ? (d['scanner1688MinimumCandidateScore'])
         : CONNECTION_DEFAULTS.scanner1688MinimumCandidateScore,
     scanner1688MaxExtractedImages:
       typeof d['scanner1688MaxExtractedImages'] === 'number'
-        ? (d['scanner1688MaxExtractedImages'] as number)
+        ? (d['scanner1688MaxExtractedImages'])
         : CONNECTION_DEFAULTS.scanner1688MaxExtractedImages,
     scanner1688AllowUrlImageSearchFallback:
       typeof d['scanner1688AllowUrlImageSearchFallback'] === 'boolean'
-        ? (d['scanner1688AllowUrlImageSearchFallback'] as boolean)
+        ? (d['scanner1688AllowUrlImageSearchFallback'])
         : CONNECTION_DEFAULTS.scanner1688AllowUrlImageSearchFallback,
     allegroAccessToken: (d['allegroAccessToken'] as string) ?? null,
     allegroRefreshToken: (d['allegroRefreshToken'] as string) ?? null,

@@ -33,7 +33,7 @@ describe('product-scan-amazon-script', () => {
       'const openGoogleLensForUpload = async ({'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "destinationUrl: 'https://images.google.com/',"
+      "destinationUrl: 'https://images.google.com/?hl=en',"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "'https://www.google.com/searchbyimage?image_url=' +"
@@ -136,10 +136,37 @@ describe('product-scan-amazon-script', () => {
 
   it('verifies that Google Lens actually received a non-empty file before treating upload as successful', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const buildGoogleUploadResult = (input = {}) => ({'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'captchaEncountered: input.captchaEncountered === true,'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const readSelectedGoogleLensFileState = async (inputLocator) => {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'const waitForGoogleLensResultState = async (startingUrl, inputLocator = null) => {'
+      'const GOOGLE_LENS_PROCESSING_INDICATOR_SELECTORS = ['
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const GOOGLE_LENS_PROCESSING_TEXT_HINTS = ['
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const GOOGLE_LENS_RESULT_TEXT_HINTS = ['
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const GOOGLE_LENS_RESULT_SHELL_SELECTORS = ['
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const findGoogleLensProcessingText = async () => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const findGoogleLensResultText = async () => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const readGoogleLensProcessingState = async () => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const waitForGoogleLensResultState = async (startingUrl, inputLocator = null, stepMeta = null) => {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const GOOGLE_LENS_RESULT_HINT_SELECTORS = ['
@@ -148,7 +175,13 @@ describe('product-scan-amazon-script', () => {
       'isGoogleLensUploadAdvancedUrl(startingUrl, currentUrl)'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'const verifyGoogleLensFileUploadAccepted = async (inputLocator, startingUrl) => {'
+      'const verifyGoogleLensFileUploadAccepted = async (inputLocator, startingUrl, stepMeta = null) => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "resultCode: 'upload_processing'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "key: 'google_upload'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const GOOGLE_LENS_ENTRY_TRIGGER_SELECTORS = ['
@@ -178,6 +211,36 @@ describe('product-scan-amazon-script', () => {
       'Google consent dialog stayed open and blocked access to Google Lens upload.'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const buildGoogleUploadArtifactKey = (stage, candidateId, candidateAttempt) => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const captureGoogleUploadArtifacts = async (stage, candidateId, candidateAttempt) => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const GOOGLE_LENS_FILE_INPUT_SELECTORS = ['
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const listGoogleLensSearchScopes = () => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const resolveGoogleLensFileInput = async () => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'frameUrl: scope.frameUrl'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "label: 'File input selector'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "label: 'Artifact key'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "resultCode: 'file_attach_failed'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "log('amazon.scan.google_upload_attach_failed', {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const waitForGoogleLensFileInput = async () => {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
@@ -202,6 +265,15 @@ describe('product-scan-amazon-script', () => {
       'Google Lens did not advance after receiving the image upload.'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'Google Lens accepted the image and is still processing it.'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'Google Lens accepted the image but stayed in the upload processing state without producing results.'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'Google Lens accepted the image URL but stayed in the upload processing state without producing results.'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'Google Lens file upload entry did not become available.'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
@@ -217,6 +289,18 @@ describe('product-scan-amazon-script', () => {
       "log('amazon.scan.google_upload_entry_missing', {"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "reason: lastProcessingState?.processingVisible ? 'upload_processing_timeout' : 'timeout'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "reason: 'results_shell_visible'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "'button[aria-label*=\"Edit visual search\"]'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'main h2'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'visual matches'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'search results'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "label: 'Consent present'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
@@ -226,14 +310,26 @@ describe('product-scan-amazon-script', () => {
       "log('amazon.scan.google_upload_empty', {"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("stage: 'google_upload_empty'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "resultCode: uploadTimedOutWhileProcessing ? 'upload_processing_timeout' : 'empty_upload'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "label: 'Processing text'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "label: 'Result shell selector'"
+    );
   });
 
   it('verifies that Google Lens advanced after URL submission instead of assuming upload-by-URL succeeded', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'const verifyGoogleLensUrlSubmissionAccepted = async (startingUrl) => {'
+      'const verifyGoogleLensUrlSubmissionAccepted = async (startingUrl, stepMeta = null) => {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'Google Lens did not advance after receiving the image URL.'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "await page.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => undefined);"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("resultCode: 'url_submit_not_advanced'");
   });
@@ -257,25 +353,30 @@ describe('product-scan-amazon-script', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "'Local file upload failed. Falling back to image URL upload.'"
     );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'retryRecommended: !captchaEncountered && Boolean(imageUrl)'
+    );
   });
 
-  it('prefers Google Lens upload-by-URL before local file upload when both are available', () => {
+  it('prefers local Google Lens file upload before URL submission when both are available', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const openGoogleLensForUpload = async ({'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'if (imageUrl) {'
+      'if (filePath) {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'const urlUploadResult = await uploadImageCandidateByUrl(candidateId, imageUrl, candidateAttempt);'
+      'const fileUploadResult = await uploadImageCandidateFromFile(candidateId, filePath, imageUrl, candidateAttempt);'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "log('amazon.scan.google_upload_fallback_to_file', {"
+      "log('amazon.scan.google_upload_fallback_to_url', {"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'return await uploadImageCandidateFromFile(candidateId, filePath, imageUrl, candidateAttempt, {'
+      'return await uploadImageCandidateByUrl(candidateId, imageUrl, candidateAttempt, {'
     );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'Image URL upload failed. Falling back to local file upload.'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "'Local file upload failed. Falling back to image URL upload.'"
+    );
   });
 
   it('records retained Google Lens candidate details for the scan timeline', () => {
@@ -299,6 +400,9 @@ describe('product-scan-amazon-script', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const describeGoogleLensCandidateCollectionState = async () => {'
     );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const processingState = await readGoogleLensProcessingState();'
+    );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'#search a[href]'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'#rso a[href]'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'div.g a[href]'");
@@ -312,10 +416,24 @@ describe('product-scan-amazon-script', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'await waitForGoogleLensCandidateHints();'
     );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('const deadline = Date.now() + 25000;');
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("resultCode: 'candidate_collect_waiting'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('let deadline = Date.now() + 25000;');
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "resultCode: timedOutOnUploadEntry ? 'lens_result_page_not_ready' : 'candidate_collect_timeout'"
+      "resultCode: processingState.processingVisible"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "? 'upload_processing'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      ": 'candidate_collect_waiting'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'Google Lens kept showing upload progress without usable results.'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "resultCode: timedOutWhileProcessing"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "? 'upload_processing_timeout'"
     );
   });
 
@@ -327,13 +445,48 @@ describe('product-scan-amazon-script', () => {
       'const manualVerificationTimeoutMs ='
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const CAPTCHA_STABLE_CLEAR_WINDOW_MS = 10000;'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "const detectGoogleLensCaptcha = async () => {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const readGoogleLensPostCaptchaReadyState = async (stage) => {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'for (const scope of listGoogleLensSearchScopes())'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'unusual traffic'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'iframe[src*=\"recaptcha\"]'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("status: 'captcha_required'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("resultCode: 'captcha_stabilizing'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("resultCode: 'captcha_resolved'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('captchaEncountered: true,');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'Captcha challenge looks partially resolved. Waiting for Google Lens to become ready.'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('let lastCaptchaDetectedAt = Date.now();');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'timeSinceLastCaptchaDetection < CAPTCHA_STABLE_CLEAR_WINDOW_MS'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('let stableReadyCount = 0;');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('if (stableReadyCount < 3)');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("label: 'Ready reason'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'Solve it in the opened browser window and the scan will continue automatically.'
+    );
+  });
+
+  it('fails closed after any Google captcha encounter instead of advancing to another upload candidate', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('let googleCaptchaEncountered = false;');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'googleCaptchaEncountered || uploadResult.captchaEncountered === true'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'googleCaptchaEncountered || amazonCandidateResult.captchaEncountered === true'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'if (googleCaptchaEncountered) {'
     );
   });
 

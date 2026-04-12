@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
+import { is1688IntegrationSlug, isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import {
@@ -69,6 +69,13 @@ const createConnectionSchema = z
     traderaApiSandbox: z.boolean().optional(),
     traderaParameterMapperRulesJson: z.string().trim().nullable().optional(),
     traderaParameterMapperCatalogJson: z.string().trim().nullable().optional(),
+    scanner1688StartUrl: z.string().trim().max(4_000).nullable().optional(),
+    scanner1688LoginMode: z.enum(['session_required', 'manual_login']).nullable().optional(),
+    scanner1688DefaultSearchMode: z.enum(['local_image', 'image_url_fallback']).nullable().optional(),
+    scanner1688CandidateResultLimit: z.number().int().positive().nullable().optional(),
+    scanner1688MinimumCandidateScore: z.number().int().positive().nullable().optional(),
+    scanner1688MaxExtractedImages: z.number().int().positive().nullable().optional(),
+    scanner1688AllowUrlImageSearchFallback: z.boolean().nullable().optional(),
   })
   .strict();
 
@@ -182,6 +189,13 @@ export async function GET_handler(
     hasTraderaApiAppKey: Boolean(connection.traderaApiAppKey),
     hasTraderaApiToken: Boolean(connection.traderaApiToken),
     traderaApiTokenUpdatedAt: connection.traderaApiTokenUpdatedAt ?? null,
+    scanner1688StartUrl: connection.scanner1688StartUrl ?? null,
+    scanner1688LoginMode: connection.scanner1688LoginMode ?? null,
+    scanner1688DefaultSearchMode: connection.scanner1688DefaultSearchMode ?? null,
+    scanner1688CandidateResultLimit: connection.scanner1688CandidateResultLimit ?? null,
+    scanner1688MinimumCandidateScore: connection.scanner1688MinimumCandidateScore ?? null,
+    scanner1688MaxExtractedImages: connection.scanner1688MaxExtractedImages ?? null,
+    scanner1688AllowUrlImageSearchFallback: connection.scanner1688AllowUrlImageSearchFallback ?? null,
   }));
 
   return NextResponse.json(payload);
@@ -221,6 +235,7 @@ export async function POST_handler(
   const resolvedTraderaBrowserMode = data.traderaBrowserMode ?? 'builtin';
   const isBaseIntegration = BASE_INTEGRATION_SLUGS.has(integrationSlug);
   const isVintedIntegration = integrationSlug === 'vinted';
+  const is1688Integration = is1688IntegrationSlug(integration.slug);
   const isPlaywrightProgrammableIntegration = isPlaywrightProgrammableSlug(integration.slug);
   const normalizedPlaywrightListingScript = normalizePersistedTraderaPlaywrightListingScript({
     integrationSlug: integration.slug,
@@ -233,6 +248,7 @@ export async function POST_handler(
   if (
     integrationSlug !== 'baselinker' &&
     !isVintedIntegration &&
+    !is1688Integration &&
     !isPlaywrightProgrammableIntegration &&
     !normalizedUsername
   ) {
@@ -241,7 +257,7 @@ export async function POST_handler(
       integrationSlug: integration.slug,
     });
   }
-  if (!isVintedIntegration && !isPlaywrightProgrammableIntegration && !normalizedPassword) {
+  if (!isVintedIntegration && !is1688Integration && !isPlaywrightProgrammableIntegration && !normalizedPassword) {
     throw badRequestError('Password/Token is required for this integration.', {
       integrationId,
       integrationSlug: integration.slug,
@@ -405,6 +421,27 @@ export async function POST_handler(
           traderaParameterMapperCatalogJson: data.traderaParameterMapperCatalogJson ?? null,
         }
       : {}),
+    ...(typeof data.scanner1688StartUrl === 'string' || data.scanner1688StartUrl === null
+      ? { scanner1688StartUrl: data.scanner1688StartUrl ?? null }
+      : {}),
+    ...(typeof data.scanner1688LoginMode === 'string' || data.scanner1688LoginMode === null
+      ? { scanner1688LoginMode: data.scanner1688LoginMode ?? null }
+      : {}),
+    ...(typeof data.scanner1688DefaultSearchMode === 'string' || data.scanner1688DefaultSearchMode === null
+      ? { scanner1688DefaultSearchMode: data.scanner1688DefaultSearchMode ?? null }
+      : {}),
+    ...(typeof data.scanner1688CandidateResultLimit === 'number' || data.scanner1688CandidateResultLimit === null
+      ? { scanner1688CandidateResultLimit: data.scanner1688CandidateResultLimit ?? null }
+      : {}),
+    ...(typeof data.scanner1688MinimumCandidateScore === 'number' || data.scanner1688MinimumCandidateScore === null
+      ? { scanner1688MinimumCandidateScore: data.scanner1688MinimumCandidateScore ?? null }
+      : {}),
+    ...(typeof data.scanner1688MaxExtractedImages === 'number' || data.scanner1688MaxExtractedImages === null
+      ? { scanner1688MaxExtractedImages: data.scanner1688MaxExtractedImages ?? null }
+      : {}),
+    ...(typeof data.scanner1688AllowUrlImageSearchFallback === 'boolean' || data.scanner1688AllowUrlImageSearchFallback === null
+      ? { scanner1688AllowUrlImageSearchFallback: data.scanner1688AllowUrlImageSearchFallback ?? null }
+      : {}),
   });
   const playwrightPersonas = await loadPlaywrightPersonas();
 
@@ -451,5 +488,12 @@ export async function POST_handler(
     hasTraderaApiAppKey: Boolean(created.traderaApiAppKey),
     hasTraderaApiToken: Boolean(created.traderaApiToken),
     traderaApiTokenUpdatedAt: created.traderaApiTokenUpdatedAt ?? null,
+    scanner1688StartUrl: created.scanner1688StartUrl ?? null,
+    scanner1688LoginMode: created.scanner1688LoginMode ?? null,
+    scanner1688DefaultSearchMode: created.scanner1688DefaultSearchMode ?? null,
+    scanner1688CandidateResultLimit: created.scanner1688CandidateResultLimit ?? null,
+    scanner1688MinimumCandidateScore: created.scanner1688MinimumCandidateScore ?? null,
+    scanner1688MaxExtractedImages: created.scanner1688MaxExtractedImages ?? null,
+    scanner1688AllowUrlImageSearchFallback: created.scanner1688AllowUrlImageSearchFallback ?? null,
   });
 }

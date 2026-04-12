@@ -4,6 +4,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  useDefault1688Connection,
+  useIntegrationsWithConnections,
+} from '@/features/integrations/hooks/useIntegrationQueries';
 import { ProductScanAmazonExtractedFieldsPanel } from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
 import { ProductScan1688ApplyPanel } from '@/features/products/components/scans/ProductScan1688ApplyPanel';
 import {
@@ -345,6 +349,8 @@ export function ProductAmazonScanModal(
     markBlockedScanReviewed,
     clearBlockedScanReviewed,
   } = useProductScan1688ReviewState();
+  const integrationsWithConnectionsQuery = useIntegrationsWithConnections();
+  const default1688ConnectionQuery = useDefault1688Connection();
   const productFormCoreState = useContext(ProductFormCoreStateContext);
   const productFormCoreActions = useContext(ProductFormCoreActionsContext);
   const productFormImages = useContext(ProductFormImageContext);
@@ -385,6 +391,63 @@ export function ProductAmazonScanModal(
         .join('\u0000'),
     [selectedProducts]
   );
+  const integrationConnections = integrationsWithConnectionsQuery.data ?? [];
+  const connectionNamesById = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const integration of integrationConnections) {
+      for (const connection of integration.connections ?? []) {
+        const connectionId = connection.id?.trim();
+        const connectionName = connection.name?.trim();
+        if (!connectionId || !connectionName || names.has(connectionId)) {
+          continue;
+        }
+        names.set(connectionId, connectionName);
+      }
+    }
+    return names;
+  }, [integrationConnections]);
+  const scanner1688Integration = useMemo(
+    () => integrationConnections.find((integration) => integration.slug === '1688') ?? null,
+    [integrationConnections]
+  );
+  const scanner1688Connections = scanner1688Integration?.connections ?? [];
+  const resolved1688ConnectionId = useMemo(() => {
+    if (provider !== '1688') {
+      return null;
+    }
+
+    const preferredConnectionId = default1688ConnectionQuery.data?.connectionId?.trim() || '';
+    if (
+      preferredConnectionId &&
+      scanner1688Connections.some((connection) => connection.id === preferredConnectionId)
+    ) {
+      return preferredConnectionId;
+    }
+
+    return scanner1688Connections[0]?.id ?? null;
+  }, [default1688ConnectionQuery.data?.connectionId, provider, scanner1688Connections]);
+  const active1688ConnectionName = useMemo(() => {
+    if (!resolved1688ConnectionId) {
+      return null;
+    }
+
+    return (
+      scanner1688Connections.find((connection) => connection.id === resolved1688ConnectionId)?.name ??
+      null
+    );
+  }, [resolved1688ConnectionId, scanner1688Connections]);
+  const active1688Connection = useMemo(() => {
+    if (!resolved1688ConnectionId) {
+      return null;
+    }
+
+    return (
+      scanner1688Connections.find((connection) => connection.id === resolved1688ConnectionId) ?? null
+    );
+  }, [resolved1688ConnectionId, scanner1688Connections]);
+  const is1688ConnectionBootstrapPending =
+    provider === '1688' &&
+    (integrationsWithConnectionsQuery.isLoading || default1688ConnectionQuery.isLoading);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
@@ -694,6 +757,14 @@ export function ProductAmazonScanModal(
       return;
     }
 
+    if (is1688ConnectionBootstrapPending) {
+      rowsRef.current = [];
+      setRows([]);
+      setIsSubmitting(true);
+      stopPolling();
+      return;
+    }
+
     const sessionId = modalSessionRef.current + 1;
     modalSessionRef.current = sessionId;
     const selectedProductEntries = selectedProductsRef.current;
@@ -718,6 +789,23 @@ export function ProductAmazonScanModal(
       message: null,
       scan: null,
     }));
+    if (provider === '1688') {
+      const missing1688SessionMessage = !active1688Connection
+        ? '1688 browser profile required before running supplier scans.'
+        : `1688 login required for profile ${active1688Connection.name}. Refresh the saved browser session before scanning.`;
+      if (active1688Connection?.hasPlaywrightStorageState !== true) {
+        const blockedRows = initialRows.map((row) => ({
+          ...row,
+          status: 'failed' as const,
+          message: missing1688SessionMessage,
+        }));
+        rowsRef.current = blockedRows;
+        setRows(blockedRows);
+        setIsSubmitting(false);
+        stopPolling();
+        return;
+      }
+    }
     rowsRef.current = initialRows;
     setRows(initialRows);
     setIsSubmitting(true);
@@ -726,7 +814,10 @@ export function ProductAmazonScanModal(
       try {
         const response = await api.post<ProductScanBatchResponse>(
           modalConfig.batchEndpoint,
-          { productIds: selectedProductEntries.map(({ productId }) => productId) }
+          {
+            productIds: selectedProductEntries.map(({ productId }) => productId),
+            ...(provider === '1688' ? { connectionId: resolved1688ConnectionId } : {}),
+          }
         );
         if (sessionId !== modalSessionRef.current) {
           return;
@@ -922,6 +1013,7 @@ export function ProductAmazonScanModal(
   }, [
     ensurePollingForTrackedActiveRows,
     handleRefreshFailure,
+    is1688ConnectionBootstrapPending,
     isOpen,
     missingBatchResultMessage,
     missingScanRecordMessage,
@@ -930,7 +1022,10 @@ export function ProductAmazonScanModal(
     modalConfig.batchLabel,
     modalConfig.noQueuedMessage,
     modalConfig.resultTypeLabel,
+    active1688Connection,
+    provider,
     refreshScanRows,
+    resolved1688ConnectionId,
     selectedProductIdsKey,
     startPolling,
     stopPolling,
@@ -1074,10 +1169,18 @@ export function ProductAmazonScanModal(
       {rows.length === 0 ? (
         <div className='flex min-h-[160px] items-center justify-center gap-3 text-sm text-muted-foreground'>
           <Loader2 className='h-4 w-4 animate-spin' />
-          {modalConfig.preparingLabel}
+          {provider === '1688' && is1688ConnectionBootstrapPending
+            ? 'Loading 1688 browser profiles...'
+            : modalConfig.preparingLabel}
         </div>
       ) : (
         <div className='space-y-3'>
+          {provider === '1688' && (
+            <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2 text-xs text-muted-foreground'>
+              <span className='font-medium text-white'>1688 profile:</span>{' '}
+              {active1688ConnectionName ?? 'No saved browser profile selected'}
+            </div>
+          )}
           {rows.map((row) => (
             (() => {
               const { infoMessage, errorMessage } = resolveRowDisplayMessages(row);
@@ -1085,7 +1188,17 @@ export function ProductAmazonScanModal(
               const isExpanded = expandedRowIds.has(row.productId);
               const diagnosticsExpanded = expandedDiagnosticRowIds.has(row.productId);
               const extractedFieldsExpanded = expandedExtractedFieldRowIds.has(row.productId);
-              const isAmazonScan = row.scan?.provider !== '1688';
+              const effectiveProvider = row.scan?.provider ?? provider;
+              const isAmazonScan = effectiveProvider !== '1688';
+              const resolvedConnectionLabel =
+                !isAmazonScan
+                  ? ((row.scan?.connectionId
+                      ? connectionNamesById.get(row.scan.connectionId)
+                      : null) ??
+                    active1688ConnectionName ??
+                    row.scan?.connectionId ??
+                    null)
+                  : null;
               const supplierDetails = row.scan?.provider === '1688' ? row.scan.supplierDetails : null;
               const supplierSummary = [
                 supplierDetails?.supplierName,
@@ -1189,6 +1302,11 @@ export function ProductAmazonScanModal(
                         {row.status === 'running' ? <Loader2 className='mr-1 h-3 w-3 animate-spin' /> : null}
                         {resolveRowStatusLabel(row)}
                       </span>
+                      {!isAmazonScan && resolvedConnectionLabel ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                          Profile {resolvedConnectionLabel}
+                        </span>
+                      ) : null}
                     </div>
                     <span className='text-xs text-muted-foreground'>
                       {formatTimestamp(row.scan?.createdAt)}
@@ -1640,7 +1758,11 @@ export function ProductAmazonScanModal(
                   {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
                   {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
                   {!isAmazonScan && row.scan ? (
-                    <ProductScan1688Details scan={row.scan} scanId={row.scan.id} />
+                    <ProductScan1688Details
+                      scan={row.scan}
+                      scanId={row.scan.id}
+                      connectionLabel={resolvedConnectionLabel}
+                    />
                   ) : null}
                   {!isAmazonScan && row.scan ? (
                     <ProductScan1688ApplyPanel

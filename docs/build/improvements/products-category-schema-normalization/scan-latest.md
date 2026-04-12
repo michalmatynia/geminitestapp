@@ -8,7 +8,7 @@ canonical: true
 ---
 # Products category and schema normalization Improvement Track
 
-Generated at: 2026-04-12T13:47:05.832Z
+Generated at: 2026-04-12T15:40:31.457Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-12T13:47:05.832Z
 - Category: `data`
 - Included in default read-only bundle: yes
 - Overall status: `failed`
-- Latest report timestamp: 2026-04-12T13:47:05.749Z
+- Latest report timestamp: 2026-04-02T09:59:31.245Z
 
 ## Purpose
 
@@ -38,9 +38,9 @@ Surfaces the remaining category and parameter-schema decisions that cannot be au
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-configured` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
+| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `passed` | 3 | 2 | 1 | 0 | 0 |
 | `apply` | `failed` | 3 | 2 | 1 | 2 | 0 |
 
@@ -48,8 +48,6 @@ Surfaces the remaining category and parameter-schema decisions that cannot be au
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
-| `classify` | `passed` | `automatic` | `products-category-manual-remediation-report` | `products:report:parameter-remediation` |
-| `plan` | `manual` | `manual` | `products-category-schema-plan` | manual |
 | `dry-run` | `manual` | `manual` | `products-category-schema-curate-family-mappings` | manual |
 | `dry-run` | `passed` | `automatic` | `products-category-schema-build-ready-curated-overrides` | `products:build:ready-parameter-curated-overrides` |
 | `dry-run` | `passed` | `automatic` | `products-category-schema-preview-ready-curated-overrides` | `products:apply:parameter-curated-overrides` |

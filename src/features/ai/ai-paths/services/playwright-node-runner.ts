@@ -384,7 +384,7 @@ const loadStickySessionStorageState = async (
     logs.push(
       `[runtime] Loaded sticky storage state (${descriptor.profile}) for ${descriptor.scopeLabel} at ${descriptor.origin}.`
     );
-    return sanitized as any;
+    return sanitized as BrowserContextOptions['storageState'];
   } catch {
     return undefined;
   }

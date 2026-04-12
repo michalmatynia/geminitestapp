@@ -33,14 +33,15 @@ function IntegrationsContent(): React.JSX.Element {
     setDeletePassword('');
   };
 
-  const handleDeleteConfirm = async (): Promise<void> => {
+  const handleDeleteConfirm = async (): Promise<boolean | void> => {
     if (!connectionToDelete || isDeleting) return;
     setIsDeleting(true);
     try {
       const deleted = await handleConfirmDeleteConnection(deletePassword);
-      if (deleted) {
-        setDeletePassword('');
+      if (!deleted) {
+        return false;
       }
+      setDeletePassword('');
     } finally {
       setIsDeleting(false);
     }

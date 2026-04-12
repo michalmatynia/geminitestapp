@@ -123,19 +123,19 @@ const resolve1688Settings = (connection: unknown): Scanner1688SettingsSnapshot =
         : 'local_image',
     candidateResultLimit:
       typeof record['scanner1688CandidateResultLimit'] === 'number'
-        ? (record['scanner1688CandidateResultLimit'] as number)
+        ? (record['scanner1688CandidateResultLimit'])
         : null,
     minimumCandidateScore:
       typeof record['scanner1688MinimumCandidateScore'] === 'number'
-        ? (record['scanner1688MinimumCandidateScore'] as number)
+        ? (record['scanner1688MinimumCandidateScore'])
         : null,
     maxExtractedImages:
       typeof record['scanner1688MaxExtractedImages'] === 'number'
-        ? (record['scanner1688MaxExtractedImages'] as number)
+        ? (record['scanner1688MaxExtractedImages'])
         : null,
     allowUrlImageSearchFallback:
       typeof record['scanner1688AllowUrlImageSearchFallback'] === 'boolean'
-        ? (record['scanner1688AllowUrlImageSearchFallback'] as boolean)
+        ? (record['scanner1688AllowUrlImageSearchFallback'])
         : null,
   };
 };

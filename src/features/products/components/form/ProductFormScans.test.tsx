@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   useProductFormCoreMock: vi.fn(),
   useProductFormParametersMock: vi.fn(),
   useProductFormCustomFieldsMock: vi.fn(),
+  useIntegrationsWithConnectionsMock: vi.fn(),
   apiGetMock: vi.fn(),
   invalidateProductsMock: vi.fn().mockResolvedValue(undefined),
   invalidateProductsCountsAndDetailMock: vi.fn().mockResolvedValue(undefined),
@@ -43,6 +44,10 @@ vi.mock('@/shared/lib/api-client', () => ({
   api: {
     get: (...args: unknown[]) => mocks.apiGetMock(...args),
   },
+}));
+
+vi.mock('@/shared/hooks/useIntegrationQueries', () => ({
+  useIntegrationsWithConnections: () => mocks.useIntegrationsWithConnectionsMock(),
 }));
 
 vi.mock('@/shared/lib/query-invalidation', async (importOriginal) => {
@@ -157,6 +162,9 @@ describe('ProductFormScans', () => {
       customFieldValues: [],
       setTextValue: mocks.setTextValueMock,
       toggleSelectedOption: mocks.toggleSelectedOptionMock,
+    });
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [],
     });
   });
 
@@ -630,6 +638,113 @@ describe('ProductFormScans', () => {
         provider: '1688',
       })
     );
+  });
+
+  it('shows the resolved 1688 browser profile on scan history rows', async () => {
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1688',
+          name: '1688',
+          slug: '1688',
+          connections: [
+            {
+              id: 'connection-1688-main',
+              name: 'Main 1688 Browser',
+              integrationId: 'integration-1688',
+            },
+          ],
+        },
+      ],
+    });
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-history-1',
+          productId: 'product-1',
+          integrationId: 'integration-1688',
+          connectionId: 'connection-1688-main',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'completed',
+          productName: 'Product 1',
+          engineRunId: 'run-1688-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: 'Yiwu supplier result',
+          price: null,
+          url: 'https://detail.1688.com/offer/123456789.html',
+          description: 'Supplier description',
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: {
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/store/page.html',
+            supplierProductUrl: 'https://detail.1688.com/offer/123456789.html',
+            platformProductId: '123456789',
+            currency: 'CNY',
+            priceText: '¥12.80',
+            priceRangeText: null,
+            moqText: null,
+            supplierLocation: null,
+            supplierRating: null,
+            sourceLanguage: 'zh-CN',
+            images: [],
+            prices: [],
+          },
+          supplierProbe: {
+            candidateUrl: 'https://detail.1688.com/offer/123456789.html',
+            canonicalUrl: 'https://detail.1688.com/offer/123456789.html',
+            pageTitle: 'Yiwu Supplier Listing',
+            descriptionSnippet: null,
+            pageLanguage: 'zh-CN',
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/store/page.html',
+            priceText: '¥12.80',
+            currency: 'CNY',
+            heroImageUrl: null,
+            heroImageAlt: null,
+            heroImageArtifactName: null,
+            artifactKey: 'probe-artifact',
+            imageCount: 1,
+          },
+          supplierEvaluation: {
+            status: 'approved',
+            sameProduct: true,
+            imageMatch: true,
+            titleMatch: true,
+            confidence: 0.91,
+            proceed: true,
+            reasons: ['Same supplier product'],
+            mismatches: [],
+            modelId: 'gpt-5.4-mini',
+            error: null,
+            evaluatedAt: '2026-04-12T06:40:00.000Z',
+          },
+          steps: [],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T06:40:00.000Z',
+          createdAt: '2026-04-12T06:35:00.000Z',
+          updatedAt: '2026-04-12T06:40:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findAllByText(/Main 1688 Browser/)).not.toHaveLength(0);
+    expect(screen.getByText('Browser profile')).toBeInTheDocument();
   });
 
   it('renders stored 1688 supplier details inside scan history', async () => {

@@ -1,34 +1,17 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-12T13:28:47.600Z",
+  "generatedAt": "2026-04-12T15:28:32.010Z",
   "phase": "audit",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-parameter-integrity",
-    "products-category-schema-normalization",
     "ui-consolidation",
     "application-performance",
+    "testing-quality-baseline",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/audit-report.json",
   "steps": [
-    {
-      "id": "products-parameter-audit",
-      "title": "Audit products with missing parameters",
-      "trackId": "products-parameter-integrity",
-      "phase": "audit",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-missing-parameters-audit-*.json",
-        "/tmp/product-missing-parameters-audit-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:audit:missing-parameters",
-      "durationMs": 3334
-    },
     {
       "id": "ui-consolidation-guardrail",
       "title": "Run UI consolidation guardrail",
@@ -44,7 +27,7 @@
       ],
       "instructions": [],
       "script": "check:ui-consolidation",
-      "durationMs": 6091
+      "durationMs": 4536
     },
     {
       "id": "application-performance-fast-gate",
@@ -57,7 +40,23 @@
       "outputs": [],
       "instructions": [],
       "script": "perf:ops:fast",
-      "durationMs": 34016
+      "durationMs": 29949
+    },
+    {
+      "id": "testing-quality-suite-inventory",
+      "title": "Refresh the testing suite inventory",
+      "trackId": "testing-quality-baseline",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "docs/metrics/testing-suite-inventory-latest.md",
+        "docs/metrics/testing-suite-inventory-latest.json"
+      ],
+      "instructions": [],
+      "script": "metrics:test-suite-inventory",
+      "durationMs": 254
     },
     {
       "id": "repo-quality-api-error-sources",
@@ -73,7 +72,7 @@
       ],
       "instructions": [],
       "script": "check:api-error-sources",
-      "durationMs": 488
+      "durationMs": 258
     },
     {
       "id": "repo-quality-canonical-sitewide",
@@ -86,7 +85,7 @@
       "outputs": [],
       "instructions": [],
       "script": "canonical:check:sitewide",
-      "durationMs": 2579
+      "durationMs": 1771
     }
   ]
 }

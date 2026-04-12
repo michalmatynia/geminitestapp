@@ -479,6 +479,10 @@
   #app-content:focus {
     outline: none;
   }
+  #app-content:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
   .app-skip-link {
     position: fixed;
     left: 1rem;

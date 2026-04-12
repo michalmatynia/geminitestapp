@@ -8,7 +8,7 @@ canonical: true
 ---
 # UI consolidation Improvement Track
 
-Generated at: 2026-04-12T13:47:05.832Z
+Generated at: 2026-04-12T15:40:31.457Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-12T13:47:05.832Z
 - Category: `ui`
 - Included in default read-only bundle: yes
 - Overall status: `failed`
-- Latest report timestamp: 2026-04-12T13:47:05.749Z
+- Latest report timestamp: 2026-04-12T15:40:31.397Z
 
 ## Purpose
 

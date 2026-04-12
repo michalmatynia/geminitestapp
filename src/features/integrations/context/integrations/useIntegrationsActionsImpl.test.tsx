@@ -11,9 +11,11 @@ import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/integ
 const {
   toastMock,
   upsertConnectionMutateAsyncMock,
+  testConnectionMutateAsyncMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   upsertConnectionMutateAsyncMock: vi.fn(),
+  testConnectionMutateAsyncMock: vi.fn(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -28,7 +30,9 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
   useDeleteConnection: () => ({ mutateAsync: vi.fn() }),
   useDisconnectAllegro: () => ({ mutateAsync: vi.fn() }),
   useDisconnectLinkedIn: () => ({ mutateAsync: vi.fn() }),
-  useTestConnection: () => ({ mutateAsync: vi.fn() }),
+  useTestConnection: () => ({
+    mutateAsync: (...args: unknown[]) => testConnectionMutateAsyncMock(...args),
+  }),
   useBaseApiRequest: () => ({ mutateAsync: vi.fn() }),
   useAllegroApiRequest: () => ({ mutateAsync: vi.fn() }),
 }));
@@ -92,6 +96,11 @@ describe('useIntegrationsActionsImpl', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     upsertConnectionMutateAsyncMock.mockResolvedValue({ id: 'connection-1' });
+    testConnectionMutateAsyncMock.mockResolvedValue({
+      ok: true,
+      steps: [],
+      sessionReady: true,
+    });
   });
 
   it('persists scripted Tradera browser mode and Playwright script', async () => {
@@ -263,6 +272,83 @@ describe('useIntegrationsActionsImpl', () => {
     );
     expect(payload).not.toHaveProperty('username');
     expect(payload).not.toHaveProperty('password');
+  });
+
+  it('persists 1688 profile fields without requiring credentials', async () => {
+    const activeIntegration = createIntegration('1688');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: '1688 Browser',
+      username: '   ',
+      password: '   ',
+      scanner1688StartUrl: 'https://detail.1688.com/',
+      scanner1688LoginMode: 'manual_login' as const,
+      scanner1688DefaultSearchMode: 'image_url_fallback' as const,
+      scanner1688CandidateResultLimit: '12',
+      scanner1688MinimumCandidateScore: '8',
+      scanner1688MaxExtractedImages: '14',
+      scanner1688AllowUrlImageSearchFallback: true,
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: '1688 Browser',
+          scanner1688StartUrl: 'https://detail.1688.com/',
+          scanner1688LoginMode: 'manual_login',
+          scanner1688DefaultSearchMode: 'image_url_fallback',
+          scanner1688CandidateResultLimit: 12,
+          scanner1688MinimumCandidateScore: 8,
+          scanner1688MaxExtractedImages: 14,
+          scanner1688AllowUrlImageSearchFallback: true,
+        }),
+      })
+    );
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
+
+    expect(payload).not.toHaveProperty('username');
+    expect(payload).not.toHaveProperty('password');
+  });
+
+  it('starts the 1688 manual login flow with the extended timeout', async () => {
+    const activeIntegration = createIntegration('1688');
+    const connection = {
+      id: 'connection-1688',
+      integrationId: activeIntegration.id,
+      name: '1688 Browser',
+      username: '',
+      createdAt: '2026-04-02T00:00:00.000Z',
+      updatedAt: '2026-04-02T00:00:00.000Z',
+    } as IntegrationConnection;
+    const args = {
+      ...createArgs(activeIntegration),
+      connections: [connection],
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handle1688ManualLogin(connection);
+
+    expect(testConnectionMutateAsyncMock).toHaveBeenCalledWith({
+      integrationId: activeIntegration.id,
+      connectionId: 'connection-1688',
+      type: 'test',
+      body: {
+        mode: 'manual',
+        manualTimeoutMs: 300000,
+      },
+      timeoutMs: 360000,
+    });
   });
 
   it('applies personas on top of the canonical integration Playwright defaults', async () => {

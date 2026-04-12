@@ -51,6 +51,7 @@ describe('products/scans/1688/batch handler', () => {
     );
 
     expect(queue1688BatchProductScansMock).toHaveBeenCalledWith({
+      connectionId: null,
       productIds: ['product-1'],
       userId: 'user-42',
     });

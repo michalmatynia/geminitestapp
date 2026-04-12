@@ -221,7 +221,9 @@ export function useIntegrationsActionsImpl(args: {
     }
     const payload: Record<string, unknown> = {
       name: normalizedName,
-      ...(normalizedUsername || !isCreateMode || !isVintedIntegration
+      ...(normalizedUsername ||
+      !isCreateMode ||
+      (!isVintedIntegration && !is1688Integration)
         ? { username: normalizedUsername }
         : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),

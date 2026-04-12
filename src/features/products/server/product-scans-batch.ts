@@ -40,7 +40,6 @@ import {
 } from './product-scans-repository';
 import {
   AMAZON_SCAN_TIMEOUT_MS,
-  toRecord,
   normalizeErrorMessage,
   resolveScanEngineRunId,
   resolveScanManualVerificationTimeoutMs,
@@ -48,6 +47,7 @@ import {
   upsertPersistedProductScanStep,
   createAmazonScanStartedRawResult,
   createFailedBatchResult,
+  hydrateProductScanImageCandidates,
   tryDirectQueuedScanUpdate,
   sanitizeProductScanImageCandidates,
 } from './product-scans-service.helpers';
@@ -268,9 +268,12 @@ const queueProviderBatchProductScans = async (input: {
           return createFailedBatchResult(productId, 'Product not found.');
         }
 
-        const imageCandidates = sanitizeProductScanImageCandidates(
-          input.config.runtime.resolveImageCandidates(product)
-        );
+        const imageCandidates = await hydrateProductScanImageCandidates({
+          product,
+          imageCandidates: await sanitizeProductScanImageCandidates(
+            input.config.runtime.resolveImageCandidates(product)
+          ),
+        });
         const productName = input.config.runtime.resolveDisplayName(product);
         const baseRecord = input.config.runtime.createBaseRecord({
           productId,
@@ -310,15 +313,20 @@ const queueProviderBatchProductScans = async (input: {
         try {
           const scannerEngineRequestOptions =
             buildProductScannerEngineRequestOptions(scannerSettings);
+          const autoShowCaptchaBrowser = shouldAutoShowScannerCaptchaBrowser(scannerSettings);
+          const startAmazonHeadedForManualVerification =
+            input.config.provider === 'amazon' && autoShowCaptchaBrowser;
           const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
             scannerSettings,
             scannerEngineRequestOptions,
+            forceHeadless: startAmazonHeadedForManualVerification ? false : undefined,
           });
           const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(
             scannerSettings
           );
           const allowManualVerification =
-            shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless;
+            autoShowCaptchaBrowser &&
+            (startAmazonHeadedForManualVerification || !scannerHeadless);
           const requestInput = input.config.buildRequestInput({
             product,
             productName,

@@ -2126,17 +2126,6 @@ const resolveAlreadyRunningBatchResult = async (input: {
   };
 };
 
-const createFailedBatchResult = (
-  productId: string,
-  message: string,
-  scanId?: string | null
-): ProductAmazonBatchScanItem => ({
-  productId,
-  scanId: scanId ?? null,
-  status: 'failed',
-  message,
-});
-
 type BatchQueueProviderConfig = {
   provider: ProductScanProvider;
   runtime: ProductScanProviderRuntime;
@@ -2156,7 +2145,7 @@ type BatchQueueProviderConfig = {
     allowManualVerification: boolean;
     manualVerificationTimeoutMs: number;
     amazonCandidateEvaluatorEnabled: boolean;
-    scannerSettings: ProductScannerSettings;
+    scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
   }) => Record<string, unknown>;
 };
 
@@ -2171,6 +2160,7 @@ const queueStatusMessage = (
 const queueProviderBatchProductScans = async (input: {
   productIds: string[];
   userId?: string | null;
+  connectionId?: string | null;
   config: BatchQueueProviderConfig;
 }): Promise<ProductScanBatchResponse> => {
   const productIds = Array.from(
@@ -2636,10 +2626,12 @@ export async function queueAmazonBatchProductScans(input: {
 export async function queue1688BatchProductScans(input: {
   productIds: string[];
   userId?: string | null;
+  connectionId?: string | null;
 }): Promise<ProductScanBatchResponse> {
   return await queueProviderBatchProductScans({
     productIds: input.productIds,
     userId: input.userId,
+    connectionId: input.connectionId,
     config: {
       provider: '1688',
       runtime: supplierScanRuntime,

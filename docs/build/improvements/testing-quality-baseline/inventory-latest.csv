@@ -1,1 +1,4 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
+audit,testing-quality-suite-inventory,Refresh the testing suite inventory,passed,automatic,false,metrics:test-suite-inventory,docs/metrics/testing-suite-inventory-latest.md|docs/metrics/testing-suite-inventory-latest.json,2026-04-12T15:28:32.010Z,artifacts/improvements/audit-report.json
+classify,testing-quality-snapshot,Collect the testing quality snapshot,passed,automatic,false,check:test-quality,,2026-04-12T15:40:30.860Z,artifacts/improvements/classify-report.json
+plan,testing-quality-plan,Review testing quality drift before changing validation scope,manual,manual,false,,,2026-04-12T15:40:31.397Z,artifacts/improvements/plan-report.json

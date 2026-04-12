@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generatedAt": "2026-04-12T13:28:10.400Z",
-    "scannedSourceFiles": 7286,
+    "generatedAt": "2026-04-12T15:27:59.739Z",
+    "scannedSourceFiles": 7294,
     "scannedJsxFiles": 2533,
-    "componentCount": 4449,
+    "componentCount": 4453,
     "componentsWithForwarding": 120,
     "componentsWithAnyForwarding": 285,
     "resolvedTransitionCount": 1070,
@@ -14547,7 +14547,7 @@
           "sourceProp": "onOpenSessionModal",
           "targetProp": "onClick",
           "relativePath": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx",
-          "line": 100
+          "line": 154
         }
       ]
     },
@@ -14573,7 +14573,7 @@
           "sourceProp": "sessionMeta",
           "targetProp": "disabled",
           "relativePath": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx",
-          "line": 100
+          "line": 154
         }
       ]
     },

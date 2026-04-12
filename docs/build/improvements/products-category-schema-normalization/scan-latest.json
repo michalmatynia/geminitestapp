@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-12T13:47:05.832Z",
+  "generatedAt": "2026-04-12T15:40:31.457Z",
   "track": {
     "id": "products-category-schema-normalization",
     "title": "Products category and schema normalization",
@@ -154,12 +154,12 @@
     "defaultSelected": true,
     "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
     "overallStatus": "failed",
-    "latestGeneratedAt": "2026-04-12T13:47:05.749Z",
+    "latestGeneratedAt": "2026-04-02T09:59:31.245Z",
     "docDir": "docs/build/improvements/products-category-schema-normalization",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-12T13:28:47.600Z",
+        "generatedAt": "2026-04-12T15:28:32.010Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -172,79 +172,41 @@
         "plannedStepCount": 0,
         "outputs": [],
         "steps": [],
-        "status": "not-configured"
+        "status": "not-selected"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-12T13:47:05.142Z",
+        "generatedAt": "2026-04-12T15:40:30.860Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 1,
-        "manualStepCount": 0,
-        "passedStepCount": 1,
-        "failedStepCount": 0,
-        "blockedStepCount": 0,
-        "plannedStepCount": 0,
-        "outputs": [
-          "/tmp/product-parameter-manual-remediation-*.json",
-          "/tmp/product-parameter-manual-remediation-latest.json"
-        ],
-        "steps": [
-          {
-            "id": "products-category-manual-remediation-report",
-            "title": "Report products requiring manual category or schema remediation",
-            "trackId": "products-category-schema-normalization",
-            "phase": "classify",
-            "mode": "automatic",
-            "writes": false,
-            "status": "passed",
-            "outputs": [
-              "/tmp/product-parameter-manual-remediation-*.json",
-              "/tmp/product-parameter-manual-remediation-latest.json"
-            ],
-            "instructions": [],
-            "script": "products:report:parameter-remediation",
-            "durationMs": 682
-          }
-        ],
-        "status": "passed"
-      },
-      {
-        "phase": "plan",
-        "generatedAt": "2026-04-12T13:47:05.749Z",
-        "reportPath": "artifacts/improvements/plan-report.json",
-        "executionMode": "planned",
-        "allowWrite": false,
-        "stepCount": 1,
+        "stepCount": 0,
         "automaticStepCount": 0,
-        "manualStepCount": 1,
+        "manualStepCount": 0,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "products-category-schema-plan",
-            "title": "Plan category and schema normalization decisions",
-            "trackId": "products-category-schema-normalization",
-            "phase": "plan",
-            "mode": "manual",
-            "writes": false,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "Assign missing categories only when a defensible family/category match exists.",
-              "Choose final parameter ids for the unresolved families before generating any curated override file.",
-              "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.",
-              "Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.",
-              "Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply."
-            ]
-          }
-        ],
-        "status": "manual"
+        "steps": [],
+        "status": "not-selected"
+      },
+      {
+        "phase": "plan",
+        "generatedAt": "2026-04-12T15:40:31.397Z",
+        "reportPath": "artifacts/improvements/plan-report.json",
+        "executionMode": "planned",
+        "allowWrite": false,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "dry-run",

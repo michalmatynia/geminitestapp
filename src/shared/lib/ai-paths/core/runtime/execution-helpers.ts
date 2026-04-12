@@ -117,7 +117,7 @@ export const resolveAbortSignalMessage = (
   signal: AbortSignal | undefined,
   fallback: string
 ): string => {
-  const reason = signal?.reason;
+  const reason = (signal?.reason as unknown);
   if (reason instanceof Error && typeof reason.message === 'string' && reason.message.trim()) {
     return reason.message.trim();
   }

@@ -1,9 +1,9 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
-audit,repo-quality-api-error-sources,Check API error source coverage,passed,automatic,false,check:api-error-sources,docs/metrics/api-error-sources-latest.json|docs/metrics/api-error-sources-latest.md,2026-04-12T13:28:47.600Z,artifacts/improvements/audit-report.json
-audit,repo-quality-canonical-sitewide,Check canonical sitewide coverage,passed,automatic,false,canonical:check:sitewide,,2026-04-12T13:28:47.600Z,artifacts/improvements/audit-report.json
-classify,repo-quality-lint,Run source lint baseline,failed,automatic,false,quality:baseline:lint,,2026-04-12T13:47:05.142Z,artifacts/improvements/classify-report.json
-classify,repo-quality-typecheck,Run typecheck baseline,failed,automatic,false,quality:baseline:typecheck,,2026-04-12T13:47:05.142Z,artifacts/improvements/classify-report.json
-plan,repo-quality-baseline-plan,Review baseline results and decide follow-up validation,manual,manual,false,,,2026-04-12T13:47:05.749Z,artifacts/improvements/plan-report.json
+audit,repo-quality-api-error-sources,Check API error source coverage,passed,automatic,false,check:api-error-sources,docs/metrics/api-error-sources-latest.json|docs/metrics/api-error-sources-latest.md,2026-04-12T15:28:32.010Z,artifacts/improvements/audit-report.json
+audit,repo-quality-canonical-sitewide,Check canonical sitewide coverage,passed,automatic,false,canonical:check:sitewide,,2026-04-12T15:28:32.010Z,artifacts/improvements/audit-report.json
+classify,repo-quality-lint,Run source lint baseline,passed,automatic,false,quality:baseline:lint,,2026-04-12T15:40:30.860Z,artifacts/improvements/classify-report.json
+classify,repo-quality-typecheck,Run typecheck baseline,failed,automatic,false,quality:baseline:typecheck,,2026-04-12T15:40:30.860Z,artifacts/improvements/classify-report.json
+plan,repo-quality-baseline-plan,Review baseline results and decide follow-up validation,manual,manual,false,,,2026-04-12T15:40:31.397Z,artifacts/improvements/plan-report.json
 dry-run,repo-quality-api-error-sources,Check API error source coverage,passed,automatic,false,check:api-error-sources,docs/metrics/api-error-sources-latest.json|docs/metrics/api-error-sources-latest.md,2026-03-14T08:13:11.213Z,artifacts/improvements/dry-run-report.json
 dry-run,repo-quality-canonical-sitewide,Check canonical sitewide coverage,passed,automatic,false,canonical:check:sitewide,,2026-03-14T08:13:11.213Z,artifacts/improvements/dry-run-report.json
 apply,repo-quality-baseline-apply,Apply repo-wide quality fixes manually,manual,manual,true,,,2026-04-02T09:59:31.245Z,artifacts/improvements/apply-report.json

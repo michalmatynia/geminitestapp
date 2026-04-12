@@ -1,7 +1,8 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
-import { extname } from 'node:path';
+import { tmpdir } from 'node:os';
+import { extname, join } from 'node:path';
 
 import {
   DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
@@ -24,6 +25,8 @@ import {
   type ProductScanSupplierProbe,
   type ProductScanStep,
 } from '@/shared/contracts/product-scans';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -59,6 +62,7 @@ export const PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE =
   'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
 
 const nodeFs = getFsPromises();
+const PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY = join(tmpdir(), 'geminitestapp-product-scan-images');
 
 export type AmazonScanScriptResult = {
   status: 'matched' | 'probe_ready' | 'no_match' | 'failed' | 'captcha_required' | 'running';
@@ -162,20 +166,44 @@ export const hasSupportedLocalScanImageExtension = (candidate: {
 export const validateLocalScanImageCandidatePath = async (
   candidate: Pick<ProductScanRecord['imageCandidates'][number], 'filepath' | 'filename'>
 ): Promise<boolean> => {
+  return Boolean(await resolveLocalScanImageCandidatePath(candidate));
+};
+
+export const resolveLocalScanImageCandidatePath = async (
+  candidate: Pick<ProductScanRecord['imageCandidates'][number], 'filepath' | 'filename'>
+): Promise<string | null> => {
   const normalizedFilepath = readOptionalString(candidate.filepath);
   if (!normalizedFilepath) {
-    return false;
+    return null;
   }
   if (!hasSupportedLocalScanImageExtension(candidate)) {
-    return false;
+    return null;
   }
 
-  try {
-    const fileStats = await nodeFs.stat(normalizedFilepath);
-    return fileStats.isFile() && fileStats.size >= PRODUCT_SCAN_MIN_IMAGE_BYTES;
-  } catch {
-    return false;
+  const diskPathCandidates = [normalizedFilepath];
+  if (normalizedFilepath.startsWith('/')) {
+    try {
+      const publicDiskPath = getDiskPathFromPublicPath(normalizedFilepath);
+      if (publicDiskPath && !diskPathCandidates.includes(publicDiskPath)) {
+        diskPathCandidates.push(publicDiskPath);
+      }
+    } catch {
+      // Ignore path-conversion failures and fall back to the raw filepath only.
+    }
   }
+
+  for (const diskPath of diskPathCandidates) {
+    try {
+      const fileStats = await nodeFs.stat(diskPath);
+      if (fileStats.isFile() && fileStats.size >= PRODUCT_SCAN_MIN_IMAGE_BYTES) {
+        return diskPath;
+      }
+    } catch {
+      // Try the next disk path candidate.
+    }
+  }
+
+  return null;
 };
 
 export const sanitizeProductScanImageCandidates = async (
@@ -183,11 +211,14 @@ export const sanitizeProductScanImageCandidates = async (
 ): Promise<ProductScanRecord['imageCandidates']> => {
   const sanitizedCandidates = await Promise.all(
     imageCandidates.map(async (candidate) => {
-      const filepathValid = await validateLocalScanImageCandidatePath(candidate);
+      const resolvedFilepath = await resolveLocalScanImageCandidatePath(candidate);
       const hasUrl = Boolean(readOptionalString(candidate.url));
 
-      if (filepathValid) {
-        return candidate;
+      if (resolvedFilepath) {
+        return {
+          ...candidate,
+          filepath: resolvedFilepath,
+        };
       }
 
       if (!hasUrl) {
@@ -204,6 +235,138 @@ export const sanitizeProductScanImageCandidates = async (
   return sanitizedCandidates.filter(
     (candidate): candidate is ProductScanRecord['imageCandidates'][number] => Boolean(candidate)
   );
+};
+
+const normalizeProductScanDataUrl = (value: unknown): string | null => {
+  const normalized = readOptionalString(value);
+  if (!normalized) {
+    return null;
+  }
+  return /^data:image\/[a-z0-9.+-]+;base64,/i.test(normalized) ? normalized : null;
+};
+
+const collectProductScanBase64Slots = (
+  product: Pick<ProductWithImages, 'imageBase64s' | 'imageLinks'>
+): string[] => {
+  const seen = new Set<string>();
+  const values: string[] = [];
+  for (const entry of Array.isArray(product.imageBase64s) ? product.imageBase64s : []) {
+    const normalized = normalizeProductScanDataUrl(entry);
+    if (normalized && !seen.has(normalized)) {
+      seen.add(normalized);
+      values.push(normalized);
+    }
+  }
+  for (const entry of Array.isArray(product.imageLinks) ? product.imageLinks : []) {
+    const normalized = normalizeProductScanDataUrl(entry);
+    if (normalized && !seen.has(normalized)) {
+      seen.add(normalized);
+      values.push(normalized);
+    }
+  }
+  return values;
+};
+
+const resolveProductScanBase64ImageExtension = (mimeType: string): string => {
+  const normalized = mimeType.trim().toLowerCase();
+  if (normalized === 'image/png') return '.png';
+  if (normalized === 'image/webp') return '.webp';
+  if (normalized === 'image/gif') return '.gif';
+  if (normalized === 'image/bmp') return '.bmp';
+  if (normalized === 'image/tiff') return '.tiff';
+  if (normalized === 'image/avif') return '.avif';
+  if (normalized === 'image/heic') return '.heic';
+  if (normalized === 'image/heif') return '.heif';
+  return '.jpg';
+};
+
+const materializeProductScanBase64Candidate = async (input: {
+  productId: string;
+  slotIndex: number;
+  dataUrl: string;
+}): Promise<ProductScanRecord['imageCandidates'][number] | null> => {
+  const match = input.dataUrl.match(/^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i);
+  if (!match) {
+    return null;
+  }
+
+  const mimeType = match[1]?.toLowerCase() ?? 'image/jpeg';
+  const encoded = match[2] ?? '';
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(encoded, 'base64');
+  } catch {
+    return null;
+  }
+  if (buffer.byteLength < PRODUCT_SCAN_MIN_IMAGE_BYTES) {
+    return null;
+  }
+
+  const extension = resolveProductScanBase64ImageExtension(mimeType);
+  const safeProductId =
+    readOptionalString(input.productId)?.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60) ||
+    'product';
+  const filename = `${safeProductId}-scan-slot-${input.slotIndex + 1}${extension}`;
+  const filepath = join(
+    PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY,
+    `${safeProductId}-${input.slotIndex + 1}-${randomUUID()}${extension}`
+  );
+
+  await nodeFs.mkdir(PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY, { recursive: true });
+  await nodeFs.writeFile(filepath, buffer);
+
+  return {
+    id: `base64-slot-${input.slotIndex + 1}`,
+    filepath,
+    url: null,
+    filename,
+  };
+};
+
+export const hydrateProductScanImageCandidates = async (input: {
+  product: Pick<ProductWithImages, 'id' | 'imageBase64s' | 'imageLinks'>;
+  imageCandidates: ProductScanRecord['imageCandidates'];
+  limit?: number;
+}): Promise<ProductScanRecord['imageCandidates']> => {
+  const limit =
+    typeof input.limit === 'number' && Number.isFinite(input.limit) && input.limit > 0
+      ? Math.trunc(input.limit)
+      : input.imageCandidates.length || 3;
+  const nextCandidates = input.imageCandidates.slice(0, limit);
+  if (nextCandidates.length >= limit) {
+    return nextCandidates;
+  }
+
+  const base64Slots = collectProductScanBase64Slots(input.product);
+  if (base64Slots.length === 0) {
+    return nextCandidates;
+  }
+
+  for (const [slotIndex, dataUrl] of base64Slots.entries()) {
+    if (nextCandidates.length >= limit) {
+      break;
+    }
+
+    try {
+      const candidate = await materializeProductScanBase64Candidate({
+        productId: input.product.id,
+        slotIndex,
+        dataUrl,
+      });
+      if (candidate) {
+        nextCandidates.push(candidate);
+      }
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'product-scans.service',
+        action: 'hydrateProductScanImageCandidates',
+        productId: input.product.id,
+        slotIndex,
+      });
+    }
+  }
+
+  return nextCandidates.slice(0, limit);
 };
 
 export const resolveIsoAgeMs = (value: string | null | undefined): number | null => {

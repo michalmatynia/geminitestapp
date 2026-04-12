@@ -157,9 +157,6 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           ? 'New fallback secret (leave blank to keep)'
           : 'New password (leave blank to keep)';
 
-  const vintedCredentialDescription = isVinted
-    ? 'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
-    : undefined;
   const browserSessionCredentialDescription =
     isVinted || is1688
       ? 'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'

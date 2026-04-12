@@ -48,6 +48,7 @@ import { useProductFormCore } from '@/features/products/context/ProductFormCoreC
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
 import { PRODUCT_SCANNER_SETTINGS_HREF } from '@/features/products/scanner-settings';
+import { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQueries';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type {
@@ -137,7 +138,22 @@ export default function ProductFormScans(): React.JSX.Element {
     },
   });
   const scans = scansQuery.data?.scans ?? [];
+  const integrationsWithConnectionsQuery = useIntegrationsWithConnections();
   const scansDataUpdatedAt = scansQuery.dataUpdatedAt;
+  const connectionNamesById = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const integration of integrationsWithConnectionsQuery.data ?? []) {
+      for (const connection of integration.connections ?? []) {
+        const connectionId = connection.id?.trim();
+        const connectionName = connection.name?.trim();
+        if (!connectionId || !connectionName || names.has(connectionId)) {
+          continue;
+        }
+        names.set(connectionId, connectionName);
+      }
+    }
+    return names;
+  }, [integrationsWithConnectionsQuery.data]);
   const preferredAmazonExtractedScans = useMemo(
     () => resolvePreferredAmazonExtractedScans(scans),
     [scans]
@@ -572,6 +588,10 @@ export default function ProductFormScans(): React.JSX.Element {
             const isExpanded = expandedScanIds.has(scan.id);
             const diagnosticsExpanded = expandedDiagnosticScanIds.has(scan.id);
             const isAmazonScan = scan.provider !== '1688';
+            const resolvedConnectionLabel =
+              (scan.connectionId ? connectionNamesById.get(scan.connectionId) : null) ??
+              scan.connectionId ??
+              null;
             const supplierSummary = [
               scan.supplierDetails?.supplierName,
               scan.supplierDetails?.priceText ?? scan.supplierDetails?.priceRangeText,
@@ -754,6 +774,11 @@ export default function ProductFormScans(): React.JSX.Element {
                     >
                       {resolveStatusLabel(scan)}
                     </span>
+                    {!isAmazonScan && resolvedConnectionLabel ? (
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                        Profile {resolvedConnectionLabel}
+                      </span>
+                    ) : null}
                     {hasNewerApproved1688Result ? (
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
                         Superseded by newer approved 1688 match
@@ -1320,7 +1345,11 @@ export default function ProductFormScans(): React.JSX.Element {
                   <p className='text-sm text-destructive'>{errorMessage}</p>
                 ) : null}
                 {!shouldCollapseReviewedBlocked1688 && !isAmazonScan ? (
-                  <ProductScan1688Details scan={scan} scanId={scan.id} />
+                  <ProductScan1688Details
+                    scan={scan}
+                    scanId={scan.id}
+                    connectionLabel={resolvedConnectionLabel}
+                  />
                 ) : null}
                 {!shouldCollapseReviewedBlocked1688 && !isAmazonScan ? (
                   <ProductScan1688ApplyPanel

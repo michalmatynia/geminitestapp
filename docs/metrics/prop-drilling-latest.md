@@ -8,13 +8,13 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-04-12T13:28:10.400Z
+Generated at: 2026-04-12T15:27:59.739Z
 
 ## Snapshot
 
-- Scanned source files: 7286
+- Scanned source files: 7294
 - JSX files scanned: 2533
-- Components detected: 4449
+- Components detected: 4453
 - Components forwarding parent props (hotspot threshold): 120
 - Components forwarding parent props (any): 285
 - Resolved forwarded transitions: 1070

@@ -14,7 +14,7 @@ describe('product Amazon scan helpers', () => {
     expect(normalizeAmazonAsin(null)).toBeNull();
   });
 
-  it('returns up to three usable image candidates in order', () => {
+  it('returns up to three usable image candidates in file-first order', () => {
     const candidates = resolveProductScanImageCandidates({
       images: [
         {
@@ -62,16 +62,16 @@ describe('product Amazon scan helpers', () => {
         filename: 'one.jpg',
       },
       {
-        id: 'image-2',
-        filepath: null,
-        url: 'https://cdn.example.com/two.jpg',
-        filename: 'two.jpg',
-      },
-      {
         id: 'image-3',
         filepath: '/tmp/three.jpg',
         url: null,
         filename: 'three.jpg',
+      },
+      {
+        id: 'image-4',
+        filepath: '/tmp/four.jpg',
+        url: null,
+        filename: 'four.jpg',
       },
     ]);
   });
@@ -140,7 +140,7 @@ describe('product Amazon scan helpers', () => {
     ]);
   });
 
-  it('prioritizes URL-backed candidates ahead of file-only candidates', () => {
+  it('prioritizes file-backed candidates ahead of URL-only candidates', () => {
     const candidates = resolveProductScanImageCandidates({
       images: [
         {
@@ -166,6 +166,12 @@ describe('product Amazon scan helpers', () => {
 
     expect(candidates).toEqual([
       {
+        id: 'image-1',
+        filepath: '/tmp/file-only.jpg',
+        url: null,
+        filename: 'file-only.jpg',
+      },
+      {
         id: 'image-2',
         filepath: '/tmp/url-backed.jpg',
         url: 'https://cdn.example.com/url-backed.jpg',
@@ -176,12 +182,6 @@ describe('product Amazon scan helpers', () => {
         filepath: null,
         url: 'https://cdn.example.com/from-link.jpg',
         filename: null,
-      },
-      {
-        id: 'image-1',
-        filepath: '/tmp/file-only.jpg',
-        url: null,
-        filename: 'file-only.jpg',
       },
     ]);
   });

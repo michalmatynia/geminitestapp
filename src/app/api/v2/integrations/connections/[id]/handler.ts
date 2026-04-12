@@ -73,6 +73,13 @@ const connectionSchema = z.object({
   traderaApiSandbox: z.boolean().optional(),
   traderaParameterMapperRulesJson: z.string().trim().nullable().optional(),
   traderaParameterMapperCatalogJson: z.string().trim().nullable().optional(),
+  scanner1688StartUrl: z.string().trim().max(4_000).nullable().optional(),
+  scanner1688LoginMode: z.enum(['session_required', 'manual_login']).nullable().optional(),
+  scanner1688DefaultSearchMode: z.enum(['local_image', 'image_url_fallback']).nullable().optional(),
+  scanner1688CandidateResultLimit: z.number().int().positive().nullable().optional(),
+  scanner1688MinimumCandidateScore: z.number().int().positive().nullable().optional(),
+  scanner1688MaxExtractedImages: z.number().int().positive().nullable().optional(),
+  scanner1688AllowUrlImageSearchFallback: z.boolean().nullable().optional(),
 });
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
@@ -387,6 +394,27 @@ export async function PUT_handler(
           traderaParameterMapperCatalogJson: data.traderaParameterMapperCatalogJson ?? null,
         }
       : {}),
+    ...(typeof data.scanner1688StartUrl === 'string' || data.scanner1688StartUrl === null
+      ? { scanner1688StartUrl: data.scanner1688StartUrl ?? null }
+      : {}),
+    ...(typeof data.scanner1688LoginMode === 'string' || data.scanner1688LoginMode === null
+      ? { scanner1688LoginMode: data.scanner1688LoginMode ?? null }
+      : {}),
+    ...(typeof data.scanner1688DefaultSearchMode === 'string' || data.scanner1688DefaultSearchMode === null
+      ? { scanner1688DefaultSearchMode: data.scanner1688DefaultSearchMode ?? null }
+      : {}),
+    ...(typeof data.scanner1688CandidateResultLimit === 'number' || data.scanner1688CandidateResultLimit === null
+      ? { scanner1688CandidateResultLimit: data.scanner1688CandidateResultLimit ?? null }
+      : {}),
+    ...(typeof data.scanner1688MinimumCandidateScore === 'number' || data.scanner1688MinimumCandidateScore === null
+      ? { scanner1688MinimumCandidateScore: data.scanner1688MinimumCandidateScore ?? null }
+      : {}),
+    ...(typeof data.scanner1688MaxExtractedImages === 'number' || data.scanner1688MaxExtractedImages === null
+      ? { scanner1688MaxExtractedImages: data.scanner1688MaxExtractedImages ?? null }
+      : {}),
+    ...(typeof data.scanner1688AllowUrlImageSearchFallback === 'boolean' || data.scanner1688AllowUrlImageSearchFallback === null
+      ? { scanner1688AllowUrlImageSearchFallback: data.scanner1688AllowUrlImageSearchFallback ?? null }
+      : {}),
   });
   const playwrightPersonas = await loadPlaywrightPersonas();
 
@@ -432,6 +460,13 @@ export async function PUT_handler(
     hasTraderaApiAppKey: Boolean(connection.traderaApiAppKey),
     hasTraderaApiToken: Boolean(connection.traderaApiToken),
     traderaApiTokenUpdatedAt: connection.traderaApiTokenUpdatedAt ?? null,
+    scanner1688StartUrl: connection.scanner1688StartUrl ?? null,
+    scanner1688LoginMode: connection.scanner1688LoginMode ?? null,
+    scanner1688DefaultSearchMode: connection.scanner1688DefaultSearchMode ?? null,
+    scanner1688CandidateResultLimit: connection.scanner1688CandidateResultLimit ?? null,
+    scanner1688MinimumCandidateScore: connection.scanner1688MinimumCandidateScore ?? null,
+    scanner1688MaxExtractedImages: connection.scanner1688MaxExtractedImages ?? null,
+    scanner1688AllowUrlImageSearchFallback: connection.scanner1688AllowUrlImageSearchFallback ?? null,
   });
 }
 

@@ -1,28 +1,28 @@
 {
-  "generatedAt": "2026-04-12T13:29:00.527Z",
+  "generatedAt": "2026-04-12T16:19:43.065Z",
   "source": {
-    "totalFiles": 10357,
-    "totalLines": 1743578,
+    "totalFiles": 10379,
+    "totalLines": 1750759,
     "useClientFiles": 1762,
     "hooksWithoutUseClient": 0,
-    "filesOver800": 106,
-    "filesOver1000": 13,
+    "filesOver800": 107,
+    "filesOver1000": 14,
     "filesOver1500": 7,
     "largestFile": {
-      "path": "src/features/products/server/product-scans-service.ts",
-      "lines": 2646
+      "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
+      "lines": 2847
     }
   },
   "api": {
     "totalRoutes": 30,
     "routesWithApiHandler": 126,
-    "delegatedServerRoutes": 186,
+    "delegatedServerRoutes": 187,
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 0,
     "revalidateRoutes": 0,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 8,
-    "routesWithExplicitCachePolicy": 312,
+    "routesWithExplicitCachePolicy": 313,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
@@ -139,13 +139,13 @@
       },
       {
         "feature": "products",
-        "files": 456,
-        "lines": 130670
+        "files": 466,
+        "lines": 135412
       },
       {
         "feature": "integrations",
-        "files": 472,
-        "lines": 102411
+        "files": 476,
+        "lines": 103840
       },
       {
         "feature": "case-resolver",
@@ -180,7 +180,7 @@
       {
         "feature": "admin",
         "files": 61,
-        "lines": 10343
+        "lines": 10349
       },
       {
         "feature": "playwright",
@@ -437,48 +437,44 @@
   "hotspots": {
     "topFilesByLines": [
       {
-        "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-        "lines": 4653
-      },
-      {
-        "path": "src/features/products/server/product-scans-service.test.ts",
-        "lines": 4622
-      },
-      {
         "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
-        "lines": 3708
+        "lines": 3831
       },
       {
         "path": "src/features/products/components/form/ProductFormScans.test.tsx",
-        "lines": 2862
-      },
-      {
-        "path": "src/features/products/server/product-scans-service.ts",
-        "lines": 2646
+        "lines": 2977
       },
       {
         "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
-        "lines": 2050
+        "lines": 2847
+      },
+      {
+        "path": "src/features/products/server/product-scans-service.ts",
+        "lines": 2680
+      },
+      {
+        "path": "src/features/products/server/product-scans-service.amazon.test.ts",
+        "lines": 1919
+      },
+      {
+        "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+        "lines": 1790
       },
       {
         "path": "src/features/products/components/ProductModals.test.tsx",
         "lines": 1730
       },
       {
-        "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
-        "lines": 1668
+        "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
+        "lines": 1619
       },
       {
         "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
         "lines": 1599
       },
       {
-        "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
-        "lines": 1538
-      },
-      {
         "path": "src/features/products/components/form/ProductFormScans.tsx",
-        "lines": 1513
+        "lines": 1542
       },
       {
         "path": "src/features/product-sync/services/product-sync-service.ts",
@@ -486,7 +482,7 @@
       },
       {
         "path": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
-        "lines": 1412
+        "lines": 1416
       },
       {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
@@ -497,12 +493,28 @@
         "lines": 1288
       },
       {
+        "path": "src/features/integrations/services/tradera-listing/BrowserListing.1.test.ts",
+        "lines": 1283
+      },
+      {
         "path": "src/features/ai/ai-paths/services/__tests__/playwright-node-runner.test.ts",
         "lines": 1253
       },
       {
         "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
         "lines": 1250
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts",
+        "lines": 1189
+      },
+      {
+        "path": "src/features/products/server/product-scans-service.helpers.ts",
+        "lines": 1159
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/BrowserListing.2.test.ts",
+        "lines": 1155
       },
       {
         "path": "src/features/products/pages/AdminProductScannerSettingsPage.tsx",
@@ -538,23 +550,11 @@
       },
       {
         "path": "src/features/products/components/scans/ProductScan1688Details.tsx",
-        "lines": 1018
+        "lines": 1035
       },
       {
         "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
         "lines": 1018
-      },
-      {
-        "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
-        "lines": 1014
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",
-        "lines": 1008
-      },
-      {
-        "path": "src/features/integrations/services/imports/base-mapper.test.ts",
-        "lines": 1004
       }
     ],
     "topPagesByLines": [

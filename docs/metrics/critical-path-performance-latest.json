@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-12T13:29:07.980Z",
+  "generatedAt": "2026-04-12T15:28:42.442Z",
   "strictMode": false,
   "summary": {
     "total": 10,
@@ -383,52 +383,56 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-12T13:29:07.971Z",
+    "generatedAt": "2026-04-12T15:28:42.430Z",
     "hotspots": {
       "topFilesByLines": [
         {
           "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-          "lines": 4653
-        },
-        {
-          "path": "src/features/products/server/product-scans-service.test.ts",
-          "lines": 4622
+          "lines": 4661
         },
         {
           "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
-          "lines": 3708
+          "lines": 3831
         },
         {
           "path": "src/features/products/components/form/ProductFormScans.test.tsx",
-          "lines": 2862
+          "lines": 2977
+        },
+        {
+          "path": "src/features/products/server/product-scans-service.test.ts",
+          "lines": 2869
         },
         {
           "path": "src/features/products/server/product-scans-service.ts",
-          "lines": 2646
+          "lines": 2675
         },
         {
           "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
-          "lines": 2050
+          "lines": 2587
+        },
+        {
+          "path": "src/features/products/server/product-scans-service.amazon.test.ts",
+          "lines": 1919
+        },
+        {
+          "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+          "lines": 1790
         },
         {
           "path": "src/features/products/components/ProductModals.test.tsx",
           "lines": 1730
         },
         {
-          "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
-          "lines": 1668
-        },
-        {
           "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
           "lines": 1599
         },
         {
-          "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
-          "lines": 1538
+          "path": "src/features/products/components/form/ProductFormScans.tsx",
+          "lines": 1542
         },
         {
-          "path": "src/features/products/components/form/ProductFormScans.tsx",
-          "lines": 1513
+          "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
+          "lines": 1538
         },
         {
           "path": "src/features/product-sync/services/product-sync-service.ts",
@@ -436,7 +440,7 @@
         },
         {
           "path": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
-          "lines": 1412
+          "lines": 1416
         },
         {
           "path": "src/features/products/components/list/ProductColumns.test.tsx",
@@ -453,6 +457,10 @@
         {
           "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
           "lines": 1250
+        },
+        {
+          "path": "src/features/products/server/product-scans-service.helpers.ts",
+          "lines": 1159
         },
         {
           "path": "src/features/products/pages/AdminProductScannerSettingsPage.tsx",
@@ -488,7 +496,7 @@
         },
         {
           "path": "src/features/products/components/scans/ProductScan1688Details.tsx",
-          "lines": 1018
+          "lines": 1035
         },
         {
           "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
@@ -497,14 +505,6 @@
         {
           "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
           "lines": 1014
-        },
-        {
-          "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",
-          "lines": 1008
-        },
-        {
-          "path": "src/features/integrations/services/imports/base-mapper.test.ts",
-          "lines": 1004
         }
       ]
     },

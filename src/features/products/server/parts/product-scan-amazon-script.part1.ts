@@ -17,6 +17,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   const CAPTCHA_REQUIRED_MESSAGE = 'Google Lens requested captcha verification.';
   const CAPTCHA_WAIT_MESSAGE =
     'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
+  const CAPTCHA_STABLE_CLEAR_WINDOW_MS = 10000;
   const scanSteps = [];
   const nowIso = () => new Date().toISOString();
   const resolveComparableAttempt = (attempt) =>
@@ -244,27 +245,104 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     }
   };
 
+  const buildGoogleUploadArtifactKey = (stage, candidateId, candidateAttempt) => {
+    const normalizedStage =
+      toText(stage)
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40) || 'state';
+    const normalizedCandidate =
+      toText(candidateId)
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 80) || 'candidate';
+    return [
+      'amazon-scan-google-upload',
+      normalizedStage,
+      normalizedCandidate,
+      'attempt-' + String(resolveComparableAttempt(candidateAttempt)),
+    ].join('-');
+  };
+
+  const captureGoogleUploadArtifacts = async (stage, candidateId, candidateAttempt) => {
+    const artifactKey = buildGoogleUploadArtifactKey(stage, candidateId, candidateAttempt);
+    if (typeof artifacts?.screenshot === 'function') {
+      await artifacts.screenshot(artifactKey).catch(() => undefined);
+    }
+    if (typeof artifacts?.html === 'function') {
+      await artifacts.html(artifactKey).catch(() => undefined);
+    }
+    return artifactKey;
+  };
+
   const GOOGLE_LENS_RESULT_HINT_SELECTORS = [
     'a[href*="amazon."]',
     '#search a[href]',
     '#rso a[href]',
     'div.g a[href]',
+    'main a[href]',
     '[data-lpage]',
+    'a[href*="udm=44"]',
+    'a[href*="udm=48"]',
     'a[href*="/imgres"]',
     '#islrg img',
     'img[src^="blob:"]',
     'img[src^="data:image/"]',
   ];
+  const GOOGLE_LENS_RESULT_SHELL_SELECTORS = [
+    'button[aria-label*="Edit visual search"]',
+    'img[alt*="Visually searched image"]',
+    'main h2',
+    '#search',
+    '#rso',
+    '#islrg',
+    '[data-lpage]',
+    'div.g',
+  ];
+  const GOOGLE_LENS_PROCESSING_INDICATOR_SELECTORS = [
+    '[role="progressbar"]',
+    '[aria-busy="true"]',
+  ];
+  const GOOGLE_LENS_PROCESSING_TEXT_HINTS = [
+    'uploading',
+    'searching',
+    'looking for matches',
+    'finding results',
+  ];
+  const GOOGLE_LENS_RESULT_TEXT_HINTS = [
+    'visual matches',
+    'exact matches',
+    'about this image',
+    'search results',
+    'edit visual search',
+  ];
+  const GOOGLE_LENS_FILE_INPUT_SELECTORS = [
+    'input[type="file"][accept*="image"]',
+    'input[type="file"]',
+  ];
   const GOOGLE_LENS_ENTRY_TRIGGER_SELECTORS = [
     'div[aria-label="Search by image"]',
     'button[aria-label="Search by image"]',
+    'div[aria-label="Search with an image"]',
+    'button[aria-label="Search with an image"]',
+    'div[role="button"][aria-label*="image"]',
+    'button[aria-label*="image"]',
+    'div[role="button"]:has-text("Search by image")',
+    'button:has-text("Search by image")',
+    'div[role="button"]:has-text("Search with an image")',
+    'button:has-text("Search with an image")',
     '[data-base-uri="/searchbyimage"]',
   ];
   const GOOGLE_LENS_UPLOAD_TAB_SELECTORS = [
     'button:has-text("Upload an image")',
     'button:has-text("Upload image")',
+    'button:has-text("Upload a file")',
+    'button:has-text("Upload file")',
     'div[role="tab"]:has-text("Upload")',
     'div[role="tab"]:has-text("Upload an image")',
+    'div[role="tab"]:has-text("Upload a file")',
     'button:has-text("upload")',
   ];
   const GOOGLE_CONSENT_CONTROL_SELECTOR =
@@ -521,8 +599,11 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     return normalizedCurrentUrl !== normalizedStartingUrl;
   };
 
-  const waitForGoogleLensResultState = async (startingUrl, inputLocator = null) => {
-    const deadline = Date.now() + 25000;
+  const waitForGoogleLensResultState = async (startingUrl, inputLocator = null, stepMeta = null) => {
+    let deadline = Date.now() + 25000;
+    let extendedForProcessing = false;
+    let nextProcessingProgressAt = Date.now() + 5000;
+    let lastProcessingState = null;
     while (Date.now() < deadline) {
       const currentUrl = page.url();
       if (await isGoogleConsentPresent().catch(() => false)) {
@@ -537,6 +618,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
           advanced: true,
           currentUrl,
           reason: 'url_changed',
+          processingState: lastProcessingState,
         };
       }
 
@@ -547,8 +629,14 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
             advanced: true,
             currentUrl,
             reason: 'input_replaced',
+            processingState: lastProcessingState,
           };
         }
+      }
+
+      const processingState = await readGoogleLensProcessingState();
+      if (processingState.processingVisible || processingState.resultShellVisible) {
+        lastProcessingState = processingState;
       }
 
       const hasResultHints = await Promise.any(
@@ -570,6 +658,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
           advanced: true,
           currentUrl,
           reason: 'result_hints',
+          processingState,
         };
       }
 
@@ -579,7 +668,50 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
           advanced: true,
           currentUrl: captchaState.currentUrl,
           reason: 'captcha',
+          processingState,
         };
+      }
+
+      if (processingState.resultShellVisible) {
+        return {
+          advanced: true,
+          currentUrl,
+          reason: 'results_shell_visible',
+          processingState,
+        };
+      }
+
+      if (processingState.processingVisible) {
+        if (!extendedForProcessing) {
+          deadline = Math.max(deadline, Date.now() + 35000);
+          extendedForProcessing = true;
+        }
+        if (Date.now() >= nextProcessingProgressAt) {
+          nextProcessingProgressAt = Date.now() + 5000;
+          if (stepMeta) {
+            upsertScanStep({
+              key: 'google_upload',
+              label: 'Upload image to Google Lens',
+              attempt: stepMeta.attempt,
+              candidateId: stepMeta.candidateId,
+              inputSource: stepMeta.inputSource,
+              status: 'running',
+              resultCode: 'upload_processing',
+              message: 'Google Lens accepted the image and is still processing it.',
+              url: currentUrl,
+              details: [
+                { label: 'Processing text', value: processingState.processingText },
+                { label: 'Progress indicator', value: processingState.progressIndicatorSelector },
+                { label: 'Result shell', value: processingState.resultShellSelector },
+              ],
+            });
+          }
+          await emitProgress({
+            stage: 'google_upload',
+            currentUrl,
+            message: 'Google Lens accepted the image and is still processing it.',
+          });
+        }
       }
 
       await wait(500);
@@ -588,11 +720,12 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     return {
       advanced: false,
       currentUrl: page.url(),
-      reason: 'timeout',
+      reason: lastProcessingState?.processingVisible ? 'upload_processing_timeout' : 'timeout',
+      processingState: lastProcessingState,
     };
   };
 
-  const verifyGoogleLensFileUploadAccepted = async (inputLocator, startingUrl) => {
+  const verifyGoogleLensFileUploadAccepted = async (inputLocator, startingUrl, stepMeta = null) => {
     const selectedFileState = await readSelectedGoogleLensFileState(inputLocator);
     if (
       selectedFileState.fileCount < 1 ||
@@ -606,11 +739,14 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       };
     }
 
-    const transitionState = await waitForGoogleLensResultState(startingUrl, inputLocator);
+    const transitionState = await waitForGoogleLensResultState(startingUrl, inputLocator, stepMeta);
     if (!transitionState.advanced) {
       return {
         accepted: false,
-        error: 'Google Lens did not advance after receiving the image upload.',
+        error:
+          transitionState.reason === 'upload_processing_timeout'
+            ? 'Google Lens accepted the image but stayed in the upload processing state without producing results.'
+            : 'Google Lens did not advance after receiving the image upload.',
         selectedFileState,
         transitionState,
       };
@@ -624,12 +760,15 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     };
   };
 
-  const verifyGoogleLensUrlSubmissionAccepted = async (startingUrl) => {
-    const transitionState = await waitForGoogleLensResultState(startingUrl);
+  const verifyGoogleLensUrlSubmissionAccepted = async (startingUrl, stepMeta = null) => {
+    const transitionState = await waitForGoogleLensResultState(startingUrl, null, stepMeta);
     if (!transitionState.advanced) {
       return {
         accepted: false,
-        error: 'Google Lens did not advance after receiving the image URL.',
+        error:
+          transitionState.reason === 'upload_processing_timeout'
+            ? 'Google Lens accepted the image URL but stayed in the upload processing state without producing results.'
+            : 'Google Lens did not advance after receiving the image URL.',
         transitionState,
       };
     }
@@ -641,45 +780,229 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     };
   };
 
+  const listGoogleLensSearchScopes = () => {
+    const mainFrame = typeof page.mainFrame === 'function' ? page.mainFrame() : null;
+    const childFrames = page
+      .frames()
+      .filter((frame) => !mainFrame || frame !== mainFrame)
+      .map((frame) => ({
+        target: frame,
+        scopeType: 'frame',
+        frameUrl: frame.url(),
+      }));
+
+    return [
+      {
+        target: page,
+        scopeType: 'page',
+        frameUrl: page.url(),
+      },
+      ...childFrames,
+    ];
+  };
+
   const findFirstVisibleSelector = async (selectors) => {
-    for (const selector of selectors) {
-      const locator = page.locator(selector).first();
-      if ((await locator.count().catch(() => 0)) === 0) {
-        continue;
-      }
-      const visible = await locator.isVisible().catch(() => false);
-      if (visible) {
-        return selector;
+    for (const scope of listGoogleLensSearchScopes()) {
+      for (const selector of selectors) {
+        const locator = scope.target.locator(selector).first();
+        if ((await locator.count().catch(() => 0)) === 0) {
+          continue;
+        }
+        const visible = await locator.isVisible().catch(() => false);
+        if (visible) {
+          return {
+            selector,
+            scopeType: scope.scopeType,
+            frameUrl: scope.frameUrl,
+          };
+        }
       }
     }
 
     return null;
   };
 
+  const findGoogleLensProcessingText = async () => {
+    for (const scope of listGoogleLensSearchScopes()) {
+      const visibleText = (
+        toText(await scope.target.locator('body').first().textContent().catch(() => null)) || ''
+      ).toLowerCase();
+      if (!visibleText) {
+        continue;
+      }
+
+      const matchedHint = GOOGLE_LENS_PROCESSING_TEXT_HINTS.find((hint) =>
+        visibleText.includes(hint)
+      );
+      if (!matchedHint) {
+        continue;
+      }
+
+      return {
+        hint: matchedHint,
+        scopeType: scope.scopeType,
+        frameUrl: scope.frameUrl,
+      };
+    }
+
+    return null;
+  };
+
+  const findGoogleLensResultText = async () => {
+    for (const scope of listGoogleLensSearchScopes()) {
+      const visibleText = (
+        toText(await scope.target.locator('body').first().textContent().catch(() => null)) || ''
+      ).toLowerCase();
+      if (!visibleText) {
+        continue;
+      }
+
+      const matchedHint = GOOGLE_LENS_RESULT_TEXT_HINTS.find((hint) =>
+        visibleText.includes(hint)
+      );
+      if (!matchedHint) {
+        continue;
+      }
+
+      return {
+        hint: matchedHint,
+        scopeType: scope.scopeType,
+        frameUrl: scope.frameUrl,
+      };
+    }
+
+    return null;
+  };
+
+  const readGoogleLensProcessingState = async () => {
+    const progressIndicatorState = await findFirstVisibleSelector(
+      GOOGLE_LENS_PROCESSING_INDICATOR_SELECTORS
+    );
+    const resultShellState = await findFirstVisibleSelector(GOOGLE_LENS_RESULT_SHELL_SELECTORS);
+    const processingTextState = await findGoogleLensProcessingText();
+    const resultTextState = await findGoogleLensResultText();
+
+    return {
+      currentUrl: page.url(),
+      processingVisible: Boolean(progressIndicatorState || processingTextState),
+      progressIndicatorVisible: Boolean(progressIndicatorState),
+      progressIndicatorSelector: progressIndicatorState?.selector ?? null,
+      progressIndicatorScopeType: progressIndicatorState?.scopeType ?? null,
+      progressIndicatorFrameUrl: progressIndicatorState?.frameUrl ?? null,
+      processingText: processingTextState?.hint ?? null,
+      processingTextScopeType: processingTextState?.scopeType ?? null,
+      processingTextFrameUrl: processingTextState?.frameUrl ?? null,
+      resultShellVisible: Boolean(resultShellState || resultTextState),
+      resultShellSelector: resultShellState?.selector ?? resultTextState?.hint ?? null,
+      resultShellScopeType: resultShellState?.scopeType ?? resultTextState?.scopeType ?? null,
+      resultShellFrameUrl: resultShellState?.frameUrl ?? resultTextState?.frameUrl ?? null,
+    };
+  };
+
+  const resolveGoogleLensFileInput = async () => {
+    for (const scope of listGoogleLensSearchScopes()) {
+      for (const selector of GOOGLE_LENS_FILE_INPUT_SELECTORS) {
+        const locator = scope.target.locator(selector);
+        const candidateCount = await locator.count().catch(() => 0);
+        if (candidateCount < 1) {
+          continue;
+        }
+
+        const bestInputIndex = await locator
+          .evaluateAll((nodes) => {
+            const describeVisibility = (node) => {
+              if (!(node instanceof HTMLElement)) {
+                return false;
+              }
+              const style = window.getComputedStyle(node);
+              const rect = node.getBoundingClientRect();
+              return (
+                style.visibility !== 'hidden' &&
+                style.display !== 'none' &&
+                rect.width > 0 &&
+                rect.height > 0
+              );
+            };
+
+            let bestIndex = -1;
+            let bestScore = -1;
+            nodes.forEach((node, index) => {
+              if (!(node instanceof HTMLInputElement)) {
+                return;
+              }
+              if (node.disabled || node.getAttribute('aria-disabled') === 'true') {
+                return;
+              }
+              let score = 0;
+              if (describeVisibility(node)) {
+                score += 8;
+              }
+              const acceptValue = (typeof node.accept === 'string' ? node.accept : '').toLowerCase();
+              if (!acceptValue || acceptValue.includes('image')) {
+                score += 4;
+              }
+              if (
+                node.closest('[role="dialog"]') ||
+                node.closest('[role="tabpanel"]') ||
+                node.closest('c-wiz') ||
+                node.closest('form')
+              ) {
+                score += 2;
+              }
+              if (node.files && node.files.length > 0) {
+                score += 1;
+              }
+              if (score > bestScore) {
+                bestIndex = index;
+                bestScore = score;
+              }
+            });
+            return bestIndex;
+          })
+          .catch(() => -1);
+
+        if (typeof bestInputIndex === 'number' && bestInputIndex >= 0) {
+          const inputLocator = locator.nth(bestInputIndex);
+          return {
+            ready: true,
+            inputLocator,
+            currentUrl: page.url(),
+            selector,
+            scopeType: scope.scopeType,
+            frameUrl: scope.frameUrl,
+            inputCount: candidateCount,
+          };
+        }
+      }
+    }
+
+    return {
+      ready: false,
+      inputLocator: null,
+      currentUrl: page.url(),
+      selector: null,
+      scopeType: null,
+      frameUrl: null,
+      inputCount: 0,
+    };
+  };
+
   const describeGoogleLensUploadEntryState = async () => {
-    const inputLocator = page.locator('input[type="file"]').first();
-    const inputCount = await inputLocator.count().catch(() => 0);
+    const fileInputState = await resolveGoogleLensFileInput();
     const fileInputVisible =
-      inputCount > 0 ? await inputLocator.isVisible().catch(() => false) : false;
-    const searchTriggerSelector = await findFirstVisibleSelector(
+      fileInputState.ready && fileInputState.inputLocator
+        ? await fileInputState.inputLocator.isVisible().catch(() => false)
+        : false;
+    const searchTriggerState = await findFirstVisibleSelector(
       GOOGLE_LENS_ENTRY_TRIGGER_SELECTORS
     );
-    const uploadTabSelector = await findFirstVisibleSelector(
+    const uploadTabState = await findFirstVisibleSelector(
       GOOGLE_LENS_UPLOAD_TAB_SELECTORS
     );
-    const resultHintsVisible = await Promise.any(
-      GOOGLE_LENS_RESULT_HINT_SELECTORS.map(async (selector) => {
-        const locator = page.locator(selector).first();
-        if ((await locator.count().catch(() => 0)) === 0) {
-          throw new Error('not-found');
-        }
-        const visible = await locator.isVisible().catch(() => false);
-        if (!visible) {
-          throw new Error('not-visible');
-        }
-        return true;
-      })
-    ).catch(() => false);
+    const resultHintsVisible = Boolean(
+      await findFirstVisibleSelector(GOOGLE_LENS_RESULT_HINT_SELECTORS)
+    );
+    const processingState = await readGoogleLensProcessingState();
     const captchaState = await detectGoogleLensCaptcha();
     const consentFrames = await listGoogleConsentFrames().catch(() => []);
     const consentPresent = Array.isArray(consentFrames) && consentFrames.length > 0;
@@ -687,10 +1010,30 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
 
     return {
       currentUrl: page.url(),
+      fileInputCount: fileInputState.inputCount,
       fileInputVisible,
-      searchTriggerSelector,
-      uploadTabSelector,
+      fileInputSelector: fileInputState.selector,
+      fileInputScopeType: fileInputState.scopeType,
+      fileInputFrameUrl: fileInputState.frameUrl,
+      searchTriggerSelector: searchTriggerState?.selector ?? null,
+      searchTriggerScopeType: searchTriggerState?.scopeType ?? null,
+      searchTriggerFrameUrl: searchTriggerState?.frameUrl ?? null,
+      uploadTabSelector: uploadTabState?.selector ?? null,
+      uploadTabScopeType: uploadTabState?.scopeType ?? null,
+      uploadTabFrameUrl: uploadTabState?.frameUrl ?? null,
       resultHintsVisible,
+      processingVisible: processingState.processingVisible,
+      progressIndicatorVisible: processingState.progressIndicatorVisible,
+      progressIndicatorSelector: processingState.progressIndicatorSelector,
+      progressIndicatorScopeType: processingState.progressIndicatorScopeType,
+      progressIndicatorFrameUrl: processingState.progressIndicatorFrameUrl,
+      processingText: processingState.processingText,
+      processingTextScopeType: processingState.processingTextScopeType,
+      processingTextFrameUrl: processingState.processingTextFrameUrl,
+      resultShellVisible: processingState.resultShellVisible,
+      resultShellSelector: processingState.resultShellSelector,
+      resultShellScopeType: processingState.resultShellScopeType,
+      resultShellFrameUrl: processingState.resultShellFrameUrl,
       captchaDetected: captchaState.detected,
       consentPresent,
       consentFrameUrl,
@@ -726,42 +1069,47 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   };
 
   const waitForGoogleLensFileInput = async () => {
-    const inputLocator = page.locator('input[type="file"]').first();
     const waitForInput = async (timeoutMs) =>
-      await inputLocator
-      .waitFor({ state: 'attached', timeout: timeoutMs })
-      .then(() => true)
-      .catch(() => false);
+      await (async () => {
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+          const state = await resolveGoogleLensFileInput();
+          if (state.ready) {
+            return state;
+          }
+          await wait(500);
+        }
+        return null;
+      })();
 
-    if (await waitForInput(2000)) {
-      return {
-        ready: true,
-        inputLocator,
-        currentUrl: page.url(),
-      };
+    const initialState = await waitForInput(2500);
+    if (initialState?.ready) {
+      return initialState;
     }
 
     await clickGoogleConsentIfPresent().catch(() => undefined);
     await clickFirstVisible(GOOGLE_LENS_ENTRY_TRIGGER_SELECTORS).catch(() => undefined);
 
-    if (await waitForInput(3000)) {
-      return {
-        ready: true,
-        inputLocator,
-        currentUrl: page.url(),
-      };
+    const postTriggerState = await waitForInput(4000);
+    if (postTriggerState?.ready) {
+      return postTriggerState;
     }
 
     await clickGoogleConsentIfPresent().catch(() => undefined);
     await clickFirstVisible(GOOGLE_LENS_UPLOAD_TAB_SELECTORS).catch(() => undefined);
 
-    const ready = await waitForInput(5000);
+    const readyState = await waitForInput(7000);
+    const ready = Boolean(readyState?.ready);
     const entryState = ready ? null : await describeGoogleLensUploadEntryState();
 
     return {
       ready,
-      inputLocator,
+      inputLocator: readyState?.inputLocator ?? null,
       currentUrl: page.url(),
+      selector: readyState?.selector ?? null,
+      scopeType: readyState?.scopeType ?? null,
+      frameUrl: readyState?.frameUrl ?? null,
+      inputCount: readyState?.inputCount ?? 0,
       entryState,
     };
   };
@@ -770,6 +1118,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     submitted: input.submitted === true,
     advanced: input.advanced === true,
     captchaRequired: input.captchaRequired === true,
+    captchaEncountered: input.captchaEncountered === true,
     error: toText(input.error),
     retryRecommended: input.retryRecommended === true,
     inputSourceUsed: toText(input.inputSourceUsed),
@@ -808,6 +1157,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       timeout: 30000,
     });
     await clickGoogleConsentIfPresent();
+    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => undefined);
     upsertScanStep({
       key: 'google_lens_open',
       label: 'Open Google Lens',
@@ -1028,6 +1378,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       .first()
       .isVisible()
       .catch(() => false);
+    const processingState = await readGoogleLensProcessingState();
     const candidateHintsVisible = await Promise.any(
       GOOGLE_LENS_CANDIDATE_HINT_SELECTORS.map(async (selector) => {
         const locator = page.locator(selector).first();
@@ -1048,11 +1399,19 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       uploadInputVisible,
       candidateHintsVisible,
       amazonLinkCount,
+      processingVisible: processingState.processingVisible,
+      progressIndicatorVisible: processingState.progressIndicatorVisible,
+      progressIndicatorSelector: processingState.progressIndicatorSelector,
+      processingText: processingState.processingText,
+      resultShellVisible: processingState.resultShellVisible,
+      resultShellSelector: processingState.resultShellSelector,
       looksLikeUploadEntry:
-        uploadInputVisible ||
-        currentUrl.includes('/searchbyimage') ||
-        currentUrl === 'https://images.google.com/' ||
-        currentUrl === 'https://images.google.com',
+        !processingState.processingVisible &&
+        !processingState.resultShellVisible &&
+        (uploadInputVisible ||
+          currentUrl.includes('/searchbyimage') ||
+          currentUrl === 'https://images.google.com/' ||
+          currentUrl === 'https://images.google.com'),
     };
   };
 
@@ -1133,9 +1492,6 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   const detectGoogleLensCaptcha = async () => {
     const currentUrl = page.url();
     const normalizedUrl = currentUrl.toLowerCase();
-    const bodyText = (
-      toText(await page.locator('body').first().textContent().catch(() => null)) || ''
-    ).toLowerCase();
     const challengeSelectors = [
       'iframe[src*="recaptcha"]',
       'iframe[src*="hcaptcha"]',
@@ -1167,18 +1523,110 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     ];
     const urlHints = ['/sorry', '/challenge', '/captcha', 'sorry/index'];
 
+    for (const scope of listGoogleLensSearchScopes()) {
+      const scopeUrl = toText(scope.frameUrl)?.toLowerCase();
+      if (scopeUrl && urlHints.some((hint) => scopeUrl.includes(hint))) {
+        return {
+          detected: true,
+          currentUrl,
+        };
+      }
+
+      for (const selector of challengeSelectors) {
+        if ((await scope.target.locator(selector).first().count().catch(() => 0)) > 0) {
+          return {
+            detected: true,
+            currentUrl,
+          };
+        }
+      }
+
+      const bodyText = (
+        toText(await scope.target.locator('body').first().textContent().catch(() => null)) || ''
+      ).toLowerCase();
+      if (bodyText && textHints.some((hint) => bodyText.includes(hint))) {
+        return {
+          detected: true,
+          currentUrl,
+        };
+      }
+    }
+
     return {
-      detected:
-        urlHints.some((hint) => normalizedUrl.includes(hint)) ||
-        textHints.some((hint) => bodyText.includes(hint)),
+      detected: urlHints.some((hint) => normalizedUrl.includes(hint)),
       currentUrl,
+    };
+  };
+
+  const readGoogleLensPostCaptchaReadyState = async (stage) => {
+    const processingState = await readGoogleLensProcessingState();
+    const resultHintState = await findFirstVisibleSelector(GOOGLE_LENS_RESULT_HINT_SELECTORS);
+    const shouldAcceptUploadEntry =
+      stage == null || stage === 'google_lens' || stage === 'google_lens_open';
+    const uploadEntryState = shouldAcceptUploadEntry
+      ? {
+          fileInputReady: (await resolveGoogleLensFileInput()).ready,
+          entryTriggerVisible: Boolean(
+            await findFirstVisibleSelector(GOOGLE_LENS_ENTRY_TRIGGER_SELECTORS)
+          ),
+          uploadTabVisible: Boolean(
+            await findFirstVisibleSelector(GOOGLE_LENS_UPLOAD_TAB_SELECTORS)
+          ),
+        }
+      : null;
+
+    const candidateHintsVisible = Boolean(resultHintState);
+    const ready =
+      processingState.processingVisible ||
+      processingState.resultShellVisible ||
+      candidateHintsVisible ||
+      (shouldAcceptUploadEntry && uploadEntryState
+        ? uploadEntryState.fileInputReady ||
+          uploadEntryState.entryTriggerVisible ||
+          uploadEntryState.uploadTabVisible
+        : false);
+
+    let readyReason = null;
+    if (processingState.resultShellVisible) {
+      readyReason = 'results_shell_visible';
+    } else if (candidateHintsVisible) {
+      readyReason = 'result_hints_visible';
+    } else if (processingState.processingVisible) {
+      readyReason = 'processing_visible';
+    } else if (uploadEntryState?.fileInputReady) {
+      readyReason = 'file_input_ready';
+    } else if (uploadEntryState?.uploadTabVisible) {
+      readyReason = 'upload_tab_visible';
+    } else if (uploadEntryState?.entryTriggerVisible) {
+      readyReason = 'entry_trigger_visible';
+    }
+
+    return {
+      currentUrl: page.url(),
+      ready,
+      readyReason,
+      candidateHintsVisible,
+      processingVisible: processingState.processingVisible,
+      progressIndicatorSelector: processingState.progressIndicatorSelector,
+      processingText: processingState.processingText,
+      resultShellVisible: processingState.resultShellVisible,
+      resultShellSelector: processingState.resultShellSelector,
+      fileInputReady: uploadEntryState?.fileInputReady ?? false,
+      entryTriggerVisible: uploadEntryState?.entryTriggerVisible ?? false,
+      uploadTabVisible: uploadEntryState?.uploadTabVisible ?? false,
     };
   };
 
   const handleGoogleLensCaptchaIfPresent = async (stage, stepMeta = {}) => {
     const detected = await detectGoogleLensCaptcha();
     if (!detected.detected) {
-      return { resolved: true, captchaRequired: false, currentUrl: detected.currentUrl, message: null };
+      return {
+        resolved: true,
+        captchaRequired: false,
+        captchaEncountered: false,
+        currentUrl: detected.currentUrl,
+        message: null,
+      };
     }
 
     log('amazon.scan.google_captcha_detected', {
@@ -1223,6 +1671,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       return {
         resolved: false,
         captchaRequired: true,
+        captchaEncountered: true,
         currentUrl: detected.currentUrl,
         message: CAPTCHA_REQUIRED_MESSAGE,
       };
@@ -1242,36 +1691,135 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     });
 
     const deadline = Date.now() + manualVerificationTimeoutMs;
+    let stableReadyCount = 0;
+    let nextProgressAt = Date.now() + 5000;
+    let lastCaptchaDetectedAt = Date.now();
     while (Date.now() < deadline) {
       await wait(1000);
       const currentState = await detectGoogleLensCaptcha();
-      if (!currentState.detected) {
-        await wait(1500);
-        await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => undefined);
-        const settledState = await detectGoogleLensCaptcha();
-        if (!settledState.detected) {
-          log('amazon.scan.google_captcha_resolved', {
-            stage,
-            currentUrl: page.url(),
-          });
+      if (currentState.detected) {
+        lastCaptchaDetectedAt = Date.now();
+        stableReadyCount = 0;
+        continue;
+      }
+
+      const timeSinceLastCaptchaDetection = Date.now() - lastCaptchaDetectedAt;
+      if (timeSinceLastCaptchaDetection < CAPTCHA_STABLE_CLEAR_WINDOW_MS) {
+        stableReadyCount = 0;
+        if (Date.now() >= nextProgressAt) {
+          nextProgressAt = Date.now() + 5000;
           upsertScanStep({
             key: 'google_captcha',
             label: 'Google captcha',
             attempt: stepMeta.attempt,
             candidateId: stepMeta.candidateId,
             inputSource: stepMeta.inputSource,
-            status: 'completed',
-            message: 'Captcha resolved. Continuing scan.',
+            status: 'running',
+            resultCode: 'captcha_stabilizing',
+            message:
+              'Captcha challenge appears to be clearing. Waiting for Google Lens to stay stable before resuming.',
             url: page.url(),
+            details: [
+              { label: 'Stable clear window (ms)', value: String(CAPTCHA_STABLE_CLEAR_WINDOW_MS) },
+              { label: 'Elapsed clear time (ms)', value: String(timeSinceLastCaptchaDetection) },
+            ],
           });
-          return {
-            resolved: true,
-            captchaRequired: false,
+          await emitProgress({
+            stage,
             currentUrl: page.url(),
-            message: null,
-          };
+            message:
+              'Captcha challenge appears to be clearing. Waiting for Google Lens to stay stable before resuming.',
+          });
         }
+        continue;
       }
+
+      const readyState = await readGoogleLensPostCaptchaReadyState(stage);
+      if (!readyState.ready) {
+        stableReadyCount = 0;
+        if (Date.now() >= nextProgressAt) {
+          nextProgressAt = Date.now() + 5000;
+          upsertScanStep({
+            key: 'google_captcha',
+            label: 'Google captcha',
+            attempt: stepMeta.attempt,
+            candidateId: stepMeta.candidateId,
+            inputSource: stepMeta.inputSource,
+            status: 'running',
+            resultCode: 'captcha_stabilizing',
+            message: 'Captcha challenge looks partially resolved. Waiting for Google Lens to become ready.',
+            url: readyState.currentUrl,
+            details: [
+              { label: 'Ready reason', value: readyState.readyReason },
+              { label: 'Processing text', value: readyState.processingText },
+              { label: 'Progress indicator', value: readyState.progressIndicatorSelector },
+              { label: 'Result shell', value: readyState.resultShellSelector },
+            ],
+          });
+          await emitProgress({
+            stage,
+            currentUrl: readyState.currentUrl,
+            message:
+              'Captcha challenge looks partially resolved. Waiting for Google Lens to become ready.',
+          });
+        }
+        continue;
+      }
+
+      stableReadyCount += 1;
+      if (stableReadyCount < 3) {
+        continue;
+      }
+
+      await wait(1500);
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => undefined);
+      const settledState = await detectGoogleLensCaptcha();
+      if (settledState.detected) {
+        lastCaptchaDetectedAt = Date.now();
+        stableReadyCount = 0;
+        continue;
+      }
+
+      if (Date.now() - lastCaptchaDetectedAt < CAPTCHA_STABLE_CLEAR_WINDOW_MS) {
+        stableReadyCount = 0;
+        continue;
+      }
+
+      const settledReadyState = await readGoogleLensPostCaptchaReadyState(stage);
+      if (!settledReadyState.ready) {
+        stableReadyCount = 0;
+        continue;
+      }
+
+      log('amazon.scan.google_captcha_resolved', {
+        stage,
+        currentUrl: page.url(),
+        readyReason: settledReadyState.readyReason,
+      });
+      upsertScanStep({
+        key: 'google_captcha',
+        label: 'Google captcha',
+        attempt: stepMeta.attempt,
+        candidateId: stepMeta.candidateId,
+        inputSource: stepMeta.inputSource,
+        status: 'completed',
+        resultCode: 'captcha_resolved',
+        message: 'Captcha resolved. Continuing scan.',
+        url: page.url(),
+        details: [
+          { label: 'Ready reason', value: settledReadyState.readyReason },
+          { label: 'Processing text', value: settledReadyState.processingText },
+          { label: 'Progress indicator', value: settledReadyState.progressIndicatorSelector },
+          { label: 'Result shell', value: settledReadyState.resultShellSelector },
+        ],
+      });
+      return {
+        resolved: true,
+        captchaRequired: false,
+        captchaEncountered: true,
+        currentUrl: page.url(),
+        message: null,
+      };
     }
 
     upsertScanStep({
@@ -1289,6 +1837,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     return {
       resolved: false,
       captchaRequired: false,
+      captchaEncountered: true,
       currentUrl: page.url(),
       message: 'Google Lens captcha was not resolved before timeout.',
     };
@@ -1300,6 +1849,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     candidateAttempt,
     fallbackContext = null
   ) => {
+    let captchaEncountered = false;
     const openState = await openGoogleLensForUpload({
       candidateId,
       candidateAttempt,
@@ -1329,7 +1879,11 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       warning: toText(fallbackContext?.warning),
       details: sharedDetails,
     });
-    const urlSubmission = await verifyGoogleLensUrlSubmissionAccepted(openState.currentUrl);
+    const urlSubmission = await verifyGoogleLensUrlSubmissionAccepted(openState.currentUrl, {
+      attempt: candidateAttempt,
+      candidateId,
+      inputSource: 'url',
+    });
     if (!urlSubmission.accepted) {
       upsertScanStep({
         key: 'google_upload',
@@ -1362,12 +1916,13 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         transitionReason: urlSubmission.transitionState?.reason,
       });
     }
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => undefined);
+    await page.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => undefined);
     const uploadByUrlCaptchaState = await handleGoogleLensCaptchaIfPresent('google_upload', {
       attempt: candidateAttempt,
       candidateId,
       inputSource: 'url',
     });
+    captchaEncountered = captchaEncountered || uploadByUrlCaptchaState.captchaEncountered === true;
     if (!uploadByUrlCaptchaState.resolved) {
       upsertScanStep({
         key: 'google_upload',
@@ -1387,10 +1942,11 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         submitted: false,
         advanced: true,
         captchaRequired: uploadByUrlCaptchaState.captchaRequired,
+        captchaEncountered,
         error: uploadByUrlCaptchaState.message,
         retryRecommended: false,
         inputSourceUsed: 'url',
-        failureCode: uploadByUrlCaptchaState.captchaRequired ? 'captcha_required' : 'url_submit_failed',
+        failureCode: uploadByUrlCaptchaState.captchaRequired ? 'captcha_required' : 'captcha_timeout',
         transitionReason: urlSubmission.transitionState?.reason,
       });
     }
@@ -1418,6 +1974,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       submitted: true,
       advanced: true,
       captchaRequired: false,
+      captchaEncountered,
       error: null,
       retryRecommended: false,
       inputSourceUsed: 'url',
@@ -1433,11 +1990,12 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     candidateAttempt,
     fallbackContext = null
   ) => {
+    let captchaEncountered = false;
     const openState = await openGoogleLensForUpload({
       candidateId,
       candidateAttempt,
       inputSource: 'file',
-      destinationUrl: 'https://images.google.com/',
+      destinationUrl: 'https://images.google.com/?hl=en',
       openingMessage: 'Opening Google Lens for image ' + (candidateId || 'candidate') + '.',
       openedMessage: 'Google Images opened.',
       fallbackContext,
@@ -1452,6 +2010,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       candidateId,
       inputSource: 'file',
     });
+    captchaEncountered = captchaEncountered || preUploadCaptchaState.captchaEncountered === true;
     if (!preUploadCaptchaState.resolved) {
       upsertScanStep({
         key: 'google_upload',
@@ -1471,10 +2030,11 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         submitted: false,
         advanced: false,
         captchaRequired: preUploadCaptchaState.captchaRequired,
+        captchaEncountered,
         error: preUploadCaptchaState.message,
         retryRecommended: false,
         inputSourceUsed: 'file',
-        failureCode: preUploadCaptchaState.captchaRequired ? 'captcha_required' : 'file_submit_failed',
+        failureCode: preUploadCaptchaState.captchaRequired ? 'captcha_required' : 'captcha_timeout',
         transitionReason: null,
       });
     }
@@ -1499,6 +2059,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         candidateId,
         inputSource: 'file',
       });
+      captchaEncountered = captchaEncountered || entryCaptchaState.captchaEncountered === true;
       if (!entryCaptchaState.resolved) {
         upsertScanStep({
           key: 'google_upload',
@@ -1519,11 +2080,12 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
           submitted: false,
           advanced: false,
           captchaRequired: entryCaptchaState.captchaRequired,
+          captchaEncountered,
           error: entryCaptchaState.message,
           retryRecommended: false,
           inputSourceUsed: 'file',
           failureCode:
-            entryCaptchaState.captchaRequired ? 'captcha_required' : 'file_submit_failed',
+            entryCaptchaState.captchaRequired ? 'captcha_required' : 'captcha_timeout',
           transitionReason: 'captcha',
         });
       }
@@ -1531,11 +2093,17 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     }
     if (!fileInputState.ready) {
       const entryFailure = resolveGoogleLensUploadEntryFailure(fileInputState.entryState);
+      const artifactKey = await captureGoogleUploadArtifacts(
+        'entry-missing',
+        candidateId,
+        candidateAttempt
+      );
       log('amazon.scan.google_upload_entry_missing', {
         candidateId,
         filepath: filePath,
         imageUrl,
         entryState: fileInputState.entryState,
+        artifactKey,
       });
       upsertScanStep({
         key: 'google_upload',
@@ -1568,12 +2136,47 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
               value: fileInputState.entryState?.consentFrameUrl,
             },
             {
+              label: 'File input count',
+              value:
+                typeof fileInputState.entryState?.fileInputCount === 'number'
+                  ? String(fileInputState.entryState.fileInputCount)
+                  : null,
+            },
+            {
+              label: 'File input selector',
+              value: fileInputState.entryState?.fileInputSelector,
+            },
+            {
+              label: 'File input scope',
+              value: fileInputState.entryState?.fileInputScopeType,
+            },
+            {
+              label: 'File input frame',
+              value: fileInputState.entryState?.fileInputFrameUrl,
+            },
+            {
               label: 'Entry trigger',
               value: fileInputState.entryState?.searchTriggerSelector,
             },
             {
+              label: 'Entry trigger scope',
+              value: fileInputState.entryState?.searchTriggerScopeType,
+            },
+            {
+              label: 'Entry trigger frame',
+              value: fileInputState.entryState?.searchTriggerFrameUrl,
+            },
+            {
               label: 'Upload tab',
               value: fileInputState.entryState?.uploadTabSelector,
+            },
+            {
+              label: 'Upload tab scope',
+              value: fileInputState.entryState?.uploadTabScopeType,
+            },
+            {
+              label: 'Upload tab frame',
+              value: fileInputState.entryState?.uploadTabFrameUrl,
             },
             {
               label: 'Result hints visible',
@@ -1583,6 +2186,10 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
                   ? String(fileInputState.entryState.resultHintsVisible)
                   : null,
             },
+            {
+              label: 'Artifact key',
+              value: artifactKey,
+            },
           ]
         ),
       });
@@ -1590,6 +2197,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         submitted: false,
         advanced: false,
         captchaRequired: entryFailure.resultCode === 'captcha_required',
+        captchaEncountered,
         error: entryFailure.message,
         retryRecommended: false,
         inputSourceUsed: 'file',
@@ -1599,35 +2207,148 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     }
     const inputLocator = fileInputState.inputLocator;
     const lensUploadUrl = fileInputState.currentUrl;
-    await inputLocator.setInputFiles(filePath);
-    const uploadVerification = await verifyGoogleLensFileUploadAccepted(inputLocator, lensUploadUrl);
+    const fileAttachError = await inputLocator
+      .setInputFiles(filePath)
+      .then(() => null)
+      .catch((error) => toText(error?.message) || 'Google Lens rejected the selected image file.');
+    if (fileAttachError) {
+      const artifactKey = await captureGoogleUploadArtifacts(
+        'attach-failed',
+        candidateId,
+        candidateAttempt
+      );
+      log('amazon.scan.google_upload_attach_failed', {
+        candidateId,
+        filepath: filePath,
+        imageUrl,
+        fileAttachError,
+        selector: fileInputState.selector,
+        scopeType: fileInputState.scopeType,
+        frameUrl: fileInputState.frameUrl,
+        artifactKey,
+      });
+      upsertScanStep({
+        key: 'google_upload',
+        label: 'Upload image to Google Lens',
+        attempt: candidateAttempt,
+        candidateId,
+        inputSource: 'file',
+        status: 'failed',
+        retryOf: toText(fallbackContext?.retryOf),
+        resultCode: 'file_attach_failed',
+        message: fileAttachError,
+        url: page.url(),
+        warning:
+          toText(fallbackContext?.warning) ||
+          (imageUrl ? 'Retryable local file handoff failed. URL fallback is available.' : null),
+        details: mergeStepDetails(
+          sharedDetails,
+          imageUrl ? [{ label: 'Fallback available', value: 'Image URL' }] : [],
+          [
+            { label: 'File input selector', value: fileInputState.selector },
+            { label: 'File input scope', value: fileInputState.scopeType },
+            { label: 'File input frame', value: fileInputState.frameUrl },
+            { label: 'Artifact key', value: artifactKey },
+          ]
+        ),
+      });
+      return buildGoogleUploadResult({
+        submitted: false,
+        advanced: false,
+        captchaRequired: false,
+        captchaEncountered,
+        error: fileAttachError,
+        retryRecommended: Boolean(imageUrl),
+        inputSourceUsed: 'file',
+        failureCode: 'file_attach_failed',
+        transitionReason: 'file_attach_failed',
+      });
+    }
+    const uploadVerification = await verifyGoogleLensFileUploadAccepted(inputLocator, lensUploadUrl, {
+      attempt: candidateAttempt,
+      candidateId,
+      inputSource: 'file',
+    });
     if (!uploadVerification.accepted) {
+      const uploadTimedOutWhileProcessing =
+        uploadVerification.transitionState?.reason === 'upload_processing_timeout';
+      const artifactKey = await captureGoogleUploadArtifacts(
+        uploadTimedOutWhileProcessing ? 'processing-timeout' : 'empty-upload',
+        candidateId,
+        candidateAttempt
+      );
       log('amazon.scan.google_upload_empty', {
         candidateId,
         filepath: filePath,
         imageUrl,
         selectedFileState: uploadVerification.selectedFileState,
         transitionState: uploadVerification.transitionState,
+        artifactKey,
       });
-        upsertScanStep({
-          key: 'google_upload',
-          label: 'Upload image to Google Lens',
-          attempt: candidateAttempt,
-          candidateId,
-          inputSource: 'file',
-          status: 'failed',
-          retryOf: toText(fallbackContext?.retryOf),
-          resultCode: 'empty_upload',
-          message: uploadVerification.error,
-          url: page.url(),
-          warning:
-            toText(fallbackContext?.warning) ||
-            (imageUrl ? 'Retryable upload handoff. URL fallback is available.' : null),
-          details: mergeStepDetails(
-            sharedDetails,
-            imageUrl ? [{ label: 'Fallback available', value: 'Image URL' }] : []
-          ),
-        });
+      upsertScanStep({
+        key: 'google_upload',
+        label: 'Upload image to Google Lens',
+        attempt: candidateAttempt,
+        candidateId,
+        inputSource: 'file',
+        status: 'failed',
+        retryOf: toText(fallbackContext?.retryOf),
+        resultCode: uploadTimedOutWhileProcessing ? 'upload_processing_timeout' : 'empty_upload',
+        message: uploadVerification.error,
+        url: page.url(),
+        warning:
+          toText(fallbackContext?.warning) ||
+          (imageUrl ? 'Retryable upload handoff. URL fallback is available.' : null),
+        details: mergeStepDetails(
+          sharedDetails,
+          imageUrl ? [{ label: 'Fallback available', value: 'Image URL' }] : [],
+          [
+            { label: 'File input selector', value: fileInputState.selector },
+            { label: 'File input scope', value: fileInputState.scopeType },
+            { label: 'File input frame', value: fileInputState.frameUrl },
+            { label: 'Selected file', value: uploadVerification.selectedFileState?.fileName },
+            {
+              label: 'Selected file size',
+              value:
+                typeof uploadVerification.selectedFileState?.fileSize === 'number'
+                  ? String(uploadVerification.selectedFileState.fileSize)
+                  : null,
+            },
+            { label: 'Transition reason', value: uploadVerification.transitionState?.reason },
+            {
+              label: 'Processing visible',
+              value:
+                uploadVerification.transitionState &&
+                typeof uploadVerification.transitionState.processingState?.processingVisible ===
+                  'boolean'
+                  ? String(uploadVerification.transitionState.processingState.processingVisible)
+                  : null,
+            },
+            {
+              label: 'Progress indicator',
+              value: uploadVerification.transitionState?.processingState?.progressIndicatorSelector,
+            },
+            {
+              label: 'Processing text',
+              value: uploadVerification.transitionState?.processingState?.processingText,
+            },
+            {
+              label: 'Result shell visible',
+              value:
+                uploadVerification.transitionState &&
+                typeof uploadVerification.transitionState.processingState?.resultShellVisible ===
+                  'boolean'
+                  ? String(uploadVerification.transitionState.processingState.resultShellVisible)
+                  : null,
+            },
+            {
+              label: 'Result shell selector',
+              value: uploadVerification.transitionState?.processingState?.resultShellSelector,
+            },
+            { label: 'Artifact key', value: artifactKey },
+          ]
+        ),
+      });
       await emitProgress({
         stage: 'google_upload_empty',
         message: uploadVerification.error,
@@ -1636,19 +2357,21 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         submitted: false,
         advanced: false,
         captchaRequired: false,
+        captchaEncountered,
         error: uploadVerification.error,
-        retryRecommended: Boolean(imageUrl),
+        retryRecommended: !captchaEncountered && Boolean(imageUrl),
         inputSourceUsed: 'file',
-        failureCode: 'empty_upload',
+        failureCode: uploadTimedOutWhileProcessing ? 'upload_processing_timeout' : 'empty_upload',
         transitionReason: uploadVerification.transitionState?.reason,
       });
     }
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => undefined);
-      const postUploadCaptchaState = await handleGoogleLensCaptchaIfPresent('google_upload', {
+    await page.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => undefined);
+    const postUploadCaptchaState = await handleGoogleLensCaptchaIfPresent('google_upload', {
         attempt: candidateAttempt,
         candidateId,
         inputSource: 'file',
       });
+    captchaEncountered = captchaEncountered || postUploadCaptchaState.captchaEncountered === true;
     if (!postUploadCaptchaState.resolved) {
         upsertScanStep({
           key: 'google_upload',
@@ -1668,10 +2391,11 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         submitted: false,
         advanced: true,
         captchaRequired: postUploadCaptchaState.captchaRequired,
+        captchaEncountered,
         error: postUploadCaptchaState.message,
         retryRecommended: false,
         inputSourceUsed: 'file',
-        failureCode: postUploadCaptchaState.captchaRequired ? 'captcha_required' : 'file_submit_failed',
+        failureCode: postUploadCaptchaState.captchaRequired ? 'captcha_required' : 'captcha_timeout',
         transitionReason: uploadVerification.transitionState?.reason,
       });
     }
@@ -1688,6 +2412,17 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       url: page.url(),
       warning: toText(fallbackContext?.warning),
       details: mergeStepDetails(sharedDetails, [
+        { label: 'File input selector', value: fileInputState.selector },
+        { label: 'File input scope', value: fileInputState.scopeType },
+        { label: 'File input frame', value: fileInputState.frameUrl },
+        { label: 'Selected file', value: uploadVerification.selectedFileState?.fileName },
+        {
+          label: 'Selected file size',
+          value:
+            typeof uploadVerification.selectedFileState?.fileSize === 'number'
+              ? String(uploadVerification.selectedFileState.fileSize)
+              : null,
+        },
         { label: 'Transition reason', value: uploadVerification.transitionState?.reason },
       ]),
     });
@@ -1699,6 +2434,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       submitted: true,
       advanced: true,
       captchaRequired: false,
+      captchaEncountered,
       error: null,
       retryRecommended: false,
       inputSourceUsed: 'file',
@@ -1711,33 +2447,6 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     const filePath = toText(candidate?.filepath);
     const imageUrl = toText(candidate?.url);
     const candidateId = toText(candidate?.id);
-
-    if (imageUrl) {
-      const urlUploadResult = await uploadImageCandidateByUrl(candidateId, imageUrl, candidateAttempt);
-      if (
-        urlUploadResult.submitted ||
-        urlUploadResult.captchaRequired ||
-        !filePath ||
-        !urlUploadResult.retryRecommended
-      ) {
-        return urlUploadResult;
-      }
-
-      log('amazon.scan.google_upload_fallback_to_file', {
-        candidateId,
-        filepath: filePath,
-        imageUrl,
-        error: urlUploadResult.error,
-      });
-      return await uploadImageCandidateFromFile(candidateId, filePath, imageUrl, candidateAttempt, {
-        warning: 'Image URL upload failed. Falling back to local file upload.',
-        retryOf: 'Image URL upload',
-        details: [
-          { label: 'Fallback from', value: 'Image URL' },
-          { label: 'Fallback reason', value: urlUploadResult.error || urlUploadResult.failureCode },
-        ],
-      });
-    }
 
     if (filePath) {
       const fileUploadResult = await uploadImageCandidateFromFile(candidateId, filePath, imageUrl, candidateAttempt);
@@ -1784,6 +2493,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       submitted: false,
       advanced: false,
       captchaRequired: false,
+      captchaEncountered: false,
       error: 'Product image candidate did not include a filepath or URL.',
       retryRecommended: false,
       inputSourceUsed: null,
@@ -1793,6 +2503,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   };
 
   const collectAmazonCandidates = async (stepMeta = {}) => {
+    let captchaEncountered = false;
     upsertScanStep({
       key: 'google_candidates',
       label: 'Collect Amazon candidates from Google Lens',
@@ -1804,10 +2515,12 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       message: 'Collecting Amazon result candidates from Google Lens.',
       url: page.url(),
     });
-    const deadline = Date.now() + 25000;
+    let deadline = Date.now() + 25000;
+    let extendedForProcessing = false;
     let nextProgressAt = Date.now() + 5000;
     while (Date.now() < deadline) {
       const captchaState = await handleGoogleLensCaptchaIfPresent('google_candidates', stepMeta);
+      captchaEncountered = captchaEncountered || captchaState.captchaEncountered === true;
       if (!captchaState.resolved) {
         upsertScanStep({
           key: 'google_candidates',
@@ -1823,8 +2536,16 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         return {
           candidates: [],
           captchaRequired: captchaState.captchaRequired,
+          captchaEncountered,
           error: captchaState.message,
+          failureCode: captchaState.captchaRequired ? 'captcha_required' : 'captcha_timeout',
         };
+      }
+
+      const processingState = await readGoogleLensProcessingState();
+      if (processingState.processingVisible && !extendedForProcessing) {
+        deadline = Math.max(deadline, Date.now() + 35000);
+        extendedForProcessing = true;
       }
 
       const rankedCandidates = await readGoogleLensAmazonCandidates();
@@ -1863,12 +2584,17 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         return {
           candidates: retainedCandidates.map((candidate) => candidate.url),
           captchaRequired: false,
+          captchaEncountered,
           error: null,
+          failureCode: null,
         };
       }
 
       if (Date.now() >= nextProgressAt) {
         nextProgressAt = Date.now() + 5000;
+        const waitingMessage = processingState.processingVisible
+          ? 'Google Lens accepted the image and is still processing it.'
+          : 'Waiting for Google Lens candidate results.';
         upsertScanStep({
           key: 'google_candidates',
           label: 'Collect Amazon candidates from Google Lens',
@@ -1876,13 +2602,22 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
           candidateId: stepMeta.candidateId,
           inputSource: stepMeta.inputSource,
           status: 'running',
-          resultCode: 'candidate_collect_waiting',
-          message: 'Waiting for Google Lens candidate results.',
+          resultCode: processingState.processingVisible
+            ? 'upload_processing'
+            : 'candidate_collect_waiting',
+          message: waitingMessage,
           url: page.url(),
+          details: processingState.processingVisible
+            ? [
+                { label: 'Processing text', value: processingState.processingText },
+                { label: 'Progress indicator', value: processingState.progressIndicatorSelector },
+                { label: 'Result shell', value: processingState.resultShellSelector },
+              ]
+            : undefined,
         });
         await emitProgress({
           stage: 'google_candidates',
-          message: 'Waiting for Google Lens candidate results.',
+          message: waitingMessage,
         });
       }
 
@@ -1890,10 +2625,17 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     }
 
     const collectionState = await describeGoogleLensCandidateCollectionState();
+    const timedOutWhileProcessing = collectionState.processingVisible;
     const timedOutOnUploadEntry = collectionState.looksLikeUploadEntry;
-    const timeoutMessage = timedOutOnUploadEntry
-      ? 'Google Lens did not transition from the upload entry into a usable result page.'
-      : 'Google Lens candidate collection timed out before Amazon results became available.';
+    const timeoutMessage = timedOutWhileProcessing
+      ? 'Google Lens accepted the image but stayed in the upload processing state without producing usable results.'
+      : timedOutOnUploadEntry
+        ? 'Google Lens did not transition from the upload entry into a usable result page.'
+        : 'Google Lens candidate collection timed out before Amazon results became available.';
+    const artifactKey =
+      timedOutWhileProcessing || timedOutOnUploadEntry
+        ? await captureGoogleUploadArtifacts('candidate-timeout', stepMeta.candidateId, stepMeta.attempt)
+        : null;
 
     upsertScanStep({
       key: 'google_candidates',
@@ -1901,17 +2643,49 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       attempt: stepMeta.attempt,
       candidateId: stepMeta.candidateId,
       inputSource: stepMeta.inputSource,
-      status: timedOutOnUploadEntry ? 'failed' : 'completed',
-      resultCode: timedOutOnUploadEntry ? 'lens_result_page_not_ready' : 'candidate_collect_timeout',
+      status: timedOutWhileProcessing || timedOutOnUploadEntry ? 'failed' : 'completed',
+      resultCode: timedOutWhileProcessing
+        ? 'upload_processing_timeout'
+        : timedOutOnUploadEntry
+          ? 'lens_result_page_not_ready'
+          : 'candidate_collect_timeout',
       message: timeoutMessage,
       url: collectionState.currentUrl,
-      warning: timedOutOnUploadEntry ? 'Google Lens remained on the upload entry UI.' : 'Candidate collection timed out for this input attempt.',
+      warning: timedOutWhileProcessing
+        ? 'Google Lens kept showing upload progress without usable results.'
+        : timedOutOnUploadEntry
+          ? 'Google Lens remained on the upload entry UI.'
+          : 'Candidate collection timed out for this input attempt.',
       details: [
         { label: 'Amazon links seen', value: String(collectionState.amazonLinkCount) },
         { label: 'Upload entry visible', value: collectionState.uploadInputVisible ? 'Yes' : 'No' },
         {
           label: 'Candidate hints visible',
           value: collectionState.candidateHintsVisible ? 'Yes' : 'No',
+        },
+        {
+          label: 'Processing visible',
+          value: collectionState.processingVisible ? 'Yes' : 'No',
+        },
+        {
+          label: 'Progress indicator',
+          value: collectionState.progressIndicatorSelector,
+        },
+        {
+          label: 'Processing text',
+          value: collectionState.processingText,
+        },
+        {
+          label: 'Result shell visible',
+          value: collectionState.resultShellVisible ? 'Yes' : 'No',
+        },
+        {
+          label: 'Result shell selector',
+          value: collectionState.resultShellSelector,
+        },
+        {
+          label: 'Artifact key',
+          value: artifactKey,
         },
       ],
     });
@@ -1922,47 +2696,70 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     return {
       candidates: [],
       captchaRequired: false,
+      captchaEncountered,
       error: timedOutOnUploadEntry ? timeoutMessage : null,
+      failureCode: timedOutWhileProcessing
+        ? 'upload_processing_timeout'
+        : timedOutOnUploadEntry
+          ? 'lens_result_page_not_ready'
+          : 'candidate_collect_timeout',
     };
   };
 
   const clickFirstVisible = async (selectors) => {
-    for (const selector of selectors) {
-      const locator = page.locator(selector).first();
-      if ((await locator.count().catch(() => 0)) === 0) {
-        continue;
-      }
-      const visible = await locator.isVisible().catch(() => false);
-      if (!visible) {
-        continue;
-      }
-      await locator.scrollIntoViewIfNeeded().catch(() => undefined);
-      const clicked = await locator
-        .click({ timeout: 3000 })
-        .then(() => true)
-        .catch(() => false);
-      if (!clicked) {
-        const jsClicked = await locator
-          .evaluate((element) => {
-            if (!(element instanceof HTMLElement)) {
-              return false;
-            }
-            element.click();
-            return true;
-          })
-          .catch(() => false);
-        if (jsClicked) {
-          await wait(800);
-          return true;
+    for (const scope of listGoogleLensSearchScopes()) {
+      for (const selector of selectors) {
+        const locator = scope.target.locator(selector).first();
+        if ((await locator.count().catch(() => 0)) === 0) {
+          continue;
         }
-      }
-      if (clicked) {
-        await wait(800);
-        return true;
+        const visible = await locator.isVisible().catch(() => false);
+        if (!visible) {
+          continue;
+        }
+        await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+        const clicked = await locator
+          .click({ timeout: 3000 })
+          .then(() => true)
+          .catch(() => false);
+        if (!clicked) {
+          const jsClicked = await locator
+            .evaluate((element) => {
+              if (!(element instanceof HTMLElement)) {
+                return false;
+              }
+              element.click();
+              return true;
+            })
+            .catch(() => false);
+          if (jsClicked) {
+            await wait(800);
+            return {
+              clicked: true,
+              selector,
+              scopeType: scope.scopeType,
+              frameUrl: scope.frameUrl,
+            };
+          }
+        }
+        if (clicked) {
+          await wait(800);
+          return {
+            clicked: true,
+            selector,
+            scopeType: scope.scopeType,
+            frameUrl: scope.frameUrl,
+          };
+        }
       }
     }
 
-    return false;
+    return {
+      clicked: false,
+      selector: null,
+      scopeType: null,
+      frameUrl: null,
+    };
   };
 
   const AMAZON_PRODUCT_CONTENT_SELECTORS = [

@@ -8,9 +8,16 @@ import { CopyButton } from '@/shared/ui/copy-button';
 type ProductScan1688DetailsProps = {
   scan: Pick<
     ProductScanRecord,
-    'id' | 'title' | 'url' | 'supplierDetails' | 'supplierProbe' | 'supplierEvaluation' | 'rawResult'
+    | 'id'
+    | 'title'
+    | 'url'
+    | 'supplierDetails'
+    | 'supplierProbe'
+    | 'supplierEvaluation'
+    | 'rawResult'
   >;
   scanId?: string | null;
+  connectionLabel?: string | null;
 };
 
 export type ProductScan1688QualitySummaryValue = {
@@ -774,6 +781,10 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
         : null
   );
   const evaluationTimestamp = formatTimestamp(evaluation?.evaluatedAt);
+  const connectionLabel =
+    typeof props.connectionLabel === 'string' && props.connectionLabel.trim().length > 0
+      ? props.connectionLabel.trim()
+      : null;
 
   return (
     <div className='space-y-3 rounded-md border border-border/50 bg-background/70 px-3 py-3'>
@@ -785,6 +796,11 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
         </span>
         {details?.supplierName ? (
           <span className='font-medium text-foreground'>{details.supplierName}</span>
+        ) : null}
+        {connectionLabel ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+            Profile {connectionLabel}
+          </span>
         ) : null}
         {priceSummary ? <span className='text-muted-foreground'>{priceSummary}</span> : null}
         {details?.moqText ? (
@@ -832,6 +848,7 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
         </div>
 
         <div className='space-y-3'>
+          <DetailRow label='Browser profile' value={connectionLabel} />
           <DetailRow label='Current page title' value={probe?.pageTitle ?? scan.title} />
           <DetailRow label='Candidate URL' value={probe?.candidateUrl} href={probe?.candidateUrl} />
           <DetailRow label='Canonical URL' value={probe?.canonicalUrl} href={probe?.canonicalUrl} />

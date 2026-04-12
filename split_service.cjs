@@ -11,7 +11,7 @@ const helpers = lines.slice(helpersStart, helpersEnd).join('\n');
 const main = lines.slice(helpersEnd).join('\n');
 
 // Make helpers exported
-const exportedHelpers = helpers.replace(/^(const|type) ([a-zA-Z0-9_]+)/gm, 'export $1 $2');
+const exportedHelpers = helpers.replace(/^(const|type) /gm, 'export $1 ');
 
 fs.writeFileSync('src/features/products/server/product-scans-service.helpers.ts', header + '\n' + exportedHelpers);
 

@@ -17,7 +17,7 @@ export async function getIntegrationsWithConnections(): Promise<IntegrationWithC
           id: connection.id,
           name: connection.name,
           integrationId: connection.integrationId,
-          hasPlaywrightStorageState: connection.hasPlaywrightStorageState ?? false,
+          hasPlaywrightStorageState: Boolean(connection.playwrightStorageState),
           traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
           hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
           scanner1688StartUrl: connection.scanner1688StartUrl ?? null,

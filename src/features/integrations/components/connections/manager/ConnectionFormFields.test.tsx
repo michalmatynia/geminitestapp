@@ -129,4 +129,34 @@ describe('ConnectionFormFields', () => {
     ).toHaveLength(2);
     expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
   });
+
+  it('shows 1688 profile fields and keeps search mode in sync with URL fallback', () => {
+    renderFields('1688');
+
+    expect(screen.getByLabelText('1688 start URL')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 login mode')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 search mode')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 candidate cap override')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 minimum score override')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 max extracted images override')).toBeInTheDocument();
+
+    const searchMode = screen.getByLabelText('1688 search mode') as HTMLSelectElement;
+    const urlFallback = screen.getByLabelText(
+      'Allow image URL fallback for 1688 search'
+    ) as HTMLInputElement;
+
+    expect(searchMode.value).toBe('local_image');
+    expect(urlFallback.checked).toBe(false);
+
+    fireEvent.change(searchMode, {
+      target: { value: 'image_url_fallback' },
+    });
+
+    expect(urlFallback.checked).toBe(true);
+
+    fireEvent.click(urlFallback);
+
+    expect(searchMode.value).toBe('local_image');
+    expect(urlFallback.checked).toBe(false);
+  });
 });

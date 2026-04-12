@@ -34,8 +34,8 @@ export const resolveProductScanImageCandidates = (
   limit = PRODUCT_SCAN_IMAGE_CANDIDATE_LIMIT
 ): ProductScanImageCandidate[] => {
   const seen = new Set<string>();
-  const urlBackedCandidates: ProductScanImageCandidate[] = [];
-  const fileOnlyCandidates: ProductScanImageCandidate[] = [];
+  const fileBackedCandidates: ProductScanImageCandidate[] = [];
+  const urlOnlyCandidates: ProductScanImageCandidate[] = [];
 
   for (const image of Array.isArray(product.images) ? product.images : []) {
     const imageFile = image.imageFile;
@@ -65,10 +65,10 @@ export const resolveProductScanImageCandidates = (
       filepath,
       filename: normalizeOptionalProductScanString(imageFile?.filename),
     };
-    if (url) {
-      urlBackedCandidates.push(candidate);
+    if (filepath) {
+      fileBackedCandidates.push(candidate);
     } else {
-      fileOnlyCandidates.push(candidate);
+      urlOnlyCandidates.push(candidate);
     }
   }
 
@@ -79,7 +79,7 @@ export const resolveProductScanImageCandidates = (
     }
 
     seen.add(normalizedUrl);
-    urlBackedCandidates.push({
+    urlOnlyCandidates.push({
       id: null,
       url: normalizedUrl,
       filepath: null,
@@ -87,5 +87,5 @@ export const resolveProductScanImageCandidates = (
     });
   }
 
-  return [...urlBackedCandidates, ...fileOnlyCandidates].slice(0, limit);
+  return [...fileBackedCandidates, ...urlOnlyCandidates].slice(0, limit);
 };

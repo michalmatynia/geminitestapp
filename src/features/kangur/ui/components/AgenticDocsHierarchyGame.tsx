@@ -52,6 +52,8 @@ type AgenticDocsHierarchyGameContextValue = {
   resolvedOrder: readonly string[];
   isComplete: boolean;
   selectedItemId: string | null;
+  onItemClick: (itemId: string, targetIndex: number) => void;
+  onDragEnd: (result: DropResult) => void;
 };
 
 const AgenticDocsHierarchyGameContext = React.createContext<AgenticDocsHierarchyGameContextValue | null>(null);
@@ -147,7 +149,6 @@ type HierarchyItemButtonProps = {
   dragHandleProps: DraggableProvidedDragHandleProps | null | undefined;
   draggableProps: DraggableProvidedDraggableProps;
   innerRef: (element: HTMLElement | null) => void;
-  onItemClick: (itemId: string, targetIndex: number) => void;
 };
 
 function HierarchyItemButton({
@@ -160,9 +161,8 @@ function HierarchyItemButton({
   dragHandleProps,
   draggableProps,
   innerRef,
-  onItemClick,
 }: HierarchyItemButtonProps): React.JSX.Element {
-  const { accent, isCoarsePointer, checked, isComplete } = useAgenticDocsHierarchyGame();
+  const { accent, isCoarsePointer, checked, isComplete, onItemClick } = useAgenticDocsHierarchyGame();
   return (
     <button
       ref={innerRef}
@@ -208,13 +208,11 @@ function HierarchyItemButton({
 type HierarchyDraggableItemProps = {
   item: HierarchyItem;
   index: number;
-  onItemClick: (itemId: string, targetIndex: number) => void;
 };
 
 function HierarchyDraggableItem({
   item,
   index,
-  onItemClick,
 }: HierarchyDraggableItemProps): React.JSX.Element {
   const { checked, resolvedOrder, selectedItemId, isComplete } = useAgenticDocsHierarchyGame();
   const isCorrect = checked && item.id === resolvedOrder[index];
@@ -239,7 +237,6 @@ function HierarchyDraggableItem({
             dragHandleProps={provided.dragHandleProps}
             draggableProps={provided.draggableProps}
             innerRef={provided.innerRef}
-            onItemClick={onItemClick}
           />
         );
 
@@ -256,17 +253,14 @@ type HierarchyListProps = {
   droppableId: string;
   order: HierarchyItem[];
   isTouchMoveTargetActive: boolean;
-  onDragEnd: (result: DropResult) => void;
-  onItemClick: (itemId: string, targetIndex: number) => void;
 };
 
 function HierarchyList({
   droppableId,
   order,
   isTouchMoveTargetActive,
-  onDragEnd,
-  onItemClick,
 }: HierarchyListProps): React.JSX.Element {
+  const { onDragEnd } = useAgenticDocsHierarchyGame();
   return (
     <KangurDragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId={`docs-hierarchy-${droppableId}`}>
@@ -289,7 +283,6 @@ function HierarchyList({
                 key={item.id}
                 item={item}
                 index={index}
-                onItemClick={onItemClick}
               />
             ))}
             {droppableProvided.placeholder}
@@ -512,6 +505,8 @@ export default function AgenticDocsHierarchyGame({
         resolvedOrder: runtime.resolvedOrder,
         isComplete: runtime.isComplete,
         selectedItemId: runtime.selectedItemId,
+        onItemClick: runtime.handleItemClick,
+        onDragEnd: runtime.handleDragEnd,
       }}
     >
       <KangurLessonCallout accent={accent} padding='sm' className='text-left'>
@@ -524,8 +519,6 @@ export default function AgenticDocsHierarchyGame({
           droppableId={runtime.droppableId}
           order={runtime.order}
           isTouchMoveTargetActive={runtime.isTouchMoveTargetActive}
-          onDragEnd={runtime.handleDragEnd}
-          onItemClick={runtime.handleItemClick}
         />
         <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'mt-3 flex-wrap justify-start gap-2')}>
           <KangurButton

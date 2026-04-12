@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   useProductFormCustomFieldsMock: vi.fn(),
   useIntegrationsWithConnectionsMock: vi.fn(),
   apiGetMock: vi.fn(),
+  apiDeleteMock: vi.fn(),
   invalidateProductsMock: vi.fn().mockResolvedValue(undefined),
   invalidateProductsCountsAndDetailMock: vi.fn().mockResolvedValue(undefined),
   productAmazonScanModalMock: vi.fn(),
@@ -43,6 +44,7 @@ vi.mock('@/features/products/context/ProductFormCustomFieldContext', () => ({
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
     get: (...args: unknown[]) => mocks.apiGetMock(...args),
+    delete: (...args: unknown[]) => mocks.apiDeleteMock(...args),
   },
 }));
 
@@ -2972,5 +2974,43 @@ describe('ProductFormScans', () => {
       expect(mocks.apiGetMock).toHaveBeenCalledTimes(4);
       expect(mocks.invalidateProductsCountsAndDetailMock).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it('allows deleting a scan from history', async () => {
+    const scanId = 'scan-to-delete-1';
+    mocks.useProductFormCoreMock.mockReturnValue({
+      product: { id: 'product-1' },
+      getValues: mocks.getValuesMock,
+      setValue: mocks.setValueMock,
+    });
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: scanId,
+          productId: 'product-1',
+          provider: 'amazon',
+          status: 'completed',
+          title: 'Scan to Delete',
+          createdAt: '2026-04-12T10:00:00.000Z',
+        },
+      ],
+    });
+    mocks.apiDeleteMock.mockResolvedValue({ success: true });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    const deleteButton = await screen.findByRole('button', { name: /delete/i });
+    fireEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(mocks.apiDeleteMock).toHaveBeenCalledWith(`/api/v2/products/scans/${scanId}`);
+    });
+
+    // Verification of cache invalidation is implicit via useQuery refetching if we had a full setup,
+    // but here we just check if api.delete was called.
   });
 });

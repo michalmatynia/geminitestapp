@@ -12,11 +12,13 @@ export const TRADERA_LOGIN_SUCCESS_SELECTORS = [
 
 export const LOGIN_SUCCESS_SELECTOR = TRADERA_LOGIN_SUCCESS_SELECTORS.join(', ');
 
-export const LOGIN_FORM_SELECTOR = [
+export const TRADERA_LOGIN_FORM_SELECTORS = [
   '#sign-in-form',
   'form[data-sign-in-form="true"]',
   'form[action*="login"]',
-].join(', ');
+ ] as const;
+
+export const LOGIN_FORM_SELECTOR = TRADERA_LOGIN_FORM_SELECTORS.join(', ');
 
 export const USERNAME_SELECTORS = ['#email', 'input[name="email"]', 'input[type="email"]'];
 export const PASSWORD_SELECTORS = ['#password', 'input[name="password"]', 'input[type="password"]'];

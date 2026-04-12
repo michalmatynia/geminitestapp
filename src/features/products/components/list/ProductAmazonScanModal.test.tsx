@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   apiGet: vi.fn(),
   useIntegrationsWithConnectionsMock: vi.fn(),
   useDefault1688ConnectionMock: vi.fn(),
+  testConnectionMutateAsync: vi.fn(),
   toast: vi.fn(),
   safeSetInterval: vi.fn(),
   safeClearInterval: vi.fn(),
@@ -68,6 +69,13 @@ vi.mock('@/shared/lib/timers', () => ({
 vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
   useIntegrationsWithConnections: () => mocks.useIntegrationsWithConnectionsMock(),
   useDefault1688Connection: () => mocks.useDefault1688ConnectionMock(),
+}));
+
+vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
+  useTestConnection: () => ({
+    mutateAsync: (...args: unknown[]) => mocks.testConnectionMutateAsync(...args),
+    error: null,
+  }),
 }));
 
 vi.mock('@/shared/ui/toast', () => ({
@@ -146,8 +154,12 @@ describe('ProductAmazonScanModal', () => {
           connections: [
             {
               id: 'connection-1688-default',
+              integrationId: 'integration-1688',
               name: 'Default 1688',
               hasPlaywrightStorageState: true,
+              playwrightBrowser: 'chrome',
+              playwrightIdentityProfile: 'marketplace',
+              playwrightPersonaId: 'persona-1688-default',
             },
           ],
         },
@@ -161,6 +173,12 @@ describe('ProductAmazonScanModal', () => {
     mocks.safeSetInterval.mockImplementation(() => 1);
     mocks.safeClearInterval.mockImplementation(() => undefined);
     mocks.pollCallback = null;
+    mocks.testConnectionMutateAsync.mockResolvedValue({
+      ok: true,
+      sessionReady: true,
+      message: '1688 session refreshed successfully.',
+      steps: [],
+    });
     mocks.getValuesMock.mockImplementation((field?: string) => {
       const values: Record<string, unknown> = {
         asin: '',
@@ -270,8 +288,22 @@ describe('ProductAmazonScanModal', () => {
           id: 'integration-1688',
           slug: '1688',
           connections: [
-            { id: 'connection-1', name: 'Primary 1688', hasPlaywrightStorageState: true },
-            { id: 'connection-2', name: 'Fallback 1688', hasPlaywrightStorageState: true },
+            {
+              id: 'connection-1',
+              name: 'Primary 1688',
+              hasPlaywrightStorageState: true,
+              playwrightBrowser: 'auto',
+              playwrightIdentityProfile: 'default',
+              playwrightPersonaId: null,
+            },
+            {
+              id: 'connection-2',
+              name: 'Fallback 1688',
+              hasPlaywrightStorageState: true,
+              playwrightBrowser: 'chrome',
+              playwrightIdentityProfile: 'marketplace',
+              playwrightPersonaId: 'persona-marketplace',
+            },
           ],
         },
       ],
@@ -320,23 +352,93 @@ describe('ProductAmazonScanModal', () => {
 
     expect(screen.getByText('Fallback 1688')).toBeInTheDocument();
     expect(screen.getByText('Profile Fallback 1688')).toBeInTheDocument();
+    expect(screen.getByText('Browser:')).toBeInTheDocument();
+    expect(screen.getByText('Chrome')).toBeInTheDocument();
+    expect(screen.getByText('Identity profile:')).toBeInTheDocument();
+    expect(screen.getByText('Marketplace')).toBeInTheDocument();
+    expect(screen.getByText('Persona:')).toBeInTheDocument();
+    expect(screen.getByText('persona-marketplace')).toBeInTheDocument();
   });
 
-  it('blocks 1688 scans when the resolved browser profile has no stored session', async () => {
+  it('shows weak 1688 Playwright posture warnings when the selected profile is under-configured', async () => {
     mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
       data: [
         {
           id: 'integration-1688',
           slug: '1688',
           connections: [
-            { id: 'connection-1', name: 'Primary 1688', hasPlaywrightStorageState: false },
+            {
+              id: 'connection-weak',
+              integrationId: 'integration-1688',
+              name: 'Weak 1688',
+              hasPlaywrightStorageState: true,
+              playwrightBrowser: 'auto',
+              playwrightIdentityProfile: 'default',
+              playwrightPersonaId: null,
+              playwrightHumanizeMouse: false,
+            },
           ],
         },
       ],
       isLoading: false,
     });
     mocks.useDefault1688ConnectionMock.mockReturnValue({
-      data: { connectionId: 'connection-1' },
+      data: { connectionId: 'connection-weak' },
+      isLoading: false,
+    });
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-weak-1',
+          runId: 'run-1688-weak-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product', images: [] } as never]}
+          provider='1688'
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Weak 1688')).toBeInTheDocument();
+    expect(screen.getByText('Auto')).toBeInTheDocument();
+    expect(screen.getByText('Default')).toBeInTheDocument();
+    expect(screen.getByText('Custom / none')).toBeInTheDocument();
+    expect(
+      screen.getByText('No Playwright persona is configured for this 1688 profile.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Identity profile is Default. 1688 is more reliable with Marketplace posture.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Browser is set to Auto. Runtime browser choice can vary between runs.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Humanized input is disabled for this 1688 profile.')
+    ).toBeInTheDocument();
+  });
+
+  it('blocks 1688 scans when no 1688 browser profile is available', async () => {
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+    mocks.useDefault1688ConnectionMock.mockReturnValue({
+      data: { connectionId: null },
       isLoading: false,
     });
 
@@ -352,9 +454,251 @@ describe('ProductAmazonScanModal', () => {
       </QueryClientProvider>
     );
 
-    expect(await screen.findByText('1688 login required for profile Primary 1688. Refresh the saved browser session before scanning.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('1688 browser profile required before running supplier scans.')
+    ).toBeInTheDocument();
+    expect(mocks.testConnectionMutateAsync).not.toHaveBeenCalled();
     expect(mocks.apiPost).not.toHaveBeenCalled();
-    expect(screen.getByText('Profile Primary 1688')).toBeInTheDocument();
+    expect(screen.getByText('No saved browser profile selected')).toBeInTheDocument();
+    expect(screen.getByText('Session:')).toBeInTheDocument();
+    expect(screen.getByText('Missing')).toBeInTheDocument();
+  });
+
+  it('auto-starts the 1688 browser session refresh when the resolved profile has no stored session', async () => {
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1688',
+          slug: '1688',
+          connections: [
+            {
+              id: 'connection-1',
+              integrationId: 'integration-1688',
+              name: 'Primary 1688',
+              hasPlaywrightStorageState: false,
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    mocks.useDefault1688ConnectionMock.mockReturnValue({
+      data: { connectionId: 'connection-1' },
+      isLoading: false,
+    });
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-1',
+          runId: 'run-1688-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+    const refreshDeferred = createDeferred<{
+      ok: boolean;
+      sessionReady: boolean;
+      message: string;
+      steps: unknown[];
+    }>();
+    mocks.testConnectionMutateAsync.mockReturnValue(refreshDeferred.promise);
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          provider='1688'
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Opening 1688 login window...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mocks.testConnectionMutateAsync).toHaveBeenCalledWith({
+        integrationId: 'integration-1688',
+        connectionId: 'connection-1',
+        type: 'test',
+        body: { mode: 'manual_session_refresh', manualTimeoutMs: 300000 },
+        timeoutMs: 360000,
+      });
+    });
+
+    expect(mocks.apiPost).not.toHaveBeenCalled();
+
+    await act(async () => {
+      refreshDeferred.resolve({
+        ok: true,
+        sessionReady: true,
+        message: '1688 session refreshed successfully.',
+        steps: [],
+      });
+      await refreshDeferred.promise;
+    });
+
+    expect(await screen.findByText('1688 session refreshed successfully.')).toBeInTheDocument();
+  });
+
+  it('lets the user retry the 1688 browser session through the dedicated session action after auto-refresh fails', async () => {
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1688',
+          slug: '1688',
+          connections: [
+            {
+              id: 'connection-1',
+              integrationId: 'integration-1688',
+              name: 'Primary 1688',
+              hasPlaywrightStorageState: false,
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    mocks.useDefault1688ConnectionMock.mockReturnValue({
+      data: { connectionId: 'connection-1' },
+      isLoading: false,
+    });
+    mocks.testConnectionMutateAsync
+      .mockRejectedValueOnce(new Error('1688 session refresh failed.'))
+      .mockResolvedValueOnce({
+        ok: true,
+        sessionReady: true,
+        message: '1688 session refreshed successfully.',
+        steps: [],
+      });
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-1',
+          runId: 'run-1688-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          provider='1688'
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(
+      (await screen.findAllByText('1688 session refresh failed.')).length
+    ).toBeGreaterThan(0);
+    expect(mocks.apiPost).not.toHaveBeenCalled();
+
+    fireEvent.click((await screen.findAllByText('Refresh 1688 session'))[0]!);
+
+    await waitFor(() => {
+      expect(mocks.testConnectionMutateAsync).toHaveBeenNthCalledWith(2, {
+        integrationId: 'integration-1688',
+        connectionId: 'connection-1',
+        type: 'test',
+        body: { mode: 'manual_session_refresh', manualTimeoutMs: 300000 },
+        timeoutMs: 360000,
+      });
+    });
+
+    await waitFor(() => {
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/v2/products/scans/1688/batch', {
+        productIds: ['product-1'],
+        connectionId: 'connection-1',
+      });
+    });
+
+    expect(await screen.findByText('1688 session refreshed successfully.')).toBeInTheDocument();
+  });
+
+  it('queues the 1688 scan immediately after a successful auto-started session refresh without reopening the modal', async () => {
+    mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1688',
+          slug: '1688',
+          connections: [
+            {
+              id: 'connection-1',
+              integrationId: 'integration-1688',
+              name: 'Primary 1688',
+              hasPlaywrightStorageState: false,
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    mocks.useDefault1688ConnectionMock.mockReturnValue({
+      data: { connectionId: 'connection-1' },
+      isLoading: false,
+    });
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-1',
+          runId: 'run-1688-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          provider='1688'
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(mocks.testConnectionMutateAsync).toHaveBeenCalledWith({
+        integrationId: 'integration-1688',
+        connectionId: 'connection-1',
+        type: 'test',
+        body: { mode: 'manual_session_refresh', manualTimeoutMs: 300000 },
+        timeoutMs: 360000,
+      });
+    });
+
+    await waitFor(() => {
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/v2/products/scans/1688/batch', {
+        productIds: ['product-1'],
+        connectionId: 'connection-1',
+      });
+    });
   });
 
   it('queues 1688 supplier scans through the provider-specific batch endpoint', async () => {
@@ -2449,7 +2793,7 @@ describe('ProductAmazonScanModal', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh scans' }));
 
     await waitFor(() => {
       expect(mocks.toast).toHaveBeenCalledWith('scan refresh failed', {
@@ -2539,7 +2883,7 @@ describe('ProductAmazonScanModal', () => {
     await waitFor(() => {
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
       expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
@@ -2661,7 +3005,7 @@ describe('ProductAmazonScanModal', () => {
     await waitFor(() => {
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('batch request failed')).toBeInTheDocument();
       expect(screen.queryByText('Older Amazon title')).not.toBeInTheDocument();
@@ -2718,12 +3062,12 @@ describe('ProductAmazonScanModal', () => {
 
     expect(await screen.findByText('batch request failed')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh scans' }));
 
     await waitFor(() => {
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
       expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
@@ -2982,7 +3326,7 @@ describe('ProductAmazonScanModal', () => {
     await waitFor(() => {
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
       expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
@@ -3100,7 +3444,7 @@ describe('ProductAmazonScanModal', () => {
       });
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-2/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Product 2')).toBeInTheDocument();
       expect(screen.getAllByText('Running').length).toBeGreaterThan(0);
@@ -3185,7 +3529,7 @@ describe('ProductAmazonScanModal', () => {
       });
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
       expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
@@ -3269,7 +3613,7 @@ describe('ProductAmazonScanModal', () => {
     await waitFor(() => {
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
       expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
@@ -3321,16 +3665,16 @@ describe('ProductAmazonScanModal', () => {
     expect(screen.queryByText('Amazon reverse image scan queued.')).not.toBeInTheDocument();
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
       cache: 'no-store',
-      params: { limit: 1 },
+      params: { limit: 1, provider: 'amazon' },
     });
     expect(mocks.safeClearInterval).toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh scans' }));
 
     await waitFor(() => {
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
     });
   });
@@ -3668,7 +4012,7 @@ describe('ProductAmazonScanModal', () => {
       expect(screen.getByText('stale batch request failed')).toBeInTheDocument();
       expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
         cache: 'no-store',
-        params: { limit: 1 },
+        params: { limit: 1, provider: 'amazon' },
       });
     });
 

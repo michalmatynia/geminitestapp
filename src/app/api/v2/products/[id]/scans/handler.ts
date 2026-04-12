@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listProductScansWithSync } from '@/features/products/server/product-scans-service';
-import { productScanListResponseSchema } from '@/shared/contracts/product-scans';
+import { productScanListResponseSchema, productScanProviderSchema } from '@/shared/contracts/product-scans';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const positiveIntSchema = z.preprocess(
@@ -17,6 +17,7 @@ const positiveIntSchema = z.preprocess(
 
 export const querySchema = z.object({
   limit: positiveIntSchema.optional(),
+  provider: productScanProviderSchema.optional(),
 });
 
 export async function GET_handler(
@@ -31,6 +32,7 @@ export async function GET_handler(
 
   const scans = await listProductScansWithSync({
     productId: params.id,
+    provider: query.provider ?? null,
     limit: query.limit ?? 50,
   });
 

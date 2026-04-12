@@ -176,7 +176,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v129');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v130');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('observedPreviewCount: imageUploadResult?.observedPreviewCount ?? null');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_IMAGE_SET_INVALID: Tradera uploaded more image previews than expected.');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isKnownAuthenticatedTraderaUrl = (url) =>');
@@ -665,9 +665,17 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       'FAIL_IMAGE_SET_INVALID: Tradera retry image cleanup did not clear the previous upload state. Last state: '
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.retry_cleanup\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let stableZeroChecks = 0;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const tryReuseCompletedImageUpload = async ({');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const buildPartialUploadRetryBlockedError = ({');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const readImageUploadRetryState = async ({');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isRetryBlockedImageUploadError = (error) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.reuse_check\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.reuse_completed\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.retry_blocked\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_IMAGE_SET_INVALID: Tradera image upload reached a partial state and retrying could duplicate images. Last state: '
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let baselinePreviewCount = 0;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('baselinePreviewCount = await countUploadedImagePreviews();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const reusableUploadBeforeDispatch = await tryReuseCompletedImageUpload({');
@@ -698,7 +706,9 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await ensureImageStepSellPageReady(\'image upload dispatch retry\');');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await ensureRetryImageCleanupSettled({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.retry_download\'');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('initialUploadSource === \'local\' && imageUrls.length > 0');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("initialUploadSource === 'local' &&");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('imageUrls.length > 0');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('!isRetryBlockedImageUploadError(error);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('imageUploadSource: imageUploadResult?.uploadSource ?? null');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('imageUploadSource: currentImageUploadSource,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('emitStage(\'category_selected\'');
@@ -830,10 +840,13 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const searchInputValue = await readActiveSearchInputValue(searchInput);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const candidatePreviewAfterSearch = await collectVisibleListingCandidatePreview();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const searchStateChanged =');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateMatches = await collectListingLinksForTerm(searchTerm);');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const inspectionCandidates = duplicateMatches;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateCandidateSet = await collectDuplicateCandidates(');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateMatches = duplicateCandidateSet.exactTitleMatches;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const fallbackMatches = duplicateCandidateSet.fallbackTitleMatches;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const inspectionCandidates = duplicateCandidateSet.inspectionCandidates;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const candidateScanMode = duplicateCandidateSet.candidateScanMode;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const knownExistingCandidate = visibleCandidates.find(matchesKnownExistingListing) || null;');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('candidateScanMode: \'exact-english-title-search-matches-only\',');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('candidateScanMode,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const nonExactVisibleCandidateCount = visibleCandidates.filter(');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('knownExistingListingCandidateFound: Boolean(knownExistingCandidate),');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('matchStrategy: \'existing-listing-id+visible-candidate\',');
@@ -922,6 +935,4 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('shippingDialogReady.saveButton ||');
   });
-});
-
 });

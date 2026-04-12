@@ -133,6 +133,92 @@ export const PART_5 = String.raw`
           })
       );
 
+    const buildPartialUploadRetryBlockedError = ({
+      baselinePreviewCount,
+      expectedUploadCount,
+      observedPreviewCount,
+      observedPreviewDelta,
+      draftImageRemoveControls,
+      imageUploadPromptVisible,
+      imageUploadPending,
+      imageUploadErrorText,
+      retryReason,
+      uploadSource,
+      uploadAttempt,
+    }) =>
+      new Error(
+        'FAIL_IMAGE_SET_INVALID: Tradera image upload reached a partial state and retrying could duplicate images. Last state: ' +
+          JSON.stringify({
+            baselinePreviewCount,
+            expectedUploadCount,
+            observedPreviewCount,
+            observedPreviewDelta,
+            draftImageRemoveControls,
+            imageUploadPromptVisible,
+            imageUploadPending,
+            imageUploadErrorText,
+            retryReason,
+            uploadSource,
+            uploadAttempt,
+          })
+      );
+
+    const readImageUploadRetryState = async ({
+      baselinePreviewCount = 0,
+      expectedUploadCount = 1,
+    } = {}) => {
+      const [
+        observedPreviewCount,
+        draftImageRemoveControls,
+        imageUploadPromptVisible,
+        imageUploadPending,
+        imageUploadErrorText,
+      ] = await Promise.all([
+        countUploadedImagePreviews().catch(() => null),
+        countDraftImageRemoveControls().catch(() => 0),
+        isImageUploadPromptVisible().catch(() => false),
+        isImageUploadPending().catch(() => false),
+        readImageUploadErrorText().catch(() => null),
+      ]);
+
+      const normalizedObservedPreviewCount =
+        typeof observedPreviewCount === 'number' ? observedPreviewCount : null;
+      const observedPreviewDelta =
+        normalizedObservedPreviewCount !== null
+          ? Math.max(0, normalizedObservedPreviewCount - Math.max(0, baselinePreviewCount))
+          : null;
+      const uploadAccepted =
+        (observedPreviewDelta !== null && observedPreviewDelta > 0) ||
+        draftImageRemoveControls > 0 ||
+        (imageUploadPromptVisible === false && imageUploadPending === true);
+      const retryBlocked =
+        uploadAccepted &&
+        !(
+          observedPreviewDelta !== null &&
+          observedPreviewDelta === expectedUploadCount &&
+          imageUploadPending === false &&
+          !imageUploadErrorText
+        );
+
+      return {
+        observedPreviewCount: normalizedObservedPreviewCount,
+        observedPreviewDelta,
+        draftImageRemoveControls,
+        imageUploadPromptVisible,
+        imageUploadPending,
+        imageUploadErrorText,
+        uploadAccepted,
+        retryBlocked,
+      };
+    };
+
+    const isRetryBlockedImageUploadError = (error) => {
+      const message = error instanceof Error ? error.message : String(error || '');
+      return message.includes(
+        'Tradera image upload reached a partial state and retrying could duplicate images.'
+      );
+    };
+
     const tryReuseCompletedImageUpload = async ({
       baselinePreviewCount = 0,
       expectedUploadCount = 1,
@@ -140,17 +226,17 @@ export const PART_5 = String.raw`
       uploadAttempt,
       retryReason = null,
     }) => {
-      const [observedPreviewCount, imageUploadPending, imageUploadErrorText] = await Promise.all([
-        countUploadedImagePreviews().catch(() => null),
-        isImageUploadPending().catch(() => false),
-        readImageUploadErrorText().catch(() => null),
-      ]);
-      const normalizedObservedPreviewCount =
-        typeof observedPreviewCount === 'number' ? observedPreviewCount : null;
-      const observedPreviewDelta =
-        normalizedObservedPreviewCount !== null
-          ? Math.max(0, normalizedObservedPreviewCount - Math.max(0, baselinePreviewCount))
-          : null;
+      const {
+        observedPreviewCount: normalizedObservedPreviewCount,
+        observedPreviewDelta,
+        draftImageRemoveControls,
+        imageUploadPromptVisible,
+        imageUploadPending,
+        imageUploadErrorText,
+      } = await readImageUploadRetryState({
+        baselinePreviewCount,
+        expectedUploadCount,
+      });
 
       log?.('tradera.quicklist.image.reuse_check', {
         uploadSource,
@@ -159,6 +245,8 @@ export const PART_5 = String.raw`
         expectedUploadCount,
         observedPreviewCount: normalizedObservedPreviewCount,
         observedPreviewDelta,
+        draftImageRemoveControls,
+        imageUploadPromptVisible,
         imageUploadPending,
         imageUploadErrorText,
         retryReason,
@@ -451,6 +539,33 @@ export const PART_5 = String.raw`
           if (reusableUploadAfterError) {
             return reusableUploadAfterError;
           }
+          const retryState = await readImageUploadRetryState({
+            baselinePreviewCount,
+            expectedUploadCount,
+          });
+          if (retryState.retryBlocked) {
+            log?.('tradera.quicklist.image.retry_blocked', {
+              uploadSource,
+              uploadAttempt,
+              sequential: useSequentialUpload,
+              currentUrl: page.url(),
+              error: retryReason,
+              ...retryState,
+            });
+            throw buildPartialUploadRetryBlockedError({
+              baselinePreviewCount,
+              expectedUploadCount,
+              observedPreviewCount: retryState.observedPreviewCount,
+              observedPreviewDelta: retryState.observedPreviewDelta,
+              draftImageRemoveControls: retryState.draftImageRemoveControls,
+              imageUploadPromptVisible: retryState.imageUploadPromptVisible,
+              imageUploadPending: retryState.imageUploadPending,
+              imageUploadErrorText: retryState.imageUploadErrorText,
+              retryReason,
+              uploadSource,
+              uploadAttempt,
+            });
+          }
           log?.('tradera.quicklist.image.upload_attempt_failed', {
             uploadSource,
             uploadAttempt,
@@ -484,6 +599,7 @@ export const PART_5 = String.raw`
       const removedCount = await clearDraftImagesIfPresent().catch(() => null);
       const deadline = Date.now() + 15_000;
       let lastCleanupState = null;
+      let stableZeroChecks = 0;
 
       while (Date.now() < deadline) {
         const [cleanupState, imageUploadPending] = await Promise.all([
@@ -508,12 +624,18 @@ export const PART_5 = String.raw`
           cleanupState.draftImageRemoveControls === 0 &&
           cleanupState.uploadedImagePreviewCount === 0
         ) {
-          log?.('tradera.quicklist.image.retry_cleanup', {
-            initialUploadSource,
-            reason,
-            ...lastCleanupState,
-          });
-          return;
+          stableZeroChecks += 1;
+          if (stableZeroChecks >= 3) {
+            log?.('tradera.quicklist.image.retry_cleanup', {
+              initialUploadSource,
+              reason,
+              stableZeroChecks,
+              ...lastCleanupState,
+            });
+            return;
+          }
+        } else {
+          stableZeroChecks = 0;
         }
 
         await wait(500);
@@ -551,7 +673,9 @@ export const PART_5 = String.raw`
         imageUploadResult = await performImageUpload(initialUploadFiles, initialUploadSource);
       } catch (error) {
         const canRetryWithDownloadedImages =
-          initialUploadSource === 'local' && imageUrls.length > 0;
+          initialUploadSource === 'local' &&
+          imageUrls.length > 0 &&
+          !isRetryBlockedImageUploadError(error);
         if (!canRetryWithDownloadedImages) {
           throw error;
         }

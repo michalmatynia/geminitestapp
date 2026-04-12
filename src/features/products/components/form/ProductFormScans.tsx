@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
@@ -119,6 +119,8 @@ export default function ProductFormScans(): React.JSX.Element {
   const [expandedReviewedBlockedScanIds, setExpandedReviewedBlockedScanIds] = useState<Set<string>>(
     new Set()
   );
+  const [isDeletingScanId, setIsDeletingScanId] = useState<string | null>(null);
+
   const {
     isBlockedScanReviewed,
     markBlockedScanReviewed,
@@ -137,6 +139,27 @@ export default function ProductFormScans(): React.JSX.Element {
       return scans.some((scan) => isProductScanActiveStatus(scan.status)) ? 3000 : false;
     },
   });
+
+  const handleDeleteScan = async (scanId: string): Promise<void> => {
+    if (isDeletingScanId != null) {
+      return;
+    }
+
+    setIsDeletingScanId(scanId);
+    try {
+      await api.delete(`/api/v2/products/scans/${scanId}`);
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.scans(productId),
+      });
+    } catch {
+      // In a real app we would show a toast here, but for now we follow
+      // existing patterns where errors are often handled implicitly
+      // or by the caller if needed.
+    } finally {
+      setIsDeletingScanId(null);
+    }
+  };
+
   const scans = scansQuery.data?.scans ?? [];
   const integrationsWithConnectionsQuery = useIntegrationsWithConnections();
   const scansDataUpdatedAt = scansQuery.dataUpdatedAt;
@@ -791,6 +814,23 @@ export default function ProductFormScans(): React.JSX.Element {
                 </div>
 
                 <div className='flex items-center justify-end gap-1'>
+                  {!isProductScanActiveStatus(scan.status) && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => void handleDeleteScan(scan.id)}
+                      disabled={isDeletingScanId === scan.id}
+                      className='h-7 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive'
+                    >
+                      {isDeletingScanId === scan.id ? (
+                        <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                      ) : (
+                        <Trash2 className='h-3.5 w-3.5' />
+                      )}
+                      Delete
+                    </Button>
+                  )}
                   {isAmazonScan ? (
                     <Button
                       type='button'

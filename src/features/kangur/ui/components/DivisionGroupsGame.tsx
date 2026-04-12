@@ -50,9 +50,14 @@ type DivisionGroupsState = ReturnType<typeof useDivisionGroupsGameState>;
 type DivisionGroupsStatus = DivisionGroupsState['status'];
 type DivisionGroupsTranslations = DivisionGroupsState['translations'];
 
-const DivisionGroupsGameContext = createContext<DivisionGroupsState | null>(null);
+type DivisionGroupsContextValue = DivisionGroupsState & {
+  onFinish: () => void;
+  finishLabel: string;
+};
 
-function useDivisionGroupsGame(): DivisionGroupsState {
+const DivisionGroupsGameContext = createContext<DivisionGroupsContextValue | null>(null);
+
+function useDivisionGroupsGame(): DivisionGroupsContextValue {
   const context = useContext(DivisionGroupsGameContext);
   if (!context) {
     throw new Error('useDivisionGroupsGame must be used within DivisionGroupsGame.');
@@ -250,14 +255,8 @@ const resolveDivisionGroupsTokenAriaLabel = (
   token: TokenItem
 ): string => translations('division.inRound.tokenAria', { emoji: token.emoji });
 
-function DivisionGroupsSummaryView({
-  finishLabel,
-  onFinish,
-}: {
-  finishLabel: string;
-  onFinish: () => void;
-}): React.JSX.Element {
-  const { handleRestart, score, translations, xpBreakdown, xpEarned } = useDivisionGroupsGame();
+function DivisionGroupsSummaryView(): React.JSX.Element {
+  const { handleRestart, score, translations, xpBreakdown, xpEarned, finishLabel, onFinish } = useDivisionGroupsGame();
   const percent = Math.round((score / TOTAL_ROUNDS) * 100);
 
   return (
@@ -588,22 +587,11 @@ function DivisionGroupsActiveRound(): React.JSX.Element {
   );
 }
 
-function DivisionGroupsRoundView({
-  finishLabel,
-  onFinish,
-}: {
-  finishLabel: string;
-  onFinish: () => void;
-}): React.JSX.Element {
+function DivisionGroupsRoundView(): React.JSX.Element {
   const { done } = useDivisionGroupsGame();
 
   if (done) {
-    return (
-      <DivisionGroupsSummaryView
-        finishLabel={finishLabel}
-        onFinish={onFinish}
-      />
-    );
+    return <DivisionGroupsSummaryView />;
   }
 
   return <DivisionGroupsActiveRound />;
@@ -621,11 +609,14 @@ export default function DivisionGroupsGame(
   );
 
   return (
-    <DivisionGroupsGameContext.Provider value={state}>
-      <DivisionGroupsRoundView
-        finishLabel={finishLabel}
-        onFinish={onFinish}
-      />
+    <DivisionGroupsGameContext.Provider
+      value={{
+        ...state,
+        onFinish,
+        finishLabel,
+      }}
+    >
+      <DivisionGroupsRoundView />
     </DivisionGroupsGameContext.Provider>
   );
 }

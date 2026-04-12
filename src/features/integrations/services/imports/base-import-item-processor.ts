@@ -24,6 +24,7 @@ import type { ProductRecord, ProductWithImages, ProductParameterValue } from '@/
 import type { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
+import { filterProductCustomFieldValuesByAllowedFieldNames } from '@/shared/lib/products/utils/custom-field-values';
 import { validateProductUpdate } from '@/shared/lib/products/validations';
 import { listingHasBaseImportProvenance } from '@/features/integrations/services/imports/base-import-provenance';
 
@@ -264,7 +265,6 @@ export const importSingleItem = async (input: {
     input.customFieldDefinitions
   );
   const templateMappedParameterValues = normalizeParameterValues(mapped.parameters);
-  const templateMappedCustomFieldValues = normalizeProductCustomFieldValues(mapped.customFields);
   const customFieldDiagnostics = collectCustomFieldImportDiagnostics(
     input.raw,
     input.templateMappings,
@@ -288,6 +288,11 @@ export const importSingleItem = async (input: {
   const resultMetadata = customFieldImportMetadata
     ? { metadata: { customFieldImport: customFieldImportMetadata } }
     : {};
+
+  const allowedTemplateMappedCustomFieldValues = filterProductCustomFieldValuesByAllowedFieldNames(
+    normalizeProductCustomFieldValues(mapped.customFields),
+    input.customFieldDefinitions ?? []
+  );
   const mappedProducerIds = resolveProducerIds(mapped.producerIds, input.lookups);
   const mappedTagIds = resolveTagIds(mapped.tagIds, input.lookups);
   const imageUrls = (mapped.imageLinks ?? []).slice(0, MAX_IMAGES_PER_PRODUCT);
@@ -397,11 +402,16 @@ export const importSingleItem = async (input: {
       : [];
     mapped.parameters = resolvedParameterValues.length > 0 ? resolvedParameterValues : undefined;
     const resolvedCustomFieldValues = mergeCustomFieldValues(
-      Array.isArray(decision.target.customFields) ? decision.target.customFields : [],
-      templateMappedCustomFieldValues
+      filterProductCustomFieldValuesByAllowedFieldNames(
+        Array.isArray(decision.target.customFields) ? decision.target.customFields : [],
+        input.customFieldDefinitions ?? []
+      ),
+      allowedTemplateMappedCustomFieldValues
     );
-    mapped.customFields =
-      templateMappedCustomFieldValues.length > 0 ? resolvedCustomFieldValues : undefined;
+    const shouldPersistCustomFields =
+      (Array.isArray(decision.target.customFields) && decision.target.customFields.length > 0) ||
+      allowedTemplateMappedCustomFieldValues.length > 0;
+    mapped.customFields = shouldPersistCustomFields ? resolvedCustomFieldValues : undefined;
 
     const updateData: ProductUpdateInput = {
       baseProductId: mappedBaseProductId ?? decision.target.baseProductId ?? null,
@@ -421,7 +431,7 @@ export const importSingleItem = async (input: {
       sizeWidth: mapped.sizeWidth,
       length: mapped.length,
       imageLinks: imageUrls,
-      ...(templateMappedCustomFieldValues.length > 0
+      ...(shouldPersistCustomFields
         ? { customFields: resolvedCustomFieldValues }
         : {}),
       ...(shouldResolveLinkedParameters ? { parameters: resolvedParameterValues } : {}),
@@ -611,18 +621,18 @@ export const importSingleItem = async (input: {
     )
     : mergedImportedParameterValues;
   const resolvedCustomFieldValues = normalizeProductCustomFieldValues(mapped.customFields);
+  const allowedResolvedCustomFieldValues = filterProductCustomFieldValuesByAllowedFieldNames(
+    resolvedCustomFieldValues,
+    input.customFieldDefinitions ?? []
+  );
   if (resolvedParameterValues.length > 0) {
     createData.parameters = resolvedParameterValues;
     mapped.parameters = resolvedParameterValues;
   } else {
     mapped.parameters = undefined;
   }
-  if (resolvedCustomFieldValues.length > 0) {
-    createData.customFields = resolvedCustomFieldValues;
-    mapped.customFields = resolvedCustomFieldValues;
-  } else {
-    mapped.customFields = undefined;
-  }
+  createData.customFields = allowedResolvedCustomFieldValues;
+  mapped.customFields = allowedResolvedCustomFieldValues.length > 0 ? allowedResolvedCustomFieldValues : undefined;
 
   const validationResult = await validateImportedCreateData(createData);
   if (!validationResult.success) {

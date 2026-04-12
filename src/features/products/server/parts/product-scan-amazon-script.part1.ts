@@ -64,12 +64,14 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       .slice(0, 12);
   const mergeStepDetails = (...detailSets) =>
     detailSets.flatMap((details) => normalizeStepDetails(details));
-  const resolveStepIdentity = (key, attempt, inputSource) =>
+  const resolveStepIdentity = (key, attempt, inputSource, candidateId = null) =>
     String(toText(key) || '') +
     '::' +
     String(resolveComparableAttempt(attempt)) +
     '::' +
-    String(toText(inputSource) || 'none');
+    String(toText(inputSource) || 'none') +
+    '::' +
+    String(toText(candidateId) || 'none');
 
   const upsertScanStep = (input) => {
     const key = toText(input?.key);
@@ -98,8 +100,8 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     const normalizedInputSource = toText(input?.inputSource);
     const existingIndex = scanSteps.findIndex(
       (entry) =>
-        resolveStepIdentity(entry.key, entry.attempt, entry.inputSource) ===
-        resolveStepIdentity(key, stepAttempt, normalizedInputSource)
+        resolveStepIdentity(entry.key, entry.attempt, entry.inputSource, entry.candidateId) ===
+        resolveStepIdentity(key, stepAttempt, normalizedInputSource, input?.candidateId)
     );
     const existingStep =
       existingIndex >= 0
@@ -599,11 +601,41 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     return normalizedCurrentUrl !== normalizedStartingUrl;
   };
 
+  const isGoogleImagesUploadEntryUrl = (value) => {
+    const normalizedValue = toText(value);
+    if (!normalizedValue) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(normalizedValue);
+      const host = parsed.hostname.toLowerCase();
+      const pathname = parsed.pathname || '/';
+      if (host === 'images.google.com' && (pathname === '/' || pathname === '')) {
+        return true;
+      }
+      if (host === 'lens.google.com' && pathname.startsWith('/upload')) {
+        return true;
+      }
+      if (
+        host.startsWith('www.google.') &&
+        (pathname === '/imghp' || pathname === '/images')
+      ) {
+        return true;
+      }
+    } catch {
+      return false;
+    }
+
+    return false;
+  };
+
   const waitForGoogleLensResultState = async (startingUrl, inputLocator = null, stepMeta = null) => {
     let deadline = Date.now() + 25000;
     let extendedForProcessing = false;
     let nextProcessingProgressAt = Date.now() + 5000;
     let lastProcessingState = null;
+    let inputWasReplaced = false;
     while (Date.now() < deadline) {
       const currentUrl = page.url();
       if (await isGoogleConsentPresent().catch(() => false)) {
@@ -620,18 +652,6 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
           reason: 'url_changed',
           processingState: lastProcessingState,
         };
-      }
-
-      if (inputLocator) {
-        const uploadInputStillPresent = await inputLocator.count().catch(() => 0);
-        if (uploadInputStillPresent === 0) {
-          return {
-            advanced: true,
-            currentUrl,
-            reason: 'input_replaced',
-            processingState: lastProcessingState,
-          };
-        }
       }
 
       const processingState = await readGoogleLensProcessingState();
@@ -681,6 +701,21 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         };
       }
 
+      if (inputLocator) {
+        const uploadInputStillPresent = await inputLocator.count().catch(() => 0);
+        if (uploadInputStillPresent === 0) {
+          inputWasReplaced = true;
+          if (!isGoogleImagesUploadEntryUrl(currentUrl)) {
+            return {
+              advanced: true,
+              currentUrl,
+              reason: 'input_replaced',
+              processingState,
+            };
+          }
+        }
+      }
+
       if (processingState.processingVisible) {
         if (!extendedForProcessing) {
           deadline = Math.max(deadline, Date.now() + 35000);
@@ -720,32 +755,39 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     return {
       advanced: false,
       currentUrl: page.url(),
-      reason: lastProcessingState?.processingVisible ? 'upload_processing_timeout' : 'timeout',
+      reason: lastProcessingState?.processingVisible
+        ? 'upload_processing_timeout'
+        : inputWasReplaced || isGoogleImagesUploadEntryUrl(page.url())
+          ? 'lens_result_page_not_ready'
+          : 'timeout',
       processingState: lastProcessingState,
     };
   };
 
   const verifyGoogleLensFileUploadAccepted = async (inputLocator, startingUrl, stepMeta = null) => {
     const selectedFileState = await readSelectedGoogleLensFileState(inputLocator);
-    if (
-      selectedFileState.fileCount < 1 ||
-      typeof selectedFileState.fileSize !== 'number' ||
-      selectedFileState.fileSize < 1
-    ) {
+    const selectionConfirmed =
+      selectedFileState.fileCount >= 1 &&
+      typeof selectedFileState.fileSize === 'number' &&
+      selectedFileState.fileSize > 0;
+
+    const transitionState = await waitForGoogleLensResultState(startingUrl, inputLocator, stepMeta);
+    if (!selectionConfirmed && !transitionState.advanced) {
       return {
         accepted: false,
         error: 'Google Lens did not receive a usable image file upload.',
         selectedFileState,
+        transitionState,
       };
     }
-
-    const transitionState = await waitForGoogleLensResultState(startingUrl, inputLocator, stepMeta);
     if (!transitionState.advanced) {
       return {
         accepted: false,
         error:
           transitionState.reason === 'upload_processing_timeout'
             ? 'Google Lens accepted the image but stayed in the upload processing state without producing results.'
+            : transitionState.reason === 'lens_result_page_not_ready'
+              ? 'Google Lens closed the upload entry but did not transition into a usable result page.'
             : 'Google Lens did not advance after receiving the image upload.',
         selectedFileState,
         transitionState,
@@ -768,6 +810,8 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         error:
           transitionState.reason === 'upload_processing_timeout'
             ? 'Google Lens accepted the image URL but stayed in the upload processing state without producing results.'
+            : transitionState.reason === 'lens_result_page_not_ready'
+              ? 'Google Lens did not transition from the image submission entry into a usable result page.'
             : 'Google Lens did not advance after receiving the image URL.',
         transitionState,
       };
@@ -1373,6 +1417,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
 
   const describeGoogleLensCandidateCollectionState = async () => {
     const currentUrl = page.url();
+    const currentUrlLooksLikeUploadEntry = isGoogleImagesUploadEntryUrl(currentUrl);
     const uploadInputVisible = await page
       .locator('input[type="file"]')
       .first()
@@ -1409,6 +1454,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         !processingState.processingVisible &&
         !processingState.resultShellVisible &&
         (uploadInputVisible ||
+          currentUrlLooksLikeUploadEntry ||
           currentUrl.includes('/searchbyimage') ||
           currentUrl === 'https://images.google.com/' ||
           currentUrl === 'https://images.google.com'),
@@ -1995,9 +2041,9 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       candidateId,
       candidateAttempt,
       inputSource: 'file',
-      destinationUrl: 'https://images.google.com/?hl=en',
+      destinationUrl: 'https://lens.google.com/upload?hl=en',
       openingMessage: 'Opening Google Lens for image ' + (candidateId || 'candidate') + '.',
-      openedMessage: 'Google Images opened.',
+      openedMessage: 'Google Lens opened.',
       fallbackContext,
       details: [
         { label: 'Source', value: 'Local file' },
@@ -2272,8 +2318,14 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     if (!uploadVerification.accepted) {
       const uploadTimedOutWhileProcessing =
         uploadVerification.transitionState?.reason === 'upload_processing_timeout';
+      const uploadNeverReachedResults =
+        uploadVerification.transitionState?.reason === 'lens_result_page_not_ready';
       const artifactKey = await captureGoogleUploadArtifacts(
-        uploadTimedOutWhileProcessing ? 'processing-timeout' : 'empty-upload',
+        uploadTimedOutWhileProcessing
+          ? 'processing-timeout'
+          : uploadNeverReachedResults
+            ? 'result-page-not-ready'
+            : 'empty-upload',
         candidateId,
         candidateAttempt
       );
@@ -2293,15 +2345,23 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         inputSource: 'file',
         status: 'failed',
         retryOf: toText(fallbackContext?.retryOf),
-        resultCode: uploadTimedOutWhileProcessing ? 'upload_processing_timeout' : 'empty_upload',
+        resultCode: uploadTimedOutWhileProcessing
+          ? 'upload_processing_timeout'
+          : uploadNeverReachedResults
+            ? 'lens_result_page_not_ready'
+            : 'empty_upload',
         message: uploadVerification.error,
         url: page.url(),
         warning:
           toText(fallbackContext?.warning) ||
-          (imageUrl ? 'Retryable upload handoff. URL fallback is available.' : null),
+          (imageUrl && !uploadNeverReachedResults
+            ? 'Retryable upload handoff. URL fallback is available.'
+            : null),
         details: mergeStepDetails(
           sharedDetails,
-          imageUrl ? [{ label: 'Fallback available', value: 'Image URL' }] : [],
+          imageUrl && !uploadNeverReachedResults
+            ? [{ label: 'Fallback available', value: 'Image URL' }]
+            : [],
           [
             { label: 'File input selector', value: fileInputState.selector },
             { label: 'File input scope', value: fileInputState.scopeType },
@@ -2359,9 +2419,17 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         captchaRequired: false,
         captchaEncountered,
         error: uploadVerification.error,
-        retryRecommended: !captchaEncountered && Boolean(imageUrl),
+        retryRecommended:
+          !uploadTimedOutWhileProcessing &&
+          !uploadNeverReachedResults &&
+          !captchaEncountered &&
+          Boolean(imageUrl),
         inputSourceUsed: 'file',
-        failureCode: uploadTimedOutWhileProcessing ? 'upload_processing_timeout' : 'empty_upload',
+        failureCode: uploadTimedOutWhileProcessing
+          ? 'upload_processing_timeout'
+          : uploadNeverReachedResults
+            ? 'lens_result_page_not_ready'
+            : 'empty_upload',
         transitionReason: uploadVerification.transitionState?.reason,
       });
     }

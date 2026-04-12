@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-12T16:19:43.065Z
+Generated at: 2026-04-12T19:22:01.638Z
 
 ## Snapshot
 
-- Source files: 10379
-- Source lines: 1750759
-- use client files: 1762
-- Files >= 1000 LOC: 14
+- Source files: 10386
+- Source lines: 1752823
+- use client files: 1767
+- Files >= 1000 LOC: 15
 - Files >= 1500 LOC: 7
-- Largest file: `src/features/products/server/parts/product-scan-amazon-script.part1.ts` (2847 LOC)
+- Largest file: `src/features/products/server/product-scans-service.ts` (3028 LOC)
 - API routes: 30
 - API delegated server routes: 187
 - API routes without apiHandler/delegation: 0
@@ -25,7 +25,7 @@ Generated at: 2026-04-12T16:19:43.065Z
 - Cross-feature dependency pairs: 2
 - Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 88
+- Prop-drilling chains (depth >= 3): 12
 - Prop-drilling chains (depth >= 4): 0
 
 ## Top API Hotspots (by LOC)
@@ -34,7 +34,7 @@ Generated at: 2026-04-12T16:19:43.065Z
 | --- | ---: |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 144 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 120 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 121 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 116 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
 | `src/app/api/databases/[[...path]]/route.ts` | 100 |
@@ -59,23 +59,23 @@ Generated at: 2026-04-12T16:19:43.065Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 3831 |
-| `src/features/products/components/form/ProductFormScans.test.tsx` | 2977 |
-| `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 2847 |
-| `src/features/products/server/product-scans-service.ts` | 2680 |
+| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 4175 |
+| `src/features/products/server/product-scans-service.ts` | 3028 |
+| `src/features/products/components/form/ProductFormScans.test.tsx` | 3017 |
+| `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 2915 |
+| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 2128 |
 | `src/features/products/server/product-scans-service.amazon.test.ts` | 1919 |
-| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 1790 |
 | `src/features/products/components/ProductModals.test.tsx` | 1730 |
-| `src/features/products/server/parts/product-scan-amazon-script.part2.ts` | 1619 |
+| `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 1712 |
+| `src/features/products/server/parts/product-scan-amazon-script.part2.ts` | 1664 |
 | `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 1599 |
-| `src/features/products/components/form/ProductFormScans.tsx` | 1542 |
-| `src/features/product-sync/services/product-sync-service.ts` | 1502 |
-| `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 1416 |
+| `src/features/products/components/form/ProductFormScans.tsx` | 1582 |
+| `src/features/integrations/services/tradera-listing-service.test.ts` | 1356 |
+| `src/features/product-sync/services/product-sync-processor.ts` | 1324 |
+| `src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts` | 1317 |
 | `src/features/products/components/list/ProductColumns.test.tsx` | 1302 |
-| `src/features/integrations/services/tradera-listing-service.test.ts` | 1288 |
 | `src/features/integrations/services/tradera-listing/BrowserListing.1.test.ts` | 1283 |
 | `src/features/ai/ai-paths/services/__tests__/playwright-node-runner.test.ts` | 1253 |
 | `src/features/products/components/scans/ProductScanAmazonDetails.tsx` | 1250 |
-| `src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts` | 1189 |
 | `src/features/products/server/product-scans-service.helpers.ts` | 1159 |
 | `src/features/integrations/services/tradera-listing/BrowserListing.2.test.ts` | 1155 |

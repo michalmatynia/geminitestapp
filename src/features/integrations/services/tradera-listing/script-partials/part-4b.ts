@@ -388,6 +388,35 @@ export const PART_4B = String.raw`
     return Boolean(pendingIndicator);
   };
 
+  const summarizeImageUploadProgressState = ({
+    selectedImageFileCount = 0,
+    draftImageRemoveControls = 0,
+    uploadedImagePreviewCount = 0,
+    baselinePreviewCount = 0,
+    imageUploadPromptVisible = false,
+    imageUploadPending = false,
+  } = {}) => {
+    const normalizedBaselinePreviewCount = Math.max(0, baselinePreviewCount || 0);
+    const observedPreviewDelta = Math.max(
+      0,
+      (uploadedImagePreviewCount || 0) - normalizedBaselinePreviewCount
+    );
+    const uploadAccepted =
+      observedPreviewDelta > 0 ||
+      draftImageRemoveControls > 0 ||
+      (selectedImageFileCount > 0 && imageUploadPromptVisible === false) ||
+      (imageUploadPending === true && imageUploadPromptVisible === false);
+    const uploadPartiallyApplied =
+      uploadAccepted &&
+      (imageUploadPending === true || observedPreviewDelta === 0);
+
+    return {
+      observedPreviewDelta,
+      uploadAccepted,
+      uploadPartiallyApplied,
+    };
+  };
+
   const readImageUploadErrorText = async () => {
     for (const selector of IMAGE_UPLOAD_ERROR_SELECTORS) {
       const locator = page.locator(selector);
@@ -678,6 +707,14 @@ export const PART_4B = String.raw`
         draftImageRemoveControls,
         uploadedImagePreviewCount,
         baselinePreviewCount,
+        ...summarizeImageUploadProgressState({
+          selectedImageFileCount,
+          draftImageRemoveControls,
+          uploadedImagePreviewCount,
+          baselinePreviewCount,
+          imageUploadPromptVisible,
+          imageUploadPending,
+        }),
         imageUploadPromptVisible,
         imageUploadPending,
         continueButtonVisible: Boolean(continueButton),

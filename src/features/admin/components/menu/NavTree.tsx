@@ -27,21 +27,7 @@ type NavTreeProps = {
   onSetPendingHref?: ((href: string) => void) | undefined;
 };
 
-type NavTreeItemProps = {
-  item: NavItem;
-  depth: number;
-  isMenuCollapsed: boolean;
-  active: boolean;
-  isOpen: boolean;
-  onToggleOpen: (id: string) => void;
-  onNavigateHref: (href: string) => void;
-  onPrefetchHref: (href: string) => void;
-  onSetPendingHref?: ((href: string) => void) | undefined;
-};
-
-type NavTreeNodeProps = {
-  item: NavItem;
-  depth: number;
+type NavTreeContextValue = {
   isMenuCollapsed: boolean;
   pathname: string;
   openIds: Set<string>;
@@ -50,6 +36,28 @@ type NavTreeNodeProps = {
   onPrefetchHref: (href: string) => void;
   pendingHref?: string | null | undefined;
   onSetPendingHref?: ((href: string) => void) | undefined;
+};
+
+const NavTreeContext = React.createContext<NavTreeContextValue | null>(null);
+
+function useNavTree(): NavTreeContextValue {
+  const context = React.useContext(NavTreeContext);
+  if (!context) {
+    throw new Error('useNavTree must be used within a NavTreeProvider');
+  }
+  return context;
+}
+
+type NavTreeItemProps = {
+  item: NavItem;
+  depth: number;
+  active: boolean;
+  isOpen: boolean;
+};
+
+type NavTreeNodeProps = {
+  item: NavItem;
+  depth: number;
 };
 
 const FOCUS_RING_CLASS_NAME =
@@ -126,40 +134,27 @@ const buildNavContextItems = (
   return items;
 };
 
-const hasSubtreeOpenStateChanged = (
-  prevOpenIds: Set<string>,
-  nextOpenIds: Set<string>,
-  item: NavItem
-): boolean => {
-  const children = item.children;
-  if (!children || children.length === 0) return false;
-
-  const stack = [...children];
-  while (stack.length > 0) {
-    const node = stack.pop();
-    if (!node?.children || node.children.length === 0) continue;
-    if (prevOpenIds.has(node.id) !== nextOpenIds.has(node.id)) {
-      return true;
-    }
-    stack.push(...node.children);
-  }
-
-  return false;
-};
-
-const NavTreeItem = memo(
-  function NavTreeItem({
+const NavTreeNode = memo(
+  function NavTreeNode({
     item,
     depth,
-    isMenuCollapsed,
-    active,
-    isOpen,
-    onToggleOpen,
-    onNavigateHref,
-    onPrefetchHref,
-    onSetPendingHref,
-  }: NavTreeItemProps): React.ReactNode {
+  }: NavTreeNodeProps): React.ReactNode {
+    const {
+      isMenuCollapsed,
+      pathname,
+      openIds,
+      pendingHref,
+      onToggleOpen,
+      onNavigateHref,
+      onPrefetchHref,
+      onSetPendingHref,
+    } = useNavTree();
+
     const hasChildren = !!item.children?.length;
+    const effectivePathname = pendingHref ?? pathname;
+    const active = !hasChildren && item.href ? isActiveHref(effectivePathname, item.href, item.exact) : false;
+    const isOpen = !isMenuCollapsed && hasChildren && openIds.has(item.id);
+
     const contextItems = useMemo(
       () => buildNavContextItems(item, isOpen, hasChildren, onToggleOpen, onNavigateHref),
       [hasChildren, isOpen, item, onNavigateHref, onToggleOpen]
@@ -332,115 +327,34 @@ const NavTreeItem = memo(
 
     return (
       <div>
-        {isMenuCollapsed && depth === 0 ? (
-          <Tooltip content={item.label} side='right'>
-            <span tabIndex={0} role='button' className='block focus:outline-none'>
-              {collapsedRootContent}
-            </span>
-          </Tooltip>
-        ) : (
-          primaryRowContent
-        )}
-      </div>
-    );
-  },
-  function navTreeItemPropsAreEqual(prev: NavTreeItemProps, next: NavTreeItemProps): boolean {
-    return (
-      prev.item === next.item &&
-      prev.depth === next.depth &&
-      prev.isMenuCollapsed === next.isMenuCollapsed &&
-      prev.active === next.active &&
-      prev.isOpen === next.isOpen &&
-      prev.onToggleOpen === next.onToggleOpen &&
-      prev.onNavigateHref === next.onNavigateHref &&
-      prev.onPrefetchHref === next.onPrefetchHref &&
-      prev.onSetPendingHref === next.onSetPendingHref
-    );
-  }
-);
-
-const NavTreeNode = memo(
-  function NavTreeNode({
-    item,
-    depth,
-    isMenuCollapsed,
-    pathname,
-    openIds,
-    onToggleOpen,
-    onNavigateHref,
-    onPrefetchHref,
-    pendingHref,
-    onSetPendingHref,
-  }: NavTreeNodeProps): React.ReactNode {
-    const hasChildren = !!item.children?.length;
-    const effectivePathname = pendingHref ?? pathname;
-    const active = !hasChildren && item.href ? isActiveHref(effectivePathname, item.href, item.exact) : false;
-    const isOpen = !isMenuCollapsed && hasChildren && openIds.has(item.id);
-
-    return (
-      <div>
-        <NavTreeItem
-          item={item}
-          depth={depth}
-          isMenuCollapsed={isMenuCollapsed}
-          active={active}
-          isOpen={isOpen}
-          onToggleOpen={onToggleOpen}
-          onNavigateHref={onNavigateHref}
-          onPrefetchHref={onPrefetchHref}
-          onSetPendingHref={onSetPendingHref}
-        />
+        <div>
+          {isMenuCollapsed && depth === 0 ? (
+            <Tooltip content={item.label} side='right'>
+              <span tabIndex={0} role='button' className='block focus:outline-none'>
+                {collapsedRootContent}
+              </span>
+            </Tooltip>
+          ) : (
+            primaryRowContent
+          )}
+        </div>
 
         {hasChildren && isOpen ? (
-          <div className='mt-1' id={`${item.id}-children`}>
-            <NavTree
-              items={item.children ?? []}
-              depth={depth + 1}
-              isMenuCollapsed={isMenuCollapsed}
-              pathname={pathname}
-              openIds={openIds}
-              onToggleOpen={onToggleOpen}
-              onNavigateHref={onNavigateHref}
-              onPrefetchHref={onPrefetchHref}
-              pendingHref={pendingHref}
-              onSetPendingHref={onSetPendingHref}
-            />
+          <div className='mt-1 space-y-1' id={`${item.id}-children`}>
+            {item.children!.map((childItem: NavItem) => (
+              <NavTreeNode
+                key={childItem.id}
+                item={childItem}
+                depth={depth + 1}
+              />
+            ))}
           </div>
         ) : null}
       </div>
     );
   },
   function navTreeNodePropsAreEqual(prev: NavTreeNodeProps, next: NavTreeNodeProps): boolean {
-    if (
-      prev.item !== next.item ||
-      prev.depth !== next.depth ||
-      prev.isMenuCollapsed !== next.isMenuCollapsed ||
-      prev.pathname !== next.pathname ||
-      prev.pendingHref !== next.pendingHref ||
-      prev.onToggleOpen !== next.onToggleOpen ||
-      prev.onNavigateHref !== next.onNavigateHref ||
-      prev.onPrefetchHref !== next.onPrefetchHref ||
-      prev.onSetPendingHref !== next.onSetPendingHref
-    ) {
-      return false;
-    }
-
-    const hasChildren = !!next.item.children?.length;
-    if (!hasChildren) {
-      return true;
-    }
-
-    const prevIsOpen = !prev.isMenuCollapsed && prev.openIds.has(prev.item.id);
-    const nextIsOpen = !next.isMenuCollapsed && next.openIds.has(next.item.id);
-    if (prevIsOpen !== nextIsOpen) {
-      return false;
-    }
-
-    if (!nextIsOpen) {
-      return true;
-    }
-
-    return !hasSubtreeOpenStateChanged(prev.openIds, next.openIds, next.item);
+    return prev.item === next.item && prev.depth === next.depth;
   }
 );
 
@@ -480,23 +394,40 @@ export const NavTree = memo(function NavTree({
   const handleNavigateHref = onNavigateHrefProp ?? handleNavigateHrefLocal;
   const handlePrefetchHref = onPrefetchHrefProp ?? handlePrefetchHrefLocal;
 
-  return (
-    <div className={cn(depth === 0 ? 'space-y-1.5' : 'space-y-1')}>
-      {items.map((item: NavItem) => (
-        <NavTreeNode
-          key={item.id}
-          item={item}
-          depth={depth}
-          isMenuCollapsed={isMenuCollapsed}
-          pathname={pathname}
-          openIds={openIds}
-          onToggleOpen={onToggleOpen}
-          onNavigateHref={handleNavigateHref}
-          onPrefetchHref={handlePrefetchHref}
-          pendingHref={pendingHref}
-          onSetPendingHref={onSetPendingHrefProp}
-        />
-      ))}
-    </div>
+  const contextValue = useMemo<NavTreeContextValue>(
+    () => ({
+      isMenuCollapsed,
+      pathname,
+      openIds,
+      onToggleOpen,
+      onNavigateHref: handleNavigateHref,
+      onPrefetchHref: handlePrefetchHref,
+      pendingHref,
+      onSetPendingHref: onSetPendingHrefProp,
+    }),
+    [
+      isMenuCollapsed,
+      pathname,
+      openIds,
+      onToggleOpen,
+      handleNavigateHref,
+      handlePrefetchHref,
+      pendingHref,
+      onSetPendingHrefProp,
+    ]
   );
-});
+
+  return (
+    <NavTreeContext.Provider value={contextValue}>
+      <div className={cn(depth === 0 ? 'space-y-1.5' : 'space-y-1')}>
+        {items.map((item: NavItem) => (
+          <NavTreeNode
+            key={item.id}
+            item={item}
+            depth={depth}
+          />
+        ))}
+      </div>
+    </NavTreeContext.Provider>
+  );
+  });

@@ -314,11 +314,10 @@ function KangurLearnerProfileOverviewAvatarPicker({
 
 function KangurLearnerProfileOverviewGuidedRoundsMetric({
   snapshot,
-  translations,
 }: {
   snapshot: KangurOverviewRuntime['snapshot'];
-  translations: KangurOverviewTranslations;
 }): React.JSX.Element | null {
+  const translations = useTranslations('KangurLearnerProfileWidgets.overview');
   if (snapshot.recommendedSessionsCompleted <= 0) {
     return null;
   }
@@ -353,12 +352,11 @@ function KangurLearnerProfileOverviewGuidedRoundsMetric({
 function KangurLearnerProfileOverviewDailyQuestMetric({
   dailyQuest,
   dailyQuestAccent,
-  translations,
 }: {
   dailyQuest: KangurOverviewDailyQuest;
   dailyQuestAccent: 'emerald' | 'amber' | 'indigo' | 'slate';
-  translations: KangurOverviewTranslations;
 }): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.overview');
   return (
     <KangurMetricCard
       accent={dailyQuestAccent}
@@ -388,19 +386,24 @@ function KangurLearnerProfileOverviewDailyQuestMetric({
   );
 }
 
-function KangurLearnerProfileOverviewMetrics({
-  dailyQuest,
-  dailyQuestAccent,
-  nextBadge,
-  snapshot,
-  translations,
-}: {
-  dailyQuest: KangurOverviewDailyQuest;
-  dailyQuestAccent: 'emerald' | 'amber' | 'indigo' | 'slate';
-  nextBadge: ReturnType<typeof getNextLockedBadge>;
-  snapshot: KangurOverviewRuntime['snapshot'];
-  translations: KangurOverviewTranslations;
-}): React.JSX.Element {
+function KangurLearnerProfileOverviewMetrics(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.overview');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
+  const { progress, snapshot } = useKangurLearnerProfileRuntime();
+  const { subject, subjectKey } = useKangurSubjectFocus();
+
+  const dailyQuest = useMemo<KangurDailyQuestState | null | undefined>(
+    () =>
+      getCurrentKangurDailyQuest(progress, {
+        ownerKey: subjectKey,
+        subject,
+        translate: runtimeTranslations,
+      }),
+    [progress, runtimeTranslations, subject, subjectKey]
+  );
+  const dailyQuestAccent = resolveKangurOverviewDailyQuestAccent(dailyQuest);
+  const nextBadge = getNextLockedBadge(progress, { translate: runtimeTranslations });
+
   return (
     <div
       className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} min-[420px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6`}
@@ -443,13 +446,11 @@ function KangurLearnerProfileOverviewMetrics({
 
       <KangurLearnerProfileOverviewGuidedRoundsMetric
         snapshot={snapshot}
-        translations={translations}
       />
 
       <KangurLearnerProfileOverviewDailyQuestMetric
         dailyQuest={dailyQuest}
         dailyQuestAccent={dailyQuestAccent}
-        translations={translations}
       />
 
       <KangurMetricCard
@@ -479,12 +480,9 @@ function KangurLearnerProfileOverviewMetrics({
 
 export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.overview');
-  const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const { progress, snapshot, user } = useKangurLearnerProfileRuntime();
+  const { user } = useKangurLearnerProfileRuntime();
   const { checkAppState } = useKangurAuthActions();
-  const { subject, subjectKey } = useKangurSubjectFocus();
   const { entry: overviewContent } = useKangurPageContentEntry('learner-profile-overview');
-  const nextBadge = getNextLockedBadge(progress, { translate: runtimeTranslations });
   const isCoarsePointer = useKangurCoarsePointer();
   const activeLearner = user?.activeLearner ?? null;
   const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
@@ -492,16 +490,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
     overviewContent,
     translations,
   });
-  const dailyQuest = useMemo<KangurDailyQuestState | null | undefined>(
-    () =>
-      getCurrentKangurDailyQuest(progress, {
-        ownerKey: subjectKey,
-        subject,
-        translate: runtimeTranslations,
-      }),
-    [progress, runtimeTranslations, subject, subjectKey]
-  );
-  const dailyQuestAccent = resolveKangurOverviewDailyQuestAccent(dailyQuest);
+
   const { avatarError, handleAvatarSelect, isSavingAvatar } =
     useKangurLearnerProfileOverviewAvatarState({
       activeLearner,
@@ -525,13 +514,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         selectedAvatar={selectedAvatar}
         translations={translations}
       />
-      <KangurLearnerProfileOverviewMetrics
-        dailyQuest={dailyQuest}
-        dailyQuestAccent={dailyQuestAccent}
-        nextBadge={nextBadge}
-        snapshot={snapshot}
-        translations={translations}
-      />
+      <KangurLearnerProfileOverviewMetrics />
     </section>
   );
 }

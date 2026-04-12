@@ -53,6 +53,7 @@ export async function postTestConnectionHandler(
           ? 'quicklist_preflight'
           : 'auto';
   const manualMode = mode === 'manual';
+  const manualSessionRefreshMode = mode === 'manual_session_refresh';
   const quicklistPreflightMode = mode === 'quicklist_preflight';
   const rawManualTimeout = requestBody.manualTimeoutMs;
   const manualLoginTimeoutMs =
@@ -135,6 +136,7 @@ export async function postTestConnectionHandler(
       connection,
       repo,
       manualMode,
+      manualSessionRefreshMode,
       quicklistPreflightMode,
       manualLoginTimeoutMs,
       steps,

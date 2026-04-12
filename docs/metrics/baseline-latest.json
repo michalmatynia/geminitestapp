@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-12T16:19:43.065Z",
+  "generatedAt": "2026-04-12T19:22:01.638Z",
   "source": {
-    "totalFiles": 10379,
-    "totalLines": 1750759,
-    "useClientFiles": 1762,
+    "totalFiles": 10386,
+    "totalLines": 1752823,
+    "useClientFiles": 1767,
     "hooksWithoutUseClient": 0,
-    "filesOver800": 107,
-    "filesOver1000": 14,
+    "filesOver800": 105,
+    "filesOver1000": 15,
     "filesOver1500": 7,
     "largestFile": {
-      "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
-      "lines": 2847
+      "path": "src/features/products/server/product-scans-service.ts",
+      "lines": 3028
     }
   },
   "api": {
@@ -35,7 +35,7 @@
       },
       {
         "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 120
+        "lines": 121
       },
       {
         "path": "src/app/api/ai-paths/[[...path]]/route.ts",
@@ -129,8 +129,8 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2501,
-        "lines": 528116
+        "files": 2504,
+        "lines": 527841
       },
       {
         "feature": "ai",
@@ -139,13 +139,13 @@
       },
       {
         "feature": "products",
-        "files": 466,
-        "lines": 135412
+        "files": 465,
+        "lines": 136362
       },
       {
         "feature": "integrations",
         "files": 476,
-        "lines": 103840
+        "lines": 104983
       },
       {
         "feature": "case-resolver",
@@ -159,8 +159,8 @@
       },
       {
         "feature": "filemaker",
-        "files": 161,
-        "lines": 38182
+        "files": 163,
+        "lines": 38318
       },
       {
         "feature": "prompt-exploder",
@@ -180,7 +180,7 @@
       {
         "feature": "admin",
         "files": 61,
-        "lines": 10349
+        "lines": 10280
       },
       {
         "feature": "playwright",
@@ -199,8 +199,8 @@
       },
       {
         "feature": "product-sync",
-        "files": 15,
-        "lines": 5654
+        "files": 16,
+        "lines": 5691
       },
       {
         "feature": "viewer3d",
@@ -438,35 +438,39 @@
     "topFilesByLines": [
       {
         "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
-        "lines": 3831
-      },
-      {
-        "path": "src/features/products/components/form/ProductFormScans.test.tsx",
-        "lines": 2977
-      },
-      {
-        "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
-        "lines": 2847
+        "lines": 4175
       },
       {
         "path": "src/features/products/server/product-scans-service.ts",
-        "lines": 2680
+        "lines": 3028
+      },
+      {
+        "path": "src/features/products/components/form/ProductFormScans.test.tsx",
+        "lines": 3017
+      },
+      {
+        "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
+        "lines": 2915
+      },
+      {
+        "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+        "lines": 2128
       },
       {
         "path": "src/features/products/server/product-scans-service.amazon.test.ts",
         "lines": 1919
       },
       {
-        "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
-        "lines": 1790
-      },
-      {
         "path": "src/features/products/components/ProductModals.test.tsx",
         "lines": 1730
       },
       {
+        "path": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
+        "lines": 1712
+      },
+      {
         "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
-        "lines": 1619
+        "lines": 1664
       },
       {
         "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
@@ -474,23 +478,23 @@
       },
       {
         "path": "src/features/products/components/form/ProductFormScans.tsx",
-        "lines": 1542
+        "lines": 1582
       },
       {
-        "path": "src/features/product-sync/services/product-sync-service.ts",
-        "lines": 1502
+        "path": "src/features/integrations/services/tradera-listing-service.test.ts",
+        "lines": 1356
       },
       {
-        "path": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
-        "lines": 1416
+        "path": "src/features/product-sync/services/product-sync-processor.ts",
+        "lines": 1324
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts",
+        "lines": 1317
       },
       {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
         "lines": 1302
-      },
-      {
-        "path": "src/features/integrations/services/tradera-listing-service.test.ts",
-        "lines": 1288
       },
       {
         "path": "src/features/integrations/services/tradera-listing/BrowserListing.1.test.ts",
@@ -503,10 +507,6 @@
       {
         "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
         "lines": 1250
-      },
-      {
-        "path": "src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts",
-        "lines": 1189
       },
       {
         "path": "src/features/products/server/product-scans-service.helpers.ts",
@@ -527,6 +527,10 @@
       {
         "path": "src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts",
         "lines": 1095
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/script-partials/part-5.ts",
+        "lines": 1081
       },
       {
         "path": "src/features/ai/ai-paths/services/path-run-executor/callbacks.ts",
@@ -551,10 +555,6 @@
       {
         "path": "src/features/products/components/scans/ProductScan1688Details.tsx",
         "lines": 1035
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
-        "lines": 1018
       }
     ],
     "topPagesByLines": [
@@ -641,7 +641,7 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 88,
+    "candidateChains": 12,
     "depthGte4Chains": 0,
     "forwardingComponents": 120
   }

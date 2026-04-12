@@ -185,6 +185,51 @@ describe('product-scans-service batch operations', () => {
     mocks.createCustomPlaywrightInstanceMock.mockReturnValue({
       id: 'instance-1',
     });
+    mocks.startPlaywrightConnectionEngineTaskMock.mockResolvedValue({
+      run: {
+        runId: 'run-connection-1688',
+        status: 'queued',
+      },
+      runtime: {
+        settings: {
+          headless: true,
+          identityProfile: 'marketplace',
+        },
+        browserPreference: 'brave',
+        personaId: 'persona-1688',
+      },
+      settings: {
+        headless: false,
+        identityProfile: 'marketplace',
+      },
+      browserPreference: 'brave',
+    });
+    mocks.getIntegrationRepositoryMock.mockResolvedValue({
+      listIntegrations: vi.fn(async () => [
+        {
+          id: 'integration-1688',
+          slug: '1688',
+          name: '1688',
+        },
+      ]),
+      listConnections: vi.fn(async () => [
+        {
+          id: 'connection-1688',
+          integrationId: 'integration-1688',
+          name: '1688 Primary',
+          scanner1688StartUrl: 'https://www.1688.com/',
+          scanner1688LoginMode: 'session_required',
+          scanner1688DefaultSearchMode: 'local_image',
+          scanner1688CandidateResultLimit: 12,
+          scanner1688MinimumCandidateScore: 6,
+          scanner1688MaxExtractedImages: 9,
+          scanner1688AllowUrlImageSearchFallback: false,
+          playwrightStorageState: '{"cookies":[],"origins":[]}',
+          playwrightPersonaId: 'persona-1688',
+        },
+      ]),
+    });
+    mocks.get1688DefaultConnectionIdMock.mockResolvedValue('connection-1688');
     mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
     mocks.getProductScannerSettingsMock.mockResolvedValue({
       amazonCandidateEvaluatorProbe: { mode: 'brain_default' },
@@ -432,10 +477,6 @@ describe('product-scans-service batch operations', () => {
         },
       ],
     });
-    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
-      runId: 'run-new-1688',
-      status: 'queued',
-    });
     mocks.upsertProductScanMock.mockImplementation(
       async (input: any) => ({
         ...input,
@@ -452,13 +493,48 @@ describe('product-scans-service batch operations', () => {
     expect(result.results[0]).toMatchObject({
       productId: 'product-1',
       scanId: expect.any(String),
-      runId: 'run-new-1688',
+      runId: 'run-connection-1688',
       status: 'queued',
     });
-    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+    expect(mocks.startPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        connection: expect.objectContaining({
+          id: 'connection-1688',
+          playwrightPersonaId: 'persona-1688',
+        }),
         request: expect.objectContaining({
           script: expect.stringContaining("label: 'Open supplier product page'"),
+          input: expect.objectContaining({
+            integrationId: 'integration-1688',
+            connectionId: 'connection-1688',
+            scanner1688StartUrl: 'https://www.1688.com/',
+            scanner1688DefaultSearchMode: 'local_image',
+            candidateResultLimit: 12,
+            minimumCandidateScore: 6,
+            maxExtractedImages: 9,
+            allowUrlImageSearchFallback: false,
+          }),
+        }),
+        resolveEngineRequestConfig: expect.any(Function),
+      })
+    );
+    expect(mocks.startPlaywrightEngineTaskMock).not.toHaveBeenCalled();
+    const resolver =
+      mocks.startPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0]
+        ?.resolveEngineRequestConfig;
+    const resolvedConfig = resolver?.({
+      settings: {
+        headless: true,
+        identityProfile: 'marketplace',
+      },
+      browserPreference: 'brave',
+    });
+    expect(resolvedConfig).toEqual(
+      expect.objectContaining({
+        browserPreference: 'brave',
+        settings: expect.objectContaining({
+          headless: false,
+          identityProfile: 'marketplace',
         }),
       })
     );
@@ -581,10 +657,51 @@ describe('product-scans-service batch operations', () => {
   });
 
   it('fails 1688 batch scans early when the resolved profile has no stored browser session', async () => {
-    // This is tested via the buildRequestInput config which we don't mock deeply here
-    // but we verify the batch logic handles errors from product loading or run starting.
     mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
-    mocks.getProductByIdMock.mockRejectedValue(new Error('Database error'));
+    mocks.getIntegrationRepositoryMock.mockResolvedValue({
+      listIntegrations: vi.fn(async () => [
+        {
+          id: 'integration-1688',
+          slug: '1688',
+          name: '1688',
+        },
+      ]),
+      listConnections: vi.fn(async () => [
+        {
+          id: 'connection-1688',
+          integrationId: 'integration-1688',
+          name: '1688 Primary',
+          scanner1688StartUrl: 'https://www.1688.com/',
+          scanner1688LoginMode: 'session_required',
+          scanner1688DefaultSearchMode: 'local_image',
+          scanner1688CandidateResultLimit: null,
+          scanner1688MinimumCandidateScore: null,
+          scanner1688MaxExtractedImages: null,
+          scanner1688AllowUrlImageSearchFallback: null,
+          playwrightStorageState: null,
+        },
+      ]),
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Sessionless Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'img.jpg',
+            filepath: '/img.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.upsertProductScanMock.mockImplementation(async (input: any) => ({
+      ...input,
+      id: input.id || 'scan-1688-session-missing',
+    }));
 
     const result = await queue1688BatchProductScans({
       productIds: ['product-1'],
@@ -592,7 +709,10 @@ describe('product-scans-service batch operations', () => {
 
     expect(result.failed).toBe(1);
     expect(result.results[0]?.status).toBe('failed');
-    expect(result.results[0]?.message).toBe('Database error');
+    expect(result.results[0]?.message).toBe(
+      '1688 login required for profile 1688 Primary. Refresh the saved browser session before scanning.'
+    );
+    expect(mocks.startPlaywrightConnectionEngineTaskMock).not.toHaveBeenCalled();
   });
 
   it('serializes batch scan startup and preserves product order', async () => {

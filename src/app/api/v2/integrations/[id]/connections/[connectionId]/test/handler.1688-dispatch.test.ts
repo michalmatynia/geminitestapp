@@ -98,6 +98,7 @@ describe('integration connection test handler 1688 dispatch', () => {
       }),
       true,
       false,
+      false,
       300000,
       expect.any(Array),
       expect.any(Function),
@@ -108,5 +109,41 @@ describe('integration connection test handler 1688 dispatch', () => {
       ok: true,
       sessionReady: true,
     });
+  });
+
+  it('routes manual session refresh mode to the interactive 1688 browser flow', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        mode: 'manual_session_refresh',
+        manualTimeoutMs: 180000,
+      },
+    });
+
+    await postTestConnectionHandler(
+      new NextRequest(
+        'http://localhost/api/v2/integrations/integration-1688/connections/connection-1688/test',
+        {
+          method: 'POST',
+        }
+      ),
+      {} as never,
+      {
+        id: 'integration-1688',
+        connectionId: 'connection-1688',
+      }
+    );
+
+    expect(handle1688BrowserTestMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      false,
+      true,
+      false,
+      180000,
+      expect.any(Array),
+      expect.any(Function),
+      expect.any(Function)
+    );
   });
 });

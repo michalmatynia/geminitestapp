@@ -27,6 +27,7 @@ import {
 import {
   ensureLoggedIn,
   readTraderaAuthState,
+  type TraderaEnsureLoggedInStatusUpdate,
 } from './tradera-browser-auth';
 import { resolveTraderaListingPriceForProduct } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
@@ -122,7 +123,14 @@ export const runTraderaBrowserListingStandard = async ({
         status: 'running',
         message: 'Checking whether the stored Tradera session is still valid.',
       });
-      await ensureLoggedIn(page, connection, listingFormUrl);
+      await ensureLoggedIn(page, connection, listingFormUrl, {
+        onStatus: (update: TraderaEnsureLoggedInStatusUpdate) => {
+          markStep('auth', {
+            status: 'running',
+            message: update.message,
+          });
+        },
+      });
       markStep('auth', {
         status: 'success',
         message: 'Stored Tradera session was accepted.',
@@ -290,6 +298,10 @@ export const runTraderaBrowserListingStandard = async ({
         ...(pricingMetadata ?? {}),
         debugArtifacts,
         authState,
+        authFailureMeta:
+          error && typeof error === 'object' && 'meta' in error
+            ? (error as { meta?: unknown }).meta ?? null
+            : null,
         errorId,
       };
     },

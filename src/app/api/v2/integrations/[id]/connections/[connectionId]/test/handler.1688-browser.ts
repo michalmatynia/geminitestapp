@@ -85,14 +85,23 @@ export const handle1688BrowserTest = async (
   connection: IntegrationConnectionRecord,
   repo: ConnectionUpdateRepository,
   manualMode: boolean,
+  manualSessionRefreshMode: boolean,
   quicklistPreflightMode: boolean,
   manualLoginTimeoutMs: number,
   steps: TestLogEntry[],
   pushStep: PushStep,
   fail: Fail
 ): Promise<Response> => {
-  if (manualMode) {
-    pushStep('Manual mode', 'ok', `Manual login enabled (timeout ${manualLoginTimeoutMs}ms).`);
+  const interactiveManualMode = manualMode || manualSessionRefreshMode;
+
+  if (interactiveManualMode) {
+    pushStep(
+      'Manual mode',
+      'ok',
+      `${
+        manualSessionRefreshMode ? 'Manual session refresh' : 'Manual login'
+      } enabled (timeout ${manualLoginTimeoutMs}ms).`
+    );
   }
 
   const runtime = await resolvePlaywrightConnectionTestRuntime({
@@ -107,21 +116,26 @@ export const handle1688BrowserTest = async (
     storedSession: {
       loadedDetail: 'Stored session loaded',
       missingDetail: 'No stored session found',
-      missingStatus: manualMode ? 'ok' : 'failed',
+      missingStatus: interactiveManualMode ? 'ok' : 'failed',
     },
   });
 
   const resolvedSettings = runtime.settings;
   const startUrl = normalize1688StartUrl(connection);
-  const headless = manualMode ? false : resolvedSettings.headless;
+  const headless = interactiveManualMode ? false : resolvedSettings.headless;
   const session = await openPlaywrightConnectionTestSession({
     connection,
     pushStep,
     runtime,
     headless,
-    browserPreference: manualMode && resolvedSettings.browser === 'chromium' ? 'auto' : resolvedSettings.browser,
+    browserPreference:
+      interactiveManualMode && resolvedSettings.browser === 'chromium'
+        ? 'auto'
+        : resolvedSettings.browser,
     launchSettingsOverrides: {
-      slowMo: manualMode ? Math.max(50, resolvedSettings.slowMo) : resolvedSettings.slowMo,
+      slowMo: interactiveManualMode
+        ? Math.max(50, resolvedSettings.slowMo)
+        : resolvedSettings.slowMo,
       proxyEnabled: resolvedSettings.proxyEnabled,
       proxyServer: resolvedSettings.proxyServer,
       proxyUsername: resolvedSettings.proxyUsername,
@@ -144,7 +158,7 @@ export const handle1688BrowserTest = async (
       pushStep(stepName, 'ok', '1688 start page loaded');
     };
 
-    if (quicklistPreflightMode || !manualMode) {
+    if (quicklistPreflightMode || !interactiveManualMode) {
       if (!runtime.storageState) {
         return await fail('Session preflight', QUICKLIST_AUTH_REQUIRED_DETAIL, 409);
       }

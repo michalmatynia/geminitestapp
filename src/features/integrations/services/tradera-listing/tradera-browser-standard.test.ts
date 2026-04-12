@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { internalError } from '@/shared/errors/app-error';
 
 const {
   chromiumLaunchMock,
@@ -156,6 +157,7 @@ describe('runTraderaBrowserListingStandard', () => {
 
     chromiumLaunchMock.mockResolvedValue({
       newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
         setDefaultTimeout: vi.fn(),
         setDefaultNavigationTimeout: vi.fn(),
         newPage: vi.fn().mockResolvedValue({
@@ -256,6 +258,7 @@ describe('runTraderaBrowserListingStandard', () => {
 
     chromiumLaunchMock.mockResolvedValue({
       newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
         setDefaultTimeout: vi.fn(),
         setDefaultNavigationTimeout: vi.fn(),
         newPage: vi.fn().mockResolvedValue({
@@ -322,6 +325,7 @@ describe('runTraderaBrowserListingStandard', () => {
 
     chromiumLaunchMock.mockResolvedValue({
       newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
         setDefaultTimeout: vi.fn(),
         setDefaultNavigationTimeout: vi.fn(),
         newPage: vi.fn().mockResolvedValue({
@@ -377,6 +381,80 @@ describe('runTraderaBrowserListingStandard', () => {
       }),
     });
     expect(findVisibleLocatorMock).not.toHaveBeenCalled();
+    expect(contextCloseMock).toHaveBeenCalled();
+    expect(browserCloseMock).toHaveBeenCalled();
+  });
+
+  it('attaches auth diagnostics when Tradera session validation does not resolve', async () => {
+    const browserCloseMock = vi.fn().mockResolvedValue(undefined);
+    const contextCloseMock = vi.fn().mockResolvedValue(undefined);
+
+    chromiumLaunchMock.mockResolvedValue({
+      newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
+        setDefaultTimeout: vi.fn(),
+        setDefaultNavigationTimeout: vi.fn(),
+        newPage: vi.fn().mockResolvedValue({
+          url: () => 'https://www.tradera.com/en/my/',
+        }),
+        close: contextCloseMock,
+      }),
+      close: browserCloseMock,
+    });
+
+    ensureLoggedInMock.mockRejectedValue(
+      internalError('AUTH_STATE_TIMEOUT: Tradera session validation did not resolve.', {
+        phase: 'session_check',
+        hasStoredSession: true,
+        currentUrl: 'https://www.tradera.com/en/my/',
+        resolution: 'unknown',
+      })
+    );
+    readTraderaAuthStateMock.mockResolvedValue({
+      currentUrl: 'https://www.tradera.com/en/my/',
+      loggedIn: false,
+      successVisible: false,
+      loginFormVisible: false,
+      errorText: '',
+      captchaDetected: false,
+      manualVerificationDetected: false,
+      cookieConsentVisible: false,
+      knownAuthenticatedUrl: false,
+      resolution: 'unknown',
+      matchedSignals: [],
+    });
+
+    await expect(
+      runTraderaBrowserListingStandard({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
+      })
+    ).rejects.toMatchObject({
+      message: 'AUTH_STATE_TIMEOUT: Tradera session validation did not resolve.',
+      meta: expect.objectContaining({
+        mode: 'standard',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        authState: expect.objectContaining({
+          currentUrl: 'https://www.tradera.com/en/my/',
+          resolution: 'unknown',
+        }),
+        authFailureMeta: expect.objectContaining({
+          phase: 'session_check',
+          hasStoredSession: true,
+        }),
+      }),
+    });
+
     expect(contextCloseMock).toHaveBeenCalled();
     expect(browserCloseMock).toHaveBeenCalled();
   });

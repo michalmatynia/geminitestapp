@@ -8,6 +8,7 @@ import {
   useDefault1688Connection,
   useIntegrationsWithConnections,
 } from '@/features/integrations/hooks/useIntegrationQueries';
+import { useTestConnection } from '@/features/integrations/hooks/useIntegrationMutations';
 import { ProductScanAmazonExtractedFieldsPanel } from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
 import { ProductScan1688ApplyPanel } from '@/features/products/components/scans/ProductScan1688ApplyPanel';
 import {
@@ -61,6 +62,7 @@ import {
   invalidateProductsAndDetail,
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { resolveProductScanRunFeedbackPresentation } from '@/features/products/lib/product-scan-run-feedback';
 import { AppModal } from '@/shared/ui/app-modal';
@@ -265,6 +267,54 @@ const formatTimestamp = (value: string | null | undefined): string => {
   return parsed.toLocaleString();
 };
 
+const formatPlaywrightBrowserLabel = (
+  value: 'auto' | 'brave' | 'chrome' | 'chromium' | null | undefined
+): string => {
+  if (value === 'brave') return 'Brave';
+  if (value === 'chrome') return 'Chrome';
+  if (value === 'chromium') return 'Chromium';
+  return 'Auto';
+};
+
+const formatPlaywrightIdentityProfileLabel = (
+  value: 'default' | 'search' | 'marketplace' | null | undefined
+): string => {
+  if (value === 'search') return 'Search';
+  if (value === 'marketplace') return 'Marketplace';
+  return 'Default';
+};
+
+const resolve1688PostureWarnings = (connection: {
+  playwrightBrowser?: 'auto' | 'brave' | 'chrome' | 'chromium' | null;
+  playwrightIdentityProfile?: 'default' | 'search' | 'marketplace' | null;
+  playwrightPersonaId?: string | null;
+  playwrightHumanizeMouse?: boolean;
+} | null): string[] => {
+  if (!connection) {
+    return [];
+  }
+
+  const warnings: string[] = [];
+  if (!connection.playwrightPersonaId?.trim()) {
+    warnings.push('No Playwright persona is configured for this 1688 profile.');
+  }
+  if ((connection.playwrightIdentityProfile ?? 'default') !== 'marketplace') {
+    warnings.push(
+      `Identity profile is ${formatPlaywrightIdentityProfileLabel(
+        connection.playwrightIdentityProfile
+      )}. 1688 is more reliable with Marketplace posture.`
+    );
+  }
+  if ((connection.playwrightBrowser ?? 'auto') === 'auto') {
+    warnings.push('Browser is set to Auto. Runtime browser choice can vary between runs.');
+  }
+  if (connection.playwrightHumanizeMouse === false) {
+    warnings.push('Humanized input is disabled for this 1688 profile.');
+  }
+
+  return warnings;
+};
+
 const isDiscoveredScanCurrentForRow = (
   row: ScanModalRow,
   discoveredScan: ProductScanRecord | null
@@ -334,8 +384,22 @@ export function ProductAmazonScanModal(
   const queryClient = useQueryClient();
   const pollTimerRef = useRef<SafeTimerId | null>(null);
   const modalSessionRef = useRef(0);
+  const autoStarted1688ConnectionIdsRef = useRef<Set<string>>(new Set());
   const rowsRef = useRef<ScanModalRow[]>([]);
   const selectedProductsRef = useRef<Array<{ productId: string; productName: string }>>([]);
+  const toastRef = useRef(toast);
+  const stopPollingRef = useRef<() => void>(() => undefined);
+  const refreshScanRowsRef = useRef<(sessionId?: number) => Promise<void>>(async () => undefined);
+  const handleRefreshFailureRef = useRef<
+    (error: unknown, options?: { stopPolling?: boolean; sessionId?: number }) => void
+  >(() => undefined);
+  const startPollingRef = useRef<(sessionId?: number) => void>(() => undefined);
+  const ensurePollingForTrackedActiveRowsRef = useRef<(sessionId?: number) => void>(
+    () => undefined
+  );
+  const handle1688RefreshSessionRef = useRef<() => Promise<{ ok: boolean; message: string }>>(
+    async () => ({ ok: false, message: '1688 browser profile required before running supplier scans.' })
+  );
   const [rows, setRows] = useState<ScanModalRow[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
@@ -349,6 +413,13 @@ export function ProductAmazonScanModal(
     markBlockedScanReviewed,
     clearBlockedScanReviewed,
   } = useProductScan1688ReviewState();
+  const testConnectionMutation = useTestConnection();
+  const [is1688LoginPending, setIs1688LoginPending] = useState(false);
+  const [refreshed1688ConnectionIds, setRefreshed1688ConnectionIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [latest1688SessionMessage, setLatest1688SessionMessage] = useState<string | null>(null);
+  const [latest1688SessionError, setLatest1688SessionError] = useState<string | null>(null);
   const integrationsWithConnectionsQuery = useIntegrationsWithConnections();
   const default1688ConnectionQuery = useDefault1688Connection();
   const productFormCoreState = useContext(ProductFormCoreStateContext);
@@ -445,9 +516,108 @@ export function ProductAmazonScanModal(
       scanner1688Connections.find((connection) => connection.id === resolved1688ConnectionId) ?? null
     );
   }, [resolved1688ConnectionId, scanner1688Connections]);
+  const active1688ConnectionId = active1688Connection?.id?.trim() || null;
+  const active1688IntegrationId = active1688Connection?.integrationId?.trim() || null;
+  const active1688ProfileName = active1688Connection?.name?.trim() || active1688ConnectionName;
+  const active1688PostureWarnings = useMemo(
+    () => resolve1688PostureWarnings(active1688Connection),
+    [
+      active1688Connection?.playwrightBrowser,
+      active1688Connection?.playwrightHumanizeMouse,
+      active1688Connection?.playwrightIdentityProfile,
+      active1688Connection?.playwrightPersonaId,
+    ]
+  );
+  const hasResolved1688Session =
+    provider === '1688' &&
+    Boolean(
+      active1688Connection &&
+        (active1688Connection.hasPlaywrightStorageState === true ||
+          refreshed1688ConnectionIds.has(active1688Connection.id))
+    );
   const is1688ConnectionBootstrapPending =
     provider === '1688' &&
     (integrationsWithConnectionsQuery.isLoading || default1688ConnectionQuery.isLoading);
+
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
+
+  const handle1688RefreshSession = useCallback(async (): Promise<{
+    ok: boolean;
+    message: string;
+  }> => {
+    if (!active1688ConnectionId || !active1688IntegrationId || is1688LoginPending) {
+      return {
+        ok: false,
+        message: '1688 browser profile required before running supplier scans.',
+      };
+    }
+    setIs1688LoginPending(true);
+    setLatest1688SessionError(null);
+    setLatest1688SessionMessage(null);
+    try {
+      const response = await testConnectionMutation.mutateAsync({
+        integrationId: active1688IntegrationId,
+        connectionId: active1688ConnectionId,
+        type: 'test',
+        body: { mode: 'manual_session_refresh', manualTimeoutMs: 300000 },
+        timeoutMs: 360000,
+      });
+      setRefreshed1688ConnectionIds((current) => {
+        const next = new Set(current);
+        next.add(active1688ConnectionId);
+        return next;
+      });
+      const successMessage =
+        typeof response?.message === 'string' && response.message.trim().length > 0
+          ? response.message.trim()
+          : `1688 session refreshed for profile ${active1688ProfileName ?? '1688 profile'}.`;
+      setLatest1688SessionMessage(successMessage);
+      toastRef.current(successMessage, { variant: 'success' });
+      return {
+        ok: true,
+        message: successMessage,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Failed to refresh the 1688 session for profile ${active1688ProfileName ?? '1688 profile'}.`;
+      setLatest1688SessionError(message);
+      toastRef.current(message, { variant: 'error' });
+      return {
+        ok: false,
+        message,
+      };
+    } finally {
+      setIs1688LoginPending(false);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.withConnections() }),
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.integrations.selection.scanner1688DefaultConnection(),
+        }),
+      ]);
+      await Promise.all([
+        queryClient.refetchQueries({
+          queryKey: QUERY_KEYS.integrations.withConnections(),
+          type: 'active',
+        }),
+        queryClient.refetchQueries({
+          queryKey: QUERY_KEYS.integrations.selection.scanner1688DefaultConnection(),
+          type: 'active',
+        }),
+      ]);
+    }
+  }, [
+    active1688ConnectionId,
+    active1688IntegrationId,
+    active1688ProfileName,
+    is1688LoginPending,
+    queryClient,
+    testConnectionMutation,
+    toast,
+  ]);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
@@ -456,6 +626,10 @@ export function ProductAmazonScanModal(
     }
     setIsPolling(false);
   }, []);
+
+  useEffect(() => {
+    stopPollingRef.current = stopPolling;
+  }, [stopPolling]);
 
   useEffect(() => {
     rowsRef.current = rows;
@@ -575,7 +749,7 @@ export function ProductAmazonScanModal(
                 `/api/v2/products/${productId}/scans`,
                 {
                   cache: 'no-store',
-                  params: { limit: 1 },
+                  params: { limit: 1, provider },
                 }
               ),
               error: null,
@@ -687,7 +861,11 @@ export function ProductAmazonScanModal(
     if (!nextRows.some((row) => row.status === 'enqueuing' || isProductScanActiveStatus(row.status))) {
       stopPolling();
     }
-  }, [invalidateProductViews, modalConfig.resultStatusLabel, missingScanRecordMessage, stopPolling]);
+  }, [invalidateProductViews, modalConfig.resultStatusLabel, missingScanRecordMessage, provider, stopPolling]);
+
+  useEffect(() => {
+    refreshScanRowsRef.current = refreshScanRows;
+  }, [refreshScanRows]);
 
   const handleRefreshFailure = useCallback(
     (error: unknown, options?: { stopPolling?: boolean; sessionId?: number }) => {
@@ -707,6 +885,10 @@ export function ProductAmazonScanModal(
     [modalConfig.refreshFailureMessage, stopPolling, toast]
   );
 
+  useEffect(() => {
+    handleRefreshFailureRef.current = handleRefreshFailure;
+  }, [handleRefreshFailure]);
+
   const startPolling = useCallback((sessionId = modalSessionRef.current) => {
     stopPolling();
     if (sessionId !== modalSessionRef.current) {
@@ -719,6 +901,10 @@ export function ProductAmazonScanModal(
       });
     }, 3000);
   }, [handleRefreshFailure, refreshScanRows, stopPolling]);
+
+  useEffect(() => {
+    startPollingRef.current = startPolling;
+  }, [startPolling]);
 
   const ensurePollingForTrackedActiveRows = useCallback((sessionId = modalSessionRef.current) => {
     if (sessionId !== modalSessionRef.current) {
@@ -733,8 +919,25 @@ export function ProductAmazonScanModal(
     }
   }, [startPolling]);
 
+  useEffect(() => {
+    ensurePollingForTrackedActiveRowsRef.current = ensurePollingForTrackedActiveRows;
+  }, [ensurePollingForTrackedActiveRows]);
+
+  useEffect(() => {
+    handle1688RefreshSessionRef.current = handle1688RefreshSession;
+  }, [handle1688RefreshSession]);
+
   const handleManualRefresh = useCallback(() => {
     const sessionId = modalSessionRef.current;
+    if (rowsRef.current.length === 0) {
+      toast(
+        provider === '1688'
+          ? 'No 1688 scan rows to refresh. Use Refresh 1688 session to renew the browser profile.'
+          : 'No scan rows to refresh.',
+        { variant: 'info' }
+      );
+      return;
+    }
     void refreshScanRows(sessionId)
       .then(() => {
         ensurePollingForTrackedActiveRows(sessionId);
@@ -742,7 +945,7 @@ export function ProductAmazonScanModal(
       .catch((error: unknown) => {
         handleRefreshFailure(error, { sessionId });
       });
-  }, [ensurePollingForTrackedActiveRows, handleRefreshFailure, refreshScanRows]);
+  }, [ensurePollingForTrackedActiveRows, handleRefreshFailure, provider, refreshScanRows, toast]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -750,10 +953,15 @@ export function ProductAmazonScanModal(
       rowsRef.current = [];
       setRows([]);
       setIsSubmitting(false);
+      setIs1688LoginPending(false);
+      autoStarted1688ConnectionIdsRef.current = new Set();
+      setRefreshed1688ConnectionIds(new Set());
+      setLatest1688SessionMessage(null);
+      setLatest1688SessionError(null);
       setExpandedRowIds(new Set());
       setExpandedDiagnosticRowIds(new Set());
       setExpandedExtractedFieldRowIds(new Set());
-      stopPolling();
+      stopPollingRef.current();
       return;
     }
 
@@ -761,7 +969,7 @@ export function ProductAmazonScanModal(
       rowsRef.current = [];
       setRows([]);
       setIsSubmitting(true);
-      stopPolling();
+      stopPollingRef.current();
       return;
     }
 
@@ -775,7 +983,7 @@ export function ProductAmazonScanModal(
       setExpandedRowIds(new Set());
       setExpandedDiagnosticRowIds(new Set());
       setExpandedExtractedFieldRowIds(new Set());
-      stopPolling();
+      stopPollingRef.current();
       return;
     }
 
@@ -790,10 +998,10 @@ export function ProductAmazonScanModal(
       scan: null,
     }));
     if (provider === '1688') {
-      const missing1688SessionMessage = !active1688Connection
+      const missing1688SessionMessage = !active1688ConnectionId
         ? '1688 browser profile required before running supplier scans.'
-        : `1688 login required for profile ${active1688Connection.name}. Refresh the saved browser session before scanning.`;
-      if (active1688Connection?.hasPlaywrightStorageState !== true) {
+        : `1688 login required for profile ${active1688ProfileName ?? '1688 profile'}. Refresh the saved browser session before scanning.`;
+      if (!active1688ConnectionId) {
         const blockedRows = initialRows.map((row) => ({
           ...row,
           status: 'failed' as const,
@@ -802,7 +1010,43 @@ export function ProductAmazonScanModal(
         rowsRef.current = blockedRows;
         setRows(blockedRows);
         setIsSubmitting(false);
-        stopPolling();
+        stopPollingRef.current();
+        return;
+      }
+      if (!hasResolved1688Session) {
+        const connectionId = active1688ConnectionId;
+        if (connectionId.length > 0 && !autoStarted1688ConnectionIdsRef.current.has(connectionId)) {
+          autoStarted1688ConnectionIdsRef.current.add(connectionId);
+          rowsRef.current = [];
+          setRows([]);
+          setIsSubmitting(true);
+          stopPollingRef.current();
+          void handle1688RefreshSessionRef.current().then((sessionRefreshResult) => {
+            if (sessionId !== modalSessionRef.current || sessionRefreshResult.ok) {
+              return;
+            }
+
+            const blockedRows = initialRows.map((row) => ({
+              ...row,
+              status: 'failed' as const,
+              message: sessionRefreshResult.message,
+            }));
+            rowsRef.current = blockedRows;
+            setRows(blockedRows);
+            setIsSubmitting(false);
+          });
+          return;
+        }
+
+        const blockedRows = initialRows.map((row) => ({
+          ...row,
+          status: 'failed' as const,
+          message: latest1688SessionError ?? missing1688SessionMessage,
+        }));
+        rowsRef.current = blockedRows;
+        setRows(blockedRows);
+        setIsSubmitting(false);
+        stopPollingRef.current();
         return;
       }
     }
@@ -896,15 +1140,15 @@ export function ProductAmazonScanModal(
         }
 
         if (queuedRows.some((row) => row.status === 'queued' || row.status === 'running')) {
-          startPolling(sessionId);
-          void refreshScanRows(sessionId).catch((error: unknown) => {
-            handleRefreshFailure(error, { stopPolling: true, sessionId });
+          startPollingRef.current(sessionId);
+          void refreshScanRowsRef.current(sessionId).catch((error: unknown) => {
+            handleRefreshFailureRef.current(error, { stopPolling: true, sessionId });
           });
         } else if (queuedRows.some((row) => !row.scanId)) {
           let recoveredRows = queuedRows;
           try {
-            await refreshScanRows(sessionId);
-            ensurePollingForTrackedActiveRows(sessionId);
+            await refreshScanRowsRef.current(sessionId);
+            ensurePollingForTrackedActiveRowsRef.current(sessionId);
             recoveredRows = rowsRef.current;
           } catch {
             recoveredRows = queuedRows;
@@ -949,7 +1193,7 @@ export function ProductAmazonScanModal(
         if (sessionId !== modalSessionRef.current) {
           return;
         }
-        toast(toastMessage, {
+        toastRef.current(toastMessage, {
           variant: toastVariant,
         });
       } catch (error) {
@@ -977,8 +1221,8 @@ export function ProductAmazonScanModal(
         );
         let recoveredState = false;
         try {
-          await refreshScanRows(sessionId);
-          ensurePollingForTrackedActiveRows(sessionId);
+          await refreshScanRowsRef.current(sessionId);
+          ensurePollingForTrackedActiveRowsRef.current(sessionId);
           const latestRows = rowsRef.current;
           recoveredState = latestRows.some((row, index) => {
             const failedRow = failedRows[index];
@@ -996,7 +1240,7 @@ export function ProductAmazonScanModal(
         if (sessionId !== modalSessionRef.current || recoveredState) {
           return;
         }
-        toast(message, { variant: 'error' });
+        toastRef.current(message, { variant: 'error' });
       } finally {
         if (sessionId === modalSessionRef.current) {
           setIsSubmitting(false);
@@ -1008,11 +1252,9 @@ export function ProductAmazonScanModal(
       if (modalSessionRef.current === sessionId) {
         modalSessionRef.current += 1;
       }
-      stopPolling();
+      stopPollingRef.current();
     };
   }, [
-    ensurePollingForTrackedActiveRows,
-    handleRefreshFailure,
     is1688ConnectionBootstrapPending,
     isOpen,
     missingBatchResultMessage,
@@ -1022,14 +1264,13 @@ export function ProductAmazonScanModal(
     modalConfig.batchLabel,
     modalConfig.noQueuedMessage,
     modalConfig.resultTypeLabel,
-    active1688Connection,
+    active1688ConnectionId,
+    active1688ProfileName,
+    hasResolved1688Session,
+    latest1688SessionError,
     provider,
-    refreshScanRows,
     resolved1688ConnectionId,
     selectedProductIdsKey,
-    startPolling,
-    stopPolling,
-    toast,
     untrackableActiveScanMessage,
   ]);
 
@@ -1146,6 +1387,77 @@ export function ProductAmazonScanModal(
     } as const;
   }, [productFormCoreActions, productFormCoreState, productFormImages]);
 
+  const render1688SessionPanel =
+    provider === '1688' ? (
+      <div className='flex items-start gap-3 rounded-md border border-border/60 bg-card/30 px-3 py-2 text-xs text-muted-foreground'>
+        <div className='flex-1 space-y-1'>
+          <div>
+            <span className='font-medium text-white'>1688 profile:</span>{' '}
+            {active1688ConnectionName ?? 'No saved browser profile selected'}
+          </div>
+          <div>
+            <span className='font-medium text-white'>Session:</span>{' '}
+            {hasResolved1688Session ? 'Stored' : 'Missing'}
+          </div>
+          {active1688Connection ? (
+            <>
+              <div>
+                <span className='font-medium text-white'>Browser:</span>{' '}
+                {formatPlaywrightBrowserLabel(active1688Connection.playwrightBrowser)}
+              </div>
+              <div>
+                <span className='font-medium text-white'>Identity profile:</span>{' '}
+                {formatPlaywrightIdentityProfileLabel(
+                  active1688Connection.playwrightIdentityProfile
+                )}
+              </div>
+              <div>
+                <span className='font-medium text-white'>Persona:</span>{' '}
+                {active1688Connection.playwrightPersonaId?.trim() || 'Custom / none'}
+              </div>
+            </>
+          ) : null}
+          {active1688Connection?.playwrightStorageStateUpdatedAt ? (
+            <div>
+              <span className='font-medium text-white'>Updated:</span>{' '}
+              {new Date(active1688Connection.playwrightStorageStateUpdatedAt).toLocaleString()}
+            </div>
+          ) : null}
+          {active1688PostureWarnings.length > 0 ? (
+            <div className='space-y-1 text-amber-300'>
+              {active1688PostureWarnings.map((warning) => (
+                <div key={warning}>{warning}</div>
+              ))}
+            </div>
+          ) : null}
+          {latest1688SessionMessage ? (
+            <div className='text-emerald-300'>{latest1688SessionMessage}</div>
+          ) : null}
+          {latest1688SessionError ? (
+            <div className='text-destructive'>{latest1688SessionError}</div>
+          ) : null}
+        </div>
+        {active1688Connection ? (
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={() => {
+              void handle1688RefreshSession();
+            }}
+            disabled={is1688LoginPending || isSubmitting}
+            className='h-7 gap-1 px-2 text-xs'
+          >
+            {is1688LoginPending ? (
+              <Loader2 className='h-3 w-3 animate-spin' />
+            ) : (
+              <RefreshCw className='h-3 w-3' />
+            )}
+            {is1688LoginPending ? 'Refreshing…' : 'Refresh 1688 session'}
+          </Button>
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <AppModal
       isOpen={isOpen}
@@ -1154,35 +1466,53 @@ export function ProductAmazonScanModal(
       subtitle={formatSummary(rows)}
       size='lg'
       headerActions={
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={handleManualRefresh}
-          disabled={isSubmitting}
-          className='h-8 gap-1.5 px-2 text-xs'
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isPolling ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className='flex items-center gap-2'>
+          {provider === '1688' && active1688Connection ? (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => {
+                void handle1688RefreshSession();
+              }}
+              disabled={is1688LoginPending || isSubmitting}
+              className='h-8 gap-1.5 px-2 text-xs'
+            >
+              {is1688LoginPending ? (
+                <Loader2 className='h-3.5 w-3.5 animate-spin' />
+              ) : (
+                <RefreshCw className='h-3.5 w-3.5' />
+              )}
+              Refresh 1688 session
+            </Button>
+          ) : null}
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={handleManualRefresh}
+            disabled={isSubmitting}
+            className='h-8 gap-1.5 px-2 text-xs'
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isPolling ? 'animate-spin' : ''}`} />
+            Refresh scans
+          </Button>
+        </div>
       }
     >
-      {rows.length === 0 ? (
-        <div className='flex min-h-[160px] items-center justify-center gap-3 text-sm text-muted-foreground'>
-          <Loader2 className='h-4 w-4 animate-spin' />
-          {provider === '1688' && is1688ConnectionBootstrapPending
-            ? 'Loading 1688 browser profiles...'
-            : modalConfig.preparingLabel}
-        </div>
-      ) : (
-        <div className='space-y-3'>
-          {provider === '1688' && (
-            <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2 text-xs text-muted-foreground'>
-              <span className='font-medium text-white'>1688 profile:</span>{' '}
-              {active1688ConnectionName ?? 'No saved browser profile selected'}
-            </div>
-          )}
-          {rows.map((row) => (
-            (() => {
+      <div className='space-y-3'>
+        {render1688SessionPanel}
+        {rows.length === 0 ? (
+          <div className='flex min-h-[160px] items-center justify-center gap-3 text-sm text-muted-foreground'>
+            <Loader2 className='h-4 w-4 animate-spin' />
+            {provider === '1688' && is1688ConnectionBootstrapPending
+              ? 'Loading 1688 browser profiles...'
+              : provider === '1688' && is1688LoginPending
+                ? 'Opening 1688 login window...'
+              : provider === '1688' && !hasResolved1688Session
+                ? '1688 session refresh required before scanning.'
+                : modalConfig.preparingLabel}
+          </div>
+        ) : (
+          rows.map((row) => {
               const { infoMessage, errorMessage } = resolveRowDisplayMessages(row);
               const scanSteps = Array.isArray(row.scan?.steps) ? row.scan.steps : [];
               const isExpanded = expandedRowIds.has(row.productId);
@@ -1279,11 +1609,16 @@ export function ProductAmazonScanModal(
                     })
                   : null;
               const fallbackFailureSummary =
-                !latestOutcomeSummary &&
-                row.scan &&
-                (row.status === 'failed' || row.status === 'conflict')
+                !latestOutcomeSummary && row.scan
                   ? resolveProductScanDiagnosticFailureSummary(row.scan)
                   : null;
+              const isActiveDiagnosticSummary =
+                !latestOutcomeSummary &&
+                Boolean(fallbackFailureSummary) &&
+                (row.status === 'queued' || row.status === 'running');
+              const usesFailureSummaryStyling =
+                latestOutcomeSummary?.kind === 'failed' ||
+                (fallbackFailureSummary != null && !isActiveDiagnosticSummary);
 
               return (
                 <section
@@ -1510,7 +1845,7 @@ export function ProductAmazonScanModal(
                   {latestOutcomeSummary || fallbackFailureSummary ? (
                     <div
                       className={`space-y-1 rounded-md px-3 py-2 ${
-                        latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
+                        usesFailureSummaryStyling
                           ? 'border border-destructive/20 bg-destructive/5'
                           : 'border border-amber-500/20 bg-amber-500/5'
                       }`}
@@ -1518,7 +1853,7 @@ export function ProductAmazonScanModal(
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span
                           className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${
-                            latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
+                            usesFailureSummaryStyling
                               ? 'border border-destructive/20 text-destructive'
                               : 'border border-amber-500/20 text-amber-300'
                           }`}
@@ -1526,8 +1861,12 @@ export function ProductAmazonScanModal(
                           {latestOutcomeSummary?.phaseLabel ?? fallbackFailureSummary?.phaseLabel}
                         </span>
                         <span className='text-muted-foreground'>
-                          {latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
+                          {latestOutcomeSummary?.kind === 'failed'
                             ? 'Last failure'
+                            : isActiveDiagnosticSummary
+                              ? 'Latest diagnostics'
+                              : fallbackFailureSummary
+                                ? 'Last failure'
                             : 'Last completed step'}
                         </span>
                         <span className='font-medium text-foreground'>
@@ -1780,10 +2119,9 @@ export function ProductAmazonScanModal(
                   {isExpanded && scanSteps.length > 0 ? <ProductScanSteps steps={scanSteps} /> : null}
                 </section>
               );
-            })()
-          ))}
-        </div>
-      )}
+          })
+        )}
+      </div>
     </AppModal>
   );
 }

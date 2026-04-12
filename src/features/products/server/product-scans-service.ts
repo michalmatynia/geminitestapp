@@ -6,12 +6,18 @@ import {
   createCustomPlaywrightInstance,
   readPlaywrightEngineRun,
   resolvePlaywrightEngineRunOutputs,
+  startPlaywrightConnectionEngineTask,
   startPlaywrightEngineTask,
 } from '@/features/playwright/server';
+import {
+  get1688DefaultConnectionId,
+  getIntegrationRepository,
+} from '@/features/integrations/server';
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import {
   createDefaultProductScannerSettings,
 } from '@/features/products/scanner-settings';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import {
   isProductScanActiveStatus,
   isProductScanTerminalStatus,
@@ -64,6 +70,7 @@ import {
   normalizeErrorMessage,
   resolveManualVerificationMessage,
   resolvePersistableScanUrl,
+  hydrateProductScanImageCandidates,
   sanitizeProductScanImageCandidates,
   resolveIsoAgeMs,
   resolveScanEngineRunId,
@@ -89,6 +96,8 @@ const AMAZON_SCAN_DEFAULT_USER_AGENT =
 const AMAZON_SCAN_STEALTH_LAUNCH_ARGS = ['--disable-blink-features=AutomationControlled'];
 const amazonScanRuntime: ProductScanProviderRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime!;
 const supplierScanRuntime: ProductScanProviderRuntime = getProductScanProviderDefinition('1688').runtime!;
+const SCANNER_1688_MISSING_PROFILE_MESSAGE =
+  'No 1688 browser profile is configured. Create or select a 1688 connection before scanning.';
 
 const formatAmazonEvaluationConfidence = (confidence: number | null | undefined): string | null =>
   typeof confidence === 'number' && Number.isFinite(confidence)
@@ -108,6 +117,117 @@ const resolveAmazonEvaluationStepStatus = (
     return 'skipped';
   }
   return 'failed';
+};
+
+const formatAmazonRuntimeStageLabel = (value: unknown): string | null => {
+  const normalized = readOptionalString(value, 160);
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized
+    .replace(/[_-]+/g, ' ')
+    .trim();
+};
+
+const humanizeAmazonRuntimeStageLabel = (value: unknown): string | null => {
+  const normalized = formatAmazonRuntimeStageLabel(value);
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const buildAmazonActiveRunDiagnostics = (
+  run: Parameters<typeof buildPlaywrightEngineRunFailureMeta>[0]
+): Record<string, unknown> => {
+  const metaRecord =
+    toRecord(buildPlaywrightEngineRunFailureMeta(run, { includeRawResult: true })) ?? {};
+  const metaRawResult = toRecord(metaRecord['rawResult']) ?? {};
+  const failureArtifacts = Array.isArray(metaRecord['failureArtifacts'])
+    ? metaRecord['failureArtifacts']
+    : (Array.isArray(metaRawResult['failureArtifacts'])
+        ? metaRawResult['failureArtifacts']
+        : null);
+  const logTail = Array.isArray(metaRecord['logTail'])
+    ? metaRecord['logTail']
+    : (Array.isArray(metaRawResult['logTail']) ? metaRawResult['logTail'] : null);
+  const runtimePosture = toRecord(metaRecord['runtimePosture']) ?? toRecord(metaRawResult['runtimePosture']);
+
+  return {
+    ...metaRawResult,
+    ...(readOptionalString(metaRecord['runId']) || readOptionalString(metaRawResult['runId'])
+      ? {
+          runId:
+            readOptionalString(metaRecord['runId']) ?? readOptionalString(metaRawResult['runId']),
+        }
+      : {}),
+    ...(readOptionalString(metaRecord['runStatus']) ||
+    readOptionalString(metaRawResult['runStatus'])
+      ? {
+          runStatus:
+            readOptionalString(metaRecord['runStatus']) ??
+            readOptionalString(metaRawResult['runStatus']),
+        }
+      : {}),
+    ...(resolvePersistableScanUrl(metaRecord['finalUrl'], metaRawResult['finalUrl'])
+      ? {
+          finalUrl: resolvePersistableScanUrl(metaRecord['finalUrl'], metaRawResult['finalUrl']),
+        }
+      : {}),
+    ...(readOptionalString(metaRecord['latestStage']) ||
+    readOptionalString(metaRawResult['latestStage']) ||
+    readOptionalString(metaRawResult['stage'])
+      ? {
+          latestStage:
+            readOptionalString(metaRecord['latestStage']) ??
+            readOptionalString(metaRawResult['latestStage']) ??
+            readOptionalString(metaRawResult['stage']),
+        }
+      : {}),
+    ...(resolvePersistableScanUrl(
+      metaRecord['latestStageUrl'],
+      metaRawResult['latestStageUrl'],
+      metaRawResult['currentUrl']
+    )
+      ? {
+          latestStageUrl: resolvePersistableScanUrl(
+            metaRecord['latestStageUrl'],
+            metaRawResult['latestStageUrl'],
+            metaRawResult['currentUrl']
+          ),
+        }
+      : {}),
+    ...(failureArtifacts ? { failureArtifacts } : {}),
+    ...(logTail ? { logTail } : {}),
+    ...(runtimePosture ? { runtimePosture } : {}),
+  };
+};
+
+const resolveAmazonActiveRunStallMessage = ({
+  reason,
+  latestStage,
+}: {
+  reason: 'runtime_exceeded' | 'no_progress' | 'manual_verification_expired';
+  latestStage: string | null;
+}): string => {
+  const displayStage = humanizeAmazonRuntimeStageLabel(latestStage);
+  if (reason === 'manual_verification_expired') {
+    return displayStage
+      ? `Google Lens manual verification expired at ${displayStage}.`
+      : 'Google Lens manual verification expired before completion.';
+  }
+
+  if (reason === 'no_progress') {
+    return displayStage
+      ? `Amazon reverse image scan stalled at ${displayStage}.`
+      : 'Amazon reverse image scan stopped making progress.';
+  }
+
+  return displayStage
+    ? `Amazon reverse image scan timed out at ${displayStage}.`
+    : 'Amazon reverse image scan exceeded its runtime limit.';
 };
 
 const resolveAmazonEvaluationStepResultCode = (
@@ -718,15 +838,26 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(
         existingRawResult
       );
+      const activeRunDiagnostics = buildAmazonActiveRunDiagnostics(run);
       const nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+      const manualVerificationPending =
+        parsedResult.status === 'captcha_required' ||
+        existingRawResult['manualVerificationPending'] === true;
       const activeMessage =
-        parsedResult.status === 'captcha_required'
+        manualVerificationPending
           ? resolveManualVerificationMessage(parsedResult.message)
           : null;
+      const allowedRuntimeMs = manualVerificationPending
+        ? Math.max(AMAZON_SCAN_TIMEOUT_MS, manualVerificationTimeoutMs + 60_000)
+        : AMAZON_SCAN_TIMEOUT_MS;
+      const activeRunAgeMs =
+        resolveIsoAgeMs(run.startedAt) ?? resolveIsoAgeMs(run.createdAt);
+      const activeRunIdleAgeMs = resolveIsoAgeMs(run.updatedAt);
       const nextRawResult =
-        parsedResult.status === 'captcha_required'
+        manualVerificationPending
           ? {
               ...existingRawResult,
+              ...activeRunDiagnostics,
               ...resultValue,
               runId: engineRunId,
               runStatus: run.status,
@@ -736,20 +867,64 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
             }
           : {
               ...existingRawResult,
+              ...activeRunDiagnostics,
+              ...resultValue,
               runId: engineRunId,
               runStatus: run.status,
               manualVerificationPending: false,
               manualVerificationMessage: null,
               manualVerificationTimeoutMs,
             };
+      const staleActiveReason =
+        manualVerificationPending &&
+        activeRunAgeMs != null &&
+        activeRunAgeMs >= allowedRuntimeMs
+          ? 'manual_verification_expired'
+          : activeRunIdleAgeMs != null && activeRunIdleAgeMs >= allowedRuntimeMs
+              ? 'no_progress'
+            : activeRunAgeMs != null && activeRunAgeMs >= allowedRuntimeMs
+              ? 'runtime_exceeded'
+              : null;
+      if (staleActiveReason) {
+        const staleMessage = resolveAmazonActiveRunStallMessage({
+          reason: staleActiveReason,
+          latestStage:
+            readOptionalString(nextRawResult['latestStage']) ??
+            readOptionalString(nextRawResult['stage']),
+        });
+        return await persistSynchronizedScan(scan, {
+          engineRunId,
+          status: 'failed',
+          steps: nextSteps,
+          rawResult: {
+            ...nextRawResult,
+            manualVerificationPending: false,
+            manualVerificationMessage: null,
+            ...(manualVerificationPending
+              ? {
+                  manualVerificationExpired: true,
+                }
+              : {}),
+            stalledReason: staleActiveReason,
+            stalledAt: new Date().toISOString(),
+          },
+          error: staleMessage,
+          asinUpdateStatus: 'failed',
+          asinUpdateMessage: staleMessage,
+          completedAt: new Date().toISOString(),
+        });
+      }
+      const rawResultChanged =
+        JSON.stringify(existingRawResult) !== JSON.stringify(nextRawResult);
       const shouldPersistActiveState =
         scan.status !== run.status ||
         scan.engineRunId !== engineRunId ||
         !areProductScanStepsEqual(scan.steps, nextSteps) ||
+        rawResultChanged ||
         (activeMessage ?? null) !== (scan.asinUpdateMessage ?? null) ||
-        (parsedResult.status === 'captcha_required' &&
+        (manualVerificationPending &&
           existingRawResult['manualVerificationPending'] !== true) ||
-        (parsedResult.status !== 'captcha_required' &&
+        (!manualVerificationPending &&
           (existingRawResult['manualVerificationPending'] === true ||
             readOptionalString(existingRawResult['manualVerificationMessage']) != null));
 
@@ -2141,12 +2316,91 @@ type BatchQueueProviderConfig = {
     product: Awaited<ReturnType<typeof productService.getProductById>>;
     productName: string;
     imageCandidates: ProductScanRecord['imageCandidates'];
+    integrationId?: string | null;
+    connectionId?: string | null;
+    connection?: IntegrationConnectionRecord | null;
     batchIndex: number;
     allowManualVerification: boolean;
     manualVerificationTimeoutMs: number;
     amazonCandidateEvaluatorEnabled: boolean;
     scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
   }) => Record<string, unknown>;
+};
+
+type Resolved1688QueueContext = {
+  integrationId: string | null;
+  connection: IntegrationConnectionRecord | null;
+  errorMessage: string | null;
+};
+
+const resolve1688MissingSessionMessage = (
+  connection: Pick<IntegrationConnectionRecord, 'name'> | null
+): string =>
+  connection?.name?.trim()
+    ? `1688 login required for profile ${connection.name}. Refresh the saved browser session before scanning.`
+    : '1688 login required. Refresh the saved browser session before scanning.';
+
+const resolve1688QueueContext = async (
+  requestedConnectionId?: string | null
+): Promise<Resolved1688QueueContext> => {
+  const integrationRepository = await getIntegrationRepository();
+  const integrations = await integrationRepository.listIntegrations();
+  const integration1688 = integrations.find(
+    (integration) => integration.slug?.trim().toLowerCase() === '1688'
+  );
+  if (!integration1688) {
+    return {
+      integrationId: null,
+      connection: null,
+      errorMessage: '1688 integration is not configured.',
+    };
+  }
+
+  const connections = await integrationRepository.listConnections(integration1688.id);
+  const normalizedRequestedConnectionId = requestedConnectionId?.trim() || null;
+  const defaultConnectionId = (await get1688DefaultConnectionId().catch(() => null))?.trim() || null;
+  const fallbackConnection =
+    connections.length === 1 ? connections[0] ?? null : null;
+  const resolvedConnectionId =
+    normalizedRequestedConnectionId || defaultConnectionId || fallbackConnection?.id || null;
+
+  if (!resolvedConnectionId) {
+    return {
+      integrationId: integration1688.id,
+      connection: null,
+      errorMessage:
+        connections.length === 0
+          ? SCANNER_1688_MISSING_PROFILE_MESSAGE
+          : 'Choose a 1688 browser profile before scanning.',
+    };
+  }
+
+  const resolvedConnection =
+    connections.find((connection) => connection.id === resolvedConnectionId) ?? null;
+  if (!resolvedConnection) {
+    return {
+      integrationId: integration1688.id,
+      connection: null,
+      errorMessage:
+        normalizedRequestedConnectionId != null
+          ? 'The selected 1688 browser profile was not found.'
+          : SCANNER_1688_MISSING_PROFILE_MESSAGE,
+    };
+  }
+
+  if (!resolvedConnection.playwrightStorageState?.trim()) {
+    return {
+      integrationId: integration1688.id,
+      connection: resolvedConnection,
+      errorMessage: resolve1688MissingSessionMessage(resolvedConnection),
+    };
+  }
+
+  return {
+    integrationId: integration1688.id,
+    connection: resolvedConnection,
+    errorMessage: null,
+  };
 };
 
 const queueStatusMessage = (
@@ -2188,6 +2442,21 @@ const queueProviderBatchProductScans = async (input: {
     });
   }
 
+  const supplierConnectionContext =
+    input.config.provider === '1688'
+      ? await resolve1688QueueContext(input.connectionId).catch((error) => {
+          void ErrorSystem.captureException(error, {
+            service: 'product-scans.service',
+            action: `${input.config.actionPrefix}.resolve1688Connection`,
+          });
+          return {
+            integrationId: null,
+            connection: null,
+            errorMessage: 'Failed to resolve the 1688 browser profile.',
+          } satisfies Resolved1688QueueContext;
+        })
+      : null;
+
   const results = await mapWithConcurrencyLimit(
     productIds,
     AMAZON_BATCH_SCAN_START_CONCURRENCY,
@@ -2208,17 +2477,37 @@ const queueProviderBatchProductScans = async (input: {
           return createFailedBatchResult(productId, 'Product not found.');
         }
 
+        const hydratedImageCandidates = await hydrateProductScanImageCandidates({
+          product,
+          imageCandidates: input.config.runtime.resolveImageCandidates(product),
+        });
         const imageCandidates = await sanitizeProductScanImageCandidates(
-          input.config.runtime.resolveImageCandidates(product)
+          hydratedImageCandidates
         );
         const productName = input.config.runtime.resolveDisplayName(product);
+        const providerPreflightError =
+          input.config.provider === '1688'
+            ? supplierConnectionContext?.errorMessage ?? null
+            : null;
         const baseRecord = input.config.runtime.createBaseRecord({
           productId,
           productName,
+          integrationId:
+            input.config.provider === '1688'
+              ? supplierConnectionContext?.integrationId ?? null
+              : null,
+          connectionId:
+            input.config.provider === '1688'
+              ? supplierConnectionContext?.connection?.id ?? input.connectionId ?? null
+              : null,
           userId: input.userId,
           imageCandidates,
-          status: imageCandidates.length > 0 ? 'queued' : 'failed',
-          error: imageCandidates.length > 0 ? null : input.config.noImageMessage,
+          status:
+            imageCandidates.length > 0 && providerPreflightError == null ? 'queued' : 'failed',
+          error:
+            imageCandidates.length > 0
+              ? providerPreflightError
+              : input.config.noImageMessage,
         });
 
         let savedBaseRecord: ProductScanRecord;
@@ -2237,60 +2526,110 @@ const queueProviderBatchProductScans = async (input: {
 
           throw error;
         }
-        if (imageCandidates.length === 0) {
+        if (imageCandidates.length === 0 || providerPreflightError) {
           return createFailedBatchResult(
             productId,
-            savedBaseRecord.error ?? input.config.noImageMessage,
+            savedBaseRecord.error ??
+              providerPreflightError ??
+              input.config.noImageMessage,
             savedBaseRecord.id
           );
         }
 
         try {
-          const scannerEngineRequestOptions =
-            buildProductScannerEngineRequestOptions(scannerSettings);
-          const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
-            scannerSettings,
-            scannerEngineRequestOptions,
-          });
           const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(
             scannerSettings
           );
+          const forceVisibleLaunchForManualVerification =
+            input.config.provider === 'amazon' &&
+            scannerSettings.captchaBehavior === 'auto_show_browser';
           const allowManualVerification =
-            shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless;
-          const run = await startPlaywrightEngineTask({
-            request: {
-              script: input.config.runtime.script,
-              input: input.config.buildRequestInput({
-                product,
-                productName,
-                imageCandidates,
-                batchIndex,
-                allowManualVerification,
-                manualVerificationTimeoutMs,
-                amazonCandidateEvaluatorEnabled,
-                scannerSettings,
-              }),
-              timeoutMs: allowManualVerification
-                ? Math.max(
-                    AMAZON_SCAN_TIMEOUT_MS,
-                    manualVerificationTimeoutMs + 60_000
-                  )
-                : AMAZON_SCAN_TIMEOUT_MS,
-              browserEngine: 'chromium',
-              ...scannerRuntimeOptions,
-              capture: {
-                screenshot: true,
-                html: true,
-              },
-              preventNewPages: true,
-            },
-            ownerUserId: input.userId?.trim() || null,
-            instance: createCustomPlaywrightInstance({
-              family: 'scrape',
-              label: input.config.instanceLabel,
-              tags: input.config.instanceTags,
-            }),
+            input.config.provider === '1688'
+              ? shouldAutoShowScannerCaptchaBrowser(scannerSettings)
+              : forceVisibleLaunchForManualVerification ||
+                (shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless);
+          const requestInput = input.config.buildRequestInput({
+            product,
+            productName,
+            imageCandidates,
+            integrationId:
+              input.config.provider === '1688'
+                ? supplierConnectionContext?.integrationId ?? null
+                : null,
+            connectionId:
+              input.config.provider === '1688'
+                ? supplierConnectionContext?.connection?.id ?? input.connectionId ?? null
+                : null,
+            connection:
+              input.config.provider === '1688'
+                ? supplierConnectionContext?.connection ?? null
+                : null,
+            batchIndex,
+            allowManualVerification,
+            manualVerificationTimeoutMs,
+            amazonCandidateEvaluatorEnabled,
+            scannerSettings,
           });
+          const timeoutMs = allowManualVerification
+            ? Math.max(
+                AMAZON_SCAN_TIMEOUT_MS,
+                manualVerificationTimeoutMs + 60_000
+              )
+            : AMAZON_SCAN_TIMEOUT_MS;
+          const instance = createCustomPlaywrightInstance({
+            family: 'scrape',
+            label: input.config.instanceLabel,
+            tags: input.config.instanceTags,
+          });
+          const run =
+            input.config.provider === '1688' && supplierConnectionContext?.connection
+              ? (
+                  await startPlaywrightConnectionEngineTask({
+                    connection: supplierConnectionContext.connection,
+                    request: {
+                      script: input.config.runtime.script,
+                      input: requestInput,
+                      timeoutMs,
+                      capture: {
+                        screenshot: true,
+                        html: true,
+                      },
+                      preventNewPages: true,
+                    },
+                    ownerUserId: input.userId?.trim() || null,
+                    instance,
+                    resolveEngineRequestConfig: (runtime) => ({
+                      settings: allowManualVerification
+                        ? {
+                            ...runtime.settings,
+                            headless: false,
+                          }
+                        : runtime.settings,
+                      browserPreference: runtime.browserPreference,
+                    }),
+                  })
+                ).run
+              : await startPlaywrightEngineTask({
+                  request: {
+                    script: input.config.runtime.script,
+                    input: requestInput,
+                    timeoutMs,
+                    browserEngine: 'chromium',
+                    ...buildAmazonScannerRequestRuntimeOptions({
+                      scannerSettings,
+                      scannerEngineRequestOptions:
+                        buildProductScannerEngineRequestOptions(scannerSettings),
+                      forceHeadless: forceVisibleLaunchForManualVerification ? false : undefined,
+                    }),
+                    capture: {
+                      screenshot: true,
+                      html: true,
+                    },
+                    preventNewPages: true,
+                  },
+                  ownerUserId: input.userId?.trim() || null,
+                  instance,
+                });
 
           const queuedRunStatus = run.status === 'running' ? 'running' : 'queued';
           const startedRunRawResult = createAmazonScanStartedRawResult({
@@ -2606,6 +2945,9 @@ export async function queueAmazonBatchProductScans(input: {
         batchIndex,
         allowManualVerification,
         manualVerificationTimeoutMs,
+        integrationId: _integrationId,
+        connectionId: _connectionId,
+        connection: _connection,
         amazonCandidateEvaluatorEnabled,
         scannerSettings: _scannerSettings,
       }) =>
@@ -2650,19 +2992,34 @@ export async function queue1688BatchProductScans(input: {
         batchIndex,
         allowManualVerification,
         manualVerificationTimeoutMs,
+        integrationId,
+        connectionId,
+        connection,
         scannerSettings,
       }) =>
         supplierScanRuntime.buildRequestInput({
           productId: product?.id,
           productName,
           imageCandidates,
+          integrationId,
+          connectionId,
+          scanner1688StartUrl: connection?.scanner1688StartUrl ?? null,
+          scanner1688LoginMode: connection?.scanner1688LoginMode ?? null,
+          scanner1688DefaultSearchMode: connection?.scanner1688DefaultSearchMode ?? null,
           batchIndex,
           allowManualVerification,
           manualVerificationTimeoutMs,
-          candidateResultLimit: scannerSettings.scanner1688?.candidateResultLimit,
-          minimumCandidateScore: scannerSettings.scanner1688?.minimumCandidateScore,
-          maxExtractedImages: scannerSettings.scanner1688?.maxExtractedImages,
+          candidateResultLimit:
+            connection?.scanner1688CandidateResultLimit ??
+            scannerSettings.scanner1688?.candidateResultLimit,
+          minimumCandidateScore:
+            connection?.scanner1688MinimumCandidateScore ??
+            scannerSettings.scanner1688?.minimumCandidateScore,
+          maxExtractedImages:
+            connection?.scanner1688MaxExtractedImages ??
+            scannerSettings.scanner1688?.maxExtractedImages,
           allowUrlImageSearchFallback:
+            connection?.scanner1688AllowUrlImageSearchFallback ??
             scannerSettings.scanner1688?.allowUrlImageSearchFallback,
         }),
     },

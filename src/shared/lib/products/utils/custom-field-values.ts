@@ -56,6 +56,59 @@ export const normalizeProductCustomFieldValues = (input: unknown): ProductCustom
   return Array.from(byFieldId.values());
 };
 
+const normalizeFieldName = (value: unknown): string => toTrimmedString(value).toLowerCase();
+
+export const allowedProductCustomFieldNames = [
+  'market exclusion',
+  '3rd party marketplaces',
+] as const;
+
+export const filterProductCustomFieldValuesByAllowedFieldNames = (
+  input: unknown,
+  definitions: ProductCustomFieldDefinition[],
+  allowedFieldNames: readonly string[] = allowedProductCustomFieldNames
+): ProductCustomFieldValue[] => {
+  const normalizedValues = normalizeProductCustomFieldValues(input);
+  if (!Array.isArray(definitions) || definitions.length === 0) return [];
+
+  const allowedDefinitionNames = new Set(
+    allowedFieldNames.map((value: string): string => normalizeFieldName(value)).filter(Boolean)
+  );
+
+  const definitionsById = new Map<string, ProductCustomFieldDefinition>();
+  definitions.forEach((definition: ProductCustomFieldDefinition) => {
+    definitionsById.set(definition.id, definition);
+  });
+
+  return normalizedValues.flatMap((entry: ProductCustomFieldValue): ProductCustomFieldValue[] => {
+    const definition = definitionsById.get(entry.fieldId);
+    if (!definition) return [];
+
+    if (!allowedDefinitionNames.has(normalizeFieldName(definition.name))) {
+      return [];
+    }
+
+    if (definition.type === 'checkbox_set') {
+      const optionIds = new Set<string>(definition.options.map((option) => option.id));
+      return [
+        {
+          fieldId: entry.fieldId,
+          selectedOptionIds: normalizeProductCustomFieldSelectedOptionIds(
+            entry.selectedOptionIds
+          ).filter((optionId: string): boolean => optionIds.has(optionId)),
+        },
+      ];
+    }
+
+    return [
+      {
+        fieldId: entry.fieldId,
+        textValue: typeof entry.textValue === 'string' ? entry.textValue.trim() : '',
+      },
+    ];
+  });
+};
+
 export const filterProductCustomFieldValuesByDefinitions = (
   input: unknown,
   definitions: ProductCustomFieldDefinition[]

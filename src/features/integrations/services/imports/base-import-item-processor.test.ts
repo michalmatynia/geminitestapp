@@ -175,7 +175,7 @@ describe('importSingleItem custom fields', () => {
     mocks.listingHasBaseImportProvenanceMock.mockReturnValue(false);
   });
 
-  it('normalizes mapped custom fields before product creation', async () => {
+  it('filters removed custom fields out before product creation', async () => {
     mocks.mapBaseProductMock.mockReturnValue({
       sku: 'SKU-1',
       baseProductId: 'base-1',
@@ -211,18 +211,12 @@ describe('importSingleItem custom fields', () => {
       expect.objectContaining({
         sku: 'SKU-1',
         importSource: 'base',
-        customFields: [
-          { fieldId: 'notes', textValue: 'Keep this one' },
-          { fieldId: 'flags', selectedOptionIds: ['tradera'] },
-        ],
+        customFields: [],
       })
     );
     expect(productRepository.createProduct).toHaveBeenCalledWith(
       expect.objectContaining({
-        customFields: [
-          { fieldId: 'notes', textValue: 'Keep this one' },
-          { fieldId: 'flags', selectedOptionIds: ['tradera'] },
-        ],
+        customFields: [],
       })
     );
     expect(result).toEqual(
@@ -280,18 +274,12 @@ describe('importSingleItem custom fields', () => {
 
     expect(mocks.validateProductCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        customFields: [
-          { fieldId: 'market-exclusion', selectedOptionIds: ['allegro', 'tradera'] },
-          { fieldId: 'extra-18808', textValue: 'Yes' },
-        ],
+        customFields: [{ fieldId: 'market-exclusion', selectedOptionIds: ['allegro', 'tradera'] }],
       })
     );
     expect(productRepository.createProduct).toHaveBeenCalledWith(
       expect.objectContaining({
-        customFields: [
-          { fieldId: 'market-exclusion', selectedOptionIds: ['allegro', 'tradera'] },
-          { fieldId: 'extra-18808', textValue: 'Yes' },
-        ],
+        customFields: [{ fieldId: 'market-exclusion', selectedOptionIds: ['allegro', 'tradera'] }],
       })
     );
   });
@@ -454,6 +442,16 @@ describe('importSingleItem custom fields', () => {
         mode: 'create_only',
         forceCreateNewProduct: true,
         persistBaseSyncIdentity: false,
+        customFieldDefinitions: [
+          {
+            id: 'market-exclusion',
+            name: 'Market Exclusion',
+            type: 'checkbox_set',
+            options: [{ id: 'tradera', label: 'Tradera' }],
+            createdAt: '2026-04-08T00:00:00.000Z',
+            updatedAt: '2026-04-08T00:00:00.000Z',
+          },
+        ],
       })
     );
 
@@ -546,11 +544,7 @@ describe('importSingleItem custom fields', () => {
       })
     );
 
-    const expectedCustomFields = [
-      { fieldId: 'legacy', textValue: 'Keep existing' },
-      { fieldId: 'notes', textValue: 'Updated from import' },
-      { fieldId: 'flags', selectedOptionIds: ['tradera'] },
-    ];
+    const expectedCustomFields: Array<{ fieldId: string; textValue?: string; selectedOptionIds?: string[] }> = [];
 
     expect(mocks.validateProductUpdateMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -617,14 +611,14 @@ describe('importSingleItem custom fields', () => {
     );
 
     expect(mocks.validateProductUpdateMock).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        customFields: expect.anything(),
+      expect.objectContaining({
+        customFields: [],
       })
     );
     expect(productRepository.updateProduct).toHaveBeenCalledWith(
       'product-1',
-      expect.not.objectContaining({
-        customFields: expect.anything(),
+      expect.objectContaining({
+        customFields: [],
       })
     );
   });

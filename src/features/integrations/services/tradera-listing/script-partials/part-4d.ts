@@ -517,6 +517,115 @@ export const PART_4D = String.raw`
     return removedCount;
   };
 
+  const FALLBACK_DUPLICATE_SEARCH_CANDIDATE_LIMIT = 6;
+
+  const dedupeCandidatesByListing = (candidates) => {
+    const seen = new Set();
+    const deduped = [];
+
+    for (const candidate of candidates || []) {
+      if (!candidate) continue;
+      const dedupeKey =
+        normalizeWhitespace(candidate.listingId || '') ||
+        normalizeWhitespace(candidate.listingUrl || '') ||
+        null;
+      if (!dedupeKey || seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      deduped.push(candidate);
+    }
+
+    return deduped;
+  };
+
+  const isLikelyDuplicateMatchByText = (candidate, normalizedSearchTerm) => {
+    if (!normalizedSearchTerm) {
+      return false;
+    }
+
+    const normalizedCandidateTitle = normalizeWhitespace(candidate?.title || '').toLowerCase();
+    const normalizedCandidateText = normalizeWhitespace(candidate?.text || candidate?.title || '').toLowerCase();
+    const candidateTitle = normalizedCandidateTitle;
+    const candidateText = normalizedCandidateText;
+
+    if (!candidateTitle && !candidateText) {
+      return false;
+    }
+
+    if (
+      candidateTitle === normalizedSearchTerm ||
+      candidateText === normalizedSearchTerm ||
+      candidateTitle.includes(normalizedSearchTerm) ||
+      candidateText.includes(normalizedSearchTerm)
+    ) {
+      return true;
+    }
+
+    if (normalizedSearchTerm.includes(candidateTitle) && candidateTitle.length >= 12) {
+      return true;
+    }
+
+    const searchTokens = normalizedSearchTerm
+      .split(' ')
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 3);
+    if (searchTokens.length < 2) {
+      return false;
+    }
+
+    const candidateTokens = candidateText.split(' ');
+    let matchCount = 0;
+    for (const token of searchTokens) {
+      if (candidateTokens.includes(token)) {
+        matchCount += 1;
+      }
+    }
+
+    return matchCount >= Math.min(2, Math.ceil(searchTokens.length / 2));
+  };
+
+  const collectDuplicateCandidates = async (searchTerm, visibleCandidates = []) => {
+    const normalizedSearchTerm = normalizeWhitespace(searchTerm).toLowerCase();
+    if (!normalizedSearchTerm) {
+      return {
+        exactTitleMatches: [],
+        fallbackTitleMatches: [],
+        inspectionCandidates: [],
+        candidateScanMode: 'no-search-term',
+      };
+    }
+
+    const exactTitleMatches = await collectListingLinksForTerm(searchTerm);
+    if (exactTitleMatches.length > 0) {
+      return {
+        exactTitleMatches,
+        fallbackTitleMatches: [],
+        inspectionCandidates: dedupeCandidatesByListing(exactTitleMatches),
+        candidateScanMode: 'exact-title-search-only',
+      };
+    }
+
+    const sourceCandidates = Array.isArray(visibleCandidates) && visibleCandidates.length > 0
+      ? visibleCandidates
+      : await collectVisibleListingCandidates(8);
+    const fallbackTitleMatches = [];
+
+    for (const candidate of sourceCandidates) {
+      if (fallbackTitleMatches.length >= FALLBACK_DUPLICATE_SEARCH_CANDIDATE_LIMIT) {
+        break;
+      }
+      if (isLikelyDuplicateMatchByText(candidate, normalizedSearchTerm)) {
+        fallbackTitleMatches.push(candidate);
+      }
+    }
+
+    return {
+      exactTitleMatches,
+      fallbackTitleMatches,
+      inspectionCandidates: dedupeCandidatesByListing([...exactTitleMatches, ...fallbackTitleMatches]),
+      candidateScanMode: fallbackTitleMatches.length > 0 ? 'exact-title-fallback-text-match' : 'no-title-match-found',
+    };
+  };
+
   const checkDuplicate = async (terms) => {
     const resolveDuplicateSearchTerms = () => {
       const firstTerm = Array.isArray(terms) ? terms[0] : terms;
@@ -611,13 +720,20 @@ export const PART_4D = String.raw`
         currentUrl: page.url(),
       });
 
-      const duplicateMatches = await collectListingLinksForTerm(searchTerm);
       const visibleCandidates = await collectVisibleListingCandidates(8);
-      const inspectionCandidates = duplicateMatches;
+      const duplicateCandidateSet = await collectDuplicateCandidates(
+        searchTerm,
+        visibleCandidates
+      );
+      const duplicateMatches = duplicateCandidateSet.exactTitleMatches;
+      const fallbackMatches = duplicateCandidateSet.fallbackTitleMatches;
+      const inspectionCandidates = duplicateCandidateSet.inspectionCandidates;
+      const candidateScanMode = duplicateCandidateSet.candidateScanMode;
       const knownExistingCandidate = visibleCandidates.find(matchesKnownExistingListing) || null;
       const nonExactVisibleCandidateCount = visibleCandidates.filter(
         (candidate) => !titlesExactlyMatch(candidate?.title || '', searchTerm)
       ).length;
+      const fallbackCandidateCount = (fallbackMatches || []).length;
 
       const hadVisibleCandidates =
         candidatePreviewBeforeSearch.length > 0 ||
@@ -640,7 +756,8 @@ export const PART_4D = String.raw`
         exactTitleCandidateCount: duplicateMatches.length,
         inspectionCandidateCount: inspectionCandidates.length,
         nonExactVisibleCandidateCount,
-        candidateScanMode: 'exact-english-title-search-matches-only',
+        fallbackCandidateCount,
+        candidateScanMode,
         searchStateChanged,
         uncertainSearch,
         knownExistingListingCandidateFound: Boolean(knownExistingCandidate),

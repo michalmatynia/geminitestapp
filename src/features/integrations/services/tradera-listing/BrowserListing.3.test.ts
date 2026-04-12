@@ -156,6 +156,137 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
   matchedTargetPriceGroupIds: ['price-group-eur'],
 };
 
+beforeEach(() => {
+  vi.resetAllMocks();
+  runPlaywrightListingScriptMock.mockResolvedValue({
+    runId: 'run-stable',
+    status: 'success',
+    externalListingId: 'listing-stable',
+    listingUrl: 'https://www.tradera.com/item/stable',
+    publishVerified: true,
+    logs: [],
+    rawResult: {},
+  });
+  accessMock.mockResolvedValue(undefined);
+  copyFileMock.mockResolvedValue(undefined);
+  mkdtempMock.mockResolvedValue('/tmp/tradera-browser-test');
+  statMock.mockResolvedValue({
+    isFile: () => true,
+    size: 20_000,
+  });
+  getCategoryByIdMock.mockResolvedValue(null);
+  listCategoriesMock.mockResolvedValue([]);
+  getProductByIdMock.mockResolvedValue({
+    id: 'product-1',
+    sku: 'SKU-1',
+    baseProductId: 'BASE-1',
+    categoryId: 'internal-category-1',
+    catalogId: 'catalog-1',
+    catalogs: [{ catalogId: 'catalog-1' }],
+    name_en: 'Example title',
+    description_en: 'Example description',
+    price: 123,
+    imageLinks: ['https://cdn.example.com/a.jpg'],
+    images: [
+      {
+        imageFile: {
+          filepath: '/uploads/products/SKU-1/example.png',
+        },
+      },
+    ],
+  });
+  listCategoryMappingsMock.mockResolvedValue([
+    {
+      id: 'mapping-1',
+      connectionId: 'connection-1',
+      externalCategoryId: '101',
+      internalCategoryId: 'internal-category-1',
+      catalogId: 'catalog-1',
+      isActive: true,
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T10:00:00.000Z',
+      externalCategory: {
+        id: 'external-category-101',
+        connectionId: 'connection-1',
+        externalId: '101',
+        name: 'Pins',
+        parentExternalId: '100',
+        path: 'Collectibles > Pins',
+        depth: 1,
+        isLeaf: true,
+        metadata: null,
+        fetchedAt: '2026-04-02T10:00:00.000Z',
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T10:00:00.000Z',
+      },
+      internalCategory: {
+        id: 'internal-category-1',
+        name: 'Pins',
+        description: null,
+        color: null,
+        parentId: null,
+        catalogId: 'catalog-1',
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T10:00:00.000Z',
+      },
+    },
+  ]);
+  resolveTraderaShippingGroupResolutionForProductMock.mockResolvedValue({
+    shippingGroup: {
+      id: 'shipping-group-1',
+      name: 'Small parcel',
+      catalogId: 'catalog-1',
+      traderaShippingCondition: 'Buyer pays shipping',
+      traderaShippingPriceEur: 5,
+      autoAssignCategoryIds: [],
+    },
+    shippingGroupId: 'shipping-group-1',
+    shippingCondition: 'Buyer pays shipping',
+    shippingPriceEur: 5,
+    shippingGroupSource: 'manual',
+    reason: 'mapped',
+    matchedCategoryRuleIds: [],
+    matchingShippingGroupIds: ['shipping-group-1'],
+  });
+  resolveTraderaListingPriceForProductMock.mockResolvedValue({
+    listingPrice: 55,
+    listingCurrencyCode: 'EUR',
+    targetCurrencyCode: 'EUR',
+    resolvedToTargetCurrency: true,
+    basePrice: 123,
+    baseCurrencyCode: 'PLN',
+    priceSource: 'price_group_target_currency',
+    reason: 'resolved_target_currency',
+    defaultPriceGroupId: 'price-group-pln',
+    catalogDefaultPriceGroupId: 'price-group-pln',
+    catalogId: 'catalog-1',
+    catalogPriceGroupIds: ['price-group-pln', 'price-group-eur'],
+    loadedPriceGroupIds: ['price-group-pln', 'price-group-eur'],
+    matchedTargetPriceGroupIds: ['price-group-eur'],
+  });
+  listParametersMock.mockResolvedValue([]);
+  resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
+    headless: true,
+    slowMo: 85,
+    timeout: 30000,
+    navigationTimeout: 45000,
+    humanizeMouse: true,
+    mouseJitter: 12,
+    clickDelayMin: 40,
+    clickDelayMax: 140,
+    inputDelayMin: 30,
+    inputDelayMax: 110,
+    actionDelayMin: 220,
+    actionDelayMax: 800,
+    proxyEnabled: false,
+    proxyServer: '',
+    proxyUsername: '',
+    proxyPassword: '',
+    emulateDevice: false,
+    deviceName: 'Desktop Chrome',
+  });
+});
+
   it('refreshes legacy default scripts that still rely on dynamic imports', async () => {
     runPlaywrightListingScriptMock.mockResolvedValue({
       runId: 'run-456',
@@ -223,7 +354,7 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v129',
+        scriptMarker: 'tradera-quicklist-default:v130',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -347,7 +478,7 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v129',
+        scriptMarker: 'tradera-quicklist-default:v130',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -941,7 +1072,7 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v129',
+      'tradera-quicklist-default:v130',
       'tradera-quicklist-default:v89'
     );
 
@@ -1125,7 +1256,7 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v129',
+        scriptMarker: 'tradera-quicklist-default:v130',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
@@ -1183,6 +1314,3 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
     });
     expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(9);
   });
-
-  });
-});

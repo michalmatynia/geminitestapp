@@ -169,6 +169,26 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
 describe('product-scans-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.collectPlaywrightEngineRunFailureMessagesMock.mockReturnValue([]);
+    mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({});
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      captchaBehavior: 'fail',
+      scanner1688: {},
+    });
+    mocks.resolveProductScannerHeadlessMock.mockResolvedValue(true);
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: false,
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock.mockResolvedValue({
+      enabled: false,
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock.mockResolvedValue({
+      enabled: false,
+    });
+    mocks.resolveProductScanner1688CandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: false,
+    });
   });
 
   it('stores no_match results without attempting an ASIN update', async () => {
@@ -441,6 +461,236 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         engineRunId: 'run-still-queued',
         status: 'queued',
+      })
+    );
+  });
+
+  it('persists active runtime diagnostics for fresh running scans', async () => {
+    const now = Date.now();
+    const scan = createScan({
+      status: 'queued',
+      rawResult: {
+        runId: 'run-1',
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+      startedAt: new Date(now - 30_000).toISOString(),
+      createdAt: new Date(now - 35_000).toISOString(),
+      updatedAt: new Date(now - 5_000).toISOString(),
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'running',
+        stage: 'google_upload',
+        currentUrl: 'https://lens.google.com/upload',
+        steps: [
+          {
+            key: 'google_upload',
+            label: 'Upload image to Google Lens',
+            status: 'running',
+            message: 'Uploading image to Google Lens.',
+            url: 'https://lens.google.com/upload',
+            startedAt: new Date(now - 10_000).toISOString(),
+            completedAt: null,
+          },
+        ],
+      },
+      finalUrl: 'https://lens.google.com/upload',
+    });
+    mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({
+      runId: 'run-1',
+      runStatus: 'running',
+      latestStage: 'google_upload',
+      latestStageUrl: 'https://lens.google.com/upload',
+      failureArtifacts: [],
+      logTail: ['google lens upload pending'],
+      rawResult: {
+        stage: 'google_upload',
+        currentUrl: 'https://lens.google.com/upload',
+      },
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        engineRunId: 'run-1',
+        status: 'running',
+        asinUpdateStatus: 'pending',
+        rawResult: expect.objectContaining({
+          runId: 'run-1',
+          runStatus: 'running',
+          latestStage: 'google_upload',
+          latestStageUrl: 'https://lens.google.com/upload',
+          logTail: ['google lens upload pending'],
+          manualVerificationPending: false,
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'running',
+        asinUpdateStatus: 'pending',
+      })
+    );
+  });
+
+  it('fails stale active scans with persisted runtime diagnostics', async () => {
+    const now = Date.now();
+    const scan = createScan({
+      status: 'running',
+      rawResult: {
+        runId: 'run-1',
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+      startedAt: new Date(now - 240_000).toISOString(),
+      createdAt: new Date(now - 245_000).toISOString(),
+      updatedAt: new Date(now - 190_000).toISOString(),
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'running',
+        stage: 'google_upload',
+        currentUrl: 'https://lens.google.com/upload',
+        steps: [
+          {
+            key: 'google_upload',
+            label: 'Upload image to Google Lens',
+            status: 'running',
+            message: 'Uploading image to Google Lens.',
+            url: 'https://lens.google.com/upload',
+            startedAt: new Date(now - 200_000).toISOString(),
+            completedAt: null,
+          },
+        ],
+      },
+      finalUrl: 'https://lens.google.com/upload',
+    });
+    mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({
+      runId: 'run-1',
+      runStatus: 'running',
+      latestStage: 'google_upload',
+      latestStageUrl: 'https://lens.google.com/upload',
+      failureArtifacts: [],
+      logTail: ['google lens upload pending'],
+      rawResult: {
+        stage: 'google_upload',
+        currentUrl: 'https://lens.google.com/upload',
+      },
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        engineRunId: 'run-1',
+        status: 'failed',
+        error: 'Amazon reverse image scan stalled at Google Upload.',
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: 'Amazon reverse image scan stalled at Google Upload.',
+        rawResult: expect.objectContaining({
+          latestStage: 'google_upload',
+          latestStageUrl: 'https://lens.google.com/upload',
+          logTail: ['google lens upload pending'],
+          stalledReason: 'no_progress',
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        asinUpdateStatus: 'failed',
+      })
+    );
+  });
+
+  it('fails expired manual-verification scans with persisted runtime diagnostics', async () => {
+    const now = Date.now();
+    const scan = createScan({
+      status: 'running',
+      rawResult: {
+        runId: 'run-1',
+        manualVerificationPending: true,
+        manualVerificationMessage: 'Waiting for Google Lens manual verification.',
+        manualVerificationTimeoutMs: 300_000,
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+      startedAt: new Date(now - 420_000).toISOString(),
+      createdAt: new Date(now - 425_000).toISOString(),
+      updatedAt: new Date(now - 10_000).toISOString(),
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'captcha_required',
+        stage: 'google_upload',
+        currentUrl: 'https://lens.google.com/upload',
+        message: 'Waiting for Google Lens manual verification.',
+        steps: [
+          {
+            key: 'google_upload',
+            label: 'Upload image to Google Lens',
+            status: 'running',
+            message: 'Waiting for Google Lens manual verification.',
+            url: 'https://lens.google.com/upload',
+            startedAt: new Date(now - 360_000).toISOString(),
+            completedAt: null,
+          },
+        ],
+      },
+      finalUrl: 'https://lens.google.com/upload',
+    });
+    mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({
+      runId: 'run-1',
+      runStatus: 'running',
+      latestStage: 'google_upload',
+      latestStageUrl: 'https://lens.google.com/upload',
+      logTail: ['waiting for manual verification'],
+      rawResult: {
+        stage: 'google_upload',
+        currentUrl: 'https://lens.google.com/upload',
+      },
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        engineRunId: 'run-1',
+        status: 'failed',
+        error: 'Google Lens manual verification expired at Google Upload.',
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: 'Google Lens manual verification expired at Google Upload.',
+        rawResult: expect.objectContaining({
+          latestStage: 'google_upload',
+          latestStageUrl: 'https://lens.google.com/upload',
+          logTail: ['waiting for manual verification'],
+          manualVerificationPending: false,
+          manualVerificationExpired: true,
+          stalledReason: 'manual_verification_expired',
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        asinUpdateStatus: 'failed',
       })
     );
   });

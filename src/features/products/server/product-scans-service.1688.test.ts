@@ -199,15 +199,26 @@ describe('product-scans-service 1688 synchronization', () => {
     });
     mocks.evaluate1688SupplierCandidateMatchMock.mockResolvedValue({
       status: 'approved',
+      sameProduct: true,
+      imageMatch: true,
+      titleMatch: true,
       confidence: 0.95,
+      proceed: true,
       reasons: ['Strong title and image match.'],
+      mismatches: [],
+      modelId: 'brain-default',
+      error: null,
+      evaluatedAt: '2026-04-11T04:04:30.000Z',
     });
     mocks.resolveProductScanner1688CandidateEvaluatorConfigMock.mockResolvedValue({
       enabled: true,
       mode: 'brain_default',
       threshold: 0.8,
     });
-    mocks.upsertProductScanMock.mockImplementation(async (data: any) => data);
+    mocks.updateProductScanMock.mockImplementation(async (_id: string, updates: any) => ({
+      ...scan,
+      ...updates,
+    }));
 
     const result = await synchronizeProductScan(scan);
 
@@ -217,7 +228,7 @@ describe('product-scans-service 1688 synchronization', () => {
     expect(result.url).toBe('https://detail.1688.com/offer/123456789.html');
     expect(result.description).toBe('Supplier description');
     expect(result.supplierEvaluation?.status).toBe('approved');
-    expect(mocks.upsertProductScanMock).toHaveBeenCalled();
+    expect(mocks.updateProductScanMock).toHaveBeenCalled();
   });
 
   it('upgrades a borderline 1688 supplier result through the AI evaluator', async () => {
@@ -241,15 +252,26 @@ describe('product-scans-service 1688 synchronization', () => {
     });
     mocks.evaluate1688SupplierCandidateMatchMock.mockResolvedValue({
       status: 'approved',
+      sameProduct: true,
+      imageMatch: true,
+      titleMatch: false,
       confidence: 0.85,
+      proceed: true,
       reasons: ['AI confirms product similarity despite heuristic doubt.'],
+      mismatches: [],
+      modelId: 'scanner-override',
+      error: null,
+      evaluatedAt: '2026-04-11T04:04:45.000Z',
     });
     mocks.resolveProductScanner1688CandidateEvaluatorConfigMock.mockResolvedValue({
       enabled: true,
       mode: 'model_override',
       threshold: 0.7,
     });
-    mocks.upsertProductScanMock.mockImplementation(async (data: any) => data);
+    mocks.updateProductScanMock.mockImplementation(async (_id: string, updates: any) => ({
+      ...scan,
+      ...updates,
+    }));
 
     const result = await synchronizeProductScan(scan);
 

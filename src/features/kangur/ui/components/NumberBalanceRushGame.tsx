@@ -42,6 +42,7 @@ type NumberBalanceRushTranslations = NumberBalanceRushState['translations'];
 import {
   type NumberBalanceLeaderboardEntry,
 } from './NumberBalanceRushGame.runtime';
+import { NumberBalanceRushGameProvider, useNumberBalanceRushGame } from './NumberBalanceRushGameContext';
 
 const NUMBER_BALANCE_DROP_ZONE_CLASSNAME =
   'flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition touch-manipulation';
@@ -419,27 +420,25 @@ function NumberBalanceRushTouchHint({
 
 function NumberBalanceRushTileZone({
   ariaLabel,
-  canInteract,
   dataTestId,
   droppableId,
-  isCoarsePointer,
-  moveSelectedTileTo,
-  selectedTileId,
-  setSelectedTileId,
   snapshotClassName,
   tiles,
 }: {
   ariaLabel: string;
-  canInteract: boolean;
   dataTestId: string;
   droppableId: ZoneId;
-  isCoarsePointer: boolean;
-  moveSelectedTileTo: NumberBalanceRushState['moveSelectedTileTo'];
-  selectedTileId: string | null;
-  setSelectedTileId: NumberBalanceRushState['setSelectedTileId'];
   snapshotClassName: string;
   tiles: NumberBalanceTile[];
 }): React.JSX.Element {
+  const {
+    canInteract,
+    isCoarsePointer,
+    moveSelectedTileTo,
+    selectedTileId,
+    setSelectedTileId,
+  } = useNumberBalanceRushGame();
+
   return (
     <Droppable droppableId={droppableId} direction='horizontal'>
       {(provided, snapshot) => (
@@ -478,33 +477,23 @@ function NumberBalanceRushTileZone({
 
 function NumberBalanceRushBoardSide({
   ariaLabel,
-  canInteract,
   currentTiles,
   dataTestId,
   droppableId,
-  isCoarsePointer,
-  moveSelectedTileTo,
-  selectedTileId,
-  setSelectedTileId,
   sum,
   target,
   totalSlots,
-  translations,
 }: {
   ariaLabel: string;
-  canInteract: boolean;
   currentTiles: NumberBalanceTile[];
   dataTestId: string;
   droppableId: 'left' | 'right';
-  isCoarsePointer: boolean;
-  moveSelectedTileTo: NumberBalanceRushState['moveSelectedTileTo'];
-  selectedTileId: string | null;
-  setSelectedTileId: NumberBalanceRushState['setSelectedTileId'];
   sum: number;
   target: number;
   totalSlots: number;
-  translations: NumberBalanceRushTranslations;
 }): React.JSX.Element {
+  const { translations } = useNumberBalanceRushGame();
+
   return (
     <div className='flex w-full max-w-xs flex-col items-center kangur-panel-gap'>
       <div className='text-sm font-semibold text-amber-900'>
@@ -512,13 +501,8 @@ function NumberBalanceRushBoardSide({
       </div>
       <NumberBalanceRushTileZone
         ariaLabel={ariaLabel}
-        canInteract={canInteract}
         dataTestId={dataTestId}
         droppableId={droppableId}
-        isCoarsePointer={isCoarsePointer}
-        moveSelectedTileTo={moveSelectedTileTo}
-        selectedTileId={selectedTileId}
-        setSelectedTileId={setSelectedTileId}
         snapshotClassName={NUMBER_BALANCE_DROP_ZONE_CLASSNAME}
         tiles={currentTiles}
       />
@@ -532,23 +516,9 @@ function NumberBalanceRushBoardSide({
   );
 }
 
-function NumberBalanceRushTray({
-  canInteract,
-  isCoarsePointer,
-  moveSelectedTileTo,
-  selectedTileId,
-  setSelectedTileId,
-  tiles,
-  translations,
-}: {
-  canInteract: boolean;
-  isCoarsePointer: boolean;
-  moveSelectedTileTo: NumberBalanceRushState['moveSelectedTileTo'];
-  selectedTileId: string | null;
-  setSelectedTileId: NumberBalanceRushState['setSelectedTileId'];
-  tiles: NumberBalanceTile[];
-  translations: NumberBalanceRushTranslations;
-}): React.JSX.Element {
+function NumberBalanceRushTray(): React.JSX.Element {
+  const { translations, trayTiles } = useNumberBalanceRushGame();
+
   return (
     <div className='flex flex-col kangur-panel-gap'>
       <div className='text-xs font-semibold text-amber-900/80'>
@@ -556,15 +526,10 @@ function NumberBalanceRushTray({
       </div>
       <NumberBalanceRushTileZone
         ariaLabel={translations('numberBalance.inRound.aria.tray')}
-        canInteract={canInteract}
         dataTestId='number-balance-tray-zone'
         droppableId='tray'
-        isCoarsePointer={isCoarsePointer}
-        moveSelectedTileTo={moveSelectedTileTo}
-        selectedTileId={selectedTileId}
-        setSelectedTileId={setSelectedTileId}
         snapshotClassName={NUMBER_BALANCE_TRAY_CLASSNAME}
-        tiles={tiles}
+        tiles={trayTiles}
       />
     </div>
   );
@@ -581,11 +546,8 @@ function NumberBalanceRushActiveRound({
     translations,
     isCoarsePointer,
     puzzle,
-    trayTiles,
     leftTiles,
     rightTiles,
-    selectedTileId,
-    setSelectedTileId,
     score,
     celebrating,
     timeLeftMs,
@@ -594,9 +556,7 @@ function NumberBalanceRushActiveRound({
     opponentLabel,
     leaderboardEntries,
     handleDragEnd,
-    moveSelectedTileTo,
     touchHint,
-    canInteract,
     match,
   } = state;
   const matchDurationMs = match?.roundDurationMs ?? durationMs;
@@ -645,45 +605,25 @@ function NumberBalanceRushActiveRound({
             <div className='flex flex-col items-center justify-center gap-6 md:flex-row md:items-end'>
               <NumberBalanceRushBoardSide
                 ariaLabel={translations('numberBalance.inRound.aria.leftSide')}
-                canInteract={canInteract}
                 currentTiles={leftTiles}
                 dataTestId='number-balance-left-zone'
                 droppableId='left'
-                isCoarsePointer={isCoarsePointer}
-                moveSelectedTileTo={moveSelectedTileTo}
-                selectedTileId={selectedTileId}
-                setSelectedTileId={setSelectedTileId}
                 sum={leftSum}
                 target={puzzle.targets.left}
                 totalSlots={puzzle.slots.left}
-                translations={translations}
               />
               <div className='hidden h-1 w-12 rounded-full bg-amber-200/80 md:block' aria-hidden='true' />
               <NumberBalanceRushBoardSide
                 ariaLabel={translations('numberBalance.inRound.aria.rightSide')}
-                canInteract={canInteract}
                 currentTiles={rightTiles}
                 dataTestId='number-balance-right-zone'
                 droppableId='right'
-                isCoarsePointer={isCoarsePointer}
-                moveSelectedTileTo={moveSelectedTileTo}
-                selectedTileId={selectedTileId}
-                setSelectedTileId={setSelectedTileId}
                 sum={rightSum}
                 target={puzzle.targets.right}
                 totalSlots={puzzle.slots.right}
-                translations={translations}
               />
             </div>
-            <NumberBalanceRushTray
-              canInteract={canInteract}
-              isCoarsePointer={isCoarsePointer}
-              moveSelectedTileTo={moveSelectedTileTo}
-              selectedTileId={selectedTileId}
-              setSelectedTileId={setSelectedTileId}
-              tiles={trayTiles}
-              translations={translations}
-            />
+            <NumberBalanceRushTray />
           </div>
         </KangurGlassPanel>
       </KangurPracticeGameShell>
@@ -806,5 +746,9 @@ export default function NumberBalanceRushGame(
   props: NumberBalanceRushGameProps
 ): React.JSX.Element {
   const state = useNumberBalanceRushGameState(props);
-  return renderNumberBalanceRushPhaseView({ props, state });
+  return (
+    <NumberBalanceRushGameProvider state={state}>
+      {renderNumberBalanceRushPhaseView({ props, state })}
+    </NumberBalanceRushGameProvider>
+  );
 }

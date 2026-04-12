@@ -13,9 +13,12 @@ export const isTraderaBrowserAuthRequiredMessage = (
   if (!normalized) return false;
   return (
     normalized.includes('auth_required') ||
+    normalized.includes('auth_state_timeout') ||
     normalized.includes('manual verification') ||
     normalized.includes('captcha') ||
     normalized.includes('login requires') ||
+    normalized.includes('session validation did not resolve') ||
+    normalized.includes('session check did not resolve') ||
     normalized.includes('session expired') ||
     normalized.includes('session has expired') ||
     normalized.includes('session is missing or expired') ||

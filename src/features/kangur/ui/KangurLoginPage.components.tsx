@@ -16,7 +16,6 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import type { KangurLoginPageProps } from '@/features/kangur/ui/login-page/login-context';
 import { useKangurLoginPageState } from './KangurLoginPage.hooks';
-import type { VerificationCardState } from './KangurLoginPage.utils';
 
 type KangurLoginPageState = ReturnType<typeof useKangurLoginPageState>;
 type KangurLoginTranslations = ReturnType<typeof useTranslations>;
@@ -104,25 +103,10 @@ const KANGUR_LOGIN_TEXT_FIELD_STYLE: React.CSSProperties = {
   color: 'var(--kangur-text-field-text, #0f172a)',
 };
 
-export type VerificationCardProps = VerificationCardState & {
-  resendLabel: string;
-  resendDisabled: boolean;
-  resendHelper?: string | null;
-  changeEmailLabel?: string | null;
-  onChangeEmail?: (() => void) | null;
-  continueToSignInLabel?: string | null;
-  onContinueToSignIn?: (() => void) | null;
-  onResend: () => void;
-};
-
-function VerificationCardNotices(props: {
-  email: string;
-  error?: string | null;
-  message?: string | null;
-  translations: ReturnType<typeof useTranslations>;
-  verificationUrl?: string | null;
-}): React.JSX.Element {
-  const { email, error, message, translations, verificationUrl } = props;
+function VerificationCardNotices(): React.JSX.Element {
+  const { translations, verificationCard } = useKangurLoginPage();
+  if (!verificationCard) return <></>;
+  const { email, error, message, verificationUrl } = verificationCard;
 
   return (
     <>
@@ -158,27 +142,25 @@ function VerificationCardNotices(props: {
   );
 }
 
-function VerificationCardActions(props: Pick<
-  VerificationCardProps,
-  | 'changeEmailLabel'
-  | 'continueToSignInLabel'
-  | 'onChangeEmail'
-  | 'onContinueToSignIn'
-  | 'onResend'
-  | 'resendDisabled'
-  | 'resendHelper'
-  | 'resendLabel'
->): React.JSX.Element {
+function VerificationCardActions(): React.JSX.Element {
   const {
-    changeEmailLabel,
     continueToSignInLabel,
-    onChangeEmail,
-    onContinueToSignIn,
-    onResend,
-    resendDisabled,
+    handleChangeEmail,
+    handleContinueToSignIn,
+    handleResendVerification,
+    isLoading,
+    resendCooldownLabel,
     resendHelper,
     resendLabel,
-  } = props;
+    showParentAuthModeTabs,
+    translations,
+  } = useKangurLoginPage();
+
+  const resendDisabled = Boolean(resendCooldownLabel) || isLoading;
+  const changeEmailLabel = translations('changeEmailAction');
+  const onResend = () => void handleResendVerification();
+
+  const showContinueToSignIn = showParentAuthModeTabs === false;
 
   return (
     <div className='mt-4 flex flex-col gap-2'>
@@ -197,23 +179,23 @@ function VerificationCardActions(props: Pick<
           {resendHelper}
         </div>
       ) : null}
-      {changeEmailLabel && onChangeEmail ? (
+      {changeEmailLabel && handleChangeEmail ? (
         <KangurButton
           type='button'
           variant='ghost'
           size='sm'
-          onClick={onChangeEmail}
+          onClick={handleChangeEmail}
           className='justify-start px-0'
         >
           {changeEmailLabel}
         </KangurButton>
       ) : null}
-      {continueToSignInLabel && onContinueToSignIn ? (
+      {showContinueToSignIn && continueToSignInLabel && handleContinueToSignIn ? (
         <KangurButton
           type='button'
           variant='ghost'
           size='sm'
-          onClick={onContinueToSignIn}
+          onClick={handleContinueToSignIn}
           className='justify-start px-0'
         >
           {continueToSignInLabel}
@@ -223,41 +205,11 @@ function VerificationCardActions(props: Pick<
   );
 }
 
-export const ParentVerificationCard = ({
-  email,
-  message,
-  error,
-  verificationUrl,
-  resendLabel,
-  resendDisabled,
-  resendHelper,
-  changeEmailLabel,
-  onChangeEmail,
-  continueToSignInLabel,
-  onContinueToSignIn,
-  onResend,
-}: VerificationCardProps): React.JSX.Element => {
-  const translations = useTranslations('KangurLogin');
-
+export const ParentVerificationCard = (): React.JSX.Element => {
   return (
     <div className='mt-6 rounded-2xl border p-5' style={KANGUR_LOGIN_SOFT_SURFACE_STYLE}>
-      <VerificationCardNotices
-        email={email}
-        error={error}
-        message={message}
-        translations={translations}
-        verificationUrl={verificationUrl}
-      />
-      <VerificationCardActions
-        changeEmailLabel={changeEmailLabel}
-        continueToSignInLabel={continueToSignInLabel}
-        onChangeEmail={onChangeEmail}
-        onContinueToSignIn={onContinueToSignIn}
-        onResend={onResend}
-        resendDisabled={resendDisabled}
-        resendHelper={resendHelper}
-        resendLabel={resendLabel}
-      />
+      <VerificationCardNotices />
+      <VerificationCardActions />
     </div>
   );
 };
@@ -551,41 +503,13 @@ function KangurLoginFormPanel(): React.JSX.Element {
 }
 
 function KangurLoginVerificationSection(): React.JSX.Element | null {
-  const {
-    continueToSignInLabel,
-    handleChangeEmail,
-    handleContinueToSignIn,
-    handleResendVerification,
-    isLoading,
-    resendCooldownLabel,
-    resendHelper,
-    resendLabel,
-    showParentAuthModeTabs,
-    translations,
-    verificationCard,
-  } = useKangurLoginPage();
+  const { verificationCard } = useKangurLoginPage();
 
   if (!verificationCard) {
     return null;
   }
 
-  return (
-    <ParentVerificationCard
-      {...verificationCard}
-      resendLabel={resendLabel}
-      resendDisabled={Boolean(resendCooldownLabel) || isLoading}
-      resendHelper={resendHelper}
-      changeEmailLabel={translations('changeEmailAction')}
-      onChangeEmail={handleChangeEmail}
-      continueToSignInLabel={
-        showParentAuthModeTabs === false ? continueToSignInLabel : null
-      }
-      onContinueToSignIn={
-        showParentAuthModeTabs === false ? handleContinueToSignIn : null
-      }
-      onResend={() => void handleResendVerification()}
-    />
-  );
+  return <ParentVerificationCard />;
 }
 
 export function KangurLoginPageLayout(props: {

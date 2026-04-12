@@ -421,3 +421,21 @@ export async function updateProductScan(
     })
   );
 }
+
+export async function deleteProductScan(id: string): Promise<boolean> {
+  const normalizedId = id.trim();
+  if (!normalizedId) {
+    return false;
+  }
+
+  if (!process.env['MONGODB_URI']) {
+    const initialLength = inMemoryScans.length;
+    inMemoryScans = inMemoryScans.filter((scan) => scan.id !== normalizedId);
+    return inMemoryScans.length < initialLength;
+  }
+
+  await ensureIndexes();
+  const collection = await readCollection();
+  const result = await collection.deleteOne({ id: normalizedId });
+  return (result.deletedCount ?? 0) > 0;
+}

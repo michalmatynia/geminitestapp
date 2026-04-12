@@ -1349,6 +1349,28 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         if (uploadResult.captchaRequired) {
           return;
         }
+        if (
+          uploadResult.failureCode === 'upload_processing_timeout' ||
+          uploadResult.failureCode === 'lens_result_page_not_ready'
+        ) {
+          await artifacts.screenshot('amazon-scan-error').catch(() => undefined);
+          await artifacts.html('amazon-scan-error').catch(() => undefined);
+          await emitResult({
+            status: 'failed',
+            asin: null,
+            title: null,
+            price: null,
+            url: null,
+            description: null,
+            matchedImageId: candidateId,
+            currentUrl: page.url(),
+            message:
+              uploadResult.error ||
+              'Google Lens accepted the image input but did not transition into a usable result page.',
+            stage: 'google_upload',
+          });
+          return;
+        }
         if (googleCaptchaEncountered) {
           await artifacts.screenshot('amazon-scan-error').catch(() => undefined);
           await artifacts.html('amazon-scan-error').catch(() => undefined);
@@ -1443,6 +1465,29 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
           currentUrl: page.url(),
           message: amazonCandidateResult.error,
           stage: 'google_captcha',
+        });
+        return;
+      }
+      if (
+        (amazonCandidateResult.failureCode === 'upload_processing_timeout' ||
+          amazonCandidateResult.failureCode === 'lens_result_page_not_ready') &&
+        amazonCandidateResult.candidates.length === 0
+      ) {
+        await artifacts.screenshot('amazon-scan-error').catch(() => undefined);
+        await artifacts.html('amazon-scan-error').catch(() => undefined);
+        await emitResult({
+          status: 'failed',
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          matchedImageId: candidateId,
+          currentUrl: page.url(),
+          message:
+            amazonCandidateResult.error ||
+            'Google Lens did not transition from image processing into a usable result page.',
+          stage: 'google_candidates',
         });
         return;
       }

@@ -79,6 +79,14 @@ describe('classifyTraderaFailure', () => {
       )
     ).toBe('FORM');
   });
+
+  it('classifies auth-state timeout failures as auth errors', () => {
+    expect(
+      classifyTraderaFailure(
+        'AUTH_STATE_TIMEOUT: Tradera session validation did not resolve.'
+      )
+    ).toBe('AUTH');
+  });
 });
 
 describe('toUserFacingTraderaFailure', () => {
@@ -90,6 +98,28 @@ describe('toUserFacingTraderaFailure', () => {
       )
     ).toBe(
       'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.'
+    );
+  });
+
+  it('maps duplicate-risk retry blocks to a user-facing retry message', () => {
+    expect(
+      toUserFacingTraderaFailure(
+        'FORM',
+        'FAIL_IMAGE_SET_INVALID: Tradera image upload reached a partial state and retrying could duplicate images. Last state: {"expectedUploadCount":3,"observedPreviewDelta":1}'
+      )
+    ).toBe(
+      'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.'
+    );
+  });
+
+  it('maps auth-state timeout failures to a session-refresh message', () => {
+    expect(
+      toUserFacingTraderaFailure(
+        'AUTH',
+        'AUTH_STATE_TIMEOUT: Tradera session validation did not resolve.'
+      )
+    ).toBe(
+      'Tradera session validation did not resolve. Refresh the saved browser session and retry.'
     );
   });
 });

@@ -20,9 +20,12 @@ export const classifyTraderaFailure = (message: string): TraderaFailureCategory 
   const normalized = message.trim().toLowerCase();
   if (
     normalized.includes('auth_required') ||
+    normalized.includes('auth_state_timeout') ||
     normalized.includes('login failed') ||
     normalized.includes('manual verification') ||
     normalized.includes('captcha') ||
+    normalized.includes('session validation did not resolve') ||
+    normalized.includes('session check did not resolve') ||
     normalized.includes('two-factor') ||
     normalized.includes('2fa')
   ) {
@@ -67,11 +70,21 @@ export const toUserFacingTraderaFailure = (
   message: string
 ): string => {
   const normalized = message.trim().toLowerCase();
+  if (
+    normalized.includes('auth_state_timeout') ||
+    normalized.includes('session validation did not resolve') ||
+    normalized.includes('session check did not resolve')
+  ) {
+    return 'Tradera session validation did not resolve. Refresh the saved browser session and retry.';
+  }
   if (category === 'AUTH') {
     return 'Tradera login requires manual verification. Open login window and retry.';
   }
   if (normalized.includes('uploaded more image previews than expected')) {
     return 'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.';
+  }
+  if (normalized.includes('retrying could duplicate images')) {
+    return 'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.';
   }
   if (normalized.includes('retry image cleanup did not clear the previous upload state')) {
     return 'Tradera image cleanup did not finish before retrying the upload. Review the listing images in Tradera and retry.';

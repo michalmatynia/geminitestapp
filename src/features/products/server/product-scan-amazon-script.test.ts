@@ -33,7 +33,7 @@ describe('product-scan-amazon-script', () => {
       'const openGoogleLensForUpload = async ({'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "destinationUrl: 'https://images.google.com/?hl=en',"
+      "destinationUrl: 'https://lens.google.com/upload?hl=en',"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "'https://www.google.com/searchbyimage?image_url=' +"
@@ -253,10 +253,13 @@ describe('product-scan-amazon-script', () => {
       'const entryState = ready ? null : await describeGoogleLensUploadEntryState();'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'selectedFileState.fileCount < 1'
+      "host === 'lens.google.com' && pathname.startsWith('/upload')"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "selectedFileState.fileSize < 1"
+      'const selectionConfirmed ='
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      '!selectionConfirmed && !transitionState.advanced'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'Google Lens did not receive a usable image file upload.'
@@ -289,7 +292,13 @@ describe('product-scan-amazon-script', () => {
       "log('amazon.scan.google_upload_entry_missing', {"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "reason: lastProcessingState?.processingVisible ? 'upload_processing_timeout' : 'timeout'"
+      "const isGoogleImagesUploadEntryUrl = (value) => {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "if (!isGoogleImagesUploadEntryUrl(currentUrl)) {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "? 'lens_result_page_not_ready'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "reason: 'results_shell_visible'"
@@ -311,7 +320,10 @@ describe('product-scan-amazon-script', () => {
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("stage: 'google_upload_empty'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "resultCode: uploadTimedOutWhileProcessing ? 'upload_processing_timeout' : 'empty_upload'"
+      "const uploadNeverReachedResults ="
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "? 'lens_result_page_not_ready'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "label: 'Processing text'"
@@ -354,7 +366,7 @@ describe('product-scan-amazon-script', () => {
       "'Local file upload failed. Falling back to image URL upload.'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'retryRecommended: !captchaEncountered && Boolean(imageUrl)'
+      'retryRecommended:\n          !uploadTimedOutWhileProcessing &&\n          !uploadNeverReachedResults &&'
     );
   });
 
@@ -487,6 +499,39 @@ describe('product-scan-amazon-script', () => {
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'if (googleCaptchaEncountered) {'
+    );
+  });
+
+  it('fails closed when Google Lens remains stuck in upload processing instead of cycling through more candidates', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'retryRecommended:\n          !uploadTimedOutWhileProcessing &&\n          !uploadNeverReachedResults &&'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "uploadResult.failureCode === 'upload_processing_timeout' ||"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "uploadResult.failureCode === 'lens_result_page_not_ready'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "stage: 'google_upload'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "amazonCandidateResult.failureCode === 'upload_processing_timeout'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "amazonCandidateResult.failureCode === 'lens_result_page_not_ready'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "stage: 'google_candidates'"
+    );
+  });
+
+  it('tracks scan steps per image candidate instead of overwriting repeated Google upload attempts', () => {
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "const resolveStepIdentity = (key, attempt, inputSource, candidateId = null) =>"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "resolveStepIdentity(entry.key, entry.attempt, entry.inputSource, entry.candidateId)"
     );
   });
 

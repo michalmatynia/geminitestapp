@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, createContext, useContext } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
 import {
@@ -17,6 +17,27 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 
 import { createAgenticCodingMiniGameComponent } from './AgenticCodingMiniGames.factory';
 import type { SortGameConfig, SortGameItem } from './AgenticCodingMiniGames.types';
+
+type AgenticSortGameContextValue = {
+  checked: boolean;
+  draggingId: string | null;
+  isCoarsePointer: boolean;
+  selectedItemId: string | null;
+  onActivateBin: (binId: string | null) => void;
+  onDropToBin: (binId: string, event: React.DragEvent<HTMLDivElement>) => void;
+  onSelectItem: (id: string | null) => void;
+  onStartDragging: (id: string | null) => void;
+};
+
+const AgenticSortGameContext = createContext<AgenticSortGameContextValue | null>(null);
+
+function useAgenticSortGame() {
+  const context = useContext(AgenticSortGameContext);
+  if (!context) {
+    throw new Error('useAgenticSortGame must be used within AgenticSortGameContext.Provider');
+  }
+  return context;
+}
 
 type AgenticSortGameProps = {
   accent: KangurAccent;
@@ -121,56 +142,47 @@ function renderAgenticSortGame(
   } = model;
 
   return (
-    <KangurLessonStack align='start' className='w-full'>
-      <KangurLessonVisual
-        accent={accent}
-        caption={config.svgLabel}
-        maxWidthClassName='max-w-full'
-      >
-        <SortGameSvg />
-      </KangurLessonVisual>
-      <AgenticSortGameCallout
-        accent={accent}
-        config={config}
-        isCoarsePointer={isCoarsePointer}
-        keyboardHint={keyboardHint}
-        placedCount={config.items.length - poolItems.length}
-        touchHint={touchHint}
-      />
-      <AgenticSortBinsGrid
-        binsWithItems={binsWithItems}
-        checked={checked}
-        draggingId={draggingId}
-        isCoarsePointer={isCoarsePointer}
-        onActivateBin={handleBinActivate}
-        onDropToBin={handleDrop}
-        onSelectItem={setSelectedItemId}
-        onStartDragging={setDraggingId}
-        selectedItemId={selectedItemId}
-      />
-      <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-[1.4fr_1fr]`}>
-        <AgenticSortPool
-          checked={checked}
-          draggingId={draggingId}
-          isCoarsePointer={isCoarsePointer}
-          onActivatePool={handleBinActivate}
-          onDropToPool={handleDrop}
-          onSelectItem={setSelectedItemId}
-          onStartDragging={setDraggingId}
-          poolItems={poolItems}
-          selectedItemId={selectedItemId}
-        />
-        <AgenticSortActionsPanel
+    <AgenticSortGameContext.Provider
+      value={{
+        checked,
+        draggingId,
+        isCoarsePointer,
+        selectedItemId,
+        onActivateBin: handleBinActivate,
+        onDropToBin: handleDrop,
+        onSelectItem: setSelectedItemId,
+        onStartDragging: setDraggingId,
+      }}
+    >
+      <KangurLessonStack align='start' className='w-full'>
+        <KangurLessonVisual
           accent={accent}
-          allCorrect={allCorrect}
-          allPlaced={allPlaced}
-          checked={checked}
+          caption={config.svgLabel}
+          maxWidthClassName='max-w-full'
+        >
+          <SortGameSvg />
+        </KangurLessonVisual>
+        <AgenticSortGameCallout
+          accent={accent}
+          config={config}
           isCoarsePointer={isCoarsePointer}
-          onCheck={() => setChecked(true)}
-          successMessage={config.success}
+          keyboardHint={keyboardHint}
+          placedCount={config.items.length - poolItems.length}
+          touchHint={touchHint}
         />
-      </div>
-    </KangurLessonStack>
+        <AgenticSortBinsGrid binsWithItems={binsWithItems} />
+        <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-[1.4fr_1fr]`}>
+          <AgenticSortPool poolItems={poolItems} />
+          <AgenticSortActionsPanel
+            accent={accent}
+            allCorrect={allCorrect}
+            allPlaced={allPlaced}
+            onCheck={() => setChecked(true)}
+            successMessage={config.success}
+          />
+        </div>
+      </KangurLessonStack>
+    </AgenticSortGameContext.Provider>
   );
 }
 
@@ -283,25 +295,17 @@ function AgenticSortGameCallout({
 
 function AgenticSortBin({
   bin,
-  checked,
-  draggingId,
-  isCoarsePointer,
-  onActivateBin,
-  onDropToBin,
-  onSelectItem,
-  onStartDragging,
-  selectedItemId,
 }: {
   bin: AgenticSortBinRecord;
-  checked: boolean;
-  draggingId: string | null;
-  isCoarsePointer: boolean;
-  onActivateBin: (binId: string | null) => void;
-  onDropToBin: (binId: string, event: React.DragEvent<HTMLDivElement>) => void;
-  onSelectItem: (id: string | null) => void;
-  onStartDragging: (id: string | null) => void;
-  selectedItemId: string | null;
 }): React.JSX.Element {
+  const {
+    checked,
+    isCoarsePointer,
+    onActivateBin,
+    onDropToBin,
+    selectedItemId,
+  } = useAgenticSortGame();
+
   return (
     <div
       className={resolveAgenticSortDropZoneClassName({
@@ -329,13 +333,7 @@ function AgenticSortBin({
           bin.items.map((item) => (
             <DraggableToken
               key={item.id}
-              draggingId={draggingId}
-              isCoarsePointer={isCoarsePointer}
-              isSelected={selectedItemId === item.id}
               item={item}
-              onDragStart={onStartDragging}
-              onDragEnd={() => onStartDragging(null)}
-              onSelect={onSelectItem}
               isCorrect={checked ? item.binId === bin.id : undefined}
             />
           ))
@@ -349,24 +347,8 @@ function AgenticSortBin({
 
 function AgenticSortBinsGrid({
   binsWithItems,
-  checked,
-  draggingId,
-  isCoarsePointer,
-  onActivateBin,
-  onDropToBin,
-  onSelectItem,
-  onStartDragging,
-  selectedItemId,
 }: {
   binsWithItems: AgenticSortBinRecord[];
-  checked: boolean;
-  draggingId: string | null;
-  isCoarsePointer: boolean;
-  onActivateBin: (binId: string | null) => void;
-  onDropToBin: (binId: string, event: React.DragEvent<HTMLDivElement>) => void;
-  onSelectItem: (id: string | null) => void;
-  onStartDragging: (id: string | null) => void;
-  selectedItemId: string | null;
 }): React.JSX.Element {
   return (
     <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-2`}>
@@ -374,14 +356,6 @@ function AgenticSortBinsGrid({
         <AgenticSortBin
           key={bin.id}
           bin={bin}
-          checked={checked}
-          draggingId={draggingId}
-          isCoarsePointer={isCoarsePointer}
-          onActivateBin={onActivateBin}
-          onDropToBin={onDropToBin}
-          onSelectItem={onSelectItem}
-          onStartDragging={onStartDragging}
-          selectedItemId={selectedItemId}
         />
       ))}
     </div>
@@ -389,26 +363,18 @@ function AgenticSortBinsGrid({
 }
 
 function AgenticSortPool({
-  checked,
-  draggingId,
-  isCoarsePointer,
-  onActivatePool,
-  onDropToPool,
-  onSelectItem,
-  onStartDragging,
   poolItems,
-  selectedItemId,
 }: {
-  checked: boolean;
-  draggingId: string | null;
-  isCoarsePointer: boolean;
-  onActivatePool: (binId: string | null) => void;
-  onDropToPool: (binId: string, event: React.DragEvent<HTMLDivElement>) => void;
-  onSelectItem: (id: string | null) => void;
-  onStartDragging: (id: string | null) => void;
   poolItems: SortGameItem[];
-  selectedItemId: string | null;
 }): React.JSX.Element {
+  const {
+    checked,
+    isCoarsePointer,
+    onActivateBin,
+    onDropToBin,
+    selectedItemId,
+  } = useAgenticSortGame();
+
   return (
     <div
       className={resolveAgenticSortDropZoneClassName({
@@ -417,13 +383,13 @@ function AgenticSortPool({
         tone: 'pool',
       })}
       onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => onDropToPool('pool', event)}
-      onClick={() => onActivatePool(null)}
+      onDrop={(event) => onDropToBin('pool', event)}
+      onClick={() => onActivateBin(null)}
       onKeyDown={(event) => {
         if (!shouldActivateSortDropZone(event)) {
           return;
         }
-        onActivatePool(null);
+        onActivateBin(null);
       }}
       data-testid='agentic-sort-pool'
       role='button'
@@ -435,13 +401,7 @@ function AgenticSortPool({
         {poolItems.map((item) => (
           <DraggableToken
             key={item.id}
-            draggingId={draggingId}
-            isCoarsePointer={isCoarsePointer}
-            isSelected={selectedItemId === item.id}
             item={item}
-            onDragStart={onStartDragging}
-            onDragEnd={() => onStartDragging(null)}
-            onSelect={onSelectItem}
             isCorrect={checked ? false : undefined}
           />
         ))}
@@ -455,19 +415,16 @@ function AgenticSortActionsPanel({
   accent,
   allCorrect,
   allPlaced,
-  checked,
-  isCoarsePointer,
   onCheck,
   successMessage,
 }: {
   accent: KangurAccent;
   allCorrect: boolean;
   allPlaced: boolean;
-  checked: boolean;
-  isCoarsePointer: boolean;
   onCheck: () => void;
   successMessage: string;
 }): React.JSX.Element {
+  const { checked, isCoarsePointer } = useAgenticSortGame();
   const result = resolveAgenticSortResultMessage({ checked, allCorrect, successMessage });
 
   return (
@@ -489,24 +446,21 @@ function AgenticSortActionsPanel({
 }
 
 function DraggableToken({
-  draggingId,
-  isCoarsePointer,
-  isSelected,
   item,
-  onDragEnd,
-  onDragStart,
-  onSelect,
   isCorrect,
 }: {
-  draggingId: string | null;
-  isCoarsePointer: boolean;
-  isSelected: boolean;
   item: SortGameItem;
-  onDragStart: (id: string) => void;
-  onDragEnd: () => void;
-  onSelect: (id: string | null) => void;
   isCorrect?: boolean;
 }): React.JSX.Element {
+  const {
+    draggingId,
+    isCoarsePointer,
+    selectedItemId,
+    onSelectItem,
+    onStartDragging,
+  } = useAgenticSortGame();
+
+  const isSelected = selectedItemId === item.id;
   const isDragging = draggingId === item.id;
   const stateClassName = cn(
     'rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm transition',
@@ -523,7 +477,7 @@ function DraggableToken({
       <button
         type='button'
         aria-pressed={isSelected}
-        onClick={() => onSelect(isSelected ? null : item.id)}
+        onClick={() => onSelectItem(isSelected ? null : item.id)}
         className={cn(
           stateClassName,
           'w-full text-left touch-manipulation select-none min-h-[3.5rem] active:scale-[0.98]'
@@ -539,13 +493,13 @@ function DraggableToken({
       draggable
       onDragStart={(event) => {
         event.dataTransfer.setData('text/plain', item.id);
-        onDragStart(item.id);
+        onStartDragging(item.id);
       }}
-      onDragEnd={onDragEnd}
+      onDragEnd={() => onStartDragging(null)}
       onClick={(event) => {
         event.stopPropagation();
         if (isDragging) return;
-        onSelect(isSelected ? null : item.id);
+        onSelectItem(isSelected ? null : item.id);
       }}
       onKeyDown={(event) => {
         if (event.key !== 'Enter' && event.key !== ' ') {
@@ -554,7 +508,7 @@ function DraggableToken({
         event.preventDefault();
         event.stopPropagation();
         if (isDragging) return;
-        onSelect(isSelected ? null : item.id);
+        onSelectItem(isSelected ? null : item.id);
       }}
       className={cn(
         stateClassName,

@@ -51,6 +51,7 @@ import { KangurGameOperationRecommendationCard } from './KangurGameOperationReco
 import { KangurGameOperationSelectorOperationSection } from './KangurGameOperationSelectorOperationSection';
 import { KangurGameOperationSelectorQuickPracticeSection } from './KangurGameOperationSelectorQuickPracticeSection';
 import { KangurGameOperationSelectorTrainingSection } from './KangurGameOperationSelectorTrainingSection';
+import { KangurGameOperationSelectorProvider } from './KangurGameOperationSelectorContext';
 
 export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const locale = useLocale();
@@ -277,72 +278,96 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       trainingSectionRef,
     });
 
+  const contextValue = useMemo(
+    () => ({
+      basePath,
+      fallbackCopy,
+      gamePageTranslations,
+      isSixYearOld,
+      locale,
+      mixedPracticeAssignment,
+      normalizedProgress,
+      quickPracticeDescription,
+      quickPracticeGameChipLabel,
+      quickPracticeTitle,
+      recommendation,
+      recommendedLessonQuizScreen,
+      setScreen,
+      showMathSections,
+      suggestedTraining,
+      trainingSetupTitle,
+      trainingWordmarkLabel,
+      handleHome,
+      handleStartTraining,
+      handleSelectOperation,
+      practiceAssignmentsByOperation,
+    }),
+    [
+      basePath,
+      fallbackCopy,
+      gamePageTranslations,
+      isSixYearOld,
+      locale,
+      mixedPracticeAssignment,
+      normalizedProgress,
+      quickPracticeDescription,
+      quickPracticeGameChipLabel,
+      quickPracticeTitle,
+      recommendation,
+      recommendedLessonQuizScreen,
+      setScreen,
+      showMathSections,
+      suggestedTraining,
+      trainingSetupTitle,
+      trainingWordmarkLabel,
+      handleHome,
+      handleStartTraining,
+      handleSelectOperation,
+      practiceAssignmentsByOperation,
+    ]
+  );
+
   return (
-    <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurPageIntroCard
-        className='max-w-md'
-        description={
-          gameIntroDescription
-        }
-        headingSize='lg'
-        onBack={handleHome}
-        testId='kangur-game-operation-top-section'
-        title={operationSelectorTitle}
-        visualTitle={
-          <KangurGrajmyWordmark
-            className='mx-auto'
-            data-testid='kangur-grajmy-heading-art'
-            idPrefix='kangur-game-operation-heading'
-            label={operationSelectorTitle}
-            locale={locale}
-          />
-        }
-      />
-      <KangurGameOperationPracticeAssignmentBanner
-        assignment={showMathSections ? operationPracticeAssignment : null}
-        basePath={basePath}
-        mode='queue'
-      />
-      <KangurGameOperationRecommendationCard
-        compactActionClassName={compactActionClassName}
-        onRecommendationSelect={handleRecommendationSelect}
-        recommendation={recommendation}
-        showMathSections={showMathSections}
-      />
-      <KangurGameOperationSelectorOperationSection
-        handleSelectOperation={handleSelectOperation}
-        practiceAssignmentsByOperation={practiceAssignmentsByOperation}
-        recommendation={recommendation}
-        showMathSections={showMathSections}
-      />
-      <KangurGameOperationSelectorQuickPracticeSection
-        fallbackCopy={fallbackCopy}
-        filteredLessonQuizGroups={filteredLessonQuizGroups}
-        gamePageTranslations={gamePageTranslations}
-        isSixYearOld={isSixYearOld}
-        quickPracticeDescription={quickPracticeDescription}
-        quickPracticeGameChipLabel={quickPracticeGameChipLabel}
-        quickPracticeTitle={quickPracticeTitle}
-        recommendation={recommendation}
-        recommendedLessonQuizScreen={recommendedLessonQuizScreen}
-        setScreen={setScreen}
-        subject={subject}
-      />
-      <KangurGameOperationSelectorTrainingSection
-        basePath={basePath}
-        fallbackCopy={fallbackCopy}
-        gamePageTranslations={gamePageTranslations}
-        handleHome={handleHome}
-        handleStartTraining={handleStartTraining}
-        locale={locale}
-        mixedPracticeAssignment={mixedPracticeAssignment}
-        normalizedProgress={normalizedProgress}
-        showMathSections={showMathSections}
-        suggestedTraining={suggestedTraining}
-        trainingSectionRef={trainingSectionRef}
-        trainingSetupTitle={trainingSetupTitle}
-        trainingWordmarkLabel={trainingWordmarkLabel}
-      />
-    </div>
+    <KangurGameOperationSelectorProvider value={contextValue}>
+      <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        <KangurPageIntroCard
+          className='max-w-md'
+          description={
+            gameIntroDescription
+          }
+          headingSize='lg'
+          onBack={handleHome}
+          testId='kangur-game-operation-top-section'
+          title={operationSelectorTitle}
+          visualTitle={
+            <KangurGrajmyWordmark
+              className='mx-auto'
+              data-testid='kangur-grajmy-heading-art'
+              idPrefix='kangur-game-operation-heading'
+              label={operationSelectorTitle}
+              locale={locale}
+            />
+          }
+        />
+        <KangurGameOperationPracticeAssignmentBanner
+          assignment={showMathSections ? operationPracticeAssignment : null}
+          basePath={basePath}
+          mode='queue'
+        />
+        <KangurGameOperationRecommendationCard
+          compactActionClassName={compactActionClassName}
+          onRecommendationSelect={handleRecommendationSelect}
+          recommendation={recommendation}
+          showMathSections={showMathSections}
+        />
+        <KangurGameOperationSelectorOperationSection />
+        <KangurGameOperationSelectorQuickPracticeSection
+          filteredLessonQuizGroups={filteredLessonQuizGroups}
+        />
+        <KangurGameOperationSelectorTrainingSection
+          trainingSectionRef={trainingSectionRef}
+        />
+      </div>
+    </KangurGameOperationSelectorProvider>
   );
 }

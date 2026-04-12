@@ -1001,6 +1001,74 @@ describe('processTraderaListingJob', () => {
     );
   });
 
+  it('persists duplicate-risk image retry blocks as form failures with a user-facing retry message', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-image-duplicate-risk',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockRejectedValue(
+      internalError(
+        'FAIL_IMAGE_SET_INVALID: Tradera image upload reached a partial state and retrying could duplicate images. Last state: {"expectedUploadCount":3,"observedPreviewDelta":1}'
+      )
+    );
+
+    await expect(
+      processTraderaListingJob({
+        listingId: 'listing-image-duplicate-risk',
+        action: 'list',
+        source: 'manual',
+        jobId: 'job-tradera-image-duplicate-risk',
+      })
+    ).rejects.toThrow(
+      'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.'
+    );
+
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-image-duplicate-risk',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.',
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastErrorCategory: 'FORM',
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-image-duplicate-risk',
+              ok: false,
+              error:
+                'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.',
+              errorCategory: 'FORM',
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-image-duplicate-risk',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.',
+        requestId: 'job-tradera-image-duplicate-risk',
+      })
+    );
+  });
+
   it('keeps scheduler-driven scripted Tradera runs on the connection default browser mode', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();

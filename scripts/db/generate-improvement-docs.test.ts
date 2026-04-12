@@ -178,7 +178,7 @@ describe('refreshImprovementDocs', () => {
     expect(portfolioMarkdown).toContain('[README](./application-performance/README.md)');
     expect(portfolioMarkdown).toContain('| `application-performance` | `performance` | yes | `attention` |');
 
-    expect(applicationTrackMarkdown).toContain("# Application performance Improvement Track");
+    expect(applicationTrackMarkdown).toContain('# Application performance Improvement Track');
     expect(applicationTrackMarkdown).toContain('| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |');
     expect(applicationTrackMarkdown).toContain('[`docs/runbooks/application-performance-operations.md`](../../../runbooks/application-performance-operations.md)');
 

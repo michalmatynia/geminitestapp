@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Trigger: Image Studio Analysis Migration Sheet (`trigger`)
 
-Generated at: 2026-04-11T13:54:16.572Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -20,7 +20,7 @@ Generated at: 2026-04-11T13:54:16.572Z
 - Readiness blockers: `none`
 - Parity evidence suite IDs: `runtime-kernel-parity-core`, `runtime-kernel-product-trigger-queue-e2e`
 - Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
-- Config field count: 5
+- Config field count: 6
 
 ## Node Contract Files
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-11T13:54:16.572Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/trigger.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/trigger.scaffold.json`
 - v3 object id: `node_obj_trigger_portable_v3`
-- v3 object hash: `d3646a3e751b8f5ddfd36b9ae26d5e273cca6aca5fba1e56727db58aba1b73d8`
+- v3 object hash: `de665504ba1f37cf12d4030e24c9f0145f8576ec7a2db1e0a50e2ecc0bdd1f3c`
 
 ## Ports
 

@@ -8,9 +8,30 @@ import { CopyButton } from '@/shared/ui/copy-button';
 type ProductScan1688DetailsProps = {
   scan: Pick<
     ProductScanRecord,
-    'title' | 'url' | 'supplierDetails' | 'supplierProbe' | 'supplierEvaluation'
+    'id' | 'title' | 'url' | 'supplierDetails' | 'supplierProbe' | 'supplierEvaluation' | 'rawResult'
   >;
+  scanId?: string | null;
 };
+
+export type ProductScan1688QualitySummaryValue = {
+  primaryLabel:
+    | 'AI-approved supplier match'
+    | 'Deterministic supplier match'
+    | 'Heuristic supplier match'
+    | 'Supplier probe';
+  hasPricing: boolean;
+  hasImages: boolean;
+  hasStoreLink: boolean;
+};
+
+export type ProductScan1688ApplyPolicySummaryValue = {
+  tone: 'warning' | 'destructive';
+  label: 'Apply blocked by AI rejection' | 'Manual review after AI failure' | 'Manual review recommended';
+  detail: string;
+  blockActions: boolean;
+};
+
+type ProductScan1688SectionKey = 'candidate-urls' | 'match-evaluation';
 
 const formatConfidence = (value: number | null | undefined): string | null => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -30,11 +51,295 @@ const buildInlineSummary = (
   return entries.length > 0 ? entries.join(' · ') : null;
 };
 
+const resolveSupplierEvaluationDetail = (
+  scan:
+    | Pick<ProductScanRecord, 'supplierEvaluation'>
+    | null
+    | undefined
+): string | null => {
+  const evaluation = scan?.supplierEvaluation;
+  if (!evaluation) {
+    return null;
+  }
+
+  const mismatch = evaluation.mismatches[0] ?? null;
+  const reason = evaluation.reasons[0] ?? null;
+  const confidence =
+    typeof evaluation.confidence === 'number' && Number.isFinite(evaluation.confidence)
+      ? `Confidence ${Math.round(evaluation.confidence * 100)}%`
+      : null;
+
+  return mismatch ?? reason ?? evaluation.error ?? confidence ?? 'Review the extracted supplier details before applying them to the product form.';
+};
+
+const formatTimestamp = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleString();
+};
+
+const normalizeDomIdFragment = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim().replace(/[^a-zA-Z0-9_-]+/g, '-');
+  return normalized.length > 0 ? normalized : null;
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null =>
+  value != null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const resolveSupplierCandidateUrls = (
+  scan:
+    | Pick<ProductScanRecord, 'url' | 'supplierProbe' | 'rawResult'>
+    | null
+    | undefined
+): string[] => {
+  if (!scan) {
+    return [];
+  }
+
+  const urls = new Set<string>();
+  const addUrl = (value: unknown): void => {
+    if (typeof value !== 'string') {
+      return;
+    }
+    const normalized = value.trim();
+    if (normalized.length === 0) {
+      return;
+    }
+    urls.add(normalized);
+  };
+
+  addUrl(scan.supplierProbe?.candidateUrl);
+  addUrl(scan.supplierProbe?.canonicalUrl);
+  addUrl(scan.url);
+
+  const rawResult = toRecord(scan.rawResult);
+  const candidateUrls = rawResult?.['candidateUrls'];
+  if (Array.isArray(candidateUrls)) {
+    candidateUrls.forEach(addUrl);
+  }
+
+  return Array.from(urls).slice(0, 8);
+};
+
+export const resolveProductScan1688QualitySummary = (
+  scan:
+    | Pick<
+        ProductScanRecord,
+        'supplierDetails' | 'supplierProbe' | 'supplierEvaluation'
+      >
+    | null
+    | undefined
+): ProductScan1688QualitySummaryValue | null => {
+  if (!scan) {
+    return null;
+  }
+
+  const details = scan.supplierDetails;
+  const evaluation = scan.supplierEvaluation;
+  const hasPricing = Boolean(
+    details?.priceText ||
+      details?.priceRangeText ||
+      (Array.isArray(details?.prices) && details.prices.length > 0)
+  );
+  const hasImages = Boolean(Array.isArray(details?.images) && details.images.length > 0);
+  const hasStoreLink = Boolean(details?.supplierStoreUrl);
+
+  if (evaluation?.status === 'approved') {
+    return {
+      primaryLabel: 'AI-approved supplier match',
+      hasPricing,
+      hasImages,
+      hasStoreLink,
+    };
+  }
+
+  if (evaluation?.status === 'skipped' && evaluation.proceed) {
+    return {
+      primaryLabel: 'Deterministic supplier match',
+      hasPricing,
+      hasImages,
+      hasStoreLink,
+    };
+  }
+
+  if (details?.supplierProductUrl || details?.supplierName || hasPricing || hasImages) {
+    return {
+      primaryLabel: 'Heuristic supplier match',
+      hasPricing,
+      hasImages,
+      hasStoreLink,
+    };
+  }
+
+  if (scan.supplierProbe?.candidateUrl || scan.supplierProbe?.canonicalUrl || scan.supplierProbe?.pageTitle) {
+    return {
+      primaryLabel: 'Supplier probe',
+      hasPricing,
+      hasImages,
+      hasStoreLink,
+    };
+  }
+
+  return null;
+};
+
+export const resolve1688ScanRecommendationReason = (
+  scan:
+    | Pick<
+        ProductScanRecord,
+        'supplierDetails' | 'supplierProbe' | 'supplierEvaluation'
+      >
+    | null
+    | undefined
+): string | null => {
+  const quality = resolveProductScan1688QualitySummary(scan);
+  if (!quality) {
+    return null;
+  }
+
+  if (quality.primaryLabel === 'AI-approved supplier match') {
+    return 'AI-approved supplier match';
+  }
+
+  if (quality.primaryLabel === 'Deterministic supplier match') {
+    return 'Deterministic supplier match';
+  }
+
+  if (quality.primaryLabel === 'Heuristic supplier match') {
+    if (quality.hasPricing && quality.hasImages) {
+      return 'Supplier match with pricing and images';
+    }
+    if (quality.hasPricing) {
+      return 'Supplier match with pricing';
+    }
+    if (quality.hasImages) {
+      return 'Supplier match with images';
+    }
+    return 'Heuristic supplier match';
+  }
+
+  return 'Supplier probe only';
+};
+
+export const resolveProductScan1688ApplyPolicySummary = (
+  scan:
+    | Pick<ProductScanRecord, 'supplierEvaluation'>
+    | null
+    | undefined
+): ProductScan1688ApplyPolicySummaryValue | null => {
+  const evaluation = scan?.supplierEvaluation;
+  if (!evaluation) {
+    return null;
+  }
+
+  const detail = resolveSupplierEvaluationDetail(scan);
+
+  if (evaluation.status === 'rejected' && evaluation.proceed !== true) {
+    return {
+      tone: 'destructive',
+      label: 'Apply blocked by AI rejection',
+      detail: detail ?? 'The supplier candidate was rejected by the 1688 evaluator.',
+      blockActions: true,
+    };
+  }
+
+  if (evaluation.status === 'failed') {
+    return {
+      tone: 'warning',
+      label: 'Manual review after AI failure',
+      detail: detail ?? 'The 1688 evaluator failed. Review the extracted supplier details manually.',
+      blockActions: false,
+    };
+  }
+
+  if (evaluation.status === 'skipped' && evaluation.proceed !== true) {
+    return {
+      tone: 'warning',
+      label: 'Manual review recommended',
+      detail:
+        detail ?? 'The supplier candidate was not auto-approved. Review the extracted details before applying them.',
+      blockActions: false,
+    };
+  }
+
+  return null;
+};
+
+export const buildProductScan1688SectionId = (
+  scanId: string | null | undefined,
+  section: ProductScan1688SectionKey
+): string | null => {
+  const normalizedScanId = normalizeDomIdFragment(scanId);
+  return normalizedScanId ? `product-scan-1688-${normalizedScanId}-${section}` : null;
+};
+
+export function ProductScan1688QualitySummary(props: {
+  scan: Pick<ProductScanRecord, 'supplierDetails' | 'supplierProbe' | 'supplierEvaluation'>;
+}): React.JSX.Element | null {
+  const quality = resolveProductScan1688QualitySummary(props.scan);
+
+  if (!quality) {
+    return null;
+  }
+
+  const primaryClassName =
+    quality.primaryLabel === 'AI-approved supplier match'
+      ? 'border-emerald-500/40 text-emerald-300'
+      : quality.primaryLabel === 'Deterministic supplier match'
+        ? 'border-cyan-500/40 text-cyan-300'
+        : quality.primaryLabel === 'Heuristic supplier match'
+          ? 'border-amber-500/40 text-amber-300'
+          : 'border-border/60 text-muted-foreground';
+
+  return (
+    <div className='space-y-2 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
+      <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+        Supplier result
+      </p>
+      <div className='flex flex-wrap gap-2'>
+        <span
+          className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${primaryClassName}`}
+        >
+          {quality.primaryLabel}
+        </span>
+        {quality.hasPricing ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+            Pricing extracted
+          </span>
+        ) : null}
+        {quality.hasImages ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+            Images extracted
+          </span>
+        ) : null}
+        {quality.hasStoreLink ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+            Store link found
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export const hasProductScan1688Details = (
   scan:
     | Pick<
         ProductScanRecord,
-        'title' | 'url' | 'supplierDetails' | 'supplierProbe' | 'supplierEvaluation'
+        'title' | 'url' | 'supplierDetails' | 'supplierProbe' | 'supplierEvaluation' | 'rawResult'
       >
     | null
     | undefined
@@ -57,6 +362,7 @@ export const hasProductScan1688Details = (
       scan.supplierProbe?.candidateUrl ||
       scan.supplierProbe?.canonicalUrl ||
       scan.supplierProbe?.pageTitle ||
+      resolveSupplierCandidateUrls(scan).length > 0 ||
       scan.supplierEvaluation
   );
 };
@@ -108,9 +414,15 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
     return null;
   }
 
+  const resolvedScanId = props.scanId ?? scan.id ?? null;
+
   const details = scan.supplierDetails;
   const probe = scan.supplierProbe;
   const evaluation = scan.supplierEvaluation;
+  const extractedImageCount = details?.images?.length ?? 0;
+  const extractedPriceCount = details?.prices?.length ?? 0;
+  const probeImageCount = probe?.imageCount ?? null;
+  const candidateUrls = resolveSupplierCandidateUrls(scan);
   const priceSummary =
     buildInlineSummary(details?.priceText, details?.priceRangeText) ||
     buildInlineSummary(
@@ -119,9 +431,31 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
       details?.prices?.[0]?.moq ? `MOQ ${details.prices[0].moq}` : null
     );
   const evaluationConfidence = formatConfidence(evaluation?.confidence);
+  const evaluationSummary = buildInlineSummary(
+    evaluation?.modelId ? `Evaluator ${evaluation.modelId}` : null,
+    evaluationConfidence ? `Confidence ${evaluationConfidence}` : null,
+    evaluation?.sameProduct === true
+      ? 'Same product'
+      : evaluation?.sameProduct === false
+        ? 'Different product'
+        : null,
+    evaluation?.imageMatch === true
+      ? 'Image match'
+      : evaluation?.imageMatch === false
+        ? 'Image mismatch'
+        : null,
+    evaluation?.titleMatch === true
+      ? 'Title match'
+      : evaluation?.titleMatch === false
+        ? 'Title mismatch'
+        : null
+  );
+  const evaluationTimestamp = formatTimestamp(evaluation?.evaluatedAt);
 
   return (
     <div className='space-y-3 rounded-md border border-border/50 bg-background/70 px-3 py-3'>
+      <ProductScan1688QualitySummary scan={scan} />
+
       <div className='flex flex-wrap items-center gap-2 text-xs'>
         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
           1688 supplier details
@@ -138,6 +472,21 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
         {details?.sourceLanguage ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
             {details.sourceLanguage}
+          </span>
+        ) : null}
+        {extractedImageCount > 0 ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+            {extractedImageCount} extracted image{extractedImageCount === 1 ? '' : 's'}
+          </span>
+        ) : null}
+        {extractedPriceCount > 0 ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+            {extractedPriceCount} price tier{extractedPriceCount === 1 ? '' : 's'}
+          </span>
+        ) : null}
+        {probeImageCount && probeImageCount > 0 ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+            Probe saw {probeImageCount} image{probeImageCount === 1 ? '' : 's'}
           </span>
         ) : null}
       </div>
@@ -165,8 +514,60 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
           <DetailRow label='Canonical URL' value={probe?.canonicalUrl} href={probe?.canonicalUrl} />
           <DetailRow label='Probe language' value={probe?.pageLanguage} />
           <DetailRow label='Probe artifact key' value={probe?.artifactKey} />
+          <DetailRow
+            label='Probe image count'
+            value={
+              typeof probeImageCount === 'number' && Number.isFinite(probeImageCount)
+                ? String(probeImageCount)
+                : null
+            }
+          />
+          <DetailRow
+            label='Extracted image count'
+            value={extractedImageCount > 0 ? String(extractedImageCount) : null}
+          />
+          <DetailRow
+            label='Extracted price tiers'
+            value={extractedPriceCount > 0 ? String(extractedPriceCount) : null}
+          />
         </div>
       </div>
+
+      {candidateUrls.length > 0 ? (
+        <div
+          id={buildProductScan1688SectionId(resolvedScanId, 'candidate-urls') ?? undefined}
+          className='space-y-2'
+        >
+          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+            Candidate supplier URLs
+          </p>
+          <ul className='space-y-2 text-sm text-foreground'>
+            {candidateUrls.map((candidateUrl, index) => (
+              <li
+                key={`${candidateUrl}-${index}`}
+                className='rounded-md border border-border/40 bg-muted/10 px-3 py-2'
+              >
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <span className='font-medium'>Candidate {index + 1}</span>
+                  <a
+                    href={candidateUrl}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+                  >
+                    Open
+                    <ExternalLink className='h-3.5 w-3.5' />
+                  </a>
+                </div>
+                <div className='mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+                  <span className='break-all'>{candidateUrl}</span>
+                  <CopyButton value={candidateUrl} className='h-6 px-2 text-[11px]' />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {details?.prices?.length ? (
         <div className='space-y-2'>
@@ -229,7 +630,10 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
           )}
         </div>
 
-        <div className='space-y-2'>
+        <div
+          id={buildProductScan1688SectionId(resolvedScanId, 'match-evaluation') ?? undefined}
+          className='space-y-2'
+        >
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
             Match evaluation
           </p>
@@ -244,54 +648,44 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
                       ? 'Failed'
                       : 'Skipped'}
               </p>
-              {buildInlineSummary(
-                evaluationConfidence ? `Confidence ${evaluationConfidence}` : null,
-                evaluation.sameProduct === true
-                  ? 'Same product'
-                  : evaluation.sameProduct === false
-                    ? 'Different product'
-                    : null,
-                evaluation.imageMatch === true
-                  ? 'Image match'
-                  : evaluation.imageMatch === false
-                    ? 'Image mismatch'
-                    : null,
-                evaluation.titleMatch === true
-                  ? 'Title match'
-                  : evaluation.titleMatch === false
-                    ? 'Title mismatch'
-                    : null
-              ) ? (
-                <p className='text-muted-foreground'>
-                  {buildInlineSummary(
-                    evaluationConfidence ? `Confidence ${evaluationConfidence}` : null,
-                    evaluation.sameProduct === true
-                      ? 'Same product'
-                      : evaluation.sameProduct === false
-                        ? 'Different product'
-                        : null,
-                    evaluation.imageMatch === true
-                      ? 'Image match'
-                      : evaluation.imageMatch === false
-                        ? 'Image mismatch'
-                        : null,
-                    evaluation.titleMatch === true
-                      ? 'Title match'
-                      : evaluation.titleMatch === false
-                        ? 'Title mismatch'
-                        : null
-                  )}
-                </p>
-              ) : null}
+              {evaluationSummary ? <p className='text-muted-foreground'>{evaluationSummary}</p> : null}
+              <div className='grid gap-2 sm:grid-cols-2'>
+                <DetailRow
+                  label='Proceed'
+                  value={typeof evaluation.proceed === 'boolean' ? String(evaluation.proceed) : null}
+                />
+                <DetailRow label='Evaluated at' value={evaluationTimestamp} />
+              </div>
               {evaluation.reasons.length ? (
-                <p className='text-muted-foreground'>{evaluation.reasons.join(' ')}</p>
+                <div className='space-y-1'>
+                  <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                    Reasons
+                  </p>
+                  <ul className='list-disc space-y-1 pl-5 text-muted-foreground'>
+                    {evaluation.reasons.map((reason, index) => (
+                      <li key={`${reason}-${index}`}>{reason}</li>
+                    ))}
+                  </ul>
+                </div>
               ) : null}
               {evaluation.mismatches.length ? (
-                <p className='text-destructive'>{evaluation.mismatches.join(' ')}</p>
+                <div className='space-y-1'>
+                  <p className='text-[11px] font-medium uppercase tracking-wide text-destructive'>
+                    Mismatches
+                  </p>
+                  <ul className='list-disc space-y-1 pl-5 text-destructive'>
+                    {evaluation.mismatches.map((mismatch, index) => (
+                      <li key={`${mismatch}-${index}`}>{mismatch}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {evaluation.error ? (
+                <p className='text-destructive'>{evaluation.error}</p>
               ) : null}
             </div>
           ) : (
-            <p className='text-sm text-muted-foreground'>No AI supplier evaluation was stored for this run.</p>
+            <p className='text-sm text-muted-foreground'>No supplier evaluation was stored for this run.</p>
           )}
         </div>
       </div>

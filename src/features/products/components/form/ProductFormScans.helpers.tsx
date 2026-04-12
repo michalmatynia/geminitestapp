@@ -3,6 +3,7 @@
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductScanRecord, ProductScanStatus } from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
+import { resolveProductScanRunFeedbackPresentation } from '@/features/products/lib/product-scan-run-feedback';
 
 export const STATUS_LABELS: Record<ProductScanStatus, string> = {
   enqueuing: 'Enqueuing...',
@@ -34,14 +35,20 @@ export const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawRe
 };
 
 export const resolveStatusLabel = (scan: ProductScanRecord): string =>
-  scan.status === 'running' && isManualVerificationPending(scan)
-    ? 'Captcha'
-    : STATUS_LABELS[scan.status];
+  resolveProductScanRunFeedbackPresentation(scan.status, {
+    manualVerificationPending: isManualVerificationPending(scan),
+    amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
+    amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
+    supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,
+  }).label;
 
 export const resolveStatusClassName = (scan: ProductScanRecord): string =>
-  scan.status === 'running' && isManualVerificationPending(scan)
-    ? 'border-amber-500/40 text-amber-300'
-    : STATUS_CLASSES[scan.status];
+  resolveProductScanRunFeedbackPresentation(scan.status, {
+    manualVerificationPending: isManualVerificationPending(scan),
+    amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
+    amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
+    supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,
+  }).badgeClassName ?? STATUS_CLASSES[scan.status];
 
 export const resolveActiveStatusMessage = (status: ProductScanStatus): string | null => {
   if (status === 'queued') {

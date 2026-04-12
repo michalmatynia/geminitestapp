@@ -12,6 +12,7 @@ import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 
 import {
+  resolveProductScanner1688CandidateEvaluatorConfig,
   buildProductScannerEngineRequestOptions,
   resolveProductScannerAmazonCandidateEvaluatorConfig,
   resolveProductScannerHeadless,
@@ -191,6 +192,94 @@ describe('product scanner engine request options', () => {
       rejectNonEnglishContent: true,
       languageDetectionMode: 'deterministic_then_ai',
       systemPrompt: 'Use the scanner override.',
+      brainApplied: null,
+    });
+
+    expect(resolveBrainExecutionConfigForCapability).not.toHaveBeenCalled();
+  });
+
+  it('resolves the Brain default 1688 candidate evaluator config', async () => {
+    vi.mocked(resolveBrainExecutionConfigForCapability).mockResolvedValueOnce({
+      modelId: 'gpt-4.1-mini',
+      systemPrompt: 'Brain supplier prompt',
+      brainApplied: {
+        capability: 'product.scan.1688_supplier_match',
+        runtimeKind: 'vision',
+      },
+    } as never);
+
+    await expect(
+      resolveProductScanner1688CandidateEvaluatorConfig({
+        playwrightPersonaId: null,
+        playwrightBrowser: 'chromium',
+        captchaBehavior: 'auto_show_browser',
+        manualVerificationTimeoutMs: 240000,
+        playwrightSettingsOverrides: {},
+        amazonCandidateEvaluator: {
+          mode: 'disabled',
+          modelId: null,
+          threshold: 0.7,
+          onlyForAmbiguousCandidates: true,
+          allowedContentLanguage: 'en',
+          rejectNonEnglishContent: true,
+          languageDetectionMode: 'deterministic_then_ai',
+          systemPrompt: null,
+        },
+        scanner1688CandidateEvaluator: {
+          mode: 'brain_default',
+          modelId: null,
+          threshold: 0.81,
+          onlyForAmbiguousCandidates: false,
+          systemPrompt: null,
+        },
+      })
+    ).resolves.toEqual({
+      enabled: true,
+      mode: 'brain_default',
+      modelId: 'gpt-4.1-mini',
+      threshold: 0.81,
+      onlyForAmbiguousCandidates: false,
+      systemPrompt: 'Brain supplier prompt',
+      brainApplied: {
+        capability: 'product.scan.1688_supplier_match',
+        runtimeKind: 'vision',
+      },
+    });
+  });
+
+  it('resolves a scanner override 1688 candidate evaluator model without AI Brain lookup', async () => {
+    await expect(
+      resolveProductScanner1688CandidateEvaluatorConfig({
+        playwrightPersonaId: null,
+        playwrightBrowser: 'chromium',
+        captchaBehavior: 'auto_show_browser',
+        manualVerificationTimeoutMs: 240000,
+        playwrightSettingsOverrides: {},
+        amazonCandidateEvaluator: {
+          mode: 'disabled',
+          modelId: null,
+          threshold: 0.7,
+          onlyForAmbiguousCandidates: true,
+          allowedContentLanguage: 'en',
+          rejectNonEnglishContent: true,
+          languageDetectionMode: 'deterministic_then_ai',
+          systemPrompt: null,
+        },
+        scanner1688CandidateEvaluator: {
+          mode: 'model_override',
+          modelId: 'gpt-4.1',
+          threshold: 0.9,
+          onlyForAmbiguousCandidates: true,
+          systemPrompt: 'Use the scanner supplier override.',
+        },
+      })
+    ).resolves.toEqual({
+      enabled: true,
+      mode: 'model_override',
+      modelId: 'gpt-4.1',
+      threshold: 0.9,
+      onlyForAmbiguousCandidates: true,
+      systemPrompt: 'Use the scanner supplier override.',
       brainApplied: null,
     });
 

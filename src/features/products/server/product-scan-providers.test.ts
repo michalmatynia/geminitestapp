@@ -24,6 +24,8 @@ describe('product-scan-providers', () => {
     });
     expect(provider.runtime).not.toBeNull();
     expect(provider.runtime?.script).toContain('normalize1688OfferUrl');
+    expect(provider.runtime?.script).toContain('supplier_evaluate');
+    expect(provider.runtime?.script).toContain('heuristic_1688_probe_v1');
     expect(provider.runtime?.script).toContain('supplier_extract');
     expect(provider.runtime?.script).toContain('1688 supplier reverse image scan completed');
     expect(

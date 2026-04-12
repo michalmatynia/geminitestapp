@@ -10,9 +10,20 @@ import {
 } from '@/shared/lib/observability/context/SystemLogsContext';
 import SystemLogsPage from '@/shared/lib/observability/components/system-logs/SystemLogsPage';
 
-import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
-
 vi.mock('@/shared/ui/list-panel', () => ({
+  ListPanel: ({
+    header,
+    children,
+  }: {
+    header?: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
+    <div data-testid='mock-list-panel'>
+      {header}
+      {children}
+    </div>
+  ),
+}));
 
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
@@ -77,7 +88,18 @@ vi.mock('@/shared/ui/navigation-and-layout.public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui/navigation-and-layout.public')>();
   return {
     ...actual,
-    ListPanel: MockListPanel,
+    ListPanel: ({
+      header,
+      children,
+    }: {
+      header?: React.ReactNode;
+      children?: React.ReactNode;
+    }) => (
+      <div data-testid='mock-list-panel'>
+        {header}
+        {children}
+      </div>
+    ),
   };
 });
 
@@ -179,7 +201,7 @@ describe('SystemLogsPage', () => {
   it('renders logs list and metrics', async () => {
     const { user } = renderPage();
     expect(screen.getByRole('heading', { name: 'Observation Post' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-list-panel')).toBeInTheDocument();
+    expect(screen.getAllByTestId('mock-list-panel').length).toBeGreaterThan(0);
     expect(screen.getByRole('tab', { name: /Overview/i })).toBeInTheDocument();
     
     // Switch to Metrics tab

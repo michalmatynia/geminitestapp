@@ -7,7 +7,7 @@ import { memo, useMemo, useState } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
-import { isMissingProductListingsError } from '@/features/integrations/public';
+import { isMissingProductListingsError } from '@/features/integrations/product-integrations-adapter';
 import {
   useProductListHeaderActionsContext,
   useProductListRowActionsContext,

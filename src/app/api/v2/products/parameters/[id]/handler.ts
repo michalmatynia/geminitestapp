@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { Document } from 'mongodb';
+import type { ObjectId, UpdateFilter } from 'mongodb';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
@@ -56,7 +56,13 @@ export const productParameterUpdateSchema = z.object({
   linkedTitleTermType: productParameterLinkedTitleTermTypeSchema.optional(),
 });
 
-const buildRemoveParameterFromProductsUpdate = (parameterId: string): any => ({
+type ProductParameterReferenceDocument = {
+  parameters?: Array<{ parameterId?: string | ObjectId }>;
+};
+
+const buildRemoveParameterFromProductsUpdate = (
+  parameterId: string
+): UpdateFilter<ProductParameterReferenceDocument> => ({
   $pull: {
     parameters: {
       parameterId,
@@ -153,12 +159,15 @@ export async function DELETE_handler(
   await repository.deleteParameter(parameter.id);
   const db = await getMongoDb();
   const parameterId = parameter.id;
+  const productsCollection = db.collection<ProductParameterReferenceDocument>('products');
+  const productDraftsCollection =
+    db.collection<ProductParameterReferenceDocument>('product_drafts');
   await Promise.all([
-    db.collection('products').updateMany(
+    productsCollection.updateMany(
       { 'parameters.parameterId': parameterId },
       buildRemoveParameterFromProductsUpdate(parameterId)
     ),
-    db.collection('product_drafts').updateMany(
+    productDraftsCollection.updateMany(
       { 'parameters.parameterId': parameterId },
       buildRemoveParameterFromProductsUpdate(parameterId)
     ),

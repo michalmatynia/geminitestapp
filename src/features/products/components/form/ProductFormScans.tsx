@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw, Search } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
 import {
@@ -15,7 +15,14 @@ import {
   resolveAmazonScanRecommendationReason,
   resolvePreferredAmazonExtractedScans,
 } from '@/features/products/components/scans/ProductScanAmazonDetails';
-import { ProductScan1688Details } from '@/features/products/components/scans/ProductScan1688Details';
+import {
+  buildProductScan1688SectionId,
+  ProductScan1688Details,
+  resolveProductScan1688ApplyPolicySummary,
+  resolve1688ScanRecommendationReason,
+} from '@/features/products/components/scans/ProductScan1688Details';
+import { ProductScan1688ApplyPanel } from '@/features/products/components/scans/ProductScan1688ApplyPanel';
+import { useProductScan1688ReviewState } from '@/features/products/components/scans/useProductScan1688ReviewState';
 import {
   buildProductScanArtifactHref,
   ProductScanDiagnostics,
@@ -32,6 +39,7 @@ import {
 } from '@/features/products/components/scans/ProductScanSteps';
 import { useProductFormCustomFields } from '@/features/products/context/ProductFormCustomFieldContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
 import { PRODUCT_SCANNER_SETTINGS_HREF } from '@/features/products/scanner-settings';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
@@ -78,6 +86,7 @@ export default function ProductFormScans(): React.JSX.Element {
   } = useProductFormParameters();
   const { customFields, customFieldValues, setTextValue, toggleSelectedOption } =
     useProductFormCustomFields();
+  const productFormImages = useContext(ProductFormImageContext);
   const productId = product?.id?.trim() || '';
   const queryClient = useQueryClient();
   const invalidatedUpdatedScanIdsRef = useRef<Set<string>>(new Set());
@@ -91,6 +100,11 @@ export default function ProductFormScans(): React.JSX.Element {
   const [expandedExtractedFieldScanIds, setExpandedExtractedFieldScanIds] = useState<Set<string>>(
     new Set()
   );
+  const {
+    isBlockedScanReviewed,
+    markBlockedScanReviewed,
+    clearBlockedScanReviewed,
+  } = useProductScan1688ReviewState();
 
   const scansQuery = useQuery<ProductScanListResponse, Error>({
     queryKey: QUERY_KEYS.products.scans(productId),
@@ -175,6 +189,20 @@ export default function ProductFormScans(): React.JSX.Element {
     field: TField
   ): ProductFormData[TField] | undefined =>
     typeof getValues === 'function' ? getValues(field) : undefined;
+
+  const supplier1688FormBindings = {
+    getTextFieldValue: (field: 'supplierName' | 'supplierLink' | 'priceComment') => {
+      const value = getCurrentProductFormValue(field);
+      return typeof value === 'string' ? value : null;
+    },
+    applyTextField: (field: 'supplierName' | 'supplierLink' | 'priceComment', value: string) => {
+      applyProductFormValue(field, value);
+    },
+    imageLinks: productFormImages?.imageLinks,
+    imageBase64s: productFormImages?.imageBase64s,
+    setImageLinkAt: productFormImages?.setImageLinkAt,
+    setImageBase64At: productFormImages?.setImageBase64At,
+  } as const;
 
   const buildAttributeMappings = (
     scan: Pick<ProductScanRecord, 'amazonDetails'>
@@ -518,9 +546,25 @@ export default function ProductFormScans(): React.JSX.Element {
             const hasExtractedFields =
               isAmazonScan &&
               (hasProductScanAmazonDetails(scan.amazonDetails) || Boolean(scan.asin));
-            const recommendationReason = isAmazonScan && hasExtractedFields
-              ? resolveAmazonScanRecommendationReason(scan)
+            const recommendationReason = isAmazonScan
+              ? hasExtractedFields
+                ? resolveAmazonScanRecommendationReason(scan)
+                : null
+              : resolve1688ScanRecommendationReason(scan);
+            const supplierApplyPolicySummary = !isAmazonScan
+              ? resolveProductScan1688ApplyPolicySummary(scan)
               : null;
+            const isBlocked1688ResultReviewed =
+              supplierApplyPolicySummary?.blockActions === true &&
+              isBlockedScanReviewed(scan.id);
+            const blocked1688CandidateUrlsHref =
+              !isAmazonScan && supplierApplyPolicySummary?.blockActions
+                ? buildProductScan1688SectionId(scan.id, 'candidate-urls')
+                : null;
+            const blocked1688MatchEvaluationHref =
+              !isAmazonScan && supplierApplyPolicySummary?.blockActions
+                ? buildProductScan1688SectionId(scan.id, 'match-evaluation')
+                : null;
             const recommendationRejectedBreakdown = isAmazonScan && hasExtractedFields
               ? resolveRejectedAmazonCandidateBreakdown(scan.steps)
               : null;
@@ -914,10 +958,10 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {isAmazonScan && recommendationReason ? (
+                {recommendationReason ? (
                   <div
                     className={`space-y-1 rounded-md px-3 py-2 ${
-                      isRecommendedAmazonResult
+                      isAmazonScan && isRecommendedAmazonResult
                         ? 'border border-emerald-500/20 bg-emerald-500/5'
                         : 'border border-border/50 bg-background/70'
                     }`}
@@ -925,22 +969,73 @@ export default function ProductFormScans(): React.JSX.Element {
                     <div className='flex flex-wrap items-center gap-2 text-xs'>
                       <span
                         className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${
-                          isRecommendedAmazonResult
+                          isAmazonScan && isRecommendedAmazonResult
                             ? 'border border-emerald-500/20 text-emerald-300'
                             : 'border border-border/60 text-muted-foreground'
                         }`}
                       >
-                        {isRecommendedAmazonResult
+                        {isAmazonScan && isRecommendedAmazonResult
                           ? 'Recommended Amazon result'
-                          : 'Amazon result signal'}
+                          : isAmazonScan
+                            ? 'Amazon result signal'
+                            : '1688 supplier result'}
                       </span>
                       <span className='font-medium text-foreground'>{recommendationReason}</span>
                     </div>
-                    {hasAlternativeRecommendedAmazonResult ? (
+                    {supplierApplyPolicySummary ? (
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          Apply policy
+                        </span>
+                        <span
+                          className={
+                            isBlocked1688ResultReviewed
+                              ? 'font-medium text-muted-foreground'
+                              : supplierApplyPolicySummary.tone === 'destructive'
+                              ? 'font-medium text-destructive'
+                              : 'font-medium text-amber-300'
+                          }
+                        >
+                          {isBlocked1688ResultReviewed
+                            ? 'Blocked result reviewed'
+                            : supplierApplyPolicySummary.label}
+                        </span>
+                        {blocked1688CandidateUrlsHref ? (
+                          <a
+                            href={`#${blocked1688CandidateUrlsHref}`}
+                            className='text-primary underline-offset-2 hover:underline'
+                          >
+                            Review candidates
+                          </a>
+                        ) : null}
+                        {blocked1688MatchEvaluationHref ? (
+                          <a
+                            href={`#${blocked1688MatchEvaluationHref}`}
+                            className='text-primary underline-offset-2 hover:underline'
+                          >
+                            Review evaluation
+                          </a>
+                        ) : null}
+                        {supplierApplyPolicySummary.blockActions ? (
+                          <button
+                            type='button'
+                            onClick={() =>
+                              isBlocked1688ResultReviewed
+                                ? clearBlockedScanReviewed(scan.id)
+                                : markBlockedScanReviewed(scan.id)
+                            }
+                            className='text-primary underline-offset-2 hover:underline'
+                          >
+                            {isBlocked1688ResultReviewed ? 'Undo review' : 'Mark reviewed'}
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {isAmazonScan && hasAlternativeRecommendedAmazonResult ? (
                       <p className='text-sm text-muted-foreground'>
                         A stronger extracted Amazon run is available for this product.
                       </p>
-                    ) : preferredAmazonExtractedScans.length > 1 ? (
+                    ) : isAmazonScan && preferredAmazonExtractedScans.length > 1 ? (
                       <p className='text-sm text-muted-foreground'>
                         Preferred over other extracted Amazon runs for this product.
                       </p>
@@ -954,6 +1049,59 @@ export default function ProductFormScans(): React.JSX.Element {
                         by the language gate.
                       </p>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {!recommendationReason && supplierApplyPolicySummary ? (
+                  <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
+                    <div className='flex flex-wrap items-center gap-2 text-xs'>
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                        Apply policy
+                      </span>
+                      <span
+                        className={
+                          isBlocked1688ResultReviewed
+                            ? 'font-medium text-muted-foreground'
+                            : supplierApplyPolicySummary.tone === 'destructive'
+                            ? 'font-medium text-destructive'
+                            : 'font-medium text-amber-300'
+                        }
+                      >
+                        {isBlocked1688ResultReviewed
+                          ? 'Blocked result reviewed'
+                          : supplierApplyPolicySummary.label}
+                      </span>
+                      {blocked1688CandidateUrlsHref ? (
+                        <a
+                          href={`#${blocked1688CandidateUrlsHref}`}
+                          className='text-primary underline-offset-2 hover:underline'
+                        >
+                          Review candidates
+                        </a>
+                      ) : null}
+                      {blocked1688MatchEvaluationHref ? (
+                        <a
+                          href={`#${blocked1688MatchEvaluationHref}`}
+                          className='text-primary underline-offset-2 hover:underline'
+                        >
+                          Review evaluation
+                        </a>
+                      ) : null}
+                      {supplierApplyPolicySummary.blockActions ? (
+                        <button
+                          type='button'
+                          onClick={() =>
+                            isBlocked1688ResultReviewed
+                              ? clearBlockedScanReviewed(scan.id)
+                              : markBlockedScanReviewed(scan.id)
+                          }
+                          className='text-primary underline-offset-2 hover:underline'
+                        >
+                          {isBlocked1688ResultReviewed ? 'Undo review' : 'Mark reviewed'}
+                        </button>
+                      ) : null}
+                    </div>
+                    <p className='text-sm text-muted-foreground'>{supplierApplyPolicySummary.detail}</p>
                   </div>
                 ) : null}
 
@@ -978,7 +1126,13 @@ export default function ProductFormScans(): React.JSX.Element {
                 ) : null}
                 {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
                 {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
-                {!isAmazonScan ? <ProductScan1688Details scan={scan} /> : null}
+                {!isAmazonScan ? <ProductScan1688Details scan={scan} scanId={scan.id} /> : null}
+                {!isAmazonScan ? (
+                  <ProductScan1688ApplyPanel
+                    scan={scan}
+                    formBindings={supplier1688FormBindings}
+                  />
+                ) : null}
                 {isAmazonScan && extractedFieldsExpanded ? (
                   <div className='space-y-3'>
                     <ProductScanAmazonQualitySummary scan={scan} />

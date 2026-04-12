@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generatedAt": "2026-04-12T04:06:13.214Z",
-    "scannedSourceFiles": 7279,
-    "scannedJsxFiles": 2531,
-    "componentCount": 4444,
+    "generatedAt": "2026-04-12T11:30:35.512Z",
+    "scannedSourceFiles": 7284,
+    "scannedJsxFiles": 2533,
+    "componentCount": 4448,
     "componentsWithForwarding": 120,
     "componentsWithAnyForwarding": 285,
     "resolvedTransitionCount": 1070,
@@ -15483,7 +15483,7 @@
           "sourceProp": "title",
           "targetProp": "ariaLabel",
           "relativePath": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
-          "line": 651
+          "line": 657
         }
       ]
     },
@@ -24453,7 +24453,7 @@
           "sourceProp": "value",
           "targetProp": "value",
           "relativePath": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
-          "line": 651
+          "line": 657
         }
       ]
     },

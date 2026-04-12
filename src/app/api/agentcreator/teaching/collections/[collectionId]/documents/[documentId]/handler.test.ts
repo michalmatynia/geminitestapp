@@ -50,6 +50,7 @@ describe('agentcreator teaching collection document-by-id handler module', () =>
 
     expect(deleteEmbeddingDocumentMock).toHaveBeenCalledWith('document-1');
     await expect(response.json()).resolves.toEqual({
+      success: true,
       ok: true,
       deleted: true,
     });

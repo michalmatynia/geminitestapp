@@ -4,6 +4,7 @@ import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/integ
 
 import {
   buildPersistedProductScannerSettings,
+  createDefaultProductScanner1688CandidateEvaluator,
   buildProductScannerSettingsDraft,
   createDefaultProductScannerAmazonCandidateEvaluator,
   createDefaultProductScannerSettings,
@@ -12,6 +13,7 @@ import {
 
 describe('product scanner settings helpers', () => {
   const defaultAmazonEvaluator = createDefaultProductScannerAmazonCandidateEvaluator();
+  const default1688Evaluator = createDefaultProductScanner1688CandidateEvaluator();
   const personas = [
     {
       id: 'persona-1',
@@ -46,6 +48,13 @@ describe('product scanner settings helpers', () => {
           maxExtractedImages: 10,
           allowUrlImageSearchFallback: false,
         },
+        scanner1688CandidateEvaluator: {
+          mode: 'brain_default',
+          modelId: null,
+          threshold: 0.76,
+          onlyForAmbiguousCandidates: false,
+          systemPrompt: null,
+        },
         playwrightSettingsOverrides: {
           timeout: 45000,
         },
@@ -75,6 +84,13 @@ describe('product scanner settings helpers', () => {
         minimumCandidateScore: 5,
         maxExtractedImages: 10,
         allowUrlImageSearchFallback: false,
+      },
+      scanner1688CandidateEvaluator: {
+        mode: 'brain_default',
+        modelId: null,
+        threshold: 0.76,
+        onlyForAmbiguousCandidates: false,
+        systemPrompt: null,
       },
       playwrightSettings: expect.objectContaining({
         headless: false,
@@ -106,6 +122,13 @@ describe('product scanner settings helpers', () => {
           minimumCandidateScore: 6,
           maxExtractedImages: 8,
           allowUrlImageSearchFallback: false,
+        },
+        scanner1688CandidateEvaluator: {
+          mode: 'model_override',
+          modelId: 'gpt-4.1-mini',
+          threshold: 0.88,
+          onlyForAmbiguousCandidates: false,
+          systemPrompt: 'Supplier match.',
         },
         playwrightSettings: {
           ...defaultIntegrationConnectionPlaywrightSettings,
@@ -139,6 +162,13 @@ describe('product scanner settings helpers', () => {
         minimumCandidateScore: 6,
         maxExtractedImages: 8,
         allowUrlImageSearchFallback: false,
+      },
+      scanner1688CandidateEvaluator: {
+        mode: 'model_override',
+        modelId: 'gpt-4.1-mini',
+        threshold: 0.88,
+        onlyForAmbiguousCandidates: false,
+        systemPrompt: 'Supplier match.',
       },
     });
   });
@@ -180,6 +210,7 @@ describe('product scanner settings helpers', () => {
         maxExtractedImages: 12,
         allowUrlImageSearchFallback: true,
       },
+      scanner1688CandidateEvaluator: default1688Evaluator,
       playwrightSettingsOverrides: expect.objectContaining({
         headless: false,
         timeout: 45000,
@@ -233,6 +264,7 @@ describe('product scanner settings helpers', () => {
         maxExtractedImages: 12,
         allowUrlImageSearchFallback: true,
       },
+      scanner1688CandidateEvaluator: default1688Evaluator,
     });
   });
 });

@@ -5,12 +5,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  logClientCatch: vi.fn(),
+  dispatchClientCatch: vi.fn(),
   logWarning: vi.fn(),
 }));
 
-vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientCatch: mocks.logClientCatch,
+vi.mock('@/shared/utils/observability/client-error-dispatch', () => ({
+  dispatchClientCatch: mocks.dispatchClientCatch,
 }));
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
@@ -28,7 +28,7 @@ import {
 
 describe('settings compression', () => {
   beforeEach(() => {
-    mocks.logClientCatch.mockReset();
+    mocks.dispatchClientCatch.mockReset();
     mocks.logWarning.mockReset().mockResolvedValue(undefined);
   });
 
@@ -62,7 +62,15 @@ describe('settings compression', () => {
     const invalid = `${COMPRESSED_SETTING_PREFIX}not-valid-gzip`;
 
     expect(decodeSettingValue('case_resolver_workspace_v2', invalid)).toBe(invalid);
-    expect(mocks.logClientCatch).toHaveBeenCalledTimes(1);
+    expect(mocks.dispatchClientCatch).toHaveBeenCalledTimes(1);
+    expect(mocks.dispatchClientCatch).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        source: 'settings-compression',
+        action: 'decodeSettingValue',
+        key: 'case_resolver_workspace_v2',
+      })
+    );
     expect(mocks.logWarning).toHaveBeenCalledWith(
       '[settings] Failed to decompress setting value.',
       expect.objectContaining({

@@ -44,6 +44,24 @@ const mocks = vi.hoisted(() => ({
     sourceWarnings: [],
     refresh: vi.fn(),
   },
+  brain1688ModelOptionsMock: {
+    models: ['gpt-4.1-mini', 'gpt-4.1'],
+    descriptors: {},
+    isLoading: false,
+    assignment: {
+      enabled: true,
+      provider: 'model',
+      modelId: 'gpt-4.1-mini',
+      agentId: '',
+      temperature: 0.2,
+      maxTokens: 1200,
+      systemPrompt: '',
+      notes: null,
+    },
+    effectiveModelId: 'gpt-4.1-mini',
+    sourceWarnings: [],
+    refresh: vi.fn(),
+  },
   toastMock: vi.fn(),
 }));
 
@@ -69,7 +87,14 @@ vi.mock('@/features/playwright/public', () => ({
 }));
 
 vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
-  useBrainModelOptions: () => mocks.brainModelOptionsMock,
+  useBrainModelOptions: ({
+    capability,
+  }: {
+    capability?: string;
+  }) =>
+    capability === 'product.scan.1688_supplier_match'
+      ? mocks.brain1688ModelOptionsMock
+      : mocks.brainModelOptionsMock,
 }));
 
 vi.mock('@/features/playwright/ui.public', () => ({
@@ -214,6 +239,9 @@ describe('AdminProductScannerSettingsPage', () => {
     mocks.brainModelOptionsMock.isLoading = false;
     mocks.brainModelOptionsMock.effectiveModelId = 'gpt-4.1-mini';
     mocks.brainModelOptionsMock.sourceWarnings = [];
+    mocks.brain1688ModelOptionsMock.isLoading = false;
+    mocks.brain1688ModelOptionsMock.effectiveModelId = 'gpt-4.1-mini';
+    mocks.brain1688ModelOptionsMock.sourceWarnings = [];
   });
 
   it('loads persisted global scanner settings', () => {
@@ -244,6 +272,13 @@ describe('AdminProductScannerSettingsPage', () => {
             maxExtractedImages: 10,
             allowUrlImageSearchFallback: false,
           },
+          scanner1688CandidateEvaluator: {
+            mode: 'brain_default',
+            modelId: null,
+            threshold: 0.78,
+            onlyForAmbiguousCandidates: false,
+            systemPrompt: null,
+          },
         }),
       ],
     ]);
@@ -264,73 +299,116 @@ describe('AdminProductScannerSettingsPage', () => {
       180000
     );
     expect(
-      screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator mode' })
+      screen.getByRole('combobox', { name: 'Select Amazon probe evaluator mode' })
     ).toHaveValue('brain_default');
     expect(
       screen.getByRole('spinbutton', {
-        name: 'Amazon candidate evaluator confidence threshold',
+        name: 'Amazon probe evaluator confidence threshold',
       })
     ).toHaveValue(0.82);
     expect(
-      screen.getByRole('checkbox', { name: 'Only evaluate ambiguous Amazon candidates' })
+      screen.getByRole('checkbox', { name: 'Only evaluate ambiguous Amazon probe candidates' })
     ).not.toBeChecked();
     expect(
-      screen.getByRole('checkbox', { name: 'Reject non-English Amazon content' })
+      screen.getByRole('checkbox', { name: 'Reject non-English Amazon content in probe stage' })
     ).toBeChecked();
     expect(
       screen.getByRole('combobox', {
-        name: 'Select Amazon candidate evaluator language detection mode',
+        name: 'Select Amazon probe evaluator language detection mode',
+      })
+    ).toHaveValue('deterministic_then_ai');
+    expect(
+      screen.getByRole('combobox', { name: 'Select Amazon extraction evaluator mode' })
+    ).toHaveValue('brain_default');
+    expect(
+      screen.getByRole('spinbutton', {
+        name: 'Amazon extraction evaluator confidence threshold',
+      })
+    ).toHaveValue(0.82);
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'Only evaluate ambiguous Amazon extraction candidates',
+      })
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole('checkbox', { name: 'Reject non-English Amazon content in extraction stage' })
+    ).toBeChecked();
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Select Amazon extraction evaluator language detection mode',
       })
     ).toHaveValue('deterministic_then_ai');
     expect(screen.getByRole('spinbutton', { name: '1688 candidate result limit' })).toHaveValue(6);
     expect(screen.getByRole('spinbutton', { name: '1688 minimum candidate score' })).toHaveValue(5);
     expect(screen.getByRole('spinbutton', { name: '1688 max extracted images' })).toHaveValue(10);
     expect(screen.getByRole('checkbox', { name: 'Allow 1688 image URL fallback' })).not.toBeChecked();
+    expect(
+      screen.getByRole('combobox', { name: 'Select 1688 supplier evaluator mode' })
+    ).toHaveValue('brain_default');
+    expect(
+      screen.getByRole('spinbutton', {
+        name: '1688 supplier evaluator confidence threshold',
+      })
+    ).toHaveValue(0.78);
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'Only evaluate ambiguous 1688 supplier candidates',
+      })
+    ).not.toBeChecked();
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.getAllByText(
         'AI review runs on every Amazon candidate before extraction is trusted.'
       )
-    ).toBeInTheDocument();
-    expect(screen.getByText('Evaluator Summary')).toBeInTheDocument();
-    expect(screen.getByText('Model source: AI Brain default')).toBeInTheDocument();
-    expect(screen.getByText('Resolved model: gpt-4.1-mini')).toBeInTheDocument();
-    expect(screen.getByText('Trust threshold: 82% confidence')).toBeInTheDocument();
-    expect(screen.getByText('Review scope: Every Amazon candidate')).toBeInTheDocument();
-    expect(screen.getByText('Language gate: English only, probe hints first')).toBeInTheDocument();
+    ).toHaveLength(2);
+    expect(screen.getAllByText('Evaluator Summary')).toHaveLength(2);
+    expect(screen.getAllByText('Model source: AI Brain default')).toHaveLength(3);
+    expect(screen.getAllByText('Resolved model: gpt-4.1-mini')).toHaveLength(3);
+    expect(screen.getAllByText('Trust threshold: 82% confidence')).toHaveLength(2);
+    expect(screen.getAllByText('Review scope: Every Amazon candidate')).toHaveLength(2);
     expect(
-      screen.getByText('Continuation: Try next Amazon candidate after rejection')
-    ).toBeInTheDocument();
+      screen.getAllByText('Language gate: English only, probe hints first')
+    ).toHaveLength(2);
     expect(
-      screen.getByText(
+      screen.getAllByText('Continuation: Try next Amazon candidate after rejection')
+    ).toHaveLength(2);
+    expect(
+      screen.getAllByText(
         'Only English Amazon page content is trusted for scraping into English product fields.'
       )
-    ).toBeInTheDocument();
+    ).toHaveLength(2);
     expect(
-      screen.getByText(
+      screen.getAllByText(
         'The scanner uses probe language hints first and asks AI when page language remains unclear.'
       )
-    ).toBeInTheDocument();
+    ).toHaveLength(2);
     expect(
-      screen.getByText(
+      screen.getAllByText(
         'Matched products on non-English Amazon pages are rejected and the scanner moves to the next candidate when one is available.'
       )
-    ).toBeInTheDocument();
+    ).toHaveLength(2);
+    expect(screen.getAllByText('Candidates must meet 82% confidence to be trusted.')).toHaveLength(
+      2
+    );
     expect(
-      screen.getByText('Candidates must meet 82% confidence to be trusted.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
+      screen.getAllByText(
         'Rejected candidates continue to the next Amazon candidate when one is available; otherwise the scan finishes as No Match.'
       )
-    ).toBeInTheDocument();
+    ).toHaveLength(2);
     expect(
-      screen.getByText(
+      screen.getAllByText(
         'Evaluator runtime errors fail the scan conservatively instead of trusting the page.'
       )
-    ).toBeInTheDocument();
+    ).toHaveLength(2);
     expect(screen.getByText('1688 Runtime Summary')).toBeInTheDocument();
     expect(screen.getByText('Collect up to 6 candidate supplier pages per scan.')).toBeInTheDocument();
+    expect(screen.getByText('1688 Evaluator Summary')).toBeInTheDocument();
+    expect(screen.getAllByText('Model source: AI Brain default')).toHaveLength(3);
+    expect(screen.getAllByText('Resolved model: gpt-4.1-mini')).toHaveLength(3);
+    expect(screen.getByText('Trust threshold: 78% confidence')).toBeInTheDocument();
+    expect(
+      screen.getByText('Review scope: Every strongest 1688 candidate')
+    ).toBeInTheDocument();
   });
 
   it('loads legacy persisted full settings', () => {
@@ -364,26 +442,32 @@ describe('AdminProductScannerSettingsPage', () => {
       90000
     );
     expect(
-      screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator mode' })
+      screen.getByRole('combobox', { name: 'Select Amazon probe evaluator mode' })
+    ).toHaveValue('disabled');
+    expect(
+      screen.getByRole('combobox', { name: 'Select Amazon extraction evaluator mode' })
     ).toHaveValue('disabled');
     expect(screen.getByRole('spinbutton', { name: '1688 candidate result limit' })).toHaveValue(8);
     expect(screen.getByRole('spinbutton', { name: '1688 minimum candidate score' })).toHaveValue(4);
     expect(screen.getByRole('spinbutton', { name: '1688 max extracted images' })).toHaveValue(12);
     expect(screen.getByRole('checkbox', { name: 'Allow 1688 image URL fallback' })).toBeChecked();
+    expect(
+      screen.getByRole('combobox', { name: 'Select 1688 supplier evaluator mode' })
+    ).toHaveValue('disabled');
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.getAllByText(
         'AI review is disabled. The scanner trusts the Amazon candidate flow without an evaluator gate.'
       )
-    ).toBeInTheDocument();
-    expect(screen.getByText('Model: Disabled')).toBeInTheDocument();
+    ).toHaveLength(2);
+    expect(screen.getAllByText('Model: Disabled')).toHaveLength(3);
     expect(
-      screen.getByText('Trust policy: Amazon pages are trusted without AI review.')
-    ).toBeInTheDocument();
-    expect(screen.getByText('Language gate: Inactive')).toBeInTheDocument();
-    expect(
-      screen.getByText('Continuation: No AI rejection recovery path')
-    ).toBeInTheDocument();
+      screen.getAllByText('Trust policy: Amazon pages are trusted without AI review.')
+    ).toHaveLength(2);
+    expect(screen.getAllByText('Language gate: Inactive')).toHaveLength(2);
+    expect(screen.getAllByText('Continuation: No AI rejection recovery path')).toHaveLength(3);
+    expect(screen.getByText('1688 Evaluator Summary')).toBeInTheDocument();
+    expect(screen.getByText('Trust policy: 1688 supplier candidates are trusted without AI review.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Saved' })).toBeDisabled();
   });
 
@@ -403,34 +487,76 @@ describe('AdminProductScannerSettingsPage', () => {
       target: { value: '180000' },
     });
     fireEvent.change(
-      screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator mode' }),
+      screen.getByRole('combobox', { name: 'Select Amazon probe evaluator mode' }),
       {
         target: { value: 'model_override' },
       }
     );
     fireEvent.change(
-      screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator model' }),
+      screen.getByRole('combobox', { name: 'Select Amazon probe evaluator model' }),
       {
         target: { value: 'gpt-4.1' },
       }
     );
     fireEvent.change(
       screen.getByRole('spinbutton', {
-        name: 'Amazon candidate evaluator confidence threshold',
+        name: 'Amazon probe evaluator confidence threshold',
       }),
       {
         target: { value: '0.9' },
       }
     );
     fireEvent.click(
-      screen.getByRole('checkbox', { name: 'Only evaluate ambiguous Amazon candidates' })
+      screen.getByRole('checkbox', { name: 'Only evaluate ambiguous Amazon probe candidates' })
     );
     fireEvent.click(
-      screen.getByRole('checkbox', { name: 'Reject non-English Amazon content' })
+      screen.getByRole('checkbox', { name: 'Reject non-English Amazon content in probe stage' })
     );
     fireEvent.change(
       screen.getByRole('combobox', {
-        name: 'Select Amazon candidate evaluator language detection mode',
+        name: 'Select Amazon probe evaluator language detection mode',
+      }),
+      {
+        target: { value: 'ai_only' },
+      }
+    );
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Select Amazon extraction evaluator mode',
+      }),
+      {
+        target: { value: 'model_override' },
+      }
+    );
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Select Amazon extraction evaluator model',
+      }),
+      {
+        target: { value: 'gpt-4.1-mini' },
+      }
+    );
+    fireEvent.change(
+      screen.getByRole('spinbutton', {
+        name: 'Amazon extraction evaluator confidence threshold',
+      }),
+      {
+        target: { value: '0.88' },
+      }
+    );
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: 'Only evaluate ambiguous Amazon extraction candidates',
+      })
+    );
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: 'Reject non-English Amazon content in extraction stage',
+      })
+    );
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Select Amazon extraction evaluator language detection mode',
       }),
       {
         target: { value: 'ai_only' },
@@ -446,6 +572,31 @@ describe('AdminProductScannerSettingsPage', () => {
       target: { value: '9' },
     });
     fireEvent.click(screen.getByRole('checkbox', { name: 'Allow 1688 image URL fallback' }));
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Select 1688 supplier evaluator mode' }),
+      {
+        target: { value: 'model_override' },
+      }
+    );
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Select 1688 supplier evaluator model' }),
+      {
+        target: { value: 'gpt-4.1' },
+      }
+    );
+    fireEvent.change(
+      screen.getByRole('spinbutton', {
+        name: '1688 supplier evaluator confidence threshold',
+      }),
+      {
+        target: { value: '0.85' },
+      }
+    );
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: 'Only evaluate ambiguous 1688 supplier candidates',
+      })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
 
     await waitFor(() => {
@@ -458,22 +609,38 @@ describe('AdminProductScannerSettingsPage', () => {
           manualVerificationTimeoutMs: 180000,
           playwrightSettingsOverrides: {},
           amazonCandidateEvaluator: {
+            ...defaultAmazonEvaluator,
+          },
+          amazonCandidateEvaluatorProbe: {
+            ...defaultAmazonEvaluator,
             mode: 'model_override',
             modelId: 'gpt-4.1',
             threshold: 0.9,
             onlyForAmbiguousCandidates: false,
-            allowedContentLanguage: 'en',
             rejectNonEnglishContent: false,
             languageDetectionMode: 'ai_only',
-            systemPrompt: null,
           },
-          amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
-          amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
+          amazonCandidateEvaluatorExtraction: {
+            ...defaultAmazonEvaluator,
+            mode: 'model_override',
+            modelId: 'gpt-4.1-mini',
+            threshold: 0.88,
+            onlyForAmbiguousCandidates: false,
+            rejectNonEnglishContent: false,
+            languageDetectionMode: 'ai_only',
+          },
           scanner1688: {
             candidateResultLimit: 6,
             minimumCandidateScore: 5,
             maxExtractedImages: 9,
             allowUrlImageSearchFallback: false,
+          },
+          scanner1688CandidateEvaluator: {
+            mode: 'model_override',
+            modelId: 'gpt-4.1',
+            threshold: 0.85,
+            onlyForAmbiguousCandidates: false,
+            systemPrompt: null,
           },
         }),
       });

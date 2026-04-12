@@ -2157,7 +2157,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       listingUrl: 'https://www.tradera.com/item/fallback-from-mapped',
       metadata: {
         categoryMappingReason: 'mapped',
-        categoryId: null,
+        categoryId: '101',
         categoryPath: 'Other > Other',
         categorySource: 'fallback',
       },

@@ -13,7 +13,7 @@ import {
   isVintedIntegrationSlug,
   persistVintedQuickListFeedback,
   preflightVintedQuickListSession,
-} from '@/features/integrations/public';
+} from '@/features/integrations/product-integrations-adapter';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ProgressSnapshotDto } from '@/shared/contracts/base';
 import { ApiError, api } from '@/shared/lib/api-client';

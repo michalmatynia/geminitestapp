@@ -38,7 +38,7 @@ describe('client boundary audit', () => {
       root,
       'src/app/admin/page.tsx',
       [
-        "import { MediaLibraryPanel } from '@/features/cms/components/MediaLibraryPanel';",
+        'import { MediaLibraryPanel } from \'@/features/cms/components/MediaLibraryPanel\';',
         '',
         'export default function Page() {',
         '  return <MediaLibraryPanel />;',
@@ -50,8 +50,8 @@ describe('client boundary audit', () => {
       root,
       'src/features/cms/components/MediaLibraryPanel.tsx',
       [
-        "import dynamic from 'next/dynamic';",
-        "import { useToast } from '@/shared/ui/primitives.public';",
+        'import dynamic from \'next/dynamic\';',
+        'import { useToast } from \'@/shared/ui/primitives.public\';',
         '',
         'const FileManager = dynamic(() => import(\'@/features/files/public\'), { ssr: false });',
         '',
@@ -86,10 +86,10 @@ describe('client boundary audit', () => {
       root,
       'src/app/layout.tsx',
       [
-        "import { AppIntlProvider } from '@/shared/providers/AppIntlProvider';",
+        'import { AppIntlProvider } from \'@/shared/providers/AppIntlProvider\';',
         '',
         'export default function RootLayout({ children }: { children: React.ReactNode }) {',
-        "  return <AppIntlProvider locale='en'>{children}</AppIntlProvider>;",
+        '  return <AppIntlProvider locale=\'en\'>{children}</AppIntlProvider>;',
         '}',
         '',
       ].join('\n')
@@ -98,7 +98,7 @@ describe('client boundary audit', () => {
       root,
       'src/shared/providers/AppIntlProvider.tsx',
       [
-        "import { NextIntlClientProvider } from 'next-intl';",
+        'import { NextIntlClientProvider } from \'next-intl\';',
         '',
         'export function AppIntlProvider(props: { children: React.ReactNode; locale: string }) {',
         '  return <NextIntlClientProvider {...props} />;',
@@ -150,7 +150,7 @@ describe('client boundary audit', () => {
       root,
       'src/app/admin/page.tsx',
       [
-        "import { CategoryFormContext } from '@/features/products/components/settings/CategoryFormContext';",
+        'import { CategoryFormContext } from \'@/features/products/components/settings/CategoryFormContext\';',
         '',
         'export default function Page() {',
         '  return <CategoryFormContext.Provider value={null} />;',
@@ -162,9 +162,9 @@ describe('client boundary audit', () => {
       root,
       'src/shared/lib/react/createStrictContext.ts',
       [
-        "'use client';",
+        '\'use client\';',
         '',
-        "import { createContext, useContext } from 'react';",
+        'import { createContext, useContext } from \'react\';',
         '',
         'export function createStrictContext() {',
         '  const Context = createContext(null);',
@@ -182,7 +182,7 @@ describe('client boundary audit', () => {
       root,
       'src/features/products/components/settings/CategoryFormContext.tsx',
       [
-        "import { createStrictContext } from '@/shared/lib/react/createStrictContext';",
+        'import { createStrictContext } from \'@/shared/lib/react/createStrictContext\';',
         '',
         'export const CategoryFormContext = createStrictContext();',
         '',
@@ -206,7 +206,7 @@ describe('client boundary audit', () => {
       root: '/repo',
       absolutePath: '/repo/src/app/page.tsx',
       content: [
-        "import { Search } from '@/components/Search';",
+        'import { Search } from \'@/components/Search\';',
         '',
         'export default function Page() {',
         '  return <Search />;',
@@ -247,7 +247,7 @@ describe('client boundary audit', () => {
       root,
       'src/app/page.tsx',
       [
-        "import { RuntimeWidget } from '@/features/example/runtime';",
+        'import { RuntimeWidget } from \'@/features/example/runtime\';',
         '',
         'export default function Page() {',
         '  return <RuntimeWidget />;',
@@ -302,9 +302,9 @@ describe('client boundary audit', () => {
       root,
       'src/features/products/pages/AdminProductsPageView.tsx',
       [
-        "'use client';",
+        '\'use client\';',
         '',
-        "import { ProductListPanel } from '@/features/products/components/ProductListPanel';",
+        'import { ProductListPanel } from \'@/features/products/components/ProductListPanel\';',
         '',
         'export function AdminProductsPageView() {',
         '  return <ProductListPanel />;',
@@ -328,9 +328,9 @@ describe('client boundary audit', () => {
       root,
       'src/shared/lib/react/createStrictContext.ts',
       [
-        "'use client';",
+        '\'use client\';',
         '',
-        "import { createContext, useContext } from 'react';",
+        'import { createContext, useContext } from \'react\';',
         '',
         'export function createStrictContext() {',
         '  const Context = createContext(null);',
@@ -348,9 +348,9 @@ describe('client boundary audit', () => {
       root,
       'src/features/products/components/settings/CategoryFormContext.tsx',
       [
-        "'use client';",
+        '\'use client\';',
         '',
-        "import { createStrictContext } from '@/shared/lib/react/createStrictContext';",
+        'import { createStrictContext } from \'@/shared/lib/react/createStrictContext\';',
         '',
         'export const CategoryFormContext = createStrictContext();',
         '',
@@ -374,7 +374,7 @@ describe('client boundary audit', () => {
       root,
       'src/app/admin/error.tsx',
       [
-        "'use client';",
+        '\'use client\';',
         '',
         'export default function ErrorFallback() {',
         '  return <div>Something went wrong.</div>;',

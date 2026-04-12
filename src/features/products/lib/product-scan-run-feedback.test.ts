@@ -175,4 +175,56 @@ describe('product scan run feedback', () => {
     expect(feedback.label).toBe('AI Failed');
     expect(feedback.variant).toBe('error');
   });
+
+  it('surfaces 1688 AI rejection distinctly from a generic supplier no-match result', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        provider: '1688',
+        scanType: 'supplier_reverse_image',
+        status: 'no_match',
+        supplierEvaluation: {
+          status: 'rejected',
+          sameProduct: false,
+          imageMatch: false,
+          titleMatch: false,
+          confidence: 0.34,
+          proceed: false,
+          reasons: ['Supplier candidate does not represent the same product.'],
+          mismatches: ['Supplier gallery differs from the source product.'],
+          modelId: 'gpt-4.1-mini',
+          error: null,
+          evaluatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      })
+    );
+
+    expect(feedback.label).toBe('AI Rejected');
+    expect(feedback.variant).toBe('warning');
+  });
+
+  it('surfaces 1688 evaluator failures distinctly from generic supplier scan failures', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        provider: '1688',
+        scanType: 'supplier_reverse_image',
+        status: 'failed',
+        supplierEvaluation: {
+          status: 'failed',
+          sameProduct: null,
+          imageMatch: null,
+          titleMatch: null,
+          confidence: null,
+          proceed: false,
+          reasons: [],
+          mismatches: [],
+          modelId: 'gpt-4.1-mini',
+          error: 'Supplier evaluator runtime failed.',
+          evaluatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      })
+    );
+
+    expect(feedback.label).toBe('AI Failed');
+    expect(feedback.variant).toBe('error');
+  });
 });

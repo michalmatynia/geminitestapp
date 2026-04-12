@@ -116,9 +116,7 @@ describe('EditProductForm', () => {
     const { container } = renderWithProviders(<EditProductPage product={mockProduct} />);
 
     await screen.findByRole('heading', { name: 'Edit Product' });
-    await waitFor(() => {
-      expect(queryClient.isFetching()).toBe(0);
-    });
+    await screen.findByRole('tab', { name: /General/i });
     await act(async () => {
       await expectNoAxeViolations(container);
     });
@@ -208,9 +206,6 @@ describe('EditProductForm', () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
     const generalTab = await screen.findByRole('tab', { name: /General/i });
-    await waitFor(() => {
-      expect(queryClient.isFetching()).toBe(0);
-    });
     const generalTabId = generalTab.getAttribute('id');
     const generalPanel =
       generalTabId !== null

@@ -5,12 +5,18 @@ import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw } from 'lucide
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ProductScanAmazonExtractedFieldsPanel } from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
+import { ProductScan1688ApplyPanel } from '@/features/products/components/scans/ProductScan1688ApplyPanel';
 import {
   hasProductScanAmazonDetails,
   resolveAmazonScanRecommendationReason,
   resolveRejectedAmazonCandidateBreakdown,
 } from '@/features/products/components/scans/ProductScanAmazonDetails';
-import { ProductScan1688Details } from '@/features/products/components/scans/ProductScan1688Details';
+import {
+  buildProductScan1688SectionId,
+  ProductScan1688Details,
+  resolveProductScan1688ApplyPolicySummary,
+  resolve1688ScanRecommendationReason,
+} from '@/features/products/components/scans/ProductScan1688Details';
 import {
   buildProductScanArtifactHref,
   ProductScanDiagnostics,
@@ -24,6 +30,7 @@ import {
   ProductFormCoreActionsContext,
   ProductFormCoreStateContext,
 } from '@/features/products/context/ProductFormCoreContext';
+import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { ProductFormParameterContext } from '@/features/products/context/ProductFormParameterContext';
 import {
   ProductScanSteps,
@@ -33,6 +40,7 @@ import {
   resolveProductScanLatestOutcomeSummary,
   resolveProductScanRejectedCandidateSummary,
 } from '@/features/products/components/scans/ProductScanSteps';
+import { useProductScan1688ReviewState } from '@/features/products/components/scans/useProductScan1688ReviewState';
 import type {
   ProductScanBatchResponse,
   ProductScanListResponse,
@@ -49,6 +57,7 @@ import {
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
+import { resolveProductScanRunFeedbackPresentation } from '@/features/products/lib/product-scan-run-feedback';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { CopyButton } from '@/shared/ui/copy-button';
@@ -148,14 +157,24 @@ const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'> 
 };
 
 const resolveRowStatusLabel = (row: ScanModalRow): string =>
-  row.status === 'running' && isManualVerificationPending(row.scan)
-    ? 'Captcha'
-    : STATUS_LABELS[row.status];
+  row.status === 'enqueuing'
+    ? STATUS_LABELS[row.status]
+    : resolveProductScanRunFeedbackPresentation(row.status, {
+        manualVerificationPending: isManualVerificationPending(row.scan),
+        amazonEvaluationStatus: row.scan?.amazonEvaluation?.status ?? null,
+        amazonEvaluationLanguageAccepted: row.scan?.amazonEvaluation?.languageAccepted ?? null,
+        supplierEvaluationStatus: row.scan?.supplierEvaluation?.status ?? null,
+      }).label;
 
 const resolveRowStatusClassName = (row: ScanModalRow): string =>
-  row.status === 'running' && isManualVerificationPending(row.scan)
-    ? 'border-amber-500/40 text-amber-300'
-    : STATUS_CLASSES[row.status];
+  row.status === 'enqueuing'
+    ? STATUS_CLASSES[row.status]
+    : resolveProductScanRunFeedbackPresentation(row.status, {
+        manualVerificationPending: isManualVerificationPending(row.scan),
+        amazonEvaluationStatus: row.scan?.amazonEvaluation?.status ?? null,
+        amazonEvaluationLanguageAccepted: row.scan?.amazonEvaluation?.languageAccepted ?? null,
+        supplierEvaluationStatus: row.scan?.supplierEvaluation?.status ?? null,
+      }).badgeClassName ?? STATUS_CLASSES[row.status];
 
 const resolveActiveStatusMessage = (
   resultStatusLabel: string,
@@ -323,8 +342,14 @@ export function ProductAmazonScanModal(
   const [expandedExtractedFieldRowIds, setExpandedExtractedFieldRowIds] = useState<Set<string>>(
     new Set()
   );
+  const {
+    isBlockedScanReviewed,
+    markBlockedScanReviewed,
+    clearBlockedScanReviewed,
+  } = useProductScan1688ReviewState();
   const productFormCoreState = useContext(ProductFormCoreStateContext);
   const productFormCoreActions = useContext(ProductFormCoreActionsContext);
+  const productFormImages = useContext(ProductFormImageContext);
   const productFormParameters = useContext(ProductFormParameterContext);
   const productFormCustomFields = useContext(ProductFormCustomFieldContext);
 
@@ -1004,6 +1029,30 @@ export function ProductAmazonScanModal(
     productFormParameters,
   ]);
 
+  const productSupplier1688FormBindings = useMemo(() => {
+    if (!productFormCoreState || !productFormCoreActions) {
+      return null;
+    }
+
+    return {
+      getTextFieldValue: (field: 'supplierName' | 'supplierLink' | 'priceComment') => {
+        const value = productFormCoreState.getValues(field);
+        return typeof value === 'string' ? value : null;
+      },
+      applyTextField: (field: 'supplierName' | 'supplierLink' | 'priceComment', value: string) => {
+        productFormCoreActions.setValue(field, value, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      },
+      imageLinks: productFormImages?.imageLinks,
+      imageBase64s: productFormImages?.imageBase64s,
+      setImageLinkAt: productFormImages?.setImageLinkAt,
+      setImageBase64At: productFormImages?.setImageBase64At,
+    } as const;
+  }, [productFormCoreActions, productFormCoreState, productFormImages]);
+
   return (
     <AppModal
       isOpen={isOpen}
@@ -1052,8 +1101,27 @@ export function ProductAmazonScanModal(
                 ((row.scan && hasProductScanAmazonDetails(row.scan.amazonDetails)) ||
                   Boolean(row.scan?.asin));
               const recommendationReason =
-                row.scan && isAmazonScan && hasExtractedFields
-                  ? resolveAmazonScanRecommendationReason(row.scan)
+                row.scan == null
+                  ? null
+                  : isAmazonScan
+                    ? hasExtractedFields
+                      ? resolveAmazonScanRecommendationReason(row.scan)
+                      : null
+                    : resolve1688ScanRecommendationReason(row.scan);
+              const supplierApplyPolicySummary =
+                row.scan && !isAmazonScan
+                  ? resolveProductScan1688ApplyPolicySummary(row.scan)
+                  : null;
+              const isBlocked1688ResultReviewed =
+                supplierApplyPolicySummary?.blockActions === true &&
+                isBlockedScanReviewed(row.scan?.id);
+              const blocked1688CandidateUrlsHref =
+                row.scan && !isAmazonScan && supplierApplyPolicySummary?.blockActions
+                  ? buildProductScan1688SectionId(row.scan.id, 'candidate-urls')
+                  : null;
+              const blocked1688MatchEvaluationHref =
+                row.scan && !isAmazonScan && supplierApplyPolicySummary?.blockActions
+                  ? buildProductScan1688SectionId(row.scan.id, 'match-evaluation')
                   : null;
               const recommendationRejectedBreakdown =
                 row.scan && isAmazonScan && hasExtractedFields
@@ -1424,6 +1492,55 @@ export function ProductAmazonScanModal(
                         </span>
                         <span className='font-medium text-foreground'>{recommendationReason}</span>
                       </div>
+                      {supplierApplyPolicySummary ? (
+                        <div className='flex flex-wrap items-center gap-2 text-xs'>
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            Apply policy
+                          </span>
+                          <span
+                            className={
+                              isBlocked1688ResultReviewed
+                                ? 'font-medium text-muted-foreground'
+                                : supplierApplyPolicySummary.tone === 'destructive'
+                                ? 'font-medium text-destructive'
+                                : 'font-medium text-amber-300'
+                            }
+                          >
+                            {isBlocked1688ResultReviewed
+                              ? 'Blocked result reviewed'
+                              : supplierApplyPolicySummary.label}
+                          </span>
+                          {blocked1688CandidateUrlsHref ? (
+                            <a
+                              href={`#${blocked1688CandidateUrlsHref}`}
+                              className='text-primary underline-offset-2 hover:underline'
+                            >
+                              Review candidates
+                            </a>
+                          ) : null}
+                          {blocked1688MatchEvaluationHref ? (
+                            <a
+                              href={`#${blocked1688MatchEvaluationHref}`}
+                              className='text-primary underline-offset-2 hover:underline'
+                            >
+                              Review evaluation
+                            </a>
+                          ) : null}
+                          {supplierApplyPolicySummary.blockActions ? (
+                            <button
+                              type='button'
+                              onClick={() =>
+                                isBlocked1688ResultReviewed
+                                  ? clearBlockedScanReviewed(row.scan?.id)
+                                  : markBlockedScanReviewed(row.scan?.id)
+                              }
+                              className='text-primary underline-offset-2 hover:underline'
+                            >
+                              {isBlocked1688ResultReviewed ? 'Undo review' : 'Mark reviewed'}
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : null}
                       {recommendationRejectedBreakdown &&
                       recommendationRejectedBreakdown.languageRejectedCount > 0 ? (
                         <p className='text-sm text-muted-foreground'>
@@ -1433,6 +1550,61 @@ export function ProductAmazonScanModal(
                           by the language gate.
                         </p>
                       ) : null}
+                    </div>
+                  ) : null}
+
+                  {!recommendationReason && supplierApplyPolicySummary ? (
+                    <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          Apply policy
+                        </span>
+                        <span
+                          className={
+                            isBlocked1688ResultReviewed
+                              ? 'font-medium text-muted-foreground'
+                              : supplierApplyPolicySummary.tone === 'destructive'
+                              ? 'font-medium text-destructive'
+                              : 'font-medium text-amber-300'
+                          }
+                        >
+                          {isBlocked1688ResultReviewed
+                            ? 'Blocked result reviewed'
+                            : supplierApplyPolicySummary.label}
+                        </span>
+                        {blocked1688CandidateUrlsHref ? (
+                          <a
+                            href={`#${blocked1688CandidateUrlsHref}`}
+                            className='text-primary underline-offset-2 hover:underline'
+                          >
+                            Review candidates
+                          </a>
+                        ) : null}
+                        {blocked1688MatchEvaluationHref ? (
+                          <a
+                            href={`#${blocked1688MatchEvaluationHref}`}
+                            className='text-primary underline-offset-2 hover:underline'
+                          >
+                            Review evaluation
+                          </a>
+                        ) : null}
+                        {supplierApplyPolicySummary.blockActions ? (
+                          <button
+                            type='button'
+                            onClick={() =>
+                              isBlocked1688ResultReviewed
+                                ? clearBlockedScanReviewed(row.scan?.id)
+                                : markBlockedScanReviewed(row.scan?.id)
+                            }
+                            className='text-primary underline-offset-2 hover:underline'
+                          >
+                            {isBlocked1688ResultReviewed ? 'Undo review' : 'Mark reviewed'}
+                          </button>
+                        ) : null}
+                      </div>
+                      <p className='text-sm text-muted-foreground'>
+                        {supplierApplyPolicySummary.detail}
+                      </p>
                     </div>
                   ) : null}
 
@@ -1463,7 +1635,15 @@ export function ProductAmazonScanModal(
                   ) : null}
                   {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
                   {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
-                  {!isAmazonScan && row.scan ? <ProductScan1688Details scan={row.scan} /> : null}
+                  {!isAmazonScan && row.scan ? (
+                    <ProductScan1688Details scan={row.scan} scanId={row.scan.id} />
+                  ) : null}
+                  {!isAmazonScan && row.scan ? (
+                    <ProductScan1688ApplyPanel
+                      scan={row.scan}
+                      formBindings={productSupplier1688FormBindings}
+                    />
+                  ) : null}
                   {isAmazonScan && extractedFieldsExpanded && row.scan ? (
                     <ProductScanAmazonExtractedFieldsPanel
                       scan={row.scan}

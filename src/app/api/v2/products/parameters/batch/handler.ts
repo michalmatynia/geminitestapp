@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ObjectId, type Document } from 'mongodb';
+import { ObjectId, type UpdateFilter } from 'mongodb';
 import { z } from 'zod';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -64,9 +64,13 @@ const buildParameterIdInValues = (ids: string[]): Array<string | ObjectId> => {
   return values;
 };
 
+type ProductParameterReferenceDocument = {
+  parameters?: Array<{ parameterId?: string | ObjectId }>;
+};
+
 const buildRemoveParametersFromProductsUpdate = (
   parameterIdInValues: Array<string | ObjectId>
-): any => ({
+): UpdateFilter<ProductParameterReferenceDocument> => ({
   $pull: {
     parameters: {
       parameterId: { $in: parameterIdInValues },
@@ -119,14 +123,17 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     $or: canonicalParameterIds.flatMap((id) => buildIdFilter(id)),
   };
   const parameterIdInValues = buildParameterIdInValues(canonicalParameterIds);
+  const productsCollection = db.collection<ProductParameterReferenceDocument>('products');
+  const productDraftsCollection =
+    db.collection<ProductParameterReferenceDocument>('product_drafts');
 
   const removed = await db.collection('product_parameters').deleteMany(deleteFilter);
   const [productsResult, productDraftsResult] = await Promise.all([
-    db.collection('products').updateMany(
+    productsCollection.updateMany(
       { 'parameters.parameterId': { $in: parameterIdInValues } },
       buildRemoveParametersFromProductsUpdate(parameterIdInValues)
     ),
-    db.collection('product_drafts').updateMany(
+    productDraftsCollection.updateMany(
       { 'parameters.parameterId': { $in: parameterIdInValues } },
       buildRemoveParametersFromProductsUpdate(parameterIdInValues)
     ),

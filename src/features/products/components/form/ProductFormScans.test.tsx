@@ -6,12 +6,14 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 
 const mocks = vi.hoisted(() => ({
   useProductFormCoreMock: vi.fn(),
   useProductFormParametersMock: vi.fn(),
   useProductFormCustomFieldsMock: vi.fn(),
   apiGetMock: vi.fn(),
+  invalidateProductsMock: vi.fn().mockResolvedValue(undefined),
   invalidateProductsCountsAndDetailMock: vi.fn().mockResolvedValue(undefined),
   productAmazonScanModalMock: vi.fn(),
   setValueMock: vi.fn(),
@@ -21,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   updateParameterValueMock: vi.fn(),
   setTextValueMock: vi.fn(),
   toggleSelectedOptionMock: vi.fn(),
+  setImageLinkAtMock: vi.fn(),
+  setImageBase64AtMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
@@ -41,10 +45,15 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/shared/lib/query-invalidation', () => ({
-  invalidateProductsCountsAndDetail: (...args: unknown[]) =>
-    mocks.invalidateProductsCountsAndDetailMock(...args),
-}));
+vi.mock('@/shared/lib/query-invalidation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/query-invalidation')>();
+  return {
+    ...actual,
+    invalidateProducts: (...args: unknown[]) => mocks.invalidateProductsMock(...args),
+    invalidateProductsCountsAndDetail: (...args: unknown[]) =>
+      mocks.invalidateProductsCountsAndDetailMock(...args),
+  };
+});
 
 vi.mock('@/features/products/components/list/ProductAmazonScanModal', () => ({
   ProductAmazonScanModal: (props: {
@@ -111,6 +120,7 @@ const createDeferred = <T,>() => {
 describe('ProductFormScans', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     mocks.getValuesMock.mockImplementation((field?: string) => {
       const values: Record<string, unknown> = {
         asin: '',
@@ -120,6 +130,9 @@ describe('ProductFormScans', () => {
         sizeLength: 0,
         sizeWidth: 0,
         length: 0,
+        supplierName: '',
+        supplierLink: '',
+        priceComment: '',
       };
       return field ? values[field] : values;
     });
@@ -180,7 +193,33 @@ describe('ProductFormScans', () => {
 
     render(
       <QueryClientProvider client={createQueryClient()}>
-        <ProductFormScans />
+        <ProductFormImageContext.Provider
+          value={
+            {
+              imageSlots: [],
+              imageLinks: ['', '', '', '', '', '', '', ''],
+              imageBase64s: ['', '', '', '', '', '', '', ''],
+              productId: 'product-1',
+              uploading: false,
+              uploadError: null,
+              uploadSuccess: false,
+              showFileManager: false,
+              setShowFileManager: vi.fn(),
+              handleSlotImageChange: vi.fn(),
+              handleSlotFileSelect: vi.fn(),
+              handleSlotDisconnectImage: vi.fn(),
+              handleMultiImageChange: vi.fn(),
+              handleMultiFileSelect: vi.fn(),
+              swapImageSlots: vi.fn(),
+              setImageLinkAt: mocks.setImageLinkAtMock,
+              setImageBase64At: mocks.setImageBase64AtMock,
+              setImagesReordering: vi.fn(),
+              refreshImagesFromProduct: vi.fn(),
+            } as never
+          }
+        >
+          <ProductFormScans />
+        </ProductFormImageContext.Provider>
       </QueryClientProvider>
     );
 
@@ -677,7 +716,12 @@ describe('ProductFormScans', () => {
             evaluatedAt: '2026-04-12T06:40:00.000Z',
           },
           steps: [],
-          rawResult: null,
+          rawResult: {
+            candidateUrls: [
+              'https://detail.1688.com/offer/123456789.html',
+              'https://detail.1688.com/offer/987654321.html',
+            ],
+          },
           error: null,
           asinUpdateStatus: 'not_needed',
           asinUpdateMessage: null,
@@ -697,9 +741,130 @@ describe('ProductFormScans', () => {
     );
 
     expect(await screen.findByText('1688 supplier details')).toBeInTheDocument();
+    expect(screen.getByText('1688 supplier result')).toBeInTheDocument();
+    expect(screen.getAllByText('AI-approved supplier match').length).toBeGreaterThan(0);
     expect(screen.getByText('Yiwu Supplier Co.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use Product Link' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use Store Link' })).toBeInTheDocument();
+    expect(screen.getByText('https://detail.1688.com/offer/987654321.html')).toBeInTheDocument();
     expect(screen.getByText('Extracted prices')).toBeInTheDocument();
     expect(screen.getByText('Match evaluation')).toBeInTheDocument();
+    expect(screen.getByText('Apply to product form')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Use Supplier Name' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use Product Link' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use Price Summary' }));
+    expect(mocks.setValueMock).toHaveBeenCalledWith(
+      'supplierName',
+      'Yiwu Supplier Co.',
+      expect.any(Object)
+    );
+    expect(mocks.setValueMock).toHaveBeenCalledWith(
+      'supplierLink',
+      'https://detail.1688.com/offer/123456789.html',
+      expect.any(Object)
+    );
+    expect(mocks.setValueMock).toHaveBeenCalledWith(
+      'priceComment',
+      '¥12.80-14.20 · MOQ 20 pcs',
+      expect.any(Object)
+    );
+  });
+
+  it('shows AI Rejected for 1688 no-match scans rejected by the supplier evaluator', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-rejected-1',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'no_match',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-rejected-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: null,
+          supplierProbe: {
+            candidateUrl: 'https://detail.1688.com/offer/123456789.html',
+            canonicalUrl: 'https://detail.1688.com/offer/123456789.html',
+            pageTitle: 'Yiwu Supplier Listing',
+            descriptionSnippet: null,
+            pageLanguage: 'zh-CN',
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: null,
+            priceText: null,
+            currency: null,
+            heroImageUrl: null,
+            heroImageAlt: null,
+            heroImageArtifactName: null,
+            artifactKey: '1688-scan-probe-image-1',
+            imageCount: 1,
+          },
+          supplierEvaluation: {
+            status: 'rejected',
+            sameProduct: false,
+            imageMatch: false,
+            titleMatch: false,
+            confidence: 0.41,
+            proceed: false,
+            reasons: ['Supplier candidate does not match the source product.'],
+            mismatches: ['Supplier gallery differs from the source product.'],
+            modelId: 'gpt-4.1-mini',
+            error: null,
+            evaluatedAt: '2026-04-12T06:40:00.000Z',
+          },
+          steps: [],
+          rawResult: {
+            candidateUrls: [
+              'https://detail.1688.com/offer/123456789.html',
+              'https://detail.1688.com/offer/998877665.html',
+            ],
+          },
+          error: 'AI evaluator rejected the 1688 supplier candidate (41%).',
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: 'AI evaluator rejected the 1688 supplier candidate (41%).',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T06:40:10.000Z',
+          createdAt: '2026-04-12T06:39:00.000Z',
+          updatedAt: '2026-04-12T06:40:10.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('AI Rejected')).toBeInTheDocument();
+    expect(screen.getByText('1688 supplier result')).toBeInTheDocument();
+    expect(screen.getByText('Supplier probe only')).toBeInTheDocument();
+    expect(screen.getAllByText('Apply blocked by AI rejection').length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Review candidates' })).toHaveAttribute(
+      'href',
+      '#product-scan-1688-scan-1688-rejected-1-candidate-urls'
+    );
+    expect(screen.getByRole('link', { name: 'Review evaluation' })).toHaveAttribute(
+      'href',
+      '#product-scan-1688-scan-1688-rejected-1-match-evaluation'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark reviewed' }));
+    expect(screen.getByText('Blocked result reviewed')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Undo review' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Undo review' }));
+    expect(screen.getAllByText('Apply blocked by AI rejection').length).toBeGreaterThan(0);
   });
 
   it('shows and hides persisted scan steps for a scan entry', async () => {

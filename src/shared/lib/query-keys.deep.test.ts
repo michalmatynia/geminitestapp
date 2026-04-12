@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { QUERY_KEYS } from './query-keys';
 
-const buildArgs = (arity: number): unknown[] => {
+const buildArgs = (path: string[], arity: number): unknown[] => {
+  const factoryPath = path.join('.');
+  if (factoryPath === 'products.scansLatest' || factoryPath === 'notes.lookup') {
+    return [['alpha', 'beta']].slice(0, arity);
+  }
+  if (factoryPath === 'kangur.socialImageAddons') {
+    return [{ limit: 25, ids: ['alpha', 'beta'] }].slice(0, arity);
+  }
   const sharedArgs = [
     'alpha',
     'beta',
@@ -21,7 +28,7 @@ const invokeFactories = (
   if (typeof value === 'function') {
     results.push({
       path: path.join('.'),
-      value: value(...buildArgs(value.length)),
+      value: value(...buildArgs(path, value.length)),
     });
     return results;
   }

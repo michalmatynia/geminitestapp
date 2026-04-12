@@ -318,6 +318,7 @@
     "docs/metrics/api-input-validation-latest.md",
     "docs/metrics/baseline-latest.md",
     "docs/metrics/bundle-budgets-latest.md",
+    "docs/metrics/client-boundaries-latest.md",
     "docs/metrics/context-health-latest.md",
     "docs/metrics/critical-flow-tests-latest.md",
     "docs/metrics/critical-path-performance-latest.md",

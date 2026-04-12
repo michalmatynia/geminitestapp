@@ -1,21 +1,17 @@
-import { z } from 'zod';
-
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
-  catalogIdsQuerySchema,
-  freshQuerySchema,
+  catalogIdsWithFreshQuerySchema,
+  type CatalogIdsWithFreshQuery,
 } from '@/shared/validations/product-metadata-api-schemas';
 
 const MAX_CATALOG_IDS = 25;
 
-export const querySchema = catalogIdsQuerySchema.extend({
-  fresh: freshQuerySchema.default(false),
-});
+export const querySchema = catalogIdsWithFreshQuerySchema;
 
 export const productCategoryBatchQuerySchema = querySchema;
 
-export type ProductCategoryBatchQuery = z.infer<typeof querySchema>;
+export type ProductCategoryBatchQuery = CatalogIdsWithFreshQuery;
 
 export const parseProductCategoryBatchCatalogIds = (
   query: ProductCategoryBatchQuery | undefined

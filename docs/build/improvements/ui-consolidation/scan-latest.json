@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-12T04:21:28.603Z",
+  "generatedAt": "2026-04-12T11:10:55.803Z",
   "track": {
     "id": "ui-consolidation",
     "title": "UI consolidation",
@@ -101,12 +101,12 @@
     "defaultSelected": true,
     "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
     "overallStatus": "failed",
-    "latestGeneratedAt": "2026-04-12T04:21:28.585Z",
+    "latestGeneratedAt": "2026-04-12T11:10:55.782Z",
     "docDir": "docs/build/improvements/ui-consolidation",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-12T04:06:44.394Z",
+        "generatedAt": "2026-04-12T10:55:20.167Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -138,14 +138,14 @@
             ],
             "instructions": [],
             "script": "check:ui-consolidation",
-            "durationMs": 4786
+            "durationMs": 9585
           }
         ],
         "status": "failed"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-12T04:21:28.293Z",
+        "generatedAt": "2026-04-12T11:10:55.500Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -162,7 +162,7 @@
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-12T04:21:28.585Z",
+        "generatedAt": "2026-04-12T11:10:55.782Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,

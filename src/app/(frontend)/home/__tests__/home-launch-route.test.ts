@@ -47,7 +47,7 @@ vi.mock('@/features/kangur/public', () => ({
     route === 'dedicated_app' ? '/kangur?__kangurLaunch=dedicated_app' : '/kangur',
 }));
 
-vi.mock('@/features/kangur/server', () => {
+vi.mock('@/features/kangur/server/launch-route', () => {
   return {
     getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
   };

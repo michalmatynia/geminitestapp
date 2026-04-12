@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -28,6 +29,18 @@ vi.mock('@/features/auth/server', () => ({
 }));
 
 describe('kangur alias route', () => {
+  const expectSuspenseShell = (value: unknown) => {
+    expect(React.isValidElement(value)).toBe(true);
+    expect((value as React.ReactElement).type).toBe(Suspense);
+  };
+
+  const resolveSuspenseChild = async (value: unknown) => {
+    expectSuspenseShell(value);
+    const child = (value as React.ReactElement).props.children as React.ReactElement;
+    expect(React.isValidElement(child)).toBe(true);
+    return child.type(child.props);
+  };
+
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -47,12 +60,14 @@ describe('kangur alias route', () => {
         '@/app/(frontend)/kangur/(app)/[...slug]/page'
       );
 
-      const result = await KangurAliasPage({
+      const result = KangurAliasPage({
         params: Promise.resolve({ slug: ['lessons'] }),
         searchParams: Promise.resolve({ focus: 'division' }),
       } as never);
+      const guardedResult = await resolveSuspenseChild(await resolveSuspenseChild(result));
 
-      expect(result).toBeNull();
+      expectSuspenseShell(result);
+      expect(guardedResult).toBeNull();
 
       expect(redirectMock).not.toHaveBeenCalled();
     },
@@ -72,10 +87,14 @@ describe('kangur alias route', () => {
       import('@/app/(frontend)/kangur/(app)/tests/page'),
     ]);
 
-    await expect(KangurAliasHomePage()).resolves.toBeNull();
-    await expect(KangurAliasLessonsPage()).resolves.toBeNull();
-    await expect(KangurAliasDuelsPage()).resolves.toBeNull();
-    await expect(KangurAliasTestsPage()).resolves.toBeNull();
+    expectSuspenseShell(KangurAliasHomePage());
+    expectSuspenseShell(KangurAliasLessonsPage());
+    expectSuspenseShell(KangurAliasDuelsPage());
+    expectSuspenseShell(KangurAliasTestsPage());
+    await expect(resolveSuspenseChild(KangurAliasHomePage())).resolves.toBeNull();
+    await expect(resolveSuspenseChild(KangurAliasLessonsPage())).resolves.toBeNull();
+    await expect(resolveSuspenseChild(KangurAliasDuelsPage())).resolves.toBeNull();
+    await expect(resolveSuspenseChild(KangurAliasTestsPage())).resolves.toBeNull();
 
     expect(redirectMock).not.toHaveBeenCalled();
   });
@@ -84,10 +103,14 @@ describe('kangur alias route', () => {
     const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[...slug]/page');
 
     await expect(
-      KangurAliasPage({
-        params: Promise.resolve({ slug: ['games'] }),
-        searchParams: Promise.resolve({ tab: 'runtime' }),
-      } as never)
+      resolveSuspenseChild(
+        await resolveSuspenseChild(
+          KangurAliasPage({
+            params: Promise.resolve({ slug: ['games'] }),
+            searchParams: Promise.resolve({ tab: 'runtime' }),
+          } as never)
+        )
+      )
     ).rejects.toThrow('notFound');
 
     expect(redirectMock).not.toHaveBeenCalled();
@@ -103,11 +126,13 @@ describe('kangur alias route', () => {
 
     const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[...slug]/page');
 
-    const result = await KangurAliasPage({
+    const result = KangurAliasPage({
       params: Promise.resolve({ slug: ['games'] }),
     } as never);
+    const guardedResult = await resolveSuspenseChild(await resolveSuspenseChild(result));
 
-    expect(result).toBeNull();
+    expectSuspenseShell(result);
+    expect(guardedResult).toBeNull();
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
@@ -116,12 +141,14 @@ describe('kangur alias route', () => {
       '@/app/[locale]/(frontend)/kangur/(app)/[...slug]/page'
     );
 
-    const result = await LocalizedKangurAliasPage({
+    const result = LocalizedKangurAliasPage({
       params: Promise.resolve({ locale: 'pl', slug: ['lessons'] }),
       searchParams: Promise.resolve({ focus: 'division' }),
     } as never);
+    const guardedResult = await resolveSuspenseChild(await resolveSuspenseChild(result));
 
-    expect(result).toBeNull();
+    expectSuspenseShell(result);
+    expect(guardedResult).toBeNull();
 
     expect(redirectMock).not.toHaveBeenCalled();
   });
@@ -139,10 +166,14 @@ describe('kangur alias route', () => {
       import('@/app/[locale]/(frontend)/kangur/(app)/tests/page'),
     ]);
 
-    await expect(LocalizedKangurAliasHomePage()).resolves.toBeNull();
-    await expect(LocalizedKangurAliasLessonsPage()).resolves.toBeNull();
-    await expect(LocalizedKangurAliasDuelsPage()).resolves.toBeNull();
-    await expect(LocalizedKangurAliasTestsPage()).resolves.toBeNull();
+    expectSuspenseShell(LocalizedKangurAliasHomePage());
+    expectSuspenseShell(LocalizedKangurAliasLessonsPage());
+    expectSuspenseShell(LocalizedKangurAliasDuelsPage());
+    expectSuspenseShell(LocalizedKangurAliasTestsPage());
+    await expect(resolveSuspenseChild(LocalizedKangurAliasHomePage())).resolves.toBeNull();
+    await expect(resolveSuspenseChild(LocalizedKangurAliasLessonsPage())).resolves.toBeNull();
+    await expect(resolveSuspenseChild(LocalizedKangurAliasDuelsPage())).resolves.toBeNull();
+    await expect(resolveSuspenseChild(LocalizedKangurAliasTestsPage())).resolves.toBeNull();
 
     expect(redirectMock).not.toHaveBeenCalled();
   });
@@ -159,9 +190,13 @@ describe('kangur alias route', () => {
     );
 
     await expect(
-      LocalizedKangurAliasPage({
-        params: Promise.resolve({ locale: 'pl', slug: ['games'] }),
-      } as never)
+      resolveSuspenseChild(
+        await resolveSuspenseChild(
+          LocalizedKangurAliasPage({
+            params: Promise.resolve({ locale: 'pl', slug: ['games'] }),
+          } as never)
+        )
+      )
     ).rejects.toThrow('notFound');
 
     expect(redirectMock).not.toHaveBeenCalled();

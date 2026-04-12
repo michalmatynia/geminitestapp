@@ -27,7 +27,7 @@ import {
   useProductListFiltersContext,
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
-import { TraderaStatusCheckModal } from '@/features/integrations/public';
+import { TraderaStatusCheckModal } from '@/features/integrations/product-integrations-adapter';
 import {
   useBulkSetProductsArchivedState,
   useBulkConvertImagesToBase64,

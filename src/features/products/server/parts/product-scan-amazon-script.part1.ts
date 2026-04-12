@@ -282,7 +282,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   };
 
   const waitForGoogleLensResultState = async (startingUrl, inputLocator = null) => {
-    const deadline = Date.now() + 8000;
+    const deadline = Date.now() + 25000;
     while (Date.now() < deadline) {
       const currentUrl = page.url();
       if (isGoogleLensUploadAdvancedUrl(startingUrl, currentUrl)) {

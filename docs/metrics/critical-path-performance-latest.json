@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-12T04:07:02.678Z",
-  "strictMode": false,
+  "generatedAt": "2026-04-12T11:30:39.839Z",
+  "strictMode": true,
   "summary": {
     "total": 10,
     "passed": 10,
@@ -383,7 +383,7 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-12T04:07:02.670Z",
+    "generatedAt": "2026-04-12T11:30:39.830Z",
     "hotspots": {
       "topFilesByLines": [
         {
@@ -392,19 +392,19 @@
         },
         {
           "path": "src/features/products/server/product-scans-service.test.ts",
-          "lines": 4298
+          "lines": 4636
         },
         {
           "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
-          "lines": 3211
+          "lines": 3708
         },
         {
           "path": "src/features/products/server/product-scans-service.ts",
-          "lines": 2351
+          "lines": 2668
         },
         {
           "path": "src/features/products/components/form/ProductFormScans.test.tsx",
-          "lines": 2246
+          "lines": 2546
         },
         {
           "path": "src/features/products/components/ProductModals.test.tsx",
@@ -415,6 +415,10 @@
           "lines": 1721
         },
         {
+          "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+          "lines": 1664
+        },
+        {
           "path": "src/features/product-sync/services/product-sync-service.ts",
           "lines": 1502
         },
@@ -423,8 +427,12 @@
           "lines": 1475
         },
         {
-          "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
-          "lines": 1393
+          "path": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
+          "lines": 1366
+        },
+        {
+          "path": "src/features/products/components/form/ProductFormScans.tsx",
+          "lines": 1314
         },
         {
           "path": "src/features/products/components/list/ProductColumns.test.tsx",
@@ -436,11 +444,11 @@
         },
         {
           "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
-          "lines": 1244
+          "lines": 1250
         },
         {
-          "path": "src/features/products/components/form/ProductFormScans.tsx",
-          "lines": 1123
+          "path": "src/features/products/pages/AdminProductScannerSettingsPage.tsx",
+          "lines": 1153
         },
         {
           "path": "src/features/product-sync/components/ProductSyncSettings.tsx",
@@ -449,6 +457,10 @@
         {
           "path": "src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts",
           "lines": 1095
+        },
+        {
+          "path": "src/features/ai/ai-paths/services/path-run-executor/callbacks.ts",
+          "lines": 1056
         },
         {
           "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
@@ -467,6 +479,10 @@
           "lines": 1035
         },
         {
+          "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
+          "lines": 1018
+        },
+        {
           "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
           "lines": 1014
         },
@@ -479,10 +495,6 @@
           "lines": 1004
         },
         {
-          "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
-          "lines": 1001
-        },
-        {
           "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
           "lines": 999
         },
@@ -493,18 +505,6 @@
         {
           "path": "src/features/integrations/pages/marketplaces/tradera/TraderaParameterMappingPage.tsx",
           "lines": 991
-        },
-        {
-          "path": "src/shared/lib/products/services/product-ai-graph-model-payload.test.ts",
-          "lines": 991
-        },
-        {
-          "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",
-          "lines": 989
-        },
-        {
-          "path": "src/features/ai/ai-paths/server/__tests__/settings-store.test.ts",
-          "lines": 989
         }
       ]
     },

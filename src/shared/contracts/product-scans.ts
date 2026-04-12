@@ -297,6 +297,10 @@ export const productScanSupplierEvaluationSchema = z
   .nullable()
   .default(null);
 export type ProductScanSupplierEvaluation = z.infer<typeof productScanSupplierEvaluationSchema>;
+export type NonNullableProductScanSupplierEvaluation = Exclude<
+  ProductScanSupplierEvaluation,
+  null
+>;
 
 export const productScanImageCandidateSchema = z.object({
   id: optionalTrimmedString(160),

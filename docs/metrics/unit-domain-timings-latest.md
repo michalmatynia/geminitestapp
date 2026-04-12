@@ -8,23 +8,23 @@ canonical: true
 ---
 # Unit Domain Timings Report
 
-Generated at: 2026-04-12T04:16:51.081Z
+Generated at: 2026-04-12T11:06:06.430Z
 
 ## Summary
 
 - Domains: 5
-- Passed: 3
-- Failed: 2
-- Total duration: 9.4m
+- Passed: 4
+- Failed: 1
+- Total duration: 10.0m
 
 ## Domain Status
 
 | Domain | Status | Duration | Exit |
 | --- | --- | ---: | ---: |
-| Auth | PASS | 20.8s | 0 |
-| Products | FAIL | 3.1m | 1 |
-| AI Paths | FAIL | 3.1m | 1 |
-| Image Studio | PASS | 1.3m | 0 |
+| Auth | PASS | 23.2s | 0 |
+| Products | FAIL | 3.3m | 1 |
+| AI Paths | PASS | 3.3m | 0 |
+| Image Studio | PASS | 1.5m | 0 |
 | Case Resolver | PASS | 1.5m | 0 |
 
 ## Domain Filters

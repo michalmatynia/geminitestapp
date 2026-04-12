@@ -188,6 +188,41 @@ describe('ProductScanSteps', () => {
     expect(summary?.timingLabel).toContain('Duration 8.0 s');
   });
 
+  it('resolves the latest failed supplier evaluator step summary', () => {
+    const summary = resolveProductScanLatestOutcomeSummary([
+      {
+        key: 'supplier_ai_evaluate',
+        label: 'Evaluate supplier candidate match',
+        group: 'supplier',
+        attempt: 1,
+        candidateId: 'image-1',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'evaluation_failed',
+        status: 'failed',
+        message: '1688 supplier AI evaluation failed.',
+        warning: null,
+        details: [{ label: 'Error', value: 'Timed out while evaluating supplier candidate.' }],
+        url: 'https://detail.1688.com/offer/123456789.html',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+    ]);
+
+    expect(summary).toMatchObject({
+      kind: 'failed',
+      phaseLabel: 'Supplier',
+      sourceLabel: 'Supplier evaluator',
+      stepLabel: 'Evaluate supplier candidate match',
+      message: '1688 supplier AI evaluation failed.',
+      resultCodeLabel: 'Evaluation Failed',
+      attempt: 1,
+      url: 'https://detail.1688.com/offer/123456789.html',
+    });
+  });
+
   it('resolves candidate continuation summaries after AI rejection', () => {
     const summary = resolveProductScanContinuationSummary([
       {
@@ -300,6 +335,42 @@ describe('ProductScanSteps', () => {
       languageRejectedCount: 0,
       latestRejectedUrl: 'https://www.amazon.com/dp/B00TEST456',
       latestReason: 'The second Amazon page is still a different product.',
+      latestRejectionKind: 'product',
+    });
+  });
+
+  it('resolves rejected supplier candidate summaries from 1688 AI evaluation steps', () => {
+    const summary = resolveProductScanRejectedCandidateSummary([
+      {
+        key: 'supplier_ai_evaluate',
+        label: 'Evaluate supplier candidate match',
+        group: 'supplier',
+        attempt: 1,
+        candidateId: 'image-1',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidate_rejected',
+        status: 'failed',
+        message: 'AI evaluator rejected the 1688 supplier candidate (34%).',
+        warning: null,
+        details: [
+          { label: 'Confidence', value: '34%' },
+          { label: 'Candidate URL', value: 'https://detail.1688.com/offer/123456789.html' },
+          { label: 'Mismatch', value: 'Supplier gallery differs from the source product.' },
+        ],
+        url: 'https://detail.1688.com/offer/123456789.html',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      rejectedCount: 1,
+      languageRejectedCount: 0,
+      latestRejectedUrl: 'https://detail.1688.com/offer/123456789.html',
+      latestReason: 'Supplier gallery differs from the source product.',
       latestRejectionKind: 'product',
     });
   });
@@ -426,6 +497,45 @@ describe('ProductScanSteps', () => {
       scopeLabel: 'Ambiguous Amazon candidates only',
       languageGateLabel: 'English only',
       languageDetectionLabel: 'Deterministic first, then AI',
+    });
+  });
+
+  it('resolves the persisted AI evaluator policy summary for 1688 supplier scans', () => {
+    const summary = resolveProductScanEvaluationPolicySummary([
+      {
+        key: 'supplier_ai_evaluate',
+        label: 'Evaluate supplier candidate match',
+        group: 'supplier',
+        attempt: 1,
+        candidateId: 'image-1',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidate_approved',
+        status: 'completed',
+        message: 'AI evaluator approved the 1688 supplier candidate.',
+        warning: null,
+        details: [
+          { label: 'Model source', value: 'AI Brain default' },
+          { label: 'Model', value: 'gpt-4.1-mini' },
+          { label: 'Threshold', value: '80%' },
+          { label: 'Evaluation scope', value: 'Ambiguous 1688 candidates only' },
+        ],
+        url: 'https://detail.1688.com/offer/123456789.html',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      executionLabel: 'Reviewed by AI',
+      modelSource: 'AI Brain default',
+      modelLabel: 'gpt-4.1-mini',
+      thresholdLabel: '80%',
+      scopeLabel: 'Ambiguous 1688 candidates only',
+      languageGateLabel: null,
+      languageDetectionLabel: null,
     });
   });
 

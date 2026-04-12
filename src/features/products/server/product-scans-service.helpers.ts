@@ -11,6 +11,7 @@ import {
   productScanAmazonDetailsSchema,
   productScanAmazonProbeSchema,
   productScanSupplierDetailsSchema,
+  productScanSupplierEvaluationSchema,
   productScanSupplierProbeSchema,
   productScanStepDetailSchema,
   productScanStepSchema,
@@ -19,6 +20,7 @@ import {
   type ProductAmazonBatchScanItem,
   type ProductScanRecord,
   type ProductScanSupplierDetails,
+  type ProductScanSupplierEvaluation,
   type ProductScanSupplierProbe,
   type ProductScanStep,
 } from '@/shared/contracts/product-scans';
@@ -83,6 +85,7 @@ export type SupplierScanScriptResult = {
   description: string | null;
   supplierDetails: ProductScanSupplierDetails;
   supplierProbe: ProductScanSupplierProbe;
+  supplierEvaluation: ProductScanSupplierEvaluation;
   candidateUrls: string[];
   matchedImageId: string | null;
   message: string | null;
@@ -236,7 +239,20 @@ export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep
   }
 
   return value
-    .map((entry) => productScanStepSchema.safeParse(entry))
+    .map((entry) => {
+      const record = toRecord(entry);
+      if (!record) {
+        return null;
+      }
+
+      return productScanStepSchema.safeParse({
+        ...record,
+        details: normalizeProductScanStepDetails(
+          record['details'] as Array<{ label: string; value?: string | null }> | null | undefined
+        ),
+      });
+    })
+    .filter((entry): entry is ReturnType<typeof productScanStepSchema.safeParse> => Boolean(entry))
     .filter((entry) => entry.success)
     .map((entry) => entry.data);
 };
@@ -258,6 +274,13 @@ export const normalizeParsedSupplierDetails = (value: unknown): ProductScanSuppl
 
 export const normalizeParsedSupplierProbe = (value: unknown): ProductScanSupplierProbe => {
   const parsed = productScanSupplierProbeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedSupplierEvaluation = (
+  value: unknown
+): ProductScanSupplierEvaluation => {
+  const parsed = productScanSupplierEvaluationSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 };
 
@@ -322,6 +345,7 @@ const normalizeProductScanStepDetails = (
   value: Array<{ label: string; value?: string | null }> | null | undefined
 ): ProductScanStep['details'] =>
   (Array.isArray(value) ? value : [])
+    .slice(0, 20)
     .map((entry) =>
       productScanStepDetailSchema.safeParse({
         label: entry.label,
@@ -620,6 +644,7 @@ export const parse1688ScanScriptResult = (value: unknown): SupplierScanScriptRes
     description: readOptionalString(record?.['description'], PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH),
     supplierDetails: normalizeParsedSupplierDetails(record?.['supplierDetails']),
     supplierProbe: normalizeParsedSupplierProbe(record?.['supplierProbe']),
+    supplierEvaluation: normalizeParsedSupplierEvaluation(record?.['supplierEvaluation']),
     candidateUrls: normalizeParsedCandidateUrls(record?.['candidateUrls']),
     matchedImageId: readOptionalString(
       record?.['matchedImageId'],

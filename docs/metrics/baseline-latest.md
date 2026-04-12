@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-12T04:06:54.697Z
+Generated at: 2026-04-12T10:55:35.354Z
 
 ## Snapshot
 
-- Source files: 10343
-- Source lines: 1729016
-- use client files: 1759
-- Files >= 1000 LOC: 8
-- Files >= 1500 LOC: 3
-- Largest file: `src/features/products/server/product-scans-service.ts` (2351 LOC)
+- Source files: 10350
+- Source lines: 1735645
+- use client files: 1761
+- Files >= 1000 LOC: 10
+- Files >= 1500 LOC: 4
+- Largest file: `src/features/products/server/product-scans-service.ts` (2670 LOC)
 - API routes: 30
 - API delegated server routes: 186
 - API routes without apiHandler/delegation: 0
@@ -60,22 +60,22 @@ Generated at: 2026-04-12T04:06:54.697Z
 | File | LOC |
 | --- | ---: |
 | `src/features/integrations/services/tradera-listing/browser.test.ts` | 4648 |
-| `src/features/products/server/product-scans-service.test.ts` | 4298 |
-| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 3211 |
-| `src/features/products/server/product-scans-service.ts` | 2351 |
-| `src/features/products/components/form/ProductFormScans.test.tsx` | 2246 |
+| `src/features/products/server/product-scans-service.test.ts` | 4610 |
+| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 3677 |
+| `src/features/products/server/product-scans-service.ts` | 2670 |
+| `src/features/products/components/form/ProductFormScans.test.tsx` | 2518 |
 | `src/features/products/components/ProductModals.test.tsx` | 1730 |
 | `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 1721 |
+| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 1528 |
 | `src/features/product-sync/services/product-sync-service.ts` | 1502 |
 | `src/features/products/server/parts/product-scan-amazon-script.part2.ts` | 1475 |
-| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 1393 |
+| `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 1366 |
 | `src/features/products/components/list/ProductColumns.test.tsx` | 1302 |
 | `src/features/integrations/services/tradera-listing-service.test.ts` | 1288 |
-| `src/features/products/components/scans/ProductScanAmazonDetails.tsx` | 1244 |
-| `src/features/products/components/form/ProductFormScans.tsx` | 1123 |
+| `src/features/products/components/scans/ProductScanAmazonDetails.tsx` | 1249 |
+| `src/features/products/components/form/ProductFormScans.tsx` | 1183 |
 | `src/features/product-sync/components/ProductSyncSettings.tsx` | 1111 |
 | `src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts` | 1095 |
+| `src/features/ai/ai-paths/services/path-run-executor/callbacks.ts` | 1056 |
 | `src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx` | 1055 |
 | `src/shared/lib/products/services/productService.test.ts` | 1048 |
-| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1037 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx` | 1035 |

@@ -57,12 +57,17 @@ vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: null, status: 'unauthenticated' }),
 }));
 
-vi.mock('lucide-react', () => ({
-  ChevronLeftIcon: () => <svg data-testid='chevron-left-icon' />,
-  Menu: () => <svg data-testid='menu-icon' />,
-  X: () => <svg data-testid='close-icon' />,
-  AlertCircle: () => <svg data-testid='alert-circle-icon' />,
-}));
+vi.mock('lucide-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('lucide-react')>();
+  return {
+    ...actual,
+    ChevronLeftIcon: () => <svg data-testid='chevron-left-icon' />,
+    Menu: () => <svg data-testid='menu-icon' />,
+    X: () => <svg data-testid='close-icon' />,
+    AlertCircle: () => <svg data-testid='alert-circle-icon' />,
+    GitBranch: () => <svg data-testid='git-branch-icon' />,
+  };
+});
 
 vi.mock('@/features/admin/components/AiInsightsNotificationsDrawer', () => ({
   AiInsightsNotificationsDrawer: () => {

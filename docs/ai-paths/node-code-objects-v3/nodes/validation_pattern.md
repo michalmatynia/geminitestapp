@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Validation Pattern Migration Sheet (`validation_pattern`)
 
-Generated at: 2026-04-11T13:54:16.572Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-11T13:54:16.572Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/validation_pattern.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/validation_pattern.scaffold.json`
 - v3 object id: `node_obj_validation_pattern_portable_v3`
-- v3 object hash: `d71b6cd22fd86414a7b302cd808469c86ccaf42a2f593ff9dee71e11de617a85`
+- v3 object hash: `fed45a004d18fd1a5cdf68ccde082f1ae4f9caa861a029e0967741f96e05418a`
 
 ## Ports
 

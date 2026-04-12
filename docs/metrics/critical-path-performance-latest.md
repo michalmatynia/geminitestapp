@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-12T04:07:02.678Z
+Generated at: 2026-04-12T11:30:39.839Z
 
 ## Summary
 
@@ -87,15 +87,15 @@ Generated at: 2026-04-12T04:07:02.678Z
 | File | LOC |
 | --- | ---: |
 | `src/features/integrations/services/tradera-listing/browser.test.ts` | 4648 |
-| `src/features/products/server/product-scans-service.test.ts` | 4298 |
-| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 3211 |
-| `src/features/products/server/product-scans-service.ts` | 2351 |
-| `src/features/products/components/form/ProductFormScans.test.tsx` | 2246 |
+| `src/features/products/server/product-scans-service.test.ts` | 4636 |
+| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 3708 |
+| `src/features/products/server/product-scans-service.ts` | 2668 |
+| `src/features/products/components/form/ProductFormScans.test.tsx` | 2546 |
 | `src/features/products/components/ProductModals.test.tsx` | 1730 |
 | `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 1721 |
+| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 1664 |
 | `src/features/product-sync/services/product-sync-service.ts` | 1502 |
 | `src/features/products/server/parts/product-scan-amazon-script.part2.ts` | 1475 |
-| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 1393 |
 
 ## Top API Route Hotspots (Reference)
 

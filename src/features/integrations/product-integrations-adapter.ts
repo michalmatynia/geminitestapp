@@ -3,6 +3,7 @@ export type { IntegrationWithConnections } from '@/shared/contracts/integrations
 export { default as ListProductModal } from './components/listings/ListProductModal';
 export { default as MassListProductModal } from './components/listings/MassListProductModal';
 export { ProductListingsModal } from './components/listings/ProductListingsModal';
+export { TraderaStatusCheckModal } from './components/listings/TraderaStatusCheckModal';
 export {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
@@ -28,6 +29,8 @@ export {
 export {
   useDefaultExportConnection,
   useDefaultTraderaConnection,
+  useIntegrationConnections,
+  useIntegrations,
   useIntegrationsWithConnections,
 } from './hooks/useIntegrationQueries';
 export {
@@ -56,6 +59,7 @@ export {
   SUCCESS_STATUSES,
   normalizeMarketplaceStatus,
 } from './utils/marketplace-status';
+export { getBaseExportPreflightError } from './utils/baseExportPreflight';
 export {
   createBaseRecoveryContext,
   createTraderaRecoveryContext,

@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Reasoning Agent Migration Sheet (`agent`)
 
-Generated at: 2026-04-11T13:54:16.572Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-11T13:54:16.572Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/agent.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/agent.scaffold.json`
 - v3 object id: `node_obj_agent_portable_v3`
-- v3 object hash: `8586048c89120fa848916b72ab28bbe505d1c24af57104f191cdae4c7ecb96c6`
+- v3 object hash: `4080315e118ccbaf1f136e4a78db951fc05afac13c2dfa71a7793cf8dd863fb3`
 
 ## Ports
 

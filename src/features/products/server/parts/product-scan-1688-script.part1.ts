@@ -237,6 +237,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       description: null,
       supplierDetails: null,
       supplierProbe: null,
+      supplierEvaluation: null,
       candidateUrls: [],
       matchedImageId: toText(input?.matchedImageId),
       currentUrl: toText(input?.currentUrl) || page.url(),
@@ -546,6 +547,15 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       .replace(/[^\p{L}\p{N}]+/gu, ' ')
       .split(/\s+/)
       .filter((token) => token.length >= 3);
+  const countSharedTitleTokens = (sourceTitle, candidateTitle) => {
+    const sourceTokens = tokenizeComparableText(sourceTitle);
+    const candidateTokens = tokenizeComparableText(candidateTitle);
+    if (sourceTokens.length === 0 || candidateTokens.length === 0) {
+      return 0;
+    }
+    const sourceSet = new Set(sourceTokens);
+    return candidateTokens.filter((token) => sourceSet.has(token)).length;
+  };
   const scoreSupplierCandidate = (candidate) => {
     let score = 0;
     if (toText(candidate?.title)) {
@@ -571,6 +581,96 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       score += overlap;
     }
     return score;
+  };
+  const buildSupplierEvaluation = (candidate, status) => {
+    if (!candidate) {
+      return null;
+    }
+    const sharedTitleTokens = countSharedTitleTokens(productName, candidate?.title);
+    const titleMatch =
+      toText(productName) && toText(candidate?.title)
+        ? sharedTitleTokens > 0
+        : null;
+    const extractedImages = Array.isArray(candidate?.supplierDetails?.images)
+      ? candidate.supplierDetails.images.length
+      : 0;
+    const imageMatch = extractedImages > 0 ? true : null;
+    const candidateScore =
+      typeof candidate?.score === 'number' && Number.isFinite(candidate.score)
+        ? candidate.score
+        : 0;
+    const confidence = Math.min(
+      0.98,
+      Math.max(0.05, candidateScore / Math.max(configuredMinimumCandidateScore + 4, 8))
+    );
+    const reasons = [];
+    const mismatches = [];
+
+    if (titleMatch === true) {
+      reasons.push(
+        'The 1688 candidate title shares ' +
+          String(sharedTitleTokens) +
+          ' normalized token' +
+          (sharedTitleTokens === 1 ? '' : 's') +
+          ' with the source product title.'
+      );
+    } else if (titleMatch === false) {
+      mismatches.push('The 1688 candidate title does not overlap with the source product title.');
+    }
+
+    if (toText(candidate?.price)) {
+      reasons.push('The 1688 candidate exposes supplier pricing on the product page.');
+    } else {
+      mismatches.push('The 1688 candidate did not expose a usable supplier price.');
+    }
+
+    if (toText(candidate?.supplierDetails?.supplierName)) {
+      reasons.push('The 1688 candidate exposes a supplier name.');
+    }
+
+    if (extractedImages > 0) {
+      reasons.push(
+        'The 1688 candidate exposes ' +
+          String(extractedImages) +
+          ' supplier image' +
+          (extractedImages === 1 ? '' : 's') +
+          '.'
+      );
+    } else {
+      mismatches.push('The 1688 candidate did not expose supplier images.');
+    }
+
+    if (toText(candidate?.supplierDetails?.supplierStoreUrl)) {
+      reasons.push('The 1688 candidate includes a supplier storefront link.');
+    }
+
+    if (status === 'approved') {
+      reasons.push(
+        'The supplier candidate met the configured heuristic score threshold of ' +
+          String(configuredMinimumCandidateScore) +
+          '.'
+      );
+    } else {
+      mismatches.push(
+        'The supplier candidate scored below the configured heuristic threshold of ' +
+          String(configuredMinimumCandidateScore) +
+          '.'
+      );
+    }
+
+    return {
+      status,
+      sameProduct: status === 'approved' ? true : false,
+      imageMatch,
+      titleMatch,
+      confidence,
+      proceed: status === 'approved',
+      reasons: status === 'approved' ? reasons.slice(0, 10) : reasons.slice(0, 5),
+      mismatches: status === 'approved' ? [] : mismatches.slice(0, 10),
+      modelId: 'heuristic_1688_probe_v1',
+      error: null,
+      evaluatedAt: nowIso(),
+    };
   };
   const extract1688CandidatePayload = async (candidateUrl, candidateRank, candidateId) => {
     await page.goto(candidateUrl, {
@@ -732,6 +832,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       description: null,
       supplierDetails: null,
       supplierProbe: null,
+      supplierEvaluation: null,
       candidateUrls: [],
       matchedImageId: null,
       message: '1688 supplier reverse image scanner requires at least one product image.',
@@ -836,6 +937,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         description: null,
         supplierDetails: null,
         supplierProbe: null,
+        supplierEvaluation: null,
         candidateUrls: [],
         matchedImageId,
         message: barrierAfterOpen.message,
@@ -889,6 +991,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
           description: null,
           supplierDetails: null,
           supplierProbe: null,
+          supplierEvaluation: null,
           candidateUrls: [],
           matchedImageId,
           message: candidateState.message,
@@ -944,6 +1047,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
               description: null,
               supplierDetails: null,
               supplierProbe: null,
+              supplierEvaluation: null,
               candidateUrls: [],
               matchedImageId,
               message: candidateState.message,
@@ -995,6 +1099,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
           description: null,
           supplierDetails: null,
           supplierProbe: null,
+          supplierEvaluation: null,
           candidateUrls: [],
           matchedImageId,
           message:
@@ -1017,6 +1122,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         description: null,
         supplierDetails: null,
         supplierProbe: null,
+        supplierEvaluation: null,
         candidateUrls: [],
         matchedImageId,
         message: missingInputMessage,
@@ -1042,6 +1148,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       description: null,
       supplierDetails: null,
       supplierProbe: null,
+      supplierEvaluation: null,
       candidateUrls: [],
       matchedImageId,
       message: '1688 image search did not return any supplier product candidates.',
@@ -1145,6 +1252,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       description: null,
       supplierDetails: null,
       supplierProbe: null,
+      supplierEvaluation: null,
       candidateUrls: normalizedCandidateUrls,
       matchedImageId,
       message: blockedMessage,
@@ -1154,7 +1262,49 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     return;
   }
 
-    if (!bestCandidate || bestScore < configuredMinimumCandidateScore) {
+  const bestCandidateEvaluation =
+    bestCandidate && bestScore >= configuredMinimumCandidateScore
+      ? buildSupplierEvaluation(bestCandidate, 'approved')
+      : bestCandidate
+        ? buildSupplierEvaluation(bestCandidate, 'rejected')
+        : null;
+
+  if (bestCandidate) {
+    upsertScanStep({
+      key: 'supplier_evaluate',
+      label: 'Evaluate supplier candidate',
+      attempt: 1,
+      candidateId: matchedImageId,
+      candidateRank: bestCandidate.candidateRank,
+      status:
+        bestCandidateEvaluation?.status === 'approved'
+          ? 'completed'
+          : 'failed',
+      resultCode:
+        bestCandidateEvaluation?.status === 'approved'
+          ? 'candidate_approved'
+          : 'candidate_rejected',
+      message:
+        bestCandidateEvaluation?.status === 'approved'
+          ? 'The strongest 1688 supplier candidate met the heuristic match threshold.'
+          : 'The strongest 1688 supplier candidate did not meet the heuristic match threshold.',
+      url: bestCandidate.url,
+      details: mergeStepDetails([
+        { label: 'Candidate score', value: String(bestScore) },
+        { label: 'Threshold', value: String(configuredMinimumCandidateScore) },
+        {
+          label: 'Confidence',
+          value:
+            typeof bestCandidateEvaluation?.confidence === 'number'
+              ? String(Math.round(bestCandidateEvaluation.confidence * 100)) + '%'
+              : null,
+        },
+        { label: 'Title', value: bestCandidate.title },
+      ]),
+    });
+  }
+
+  if (!bestCandidate || bestScore < configuredMinimumCandidateScore) {
     await artifacts.screenshot('1688-scan-no-match').catch(() => undefined);
     await artifacts.html('1688-scan-no-match').catch(() => undefined);
     await emitResult({
@@ -1165,6 +1315,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       description: bestCandidate?.description || null,
       supplierDetails: bestCandidate?.supplierDetails || null,
       supplierProbe: bestCandidate?.supplierProbe || null,
+      supplierEvaluation: bestCandidateEvaluation,
       candidateUrls: normalizedCandidateUrls,
       matchedImageId,
       message:
@@ -1203,6 +1354,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     description: bestCandidate.description,
     supplierDetails: bestCandidate.supplierDetails,
     supplierProbe: bestCandidate.supplierProbe,
+    supplierEvaluation: bestCandidateEvaluation,
     candidateUrls: normalizedCandidateUrls,
     matchedImageId,
     message: '1688 supplier reverse image scan completed.',

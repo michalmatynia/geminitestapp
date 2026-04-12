@@ -161,6 +161,26 @@ export const resolveProductScanFailureSourceLabel = (
     return 'Amazon page';
   }
 
+  if (group === 'supplier') {
+    if (step.key === 'supplier_ai_evaluate') {
+      return 'Supplier evaluator';
+    }
+
+    if (
+      step.key === 'supplier_open' ||
+      step.key === 'supplier_content_ready' ||
+      step.key === 'supplier_overlays'
+    ) {
+      return 'Supplier page';
+    }
+
+    if (step.key === 'supplier_extract') {
+      return 'Supplier extraction';
+    }
+
+    return 'Supplier page';
+  }
+
   return 'Product update';
 };
 
@@ -248,6 +268,16 @@ const resolveAmazonEvaluationRejectionKind = (
   return null;
 };
 
+const resolveSupplierEvaluationRejectionKind = (
+  step: Pick<ProductScanStep, 'resultCode'>
+): 'product' | null => {
+  if (step.resultCode === 'candidate_rejected') {
+    return 'product';
+  }
+
+  return null;
+};
+
 const resolveAmazonCandidateContinuationRejectionKind = (
   step: Pick<ProductScanStep, 'key' | 'label' | 'message' | 'resultCode' | 'details'>
 ): 'language' | 'product' | null => {
@@ -303,9 +333,10 @@ export const resolveProductScanRejectedCandidateSummary = (
 ): ProductScanRejectedCandidateSummary | null => {
   const rejectedEvaluationSteps = steps.filter(
     (step) =>
-      step.key === 'amazon_ai_evaluate' &&
-      (step.resultCode === 'candidate_rejected' ||
-        step.resultCode === 'candidate_language_rejected')
+      (step.key === 'amazon_ai_evaluate' &&
+        (step.resultCode === 'candidate_rejected' ||
+          step.resultCode === 'candidate_language_rejected')) ||
+      (step.key === 'supplier_ai_evaluate' && step.resultCode === 'candidate_rejected')
   );
 
   if (rejectedEvaluationSteps.length === 0) {
@@ -320,6 +351,8 @@ export const resolveProductScanRejectedCandidateSummary = (
   const languageRejectedCount = rejectedEvaluationSteps.filter(
     (step) => resolveAmazonEvaluationRejectionKind(step) === 'language'
   ).length;
+  const latestAmazonRejectionKind = resolveAmazonEvaluationRejectionKind(latestRejectedStep);
+  const latestSupplierRejectionKind = resolveSupplierEvaluationRejectionKind(latestRejectedStep);
 
   return {
     rejectedCount: rejectedEvaluationSteps.length,
@@ -331,14 +364,14 @@ export const resolveProductScanRejectedCandidateSummary = (
       resolveStepDetailValue(latestRejectedStep, 'Language reason') ??
       latestRejectedStep.message ??
       null,
-    latestRejectionKind: resolveAmazonEvaluationRejectionKind(latestRejectedStep),
+    latestRejectionKind: latestAmazonRejectionKind ?? latestSupplierRejectionKind,
   };
 };
 
 const resolveProductScanEvaluationPolicySummaryFromStep = (
   step: Pick<ProductScanStep, 'key' | 'details' | 'resultCode' | 'status'> | null | undefined
 ): ProductScanEvaluationPolicySummary | null => {
-  if (step?.key !== 'amazon_ai_evaluate') {
+  if (step?.key !== 'amazon_ai_evaluate' && step?.key !== 'supplier_ai_evaluate') {
     return null;
   }
 
@@ -349,7 +382,7 @@ const resolveProductScanEvaluationPolicySummaryFromStep = (
   const allowedContentLanguage = resolveStepDetailValue(step, 'Allowed content language');
   const languagePolicy = resolveStepDetailValue(step, 'Language policy');
   const languageDetectionLabel = resolveStepDetailValue(step, 'Language detection');
-  const executionLabel = resolveAmazonEvaluationExecutionSummary(step)?.badgeLabel ?? null;
+  const executionLabel = resolveEvaluationExecutionSummary(step)?.badgeLabel ?? null;
 
   let languageGateLabel: string | null = null;
   if (allowedContentLanguage && languagePolicy === 'Reject non-English content') {
@@ -403,11 +436,39 @@ const resolveAmazonEvaluationExecutionSummary = (
   };
 };
 
+const resolveSupplierEvaluationExecutionSummary = (
+  step: Pick<ProductScanStep, 'key' | 'resultCode' | 'status'>
+): AmazonEvaluationExecutionSummary | null => {
+  if (step.key !== 'supplier_ai_evaluate') {
+    return null;
+  }
+
+  if (step.resultCode === 'evaluation_skipped' || step.status === 'skipped') {
+    return {
+      badgeLabel: 'Deterministic bypass',
+      detailLabel: 'Bypassed on deterministic supplier match',
+    };
+  }
+
+  return {
+    badgeLabel: 'Reviewed by AI',
+    detailLabel: null,
+  };
+};
+
+const resolveEvaluationExecutionSummary = (
+  step: Pick<ProductScanStep, 'key' | 'resultCode' | 'status'>
+): AmazonEvaluationExecutionSummary | null =>
+  resolveAmazonEvaluationExecutionSummary(step) ??
+  resolveSupplierEvaluationExecutionSummary(step);
+
 export const resolveProductScanEvaluationPolicySummary = (
   steps: ProductScanStep[]
 ): ProductScanEvaluationPolicySummary | null =>
   resolveProductScanEvaluationPolicySummaryFromStep(
-    [...steps].reverse().find((step) => step.key === 'amazon_ai_evaluate') ?? null
+    [...steps].reverse().find(
+      (step) => step.key === 'amazon_ai_evaluate' || step.key === 'supplier_ai_evaluate'
+    ) ?? null
   );
 
 type ProductScanContinuationContext = {
@@ -585,7 +646,7 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                   ? continuationContexts.get(step.attempt) ?? null
                   : null;
               const evaluationPolicySummary = resolveProductScanEvaluationPolicySummaryFromStep(step);
-              const evaluationExecutionSummary = resolveAmazonEvaluationExecutionSummary(step);
+              const evaluationExecutionSummary = resolveEvaluationExecutionSummary(step);
               const isContinuationQueueStep =
                 continuationContext?.step === step &&
                 step.key === 'queue_scan' &&

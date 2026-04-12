@@ -173,7 +173,7 @@ vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () 
   },
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/product-integrations-adapter', () => ({
   ProductListingsModal: (props: any) => {
     productListingsModalPropsMock(props);
     return <div data-testid='product-listings-modal' />;

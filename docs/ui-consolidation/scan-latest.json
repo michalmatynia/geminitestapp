@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-04-12T04:06:12.929Z",
-    "scannedFileCount": 2589,
+    "generatedAt": "2026-04-12T11:30:35.642Z",
+    "scannedFileCount": 2593,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1894
+        "count": 1897
       },
       {
         "family": "Page",
@@ -23,7 +23,7 @@
       },
       {
         "family": "Panel",
-        "count": 103
+        "count": 104
       },
       {
         "family": "Modal",
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 2006
+        "count": 2010
       },
       {
         "domain": "app",
@@ -47374,7 +47374,7 @@
         "./product-form-preload",
         "@/features/files/public",
         "@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar",
-        "@/features/integrations/public"
+        "@/features/integrations/product-integrations-adapter"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 4,
@@ -48033,11 +48033,12 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 402,
+      "lines": 409,
       "useClient": true,
       "imports": [
         "@/shared/contracts/products/custom-fields",
-        "@/shared/contracts/product-scans"
+        "@/shared/contracts/product-scans",
+        "@/features/products/lib/product-scan-run-feedback"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -48051,14 +48052,16 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 2246,
+      "lines": 2546,
       "useClient": false,
       "imports": [
         "react",
         "@tanstack/react-query",
         "@testing-library/react",
         "vitest",
-        "./ProductFormScans"
+        "@/features/products/context/ProductFormImageContext",
+        "./ProductFormScans",
+        "@/shared/lib/query-invalidation"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -48072,7 +48075,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1123,
+      "lines": 1314,
       "useClient": true,
       "imports": [
         "next/link",
@@ -48081,10 +48084,14 @@
         "react",
         "@/features/products/components/list/ProductAmazonScanModal",
         "@/features/products/components/scans/ProductScanAmazonDetails",
+        "@/features/products/components/scans/ProductScan1688Details",
+        "@/features/products/components/scans/ProductScan1688ApplyPanel",
+        "@/features/products/components/scans/useProductScan1688ReviewState",
         "@/features/products/components/scans/ProductScanDiagnostics",
         "@/features/products/components/scans/ProductScanSteps",
         "@/features/products/context/ProductFormCustomFieldContext",
         "@/features/products/context/ProductFormCoreContext",
+        "@/features/products/context/ProductFormImageContext",
         "@/features/products/context/ProductFormParameterContext",
         "@/features/products/scanner-settings",
         "@/shared/contracts/products/custom-fields",
@@ -48671,7 +48678,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 3211,
+      "lines": 3708,
       "useClient": false,
       "imports": [
         "react",
@@ -48680,8 +48687,10 @@
         "vitest",
         "./ProductAmazonScanModal",
         "@/features/products/context/ProductFormCoreContext",
+        "@/features/products/context/ProductFormImageContext",
         "@/features/products/context/ProductFormParameterContext",
-        "@/features/products/context/ProductFormCustomFieldContext"
+        "@/features/products/context/ProductFormCustomFieldContext",
+        "@/shared/lib/query-invalidation"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -48695,24 +48704,29 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 1393,
+      "lines": 1664,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
         "lucide-react",
         "react",
         "@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel",
+        "@/features/products/components/scans/ProductScan1688ApplyPanel",
         "@/features/products/components/scans/ProductScanAmazonDetails",
+        "@/features/products/components/scans/ProductScan1688Details",
         "@/features/products/components/scans/ProductScanDiagnostics",
         "@/features/products/context/ProductFormCustomFieldContext",
         "@/features/products/context/ProductFormCoreContext",
+        "@/features/products/context/ProductFormImageContext",
         "@/features/products/context/ProductFormParameterContext",
         "@/features/products/components/scans/ProductScanSteps",
+        "@/features/products/components/scans/useProductScan1688ReviewState",
         "@/shared/contracts/product-scans",
         "@/shared/contracts/products/product",
         "@/shared/lib/api-client",
         "@/shared/lib/query-invalidation",
         "@/shared/lib/timers",
+        "@/features/products/lib/product-scan-run-feedback",
         "@/shared/ui/app-modal",
         "@/shared/ui/button",
         "@/shared/ui/copy-button",
@@ -48762,7 +48776,7 @@
         "react",
         "@/features/products/components/cells/ProductImageCell",
         "@/features/products/components/EditableCell",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/features/products/context/ProductListContext",
         "@/features/products/lib/build-triggered-product-entity-json",
         "@/features/products/lib/product-integrations-adapter-loader",
@@ -48962,7 +48976,7 @@
         "next/dynamic",
         "react",
         "@/features/products/components/cells/ProductImageCell",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/features/products/context/ProductListContext",
         "@/features/products/lib/build-triggered-product-entity-json",
         "@/features/products/lib/product-integrations-adapter-loader",
@@ -49027,7 +49041,7 @@
         "react",
         "@/features/products/components/list/advanced-filter",
         "@/features/products/context/ProductListContext",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/features/products/hooks/useProductsMutations",
         "@/features/products/hooks/product-list/useTraderaMassQuickExport",
         "@/features/products/hooks/product-list/useVintedMassQuickExport",
@@ -49129,7 +49143,7 @@
       "useClient": true,
       "imports": [
         "react",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/shared/contracts/integrations/domain",
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
@@ -49281,7 +49295,7 @@
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
         "@/shared/lib/api-client",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/shared/lib/ai-paths/client-run-tracker",
         "@/shared/lib/ai-paths/trigger-button-run-feedback",
         "@/shared/lib/query-factories-v2",
@@ -49359,7 +49373,7 @@
         "@tanstack/react-query",
         "lucide-react",
         "react",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
         "@/shared/lib/api-client",
@@ -49407,7 +49421,7 @@
       "useClient": true,
       "imports": [
         "react",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/shared/contracts/integrations/listings",
         "@/shared/ui/button",
         "@/shared/utils/ui-utils",
@@ -49437,7 +49451,7 @@
         "./BaseQuickExportButton.test-support",
         "./VintedQuickListButton",
         "@/shared/utils/observability/client-error-logger",
-        "@/features/integrations/public"
+        "@/features/integrations/product-integrations-adapter"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -49457,7 +49471,7 @@
         "@tanstack/react-query",
         "lucide-react",
         "react",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/shared/contracts/integrations/listings",
         "@/shared/contracts/products/product",
         "@/shared/lib/api-client",
@@ -49505,11 +49519,89 @@
       "useClient": true,
       "imports": [
         "react",
-        "@/features/integrations/public",
+        "@/features/integrations/product-integrations-adapter",
         "@/shared/contracts/integrations/listings",
         "@/shared/ui/button",
         "@/shared/utils/ui-utils",
         "../product-column-utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/scans/ProductScan1688ApplyPanel.test.tsx",
+      "basename": "ProductScan1688ApplyPanel.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 359,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./ProductScan1688ApplyPanel"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/scans/ProductScan1688ApplyPanel.tsx",
+      "basename": "ProductScan1688ApplyPanel.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Panel",
+      "lines": 534,
+      "useClient": true,
+      "imports": [
+        "@/shared/contracts/product-scans",
+        "@/shared/ui/button",
+        "@/features/products/components/scans/ProductScan1688Details"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/scans/ProductScan1688Details.test.tsx",
+      "basename": "ProductScan1688Details.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 226,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./ProductScan1688Details"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/products/components/scans/ProductScan1688Details.tsx",
+      "basename": "ProductScan1688Details.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 695,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "@/shared/contracts/product-scans",
+        "@/shared/ui/copy-button"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
@@ -49542,7 +49634,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1244,
+      "lines": 1250,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -49624,7 +49716,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 723,
+      "lines": 833,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -49643,7 +49735,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 753,
+      "lines": 816,
       "useClient": true,
       "imports": [
         "lucide-react",

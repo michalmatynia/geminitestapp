@@ -261,9 +261,10 @@ const resolveRejectedAmazonCandidateHistory = (
           ? step.candidateRank
           : null,
       url: step.url?.trim() || resolveStepDetailValue(step, 'Candidate URL'),
-      rejectionKind: (step.resultCode === 'candidate_language_rejected'
-        ? 'language'
-        : 'product') as 'language' | 'product',
+      rejectionKind:
+        step.resultCode === 'candidate_language_rejected'
+          ? ('language' as const)
+          : ('product' as const),
       confidenceLabel: resolveStepDetailValue(step, 'Confidence'),
       modelId: resolveStepDetailValue(step, 'Model'),
       reason:

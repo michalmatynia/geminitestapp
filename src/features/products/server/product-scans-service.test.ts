@@ -23,7 +23,11 @@ const mocks = vi.hoisted(() => ({
   resolveProductScannerHeadlessMock: vi.fn(),
   buildProductScannerEngineRequestOptionsMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorConfigMock: vi.fn(),
+  resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock: vi.fn(),
+  resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock: vi.fn(),
+  resolveProductScanner1688CandidateEvaluatorConfigMock: vi.fn(),
   runBrainChatCompletionMock: vi.fn(),
+  evaluate1688SupplierCandidateMatchMock: vi.fn(),
   captureExceptionMock: vi.fn(),
 }));
 
@@ -85,6 +89,17 @@ vi.mock('./product-scanner-settings', () => ({
     mocks.buildProductScannerEngineRequestOptionsMock(...args),
   resolveProductScannerAmazonCandidateEvaluatorConfig: (...args: unknown[]) =>
     mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock(...args),
+  resolveProductScannerAmazonCandidateEvaluatorProbeConfig: (...args: unknown[]) =>
+    mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock(...args),
+  resolveProductScannerAmazonCandidateEvaluatorExtractionConfig: (...args: unknown[]) =>
+    mocks.resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock(...args),
+  resolveProductScanner1688CandidateEvaluatorConfig: (...args: unknown[]) =>
+    mocks.resolveProductScanner1688CandidateEvaluatorConfigMock(...args),
+}));
+
+vi.mock('./product-scan-1688-evaluator', () => ({
+  evaluate1688SupplierCandidateMatch: (...args: unknown[]) =>
+    mocks.evaluate1688SupplierCandidateMatchMock(...args),
 }));
 
 vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
@@ -166,7 +181,7 @@ describe('product-scans-service', () => {
     });
     mocks.resolveProductScannerHeadlessMock.mockResolvedValue(true);
     mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
-    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue({
+    const defaultAmazonEvaluationConfig = {
       enabled: false,
       mode: 'disabled',
       threshold: 0.85,
@@ -174,6 +189,26 @@ describe('product-scans-service', () => {
       allowedContentLanguage: 'en',
       rejectNonEnglishContent: true,
       languageDetectionMode: 'deterministic_then_ai',
+      modelId: null,
+      systemPrompt: null,
+      brainApplied: null,
+    };
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue(
+      defaultAmazonEvaluationConfig
+    );
+    mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock.mockImplementation(
+      (...args: unknown[]) =>
+        mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock(...args)
+    );
+    mocks.resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock.mockImplementation(
+      (...args: unknown[]) =>
+        mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock(...args)
+    );
+    mocks.resolveProductScanner1688CandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: false,
+      mode: 'disabled',
+      threshold: 0.75,
+      onlyForAmbiguousCandidates: true,
       modelId: null,
       systemPrompt: null,
       brainApplied: null,
@@ -186,6 +221,7 @@ describe('product-scans-service', () => {
       })
     );
     mocks.upsertProductScanMock.mockImplementation(async (scan: ProductScanRecord) => scan);
+    mocks.evaluate1688SupplierCandidateMatchMock.mockResolvedValue(null);
   });
 
   it('fills a missing ASIN from a completed Amazon scan result', async () => {
@@ -1700,6 +1736,10 @@ describe('product-scans-service', () => {
         runStatus: 'running',
       },
     });
+    const oversizedStepDetails = Array.from({ length: 25 }, (_, index) => ({
+      label: `Detail ${index + 1}`,
+      value: `Value ${index + 1}`,
+    }));
 
     mocks.readPlaywrightEngineRunMock.mockResolvedValue({
       runId: 'run-1',
@@ -1726,6 +1766,7 @@ describe('product-scans-service', () => {
             label: 'Collect Amazon candidates from Google Lens',
             status: 'completed',
             message: 'Found 3 Amazon candidates.',
+            details: oversizedStepDetails,
             url: 'https://lens.google.com/search',
             startedAt: '2026-04-11T04:00:02.000Z',
             completedAt: '2026-04-11T04:00:03.000Z',
@@ -1757,11 +1798,15 @@ describe('product-scans-service', () => {
           expect.objectContaining({
             key: 'google_candidates',
             status: 'completed',
+            details: oversizedStepDetails.slice(0, 20),
           }),
         ],
       })
     );
     expect(result.steps).toHaveLength(4);
+    expect(result.steps.find((step) => step.key === 'google_candidates')?.details).toEqual(
+      oversizedStepDetails.slice(0, 20)
+    );
   });
 
   it('marks conflicting ASIN results without overwriting the product', async () => {
@@ -2826,6 +2871,19 @@ describe('product-scans-service', () => {
           priceText: 'CN¥ 12.50-15.00',
           currency: 'CNY',
         },
+        supplierEvaluation: {
+          status: 'approved',
+          sameProduct: true,
+          imageMatch: true,
+          titleMatch: true,
+          confidence: 0.88,
+          proceed: true,
+          reasons: ['The strongest 1688 supplier candidate met the heuristic match threshold.'],
+          mismatches: [],
+          modelId: 'heuristic_1688_probe_v1',
+          error: null,
+          evaluatedAt: '2026-04-11T04:05:00.000Z',
+        },
       },
       finalUrl: 'https://detail.1688.com/offer/123456789.html',
     });
@@ -2847,7 +2905,11 @@ describe('product-scans-service', () => {
         supplierProbe: expect.objectContaining({
           pageTitle: '1688 Probe Title',
         }),
-        supplierEvaluation: null,
+        supplierEvaluation: expect.objectContaining({
+          status: 'approved',
+          proceed: true,
+          modelId: 'heuristic_1688_probe_v1',
+        }),
         asinUpdateStatus: 'not_needed',
       })
     );
@@ -2857,7 +2919,154 @@ describe('product-scans-service', () => {
         supplierDetails: expect.objectContaining({
           supplierName: 'Yiwu Supplier Co.',
         }),
+        supplierEvaluation: expect.objectContaining({
+          status: 'approved',
+        }),
         asinUpdateStatus: 'not_needed',
+      })
+    );
+  });
+
+  it('upgrades a borderline 1688 supplier result through the AI evaluator', async () => {
+    const scan = createScan({
+      provider: '1688',
+      scanType: 'supplier_reverse_image',
+      asinUpdateStatus: 'not_needed',
+    });
+
+    mocks.resolveProductScanner1688CandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.8,
+      onlyForAmbiguousCandidates: true,
+      modelId: 'gpt-4.1-mini',
+      systemPrompt: 'Supplier prompt',
+      brainApplied: {
+        capability: 'product.scan.1688_supplier_match',
+      },
+    });
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'no_match',
+        title: '1688 Supplier Listing',
+        price: 'CN¥ 12.50-15.00',
+        url: 'https://detail.1688.com/offer/123456789.html',
+        description: 'Supplier description',
+        matchedImageId: 'image-1',
+        supplierDetails: {
+          supplierName: 'Yiwu Supplier Co.',
+          supplierProductUrl: 'https://detail.1688.com/offer/123456789.html',
+          supplierStoreUrl: 'https://shop.1688.com/page.html',
+          currency: 'CNY',
+          priceRangeText: 'CN¥ 12.50-15.00',
+          moqText: '2 pcs',
+        },
+        supplierProbe: {
+          candidateUrl: 'https://detail.1688.com/offer/123456789.html',
+          canonicalUrl: 'https://detail.1688.com/offer/123456789.html',
+          pageTitle: '1688 Probe Title',
+          supplierName: 'Yiwu Supplier Co.',
+          candidateRank: 1,
+          artifactKey: '1688-scan-probe-image-1-rank-1',
+        },
+        supplierEvaluation: {
+          status: 'rejected',
+          sameProduct: false,
+          imageMatch: null,
+          titleMatch: false,
+          confidence: 0.55,
+          proceed: false,
+          reasons: ['The heuristic score stayed below the trust threshold.'],
+          mismatches: ['Heuristic score was inconclusive.'],
+          modelId: 'heuristic_1688_probe_v1',
+          error: null,
+          evaluatedAt: '2026-04-11T04:05:00.000Z',
+        },
+        steps: [
+          {
+            key: 'supplier_evaluate',
+            label: 'Evaluate supplier candidate',
+            status: 'failed',
+            resultCode: 'candidate_rejected',
+            message: 'The strongest 1688 supplier candidate did not meet the heuristic match threshold.',
+            candidateId: 'image-1',
+            candidateRank: 1,
+            details: [],
+          },
+        ],
+      },
+      finalUrl: 'https://detail.1688.com/offer/123456789.html',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Product 1',
+      images: [],
+      imageLinks: ['https://cdn.example.com/product-1.jpg'],
+      description_en: 'Source product',
+      supplierName: null,
+      supplierLink: null,
+      ean: null,
+      gtin: null,
+    });
+    mocks.evaluate1688SupplierCandidateMatchMock.mockResolvedValue({
+      status: 'approved',
+      sameProduct: true,
+      imageMatch: true,
+      titleMatch: true,
+      confidence: 0.92,
+      proceed: true,
+      reasons: ['AI confirmed the supplier page matches the same product.'],
+      mismatches: [],
+      modelId: 'gpt-4.1-mini',
+      error: null,
+      evaluatedAt: '2026-04-11T04:05:10.000Z',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.getProductByIdMock).toHaveBeenCalledWith('product-1');
+    expect(mocks.evaluate1688SupplierCandidateMatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scan: expect.objectContaining({ id: 'scan-1' }),
+        parsedResult: expect.objectContaining({ status: 'no_match' }),
+        evaluatorConfig: expect.objectContaining({
+          enabled: true,
+          modelId: 'gpt-4.1-mini',
+        }),
+      })
+    );
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'completed',
+        supplierEvaluation: expect.objectContaining({
+          status: 'approved',
+          modelId: 'gpt-4.1-mini',
+        }),
+        asinUpdateMessage: 'AI evaluator approved the 1688 supplier candidate (92%).',
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'supplier_ai_evaluate',
+            status: 'completed',
+            resultCode: 'candidate_approved',
+          }),
+        ]),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'completed',
+        supplierEvaluation: expect.objectContaining({
+          status: 'approved',
+          confidence: 0.92,
+        }),
       })
     );
   });

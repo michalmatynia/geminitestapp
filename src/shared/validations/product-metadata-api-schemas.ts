@@ -53,6 +53,24 @@ export type CatalogIdsQuery = z.infer<typeof catalogIdsQuerySchema>;
 
 export const freshQuerySchema = z.preprocess(parseBooleanQueryValue, z.boolean().optional());
 
+/**
+ * Standard product catalog query with fresh data flag.
+ */
+export const catalogIdWithFreshQuerySchema = catalogIdQuerySchema.extend({
+  fresh: freshQuerySchema.default(false),
+});
+
+export type CatalogIdWithFreshQuery = z.infer<typeof catalogIdWithFreshQuerySchema>;
+
+/**
+ * Standard product catalog IDs query with fresh data flag.
+ */
+export const catalogIdsWithFreshQuerySchema = catalogIdsQuerySchema.extend({
+  fresh: freshQuerySchema.default(false),
+});
+
+export type CatalogIdsWithFreshQuery = z.infer<typeof catalogIdsWithFreshQuerySchema>;
+
 export const connectionIdQuerySchema = z.object({
   connectionId: z.preprocess(
     normalizeOptionalEntityId,

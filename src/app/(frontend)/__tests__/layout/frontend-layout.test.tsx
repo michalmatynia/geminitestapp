@@ -3,7 +3,7 @@
  */
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 const {
   cmsStorefrontAppearanceProviderMock,
@@ -80,6 +80,21 @@ vi.mock('@/features/kangur/public', () => ({
 }));
 
 describe('frontend layout bootstrap', () => {
+  const resolveSuspenseRuntime = async (element: React.ReactElement) => {
+    expect(React.isValidElement(element)).toBe(true);
+    const child = element.props.children as React.ReactElement;
+    expect(React.isValidElement(child)).toBe(true);
+    return child.type(child.props);
+  };
+
+  const renderResolvedFrontendLayout = async (children: React.ReactNode) => {
+    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
+    const layout = await FrontendLayout({ children });
+    const resolvedLayout = await resolveSuspenseRuntime(layout);
+    render(resolvedLayout as React.ReactElement);
+    return { layout, resolvedLayout };
+  };
+
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -111,12 +126,7 @@ describe('frontend layout bootstrap', () => {
   it(
     'skips Kangur storefront bootstrap when the frontend public owner is cms',
     async () => {
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>cms</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>cms</div>);
 
     expect(resolveFrontPageSelectionMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
@@ -160,12 +170,7 @@ describe('frontend layout bootstrap', () => {
       'window.__KANGUR_AUTH_BOOTSTRAP__=null;'
     );
 
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>kangur</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>kangur</div>);
 
     expect(resolveFrontPageSelectionMock).toHaveBeenCalled();
     // CMS theme is speculatively fetched in parallel but its result is
@@ -212,12 +217,7 @@ describe('frontend layout bootstrap', () => {
       fallbackReason: null,
     });
 
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>root-redirect</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>root-redirect</div>);
 
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
@@ -246,12 +246,7 @@ describe('frontend layout bootstrap', () => {
       fallbackReason: null,
     });
 
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>kangur-lessons</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>kangur-lessons</div>);
 
     expect(resolveFrontPageSelectionMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
@@ -296,12 +291,7 @@ describe('frontend layout bootstrap', () => {
       'window.__KANGUR_AUTH_BOOTSTRAP__=null;'
     );
 
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>kangur-home</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>kangur-home</div>);
 
     const timingScript = document.querySelector('#__FRONTEND_LAYOUT_TIMING__');
     expect(timingScript).not.toBeNull();
@@ -322,12 +312,7 @@ describe('frontend layout bootstrap', () => {
       })
     );
 
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>product</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>product</div>);
 
     expect(document.querySelector('#kangur-main-content')).toHaveAttribute(
       'data-frontend-public-route-family',
@@ -346,12 +331,7 @@ describe('frontend layout bootstrap', () => {
       })
     );
 
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>kangur-explicit</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>kangur-explicit</div>);
 
     expect(document.querySelector('#kangur-main-content')).toHaveAttribute(
       'data-frontend-public-route-family',
@@ -389,12 +369,7 @@ describe('frontend layout bootstrap', () => {
       fallbackReason: 'transient-mongo-error',
     });
 
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>kangur-lessons</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>kangur-lessons</div>);
 
     expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
@@ -423,12 +398,7 @@ describe('frontend layout bootstrap', () => {
     );
     readServerRequestPathnameMock.mockReturnValue('/en/kangur/library');
 
-    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-
-    const layout = await FrontendLayout({
-      children: <div>kangur-explicit</div>,
-    });
-    render(layout);
+    await renderResolvedFrontendLayout(<div>kangur-explicit</div>);
 
     expect(headersMock).not.toHaveBeenCalled();
     expect(resolveFrontPageSelectionMock).not.toHaveBeenCalled();
@@ -456,10 +426,11 @@ describe('frontend layout bootstrap', () => {
         children: <div>kangur-explicit</div>,
       });
 
-      await vi.advanceTimersByTimeAsync(1200);
-
       const layout = await layoutPromise;
-      render(layout);
+      const resolvedLayoutPromise = resolveSuspenseRuntime(layout);
+      await vi.advanceTimersByTimeAsync(1200);
+      const resolvedLayout = await resolvedLayoutPromise;
+      render(resolvedLayout as React.ReactElement);
 
       expect(resolveFrontPageSelectionMock).toHaveBeenCalledTimes(1);
       expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();

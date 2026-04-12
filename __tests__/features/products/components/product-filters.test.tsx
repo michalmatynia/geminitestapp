@@ -42,12 +42,16 @@ vi.mock('@/features/products/hooks/useUserPreferences', () => ({
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
-  useCategories: () => ({ data: [] }),
-  useCategoriesForCatalogs: () => ({ data: [] }),
   useCatalogs: () => ({ data: [] }),
+  useFilterTags: () => ({ data: [] }),
   useMultiTags: () => [],
   useTags: () => ({ data: [] }),
   useProducers: () => ({ data: [] }),
+}));
+
+vi.mock('@/features/products/hooks/useCategoryQueries', () => ({
+  useProductCategories: () => ({ data: [] }),
+  useProductCategoriesForCatalogs: () => ({ data: [] }),
 }));
 
 const queryClient = new QueryClient({
@@ -88,6 +92,8 @@ describe('ProductFilters Component', () => {
     nameLocale: 'name_en',
     baseExported: '',
     setBaseExported: vi.fn(),
+    includeArchived: false,
+    setIncludeArchived: vi.fn(),
     minPrice: undefined,
     setMinPrice: vi.fn(),
     maxPrice: undefined,

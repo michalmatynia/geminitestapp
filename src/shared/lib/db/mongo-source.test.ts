@@ -114,6 +114,7 @@ describe('mongo-source', () => {
       source: 'cloud',
       target: 'local',
       syncedAt: '2026-04-09T04:30:00.000Z',
+      preSyncBackups: [],
       archivePath: '/tmp/mongo-sync.archive',
       logPath: '/tmp/mongo-sync.log',
     });

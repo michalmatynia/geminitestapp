@@ -3,8 +3,8 @@
   "label": "Observability pipelines, metrics, and system logs",
   "riskLevel": "medium",
   "sourceRoots": [
-    "src/features/observability",
     "src/shared/lib/observability",
+    "src/shared/utils/observability",
     "src/app/api/system/logs",
     "scripts/observability"
   ],

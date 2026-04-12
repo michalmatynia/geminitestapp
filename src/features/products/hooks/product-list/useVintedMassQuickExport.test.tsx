@@ -33,7 +33,7 @@ const {
   toastMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/product-integrations-adapter', () => ({
   clearPersistedVintedQuickListFeedback: (...args: unknown[]) =>
     clearPersistedVintedQuickListFeedbackMock(...args),
   ensureVintedBrowserSession: (...args: unknown[]) =>

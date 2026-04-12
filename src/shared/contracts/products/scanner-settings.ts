@@ -41,7 +41,14 @@ export type ProductScannerAmazonCandidateEvaluatorLanguageDetectionMode = z.infe
   typeof productScannerAmazonCandidateEvaluatorLanguageDetectionModeSchema
 >;
 
-export const productScannerAmazonCandidateEvaluatorAllowedContentLanguageSchema = z.enum(['en']);
+export const productScannerAmazonCandidateEvaluatorAllowedContentLanguageSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(20)
+  .toLowerCase()
+  .regex(/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/)
+  .or(z.string().trim().min(2).max(20).transform((value) => value.toLowerCase().replace(/_/g, '-')));
 
 export type ProductScannerAmazonCandidateEvaluatorAllowedContentLanguage = z.infer<
   typeof productScannerAmazonCandidateEvaluatorAllowedContentLanguageSchema
@@ -60,6 +67,18 @@ export const productScannerAmazonCandidateEvaluatorSchema = z.object({
 
 export type ProductScannerAmazonCandidateEvaluator = z.infer<
   typeof productScannerAmazonCandidateEvaluatorSchema
+>;
+
+export const productScanner1688CandidateEvaluatorSchema = z.object({
+  mode: productScannerAmazonCandidateEvaluatorModeSchema,
+  modelId: z.string().trim().min(1).max(200).nullable(),
+  threshold: z.number().min(0).max(1),
+  onlyForAmbiguousCandidates: z.boolean(),
+  systemPrompt: z.string().trim().max(4000).nullable(),
+});
+
+export type ProductScanner1688CandidateEvaluator = z.infer<
+  typeof productScanner1688CandidateEvaluatorSchema
 >;
 
 export const productScanner1688SettingsSchema = z.object({
@@ -81,6 +100,7 @@ export const productScannerSettingsSchema = z.object({
   amazonCandidateEvaluatorProbe: productScannerAmazonCandidateEvaluatorSchema.optional(),
   amazonCandidateEvaluatorExtraction: productScannerAmazonCandidateEvaluatorSchema.optional(),
   scanner1688: productScanner1688SettingsSchema.optional(),
+  scanner1688CandidateEvaluator: productScanner1688CandidateEvaluatorSchema.optional(),
 });
 
 export type ProductScannerSettings = z.infer<typeof productScannerSettingsSchema>;

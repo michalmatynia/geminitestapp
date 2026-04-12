@@ -1,6 +1,7 @@
 import type {
   ProductScanAmazonEvaluationStatus,
   ProductScanRecord,
+  ProductScanSupplierEvaluationStatus,
   ProductScanStatus,
 } from '@/shared/contracts/product-scans';
 import type { TriggerButtonRunFeedbackPresentation } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
@@ -65,6 +66,7 @@ export const resolveProductScanRunFeedbackPresentation = (
     manualVerificationPending?: boolean | null;
     amazonEvaluationStatus?: ProductScanAmazonEvaluationStatus | null;
     amazonEvaluationLanguageAccepted?: boolean | null;
+    supplierEvaluationStatus?: ProductScanSupplierEvaluationStatus | null;
   }
 ): TriggerButtonRunFeedbackPresentation =>
   status === 'running' && options?.manualVerificationPending
@@ -90,11 +92,23 @@ export const resolveProductScanRunFeedbackPresentation = (
           badgeClassName:
             'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25',
         }
+      : status === 'no_match' && options?.supplierEvaluationStatus === 'rejected'
+        ? {
+            label: 'AI Rejected',
+            variant: 'warning',
+            badgeClassName:
+              'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25',
+          }
       : status === 'failed' && options?.amazonEvaluationStatus === 'failed'
         ? {
             label: 'AI Failed',
             variant: 'error',
           }
+        : status === 'failed' && options?.supplierEvaluationStatus === 'failed'
+          ? {
+              label: 'AI Failed',
+              variant: 'error',
+            }
         : PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS[status] ?? {
             label: status,
             variant: 'neutral',
@@ -110,6 +124,7 @@ export const buildProductScanRunFeedbackFromRecord = (
     manualVerificationPending: isManualVerificationPending(scan),
     amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
     amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
+    supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,
   }),
 });
 

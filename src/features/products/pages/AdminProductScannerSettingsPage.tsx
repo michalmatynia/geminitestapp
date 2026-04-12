@@ -16,6 +16,7 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 
 import {
   buildPersistedProductScannerSettings,
+  PRODUCT_SCANNER_1688_CANDIDATE_EVALUATOR_MODE_OPTIONS,
   PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_OPTIONS,
   buildProductScannerSettingsDraft,
   PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS,
@@ -47,10 +48,17 @@ const toUnitInterval = (value: string, fallback: number): number => {
 const formatConfidenceThresholdLabel = (value: number): string =>
   `${Math.round(Math.min(1, Math.max(0, value)) * 100)}% confidence`;
 
+type AmazonCandidateEvaluator = Pick<
+  ProductScannerSettingsDraft,
+  'amazonCandidateEvaluatorProbe' | 'amazonCandidateEvaluatorExtraction'
+>[keyof Pick<
+  ProductScannerSettingsDraft,
+  'amazonCandidateEvaluatorProbe' | 'amazonCandidateEvaluatorExtraction'
+>];
+
 const resolveAmazonEvaluatorPolicyLines = (
-  draft: Pick<ProductScannerSettingsDraft, 'amazonCandidateEvaluator'>
+  evaluator: AmazonCandidateEvaluator
 ): string[] => {
-  const evaluator = draft.amazonCandidateEvaluator;
   if (evaluator.mode === 'disabled') {
     return [
       'AI review is disabled. The scanner trusts the Amazon candidate flow without an evaluator gate.',
@@ -79,11 +87,9 @@ const resolveAmazonEvaluatorPolicyLines = (
 };
 
 const resolveAmazonEvaluatorSummaryLines = (
-  draft: Pick<ProductScannerSettingsDraft, 'amazonCandidateEvaluator'>,
+  evaluator: AmazonCandidateEvaluator,
   effectiveModelLabel: string
 ): string[] => {
-  const evaluator = draft.amazonCandidateEvaluator;
-
   if (evaluator.mode === 'disabled') {
     return [
       'Model: Disabled',
@@ -109,12 +115,75 @@ const resolveAmazonEvaluatorSummaryLines = (
   ];
 };
 
+const resolveAmazonEvaluatorModelLabel = (
+  evaluator: AmazonCandidateEvaluator,
+  brainDefaultModelLabel: string
+): string =>
+  evaluator.mode === 'disabled'
+    ? 'Disabled'
+    : evaluator.mode === 'brain_default'
+      ? brainDefaultModelLabel.trim() || 'Not configured in AI Brain'
+      : evaluator.modelId?.trim() || 'Select a model';
+
+const resolve1688EvaluatorPolicyLines = (
+  draft: Pick<ProductScannerSettingsDraft, 'scanner1688CandidateEvaluator'>
+): string[] => {
+  const evaluator = draft.scanner1688CandidateEvaluator;
+  if (evaluator.mode === 'disabled') {
+    return [
+      'AI review is disabled. The 1688 scanner trusts the strongest heuristic supplier candidate.',
+    ];
+  }
+
+  return [
+    evaluator.onlyForAmbiguousCandidates
+      ? 'AI review runs only when the 1688 supplier candidate remains ambiguous after the heuristic probe.'
+      : 'AI review runs on every strongest 1688 supplier candidate before the scan is trusted.',
+    `Candidates must meet ${formatConfidenceThresholdLabel(evaluator.threshold)} to be approved.`,
+    'Approved supplier candidates persist their extracted supplier page, pricing, MOQ, and images.',
+    'Rejected supplier candidates finish the scan as No Match while keeping the candidate diagnostics visible.',
+    'Evaluator runtime errors fail the scan conservatively instead of trusting the supplier page.',
+  ];
+};
+
+const resolve1688EvaluatorSummaryLines = (
+  draft: Pick<ProductScannerSettingsDraft, 'scanner1688CandidateEvaluator'>,
+  effectiveModelLabel: string
+): string[] => {
+  const evaluator = draft.scanner1688CandidateEvaluator;
+
+  if (evaluator.mode === 'disabled') {
+    return [
+      'Model: Disabled',
+      'Trust policy: 1688 supplier candidates are trusted without AI review.',
+      'Review scope: Heuristic-only',
+      'Continuation: No AI rejection recovery path',
+    ];
+  }
+
+  return [
+    `Model source: ${evaluator.mode === 'brain_default' ? 'AI Brain default' : 'Scanner override'}`,
+    `Resolved model: ${effectiveModelLabel}`,
+    `Trust threshold: ${formatConfidenceThresholdLabel(evaluator.threshold)}`,
+    `Review scope: ${
+      evaluator.onlyForAmbiguousCandidates
+        ? 'Ambiguous 1688 candidates only'
+        : 'Every strongest 1688 candidate'
+    }`,
+    'Continuation: Approved candidates complete the scan, rejected candidates finish as No Match',
+  ];
+};
+
 export function AdminProductScannerSettingsPage(): React.JSX.Element {
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSetting = useUpdateSetting();
   const personasQuery = usePlaywrightPersonas();
   const brainModelOptions = useBrainModelOptions({
     capability: 'product.scan.amazon_candidate_match',
+    enabled: settingsQuery.isSuccess,
+  });
+  const brain1688ModelOptions = useBrainModelOptions({
+    capability: 'product.scan.1688_supplier_match',
     enabled: settingsQuery.isSuccess,
   });
   const { toast } = useToast();
@@ -157,19 +226,59 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
       })),
     [brainModelOptions.models]
   );
-  const effectiveAmazonCandidateEvaluatorModel =
-    draft.amazonCandidateEvaluator.mode === 'disabled'
+  const supplier1688EvaluatorModelOptions = useMemo(
+    () =>
+      brain1688ModelOptions.models.map((modelId) => ({
+        value: modelId,
+        label: modelId,
+      })),
+    [brain1688ModelOptions.models]
+  );
+  const effectiveAmazonCandidateEvaluatorProbeModel = resolveAmazonEvaluatorModelLabel(
+    draft.amazonCandidateEvaluatorProbe,
+    brainModelOptions.effectiveModelId
+  );
+  const effectiveAmazonCandidateEvaluatorExtractionModel = resolveAmazonEvaluatorModelLabel(
+    draft.amazonCandidateEvaluatorExtraction,
+    brainModelOptions.effectiveModelId
+  );
+  const effective1688CandidateEvaluatorModel =
+    draft.scanner1688CandidateEvaluator.mode === 'disabled'
       ? 'Disabled'
-      : draft.amazonCandidateEvaluator.mode === 'brain_default'
-        ? brainModelOptions.effectiveModelId.trim() || 'Not configured in AI Brain'
-        : draft.amazonCandidateEvaluator.modelId?.trim() || 'Select a model';
-  const amazonEvaluatorPolicyLines = useMemo(
-    () => resolveAmazonEvaluatorPolicyLines(draft),
+      : draft.scanner1688CandidateEvaluator.mode === 'brain_default'
+        ? brain1688ModelOptions.effectiveModelId.trim() || 'Not configured in AI Brain'
+        : draft.scanner1688CandidateEvaluator.modelId?.trim() || 'Select a model';
+  const amazonProbeEvaluatorPolicyLines = useMemo(
+    () => resolveAmazonEvaluatorPolicyLines(draft.amazonCandidateEvaluatorProbe),
     [draft]
   );
-  const amazonEvaluatorSummaryLines = useMemo(
-    () => resolveAmazonEvaluatorSummaryLines(draft, effectiveAmazonCandidateEvaluatorModel),
-    [draft, effectiveAmazonCandidateEvaluatorModel]
+  const amazonExtractionEvaluatorPolicyLines = useMemo(
+    () => resolveAmazonEvaluatorPolicyLines(draft.amazonCandidateEvaluatorExtraction),
+    [draft]
+  );
+  const amazonProbeEvaluatorSummaryLines = useMemo(
+    () =>
+      resolveAmazonEvaluatorSummaryLines(
+        draft.amazonCandidateEvaluatorProbe,
+        effectiveAmazonCandidateEvaluatorProbeModel
+      ),
+    [draft, effectiveAmazonCandidateEvaluatorProbeModel]
+  );
+  const amazonExtractionEvaluatorSummaryLines = useMemo(
+    () =>
+      resolveAmazonEvaluatorSummaryLines(
+        draft.amazonCandidateEvaluatorExtraction,
+        effectiveAmazonCandidateEvaluatorExtractionModel
+      ),
+    [draft, effectiveAmazonCandidateEvaluatorExtractionModel]
+  );
+  const evaluator1688PolicyLines = useMemo(
+    () => resolve1688EvaluatorPolicyLines(draft),
+    [draft]
+  );
+  const evaluator1688SummaryLines = useMemo(
+    () => resolve1688EvaluatorSummaryLines(draft, effective1688CandidateEvaluatorModel),
+    [draft, effective1688CandidateEvaluatorModel]
   );
   const persistedDraftForSave = useMemo(
     () => buildPersistedProductScannerSettings(draft, personasQuery.data),
@@ -344,23 +453,23 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
         </FormSection>
 
         <FormSection
-          title='Amazon Candidate Evaluator'
-          description='Optional AI gate that reviews the Amazon page before trusting extracted data.'
+          title='Amazon Probe Evaluator'
+          description='Optional AI gate that reviews each Amazon candidate before extraction is attempted.'
           className='p-6'
         >
           <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
             <FormField
-              label='Evaluator Mode'
+              label='Probe Evaluator Mode'
               description='Choose whether this scanner step uses the AI Brain default model or a scanner-specific override.'
             >
               <SelectSimple
                 size='sm'
-                value={draft.amazonCandidateEvaluator.mode}
+                value={draft.amazonCandidateEvaluatorProbe.mode}
                 onValueChange={(value: string): void => {
                   setDraft((prev) => ({
                     ...prev,
-                    amazonCandidateEvaluator: {
-                      ...prev.amazonCandidateEvaluator,
+                    amazonCandidateEvaluatorProbe: {
+                      ...prev.amazonCandidateEvaluatorProbe,
                       mode:
                         value === 'brain_default' || value === 'model_override'
                           ? value
@@ -370,8 +479,8 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 }}
                 options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS]}
                 placeholder='Select evaluator mode'
-                ariaLabel='Select Amazon candidate evaluator mode'
-                title='Select Amazon candidate evaluator mode'
+                ariaLabel='Select Amazon probe evaluator mode'
+                title='Select Amazon probe evaluator mode'
               />
             </FormField>
             <FormField
@@ -379,33 +488,33 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
               description='Current effective model for the evaluator checkpoint.'
             >
               <Input
-                value={effectiveAmazonCandidateEvaluatorModel}
+                value={effectiveAmazonCandidateEvaluatorProbeModel}
                 readOnly
-                aria-label='Resolved Amazon candidate evaluator model'
-                title='Resolved Amazon candidate evaluator model'
+                aria-label='Resolved Amazon probe evaluator model'
+                title='Resolved Amazon probe evaluator model'
               />
             </FormField>
-            {draft.amazonCandidateEvaluator.mode === 'model_override' ? (
+            {draft.amazonCandidateEvaluatorProbe.mode === 'model_override' ? (
               <FormField
                 label='Override Model'
                 description='Choose a vision-capable model from the AI Brain catalog.'
               >
                 <SelectSimple
                   size='sm'
-                  value={draft.amazonCandidateEvaluator.modelId ?? ''}
+                  value={draft.amazonCandidateEvaluatorProbe.modelId ?? ''}
                   onValueChange={(value: string): void => {
                     setDraft((prev) => ({
                       ...prev,
-                      amazonCandidateEvaluator: {
-                        ...prev.amazonCandidateEvaluator,
+                      amazonCandidateEvaluatorProbe: {
+                        ...prev.amazonCandidateEvaluatorProbe,
                         modelId: value.trim() || null,
                       },
                     }));
                   }}
                   options={[...amazonCandidateEvaluatorModelOptions]}
                   placeholder='Select evaluator model'
-                  ariaLabel='Select Amazon candidate evaluator model'
-                  title='Select Amazon candidate evaluator model'
+                  ariaLabel='Select Amazon probe evaluator model'
+                  title='Select Amazon probe evaluator model'
                 />
               </FormField>
             ) : null}
@@ -418,21 +527,21 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 min={0}
                 max={1}
                 step={0.05}
-                value={draft.amazonCandidateEvaluator.threshold}
+                value={draft.amazonCandidateEvaluatorProbe.threshold}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                   setDraft((prev) => ({
                     ...prev,
-                    amazonCandidateEvaluator: {
-                      ...prev.amazonCandidateEvaluator,
+                    amazonCandidateEvaluatorProbe: {
+                      ...prev.amazonCandidateEvaluatorProbe,
                       threshold: toUnitInterval(
                         event.target.value,
-                        prev.amazonCandidateEvaluator.threshold
+                        prev.amazonCandidateEvaluatorProbe.threshold
                       ),
                     },
                   }));
                 }}
-                aria-label='Amazon candidate evaluator confidence threshold'
-                title='Amazon candidate evaluator confidence threshold'
+                aria-label='Amazon probe evaluator confidence threshold'
+                title='Amazon probe evaluator confidence threshold'
               />
             </FormField>
             <FormField
@@ -442,18 +551,18 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
               <label className='inline-flex items-center gap-2 text-sm'>
                 <input
                   type='checkbox'
-                  checked={draft.amazonCandidateEvaluator.onlyForAmbiguousCandidates}
+                  checked={draft.amazonCandidateEvaluatorProbe.onlyForAmbiguousCandidates}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                     setDraft((prev) => ({
                       ...prev,
-                      amazonCandidateEvaluator: {
-                        ...prev.amazonCandidateEvaluator,
+                      amazonCandidateEvaluatorProbe: {
+                        ...prev.amazonCandidateEvaluatorProbe,
                         onlyForAmbiguousCandidates: event.target.checked,
                       },
                     }));
                   }}
-                  aria-label='Only evaluate ambiguous Amazon candidates'
-                  title='Only evaluate ambiguous Amazon candidates'
+                  aria-label='Only evaluate ambiguous Amazon probe candidates'
+                  title='Only evaluate ambiguous Amazon probe candidates'
                 />
                 Only evaluate ambiguous candidates
               </label>
@@ -471,18 +580,18 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
               <label className='inline-flex items-center gap-2 text-sm'>
                 <input
                   type='checkbox'
-                  checked={draft.amazonCandidateEvaluator.rejectNonEnglishContent}
+                  checked={draft.amazonCandidateEvaluatorProbe.rejectNonEnglishContent}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                     setDraft((prev) => ({
                       ...prev,
-                      amazonCandidateEvaluator: {
-                        ...prev.amazonCandidateEvaluator,
+                      amazonCandidateEvaluatorProbe: {
+                        ...prev.amazonCandidateEvaluatorProbe,
                         rejectNonEnglishContent: event.target.checked,
                       },
                     }));
                   }}
-                  aria-label='Reject non-English Amazon content'
-                  title='Reject non-English Amazon content'
+                  aria-label='Reject non-English Amazon content in probe stage'
+                  title='Reject non-English Amazon content in probe stage'
                 />
                 Reject non-English Amazon content
               </label>
@@ -493,12 +602,12 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
             >
               <SelectSimple
                 size='sm'
-                value={draft.amazonCandidateEvaluator.languageDetectionMode}
+                value={draft.amazonCandidateEvaluatorProbe.languageDetectionMode}
                 onValueChange={(value: string): void => {
                   setDraft((prev) => ({
                     ...prev,
-                    amazonCandidateEvaluator: {
-                      ...prev.amazonCandidateEvaluator,
+                    amazonCandidateEvaluatorProbe: {
+                      ...prev.amazonCandidateEvaluatorProbe,
                       languageDetectionMode:
                         value === 'ai_only' ? 'ai_only' : 'deterministic_then_ai',
                     },
@@ -506,8 +615,8 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 }}
                 options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_OPTIONS]}
                 placeholder='Select language detection mode'
-                ariaLabel='Select Amazon candidate evaluator language detection mode'
-                title='Select Amazon candidate evaluator language detection mode'
+                ariaLabel='Select Amazon probe evaluator language detection mode'
+                title='Select Amazon probe evaluator language detection mode'
               />
             </FormField>
           </div>
@@ -516,13 +625,13 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
             {brainModelOptions.isLoading
               ? 'Loading AI Brain model options.'
               : brainModelOptions.sourceWarnings[0] ||
-                'The evaluator compares the Amazon page image and text against the product in your app before extraction is trusted.'}
+                'The probe evaluator compares the Amazon page image and text before extraction is trusted.'}
           </div>
 
           <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-background/70 px-3 py-3 text-xs text-muted-foreground'>
             <p className='font-medium uppercase tracking-wide text-foreground'>Evaluator Summary</p>
             <ul className='space-y-1'>
-              {amazonEvaluatorSummaryLines.map((line) => (
+              {amazonProbeEvaluatorSummaryLines.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
@@ -531,7 +640,202 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
           <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3 text-xs text-muted-foreground'>
             <p className='font-medium uppercase tracking-wide text-foreground'>Runtime Policy</p>
             <ul className='space-y-1'>
-              {amazonEvaluatorPolicyLines.map((line) => (
+              {amazonProbeEvaluatorPolicyLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        </FormSection>
+
+        <FormSection
+          title='Amazon Extraction Evaluator'
+          description='AI gate that validates the extracted Amazon product page before ASIN update.'
+          className='p-6'
+        >
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
+            <FormField
+              label='Extraction Evaluator Mode'
+              description='Choose whether this scanner step uses the AI Brain default model or a scanner-specific override.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluatorExtraction.mode}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorExtraction: {
+                      ...prev.amazonCandidateEvaluatorExtraction,
+                      mode:
+                        value === 'brain_default' || value === 'model_override'
+                          ? value
+                          : 'disabled',
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS]}
+                placeholder='Select evaluator mode'
+                ariaLabel='Select Amazon extraction evaluator mode'
+                title='Select Amazon extraction evaluator mode'
+              />
+            </FormField>
+            <FormField
+              label='Resolved Model'
+              description='Current effective model for the evaluator checkpoint.'
+            >
+              <Input
+                value={effectiveAmazonCandidateEvaluatorExtractionModel}
+                readOnly
+                aria-label='Resolved Amazon extraction evaluator model'
+                title='Resolved Amazon extraction evaluator model'
+              />
+            </FormField>
+            {draft.amazonCandidateEvaluatorExtraction.mode === 'model_override' ? (
+              <FormField
+                label='Override Model'
+                description='Choose a vision-capable model from the AI Brain catalog.'
+              >
+                <SelectSimple
+                  size='sm'
+                  value={draft.amazonCandidateEvaluatorExtraction.modelId ?? ''}
+                  onValueChange={(value: string): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluatorExtraction: {
+                        ...prev.amazonCandidateEvaluatorExtraction,
+                        modelId: value.trim() || null,
+                      },
+                    }));
+                  }}
+                  options={[...amazonCandidateEvaluatorModelOptions]}
+                  placeholder='Select evaluator model'
+                  ariaLabel='Select Amazon extraction evaluator model'
+                  title='Select Amazon extraction evaluator model'
+                />
+              </FormField>
+            ) : null}
+            <FormField
+              label='Confidence Threshold'
+              description='Minimum evaluator confidence required before trusting the Amazon page.'
+            >
+              <Input
+                type='number'
+                min={0}
+                max={1}
+                step={0.05}
+                value={draft.amazonCandidateEvaluatorExtraction.threshold}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorExtraction: {
+                      ...prev.amazonCandidateEvaluatorExtraction,
+                      threshold: toUnitInterval(
+                        event.target.value,
+                        prev.amazonCandidateEvaluatorExtraction.threshold
+                      ),
+                    },
+                  }));
+                }}
+                aria-label='Amazon extraction evaluator confidence threshold'
+                title='Amazon extraction evaluator confidence threshold'
+              />
+            </FormField>
+            <FormField
+              label='Evaluation Scope'
+              description='Run the evaluator only when Amazon candidates are ambiguous.'
+            >
+              <label className='inline-flex items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  checked={draft.amazonCandidateEvaluatorExtraction.onlyForAmbiguousCandidates}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluatorExtraction: {
+                        ...prev.amazonCandidateEvaluatorExtraction,
+                        onlyForAmbiguousCandidates: event.target.checked,
+                      },
+                    }));
+                  }}
+                  aria-label='Only evaluate ambiguous Amazon extraction candidates'
+                  title='Only evaluate ambiguous Amazon extraction candidates'
+                />
+                Only evaluate ambiguous candidates
+              </label>
+            </FormField>
+            <FormField
+              label='Allowed Content Language'
+              description='Trusted extraction currently targets English product fields.'
+            >
+              <Input value='English' readOnly aria-label='Allowed Amazon content language' />
+            </FormField>
+            <FormField
+              label='Language Gate'
+              description='Reject matching Amazon pages when their visible content is not English.'
+            >
+              <label className='inline-flex items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  checked={draft.amazonCandidateEvaluatorExtraction.rejectNonEnglishContent}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluatorExtraction: {
+                        ...prev.amazonCandidateEvaluatorExtraction,
+                        rejectNonEnglishContent: event.target.checked,
+                      },
+                    }));
+                  }}
+                  aria-label='Reject non-English Amazon content in extraction stage'
+                  title='Reject non-English Amazon content in extraction stage'
+                />
+                Reject non-English Amazon content
+              </label>
+            </FormField>
+            <FormField
+              label='Language Detection'
+              description='Choose whether probe hints can reject non-English pages before AI runs.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluatorExtraction.languageDetectionMode}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorExtraction: {
+                      ...prev.amazonCandidateEvaluatorExtraction,
+                      languageDetectionMode:
+                        value === 'ai_only' ? 'ai_only' : 'deterministic_then_ai',
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_OPTIONS]}
+                placeholder='Select language detection mode'
+                ariaLabel='Select Amazon extraction evaluator language detection mode'
+                title='Select Amazon extraction evaluator language detection mode'
+              />
+            </FormField>
+          </div>
+
+          <div className='mt-4 text-xs text-muted-foreground'>
+            {brainModelOptions.isLoading
+              ? 'Loading AI Brain model options.'
+              : brainModelOptions.sourceWarnings[0] ||
+                'The extraction evaluator confirms the same product before updating product data.'}
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-background/70 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>Evaluator Summary</p>
+            <ul className='space-y-1'>
+              {amazonExtractionEvaluatorSummaryLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>Runtime Policy</p>
+            <ul className='space-y-1'>
+              {amazonExtractionEvaluatorPolicyLines.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
@@ -676,6 +980,153 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                   ? 'URL-based 1688 image search fallback is enabled when no local image file is available.'
                   : 'URL-based 1688 image search fallback is disabled; scans require a local image file.'}
               </li>
+            </ul>
+          </div>
+        </FormSection>
+
+        <FormSection
+          title='1688 Supplier Evaluator'
+          description='Optional AI gate that reviews the strongest 1688 supplier candidate before the scan is trusted.'
+          className='p-6'
+        >
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
+            <FormField
+              label='Evaluator Mode'
+              description='Choose whether the supplier evaluator uses the AI Brain default model or a scanner-specific override.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.scanner1688CandidateEvaluator.mode}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    scanner1688CandidateEvaluator: {
+                      ...prev.scanner1688CandidateEvaluator,
+                      mode:
+                        value === 'brain_default' || value === 'model_override'
+                          ? value
+                          : 'disabled',
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_1688_CANDIDATE_EVALUATOR_MODE_OPTIONS]}
+                placeholder='Select evaluator mode'
+                ariaLabel='Select 1688 supplier evaluator mode'
+                title='Select 1688 supplier evaluator mode'
+              />
+            </FormField>
+            <FormField
+              label='Resolved Model'
+              description='Current effective model for the 1688 supplier evaluator.'
+            >
+              <Input
+                value={effective1688CandidateEvaluatorModel}
+                readOnly
+                aria-label='Resolved 1688 supplier evaluator model'
+                title='Resolved 1688 supplier evaluator model'
+              />
+            </FormField>
+            {draft.scanner1688CandidateEvaluator.mode === 'model_override' ? (
+              <FormField
+                label='Override Model'
+                description='Choose a vision-capable model from the AI Brain catalog.'
+              >
+                <SelectSimple
+                  size='sm'
+                  value={draft.scanner1688CandidateEvaluator.modelId ?? ''}
+                  onValueChange={(value: string): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      scanner1688CandidateEvaluator: {
+                        ...prev.scanner1688CandidateEvaluator,
+                        modelId: value.trim() || null,
+                      },
+                    }));
+                  }}
+                  options={[...supplier1688EvaluatorModelOptions]}
+                  placeholder='Select evaluator model'
+                  ariaLabel='Select 1688 supplier evaluator model'
+                  title='Select 1688 supplier evaluator model'
+                />
+              </FormField>
+            ) : null}
+            <FormField
+              label='Confidence Threshold'
+              description='Minimum evaluator confidence required before a supplier candidate is trusted.'
+            >
+              <Input
+                type='number'
+                min={0}
+                max={1}
+                step={0.05}
+                value={draft.scanner1688CandidateEvaluator.threshold}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    scanner1688CandidateEvaluator: {
+                      ...prev.scanner1688CandidateEvaluator,
+                      threshold: toUnitInterval(
+                        event.target.value,
+                        prev.scanner1688CandidateEvaluator.threshold
+                      ),
+                    },
+                  }));
+                }}
+                aria-label='1688 supplier evaluator confidence threshold'
+                title='1688 supplier evaluator confidence threshold'
+              />
+            </FormField>
+            <FormField
+              label='Evaluation Scope'
+              description='Run the evaluator only when the heuristic supplier match is still ambiguous.'
+            >
+              <label className='inline-flex items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  checked={draft.scanner1688CandidateEvaluator.onlyForAmbiguousCandidates}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      scanner1688CandidateEvaluator: {
+                        ...prev.scanner1688CandidateEvaluator,
+                        onlyForAmbiguousCandidates: event.target.checked,
+                      },
+                    }));
+                  }}
+                  aria-label='Only evaluate ambiguous 1688 supplier candidates'
+                  title='Only evaluate ambiguous 1688 supplier candidates'
+                />
+                Only evaluate ambiguous supplier candidates
+              </label>
+            </FormField>
+          </div>
+
+          <div className='mt-4 text-xs text-muted-foreground'>
+            {brain1688ModelOptions.isLoading
+              ? 'Loading AI Brain model options.'
+              : brain1688ModelOptions.sourceWarnings[0] ||
+                'The evaluator compares the source product image and the strongest 1688 supplier page before the scan is trusted.'}
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-background/70 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>
+              1688 Evaluator Summary
+            </p>
+            <ul className='space-y-1'>
+              {evaluator1688SummaryLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>
+              1688 Evaluator Policy
+            </p>
+            <ul className='space-y-1'>
+              {evaluator1688PolicyLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
             </ul>
           </div>
         </FormSection>

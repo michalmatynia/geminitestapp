@@ -20,7 +20,7 @@ const {
   useLinkExistingTraderaListingMutationMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/product-integrations-adapter', () => ({
   isTraderaIntegrationSlug: (value: string | null | undefined) =>
     ['tradera', 'tradera-api'].includes((value ?? '').trim().toLowerCase()),
   useDefaultTraderaConnection: () => useDefaultTraderaConnectionMock(),

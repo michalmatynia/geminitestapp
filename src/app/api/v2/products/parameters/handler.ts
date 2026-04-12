@@ -10,8 +10,7 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import {
-  catalogIdQuerySchema,
-  type CatalogIdQuery,
+  catalogIdWithFreshQuerySchema,
 } from '@/shared/validations/product-metadata-api-schemas';
 
 const SELECTOR_TYPES = [
@@ -34,26 +33,7 @@ const LINKABLE_SELECTOR_TYPES = new Set<(typeof SELECTOR_TYPES)[number]>(
   PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES
 );
 
-const freshQuerySchema = z.preprocess(
-  (value: unknown) => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value !== 'string') return undefined;
-    const normalized = value.trim().toLowerCase();
-    if (!normalized) return undefined;
-    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
-      return true;
-    }
-    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
-      return false;
-    }
-    return value;
-  },
-  z.boolean().optional()
-);
-
-export const querySchema = catalogIdQuerySchema.extend({
-  fresh: freshQuerySchema,
-});
+export const querySchema = catalogIdWithFreshQuerySchema;
 
 const resolveParametersQueryInput = (
   req: Request,
@@ -115,9 +95,7 @@ export const productParameterCreateSchema = z
  * - catalogId: Filter by catalog (required)
  */
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = querySchema.parse(resolveParametersQueryInput(req, _ctx)) as CatalogIdQuery & {
-    fresh?: boolean;
-  };
+  const query = querySchema.parse(resolveParametersQueryInput(req, _ctx));
   const catalogId = query?.catalogId ?? '';
 
   if (!catalogId) {

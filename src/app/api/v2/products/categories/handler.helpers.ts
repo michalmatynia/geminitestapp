@@ -1,18 +1,15 @@
-import { z } from 'zod';
-
 import type { ProductCategory, ProductCategoryCreateInput } from '@/shared/contracts/products/categories';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
+import { attachTimingHeaders, buildServerTiming } from '@/shared/lib/api/timing-utils';
 import {
-  catalogIdQuerySchema,
+  catalogIdWithFreshQuerySchema,
+  type CatalogIdWithFreshQuery,
   type CatalogIdQuery,
-  freshQuerySchema,
 } from '@/shared/validations/product-metadata-api-schemas';
 
-export const querySchema = catalogIdQuerySchema.extend({
-  fresh: freshQuerySchema,
-});
+export const querySchema = catalogIdWithFreshQuerySchema;
 
-export type ProductCategoriesQuery = z.infer<typeof querySchema>;
+export type ProductCategoriesQuery = CatalogIdWithFreshQuery;
 
 export const requireProductCategoryCatalogId = (
   query: CatalogIdQuery | undefined
@@ -66,18 +63,4 @@ export const buildProductCategoryCreateInput = (
   ...(data.sortIndex !== undefined ? { sortIndex: data.sortIndex } : {}),
 });
 
-export const buildServerTiming = (entries: Record<string, number | null | undefined>): string =>
-  Object.entries(entries)
-    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
-    .map(([name, value]) => `${name};dur=${Math.round(value as number)}`)
-    .join(', ');
-
-export const attachTimingHeaders = (
-  response: Response,
-  entries: Record<string, number | null | undefined>
-): void => {
-  const value = buildServerTiming(entries);
-  if (value) {
-    response.headers.set('Server-Timing', value);
-  }
-};
+export { buildServerTiming, attachTimingHeaders };

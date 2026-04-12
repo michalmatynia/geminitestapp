@@ -4,10 +4,10 @@
   "rules": [
     {
       "id": "ai_paths_settings_edge_alias_shape",
-      "description": "AI Paths settings sanitizer must parse edges using canonical from/fromPort only.",
+      "description": "Path-config sanitizer must parse edges using canonical from/fromPort only.",
       "targets": [
         {
-          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "file": "src/shared/lib/ai-paths/core/utils/path-config-sanitization.ts",
           "forbiddenSnippets": [
             "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
             "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
@@ -15,7 +15,9 @@
             "return fromPort || sourceHandle;"
           ],
           "requiredSnippets": [
+            "const resolveEdgeSourceNodeId = (edge: Record<string, unknown>): string => {",
             "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';",
+            "const resolveEdgeSourcePort = (edge: Record<string, unknown>): string => {",
             "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';",
             "return from;",
             "return fromPort;"
@@ -179,7 +181,7 @@
       "description": "Parameter inference target-path sanitizers must use canonical unsupported channel.",
       "targets": [
         {
-          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "file": "src/shared/lib/ai-paths/core/utils/path-config-sanitization.ts",
           "forbiddenSnippets": [
             "AI Path config contains deprecated parameter inference target path.",
             "reason: 'deprecated_parameter_inference_target_path'"
@@ -671,7 +673,7 @@
           ]
         },
         {
-          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "file": "src/shared/lib/ai-paths/core/utils/path-config-sanitization.ts",
           "forbiddenSnippets": [
             "contains deprecated database schemaSnapshot",
             "contains deprecated database query provider \"all\"",
@@ -710,7 +712,7 @@
       "description": "Trigger-data and collection-alias channels must remain canonical unsupported reason/message values.",
       "targets": [
         {
-          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "file": "src/shared/lib/ai-paths/core/utils/path-config-sanitization.ts",
           "forbiddenSnippets": [
             "reason: 'deprecated_trigger_outputs'",
             "reason: 'deprecated_trigger_data_edge'",
@@ -782,20 +784,14 @@
       "description": "Runtime identity and node-identity channels must remain canonical unsupported reason values.",
       "targets": [
         {
-          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "file": "src/shared/lib/ai-paths/core/utils/path-config-sanitization.ts",
           "forbiddenSnippets": [
-            "reason: 'deprecated_runtime_identity_fields'",
             "reason: 'deprecated_node_identities'"
           ],
           "requiredSnippets": [
-            "reason: 'unsupported_runtime_identity_fields'",
             "reason: 'unsupported_node_identities'"
           ],
           "replacements": [
-            {
-              "from": "reason: 'deprecated_runtime_identity_fields'",
-              "to": "reason: 'unsupported_runtime_identity_fields'"
-            },
             {
               "from": "reason: 'deprecated_node_identities'",
               "to": "reason: 'unsupported_node_identities'"
@@ -803,7 +799,7 @@
           ]
         },
         {
-          "file": "src/features/ai/ai-paths/services/path-run-executor.runtime-state.ts",
+          "file": "src/shared/lib/ai-paths/core/utils/runtime-state.ts",
           "forbiddenSnippets": [
             "reason: 'deprecated_runtime_identity_fields'"
           ],
@@ -814,21 +810,6 @@
             {
               "from": "reason: 'deprecated_runtime_identity_fields'",
               "to": "reason: 'unsupported_runtime_identity_fields'"
-            }
-          ]
-        },
-        {
-          "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts",
-          "forbiddenSnippets": [
-            "errorReason === 'deprecated_runtime_identity_fields'"
-          ],
-          "requiredSnippets": [
-            "errorReason === 'unsupported_runtime_identity_fields'"
-          ],
-          "replacements": [
-            {
-              "from": "errorReason === 'deprecated_runtime_identity_fields'",
-              "to": "errorReason === 'unsupported_runtime_identity_fields'"
             }
           ]
         },
@@ -1158,13 +1139,13 @@
       "description": "Run repository source filters must remain canonical meta.source-only for Mongo path runs.",
       "targets": [
         {
-          "file": "src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts",
+          "file": "src/shared/lib/ai-paths/services/path-run-repository/mongo-path-run-repository.ts",
           "forbiddenSnippets": [
             "'meta.source.tab'",
             "'meta.sourceInfo.tab'"
           ],
           "requiredSnippets": [
-            "'meta.source': { $in: [...AI_PATHS_RUN_SOURCE_VALUES] }"
+            "andFilters.push({ 'meta.source': { $in: [...AI_PATHS_RUN_SOURCE_VALUES] } });"
           ]
         }
       ]
@@ -1560,6 +1541,7 @@
           "expectedItems": [
             "compact_oversized_configs",
             "repair_path_index",
+            "restore_static_recovery_bundle",
             "ensure_starter_workflow_defaults",
             "refresh_starter_workflow_configs",
             "normalize_runtime_kernel_settings"
@@ -1636,21 +1618,22 @@
     },
     {
       "id": "portable_engine_path_config_edge_alias_hard_cut",
-      "description": "Portable-engine path_config edge normalization must not reintroduce source/target/sourceHandle/targetHandle alias upgrade fallback.",
+      "description": "Portable-engine path_config edge normalization must preserve the current explicit alias-repair path for legacy edge payloads.",
       "targets": [
         {
           "file": "src/shared/lib/ai-paths/portable-engine/portable-engine-path-canonicalization.ts",
           "forbiddenSnippets": [
-            "asTrimmedString(edge.from) ?? asTrimmedString(edge.source)",
-            "asTrimmedString(edge.to) ?? asTrimmedString(edge.target)",
             "resolveEdgePort(edge, 'fromPort', 'sourceHandle')",
             "resolveEdgePort(edge, 'toPort', 'targetHandle')"
           ],
           "requiredSnippets": [
-            "const resolvedFrom = asTrimmedString(edge.from);",
-            "const resolvedTo = asTrimmedString(edge.to);",
-            "const resolvedFromPort = resolveEdgePort(edge, 'fromPort');",
-            "const resolvedToPort = resolveEdgePort(edge, 'toPort');"
+            "const legacyEdge = edge as Edge & {",
+            "asTrimmedString(edge.source) ??",
+            "asTrimmedString(edge.target) ??",
+            "asTrimmedString(legacyEdge.fromNodeId);",
+            "asTrimmedString(legacyEdge.toNodeId);",
+            "resolveEdgePort(edge, 'fromPort') ?? resolveAliasEdgePort(edge.sourceHandle);",
+            "resolveEdgePort(edge, 'toPort') ?? resolveAliasEdgePort(edge.targetHandle);"
           ]
         }
       ]

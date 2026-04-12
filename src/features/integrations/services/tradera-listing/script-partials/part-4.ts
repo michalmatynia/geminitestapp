@@ -141,6 +141,259 @@ export const PART_4 = String.raw`
     await chooseFallbackCategory();
   };
 
+  // Try to select a category by typing into the picker's search/combobox input.
+  // Tradera's sell page may show a text-search field inside the category chooser
+  // rather than (or in addition to) the hierarchical menu.
+  // Returns true if the selection was confirmed, false if search is unavailable.
+  const trySearchCategoryInPicker = async (segments) => {
+    if (!Array.isArray(segments) || segments.length === 0) return false;
+
+    const pickerRoot = page.locator('[data-test-category-chooser="true"]').first();
+    const pickerVisible = await pickerRoot.isVisible().catch(() => false);
+    if (!pickerVisible) return false;
+
+    // Look for a text input or search box inside the picker
+    const searchInput = pickerRoot
+      .locator('input[type="text"], input[type="search"], [role="searchbox"], [role="combobox"]:not([aria-expanded])')
+      .first();
+    const searchVisible = await searchInput.isVisible().catch(() => false);
+    if (!searchVisible) return false;
+
+    // Type the leaf category name (last segment) to trigger autocomplete
+    const leafName = segments[segments.length - 1];
+    log?.('tradera.quicklist.category.search_attempt', { leafName, fullPath: segments.join(' > ') });
+
+    await searchInput.click({ force: true }).catch(() => undefined);
+    await wait(200);
+    await searchInput.fill('').catch(() => undefined);
+    await searchInput.type(leafName, { delay: 60 }).catch(() => undefined);
+    await wait(1500); // wait for suggestions to load
+
+    // The autocomplete suggestions may appear inside the picker or in a listbox/menu
+    const optionsAfter = await readVisibleCategoryMenuOptions();
+    if (optionsAfter.length === 0) {
+      log?.('tradera.quicklist.category.search_no_suggestions', { leafName });
+      return false;
+    }
+
+    // Prefer option whose text matches the full path (contains all segments)
+    const normalizedSegments = segments.map((s) => normalizeWhitespace(s).toLowerCase());
+    const fullPathOption = optionsAfter.find((opt) => {
+      const normalizedOpt = normalizeWhitespace(opt).toLowerCase();
+      return normalizedSegments.every((seg) => normalizedOpt.includes(seg));
+    });
+
+    // Fall back to the option whose text includes the leaf name
+    const leafOption =
+      fullPathOption ||
+      optionsAfter.find((opt) =>
+        normalizeWhitespace(opt).toLowerCase().includes(normalizeWhitespace(leafName).toLowerCase())
+      );
+
+    if (!leafOption) {
+      log?.('tradera.quicklist.category.search_no_match', {
+        leafName,
+        suggestions: optionsAfter.slice(0, 8),
+      });
+      return false;
+    }
+
+    const clicked = await clickCategoryPickerOptionByName(leafOption);
+    if (!clicked) {
+      // Fall back to global click
+      await clickMenuItemByName(leafOption).catch(() => false);
+    }
+    await wait(600);
+
+    // Verify the selection was applied
+    const confirmedPath = await readCurrentSelectedCategoryPath();
+    const confirmed =
+      confirmedPath !== null &&
+      !isCategoryPlaceholderValue(confirmedPath) &&
+      normalizedSegments.some((seg) =>
+        normalizeWhitespace(confirmedPath).toLowerCase().includes(seg)
+      );
+
+    log?.('tradera.quicklist.category.search_result', {
+      leafName,
+      selectedOption: leafOption,
+      confirmedPath,
+      confirmed,
+    });
+    return confirmed;
+  };
+
+  // Wait for the category picker to reflect a segment click by checking
+  // that the visible options changed or the breadcrumbs updated.
+  const waitForCategoryPickerUpdate = async (clickedSegment, optionsBefore, timeoutMs = 8_000) => {
+    const deadline = Date.now() + timeoutMs;
+    const normalizedClickedSegment = normalizeWhitespace(clickedSegment).toLowerCase();
+    const beforeSet = new Set(optionsBefore.map((o) => normalizeWhitespace(o).toLowerCase()));
+
+    while (Date.now() < deadline) {
+      const currentOptions = await readVisibleCategoryMenuOptions();
+      const currentSet = new Set(currentOptions.map((o) => normalizeWhitespace(o).toLowerCase()));
+
+      // Options changed (new sub-level loaded) or the picker closed (leaf category selected)
+      const optionsChanged =
+        currentSet.size !== beforeSet.size ||
+        [...currentSet].some((o) => !beforeSet.has(o));
+
+      if (optionsChanged) {
+        return { updated: true, options: currentOptions };
+      }
+
+      // Breadcrumbs containing the clicked segment means navigation happened
+      const breadcrumbs = await readCategoryPickerBreadcrumbs();
+      const breadcrumbTexts = breadcrumbs.map((b) => normalizeWhitespace(b).toLowerCase());
+      if (breadcrumbTexts.includes(normalizedClickedSegment)) {
+        return { updated: true, options: currentOptions };
+      }
+
+      await wait(400);
+    }
+
+    return { updated: false, options: await readVisibleCategoryMenuOptions() };
+  };
+
+  const chooseMappedCategory = async (segments) => {
+    if (!Array.isArray(segments) || segments.length === 0) {
+      return false;
+    }
+
+    const currentSelectedPath = await readCurrentSelectedCategoryPath();
+    if (categoryPathMatches(currentSelectedPath, segments)) {
+      selectedCategoryPath = segments.join(' > ');
+      selectedCategorySource = 'categoryMapper';
+      log?.('tradera.quicklist.category.mapped_already_selected', {
+        mappedPath: selectedCategoryPath,
+      });
+      return true;
+    }
+
+    await ensureCategoryPickerOpen('mapped');
+
+    // Strategy 1: search/typeahead — works when Tradera shows a text-search field
+    // inside the picker (increasingly common on CSR/Next.js listing pages).
+    const searchSelected = await trySearchCategoryInPicker(segments);
+    if (searchSelected) {
+      selectedCategoryPath = segments.join(' > ');
+      selectedCategorySource = 'categoryMapper';
+      return true;
+    }
+
+    // Strategy 2: hierarchical click-through (original approach).
+    // Re-open picker in case search interaction closed or corrupted it.
+    await ensureCategoryPickerOpen('mapped-hierarchical');
+
+    const mappedRootVisible = await ensureCategoryOptionVisible({
+      targetPath: segments.join(' > '),
+      optionLabels: [segments[0]],
+      requireRoot: true,
+    });
+    if (!mappedRootVisible) {
+      const pickerState = await readCategoryPickerState();
+      log?.('tradera.quicklist.category.mapped_unavailable', {
+        missingSegment: segments[0],
+        mappedPath: segments.join(' > '),
+        selectedPath: pickerState.selectedPath,
+        breadcrumbs: pickerState.breadcrumbs,
+        visibleOptions: pickerState.visibleOptions,
+      });
+      await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+        () => undefined
+      );
+      await wait(200);
+      return false;
+    }
+
+    for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+      const segment = segments[segmentIndex];
+      const optionsBefore = await readVisibleCategoryMenuOptions();
+
+      // Prefer picker-scoped click; fall back to global search only if
+      // the picker container is missing (e.g. data-test attribute removed).
+      const clicked =
+        (await clickCategoryPickerOptionByName(segment)) ||
+        (await clickMenuItemByName(segment));
+      if (!clicked) {
+        const pickerState = await readCategoryPickerState();
+        log?.('tradera.quicklist.category.mapped_unavailable', {
+          missingSegment: segment,
+          segmentIndex,
+          mappedPath: segments.join(' > '),
+          selectedPath: pickerState.selectedPath,
+          breadcrumbs: pickerState.breadcrumbs,
+          visibleOptions: pickerState.visibleOptions,
+        });
+        await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+          () => undefined
+        );
+        await wait(200);
+        return false;
+      }
+
+      // Wait for the picker to load sub-categories or close (leaf selected)
+      // instead of using a fixed delay.
+      if (segmentIndex < segments.length - 1) {
+        const updateResult = await waitForCategoryPickerUpdate(segment, optionsBefore);
+        log?.('tradera.quicklist.category.segment_selected', {
+          segment,
+          segmentIndex,
+          total: segments.length,
+          pickerUpdated: updateResult.updated,
+          visibleOptionsAfter: updateResult.options.slice(0, 8),
+        });
+      } else {
+        // Last segment — give the picker time to commit the selection
+        await wait(600);
+        log?.('tradera.quicklist.category.segment_selected', {
+          segment,
+          segmentIndex,
+          total: segments.length,
+          final: true,
+        });
+      }
+    }
+
+    selectedCategoryPath = segments.join(' > ');
+    selectedCategorySource = 'categoryMapper';
+    return true;
+  };
+
+  const applyCategorySelection = async () => {
+    if (mappedCategorySegments.length > 0) {
+      const mappedCategoryApplied = await chooseMappedCategory(mappedCategorySegments);
+      if (mappedCategoryApplied) {
+        return;
+      }
+
+      throw new Error(
+        'FAIL_CATEGORY_SET: Tradera mapped category "' +
+          mappedCategorySegments.join(' > ') +
+          '" could not be selected in the listing form. Refresh Tradera categories in Category Mapper or remove the mapping to allow fallback to "' +
+          FALLBACK_CATEGORY_PATH +
+          '".'
+      );
+    }
+
+    const currentSelectedPath = await readCurrentSelectedCategoryPath();
+    if (currentSelectedPath) {
+      selectedCategoryPath = currentSelectedPath;
+      selectedCategorySource = 'autofill';
+      log?.('tradera.quicklist.category.autofill_preserved', {
+        selectedPath: selectedCategoryPath,
+      });
+      return;
+    }
+
+    await chooseFallbackCategory();
+  };
+
+  async function fillCategoryExtraDropdowns() {
+    // no-op for top_suggested strategy
+  }
+
   const trySelectOptionalFieldValue = async ({
     fieldLabels,
     optionLabels,

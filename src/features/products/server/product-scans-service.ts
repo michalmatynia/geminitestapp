@@ -22,11 +22,14 @@ import {
   type ProductScanBatchResponse,
   type ProductScanProvider,
   type ProductScanRecord,
+  type ProductScanStatus,
+  type ProductScanSupplierEvaluation,
 } from '@/shared/contracts/product-scans';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { evaluateAmazonScanCandidateMatch } from './product-scan-amazon-evaluator';
+import { evaluate1688SupplierCandidateMatch } from './product-scan-1688-evaluator';
 import {
   resolveDetectedAmazonAsinOutcome,
 } from './product-scan-amazon.helpers';
@@ -38,8 +41,9 @@ import {
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
+  type ProductScanner1688CandidateEvaluatorResolvedConfig,
   type ProductScannerAmazonCandidateEvaluatorResolvedConfig,
-  resolveProductScannerAmazonCandidateEvaluatorConfig,
+  resolveProductScanner1688CandidateEvaluatorConfig,
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfig,
   resolveProductScannerAmazonCandidateEvaluatorProbeConfig,
   resolveProductScannerHeadless,
@@ -260,6 +264,164 @@ const resolveNextAmazonEvaluationStepAttempt = (
       )
   ) + 1;
 
+const resolveNext1688EvaluationStepAttempt = (
+  steps: ProductScanRecord['steps']
+): number =>
+  Math.max(
+    0,
+    ...steps
+      .filter((step) => step.key === 'supplier_ai_evaluate')
+      .map((step) =>
+        typeof step.attempt === 'number' && Number.isFinite(step.attempt) ? step.attempt : 1
+      )
+  ) + 1;
+
+const resolve1688EvaluationStepStatus = (
+  evaluation: ProductScanSupplierEvaluation
+): ProductScanRecord['steps'][number]['status'] => {
+  if (!evaluation) {
+    return 'failed';
+  }
+  if (evaluation.status === 'approved') {
+    return 'completed';
+  }
+  if (evaluation.status === 'skipped') {
+    return 'skipped';
+  }
+  if (evaluation.status === 'rejected') {
+    return 'failed';
+  }
+  return 'failed';
+};
+
+const resolve1688EvaluationStepResultCode = (
+  evaluation: ProductScanSupplierEvaluation
+): string => {
+  if (!evaluation) {
+    return 'evaluation_failed';
+  }
+  if (evaluation.status === 'approved') {
+    return 'candidate_approved';
+  }
+  if (evaluation.status === 'rejected') {
+    return 'candidate_rejected';
+  }
+  if (evaluation.status === 'skipped') {
+    return 'evaluation_skipped';
+  }
+  return 'evaluation_failed';
+};
+
+const resolve1688EvaluatorModelSource = (
+  value: ProductScanner1688CandidateEvaluatorResolvedConfig['mode'] | null | undefined
+): string | null => {
+  if (value === 'brain_default') {
+    return 'AI Brain default';
+  }
+
+  if (value === 'model_override') {
+    return 'Scanner override';
+  }
+
+  return null;
+};
+
+const resolve1688CandidateRank = (
+  probe: ProductScanRecord['supplierProbe']
+): number | null => {
+  const candidateRank =
+    probe && typeof probe === 'object' && 'candidateRank' in probe
+      ? (probe as { candidateRank?: unknown }).candidateRank
+      : null;
+  if (
+    typeof candidateRank === 'number' &&
+    Number.isFinite(candidateRank) &&
+    candidateRank > 0
+  ) {
+    return candidateRank;
+  }
+
+  return null;
+};
+
+const resolve1688EvaluationMessage = (
+  evaluation: ProductScanSupplierEvaluation
+): string => {
+  if (!evaluation) {
+    return '1688 supplier AI evaluation failed.';
+  }
+  const confidenceLabel = formatAmazonEvaluationConfidence(evaluation.confidence);
+  if (evaluation.status === 'approved') {
+    return confidenceLabel
+      ? `AI evaluator approved the 1688 supplier candidate (${confidenceLabel}).`
+      : 'AI evaluator approved the 1688 supplier candidate.';
+  }
+  if (evaluation.status === 'rejected') {
+    return confidenceLabel
+      ? `AI evaluator rejected the 1688 supplier candidate (${confidenceLabel}).`
+      : 'AI evaluator rejected the 1688 supplier candidate.';
+  }
+  if (evaluation.status === 'skipped') {
+    return (
+      evaluation.reasons[0] ??
+      'Skipped 1688 supplier AI evaluation because the heuristic supplier match was already strong.'
+    );
+  }
+  return evaluation.error ?? '1688 supplier AI evaluation failed.';
+};
+
+const build1688EvaluationStepDetails = (
+  evaluation: ProductScanSupplierEvaluation,
+  evaluatorConfig: ProductScanner1688CandidateEvaluatorResolvedConfig
+): Array<{ label: string; value: string | null }> => [
+  { label: 'Model', value: evaluation?.modelId ?? null },
+  {
+    label: 'Model source',
+    value: resolve1688EvaluatorModelSource(evaluatorConfig.mode),
+  },
+  {
+    label: 'Threshold',
+    value: formatAmazonEvaluationConfidence(evaluatorConfig.threshold),
+  },
+  {
+    label: 'Evaluation scope',
+    value: evaluatorConfig.onlyForAmbiguousCandidates
+      ? 'Ambiguous 1688 candidates only'
+      : 'Every 1688 candidate',
+  },
+  {
+    label: 'Confidence',
+    value: formatAmazonEvaluationConfidence(evaluation?.confidence),
+  },
+  {
+    label: 'Same product',
+    value:
+      typeof evaluation?.sameProduct === 'boolean' ? String(evaluation.sameProduct) : null,
+  },
+  {
+    label: 'Image match',
+    value:
+      typeof evaluation?.imageMatch === 'boolean' ? String(evaluation.imageMatch) : null,
+  },
+  {
+    label: 'Title match',
+    value:
+      typeof evaluation?.titleMatch === 'boolean' ? String(evaluation.titleMatch) : null,
+  },
+  {
+    label: 'Proceed',
+    value: typeof evaluation?.proceed === 'boolean' ? String(evaluation.proceed) : null,
+  },
+  {
+    label: 'Reason',
+    value: evaluation?.reasons[0] ?? null,
+  },
+  {
+    label: 'Mismatch',
+    value: evaluation?.mismatches[0] ?? null,
+  },
+];
+
 const resolveLatestAmazonCandidateStepMeta = (
   steps: ProductScanRecord['steps']
 ): {
@@ -289,8 +451,13 @@ const resolveLatestAmazonCandidateStepMeta = (
 
 const buildAmazonEvaluationStepDetails = (
   evaluation: ProductScanAmazonEvaluation,
-  evaluatorConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig
+  evaluatorConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig,
+  stage: 'probe' | 'extraction'
 ): Array<{ label: string; value: string | null }> => [
+  {
+    label: 'Evaluation stage',
+    value: stage === 'probe' ? 'Probe' : 'Extraction',
+  },
   { label: 'Model', value: evaluation?.modelId ?? null },
   {
     label: 'Model source',
@@ -689,10 +856,10 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         completedAt: null,
       });
 
-      try {
-        const amazonCandidateEvaluatorEnabled = (
-          await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings)
-        ).enabled;
+        try {
+          const amazonCandidateEvaluatorEnabled = (
+            await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings)
+          ).enabled;
         const scannerEngineRequestOptions =
           buildProductScannerEngineRequestOptions(scannerSettings);
         const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
@@ -851,7 +1018,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       let amazonEvaluation = existingAmazonEvaluation;
       try {
         const evaluatorConfig =
-          await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings);
+          await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings);
         if (evaluatorConfig.enabled) {
           amazonEvaluation = await evaluateAmazonScanCandidateMatch({
             scan,
@@ -872,7 +1039,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
             status: resolveAmazonEvaluationStepStatus(amazonEvaluation),
             resultCode: resolveAmazonEvaluationStepResultCode(amazonEvaluation),
             message: resolveAmazonEvaluationMessage(amazonEvaluation),
-            details: buildAmazonEvaluationStepDetails(amazonEvaluation, evaluatorConfig),
+            details: buildAmazonEvaluationStepDetails(amazonEvaluation, evaluatorConfig, 'probe'),
             url:
               amazonEvaluation.evidence?.candidateUrl ?? resolvedProbeUrl ?? latestCandidateMeta.url,
           });
@@ -1329,9 +1496,9 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
       });
     }
 
-    try {
-      const evaluatorConfig =
-        await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings);
+      try {
+        const evaluatorConfig =
+          await resolveProductScannerAmazonCandidateEvaluatorExtractionConfig(scannerSettings);
       if (evaluatorConfig.enabled && !isApprovedAmazonCandidateExtractionRun(scan)) {
         amazonEvaluation = await evaluateAmazonScanCandidateMatch({
           scan,
@@ -1352,7 +1519,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
           status: resolveAmazonEvaluationStepStatus(amazonEvaluation),
           resultCode: resolveAmazonEvaluationStepResultCode(amazonEvaluation),
           message: resolveAmazonEvaluationMessage(amazonEvaluation),
-          details: buildAmazonEvaluationStepDetails(amazonEvaluation, evaluatorConfig),
+            details: buildAmazonEvaluationStepDetails(amazonEvaluation, evaluatorConfig, 'extraction'),
           url:
             amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl ?? latestCandidateMeta.url,
         });
@@ -1696,14 +1863,156 @@ async function synchronize1688ProductScan(scan: ProductScanRecord): Promise<Prod
       );
     }
 
-    const nextStatus = parsedResult.status === 'no_match' ? 'no_match' : 'completed';
     const resolvedScanUrl = resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl);
-    const finalizedSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
-    const nextMessage =
+    let finalizedSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+    let nextStatus: ProductScanStatus = parsedResult.status === 'no_match' ? 'no_match' : 'completed';
+    let nextMessage =
       parsedResult.message ??
       (nextStatus === 'no_match'
         ? 'No 1688 supplier page matched the scanned product image.'
         : '1688 supplier reverse image scan completed.');
+    let supplierEvaluation = parsedResult.supplierEvaluation;
+
+    let scannerSettings = createDefaultProductScannerSettings();
+    try {
+      scannerSettings = await getProductScannerSettings();
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'product-scans.service',
+        action: 'synchronize1688ProductScan.loadScannerSettingsForSupplierEvaluator',
+        scanId: scan.id,
+        productId: scan.productId,
+        engineRunId,
+      });
+    }
+
+    try {
+      const evaluatorConfig =
+        await resolveProductScanner1688CandidateEvaluatorConfig(scannerSettings);
+      const hasSupplierCandidate =
+        parsedResult.supplierProbe != null ||
+        parsedResult.supplierDetails != null ||
+        resolvedScanUrl != null ||
+        parsedResult.title != null;
+      if (evaluatorConfig.enabled && hasSupplierCandidate) {
+        const product = await productService.getProductById(scan.productId);
+        if (!product) {
+          return await persistFailedSynchronization(
+            scan,
+            'Product not found while running the 1688 supplier evaluator.',
+            '1688 supplier reverse image scan failed.'
+          );
+        }
+
+        supplierEvaluation = await evaluate1688SupplierCandidateMatch({
+          scan,
+          product,
+          parsedResult,
+          run,
+          evaluatorConfig,
+        });
+
+        finalizedSteps = upsertPersistedProductScanStep(finalizedSteps, {
+          key: 'supplier_ai_evaluate',
+          label: 'Evaluate supplier candidate match',
+          group: 'supplier',
+          attempt: resolveNext1688EvaluationStepAttempt(finalizedSteps),
+          candidateId: parsedResult.matchedImageId,
+          candidateRank: resolve1688CandidateRank(parsedResult.supplierProbe),
+          status: resolve1688EvaluationStepStatus(supplierEvaluation),
+          resultCode: resolve1688EvaluationStepResultCode(supplierEvaluation),
+          message: resolve1688EvaluationMessage(supplierEvaluation),
+          details: build1688EvaluationStepDetails(supplierEvaluation, evaluatorConfig),
+          url:
+            parsedResult.supplierProbe?.canonicalUrl ??
+            parsedResult.supplierProbe?.candidateUrl ??
+            resolvedScanUrl,
+        });
+
+        if (supplierEvaluation?.status === 'approved') {
+          nextStatus = 'completed';
+          nextMessage = resolve1688EvaluationMessage(supplierEvaluation);
+        } else if (supplierEvaluation?.status === 'rejected') {
+          nextStatus = 'no_match';
+          nextMessage = resolve1688EvaluationMessage(supplierEvaluation);
+        } else if (supplierEvaluation?.status === 'failed') {
+          const failureMessage = resolve1688EvaluationMessage(supplierEvaluation);
+          return await persistSynchronizedScan(scan, {
+            engineRunId,
+            status: 'failed',
+            matchedImageId: parsedResult.matchedImageId,
+            title: parsedResult.title,
+            price: parsedResult.price,
+            url: resolvedScanUrl,
+            description: parsedResult.description,
+            supplierDetails: parsedResult.supplierDetails,
+            supplierProbe: parsedResult.supplierProbe,
+            supplierEvaluation,
+            steps: finalizedSteps,
+            rawResult: resultValue,
+            error: failureMessage,
+            asinUpdateStatus: 'not_needed',
+            asinUpdateMessage: failureMessage,
+            completedAt: run.completedAt ?? new Date().toISOString(),
+          });
+        } else {
+          nextStatus = parsedResult.status === 'no_match' ? 'no_match' : 'completed';
+          nextMessage = resolve1688EvaluationMessage(supplierEvaluation);
+        }
+      }
+    } catch (error) {
+      const message = normalizeErrorMessage(
+        error instanceof Error ? error.message : error,
+        '1688 supplier AI evaluation failed.'
+      );
+      const evaluationError: ProductScanSupplierEvaluation = {
+        status: 'failed',
+        sameProduct: null,
+        imageMatch: null,
+        titleMatch: null,
+        confidence: null,
+        proceed: false,
+        reasons: [],
+        mismatches: [],
+        modelId: null,
+        error: message,
+        evaluatedAt: new Date().toISOString(),
+      };
+      finalizedSteps = upsertPersistedProductScanStep(finalizedSteps, {
+        key: 'supplier_ai_evaluate',
+        label: 'Evaluate supplier candidate match',
+        group: 'supplier',
+        attempt: resolveNext1688EvaluationStepAttempt(finalizedSteps),
+        candidateId: parsedResult.matchedImageId,
+        candidateRank: resolve1688CandidateRank(parsedResult.supplierProbe),
+        status: 'failed',
+        resultCode: 'evaluation_failed',
+        message,
+        details: [{ label: 'Error', value: message }],
+        url:
+          parsedResult.supplierProbe?.canonicalUrl ??
+          parsedResult.supplierProbe?.candidateUrl ??
+          resolvedScanUrl,
+      });
+      return await persistSynchronizedScan(scan, {
+        engineRunId,
+        status: 'failed',
+        matchedImageId: parsedResult.matchedImageId,
+        title: parsedResult.title,
+        price: parsedResult.price,
+        url: resolvedScanUrl,
+        description: parsedResult.description,
+        supplierDetails: parsedResult.supplierDetails,
+        supplierProbe: parsedResult.supplierProbe,
+        supplierEvaluation: evaluationError,
+        steps: finalizedSteps,
+        rawResult: resultValue,
+        error: message,
+        asinUpdateStatus: 'not_needed',
+        asinUpdateMessage: message,
+        completedAt: run.completedAt ?? new Date().toISOString(),
+      });
+    }
 
     return await persistSynchronizedScan(scan, {
       engineRunId,
@@ -1715,7 +2024,7 @@ async function synchronize1688ProductScan(scan: ProductScanRecord): Promise<Prod
       description: parsedResult.description,
       supplierDetails: parsedResult.supplierDetails,
       supplierProbe: parsedResult.supplierProbe,
-      supplierEvaluation: null,
+      supplierEvaluation,
       steps: finalizedSteps,
       rawResult: resultValue,
       error: null,
@@ -1868,7 +2177,7 @@ const queueProviderBatchProductScans = async (input: {
     scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
     if (input.config.provider === 'amazon') {
       amazonCandidateEvaluatorEnabled = (
-        await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings)
+        await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings)
       ).enabled;
     }
   } catch (error) {

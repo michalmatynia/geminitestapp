@@ -67,7 +67,6 @@ describe('mongo-client defaults', () => {
 
     expect(options.serverSelectionTimeoutMS).toBe(5000);
     expect(options.connectTimeoutMS).toBe(5000);
-    expect(options.directConnection).toBe(true);
   });
 
   it('preserves explicit timeout overrides', async () => {
@@ -80,7 +79,6 @@ describe('mongo-client defaults', () => {
 
     expect(options.serverSelectionTimeoutMS).toBe(2500);
     expect(options.connectTimeoutMS).toBe(3500);
-    expect(options.directConnection).toBe(true);
   });
 
   it('enables directConnection only for single-node localhost uris', async () => {

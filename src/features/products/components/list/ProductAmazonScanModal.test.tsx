@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   safeSetInterval: vi.fn(),
   safeClearInterval: vi.fn(),
   pollCallback: null as null | (() => void),
+  invalidateProducts: vi.fn().mockResolvedValue(undefined),
   invalidateProductsAndDetail: vi.fn().mockResolvedValue(undefined),
   invalidateProductsAndCounts: vi.fn().mockResolvedValue(undefined),
   invalidateProductScans: vi.fn().mockResolvedValue(undefined),
@@ -24,6 +25,8 @@ const mocks = vi.hoisted(() => ({
   updateParameterValueMock: vi.fn(),
   setTextValueMock: vi.fn(),
   toggleSelectedOptionMock: vi.fn(),
+  setImageLinkAtMock: vi.fn(),
+  setImageBase64AtMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -33,14 +36,19 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/shared/lib/query-invalidation', () => ({
-  invalidateProductsAndDetail: (...args: unknown[]) =>
-    mocks.invalidateProductsAndDetail(...args),
-  invalidateProductsAndCounts: (...args: unknown[]) =>
-    mocks.invalidateProductsAndCounts(...args),
-  invalidateProductScans: (...args: unknown[]) =>
-    mocks.invalidateProductScans(...args),
-}));
+vi.mock('@/shared/lib/query-invalidation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/query-invalidation')>();
+  return {
+    ...actual,
+    invalidateProducts: (...args: unknown[]) => mocks.invalidateProducts(...args),
+    invalidateProductsAndDetail: (...args: unknown[]) =>
+      mocks.invalidateProductsAndDetail(...args),
+    invalidateProductsAndCounts: (...args: unknown[]) =>
+      mocks.invalidateProductsAndCounts(...args),
+    invalidateProductScans: (...args: unknown[]) =>
+      mocks.invalidateProductScans(...args),
+  };
+});
 
 vi.mock('@/shared/lib/timers', () => ({
   safeSetInterval: (...args: unknown[]) => {
@@ -97,6 +105,7 @@ import {
   ProductFormCoreActionsContext,
   ProductFormCoreStateContext,
 } from '@/features/products/context/ProductFormCoreContext';
+import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { ProductFormParameterContext } from '@/features/products/context/ProductFormParameterContext';
 import { ProductFormCustomFieldContext } from '@/features/products/context/ProductFormCustomFieldContext';
 
@@ -121,6 +130,7 @@ const createDeferred = <T,>() => {
 describe('ProductAmazonScanModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     mocks.safeSetInterval.mockImplementation(() => 1);
     mocks.safeClearInterval.mockImplementation(() => undefined);
     mocks.pollCallback = null;
@@ -133,6 +143,9 @@ describe('ProductAmazonScanModal', () => {
         sizeLength: 0,
         sizeWidth: 0,
         length: 0,
+        supplierName: '',
+        supplierLink: '',
+        priceComment: '',
       };
       return field ? values[field] : values;
     });
@@ -365,7 +378,12 @@ describe('ProductAmazonScanModal', () => {
             evaluatedAt: '2026-04-12T06:40:00.000Z',
           },
           steps: [],
-          rawResult: null,
+          rawResult: {
+            candidateUrls: [
+              'https://detail.1688.com/offer/123456789.html',
+              'https://detail.1688.com/offer/987654321.html',
+            ],
+          },
           error: null,
           asinUpdateStatus: 'not_needed',
           asinUpdateMessage: null,
@@ -391,9 +409,315 @@ describe('ProductAmazonScanModal', () => {
     );
 
     expect(await screen.findByText('1688 supplier details')).toBeInTheDocument();
+    expect(screen.getByText('1688 supplier result')).toBeInTheDocument();
+    expect(screen.getAllByText('AI-approved supplier match').length).toBeGreaterThan(0);
     expect(screen.getByText('Yiwu Supplier Co.')).toBeInTheDocument();
+    expect(screen.getByText('https://detail.1688.com/offer/987654321.html')).toBeInTheDocument();
     expect(screen.getByText('Match evaluation')).toBeInTheDocument();
     expect(screen.getByText(/Confidence 91%/)).toBeInTheDocument();
+  });
+
+  it('applies 1688 supplier fields into the open product form from the modal', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-apply-1',
+          runId: 'run-1688-apply-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-apply-1',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'completed',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-apply-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: '1688 supplier listing',
+          price: '¥12.80-14.20',
+          url: 'https://detail.1688.com/offer/123456789.html',
+          description: 'Supplier listing for the scanned product.',
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: {
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/store/page.html',
+            supplierProductUrl: 'https://detail.1688.com/offer/123456789.html',
+            platformProductId: '123456789',
+            currency: 'CNY',
+            priceText: '¥12.80-14.20',
+            priceRangeText: '¥12.80-14.20',
+            moqText: 'MOQ 20 pcs',
+            supplierLocation: 'Zhejiang, China',
+            supplierRating: 'Gold supplier',
+            sourceLanguage: 'zh-CN',
+            images: [
+              {
+                url: 'https://cbu01.alicdn.com/image1.jpg',
+                alt: null,
+                artifactName: null,
+                source: 'hero',
+              },
+            ],
+            prices: [],
+          },
+          supplierProbe: null,
+          supplierEvaluation: null,
+          steps: [],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T06:40:10.000Z',
+          createdAt: '2026-04-12T06:39:00.000Z',
+          updatedAt: '2026-04-12T06:40:10.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductFormCoreStateContext.Provider
+          value={
+            {
+              getValues: mocks.getValuesMock,
+            } as never
+          }
+        >
+          <ProductFormCoreActionsContext.Provider
+            value={
+              {
+                setValue: mocks.setValueMock,
+              } as never
+            }
+          >
+            <ProductFormParameterContext.Provider
+              value={
+                {
+                  parameters: [],
+                  parametersLoading: false,
+                  parameterValues: [],
+                  addParameterValue: mocks.addParameterValueMock,
+                  updateParameterId: mocks.updateParameterIdMock,
+                  updateParameterValue: mocks.updateParameterValueMock,
+                  updateParameterValueByLanguage: vi.fn(),
+                  removeParameterValue: vi.fn(),
+                } as never
+              }
+            >
+              <ProductFormCustomFieldContext.Provider
+                value={
+                  {
+                    customFields: [],
+                    customFieldsLoading: false,
+                    customFieldValues: [],
+                    setTextValue: mocks.setTextValueMock,
+                    toggleSelectedOption: mocks.toggleSelectedOptionMock,
+                  } as never
+                }
+              >
+                <ProductFormImageContext.Provider
+                  value={
+                    {
+                      imageSlots: [],
+                      imageLinks: ['', '', '', '', '', '', '', ''],
+                      imageBase64s: ['', '', '', '', '', '', '', ''],
+                      productId: 'product-1',
+                      uploading: false,
+                      uploadError: null,
+                      uploadSuccess: false,
+                      showFileManager: false,
+                      setShowFileManager: vi.fn(),
+                      handleSlotImageChange: vi.fn(),
+                      handleSlotFileSelect: vi.fn(),
+                      handleSlotDisconnectImage: vi.fn(),
+                      handleMultiImageChange: vi.fn(),
+                      handleMultiFileSelect: vi.fn(),
+                      swapImageSlots: vi.fn(),
+                      setImageLinkAt: mocks.setImageLinkAtMock,
+                      setImageBase64At: mocks.setImageBase64AtMock,
+                      setImagesReordering: vi.fn(),
+                      refreshImagesFromProduct: vi.fn(),
+                    } as never
+                  }
+                >
+                  <ProductAmazonScanModal
+                    isOpen
+                    onClose={vi.fn()}
+                    provider='1688'
+                    productIds={['product-1']}
+                    products={[{ id: 'product-1', name_en: 'Supplier Product 1', images: [] } as never]}
+                  />
+                </ProductFormImageContext.Provider>
+              </ProductFormCustomFieldContext.Provider>
+            </ProductFormParameterContext.Provider>
+          </ProductFormCoreActionsContext.Provider>
+        </ProductFormCoreStateContext.Provider>
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Apply to product form')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use Product Link' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use Store Link' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use Supplier Name' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use Product Link' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use Price Summary' }));
+
+    expect(mocks.setValueMock).toHaveBeenCalledWith(
+      'supplierName',
+      'Yiwu Supplier Co.',
+      expect.any(Object)
+    );
+    expect(mocks.setValueMock).toHaveBeenCalledWith(
+      'supplierLink',
+      'https://detail.1688.com/offer/123456789.html',
+      expect.any(Object)
+    );
+    expect(mocks.setValueMock).toHaveBeenCalledWith(
+      'priceComment',
+      '¥12.80-14.20 · MOQ 20 pcs',
+      expect.any(Object)
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Apply All Supplier Data' }));
+    expect(mocks.setImageLinkAtMock).toHaveBeenCalledWith(
+      0,
+      'https://cbu01.alicdn.com/image1.jpg'
+    );
+    expect(mocks.setImageBase64AtMock).toHaveBeenCalledWith(0, '');
+  });
+
+  it('shows AI Rejected for 1688 supplier scans rejected by the evaluator', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-rejected-1',
+          runId: 'run-1688-rejected-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-rejected-1',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'no_match',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-rejected-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: null,
+          supplierProbe: {
+            candidateUrl: 'https://detail.1688.com/offer/123456789.html',
+            canonicalUrl: 'https://detail.1688.com/offer/123456789.html',
+            pageTitle: 'Yiwu Supplier Listing',
+            descriptionSnippet: null,
+            pageLanguage: 'zh-CN',
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: null,
+            priceText: null,
+            currency: null,
+            heroImageUrl: null,
+            heroImageAlt: null,
+            heroImageArtifactName: null,
+            artifactKey: '1688-scan-probe-image-1',
+            imageCount: 1,
+          },
+          supplierEvaluation: {
+            status: 'rejected',
+            sameProduct: false,
+            imageMatch: false,
+            titleMatch: false,
+            confidence: 0.41,
+            proceed: false,
+            reasons: ['Supplier candidate does not match the source product.'],
+            mismatches: ['Supplier gallery differs from the source product.'],
+            modelId: 'gpt-4.1-mini',
+            error: null,
+            evaluatedAt: '2026-04-12T06:40:00.000Z',
+          },
+          steps: [],
+          rawResult: {
+            candidateUrls: [
+              'https://detail.1688.com/offer/123456789.html',
+              'https://detail.1688.com/offer/998877665.html',
+            ],
+          },
+          error: 'AI evaluator rejected the 1688 supplier candidate (41%).',
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: 'AI evaluator rejected the 1688 supplier candidate (41%).',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T06:40:10.000Z',
+          createdAt: '2026-04-12T06:39:00.000Z',
+          updatedAt: '2026-04-12T06:40:10.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          provider='1688'
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('AI Rejected')).toBeInTheDocument();
+    expect(screen.getByText('1688 supplier result')).toBeInTheDocument();
+    expect(screen.getByText('Supplier probe only')).toBeInTheDocument();
+    expect(screen.getByText('Apply blocked by AI rejection')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Review candidates' })).toHaveAttribute(
+      'href',
+      '#product-scan-1688-scan-1688-rejected-1-candidate-urls'
+    );
+    expect(screen.getByRole('link', { name: 'Review evaluation' })).toHaveAttribute(
+      'href',
+      '#product-scan-1688-scan-1688-rejected-1-match-evaluation'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark reviewed' }));
+    expect(screen.getByText('Blocked result reviewed')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Undo review' })).toBeInTheDocument();
   });
 
   it('shows and hides persisted scan steps for a modal scan row', async () => {

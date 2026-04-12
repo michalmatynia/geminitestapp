@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Template Migration Sheet (`template`)
 
-Generated at: 2026-04-11T13:54:16.572Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-11T13:54:16.572Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/template.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/template.scaffold.json`
 - v3 object id: `node_obj_template_portable_v3`
-- v3 object hash: `d5435024cf669eee8e1e469777f9a818ec658cadc96002687b8306ebf12b2cae`
+- v3 object hash: `4c05d105432fd3d87c3f9a46ec1165f490ebfcf14c37e72c803dcd07b8379554`
 
 ## Ports
 

@@ -137,6 +137,7 @@
     "products:audit:missing-parameters": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/audit-products-missing-parameters.ts",
     "products:apply:parameter-curated-overrides": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/apply-product-parameter-curated-overrides.ts",
     "products:apply:ready-parameter-curated-overrides": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/apply-product-parameter-curated-overrides.ts --apply --input=/tmp/product-parameter-curated-overrides-latest.json",
+    "products:clear:parameters": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/clear-product-parameters.ts",
     "products:build:ready-parameter-curated-overrides": "node --import tsx scripts/db/build-ready-product-parameter-curated-overrides.ts",
     "products:classify:parameter-recovery": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/classify-product-parameter-recovery.ts",
     "products:generate:parameter-curated-overrides": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/generate-product-parameter-curated-overrides.ts",

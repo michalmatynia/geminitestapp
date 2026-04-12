@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
 import { CustomFieldsSettings } from '@/features/products/components/settings/CustomFieldsSettings';
+import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogModal } from '@/features/products/components/settings/modals/catalog-modal/CatalogModal';
 import { PriceGroupModal } from '@/features/products/components/settings/modals/price-group-modal/PriceGroupModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
@@ -21,10 +21,10 @@ import { ValidatorSettings } from '@/features/products/components/settings/Valid
 import {
   useCatalogs,
   useCategories,
+  useParameters,
   useCustomFields,
   useDeleteCatalogMutation,
   useDeletePriceGroupMutation,
-  useParameters,
   usePriceGroups,
   useShippingGroups,
   useTags,
@@ -190,12 +190,12 @@ export function ProductSettingsPage({
     catalogs,
     isCategoriesSectionActive,
     isShippingGroupsSectionActive,
-    isParametersSectionActive,
     isTagsSectionActive,
+    isParametersSectionActive,
     selectedCategoryCatalogId,
     selectedShippingGroupCatalogId,
-    selectedParameterCatalogId,
     selectedTagCatalogId,
+    selectedParameterCatalogId,
     shouldLoadCatalogs,
   ]);
 

@@ -42,4 +42,18 @@ describe('products route module', () => {
     expect(scansIndex).toBeLessThan(productIdIndex);
     expect(scanBatchIndex).toBeLessThan(productIdIndex);
   });
+
+  it('registers parameter batch routes before the generic parameter id route', () => {
+    const parametersBatchIndex = catchAllRouteSource.indexOf('../parameters/batch/route-handler');
+    const parametersIndex = catchAllRouteSource.indexOf('../parameters/route-handler');
+    const parametersIdIndex = catchAllRouteSource.indexOf('../parameters/[id]/route-handler');
+    const productIdIndex = catchAllRouteSource.indexOf('../[id]/route-handler');
+
+    expect(parametersBatchIndex).toBeGreaterThan(-1);
+    expect(parametersIndex).toBeGreaterThan(-1);
+    expect(parametersIdIndex).toBeGreaterThan(-1);
+    expect(productIdIndex).toBeGreaterThan(-1);
+    expect(parametersBatchIndex).toBeLessThan(parametersIdIndex);
+    expect(parametersIndex).toBeLessThan(productIdIndex);
+  });
 });

@@ -933,6 +933,74 @@ describe('processTraderaListingJob', () => {
     );
   });
 
+  it('persists image preview mismatches as form failures with a user-facing retry message', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-image-mismatch',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockRejectedValue(
+      internalError(
+        'FAIL_IMAGE_SET_INVALID: Tradera uploaded more image previews than expected. Last state: {"expectedUploadCount":3,"observedPreviewDelta":4}'
+      )
+    );
+
+    await expect(
+      processTraderaListingJob({
+        listingId: 'listing-image-mismatch',
+        action: 'list',
+        source: 'manual',
+        jobId: 'job-tradera-image-mismatch',
+      })
+    ).rejects.toThrow(
+      'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.'
+    );
+
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-image-mismatch',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.',
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastErrorCategory: 'FORM',
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-image-mismatch',
+              ok: false,
+              error:
+                'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.',
+              errorCategory: 'FORM',
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-image-mismatch',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.',
+        requestId: 'job-tradera-image-mismatch',
+      })
+    );
+  });
+
   it('keeps scheduler-driven scripted Tradera runs on the connection default browser mode', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();

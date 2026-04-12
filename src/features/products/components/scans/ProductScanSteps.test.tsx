@@ -6,6 +6,7 @@ import {
   resolveProductScanActiveStepSummary,
   resolveProductScanContinuationSummary,
   resolveProductScanLatestOutcomeSummary,
+  resolveProductScanRejectedCandidateSummary,
 } from './ProductScanSteps';
 
 describe('ProductScanSteps', () => {
@@ -239,6 +240,149 @@ describe('ProductScanSteps', () => {
       attempt: 2,
       rejectedUrl: 'https://www.amazon.com/dp/B00TEST123',
       nextUrl: 'https://www.amazon.com/dp/B00TEST456',
+      rejectionKind: 'product',
+    });
+  });
+
+  it('resolves rejected candidate summaries from AI evaluation steps', () => {
+    const summary = resolveProductScanRejectedCandidateSummary([
+      {
+        key: 'amazon_ai_evaluate',
+        label: 'Evaluate Amazon candidate match',
+        group: 'amazon',
+        attempt: 1,
+        candidateId: 'image-2',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidate_rejected',
+        status: 'failed',
+        message: 'AI evaluator rejected the Amazon candidate (21%).',
+        warning: null,
+        details: [
+          { label: 'Confidence', value: '21%' },
+          { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00TEST123' },
+          { label: 'Reason', value: 'The Amazon page shows a different product.' },
+        ],
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+      {
+        key: 'amazon_ai_evaluate',
+        label: 'Evaluate Amazon candidate match',
+        group: 'amazon',
+        attempt: 2,
+        candidateId: 'image-2',
+        candidateRank: 2,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidate_rejected',
+        status: 'failed',
+        message: 'AI evaluator rejected the Amazon candidate (17%).',
+        warning: null,
+        details: [
+          { label: 'Confidence', value: '17%' },
+          { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00TEST456' },
+          { label: 'Reason', value: 'The second Amazon page is still a different product.' },
+        ],
+        url: 'https://www.amazon.com/dp/B00TEST456',
+        startedAt: '2026-04-11T10:00:09.000Z',
+        completedAt: '2026-04-11T10:00:12.000Z',
+        durationMs: 3000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      rejectedCount: 2,
+      languageRejectedCount: 0,
+      latestRejectedUrl: 'https://www.amazon.com/dp/B00TEST456',
+      latestReason: 'The second Amazon page is still a different product.',
+      latestRejectionKind: 'product',
+    });
+  });
+
+  it('resolves language-rejection continuation and rejected summaries', () => {
+    const continuationSummary = resolveProductScanContinuationSummary([
+      {
+        key: 'amazon_ai_evaluate',
+        label: 'Evaluate Amazon candidate match',
+        group: 'amazon',
+        attempt: 1,
+        candidateId: 'image-2',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidate_language_rejected',
+        status: 'failed',
+        message: 'AI evaluator rejected the Amazon candidate because page content is not English.',
+        warning: null,
+        details: [{ label: 'Rejection kind', value: 'Language gate' }],
+        url: 'https://www.amazon.de/dp/B00TEST123',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+      {
+        key: 'queue_scan',
+        label: 'Continue with next Amazon candidate',
+        group: 'input',
+        attempt: 2,
+        candidateId: null,
+        candidateRank: null,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'run_started',
+        status: 'completed',
+        message: 'Started the next Amazon candidate after language rejection.',
+        warning: null,
+        details: [
+          { label: 'Rejection kind', value: 'Language gate' },
+          { label: 'Rejected candidate URL', value: 'https://www.amazon.de/dp/B00TEST123' },
+          { label: 'Next candidate URL', value: 'https://www.amazon.com/dp/B00TEST456' },
+        ],
+        url: 'https://www.amazon.com/dp/B00TEST456',
+        startedAt: '2026-04-11T10:00:08.000Z',
+        completedAt: '2026-04-11T10:00:09.000Z',
+        durationMs: 1000,
+      },
+    ]);
+
+    expect(continuationSummary?.rejectionKind).toBe('language');
+
+    const rejectedSummary = resolveProductScanRejectedCandidateSummary([
+      {
+        key: 'amazon_ai_evaluate',
+        label: 'Evaluate Amazon candidate match',
+        group: 'amazon',
+        attempt: 1,
+        candidateId: 'image-2',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidate_language_rejected',
+        status: 'failed',
+        message: 'AI evaluator rejected the Amazon candidate because page content is not English.',
+        warning: null,
+        details: [
+          { label: 'Candidate URL', value: 'https://www.amazon.de/dp/B00TEST123' },
+          { label: 'Language reason', value: 'Detected German product content.' },
+          { label: 'Rejection kind', value: 'Language gate' },
+        ],
+        url: 'https://www.amazon.de/dp/B00TEST123',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+    ]);
+
+    expect(rejectedSummary).toEqual({
+      rejectedCount: 1,
+      languageRejectedCount: 1,
+      latestRejectedUrl: 'https://www.amazon.de/dp/B00TEST123',
+      latestReason: 'Detected German product content.',
+      latestRejectionKind: 'language',
     });
   });
 
@@ -314,6 +458,83 @@ describe('ProductScanSteps', () => {
     expect(screen.getByText('Recovery attempt')).toBeInTheDocument();
     expect(
       screen.getByText('Continues after AI rejection of https://www.amazon.com/dp/B00TEST123.')
+    ).toBeInTheDocument();
+  });
+
+  it('renders language gate context for continuation attempts in the timeline', () => {
+    render(
+      <ProductScanSteps
+        steps={[
+          {
+            key: 'amazon_ai_evaluate',
+            label: 'Evaluate Amazon candidate match',
+            group: 'amazon',
+            attempt: 1,
+            candidateId: 'image-2',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'candidate_language_rejected',
+            status: 'failed',
+            message: 'AI evaluator rejected the Amazon candidate because page content is not English.',
+            warning: null,
+            details: [{ label: 'Rejection kind', value: 'Language gate' }],
+            url: 'https://www.amazon.de/dp/B00TEST123',
+            startedAt: '2026-04-11T10:00:05.000Z',
+            completedAt: '2026-04-11T10:00:08.000Z',
+            durationMs: 3000,
+          },
+          {
+            key: 'queue_scan',
+            label: 'Continue with next Amazon candidate',
+            group: 'input',
+            attempt: 2,
+            candidateId: null,
+            candidateRank: null,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'run_queued',
+            status: 'completed',
+            message: 'Queued the next Amazon candidate after language rejection.',
+            warning: null,
+            details: [
+              { label: 'Rejection kind', value: 'Language gate' },
+              { label: 'Rejected candidate URL', value: 'https://www.amazon.de/dp/B00TEST123' },
+              { label: 'Next candidate URL', value: 'https://www.amazon.com/dp/B00TEST456' },
+            ],
+            url: 'https://www.amazon.com/dp/B00TEST456',
+            startedAt: '2026-04-11T10:00:08.000Z',
+            completedAt: '2026-04-11T10:00:09.000Z',
+            durationMs: 1000,
+          },
+          {
+            key: 'amazon_open',
+            label: 'Open Amazon candidate',
+            group: 'amazon',
+            attempt: 2,
+            candidateId: 'image-2',
+            candidateRank: 2,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'candidate_open_start',
+            status: 'running',
+            message: 'Opening Amazon candidate page.',
+            warning: null,
+            details: [],
+            url: 'https://www.amazon.com/dp/B00TEST456',
+            startedAt: '2026-04-11T10:00:10.000Z',
+            completedAt: null,
+            durationMs: null,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getAllByText('Language gate').length).toBeGreaterThan(0);
+    expect(screen.getByText('Language rejection recovery')).toBeInTheDocument();
+    expect(screen.getByText('Language recovery attempt')).toBeInTheDocument();
+    expect(
+      screen.getByText('Continues after language rejection of https://www.amazon.de/dp/B00TEST123.')
     ).toBeInTheDocument();
   });
 });

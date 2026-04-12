@@ -296,24 +296,26 @@ export const findDuplicateProductSyncAppField = (
 };
 
 const buildUniqueProductSyncFieldRulesSchema = <
-  T extends z.ZodType<ProductSyncRuleFieldCarrier[], z.ZodTypeDef, ProductSyncRuleFieldCarrier[]>,
+  T extends z.ZodTypeAny
 >(
   schema: T
-): T =>
-  schema.superRefine((rules, ctx) => {
-    const duplicateAppField = findDuplicateProductSyncAppField(rules);
+) =>
+  schema.superRefine((rules: unknown, ctx) => {
+    if (!Array.isArray(rules)) return;
+    const ruleList = rules as ProductSyncRuleFieldCarrier[];
+    const duplicateAppField = findDuplicateProductSyncAppField(ruleList);
     if (!duplicateAppField) return;
-    const duplicateIndex = rules.findIndex(
+    const duplicateIndex = ruleList.findIndex(
       (rule, index) =>
         rule.appField === duplicateAppField &&
-        rules.findIndex((candidate) => candidate.appField === duplicateAppField) !== index
+        ruleList.findIndex((candidate) => candidate.appField === duplicateAppField) !== index
     );
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: duplicateIndex >= 0 ? [duplicateIndex, 'appField'] : ['fieldRules'],
       message: `Only one synchronization rule is allowed for ${duplicateAppField}.`,
     });
-  }) as T;
+  });
 
 export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRule, 'id'>> = [
   {

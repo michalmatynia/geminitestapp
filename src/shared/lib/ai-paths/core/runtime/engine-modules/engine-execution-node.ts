@@ -634,6 +634,80 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       return true;
     }
 
+    // Detect handler-declared blocked status (e.g. model returning { status: 'blocked', reason: 'missing_prompt' }).
+    // Route through the blocked-node path so downstream nodes wait instead of processing garbage data.
+    const handlerDeclaredBlocked =
+      typeof nextOutputs?.['status'] === 'string' &&
+      nextOutputs['status'].trim().toLowerCase() === 'blocked';
+
+    if (handlerDeclaredBlocked) {
+      const nodeDurationMs = nowMs() - nodeStartedAt;
+      state.nodeDurationsMap.set(node.id, nodeDurationMs);
+      state.activeNodes.delete(node.id);
+      state.blockedNodes.add(node.id);
+      state.outputs[node.id] = nextOutputs;
+
+      appendNodeHistoryEntry({
+        state,
+        options,
+        resolvedRunId,
+        spanId,
+        node,
+        status: 'executed',
+        iteration,
+        attempt,
+        nodeInputs,
+        nodeOutputs: nextOutputs,
+        nodeById,
+        sanitizedEdges,
+        inputHash: nodeHash,
+        activationHash,
+        cacheDecision: isCacheDisabled ? 'disabled' : 'miss',
+        sideEffectPolicy,
+        sideEffectDecision,
+        idempotencyKey,
+        resume,
+        durationMs: nodeDurationMs,
+        runtimeTelemetry,
+      });
+
+      if (options.profile?.onEvent) {
+        options.profile.onEvent({
+          type: 'node',
+          runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
+          nodeId: node.id,
+          nodeType: node.type,
+          iteration,
+          status: 'skipped',
+          durationMs: nodeDurationMs,
+          reason: String(nextOutputs['reason'] ?? 'handler_declared_blocked'),
+          ...buildRuntimeTelemetryFields(runtimeTelemetry),
+        });
+      }
+
+      if (options.onNodeBlocked) {
+        void options.onNodeBlocked({
+          runId: resolvedRunId,
+          traceId: resolvedRunId,
+          spanId,
+          node,
+          iteration,
+          attempt,
+          reason: String(nextOutputs['reason'] ?? 'handler_declared_blocked'),
+          status: 'blocked',
+          message: `Node ${node.title || node.id} blocked: ${String(nextOutputs['reason'] ?? 'handler declared blocked status')}`,
+          waitingOnPorts: Array.isArray(nextOutputs['waitingOnPorts'])
+            ? (nextOutputs['waitingOnPorts'] as string[])
+            : [],
+          waitingOnDetails: [],
+          ...buildRuntimeTelemetryFields(runtimeTelemetry),
+        });
+      }
+
+      return true;
+    }
+
     const nodeDurationMs = nowMs() - nodeStartedAt;
     state.nodeDurationsMap.set(node.id, nodeDurationMs);
     state.finishedNodes.add(node.id);

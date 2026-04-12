@@ -36,6 +36,7 @@ export const classifyTraderaFailure = (message: string): TraderaFailureCategory 
     return 'NAVIGATION';
   }
   if (
+    normalized.includes('fail_image_set_invalid') ||
     normalized.includes('category mapping') ||
     normalized.includes('fetch tradera categories') ||
     normalized.includes('map the category') ||
@@ -65,8 +66,18 @@ export const toUserFacingTraderaFailure = (
   category: TraderaFailureCategory,
   message: string
 ): string => {
+  const normalized = message.trim().toLowerCase();
   if (category === 'AUTH') {
     return 'Tradera login requires manual verification. Open login window and retry.';
+  }
+  if (normalized.includes('uploaded more image previews than expected')) {
+    return 'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.';
+  }
+  if (normalized.includes('retry image cleanup did not clear the previous upload state')) {
+    return 'Tradera image cleanup did not finish before retrying the upload. Review the listing images in Tradera and retry.';
+  }
+  if (normalized.includes('fail_image_set_invalid')) {
+    return 'Tradera image upload did not settle correctly. Review the listing images in Tradera and retry.';
   }
   return message;
 };

@@ -49,6 +49,7 @@ import {
 const PATH_CONFIG_PREFETCH_BATCH_SIZE = 3;
 const PATH_CONFIG_PREFETCH_IDLE_DELAY_MS = 250;
 const PATH_CONFIG_PREFETCH_TIMEOUT_MS = 6_000;
+const CANVAS_BOOT_SETTINGS_TIMEOUT_MS = 20_000;
 
 export function useAiPathsPersistence(
   args: UseAiPathsPersistenceArgs
@@ -189,7 +190,9 @@ export function useAiPathsPersistence(
           'ai_paths_trigger_buttons',
         ];
         const stageAStartedAt = Date.now();
-        const baseSettings = await fetchAiPathsSettingsByKeysCached(baseKeys, { timeoutMs: 8_000 });
+        const baseSettings = await fetchAiPathsSettingsByKeysCached(baseKeys, {
+          timeoutMs: CANVAS_BOOT_SETTINGS_TIMEOUT_MS,
+        });
         const stageADurationMs = Date.now() - stageAStartedAt;
         const userPrefs = prefs.resolveUserPreferences(baseSettings);
         const uiState = prefs.resolveUiState(baseSettings);
@@ -250,7 +253,7 @@ export function useAiPathsPersistence(
         const activeConfigKey = `${PATH_CONFIG_PREFIX}${resolvedActivePathId}`;
         const stageBStartedAt = Date.now();
         const activeConfigSettings = await fetchAiPathsSettingsByKeysCached([activeConfigKey], {
-          timeoutMs: 10_000,
+          timeoutMs: CANVAS_BOOT_SETTINGS_TIMEOUT_MS,
         });
         const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
         if (!configItem?.value) {

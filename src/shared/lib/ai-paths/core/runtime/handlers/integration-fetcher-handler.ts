@@ -377,6 +377,10 @@ export const handleFetcher: NodeHandler = async ({
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const triggerSignal = coerceInput(nodeInputs['trigger']);
   if (triggerSignal === undefined || triggerSignal === null || triggerSignal === false) {
+    toast(
+      `Fetcher "${node.title ?? node.id}" skipped: no trigger signal received. Check the edge from the Trigger node.`,
+      { variant: 'warning' }
+    );
     return {};
   }
 

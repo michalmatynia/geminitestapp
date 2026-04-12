@@ -82,7 +82,7 @@ export const productScanStepSchema = z.object({
   status: productScanStepStatusSchema,
   message: optionalTrimmedString(2_000),
   warning: optionalTrimmedString(500),
-  details: z.array(productScanStepDetailSchema).max(12).default([]),
+  details: z.array(productScanStepDetailSchema).max(20).default([]),
   url: optionalTrimmedString(4_000),
   startedAt: z.string().datetime().nullable().default(null),
   completedAt: z.string().datetime().nullable().default(null),
@@ -139,6 +139,9 @@ export const productScanAmazonProbeSchema = z
     asin: optionalTrimmedString(40),
     pageTitle: optionalTrimmedString(1_000),
     descriptionSnippet: optionalTrimmedString(4_000),
+    pageLanguage: optionalTrimmedString(80).optional(),
+    pageLanguageSource: optionalTrimmedString(120).optional(),
+    marketplaceDomain: optionalTrimmedString(200).optional(),
     candidateUrl: optionalTrimmedString(4_000),
     canonicalUrl: optionalTrimmedString(4_000),
     heroImageUrl: optionalTrimmedString(4_000),
@@ -176,24 +179,31 @@ export type ProductScanAmazonEvaluationEvidence = z.infer<
   typeof productScanAmazonEvaluationEvidenceSchema
 >;
 
-export const productScanAmazonEvaluationSchema = z
-  .object({
-    status: productScanAmazonEvaluationStatusSchema,
-    sameProduct: z.boolean().nullable().default(null),
-    imageMatch: z.boolean().nullable().default(null),
-    descriptionMatch: z.boolean().nullable().default(null),
-    pageRepresentsSameProduct: z.boolean().nullable().default(null),
-    confidence: z.number().min(0).max(1).nullable().default(null),
-    proceed: z.boolean().default(false),
-    threshold: z.number().min(0).max(1).nullable().default(null),
-    reasons: z.array(trimmedString.max(500)).max(10).default([]),
-    mismatches: z.array(trimmedString.max(500)).max(10).default([]),
-    modelId: optionalTrimmedString(200),
-    brainApplied: z.record(z.string(), z.unknown()).nullable().default(null),
-    evidence: productScanAmazonEvaluationEvidenceSchema.nullable().default(null),
-    error: optionalTrimmedString(2_000),
-    evaluatedAt: z.string().datetime().nullable().default(null),
-  })
+export const productScanAmazonEvaluationResultSchema = z.object({
+  status: productScanAmazonEvaluationStatusSchema,
+  sameProduct: z.boolean().nullable().default(null),
+  imageMatch: z.boolean().nullable().default(null),
+  descriptionMatch: z.boolean().nullable().default(null),
+  pageRepresentsSameProduct: z.boolean().nullable().default(null),
+  pageLanguage: optionalTrimmedString(80).optional(),
+  languageConfidence: z.number().min(0).max(1).nullable().optional(),
+  languageAccepted: z.boolean().nullable().optional(),
+  languageReason: optionalTrimmedString(500).optional(),
+  confidence: z.number().min(0).max(1).nullable().default(null),
+  proceed: z.boolean().default(false),
+  scrapeAllowed: z.boolean().optional(),
+  threshold: z.number().min(0).max(1).nullable().default(null),
+  reasons: z.array(trimmedString.max(500)).max(10).default([]),
+  mismatches: z.array(trimmedString.max(500)).max(10).default([]),
+  modelId: optionalTrimmedString(200),
+  brainApplied: z.record(z.string(), z.unknown()).nullable().default(null),
+  evidence: productScanAmazonEvaluationEvidenceSchema.nullable().default(null),
+  error: optionalTrimmedString(2_000),
+  evaluatedAt: z.string().datetime().nullable().default(null),
+});
+export type ProductScanAmazonEvaluationResult = z.infer<typeof productScanAmazonEvaluationResultSchema>;
+
+export const productScanAmazonEvaluationSchema = productScanAmazonEvaluationResultSchema
   .nullable()
   .default(null);
 export type ProductScanAmazonEvaluation = z.infer<typeof productScanAmazonEvaluationSchema>;

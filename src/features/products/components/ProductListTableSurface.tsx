@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import dynamic from 'next/dynamic';
 import { Profiler, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -82,9 +83,6 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
   const [resolvedTableMaxHeight, setResolvedTableMaxHeight] = useState<
     number | string | undefined
   >(tableProps.maxHeight);
-  const actionsContent = useMemo(() => <ProductSelectionActions />, []);
-  const alertsContent = useMemo(() => <ProductListAlerts />, []);
-  const headerFiltersContent = useMemo(() => <ProductFilters instanceId='header' />, []);
 
   const updateTableMaxHeight = useCallback(() => {
     try {
@@ -149,9 +147,6 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
     };
   }, [updateTableMaxHeight]);
 
-  const headerContent = useMemo(() => {
-    return <ProductListHeader filtersContent={headerFiltersContent} />;
-  }, [headerFiltersContent]);
   const isEmpty = !tableProps.isLoading && tableProps.data.length === 0;
 
   return (
@@ -159,9 +154,9 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
       <StandardDataTablePanel
         variant='flat'
         className='[&>div:first-child]:mb-3'
-        header={headerContent}
-        alerts={alertsContent}
-        actions={actionsContent}
+        header={<ProductListHeader filtersContent={<ProductFilters instanceId='header' />} />}
+        alerts={<ProductListAlerts />}
+        actions={<ProductSelectionActions />}
         columns={tableProps.columns}
         data={tableProps.data}
         isLoading={tableProps.isLoading}

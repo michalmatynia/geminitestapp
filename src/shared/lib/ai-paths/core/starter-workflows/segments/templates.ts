@@ -172,7 +172,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'marketplace_copy_debrand',
-      templateVersion: 1,
+      templateVersion: 4,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

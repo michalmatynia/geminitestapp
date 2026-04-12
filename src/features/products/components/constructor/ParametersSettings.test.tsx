@@ -8,9 +8,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 
-const { saveMutateAsyncMock, deleteMutateAsyncMock, toastMock } = vi.hoisted(() => ({
+const {
+  saveMutateAsyncMock,
+  deleteMutateAsyncMock,
+  deleteParametersMutateAsyncMock,
+  toastMock,
+} = vi.hoisted(() => ({
   saveMutateAsyncMock: vi.fn(),
   deleteMutateAsyncMock: vi.fn(),
+  deleteParametersMutateAsyncMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -21,6 +27,10 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   }),
   useDeleteParameterMutation: () => ({
     mutateAsync: deleteMutateAsyncMock,
+    isPending: false,
+  }),
+  useDeleteParametersMutation: () => ({
+    mutateAsync: deleteParametersMutateAsyncMock,
     isPending: false,
   }),
 }));
@@ -141,20 +151,53 @@ vi.mock('@/shared/ui/select-simple', () => ({
 }));
 
 vi.mock('@/shared/ui/templates/modals/ConfirmModal', () => ({
-  ConfirmModal: () => null,
+  ConfirmModal: ({
+    isOpen,
+    onConfirm,
+    onClose,
+    confirmText = 'Confirm',
+    children,
+  }: {
+    isOpen: boolean;
+    onConfirm: () => void | Promise<void>;
+    onClose: () => void;
+    confirmText?: string;
+    children?: React.ReactNode;
+  }) =>
+    isOpen ? (
+      <div role='dialog'>
+        {children}
+        <button type='button' onClick={onClose}>
+          Cancel
+        </button>
+        <button type='button' onClick={() => void onConfirm()}>
+          {confirmText}
+        </button>
+      </div>
+    ) : null,
 }));
 
 vi.mock('@/shared/ui/templates/SimpleSettingsList', () => ({
   SimpleSettingsList: ({
     items,
+    renderActions,
+    onDelete,
   }: {
-    items: Array<{ title: string; description?: React.ReactNode }>;
+    items: Array<{ id: string; title: string; description?: React.ReactNode }>;
+    renderActions?: (item: { id: string }) => React.ReactNode;
+    onDelete?: (item: { id: string }) => void | Promise<void>;
   }) => (
     <div>
       {items.map((item) => (
         <div key={item.title}>
           <div>{item.title}</div>
           <div>{item.description}</div>
+          <div>{renderActions?.(item)}</div>
+          {onDelete ? (
+            <button type='button' onClick={() => onDelete(item)}>
+              Delete {item.title}
+            </button>
+          ) : null}
         </div>
       ))}
     </div>
@@ -195,6 +238,7 @@ const catalog = {
 } as CatalogRecord;
 
 function renderSettings(parameters: ProductParameter[] = []) {
+  const onRefresh = vi.fn();
   return render(
     <ParametersSettings
       loading={false}
@@ -202,7 +246,7 @@ function renderSettings(parameters: ProductParameter[] = []) {
       catalogs={[catalog]}
       selectedCatalogId='catalog-1'
       onCatalogChange={vi.fn()}
-      onRefresh={vi.fn()}
+      onRefresh={onRefresh}
     />
   );
 }
@@ -217,6 +261,15 @@ describe('ParametersSettings', () => {
       linkedTitleTermType: 'material',
     });
     deleteMutateAsyncMock.mockResolvedValue(undefined);
+    deleteParametersMutateAsyncMock.mockResolvedValue({
+      status: 'ok',
+      requested: 0,
+      found: 0,
+      deleted: 0,
+      removedProducts: 0,
+      removedProductDrafts: 0,
+      invalidIds: [],
+    });
   });
 
   it('saves linked English Title term mapping for text parameters', async () => {
@@ -278,6 +331,79 @@ describe('ParametersSettings', () => {
           optionLabels: ['Steel'],
         }),
       });
+    });
+  });
+
+  it('uses bulk delete for multiple selected parameters', async () => {
+    const user = userEvent.setup();
+
+    const parameters: ProductParameter[] = [
+      {
+        id: 'param-1',
+        catalogId: 'catalog-1',
+        selectorType: 'text',
+        name_en: 'Material',
+        name_pl: null,
+        name_de: null,
+        optionLabels: ['A'],
+        linkedTitleTermType: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'param-2',
+        catalogId: 'catalog-1',
+        selectorType: 'text',
+        name_en: 'Pattern',
+        name_pl: null,
+        name_de: null,
+        optionLabels: ['B'],
+        linkedTitleTermType: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ];
+    const onRefresh = vi.fn();
+
+    render(
+      <ParametersSettings
+        loading={false}
+        parameters={parameters}
+        catalogs={[catalog]}
+        selectedCatalogId='catalog-1'
+        onCatalogChange={vi.fn()}
+        onRefresh={onRefresh}
+      />
+    );
+
+    const materialCheckbox = screen.getByRole('checkbox', {
+      name: 'Select parameter Material',
+    }) as HTMLInputElement;
+    const patternCheckbox = screen.getByRole('checkbox', {
+      name: 'Select parameter Pattern',
+    }) as HTMLInputElement;
+
+    await user.click(materialCheckbox);
+    await user.click(patternCheckbox);
+
+    expect(materialCheckbox).toBeChecked();
+    expect(patternCheckbox).toBeChecked();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Delete Selected (2)',
+      })
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(deleteParametersMutateAsyncMock).toHaveBeenCalledWith({
+        parameterIds: ['param-1', 'param-2'],
+        catalogId: 'catalog-1',
+      });
+      expect(onRefresh).toHaveBeenCalledTimes(1);
+      expect(materialCheckbox).not.toBeChecked();
     });
   });
 });

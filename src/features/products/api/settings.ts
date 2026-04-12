@@ -231,6 +231,18 @@ export async function deleteParameter(id: string): Promise<void> {
   return api.delete(`/api/v2/products/parameters/${id}`);
 }
 
+export async function deleteParameters(parameterIds: string[]): Promise<{
+  status: 'ok';
+  requested: number;
+  found: number;
+  deleted: number;
+  removedProducts: number;
+  removedProductDrafts: number;
+  invalidIds: string[];
+}> {
+  return api.post('/api/v2/products/parameters/batch', { parameterIds });
+}
+
 export async function getValidatorSettings(): Promise<ProductValidatorSettings> {
   return api.get<ProductValidatorSettings>('/api/v2/products/validator-settings');
 }

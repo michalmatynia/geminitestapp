@@ -37,7 +37,6 @@ import type { DatabaseQueryInputControlsContextValue } from './database/Database
 export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   const state = useDatabaseNodeConfigState();
   const { selectedNode } = state;
-
   if (selectedNode?.type !== 'database') return null;
 
   const actionCategoryOptions = React.useMemo(
@@ -202,6 +201,8 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     },
   };
 
+  const nodeConfigLabel = (selectedNode.config?.database as { label?: string } | undefined)?.label;
+
   return (
     <DatabaseQueryValidatorPanelContextProvider
       value={{
@@ -221,7 +222,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
                 Database Node:{' '}
                 {resolveNodeLabel(
                   selectedNode.type,
-                  (selectedNode.config?.database as { label?: string } | undefined)?.label
+                  nodeConfigLabel
                 )}
               </h3>
             </div>

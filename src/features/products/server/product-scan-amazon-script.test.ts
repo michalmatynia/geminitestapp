@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { AMAZON_REVERSE_IMAGE_SCAN_SCRIPT } from './product-scan-amazon-script';
+import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
 
 describe('product-scan-amazon-script', () => {
   it('handles Google consent on both upload flows', () => {
@@ -27,6 +28,8 @@ describe('product-scan-amazon-script', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const canonicalUrl = toAbsoluteUrl(canonicalHref, currentUrl) || currentUrl;'
     );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('document.documentElement?.lang');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('marketplaceDomain');
   });
 
   it('collects candidate links from generic anchors so Google redirect URLs can resolve to Amazon', () => {
@@ -517,5 +520,11 @@ describe('product-scan-amazon-script', () => {
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('attributes,');
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('rankings: parseAmazonRankings(bestSellersRank)');
+  });
+
+  it('passes Playwright script validation', () => {
+    const validation = validatePlaywrightNodeScript(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT);
+
+    expect(validation.ok).toBe(true);
   });
 });

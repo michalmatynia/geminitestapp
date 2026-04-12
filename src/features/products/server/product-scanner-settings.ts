@@ -18,14 +18,17 @@ import {
 } from '../scanner-settings';
 
 const DEFAULT_AMAZON_CANDIDATE_EVALUATOR_SYSTEM_PROMPT =
-  'Evaluate whether the Amazon page represents the same product as the source product. Compare the visible product image, title, description, and key attributes. Return a conservative judgment and reject mismatches.';
+  'Evaluate whether the Amazon page represents the same product as the source product. Compare the visible product image, title, description, and key attributes. Also judge whether the visible Amazon page content is English enough to trust scraping into English product fields. Return a conservative judgment and reject mismatches or non-English pages when required.';
 
 export type ProductScannerAmazonCandidateEvaluatorResolvedConfig =
-  | {
+    | {
       enabled: false;
       mode: ProductScannerAmazonCandidateEvaluator['mode'];
       threshold: number;
       onlyForAmbiguousCandidates: boolean;
+      allowedContentLanguage: ProductScannerAmazonCandidateEvaluator['allowedContentLanguage'];
+      rejectNonEnglishContent: boolean;
+      languageDetectionMode: ProductScannerAmazonCandidateEvaluator['languageDetectionMode'];
       modelId: null;
       systemPrompt: null;
       brainApplied: null;
@@ -35,6 +38,9 @@ export type ProductScannerAmazonCandidateEvaluatorResolvedConfig =
       mode: ProductScannerAmazonCandidateEvaluator['mode'];
       threshold: number;
       onlyForAmbiguousCandidates: boolean;
+      allowedContentLanguage: ProductScannerAmazonCandidateEvaluator['allowedContentLanguage'];
+      rejectNonEnglishContent: boolean;
+      languageDetectionMode: ProductScannerAmazonCandidateEvaluator['languageDetectionMode'];
       modelId: string;
       systemPrompt: string;
       brainApplied: Record<string, unknown> | null;
@@ -103,6 +109,9 @@ export const resolveProductScannerAmazonCandidateEvaluatorConfig = async (
       mode: evaluator.mode,
       threshold: evaluator.threshold,
       onlyForAmbiguousCandidates: evaluator.onlyForAmbiguousCandidates,
+      allowedContentLanguage: evaluator.allowedContentLanguage,
+      rejectNonEnglishContent: evaluator.rejectNonEnglishContent,
+      languageDetectionMode: evaluator.languageDetectionMode,
       modelId: null,
       systemPrompt: null,
       brainApplied: null,
@@ -125,6 +134,9 @@ export const resolveProductScannerAmazonCandidateEvaluatorConfig = async (
       mode: evaluator.mode,
       threshold: evaluator.threshold,
       onlyForAmbiguousCandidates: evaluator.onlyForAmbiguousCandidates,
+      allowedContentLanguage: evaluator.allowedContentLanguage,
+      rejectNonEnglishContent: evaluator.rejectNonEnglishContent,
+      languageDetectionMode: evaluator.languageDetectionMode,
       modelId,
       systemPrompt,
       brainApplied: null,
@@ -146,6 +158,9 @@ export const resolveProductScannerAmazonCandidateEvaluatorConfig = async (
     mode: evaluator.mode,
     threshold: evaluator.threshold,
     onlyForAmbiguousCandidates: evaluator.onlyForAmbiguousCandidates,
+    allowedContentLanguage: evaluator.allowedContentLanguage,
+    rejectNonEnglishContent: evaluator.rejectNonEnglishContent,
+    languageDetectionMode: evaluator.languageDetectionMode,
     modelId: brainConfig.modelId,
     systemPrompt: brainConfig.systemPrompt,
     brainApplied: brainConfig.brainApplied as Record<string, unknown>,

@@ -1,5 +1,7 @@
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type {
+  ProductScannerAmazonCandidateEvaluatorAllowedContentLanguage,
+  ProductScannerAmazonCandidateEvaluatorLanguageDetectionMode,
   ProductScannerAmazonCandidateEvaluator,
   ProductScannerAmazonCandidateEvaluatorMode,
   ProductScannerCaptchaBehavior,
@@ -22,6 +24,10 @@ export const DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR = 'auto_show_browser' as c
 export const DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS = 240_000;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE = 'disabled' as const;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD = 0.7;
+export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_ALLOWED_CONTENT_LANGUAGE =
+  'en' as const;
+export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE =
+  'deterministic_then_ai' as const;
 export const defaultProductScannerPlaywrightSettings: PlaywrightSettings = {
   ...buildIntegrationConnectionPlaywrightSettings(),
   headless: false,
@@ -32,6 +38,10 @@ export const createDefaultProductScannerAmazonCandidateEvaluator = (): ProductSc
   modelId: null,
   threshold: DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD,
   onlyForAmbiguousCandidates: true,
+  allowedContentLanguage: DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_ALLOWED_CONTENT_LANGUAGE,
+  rejectNonEnglishContent: true,
+  languageDetectionMode:
+    DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE,
   systemPrompt: null,
 });
 
@@ -100,6 +110,14 @@ export const PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS: ReadonlyAr
   { value: 'model_override', label: 'Override with scanner model' },
 ];
 
+export const PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_OPTIONS: ReadonlyArray<{
+  value: ProductScannerAmazonCandidateEvaluatorLanguageDetectionMode;
+  label: string;
+}> = [
+  { value: 'deterministic_then_ai', label: 'Deterministic probe hints, then AI' },
+  { value: 'ai_only', label: 'AI only' },
+];
+
 export const createDefaultProductScannerSettings = (): ProductScannerSettings => ({
   playwrightPersonaId: null,
   playwrightBrowser: DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
@@ -161,6 +179,20 @@ const normalizeProductScannerAmazonCandidateEvaluatorMode = (
     ? value
     : DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE;
 
+const normalizeProductScannerAmazonCandidateEvaluatorAllowedContentLanguage = (
+  value: unknown
+): ProductScannerAmazonCandidateEvaluatorAllowedContentLanguage =>
+  value === 'en'
+    ? value
+    : DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_ALLOWED_CONTENT_LANGUAGE;
+
+const normalizeProductScannerAmazonCandidateEvaluatorLanguageDetectionMode = (
+  value: unknown
+): ProductScannerAmazonCandidateEvaluatorLanguageDetectionMode =>
+  value === 'ai_only'
+    ? value
+    : DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE;
+
 const normalizeProductScannerAmazonCandidateEvaluatorThreshold = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD;
@@ -183,6 +215,13 @@ const normalizeProductScannerAmazonCandidateEvaluator = (
     modelId: normalizeNullableTrimmedString(record['modelId'], 200),
     threshold: normalizeProductScannerAmazonCandidateEvaluatorThreshold(record['threshold']),
     onlyForAmbiguousCandidates: record['onlyForAmbiguousCandidates'] !== false,
+    allowedContentLanguage: normalizeProductScannerAmazonCandidateEvaluatorAllowedContentLanguage(
+      record['allowedContentLanguage']
+    ),
+    rejectNonEnglishContent: record['rejectNonEnglishContent'] !== false,
+    languageDetectionMode: normalizeProductScannerAmazonCandidateEvaluatorLanguageDetectionMode(
+      record['languageDetectionMode']
+    ),
     systemPrompt: normalizeNullableTrimmedString(record['systemPrompt'], 4000),
   };
 };

@@ -227,4 +227,37 @@ describe('buildTriggeredProductEntityJson', () => {
       });
     });
   });
+
+  describe('imageLinks normalization', () => {
+    it('normalizes image links from current form values', () => {
+      const result = buildTriggeredProductEntityJson({
+        product: { imageLinks: ['https://existing.example.com'] } as never,
+        values: {
+          imageLinks: [' https://from-form-1.com ', '', '  ', 'https://from-form-2.com'],
+        },
+      });
+
+      expect(result['imageLinks']).toEqual(['https://from-form-1.com', 'https://from-form-2.com']);
+    });
+
+    it('keeps product image links when values omit image links', () => {
+      const result = buildTriggeredProductEntityJson({
+        product: { imageLinks: ['https://existing.example.com'] } as never,
+        values: { name: 'Test Product' },
+      });
+
+      expect(result['imageLinks']).toEqual(['https://existing.example.com']);
+    });
+
+    it('writes empty imageLinks when form image links are all blank', () => {
+      const result = buildTriggeredProductEntityJson({
+        product: { imageLinks: ['https://existing.example.com'] } as never,
+        values: {
+          imageLinks: ['   ', '', null, undefined],
+        },
+      });
+
+      expect(result['imageLinks']).toEqual([]);
+    });
+  });
 });

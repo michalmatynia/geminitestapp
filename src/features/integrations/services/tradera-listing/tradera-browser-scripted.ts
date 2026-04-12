@@ -374,6 +374,10 @@ const buildSuccessMetadata = ({
     typeof result.rawResult['observedPreviewCount'] === 'number'
       ? result.rawResult['observedPreviewCount']
       : null;
+  const observedImagePreviewDelta =
+    typeof result.rawResult['observedPreviewDelta'] === 'number'
+      ? result.rawResult['observedPreviewDelta']
+      : null;
 
   return buildPlaywrightScriptListingMetadata({
     result,
@@ -419,6 +423,11 @@ const buildSuccessMetadata = ({
         imageDiagnostics.imageInputSource === 'local' && imageUploadSource === 'downloaded',
       plannedImageCount,
       observedImagePreviewCount,
+      observedImagePreviewDelta,
+      imagePreviewMismatch:
+        plannedImageCount !== null &&
+        observedImagePreviewDelta !== null &&
+        plannedImageCount !== observedImagePreviewDelta,
       localImagePathCount: imageDiagnostics.localImagePathCount,
       imageUrlCount: imageDiagnostics.imageUrlCount,
     },

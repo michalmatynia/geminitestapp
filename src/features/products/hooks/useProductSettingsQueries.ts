@@ -54,6 +54,11 @@ import {
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 export { productSettingsKeys };
 
+type DeleteParametersPayload = {
+  parameterIds: string[];
+  catalogId: string | null;
+};
+
 import {
   useCatalogs as useMetadataCatalogs,
   useParameters as useMetadataParameters,
@@ -649,6 +654,32 @@ export function useDeleteParameterMutation(): UpdateMutation<
       mutationKey: queryKey,
       tags: ['products', 'settings', 'parameters', 'delete'],
       description: 'Deletes products settings parameters.'},
+    invalidate: async (queryClient, _data, variables) => {
+      await Promise.all([
+        invalidateCatalogScopedData(queryClient, variables.catalogId),
+        invalidateProductsAndCounts(queryClient),
+      ]);
+    },
+  });
+}
+
+export function useDeleteParametersMutation(): UpdateMutation<
+  Awaited<ReturnType<typeof api.deleteParameters>>,
+  DeleteParametersPayload
+> {
+  const mutationKey = productSettingsKeys.all;
+  return createUpdateMutationV2({
+    mutationFn: ({ parameterIds }: DeleteParametersPayload) => api.deleteParameters(parameterIds),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteParametersMutation',
+      operation: 'delete',
+      resource: 'products.settings.parameters',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'parameters', 'delete', 'batch'],
+      description: 'Deletes multiple products settings parameters.',
+    },
     invalidate: async (queryClient, _data, variables) => {
       await Promise.all([
         invalidateCatalogScopedData(queryClient, variables.catalogId),

@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { PlusIcon, Package } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -109,15 +110,19 @@ export const ProductListHeader = memo(function ProductListHeader({
       currencyOptions.map((code: string) => ({ value: code, label: code })),
     [currencyOptions]
   );
-  const resolvedFiltersContent = useMemo((): ReactNode => {
-    if (!filtersContent) return null;
-    if (isValidElement(filtersContent) && typeof filtersContent.type !== 'string') {
-      return cloneElement(filtersContent as ReactElement<Record<string, unknown>>, {
+  let resolvedFiltersContent: ReactNode = filtersContent ?? null;
+  if (
+    resolvedFiltersContent &&
+    isValidElement(resolvedFiltersContent) &&
+    typeof resolvedFiltersContent.type !== 'string'
+  ) {
+    resolvedFiltersContent = cloneElement(
+      resolvedFiltersContent as ReactElement<Record<string, unknown>>,
+      {
         instanceId: 'header',
-      });
-    }
-    return filtersContent;
-  }, [filtersContent]);
+      }
+    );
+  }
 
   useEffect(() => {
     return (): void => {

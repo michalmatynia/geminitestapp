@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 
 import type {
   ProductScanAmazonDetails as ProductScanAmazonDetailsValue,
-  ProductScanAmazonEvaluation,
+  ProductScanAmazonEvaluationResult,
   ProductScanRecord,
   ProductScanStep,
 } from '@/shared/contracts/product-scans';
@@ -26,6 +26,24 @@ type AmazonExtractionProvenance = {
   retryOf: string | null;
   reusedProbe: boolean;
   extractionResultLabel: string | null;
+};
+type AmazonRejectedCandidateHistoryEntry = {
+  attempt: number;
+  candidateId: string | null;
+  candidateRank: number | null;
+  url: string | null;
+  rejectionKind: 'language' | 'product';
+  confidenceLabel: string | null;
+  modelId: string | null;
+  reason: string | null;
+  mismatch: string | null;
+  message: string | null;
+};
+
+export type AmazonRejectedCandidateBreakdown = {
+  totalCount: number;
+  languageRejectedCount: number;
+  productRejectedCount: number;
 };
 
 export type AmazonScanQualitySummary = {
@@ -132,7 +150,7 @@ const resolveInputSourceLabel = (value: string | null | undefined): string | nul
 };
 
 const resolveAmazonEvaluationStatusLabel = (
-  value: ProductScanAmazonEvaluation['status'] | null | undefined
+  value: ProductScanAmazonEvaluationResult['status'] | null | undefined
 ): string | null => {
   if (typeof value !== 'string' || value.trim().length === 0) {
     return null;
@@ -145,6 +163,32 @@ const resolveAmazonEvaluationStatusLabel = (
 
 const formatAmazonEvaluationConfidence = (value: number | null | undefined): string | null =>
   typeof value === 'number' && Number.isFinite(value) ? `${Math.round(value * 100)}%` : null;
+
+const formatAmazonPageLanguage = (value: string | null | undefined): string | null => {
+  if (!hasText(value)) {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'en') return 'English';
+  if (normalized === 'en-us') return 'English (US)';
+  if (normalized === 'en-gb') return 'English (UK)';
+  if (normalized === 'de') return 'German';
+  if (normalized === 'fr') return 'French';
+  if (normalized === 'es') return 'Spanish';
+  if (normalized === 'it') return 'Italian';
+  if (normalized === 'pl') return 'Polish';
+  if (normalized === 'nl') return 'Dutch';
+  if (normalized === 'sv') return 'Swedish';
+  if (normalized === 'ja') return 'Japanese';
+  return normalized.toUpperCase();
+};
+
+const resolveStepDetailValue = (
+  step: Pick<ProductScanStep, 'details'>,
+  label: string
+): string | null =>
+  step.details.find((entry) => entry.label === label)?.value?.trim() || null;
 
 const resolveAmazonExtractionProvenance = (
   steps: readonly ProductScanStep[] | null | undefined
@@ -193,6 +237,161 @@ const resolveAmazonExtractionProvenance = (
   };
 };
 
+const resolveRejectedAmazonCandidateHistory = (
+  steps: readonly ProductScanStep[] | null | undefined
+): AmazonRejectedCandidateHistoryEntry[] =>
+  (steps ?? [])
+    .filter(
+      (step) =>
+        step.key === 'amazon_ai_evaluate' &&
+        (step.resultCode === 'candidate_rejected' ||
+          step.resultCode === 'candidate_language_rejected')
+    )
+    .map((step) => ({
+      attempt:
+        typeof step.attempt === 'number' && Number.isFinite(step.attempt) ? step.attempt : 1,
+      candidateId: step.candidateId?.trim() || null,
+      candidateRank:
+        typeof step.candidateRank === 'number' && Number.isFinite(step.candidateRank)
+          ? step.candidateRank
+          : null,
+      url: step.url?.trim() || resolveStepDetailValue(step, 'Candidate URL'),
+      rejectionKind:
+        step.resultCode === 'candidate_language_rejected' ? 'language' : 'product',
+      confidenceLabel: resolveStepDetailValue(step, 'Confidence'),
+      modelId: resolveStepDetailValue(step, 'Model'),
+      reason:
+        resolveStepDetailValue(step, 'Reason') ??
+        resolveStepDetailValue(step, 'Language reason'),
+      mismatch: resolveStepDetailValue(step, 'Mismatch'),
+      message: step.message?.trim() || null,
+    }))
+    .sort((left, right) => left.attempt - right.attempt);
+
+export const resolveRejectedAmazonCandidateBreakdown = (
+  steps: readonly ProductScanStep[] | null | undefined
+): AmazonRejectedCandidateBreakdown => {
+  const history = resolveRejectedAmazonCandidateHistory(steps);
+  const languageRejectedCount = history.filter((entry) => entry.rejectionKind === 'language').length;
+
+  return {
+    totalCount: history.length,
+    languageRejectedCount,
+    productRejectedCount: history.length - languageRejectedCount,
+  };
+};
+
+export const resolveRejectedAmazonCandidateCount = (
+  steps: readonly ProductScanStep[] | null | undefined
+): number => resolveRejectedAmazonCandidateBreakdown(steps).totalCount;
+
+export const resolveAmazonScanRecommendationReason = (
+  scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails' | 'steps'>
+): string | null => {
+  const quality = resolveAmazonScanQualitySummary(scan);
+  const rejectedCandidateBreakdown = resolveRejectedAmazonCandidateBreakdown(scan.steps);
+  const rejectedCandidateCount = rejectedCandidateBreakdown.totalCount;
+  const rejectedLanguageCount = rejectedCandidateBreakdown.languageRejectedCount;
+  const rejectedSuffix =
+    rejectedLanguageCount > 0
+      ? ` (${rejectedLanguageCount} non-English)`
+      : '';
+
+  if (!quality) {
+    return rejectedCandidateCount > 0
+      ? `Best available result after ${rejectedCandidateCount} rejected candidate${
+          rejectedCandidateCount === 1 ? '' : 's'
+        }`
+      : 'Best available result';
+  }
+
+  if (quality.primaryLabel === 'Strong match') {
+    if (rejectedCandidateCount > 0) {
+      return `Strong match after ${rejectedCandidateCount} rejected candidate${
+        rejectedCandidateCount === 1 ? '' : 's'
+      }${rejectedSuffix}`;
+    }
+
+    if (!quality.usedFallback && !quality.usedCaptcha) {
+      return 'Strongest clean match';
+    }
+
+    return 'Strongest recovered match';
+  }
+
+  if (quality.primaryLabel === 'Partial extraction') {
+    if (rejectedCandidateCount > 0) {
+      return `Partial extraction after ${rejectedCandidateCount} rejected candidate${
+        rejectedCandidateCount === 1 ? '' : 's'
+      }${rejectedSuffix}`;
+    }
+
+    if (!quality.usedFallback && !quality.usedCaptcha) {
+      return 'Clean partial extraction';
+    }
+
+    return 'Best partial extraction';
+  }
+
+  if (rejectedCandidateCount > 0) {
+    return `Best scraped result after ${rejectedCandidateCount} rejected candidate${
+      rejectedCandidateCount === 1 ? '' : 's'
+    }${rejectedSuffix}`;
+  }
+
+  return 'Best scraped result';
+};
+
+export const resolvePreferredAmazonExtractedScans = (
+  scans: ProductScanRecord[]
+): ProductScanRecord[] => {
+  const extractedScans = scans.filter(
+    (scan) => hasProductScanAmazonDetails(scan.amazonDetails) || Boolean(scan.asin)
+  );
+
+  const resolveQualityPriority = (scan: ProductScanRecord): number => {
+    const quality = resolveAmazonScanQualitySummary(scan);
+    if (!quality) {
+      return 0;
+    }
+
+    const primaryScore =
+      quality.primaryLabel === 'Strong match'
+        ? 300
+        : quality.primaryLabel === 'Partial extraction'
+          ? 200
+          : 100;
+
+    return primaryScore + (quality.usedFallback ? 0 : 5) + (quality.usedCaptcha ? 0 : 2);
+  };
+
+  const resolveSortTimestamp = (scan: ProductScanRecord): number => {
+    const parsed = new Date(scan.updatedAt ?? scan.createdAt ?? 0).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  return [...extractedScans].sort((left, right) => {
+    const qualityDifference = resolveQualityPriority(right) - resolveQualityPriority(left);
+    if (qualityDifference !== 0) {
+      return qualityDifference;
+    }
+
+    const rejectionDifference =
+      resolveRejectedAmazonCandidateCount(left.steps) -
+      resolveRejectedAmazonCandidateCount(right.steps);
+    if (rejectionDifference !== 0) {
+      return rejectionDifference;
+    }
+
+    const timestampDifference = resolveSortTimestamp(right) - resolveSortTimestamp(left);
+    if (timestampDifference !== 0) {
+      return timestampDifference;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
+};
+
 export const resolveAmazonScanQualitySummary = (
   scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails' | 'steps'>
 ): AmazonScanQualitySummary | null => {
@@ -218,10 +417,42 @@ export const resolveAmazonScanQualitySummary = (
   };
 };
 
+const resolveAmazonScanQualityModifierLabel = (
+  scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails' | 'steps'>
+): string | null => {
+  const quality = resolveAmazonScanQualitySummary(scan);
+  if (!quality) {
+    return null;
+  }
+
+  const rejectedCandidateBreakdown = resolveRejectedAmazonCandidateBreakdown(scan.steps);
+  const rejectedCandidateCount = rejectedCandidateBreakdown.totalCount;
+  if (rejectedCandidateCount > 0) {
+    const languageSuffix =
+      rejectedCandidateBreakdown.languageRejectedCount > 0
+        ? ` (${rejectedCandidateBreakdown.languageRejectedCount} non-English)`
+        : '';
+    return `After ${rejectedCandidateCount} rejected candidate${
+      rejectedCandidateCount === 1 ? '' : 's'
+    }${languageSuffix}`;
+  }
+
+  if (!quality.usedFallback && !quality.usedCaptcha) {
+    return 'Clean path';
+  }
+
+  if (quality.usedFallback || quality.usedCaptcha) {
+    return 'Recovered path';
+  }
+
+  return null;
+};
+
 export function ProductScanAmazonQualitySummary(props: {
   scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails' | 'steps'>;
 }): React.JSX.Element | null {
   const quality = resolveAmazonScanQualitySummary(props.scan);
+  const modifierLabel = resolveAmazonScanQualityModifierLabel(props.scan);
 
   if (!quality) {
     return null;
@@ -245,6 +476,11 @@ export function ProductScanAmazonQualitySummary(props: {
         >
           {quality.primaryLabel}
         </span>
+        {modifierLabel ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+            {modifierLabel}
+          </span>
+        ) : null}
         {quality.usedFallback ? (
           <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
             Fallback used
@@ -264,8 +500,10 @@ export function ProductScanAmazonProvenanceSummary(props: {
   scan: Pick<ProductScanRecord, 'steps'>;
 }): React.JSX.Element | null {
   const provenance = resolveAmazonExtractionProvenance(props.scan.steps);
+  const rejectedCandidateBreakdown = resolveRejectedAmazonCandidateBreakdown(props.scan.steps);
+  const rejectedCandidateCount = rejectedCandidateBreakdown.totalCount;
 
-  if (!provenance) {
+  if (!provenance && rejectedCandidateCount === 0) {
     return null;
   }
 
@@ -288,6 +526,16 @@ export function ProductScanAmazonProvenanceSummary(props: {
         {provenance.reusedProbe ? (
           <span className='inline-flex items-center rounded-md border border-emerald-500/40 px-2 py-0.5 text-[11px] font-medium text-emerald-300'>
             Probe reused
+          </span>
+        ) : null}
+        {rejectedCandidateCount > 0 ? (
+          <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
+            Rejected before match: {rejectedCandidateCount}
+          </span>
+        ) : null}
+        {rejectedCandidateBreakdown.languageRejectedCount > 0 ? (
+          <span className='inline-flex items-center rounded-md border border-rose-500/40 px-2 py-0.5 text-[11px] font-medium text-rose-300'>
+            Non-English rejected: {rejectedCandidateBreakdown.languageRejectedCount}
           </span>
         ) : null}
         {typeof provenance.candidateRank === 'number' ? (
@@ -422,6 +670,14 @@ export function ProductScanAmazonDetails(props: {
   const details = scan.amazonDetails;
   const provenance = useMemo(() => resolveAmazonExtractionProvenance(scan.steps), [scan.steps]);
   const quality = useMemo(() => resolveAmazonScanQualitySummary(scan), [scan]);
+  const rejectedCandidateHistory = useMemo(
+    () => resolveRejectedAmazonCandidateHistory(scan.steps),
+    [scan.steps]
+  );
+  const rejectedCandidateBreakdown = useMemo(
+    () => resolveRejectedAmazonCandidateBreakdown(scan.steps),
+    [scan.steps]
+  );
   const [attributeQuery, setAttributeQuery] = useState('');
   const groupedAttributes = useMemo(() => groupAmazonAttributesBySource(details), [details]);
   const normalizedAttributeQuery = attributeQuery.trim().toLowerCase();
@@ -513,6 +769,18 @@ export function ProductScanAmazonDetails(props: {
             Amazon candidate #{provenance.candidateRank}
           </span>
         ) : null}
+        {rejectedCandidateHistory.length ? (
+          <span className='inline-flex items-center rounded-md border border-amber-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-amber-300'>
+            {rejectedCandidateHistory.length} earlier candidate
+            {rejectedCandidateHistory.length === 1 ? '' : 's'} rejected
+          </span>
+        ) : null}
+        {rejectedCandidateBreakdown.languageRejectedCount > 0 ? (
+          <span className='inline-flex items-center rounded-md border border-rose-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-rose-300'>
+            {rejectedCandidateBreakdown.languageRejectedCount} non-English page
+            {rejectedCandidateBreakdown.languageRejectedCount === 1 ? '' : 's'} rejected
+          </span>
+        ) : null}
         {scan.amazonEvaluation ? (
           <span
             className={`inline-flex items-center rounded-md border bg-background/70 px-2.5 py-1 text-xs font-medium ${
@@ -526,6 +794,16 @@ export function ProductScanAmazonDetails(props: {
             }`}
           >
             {resolveAmazonEvaluationStatusLabel(scan.amazonEvaluation.status)}
+          </span>
+        ) : null}
+        {scan.amazonEvaluation?.languageAccepted === false ? (
+          <span className='inline-flex items-center rounded-md border border-rose-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-rose-300'>
+            Non-English page
+          </span>
+        ) : null}
+        {scan.amazonEvaluation?.pageLanguage ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+            Language {formatAmazonPageLanguage(scan.amazonEvaluation.pageLanguage)}
           </span>
         ) : null}
         {scan.amazonEvaluation?.confidence != null ? (
@@ -574,6 +852,32 @@ export function ProductScanAmazonDetails(props: {
                   : null,
             },
             {
+              label: 'Page language',
+              value: formatAmazonPageLanguage(scan.amazonEvaluation.pageLanguage),
+            },
+            {
+              label: 'Language accepted',
+              value:
+                typeof scan.amazonEvaluation.languageAccepted === 'boolean'
+                  ? String(scan.amazonEvaluation.languageAccepted)
+                  : null,
+            },
+            {
+              label: 'Language confidence',
+              value: formatAmazonEvaluationConfidence(scan.amazonEvaluation.languageConfidence),
+            },
+            {
+              label: 'Language reason',
+              value: scan.amazonEvaluation.languageReason,
+            },
+            {
+              label: 'Scrape allowed',
+              value:
+                typeof scan.amazonEvaluation.scrapeAllowed === 'boolean'
+                  ? String(scan.amazonEvaluation.scrapeAllowed)
+                  : null,
+            },
+            {
               label: 'Candidate URL',
               value: scan.amazonEvaluation.evidence?.candidateUrl,
             },
@@ -608,6 +912,79 @@ export function ProductScanAmazonDetails(props: {
         />
       ) : null}
 
+      {rejectedCandidateHistory.length ? (
+        <div className='space-y-2'>
+          <h5 className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+            Rejected Amazon Candidates
+          </h5>
+          <div className='space-y-2'>
+            {rejectedCandidateHistory.map((entry) => (
+              <div
+                key={`amazon-ai-rejected-${entry.attempt}-${entry.candidateRank ?? 'na'}`}
+                className='rounded-md border border-rose-500/20 bg-background/70 px-3 py-2'
+              >
+                <div className='flex flex-wrap gap-2'>
+                  {typeof entry.candidateRank === 'number' ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+                      Candidate #{entry.candidateRank}
+                    </span>
+                  ) : null}
+                  <span className='inline-flex items-center rounded-md border border-rose-500/40 px-2 py-0.5 text-[11px] font-medium text-rose-300'>
+                    Rejected
+                  </span>
+                  <span
+                    className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${
+                      entry.rejectionKind === 'language'
+                        ? 'border-rose-500/40 text-rose-300'
+                        : 'border-border/60'
+                    }`}
+                  >
+                    {entry.rejectionKind === 'language' ? 'Language gate' : 'Product mismatch'}
+                  </span>
+                  <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+                    Evaluation #{entry.attempt}
+                  </span>
+                  {entry.confidenceLabel ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+                      Confidence {entry.confidenceLabel}
+                    </span>
+                  ) : null}
+                  {entry.candidateId ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+                      Image {entry.candidateId}
+                    </span>
+                  ) : null}
+                </div>
+                <div className='mt-2 space-y-2 text-sm'>
+                  {entry.url ? (
+                    <div className='flex items-start justify-between gap-2'>
+                      <p className='break-all'>{entry.url}</p>
+                      <CopyButton
+                        value={entry.url}
+                        ariaLabel={`Copy rejected Amazon candidate URL ${entry.attempt}`}
+                        size='sm'
+                        className='h-6 px-2 text-[11px]'
+                        showText
+                      />
+                    </div>
+                  ) : null}
+                  {entry.reason ? <p>{entry.reason}</p> : null}
+                  {entry.mismatch ? (
+                    <p className='text-muted-foreground'>{entry.mismatch}</p>
+                  ) : null}
+                  {!entry.reason && !entry.mismatch && entry.message ? (
+                    <p>{entry.message}</p>
+                  ) : null}
+                  {entry.modelId ? (
+                    <p className='text-xs text-muted-foreground'>Model: {entry.modelId}</p>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {scan.amazonProbe ? (
         <FieldGroup
           title='Amazon Probe'
@@ -615,6 +992,12 @@ export function ProductScanAmazonDetails(props: {
             { label: 'Probe ASIN', value: scan.amazonProbe.asin },
             { label: 'Probe title', value: scan.amazonProbe.pageTitle },
             { label: 'Description snippet', value: scan.amazonProbe.descriptionSnippet },
+            {
+              label: 'Page language',
+              value: formatAmazonPageLanguage(scan.amazonProbe.pageLanguage),
+            },
+            { label: 'Language source', value: scan.amazonProbe.pageLanguageSource },
+            { label: 'Marketplace domain', value: scan.amazonProbe.marketplaceDomain },
             { label: 'Candidate URL', value: scan.amazonProbe.candidateUrl },
             { label: 'Canonical URL', value: scan.amazonProbe.canonicalUrl },
             { label: 'Hero image URL', value: scan.amazonProbe.heroImageUrl },
@@ -656,6 +1039,15 @@ export function ProductScanAmazonDetails(props: {
           {
             label: 'Probe handling',
             value: provenance?.reusedProbe ? 'Reused earlier approved probe' : null,
+          },
+          {
+            label: 'Rejected candidates',
+            value:
+              rejectedCandidateBreakdown.totalCount > 0
+                ? rejectedCandidateBreakdown.languageRejectedCount > 0
+                  ? `${rejectedCandidateBreakdown.totalCount} total, ${rejectedCandidateBreakdown.languageRejectedCount} non-English`
+                  : String(rejectedCandidateBreakdown.totalCount)
+                : null,
           },
           { label: 'Retry path', value: provenance?.retryOf },
           { label: 'Extraction result', value: provenance?.extractionResultLabel },

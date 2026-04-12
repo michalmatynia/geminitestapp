@@ -84,6 +84,39 @@ describe('product scan run feedback', () => {
     expect(feedback.variant).toBe('warning');
   });
 
+  it('surfaces language rejection distinctly from a generic AI no-match result', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        status: 'no_match',
+        amazonEvaluation: {
+          status: 'rejected',
+          sameProduct: true,
+          imageMatch: true,
+          descriptionMatch: true,
+          pageRepresentsSameProduct: true,
+          pageLanguage: 'de',
+          languageConfidence: 0.99,
+          languageAccepted: false,
+          languageReason: 'Amazon page declares German content.',
+          confidence: 0.91,
+          proceed: false,
+          scrapeAllowed: false,
+          threshold: 0.85,
+          reasons: ['Amazon page declares German content.'],
+          mismatches: ['Amazon page content is not in English.'],
+          modelId: 'gpt-4o',
+          brainApplied: null,
+          evidence: null,
+          error: null,
+          evaluatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      })
+    );
+
+    expect(feedback.label).toBe('AI Rejected: Language');
+    expect(feedback.variant).toBe('warning');
+  });
+
   it('keeps active scans in queued/running feedback even when the latest candidate was AI rejected', () => {
     const feedback = buildProductScanRunFeedbackFromRecord(
       createScanRecord({

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ProductScanAmazonDetails,
+  ProductScanAmazonQualitySummary,
   ProductScanAmazonProvenanceSummary,
 } from './ProductScanAmazonDetails';
 
@@ -26,6 +27,9 @@ describe('ProductScanAmazonDetails', () => {
             asin: 'B00TEST123',
             pageTitle: 'Amazon product title',
             descriptionSnippet: 'Amazon product description',
+            pageLanguage: 'en',
+            pageLanguageSource: 'html_lang',
+            marketplaceDomain: 'amazon.com',
             candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
             canonicalUrl: 'https://www.amazon.com/dp/B00TEST123',
             heroImageUrl: 'https://m.media-amazon.com/images/I/example.jpg',
@@ -42,8 +46,13 @@ describe('ProductScanAmazonDetails', () => {
             imageMatch: true,
             descriptionMatch: true,
             pageRepresentsSameProduct: true,
+            pageLanguage: 'en',
+            languageConfidence: 0.97,
+            languageAccepted: true,
+            languageReason: 'Amazon page declares English content.',
             confidence: 0.93,
             proceed: true,
+            scrapeAllowed: true,
             threshold: 0.85,
             reasons: ['Packaging and title align with the source product.'],
             mismatches: [],
@@ -200,6 +209,7 @@ describe('ProductScanAmazonDetails', () => {
     expect(screen.getByText('Showing 2 of 2')).toBeInTheDocument();
     expect(screen.getByText('Scan Provenance')).toBeInTheDocument();
     expect(screen.getAllByText('AI approved')).toHaveLength(2);
+    expect(screen.getByText('Language English')).toBeInTheDocument();
     expect(screen.getByText('AI confidence 93%')).toBeInTheDocument();
     expect(screen.getByText('AI Evaluation')).toBeInTheDocument();
     expect(screen.getByText('Amazon Probe')).toBeInTheDocument();
@@ -208,11 +218,19 @@ describe('ProductScanAmazonDetails', () => {
     expect(screen.getByText('amazon-scan-probe-image-2-attempt-1-rank-1')).toBeInTheDocument();
     expect(screen.getByText('Probe ASIN')).toBeInTheDocument();
     expect(screen.getByText('Description snippet')).toBeInTheDocument();
+    expect(screen.getAllByText('Page language')).toHaveLength(2);
+    expect(screen.getByText('Language accepted')).toBeInTheDocument();
+    expect(screen.getByText('Language confidence')).toBeInTheDocument();
+    expect(screen.getByText('Language reason')).toBeInTheDocument();
+    expect(screen.getByText('Language source')).toBeInTheDocument();
+    expect(screen.getByText('Marketplace domain')).toBeInTheDocument();
+    expect(screen.getByText('Scrape allowed')).toBeInTheDocument();
     expect(screen.getByText('Probe Bullet Points')).toBeInTheDocument();
     expect(screen.getByText('Hero image source')).toBeInTheDocument();
     expect(screen.getAllByText('Hero image artifact')).toHaveLength(2);
     expect(screen.getAllByText('amazon-scan-probe-image-2-attempt-1-rank-1-hero.png')).toHaveLength(2);
     expect(screen.getByText('Packaging and title align with the source product.')).toBeInTheDocument();
+    expect(screen.getByText('Amazon page declares English content.')).toBeInTheDocument();
     expect(screen.getAllByText('URL input')).toHaveLength(2);
     expect(screen.getByText('Fallback used')).toBeInTheDocument();
     expect(screen.getByText('Probe reused')).toBeInTheDocument();
@@ -233,6 +251,28 @@ describe('ProductScanAmazonDetails', () => {
       <ProductScanAmazonProvenanceSummary
         scan={{
           steps: [
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 1,
+              candidateId: 'image-2',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_language_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate because page content is not English.',
+              warning: null,
+              details: [
+                { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG123' },
+                { label: 'Language reason', value: 'Detected German product content.' },
+              ],
+              url: 'https://www.amazon.com/dp/B00WRONG123',
+              startedAt: '2026-04-11T10:00:03.000Z',
+              completedAt: '2026-04-11T10:00:04.000Z',
+              durationMs: 1000,
+            },
             {
               key: 'amazon_probe',
               label: 'Probe Amazon product page',
@@ -277,8 +317,131 @@ describe('ProductScanAmazonDetails', () => {
     );
 
     expect(screen.getByText('Probe reused')).toBeInTheDocument();
+    expect(screen.getByText(/Rejected before match:\s*1/)).toBeInTheDocument();
+    expect(screen.getByText(/Non-English rejected:\s*1/)).toBeInTheDocument();
     expect(screen.getByText('Amazon rank: #1')).toBeInTheDocument();
     expect(screen.getByText('Result: Match Found')).toBeInTheDocument();
+  });
+
+  it('shows the clean modifier inside the quality summary', () => {
+    render(
+      <ProductScanAmazonQualitySummary
+        scan={{
+          asin: 'B00TEST999',
+          title: 'Recovered Amazon product title',
+          description: 'Recovered Amazon product description',
+          amazonDetails: null,
+          steps: [],
+        }}
+      />
+    );
+
+    expect(screen.getByText('Strong match')).toBeInTheDocument();
+    expect(screen.getByText('Clean path')).toBeInTheDocument();
+  });
+
+  it('shows the rejection modifier inside the quality summary', () => {
+    render(
+      <ProductScanAmazonQualitySummary
+        scan={{
+          asin: 'B00TEST999',
+          title: 'Recovered Amazon product title',
+          description: 'Recovered Amazon product description',
+          amazonDetails: {
+            brand: null,
+            manufacturer: null,
+            modelNumber: null,
+            partNumber: null,
+            color: null,
+            style: null,
+            material: null,
+            size: null,
+            pattern: null,
+            finish: null,
+            itemDimensions: null,
+            packageDimensions: null,
+            itemWeight: null,
+            packageWeight: null,
+            bestSellersRank: null,
+            ean: null,
+            gtin: null,
+            upc: null,
+            isbn: null,
+            bulletPoints: [],
+            rankings: [],
+            attributes: [],
+          },
+          steps: [
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 1,
+              candidateId: 'image-1',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate.',
+              warning: null,
+              details: [
+                { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG123' },
+                { label: 'Reason', value: 'Different product.' },
+              ],
+              url: 'https://www.amazon.com/dp/B00WRONG123',
+              startedAt: '2026-04-11T10:00:01.000Z',
+              completedAt: '2026-04-11T10:00:02.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-1',
+              candidateRank: 2,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate again.',
+              warning: null,
+              details: [
+                { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG456' },
+                { label: 'Reason', value: 'Still different product.' },
+              ],
+              url: 'https://www.amazon.com/dp/B00WRONG456',
+              startedAt: '2026-04-11T10:00:03.000Z',
+              completedAt: '2026-04-11T10:00:04.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_extract',
+              label: 'Extract Amazon details',
+              group: 'amazon',
+              attempt: 3,
+              candidateId: 'image-1',
+              candidateRank: 3,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'match_found',
+              status: 'completed',
+              message: 'Extracted Amazon ASIN B00TEST999.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B00TEST999',
+              startedAt: '2026-04-11T10:00:05.000Z',
+              completedAt: '2026-04-11T10:00:08.000Z',
+              durationMs: 3000,
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByText('Strong match')).toBeInTheDocument();
+    expect(screen.getByText('After 2 rejected candidates')).toBeInTheDocument();
   });
 
   it('filters extracted Amazon attributes by label or value', () => {
@@ -462,5 +625,148 @@ describe('ProductScanAmazonDetails', () => {
     expect(screen.getAllByText('AI rejected')).toHaveLength(2);
     expect(screen.getByText('AI Evaluation')).toBeInTheDocument();
     expect(screen.getByText('Brand and visible image do not match.')).toBeInTheDocument();
+  });
+
+  it('shows rejected Amazon candidate history from persisted evaluation steps', () => {
+    render(
+      <ProductScanAmazonDetails
+        scan={{
+          asin: 'B00MATCHED123',
+          title: 'Correct Amazon product',
+          description: 'Correct Amazon description',
+          amazonProbe: {
+            asin: 'B00MATCHED123',
+            pageTitle: 'Correct Amazon product',
+            descriptionSnippet: 'Correct Amazon description',
+            candidateUrl: 'https://www.amazon.com/dp/B00MATCHED123',
+            canonicalUrl: 'https://www.amazon.com/dp/B00MATCHED123',
+            heroImageUrl: 'https://m.media-amazon.com/images/I/correct.jpg',
+            heroImageAlt: 'Correct product',
+            heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-3-hero.png',
+            artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-3',
+            bulletPoints: ['Correct bullet'],
+            bulletCount: 1,
+            attributeCount: 1,
+          },
+          amazonEvaluation: {
+            status: 'approved',
+            sameProduct: true,
+            imageMatch: true,
+            descriptionMatch: true,
+            pageRepresentsSameProduct: true,
+            confidence: 0.94,
+            proceed: true,
+            threshold: 0.85,
+            reasons: ['The third candidate matches the product.'],
+            mismatches: [],
+            modelId: 'gpt-4o',
+            brainApplied: null,
+            evidence: {
+              candidateUrl: 'https://www.amazon.com/dp/B00MATCHED123',
+              pageTitle: 'Correct Amazon product',
+              heroImageSource: 'https://m.media-amazon.com/images/I/correct.jpg',
+              heroImageArtifactName: 'amazon-scan-probe-image-1-attempt-1-rank-3-hero.png',
+              screenshotArtifactName: 'amazon-scan-match.png',
+              htmlArtifactName: null,
+              productImageSource: '/uploads/product-1.jpg',
+            },
+            error: null,
+            evaluatedAt: '2026-04-11T10:00:08.000Z',
+          },
+          steps: [
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 1,
+              candidateId: 'image-1',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate (21%).',
+              warning: null,
+              details: [
+                { label: 'Model', value: 'gpt-4o' },
+                { label: 'Confidence', value: '21%' },
+                { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG123' },
+                { label: 'Reason', value: 'The Amazon page shows a different product.' },
+                { label: 'Mismatch', value: 'Title and image do not match.' },
+              ],
+              url: 'https://www.amazon.com/dp/B00WRONG123',
+              startedAt: '2026-04-11T10:00:01.000Z',
+              completedAt: '2026-04-11T10:00:02.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-1',
+              candidateRank: 2,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_language_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate because page content is not English (17%).',
+              warning: null,
+              details: [
+                { label: 'Model', value: 'gpt-4o' },
+                { label: 'Confidence', value: '17%' },
+                { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG456' },
+                { label: 'Language reason', value: 'Detected German product content.' },
+                { label: 'Rejection kind', value: 'Language gate' },
+              ],
+              url: 'https://www.amazon.com/dp/B00WRONG456',
+              startedAt: '2026-04-11T10:00:03.000Z',
+              completedAt: '2026-04-11T10:00:04.000Z',
+              durationMs: 1000,
+            },
+          ],
+          amazonDetails: {
+            brand: 'Acme',
+            manufacturer: 'Acme Manufacturing',
+            modelNumber: null,
+            partNumber: null,
+            color: null,
+            style: null,
+            material: null,
+            size: null,
+            pattern: null,
+            finish: null,
+            itemDimensions: null,
+            packageDimensions: null,
+            itemWeight: null,
+            packageWeight: null,
+            bestSellersRank: null,
+            ean: null,
+            gtin: null,
+            upc: null,
+            isbn: null,
+            bulletPoints: ['Correct bullet'],
+            rankings: [],
+            attributes: [],
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByText('Rejected Amazon Candidates')).toBeInTheDocument();
+    expect(screen.getByText('2 earlier candidates rejected')).toBeInTheDocument();
+    expect(screen.getByText('1 non-English page rejected')).toBeInTheDocument();
+    expect(screen.getByText('Candidate #1')).toBeInTheDocument();
+    expect(screen.getByText('Candidate #2')).toBeInTheDocument();
+    expect(screen.getByText('Evaluation #1')).toBeInTheDocument();
+    expect(screen.getByText('Evaluation #2')).toBeInTheDocument();
+    expect(screen.getByText('Language gate')).toBeInTheDocument();
+    expect(screen.getByText('2 earlier candidates rejected')).toBeInTheDocument();
+    expect(screen.getByText('2 total, 1 non-English')).toBeInTheDocument();
+    expect(screen.getByText('The Amazon page shows a different product.')).toBeInTheDocument();
+    expect(screen.getByText('Detected German product content.')).toBeInTheDocument();
+    expect(screen.getByText('Title and image do not match.')).toBeInTheDocument();
+    expect(screen.getByText('https://www.amazon.com/dp/B00WRONG123')).toBeInTheDocument();
+    expect(screen.getByText('https://www.amazon.com/dp/B00WRONG456')).toBeInTheDocument();
   });
 });

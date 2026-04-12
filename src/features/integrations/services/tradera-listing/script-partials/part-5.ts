@@ -319,6 +319,7 @@ export const PART_5 = String.raw`
           imageCount: expectedUploadCount,
           expectedUploadCount,
           observedPreviewCount: imageAdvanceResult?.observedPreviewCount ?? null,
+          observedPreviewDelta: imageAdvanceResult?.observedPreviewDelta ?? null,
           uploadSource,
         };
       }

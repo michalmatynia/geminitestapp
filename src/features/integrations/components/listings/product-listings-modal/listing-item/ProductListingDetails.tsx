@@ -444,6 +444,14 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.imagePreviewMismatch ? (
+            <MetadataItem
+              label='Image preview mismatch'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.plannedImageCount !== null ? (
             <MetadataItem
               label='Planned image count'
@@ -451,9 +459,16 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.observedImagePreviewDelta !== null ? (
+            <MetadataItem
+              label='Observed new previews'
+              value={String(traderaExecution.observedImagePreviewDelta)}
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.observedImagePreviewCount !== null ? (
             <MetadataItem
-              label='Observed uploaded previews'
+              label='Observed total previews'
               value={String(traderaExecution.observedImagePreviewCount)}
               variant='minimal'
             />

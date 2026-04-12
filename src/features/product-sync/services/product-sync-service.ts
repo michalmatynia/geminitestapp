@@ -384,7 +384,7 @@ const loadWarehousePresentationMetadata = async (input: {
       ].filter(Boolean);
       if (identifiers.length === 0) return;
 
-      const name = toTrimmedString(warehouse.name) || identifiers[0];
+      const name = (toTrimmedString(warehouse.name) || identifiers[0]) ?? 'unknown';
       identifiers.forEach((identifier: string) => {
         if (!wantedIdentifiers.has(identifier)) return;
         warehousesByIdentifier.set(identifier, {
@@ -463,7 +463,7 @@ const loadPriceGroupPresentationMetadata = async (
       ].filter(Boolean);
       if (identifiersForGroup.length === 0) return;
 
-      const name = toTrimmedString(group.name) || identifiersForGroup[0];
+      const name = (toTrimmedString(group.name) || identifiersForGroup[0]) ?? 'unknown';
       const currencyCode = currencyCodeById.get(toTrimmedString(group.currencyId)) ?? null;
       identifiersForGroup.forEach((identifier: string) => {
         if (!wantedIdentifiers.includes(identifier)) return;

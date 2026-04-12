@@ -1,11 +1,12 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   useSaveParameterMutation,
+  useDeleteParametersMutation,
   useDeleteParameterMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
@@ -19,6 +20,7 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { FormSection, FormField } from '@/shared/ui/form-section';
 import { FormModal } from '@/shared/ui/FormModal';
 import { Input } from '@/shared/ui/input';
+import { Checkbox } from '@/shared/ui/checkbox';
 import { SelectSimple } from '@/shared/ui/select-simple';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
@@ -117,10 +119,86 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
     optionLabelsInput: '',
     linkedTitleTermType: null,
   });
-  const [parameterToDelete, setParameterToDelete] = useState<ProductParameter | null>(null);
+  const [selectedParameterIds, setSelectedParameterIds] = useState<Set<string>>(new Set());
+  const [parameterIdsToDelete, setParameterIdsToDelete] = useState<string[]>([]);
 
   const saveParameterMutation = useSaveParameterMutation();
+  const deleteParametersMutation = useDeleteParametersMutation();
   const deleteParameterMutation = useDeleteParameterMutation();
+  const deletePending = deleteParameterMutation.isPending || deleteParametersMutation.isPending;
+
+  const visibleParameterIds = useMemo(
+    () => parameters.map((parameter: ProductParameter) => parameter.id),
+    [parameters]
+  );
+  const hasVisibleParameters = visibleParameterIds.length > 0;
+  const isAllSelected =
+    hasVisibleParameters && selectedParameterIds.size === visibleParameterIds.length;
+  const isIndeterminateSelection =
+    selectedParameterIds.size > 0 && selectedParameterIds.size < visibleParameterIds.length;
+  const parameterIdsToDeleteSet = useMemo(
+    () => new Set(parameterIdsToDelete),
+    [parameterIdsToDelete]
+  );
+  const selectAllChecked = isAllSelected
+    ? true
+    : isIndeterminateSelection
+      ? ('indeterminate' as const)
+      : false;
+  const selectedCount = selectedParameterIds.size;
+  const pendingDeleteCount = parameterIdsToDeleteSet.size;
+
+  const clearSelection = useCallback(() => {
+    setSelectedParameterIds(new Set());
+  }, []);
+
+  useEffect(() => {
+    setSelectedParameterIds((prev) => {
+      const next = new Set([...prev].filter((id) => visibleParameterIds.includes(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [visibleParameterIds]);
+
+  useEffect(() => {
+    clearSelection();
+    setParameterIdsToDelete([]);
+  }, [clearSelection, selectedCatalogId]);
+
+  const updateSelection = useCallback((parameterId: string, checked: boolean): void => {
+    setSelectedParameterIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(parameterId);
+      } else {
+        next.delete(parameterId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleToggleSelectAll = useCallback((): void => {
+    if (isAllSelected) {
+      clearSelection();
+      return;
+    }
+    setSelectedParameterIds(new Set(visibleParameterIds));
+  }, [clearSelection, isAllSelected, visibleParameterIds]);
+
+  const startDeleteSelection = useCallback((): void => {
+    if (selectedParameterIds.size === 0) {
+      toast('Please select at least one parameter to delete.', { variant: 'error' });
+      return;
+    }
+    setParameterIdsToDelete(Array.from(selectedParameterIds));
+  }, [selectedParameterIds, toast]);
+
+  const startDeleteParameter = useCallback((parameter: ProductParameter): void => {
+    setParameterIdsToDelete([parameter.id]);
+  }, []);
+
+  const normalizeSelectionForDeletion = useCallback((): string[] => {
+    return Array.from(new Set(parameterIdsToDelete.filter((id) => id.trim())));
+  }, [parameterIdsToDelete]);
 
   const openCreateModal = (): void => {
     if (!selectedCatalogId) {
@@ -209,25 +287,32 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
     }
   };
 
-  const handleDelete = useCallback((parameter: ProductParameter): void => {
-    setParameterToDelete(parameter);
-  }, []);
-
   const handleConfirmDelete = async (): Promise<void> => {
-    if (!parameterToDelete) return;
+    const ids = normalizeSelectionForDeletion();
+    if (ids.length === 0) return;
     try {
-      await deleteParameterMutation.mutateAsync({
-        id: parameterToDelete.id,
-        catalogId: selectedCatalogId,
-      });
-      toast('Parameter deleted.', { variant: 'success' });
+      if (ids.length === 1) {
+        await deleteParameterMutation.mutateAsync({
+          id: ids[0]!,
+          catalogId: selectedCatalogId,
+        });
+        toast('Parameter deleted.', { variant: 'success' });
+      } else {
+        await deleteParametersMutation.mutateAsync({
+          parameterIds: ids,
+          catalogId: selectedCatalogId,
+        });
+        const noun = ids.length === 1 ? 'parameter' : 'parameters';
+        toast(`Deleted ${ids.length} ${noun}.`, { variant: 'success' });
+      }
       onRefresh();
+      clearSelection();
     } catch (error) {
       logClientError(error);
-      const message = error instanceof Error ? error.message : 'Failed to delete parameter.';
+      const message = error instanceof Error ? error.message : 'Failed to delete parameter(s).';
       toast(message, { variant: 'error' });
     } finally {
-      setParameterToDelete(null);
+      setParameterIdsToDelete([]);
     }
   };
 
@@ -275,7 +360,30 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
 
           <FormSection title={`Parameters for "${selectedCatalog?.name}"`} className='p-4'>
             <div className='mt-4'>
-              <SimpleSettingsList
+            <div className='mb-4 flex items-center justify-between gap-3'>
+              <div className='flex items-center gap-2 text-sm text-gray-300'>
+                <Checkbox
+                  checked={selectAllChecked}
+                  onCheckedChange={() => {
+                    handleToggleSelectAll();
+                  }}
+                  disabled={!hasVisibleParameters || loading}
+                  aria-label='Select all parameters'
+                  title='Select all parameters'
+                />
+                <span>Select all</span>
+              </div>
+              <Button
+                size='sm'
+                onClick={startDeleteSelection}
+                disabled={selectedCount === 0 || deletePending || loading}
+                variant='destructive'
+                className='gap-2'
+              >
+                {deletePending ? 'Deleting...' : `Delete Selected (${selectedCount})`}
+              </Button>
+            </div>
+            <SimpleSettingsList
                 items={parameters.map((parameter: ProductParameter) => ({
                   id: parameter.id,
                   title: parameter.name_en,
@@ -296,8 +404,18 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
                 }))}
                 isLoading={loading}
                 onEdit={(item) => openEditModal(item.original)}
+                renderActions={(item) => (
+                  <Checkbox
+                    checked={selectedParameterIds.has(item.id)}
+                    onCheckedChange={(checked) => {
+                      updateSelection(item.id, checked === true);
+                    }}
+                    aria-label={`Select parameter ${item.title}`}
+                    title={`Select parameter ${item.title}`}
+                  />
+                )}
                 onDelete={(item) => {
-                  handleDelete(item.original);
+                  startDeleteParameter(item.original);
                 }}
                 emptyMessage='No parameters yet. Create product parameters and choose their selector type.'
               />
@@ -314,13 +432,18 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
       )}
 
       <ConfirmModal
-        isOpen={!!parameterToDelete}
-        onClose={() => setParameterToDelete(null)}
+        isOpen={pendingDeleteCount > 0}
+        onClose={() => {
+          setParameterIdsToDelete([]);
+        }}
         onConfirm={handleConfirmDelete}
-        title='Delete Parameter'
-        message={`Are you sure you want to delete parameter "${parameterToDelete?.name_en}"? This action cannot be undone.`}
+        title={pendingDeleteCount === 1 ? 'Delete parameter?' : 'Delete parameters?'}
+        message={`Delete ${pendingDeleteCount} selected ${
+          pendingDeleteCount === 1 ? 'parameter' : 'parameters'
+        }? This action cannot be undone and will remove them from all products. `}
         confirmText='Delete'
         isDangerous={true}
+        loading={deletePending}
       />
 
       {showModal && (

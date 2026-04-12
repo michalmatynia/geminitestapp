@@ -81,6 +81,15 @@ export type ProductScanContinuationSummary = {
   attempt: number | null;
   nextUrl: string | null;
   rejectedUrl: string | null;
+  rejectionKind: 'language' | 'product' | null;
+};
+
+export type ProductScanRejectedCandidateSummary = {
+  rejectedCount: number;
+  languageRejectedCount: number;
+  latestRejectedUrl: string | null;
+  latestReason: string | null;
+  latestRejectionKind: 'language' | 'product' | null;
 };
 
 export const resolveProductScanActiveStepSummary = (
@@ -195,6 +204,57 @@ const resolveStepDetailValue = (
     : null;
 };
 
+const resolveAmazonEvaluationRejectionKind = (
+  step: Pick<ProductScanStep, 'resultCode' | 'details'>
+): 'language' | 'product' | null => {
+  if (step.resultCode === 'candidate_language_rejected') {
+    return 'language';
+  }
+
+  if (step.resultCode === 'candidate_rejected') {
+    return 'product';
+  }
+
+  const rejectionKind = resolveStepDetailValue(step, 'Rejection kind')?.toLowerCase() ?? null;
+  if (!rejectionKind) {
+    return null;
+  }
+
+  if (rejectionKind.includes('language')) {
+    return 'language';
+  }
+
+  if (rejectionKind.includes('product')) {
+    return 'product';
+  }
+
+  return null;
+};
+
+const resolveAmazonCandidateContinuationRejectionKind = (
+  step: Pick<ProductScanStep, 'key' | 'label' | 'message' | 'resultCode' | 'details'>
+): 'language' | 'product' | null => {
+  const explicitKind = resolveAmazonEvaluationRejectionKind(step);
+  if (explicitKind) {
+    return explicitKind;
+  }
+
+  if (step.message?.includes('language rejection')) {
+    return 'language';
+  }
+
+  return isAmazonCandidateContinuationStep(step) ? 'product' : null;
+};
+
+const isAmazonCandidateContinuationStep = (
+  step: Pick<ProductScanStep, 'key' | 'label' | 'message'>
+): boolean =>
+  step.key === 'queue_scan' &&
+  (step.label === 'Continue with next Amazon candidate' ||
+    step.message?.includes('next Amazon candidate after AI rejection') ||
+    step.message?.includes('next Amazon candidate after language rejection') ||
+    false);
+
 export const resolveProductScanContinuationSummary = (
   steps: ProductScanStep[]
 ): ProductScanContinuationSummary | null => {
@@ -202,10 +262,7 @@ export const resolveProductScanContinuationSummary = (
     [...steps]
       .reverse()
       .find(
-        (step) =>
-          step.key === 'queue_scan' &&
-          (step.label === 'Continue with next Amazon candidate' ||
-            step.message?.includes('next Amazon candidate after AI rejection'))
+        (step) => isAmazonCandidateContinuationStep(step)
       ) ?? null;
 
   if (!continuationStep) {
@@ -220,6 +277,44 @@ export const resolveProductScanContinuationSummary = (
     attempt: continuationStep.attempt ?? null,
     nextUrl: resolveStepDetailValue(continuationStep, 'Next candidate URL'),
     rejectedUrl: resolveStepDetailValue(continuationStep, 'Rejected candidate URL'),
+    rejectionKind: resolveAmazonCandidateContinuationRejectionKind(continuationStep),
+  };
+};
+
+export const resolveProductScanRejectedCandidateSummary = (
+  steps: ProductScanStep[]
+): ProductScanRejectedCandidateSummary | null => {
+  const rejectedEvaluationSteps = steps.filter(
+    (step) =>
+      step.key === 'amazon_ai_evaluate' &&
+      (step.resultCode === 'candidate_rejected' ||
+        step.resultCode === 'candidate_language_rejected')
+  );
+
+  if (rejectedEvaluationSteps.length === 0) {
+    return null;
+  }
+
+  const latestRejectedStep = [...rejectedEvaluationSteps].reverse()[0] ?? null;
+  if (!latestRejectedStep) {
+    return null;
+  }
+
+  const languageRejectedCount = rejectedEvaluationSteps.filter(
+    (step) => resolveAmazonEvaluationRejectionKind(step) === 'language'
+  ).length;
+
+  return {
+    rejectedCount: rejectedEvaluationSteps.length,
+    languageRejectedCount,
+    latestRejectedUrl: latestRejectedStep.url ?? resolveStepDetailValue(latestRejectedStep, 'Candidate URL'),
+    latestReason:
+      resolveStepDetailValue(latestRejectedStep, 'Reason') ??
+      resolveStepDetailValue(latestRejectedStep, 'Mismatch') ??
+      resolveStepDetailValue(latestRejectedStep, 'Language reason') ??
+      latestRejectedStep.message ??
+      null,
+    latestRejectionKind: resolveAmazonEvaluationRejectionKind(latestRejectedStep),
   };
 };
 
@@ -227,6 +322,7 @@ type ProductScanContinuationContext = {
   step: ProductScanStep;
   rejectedUrl: string | null;
   nextUrl: string | null;
+  rejectionKind: 'language' | 'product' | null;
 };
 
 const resolveContinuationContexts = (
@@ -236,9 +332,7 @@ const resolveContinuationContexts = (
 
   for (const step of steps) {
     if (
-      step.key !== 'queue_scan' ||
-      (step.label !== 'Continue with next Amazon candidate' &&
-        !step.message?.includes('next Amazon candidate after AI rejection')) ||
+      !isAmazonCandidateContinuationStep(step) ||
       typeof step.attempt !== 'number' ||
       !Number.isFinite(step.attempt)
     ) {
@@ -249,6 +343,7 @@ const resolveContinuationContexts = (
       step,
       rejectedUrl: resolveStepDetailValue(step, 'Rejected candidate URL'),
       nextUrl: resolveStepDetailValue(step, 'Next candidate URL'),
+      rejectionKind: resolveAmazonCandidateContinuationRejectionKind(step),
     });
   }
 
@@ -437,14 +532,24 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                         {resultCodeLabel}
                       </span>
                     ) : null}
+                    {step.key === 'amazon_ai_evaluate' &&
+                    resolveAmazonEvaluationRejectionKind(step) === 'language' ? (
+                      <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
+                        Language gate
+                      </span>
+                    ) : null}
                     {isContinuationQueueStep ? (
                       <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
-                        AI rejection recovery
+                        {continuationContext?.rejectionKind === 'language'
+                          ? 'Language rejection recovery'
+                          : 'AI rejection recovery'}
                       </span>
                     ) : null}
                     {isContinuationAmazonStep ? (
                       <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
-                        Recovery attempt
+                        {continuationContext?.rejectionKind === 'language'
+                          ? 'Language recovery attempt'
+                          : 'Recovery attempt'}
                       </span>
                     ) : null}
                   </div>
@@ -454,7 +559,11 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                   ) : null}
                   {isContinuationAmazonStep && continuationContext ? (
                     <p className='text-xs text-muted-foreground'>
-                      Continues after AI rejection of{' '}
+                      Continues after{' '}
+                      {continuationContext.rejectionKind === 'language'
+                        ? 'language rejection'
+                        : 'AI rejection'}{' '}
+                      of{' '}
                       {continuationContext.rejectedUrl ?? 'the previous Amazon candidate'}.
                     </p>
                   ) : null}

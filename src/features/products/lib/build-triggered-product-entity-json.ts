@@ -54,6 +54,14 @@ const resolveTriggerCatalogIds = (entityJson: Record<string, unknown>): string[]
 const resolveTriggerString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
+const normalizeImageLinks = (value: unknown): string[] | undefined => {
+  if (!Array.isArray(value)) return undefined;
+  const next = value
+    .map((entry: unknown) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry: string) => entry.length > 0);
+  return next.length > 0 ? next : [];
+};
+
 const buildTriggerCategoryPath = (
   categoryId: string,
   categoryById: Map<string, ProductCategory>
@@ -160,11 +168,16 @@ export const buildTriggeredProductEntityJson = (args: {
   categories?: ProductCategory[];
 }): Record<string, unknown> => {
   const base = args.product ?? args.draft ?? {};
-  const entityJson: Record<string, unknown> = {
-    ...base,
-    ...args.values,
-    ...(args.product?.id ? { id: args.product.id } : {}),
-  };
+  const imageLinks = normalizeImageLinks(args.values['imageLinks']);
+  const entityJson: Record<string, unknown> = { ...base, ...args.values };
+  if (imageLinks !== undefined) {
+    entityJson['imageLinks'] = imageLinks;
+  } else if (args.values.imageLinks !== undefined) {
+    entityJson['imageLinks'] = [];
+  }
+  if (args.product?.id) {
+    entityJson['id'] = args.product.id;
+  }
 
   normalizeProductTriggerStatus(entityJson);
 

@@ -181,13 +181,15 @@ describe('starter marketplace copy debrand workflow', () => {
     );
   });
 
-  it('materializes a runnable row-level starter graph without background database writes', () => {
+  it('materializes a runnable row-level starter graph with a canonical database persistence node', () => {
     const entry = getStarterWorkflowTemplateById('starter_marketplace_copy_debrand');
     if (!entry) throw new Error('Missing starter_marketplace_copy_debrand entry');
 
     const config = materializeStarterWorkflowPathConfig(entry, {
       pathId: 'path_starter_marketplace_copy_debrand_runtime',
     });
+    const databaseNodes = config.nodes.filter((node) => node.type === 'database');
+    const databaseNode = databaseNodes[0];
     const report = evaluateRunPreflight({
       nodes: config.nodes,
       edges: config.edges,
@@ -196,7 +198,32 @@ describe('starter marketplace copy debrand workflow', () => {
       mode: 'full',
     });
 
-    expect(config.nodes.some((node) => node.type === 'database')).toBe(false);
+    expect(databaseNodes).toHaveLength(1);
+    expect(databaseNode?.config?.database).toEqual(
+      expect.objectContaining({
+        operation: 'update',
+        entityType: 'product',
+        updatePayloadMode: 'custom',
+        writeOutcomePolicy: {
+          onZeroAffected: 'fail',
+        },
+      })
+    );
+    expect(databaseNode?.config?.database?.query).toEqual(
+      expect.objectContaining({
+        collection: 'products',
+        queryTemplate: expect.stringContaining('"$elemMatch"'),
+      })
+    );
+    expect(databaseNode?.config?.database?.updateTemplate).toContain(
+      'marketplaceContentOverrides.$.title'
+    );
+    expect(databaseNode?.config?.database?.updateTemplate).toContain(
+      'marketplaceContentOverrides.$.description'
+    );
+    expect(databaseNode?.config?.database?.query?.queryTemplate).toContain(
+      'context.marketplaceCopyDebrandInput.targetRow.integrationIds'
+    );
     expect(entry.triggerButtonPresets?.[0]?.locations).toContain('product_marketplace_copy_row');
     expect(report.shouldBlock).toBe(false);
     expect(report.blockReason).toBeNull();

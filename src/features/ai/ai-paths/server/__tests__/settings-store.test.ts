@@ -206,6 +206,126 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(triggerNodes[0]?.config?.trigger?.event).toBe(MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID);
   });
 
+  it('refreshes stale marketplace copy debrand configs to add the database persistence node', () => {
+    const fullySeeded = ensureStarterWorkflowDefaults(buildEmptyStarterSettings()).nextRecords;
+    const staleRecords = fullySeeded.map((record) => {
+      if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}${MARKETPLACE_COPY_DEBRAND_PATH_ID}`) {
+        return record;
+      }
+
+      const parsed = JSON.parse(record.value) as Record<string, unknown>;
+      const nodes = Array.isArray(parsed['nodes'])
+        ? (parsed['nodes'] as Array<Record<string, unknown>>)
+        : [];
+      const edges = Array.isArray(parsed['edges'])
+        ? (parsed['edges'] as Array<Record<string, unknown>>)
+        : [];
+
+      return {
+        ...record,
+        value: JSON.stringify({
+          ...parsed,
+          version: 3,
+          nodes: nodes.map((node) =>
+            node['id'] !== 'node-db-update-marketplace-copy-debrand'
+              ? node
+              : {
+                  ...node,
+                  config: {
+                    ...(node['config'] && typeof node['config'] === 'object'
+                      ? (node['config'] as Record<string, unknown>)
+                      : {}),
+                    database: {
+                      ...(((node['config'] as Record<string, unknown> | undefined)?.['database'] &&
+                      typeof (node['config'] as Record<string, unknown>)['database'] === 'object')
+                        ? ((node['config'] as Record<string, unknown>)['database'] as Record<
+                            string,
+                            unknown
+                          >)
+                        : {}),
+                      updateTemplate:
+                        '{\n  "$set": {\n    "marketplaceContentOverrides.{{context.marketplaceCopyDebrandInput.targetRow.index}}.title": "{{value.debrandedTitle}}",\n    "marketplaceContentOverrides.{{context.marketplaceCopyDebrandInput.targetRow.index}}.description": "{{value.debrandedDescription}}"\n  },\n  "$unset": {\n    "__noop__": ""\n  }\n}',
+                      query: {
+                        provider: 'auto',
+                        collection: 'products',
+                        mode: 'custom',
+                        preset: 'by_id',
+                        field: 'id',
+                        idType: 'string',
+                        queryTemplate: '{"id":"{{entityId}}"}',
+                        limit: 1,
+                        sort: '',
+                        projection: '',
+                        single: true,
+                      },
+                    },
+                  },
+                }
+          ),
+          edges,
+          extensions: {
+            ...(parsed['extensions'] && typeof parsed['extensions'] === 'object'
+              ? (parsed['extensions'] as Record<string, unknown>)
+              : {}),
+            aiPathsStarter: {
+              starterKey: 'marketplace_copy_debrand',
+              templateId: 'starter_marketplace_copy_debrand',
+              templateVersion: 3,
+              seededDefault: true,
+            },
+          },
+        }),
+      };
+    });
+
+    const refreshed = refreshStarterWorkflowConfigs(staleRecords);
+    expect(refreshed.affectedCount).toBeGreaterThan(0);
+
+    const debrandRecord = refreshed.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${MARKETPLACE_COPY_DEBRAND_PATH_ID}`
+    );
+    if (!debrandRecord) throw new Error('Expected marketplace copy debrand path config');
+
+    const canonical = loadCanonicalStoredPathConfig({
+      pathId: MARKETPLACE_COPY_DEBRAND_PATH_ID,
+      rawConfig: debrandRecord.value,
+    });
+    const parsed = JSON.parse(debrandRecord.value) as Record<string, unknown>;
+    const databaseNode = canonical.nodes.find((node) => node.type === 'database');
+    const databaseConfig =
+      databaseNode?.config &&
+      typeof databaseNode.config === 'object' &&
+      (databaseNode.config as Record<string, unknown>)['database'] &&
+      typeof (databaseNode.config as Record<string, unknown>)['database'] === 'object'
+        ? ((databaseNode.config as Record<string, unknown>)['database'] as Record<string, unknown>)
+        : null;
+    const starterExtension =
+      parsed['extensions'] &&
+      typeof parsed['extensions'] === 'object' &&
+      (parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] &&
+      typeof (parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] === 'object'
+        ? ((parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] as Record<string, unknown>)
+        : null;
+
+    expect(databaseNode?.type).toBe('database');
+    expect(databaseConfig?.['updatePayloadMode']).toBe('custom');
+    expect(typeof databaseConfig?.['updateTemplate']).toBe('string');
+    expect(databaseConfig?.['updateTemplate']).toContain(
+      'marketplaceContentOverrides.$.title'
+    );
+    expect(
+      ((databaseConfig?.['writeOutcomePolicy'] as Record<string, unknown> | undefined)?.[
+        'onZeroAffected'
+      ] as string | undefined) ?? ''
+    ).toBe('fail');
+    expect(
+      ((databaseConfig?.['query'] as Record<string, unknown> | undefined)?.['queryTemplate'] as
+        | string
+        | undefined) ?? ''
+    ).toContain('"$elemMatch"');
+    expect(starterExtension?.['templateVersion']).not.toBe(3);
+  });
+
   it('restores the broader static recovery bundle from semantic workflow assets', () => {
     const initial = [
       { key: AI_PATHS_INDEX_KEY, value: '[]' },

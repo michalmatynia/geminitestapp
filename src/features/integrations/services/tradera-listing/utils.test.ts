@@ -4,6 +4,7 @@ import {
   buildCanonicalTraderaListingUrl,
   classifyTraderaFailure,
   extractExternalListingId,
+  toUserFacingTraderaFailure,
 } from './utils';
 
 describe('buildCanonicalTraderaListingUrl', () => {
@@ -69,5 +70,26 @@ describe('classifyTraderaFailure', () => {
         'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
       )
     ).toBe('FORM');
+  });
+
+  it('classifies image mismatch failures as form errors', () => {
+    expect(
+      classifyTraderaFailure(
+        'FAIL_IMAGE_SET_INVALID: Tradera uploaded more image previews than expected. Last state: {"expectedUploadCount":3,"observedPreviewDelta":4}'
+      )
+    ).toBe('FORM');
+  });
+});
+
+describe('toUserFacingTraderaFailure', () => {
+  it('maps image preview mismatch failures to a user-facing retry message', () => {
+    expect(
+      toUserFacingTraderaFailure(
+        'FORM',
+        'FAIL_IMAGE_SET_INVALID: Tradera uploaded more image previews than expected. Last state: {"expectedUploadCount":3,"observedPreviewDelta":4}'
+      )
+    ).toBe(
+      'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.'
+    );
   });
 });

@@ -34,6 +34,7 @@ import {
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
+  type ProductScannerAmazonCandidateEvaluatorResolvedConfig,
   resolveProductScannerAmazonCandidateEvaluatorConfig,
   resolveProductScannerHeadless,
 } from './product-scanner-settings';
@@ -108,7 +109,9 @@ const resolveAmazonEvaluationStepResultCode = (
     return 'candidate_approved';
   }
   if (evaluation.status === 'rejected') {
-    return 'candidate_rejected';
+    return evaluation.languageAccepted === false
+      ? 'candidate_language_rejected'
+      : 'candidate_rejected';
   }
   if (evaluation.status === 'skipped') {
     return 'evaluation_skipped';
@@ -129,6 +132,11 @@ const resolveAmazonEvaluationMessage = (
       : 'AI evaluator approved the Amazon candidate.';
   }
   if (evaluation.status === 'rejected') {
+    if (evaluation.languageAccepted === false) {
+      return confidenceLabel
+        ? `AI evaluator rejected the Amazon candidate because page content is not English (${confidenceLabel}).`
+        : 'AI evaluator rejected the Amazon candidate because page content is not English.';
+    }
     return confidenceLabel
       ? `AI evaluator rejected the Amazon candidate (${confidenceLabel}).`
       : 'AI evaluator rejected the Amazon candidate.';
@@ -140,6 +148,39 @@ const resolveAmazonEvaluationMessage = (
     );
   }
   return evaluation.error ?? 'Amazon candidate AI evaluation failed.';
+};
+
+const formatAmazonEvaluatorAllowedContentLanguage = (
+  value: ProductScannerAmazonCandidateEvaluatorResolvedConfig['allowedContentLanguage'] | null | undefined
+): string => {
+  if (!value || value === 'en') {
+    return 'English';
+  }
+
+  return String(value).toUpperCase();
+};
+
+const formatAmazonEvaluatorLanguageDetectionMode = (
+  value:
+    | ProductScannerAmazonCandidateEvaluatorResolvedConfig['languageDetectionMode']
+    | null
+    | undefined
+): string => {
+  if (value === 'ai_only') {
+    return 'AI only';
+  }
+
+  return 'Deterministic first, then AI';
+};
+
+const resolveAmazonEvaluationRejectionKindLabel = (
+  evaluation: ProductScanAmazonEvaluation | null | undefined
+): string | null => {
+  if (evaluation?.status !== 'rejected') {
+    return null;
+  }
+
+  return evaluation.languageAccepted === false ? 'Language gate' : 'Product mismatch';
 };
 
 const resolveNextAmazonCandidateUrl = (input: {
@@ -185,6 +226,133 @@ const resolveNextQueueStepAttempt = (
         typeof step.attempt === 'number' && Number.isFinite(step.attempt) ? step.attempt : 1
       )
   ) + 1;
+
+const resolveNextAmazonEvaluationStepAttempt = (
+  steps: ProductScanRecord['steps']
+): number =>
+  Math.max(
+    0,
+    ...steps
+      .filter((step) => step.key === 'amazon_ai_evaluate')
+      .map((step) =>
+        typeof step.attempt === 'number' && Number.isFinite(step.attempt) ? step.attempt : 1
+      )
+  ) + 1;
+
+const resolveLatestAmazonCandidateStepMeta = (
+  steps: ProductScanRecord['steps']
+): {
+  candidateId: string | null;
+  candidateRank: number | null;
+  url: string | null;
+} => {
+  const latestCandidateStep =
+    [...steps].reverse().find((step) =>
+      step.key === 'amazon_extract' ||
+      step.key === 'amazon_probe' ||
+      step.key === 'amazon_content_ready' ||
+      step.key === 'amazon_open'
+    ) ?? null;
+
+  return {
+    candidateId: latestCandidateStep?.candidateId?.trim() || null,
+    candidateRank:
+      typeof latestCandidateStep?.candidateRank === 'number' &&
+      Number.isFinite(latestCandidateStep.candidateRank) &&
+      latestCandidateStep.candidateRank > 0
+        ? latestCandidateStep.candidateRank
+        : null,
+    url: latestCandidateStep?.url?.trim() || null,
+  };
+};
+
+const buildAmazonEvaluationStepDetails = (
+  evaluation: ProductScanAmazonEvaluation,
+  evaluatorConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig
+): Array<{ label: string; value: string | null }> => [
+  { label: 'Model', value: evaluation?.modelId ?? null },
+  {
+    label: 'Evaluation scope',
+    value: evaluatorConfig.onlyForAmbiguousCandidates
+      ? 'Ambiguous Amazon candidates only'
+      : 'Every Amazon candidate',
+  },
+  {
+    label: 'Allowed content language',
+    value: formatAmazonEvaluatorAllowedContentLanguage(evaluatorConfig.allowedContentLanguage),
+  },
+  {
+    label: 'Language policy',
+    value: evaluatorConfig.rejectNonEnglishContent !== false
+      ? 'Reject non-English content'
+      : 'Allow non-English content',
+  },
+  {
+    label: 'Language detection',
+    value: formatAmazonEvaluatorLanguageDetectionMode(evaluatorConfig.languageDetectionMode),
+  },
+  {
+    label: 'Rejection kind',
+    value: resolveAmazonEvaluationRejectionKindLabel(evaluation),
+  },
+  {
+    label: 'Confidence',
+    value: formatAmazonEvaluationConfidence(evaluation?.confidence),
+  },
+  {
+    label: 'Same product',
+    value:
+      typeof evaluation?.sameProduct === 'boolean' ? String(evaluation.sameProduct) : null,
+  },
+  {
+    label: 'Image match',
+    value:
+      typeof evaluation?.imageMatch === 'boolean' ? String(evaluation.imageMatch) : null,
+  },
+  {
+    label: 'Description match',
+    value:
+      typeof evaluation?.descriptionMatch === 'boolean'
+        ? String(evaluation.descriptionMatch)
+        : null,
+  },
+  {
+    label: 'Page language',
+    value: evaluation?.pageLanguage ?? null,
+  },
+  {
+    label: 'Language accepted',
+    value:
+      typeof evaluation?.languageAccepted === 'boolean'
+        ? String(evaluation.languageAccepted)
+        : null,
+  },
+  {
+    label: 'Language confidence',
+    value: formatAmazonEvaluationConfidence(evaluation?.languageConfidence),
+  },
+  {
+    label: 'Language reason',
+    value: evaluation?.languageReason ?? null,
+  },
+  {
+    label: 'Scrape allowed',
+    value:
+      typeof evaluation?.scrapeAllowed === 'boolean' ? String(evaluation.scrapeAllowed) : null,
+  },
+  {
+    label: 'Candidate URL',
+    value: evaluation?.evidence?.candidateUrl ?? null,
+  },
+  {
+    label: 'Reason',
+    value: evaluation?.reasons[0] ?? null,
+  },
+  {
+    label: 'Mismatch',
+    value: evaluation?.mismatches[0] ?? null,
+  },
+];
 
 const mergeUniqueStringValues = (
   values: ReadonlyArray<string>,
@@ -285,7 +453,7 @@ async function mapWithConcurrencyLimit<TInput, TOutput>(
       while (nextIndex < values.length) {
         const index = nextIndex;
         nextIndex += 1;
-        results[index] = await mapper(values[index], index);
+        results[index] = await mapper(values[index] as TInput, index);
       }
     })
   );
@@ -659,47 +827,21 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
             run,
             evaluatorConfig,
           });
+          const latestCandidateMeta = resolveLatestAmazonCandidateStepMeta(finalizedAmazonSteps);
 
           finalizedAmazonSteps = upsertPersistedProductScanStep(finalizedAmazonSteps, {
             key: 'amazon_ai_evaluate',
             label: 'Evaluate Amazon candidate match',
             group: 'amazon',
+            attempt: resolveNextAmazonEvaluationStepAttempt(finalizedAmazonSteps),
+            candidateId: latestCandidateMeta.candidateId ?? parsedResult.matchedImageId,
+            candidateRank: latestCandidateMeta.candidateRank,
             status: resolveAmazonEvaluationStepStatus(amazonEvaluation),
             resultCode: resolveAmazonEvaluationStepResultCode(amazonEvaluation),
             message: resolveAmazonEvaluationMessage(amazonEvaluation),
-            details: [
-              { label: 'Model', value: amazonEvaluation.modelId },
-              {
-                label: 'Confidence',
-                value: formatAmazonEvaluationConfidence(amazonEvaluation.confidence),
-              },
-              {
-                label: 'Same product',
-                value:
-                  typeof amazonEvaluation.sameProduct === 'boolean'
-                    ? String(amazonEvaluation.sameProduct)
-                    : null,
-              },
-              {
-                label: 'Image match',
-                value:
-                  typeof amazonEvaluation.imageMatch === 'boolean'
-                    ? String(amazonEvaluation.imageMatch)
-                    : null,
-              },
-              {
-                label: 'Description match',
-                value:
-                  typeof amazonEvaluation.descriptionMatch === 'boolean'
-                    ? String(amazonEvaluation.descriptionMatch)
-                    : null,
-              },
-              {
-                label: 'Reason',
-                value: amazonEvaluation.reasons[0] ?? amazonEvaluation.mismatches[0] ?? null,
-              },
-            ],
-            url: amazonEvaluation.evidence?.candidateUrl ?? resolvedProbeUrl,
+            details: buildAmazonEvaluationStepDetails(amazonEvaluation, evaluatorConfig),
+            url:
+              amazonEvaluation.evidence?.candidateUrl ?? resolvedProbeUrl ?? latestCandidateMeta.url,
           });
 
           if (amazonEvaluation.status === 'failed') {
@@ -780,6 +922,8 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
 
                 const continuationStatus =
                   continuationRun.status === 'running' ? 'running' : 'queued';
+                const continuationRejectionKind =
+                  amazonEvaluation.languageAccepted === false ? 'Language gate' : 'Product mismatch';
                 const continuationSteps = upsertPersistedProductScanStep(finalizedAmazonSteps, {
                   key: 'queue_scan',
                   label: 'Continue with next Amazon candidate',
@@ -789,9 +933,14 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
                   resultCode: continuationStatus === 'running' ? 'run_started' : 'run_queued',
                   message:
                     continuationStatus === 'running'
-                      ? 'Started the next Amazon candidate after AI rejection.'
-                      : 'Queued the next Amazon candidate after AI rejection.',
+                      ? amazonEvaluation.languageAccepted === false
+                        ? 'Started the next Amazon candidate after language rejection.'
+                        : 'Started the next Amazon candidate after AI rejection.'
+                      : amazonEvaluation.languageAccepted === false
+                        ? 'Queued the next Amazon candidate after language rejection.'
+                        : 'Queued the next Amazon candidate after AI rejection.',
                   details: [
+                    { label: 'Rejection kind', value: continuationRejectionKind },
                     { label: 'Rejected candidate URL', value: resolvedProbeUrl },
                     { label: 'Next candidate URL', value: nextCandidate.nextUrl },
                   ],
@@ -834,7 +983,9 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
               } catch (error) {
                 const continuationMessage = normalizeErrorMessage(
                   error instanceof Error ? error.message : error,
-                  'Failed to continue with the next Amazon candidate after AI rejection.'
+                  amazonEvaluation.languageAccepted === false
+                    ? 'Failed to continue with the next Amazon candidate after language rejection.'
+                    : 'Failed to continue with the next Amazon candidate after AI rejection.'
                 );
                 return await persistSynchronizedScan(scan, {
                   engineRunId,
@@ -857,6 +1008,13 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
                     resultCode: 'run_start_failed',
                     message: continuationMessage,
                     details: [
+                      {
+                        label: 'Rejection kind',
+                        value:
+                          amazonEvaluation.languageAccepted === false
+                            ? 'Language gate'
+                            : 'Product mismatch',
+                      },
                       { label: 'Rejected candidate URL', value: resolvedProbeUrl },
                       { label: 'Next candidate URL', value: nextCandidate.nextUrl },
                     ],
@@ -955,7 +1113,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
           key: 'queue_scan',
           label: 'Start approved Amazon extraction',
           group: 'input',
-          attempt: 2,
+          attempt: resolveNextQueueStepAttempt(finalizedAmazonSteps),
           status: 'completed',
           resultCode: extractionRunStatus === 'running' ? 'run_started' : 'run_queued',
           message:
@@ -1018,7 +1176,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
             key: 'queue_scan',
             label: 'Start approved Amazon extraction',
             group: 'input',
-            attempt: 2,
+            attempt: resolveNextQueueStepAttempt(finalizedAmazonSteps),
             status: 'failed',
             resultCode: 'run_start_failed',
             message,
@@ -1149,47 +1307,21 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
           run,
           evaluatorConfig,
         });
+        const latestCandidateMeta = resolveLatestAmazonCandidateStepMeta(finalizedAmazonSteps);
 
         finalizedAmazonSteps = upsertPersistedProductScanStep(finalizedAmazonSteps, {
           key: 'amazon_ai_evaluate',
           label: 'Evaluate Amazon candidate match',
           group: 'amazon',
+          attempt: resolveNextAmazonEvaluationStepAttempt(finalizedAmazonSteps),
+          candidateId: latestCandidateMeta.candidateId ?? parsedResult.matchedImageId,
+          candidateRank: latestCandidateMeta.candidateRank,
           status: resolveAmazonEvaluationStepStatus(amazonEvaluation),
           resultCode: resolveAmazonEvaluationStepResultCode(amazonEvaluation),
           message: resolveAmazonEvaluationMessage(amazonEvaluation),
-          details: [
-            { label: 'Model', value: amazonEvaluation.modelId },
-            {
-              label: 'Confidence',
-              value: formatAmazonEvaluationConfidence(amazonEvaluation.confidence),
-            },
-            {
-              label: 'Same product',
-              value:
-                typeof amazonEvaluation.sameProduct === 'boolean'
-                  ? String(amazonEvaluation.sameProduct)
-                  : null,
-            },
-            {
-              label: 'Image match',
-              value:
-                typeof amazonEvaluation.imageMatch === 'boolean'
-                  ? String(amazonEvaluation.imageMatch)
-                  : null,
-            },
-            {
-              label: 'Description match',
-              value:
-                typeof amazonEvaluation.descriptionMatch === 'boolean'
-                  ? String(amazonEvaluation.descriptionMatch)
-                  : null,
-            },
-            {
-              label: 'Reason',
-              value: amazonEvaluation.reasons[0] ?? amazonEvaluation.mismatches[0] ?? null,
-            },
-          ],
-          url: amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl,
+          details: buildAmazonEvaluationStepDetails(amazonEvaluation, evaluatorConfig),
+          url:
+            amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl ?? latestCandidateMeta.url,
         });
 
         if (amazonEvaluation.status === 'failed') {
@@ -1253,6 +1385,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         error instanceof Error ? error.message : error,
         'Amazon candidate AI evaluation failed.'
       );
+      const latestCandidateMeta = resolveLatestAmazonCandidateStepMeta(finalizedAmazonSteps);
       amazonEvaluation = {
         status: 'failed',
         sameProduct: null,
@@ -1280,11 +1413,17 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         key: 'amazon_ai_evaluate',
         label: 'Evaluate Amazon candidate match',
         group: 'amazon',
+        attempt: resolveNextAmazonEvaluationStepAttempt(finalizedAmazonSteps),
+        candidateId: latestCandidateMeta.candidateId ?? parsedResult.matchedImageId,
+        candidateRank: latestCandidateMeta.candidateRank,
         status: 'failed',
         resultCode: 'evaluation_failed',
         message,
-        details: [{ label: 'Error', value: message }],
-        url: resolvedScanUrl,
+        details: [
+          { label: 'Candidate URL', value: amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl },
+          { label: 'Error', value: message },
+        ],
+        url: amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl ?? latestCandidateMeta.url,
       });
       return await persistSynchronizedScan(scan, {
         engineRunId,

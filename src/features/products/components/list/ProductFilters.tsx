@@ -1,6 +1,7 @@
 'use client';
+'use no memo';
 
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { AdvancedFilterModal } from '@/features/products/components/list/advanced-filter';
 import { useProductListFiltersContext } from '@/features/products/context/ProductListContext';
@@ -9,14 +10,16 @@ import {
   useProductCategoriesForCatalogs,
 } from '@/features/products/hooks/useCategoryQueries';
 import {
-  useAllTags,
   useCatalogs,
+  useFilterTags,
   useProducers,
-  useTags,
 } from '@/features/products/hooks/useProductMetadataQueries';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductAdvancedFilterField, ProductAdvancedFilterGroup } from '@/shared/contracts/products/filters';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { Producer } from '@/shared/contracts/products/producers';
+import type { ProductTag } from '@/shared/contracts/products/tags';
 
 const ID_MATCH_MODE_OPTIONS: Array<LabeledOptionDto<'exact' | 'partial'>> = [
   { value: 'exact', label: 'Exact' },
@@ -52,11 +55,37 @@ import {
 
 export { ProductSelectionActions } from './ProductSelectionActions';
 
+const normalizeString = (value: unknown): string => {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number') return String(value);
+  return '';
+};
+
+const isCatalogRecord = (value: unknown): value is CatalogRecord =>
+  Boolean(value) &&
+  typeof value === 'object' &&
+  normalizeString((value as { id?: unknown }).id).length > 0;
+
+const isProductCategory = (value: unknown): value is ProductCategory =>
+  Boolean(value) &&
+  typeof value === 'object' &&
+  normalizeString((value as { id?: unknown }).id).length > 0;
+
+const isProductTag = (value: unknown): value is ProductTag =>
+  Boolean(value) &&
+  typeof value === 'object' &&
+  normalizeString((value as { id?: unknown }).id).length > 0;
+
+const isProducer = (value: unknown): value is Producer =>
+  Boolean(value) &&
+  typeof value === 'object' &&
+  normalizeString((value as { id?: unknown }).id).length > 0;
+
 type ProductFiltersProps = {
   instanceId?: string;
 };
 
-export const ProductFilters = memo(function ProductFilters({
+export function ProductFilters({
   instanceId,
 }: ProductFiltersProps): React.JSX.Element {
   const {
@@ -108,14 +137,10 @@ export const ProductFilters = memo(function ProductFilters({
   const selectedCatalogId =
     catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : undefined;
   const { data: rawCatalogs } = useCatalogs({ enabled: filterMetadataEnabled });
-  const catalogs = useMemo(
-    () => (Array.isArray(rawCatalogs) ? rawCatalogs : []),
-    [rawCatalogs]
-  );
-  const catalogIds = useMemo(
-    () => catalogs.map((catalog) => catalog.id).filter((id) => id.trim().length > 0),
-    [catalogs]
-  );
+  const catalogs = Array.isArray(rawCatalogs) ? rawCatalogs.filter(isCatalogRecord) : [];
+  const catalogIds = catalogs
+    .map((catalog) => normalizeString(catalog.id))
+    .filter((id) => id.length > 0);
   const { data: rawSingleCatalogCategories } = useProductCategories(selectedCatalogId, {
     enabled: isFilterPanelExpanded,
   });
@@ -125,228 +150,197 @@ export const ProductFilters = memo(function ProductFilters({
       enabled: isFilterPanelExpanded,
     }
   );
-  const { data: rawTags } = useTags(selectedCatalogId, {
+  const { data: rawAvailableTags } = useFilterTags(selectedCatalogId, {
     enabled: filterMetadataEnabled,
   });
-  const { data: rawAllTags } = useAllTags({
-    enabled: filterMetadataEnabled && !selectedCatalogId,
-  });
-  const categories = useMemo(
-    () =>
-      Array.isArray(selectedCatalogId ? rawSingleCatalogCategories : rawCrossCatalogCategories)
-        ? (selectedCatalogId ? rawSingleCatalogCategories : rawCrossCatalogCategories)
-        : [],
-    [rawCrossCatalogCategories, rawSingleCatalogCategories, selectedCatalogId]
-  );
-  const tags = useMemo(() => (Array.isArray(rawTags) ? rawTags : []), [rawTags]);
-  const allTags = useMemo(() => (Array.isArray(rawAllTags) ? rawAllTags : []), [rawAllTags]);
-  const catalogNameById = useMemo(
-    () =>
-      new Map(
-        catalogs.map(
-          (catalog) =>
-            [catalog.id, (catalog.name || catalog.id).trim() || catalog.id] as const
-        )
-      ),
-    [catalogs]
+  const categorySource = selectedCatalogId ? rawSingleCatalogCategories : rawCrossCatalogCategories;
+  const categories = Array.isArray(categorySource) ? categorySource.filter(isProductCategory) : [];
+  const availableTags = Array.isArray(rawAvailableTags)
+    ? rawAvailableTags.filter(isProductTag)
+    : [];
+  const catalogNameById = new Map(
+    catalogs.map(
+      (catalog) =>
+        [
+          normalizeString(catalog.id),
+          normalizeString(catalog.name) || normalizeString(catalog.id),
+        ] as const
+    )
   );
   const { data: rawProducers } = useProducers({ enabled: filterMetadataEnabled });
-  const producers = useMemo(
-    () => (Array.isArray(rawProducers) ? rawProducers : []),
-    [rawProducers]
-  );
+  const producers = Array.isArray(rawProducers) ? rawProducers.filter(isProducer) : [];
 
-  const categoryOptions = useMemo(() => {
-    const options: Array<LabeledOptionDto<string>> = [
-      { value: '__all__', label: 'All categories' },
-    ];
-    const categoryEntries = categories.map((category: ProductCategory) => {
-      const localizedName = category[nameLocale];
-      const fallbackName =
-        category.name_en || category.name || category.name_pl || category.name_de;
-      return {
-        category,
-        label: localizedName || fallbackName || category.id,
-      };
-    });
-    const duplicateCountByLabel = new Map<string, number>();
+  const categoryOptions: Array<LabeledOptionDto<string>> = [
+    { value: '__all__', label: 'All categories' },
+  ];
+  const categoryEntries = categories.map((category: ProductCategory) => {
+    const localizedName = normalizeString(category[nameLocale]);
+    const fallbackName =
+      normalizeString(category.name_en) ||
+      normalizeString(category.name) ||
+      normalizeString(category.name_pl) ||
+      normalizeString(category.name_de);
+    return {
+      category,
+      label: localizedName || fallbackName || normalizeString(category.id) || 'Unlabeled category',
+    };
+  });
+  const duplicateCountByLabel = new Map<string, number>();
 
-    categoryEntries.forEach(({ label }) => {
-      duplicateCountByLabel.set(label, (duplicateCountByLabel.get(label) ?? 0) + 1);
-    });
+  categoryEntries.forEach(({ label }) => {
+    duplicateCountByLabel.set(label, (duplicateCountByLabel.get(label) ?? 0) + 1);
+  });
 
-    categoryEntries
-      .sort((left, right) => {
-        const labelComparison = left.label.localeCompare(right.label);
-        if (labelComparison !== 0) return labelComparison;
+  categoryEntries
+    .sort((left, right) => {
+      const labelComparison = left.label.localeCompare(right.label);
+      if (labelComparison !== 0) return labelComparison;
 
-        const leftCatalog =
-          catalogNameById.get(left.category.catalogId) ?? left.category.catalogId;
-        const rightCatalog =
-          catalogNameById.get(right.category.catalogId) ?? right.category.catalogId;
-        return leftCatalog.localeCompare(rightCatalog);
-      })
-      .forEach(({ category, label }) => {
-        const catalogLabel = catalogNameById.get(category.catalogId) ?? category.catalogId;
-        const isDuplicateLabel = (duplicateCountByLabel.get(label) ?? 0) > 1;
+      const leftCatalog =
+        normalizeString(catalogNameById.get(left.category.catalogId)) ||
+        normalizeString(left.category.catalogId) ||
+        'Unknown catalog';
+      const rightCatalog =
+        normalizeString(catalogNameById.get(right.category.catalogId)) ||
+        normalizeString(right.category.catalogId) ||
+        'Unknown catalog';
+      return leftCatalog.localeCompare(rightCatalog);
+    })
+    .forEach(({ category, label }) => {
+      const catalogLabel =
+        normalizeString(catalogNameById.get(category.catalogId)) ||
+        normalizeString(category.catalogId) ||
+        'Unknown catalog';
+      const isDuplicateLabel = (duplicateCountByLabel.get(label) ?? 0) > 1;
 
-        options.push({
-          value: category.id,
-          label: !selectedCatalogId && isDuplicateLabel ? `${label} (${catalogLabel})` : label,
-        });
-      });
-
-    return options;
-  }, [catalogNameById, categories, nameLocale, selectedCatalogId]);
-
-  const fallbackTagOptions = useMemo(() => {
-    if (selectedCatalogId) return tags;
-
-    const unique = new Map<string, { id: string; name: string }>();
-    allTags.forEach((tag) => {
-      if (!tag.id || unique.has(tag.id)) return;
-      unique.set(tag.id, {
-        id: tag.id,
-        name: tag.name || tag.id,
+      categoryOptions.push({
+        value: normalizeString(category.id),
+        label: !selectedCatalogId && isDuplicateLabel ? `${label} (${catalogLabel})` : label,
       });
     });
-    return Array.from(unique.values());
-  }, [allTags, selectedCatalogId, tags]);
 
-  const advancedFieldValueOptions = useMemo<
-    Partial<Record<ProductAdvancedFilterField, Array<LabeledOptionDto<string>>>>
-  >(
-    () => ({
-      catalogId: catalogs.map((catalog) => ({
-        value: catalog.id,
-        label: catalog.name || catalog.id,
-      })),
-      tagId: fallbackTagOptions.map((tag) => ({
-        value: tag.id,
-        label: tag.name || tag.id,
-      })),
-      producerId: producers.map((producer) => ({
-        value: producer.id,
-        label: producer.name || producer.id,
-      })),
-    }),
-    [catalogs, fallbackTagOptions, producers]
-  );
+  const fallbackTagOptionMap = new Map<string, { id: string; name: string }>();
+  availableTags.forEach((tag) => {
+    const tagId = normalizeString(tag.id);
+    if (!tagId || fallbackTagOptionMap.has(tagId)) return;
+    fallbackTagOptionMap.set(tagId, {
+      id: tagId,
+      name: normalizeString(tag.name) || tagId,
+    });
+  });
+  const fallbackTagOptions = Array.from(fallbackTagOptionMap.values());
+
+  const advancedFieldValueOptions: Partial<
+    Record<ProductAdvancedFilterField, Array<LabeledOptionDto<string>>>
+  > = {
+    catalogId: catalogs.map((catalog) => ({
+      value: normalizeString(catalog.id),
+      label: normalizeString(catalog.name) || normalizeString(catalog.id),
+    })),
+    tagId: fallbackTagOptions.map((tag) => ({
+      value: normalizeString(tag.id),
+      label: normalizeString(tag.name) || normalizeString(tag.id),
+    })),
+    producerId: producers.map((producer) => ({
+      value: normalizeString(producer.id),
+      label: normalizeString(producer.name) || normalizeString(producer.id),
+    })),
+  };
 
   // Filter configuration
-  const filterConfig: FilterField[] = useMemo(
-    () => [
-      {
-        key: 'productId',
-        label: 'Product ID',
-        type: 'text',
-        placeholder: 'Search by product ID...',
-        width: '16rem',
-      },
-      {
-        key: 'idMatchMode',
-        label: 'ID Match',
-        type: 'select',
-        placeholder: 'Choose match mode',
-        options: ID_MATCH_MODE_OPTIONS,
-        width: '10rem',
-      },
-      { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
-      {
-        key: 'description',
-        label: 'Description',
-        type: 'text',
-        placeholder: 'Search by description...',
-        width: '16rem',
-      },
-      {
-        key: 'categoryId',
-        label: 'Category',
-        type: 'select',
-        placeholder: 'All categories',
-        options: categoryOptions,
-        width: '16rem',
-      },
-      {
-        key: 'baseExported',
-        label: 'Base.com Export',
-        type: 'select',
-        placeholder: 'All export statuses',
-        options: BASE_EXPORTED_OPTIONS,
-        width: '16rem',
-      },
-      {
-        key: 'includeArchived',
-        label: 'Show Archived',
-        type: 'checkbox',
-        width: '12rem',
-      },
-      {
-        key: 'minPrice',
-        label: 'Min Price',
-        type: 'number',
-        placeholder: 'Min price',
-        width: '9rem',
-      },
-      {
-        key: 'maxPrice',
-        label: 'Max Price',
-        type: 'number',
-        placeholder: 'Max price',
-        width: '9rem',
-      },
-      {
-        key: 'stockOperator',
-        label: 'Stock Operator',
-        type: 'select',
-        placeholder: 'Choose operator',
-        options: STOCK_OPERATOR_OPTIONS,
-        width: '13rem',
-      },
-      {
-        key: 'stockValue',
-        label: 'Stock Value',
-        type: 'number',
-        placeholder: 'Stock amount',
-        width: '10rem',
-      },
-      { key: 'createdAt', label: 'Date Range', type: 'dateRange', width: '22rem' },
-    ],
-    [categoryOptions]
-  );
+  const filterConfig: FilterField[] = [
+    {
+      key: 'productId',
+      label: 'Product ID',
+      type: 'text',
+      placeholder: 'Search by product ID...',
+      width: '16rem',
+    },
+    {
+      key: 'idMatchMode',
+      label: 'ID Match',
+      type: 'select',
+      placeholder: 'Choose match mode',
+      options: ID_MATCH_MODE_OPTIONS,
+      width: '10rem',
+    },
+    { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
+    {
+      key: 'description',
+      label: 'Description',
+      type: 'text',
+      placeholder: 'Search by description...',
+      width: '16rem',
+    },
+    {
+      key: 'categoryId',
+      label: 'Category',
+      type: 'select',
+      placeholder: 'All categories',
+      options: categoryOptions,
+      width: '16rem',
+    },
+    {
+      key: 'baseExported',
+      label: 'Base.com Export',
+      type: 'select',
+      placeholder: 'All export statuses',
+      options: BASE_EXPORTED_OPTIONS,
+      width: '16rem',
+    },
+    {
+      key: 'includeArchived',
+      label: 'Show Archived',
+      type: 'checkbox',
+      width: '12rem',
+    },
+    {
+      key: 'minPrice',
+      label: 'Min Price',
+      type: 'number',
+      placeholder: 'Min price',
+      width: '9rem',
+    },
+    {
+      key: 'maxPrice',
+      label: 'Max Price',
+      type: 'number',
+      placeholder: 'Max price',
+      width: '9rem',
+    },
+    {
+      key: 'stockOperator',
+      label: 'Stock Operator',
+      type: 'select',
+      placeholder: 'Choose operator',
+      options: STOCK_OPERATOR_OPTIONS,
+      width: '13rem',
+    },
+    {
+      key: 'stockValue',
+      label: 'Stock Value',
+      type: 'number',
+      placeholder: 'Stock amount',
+      width: '10rem',
+    },
+    { key: 'createdAt', label: 'Date Range', type: 'dateRange', width: '22rem' },
+  ];
 
   // Filter values (combined date range into single object)
-  const filterValues = useMemo(
-    () => ({
-      productId,
-      idMatchMode: productId.trim() ? idMatchMode : '',
-      sku,
-      description,
-      categoryId,
-      baseExported,
-      includeArchived,
-      minPrice,
-      maxPrice,
-      stockOperator,
-      stockValue,
-      createdAt: { from: startDate, to: endDate },
-    }),
-    [
-      productId,
-      idMatchMode,
-      sku,
-      description,
-      categoryId,
-      baseExported,
-      includeArchived,
-      minPrice,
-      maxPrice,
-      stockOperator,
-      stockValue,
-      startDate,
-      endDate,
-    ]
-  );
+  const filterValues = {
+    productId,
+    idMatchMode: normalizeString(productId) ? idMatchMode : '',
+    sku,
+    description,
+    categoryId,
+    baseExported,
+    includeArchived,
+    minPrice,
+    maxPrice,
+    stockOperator,
+    stockValue,
+    createdAt: { from: startDate, to: endDate },
+  };
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: unknown) => {
@@ -413,20 +407,20 @@ export const ProductFilters = memo(function ProductFilters({
     }
   };
 
-  const handleSavePresetFromModal = useCallback(
-    async (name: string, filter: ProductAdvancedFilterGroup): Promise<void> => {
-      const trimmedName = normalizePresetName(name);
-      if (!trimmedName) {
-        throw new Error('Preset name is required.');
-      }
-      if (hasPresetNameConflict(advancedFilterPresets, trimmedName)) {
-        throw new Error('Preset name already exists. Choose a unique name.');
-      }
-      const preset = createAdvancedPreset(trimmedName, filter);
-      await setAdvancedFilterPresets([...advancedFilterPresets, preset]);
-    },
-    [advancedFilterPresets, setAdvancedFilterPresets]
-  );
+  const handleSavePresetFromModal = async (
+    name: string,
+    filter: ProductAdvancedFilterGroup
+  ): Promise<void> => {
+    const trimmedName = normalizePresetName(name);
+    if (!trimmedName) {
+      throw new Error('Preset name is required.');
+    }
+    if (hasPresetNameConflict(advancedFilterPresets, trimmedName)) {
+      throw new Error('Preset name already exists. Choose a unique name.');
+    }
+    const preset = createAdvancedPreset(trimmedName, filter);
+    await setAdvancedFilterPresets([...advancedFilterPresets, preset]);
+  };
 
   return (
     <>
@@ -486,6 +480,6 @@ export const ProductFilters = memo(function ProductFilters({
       ) : null}
     </>
   );
-});
+}
 
 ProductFilters.displayName = 'ProductFilters';

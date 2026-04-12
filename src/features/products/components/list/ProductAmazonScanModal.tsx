@@ -5,7 +5,11 @@ import { ChevronDown, ChevronUp, ExternalLink, Loader2, RefreshCw } from 'lucide
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ProductScanAmazonExtractedFieldsPanel } from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
-import { hasProductScanAmazonDetails } from '@/features/products/components/scans/ProductScanAmazonDetails';
+import {
+  hasProductScanAmazonDetails,
+  resolveAmazonScanRecommendationReason,
+  resolveRejectedAmazonCandidateBreakdown,
+} from '@/features/products/components/scans/ProductScanAmazonDetails';
 import {
   buildProductScanArtifactHref,
   ProductScanDiagnostics,
@@ -25,6 +29,7 @@ import {
   resolveProductScanActiveStepSummary,
   resolveProductScanContinuationSummary,
   resolveProductScanLatestOutcomeSummary,
+  resolveProductScanRejectedCandidateSummary,
 } from '@/features/products/components/scans/ProductScanSteps';
 import type {
   ProductAmazonBatchScanResponse,
@@ -963,6 +968,14 @@ export function ProductAmazonScanModal(
               const extractedFieldsExpanded = expandedExtractedFieldRowIds.has(row.productId);
               const hasExtractedFields =
                 (row.scan && hasProductScanAmazonDetails(row.scan.amazonDetails)) || Boolean(row.scan?.asin);
+              const recommendationReason =
+                row.scan && hasExtractedFields
+                  ? resolveAmazonScanRecommendationReason(row.scan)
+                  : null;
+              const recommendationRejectedBreakdown =
+                row.scan && hasExtractedFields
+                  ? resolveRejectedAmazonCandidateBreakdown(row.scan.steps)
+                  : null;
               const diagnostics = row.scan ? resolveProductScanDiagnostics(row.scan) : null;
               const hasDiagnostics = Boolean(diagnostics);
               const latestFailureArtifact = diagnostics?.failureArtifacts[0] ?? null;
@@ -979,6 +992,10 @@ export function ProductAmazonScanModal(
               const continuationSummary =
                 (row.status === 'queued' || row.status === 'running') && scanSteps.length > 0
                   ? resolveProductScanContinuationSummary(scanSteps)
+                  : null;
+              const rejectedCandidateSummary =
+                scanSteps.length > 0 && !progressSummary && !continuationSummary
+                  ? resolveProductScanRejectedCandidateSummary(scanSteps)
                   : null;
               const latestOutcomeSummary =
                 scanSteps.length > 0 &&
@@ -1097,7 +1114,11 @@ export function ProductAmazonScanModal(
                         <span className='inline-flex items-center rounded-md border border-amber-500/20 px-2 py-0.5 font-medium text-amber-300'>
                           Candidate continuation
                         </span>
-                        <span className='text-muted-foreground'>After AI rejection</span>
+                        <span className='text-muted-foreground'>
+                          {continuationSummary.rejectionKind === 'language'
+                            ? 'After language rejection'
+                            : 'After AI rejection'}
+                        </span>
                         <span className='font-medium text-foreground'>{continuationSummary.stepLabel}</span>
                         {continuationSummary.resultCodeLabel ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
@@ -1121,6 +1142,43 @@ export function ProductAmazonScanModal(
                           <span>Next: {continuationSummary.nextUrl}</span>
                         ) : null}
                       </div>
+                    </div>
+                  ) : null}
+
+                  {rejectedCandidateSummary ? (
+                    <div className='space-y-1 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span className='inline-flex items-center rounded-md border border-amber-500/20 px-2 py-0.5 font-medium text-amber-300'>
+                          {rejectedCandidateSummary.latestRejectionKind === 'language'
+                            ? 'AI language rejections'
+                            : 'AI candidate rejections'}
+                        </span>
+                        <span className='font-medium text-foreground'>
+                          {rejectedCandidateSummary.rejectedCount} candidate
+                          {rejectedCandidateSummary.rejectedCount === 1 ? '' : 's'} rejected before{' '}
+                          {row.status === 'completed' || row.status === 'conflict'
+                            ? 'match'
+                            : row.status === 'no_match'
+                              ? 'no match'
+                              : 'final result'}
+                        </span>
+                      </div>
+                      {rejectedCandidateSummary.latestReason ? (
+                        <p className='text-sm text-muted-foreground'>
+                          {rejectedCandidateSummary.latestReason}
+                        </p>
+                      ) : null}
+                      {rejectedCandidateSummary.languageRejectedCount > 0 ? (
+                        <p className='text-xs text-muted-foreground'>
+                          {rejectedCandidateSummary.languageRejectedCount} non-English page
+                          {rejectedCandidateSummary.languageRejectedCount === 1 ? '' : 's'} rejected
+                        </p>
+                      ) : null}
+                      {rejectedCandidateSummary.latestRejectedUrl ? (
+                        <div className='flex flex-wrap gap-3 text-xs text-muted-foreground'>
+                          <span>Latest rejected: {rejectedCandidateSummary.latestRejectedUrl}</span>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
 
@@ -1217,6 +1275,26 @@ export function ProductAmazonScanModal(
                           Open latest artifact
                           <ExternalLink className='h-3.5 w-3.5' />
                         </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {recommendationReason ? (
+                    <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          Amazon result signal
+                        </span>
+                        <span className='font-medium text-foreground'>{recommendationReason}</span>
+                      </div>
+                      {recommendationRejectedBreakdown &&
+                      recommendationRejectedBreakdown.languageRejectedCount > 0 ? (
+                        <p className='text-sm text-muted-foreground'>
+                          Includes {recommendationRejectedBreakdown.languageRejectedCount} non-English
+                          page
+                          {recommendationRejectedBreakdown.languageRejectedCount === 1 ? '' : 's'} rejected
+                          by the language gate.
+                        </p>
                       ) : null}
                     </div>
                   ) : null}

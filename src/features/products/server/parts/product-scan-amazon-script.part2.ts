@@ -746,6 +746,16 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         await page.locator('link[rel="canonical"]').first().getAttribute('href').catch(() => null)
       );
       const canonicalUrl = toAbsoluteUrl(canonicalHref, currentUrl) || currentUrl;
+      const pageLanguage = toText(
+        await page.evaluate(() => document.documentElement?.lang || null).catch(() => null)
+      );
+      const marketplaceDomain = (() => {
+        try {
+          return new URL(canonicalUrl || currentUrl).hostname.toLowerCase();
+        } catch {
+          return null;
+        }
+      })();
       const asin =
         extractAsin(currentUrl) ||
         extractAsin(canonicalUrl) ||
@@ -940,6 +950,9 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         asin,
         pageTitle,
         descriptionSnippet,
+        pageLanguage,
+        pageLanguageSource: pageLanguage ? 'html_lang' : marketplaceDomain ? 'marketplace_domain' : null,
+        marketplaceDomain,
         candidateUrl: toText(candidateUrl),
         canonicalUrl,
         heroImageUrl,
@@ -965,6 +978,12 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
           { label: 'ASIN', value: asin },
           { label: 'Title', value: pageTitle },
           { label: 'Description', value: descriptionSnippet },
+          { label: 'Page language', value: pageLanguage },
+          {
+            label: 'Language source',
+            value: pageLanguage ? 'html_lang' : marketplaceDomain ? 'marketplace_domain' : null,
+          },
+          { label: 'Marketplace domain', value: marketplaceDomain },
           { label: 'Canonical URL', value: canonicalUrl },
           { label: 'Hero image URL', value: heroImageUrl },
           { label: 'Hero image artifact', value: heroImageArtifactName },

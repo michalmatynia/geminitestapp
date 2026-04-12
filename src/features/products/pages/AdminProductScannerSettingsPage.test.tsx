@@ -230,6 +230,9 @@ describe('AdminProductScannerSettingsPage', () => {
             modelId: null,
             threshold: 0.82,
             onlyForAmbiguousCandidates: false,
+            allowedContentLanguage: 'en',
+            rejectNonEnglishContent: true,
+            languageDetectionMode: 'deterministic_then_ai',
             systemPrompt: null,
           },
         }),
@@ -262,7 +265,57 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(
       screen.getByRole('checkbox', { name: 'Only evaluate ambiguous Amazon candidates' })
     ).not.toBeChecked();
+    expect(
+      screen.getByRole('checkbox', { name: 'Reject non-English Amazon content' })
+    ).toBeChecked();
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Select Amazon candidate evaluator language detection mode',
+      })
+    ).toHaveValue('deterministic_then_ai');
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'AI review runs on every Amazon candidate before extraction is trusted.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Evaluator Summary')).toBeInTheDocument();
+    expect(screen.getByText('Model source: AI Brain default')).toBeInTheDocument();
+    expect(screen.getByText('Resolved model: gpt-4.1-mini')).toBeInTheDocument();
+    expect(screen.getByText('Trust threshold: 82% confidence')).toBeInTheDocument();
+    expect(screen.getByText('Review scope: Every Amazon candidate')).toBeInTheDocument();
+    expect(screen.getByText('Language gate: English only, probe hints first')).toBeInTheDocument();
+    expect(
+      screen.getByText('Continuation: Try next Amazon candidate after rejection')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Only English Amazon page content is trusted for scraping into English product fields.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'The scanner uses probe language hints first and asks AI when page language remains unclear.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Matched products on non-English Amazon pages are rejected and the scanner moves to the next candidate when one is available.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Candidates must meet 82% confidence to be trusted.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Rejected candidates continue to the next Amazon candidate when one is available; otherwise the scan finishes as No Match.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Evaluator runtime errors fail the scan conservatively instead of trusting the page.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('loads legacy persisted full settings', () => {
@@ -299,6 +352,19 @@ describe('AdminProductScannerSettingsPage', () => {
       screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator mode' })
     ).toHaveValue('disabled');
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'AI review is disabled. The scanner trusts the Amazon candidate flow without an evaluator gate.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Model: Disabled')).toBeInTheDocument();
+    expect(
+      screen.getByText('Trust policy: Amazon pages are trusted without AI review.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Language gate: Inactive')).toBeInTheDocument();
+    expect(
+      screen.getByText('Continuation: No AI rejection recovery path')
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Saved' })).toBeDisabled();
   });
 
@@ -340,6 +406,17 @@ describe('AdminProductScannerSettingsPage', () => {
     fireEvent.click(
       screen.getByRole('checkbox', { name: 'Only evaluate ambiguous Amazon candidates' })
     );
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Reject non-English Amazon content' })
+    );
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Select Amazon candidate evaluator language detection mode',
+      }),
+      {
+        target: { value: 'ai_only' },
+      }
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
 
     await waitFor(() => {
@@ -356,6 +433,9 @@ describe('AdminProductScannerSettingsPage', () => {
             modelId: 'gpt-4.1',
             threshold: 0.9,
             onlyForAmbiguousCandidates: false,
+            allowedContentLanguage: 'en',
+            rejectNonEnglishContent: false,
+            languageDetectionMode: 'ai_only',
             systemPrompt: null,
           },
         }),

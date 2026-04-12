@@ -11,7 +11,7 @@ import {
   type PlaywrightEngineRunRecord,
 } from '@/features/playwright/server';
 import type {
-  ProductScanAmazonEvaluation,
+  ProductScanAmazonEvaluationResult,
   ProductScanRecord,
 } from '@/shared/contracts/product-scans';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -49,6 +49,18 @@ const amazonEvaluatorResponseSchema = z.object({
   imageMatch: z.boolean().nullable().optional().default(null),
   descriptionMatch: z.boolean().nullable().optional().default(null),
   pageRepresentsSameProduct: z.boolean(),
+  pageLanguage: z.string().trim().min(1).max(80).nullable().optional().default(null),
+  languageAccepted: z.boolean().nullable().optional().default(null),
+  languageReason: z.string().trim().min(1).max(500).nullable().optional().default(null),
+  languageConfidence: z.preprocess(
+    (value) => {
+      if (value == null || value === '') {
+        return null;
+      }
+      return normalizeConfidenceInput(value);
+    },
+    z.number().min(0).max(1).nullable()
+  ).optional().default(null),
   confidence: z.preprocess(
     normalizeConfidenceInput,
     z.number().min(0).max(1)
@@ -78,8 +90,189 @@ const normalizeTextList = (values: Array<string | null | undefined>): string[] =
   return normalized;
 };
 
+const resolveLanguageLabel = (value: string | null | undefined): string | null => {
+  const normalized = normalizeLanguageTag(value);
+  if (!normalized) {
+    return null;
+  }
+  return LANGUAGE_LABELS[normalized] ?? normalized.toUpperCase();
+};
+
+const resolveMarketplaceLanguageHint = (candidateUrl: string | null): string | null => {
+  const normalizedUrl = readOptionalString(candidateUrl);
+  if (!normalizedUrl) {
+    return null;
+  }
+  try {
+    return AMAZON_MARKETPLACE_LANGUAGE_HINTS[new URL(normalizedUrl).hostname.toLowerCase()] ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const detectTextLanguage = (value: string | null): {
+  language: string | null;
+  confidence: number | null;
+  reason: string | null;
+} => {
+  const normalized = readOptionalString(value)?.toLowerCase() ?? null;
+  if (!normalized) {
+    return { language: null, confidence: null, reason: null };
+  }
+
+  const tokens = normalized.match(/[a-z\u00c0-\u017f]+/g) ?? [];
+  if (tokens.length === 0) {
+    return { language: null, confidence: null, reason: null };
+  }
+
+  let bestLanguage: string | null = null;
+  let bestScore = 0;
+  let secondScore = 0;
+
+  for (const [language, stopwords] of Object.entries(LANGUAGE_STOPWORDS)) {
+    const stopwordSet = new Set(stopwords);
+    const score = tokens.reduce((count, token) => count + (stopwordSet.has(token) ? 1 : 0), 0);
+    if (score > bestScore) {
+      secondScore = bestScore;
+      bestScore = score;
+      bestLanguage = language;
+    } else if (score > secondScore) {
+      secondScore = score;
+    }
+  }
+
+  if (!bestLanguage || bestScore < 2) {
+    return { language: null, confidence: null, reason: null };
+  }
+
+  return {
+    language: bestLanguage,
+    confidence: Math.min(0.95, 0.55 + (bestScore - secondScore) * 0.08),
+    reason: `Visible Amazon text looks ${resolveLanguageLabel(bestLanguage)}.`,
+  };
+};
+
+const resolveDeterministicLanguageDecision = (input: {
+  parsedResult: AmazonScanScriptResult;
+  evaluatorConfig: Extract<
+    ProductScannerAmazonCandidateEvaluatorResolvedConfig,
+    { enabled: true }
+  >;
+}): DeterministicLanguageDecision => {
+  const probe = input.parsedResult.amazonProbe;
+  const probeLanguage = normalizeLanguageTag(probe?.pageLanguage);
+  if (probeLanguage) {
+    return {
+      pageLanguage: probeLanguage,
+      languageAccepted: isEnglishLanguageTag(probeLanguage),
+      confidence: 0.99,
+      reason: isEnglishLanguageTag(probeLanguage)
+        ? `Amazon page declares ${resolveLanguageLabel(probeLanguage)} content.`
+        : `Amazon page declares ${resolveLanguageLabel(probeLanguage)} content, which is outside the allowed ${resolveLanguageLabel(input.evaluatorConfig.allowedContentLanguage)} policy.`,
+    };
+  }
+
+  const marketplaceLanguage =
+    normalizeLanguageTag(probe?.marketplaceDomain && AMAZON_MARKETPLACE_LANGUAGE_HINTS[probe.marketplaceDomain]) ??
+    resolveMarketplaceLanguageHint(
+      readOptionalString(probe?.canonicalUrl) ??
+        readOptionalString(probe?.candidateUrl) ??
+        readOptionalString(input.parsedResult.url) ??
+        readOptionalString(input.parsedResult.currentUrl)
+    );
+  const textLanguage = detectTextLanguage(
+    normalizeTextList([
+      readOptionalString(probe?.pageTitle),
+      readOptionalString(probe?.descriptionSnippet),
+      ...(Array.isArray(probe?.bulletPoints) ? probe.bulletPoints : []),
+    ]).join('\n')
+  );
+  const pageLanguage = textLanguage.language ?? marketplaceLanguage ?? null;
+
+  if (textLanguage.language && !isEnglishLanguageTag(textLanguage.language)) {
+    return {
+      pageLanguage,
+      languageAccepted: false,
+      confidence: textLanguage.confidence,
+      reason: textLanguage.reason,
+    };
+  }
+
+  if (textLanguage.language && isEnglishLanguageTag(textLanguage.language)) {
+    return {
+      pageLanguage,
+      languageAccepted: true,
+      confidence: textLanguage.confidence,
+      reason: textLanguage.reason,
+    };
+  }
+
+  return {
+    pageLanguage,
+    languageAccepted: null,
+    confidence: null,
+    reason: marketplaceLanguage && !isEnglishLanguageTag(marketplaceLanguage)
+      ? `Amazon marketplace domain suggests ${resolveLanguageLabel(marketplaceLanguage)} content, but probe text was not strong enough to trust that alone.`
+      : null,
+  };
+};
+
 const normalizeIdentifier = (value: unknown): string | null =>
   readOptionalString(value)?.replace(/\s+/g, '').toUpperCase() ?? null;
+
+const normalizeLanguageTag = (value: unknown): string | null =>
+  readOptionalString(value)?.replace(/_/g, '-').toLowerCase() ?? null;
+
+const isEnglishLanguageTag = (value: string | null | undefined): boolean =>
+  typeof value === 'string' && value.toLowerCase().startsWith('en');
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  en: 'English',
+  'en-us': 'English (US)',
+  'en-gb': 'English (UK)',
+  de: 'German',
+  fr: 'French',
+  es: 'Spanish',
+  it: 'Italian',
+  pl: 'Polish',
+  nl: 'Dutch',
+  sv: 'Swedish',
+  ja: 'Japanese',
+  tr: 'Turkish',
+};
+
+const AMAZON_MARKETPLACE_LANGUAGE_HINTS: Record<string, string> = {
+  'amazon.co.uk': 'en',
+  'amazon.com': 'en',
+  'amazon.com.au': 'en',
+  'amazon.de': 'de',
+  'amazon.es': 'es',
+  'amazon.fr': 'fr',
+  'amazon.it': 'it',
+  'amazon.nl': 'nl',
+  'amazon.pl': 'pl',
+  'amazon.se': 'sv',
+  'amazon.co.jp': 'ja',
+  'amazon.com.tr': 'tr',
+  'amazon.com.mx': 'es',
+};
+
+const LANGUAGE_STOPWORDS: Record<string, readonly string[]> = {
+  en: ['the', 'and', 'with', 'for', 'from', 'this', 'that', 'your', 'you', 'are', 'not'],
+  de: ['und', 'mit', 'für', 'der', 'die', 'das', 'ist', 'nicht', 'eine', 'von'],
+  fr: ['avec', 'pour', 'les', 'des', 'une', 'est', 'dans', 'pas', 'sur', 'par'],
+  es: ['con', 'para', 'los', 'las', 'una', 'este', 'esta', 'del', 'por', 'sin'],
+  it: ['con', 'per', 'gli', 'una', 'questo', 'questa', 'non', 'della', 'delle', 'dei'],
+  pl: ['dla', 'jest', 'oraz', 'nie', 'ten', 'ta', 'kolor', 'produkt', 'zestaw', 'wymiary'],
+  nl: ['met', 'voor', 'een', 'deze', 'niet', 'van', 'het', 'product', 'kleur', 'maat'],
+};
+
+type DeterministicLanguageDecision = {
+  pageLanguage: string | null;
+  languageAccepted: boolean | null;
+  confidence: number | null;
+  reason: string | null;
+};
 
 const toDataUrl = (content: Buffer, mimeType: string): string =>
   `data:${mimeType};base64,${content.toString('base64')}`;
@@ -271,10 +464,10 @@ const buildDeterministicMatchReasons = (
 };
 
 const createEvaluationResult = (
-  input: Omit<ProductScanAmazonEvaluation, 'evaluatedAt'> & {
+  input: Omit<ProductScanAmazonEvaluationResult, 'evaluatedAt'> & {
     evaluatedAt?: string | null;
   }
-): ProductScanAmazonEvaluation => ({
+): ProductScanAmazonEvaluationResult => ({
   ...input,
   evaluatedAt: input.evaluatedAt ?? new Date().toISOString(),
 });
@@ -288,7 +481,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     ProductScannerAmazonCandidateEvaluatorResolvedConfig,
     { enabled: true }
   >;
-}): Promise<ProductScanAmazonEvaluation> => {
+}): Promise<ProductScanAmazonEvaluationResult> => {
   const evidenceArtifacts = resolveAmazonEvaluationArtifactFileNames(
     input.run,
     readOptionalString(input.parsedResult.amazonProbe?.artifactKey)
@@ -309,10 +502,47 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     productImageSource: null,
   };
 
+  const deterministicLanguageDecision = resolveDeterministicLanguageDecision({
+    parsedResult: input.parsedResult,
+    evaluatorConfig: input.evaluatorConfig,
+  });
+  if (
+    input.evaluatorConfig.rejectNonEnglishContent &&
+    input.evaluatorConfig.languageDetectionMode === 'deterministic_then_ai' &&
+    deterministicLanguageDecision.languageAccepted === false
+  ) {
+    const languageReason =
+      deterministicLanguageDecision.reason ??
+      'Amazon page content is not in the allowed language.';
+    return createEvaluationResult({
+      status: 'rejected',
+      sameProduct: null,
+      imageMatch: null,
+      descriptionMatch: null,
+      pageRepresentsSameProduct: null,
+      pageLanguage: deterministicLanguageDecision.pageLanguage,
+      languageConfidence: deterministicLanguageDecision.confidence,
+      languageAccepted: false,
+      languageReason,
+      confidence: deterministicLanguageDecision.confidence,
+      proceed: false,
+      scrapeAllowed: false,
+      threshold: input.evaluatorConfig.threshold,
+      reasons: [languageReason],
+      mismatches: ['Amazon page content is not in English.'],
+      modelId: input.evaluatorConfig.modelId,
+      brainApplied: input.evaluatorConfig.brainApplied,
+      evidence,
+      error: null,
+    });
+  }
+
   const deterministicReasons = buildDeterministicMatchReasons(input.product, input.parsedResult);
   if (
     input.evaluatorConfig.onlyForAmbiguousCandidates &&
-    deterministicReasons.length > 0
+    deterministicReasons.length > 0 &&
+    (!input.evaluatorConfig.rejectNonEnglishContent ||
+      deterministicLanguageDecision.languageAccepted === true)
   ) {
     return createEvaluationResult({
       status: 'skipped',
@@ -320,8 +550,15 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       imageMatch: null,
       descriptionMatch: null,
       pageRepresentsSameProduct: true,
+      pageLanguage: deterministicLanguageDecision.pageLanguage,
+      languageConfidence: deterministicLanguageDecision.confidence,
+      languageAccepted: input.evaluatorConfig.rejectNonEnglishContent
+        ? deterministicLanguageDecision.languageAccepted
+        : true,
+      languageReason: deterministicLanguageDecision.reason,
       confidence: 1,
       proceed: true,
+      scrapeAllowed: true,
       threshold: input.evaluatorConfig.threshold,
       reasons: deterministicReasons,
       mismatches: [],
@@ -464,6 +701,10 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     'Return only JSON.',
     'Approve only when the Amazon page clearly represents the same product and variant as the source product.',
     'Reject mismatches in brand, model, color, size, pack count, or major description conflicts.',
+    `Allowed content language for scraping: ${resolveLanguageLabel(input.evaluatorConfig.allowedContentLanguage) ?? input.evaluatorConfig.allowedContentLanguage}.`,
+    input.evaluatorConfig.rejectNonEnglishContent
+      ? 'If the Amazon page content is not English enough to trust scraping into English fields, set languageAccepted to false and proceed to false.'
+      : 'Language does not block scraping in this run.',
   ]
     .filter(Boolean)
     .join('\n');
@@ -514,12 +755,21 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
           }))
         : [],
       probe: input.parsedResult.amazonProbe,
+      deterministicLanguageHint: {
+        pageLanguage: deterministicLanguageDecision.pageLanguage,
+        languageAccepted: deterministicLanguageDecision.languageAccepted,
+        reason: deterministicLanguageDecision.reason,
+      },
     },
     responseContract: {
       sameProduct: 'boolean',
       imageMatch: 'boolean | null',
       descriptionMatch: 'boolean | null',
       pageRepresentsSameProduct: 'boolean',
+      pageLanguage: 'string | null',
+      languageAccepted: 'boolean | null',
+      languageReason: 'string | null',
+      languageConfidence: 'number between 0 and 1 | null',
       confidence: 'number between 0 and 1',
       proceed: 'boolean',
       reasons: 'string[]',
@@ -598,13 +848,41 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
 
     const rawJson = JSON.parse(completion.text) as unknown;
     const parsed = amazonEvaluatorResponseSchema.parse(rawJson);
+    const languageAccepted =
+      input.evaluatorConfig.rejectNonEnglishContent
+        ? typeof parsed.languageAccepted === 'boolean'
+          ? parsed.languageAccepted
+          : input.evaluatorConfig.languageDetectionMode === 'deterministic_then_ai'
+            ? deterministicLanguageDecision.languageAccepted
+            : null
+        : true;
+    const languageReason =
+      readOptionalString(parsed.languageReason) ?? deterministicLanguageDecision.reason;
+    const pageLanguage =
+      normalizeLanguageTag(parsed.pageLanguage) ?? deterministicLanguageDecision.pageLanguage;
+    const languageConfidence =
+      typeof parsed.languageConfidence === 'number'
+        ? parsed.languageConfidence
+        : deterministicLanguageDecision.confidence;
     const approved =
       parsed.proceed &&
       parsed.sameProduct &&
       parsed.pageRepresentsSameProduct &&
       parsed.imageMatch !== false &&
       parsed.descriptionMatch !== false &&
+      languageAccepted !== false &&
       parsed.confidence >= input.evaluatorConfig.threshold;
+    const reasons = [...parsed.reasons];
+    const mismatches = [...parsed.mismatches];
+    if (languageAccepted === false && languageReason && !reasons.includes(languageReason)) {
+      reasons.unshift(languageReason);
+    }
+    if (
+      languageAccepted === false &&
+      !mismatches.some((entry) => /language|english/i.test(entry))
+    ) {
+      mismatches.push('Amazon page content is not in English.');
+    }
 
     return createEvaluationResult({
       status: approved ? 'approved' : 'rejected',
@@ -612,11 +890,16 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       imageMatch: parsed.imageMatch,
       descriptionMatch: parsed.descriptionMatch,
       pageRepresentsSameProduct: parsed.pageRepresentsSameProduct,
+      pageLanguage,
+      languageConfidence,
+      languageAccepted,
+      languageReason,
       confidence: parsed.confidence,
       proceed: approved,
+      scrapeAllowed: approved,
       threshold: input.evaluatorConfig.threshold,
-      reasons: parsed.reasons,
-      mismatches: parsed.mismatches,
+      reasons,
+      mismatches,
       modelId: completion.modelId,
       brainApplied: input.evaluatorConfig.brainApplied,
       evidence,

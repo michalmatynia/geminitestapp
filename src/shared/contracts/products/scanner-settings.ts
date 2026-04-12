@@ -32,11 +32,29 @@ export type ProductScannerAmazonCandidateEvaluatorMode = z.infer<
   typeof productScannerAmazonCandidateEvaluatorModeSchema
 >;
 
+export const productScannerAmazonCandidateEvaluatorLanguageDetectionModeSchema = z.enum([
+  'deterministic_then_ai',
+  'ai_only',
+]);
+
+export type ProductScannerAmazonCandidateEvaluatorLanguageDetectionMode = z.infer<
+  typeof productScannerAmazonCandidateEvaluatorLanguageDetectionModeSchema
+>;
+
+export const productScannerAmazonCandidateEvaluatorAllowedContentLanguageSchema = z.enum(['en']);
+
+export type ProductScannerAmazonCandidateEvaluatorAllowedContentLanguage = z.infer<
+  typeof productScannerAmazonCandidateEvaluatorAllowedContentLanguageSchema
+>;
+
 export const productScannerAmazonCandidateEvaluatorSchema = z.object({
   mode: productScannerAmazonCandidateEvaluatorModeSchema,
   modelId: z.string().trim().min(1).max(200).nullable(),
   threshold: z.number().min(0).max(1),
   onlyForAmbiguousCandidates: z.boolean(),
+  allowedContentLanguage: productScannerAmazonCandidateEvaluatorAllowedContentLanguageSchema,
+  rejectNonEnglishContent: z.boolean(),
+  languageDetectionMode: productScannerAmazonCandidateEvaluatorLanguageDetectionModeSchema,
   systemPrompt: z.string().trim().max(4000).nullable(),
 });
 

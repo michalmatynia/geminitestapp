@@ -1526,7 +1526,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
               ? [{ label: 'Top ASIN', value: retainedCandidates[0].asin }]
               : []
           ),
-        );
+        });
         await emitProgress({
           stage: 'google_candidates',
           message: 'Found ' + sortedCandidates.length + ' Amazon candidates.',

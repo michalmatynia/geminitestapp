@@ -150,7 +150,7 @@ function ProductFormModalBody(props: {
   } = props;
 
   const { product, draft, getValues, setValue, setNormalizeNameError } = useProductFormCore();
-  const { showFileManager, handleMultiFileSelect } = useProductFormImages();
+  const { showFileManager, handleMultiFileSelect, imageLinks } = useProductFormImages();
   const { categories } = useProductFormMetadata();
   const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
   const shouldApplyNormalizeResultLocally = validationInstanceScopeOverride !== undefined;
@@ -159,10 +159,13 @@ function ProductFormModalBody(props: {
     return buildTriggeredProductEntityJson({
       product,
       draft,
-      values: getValues(),
+      values: {
+        ...getValues(),
+        imageLinks,
+      },
       categories,
     });
-  }, [categories, getValues, product, draft]);
+  }, [categories, getValues, product, draft, imageLinks]);
 
   const handleRunQueued = useCallback(
     (args: {

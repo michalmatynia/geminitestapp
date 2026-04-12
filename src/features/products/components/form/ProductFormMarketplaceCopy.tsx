@@ -9,12 +9,12 @@ import { useProductFormCore } from '@/features/products/context/ProductFormCoreC
 import { buildMarketplaceCopyDebrandTriggerInput } from '@/features/products/lib/buildMarketplaceCopyDebrandTriggerInput';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import { extractDebrandedMarketplaceCopyResultFromAiPathRunDetail } from '@/features/products/lib/extractDebrandedMarketplaceCopyFromAiPathRunDetail';
-import { resolveIntegrationDisplayName } from '@/features/integrations/public';
+import { resolveIntegrationDisplayName } from '@/features/integrations/components/listings/product-listings-labels';
 import {
   isBaseIntegrationSlug,
   isLinkedInIntegrationSlug,
-} from '@/features/integrations/public';
-import { useIntegrations } from '@/features/integrations/public';
+} from '@/features/integrations/constants/slugs';
+import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { Integration } from '@/shared/contracts/integrations/base';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
@@ -163,6 +163,7 @@ function MarketplaceCopyDebrandTrigger(
   const [pendingRunId, setPendingRunId] = useState<string | null>(null);
   const [isTriggerPending, setIsTriggerPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const persistedProductId = product?.id ?? null;
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
     const values = getValues();
@@ -292,13 +293,15 @@ function MarketplaceCopyDebrandTrigger(
 
       void (async (): Promise<void> => {
         if (snapshot.status !== 'completed') {
-          if (!active) return;
-          setError(
-            snapshot.errorMessage ??
-              `Debrand failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
-          );
-          setPendingRunId((current) => (current === trackedRunId ? null : current));
-          return;
+          if (persistedProductId) {
+            if (!active) return;
+            setError(
+              snapshot.errorMessage ??
+                `Debrand failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
+            );
+            setPendingRunId((current) => (current === trackedRunId ? null : current));
+            return;
+          }
         }
 
         let response: Awaited<ReturnType<typeof getAiPathRun>>;
@@ -323,7 +326,10 @@ function MarketplaceCopyDebrandTrigger(
         const result = extractDebrandedMarketplaceCopyResultFromAiPathRunDetail(response.data);
         if (!result || (!result.title && !result.description)) {
           setError(
-            'Debrand failed: the AI Path did not return an alternate title or description.'
+            snapshot.status !== 'completed'
+              ? snapshot.errorMessage ??
+                  `Debrand failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
+              : 'Debrand failed: the AI Path did not return an alternate title or description.'
           );
           setPendingRunId((current) => (current === trackedRunId ? null : current));
           return;
@@ -361,7 +367,7 @@ function MarketplaceCopyDebrandTrigger(
       active = false;
       unsubscribe();
     };
-  }, [pendingRunId, resolveCurrentRowIndex, rowId, setValue]);
+  }, [pendingRunId, persistedProductId, resolveCurrentRowIndex, rowId, setValue]);
 
   return (
     <div className='flex min-w-0 flex-col items-end gap-2'>

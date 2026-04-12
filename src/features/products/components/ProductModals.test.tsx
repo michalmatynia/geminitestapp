@@ -16,10 +16,12 @@ const {
   useProductListHeaderActionsContextMock,
   useProductListModalsContextMock,
   useProductListSelectionContextMock,
+  useProductFormImagesMock,
 } = vi.hoisted(() => ({
   useProductListHeaderActionsContextMock: vi.fn(),
   useProductListModalsContextMock: vi.fn(),
   useProductListSelectionContextMock: vi.fn(),
+  useProductFormImagesMock: vi.fn(),
 }));
 
 const {
@@ -96,10 +98,7 @@ vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
 }));
 
 vi.mock('@/features/products/context/ProductFormImageContext', () => ({
-  useProductFormImages: () => ({
-    showFileManager: false,
-    handleMultiFileSelect: vi.fn(),
-  }),
+  useProductFormImages: () => useProductFormImagesMock(),
 }));
 
 vi.mock('@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource', () => ({
@@ -286,6 +285,13 @@ describe('ProductModals', () => {
       hasUnsavedChanges: false,
       setValue: vi.fn(),
       setNormalizeNameError: vi.fn(),
+    });
+    useProductFormImagesMock.mockReturnValue({
+      showFileManager: false,
+      handleMultiFileSelect: vi.fn(),
+      imageLinks: [],
+      imageBase64s: [],
+      imageSlots: [],
     });
     useProductFormMetadataMock.mockReturnValue({
       categories: [
@@ -1420,6 +1426,42 @@ describe('ProductModals', () => {
   });
 
   describe('trigger entity normalization', () => {
+    it('includes current form image links in the trigger payload', () => {
+      useProductFormImagesMock.mockReturnValue({
+        showFileManager: false,
+        handleMultiFileSelect: vi.fn(),
+        imageLinks: ['https://from-form.com', '   ', 'https://from-form-2.com'],
+        imageBase64s: [],
+        imageSlots: [],
+      });
+
+      const product = markEditingProductHydrated(createProduct());
+      useProductFormCoreMock.mockReturnValue({
+        product,
+        draft: null,
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: product,
+        })
+      );
+
+      render(<ProductModals />);
+
+      return waitFor(() => {
+        const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
+        const entityJson = getEntityJson();
+
+        expect(entityJson).toMatchObject({
+          imageLinks: ['https://from-form.com', 'https://from-form-2.com'],
+        });
+      });
+    });
+
     it('normalizes trigger entity catalogs from current form catalogIds', () => {
       const product = markEditingProductHydrated(createProduct());
       useProductFormCoreMock.mockReturnValue({

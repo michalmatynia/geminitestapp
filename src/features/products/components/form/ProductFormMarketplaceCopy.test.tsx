@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -22,11 +22,24 @@ const {
   useProductFormCoreMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/public', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/integrations/public')>();
+vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
+  useIntegrations: () => useIntegrationsMock(),
+}));
+
+vi.mock('@/features/integrations/components/listings/product-listings-labels', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@/features/integrations/components/listings/product-listings-labels')
+    >();
   return {
     ...actual,
-    useIntegrations: () => useIntegrationsMock(),
+  };
+});
+
+vi.mock('@/features/integrations/constants/slugs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/integrations/constants/slugs')>();
+  return {
+    ...actual,
   };
 });
 
@@ -390,6 +403,65 @@ describe('ProductFormMarketplaceCopy', () => {
     ).toBeInTheDocument();
   });
 
+  it('writes completed debrand results back into the same row from database-node update payloads', async () => {
+    const user = userEvent.setup();
+    const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (runId: string, callback: (snapshot: Record<string, unknown>) => void) => {
+        trackedCallbacks.set(runId, callback);
+        return vi.fn();
+      }
+    );
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: {
+        onSuccess?: (runId: string) => void;
+      }) => {
+        args.onSuccess?.('run-debrand-marketplace-copy-db');
+      }
+    );
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        nodes: [
+          {
+            type: 'database',
+            outputs: {
+              bundle: {
+                update: {
+                  $set: {
+                    'marketplaceContentOverrides.0.title': 'Persisted debranded title',
+                    'marketplaceContentOverrides.0.description': 'Persisted debranded description',
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderMarketplaceCopy({
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-tradera'],
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Debrand' }));
+
+    trackedCallbacks.get('run-debrand-marketplace-copy-db')?.({
+      trackingState: 'stopped',
+      status: 'completed',
+      errorMessage: null,
+    });
+
+    expect(await screen.findByDisplayValue('Persisted debranded title')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Persisted debranded description')).toBeInTheDocument();
+  });
+
   it('writes debrand results into the same row after earlier rows are removed', async () => {
     const user = userEvent.setup();
     const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
@@ -527,6 +599,117 @@ describe('ProductFormMarketplaceCopy', () => {
       entityId?: string | null;
     };
     expect(triggerArgs.entityId).toBeNull();
+  });
+
+  it('recovers draft-only debrand results from failed runs when the database node cannot persist', async () => {
+    const user = userEvent.setup();
+    const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (runId: string, callback: (snapshot: Record<string, unknown>) => void) => {
+        trackedCallbacks.set(runId, callback);
+        return vi.fn();
+      }
+    );
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: {
+        onSuccess?: (runId: string) => void;
+      }) => {
+        args.onSuccess?.('run-debrand-marketplace-copy-draft-failed');
+      }
+    );
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        nodes: [
+          {
+            type: 'regex',
+            outputs: {
+              bundle: {
+                debrandedTitle: 'Draft-safe debranded title',
+                debrandedDescription: 'Draft-safe debranded description',
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderMarketplaceCopy(
+      {
+        marketplaceContentOverrides: [
+          {
+            integrationIds: ['integration-tradera'],
+            title: '',
+            description: '',
+          },
+        ],
+      },
+      {
+        coreValue: {
+          product: undefined,
+          draft: { id: 'draft-1' },
+        },
+      }
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Debrand' }));
+
+    await act(async () => {
+      trackedCallbacks.get('run-debrand-marketplace-copy-draft-failed')?.({
+        trackingState: 'stopped',
+        status: 'failed',
+        errorMessage: 'Database write affected 0 records for update (updateOne).',
+      });
+    });
+
+    expect(await screen.findByDisplayValue('Draft-safe debranded title')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Draft-safe debranded description')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Database write affected 0 records for update (updateOne).')
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps saved-product debrand failures terminal when persistence fails', async () => {
+    const user = userEvent.setup();
+    const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (runId: string, callback: (snapshot: Record<string, unknown>) => void) => {
+        trackedCallbacks.set(runId, callback);
+        return vi.fn();
+      }
+    );
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: {
+        onSuccess?: (runId: string) => void;
+      }) => {
+        args.onSuccess?.('run-debrand-marketplace-copy-saved-failed');
+      }
+    );
+
+    renderMarketplaceCopy({
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-tradera'],
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Debrand' }));
+
+    await act(async () => {
+      trackedCallbacks.get('run-debrand-marketplace-copy-saved-failed')?.({
+        trackingState: 'stopped',
+        status: 'failed',
+        errorMessage: 'Database write affected 0 records for update (updateOne).',
+      });
+    });
+
+    expect(
+      await screen.findByText('Database write affected 0 records for update (updateOne).')
+    ).toBeInTheDocument();
+    expect(getAiPathRunMock).not.toHaveBeenCalled();
   });
 
   it('runs the canonical debrand trigger when the row button is clicked', async () => {

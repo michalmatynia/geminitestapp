@@ -168,6 +168,31 @@ describe('extractDebrandedMarketplaceCopyResultFromAiPathRunDetail', () => {
     });
   });
 
+  it('extracts marketplace override values from database bundle update payloads', () => {
+    expect(
+      extractDebrandedMarketplaceCopyResultFromAiPathRunDetail({
+        nodes: [
+          {
+            nodeType: 'database',
+            outputs: {
+              bundle: {
+                update: {
+                  $set: {
+                    'marketplaceContentOverrides.2.title': 'Saved DB debranded title',
+                    'marketplaceContentOverrides.2.description': 'Saved DB debranded description',
+                  },
+                },
+              },
+            },
+          },
+        ],
+      })
+    ).toEqual({
+      title: 'Saved DB debranded title',
+      description: 'Saved DB debranded description',
+    });
+  });
+
   it('does not treat source-context nodes as debranded output', () => {
     expect(
       extractDebrandedMarketplaceCopyResultFromAiPathRunDetail({

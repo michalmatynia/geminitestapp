@@ -530,6 +530,258 @@ describe('ProductAmazonScanModal', () => {
     );
   });
 
+  it('shows a collapsed rejected-candidate summary for completed scans', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 0,
+      alreadyRunning: 1,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-rejected-history-1',
+          runId: 'run-rejected-history-1',
+          status: 'running',
+          currentStatus: 'completed',
+          message: 'Amazon scan already completed.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-rejected-history-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'completed',
+          productName: 'Product 1',
+          engineRunId: 'run-rejected-history-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: 'B000123456',
+          title: 'Amazon title',
+          price: '$10.99',
+          url: 'https://www.amazon.com/dp/B000123456',
+          description: 'Amazon description',
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: {
+            status: 'approved',
+            sameProduct: true,
+            imageMatch: true,
+            descriptionMatch: true,
+            pageRepresentsSameProduct: true,
+            confidence: 0.94,
+            proceed: true,
+            threshold: 0.85,
+            reasons: ['The third candidate matches the product.'],
+            mismatches: [],
+            modelId: 'gpt-4o',
+            brainApplied: null,
+            evidence: {
+              candidateUrl: 'https://www.amazon.com/dp/B000123456',
+              pageTitle: 'Amazon title',
+              heroImageSource: null,
+              heroImageArtifactName: null,
+              screenshotArtifactName: null,
+              htmlArtifactName: null,
+              productImageSource: '/uploads/product-1.jpg',
+            },
+            error: null,
+            evaluatedAt: '2026-04-11T10:00:08.000Z',
+          },
+          steps: [
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 1,
+              candidateId: 'image-1',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate (21%).',
+              warning: null,
+              details: [
+                { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG123' },
+                { label: 'Reason', value: 'The Amazon page shows a different product.' },
+              ],
+              url: 'https://www.amazon.com/dp/B00WRONG123',
+              startedAt: '2026-04-11T10:00:01.000Z',
+              completedAt: '2026-04-11T10:00:02.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-1',
+              candidateRank: 2,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate (17%).',
+              warning: null,
+              details: [
+                { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG456' },
+                { label: 'Reason', value: 'The second Amazon page is still a different product.' },
+              ],
+              url: 'https://www.amazon.com/dp/B00WRONG456',
+              startedAt: '2026-04-11T10:00:03.000Z',
+              completedAt: '2026-04-11T10:00:04.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_extract',
+              label: 'Extract Amazon details',
+              group: 'amazon',
+              attempt: 3,
+              candidateId: 'image-1',
+              candidateRank: 3,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'match_found',
+              status: 'completed',
+              message: 'Extracted Amazon ASIN B000123456.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B000123456',
+              startedAt: '2026-04-11T10:00:05.000Z',
+              completedAt: '2026-04-11T10:00:07.000Z',
+              durationMs: 2000,
+            },
+          ],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'updated',
+          asinUpdateMessage: 'Product ASIN filled from Amazon scan.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T10:00:08.000Z',
+          createdAt: '2026-04-11T10:00:00.000Z',
+          updatedAt: '2026-04-11T10:00:08.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('AI candidate rejections')).toBeInTheDocument();
+    expect(screen.getByText('2 candidates rejected before match')).toBeInTheDocument();
+    expect(screen.getByText('The second Amazon page is still a different product.')).toBeInTheDocument();
+    expect(screen.getByText('Latest rejected: https://www.amazon.com/dp/B00WRONG456')).toBeInTheDocument();
+  });
+
+  it('shows AI language rejection history in collapsed modal rows', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 0,
+      alreadyRunning: 1,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-language-rejected',
+          runId: 'run-language-rejected',
+          status: 'running',
+          currentStatus: 'no_match',
+          message: 'Amazon scan already completed.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-language-rejected',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'no_match',
+          productName: 'Product 1',
+          engineRunId: 'run-language-rejected',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          amazonDetails: null,
+          steps: [
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 1,
+              candidateId: 'image-1',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_language_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate because page content is not English.',
+              warning: null,
+              details: [
+                { label: 'Candidate URL', value: 'https://www.amazon.de/dp/B00WRONG123' },
+                { label: 'Language reason', value: 'Detected German product content.' },
+                { label: 'Rejection kind', value: 'Language gate' },
+              ],
+              url: 'https://www.amazon.de/dp/B00WRONG123',
+              startedAt: '2026-04-11T10:00:01.000Z',
+              completedAt: '2026-04-11T10:00:02.000Z',
+              durationMs: 1000,
+            },
+          ],
+          rawResult: null,
+          error: 'AI evaluator rejected the Amazon candidate because page content is not English.',
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: 'AI evaluator rejected the Amazon candidate because page content is not English.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T10:00:03.000Z',
+          createdAt: '2026-04-11T10:00:00.000Z',
+          updatedAt: '2026-04-11T10:00:03.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('AI language rejections')).toBeInTheDocument();
+    expect(screen.getByText('Detected German product content.')).toBeInTheDocument();
+    expect(screen.getByText('1 non-English page rejected')).toBeInTheDocument();
+    expect(screen.getByText('Latest rejected: https://www.amazon.de/dp/B00WRONG123')).toBeInTheDocument();
+  });
+
   it('shows extracted fields in the modal and applies them when product form contexts are present', async () => {
     mocks.apiPost.mockResolvedValue({
       queued: 1,
@@ -665,6 +917,9 @@ describe('ProductAmazonScanModal', () => {
       </QueryClientProvider>
     );
 
+    expect(await screen.findByText('Amazon result signal')).toBeInTheDocument();
+    expect(screen.getByText('Strongest clean match')).toBeInTheDocument();
+
     fireEvent.click(await screen.findByRole('button', { name: 'Show extracted fields' }));
 
     expect(await screen.findByRole('button', { name: 'Use EAN' })).toBeInTheDocument();
@@ -679,6 +934,211 @@ describe('ProductAmazonScanModal', () => {
     expect(mocks.addParameterValueMock).toHaveBeenCalled();
     expect(mocks.updateParameterIdMock).toHaveBeenCalledWith(0, 'param-manufacturer');
     expect(mocks.updateParameterValueMock).toHaveBeenCalledWith(0, 'Acme Manufacturing');
+  });
+
+  it('shows non-English rejection breakdown in collapsed recommendation signals', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 0,
+      alreadyRunning: 1,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-rec-language',
+          runId: 'run-rec-language',
+          status: 'running',
+          currentStatus: 'completed',
+          message: 'Amazon scan already completed.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-rec-language',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'completed',
+          productName: 'Product 1',
+          engineRunId: 'run-rec-language',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: 'B000123456',
+          title: 'Amazon title',
+          price: '$10.99',
+          url: 'https://www.amazon.com/dp/B000123456',
+          description: 'Amazon description',
+          amazonDetails: {
+            brand: null,
+            manufacturer: 'Acme Manufacturing',
+            modelNumber: null,
+            partNumber: null,
+            color: null,
+            style: null,
+            material: null,
+            size: null,
+            pattern: null,
+            finish: null,
+            itemDimensions: null,
+            packageDimensions: null,
+            itemWeight: null,
+            packageWeight: null,
+            bestSellersRank: null,
+            ean: '5901234567890',
+            gtin: null,
+            upc: null,
+            isbn: null,
+            bulletPoints: [],
+            attributes: [],
+            rankings: [],
+          },
+          steps: [
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 1,
+              candidateId: 'image-1',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate (21%).',
+              warning: null,
+              details: [
+                { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG123' },
+                { label: 'Reason', value: 'The Amazon page shows a different product.' },
+              ],
+              url: 'https://www.amazon.com/dp/B00WRONG123',
+              startedAt: '2026-04-11T10:00:01.000Z',
+              completedAt: '2026-04-11T10:00:02.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 2,
+              candidateId: 'image-1',
+              candidateRank: 2,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_language_rejected',
+              status: 'failed',
+              message: 'AI evaluator rejected the Amazon candidate because page content is not English (17%).',
+              warning: null,
+              details: [
+                { label: 'Candidate URL', value: 'https://www.amazon.de/dp/B00WRONG456' },
+                { label: 'Language reason', value: 'Detected German product content.' },
+              ],
+              url: 'https://www.amazon.de/dp/B00WRONG456',
+              startedAt: '2026-04-11T10:00:03.000Z',
+              completedAt: '2026-04-11T10:00:04.000Z',
+              durationMs: 1000,
+            },
+            {
+              key: 'amazon_extract',
+              label: 'Extract Amazon details',
+              group: 'amazon',
+              attempt: 3,
+              candidateId: 'image-1',
+              candidateRank: 3,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'match_found',
+              status: 'completed',
+              message: 'Extracted Amazon ASIN B000123456.',
+              warning: null,
+              details: [],
+              url: 'https://www.amazon.com/dp/B000123456',
+              startedAt: '2026-04-11T10:00:05.000Z',
+              completedAt: '2026-04-11T10:00:07.000Z',
+              durationMs: 2000,
+            },
+          ],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'updated',
+          asinUpdateMessage: 'Product ASIN filled from Amazon scan.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T10:00:08.000Z',
+          createdAt: '2026-04-11T10:00:00.000Z',
+          updatedAt: '2026-04-11T10:00:08.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductFormCoreStateContext.Provider
+          value={
+            {
+              getValues: mocks.getValuesMock,
+            } as never
+          }
+        >
+          <ProductFormCoreActionsContext.Provider
+            value={
+              {
+                setValue: mocks.setValueMock,
+              } as never
+            }
+          >
+            <ProductFormParameterContext.Provider
+              value={
+                {
+                  parameters: [
+                    {
+                      id: 'param-manufacturer',
+                      name_en: 'Manufacturer',
+                      name_pl: null,
+                      name_de: null,
+                    },
+                  ],
+                  parametersLoading: false,
+                  parameterValues: [],
+                  addParameterValue: mocks.addParameterValueMock,
+                  updateParameterId: mocks.updateParameterIdMock,
+                  updateParameterValue: mocks.updateParameterValueMock,
+                  updateParameterValueByLanguage: vi.fn(),
+                  removeParameterValue: vi.fn(),
+                } as never
+              }
+            >
+              <ProductFormCustomFieldContext.Provider
+                value={
+                  {
+                    customFields: [],
+                    customFieldsLoading: false,
+                    customFieldValues: [],
+                    setTextValue: mocks.setTextValueMock,
+                    toggleSelectedOption: mocks.toggleSelectedOptionMock,
+                  } as never
+                }
+              >
+                <ProductAmazonScanModal
+                  isOpen
+                  onClose={vi.fn()}
+                  productIds={['product-1']}
+                  products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+                />
+              </ProductFormCustomFieldContext.Provider>
+            </ProductFormParameterContext.Provider>
+          </ProductFormCoreActionsContext.Provider>
+        </ProductFormCoreStateContext.Provider>
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Amazon result signal')).toBeInTheDocument();
+    expect(screen.getByText('Strong match after 2 rejected candidates (1 non-English)')).toBeInTheDocument();
+    expect(screen.getByText('Includes 1 non-English page rejected by the language gate.')).toBeInTheDocument();
   });
 
   it('replaces the queued message with a running message after sync advances the scan', async () => {
@@ -993,6 +1453,98 @@ describe('ProductAmazonScanModal', () => {
     expect(screen.getByText('Queued the next Amazon candidate after AI rejection.')).toBeInTheDocument();
     expect(screen.getByText('Rejected: https://www.amazon.com/dp/B00TEST123')).toBeInTheDocument();
     expect(screen.getByText('Next: https://www.amazon.com/dp/B00TEST456')).toBeInTheDocument();
+  });
+
+  it('shows candidate continuation context when a scan advances after language rejection', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 1,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'running',
+          message: 'Amazon reverse image scan running.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: 'https://www.amazon.com/dp/B00TEST456',
+          description: null,
+          steps: [
+            {
+              key: 'queue_scan',
+              label: 'Continue with next Amazon candidate',
+              group: 'input',
+              attempt: 2,
+              candidateId: null,
+              candidateRank: null,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'run_started',
+              status: 'completed',
+              message: 'Started the next Amazon candidate after language rejection.',
+              warning: null,
+              details: [
+                { label: 'Rejection kind', value: 'Language gate' },
+                { label: 'Rejected candidate URL', value: 'https://www.amazon.de/dp/B00TEST123' },
+                { label: 'Next candidate URL', value: 'https://www.amazon.com/dp/B00TEST456' },
+              ],
+              url: 'https://www.amazon.com/dp/B00TEST456',
+              startedAt: '2026-04-11T03:59:02.000Z',
+              completedAt: '2026-04-11T03:59:03.000Z',
+              durationMs: 1000,
+            },
+          ],
+          rawResult: {
+            candidateContinuation: true,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Candidate continuation')).toBeInTheDocument();
+    expect(screen.getByText('After language rejection')).toBeInTheDocument();
+    expect(screen.getAllByText('Started the next Amazon candidate after language rejection.').length).toBeGreaterThan(0);
   });
 
   it('shows the current phase and step for an active scan row without expanding steps', async () => {

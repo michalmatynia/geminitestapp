@@ -31,7 +31,7 @@
         "trigger": {
           "event": "7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27",
           "contextMode": "trigger_only",
-          "entitySnapshotMode": "never"
+          "entitySnapshotMode": "auto"
         }
       },
       "connections": {

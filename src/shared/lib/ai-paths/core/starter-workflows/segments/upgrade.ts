@@ -356,7 +356,8 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
   });
 
   let nodeChanged = false;
-  const nextNodes = (current.nodes ?? []).map((node) => {
+  const currentNodeIds = new Set((current.nodes ?? []).map((node) => node.id));
+  const overlayNodes = (current.nodes ?? []).map((node) => {
     const latestNode = latestNodesById.get(node.id);
     if (latestNode?.type !== node.type) return node;
     const currentConfig = toRecord(node.config);
@@ -444,9 +445,16 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
     if (JSON.stringify(nextNode) !== JSON.stringify(node)) nodeChanged = true;
     return nextNode;
   });
+  const appendedNodes = (latest.nodes ?? []).filter((node) => !currentNodeIds.has(node.id));
+  if (appendedNodes.length > 0) {
+    nodeChanged = true;
+  }
+  const nextNodes = [...overlayNodes, ...appendedNodes];
 
   let edgeChanged = false;
-  const nextEdges = (current.edges ?? []).map((edge) => {
+  const currentEdgeIds = new Set((current.edges ?? []).map((edge) => edge.id));
+  const currentEdgeSignatures = new Set((current.edges ?? []).map((edge) => edgeSignature(edge)));
+  const overlayEdges = (current.edges ?? []).map((edge) => {
     const latestEdge =
       latestEdgesById.get(edge.id) ?? latestEdgesBySignature.get(edgeSignature(edge));
     if (!latestEdge) return edge;
@@ -459,6 +467,14 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
     if (JSON.stringify(nextEdge) !== JSON.stringify(edge)) edgeChanged = true;
     return nextEdge;
   });
+  const appendedEdges = (latest.edges ?? []).filter((edge) => {
+    if (currentEdgeIds.has(edge.id)) return false;
+    return !currentEdgeSignatures.has(edgeSignature(edge));
+  });
+  if (appendedEdges.length > 0) {
+    edgeChanged = true;
+  }
+  const nextEdges = [...overlayEdges, ...appendedEdges];
 
   const currentExtensions = toRecord(current.extensions);
   const latestExtensions = toRecord(latest.extensions);

@@ -22,6 +22,7 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['custom-fields'], loader: () => import('../custom-fields/route-handler') },
   { pattern: ['custom-fields', param('id')], loader: () => import('../custom-fields/[id]/route-handler') },
   { pattern: ['parameters'], loader: () => import('../parameters/route-handler') },
+  { pattern: ['parameters', 'batch'], loader: () => import('../parameters/batch/route-handler') },
   { pattern: ['parameters', param('id')], loader: () => import('../parameters/[id]/route-handler') },
   { pattern: ['producers'], loader: () => import('../producers/route-handler') },
   { pattern: ['producers', param('id')], loader: () => import('../producers/[id]/route-handler') },

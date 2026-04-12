@@ -33,6 +33,9 @@ describe('product scanner settings helpers', () => {
           modelId: null,
           threshold: 0.8,
           onlyForAmbiguousCandidates: false,
+          allowedContentLanguage: 'en',
+          rejectNonEnglishContent: true,
+          languageDetectionMode: 'deterministic_then_ai',
           systemPrompt: null,
         },
         playwrightSettingsOverrides: {
@@ -52,6 +55,9 @@ describe('product scanner settings helpers', () => {
         modelId: null,
         threshold: 0.8,
         onlyForAmbiguousCandidates: false,
+        allowedContentLanguage: 'en',
+        rejectNonEnglishContent: true,
+        languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
       },
       playwrightSettings: expect.objectContaining({
@@ -74,6 +80,9 @@ describe('product scanner settings helpers', () => {
           modelId: 'gpt-4.1',
           threshold: 0.9,
           onlyForAmbiguousCandidates: false,
+          allowedContentLanguage: 'en',
+          rejectNonEnglishContent: true,
+          languageDetectionMode: 'deterministic_then_ai',
           systemPrompt: null,
         },
         playwrightSettings: {
@@ -96,6 +105,9 @@ describe('product scanner settings helpers', () => {
         modelId: 'gpt-4.1',
         threshold: 0.9,
         onlyForAmbiguousCandidates: false,
+        allowedContentLanguage: 'en',
+        rejectNonEnglishContent: true,
+        languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
       },
     });
@@ -125,6 +137,9 @@ describe('product scanner settings helpers', () => {
         modelId: null,
         threshold: 0.7,
         onlyForAmbiguousCandidates: true,
+        allowedContentLanguage: 'en',
+        rejectNonEnglishContent: true,
+        languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
       },
       playwrightSettingsOverrides: expect.objectContaining({
@@ -167,6 +182,9 @@ describe('product scanner settings helpers', () => {
         modelId: null,
         threshold: 0.7,
         onlyForAmbiguousCandidates: true,
+        allowedContentLanguage: 'en',
+        rejectNonEnglishContent: true,
+        languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
       },
     });

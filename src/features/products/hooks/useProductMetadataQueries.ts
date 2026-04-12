@@ -1,5 +1,4 @@
 import { type UseQueryResult } from '@tanstack/react-query';
-import { useMemo } from 'react';
 
 import { getLanguages } from '@/features/internationalization/public';
 import type { Language } from '@/shared/contracts/internationalization';
@@ -114,17 +113,13 @@ export function useCategoriesForCatalogs(
   catalogIds: string[],
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductCategory> {
-  const normalizedCatalogIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          catalogIds
-            .map((catalogId) => catalogId.trim())
-            .filter((catalogId) => catalogId.length > 0)
-        )
-      ).sort(),
-    [catalogIds]
-  );
+  const normalizedCatalogIds = Array.from(
+    new Set(
+      catalogIds
+        .map((catalogId) => catalogId.trim())
+        .filter((catalogId) => catalogId.length > 0)
+    )
+  ).sort();
   const queryKey = normalizeQueryKey([
     ...productMetadataKeys.all,
     'categories-batch',
@@ -182,6 +177,37 @@ export function useTags(
       queryKey,
       tags: ['products', 'metadata', 'tags'],
       description: 'Loads products metadata tags.'},
+  });
+}
+
+export function useFilterTags(
+  catalogId?: string,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductTag> {
+  const queryKey = productMetadataKeys.tags(catalogId ?? '__all__');
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductTag[]> => {
+      if (catalogId) {
+        return await api.get<ProductTag[]>(
+          `/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`
+        );
+      }
+      return await api.get<ProductTag[]>('/api/v2/products/tags/all');
+    },
+    enabled: options?.enabled ?? true,
+    ...STABLE_METADATA_QUERY_OPTIONS,
+    meta: {
+      source: 'products.hooks.useFilterTags',
+      operation: 'list',
+      resource: catalogId ? 'products.metadata.tags' : 'products.metadata.tags.all',
+      domain: 'products',
+      queryKey,
+      tags: catalogId
+        ? ['products', 'metadata', 'tags', 'filters']
+        : ['products', 'metadata', 'tags', 'all', 'filters'],
+      description: 'Loads products filter tags for either a single catalog or all catalogs.',
+    },
   });
 }
 

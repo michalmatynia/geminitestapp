@@ -64,6 +64,7 @@ export const resolveProductScanRunFeedbackPresentation = (
   options?: {
     manualVerificationPending?: boolean | null;
     amazonEvaluationStatus?: ProductScanAmazonEvaluationStatus | null;
+    amazonEvaluationLanguageAccepted?: boolean | null;
   }
 ): TriggerButtonRunFeedbackPresentation =>
   status === 'running' && options?.manualVerificationPending
@@ -73,6 +74,15 @@ export const resolveProductScanRunFeedbackPresentation = (
         badgeClassName:
           'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
       }
+    : status === 'no_match' &&
+        options?.amazonEvaluationStatus === 'rejected' &&
+        options?.amazonEvaluationLanguageAccepted === false
+      ? {
+          label: 'AI Rejected: Language',
+          variant: 'warning',
+          badgeClassName:
+            'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25',
+        }
     : status === 'no_match' && options?.amazonEvaluationStatus === 'rejected'
       ? {
           label: 'AI Rejected',
@@ -99,6 +109,7 @@ export const buildProductScanRunFeedbackFromRecord = (
   ...resolveProductScanRunFeedbackPresentation(scan.status, {
     manualVerificationPending: isManualVerificationPending(scan),
     amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
+    amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
   }),
 });
 

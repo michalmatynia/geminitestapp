@@ -34,6 +34,9 @@ describe('product scanner engine request options', () => {
         modelId: null,
         threshold: 0.7,
         onlyForAmbiguousCandidates: true,
+        allowedContentLanguage: 'en',
+        rejectNonEnglishContent: true,
+        languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
       },
     });
@@ -105,6 +108,9 @@ describe('product scanner engine request options', () => {
           modelId: null,
           threshold: 0.7,
           onlyForAmbiguousCandidates: true,
+          allowedContentLanguage: 'en',
+          rejectNonEnglishContent: true,
+          languageDetectionMode: 'deterministic_then_ai',
           systemPrompt: null,
         },
       })
@@ -133,6 +139,9 @@ describe('product scanner engine request options', () => {
           modelId: null,
           threshold: 0.82,
           onlyForAmbiguousCandidates: false,
+          allowedContentLanguage: 'en',
+          rejectNonEnglishContent: true,
+          languageDetectionMode: 'deterministic_then_ai',
           systemPrompt: null,
         },
       })
@@ -142,6 +151,9 @@ describe('product scanner engine request options', () => {
       modelId: 'gpt-4.1-mini',
       threshold: 0.82,
       onlyForAmbiguousCandidates: false,
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'deterministic_then_ai',
       systemPrompt: 'Brain prompt',
       brainApplied: {
         capability: 'product.scan.amazon_candidate_match',
@@ -163,6 +175,9 @@ describe('product scanner engine request options', () => {
           modelId: 'gpt-4.1',
           threshold: 0.9,
           onlyForAmbiguousCandidates: true,
+          allowedContentLanguage: 'en',
+          rejectNonEnglishContent: true,
+          languageDetectionMode: 'deterministic_then_ai',
           systemPrompt: 'Use the scanner override.',
         },
       })
@@ -172,6 +187,9 @@ describe('product scanner engine request options', () => {
       modelId: 'gpt-4.1',
       threshold: 0.9,
       onlyForAmbiguousCandidates: true,
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'deterministic_then_ai',
       systemPrompt: 'Use the scanner override.',
       brainApplied: null,
     });

@@ -138,11 +138,35 @@ export const PART_4D = String.raw`
       typeof imageSettleState.uploadedImagePreviewCount === 'number'
         ? imageSettleState.uploadedImagePreviewCount
         : null;
+    const observedPreviewDelta =
+      observedPreviewCount !== null
+        ? Math.max(0, observedPreviewCount - Math.max(0, baselinePreviewCount))
+        : null;
+
+    if (observedPreviewDelta !== null && observedPreviewDelta > expectedUploadCount) {
+      log?.('tradera.quicklist.image.preview_count_mismatch', {
+        baselinePreviewCount,
+        expectedUploadCount,
+        observedPreviewCount,
+        observedPreviewDelta,
+      });
+      throw new Error(
+        'FAIL_IMAGE_SET_INVALID: Tradera uploaded more image previews than expected. Last state: ' +
+          JSON.stringify({
+            baselinePreviewCount,
+            expectedUploadCount,
+            observedPreviewCount,
+            observedPreviewDelta,
+            imageSettleState,
+          })
+      );
+    }
 
     const imageStepEntry = await waitForImageStepActionable(20_000);
     if (imageStepEntry.type === 'editor_ready') {
       return {
         observedPreviewCount,
+        observedPreviewDelta,
       };
     }
 
@@ -161,6 +185,7 @@ export const PART_4D = String.raw`
       if (imageStepAfterContinue.type === 'editor_ready') {
         return {
           observedPreviewCount,
+          observedPreviewDelta,
         };
       }
 

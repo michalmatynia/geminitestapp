@@ -5,8 +5,10 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 
 import { ProductScanAmazonExtractedFieldsPanel } from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
 import {
-  hasProductScanAmazonDetails,
+  resolveAmazonScanRecommendationReason,
+  resolvePreferredAmazonExtractedScans,
   resolveAmazonScanQualitySummary,
+  resolveRejectedAmazonCandidateBreakdown,
 } from '@/features/products/components/scans/ProductScanAmazonDetails';
 import { ProductFormCustomFieldContext } from '@/features/products/context/ProductFormCustomFieldContext';
 import {
@@ -20,49 +22,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button } from '@/shared/ui/button';
 import { FormSection } from '@/shared/ui/form-section';
 
-const resolveScansWithAmazonExtraction = (
-  scans: ProductScanRecord[]
-): ProductScanRecord[] => {
-  const extractedScans = scans.filter(
-    (scan) => hasProductScanAmazonDetails(scan.amazonDetails) || Boolean(scan.asin)
-  );
-
-  const resolveQualityPriority = (scan: ProductScanRecord): number => {
-    const quality = resolveAmazonScanQualitySummary(scan);
-    if (!quality) {
-      return 0;
-    }
-
-    const primaryScore =
-      quality.primaryLabel === 'Strong match'
-        ? 300
-        : quality.primaryLabel === 'Partial extraction'
-          ? 200
-          : 100;
-
-    return primaryScore + (quality.usedFallback ? 0 : 5) + (quality.usedCaptcha ? 0 : 2);
-  };
-
-  const resolveSortTimestamp = (scan: ProductScanRecord): number => {
-    const parsed = new Date(scan.updatedAt ?? scan.createdAt ?? 0).getTime();
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-
-  return [...extractedScans].sort((left, right) => {
-    const qualityDifference = resolveQualityPriority(right) - resolveQualityPriority(left);
-    if (qualityDifference !== 0) {
-      return qualityDifference;
-    }
-
-    const timestampDifference = resolveSortTimestamp(right) - resolveSortTimestamp(left);
-    if (timestampDifference !== 0) {
-      return timestampDifference;
-    }
-
-    return left.id.localeCompare(right.id);
-  });
-};
-
 const resolveScanSelectionLabel = (scan: ProductScanRecord): string => {
   const statusLabel = scan.status.replace(/_/g, ' ');
   const asinLabel = scan.asin?.trim() ? `ASIN ${scan.asin.trim()}` : 'No ASIN';
@@ -71,14 +30,34 @@ const resolveScanSelectionLabel = (scan: ProductScanRecord): string => {
 
 const resolveScanQualityHintLabels = (scan: ProductScanRecord): string[] => {
   const quality = resolveAmazonScanQualitySummary(scan);
+  const rejectedCandidateBreakdown = resolveRejectedAmazonCandidateBreakdown(scan.steps);
+  const rejectedCandidateCount = rejectedCandidateBreakdown.totalCount;
   if (!quality) {
-    return [];
+    return rejectedCandidateCount > 0
+      ? [
+          `${rejectedCandidateCount} rejected candidate${
+            rejectedCandidateCount === 1 ? '' : 's'
+          }`,
+          rejectedCandidateBreakdown.languageRejectedCount > 0
+            ? `${rejectedCandidateBreakdown.languageRejectedCount} non-English`
+            : null,
+        ]
+          .filter((value): value is string => Boolean(value))
+      : [];
   }
 
   return [
     quality.primaryLabel,
     quality.usedFallback ? 'Fallback used' : null,
     quality.usedCaptcha ? 'Captcha path' : null,
+    rejectedCandidateCount > 0
+      ? `${rejectedCandidateCount} rejected candidate${
+          rejectedCandidateCount === 1 ? '' : 's'
+        }`
+      : null,
+    rejectedCandidateBreakdown.languageRejectedCount > 0
+      ? `${rejectedCandidateBreakdown.languageRejectedCount} non-English`
+      : null,
   ].filter((value): value is string => Boolean(value));
 };
 
@@ -108,7 +87,7 @@ export default function ProductFormLatestAmazonExtraction(): React.JSX.Element |
   });
 
   const extractedAmazonScans = useMemo(
-    () => resolveScansWithAmazonExtraction(latestAmazonScanQuery.data?.scans ?? []),
+    () => resolvePreferredAmazonExtractedScans(latestAmazonScanQuery.data?.scans ?? []),
     [latestAmazonScanQuery.data?.scans]
   );
   const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
@@ -138,6 +117,22 @@ export default function ProductFormLatestAmazonExtraction(): React.JSX.Element |
     [selectedAmazonScan]
   );
   const recommendedScanId = extractedAmazonScans[0]?.id ?? null;
+  const recommendedAmazonScan = useMemo(
+    () =>
+      recommendedScanId
+        ? extractedAmazonScans.find((scan) => scan.id === recommendedScanId) ??
+          extractedAmazonScans[0] ??
+          null
+        : null,
+    [extractedAmazonScans, recommendedScanId]
+  );
+  const recommendedScanReason = useMemo(
+    () =>
+      recommendedAmazonScan
+        ? resolveAmazonScanRecommendationReason(recommendedAmazonScan)
+        : null,
+    [recommendedAmazonScan]
+  );
 
   const formBindings = useMemo(() => {
     if (
@@ -212,6 +207,11 @@ export default function ProductFormLatestAmazonExtraction(): React.JSX.Element |
                   Recommended
                 </span>
               ) : null}
+              {selectedAmazonScan.id === recommendedScanId && recommendedScanReason ? (
+                <span className='inline-flex items-center rounded-md border border-emerald-500/20 bg-background/70 px-2 py-0.5 text-[11px] font-medium text-emerald-200'>
+                  {recommendedScanReason}
+                </span>
+              ) : null}
               {selectedScanQualityHints.map((label) => (
                 <span
                   key={`selected-quality-${label}`}
@@ -220,6 +220,15 @@ export default function ProductFormLatestAmazonExtraction(): React.JSX.Element |
                   {label}
                 </span>
               ))}
+            </div>
+          ) : null}
+          {recommendedAmazonScan && selectedAmazonScan.id !== recommendedAmazonScan.id ? (
+            <div className='mt-2 rounded-md border border-emerald-500/20 bg-background/70 px-3 py-2 text-[11px] text-emerald-100'>
+              <p className='font-medium text-emerald-200'>Recommended instead:</p>
+              <p className='mt-1 truncate'>{resolveScanSelectionLabel(recommendedAmazonScan)}</p>
+              {recommendedScanReason ? (
+                <p className='mt-1 text-emerald-200'>{recommendedScanReason}</p>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -233,6 +242,9 @@ export default function ProductFormLatestAmazonExtraction(): React.JSX.Element |
                 const isSelected = scan.id === selectedAmazonScan.id;
                 const qualityHintLabels = resolveScanQualityHintLabels(scan);
                 const isRecommended = scan.id === recommendedScanId;
+                const recommendedReason = isRecommended
+                  ? resolveAmazonScanRecommendationReason(scan)
+                  : null;
                 return (
                   <Button
                     key={scan.id}
@@ -247,6 +259,11 @@ export default function ProductFormLatestAmazonExtraction(): React.JSX.Element |
                     {isRecommended ? (
                       <span className='mt-1 block truncate text-[10px] font-medium text-emerald-300'>
                         Recommended
+                      </span>
+                    ) : null}
+                    {isRecommended && recommendedReason ? (
+                      <span className='mt-1 block truncate text-[10px] text-emerald-200'>
+                        {recommendedReason}
                       </span>
                     ) : null}
                     {qualityHintLabels.length > 0 ? (

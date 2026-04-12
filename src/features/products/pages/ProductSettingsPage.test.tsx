@@ -259,7 +259,6 @@ describe('ProductSettingsPage metadata gating', () => {
     expect(useShippingGroupsMock).toHaveBeenLastCalledWith('catalog-default', {
       enabled: false,
     });
-    expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('custom-fields-settings')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Price Groups' }));
@@ -273,8 +272,21 @@ describe('ProductSettingsPage metadata gating', () => {
       enabled: false,
     });
     expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
-    expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('price-groups-settings')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Parameters' }));
+
+    await waitFor(() => {
+      expect(useParametersMock).toHaveBeenLastCalledWith('catalog-default', {
+        enabled: true,
+      });
+    });
+
+    expect(useShippingGroupsMock).toHaveBeenLastCalledWith('catalog-default', {
+      enabled: false,
+    });
+    expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
+    expect(screen.getByTestId('parameters-settings')).toBeInTheDocument();
   });
 
   it('opens the requested settings section from the url search params', async () => {
@@ -292,5 +304,22 @@ describe('ProductSettingsPage metadata gating', () => {
 
     expect(useCategoriesMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('shipping-groups-settings')).toBeInTheDocument();
+  });
+
+  it('opens parameters section from the url search params', async () => {
+    useSearchParamsMock.mockReturnValue({
+      get: (key: string) => (key === 'section' ? 'parameters' : null),
+    });
+
+    render(<ProductSettingsPage />);
+
+    await waitFor(() => {
+      expect(useParametersMock).toHaveBeenLastCalledWith('catalog-default', {
+        enabled: true,
+      });
+    });
+
+    expect(useCategoriesMock).toHaveBeenLastCalledWith(null, { enabled: false });
+    expect(screen.getByTestId('parameters-settings')).toBeInTheDocument();
   });
 });

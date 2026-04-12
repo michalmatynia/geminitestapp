@@ -99,6 +99,8 @@ export const resolveTraderaExecutionSummary = (
   imageUploadFallbackUsed: boolean | null;
   plannedImageCount: number | null;
   observedImagePreviewCount: number | null;
+  observedImagePreviewDelta: number | null;
+  imagePreviewMismatch: boolean | null;
   localImagePathCount: number | null;
   imageUrlCount: number | null;
   imageSettleState: unknown;
@@ -175,6 +177,10 @@ export const resolveTraderaExecutionSummary = (
     observedImagePreviewCount:
       readNumber(metadata['observedImagePreviewCount']) ??
       readNumber(toRecord(metadata['rawResult'])['observedPreviewCount']),
+    observedImagePreviewDelta:
+      readNumber(metadata['observedImagePreviewDelta']) ??
+      readNumber(toRecord(metadata['rawResult'])['observedPreviewDelta']),
+    imagePreviewMismatch: readBoolean(metadata['imagePreviewMismatch']),
     localImagePathCount: readNumber(metadata['localImagePathCount']),
     imageUrlCount: readNumber(metadata['imageUrlCount']),
     imageSettleState: metadata['imageSettleState'] ?? null,

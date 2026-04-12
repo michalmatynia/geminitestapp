@@ -137,8 +137,10 @@ describe('ProductListingDetails', () => {
                     imageInputSource: 'local',
                     imageUploadSource: 'downloaded',
                     imageUploadFallbackUsed: true,
+                    imagePreviewMismatch: true,
                     plannedImageCount: 3,
                     observedImagePreviewCount: 4,
+                    observedImagePreviewDelta: 4,
                     localImagePathCount: 2,
                     imageUrlCount: 3,
                     rawResult: {
@@ -235,9 +237,13 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('downloaded')).toBeInTheDocument();
     expect(screen.getByText('Image upload fallback used:')).toBeInTheDocument();
     expect(screen.getAllByText('Yes').length).toBeGreaterThan(0);
+    expect(screen.getByText('Image preview mismatch:')).toBeInTheDocument();
+    expect(screen.getAllByText('Yes').length).toBeGreaterThan(1);
     expect(screen.getByText('Planned image count:')).toBeInTheDocument();
     expect(screen.getAllByText('3').length).toBeGreaterThan(0);
-    expect(screen.getByText('Observed uploaded previews:')).toBeInTheDocument();
+    expect(screen.getByText('Observed new previews:')).toBeInTheDocument();
+    expect(screen.getAllByText('4').length).toBeGreaterThan(0);
+    expect(screen.getByText('Observed total previews:')).toBeInTheDocument();
     expect(screen.getAllByText('4').length).toBeGreaterThan(0);
     expect(screen.getByText('Local image files:')).toBeInTheDocument();
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);

@@ -16,6 +16,7 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 
 import {
   buildPersistedProductScannerSettings,
+  PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_OPTIONS,
   buildProductScannerSettingsDraft,
   PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS,
   PRODUCT_SCANNER_BROWSER_OPTIONS,
@@ -41,6 +42,71 @@ const toUnitInterval = (value: string, fallback: number): number => {
   }
 
   return Math.min(1, Math.max(0, normalized));
+};
+
+const formatConfidenceThresholdLabel = (value: number): string =>
+  `${Math.round(Math.min(1, Math.max(0, value)) * 100)}% confidence`;
+
+const resolveAmazonEvaluatorPolicyLines = (
+  draft: Pick<ProductScannerSettingsDraft, 'amazonCandidateEvaluator'>
+): string[] => {
+  const evaluator = draft.amazonCandidateEvaluator;
+  if (evaluator.mode === 'disabled') {
+    return [
+      'AI review is disabled. The scanner trusts the Amazon candidate flow without an evaluator gate.',
+    ];
+  }
+
+  return [
+    evaluator.onlyForAmbiguousCandidates
+      ? 'AI review runs only when the Amazon candidate remains ambiguous after deterministic identifier checks.'
+      : 'AI review runs on every Amazon candidate before extraction is trusted.',
+    evaluator.rejectNonEnglishContent
+      ? 'Only English Amazon page content is trusted for scraping into English product fields.'
+      : 'Language does not block extraction in the current evaluator policy.',
+    evaluator.rejectNonEnglishContent
+      ? evaluator.languageDetectionMode === 'ai_only'
+        ? 'The evaluator decides page language during every reviewed AI pass.'
+        : 'The scanner uses probe language hints first and asks AI when page language remains unclear.'
+      : 'Language review is informational only when extraction is not blocked by content language.',
+    evaluator.rejectNonEnglishContent
+      ? 'Matched products on non-English Amazon pages are rejected and the scanner moves to the next candidate when one is available.'
+      : 'Matched products can still be scraped even when page language is not English.',
+    `Candidates must meet ${formatConfidenceThresholdLabel(evaluator.threshold)} to be trusted.`,
+    'Rejected candidates continue to the next Amazon candidate when one is available; otherwise the scan finishes as No Match.',
+    'Evaluator runtime errors fail the scan conservatively instead of trusting the page.',
+  ];
+};
+
+const resolveAmazonEvaluatorSummaryLines = (
+  draft: Pick<ProductScannerSettingsDraft, 'amazonCandidateEvaluator'>,
+  effectiveModelLabel: string
+): string[] => {
+  const evaluator = draft.amazonCandidateEvaluator;
+
+  if (evaluator.mode === 'disabled') {
+    return [
+      'Model: Disabled',
+      'Trust policy: Amazon pages are trusted without AI review.',
+      'Language gate: Inactive',
+      'Continuation: No AI rejection recovery path',
+    ];
+  }
+
+  return [
+    `Model source: ${evaluator.mode === 'brain_default' ? 'AI Brain default' : 'Scanner override'}`,
+    `Resolved model: ${effectiveModelLabel}`,
+    `Trust threshold: ${formatConfidenceThresholdLabel(evaluator.threshold)}`,
+    `Review scope: ${evaluator.onlyForAmbiguousCandidates ? 'Ambiguous candidates only' : 'Every Amazon candidate'}`,
+    `Language gate: ${
+      evaluator.rejectNonEnglishContent
+        ? evaluator.languageDetectionMode === 'ai_only'
+          ? 'English only, AI decides language'
+          : 'English only, probe hints first'
+        : 'Inactive'
+    }`,
+    'Continuation: Try next Amazon candidate after rejection',
+  ];
 };
 
 export function AdminProductScannerSettingsPage(): React.JSX.Element {
@@ -97,6 +163,14 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
       : draft.amazonCandidateEvaluator.mode === 'brain_default'
         ? brainModelOptions.effectiveModelId.trim() || 'Not configured in AI Brain'
         : draft.amazonCandidateEvaluator.modelId?.trim() || 'Select a model';
+  const amazonEvaluatorPolicyLines = useMemo(
+    () => resolveAmazonEvaluatorPolicyLines(draft),
+    [draft]
+  );
+  const amazonEvaluatorSummaryLines = useMemo(
+    () => resolveAmazonEvaluatorSummaryLines(draft, effectiveAmazonCandidateEvaluatorModel),
+    [draft, effectiveAmazonCandidateEvaluatorModel]
+  );
   const persistedDraftForSave = useMemo(
     () => buildPersistedProductScannerSettings(draft, personasQuery.data),
     [draft, personasQuery.data]
@@ -384,6 +458,58 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 Only evaluate ambiguous candidates
               </label>
             </FormField>
+            <FormField
+              label='Allowed Content Language'
+              description='Trusted extraction currently targets English product fields.'
+            >
+              <Input value='English' readOnly aria-label='Allowed Amazon content language' />
+            </FormField>
+            <FormField
+              label='Language Gate'
+              description='Reject matching Amazon pages when their visible content is not English.'
+            >
+              <label className='inline-flex items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  checked={draft.amazonCandidateEvaluator.rejectNonEnglishContent}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonCandidateEvaluator: {
+                        ...prev.amazonCandidateEvaluator,
+                        rejectNonEnglishContent: event.target.checked,
+                      },
+                    }));
+                  }}
+                  aria-label='Reject non-English Amazon content'
+                  title='Reject non-English Amazon content'
+                />
+                Reject non-English Amazon content
+              </label>
+            </FormField>
+            <FormField
+              label='Language Detection'
+              description='Choose whether probe hints can reject non-English pages before AI runs.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluator.languageDetectionMode}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluator: {
+                      ...prev.amazonCandidateEvaluator,
+                      languageDetectionMode:
+                        value === 'ai_only' ? 'ai_only' : 'deterministic_then_ai',
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_OPTIONS]}
+                placeholder='Select language detection mode'
+                ariaLabel='Select Amazon candidate evaluator language detection mode'
+                title='Select Amazon candidate evaluator language detection mode'
+              />
+            </FormField>
           </div>
 
           <div className='mt-4 text-xs text-muted-foreground'>
@@ -391,6 +517,24 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
               ? 'Loading AI Brain model options.'
               : brainModelOptions.sourceWarnings[0] ||
                 'The evaluator compares the Amazon page image and text against the product in your app before extraction is trusted.'}
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-background/70 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>Evaluator Summary</p>
+            <ul className='space-y-1'>
+              {amazonEvaluatorSummaryLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>Runtime Policy</p>
+            <ul className='space-y-1'>
+              {amazonEvaluatorPolicyLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
           </div>
         </FormSection>
 

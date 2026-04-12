@@ -1,0 +1,3 @@
+import { SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 } from './parts/product-scan-1688-script.part1';
+
+export const SCAN_1688_REVERSE_IMAGE_SCRIPT = SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1;

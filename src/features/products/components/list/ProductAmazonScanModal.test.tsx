@@ -223,6 +223,179 @@ describe('ProductAmazonScanModal', () => {
     });
   });
 
+  it('queues 1688 supplier scans through the provider-specific batch endpoint', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-1',
+          runId: 'run-1688-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+    mocks.apiGet.mockResolvedValue({
+      scans: [],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          provider='1688'
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByTestId('modal-title')).toHaveTextContent(
+      '1688 Supplier Reverse Image Scan'
+    );
+
+    await waitFor(() => {
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/v2/products/scans/1688/batch', {
+        productIds: ['product-1'],
+      });
+    });
+  });
+
+  it('renders stored 1688 supplier details for completed supplier scans', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1688-1',
+          runId: 'run-1688-1',
+          status: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-1',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'completed',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: '1688 supplier listing',
+          price: '¥12.80-14.20',
+          url: 'https://detail.1688.com/offer/123456789.html',
+          description: 'Supplier listing for the scanned product.',
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: {
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/store/page.html',
+            supplierProductUrl: 'https://detail.1688.com/offer/123456789.html',
+            platformProductId: '123456789',
+            currency: 'CNY',
+            priceText: '¥12.80-14.20',
+            priceRangeText: '¥12.80-14.20',
+            moqText: 'MOQ 20 pcs',
+            supplierLocation: 'Zhejiang, China',
+            supplierRating: 'Gold supplier',
+            sourceLanguage: 'zh-CN',
+            images: [
+              {
+                url: 'https://cbu01.alicdn.com/image1.jpg',
+                alt: null,
+                artifactName: null,
+                source: 'hero',
+              },
+            ],
+            prices: [
+              {
+                label: 'Range',
+                amount: '12.80',
+                currency: 'CNY',
+                rangeStart: '12.80',
+                rangeEnd: '14.20',
+                moq: '20',
+                unit: 'pcs',
+                source: 'page',
+              },
+            ],
+          },
+          supplierProbe: {
+            candidateUrl: 'https://detail.1688.com/offer/123456789.html',
+            canonicalUrl: 'https://detail.1688.com/offer/123456789.html',
+            pageTitle: 'Yiwu Supplier Listing',
+            descriptionSnippet: 'Supplier listing for the scanned product.',
+            pageLanguage: 'zh-CN',
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/store/page.html',
+            priceText: '¥12.80-14.20',
+            currency: 'CNY',
+            heroImageUrl: 'https://cbu01.alicdn.com/image1.jpg',
+            heroImageAlt: null,
+            heroImageArtifactName: null,
+            artifactKey: '1688-scan-probe-image-1',
+            imageCount: 1,
+          },
+          supplierEvaluation: {
+            status: 'approved',
+            sameProduct: true,
+            imageMatch: true,
+            titleMatch: true,
+            confidence: 0.91,
+            proceed: true,
+            reasons: ['Supplier gallery and title align with the source product.'],
+            mismatches: [],
+            modelId: 'gpt-5.4-mini',
+            error: null,
+            evaluatedAt: '2026-04-12T06:40:00.000Z',
+          },
+          steps: [],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T06:40:10.000Z',
+          createdAt: '2026-04-12T06:39:00.000Z',
+          updatedAt: '2026-04-12T06:40:10.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductAmazonScanModal
+          isOpen
+          onClose={vi.fn()}
+          provider='1688'
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Supplier Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('1688 supplier details')).toBeInTheDocument();
+    expect(screen.getByText('Yiwu Supplier Co.')).toBeInTheDocument();
+    expect(screen.getByText('Match evaluation')).toBeInTheDocument();
+    expect(screen.getByText(/Confidence 91%/)).toBeInTheDocument();
+  });
+
   it('shows and hides persisted scan steps for a modal scan row', async () => {
     mocks.apiPost.mockResolvedValue({
       queued: 1,
@@ -416,7 +589,7 @@ describe('ProductAmazonScanModal', () => {
     );
 
     expect(await screen.findByText('Last failure')).toBeInTheDocument();
-    expect(screen.getByText('Amazon')).toBeInTheDocument();
+    expect(screen.getAllByText('Amazon').length).toBeGreaterThan(0);
     expect(screen.getByText('Extract Amazon details')).toBeInTheDocument();
     expect(screen.getByText('Amazon extraction')).toBeInTheDocument();
     expect(screen.getByText('Extract Failed')).toBeInTheDocument();
@@ -1032,6 +1205,13 @@ describe('ProductAmazonScanModal', () => {
               message: 'AI evaluator rejected the Amazon candidate because page content is not English (17%).',
               warning: null,
               details: [
+                { label: 'Model source', value: 'AI Brain default' },
+                { label: 'Model', value: 'gpt-4o' },
+                { label: 'Threshold', value: '85%' },
+                { label: 'Evaluation scope', value: 'Every Amazon candidate' },
+                { label: 'Allowed content language', value: 'English' },
+                { label: 'Language policy', value: 'Reject non-English content' },
+                { label: 'Language detection', value: 'Deterministic first, then AI' },
                 { label: 'Candidate URL', value: 'https://www.amazon.de/dp/B00WRONG456' },
                 { label: 'Language reason', value: 'Detected German product content.' },
               ],
@@ -1139,6 +1319,14 @@ describe('ProductAmazonScanModal', () => {
     expect(await screen.findByText('Amazon result signal')).toBeInTheDocument();
     expect(screen.getByText('Strong match after 2 rejected candidates (1 non-English)')).toBeInTheDocument();
     expect(screen.getByText('Includes 1 non-English page rejected by the language gate.')).toBeInTheDocument();
+    expect(screen.getByText('AI evaluator policy')).toBeInTheDocument();
+    expect(screen.getByText('Reviewed by AI')).toBeInTheDocument();
+    expect(screen.getByText('AI Brain default')).toBeInTheDocument();
+    expect(screen.getByText('85%')).toBeInTheDocument();
+    expect(screen.getByText('Every Amazon candidate')).toBeInTheDocument();
+    expect(screen.getByText('English only')).toBeInTheDocument();
+    expect(screen.getByText('Deterministic first, then AI')).toBeInTheDocument();
+    expect(screen.getByText('Model gpt-4o')).toBeInTheDocument();
   });
 
   it('replaces the queued message with a running message after sync advances the scan', async () => {

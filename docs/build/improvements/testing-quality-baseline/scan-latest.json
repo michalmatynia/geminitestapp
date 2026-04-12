@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T14:40:26.139Z",
+  "generatedAt": "2026-04-12T04:21:28.603Z",
   "track": {
     "id": "testing-quality-baseline",
     "title": "Testing quality baseline",
@@ -110,50 +110,30 @@
     "category": "testing",
     "defaultSelected": false,
     "description": "Tracks the testing inventory and quality snapshot so broader improvement work stays anchored to the current test-system health.",
-    "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
+    "overallStatus": "no-data",
+    "latestGeneratedAt": null,
     "docDir": "docs/build/improvements/testing-quality-baseline",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-11T14:40:26.131Z",
+        "generatedAt": "2026-04-12T04:06:44.394Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 1,
+        "stepCount": 0,
+        "automaticStepCount": 0,
         "manualStepCount": 0,
-        "passedStepCount": 1,
+        "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [
-          "docs/metrics/testing-suite-inventory-latest.md",
-          "docs/metrics/testing-suite-inventory-latest.json"
-        ],
-        "steps": [
-          {
-            "id": "testing-quality-suite-inventory",
-            "title": "Refresh the testing suite inventory",
-            "trackId": "testing-quality-baseline",
-            "phase": "audit",
-            "mode": "automatic",
-            "writes": false,
-            "status": "passed",
-            "outputs": [
-              "docs/metrics/testing-suite-inventory-latest.md",
-              "docs/metrics/testing-suite-inventory-latest.json"
-            ],
-            "instructions": [],
-            "script": "metrics:test-suite-inventory",
-            "durationMs": 419
-          }
-        ],
-        "status": "passed"
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-11T09:41:24.435Z",
+        "generatedAt": "2026-04-12T04:21:28.293Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -170,7 +150,7 @@
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-11T14:20:03.230Z",
+        "generatedAt": "2026-04-12T04:21:28.585Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,

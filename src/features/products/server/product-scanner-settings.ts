@@ -100,8 +100,34 @@ export const buildProductScannerEngineRequestOptions = (
 export const resolveProductScannerAmazonCandidateEvaluatorConfig = async (
   settings: ProductScannerSettings
 ): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
+  return await resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings(
+    settings.amazonCandidateEvaluator
+  );
+};
+
+export const resolveProductScannerAmazonCandidateEvaluatorProbeConfig = async (
+  settings: ProductScannerSettings
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
+  return await resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings(
+    settings.amazonCandidateEvaluatorProbe ?? settings.amazonCandidateEvaluator
+  );
+};
+
+export const resolveProductScannerAmazonCandidateEvaluatorExtractionConfig = async (
+  settings: ProductScannerSettings
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
+  return await resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings(
+    settings.amazonCandidateEvaluatorExtraction ?? settings.amazonCandidateEvaluator
+  );
+};
+
+const resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings = async (
+  evaluatorCandidate?: ProductScannerSettings['amazonCandidateEvaluatorProbe']
+    | ProductScannerSettings['amazonCandidateEvaluatorExtraction']
+    | ProductScannerSettings['amazonCandidateEvaluator']
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
   const evaluator =
-    settings.amazonCandidateEvaluator ?? createDefaultProductScannerAmazonCandidateEvaluator();
+    evaluatorCandidate ?? createDefaultProductScannerAmazonCandidateEvaluator();
 
   if (evaluator.mode === 'disabled') {
     return {

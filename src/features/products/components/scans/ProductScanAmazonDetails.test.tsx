@@ -129,6 +129,33 @@ describe('ProductScanAmazonDetails', () => {
               durationMs: 0,
             },
             {
+              key: 'amazon_ai_evaluate',
+              label: 'Evaluate Amazon candidate match',
+              group: 'amazon',
+              attempt: 1,
+              candidateId: 'image-2',
+              candidateRank: 1,
+              inputSource: null,
+              retryOf: null,
+              resultCode: 'candidate_approved',
+              status: 'completed',
+              message: 'AI evaluator approved the Amazon candidate (93%).',
+              warning: null,
+              details: [
+                { label: 'Model', value: 'gpt-4o' },
+                { label: 'Model source', value: 'AI Brain default' },
+                { label: 'Threshold', value: '85%' },
+                { label: 'Evaluation scope', value: 'Every Amazon candidate' },
+                { label: 'Allowed content language', value: 'English' },
+                { label: 'Language policy', value: 'Reject non-English content' },
+                { label: 'Language detection', value: 'Deterministic first, then AI' },
+              ],
+              url: 'https://www.amazon.com/dp/B00TEST123',
+              startedAt: '2026-04-11T10:00:04.000Z',
+              completedAt: '2026-04-11T10:00:05.000Z',
+              durationMs: 1000,
+            },
+            {
               key: 'amazon_extract',
               label: 'Extract Amazon details',
               group: 'amazon',
@@ -212,6 +239,16 @@ describe('ProductScanAmazonDetails', () => {
     expect(screen.getByText('Language English')).toBeInTheDocument();
     expect(screen.getByText('AI confidence 93%')).toBeInTheDocument();
     expect(screen.getByText('AI Evaluation')).toBeInTheDocument();
+    expect(screen.getByText('Model source')).toBeInTheDocument();
+    expect(screen.getByText('AI Brain default')).toBeInTheDocument();
+    expect(screen.getByText('Evaluation scope')).toBeInTheDocument();
+    expect(screen.getByText('Every Amazon candidate')).toBeInTheDocument();
+    expect(screen.getByText('Allowed content language')).toBeInTheDocument();
+    expect(screen.getAllByText('English').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('Language policy')).toBeInTheDocument();
+    expect(screen.getByText('Reject non-English content')).toBeInTheDocument();
+    expect(screen.getByText('Language detection')).toBeInTheDocument();
+    expect(screen.getByText('Deterministic first, then AI')).toBeInTheDocument();
     expect(screen.getByText('Amazon Probe')).toBeInTheDocument();
     expect(screen.getByText('Acme product')).toBeInTheDocument();
     expect(screen.getByText('Artifact key')).toBeInTheDocument();

@@ -172,7 +172,7 @@ export const buildTriggeredProductEntityJson = (args: {
   const entityJson: Record<string, unknown> = { ...base, ...args.values };
   if (imageLinks !== undefined) {
     entityJson['imageLinks'] = imageLinks;
-  } else if (args.values.imageLinks !== undefined) {
+  } else if (args.values['imageLinks'] !== undefined) {
     entityJson['imageLinks'] = [];
   }
   if (args.product?.id) {

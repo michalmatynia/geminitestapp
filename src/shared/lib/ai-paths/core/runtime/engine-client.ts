@@ -106,6 +106,8 @@ const buildModelTerminalOutputs = (options: {
   };
 };
 
+const DEFAULT_LOCAL_GRAPH_MAX_DURATION_MS = 90_000;
+
 const handleModel: NodeHandler = async ({
   node,
   nodeInputs,
@@ -338,6 +340,7 @@ export async function evaluateGraphClient(
 
   return evaluateGraphInternal(nodes, resolvedEdges, {
     ...resolvedOptions,
+    maxDurationMs: resolvedOptions.maxDurationMs ?? DEFAULT_LOCAL_GRAPH_MAX_DURATION_MS,
     resolveHandler: runtimeKernel.resolveHandler,
     resolveHandlerTelemetry: (type: string) =>
       toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),

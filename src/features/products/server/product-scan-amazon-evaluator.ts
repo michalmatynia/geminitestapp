@@ -499,7 +499,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     heroImageArtifactName: readOptionalString(input.parsedResult.amazonProbe?.heroImageArtifactName),
     screenshotArtifactName: evidenceArtifacts.screenshotArtifactName,
     htmlArtifactName: evidenceArtifacts.htmlArtifactName,
-    productImageSource: null,
+    productImageSource: null as string | null,
   };
 
   const deterministicLanguageDecision = resolveDeterministicLanguageDecision({

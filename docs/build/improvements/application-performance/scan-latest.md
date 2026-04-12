@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Application performance Improvement Track
 
-Generated at: 2026-04-11T14:40:26.139Z
+Generated at: 2026-04-12T04:21:28.603Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-11T14:40:26.139Z
 - Category: `performance`
 - Included in default read-only bundle: yes
 - Overall status: `passed`
-- Latest report timestamp: 2026-04-11T14:40:26.131Z
+- Latest report timestamp: 2026-04-12T04:21:28.585Z
 
 ## Purpose
 
@@ -41,7 +41,7 @@ Adds app-level performance regression checks to the improvement portfolio so bro
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `audit` | `passed` | 1 | 1 | 0 | 0 | 0 |
 | `classify` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 
@@ -51,6 +51,7 @@ Adds app-level performance regression checks to the improvement portfolio so bro
 | --- | --- | --- | --- | --- |
 | `audit` | `passed` | `automatic` | `application-performance-fast-gate` | `perf:ops:fast` |
 | `classify` | `passed` | `automatic` | `application-performance-baseline` | `perf:ops:baseline` |
+| `plan` | `manual` | `manual` | `application-performance-plan` | manual |
 
 ## Related Docs
 

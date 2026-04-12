@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Document } from 'mongodb';
 import { z } from 'zod';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -64,6 +64,16 @@ const buildParameterIdInValues = (ids: string[]): Array<string | ObjectId> => {
   return values;
 };
 
+const buildRemoveParametersFromProductsUpdate = (
+  parameterIdInValues: Array<string | ObjectId>
+): any => ({
+  $pull: {
+    parameters: {
+      parameterId: { $in: parameterIdInValues },
+    },
+  },
+});
+
 /**
  * POST /api/v2/products/parameters/batch
  * Removes all selected product parameters, and strips each removed parameterId from
@@ -93,7 +103,9 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   const canonicalParameterIds = Array.from(
     new Set(
-      parameterDocs.map((doc) => String((doc as { id?: string | null; _id: unknown }).id ?? doc._id))
+      parameterDocs.map(
+        (doc) => String((doc as { id?: string | null; _id: unknown }).id ?? doc['_id'])
+      )
     )
   );
 
@@ -112,23 +124,11 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   const [productsResult, productDraftsResult] = await Promise.all([
     db.collection('products').updateMany(
       { 'parameters.parameterId': { $in: parameterIdInValues } },
-      {
-        $pull: {
-          parameters: {
-            parameterId: { $in: parameterIdInValues },
-          },
-        },
-      }
+      buildRemoveParametersFromProductsUpdate(parameterIdInValues)
     ),
     db.collection('product_drafts').updateMany(
       { 'parameters.parameterId': { $in: parameterIdInValues } },
-      {
-        $pull: {
-          parameters: {
-            parameterId: { $in: parameterIdInValues },
-          },
-        },
-      }
+      buildRemoveParametersFromProductsUpdate(parameterIdInValues)
     ),
   ]);
 
@@ -142,7 +142,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     invalidIds: normalizedParameterIds.filter(
       (id) =>
         !parameterDocs.some(
-          (doc) => String((doc as { id?: string | null; _id: unknown }).id ?? doc._id) === id
+          (doc) => String((doc as { id?: string | null; _id: unknown }).id ?? doc['_id']) === id
         )
     ),
   });

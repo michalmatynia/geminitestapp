@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { recordRuntimeNodeStatusMock, logClientErrorMock } = vi.hoisted(() => ({
+const { recordRuntimeNodeStatusMock, logClientErrorMock, logSystemEventMock } = vi.hoisted(() => ({
   recordRuntimeNodeStatusMock: vi.fn(),
   logClientErrorMock: vi.fn(),
+  logSystemEventMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
@@ -11,6 +12,10 @@ vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
+}));
+
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: logSystemEventMock,
 }));
 
 const loadModule = async () =>
@@ -307,6 +312,119 @@ describe('path-run-executor callbacks', () => {
           resolvedProvider: 'mongodb',
           count: 3,
         },
+      })
+    );
+  });
+
+  it('emits structured lifecycle system logs with node durations when enabled', async () => {
+    const { ctx, repo } = buildTestContext();
+    ctx.logNodeStartEvents = true;
+
+    const { createCallbacks } = await loadModule();
+    const callbacks = createCallbacks(ctx as never);
+
+    await callbacks.onNodeStart({
+      runId: 'run-callbacks-1',
+      traceId: 'trace-callbacks-1',
+      spanId: 'span-lifecycle-1',
+      runStartedAt: '2026-04-09T12:59:00.000Z',
+      node: {
+        id: 'node-model',
+        type: 'model',
+        title: 'Normalize Name',
+      } as never,
+      nodeInputs: {
+        prompt: 'normalize this product',
+      },
+      prevOutputs: null,
+      iteration: 1,
+      attempt: 1,
+      runtimeStrategy: 'code_object_v3',
+      runtimeResolutionSource: 'registry',
+      runtimeCodeObjectId: 'code-object-9',
+    });
+
+    vi.setSystemTime(new Date('2026-04-09T13:00:00.250Z'));
+
+    await callbacks.onNodeFinish({
+      runId: 'run-callbacks-1',
+      traceId: 'trace-callbacks-1',
+      spanId: 'span-lifecycle-1',
+      runStartedAt: '2026-04-09T12:59:00.000Z',
+      node: {
+        id: 'node-model',
+        type: 'model',
+        title: 'Normalize Name',
+      } as never,
+      nodeInputs: {
+        prompt: 'normalize this product',
+      },
+      prevOutputs: null,
+      nextOutputs: {
+        status: 'completed',
+        title: 'Normalized Product Name',
+      },
+      iteration: 1,
+      attempt: 1,
+      changed: true,
+      cached: false,
+      runtimeStrategy: 'code_object_v3',
+      runtimeResolutionSource: 'registry',
+      runtimeCodeObjectId: 'code-object-9',
+    });
+
+    expect(logSystemEventMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        level: 'info',
+        source: 'ai-paths-executor',
+        context: expect.objectContaining({
+          event: 'node.started',
+          runId: 'run-callbacks-1',
+          traceId: 'trace-callbacks-1',
+          spanId: 'span-lifecycle-1',
+          nodeId: 'node-model',
+          nodeType: 'model',
+          status: 'running',
+          startedAt: '2026-04-09T13:00:00.000Z',
+          durationMs: null,
+          runtimeStrategy: 'code_object_v3',
+          runtimeResolutionSource: 'registry',
+          runtimeCodeObjectId: 'code-object-9',
+        }),
+      })
+    );
+    expect(logSystemEventMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        level: 'info',
+        source: 'ai-paths-executor',
+        context: expect.objectContaining({
+          event: 'node.finished',
+          runId: 'run-callbacks-1',
+          traceId: 'trace-callbacks-1',
+          spanId: 'span-lifecycle-1',
+          nodeId: 'node-model',
+          nodeType: 'model',
+          status: 'completed',
+          startedAt: '2026-04-09T13:00:00.000Z',
+          finishedAt: '2026-04-09T13:00:00.250Z',
+          durationMs: 250,
+          cacheDecision: 'miss',
+        }),
+      })
+    );
+    expect(repo.createRunEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Node Normalize Name started.',
+      })
+    );
+    expect(repo.createRunEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Node Normalize Name finished with status: completed.',
+        metadata: expect.objectContaining({
+          durationMs: 250,
+        }),
       })
     );
   });

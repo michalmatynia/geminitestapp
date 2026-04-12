@@ -25,6 +25,17 @@ export const resolveCancellationPollIntervalMs = (): number => {
   return Math.max(100, Math.min(5000, Math.trunc(parsed)));
 };
 
+export const resolveGraphExecutionMaxDurationMs = (): number => {
+  const explicit = Number.parseInt(process.env['AI_PATHS_GRAPH_MAX_DURATION_MS'] ?? '', 10);
+  if (Number.isFinite(explicit) && explicit > 0) {
+    return Math.max(5_000, explicit);
+  }
+
+  const jobTimeoutMs =
+    Number.parseInt(process.env['AI_PATHS_JOB_TIMEOUT_MS'] ?? '', 10) || 10 * 60 * 1000;
+  return Math.max(30_000, jobTimeoutMs - 15_000);
+};
+
 export const isMissingRunUpdateError = (error: unknown): boolean => {
   if (
     typeof error === 'object' &&

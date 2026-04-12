@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T14:40:26.139Z",
+  "generatedAt": "2026-04-12T04:21:28.603Z",
   "track": {
     "id": "ui-consolidation",
     "title": "UI consolidation",
@@ -101,20 +101,20 @@
     "defaultSelected": true,
     "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
     "overallStatus": "failed",
-    "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
+    "latestGeneratedAt": "2026-04-12T04:21:28.585Z",
     "docDir": "docs/build/improvements/ui-consolidation",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-11T14:40:26.131Z",
+        "generatedAt": "2026-04-12T04:06:44.394Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 2,
-        "automaticStepCount": 2,
+        "stepCount": 1,
+        "automaticStepCount": 1,
         "manualStepCount": 0,
         "passedStepCount": 0,
-        "failedStepCount": 2,
+        "failedStepCount": 1,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [
@@ -138,31 +138,14 @@
             ],
             "instructions": [],
             "script": "check:ui-consolidation",
-            "durationMs": 12332
-          },
-          {
-            "id": "ui-consolidation-guardrail",
-            "title": "Run UI consolidation guardrail",
-            "trackId": "ui-consolidation",
-            "phase": "audit",
-            "mode": "automatic",
-            "writes": false,
-            "status": "failed",
-            "outputs": [
-              "docs/ui-consolidation/scan-latest.md",
-              "docs/ui-consolidation/scan-latest.json",
-              "docs/ui-consolidation/inventory-latest.csv"
-            ],
-            "instructions": [],
-            "script": "check:ui-consolidation",
-            "durationMs": 6042
+            "durationMs": 4786
           }
         ],
         "status": "failed"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-11T09:41:24.435Z",
+        "generatedAt": "2026-04-12T04:21:28.293Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -179,7 +162,7 @@
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-11T14:20:03.230Z",
+        "generatedAt": "2026-04-12T04:21:28.585Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,

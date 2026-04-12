@@ -10,6 +10,7 @@ import {
   resolveAmazonScanRecommendationReason,
   resolveRejectedAmazonCandidateBreakdown,
 } from '@/features/products/components/scans/ProductScanAmazonDetails';
+import { ProductScan1688Details } from '@/features/products/components/scans/ProductScan1688Details';
 import {
   buildProductScanArtifactHref,
   ProductScanDiagnostics,
@@ -28,12 +29,14 @@ import {
   ProductScanSteps,
   resolveProductScanActiveStepSummary,
   resolveProductScanContinuationSummary,
+  resolveProductScanEvaluationPolicySummary,
   resolveProductScanLatestOutcomeSummary,
   resolveProductScanRejectedCandidateSummary,
 } from '@/features/products/components/scans/ProductScanSteps';
 import type {
-  ProductAmazonBatchScanResponse,
+  ProductScanBatchResponse,
   ProductScanListResponse,
+  ProductScanProvider,
   ProductScanRecord,
   ProductScanStatus,
 } from '@/shared/contracts/product-scans';
@@ -56,6 +59,7 @@ type ProductAmazonScanModalProps = {
   onClose: () => void;
   productIds: string[];
   products: ProductWithImages[];
+  provider?: Extract<ProductScanProvider, 'amazon' | '1688'>;
 };
 
 type ScanModalRow = {
@@ -89,6 +93,51 @@ const STATUS_CLASSES: Record<ScanModalRow['status'], string> = {
   failed: 'border-destructive/40 text-destructive',
 };
 
+type ProductScanModalProvider = Extract<ProductScanProvider, 'amazon' | '1688'>;
+
+type ProductScanModalConfig = {
+  batchEndpoint: string;
+  batchFailureMessage: string;
+  batchLabel: string;
+  modalTitle: string;
+  noQueuedMessage: string;
+  openResultLabel: string;
+  preparingLabel: string;
+  refreshFailureMessage: string;
+  resultSignalLabel: string;
+  resultStatusLabel: string;
+  resultTypeLabel: string;
+};
+
+const PRODUCT_SCAN_MODAL_CONFIG: Record<ProductScanModalProvider, ProductScanModalConfig> = {
+  amazon: {
+    batchEndpoint: '/api/v2/products/scans/amazon/batch',
+    batchFailureMessage: 'Failed to enqueue Amazon scans.',
+    batchLabel: 'Amazon scans',
+    modalTitle: 'Amazon Reverse Image Scan',
+    noQueuedMessage: 'No Amazon scans were queued.',
+    openResultLabel: 'Open Amazon Result',
+    preparingLabel: 'Preparing Amazon scans...',
+    refreshFailureMessage: 'Failed to refresh Amazon scans.',
+    resultSignalLabel: 'Amazon result signal',
+    resultStatusLabel: 'Amazon reverse image scan',
+    resultTypeLabel: 'Amazon',
+  },
+  '1688': {
+    batchEndpoint: '/api/v2/products/scans/1688/batch',
+    batchFailureMessage: 'Failed to enqueue 1688 supplier scans.',
+    batchLabel: '1688 scans',
+    modalTitle: '1688 Supplier Reverse Image Scan',
+    noQueuedMessage: 'No 1688 supplier scans were queued.',
+    openResultLabel: 'Open 1688 Result',
+    preparingLabel: 'Preparing 1688 supplier scans...',
+    refreshFailureMessage: 'Failed to refresh 1688 supplier scans.',
+    resultSignalLabel: '1688 supplier result',
+    resultStatusLabel: '1688 supplier reverse image scan',
+    resultTypeLabel: '1688',
+  },
+};
+
 const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'> | null): boolean => {
   const rawResult = scan?.rawResult;
   if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
@@ -108,12 +157,8 @@ const resolveRowStatusClassName = (row: ScanModalRow): string =>
     ? 'border-amber-500/40 text-amber-300'
     : STATUS_CLASSES[row.status];
 
-const MISSING_BATCH_RESULT_MESSAGE = 'Amazon scan request did not return a result for this product.';
-const MISSING_SCAN_RECORD_MESSAGE = 'Amazon scan record could not be refreshed.';
-const UNTRACKABLE_ACTIVE_SCAN_MESSAGE =
-  'Amazon scan request returned an active scan without a trackable scan id.';
-
 const resolveActiveStatusMessage = (
+  resultStatusLabel: string,
   status: ProductScanStatus | 'enqueuing',
   fallback: string | null
 ): string | null => {
@@ -122,11 +167,11 @@ const resolveActiveStatusMessage = (
   }
 
   if (status === 'queued') {
-    return 'Amazon reverse image scan queued.';
+    return `${resultStatusLabel} queued.`;
   }
 
   if (status === 'running') {
-    return 'Amazon reverse image scan running.';
+    return `${resultStatusLabel} running.`;
   }
 
   return fallback;
@@ -162,7 +207,9 @@ const formatSummary = (rows: ScanModalRow[]): string => {
 };
 
 const buildToastSummaryFromRows = (
-  rows: ScanModalRow[]
+  rows: ScanModalRow[],
+  batchLabel: string,
+  noQueuedMessage: string
 ): { message: string; variant: 'success' | 'warning' } => {
   const counts = {
     queued: rows.filter((row) => row.status === 'queued').length,
@@ -185,7 +232,7 @@ const buildToastSummaryFromRows = (
     .join(', ');
 
   return {
-    message: summary ? `Amazon scans: ${summary}.` : 'No Amazon scans were queued.',
+    message: summary ? `${batchLabel}: ${summary}.` : noQueuedMessage,
     variant: counts.failed > 0 || counts.conflict > 0 ? 'warning' : 'success',
   };
 };
@@ -257,7 +304,11 @@ const resolveRowDisplayMessages = (
 export function ProductAmazonScanModal(
   props: ProductAmazonScanModalProps
 ): React.JSX.Element {
-  const { isOpen, onClose, productIds, products } = props;
+  const { isOpen, onClose, productIds, products, provider = 'amazon' } = props;
+  const modalConfig = PRODUCT_SCAN_MODAL_CONFIG[provider];
+  const missingBatchResultMessage = `${modalConfig.resultTypeLabel} scan request did not return a result for this product.`;
+  const missingScanRecordMessage = `${modalConfig.resultTypeLabel} scan record could not be refreshed.`;
+  const untrackableActiveScanMessage = `${modalConfig.resultTypeLabel} scan request returned an active scan without a trackable scan id.`;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const pollTimerRef = useRef<SafeTimerId | null>(null);
@@ -517,7 +568,7 @@ export function ProductAmazonScanModal(
           scanId: null,
           runId: null,
           status: 'failed' as const,
-          message: MISSING_SCAN_RECORD_MESSAGE,
+          message: missingScanRecordMessage,
           scan: null,
         };
       }
@@ -530,8 +581,8 @@ export function ProductAmazonScanModal(
           scan?.status === 'completed'
             ? (scan.asinUpdateMessage ?? null)
             : scan && isProductScanActiveStatus(scan.status)
-              ? (scan.asinUpdateMessage ??
-                resolveActiveStatusMessage(scan.status, row.message))
+                ? (scan.asinUpdateMessage ??
+                resolveActiveStatusMessage(modalConfig.resultStatusLabel, scan.status, row.message))
               : scan && isProductScanTerminalStatus(scan.status)
               ? null
               : row.message,
@@ -550,7 +601,7 @@ export function ProductAmazonScanModal(
     if (!nextRows.some((row) => row.status === 'enqueuing' || isProductScanActiveStatus(row.status))) {
       stopPolling();
     }
-  }, [invalidateProductViews, stopPolling]);
+  }, [invalidateProductViews, modalConfig.resultStatusLabel, missingScanRecordMessage, stopPolling]);
 
   const handleRefreshFailure = useCallback(
     (error: unknown, options?: { stopPolling?: boolean; sessionId?: number }) => {
@@ -564,10 +615,10 @@ export function ProductAmazonScanModal(
         stopPolling();
       }
       const message =
-        error instanceof Error ? error.message : 'Failed to refresh Amazon scans.';
+        error instanceof Error ? error.message : modalConfig.refreshFailureMessage;
       toast(message, { variant: 'error' });
     },
-    [stopPolling, toast]
+    [modalConfig.refreshFailureMessage, stopPolling, toast]
   );
 
   const startPolling = useCallback((sessionId = modalSessionRef.current) => {
@@ -650,8 +701,8 @@ export function ProductAmazonScanModal(
 
     void (async () => {
       try {
-        const response = await api.post<ProductAmazonBatchScanResponse>(
-          '/api/v2/products/scans/amazon/batch',
+        const response = await api.post<ProductScanBatchResponse>(
+          modalConfig.batchEndpoint,
           { productIds: selectedProductEntries.map(({ productId }) => productId) }
         );
         if (sessionId !== modalSessionRef.current) {
@@ -675,7 +726,7 @@ export function ProductAmazonScanModal(
             return {
               ...row,
               status: 'failed' as const,
-              message: MISSING_BATCH_RESULT_MESSAGE,
+              message: missingBatchResultMessage,
             };
           }
           const resultIsActive =
@@ -694,7 +745,7 @@ export function ProductAmazonScanModal(
             return {
               ...row,
               status: 'failed' as const,
-              message: UNTRACKABLE_ACTIVE_SCAN_MESSAGE,
+              message: untrackableActiveScanMessage,
             };
           }
           const nextStatus: ScanModalRow['status'] =
@@ -756,7 +807,11 @@ export function ProductAmazonScanModal(
             );
           });
           if (recoveredState) {
-            const recoveredSummary = buildToastSummaryFromRows(recoveredRows);
+            const recoveredSummary = buildToastSummaryFromRows(
+              recoveredRows,
+              modalConfig.batchLabel,
+              modalConfig.noQueuedMessage
+            );
             toastMessage = recoveredSummary.message;
             toastVariant = recoveredSummary.variant;
           }
@@ -773,7 +828,7 @@ export function ProductAmazonScanModal(
           ]
             .filter(Boolean)
             .join(', ');
-          toastMessage = summary ? `Amazon scans: ${summary}.` : 'No Amazon scans were queued.';
+          toastMessage = summary ? `${modalConfig.batchLabel}: ${summary}.` : modalConfig.noQueuedMessage;
           toastVariant = totalFailedCount > 0 ? 'warning' : 'success';
         }
 
@@ -788,7 +843,7 @@ export function ProductAmazonScanModal(
           return;
         }
         const message =
-          error instanceof Error ? error.message : 'Failed to enqueue Amazon scans.';
+          error instanceof Error ? error.message : modalConfig.batchFailureMessage;
         const failedRows = initialRows.map((row) => ({
           ...row,
           status: 'failed' as const,
@@ -841,7 +896,24 @@ export function ProductAmazonScanModal(
       }
       stopPolling();
     };
-  }, [ensurePollingForTrackedActiveRows, handleRefreshFailure, isOpen, refreshScanRows, selectedProductIdsKey, startPolling, stopPolling, toast]);
+  }, [
+    ensurePollingForTrackedActiveRows,
+    handleRefreshFailure,
+    isOpen,
+    missingBatchResultMessage,
+    missingScanRecordMessage,
+    modalConfig.batchEndpoint,
+    modalConfig.batchFailureMessage,
+    modalConfig.batchLabel,
+    modalConfig.noQueuedMessage,
+    modalConfig.resultTypeLabel,
+    refreshScanRows,
+    selectedProductIdsKey,
+    startPolling,
+    stopPolling,
+    toast,
+    untrackableActiveScanMessage,
+  ]);
 
   const toggleRowSteps = useCallback((productId: string) => {
     setExpandedRowIds((current) => {
@@ -936,7 +1008,7 @@ export function ProductAmazonScanModal(
     <AppModal
       isOpen={isOpen}
       onClose={onClose}
-      title='Amazon Reverse Image Scan'
+      title={modalConfig.modalTitle}
       subtitle={formatSummary(rows)}
       size='lg'
       headerActions={
@@ -955,7 +1027,7 @@ export function ProductAmazonScanModal(
       {rows.length === 0 ? (
         <div className='flex min-h-[160px] items-center justify-center gap-3 text-sm text-muted-foreground'>
           <Loader2 className='h-4 w-4 animate-spin' />
-          Preparing Amazon scans...
+          {modalConfig.preparingLabel}
         </div>
       ) : (
         <div className='space-y-3'>
@@ -966,14 +1038,25 @@ export function ProductAmazonScanModal(
               const isExpanded = expandedRowIds.has(row.productId);
               const diagnosticsExpanded = expandedDiagnosticRowIds.has(row.productId);
               const extractedFieldsExpanded = expandedExtractedFieldRowIds.has(row.productId);
+              const isAmazonScan = row.scan?.provider !== '1688';
+              const supplierDetails = row.scan?.provider === '1688' ? row.scan.supplierDetails : null;
+              const supplierSummary = [
+                supplierDetails?.supplierName,
+                supplierDetails?.priceText ?? supplierDetails?.priceRangeText,
+                supplierDetails?.moqText,
+              ]
+                .filter(Boolean)
+                .join(' · ');
               const hasExtractedFields =
-                (row.scan && hasProductScanAmazonDetails(row.scan.amazonDetails)) || Boolean(row.scan?.asin);
+                isAmazonScan &&
+                ((row.scan && hasProductScanAmazonDetails(row.scan.amazonDetails)) ||
+                  Boolean(row.scan?.asin));
               const recommendationReason =
-                row.scan && hasExtractedFields
+                row.scan && isAmazonScan && hasExtractedFields
                   ? resolveAmazonScanRecommendationReason(row.scan)
                   : null;
               const recommendationRejectedBreakdown =
-                row.scan && hasExtractedFields
+                row.scan && isAmazonScan && hasExtractedFields
                   ? resolveRejectedAmazonCandidateBreakdown(row.scan.steps)
                   : null;
               const diagnostics = row.scan ? resolveProductScanDiagnostics(row.scan) : null;
@@ -996,6 +1079,10 @@ export function ProductAmazonScanModal(
               const rejectedCandidateSummary =
                 scanSteps.length > 0 && !progressSummary && !continuationSummary
                   ? resolveProductScanRejectedCandidateSummary(scanSteps)
+                  : null;
+              const evaluationPolicySummary =
+                scanSteps.length > 0 && !progressSummary
+                  ? resolveProductScanEvaluationPolicySummary(scanSteps)
                   : null;
               const latestOutcomeSummary =
                 scanSteps.length > 0 &&
@@ -1023,6 +1110,9 @@ export function ProductAmazonScanModal(
                   <div className='flex flex-wrap items-center justify-between gap-2'>
                     <div className='flex flex-wrap items-center gap-2'>
                       <span className='text-sm font-medium'>{row.productName}</span>
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                        {modalConfig.resultTypeLabel}
+                      </span>
                       <span
                         className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${resolveRowStatusClassName(row)}`}
                       >
@@ -1036,21 +1126,23 @@ export function ProductAmazonScanModal(
                   </div>
 
                   <div className='flex items-center justify-end gap-1'>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => toggleRowExtractedFields(row.productId)}
-                      disabled={!hasExtractedFields}
-                      className='h-7 gap-1.5 px-2 text-xs'
-                    >
-                      {extractedFieldsExpanded ? (
-                        <ChevronUp className='h-3.5 w-3.5' />
-                      ) : (
-                        <ChevronDown className='h-3.5 w-3.5' />
-                      )}
-                      {extractedFieldsExpanded ? 'Hide extracted fields' : 'Show extracted fields'}
-                    </Button>
+                    {isAmazonScan ? (
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => toggleRowExtractedFields(row.productId)}
+                        disabled={!hasExtractedFields}
+                        className='h-7 gap-1.5 px-2 text-xs'
+                      >
+                        {extractedFieldsExpanded ? (
+                          <ChevronUp className='h-3.5 w-3.5' />
+                        ) : (
+                          <ChevronDown className='h-3.5 w-3.5' />
+                        )}
+                        {extractedFieldsExpanded ? 'Hide extracted fields' : 'Show extracted fields'}
+                      </Button>
+                    ) : null}
                     <Button
                       type='button'
                       variant='ghost'
@@ -1182,6 +1274,51 @@ export function ProductAmazonScanModal(
                     </div>
                   ) : null}
 
+                  {evaluationPolicySummary ? (
+                    <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          AI evaluator policy
+                        </span>
+                        {evaluationPolicySummary.executionLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.executionLabel}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.modelSource ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.modelSource}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.thresholdLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.thresholdLabel}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.scopeLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.scopeLabel}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.languageGateLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.languageGateLabel}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.languageDetectionLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.languageDetectionLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      {evaluationPolicySummary.modelLabel ? (
+                        <p className='text-sm text-muted-foreground'>
+                          Model {evaluationPolicySummary.modelLabel}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   {latestOutcomeSummary || fallbackFailureSummary ? (
                     <div
                       className={`space-y-1 rounded-md px-3 py-2 ${
@@ -1283,7 +1420,7 @@ export function ProductAmazonScanModal(
                     <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                          Amazon result signal
+                          {modalConfig.resultSignalLabel}
                         </span>
                         <span className='font-medium text-foreground'>{recommendationReason}</span>
                       </div>
@@ -1300,12 +1437,15 @@ export function ProductAmazonScanModal(
                   ) : null}
 
                   {row.scan?.title ? <p className='text-sm font-medium'>{row.scan.title}</p> : null}
-                  {row.scan?.asin || row.scan?.price ? (
+                  {isAmazonScan && (row.scan?.asin || row.scan?.price) ? (
                     <p className='text-xs text-muted-foreground'>
                       {[row.scan?.asin && `ASIN ${row.scan.asin}`, row.scan?.price && `Price ${row.scan.price}`]
                         .filter(Boolean)
                         .join(' · ')}
                     </p>
+                  ) : null}
+                  {!isAmazonScan && supplierSummary ? (
+                    <p className='text-xs text-muted-foreground'>{supplierSummary}</p>
                   ) : null}
                   {row.scan?.url ? (
                     <a
@@ -1314,7 +1454,7 @@ export function ProductAmazonScanModal(
                       rel='noopener noreferrer'
                       className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
                     >
-                      Open Amazon Result
+                      {modalConfig.openResultLabel}
                       <ExternalLink className='h-3.5 w-3.5' />
                     </a>
                   ) : null}
@@ -1323,7 +1463,8 @@ export function ProductAmazonScanModal(
                   ) : null}
                   {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
                   {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
-                  {extractedFieldsExpanded && row.scan ? (
+                  {!isAmazonScan && row.scan ? <ProductScan1688Details scan={row.scan} /> : null}
+                  {isAmazonScan && extractedFieldsExpanded && row.scan ? (
                     <ProductScanAmazonExtractedFieldsPanel
                       scan={row.scan}
                       formBindings={productFormBindings}

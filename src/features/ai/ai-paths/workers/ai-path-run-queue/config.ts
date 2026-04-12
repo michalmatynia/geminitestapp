@@ -18,12 +18,12 @@ export const REQUIRE_DURABLE_QUEUE =
 
 export const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber(
   'AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS',
-  2_000,
+  5_000,
   250
 );
 export const QUEUE_HOT_STATUS_CACHE_TTL_MS = parseEnvNumber(
   'AI_PATHS_QUEUE_HOT_STATUS_CACHE_TTL_MS',
-  1_000,
+  3_000,
   100
 );
 export const QUEUE_HOT_WAITING_LIMIT = parseEnvNumber('AI_PATHS_QUEUE_HOT_WAITING_LIMIT', 2_000, 1);

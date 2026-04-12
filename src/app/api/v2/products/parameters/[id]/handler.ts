@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Document } from 'mongodb';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
@@ -53,6 +54,14 @@ export const productParameterUpdateSchema = z.object({
   selectorType: selectorTypeSchema.optional(),
   optionLabels: z.array(z.string()).optional(),
   linkedTitleTermType: productParameterLinkedTitleTermTypeSchema.optional(),
+});
+
+const buildRemoveParameterFromProductsUpdate = (parameterId: string): any => ({
+  $pull: {
+    parameters: {
+      parameterId,
+    },
+  },
 });
 
 /**
@@ -147,23 +156,11 @@ export async function DELETE_handler(
   await Promise.all([
     db.collection('products').updateMany(
       { 'parameters.parameterId': parameterId },
-      {
-        $pull: {
-          parameters: {
-            parameterId,
-          },
-        },
-      }
+      buildRemoveParameterFromProductsUpdate(parameterId)
     ),
     db.collection('product_drafts').updateMany(
       { 'parameters.parameterId': parameterId },
-      {
-        $pull: {
-          parameters: {
-            parameterId,
-          },
-        },
-      }
+      buildRemoveParameterFromProductsUpdate(parameterId)
     ),
   ]);
   CachedProductService.invalidateAll();

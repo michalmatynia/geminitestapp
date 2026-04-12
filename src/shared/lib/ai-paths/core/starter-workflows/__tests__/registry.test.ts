@@ -694,6 +694,69 @@ describe('starter workflow registry', () => {
     expect(extraRegexNode).toBeDefined();
   });
 
+  it('overlays stale provenance marketplace copy debrand configs and upgrades the database node targeting', () => {
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_marketplace_copy_debrand'),
+      {
+        pathId: 'path_marketplace_copy_debrand_v1',
+        seededDefault: true,
+      }
+    );
+    const stale = {
+      ...canonical,
+      version: 3,
+      nodes: canonical.nodes.map((node) => {
+        if (node.id !== 'node-db-update-marketplace-copy-debrand') return node;
+        return {
+          ...node,
+          config: {
+            ...node.config,
+            database: {
+              ...node.config?.database,
+              updateTemplate:
+                '{\n  "$set": {\n    "marketplaceContentOverrides.{{context.marketplaceCopyDebrandInput.targetRow.index}}.title": "{{value.debrandedTitle}}",\n    "marketplaceContentOverrides.{{context.marketplaceCopyDebrandInput.targetRow.index}}.description": "{{value.debrandedDescription}}"\n  },\n  "$unset": {\n    "__noop__": ""\n  }\n}',
+              query: {
+                provider: 'auto',
+                collection: 'products',
+                mode: 'custom',
+                preset: 'by_id',
+                field: 'id',
+                idType: 'string',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                limit: 1,
+                sort: '',
+                projection: '',
+                single: true,
+              },
+              writeOutcomePolicy: {
+                onZeroAffected: 'pass' as const,
+              },
+            },
+          },
+        };
+      }),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'marketplace_copy_debrand',
+          templateId: 'starter_marketplace_copy_debrand',
+          templateVersion: 3,
+          seededDefault: true,
+        },
+      },
+    } as PathConfig;
+
+    const upgraded = upgradeStarterWorkflowPathConfig(stale);
+    const dbNode = (upgraded.config.nodes ?? []).find(
+      (node) => node.id === 'node-db-update-marketplace-copy-debrand'
+    );
+
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.resolution?.matchedBy).toBe('provenance');
+    expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('fail');
+    expect(dbNode?.config?.database?.updateTemplate).toContain('marketplaceContentOverrides.$.title');
+    expect(dbNode?.config?.database?.query?.queryTemplate).toContain('"$elemMatch"');
+  });
+
   it('does not upgrade divergent graphs that no longer match starter fingerprints', () => {
     const config = buildLegacyTranslationPathConfig();
     config.nodes = config.nodes.map((node) => {

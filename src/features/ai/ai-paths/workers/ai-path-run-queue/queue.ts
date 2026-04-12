@@ -92,7 +92,8 @@ export const queue = createManagedQueue<AiPathRunJobData>({
 
     if (!leaseResult.ok) {
       const blockedAt = new Date().toISOString();
-      const blockingOwnerAgentId = leaseResult.conflictingLease?.ownerAgentId ?? null;
+      const conflictingLease = leaseResult.conflictingLease ?? null;
+      const blockingOwnerAgentId = conflictingLease?.ownerAgentId ?? null;
       const blocked = await repo.updateRunIfStatus(run.id, ['running'], {
         status: 'blocked_on_lease',
         errorMessage: 'Run blocked on execution lease.',
@@ -104,6 +105,11 @@ export const queue = createManagedQueue<AiPathRunJobData>({
             requestedBy: ownerAgentId,
             blockedAt,
             blockingOwnerAgentId,
+            ownerAgentId: blockingOwnerAgentId,
+            ownerRunId: conflictingLease?.ownerRunId ?? null,
+            leaseId: conflictingLease?.leaseId ?? null,
+            leaseMs: conflictingLease?.leaseMs ?? AI_PATH_EXECUTION_LEASE_MS,
+            expiresAt: conflictingLease?.expiresAt ?? null,
             resultCode: leaseResult.code,
           },
         },
@@ -119,6 +125,8 @@ export const queue = createManagedQueue<AiPathRunJobData>({
             leaseScopeId: run.id,
             requestedBy: ownerAgentId,
             blockingOwnerAgentId,
+            ownerRunId: conflictingLease?.ownerRunId ?? null,
+            leaseExpiresAt: conflictingLease?.expiresAt ?? null,
             blockedAt,
           },
         });

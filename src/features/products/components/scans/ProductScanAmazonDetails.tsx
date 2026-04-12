@@ -190,6 +190,11 @@ const resolveStepDetailValue = (
 ): string | null =>
   step.details.find((entry) => entry.label === label)?.value?.trim() || null;
 
+const resolveLatestAmazonEvaluationStep = (
+  steps: readonly ProductScanStep[] | null | undefined
+): ProductScanStep | null =>
+  [...(steps ?? [])].reverse().find((step) => step.key === 'amazon_ai_evaluate') ?? null;
+
 const resolveAmazonExtractionProvenance = (
   steps: readonly ProductScanStep[] | null | undefined
 ): AmazonExtractionProvenance | null => {
@@ -256,8 +261,9 @@ const resolveRejectedAmazonCandidateHistory = (
           ? step.candidateRank
           : null,
       url: step.url?.trim() || resolveStepDetailValue(step, 'Candidate URL'),
-      rejectionKind:
-        step.resultCode === 'candidate_language_rejected' ? 'language' : 'product',
+      rejectionKind: (step.resultCode === 'candidate_language_rejected'
+        ? 'language'
+        : 'product') as 'language' | 'product',
       confidenceLabel: resolveStepDetailValue(step, 'Confidence'),
       modelId: resolveStepDetailValue(step, 'Model'),
       reason:
@@ -393,7 +399,9 @@ export const resolvePreferredAmazonExtractedScans = (
 };
 
 export const resolveAmazonScanQualitySummary = (
-  scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails' | 'steps'>
+  scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails'> & {
+    steps?: ProductScanStep[] | null;
+  }
 ): AmazonScanQualitySummary | null => {
   const provenance = resolveAmazonExtractionProvenance(scan.steps);
   const normalizedSteps: readonly ProductScanStep[] = scan.steps ?? [];
@@ -418,7 +426,9 @@ export const resolveAmazonScanQualitySummary = (
 };
 
 const resolveAmazonScanQualityModifierLabel = (
-  scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails' | 'steps'>
+  scan: Pick<ProductScanRecord, 'asin' | 'title' | 'description' | 'amazonDetails'> & {
+    steps?: ProductScanStep[] | null;
+  }
 ): string | null => {
   const quality = resolveAmazonScanQualitySummary(scan);
   if (!quality) {
@@ -513,17 +523,17 @@ export function ProductScanAmazonProvenanceSummary(props: {
         Scan Provenance
       </p>
       <div className='flex flex-wrap gap-2'>
-        {provenance.inputSourceLabel ? (
+        {provenance?.inputSourceLabel ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
             Google: {provenance.inputSourceLabel === 'URL input' ? 'URL' : 'File'}
           </span>
         ) : null}
-        {provenance.retryOf ? (
+        {provenance?.retryOf ? (
           <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
             Fallback: {provenance.retryOf}
           </span>
         ) : null}
-        {provenance.reusedProbe ? (
+        {provenance?.reusedProbe ? (
           <span className='inline-flex items-center rounded-md border border-emerald-500/40 px-2 py-0.5 text-[11px] font-medium text-emerald-300'>
             Probe reused
           </span>
@@ -538,17 +548,17 @@ export function ProductScanAmazonProvenanceSummary(props: {
             Non-English rejected: {rejectedCandidateBreakdown.languageRejectedCount}
           </span>
         ) : null}
-        {typeof provenance.candidateRank === 'number' ? (
+        {typeof provenance?.candidateRank === 'number' ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
             Amazon rank: #{provenance.candidateRank}
           </span>
         ) : null}
-        {provenance.candidateId ? (
+        {provenance?.candidateId ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
             Image: {provenance.candidateId}
           </span>
         ) : null}
-        {provenance.extractionResultLabel ? (
+        {provenance?.extractionResultLabel ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
             Result: {provenance.extractionResultLabel}
           </span>
@@ -668,6 +678,10 @@ export function ProductScanAmazonDetails(props: {
 }): React.JSX.Element | null {
   const { scan } = props;
   const details = scan.amazonDetails;
+  const latestAmazonEvaluationStep = useMemo(
+    () => resolveLatestAmazonEvaluationStep(scan.steps),
+    [scan.steps]
+  );
   const provenance = useMemo(() => resolveAmazonExtractionProvenance(scan.steps), [scan.steps]);
   const quality = useMemo(() => resolveAmazonScanQualitySummary(scan), [scan]);
   const rejectedCandidateHistory = useMemo(
@@ -827,8 +841,41 @@ export function ProductScanAmazonDetails(props: {
             },
             { label: 'Model', value: scan.amazonEvaluation.modelId },
             {
+              label: 'Model source',
+              value: latestAmazonEvaluationStep
+                ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Model source')
+                : null,
+            },
+            {
               label: 'Threshold',
-              value: formatAmazonEvaluationConfidence(scan.amazonEvaluation.threshold),
+              value:
+                (latestAmazonEvaluationStep
+                  ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Threshold')
+                  : null) ?? formatAmazonEvaluationConfidence(scan.amazonEvaluation.threshold),
+            },
+            {
+              label: 'Evaluation scope',
+              value: latestAmazonEvaluationStep
+                ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Evaluation scope')
+                : null,
+            },
+            {
+              label: 'Allowed content language',
+              value: latestAmazonEvaluationStep
+                ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Allowed content language')
+                : null,
+            },
+            {
+              label: 'Language policy',
+              value: latestAmazonEvaluationStep
+                ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Language policy')
+                : null,
+            },
+            {
+              label: 'Language detection',
+              value: latestAmazonEvaluationStep
+                ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Language detection')
+                : null,
             },
             {
               label: 'Same product',

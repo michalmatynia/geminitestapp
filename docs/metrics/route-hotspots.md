@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-04-11T17:42:41.962Z
+Generated at: 2026-04-12T04:06:58.724Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -18,9 +18,9 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | --- | ---: |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 144 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 117 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 120 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 116 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 114 |
 | `src/app/api/databases/[[...path]]/route.ts` | 100 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 80 |
 | `src/app/api/kangur/[[...path]]/route.ts` | 60 |
@@ -67,8 +67,8 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 - `src/app/api/v2/integrations/[[...path]]/route.ts`
 - `src/app/api/image-studio/[[...path]]/route.ts`
 - `src/app/api/v2/products/[[...path]]/route.ts`
-- `src/app/api/agentcreator/[[...path]]/route.ts`
 - `src/app/api/ai-paths/[[...path]]/route.ts`
+- `src/app/api/agentcreator/[[...path]]/route.ts`
 - `src/app/api/databases/[[...path]]/route.ts`
 - `src/app/api/chatbot/[[...path]]/route.ts`
 - `src/app/api/kangur/[[...path]]/route.ts`

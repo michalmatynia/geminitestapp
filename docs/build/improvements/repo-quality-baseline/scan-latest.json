@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-11T14:40:26.139Z",
+  "generatedAt": "2026-04-12T04:21:28.603Z",
   "track": {
     "id": "repo-quality-baseline",
     "title": "Repository quality baseline",
@@ -141,13 +141,13 @@
     "category": "quality",
     "defaultSelected": true,
     "description": "Runs the core read-only quality checks that establish the current repository baseline.",
-    "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-11T14:40:26.131Z",
+    "overallStatus": "failed",
+    "latestGeneratedAt": "2026-04-12T04:21:28.585Z",
     "docDir": "docs/build/improvements/repo-quality-baseline",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-11T14:40:26.131Z",
+        "generatedAt": "2026-04-12T04:06:44.394Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -177,7 +177,7 @@
             ],
             "instructions": [],
             "script": "check:api-error-sources",
-            "durationMs": 451
+            "durationMs": 251
           },
           {
             "id": "repo-quality-canonical-sitewide",
@@ -190,22 +190,22 @@
             "outputs": [],
             "instructions": [],
             "script": "canonical:check:sitewide",
-            "durationMs": 2375
+            "durationMs": 1696
           }
         ],
         "status": "passed"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-11T09:41:24.435Z",
+        "generatedAt": "2026-04-12T04:21:28.293Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
         "stepCount": 2,
         "automaticStepCount": 2,
         "manualStepCount": 0,
-        "passedStepCount": 2,
-        "failedStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 2,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
@@ -217,11 +217,11 @@
             "phase": "classify",
             "mode": "automatic",
             "writes": false,
-            "status": "passed",
+            "status": "failed",
             "outputs": [],
             "instructions": [],
             "script": "quality:baseline:lint",
-            "durationMs": 238798
+            "durationMs": 209304
           },
           {
             "id": "repo-quality-typecheck",
@@ -230,31 +230,46 @@
             "phase": "classify",
             "mode": "automatic",
             "writes": false,
-            "status": "passed",
+            "status": "failed",
             "outputs": [],
             "instructions": [],
             "script": "quality:baseline:typecheck",
-            "durationMs": 93634
+            "durationMs": 67888
           }
         ],
-        "status": "passed"
+        "status": "failed"
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-11T14:20:03.230Z",
+        "generatedAt": "2026-04-12T04:21:28.585Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
-        "stepCount": 0,
+        "stepCount": 1,
         "automaticStepCount": 0,
-        "manualStepCount": 0,
+        "manualStepCount": 1,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": [
+          {
+            "id": "repo-quality-baseline-plan",
+            "title": "Review baseline results and decide follow-up validation",
+            "trackId": "repo-quality-baseline",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Use the lint and typecheck outputs to decide whether a wider repo quality sweep is needed.",
+              "Escalate to bazel:smoke or bazel:ci only when the baseline checks indicate broader instability."
+            ]
+          }
+        ],
+        "status": "manual"
       },
       {
         "phase": "dry-run",

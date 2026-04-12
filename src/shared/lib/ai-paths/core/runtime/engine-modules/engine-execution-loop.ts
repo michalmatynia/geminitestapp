@@ -1,6 +1,7 @@
 import { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 
+import { resolveAbortSignalMessage } from '../execution-helpers';
 import { cloneValue } from '../utils';
 import { buildSpanId } from './engine-execution-context';
 import { runNode } from './engine-execution-node';
@@ -9,6 +10,7 @@ import { deriveNodeInputs } from './engine-node-input-deriver';
 import { resolveBlockedNodeStatus, resolveDeclaredNodeStatus } from './engine-runtime-status';
 import { EngineStateManager } from './engine-state-manager';
 import {
+  GraphExecutionCancelled,
   GraphExecutionError,
   type EvaluateGraphOptions,
   type RuntimeNodeResolutionTelemetry,
@@ -74,30 +76,38 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
   let iteration = 0;
   let changedInLastIteration = true;
 
-  while (changedInLastIteration && iteration < maxIterationsLimit) {
-    iteration += 1;
-    changedInLastIteration = false;
+  try {
+    while (changedInLastIteration && iteration < maxIterationsLimit) {
+      if (options.abortSignal?.aborted) {
+        throw new GraphExecutionCancelled(
+          resolveAbortSignalMessage(options.abortSignal, 'Run cancelled.'),
+          state.buildRuntimeStateSnapshot(state.inputs)
+        );
+      }
 
-    // Warn at 80% of max iterations
-    const warningThreshold = Math.floor(maxIterationsLimit * 0.8);
-    if (iteration === warningThreshold && options.onIterationLimitWarning) {
-      await options.onIterationLimitWarning({
-        runId: resolvedRunId,
-        iteration,
-        maxIterations: maxIterationsLimit,
-        remaining: maxIterationsLimit - iteration,
-      });
-    }
+      iteration += 1;
+      changedInLastIteration = false;
 
-    if (options.onIteration) {
-      await options.onIteration({
-        runId: resolvedRunId,
-        iteration,
-        activeNodes: Array.from(state.activeNodes),
-      });
-    }
+      // Warn at 80% of max iterations
+      const warningThreshold = Math.floor(maxIterationsLimit * 0.8);
+      if (iteration === warningThreshold && options.onIterationLimitWarning) {
+        await options.onIterationLimitWarning({
+          runId: resolvedRunId,
+          iteration,
+          maxIterations: maxIterationsLimit,
+          remaining: maxIterationsLimit - iteration,
+        });
+      }
 
-    const readyNodes = orderedNodes.filter((node) => {
+      if (options.onIteration) {
+        await options.onIteration({
+          runId: resolvedRunId,
+          iteration,
+          activeNodes: Array.from(state.activeNodes),
+        });
+      }
+
+      const readyNodes = orderedNodes.filter((node) => {
       if (!scopedNodeIds.has(node.id)) return false;
       if (state.finishedNodes.has(node.id) || state.errorNodes.has(node.id)) return false;
 
@@ -305,30 +315,36 @@ export const runExecutionLoop = async (args: RunExecutionLoopArgs): Promise<void
       return true;
     });
 
-    if (readyNodes.length > 0) {
-      await Promise.all(
-        readyNodes.map(async (node) => {
-          const changed = await runNode({
-            node,
-            iteration,
-            state,
-            options,
-            resolvedRunId,
-            resolvedRunStartedAt,
-            triggerContext,
-            internalCheckTriggerProvenance,
-            telemetryResolver,
-            seedHashes,
-            nodes,
-            sanitizedEdges,
-            outgoingEdgesByNode,
-            nodeById,
-            executed,
-          });
-          if (changed) changedInLastIteration = true;
-        })
-      );
+      if (readyNodes.length > 0) {
+        await Promise.all(
+          readyNodes.map(async (node) => {
+            const changed = await runNode({
+              node,
+              iteration,
+              state,
+              options,
+              resolvedRunId,
+              resolvedRunStartedAt,
+              triggerContext,
+              internalCheckTriggerProvenance,
+              telemetryResolver,
+              seedHashes,
+              nodes,
+              sanitizedEdges,
+              outgoingEdgesByNode,
+              nodeById,
+              executed,
+            });
+            if (changed) changedInLastIteration = true;
+          })
+        );
+      }
     }
+  } catch (error) {
+    if (error instanceof GraphExecutionCancelled) {
+      await emitHalt('failed');
+    }
+    throw error;
   }
 
   if (iteration >= maxIterationsLimit) {

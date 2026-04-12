@@ -5,11 +5,13 @@ import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/integ
 import {
   buildPersistedProductScannerSettings,
   buildProductScannerSettingsDraft,
+  createDefaultProductScannerAmazonCandidateEvaluator,
   createDefaultProductScannerSettings,
   parseProductScannerSettings,
 } from './scanner-settings';
 
 describe('product scanner settings helpers', () => {
+  const defaultAmazonEvaluator = createDefaultProductScannerAmazonCandidateEvaluator();
   const personas = [
     {
       id: 'persona-1',
@@ -38,6 +40,12 @@ describe('product scanner settings helpers', () => {
           languageDetectionMode: 'deterministic_then_ai',
           systemPrompt: null,
         },
+        scanner1688: {
+          candidateResultLimit: 6,
+          minimumCandidateScore: 5,
+          maxExtractedImages: 10,
+          allowUrlImageSearchFallback: false,
+        },
         playwrightSettingsOverrides: {
           timeout: 45000,
         },
@@ -59,6 +67,14 @@ describe('product scanner settings helpers', () => {
         rejectNonEnglishContent: true,
         languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
+      },
+      amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
+      amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
+      scanner1688: {
+        candidateResultLimit: 6,
+        minimumCandidateScore: 5,
+        maxExtractedImages: 10,
+        allowUrlImageSearchFallback: false,
       },
       playwrightSettings: expect.objectContaining({
         headless: false,
@@ -85,6 +101,12 @@ describe('product scanner settings helpers', () => {
           languageDetectionMode: 'deterministic_then_ai',
           systemPrompt: null,
         },
+        scanner1688: {
+          candidateResultLimit: 5,
+          minimumCandidateScore: 6,
+          maxExtractedImages: 8,
+          allowUrlImageSearchFallback: false,
+        },
         playwrightSettings: {
           ...defaultIntegrationConnectionPlaywrightSettings,
           headless: false,
@@ -109,6 +131,14 @@ describe('product scanner settings helpers', () => {
         rejectNonEnglishContent: true,
         languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
+      },
+      amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
+      amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
+      scanner1688: {
+        candidateResultLimit: 5,
+        minimumCandidateScore: 6,
+        maxExtractedImages: 8,
+        allowUrlImageSearchFallback: false,
       },
     });
   });
@@ -141,6 +171,14 @@ describe('product scanner settings helpers', () => {
         rejectNonEnglishContent: true,
         languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
+      },
+      amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
+      amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
+      scanner1688: {
+        candidateResultLimit: 8,
+        minimumCandidateScore: 4,
+        maxExtractedImages: 12,
+        allowUrlImageSearchFallback: true,
       },
       playwrightSettingsOverrides: expect.objectContaining({
         headless: false,
@@ -186,6 +224,14 @@ describe('product scanner settings helpers', () => {
         rejectNonEnglishContent: true,
         languageDetectionMode: 'deterministic_then_ai',
         systemPrompt: null,
+      },
+      amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
+      amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
+      scanner1688: {
+        candidateResultLimit: 8,
+        minimumCandidateScore: 4,
+        maxExtractedImages: 12,
+        allowUrlImageSearchFallback: true,
       },
     });
   });

@@ -94,6 +94,7 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
 
 import {
+  queue1688BatchProductScans,
   queueAmazonBatchProductScans,
   synchronizeProductScan,
 } from './product-scans-service';
@@ -123,6 +124,9 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
   amazonDetails: null,
   amazonProbe: null,
   amazonEvaluation: null,
+  supplierDetails: null,
+  supplierProbe: null,
+  supplierEvaluation: null,
   steps: [],
   rawResult: null,
   error: null,
@@ -1543,6 +1547,14 @@ describe('product-scans-service', () => {
             key: 'amazon_ai_evaluate',
             status: 'failed',
             resultCode: 'candidate_rejected',
+            details: expect.arrayContaining([
+              { label: 'Model source', value: 'AI Brain default' },
+              { label: 'Threshold', value: '85%' },
+              { label: 'Evaluation scope', value: 'Every Amazon candidate' },
+              { label: 'Allowed content language', value: 'English' },
+              { label: 'Language policy', value: 'Reject non-English content' },
+              { label: 'Language detection', value: 'Deterministic first, then AI' },
+            ]),
           }),
           expect.objectContaining({
             key: 'product_asin_update',
@@ -2761,6 +2773,95 @@ describe('product-scans-service', () => {
     );
   });
 
+  it('persists a completed 1688 supplier scan result', async () => {
+    const scan = createScan({
+      provider: '1688',
+      scanType: 'supplier_reverse_image',
+      asinUpdateStatus: 'not_needed',
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'matched',
+        title: '1688 Supplier Listing',
+        price: 'CN¥ 12.50-15.00',
+        url: 'https://detail.1688.com/offer/123456789.html',
+        description: 'Supplier description',
+        matchedImageId: 'image-1',
+        supplierDetails: {
+          supplierName: 'Yiwu Supplier Co.',
+          supplierProductUrl: 'https://detail.1688.com/offer/123456789.html',
+          supplierStoreUrl: 'https://shop.1688.com/page.html',
+          currency: 'CNY',
+          priceRangeText: 'CN¥ 12.50-15.00',
+          moqText: '2 pcs',
+          images: [
+            {
+              url: 'https://img.alicdn.com/example-1.jpg',
+              source: 'gallery',
+            },
+          ],
+          prices: [
+            {
+              label: '2-9 pcs',
+              amount: '12.50',
+              currency: 'CNY',
+              moq: '2',
+              unit: 'pcs',
+              source: 'offer',
+            },
+          ],
+        },
+        supplierProbe: {
+          candidateUrl: 'https://detail.1688.com/offer/123456789.html',
+          canonicalUrl: 'https://detail.1688.com/offer/123456789.html',
+          pageTitle: '1688 Probe Title',
+          supplierName: 'Yiwu Supplier Co.',
+          priceText: 'CN¥ 12.50-15.00',
+          currency: 'CNY',
+        },
+      },
+      finalUrl: 'https://detail.1688.com/offer/123456789.html',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductMock).not.toHaveBeenCalled();
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'completed',
+        title: '1688 Supplier Listing',
+        price: 'CN¥ 12.50-15.00',
+        url: 'https://detail.1688.com/offer/123456789.html',
+        matchedImageId: 'image-1',
+        supplierDetails: expect.objectContaining({
+          supplierName: 'Yiwu Supplier Co.',
+        }),
+        supplierProbe: expect.objectContaining({
+          pageTitle: '1688 Probe Title',
+        }),
+        supplierEvaluation: null,
+        asinUpdateStatus: 'not_needed',
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'completed',
+        supplierDetails: expect.objectContaining({
+          supplierName: 'Yiwu Supplier Co.',
+        }),
+        asinUpdateStatus: 'not_needed',
+      })
+    );
+  });
+
   it('returns already_running when an active scan is still running for the product', async () => {
     const activeScan = createScan({ status: 'queued' });
 
@@ -2795,7 +2896,7 @@ describe('product-scans-service', () => {
           runId: 'run-1',
           status: 'already_running',
           currentStatus: 'running',
-          message: 'Amazon scan already in progress for this product.',
+          message: 'Amazon reverse image scan running.',
         },
       ],
     });
@@ -2917,7 +3018,136 @@ describe('product-scans-service', () => {
           expect.objectContaining({
             key: 'queue_scan',
             status: 'completed',
-            message: 'Playwright Amazon scan queued.',
+            message: 'Playwright Amazon reverse image scan queued.',
+          }),
+        ],
+      })
+    );
+  });
+
+  it('queues a new 1688 supplier reverse-image scan with image candidates', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 180000,
+      playwrightSettingsOverrides: {
+        headless: true,
+      },
+      amazonCandidateEvaluator: {
+        mode: 'disabled',
+        modelId: null,
+        threshold: 0.85,
+        onlyForAmbiguousCandidates: false,
+        allowedContentLanguage: 'en',
+        rejectNonEnglishContent: true,
+        languageDetectionMode: 'deterministic_then_ai',
+        systemPrompt: null,
+      },
+      scanner1688: {
+        candidateResultLimit: 6,
+        minimumCandidateScore: 5,
+        maxExtractedImages: 9,
+        allowUrlImageSearchFallback: false,
+      },
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Supplier Product 1',
+      name_pl: null,
+      name_de: null,
+      sku: 'SUP-1',
+      images: [
+        {
+          imageFileId: 'image-1',
+          imageFile: {
+            id: 'image-1',
+            filepath: '/tmp/product-1.jpg',
+            publicUrl: 'https://cdn.example.com/product-1.jpg',
+            filename: 'product-1.jpg',
+          },
+        },
+      ],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-1688-1',
+      status: 'queued',
+    });
+
+    const result = await queue1688BatchProductScans({
+      productIds: [' product-1 ', 'product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.createCustomPlaywrightInstanceMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        family: 'scrape',
+        label: '1688 supplier reverse image scan',
+        tags: ['product', '1688', 'scan', 'supplier-reverse-image'],
+      })
+    );
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerUserId: 'user-1',
+        instance: expect.objectContaining({
+          family: 'scrape',
+        }),
+        request: expect.objectContaining({
+          browserEngine: 'chromium',
+          timeoutMs: 180000,
+          preventNewPages: true,
+          script: expect.stringContaining('1688'),
+          input: expect.objectContaining({
+            productId: 'product-1',
+            productName: 'Supplier Product 1',
+            candidateResultLimit: 6,
+            minimumCandidateScore: 5,
+            maxExtractedImages: 9,
+            allowUrlImageSearchFallback: false,
+            imageCandidates: [
+              expect.objectContaining({
+                id: 'image-1',
+                filepath: '/tmp/product-1.jpg',
+                url: 'https://cdn.example.com/product-1.jpg',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+    expect(result).toEqual({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: expect.any(String),
+          runId: 'run-1688-1',
+          status: 'queued',
+          currentStatus: 'queued',
+          message: '1688 supplier reverse image scan queued.',
+        },
+      ],
+    });
+    expect(mocks.upsertProductScanMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        provider: '1688',
+        scanType: 'supplier_reverse_image',
+        steps: [
+          expect.objectContaining({
+            key: 'prepare_scan',
+            status: 'completed',
+          }),
+          expect.objectContaining({
+            key: 'queue_scan',
+            status: 'completed',
+            message: 'Playwright 1688 supplier reverse image scan queued.',
           }),
         ],
       })

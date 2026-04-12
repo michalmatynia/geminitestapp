@@ -15,6 +15,7 @@ import {
   resolveAmazonScanRecommendationReason,
   resolvePreferredAmazonExtractedScans,
 } from '@/features/products/components/scans/ProductScanAmazonDetails';
+import { ProductScan1688Details } from '@/features/products/components/scans/ProductScan1688Details';
 import {
   buildProductScanArtifactHref,
   ProductScanDiagnostics,
@@ -25,6 +26,7 @@ import {
   ProductScanSteps,
   resolveProductScanActiveStepSummary,
   resolveProductScanContinuationSummary,
+  resolveProductScanEvaluationPolicySummary,
   resolveProductScanLatestOutcomeSummary,
   resolveProductScanRejectedCandidateSummary,
 } from '@/features/products/components/scans/ProductScanSteps';
@@ -34,7 +36,11 @@ import { useProductFormParameters } from '@/features/products/context/ProductFor
 import { PRODUCT_SCANNER_SETTINGS_HREF } from '@/features/products/scanner-settings';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
-import type { ProductScanListResponse, ProductScanRecord } from '@/shared/contracts/product-scans';
+import type {
+  ProductScanListResponse,
+  ProductScanProvider,
+  ProductScanRecord,
+} from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductsCountsAndDetail } from '@/shared/lib/query-invalidation';
@@ -77,7 +83,9 @@ export default function ProductFormScans(): React.JSX.Element {
   const invalidatedUpdatedScanIdsRef = useRef<Set<string>>(new Set());
   const pendingUpdatedScanIdsRef = useRef<Set<string>>(new Set());
   const invalidationSessionRef = useRef(0);
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [scanModalProvider, setScanModalProvider] = useState<
+    Extract<ProductScanProvider, 'amazon' | '1688'> | null
+  >(null);
   const [expandedScanIds, setExpandedScanIds] = useState<Set<string>>(new Set());
   const [expandedDiagnosticScanIds, setExpandedDiagnosticScanIds] = useState<Set<string>>(new Set());
   const [expandedExtractedFieldScanIds, setExpandedExtractedFieldScanIds] = useState<Set<string>>(
@@ -441,7 +449,7 @@ export default function ProductFormScans(): React.JSX.Element {
         <div>
           <h3 className='text-sm font-medium'>Scan History</h3>
           <p className='text-xs text-muted-foreground'>
-            Amazon reverse image scans for this product.
+            Amazon and 1688 image scans for this product.
           </p>
         </div>
         <div className='flex items-center gap-2'>
@@ -449,11 +457,21 @@ export default function ProductFormScans(): React.JSX.Element {
             type='button'
             variant='outline'
             size='sm'
-            onClick={() => setIsScanModalOpen(true)}
+            onClick={() => setScanModalProvider('amazon')}
             className='h-8 gap-1.5 px-3 text-xs'
           >
             <Search className='h-3.5 w-3.5' />
             Scan Amazon
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => setScanModalProvider('1688')}
+            className='h-8 gap-1.5 px-3 text-xs'
+          >
+            <Search className='h-3.5 w-3.5' />
+            Scan 1688
           </Button>
           <Button type='button' variant='outline' size='sm' asChild className='h-8 px-3 text-xs'>
             <Link href={PRODUCT_SCANNER_SETTINGS_HREF}>Scanner settings</Link>
@@ -489,16 +507,27 @@ export default function ProductFormScans(): React.JSX.Element {
             const scanSteps = Array.isArray(scan.steps) ? scan.steps : [];
             const isExpanded = expandedScanIds.has(scan.id);
             const diagnosticsExpanded = expandedDiagnosticScanIds.has(scan.id);
-            const hasExtractedFields = hasProductScanAmazonDetails(scan.amazonDetails) || Boolean(scan.asin);
-            const recommendationReason = hasExtractedFields
+            const isAmazonScan = scan.provider !== '1688';
+            const supplierSummary = [
+              scan.supplierDetails?.supplierName,
+              scan.supplierDetails?.priceText ?? scan.supplierDetails?.priceRangeText,
+              scan.supplierDetails?.moqText,
+            ]
+              .filter(Boolean)
+              .join(' · ');
+            const hasExtractedFields =
+              isAmazonScan &&
+              (hasProductScanAmazonDetails(scan.amazonDetails) || Boolean(scan.asin));
+            const recommendationReason = isAmazonScan && hasExtractedFields
               ? resolveAmazonScanRecommendationReason(scan)
               : null;
-            const recommendationRejectedBreakdown = hasExtractedFields
+            const recommendationRejectedBreakdown = isAmazonScan && hasExtractedFields
               ? resolveRejectedAmazonCandidateBreakdown(scan.steps)
               : null;
             const isRecommendedAmazonResult =
-              hasExtractedFields && scan.id === recommendedAmazonExtractedScanId;
+              isAmazonScan && hasExtractedFields && scan.id === recommendedAmazonExtractedScanId;
             const hasAlternativeRecommendedAmazonResult =
+              isAmazonScan &&
               hasExtractedFields &&
               preferredAmazonExtractedScans.length > 1 &&
               recommendedAmazonExtractedScanId != null &&
@@ -523,6 +552,10 @@ export default function ProductFormScans(): React.JSX.Element {
             const rejectedCandidateSummary =
               scanSteps.length > 0 && !progressSummary && !continuationSummary
                 ? resolveProductScanRejectedCandidateSummary(scanSteps)
+                : null;
+            const evaluationPolicySummary =
+              scanSteps.length > 0 && !progressSummary
+                ? resolveProductScanEvaluationPolicySummary(scanSteps)
                 : null;
             const latestOutcomeSummary =
               scanSteps.length > 0 &&
@@ -576,7 +609,9 @@ export default function ProductFormScans(): React.JSX.Element {
               >
                 <div className='flex flex-wrap items-center justify-between gap-2'>
                   <div className='flex flex-wrap items-center gap-2'>
-                    <span className='text-sm font-medium'>Amazon</span>
+                    <span className='text-sm font-medium'>
+                      {scan.provider === '1688' ? '1688' : 'Amazon'}
+                    </span>
                     <span
                       className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${resolveStatusClassName(scan)}`}
                     >
@@ -589,21 +624,23 @@ export default function ProductFormScans(): React.JSX.Element {
                 </div>
 
                 <div className='flex items-center justify-end gap-1'>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => toggleExtractedFields(scan.id)}
-                    disabled={!hasExtractedFields}
-                    className='h-7 gap-1.5 px-2 text-xs'
-                  >
-                    {extractedFieldsExpanded ? (
-                      <ChevronUp className='h-3.5 w-3.5' />
-                    ) : (
-                      <ChevronDown className='h-3.5 w-3.5' />
-                    )}
-                    {extractedFieldsExpanded ? 'Hide extracted fields' : 'Show extracted fields'}
-                  </Button>
+                  {isAmazonScan ? (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => toggleExtractedFields(scan.id)}
+                      disabled={!hasExtractedFields}
+                      className='h-7 gap-1.5 px-2 text-xs'
+                    >
+                      {extractedFieldsExpanded ? (
+                        <ChevronUp className='h-3.5 w-3.5' />
+                      ) : (
+                        <ChevronDown className='h-3.5 w-3.5' />
+                      )}
+                      {extractedFieldsExpanded ? 'Hide extracted fields' : 'Show extracted fields'}
+                    </Button>
+                  ) : null}
                   <Button
                     type='button'
                     variant='ghost'
@@ -735,6 +772,51 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
+                {evaluationPolicySummary ? (
+                  <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
+                    <div className='flex flex-wrap items-center gap-2 text-xs'>
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                        AI evaluator policy
+                      </span>
+                      {evaluationPolicySummary.executionLabel ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {evaluationPolicySummary.executionLabel}
+                        </span>
+                      ) : null}
+                      {evaluationPolicySummary.modelSource ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {evaluationPolicySummary.modelSource}
+                        </span>
+                      ) : null}
+                      {evaluationPolicySummary.thresholdLabel ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {evaluationPolicySummary.thresholdLabel}
+                        </span>
+                      ) : null}
+                      {evaluationPolicySummary.scopeLabel ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {evaluationPolicySummary.scopeLabel}
+                        </span>
+                      ) : null}
+                      {evaluationPolicySummary.languageGateLabel ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {evaluationPolicySummary.languageGateLabel}
+                        </span>
+                      ) : null}
+                      {evaluationPolicySummary.languageDetectionLabel ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          {evaluationPolicySummary.languageDetectionLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                    {evaluationPolicySummary.modelLabel ? (
+                      <p className='text-sm text-muted-foreground'>
+                        Model {evaluationPolicySummary.modelLabel}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 {latestOutcomeSummary || fallbackFailureSummary ? (
                   <div
                     className={`space-y-1 rounded-md px-3 py-2 ${
@@ -832,7 +914,7 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {recommendationReason ? (
+                {isAmazonScan && recommendationReason ? (
                   <div
                     className={`space-y-1 rounded-md px-3 py-2 ${
                       isRecommendedAmazonResult
@@ -876,6 +958,9 @@ export default function ProductFormScans(): React.JSX.Element {
                 ) : null}
 
                 {scan.title ? <p className='text-sm font-medium'>{scan.title}</p> : null}
+                {!isAmazonScan && supplierSummary ? (
+                  <p className='text-xs text-muted-foreground'>{supplierSummary}</p>
+                ) : null}
                 {renderScanMeta(scan)}
                 {scan.url ? (
                   <a
@@ -884,7 +969,7 @@ export default function ProductFormScans(): React.JSX.Element {
                     rel='noopener noreferrer'
                     className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
                   >
-                    Open Result
+                    {isAmazonScan ? 'Open Amazon Result' : 'Open 1688 Result'}
                     <ExternalLink className='h-3.5 w-3.5' />
                   </a>
                 ) : null}
@@ -893,7 +978,8 @@ export default function ProductFormScans(): React.JSX.Element {
                 ) : null}
                 {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
                 {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
-                {extractedFieldsExpanded ? (
+                {!isAmazonScan ? <ProductScan1688Details scan={scan} /> : null}
+                {isAmazonScan && extractedFieldsExpanded ? (
                   <div className='space-y-3'>
                     <ProductScanAmazonQualitySummary scan={scan} />
                     <ProductScanAmazonProvenanceSummary scan={scan} />
@@ -1062,10 +1148,11 @@ export default function ProductFormScans(): React.JSX.Element {
       )}
 
       <ProductAmazonScanModal
-        isOpen={isScanModalOpen}
-        onClose={() => setIsScanModalOpen(false)}
+        isOpen={scanModalProvider != null}
+        onClose={() => setScanModalProvider(null)}
         productIds={productId ? [productId] : []}
         products={product ? [product] : []}
+        provider={scanModalProvider ?? 'amazon'}
       />
     </div>
   );

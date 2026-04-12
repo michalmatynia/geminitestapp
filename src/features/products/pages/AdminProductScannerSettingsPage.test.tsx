@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/integrations/utils/playwright-connection-settings';
 import {
   PRODUCT_SCANNER_SETTINGS_KEY,
+  createDefaultProductScannerAmazonCandidateEvaluator,
   serializeProductScannerSettings,
 } from '@/features/products/scanner-settings';
 
@@ -191,6 +192,8 @@ vi.mock('@/shared/ui/primitives.public', () => ({
 import { AdminProductScannerSettingsPage } from './AdminProductScannerSettingsPage';
 
 describe('AdminProductScannerSettingsPage', () => {
+  const defaultAmazonEvaluator = createDefaultProductScannerAmazonCandidateEvaluator();
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.settingsMapMock.data = new Map<string, string>();
@@ -235,6 +238,12 @@ describe('AdminProductScannerSettingsPage', () => {
             languageDetectionMode: 'deterministic_then_ai',
             systemPrompt: null,
           },
+          scanner1688: {
+            candidateResultLimit: 6,
+            minimumCandidateScore: 5,
+            maxExtractedImages: 10,
+            allowUrlImageSearchFallback: false,
+          },
         }),
       ],
     ]);
@@ -273,6 +282,10 @@ describe('AdminProductScannerSettingsPage', () => {
         name: 'Select Amazon candidate evaluator language detection mode',
       })
     ).toHaveValue('deterministic_then_ai');
+    expect(screen.getByRole('spinbutton', { name: '1688 candidate result limit' })).toHaveValue(6);
+    expect(screen.getByRole('spinbutton', { name: '1688 minimum candidate score' })).toHaveValue(5);
+    expect(screen.getByRole('spinbutton', { name: '1688 max extracted images' })).toHaveValue(10);
+    expect(screen.getByRole('checkbox', { name: 'Allow 1688 image URL fallback' })).not.toBeChecked();
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -316,6 +329,8 @@ describe('AdminProductScannerSettingsPage', () => {
         'Evaluator runtime errors fail the scan conservatively instead of trusting the page.'
       )
     ).toBeInTheDocument();
+    expect(screen.getByText('1688 Runtime Summary')).toBeInTheDocument();
+    expect(screen.getByText('Collect up to 6 candidate supplier pages per scan.')).toBeInTheDocument();
   });
 
   it('loads legacy persisted full settings', () => {
@@ -351,6 +366,10 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(
       screen.getByRole('combobox', { name: 'Select Amazon candidate evaluator mode' })
     ).toHaveValue('disabled');
+    expect(screen.getByRole('spinbutton', { name: '1688 candidate result limit' })).toHaveValue(8);
+    expect(screen.getByRole('spinbutton', { name: '1688 minimum candidate score' })).toHaveValue(4);
+    expect(screen.getByRole('spinbutton', { name: '1688 max extracted images' })).toHaveValue(12);
+    expect(screen.getByRole('checkbox', { name: 'Allow 1688 image URL fallback' })).toBeChecked();
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -417,6 +436,16 @@ describe('AdminProductScannerSettingsPage', () => {
         target: { value: 'ai_only' },
       }
     );
+    fireEvent.change(screen.getByRole('spinbutton', { name: '1688 candidate result limit' }), {
+      target: { value: '6' },
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: '1688 minimum candidate score' }), {
+      target: { value: '5' },
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: '1688 max extracted images' }), {
+      target: { value: '9' },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Allow 1688 image URL fallback' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
 
     await waitFor(() => {
@@ -437,6 +466,14 @@ describe('AdminProductScannerSettingsPage', () => {
             rejectNonEnglishContent: false,
             languageDetectionMode: 'ai_only',
             systemPrompt: null,
+          },
+          amazonCandidateEvaluatorProbe: defaultAmazonEvaluator,
+          amazonCandidateEvaluatorExtraction: defaultAmazonEvaluator,
+          scanner1688: {
+            candidateResultLimit: 6,
+            minimumCandidateScore: 5,
+            maxExtractedImages: 9,
+            allowUrlImageSearchFallback: false,
           },
         }),
       });

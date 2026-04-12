@@ -451,7 +451,8 @@ describe('AI Paths maintenance forward-only action ids', () => {
       })
     );
     expect(report.shouldBlock).toBe(true);
-    expect(report.dependencyReport?.errors ?? 0).toBeGreaterThan(0);
+    expect(report.blockReason).toBe('compile');
+    expect(report.compileReport.errors).toBeGreaterThan(0);
   });
 
   it('repairs broken seeded BLWo starter configs through the generic refresh action', () => {

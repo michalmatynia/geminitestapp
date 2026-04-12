@@ -1,6 +1,7 @@
 import { logAgentAudit } from './agent-runtime/audit';
 import { registerErrorEnricher } from '@/shared/utils/observability/error-enricher-registry';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 // Register AI-specific error enricher to ErrorSystem without circular dependencies
 if (typeof logAgentAudit === 'function') {
@@ -34,7 +35,14 @@ registerErrorEnricher(async (error, context) => {
     });
   } catch (enrichError) {
     // Avoid infinite recursion or noisy errors during enrichment
-    console.error('[ai-paths-enricher] Failed to enrich error', enrichError);
+    void logSystemEvent({
+      level: 'error',
+      source: 'ai-paths-enricher',
+      message: 'Failed to enrich error',
+      context: {
+        error: enrichError instanceof Error ? { message: enrichError.message, stack: enrichError.stack } : enrichError,
+      },
+    });
   }
 });
 

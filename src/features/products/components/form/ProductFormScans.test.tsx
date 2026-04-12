@@ -52,6 +52,7 @@ vi.mock('@/features/products/components/list/ProductAmazonScanModal', () => ({
     productIds: string[];
     products: Array<{ id: string }>;
     onClose: () => void;
+    provider?: 'amazon' | '1688';
   }) => {
     mocks.productAmazonScanModalMock(props);
     return props.isOpen ? (
@@ -563,8 +564,142 @@ describe('ProductFormScans', () => {
         isOpen: true,
         productIds: ['product-1'],
         products: [expect.objectContaining({ id: 'product-1' })],
+        provider: 'amazon',
       })
     );
+  });
+
+  it('opens the 1688 scan modal for the current product from the Scans tab', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Scan 1688' }));
+
+    expect(await screen.findByTestId('product-amazon-scan-modal')).toHaveTextContent('product-1');
+    expect(mocks.productAmazonScanModalMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+        productIds: ['product-1'],
+        products: [expect.objectContaining({ id: 'product-1' })],
+        provider: '1688',
+      })
+    );
+  });
+
+  it('renders stored 1688 supplier details inside scan history', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-1',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'completed',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: '1688 supplier listing',
+          price: '¥12.80-14.20',
+          url: 'https://detail.1688.com/offer/123456789.html',
+          description: 'Supplier listing for the scanned product.',
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: {
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/store/page.html',
+            supplierProductUrl: 'https://detail.1688.com/offer/123456789.html',
+            platformProductId: '123456789',
+            currency: 'CNY',
+            priceText: '¥12.80-14.20',
+            priceRangeText: '¥12.80-14.20',
+            moqText: 'MOQ 20 pcs',
+            supplierLocation: 'Zhejiang, China',
+            supplierRating: 'Gold supplier',
+            sourceLanguage: 'zh-CN',
+            images: [
+              {
+                url: 'https://cbu01.alicdn.com/image1.jpg',
+                alt: null,
+                artifactName: null,
+                source: 'hero',
+              },
+            ],
+            prices: [
+              {
+                label: 'Range',
+                amount: '12.80',
+                currency: 'CNY',
+                rangeStart: '12.80',
+                rangeEnd: '14.20',
+                moq: '20',
+                unit: 'pcs',
+                source: 'page',
+              },
+            ],
+          },
+          supplierProbe: {
+            candidateUrl: 'https://detail.1688.com/offer/123456789.html',
+            canonicalUrl: 'https://detail.1688.com/offer/123456789.html',
+            pageTitle: 'Yiwu Supplier Listing',
+            descriptionSnippet: 'Supplier listing for the scanned product.',
+            pageLanguage: 'zh-CN',
+            supplierName: 'Yiwu Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/store/page.html',
+            priceText: '¥12.80-14.20',
+            currency: 'CNY',
+            heroImageUrl: 'https://cbu01.alicdn.com/image1.jpg',
+            heroImageAlt: null,
+            heroImageArtifactName: null,
+            artifactKey: '1688-scan-probe-image-1',
+            imageCount: 1,
+          },
+          supplierEvaluation: {
+            status: 'approved',
+            sameProduct: true,
+            imageMatch: true,
+            titleMatch: true,
+            confidence: 0.91,
+            proceed: true,
+            reasons: ['Supplier gallery and title align with the source product.'],
+            mismatches: [],
+            modelId: 'gpt-5.4-mini',
+            error: null,
+            evaluatedAt: '2026-04-12T06:40:00.000Z',
+          },
+          steps: [],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T06:40:10.000Z',
+          createdAt: '2026-04-12T06:39:00.000Z',
+          updatedAt: '2026-04-12T06:40:10.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('1688 supplier details')).toBeInTheDocument();
+    expect(screen.getByText('Yiwu Supplier Co.')).toBeInTheDocument();
+    expect(screen.getByText('Extracted prices')).toBeInTheDocument();
+    expect(screen.getByText('Match evaluation')).toBeInTheDocument();
   });
 
   it('shows and hides persisted scan steps for a scan entry', async () => {
@@ -1240,6 +1375,13 @@ describe('ProductFormScans', () => {
               candidateRank: 2,
               resultCode: 'candidate_language_rejected',
               details: [
+                { label: 'Model source', value: 'AI Brain default' },
+                { label: 'Model', value: 'gpt-4o' },
+                { label: 'Threshold', value: '85%' },
+                { label: 'Evaluation scope', value: 'Every Amazon candidate' },
+                { label: 'Allowed content language', value: 'English' },
+                { label: 'Language policy', value: 'Reject non-English content' },
+                { label: 'Language detection', value: 'Deterministic first, then AI' },
                 { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00WRONG222' },
                 { label: 'Language reason', value: 'Detected German product content.' },
               ],
@@ -1375,6 +1517,20 @@ describe('ProductFormScans', () => {
         'A stronger extracted Amazon run is available for this product.'
       )
     ).toBeInTheDocument();
+    expect(
+      within(newerSection as HTMLElement).getByText('AI evaluator policy')
+    ).toBeInTheDocument();
+    expect(within(newerSection as HTMLElement).getByText('Reviewed by AI')).toBeInTheDocument();
+    expect(within(newerSection as HTMLElement).getByText('AI Brain default')).toBeInTheDocument();
+    expect(within(newerSection as HTMLElement).getByText('85%')).toBeInTheDocument();
+    expect(
+      within(newerSection as HTMLElement).getByText('Every Amazon candidate')
+    ).toBeInTheDocument();
+    expect(within(newerSection as HTMLElement).getByText('English only')).toBeInTheDocument();
+    expect(
+      within(newerSection as HTMLElement).getByText('Deterministic first, then AI')
+    ).toBeInTheDocument();
+    expect(within(newerSection as HTMLElement).getByText('Model gpt-4o')).toBeInTheDocument();
   });
 
   it('applies extracted identifiers, weight, and dimensions into the product form', async () => {

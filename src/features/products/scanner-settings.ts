@@ -5,6 +5,7 @@ import type {
   ProductScannerAmazonCandidateEvaluator,
   ProductScannerAmazonCandidateEvaluatorMode,
   ProductScannerCaptchaBehavior,
+  ProductScanner1688Settings,
   ProductScannerPlaywrightBrowser,
   ProductScannerSettings,
 } from '@/shared/contracts/products/scanner-settings';
@@ -28,6 +29,9 @@ export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_ALLOWED_CONTENT_
   'en' as const;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE =
   'deterministic_then_ai' as const;
+export const DEFAULT_PRODUCT_SCANNER_1688_CANDIDATE_RESULT_LIMIT = 8;
+export const DEFAULT_PRODUCT_SCANNER_1688_MINIMUM_CANDIDATE_SCORE = 4;
+export const DEFAULT_PRODUCT_SCANNER_1688_MAX_EXTRACTED_IMAGES = 12;
 export const defaultProductScannerPlaywrightSettings: PlaywrightSettings = {
   ...buildIntegrationConnectionPlaywrightSettings(),
   headless: false,
@@ -45,12 +49,22 @@ export const createDefaultProductScannerAmazonCandidateEvaluator = (): ProductSc
   systemPrompt: null,
 });
 
+export const createDefaultProductScanner1688Settings = (): ProductScanner1688Settings => ({
+  candidateResultLimit: DEFAULT_PRODUCT_SCANNER_1688_CANDIDATE_RESULT_LIMIT,
+  minimumCandidateScore: DEFAULT_PRODUCT_SCANNER_1688_MINIMUM_CANDIDATE_SCORE,
+  maxExtractedImages: DEFAULT_PRODUCT_SCANNER_1688_MAX_EXTRACTED_IMAGES,
+  allowUrlImageSearchFallback: true,
+});
+
 export type ProductScannerSettingsDraft = {
   playwrightPersonaId: string | null;
   playwrightBrowser: ProductScannerPlaywrightBrowser;
   captchaBehavior: ProductScannerCaptchaBehavior;
   manualVerificationTimeoutMs: number;
   amazonCandidateEvaluator: ProductScannerAmazonCandidateEvaluator;
+  amazonCandidateEvaluatorProbe: ProductScannerAmazonCandidateEvaluator;
+  amazonCandidateEvaluatorExtraction: ProductScannerAmazonCandidateEvaluator;
+  scanner1688: ProductScanner1688Settings;
   playwrightSettings: PlaywrightSettings;
 };
 
@@ -125,6 +139,9 @@ export const createDefaultProductScannerSettings = (): ProductScannerSettings =>
   manualVerificationTimeoutMs: DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
   playwrightSettingsOverrides: {},
   amazonCandidateEvaluator: createDefaultProductScannerAmazonCandidateEvaluator(),
+  amazonCandidateEvaluatorProbe: createDefaultProductScannerAmazonCandidateEvaluator(),
+  amazonCandidateEvaluatorExtraction: createDefaultProductScannerAmazonCandidateEvaluator(),
+  scanner1688: createDefaultProductScanner1688Settings(),
 });
 
 const normalizeProductScannerBrowser = (
@@ -226,6 +243,62 @@ const normalizeProductScannerAmazonCandidateEvaluator = (
   };
 };
 
+const normalizeIntegerInRange = (
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number
+): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, Math.trunc(value)));
+};
+
+const normalizeProductScanner1688Settings = (
+  value: unknown
+): ProductScanner1688Settings => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return createDefaultProductScanner1688Settings();
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return {
+    candidateResultLimit: normalizeIntegerInRange(
+      record['candidateResultLimit'],
+      DEFAULT_PRODUCT_SCANNER_1688_CANDIDATE_RESULT_LIMIT,
+      1,
+      20
+    ),
+    minimumCandidateScore: normalizeIntegerInRange(
+      record['minimumCandidateScore'],
+      DEFAULT_PRODUCT_SCANNER_1688_MINIMUM_CANDIDATE_SCORE,
+      1,
+      20
+    ),
+    maxExtractedImages: normalizeIntegerInRange(
+      record['maxExtractedImages'],
+      DEFAULT_PRODUCT_SCANNER_1688_MAX_EXTRACTED_IMAGES,
+      1,
+      20
+    ),
+    allowUrlImageSearchFallback: record['allowUrlImageSearchFallback'] !== false,
+  };
+};
+
+const resolveProductScannerAmazonCandidateEvaluator = (
+  value: unknown,
+  fallback: ProductScannerAmazonCandidateEvaluator
+): ProductScannerAmazonCandidateEvaluator => {
+  if (typeof value === 'undefined') {
+    return fallback;
+  }
+
+  return normalizeProductScannerAmazonCandidateEvaluator(value);
+};
+
 const normalizeProductScannerSettingsOverrides = (
   value: unknown
 ): Partial<PlaywrightSettings> => {
@@ -271,6 +344,9 @@ export const normalizeProductScannerSettings = (
   const normalizedLegacySettings = normalizeProductScannerSettingsOverrides(
     record['playwrightSettings']
   );
+  const legacyEvaluator = normalizeProductScannerAmazonCandidateEvaluator(
+    record['amazonCandidateEvaluator']
+  );
 
   return {
     playwrightPersonaId: normalizeIntegrationConnectionPlaywrightPersonaId(
@@ -285,9 +361,16 @@ export const normalizeProductScannerSettings = (
       Object.keys(normalizedOverrides).length > 0
         ? normalizedOverrides
         : normalizedLegacySettings,
-    amazonCandidateEvaluator: normalizeProductScannerAmazonCandidateEvaluator(
-      record['amazonCandidateEvaluator']
+    amazonCandidateEvaluator: legacyEvaluator,
+    amazonCandidateEvaluatorProbe: resolveProductScannerAmazonCandidateEvaluator(
+      record['amazonCandidateEvaluatorProbe'],
+      legacyEvaluator
     ),
+    amazonCandidateEvaluatorExtraction: resolveProductScannerAmazonCandidateEvaluator(
+      record['amazonCandidateEvaluatorExtraction'],
+      legacyEvaluator
+    ),
+    scanner1688: normalizeProductScanner1688Settings(record['scanner1688']),
   };
 };
 
@@ -324,7 +407,15 @@ export const buildProductScannerSettingsDraft = (
     playwrightBrowser: settings.playwrightBrowser,
     captchaBehavior: settings.captchaBehavior,
     manualVerificationTimeoutMs: settings.manualVerificationTimeoutMs,
-    amazonCandidateEvaluator: settings.amazonCandidateEvaluator,
+    amazonCandidateEvaluator:
+      settings.amazonCandidateEvaluator ?? createDefaultProductScannerAmazonCandidateEvaluator(),
+    amazonCandidateEvaluatorProbe:
+      settings.amazonCandidateEvaluatorProbe ??
+      createDefaultProductScannerAmazonCandidateEvaluator(),
+    amazonCandidateEvaluatorExtraction:
+      settings.amazonCandidateEvaluatorExtraction ??
+      createDefaultProductScannerAmazonCandidateEvaluator(),
+    scanner1688: settings.scanner1688 ?? createDefaultProductScanner1688Settings(),
     playwrightSettings: {
       ...baseline,
       ...settings.playwrightSettingsOverrides,
@@ -365,21 +456,28 @@ export const buildPersistedProductScannerSettings = (
 ): ProductScannerSettings => {
   const baseline = resolveProductScannerSettingsBaseline(personas, draft.playwrightPersonaId);
 
-  return {
-    playwrightPersonaId: normalizeIntegrationConnectionPlaywrightPersonaId(
-      draft.playwrightPersonaId
-    ),
-    playwrightBrowser: normalizeProductScannerBrowser(draft.playwrightBrowser),
+    return {
+      playwrightPersonaId: normalizeIntegrationConnectionPlaywrightPersonaId(
+        draft.playwrightPersonaId
+      ),
+      playwrightBrowser: normalizeProductScannerBrowser(draft.playwrightBrowser),
     captchaBehavior: normalizeProductScannerCaptchaBehavior(draft.captchaBehavior),
     manualVerificationTimeoutMs: normalizeProductScannerManualVerificationTimeoutMs(
       draft.manualVerificationTimeoutMs
     ),
-    playwrightSettingsOverrides: buildPlaywrightSettingsOverrides(
-      baseline,
-      buildIntegrationConnectionPlaywrightSettings(draft.playwrightSettings)
-    ),
-    amazonCandidateEvaluator: normalizeProductScannerAmazonCandidateEvaluator(
-      draft.amazonCandidateEvaluator
-    ),
-  };
+      playwrightSettingsOverrides: buildPlaywrightSettingsOverrides(
+        baseline,
+        buildIntegrationConnectionPlaywrightSettings(draft.playwrightSettings)
+      ),
+      amazonCandidateEvaluator: normalizeProductScannerAmazonCandidateEvaluator(
+        draft.amazonCandidateEvaluator
+      ),
+      amazonCandidateEvaluatorProbe: normalizeProductScannerAmazonCandidateEvaluator(
+        draft.amazonCandidateEvaluatorProbe
+      ),
+      amazonCandidateEvaluatorExtraction: normalizeProductScannerAmazonCandidateEvaluator(
+        draft.amazonCandidateEvaluatorExtraction
+      ),
+      scanner1688: normalizeProductScanner1688Settings(draft.scanner1688),
+    };
 };

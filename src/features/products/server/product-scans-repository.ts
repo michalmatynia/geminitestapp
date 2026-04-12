@@ -5,6 +5,7 @@ import type { Filter } from 'mongodb';
 import {
   PRODUCT_SCANS_COLLECTION,
   normalizeProductScanRecord,
+  type CreateProductScanInput,
   type ProductScanRecord,
   type ProductScanStatus,
   type UpdateProductScanInput,
@@ -328,7 +329,7 @@ export async function findLatestActiveProductScan(input: {
   return doc ? toScanRecord(doc) : null;
 }
 
-export async function upsertProductScan(scan: ProductScanRecord): Promise<ProductScanRecord> {
+export async function upsertProductScan(scan: CreateProductScanInput): Promise<ProductScanRecord> {
   const normalized = normalizeProductScanRecord(scan);
   const now = new Date();
 

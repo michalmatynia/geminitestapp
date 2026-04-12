@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-04-11T17:22:08.235Z
+Generated at: 2026-04-12T04:06:42.688Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 311
-- Handler files scanned: 443
+- Route files scanned: 312
+- Handler files scanned: 448
 - Errors: 0
 - Warnings: 0
 

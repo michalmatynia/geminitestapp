@@ -13,6 +13,7 @@ import {
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { loadRepairableStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import type {
   AiPathTemplateRegistryEntry,
   StarterWorkflowTriggerPreset,
@@ -155,6 +156,34 @@ const parsePathConfigRecord = (value: string): PathConfig | null => {
   }
 };
 
+const toTimestampOrNull = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value : null;
+
+const backfillStarterRefreshTimestamps = (config: PathConfig): PathConfig => {
+  const fallbackTimestamp = toTimestampOrNull(config.updatedAt) ?? new Date().toISOString();
+
+  return {
+    ...config,
+    updatedAt: toTimestampOrNull(config.updatedAt) ?? fallbackTimestamp,
+    nodes: (config.nodes ?? []).map((node) => {
+      const createdAt = toTimestampOrNull(node.createdAt) ?? fallbackTimestamp;
+      return {
+        ...node,
+        createdAt,
+        updatedAt: toTimestampOrNull(node.updatedAt) ?? createdAt,
+      };
+    }),
+    edges: (config.edges ?? []).map((edge) => {
+      const createdAt = toTimestampOrNull(edge.createdAt) ?? fallbackTimestamp;
+      return {
+        ...edge,
+        createdAt,
+        updatedAt: toTimestampOrNull(edge.updatedAt) ?? createdAt,
+      };
+    }),
+  };
+};
+
 const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | null => {
   const resolution = resolveStarterWorkflowForPathConfig(config);
   if (!resolution) return null;
@@ -164,12 +193,15 @@ const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | n
 
   const canonicalized = materializeStoredTriggerPathConfig({
     pathId: upgraded.config.id,
-    rawConfig: JSON.stringify(upgraded.config),
+    rawConfig: JSON.stringify(backfillStarterRefreshTimestamps(upgraded.config)),
     fallbackName: upgraded.config.name,
     applyStarterWorkflowUpgrade: false,
     allowStaticRecoveryFallback: false,
   }).config;
-  return sanitizePathConfig(canonicalized);
+  return loadRepairableStoredPathConfig({
+    pathId: canonicalized.id,
+    rawConfig: JSON.stringify(canonicalized),
+  }).config;
 };
 
 const tryRepairBrokenRecoverableStarterConfig = (args: {

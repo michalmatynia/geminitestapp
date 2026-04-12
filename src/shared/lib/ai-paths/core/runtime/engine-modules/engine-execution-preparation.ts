@@ -6,7 +6,7 @@ import {
   resolveEdgeToNodeId,
   orderNodesByDependencies,
 } from './engine-utils';
-import { sanitizeEdges } from '../../utils';
+import { compileGraph, sanitizeEdges } from '../../utils';
 
 export type GraphPreparationResult = {
   sanitizedEdges: Edge[];
@@ -15,6 +15,7 @@ export type GraphPreparationResult = {
   outgoingEdgesByNode: Map<string, Edge[]>;
   orderedNodes: AiNode[];
   scopedNodeIds: Set<string>;
+  unsupportedCycleMessage: string | null;
 };
 
 export const prepareGraphForExecution = (args: {
@@ -40,6 +41,9 @@ export const prepareGraphForExecution = (args: {
   });
 
   const orderedNodes = orderNodesByDependencies(nodes, sanitizedEdges);
+  const compileReport = compileGraph(nodes, sanitizedEdges);
+  const unsupportedCycleMessage =
+    compileReport.findings.find((finding) => finding.code === 'unsupported_cycle')?.message ?? null;
 
   const scopedNodeIds = resolveScopedNodeIds({
     nodes,
@@ -57,5 +61,6 @@ export const prepareGraphForExecution = (args: {
     outgoingEdgesByNode,
     orderedNodes,
     scopedNodeIds,
+    unsupportedCycleMessage,
   };
 };

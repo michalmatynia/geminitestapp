@@ -60,6 +60,7 @@ import {
   productSyncRunListQuerySchema,
   productSyncSingleProductResponseSchema,
 } from '@/shared/contracts/product-sync';
+import { productScanRecordSchema } from '@/shared/contracts/product-scans';
 import {
   productCatalogRecordSchema,
   productWithImagesSchema,
@@ -312,6 +313,51 @@ describe('shared contracts runtime smoke', () => {
     ).toBe('success');
 
     expect(productSyncRunListQuerySchema.parse({ limit: '25' }).limit).toBe(25);
+  });
+
+  it('parses supplier-oriented product scans without disturbing amazon defaults', () => {
+    const supplierScan = productScanRecordSchema.parse({
+      id: 'scan-1688-1',
+      productId: 'product-1688-1',
+      provider: '1688',
+      scanType: 'supplier_reverse_image',
+      status: 'completed',
+      productName: 'Supplier Probe',
+      title: '1688 Supplier Listing',
+      price: 'CN¥ 12.50-15.00',
+      url: 'https://detail.1688.com/offer/123456789.html',
+      supplierDetails: {
+        supplierName: 'Yiwu Supplier Co.',
+        supplierProductUrl: 'https://detail.1688.com/offer/123456789.html',
+        supplierStoreUrl: 'https://shop.1688.com/page.html',
+        currency: 'CNY',
+        priceRangeText: 'CN¥ 12.50-15.00',
+        moqText: '2 pcs',
+        images: [
+          {
+            url: 'https://img.alicdn.com/example-1.jpg',
+            source: 'gallery',
+          },
+        ],
+        prices: [
+          {
+            label: '2-9 pcs',
+            amount: '12.50',
+            currency: 'CNY',
+            moq: '2',
+            unit: 'pcs',
+            source: 'offer',
+          },
+        ],
+      },
+    });
+
+    expect(supplierScan.provider).toBe('1688');
+    expect(supplierScan.scanType).toBe('supplier_reverse_image');
+    expect(supplierScan.supplierDetails?.supplierName).toBe('Yiwu Supplier Co.');
+    expect(supplierScan.amazonDetails).toBeNull();
+    expect(supplierScan.amazonProbe).toBeNull();
+    expect(supplierScan.amazonEvaluation).toBeNull();
   });
 
   it('parses persona-memory and prompt-library payloads', () => {

@@ -62,6 +62,15 @@ export type ProductScannerAmazonCandidateEvaluator = z.infer<
   typeof productScannerAmazonCandidateEvaluatorSchema
 >;
 
+export const productScanner1688SettingsSchema = z.object({
+  candidateResultLimit: z.number().int().min(1).max(20),
+  minimumCandidateScore: z.number().int().min(1).max(20),
+  maxExtractedImages: z.number().int().min(1).max(20),
+  allowUrlImageSearchFallback: z.boolean(),
+});
+
+export type ProductScanner1688Settings = z.infer<typeof productScanner1688SettingsSchema>;
+
 export const productScannerSettingsSchema = z.object({
   playwrightPersonaId: z.string().trim().min(1).max(200).nullable(),
   playwrightBrowser: productScannerPlaywrightBrowserSchema,
@@ -69,6 +78,9 @@ export const productScannerSettingsSchema = z.object({
   manualVerificationTimeoutMs: z.number().int().positive().max(900_000),
   playwrightSettingsOverrides: playwrightSettingsSchema.partial(),
   amazonCandidateEvaluator: productScannerAmazonCandidateEvaluatorSchema.optional(),
+  amazonCandidateEvaluatorProbe: productScannerAmazonCandidateEvaluatorSchema.optional(),
+  amazonCandidateEvaluatorExtraction: productScannerAmazonCandidateEvaluatorSchema.optional(),
+  scanner1688: productScanner1688SettingsSchema.optional(),
 });
 
 export type ProductScannerSettings = z.infer<typeof productScannerSettingsSchema>;

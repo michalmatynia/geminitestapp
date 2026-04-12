@@ -5,7 +5,14 @@ import {
   RuntimeTraceResume,
 } from '@/shared/contracts/ai-paths-runtime';
 
-import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries } from '../execution-helpers';
+import {
+  isAbortError,
+  nowMs,
+  resolveAbortSignalMessage,
+  resolveNodeTimeoutMs,
+  withTimeout,
+  withRetries,
+} from '../execution-helpers';
 import { cloneValue } from '../utils';
 import { buildSpanId } from './engine-execution-context';
 import { resolveNodeHandlerOrThrow } from './engine-execution-handlers';
@@ -19,8 +26,10 @@ import {
 } from './engine-runtime-status';
 import { EngineStateManager } from './engine-state-manager';
 import {
+  GraphExecutionCancelled,
   GraphExecutionError,
   type EvaluateGraphOptions,
+  type RuntimeNodeBlockedReason,
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
 import {
@@ -44,6 +53,21 @@ const createExecutedState = (): NodeHandlerContext['executed'] => ({
   schema: new Set<string>(),
   mapper: new Set<string>(),
 });
+
+const normalizeBlockedReason = (value: unknown): RuntimeNodeBlockedReason => {
+  if (typeof value !== 'string') return 'flow_control';
+  const normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case 'missing_inputs':
+    case 'flow_control':
+    case 'validation':
+    case 'error':
+    case 'waiting_callback':
+      return normalized;
+    default:
+      return 'flow_control';
+  }
+};
 
 export type RunNodeArgs = {
   node: AiNode;
@@ -641,6 +665,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       nextOutputs['status'].trim().toLowerCase() === 'blocked';
 
     if (handlerDeclaredBlocked) {
+      const blockedReason = normalizeBlockedReason(nextOutputs['reason']);
       const nodeDurationMs = nowMs() - nodeStartedAt;
       state.nodeDurationsMap.set(node.id, nodeDurationMs);
       state.activeNodes.delete(node.id);
@@ -681,7 +706,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
           iteration,
           status: 'skipped',
           durationMs: nodeDurationMs,
-          reason: String(nextOutputs['reason'] ?? 'handler_declared_blocked'),
+          reason: blockedReason,
           ...buildRuntimeTelemetryFields(runtimeTelemetry),
         });
       }
@@ -694,7 +719,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
           node,
           iteration,
           attempt,
-          reason: String(nextOutputs['reason'] ?? 'handler_declared_blocked'),
+          reason: blockedReason,
           status: 'blocked',
           message: `Node ${node.title || node.id} blocked: ${String(nextOutputs['reason'] ?? 'handler declared blocked status')}`,
           waitingOnPorts: Array.isArray(nextOutputs['waitingOnPorts'])
@@ -819,7 +844,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       const changed = JSON.stringify(state.inputs[toNodeId]) !== JSON.stringify(targetInputs);
 
       if (changed) {
-        state.inputs[toNodeId] = targetInputs;
+        state.inputs[toNodeId] = cloneValue(targetInputs);
         if (state.finishedNodes.has(toNodeId)) {
           const previousHash = state.nodeHashes.get(toNodeId) ?? null;
           const nextHash = buildNodeHash(
@@ -882,6 +907,18 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       }
 
       return false;
+    }
+
+    if (isAbortError(error) || options.abortSignal?.aborted) {
+      state.activeNodes.delete(node.id);
+      state.finishedNodes.delete(node.id);
+      state.blockedNodes.delete(node.id);
+      throw new GraphExecutionCancelled(
+        resolveAbortSignalMessage(options.abortSignal, 'Run cancelled.'),
+        state.buildRuntimeStateSnapshot(state.inputs),
+        node.id,
+        error instanceof Error ? error : undefined
+      );
     }
 
     state.activeNodes.delete(node.id);

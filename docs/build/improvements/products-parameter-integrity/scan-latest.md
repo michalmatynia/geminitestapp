@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Products parameter integrity Improvement Track
 
-Generated at: 2026-04-11T14:40:26.139Z
+Generated at: 2026-04-12T04:21:28.603Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-11T14:40:26.139Z
 - Category: `data`
 - Included in default read-only bundle: yes
 - Overall status: `passed`
-- Latest report timestamp: 2026-04-11T09:41:24.435Z
+- Latest report timestamp: 2026-04-12T04:21:28.585Z
 
 ## Purpose
 
@@ -39,9 +39,9 @@ Audits missing product parameters, refreshes recovery classification, and rebuil
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `passed` | 1 | 1 | 0 | 0 | 0 |
 | `classify` | `passed` | 8 | 8 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `passed` | 3 | 3 | 0 | 0 | 0 |
 | `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
 
@@ -49,6 +49,7 @@ Audits missing product parameters, refreshes recovery classification, and rebuil
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `audit` | `passed` | `automatic` | `products-parameter-audit` | `products:audit:missing-parameters` |
 | `classify` | `passed` | `automatic` | `products-parameter-recovery-classification` | `products:classify:parameter-recovery` |
 | `classify` | `passed` | `automatic` | `products-parameter-source-report` | `products:report:parameter-source-recovery` |
 | `classify` | `passed` | `automatic` | `products-parameter-source-summary` | `products:summarize:parameter-source-recovery` |
@@ -57,6 +58,7 @@ Audits missing product parameters, refreshes recovery classification, and rebuil
 | `classify` | `passed` | `automatic` | `products-parameter-family-mapping-packs` | `products:generate:parameter-family-mapping-pack` |
 | `classify` | `passed` | `automatic` | `products-parameter-family-mapping-index` | `products:build:parameter-family-mapping-index` |
 | `classify` | `passed` | `automatic` | `products-parameter-family-mapping-checklist` | `products:render:parameter-family-mapping-checklist` |
+| `plan` | `manual` | `manual` | `products-parameter-integrity-plan-review` | manual |
 | `dry-run` | `passed` | `automatic` | `products-parameter-recovery-classification` | `products:classify:parameter-recovery` |
 | `dry-run` | `passed` | `automatic` | `products-parameter-source-report` | `products:report:parameter-source-recovery` |
 | `dry-run` | `passed` | `automatic` | `products-parameter-source-summary` | `products:summarize:parameter-source-recovery` |

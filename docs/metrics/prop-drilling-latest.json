@@ -1,17 +1,17 @@
 {
   "summary": {
-    "generatedAt": "2026-04-11T15:56:11.767Z",
-    "scannedSourceFiles": 7250,
-    "scannedJsxFiles": 2525,
-    "componentCount": 4430,
+    "generatedAt": "2026-04-12T04:06:13.214Z",
+    "scannedSourceFiles": 7279,
+    "scannedJsxFiles": 2531,
+    "componentCount": 4444,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 284,
-    "resolvedTransitionCount": 1076,
-    "depth2CandidateChainCount": 1076,
+    "componentsWithAnyForwarding": 285,
+    "resolvedTransitionCount": 1070,
+    "depth2CandidateChainCount": 1070,
     "candidateChainCount": 88,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 14,
-    "highPropCountComponentCount": 44,
+    "highPropCountComponentCount": 43,
     "passThroughHotspotCount": 75,
     "topFeatureScopes": [
       {
@@ -31,11 +31,11 @@
         "count": 7
       },
       {
-        "scope": "feature:filemaker",
-        "count": 6
+        "scope": "feature:products",
+        "count": 7
       },
       {
-        "scope": "feature:products",
+        "scope": "feature:filemaker",
         "count": 6
       },
       {
@@ -15466,6 +15466,32 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
+      "sinkComponentId": "src/shared/ui/copy-button.tsx#CopyButton",
+      "componentPath": [
+        "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
+        "src/shared/ui/copy-button.tsx#CopyButton"
+      ],
+      "propPath": [
+        "title",
+        "ariaLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
+          "toComponentId": "src/shared/ui/copy-button.tsx#CopyButton",
+          "sourceProp": "title",
+          "targetProp": "ariaLabel",
+          "relativePath": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+          "line": 651
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/products/components/settings/validator-settings/ValidatorPatternSemanticHistoryPanel.tsx#ValidatorPatternSemanticHistoryPanel",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
@@ -20839,7 +20865,7 @@
           "sourceProp": "setMinuteSnapMode",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 274
+          "line": 304
         }
       ]
     },
@@ -20865,7 +20891,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 274
+          "line": 304
         }
       ]
     },
@@ -20891,59 +20917,7 @@
           "sourceProp": "minuteSnapMode",
           "targetProp": "variant",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 274
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "hourHandEnabled",
-        "enabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "hourHandEnabled",
-          "targetProp": "enabled",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 564
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "onHourPointerDown",
-        "onPointerDown"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "onHourPointerDown",
-          "targetProp": "onPointerDown",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 564
+          "line": 304
         }
       ]
     },
@@ -20969,7 +20943,7 @@
           "sourceProp": "hourHandX",
           "targetProp": "x",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 564
+          "line": 578
         }
       ]
     },
@@ -20995,59 +20969,7 @@
           "sourceProp": "hourHandY",
           "targetProp": "y",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 564
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "minuteHandEnabled",
-        "enabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "minuteHandEnabled",
-          "targetProp": "enabled",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 576
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "onMinutePointerDown",
-        "onPointerDown"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "onMinutePointerDown",
-          "targetProp": "onPointerDown",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 576
+          "line": 578
         }
       ]
     },
@@ -21073,7 +20995,7 @@
           "sourceProp": "minuteHandX",
           "targetProp": "x",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 576
+          "line": 587
         }
       ]
     },
@@ -21099,7 +21021,7 @@
           "sourceProp": "minuteHandY",
           "targetProp": "y",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 576
+          "line": 587
         }
       ]
     },
@@ -21125,7 +21047,7 @@
           "sourceProp": "submitLocked",
           "targetProp": "disabled",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 658
+          "line": 666
         }
       ]
     },
@@ -21151,7 +21073,7 @@
           "sourceProp": "onSubmitClick",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 658
+          "line": 666
         }
       ]
     },
@@ -21177,7 +21099,7 @@
           "sourceProp": "submitFeedback",
           "targetProp": "style",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 658
+          "line": 666
         }
       ]
     },
@@ -24453,7 +24375,7 @@
           "sourceProp": "instanceId",
           "targetProp": "instanceId",
           "relativePath": "src/features/products/components/list/ProductFilters.tsx",
-          "line": 384
+          "line": 427
         }
       ]
     },
@@ -24506,6 +24428,32 @@
           "targetProp": "className",
           "relativePath": "src/features/products/components/list/ProductListActivityPill.tsx",
           "line": 40
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
+      "sinkComponentId": "src/shared/ui/copy-button.tsx#CopyButton",
+      "componentPath": [
+        "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
+        "src/shared/ui/copy-button.tsx#CopyButton"
+      ],
+      "propPath": [
+        "value",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
+          "toComponentId": "src/shared/ui/copy-button.tsx#CopyButton",
+          "sourceProp": "value",
+          "targetProp": "value",
+          "relativePath": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+          "line": 651
         }
       ]
     },
@@ -25337,7 +25285,7 @@
           "sourceProp": "email",
           "targetProp": "email",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 182
+          "line": 244
         }
       ]
     },
@@ -25363,7 +25311,7 @@
           "sourceProp": "error",
           "targetProp": "error",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 182
+          "line": 244
         }
       ]
     },
@@ -25389,7 +25337,7 @@
           "sourceProp": "message",
           "targetProp": "message",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 182
+          "line": 244
         }
       ]
     },
@@ -25415,7 +25363,7 @@
           "sourceProp": "verificationUrl",
           "targetProp": "verificationUrl",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 182
+          "line": 244
         }
       ]
     },
@@ -25441,7 +25389,7 @@
           "sourceProp": "changeEmailLabel",
           "targetProp": "changeEmailLabel",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 189
+          "line": 251
         }
       ]
     },
@@ -25467,7 +25415,7 @@
           "sourceProp": "continueToSignInLabel",
           "targetProp": "continueToSignInLabel",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 189
+          "line": 251
         }
       ]
     },
@@ -25493,7 +25441,7 @@
           "sourceProp": "onChangeEmail",
           "targetProp": "onChangeEmail",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 189
+          "line": 251
         }
       ]
     },
@@ -25519,7 +25467,7 @@
           "sourceProp": "onContinueToSignIn",
           "targetProp": "onContinueToSignIn",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 189
+          "line": 251
         }
       ]
     },
@@ -25545,7 +25493,7 @@
           "sourceProp": "onResend",
           "targetProp": "onResend",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 189
+          "line": 251
         }
       ]
     },
@@ -25571,7 +25519,7 @@
           "sourceProp": "resendDisabled",
           "targetProp": "resendDisabled",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 189
+          "line": 251
         }
       ]
     },
@@ -25597,7 +25545,7 @@
           "sourceProp": "resendHelper",
           "targetProp": "resendHelper",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 189
+          "line": 251
         }
       ]
     },
@@ -25623,7 +25571,7 @@
           "sourceProp": "resendLabel",
           "targetProp": "resendLabel",
           "relativePath": "src/features/kangur/ui/KangurLoginPage.components.tsx",
-          "line": 189
+          "line": 251
         }
       ]
     },
@@ -28622,110 +28570,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing"
-      ],
-      "propPath": [
-        "challengeRingCircumference",
-        "challengeRingCircumference"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing",
-          "sourceProp": "challengeRingCircumference",
-          "targetProp": "challengeRingCircumference",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 547
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing"
-      ],
-      "propPath": [
-        "challengeRingColor",
-        "challengeRingColor"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing",
-          "sourceProp": "challengeRingColor",
-          "targetProp": "challengeRingColor",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 547
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing"
-      ],
-      "propPath": [
-        "challengeRingOffset",
-        "challengeRingOffset"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockChallengeRing",
-          "sourceProp": "challengeRingOffset",
-          "targetProp": "challengeRingOffset",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 547
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "activeHand",
-        "activeHand"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "activeHand",
-          "targetProp": "activeHand",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 564
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget.tsx#KangurGameHomeQuestPanel",
       "sinkComponentId": "src/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget.tsx#KangurGameHomeQuestMomentumSection",
       "componentPath": [
@@ -30952,15 +30796,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "name": "DraggableClockFace",
-      "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 12,
-      "outgoingTransitionCount": 12,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
       "name": "FilemakerMailSidebar",
       "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
@@ -31504,6 +31339,15 @@
       "componentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.views.tsx#ClockTrainingModeSwitchSlot",
       "name": "ClockTrainingModeSwitchSlot",
       "relativePath": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.views.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
+      "name": "DraggableClockFace",
+      "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -32034,15 +31878,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "name": "DraggableClockFace",
-      "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 12,
-      "outgoingTransitionCount": 12,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
       "name": "FilemakerMailSidebar",
       "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
@@ -32586,6 +32421,15 @@
       "componentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.views.tsx#ClockTrainingModeSwitchSlot",
       "name": "ClockTrainingModeSwitchSlot",
       "relativePath": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.views.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
+      "name": "DraggableClockFace",
+      "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -33460,6 +33304,15 @@
       "name": "LessonsDeferredEnhancements",
       "relativePath": "src/features/kangur/ui/pages/lessons/LessonsDeferredEnhancements.tsx",
       "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
+      "name": "TextBlock",
+      "relativePath": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+      "feature": "feature:products",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
       "hasUnknownSpreadForwarding": false

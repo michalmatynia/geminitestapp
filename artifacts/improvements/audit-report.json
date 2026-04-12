@@ -1,18 +1,34 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-11T14:40:26.131Z",
+  "generatedAt": "2026-04-12T04:06:44.394Z",
   "phase": "audit",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
+    "products-parameter-integrity",
+    "products-category-schema-normalization",
     "ui-consolidation",
     "application-performance",
-    "testing-quality-baseline",
-    "repo-quality-baseline",
-    "ui-consolidation"
+    "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/audit-report.json",
   "steps": [
+    {
+      "id": "products-parameter-audit",
+      "title": "Audit products with missing parameters",
+      "trackId": "products-parameter-integrity",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-missing-parameters-audit-*.json",
+        "/tmp/product-missing-parameters-audit-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:audit:missing-parameters",
+      "durationMs": 4010
+    },
     {
       "id": "ui-consolidation-guardrail",
       "title": "Run UI consolidation guardrail",
@@ -28,7 +44,7 @@
       ],
       "instructions": [],
       "script": "check:ui-consolidation",
-      "durationMs": 12332
+      "durationMs": 4786
     },
     {
       "id": "application-performance-fast-gate",
@@ -41,23 +57,7 @@
       "outputs": [],
       "instructions": [],
       "script": "perf:ops:fast",
-      "durationMs": 46069
-    },
-    {
-      "id": "testing-quality-suite-inventory",
-      "title": "Refresh the testing suite inventory",
-      "trackId": "testing-quality-baseline",
-      "phase": "audit",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "docs/metrics/testing-suite-inventory-latest.md",
-        "docs/metrics/testing-suite-inventory-latest.json"
-      ],
-      "instructions": [],
-      "script": "metrics:test-suite-inventory",
-      "durationMs": 419
+      "durationMs": 29198
     },
     {
       "id": "repo-quality-api-error-sources",
@@ -73,7 +73,7 @@
       ],
       "instructions": [],
       "script": "check:api-error-sources",
-      "durationMs": 451
+      "durationMs": 251
     },
     {
       "id": "repo-quality-canonical-sitewide",
@@ -86,24 +86,7 @@
       "outputs": [],
       "instructions": [],
       "script": "canonical:check:sitewide",
-      "durationMs": 2375
-    },
-    {
-      "id": "ui-consolidation-guardrail",
-      "title": "Run UI consolidation guardrail",
-      "trackId": "ui-consolidation",
-      "phase": "audit",
-      "mode": "automatic",
-      "writes": false,
-      "status": "failed",
-      "outputs": [
-        "docs/ui-consolidation/scan-latest.md",
-        "docs/ui-consolidation/scan-latest.json",
-        "docs/ui-consolidation/inventory-latest.csv"
-      ],
-      "instructions": [],
-      "script": "check:ui-consolidation",
-      "durationMs": 6042
+      "durationMs": 1696
     }
   ]
 }

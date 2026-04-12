@@ -1,28 +1,28 @@
 {
-  "generatedAt": "2026-04-11T17:42:38.020Z",
+  "generatedAt": "2026-04-12T04:06:54.697Z",
   "source": {
-    "totalFiles": 10301,
-    "totalLines": 1701932,
-    "useClientFiles": 1756,
+    "totalFiles": 10343,
+    "totalLines": 1729016,
+    "useClientFiles": 1759,
     "hooksWithoutUseClient": 0,
-    "filesOver800": 94,
-    "filesOver1000": 4,
-    "filesOver1500": 1,
+    "filesOver800": 102,
+    "filesOver1000": 8,
+    "filesOver1500": 3,
     "largestFile": {
-      "path": "src/features/products/server/product-scan-amazon-script.ts",
-      "lines": 1708
+      "path": "src/features/products/server/product-scans-service.ts",
+      "lines": 2351
     }
   },
   "api": {
     "totalRoutes": 30,
     "routesWithApiHandler": 126,
-    "delegatedServerRoutes": 185,
+    "delegatedServerRoutes": 186,
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 0,
     "revalidateRoutes": 0,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 8,
-    "routesWithExplicitCachePolicy": 311,
+    "routesWithExplicitCachePolicy": 312,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
@@ -35,15 +35,15 @@
       },
       {
         "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 117
+        "lines": 120
+      },
+      {
+        "path": "src/app/api/ai-paths/[[...path]]/route.ts",
+        "lines": 116
       },
       {
         "path": "src/app/api/agentcreator/[[...path]]/route.ts",
         "lines": 115
-      },
-      {
-        "path": "src/app/api/ai-paths/[[...path]]/route.ts",
-        "lines": 114
       },
       {
         "path": "src/app/api/databases/[[...path]]/route.ts",
@@ -130,22 +130,22 @@
       {
         "feature": "kangur",
         "files": 2501,
-        "lines": 528229
+        "lines": 528116
       },
       {
         "feature": "ai",
         "files": 1301,
-        "lines": 250370
+        "lines": 251365
       },
       {
         "feature": "products",
-        "files": 433,
-        "lines": 104792
+        "files": 449,
+        "lines": 121351
       },
       {
         "feature": "integrations",
         "files": 472,
-        "lines": 99692
+        "lines": 101579
       },
       {
         "feature": "case-resolver",
@@ -175,7 +175,7 @@
       {
         "feature": "data-import-export",
         "files": 49,
-        "lines": 12055
+        "lines": 11993
       },
       {
         "feature": "admin",
@@ -185,7 +185,7 @@
       {
         "feature": "database",
         "files": 53,
-        "lines": 8485
+        "lines": 8592
       },
       {
         "feature": "playwright",
@@ -198,6 +198,11 @@
         "lines": 7626
       },
       {
+        "feature": "product-sync",
+        "files": 15,
+        "lines": 5654
+      },
+      {
         "feature": "viewer3d",
         "files": 40,
         "lines": 5261
@@ -206,11 +211,6 @@
         "feature": "prompt-engine",
         "files": 32,
         "lines": 4374
-      },
-      {
-        "feature": "product-sync",
-        "files": 12,
-        "lines": 3091
       },
       {
         "feature": "drafter",
@@ -438,31 +438,43 @@
     "topFilesByLines": [
       {
         "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-        "lines": 4416
+        "lines": 4648
       },
       {
         "path": "src/features/products/server/product-scans-service.test.ts",
-        "lines": 2454
+        "lines": 4298
       },
       {
         "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
-        "lines": 2210
-      },
-      {
-        "path": "src/features/products/server/product-scan-amazon-script.ts",
-        "lines": 1708
-      },
-      {
-        "path": "src/features/products/components/ProductModals.test.tsx",
-        "lines": 1552
+        "lines": 3211
       },
       {
         "path": "src/features/products/server/product-scans-service.ts",
-        "lines": 1427
+        "lines": 2351
       },
       {
         "path": "src/features/products/components/form/ProductFormScans.test.tsx",
-        "lines": 1319
+        "lines": 2246
+      },
+      {
+        "path": "src/features/products/components/ProductModals.test.tsx",
+        "lines": 1730
+      },
+      {
+        "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
+        "lines": 1721
+      },
+      {
+        "path": "src/features/product-sync/services/product-sync-service.ts",
+        "lines": 1502
+      },
+      {
+        "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
+        "lines": 1475
+      },
+      {
+        "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
+        "lines": 1393
       },
       {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
@@ -470,15 +482,23 @@
       },
       {
         "path": "src/features/integrations/services/tradera-listing-service.test.ts",
-        "lines": 1130
+        "lines": 1288
+      },
+      {
+        "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+        "lines": 1244
+      },
+      {
+        "path": "src/features/products/components/form/ProductFormScans.tsx",
+        "lines": 1123
+      },
+      {
+        "path": "src/features/product-sync/components/ProductSyncSettings.tsx",
+        "lines": 1111
       },
       {
         "path": "src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts",
         "lines": 1095
-      },
-      {
-        "path": "src/features/products/components/form/ProductFormScans.tsx",
-        "lines": 1060
       },
       {
         "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
@@ -497,16 +517,20 @@
         "lines": 1035
       },
       {
-        "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
-        "lines": 1032
-      },
-      {
         "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
         "lines": 1014
       },
       {
+        "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",
+        "lines": 1008
+      },
+      {
         "path": "src/features/integrations/services/imports/base-mapper.test.ts",
         "lines": 1004
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
+        "lines": 1001
       },
       {
         "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
@@ -529,32 +553,8 @@
         "lines": 989
       },
       {
-        "path": "src/app/api/settings/handler.ts",
-        "lines": 983
-      },
-      {
-        "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx",
-        "lines": 982
-      },
-      {
-        "path": "src/features/kangur/ui/services/geometry-drawing.ts",
-        "lines": 981
-      },
-      {
-        "path": "src/shared/lib/products/services/productService.ts",
-        "lines": 981
-      },
-      {
-        "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
-        "lines": 977
-      },
-      {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionTriggers.ts",
-        "lines": 976
-      },
-      {
-        "path": "src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx",
-        "lines": 976
+        "path": "src/features/ai/ai-paths/server/__tests__/settings-store.test.ts",
+        "lines": 989
       }
     ],
     "topPagesByLines": [

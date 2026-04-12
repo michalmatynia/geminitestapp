@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,24 +8,24 @@ canonical: true
 ---
 # Unit Domain Timings Report
 
-Generated at: 2026-04-11T14:53:07.215Z
+Generated at: 2026-04-12T04:16:51.081Z
 
 ## Summary
 
 - Domains: 5
 - Passed: 3
 - Failed: 2
-- Total duration: 11.8m
+- Total duration: 9.4m
 
 ## Domain Status
 
 | Domain | Status | Duration | Exit |
 | --- | --- | ---: | ---: |
-| Auth | PASS | 32.1s | 0 |
-| Products | FAIL | 3.5m | 1 |
-| AI Paths | FAIL | 4.0m | 1 |
-| Image Studio | PASS | 2.0m | 0 |
-| Case Resolver | PASS | 1.7m | 0 |
+| Auth | PASS | 20.8s | 0 |
+| Products | FAIL | 3.1m | 1 |
+| AI Paths | FAIL | 3.1m | 1 |
+| Image Studio | PASS | 1.3m | 0 |
+| Case Resolver | PASS | 1.5m | 0 |
 
 ## Domain Filters
 

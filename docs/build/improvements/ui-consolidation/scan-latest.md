@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # UI consolidation Improvement Track
 
-Generated at: 2026-04-11T14:40:26.139Z
+Generated at: 2026-04-12T04:21:28.603Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-11T14:40:26.139Z
 - Category: `ui`
 - Included in default read-only bundle: yes
 - Overall status: `failed`
-- Latest report timestamp: 2026-04-11T14:40:26.131Z
+- Latest report timestamp: 2026-04-12T04:21:28.585Z
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Runs the shared UI consolidation guardrail so broad improvement sweeps account f
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `failed` | 2 | 2 | 0 | 2 | 0 |
+| `audit` | `failed` | 1 | 1 | 0 | 1 | 0 |
 | `classify` | `not-configured` | 0 | 0 | 0 | 0 | 0 |
 | `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
@@ -48,7 +48,6 @@ Runs the shared UI consolidation guardrail so broad improvement sweeps account f
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
-| `audit` | `failed` | `automatic` | `ui-consolidation-guardrail` | `check:ui-consolidation` |
 | `audit` | `failed` | `automatic` | `ui-consolidation-guardrail` | `check:ui-consolidation` |
 | `plan` | `manual` | `manual` | `ui-consolidation-plan` | manual |
 

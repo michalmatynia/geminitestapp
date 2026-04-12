@@ -56,7 +56,7 @@ export async function GET_handler(
     });
   }
 
-  return new Response(artifactResult.content, {
+  return new Response(new Uint8Array(artifactResult.content), {
     status: 200,
     headers: {
       'Content-Type': artifactResult.artifact.mimeType?.trim() || 'application/octet-stream',

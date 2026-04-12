@@ -29,17 +29,20 @@ describe('products route module', () => {
   it('registers scans routes before the generic product id route', () => {
     const scansLatestIndex = catchAllRouteSource.indexOf('../scans/latest/route-handler');
     const scansIndex = catchAllRouteSource.indexOf('../scans/route-handler');
+    const scan1688BatchIndex = catchAllRouteSource.indexOf('../scans/1688/batch/route-handler');
     const scanBatchIndex = catchAllRouteSource.indexOf('../scans/amazon/batch/route-handler');
     const productScanIndex = catchAllRouteSource.indexOf('../[id]/scans/route-handler');
     const productIdIndex = catchAllRouteSource.indexOf('../[id]/route-handler');
 
     expect(scansLatestIndex).toBeGreaterThan(-1);
     expect(scansIndex).toBeGreaterThan(-1);
+    expect(scan1688BatchIndex).toBeGreaterThan(-1);
     expect(scanBatchIndex).toBeGreaterThan(-1);
     expect(productScanIndex).toBeGreaterThan(-1);
     expect(productIdIndex).toBeGreaterThan(-1);
     expect(scansLatestIndex).toBeLessThan(productIdIndex);
     expect(scansIndex).toBeLessThan(productIdIndex);
+    expect(scan1688BatchIndex).toBeLessThan(productIdIndex);
     expect(scanBatchIndex).toBeLessThan(productIdIndex);
   });
 

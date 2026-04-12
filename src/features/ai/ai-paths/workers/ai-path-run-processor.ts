@@ -2,7 +2,10 @@ import 'server-only';
 
 import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
-import { recoverStaleRunningRuns } from '@/features/ai/ai-paths/services/path-run-recovery-service';
+import {
+  recoverBlockedLeaseRuns,
+  recoverStaleRunningRuns,
+} from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
@@ -343,6 +346,17 @@ export const processRun = async (
         retryCount,
         maxAttempts,
       });
+      publishRunUpdate(run.id, 'events', {
+        event: 'run.dead_lettered',
+        runId: run.id,
+        pathId: run.pathId,
+        pathName: run.pathName,
+        entityId: run.entityId,
+        retryCount,
+        maxAttempts,
+        error: message,
+        durationMs: Date.now() - runStartMs,
+      });
       void logSystemEvent({
         level: 'error',
         source: LOG_SOURCE,
@@ -381,6 +395,23 @@ export const processStaleRunRecovery = async (): Promise<void> => {
         action: 'staleRunRecovery',
         count,
       });
+    }
+
+    const blockedLeaseRecoveryCount = await recoverBlockedLeaseRuns({
+      source: 'ai-paths-queue.lease-recovery',
+    });
+    if (blockedLeaseRecoveryCount > 0) {
+      debugQueueLog(`Recovery: moved ${blockedLeaseRecoveryCount} blocked lease run(s) to handoff`, {
+        blockedLeaseRecoveryCount,
+      });
+      void ErrorSystem.logWarning(
+        `Lease recovery: moved ${blockedLeaseRecoveryCount} blocked run(s) to handoff-ready`,
+        {
+          service: 'ai-paths-queue',
+          action: 'blockedLeaseRecovery',
+          blockedLeaseRecoveryCount,
+        }
+      );
     }
 
     if (ORPHAN_QUEUED_RECOVERY_ENABLED) {

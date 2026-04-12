@@ -24,6 +24,7 @@ const STEP_GROUP_LABELS: Record<NonNullable<ProductScanStep['group']>, string> =
   input: 'Input',
   google_lens: 'Google Lens',
   amazon: 'Amazon',
+  supplier: 'Supplier',
   product: 'Product Update',
 };
 
@@ -31,7 +32,8 @@ const STEP_GROUP_ORDER: Record<NonNullable<ProductScanStep['group']>, number> = 
   input: 0,
   google_lens: 1,
   amazon: 2,
-  product: 3,
+  supplier: 3,
+  product: 4,
 };
 
 const resolveStepGroup = (
@@ -90,6 +92,21 @@ export type ProductScanRejectedCandidateSummary = {
   latestRejectedUrl: string | null;
   latestReason: string | null;
   latestRejectionKind: 'language' | 'product' | null;
+};
+
+export type ProductScanEvaluationPolicySummary = {
+  executionLabel: 'Reviewed by AI' | 'Deterministic bypass' | null;
+  modelSource: string | null;
+  modelLabel: string | null;
+  thresholdLabel: string | null;
+  scopeLabel: string | null;
+  languageGateLabel: string | null;
+  languageDetectionLabel: string | null;
+};
+
+type AmazonEvaluationExecutionSummary = {
+  badgeLabel: 'Reviewed by AI' | 'Deterministic bypass';
+  detailLabel: string | null;
 };
 
 export const resolveProductScanActiveStepSummary = (
@@ -318,6 +335,81 @@ export const resolveProductScanRejectedCandidateSummary = (
   };
 };
 
+const resolveProductScanEvaluationPolicySummaryFromStep = (
+  step: Pick<ProductScanStep, 'key' | 'details' | 'resultCode' | 'status'> | null | undefined
+): ProductScanEvaluationPolicySummary | null => {
+  if (step?.key !== 'amazon_ai_evaluate') {
+    return null;
+  }
+
+  const modelSource = resolveStepDetailValue(step, 'Model source');
+  const modelLabel = resolveStepDetailValue(step, 'Model');
+  const thresholdLabel = resolveStepDetailValue(step, 'Threshold');
+  const scopeLabel = resolveStepDetailValue(step, 'Evaluation scope');
+  const allowedContentLanguage = resolveStepDetailValue(step, 'Allowed content language');
+  const languagePolicy = resolveStepDetailValue(step, 'Language policy');
+  const languageDetectionLabel = resolveStepDetailValue(step, 'Language detection');
+  const executionLabel = resolveAmazonEvaluationExecutionSummary(step)?.badgeLabel ?? null;
+
+  let languageGateLabel: string | null = null;
+  if (allowedContentLanguage && languagePolicy === 'Reject non-English content') {
+    languageGateLabel = `${allowedContentLanguage} only`;
+  } else if (allowedContentLanguage && languagePolicy) {
+    languageGateLabel = `${allowedContentLanguage} · ${languagePolicy}`;
+  } else {
+    languageGateLabel = allowedContentLanguage ?? languagePolicy;
+  }
+
+  if (
+    !executionLabel &&
+    !modelSource &&
+    !modelLabel &&
+    !thresholdLabel &&
+    !scopeLabel &&
+    !languageGateLabel &&
+    !languageDetectionLabel
+  ) {
+    return null;
+  }
+
+  return {
+    executionLabel,
+    modelSource,
+    modelLabel,
+    thresholdLabel,
+    scopeLabel,
+    languageGateLabel,
+    languageDetectionLabel,
+  };
+};
+
+const resolveAmazonEvaluationExecutionSummary = (
+  step: Pick<ProductScanStep, 'key' | 'resultCode' | 'status'>
+): AmazonEvaluationExecutionSummary | null => {
+  if (step.key !== 'amazon_ai_evaluate') {
+    return null;
+  }
+
+  if (step.resultCode === 'evaluation_skipped' || step.status === 'skipped') {
+    return {
+      badgeLabel: 'Deterministic bypass',
+      detailLabel: 'Bypassed on deterministic match',
+    };
+  }
+
+  return {
+    badgeLabel: 'Reviewed by AI',
+    detailLabel: null,
+  };
+};
+
+export const resolveProductScanEvaluationPolicySummary = (
+  steps: ProductScanStep[]
+): ProductScanEvaluationPolicySummary | null =>
+  resolveProductScanEvaluationPolicySummaryFromStep(
+    [...steps].reverse().find((step) => step.key === 'amazon_ai_evaluate') ?? null
+  );
+
 type ProductScanContinuationContext = {
   step: ProductScanStep;
   rejectedUrl: string | null;
@@ -492,6 +584,8 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                 typeof step.attempt === 'number' && Number.isFinite(step.attempt)
                   ? continuationContexts.get(step.attempt) ?? null
                   : null;
+              const evaluationPolicySummary = resolveProductScanEvaluationPolicySummaryFromStep(step);
+              const evaluationExecutionSummary = resolveAmazonEvaluationExecutionSummary(step);
               const isContinuationQueueStep =
                 continuationContext?.step === step &&
                 step.key === 'queue_scan' &&
@@ -538,6 +632,11 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                         Language gate
                       </span>
                     ) : null}
+                    {evaluationExecutionSummary ? (
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                        {evaluationExecutionSummary.badgeLabel}
+                      </span>
+                    ) : null}
                     {isContinuationQueueStep ? (
                       <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
                         {continuationContext?.rejectionKind === 'language'
@@ -556,6 +655,50 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                   {step.message ? <p className='text-sm text-muted-foreground'>{step.message}</p> : null}
                   {step.warning ? (
                     <p className='text-xs font-medium text-amber-300'>{step.warning}</p>
+                  ) : null}
+                  {evaluationExecutionSummary?.detailLabel ? (
+                    <p className='text-xs text-muted-foreground'>
+                      {evaluationExecutionSummary.detailLabel}
+                    </p>
+                  ) : null}
+                  {evaluationPolicySummary ? (
+                    <div className='space-y-1 rounded-md border border-border/40 bg-muted/20 px-2 py-2'>
+                      <div className='flex flex-wrap items-center gap-2 text-xs'>
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          AI evaluator policy
+                        </span>
+                        {evaluationPolicySummary.modelSource ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.modelSource}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.thresholdLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.thresholdLabel}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.scopeLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.scopeLabel}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.languageGateLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.languageGateLabel}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.languageDetectionLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.languageDetectionLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      {evaluationPolicySummary.modelLabel ? (
+                        <p className='text-xs text-muted-foreground'>
+                          Model {evaluationPolicySummary.modelLabel}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : null}
                   {isContinuationAmazonStep && continuationContext ? (
                     <p className='text-xs text-muted-foreground'>

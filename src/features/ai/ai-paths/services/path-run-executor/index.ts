@@ -44,6 +44,7 @@ import {
   LOG_NODE_START_EVENTS,
   INTERMEDIATE_SAVE_INTERVAL_MS,
   resolveCancellationPollIntervalMs,
+  resolveGraphExecutionMaxDurationMs,
   isMissingRunUpdateError,
 } from './helpers';
 import { runExecutorPreflight } from './preflight';
@@ -408,6 +409,7 @@ export const executePathRun = async (
       },
       runtimeKernelNodeTypes,
       runtimeKernelCodeObjectResolverIds,
+      maxDurationMs: resolveGraphExecutionMaxDurationMs(),
       validationMiddleware: runtimeValidationMiddleware,
       onRuntimeValidation: async ({
         node,

@@ -538,6 +538,148 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
           </div>
         </FormSection>
 
+        <FormSection
+          title='1688 Supplier Scanner'
+          description='Tune candidate collection and extraction breadth for the 1688 reverse-image scanner.'
+          className='p-6'
+        >
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
+            <FormField
+              label='Candidate Result Limit'
+              description='Maximum number of 1688 supplier product candidates collected from one image-search pass.'
+            >
+              <Input
+                type='number'
+                min={1}
+                max={20}
+                step={1}
+                value={draft.scanner1688.candidateResultLimit}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    scanner1688: {
+                      ...prev.scanner1688,
+                      candidateResultLimit: Math.min(
+                        20,
+                        Math.max(
+                          1,
+                          toPositiveInteger(
+                            event.target.value,
+                            prev.scanner1688.candidateResultLimit
+                          )
+                        )
+                      ),
+                    },
+                  }));
+                }}
+                aria-label='1688 candidate result limit'
+                title='1688 candidate result limit'
+              />
+            </FormField>
+            <FormField
+              label='Minimum Candidate Score'
+              description='Heuristic score a supplier page must reach before the scan is trusted as a match.'
+            >
+              <Input
+                type='number'
+                min={1}
+                max={20}
+                step={1}
+                value={draft.scanner1688.minimumCandidateScore}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    scanner1688: {
+                      ...prev.scanner1688,
+                      minimumCandidateScore: Math.min(
+                        20,
+                        Math.max(
+                          1,
+                          toPositiveInteger(
+                            event.target.value,
+                            prev.scanner1688.minimumCandidateScore
+                          )
+                        )
+                      ),
+                    },
+                  }));
+                }}
+                aria-label='1688 minimum candidate score'
+                title='1688 minimum candidate score'
+              />
+            </FormField>
+            <FormField
+              label='Max Extracted Images'
+              description='Cap how many supplier gallery images the scanner stores from the matched 1688 page.'
+            >
+              <Input
+                type='number'
+                min={1}
+                max={20}
+                step={1}
+                value={draft.scanner1688.maxExtractedImages}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    scanner1688: {
+                      ...prev.scanner1688,
+                      maxExtractedImages: Math.min(
+                        20,
+                        Math.max(
+                          1,
+                          toPositiveInteger(
+                            event.target.value,
+                            prev.scanner1688.maxExtractedImages
+                          )
+                        )
+                      ),
+                    },
+                  }));
+                }}
+                aria-label='1688 max extracted images'
+                title='1688 max extracted images'
+              />
+            </FormField>
+            <FormField
+              label='Image URL Fallback'
+              description='Allow the scanner to try 1688 URL-based image search when a local product image file is unavailable.'
+            >
+              <label className='inline-flex items-center gap-2 text-sm'>
+                <input
+                  type='checkbox'
+                  checked={draft.scanner1688.allowUrlImageSearchFallback}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      scanner1688: {
+                        ...prev.scanner1688,
+                        allowUrlImageSearchFallback: event.target.checked,
+                      },
+                    }));
+                  }}
+                  aria-label='Allow 1688 image URL fallback'
+                  title='Allow 1688 image URL fallback'
+                />
+                Try image URL fallback when no local file is available
+              </label>
+            </FormField>
+          </div>
+
+          <div className='mt-4 space-y-2 rounded-md border border-border/60 bg-background/70 px-3 py-3 text-xs text-muted-foreground'>
+            <p className='font-medium uppercase tracking-wide text-foreground'>1688 Runtime Summary</p>
+            <ul className='space-y-1'>
+              <li>Collect up to {draft.scanner1688.candidateResultLimit} candidate supplier pages per scan.</li>
+              <li>Require a heuristic match score of at least {draft.scanner1688.minimumCandidateScore} before trusting the strongest candidate.</li>
+              <li>Store up to {draft.scanner1688.maxExtractedImages} supplier images from the matched page.</li>
+              <li>
+                {draft.scanner1688.allowUrlImageSearchFallback
+                  ? 'URL-based 1688 image search fallback is enabled when no local image file is available.'
+                  : 'URL-based 1688 image search fallback is disabled; scans require a local image file.'}
+              </li>
+            </ul>
+          </div>
+        </FormSection>
+
         <Hint variant='info' className='rounded-md border border-blue-500/20 bg-blue-500/5 p-4'>
           Product scan settings are global. By default, Amazon scans start in a visible browser on
           the auto browser profile. The shortcut in the product Scans tab links here for

@@ -156,16 +156,16 @@ const resolveParameterIds = async (input: {
 
   const combinedFilter: Filter<Document> = nameFilters.length
     ? ({ $or: nameFilters } as Filter<Document>)
-    : ({ _id: null } as Filter<Document>);
+    : ({ _id: { $exists: false } } as Filter<Document>);
 
   const nameResolvedParameterIds: string[] = [];
   const matchedNames = new Set<string>();
   if (requestedParameterNames.length > 0) {
     const docs = await parameterCollection.find(combinedFilter).toArray();
     docs.forEach((doc: Document): void => {
-      const ids = toTrimmedString(doc.id ?? '');
+      const ids = toTrimmedString(doc['id'] ?? '');
       if (ids.length > 0) nameResolvedParameterIds.push(ids);
-      if (typeof doc._id !== 'undefined') nameResolvedParameterIds.push(String(doc._id));
+      if (typeof doc['_id'] !== 'undefined') nameResolvedParameterIds.push(String(doc['_id']));
       ['name_en', 'name_pl', 'name_de'].forEach((key: string) => {
         const value = toTrimmedString((doc as Record<string, unknown>)[key]);
         if (value.length > 0) matchedNames.add(value.toLowerCase());
@@ -222,7 +222,7 @@ const clearProductParameters = async (input: {
         },
       },
     },
-  });
+  } as any);
 
   return { collection: input.collectionName, matched, modified: result.modifiedCount };
 };

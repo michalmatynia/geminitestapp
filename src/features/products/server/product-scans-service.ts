@@ -19,23 +19,29 @@ import {
   type ProductAmazonBatchScanItem,
   type ProductAmazonBatchScanResponse,
   type ProductScanAmazonEvaluation,
+  type ProductScanBatchResponse,
+  type ProductScanProvider,
   type ProductScanRecord,
 } from '@/shared/contracts/product-scans';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { evaluateAmazonScanCandidateMatch } from './product-scan-amazon-evaluator';
-import { AMAZON_REVERSE_IMAGE_SCAN_SCRIPT } from './product-scan-amazon-script';
 import {
   resolveDetectedAmazonAsinOutcome,
-  resolveProductScanDisplayName,
-  resolveProductScanImageCandidates,
 } from './product-scan-amazon.helpers';
+import {
+  AMAZON_PRODUCT_SCAN_PROVIDER,
+  getProductScanProviderDefinition,
+  type ProductScanProviderRuntime,
+} from './product-scan-providers';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
   type ProductScannerAmazonCandidateEvaluatorResolvedConfig,
   resolveProductScannerAmazonCandidateEvaluatorConfig,
+  resolveProductScannerAmazonCandidateEvaluatorExtractionConfig,
+  resolveProductScannerAmazonCandidateEvaluatorProbeConfig,
   resolveProductScannerHeadless,
 } from './product-scanner-settings';
 import {
@@ -63,10 +69,9 @@ import {
   resolvePersistedProductScanSteps,
   upsertPersistedProductScanStep,
   resolveAsinUpdateStepStatus,
+  parse1688ScanScriptResult,
   parseAmazonScanScriptResult,
-  buildAmazonScanRequestInput,
   createAmazonScanStartedRawResult,
-  createAmazonProductScanBaseRecord,
   createFailedBatchResult,
   persistSynchronizedScan,
   persistFailedSynchronization,
@@ -78,6 +83,8 @@ const AMAZON_SCAN_DEFAULT_SLOW_MO_MS = 80;
 const AMAZON_SCAN_DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 const AMAZON_SCAN_STEALTH_LAUNCH_ARGS = ['--disable-blink-features=AutomationControlled'];
+const amazonScanRuntime: ProductScanProviderRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime!;
+const supplierScanRuntime: ProductScanProviderRuntime = getProductScanProviderDefinition('1688').runtime!;
 
 const formatAmazonEvaluationConfidence = (confidence: number | null | undefined): string | null =>
   typeof confidence === 'number' && Number.isFinite(confidence)
@@ -171,6 +178,20 @@ const formatAmazonEvaluatorLanguageDetectionMode = (
   }
 
   return 'Deterministic first, then AI';
+};
+
+const formatAmazonEvaluatorModelSource = (
+  value: ProductScannerAmazonCandidateEvaluatorResolvedConfig['mode'] | null | undefined
+): string | null => {
+  if (value === 'brain_default') {
+    return 'AI Brain default';
+  }
+
+  if (value === 'model_override') {
+    return 'Scanner override';
+  }
+
+  return null;
 };
 
 const resolveAmazonEvaluationRejectionKindLabel = (
@@ -271,6 +292,14 @@ const buildAmazonEvaluationStepDetails = (
   evaluatorConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig
 ): Array<{ label: string; value: string | null }> => [
   { label: 'Model', value: evaluation?.modelId ?? null },
+  {
+    label: 'Model source',
+    value: formatAmazonEvaluatorModelSource(evaluatorConfig.mode),
+  },
+  {
+    label: 'Threshold',
+    value: formatAmazonEvaluationConfidence(evaluatorConfig.threshold),
+  },
   {
     label: 'Evaluation scope',
     value: evaluatorConfig.onlyForAmbiguousCandidates
@@ -464,6 +493,10 @@ async function mapWithConcurrencyLimit<TInput, TOutput>(
 export async function synchronizeProductScan(scan: ProductScanRecord): Promise<ProductScanRecord> {
   if (isProductScanTerminalStatus(scan.status)) {
     return scan;
+  }
+
+  if (scan.provider === '1688') {
+    return await synchronize1688ProductScan(scan);
   }
 
   const engineRunId = resolveScanEngineRunId(scan);
@@ -669,8 +702,8 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         });
         const runRetry = await startPlaywrightEngineTask({
           request: {
-            script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
-            input: buildAmazonScanRequestInput({
+            script: amazonScanRuntime.script,
+            input: amazonScanRuntime.buildRequestInput({
               productId: product.id,
               productName: claimedScan.productName,
               existingAsin: product.asin,
@@ -887,8 +920,8 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
                 );
                 const continuationRun = await startPlaywrightEngineTask({
                   request: {
-                    script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
-                    input: buildAmazonScanRequestInput({
+                    script: amazonScanRuntime.script,
+                    input: amazonScanRuntime.buildRequestInput({
                       productId: product.id,
                       productName: scan.productName,
                       existingAsin: product.asin,
@@ -1072,8 +1105,8 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         );
         const extractionRun = await startPlaywrightEngineTask({
           request: {
-            script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
-            input: buildAmazonScanRequestInput({
+            script: amazonScanRuntime.script,
+            input: amazonScanRuntime.buildRequestInput({
               productId: product.id,
               productName: scan.productName,
               existingAsin: product.asin,
@@ -1386,7 +1419,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         'Amazon candidate AI evaluation failed.'
       );
       const latestCandidateMeta = resolveLatestAmazonCandidateStepMeta(finalizedAmazonSteps);
-      amazonEvaluation = {
+	      amazonEvaluation = {
         status: 'failed',
         sameProduct: null,
         imageMatch: null,
@@ -1402,14 +1435,18 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         evidence: {
           candidateUrl: resolvedScanUrl,
           pageTitle: parsedResult.title,
+          heroImageSource: null,
+          heroImageArtifactName: null,
           screenshotArtifactName: null,
           htmlArtifactName: null,
           productImageSource: scan.imageCandidates[0]?.url ?? scan.imageCandidates[0]?.filepath ?? null,
         },
-        error: message,
-        evaluatedAt: new Date().toISOString(),
-      };
-      finalizedAmazonSteps = upsertPersistedProductScanStep(finalizedAmazonSteps, {
+	        error: message,
+	        evaluatedAt: new Date().toISOString(),
+	      };
+	      const evaluationCandidateUrl =
+	        amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl ?? latestCandidateMeta.url;
+	      finalizedAmazonSteps = upsertPersistedProductScanStep(finalizedAmazonSteps, {
         key: 'amazon_ai_evaluate',
         label: 'Evaluate Amazon candidate match',
         group: 'amazon',
@@ -1417,14 +1454,14 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         candidateId: latestCandidateMeta.candidateId ?? parsedResult.matchedImageId,
         candidateRank: latestCandidateMeta.candidateRank,
         status: 'failed',
-        resultCode: 'evaluation_failed',
-        message,
-        details: [
-          { label: 'Candidate URL', value: amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl },
-          { label: 'Error', value: message },
-        ],
-        url: amazonEvaluation.evidence?.candidateUrl ?? resolvedScanUrl ?? latestCandidateMeta.url,
-      });
+	        resultCode: 'evaluation_failed',
+	        message,
+	        details: [
+	          { label: 'Candidate URL', value: evaluationCandidateUrl },
+	          { label: 'Error', value: message },
+	        ],
+	        url: evaluationCandidateUrl,
+	      });
       return await persistSynchronizedScan(scan, {
         engineRunId,
         status: 'failed',
@@ -1520,12 +1557,193 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
   }
 }
 
-const resolveAlreadyRunningBatchResult = async (
-  productId: string
+async function synchronize1688ProductScan(scan: ProductScanRecord): Promise<ProductScanRecord> {
+  const engineRunId = resolveScanEngineRunId(scan);
+
+  if (!engineRunId) {
+    const ageMs =
+      resolveIsoAgeMs(scan.updatedAt) ??
+      resolveIsoAgeMs(scan.createdAt) ??
+      resolveIsoAgeMs(scan.completedAt);
+    if (ageMs != null && ageMs >= PRODUCT_SCAN_ORPHANED_ACTIVE_MAX_AGE_MS) {
+      return await persistFailedSynchronization(
+        scan,
+        '1688 supplier scan is missing its Playwright engine run id.',
+        '1688 supplier reverse image scan failed.'
+      );
+    }
+
+    return scan;
+  }
+
+  try {
+    let run;
+    try {
+      run = await readPlaywrightEngineRun(engineRunId);
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'product-scans.service',
+        action: 'synchronize1688ProductScan.readRun',
+        scanId: scan.id,
+        productId: scan.productId,
+        engineRunId,
+      });
+      return scan;
+    }
+
+    if (!run) {
+      return await persistFailedSynchronization(
+        scan,
+        `Playwright engine run ${engineRunId} was not found.`,
+        '1688 supplier reverse image scan failed.'
+      );
+    }
+
+    const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
+    const parsedResult = parse1688ScanScriptResult(resultValue);
+
+    if (run.status === 'queued' || run.status === 'running') {
+      const existingRawResult = toRecord(scan.rawResult) ?? {};
+      const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(existingRawResult);
+      const nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+      const activeMessage =
+        parsedResult.status === 'captcha_required'
+          ? resolveManualVerificationMessage(parsedResult.message)
+          : null;
+      const nextRawResult =
+        parsedResult.status === 'captcha_required'
+          ? {
+              ...existingRawResult,
+              ...resultValue,
+              runId: engineRunId,
+              runStatus: run.status,
+              manualVerificationPending: true,
+              manualVerificationMessage: activeMessage,
+              manualVerificationTimeoutMs,
+            }
+          : {
+              ...existingRawResult,
+              runId: engineRunId,
+              runStatus: run.status,
+              manualVerificationPending: false,
+              manualVerificationMessage: null,
+              manualVerificationTimeoutMs,
+            };
+
+      const shouldPersistActiveState =
+        scan.status !== run.status ||
+        scan.engineRunId !== engineRunId ||
+        !areProductScanStepsEqual(scan.steps, nextSteps) ||
+        (activeMessage ?? null) !== (scan.asinUpdateMessage ?? null) ||
+        (parsedResult.status === 'captcha_required' &&
+          existingRawResult['manualVerificationPending'] !== true) ||
+        (parsedResult.status !== 'captcha_required' &&
+          (existingRawResult['manualVerificationPending'] === true ||
+            readOptionalString(existingRawResult['manualVerificationMessage']) != null));
+
+      if (!shouldPersistActiveState) {
+        return scan;
+      }
+
+      return await persistSynchronizedScan(scan, {
+        engineRunId,
+        status: run.status,
+        steps: nextSteps,
+        rawResult: nextRawResult,
+        error: null,
+        asinUpdateStatus: 'not_needed',
+        asinUpdateMessage: activeMessage,
+        completedAt: null,
+      });
+    }
+
+    if (run.status === 'failed') {
+      const failureMessages = collectPlaywrightEngineRunFailureMessages(run);
+      const failureMessage = normalizeErrorMessage(
+        failureMessages[0],
+        '1688 supplier reverse image scan failed.'
+      );
+
+      return await persistSynchronizedScan(scan, {
+        engineRunId,
+        status: 'failed',
+        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
+        error: failureMessage,
+        rawResult: buildPlaywrightEngineRunFailureMeta(run, { includeRawResult: true }),
+        asinUpdateStatus: 'not_needed',
+        asinUpdateMessage: failureMessage,
+        completedAt: run.completedAt ?? new Date().toISOString(),
+      });
+    }
+
+    if (run.status !== 'completed') {
+      return scan;
+    }
+
+    if (parsedResult.status === 'captcha_required') {
+      return await persistFailedSynchronization(
+        scan,
+        resolveManualVerificationMessage(parsedResult.message),
+        '1688 supplier reverse image scan failed.'
+      );
+    }
+
+    if (parsedResult.status === 'failed') {
+      return await persistFailedSynchronization(
+        scan,
+        parsedResult.message ?? '1688 supplier reverse image scan failed.',
+        '1688 supplier reverse image scan failed.'
+      );
+    }
+
+    const nextStatus = parsedResult.status === 'no_match' ? 'no_match' : 'completed';
+    const resolvedScanUrl = resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl);
+    const finalizedSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+    const nextMessage =
+      parsedResult.message ??
+      (nextStatus === 'no_match'
+        ? 'No 1688 supplier page matched the scanned product image.'
+        : '1688 supplier reverse image scan completed.');
+
+    return await persistSynchronizedScan(scan, {
+      engineRunId,
+      status: nextStatus,
+      matchedImageId: parsedResult.matchedImageId,
+      title: parsedResult.title,
+      price: parsedResult.price,
+      url: resolvedScanUrl,
+      description: parsedResult.description,
+      supplierDetails: parsedResult.supplierDetails,
+      supplierProbe: parsedResult.supplierProbe,
+      supplierEvaluation: null,
+      steps: finalizedSteps,
+      rawResult: resultValue,
+      error: null,
+      asinUpdateStatus: 'not_needed',
+      asinUpdateMessage: nextMessage,
+      completedAt: run.completedAt ?? new Date().toISOString(),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to synchronize 1688 supplier reverse image scan.';
+    return await persistFailedSynchronization(
+      scan,
+      message,
+      '1688 supplier reverse image scan failed.'
+    );
+  }
+}
+
+const resolveAlreadyRunningBatchResult = async (input: {
+  productId: string;
+  provider: ProductScanProvider;
+  alreadyRunningMessage: string;
+  resultStatusLabel: string;
+}
 ): Promise<ProductAmazonBatchScanItem | null> => {
   const existingActiveScan = await findLatestActiveProductScan({
-    productId,
-    provider: 'amazon',
+    productId: input.productId,
+    provider: input.provider,
   });
   if (!existingActiveScan) {
     return null;
@@ -1537,12 +1755,15 @@ const resolveAlreadyRunningBatchResult = async (
   }
 
   return {
-    productId,
+    productId: input.productId,
     scanId: synchronized.id,
     runId: resolveScanEngineRunId(synchronized),
     status: 'already_running',
     currentStatus: synchronized.status,
-    message: 'Amazon scan already in progress for this product.',
+    message:
+      synchronized.status === 'running'
+        ? `${input.resultStatusLabel} running.`
+        : input.alreadyRunningMessage,
   };
 };
 
@@ -1596,10 +1817,42 @@ export async function getProductScanByIdWithSync(
   return await synchronizeProductScan(scan);
 }
 
-export async function queueAmazonBatchProductScans(input: {
+type BatchQueueProviderConfig = {
+  provider: ProductScanProvider;
+  runtime: ProductScanProviderRuntime;
+  actionPrefix: string;
+  instanceLabel: string;
+  instanceTags: string[];
+  resultStatusLabel: string;
+  noImageMessage: string;
+  alreadyRunningMessage: string;
+  queueFailureMessage: string;
+  enqueueFailureMessage: string;
+  buildRequestInput: (input: {
+    product: Awaited<ReturnType<typeof productService.getProductById>>;
+    productName: string;
+    imageCandidates: ProductScanRecord['imageCandidates'];
+    batchIndex: number;
+    allowManualVerification: boolean;
+    manualVerificationTimeoutMs: number;
+    amazonCandidateEvaluatorEnabled: boolean;
+    scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
+  }) => Record<string, unknown>;
+};
+
+const queueStatusMessage = (
+  queuedRunStatus: ProductScanRecord['status'],
+  resultStatusLabel: string
+): string =>
+  queuedRunStatus === 'running'
+    ? `${resultStatusLabel} running.`
+    : `${resultStatusLabel} queued.`;
+
+const queueProviderBatchProductScans = async (input: {
   productIds: string[];
   userId?: string | null;
-}): Promise<ProductAmazonBatchScanResponse> {
+  config: BatchQueueProviderConfig;
+}): Promise<ProductScanBatchResponse> => {
   const productIds = Array.from(
     new Set(
       input.productIds
@@ -1613,13 +1866,15 @@ export async function queueAmazonBatchProductScans(input: {
   try {
     scannerSettings = await getProductScannerSettings();
     scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
-    amazonCandidateEvaluatorEnabled = (
-      await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings)
-    ).enabled;
+    if (input.config.provider === 'amazon') {
+      amazonCandidateEvaluatorEnabled = (
+        await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings)
+      ).enabled;
+    }
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'product-scans.service',
-      action: 'queueAmazonBatchProductScans.loadScannerSettings',
+      action: `${input.config.actionPrefix}.loadScannerSettings`,
     });
   }
 
@@ -1628,7 +1883,12 @@ export async function queueAmazonBatchProductScans(input: {
     AMAZON_BATCH_SCAN_START_CONCURRENCY,
     async (productId, batchIndex): Promise<ProductAmazonBatchScanItem> => {
       try {
-        const alreadyRunningResult = await resolveAlreadyRunningBatchResult(productId);
+        const alreadyRunningResult = await resolveAlreadyRunningBatchResult({
+          productId,
+          provider: input.config.provider,
+          alreadyRunningMessage: input.config.alreadyRunningMessage,
+          resultStatusLabel: input.config.resultStatusLabel,
+        });
         if (alreadyRunningResult) {
           return alreadyRunningResult;
         }
@@ -1639,27 +1899,28 @@ export async function queueAmazonBatchProductScans(input: {
         }
 
         const imageCandidates = await sanitizeProductScanImageCandidates(
-          resolveProductScanImageCandidates(product)
+          input.config.runtime.resolveImageCandidates(product)
         );
-        const productName = resolveProductScanDisplayName(product);
-        const baseRecord = createAmazonProductScanBaseRecord({
+        const productName = input.config.runtime.resolveDisplayName(product);
+        const baseRecord = input.config.runtime.createBaseRecord({
           productId,
           productName,
           userId: input.userId,
           imageCandidates,
           status: imageCandidates.length > 0 ? 'queued' : 'failed',
-          error:
-            imageCandidates.length > 0
-              ? null
-              : 'No product image available for Amazon reverse image scan.',
+          error: imageCandidates.length > 0 ? null : input.config.noImageMessage,
         });
 
         let savedBaseRecord: ProductScanRecord;
         try {
           savedBaseRecord = await upsertProductScan(baseRecord);
         } catch (error) {
-          const recoveredAlreadyRunningResult =
-            await resolveAlreadyRunningBatchResult(productId);
+          const recoveredAlreadyRunningResult = await resolveAlreadyRunningBatchResult({
+            productId,
+            provider: input.config.provider,
+            alreadyRunningMessage: input.config.alreadyRunningMessage,
+            resultStatusLabel: input.config.resultStatusLabel,
+          });
           if (recoveredAlreadyRunningResult) {
             return recoveredAlreadyRunningResult;
           }
@@ -1669,7 +1930,7 @@ export async function queueAmazonBatchProductScans(input: {
         if (imageCandidates.length === 0) {
           return createFailedBatchResult(
             productId,
-            savedBaseRecord.error ?? 'No product image available for Amazon reverse image scan.',
+            savedBaseRecord.error ?? input.config.noImageMessage,
             savedBaseRecord.id
           );
         }
@@ -1688,17 +1949,17 @@ export async function queueAmazonBatchProductScans(input: {
             shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless;
           const run = await startPlaywrightEngineTask({
             request: {
-              script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
-              input: buildAmazonScanRequestInput({
-                productId: product.id,
+              script: input.config.runtime.script,
+              input: input.config.buildRequestInput({
+                product,
                 productName,
-                existingAsin: product.asin,
-              imageCandidates,
-              batchIndex,
-              allowManualVerification,
-              manualVerificationTimeoutMs,
-              probeOnlyOnAmazonMatch: amazonCandidateEvaluatorEnabled,
-            }),
+                imageCandidates,
+                batchIndex,
+                allowManualVerification,
+                manualVerificationTimeoutMs,
+                amazonCandidateEvaluatorEnabled,
+                scannerSettings,
+              }),
               timeoutMs: allowManualVerification
                 ? Math.max(
                     AMAZON_SCAN_TIMEOUT_MS,
@@ -1716,8 +1977,8 @@ export async function queueAmazonBatchProductScans(input: {
             ownerUserId: input.userId?.trim() || null,
             instance: createCustomPlaywrightInstance({
               family: 'scrape',
-              label: 'Amazon reverse image ASIN scan',
-              tags: ['product', 'amazon', 'scan', 'google-reverse-image'],
+              label: input.config.instanceLabel,
+              tags: input.config.instanceTags,
             }),
           });
 
@@ -1745,8 +2006,8 @@ export async function queueAmazonBatchProductScans(input: {
                     queuedRunStatus === 'running' ? 'run_started' : 'run_queued',
                   message:
                     queuedRunStatus === 'running'
-                      ? 'Playwright Amazon scan started immediately.'
-                      : 'Playwright Amazon scan queued.',
+                      ? `Playwright ${input.config.resultStatusLabel} started immediately.`
+                      : `Playwright ${input.config.resultStatusLabel} queued.`,
                   details: [
                     { label: 'Run status', value: queuedRunStatus },
                     { label: 'Run id', value: run.runId },
@@ -1759,7 +2020,7 @@ export async function queueAmazonBatchProductScans(input: {
           } catch (error) {
             void ErrorSystem.captureException(error, {
               service: 'product-scans.service',
-              action: 'queueAmazonBatchProductScans.persistRunLink',
+              action: `${input.config.actionPrefix}.persistRunLink`,
               productId,
               scanId: savedBaseRecord.id,
               runId: run.runId,
@@ -1779,8 +2040,8 @@ export async function queueAmazonBatchProductScans(input: {
                       queuedRunStatus === 'running' ? 'run_started' : 'run_queued',
                     message:
                       queuedRunStatus === 'running'
-                        ? 'Playwright Amazon scan started immediately.'
-                        : 'Playwright Amazon scan queued.',
+                        ? `Playwright ${input.config.resultStatusLabel} started immediately.`
+                        : `Playwright ${input.config.resultStatusLabel} queued.`,
                     details: [
                       { label: 'Run status', value: queuedRunStatus },
                       { label: 'Run id', value: run.runId },
@@ -1791,120 +2052,120 @@ export async function queueAmazonBatchProductScans(input: {
                     ...startedRunRawResult,
                     linkError: normalizeErrorMessage(
                       error instanceof Error ? error.message : error,
-                      'Failed to persist Amazon scan run link.'
+                      `Failed to persist ${input.config.resultStatusLabel} run link.`
                     ),
                   },
                 })
               );
-          } catch (fallbackError) {
-            void ErrorSystem.captureException(fallbackError, {
-              service: 'product-scans.service',
-              action: 'queueAmazonBatchProductScans.persistRunFallback',
-              productId,
+            } catch (fallbackError) {
+              void ErrorSystem.captureException(fallbackError, {
+                service: 'product-scans.service',
+                action: `${input.config.actionPrefix}.persistRunFallback`,
+                productId,
                 scanId: savedBaseRecord.id,
-              runId: run.runId,
-            });
+                runId: run.runId,
+              });
 
-            const recovered = await tryDirectQueuedScanUpdate(
-              savedBaseRecord,
-              {
-                engineRunId: run.runId,
-                status: queuedRunStatus,
-                steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
-                  key: 'queue_scan',
-                  label: 'Start Playwright scan',
-                  group: 'input',
-                  status: 'completed',
-                  resultCode:
-                    queuedRunStatus === 'running' ? 'run_started' : 'run_queued',
-                  message:
-                    queuedRunStatus === 'running'
-                      ? 'Playwright Amazon scan started immediately.'
-                      : 'Playwright Amazon scan queued.',
-                  details: [
-                    { label: 'Run status', value: queuedRunStatus },
-                    { label: 'Run id', value: run.runId },
-                  ],
-                  url: null,
-                }),
-                rawResult: {
-                  ...startedRunRawResult,
-                  linkError: normalizeErrorMessage(
-                    error instanceof Error ? error.message : error,
-                    'Failed to persist Amazon scan run link.'
-                  ),
-                  fallbackError: normalizeErrorMessage(
-                    fallbackError instanceof Error ? fallbackError.message : fallbackError,
-                    'Failed to persist Amazon scan run link fallback.'
-                  ),
+              const recovered = await tryDirectQueuedScanUpdate(
+                savedBaseRecord,
+                {
+                  engineRunId: run.runId,
+                  status: queuedRunStatus,
+                  steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
+                    key: 'queue_scan',
+                    label: 'Start Playwright scan',
+                    group: 'input',
+                    status: 'completed',
+                    resultCode:
+                      queuedRunStatus === 'running' ? 'run_started' : 'run_queued',
+                    message:
+                      queuedRunStatus === 'running'
+                        ? `Playwright ${input.config.resultStatusLabel} started immediately.`
+                        : `Playwright ${input.config.resultStatusLabel} queued.`,
+                    details: [
+                      { label: 'Run status', value: queuedRunStatus },
+                      { label: 'Run id', value: run.runId },
+                    ],
+                    url: null,
+                  }),
+                  rawResult: {
+                    ...startedRunRawResult,
+                    linkError: normalizeErrorMessage(
+                      error instanceof Error ? error.message : error,
+                      `Failed to persist ${input.config.resultStatusLabel} run link.`
+                    ),
+                    fallbackError: normalizeErrorMessage(
+                      fallbackError instanceof Error ? fallbackError.message : fallbackError,
+                      `Failed to persist ${input.config.resultStatusLabel} run link fallback.`
+                    ),
+                  },
                 },
-              },
-              {
-                action: 'queueAmazonBatchProductScans.persistRunFallbackUpdate',
-                productId,
-                runId: run.runId,
+                {
+                  action: `${input.config.actionPrefix}.persistRunFallbackUpdate`,
+                  productId,
+                  runId: run.runId,
+                }
+              );
+              if (recovered) {
+                return {
+                  productId,
+                  scanId: recovered.id,
+                  runId: run.runId,
+                  status: queuedRunStatus,
+                  currentStatus: queuedRunStatus,
+                  message: queueStatusMessage(
+                    queuedRunStatus,
+                    input.config.resultStatusLabel
+                  ),
+                };
               }
-            );
-            if (recovered) {
-              return {
-                productId,
-                scanId: recovered.id,
-                runId: run.runId,
-                status: queuedRunStatus,
-                currentStatus: queuedRunStatus,
-                message:
-                  queuedRunStatus === 'running'
-                    ? 'Amazon reverse image scan running.'
-                    : 'Amazon reverse image scan queued.',
-              };
-            }
 
-            const failureMessage =
-              'Amazon scan started, but the scan record could not be updated with its run link.';
-            const failedRecord = await tryDirectQueuedScanUpdate(
-              savedBaseRecord,
-              {
-                status: 'failed',
-                steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
-                  key: 'queue_scan',
-                  label: 'Start Playwright scan',
-                  group: 'input',
+              const failureMessage =
+                `${input.config.resultStatusLabel} started, but the scan record could not be updated with its run link.`;
+              const failedRecord = await tryDirectQueuedScanUpdate(
+                savedBaseRecord,
+                {
                   status: 'failed',
-                  resultCode: 'run_link_failed',
-                  message: failureMessage,
-                  details: [{ label: 'Run id', value: run.runId }],
-                  url: null,
-                }),
-                rawResult: {
-                  ...startedRunRawResult,
-                  linkError: normalizeErrorMessage(
-                    error instanceof Error ? error.message : error,
-                    'Failed to persist Amazon scan run link.'
-                  ),
-                  fallbackError: normalizeErrorMessage(
-                    fallbackError instanceof Error ? fallbackError.message : fallbackError,
-                    'Failed to persist Amazon scan run link fallback.'
-                  ),
+                  steps: upsertPersistedProductScanStep(savedBaseRecord.steps, {
+                    key: 'queue_scan',
+                    label: 'Start Playwright scan',
+                    group: 'input',
+                    status: 'failed',
+                    resultCode: 'run_link_failed',
+                    message: failureMessage,
+                    details: [{ label: 'Run id', value: run.runId }],
+                    url: null,
+                  }),
+                  rawResult: {
+                    ...startedRunRawResult,
+                    linkError: normalizeErrorMessage(
+                      error instanceof Error ? error.message : error,
+                      `Failed to persist ${input.config.resultStatusLabel} run link.`
+                    ),
+                    fallbackError: normalizeErrorMessage(
+                      fallbackError instanceof Error ? fallbackError.message : fallbackError,
+                      `Failed to persist ${input.config.resultStatusLabel} run link fallback.`
+                    ),
+                  },
+                  error: failureMessage,
+                  asinUpdateStatus: 'failed',
+                  asinUpdateMessage: failureMessage,
+                  completedAt: new Date().toISOString(),
                 },
-                error: failureMessage,
-                asinUpdateStatus: 'failed',
-                asinUpdateMessage: failureMessage,
-                completedAt: new Date().toISOString(),
-              },
-              {
-                action: 'queueAmazonBatchProductScans.persistRunFallbackFailed',
-                productId,
-                runId: run.runId,
-              }
-            );
+                {
+                  action: `${input.config.actionPrefix}.persistRunFallbackFailed`,
+                  productId,
+                  runId: run.runId,
+                }
+              );
 
-            return createFailedBatchResult(
-              productId,
-              failureMessage,
-              failedRecord?.id ?? savedBaseRecord.id
-            );
+              return createFailedBatchResult(
+                productId,
+                failureMessage,
+                failedRecord?.id ?? savedBaseRecord.id
+              );
+            }
           }
-        }
 
           return {
             productId,
@@ -1912,19 +2173,16 @@ export async function queueAmazonBatchProductScans(input: {
             runId: run.runId,
             status: queuedRunStatus,
             currentStatus: queuedRunStatus,
-            message:
-              queuedRunStatus === 'running'
-                ? 'Amazon reverse image scan running.'
-                : 'Amazon reverse image scan queued.',
+            message: queueStatusMessage(queuedRunStatus, input.config.resultStatusLabel),
           };
         } catch (error) {
           const message = normalizeErrorMessage(
             error instanceof Error ? error.message : error,
-            'Failed to enqueue Amazon reverse image scan.'
+            input.config.enqueueFailureMessage
           );
           void ErrorSystem.captureException(error, {
             service: 'product-scans.service',
-            action: 'queueAmazonBatchProductScans.startRun',
+            action: `${input.config.actionPrefix}.startRun`,
             productId,
           });
           let failed: ProductScanRecord;
@@ -1951,7 +2209,7 @@ export async function queueAmazonBatchProductScans(input: {
           } catch (persistFailureError) {
             void ErrorSystem.captureException(persistFailureError, {
               service: 'product-scans.service',
-              action: 'queueAmazonBatchProductScans.persistStartRunFailure',
+              action: `${input.config.actionPrefix}.persistStartRunFailure`,
               productId,
               scanId: savedBaseRecord.id,
             });
@@ -1975,7 +2233,7 @@ export async function queueAmazonBatchProductScans(input: {
                 completedAt: new Date().toISOString(),
               },
               {
-                action: 'queueAmazonBatchProductScans.persistStartRunFailureUpdate',
+                action: `${input.config.actionPrefix}.persistStartRunFailureUpdate`,
                 productId,
               }
             );
@@ -1992,11 +2250,11 @@ export async function queueAmazonBatchProductScans(input: {
       } catch (error) {
         const message = normalizeErrorMessage(
           error instanceof Error ? error.message : error,
-          'Failed to queue Amazon reverse image scan.'
+          input.config.queueFailureMessage
         );
         void ErrorSystem.captureException(error, {
           service: 'product-scans.service',
-          action: 'queueAmazonBatchProductScans.product',
+          action: `${input.config.actionPrefix}.product`,
           productId,
         });
         return createFailedBatchResult(productId, message);
@@ -2011,4 +2269,90 @@ export async function queueAmazonBatchProductScans(input: {
     failed: results.filter((result) => result.status === 'failed').length,
     results,
   };
+};
+
+export async function queueAmazonBatchProductScans(input: {
+  productIds: string[];
+  userId?: string | null;
+}): Promise<ProductAmazonBatchScanResponse> {
+  return await queueProviderBatchProductScans({
+    productIds: input.productIds,
+    userId: input.userId,
+    config: {
+      provider: 'amazon',
+      runtime: amazonScanRuntime,
+      actionPrefix: 'queueAmazonBatchProductScans',
+      instanceLabel: 'Amazon reverse image ASIN scan',
+      instanceTags: ['product', 'amazon', 'scan', 'google-reverse-image'],
+      resultStatusLabel: 'Amazon reverse image scan',
+      noImageMessage: 'No product image available for Amazon reverse image scan.',
+      alreadyRunningMessage: 'Amazon scan already in progress for this product.',
+      queueFailureMessage: 'Failed to queue Amazon reverse image scan.',
+      enqueueFailureMessage: 'Failed to enqueue Amazon reverse image scan.',
+      buildRequestInput: ({
+        product,
+        productName,
+        imageCandidates,
+        batchIndex,
+        allowManualVerification,
+        manualVerificationTimeoutMs,
+        amazonCandidateEvaluatorEnabled,
+        scannerSettings: _scannerSettings,
+      }) =>
+        amazonScanRuntime.buildRequestInput({
+          productId: product?.id,
+          productName,
+          existingAsin: product?.asin,
+          imageCandidates,
+          batchIndex,
+          allowManualVerification,
+          manualVerificationTimeoutMs,
+          probeOnlyOnAmazonMatch: amazonCandidateEvaluatorEnabled,
+        }),
+    },
+  });
+}
+
+export async function queue1688BatchProductScans(input: {
+  productIds: string[];
+  userId?: string | null;
+}): Promise<ProductScanBatchResponse> {
+  return await queueProviderBatchProductScans({
+    productIds: input.productIds,
+    userId: input.userId,
+    config: {
+      provider: '1688',
+      runtime: supplierScanRuntime,
+      actionPrefix: 'queue1688BatchProductScans',
+      instanceLabel: '1688 supplier reverse image scan',
+      instanceTags: ['product', '1688', 'scan', 'supplier-reverse-image'],
+      resultStatusLabel: '1688 supplier reverse image scan',
+      noImageMessage: 'No product image available for 1688 supplier reverse image scan.',
+      alreadyRunningMessage: '1688 supplier scan already in progress for this product.',
+      queueFailureMessage: 'Failed to queue 1688 supplier reverse image scan.',
+      enqueueFailureMessage: 'Failed to enqueue 1688 supplier reverse image scan.',
+      buildRequestInput: ({
+        product,
+        productName,
+        imageCandidates,
+        batchIndex,
+        allowManualVerification,
+        manualVerificationTimeoutMs,
+        scannerSettings,
+      }) =>
+        supplierScanRuntime.buildRequestInput({
+          productId: product?.id,
+          productName,
+          imageCandidates,
+          batchIndex,
+          allowManualVerification,
+          manualVerificationTimeoutMs,
+          candidateResultLimit: scannerSettings.scanner1688?.candidateResultLimit,
+          minimumCandidateScore: scannerSettings.scanner1688?.minimumCandidateScore,
+          maxExtractedImages: scannerSettings.scanner1688?.maxExtractedImages,
+          allowUrlImageSearchFallback:
+            scannerSettings.scanner1688?.allowUrlImageSearchFallback,
+        }),
+    },
+  });
 }

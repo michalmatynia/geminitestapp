@@ -6,10 +6,10 @@ const optionalTrimmedString = (max: number) => trimmedString.max(max).nullable()
 
 export const PRODUCT_SCANS_COLLECTION = 'product_scans';
 
-export const productScanProviderSchema = z.enum(['amazon']);
+export const productScanProviderSchema = z.enum(['amazon', '1688']);
 export type ProductScanProvider = z.infer<typeof productScanProviderSchema>;
 
-export const productScanTypeSchema = z.enum(['google_reverse_image']);
+export const productScanTypeSchema = z.enum(['google_reverse_image', 'supplier_reverse_image']);
 export type ProductScanType = z.infer<typeof productScanTypeSchema>;
 
 export const productScanStatusSchema = z.enum([
@@ -56,6 +56,7 @@ export const productScanStepGroupSchema = z.enum([
   'input',
   'google_lens',
   'amazon',
+  'supplier',
   'product',
 ]);
 export type ProductScanStepGroup = z.infer<typeof productScanStepGroupSchema>;
@@ -208,6 +209,95 @@ export const productScanAmazonEvaluationSchema = productScanAmazonEvaluationResu
   .default(null);
 export type ProductScanAmazonEvaluation = z.infer<typeof productScanAmazonEvaluationSchema>;
 
+export const productScanSupplierImageSchema = z.object({
+  url: optionalTrimmedString(4_000),
+  alt: optionalTrimmedString(1_000),
+  artifactName: optionalTrimmedString(260),
+  source: optionalTrimmedString(120),
+});
+export type ProductScanSupplierImage = z.infer<typeof productScanSupplierImageSchema>;
+
+export const productScanSupplierPriceSchema = z.object({
+  label: optionalTrimmedString(200),
+  amount: optionalTrimmedString(120),
+  currency: optionalTrimmedString(40),
+  rangeStart: optionalTrimmedString(120),
+  rangeEnd: optionalTrimmedString(120),
+  moq: optionalTrimmedString(120),
+  unit: optionalTrimmedString(120),
+  source: optionalTrimmedString(120),
+});
+export type ProductScanSupplierPrice = z.infer<typeof productScanSupplierPriceSchema>;
+
+export const productScanSupplierDetailsSchema = z
+  .object({
+    supplierName: optionalTrimmedString(300),
+    supplierStoreUrl: optionalTrimmedString(4_000),
+    supplierProductUrl: optionalTrimmedString(4_000),
+    platformProductId: optionalTrimmedString(160),
+    currency: optionalTrimmedString(40),
+    priceText: optionalTrimmedString(200),
+    priceRangeText: optionalTrimmedString(400),
+    moqText: optionalTrimmedString(200),
+    supplierLocation: optionalTrimmedString(300),
+    supplierRating: optionalTrimmedString(120),
+    sourceLanguage: optionalTrimmedString(80),
+    images: z.array(productScanSupplierImageSchema).max(40).default([]),
+    prices: z.array(productScanSupplierPriceSchema).max(20).default([]),
+  })
+  .nullable()
+  .default(null);
+export type ProductScanSupplierDetails = z.infer<typeof productScanSupplierDetailsSchema>;
+
+export const productScanSupplierProbeSchema = z
+  .object({
+    candidateUrl: optionalTrimmedString(4_000),
+    canonicalUrl: optionalTrimmedString(4_000),
+    pageTitle: optionalTrimmedString(1_000),
+    descriptionSnippet: optionalTrimmedString(4_000),
+    pageLanguage: optionalTrimmedString(80).optional(),
+    supplierName: optionalTrimmedString(300),
+    supplierStoreUrl: optionalTrimmedString(4_000),
+    priceText: optionalTrimmedString(200),
+    currency: optionalTrimmedString(40),
+    heroImageUrl: optionalTrimmedString(4_000),
+    heroImageAlt: optionalTrimmedString(1_000),
+    heroImageArtifactName: optionalTrimmedString(260),
+    artifactKey: optionalTrimmedString(260),
+    imageCount: z.number().int().nonnegative().nullable().default(null),
+  })
+  .nullable()
+  .default(null);
+export type ProductScanSupplierProbe = z.infer<typeof productScanSupplierProbeSchema>;
+
+export const productScanSupplierEvaluationStatusSchema = z.enum([
+  'approved',
+  'rejected',
+  'skipped',
+  'failed',
+]);
+export type ProductScanSupplierEvaluationStatus = z.infer<
+  typeof productScanSupplierEvaluationStatusSchema
+>;
+
+export const productScanSupplierEvaluationSchema = z
+  .object({
+    status: productScanSupplierEvaluationStatusSchema,
+    sameProduct: z.boolean().nullable().default(null),
+    imageMatch: z.boolean().nullable().default(null),
+    titleMatch: z.boolean().nullable().default(null),
+    confidence: z.number().min(0).max(1).nullable().default(null),
+    proceed: z.boolean().default(false),
+    reasons: z.array(trimmedString.max(500)).max(10).default([]),
+    mismatches: z.array(trimmedString.max(500)).max(10).default([]),
+    modelId: optionalTrimmedString(200),
+    error: optionalTrimmedString(2_000),
+    evaluatedAt: z.string().datetime().nullable().default(null),
+  })
+  .nullable()
+  .default(null);
+export type ProductScanSupplierEvaluation = z.infer<typeof productScanSupplierEvaluationSchema>;
+
 export const productScanImageCandidateSchema = z.object({
   id: optionalTrimmedString(160),
   url: optionalTrimmedString(4_000),
@@ -234,6 +324,9 @@ export const productScanRecordSchema = z.object({
   amazonDetails: productScanAmazonDetailsSchema,
   amazonProbe: productScanAmazonProbeSchema,
   amazonEvaluation: productScanAmazonEvaluationSchema,
+  supplierDetails: productScanSupplierDetailsSchema,
+  supplierProbe: productScanSupplierProbeSchema,
+  supplierEvaluation: productScanSupplierEvaluationSchema,
   steps: z.array(productScanStepSchema).max(120).default([]),
   rawResult: z.unknown().nullable().default(null),
   error: optionalTrimmedString(2_000),
@@ -246,6 +339,7 @@ export const productScanRecordSchema = z.object({
   updatedAt: z.string().datetime().optional(),
 });
 export type ProductScanRecord = z.infer<typeof productScanRecordSchema>;
+export type ProductScanRecordInput = z.input<typeof productScanRecordSchema>;
 
 export const productScanListResponseSchema = z.object({
   scans: z.array(productScanRecordSchema).default([]),
@@ -256,6 +350,8 @@ export const productAmazonBatchScanRequestSchema = z.object({
   productIds: z.array(trimmedString.min(1).max(160)).min(1).max(100),
 });
 export type ProductAmazonBatchScanRequest = z.infer<typeof productAmazonBatchScanRequestSchema>;
+export const productScanBatchRequestSchema = productAmazonBatchScanRequestSchema;
+export type ProductScanBatchRequest = ProductAmazonBatchScanRequest;
 
 export const productAmazonBatchScanItemStatusSchema = z.enum([
   'queued',
@@ -276,6 +372,8 @@ export const productAmazonBatchScanItemSchema = z.object({
   message: optionalTrimmedString(1_000),
 });
 export type ProductAmazonBatchScanItem = z.infer<typeof productAmazonBatchScanItemSchema>;
+export const productScanBatchItemSchema = productAmazonBatchScanItemSchema;
+export type ProductScanBatchItem = ProductAmazonBatchScanItem;
 
 export const productAmazonBatchScanResponseSchema = z.object({
   queued: z.number().int().nonnegative(),
@@ -287,8 +385,10 @@ export const productAmazonBatchScanResponseSchema = z.object({
 export type ProductAmazonBatchScanResponse = z.infer<
   typeof productAmazonBatchScanResponseSchema
 >;
+export const productScanBatchResponseSchema = productAmazonBatchScanResponseSchema;
+export type ProductScanBatchResponse = ProductAmazonBatchScanResponse;
 
-export type CreateProductScanInput = Omit<ProductScanRecord, 'createdAt' | 'updatedAt'> & {
+export type CreateProductScanInput = Omit<ProductScanRecordInput, 'createdAt' | 'updatedAt'> & {
   createdAt?: string;
   updatedAt?: string;
 };
@@ -296,5 +396,5 @@ export type CreateProductScanInput = Omit<ProductScanRecord, 'createdAt' | 'upda
 export type UpdateProductScanInput = Partial<CreateProductScanInput>;
 
 export const normalizeProductScanRecord = (
-  value: ProductScanRecord
+  value: ProductScanRecordInput
 ): ProductScanRecord => productScanRecordSchema.parse(value);

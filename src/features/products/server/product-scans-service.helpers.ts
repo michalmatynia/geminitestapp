@@ -10,12 +10,16 @@ import {
   normalizeProductScanRecord,
   productScanAmazonDetailsSchema,
   productScanAmazonProbeSchema,
+  productScanSupplierDetailsSchema,
+  productScanSupplierProbeSchema,
   productScanStepDetailSchema,
   productScanStepSchema,
   type ProductScanAmazonDetails,
   type ProductScanAmazonProbe,
   type ProductAmazonBatchScanItem,
   type ProductScanRecord,
+  type ProductScanSupplierDetails,
+  type ProductScanSupplierProbe,
   type ProductScanStep,
 } from '@/shared/contracts/product-scans';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
@@ -63,6 +67,22 @@ export type AmazonScanScriptResult = {
   description: string | null;
   amazonDetails: ProductScanAmazonDetails;
   amazonProbe: ProductScanAmazonProbe;
+  candidateUrls: string[];
+  matchedImageId: string | null;
+  message: string | null;
+  currentUrl: string | null;
+  stage: string | null;
+  steps: ProductScanStep[];
+};
+
+export type SupplierScanScriptResult = {
+  status: 'matched' | 'probe_ready' | 'no_match' | 'failed' | 'captcha_required' | 'running';
+  title: string | null;
+  price: string | null;
+  url: string | null;
+  description: string | null;
+  supplierDetails: ProductScanSupplierDetails;
+  supplierProbe: ProductScanSupplierProbe;
   candidateUrls: string[];
   matchedImageId: string | null;
   message: string | null;
@@ -231,6 +251,16 @@ export const normalizeParsedAmazonProbe = (value: unknown): ProductScanAmazonPro
   return parsed.success ? parsed.data : null;
 };
 
+export const normalizeParsedSupplierDetails = (value: unknown): ProductScanSupplierDetails => {
+  const parsed = productScanSupplierDetailsSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedSupplierProbe = (value: unknown): ProductScanSupplierProbe => {
+  const parsed = productScanSupplierProbeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
 export const normalizeParsedCandidateUrls = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -277,6 +307,10 @@ export const resolveProductScanStepGroup = (
     return 'amazon';
   }
 
+  if (normalizedKey.startsWith('supplier_') || normalizedKey.startsWith('1688_')) {
+    return 'supplier';
+  }
+
   if (normalizedKey.startsWith('product_')) {
     return 'product';
   }
@@ -303,7 +337,10 @@ const resolveProductScanStepIdentity = (
   `${step.key}::${resolveComparableStepAttempt(step.attempt)}::${readOptionalString(step.inputSource) ?? 'none'}`;
 
 const normalizePersistedProductScanStep = (
-  input: Partial<ProductScanStep> & Pick<ProductScanStep, 'key' | 'label' | 'status'>
+  input: Omit<Partial<ProductScanStep>, 'details'> &
+    Pick<ProductScanStep, 'key' | 'label' | 'status'> & {
+      details?: Array<{ label: string; value?: string | null }>;
+    }
 ): ProductScanStep => {
   const startedAt = input.startedAt ?? new Date().toISOString();
   const completedAt =
@@ -488,20 +525,22 @@ export const createPersistedProductScanStep = (input: {
 };
 
 export const buildPreparedProductScanSteps = (input: {
+  prepareLabel?: string;
+  summaryLabel?: string;
   imageCandidateCount: number;
   status: ProductScanRecord['status'];
   error?: string | null;
 }): ProductScanStep[] => [
   createPersistedProductScanStep({
     key: 'prepare_scan',
-    label: 'Prepare Amazon scan',
+    label: `Prepare ${input.prepareLabel ?? 'Amazon'} scan`,
     group: 'input',
     status: input.status === 'failed' ? 'failed' : 'completed',
     resultCode: input.status === 'failed' ? 'prepare_failed' : 'prepared',
     message:
       input.status === 'failed'
-        ? input.error ?? 'Failed to prepare Amazon reverse image scan.'
-        : `Prepared ${input.imageCandidateCount} image candidate${input.imageCandidateCount === 1 ? '' : 's'} for Amazon reverse image scan.`,
+        ? input.error ?? `Failed to prepare ${input.summaryLabel ?? 'Amazon reverse image'} scan.`
+        : `Prepared ${input.imageCandidateCount} image candidate${input.imageCandidateCount === 1 ? '' : 's'} for ${input.summaryLabel ?? 'Amazon reverse image'} scan.`,
     details: [
       {
         label: 'Image candidates',
@@ -560,6 +599,39 @@ export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptRes
   };
 };
 
+export const parse1688ScanScriptResult = (value: unknown): SupplierScanScriptResult => {
+  const record = toRecord(value);
+  const statusValue = readOptionalString(record?.['status']);
+  const status =
+    statusValue === 'matched' ||
+    statusValue === 'probe_ready' ||
+    statusValue === 'no_match' ||
+    statusValue === 'failed' ||
+    statusValue === 'captcha_required' ||
+    statusValue === 'running'
+      ? statusValue
+      : 'failed';
+
+  return {
+    status,
+    title: readOptionalString(record?.['title'], PRODUCT_SCAN_TITLE_MAX_LENGTH),
+    price: readOptionalString(record?.['price'], PRODUCT_SCAN_PRICE_MAX_LENGTH),
+    url: readOptionalString(record?.['url'], PRODUCT_SCAN_URL_MAX_LENGTH),
+    description: readOptionalString(record?.['description'], PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH),
+    supplierDetails: normalizeParsedSupplierDetails(record?.['supplierDetails']),
+    supplierProbe: normalizeParsedSupplierProbe(record?.['supplierProbe']),
+    candidateUrls: normalizeParsedCandidateUrls(record?.['candidateUrls']),
+    matchedImageId: readOptionalString(
+      record?.['matchedImageId'],
+      PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH
+    ),
+    message: readOptionalString(record?.['message'], PRODUCT_SCAN_ERROR_MAX_LENGTH),
+    currentUrl: readOptionalString(record?.['currentUrl'], PRODUCT_SCAN_URL_MAX_LENGTH),
+    stage: readOptionalString(record?.['stage']),
+    steps: normalizeParsedProductScanSteps(record?.['steps']),
+  };
+};
+
 export const buildAmazonScanRequestInput = (input: {
   productId: string;
   productName: string | null;
@@ -595,6 +667,67 @@ export const buildAmazonScanRequestInput = (input: {
     Number.isFinite(input.directAmazonCandidateRank) &&
     input.directAmazonCandidateRank > 0
       ? Math.trunc(input.directAmazonCandidateRank)
+      : null,
+});
+
+export const build1688ScanRequestInput = (input: {
+  productId: string;
+  productName: string | null;
+  imageCandidates: ProductScanRecord['imageCandidates'];
+  batchIndex?: number;
+  allowManualVerification: boolean;
+  manualVerificationTimeoutMs: number;
+  candidateResultLimit?: number | null;
+  minimumCandidateScore?: number | null;
+  maxExtractedImages?: number | null;
+  allowUrlImageSearchFallback?: boolean | null;
+  directSupplierCandidateUrl?: string | null;
+  directSupplierCandidateUrls?: string[] | null;
+  directMatchedImageId?: string | null;
+  directSupplierCandidateRank?: number | null;
+}) => ({
+  productId: input.productId,
+  productName: input.productName,
+  imageCandidates: input.imageCandidates,
+  batchIndex:
+    typeof input.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0
+      ? Math.trunc(input.batchIndex)
+      : 0,
+  allowManualVerification: input.allowManualVerification,
+  manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
+  candidateResultLimit:
+    typeof input.candidateResultLimit === 'number' &&
+    Number.isFinite(input.candidateResultLimit) &&
+    input.candidateResultLimit > 0
+      ? Math.trunc(input.candidateResultLimit)
+      : null,
+  minimumCandidateScore:
+    typeof input.minimumCandidateScore === 'number' &&
+    Number.isFinite(input.minimumCandidateScore) &&
+    input.minimumCandidateScore > 0
+      ? Math.trunc(input.minimumCandidateScore)
+      : null,
+  maxExtractedImages:
+    typeof input.maxExtractedImages === 'number' &&
+    Number.isFinite(input.maxExtractedImages) &&
+    input.maxExtractedImages > 0
+      ? Math.trunc(input.maxExtractedImages)
+      : null,
+  allowUrlImageSearchFallback: input.allowUrlImageSearchFallback !== false,
+  directSupplierCandidateUrl: readOptionalString(
+    input.directSupplierCandidateUrl,
+    PRODUCT_SCAN_URL_MAX_LENGTH
+  ),
+  directSupplierCandidateUrls: normalizeParsedCandidateUrls(input.directSupplierCandidateUrls),
+  directMatchedImageId: readOptionalString(
+    input.directMatchedImageId,
+    PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH
+  ),
+  directSupplierCandidateRank:
+    typeof input.directSupplierCandidateRank === 'number' &&
+    Number.isFinite(input.directSupplierCandidateRank) &&
+    input.directSupplierCandidateRank > 0
+      ? Math.trunc(input.directSupplierCandidateRank)
       : null,
 });
 
@@ -650,6 +783,53 @@ export const createAmazonProductScanBaseRecord = (input: {
     amazonProbe: null,
     amazonEvaluation: null,
     steps: buildPreparedProductScanSteps({
+      prepareLabel: 'Amazon',
+      summaryLabel: 'Amazon reverse image',
+      imageCandidateCount: input.imageCandidates.length,
+      status: input.status,
+      error: input.error ?? null,
+    }),
+    rawResult: null,
+    error: input.error ?? null,
+    asinUpdateStatus: 'not_needed',
+    asinUpdateMessage: null,
+    createdBy: input.userId?.trim() || null,
+    updatedBy: input.userId?.trim() || null,
+    completedAt: input.status === 'failed' ? new Date().toISOString() : null,
+  });
+
+export const create1688ProductScanBaseRecord = (input: {
+  productId: string;
+  productName: string;
+  userId?: string | null;
+  imageCandidates: ProductScanRecord['imageCandidates'];
+  status: ProductScanRecord['status'];
+  error?: string | null;
+}): ProductScanRecord =>
+  normalizeProductScanRecord({
+    id: randomUUID(),
+    productId: input.productId,
+    provider: '1688',
+    scanType: 'supplier_reverse_image',
+    status: input.status,
+    productName: input.productName,
+    engineRunId: null,
+    imageCandidates: input.imageCandidates,
+    matchedImageId: null,
+    asin: null,
+    title: null,
+    price: null,
+    url: null,
+    description: null,
+    amazonDetails: null,
+    amazonProbe: null,
+    amazonEvaluation: null,
+    supplierDetails: null,
+    supplierProbe: null,
+    supplierEvaluation: null,
+    steps: buildPreparedProductScanSteps({
+      prepareLabel: '1688 supplier',
+      summaryLabel: '1688 supplier reverse image',
       imageCandidateCount: input.imageCandidates.length,
       status: input.status,
       error: input.error ?? null,
@@ -717,9 +897,10 @@ export const persistSynchronizedScan = async (
 
 export const persistFailedSynchronization = async (
   scan: ProductScanRecord,
-  message: string
+  message: string,
+  fallbackMessage = 'Amazon reverse image scan failed.'
 ): Promise<ProductScanRecord> => {
-  const normalizedMessage = normalizeErrorMessage(message, 'Amazon reverse image scan failed.');
+  const normalizedMessage = normalizeErrorMessage(message, fallbackMessage);
 
   return await persistSynchronizedScan(scan, {
     status: 'failed',

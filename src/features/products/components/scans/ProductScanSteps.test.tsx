@@ -5,6 +5,7 @@ import {
   ProductScanSteps,
   resolveProductScanActiveStepSummary,
   resolveProductScanContinuationSummary,
+  resolveProductScanEvaluationPolicySummary,
   resolveProductScanLatestOutcomeSummary,
   resolveProductScanRejectedCandidateSummary,
 } from './ProductScanSteps';
@@ -386,6 +387,91 @@ describe('ProductScanSteps', () => {
     });
   });
 
+  it('resolves the persisted AI evaluator policy summary from the latest evaluation step', () => {
+    const summary = resolveProductScanEvaluationPolicySummary([
+      {
+        key: 'amazon_ai_evaluate',
+        label: 'Evaluate Amazon candidate match',
+        group: 'amazon',
+        attempt: 1,
+        candidateId: 'image-2',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'candidate_rejected',
+        status: 'failed',
+        message: 'AI evaluator rejected the Amazon candidate.',
+        warning: null,
+        details: [
+          { label: 'Model source', value: 'Scanner override' },
+          { label: 'Model', value: 'gpt-4o-mini' },
+          { label: 'Threshold', value: '82%' },
+          { label: 'Evaluation scope', value: 'Ambiguous Amazon candidates only' },
+          { label: 'Allowed content language', value: 'English' },
+          { label: 'Language policy', value: 'Reject non-English content' },
+          { label: 'Language detection', value: 'Deterministic first, then AI' },
+        ],
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      executionLabel: 'Reviewed by AI',
+      modelSource: 'Scanner override',
+      modelLabel: 'gpt-4o-mini',
+      thresholdLabel: '82%',
+      scopeLabel: 'Ambiguous Amazon candidates only',
+      languageGateLabel: 'English only',
+      languageDetectionLabel: 'Deterministic first, then AI',
+    });
+  });
+
+  it('resolves deterministic bypass in the persisted evaluator policy summary', () => {
+    const summary = resolveProductScanEvaluationPolicySummary([
+      {
+        key: 'amazon_ai_evaluate',
+        label: 'Evaluate Amazon candidate match',
+        group: 'amazon',
+        attempt: 1,
+        candidateId: 'image-2',
+        candidateRank: 1,
+        inputSource: null,
+        retryOf: null,
+        resultCode: 'evaluation_skipped',
+        status: 'skipped',
+        message:
+          'Skipped Amazon candidate AI evaluation because deterministic identifiers already matched.',
+        warning: null,
+        details: [
+          { label: 'Model source', value: 'AI Brain default' },
+          { label: 'Model', value: 'gpt-4o' },
+          { label: 'Threshold', value: '85%' },
+          { label: 'Evaluation scope', value: 'Ambiguous Amazon candidates only' },
+          { label: 'Allowed content language', value: 'English' },
+          { label: 'Language policy', value: 'Reject non-English content' },
+          { label: 'Language detection', value: 'Deterministic first, then AI' },
+        ],
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      executionLabel: 'Deterministic bypass',
+      modelSource: 'AI Brain default',
+      modelLabel: 'gpt-4o',
+      thresholdLabel: '85%',
+      scopeLabel: 'Ambiguous Amazon candidates only',
+      languageGateLabel: 'English only',
+      languageDetectionLabel: 'Deterministic first, then AI',
+    });
+  });
+
   it('renders recovery badges and context for continuation attempts in the timeline', () => {
     render(
       <ProductScanSteps
@@ -459,6 +545,102 @@ describe('ProductScanSteps', () => {
     expect(
       screen.getByText('Continues after AI rejection of https://www.amazon.com/dp/B00TEST123.')
     ).toBeInTheDocument();
+  });
+
+  it('renders the persisted evaluator policy inline on amazon evaluation steps', () => {
+    render(
+      <ProductScanSteps
+        steps={[
+          {
+            key: 'amazon_ai_evaluate',
+            label: 'Evaluate Amazon candidate match',
+            group: 'amazon',
+            attempt: 1,
+            candidateId: 'image-2',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'candidate_rejected',
+            status: 'failed',
+            message: 'AI evaluator rejected the Amazon candidate.',
+            warning: null,
+            details: [
+              { label: 'Model source', value: 'Scanner override' },
+              { label: 'Model', value: 'gpt-4o-mini' },
+              { label: 'Threshold', value: '82%' },
+              { label: 'Evaluation scope', value: 'Ambiguous Amazon candidates only' },
+              { label: 'Allowed content language', value: 'English' },
+              { label: 'Language policy', value: 'Reject non-English content' },
+              { label: 'Language detection', value: 'Deterministic first, then AI' },
+            ],
+            url: 'https://www.amazon.com/dp/B00TEST123',
+            startedAt: '2026-04-11T10:00:05.000Z',
+            completedAt: '2026-04-11T10:00:08.000Z',
+            durationMs: 3000,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText('AI evaluator policy')).toBeInTheDocument();
+    expect(screen.getByText('Model gpt-4o-mini')).toBeInTheDocument();
+    expect(screen.getAllByText('Scanner override').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('82%').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Ambiguous Amazon candidates only').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('English only').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Deterministic first, then AI').length).toBeGreaterThan(0);
+  });
+
+  it('shows whether amazon evaluation steps were reviewed by AI or bypassed deterministically', () => {
+    render(
+      <ProductScanSteps
+        steps={[
+          {
+            key: 'amazon_ai_evaluate',
+            label: 'Evaluate Amazon candidate match',
+            group: 'amazon',
+            attempt: 1,
+            candidateId: 'image-2',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'candidate_approved',
+            status: 'completed',
+            message: 'AI evaluator approved the Amazon candidate (93%).',
+            warning: null,
+            details: [{ label: 'Model', value: 'gpt-4o' }],
+            url: 'https://www.amazon.com/dp/B00TEST123',
+            startedAt: '2026-04-11T10:00:05.000Z',
+            completedAt: '2026-04-11T10:00:08.000Z',
+            durationMs: 3000,
+          },
+          {
+            key: 'amazon_ai_evaluate',
+            label: 'Evaluate Amazon candidate match',
+            group: 'amazon',
+            attempt: 2,
+            candidateId: 'image-2',
+            candidateRank: 2,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'evaluation_skipped',
+            status: 'skipped',
+            message:
+              'Skipped Amazon candidate AI evaluation because deterministic identifiers already matched.',
+            warning: null,
+            details: [{ label: 'Model', value: 'gpt-4o' }],
+            url: 'https://www.amazon.com/dp/B00TEST456',
+            startedAt: '2026-04-11T10:00:09.000Z',
+            completedAt: '2026-04-11T10:00:10.000Z',
+            durationMs: 1000,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText('Reviewed by AI')).toBeInTheDocument();
+    expect(screen.getByText('Deterministic bypass')).toBeInTheDocument();
+    expect(screen.getByText('Bypassed on deterministic match')).toBeInTheDocument();
   });
 
   it('renders language gate context for continuation attempts in the timeline', () => {

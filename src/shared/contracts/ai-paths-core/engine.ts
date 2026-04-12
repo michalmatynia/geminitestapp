@@ -117,6 +117,10 @@ export type CompiledGraph = {
 export type GraphCompileCode =
   | 'fan_in_single_port'
   | 'required_input_missing_wiring'
+  | 'invalid_edge_missing_node'
+  | 'invalid_edge_missing_port'
+  | 'invalid_edge_incompatible_connection'
+  | 'duplicate_edge_dropped'
   | 'cycle_detected'
   | 'unsupported_cycle'
   | 'cycle_wait_deadlock_risk'

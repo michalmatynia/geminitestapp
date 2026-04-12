@@ -2055,13 +2055,8 @@ describe('product-scans-service', () => {
             timeout: 45000,
             headless: false,
           },
-          launchOptions: expect.objectContaining({
+          launchOptions: {
             channel: 'chrome',
-            args: ['--disable-blink-features=AutomationControlled'],
-          }),
-          contextOptions: {
-            userAgent:
-              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           },
           input: expect.objectContaining({
             productId: 'product-1',
@@ -3569,13 +3564,8 @@ describe('product-scans-service', () => {
             headless: false,
             slowMo: 25,
           },
-          launchOptions: expect.objectContaining({
+          launchOptions: {
             channel: 'chrome',
-            args: ['--disable-blink-features=AutomationControlled'],
-          }),
-          contextOptions: {
-            userAgent:
-              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           },
           input: expect.objectContaining({
             allowManualVerification: true,
@@ -3642,15 +3632,11 @@ describe('product-scans-service', () => {
           settingsOverrides: {
             headless: false,
             slowMo: 80,
+            identityProfile: 'search',
             humanizeMouse: true,
           },
-          launchOptions: expect.objectContaining({
+          launchOptions: {
             channel: 'chrome',
-            args: ['--disable-blink-features=AutomationControlled'],
-          }),
-          contextOptions: {
-            userAgent:
-              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           },
         }),
       })

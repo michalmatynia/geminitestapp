@@ -45,6 +45,17 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       ? Math.min(20, Math.max(1, Math.trunc(input.maxExtractedImages)))
       : 12;
   const allowUrlImageSearchFallback = input?.allowUrlImageSearchFallback !== false;
+  const allowManualVerification = input?.allowManualVerification === true;
+  const manualVerificationTimeoutMs =
+    typeof input?.manualVerificationTimeoutMs === 'number' &&
+    Number.isFinite(input.manualVerificationTimeoutMs) &&
+    input.manualVerificationTimeoutMs > 0
+      ? Math.trunc(input.manualVerificationTimeoutMs)
+      : 240000;
+  const scanner1688StartUrl =
+    typeof input?.scanner1688StartUrl === 'string' && input.scanner1688StartUrl.trim()
+      ? input.scanner1688StartUrl.trim()
+      : 'https://www.1688.com/';
   const scanSteps = [];
   const nowIso = () => new Date().toISOString();
   const wait = async (ms) => {
@@ -379,6 +390,26 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       currentUrl,
       message: null,
     };
+  };
+  const handle1688CaptchaIfPresent = async (stage, stepMeta = {}) => {
+    const initial = await detect1688AccessBarrier();
+    if (!initial.blocked) return false;
+    if (!allowManualVerification) return true;
+    const waitMessage =
+      '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
+    await emitProgress({
+      stage,
+      message: waitMessage,
+      currentUrl: initial.currentUrl,
+      ...stepMeta,
+    });
+    const deadline = Date.now() + manualVerificationTimeoutMs;
+    while (Date.now() < deadline) {
+      await wait(1000);
+      const barrier = await detect1688AccessBarrier();
+      if (!barrier.blocked) return false;
+    }
+    return true;
   };
   const collect1688CandidateUrls = async (limit = CANDIDATE_RESULT_LIMIT) => {
     const hrefs = await page
@@ -890,9 +921,9 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       status: 'running',
       resultCode: 'search_open_start',
       message: 'Opening 1688 image search.',
-      url: 'https://www.1688.com/',
+      url: scanner1688StartUrl,
     });
-    await page.goto('https://www.1688.com/', {
+    await page.goto(scanner1688StartUrl, {
       waitUntil: 'domcontentloaded',
       timeout: 30000,
     });
@@ -916,8 +947,9 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       currentUrl: page.url(),
     });
 
-    const barrierAfterOpen = await detect1688AccessBarrier();
-    if (barrierAfterOpen.blocked) {
+    const stillBlocked = await handle1688CaptchaIfPresent('1688_open', { matchedImageId });
+    if (stillBlocked) {
+      const barrierAfterOpen = await detect1688AccessBarrier();
       upsertScanStep({
         key: '1688_open',
         label: 'Open 1688 image search',
@@ -970,7 +1002,13 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         url: page.url(),
       });
       await fileInput.setInputFiles(imageFilePath);
-      const candidateState = await waitFor1688Candidates(page.url());
+      let candidateState = await waitFor1688Candidates(page.url());
+      if (!candidateState.ready && candidateState.blocked) {
+        const stillBlockedFile = await handle1688CaptchaIfPresent('1688_upload', { matchedImageId });
+        if (!stillBlockedFile) {
+          candidateState = await waitFor1688Candidates(page.url(), 15000);
+        }
+      }
       if (!candidateState.ready) {
         upsertScanStep({
           key: '1688_upload',
@@ -1039,22 +1077,34 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         const candidateState = await waitFor1688Candidates(searchUrl, 8000);
         if (!candidateState.ready) {
           if (candidateState.blocked) {
-            await emitResult({
-              status: 'captcha_required',
-              title: null,
-              price: null,
-              url: null,
-              description: null,
-              supplierDetails: null,
-              supplierProbe: null,
-              supplierEvaluation: null,
-              candidateUrls: [],
-              matchedImageId,
-              message: candidateState.message,
-              currentUrl: candidateState.currentUrl,
-              stage: '1688_upload',
-            });
-            return;
+            const stillBlockedUrl = await handle1688CaptchaIfPresent('1688_upload', { matchedImageId });
+            if (stillBlockedUrl) {
+              const barrierUrl = await detect1688AccessBarrier();
+              await emitResult({
+                status: 'captcha_required',
+                title: null,
+                price: null,
+                url: null,
+                description: null,
+                supplierDetails: null,
+                supplierProbe: null,
+                supplierEvaluation: null,
+                candidateUrls: [],
+                matchedImageId,
+                message: barrierUrl.message,
+                currentUrl: barrierUrl.currentUrl,
+                stage: '1688_upload',
+              });
+              return;
+            }
+            // Captcha was solved — re-check candidates
+            const candidateStateRetry = await waitFor1688Candidates(page.url(), 15000);
+            if (!candidateStateRetry.ready) {
+              continue;
+            }
+            candidateUrls = candidateStateRetry.candidateUrls;
+            urlSearchResolved = true;
+            break;
           }
           continue;
         }

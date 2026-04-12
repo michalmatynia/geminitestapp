@@ -3,6 +3,7 @@
 import React from 'react';
 
 import {
+  is1688IntegrationSlug,
   isTraderaBrowserIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -34,6 +35,7 @@ export function ConnectionList(): React.JSX.Element {
     handleAllegroTest,
     handleTraderaManualLogin,
     handleVintedManualLogin,
+    handle1688ManualLogin,
   } = useIntegrationsActions();
 
   if (!activeIntegration) return <></>;
@@ -41,7 +43,8 @@ export function ConnectionList(): React.JSX.Element {
   const integrationSlug = activeIntegration.slug;
   const isTraderaBrowser = isTraderaBrowserIntegrationSlug(integrationSlug);
   const isVinted = isVintedIntegrationSlug(integrationSlug);
-  const isBrowserAutomation = isTraderaBrowser || isVinted;
+  const is1688 = is1688IntegrationSlug(integrationSlug);
+  const isBrowserAutomation = isTraderaBrowser || isVinted || is1688;
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
 
@@ -52,7 +55,8 @@ export function ConnectionList(): React.JSX.Element {
           id: connection.id,
           title: connection.name,
           subtitle:
-            connection.username?.trim() || (isVinted ? 'Session-based browser login' : undefined),
+            connection.username?.trim() ||
+            (isVinted || is1688 ? 'Session-based browser login' : undefined),
           description:
             editingConnectionId === connection.id ? (
               <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>
@@ -103,7 +107,8 @@ export function ConnectionList(): React.JSX.Element {
                 className='h-7 text-[10px] uppercase font-bold text-emerald-300 hover:text-emerald-200'
                 type='button'
                 onClick={(): void => {
-                  if (isVinted) void handleVintedManualLogin(item.original);
+                  if (is1688) void handle1688ManualLogin(item.original);
+                  else if (isVinted) void handleVintedManualLogin(item.original);
                   else void handleTraderaManualLogin(item.original);
                 }}
                 disabled={isTesting}

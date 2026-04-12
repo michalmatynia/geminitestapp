@@ -44,6 +44,7 @@ describe('openPlaywrightConnectionPageSession', () => {
   it('opens a configured browser page session with unified runtime settings', async () => {
     const setDefaultTimeoutMock = vi.fn();
     const setDefaultNavigationTimeoutMock = vi.fn();
+    const addInitScriptMock = vi.fn().mockResolvedValue(undefined);
     const newPageMock = vi.fn().mockResolvedValue({ id: 'page-1' });
     const contextCloseMock = vi.fn().mockResolvedValue(undefined);
     const browserCloseMock = vi.fn().mockResolvedValue(undefined);
@@ -52,9 +53,13 @@ describe('openPlaywrightConnectionPageSession', () => {
       browserPreference: 'auto',
       deviceProfileName: null,
       settings: {
+        identityProfile: 'default',
         headless: true,
         timeout: 31_000,
         navigationTimeout: 32_000,
+        proxySessionAffinity: false,
+        proxySessionMode: 'sticky',
+        proxyProviderPreset: 'custom',
       },
       storageState: null,
       personaId: 'persona-1',
@@ -64,6 +69,7 @@ describe('openPlaywrightConnectionPageSession', () => {
         newContext: vi.fn().mockResolvedValue({
           setDefaultTimeout: setDefaultTimeoutMock,
           setDefaultNavigationTimeout: setDefaultNavigationTimeoutMock,
+          addInitScript: addInitScriptMock,
           newPage: newPageMock,
           close: contextCloseMock,
         }),
@@ -90,17 +96,27 @@ describe('openPlaywrightConnectionPageSession', () => {
     expect(resolvePlaywrightConnectionRuntimeMock).toHaveBeenCalledWith({
       id: 'connection-1',
     });
-    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith('chrome', {
-      fromHelper: true,
-      settings: {
-        headless: true,
-        timeout: 31_000,
-        navigationTimeout: 32_000,
-      },
-      headless: false,
-    });
+    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith(
+      'chrome',
+      expect.objectContaining({
+        fromHelper: true,
+        settings: {
+          identityProfile: 'default',
+          headless: true,
+          timeout: 31_000,
+          navigationTimeout: 32_000,
+          proxySessionAffinity: false,
+          proxySessionMode: 'sticky',
+          proxyProviderPreset: 'custom',
+        },
+        headless: false,
+        args: ['--disable-blink-features=AutomationControlled'],
+        ignoreDefaultArgs: ['--enable-automation'],
+      })
+    );
     expect(setDefaultTimeoutMock).toHaveBeenCalledWith(31_000);
     expect(setDefaultNavigationTimeoutMock).toHaveBeenCalledWith(32_000);
+    expect(addInitScriptMock).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({
       runtime: {
         personaId: 'persona-1',
@@ -124,9 +140,11 @@ describe('openPlaywrightConnectionPageSession', () => {
   });
 
   it('uses the resolved browser preference when no override is provided', async () => {
+    const addInitScriptMock = vi.fn().mockResolvedValue(undefined);
     const newContextMock = vi.fn().mockResolvedValue({
       setDefaultTimeout: vi.fn(),
       setDefaultNavigationTimeout: vi.fn(),
+      addInitScript: addInitScriptMock,
       newPage: vi.fn().mockResolvedValue({}),
       close: vi.fn().mockResolvedValue(undefined),
     });
@@ -135,9 +153,13 @@ describe('openPlaywrightConnectionPageSession', () => {
       browserPreference: 'brave',
       deviceProfileName: 'Desktop Chrome',
       settings: {
+        identityProfile: 'marketplace',
         headless: false,
         timeout: 30_000,
         navigationTimeout: 30_000,
+        proxySessionAffinity: false,
+        proxySessionMode: 'sticky',
+        proxyProviderPreset: 'custom',
       },
       storageState: { cookies: [], origins: [] },
       personaId: undefined,
@@ -155,30 +177,47 @@ describe('openPlaywrightConnectionPageSession', () => {
       connection: {} as never,
     });
 
-    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith('brave', {
-      fromHelper: true,
-      settings: {
-        headless: false,
-        timeout: 30_000,
-        navigationTimeout: 30_000,
-      },
-      headless: false,
-    });
-    expect(newContextMock).toHaveBeenCalledWith({
-      fromHelper: true,
-      runtime: {
-        browserPreference: 'brave',
-        deviceProfileName: 'Desktop Chrome',
+    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith(
+      'brave',
+      expect.objectContaining({
+        fromHelper: true,
         settings: {
+          identityProfile: 'marketplace',
           headless: false,
           timeout: 30_000,
           navigationTimeout: 30_000,
+          proxySessionAffinity: false,
+          proxySessionMode: 'sticky',
+          proxyProviderPreset: 'custom',
         },
-        storageState: { cookies: [], origins: [] },
-        personaId: undefined,
-      },
-      viewport: undefined,
-    });
+        headless: false,
+        args: ['--disable-blink-features=AutomationControlled'],
+        ignoreDefaultArgs: ['--enable-automation'],
+      })
+    );
+    expect(newContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromHelper: true,
+        runtime: {
+          browserPreference: 'brave',
+          deviceProfileName: 'Desktop Chrome',
+          settings: {
+            identityProfile: 'marketplace',
+            headless: false,
+            timeout: 30_000,
+            navigationTimeout: 30_000,
+            proxySessionAffinity: false,
+            proxySessionMode: 'sticky',
+            proxyProviderPreset: 'custom',
+          },
+          storageState: { cookies: [], origins: [] },
+          personaId: undefined,
+        },
+        viewport: undefined,
+        userAgent: expect.any(String),
+      })
+    );
+    expect(addInitScriptMock).toHaveBeenCalledTimes(1);
   });
 
   it('reuses a provided runtime and applies launch setting overrides', async () => {
@@ -186,6 +225,7 @@ describe('openPlaywrightConnectionPageSession', () => {
       browserPreference: 'chromium',
       deviceProfileName: null,
       settings: {
+        identityProfile: 'search',
         headless: false,
         slowMo: 77,
         timeout: 30_000,
@@ -194,6 +234,9 @@ describe('openPlaywrightConnectionPageSession', () => {
         proxyServer: '',
         proxyUsername: '',
         proxyPassword: '',
+        proxySessionAffinity: false,
+        proxySessionMode: 'sticky',
+        proxyProviderPreset: 'custom',
       },
       storageState: null,
       personaId: 'persona-1',
@@ -201,6 +244,7 @@ describe('openPlaywrightConnectionPageSession', () => {
     const newContextMock = vi.fn().mockResolvedValue({
       setDefaultTimeout: vi.fn(),
       setDefaultNavigationTimeout: vi.fn(),
+      addInitScript: vi.fn().mockResolvedValue(undefined),
       newPage: vi.fn().mockResolvedValue({}),
       close: vi.fn().mockResolvedValue(undefined),
     });
@@ -224,20 +268,29 @@ describe('openPlaywrightConnectionPageSession', () => {
     });
 
     expect(resolvePlaywrightConnectionRuntimeMock).not.toHaveBeenCalled();
-    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith('chromium', {
-      fromHelper: true,
-      settings: {
-        headless: false,
-        slowMo: 0,
-        timeout: 30_000,
-        navigationTimeout: 31_000,
-        proxyEnabled: false,
-        proxyServer: '',
-        proxyUsername: '',
-        proxyPassword: '',
-      },
-      headless: true,
-    });
+    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith(
+      'chromium',
+      expect.objectContaining({
+        fromHelper: true,
+        settings: {
+          identityProfile: 'search',
+          headless: false,
+          slowMo: 0,
+          timeout: 30_000,
+          navigationTimeout: 31_000,
+          proxyEnabled: false,
+          proxyServer: '',
+          proxyUsername: '',
+          proxyPassword: '',
+          proxySessionAffinity: false,
+          proxySessionMode: 'sticky',
+          proxyProviderPreset: 'custom',
+        },
+        headless: true,
+        args: ['--disable-blink-features=AutomationControlled'],
+        ignoreDefaultArgs: ['--enable-automation'],
+      })
+    );
   });
 
   it('builds standardized native session metadata with instance identity', () => {
@@ -254,9 +307,13 @@ describe('openPlaywrightConnectionPageSession', () => {
           browserPreference: 'chrome',
           deviceProfileName: 'Desktop Chrome',
           settings: {
+            identityProfile: 'default',
             headless: false,
             timeout: 30_000,
             navigationTimeout: 30_000,
+            proxySessionAffinity: false,
+            proxySessionMode: 'sticky',
+            proxyProviderPreset: 'custom',
           },
           storageState: null,
           personaId: 'persona-1',
@@ -282,6 +339,7 @@ describe('openPlaywrightConnectionPageSession', () => {
 
   it('opens a native task session with requested browser settings and derived effective values', async () => {
     const newPageMock = vi.fn().mockResolvedValue({ id: 'page-1' });
+    const addInitScriptMock = vi.fn().mockResolvedValue(undefined);
 
     resolvePlaywrightConnectionRuntimeMock.mockResolvedValue({
       browserPreference: 'auto',
@@ -299,6 +357,7 @@ describe('openPlaywrightConnectionPageSession', () => {
         newContext: vi.fn().mockResolvedValue({
           setDefaultTimeout: vi.fn(),
           setDefaultNavigationTimeout: vi.fn(),
+          addInitScript: addInitScriptMock,
           newPage: newPageMock,
           close: vi.fn().mockResolvedValue(undefined),
         }),
@@ -322,15 +381,21 @@ describe('openPlaywrightConnectionPageSession', () => {
       viewport: { width: 1280, height: 720 },
     });
 
-    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith('chrome', {
-      fromHelper: true,
-      settings: {
-        headless: true,
-        timeout: 31_000,
-        navigationTimeout: 32_000,
-      },
-      headless: false,
-    });
+    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith(
+      'chrome',
+      expect.objectContaining({
+        fromHelper: true,
+        settings: {
+          headless: true,
+          timeout: 31_000,
+          navigationTimeout: 32_000,
+        },
+        headless: false,
+        args: ['--disable-blink-features=AutomationControlled'],
+        ignoreDefaultArgs: ['--enable-automation'],
+      })
+    );
+    expect(addInitScriptMock).toHaveBeenCalledTimes(1);
     expect(result.effectiveBrowserMode).toBe('headed');
     expect(result.effectiveBrowserPreference).toBe('chrome');
     expect(result.requestedBrowserMode).toBe('headed');

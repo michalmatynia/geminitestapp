@@ -741,9 +741,14 @@ describe('ProductFormScans', () => {
     );
 
     expect(await screen.findByText('1688 supplier details')).toBeInTheDocument();
-    expect(screen.getByText('1688 supplier result')).toBeInTheDocument();
+    expect(screen.getByText('Preferred 1688 supplier result')).toBeInTheDocument();
     expect(screen.getAllByText('AI-approved supplier match').length).toBeGreaterThan(0);
     expect(screen.getByText('Yiwu Supplier Co.')).toBeInTheDocument();
+    expect(screen.queryByText('Rank 1 of 1')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Preferred over other 1688 supplier results for this product.')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Compare with')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use Product Link' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use Store Link' })).toBeInTheDocument();
     expect(screen.getByText('https://detail.1688.com/offer/987654321.html')).toBeInTheDocument();
@@ -865,6 +870,317 @@ describe('ProductFormScans', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Undo review' }));
     expect(screen.getAllByText('Apply blocked by AI rejection').length).toBeGreaterThan(0);
+  });
+
+  it('marks a non-preferred meaningful 1688 match as weaker when a stronger supplier result exists', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-approved-best',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'completed',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-approved-best',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: 'Best approved supplier listing',
+          price: '¥10.20',
+          url: 'https://detail.1688.com/offer/777777777.html',
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: {
+            supplierName: 'Approved Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/approved-store.html',
+            supplierProductUrl: 'https://detail.1688.com/offer/777777777.html',
+            platformProductId: '777777777',
+            currency: 'CNY',
+            priceText: '¥10.20',
+            priceRangeText: null,
+            moqText: 'MOQ 10 pcs',
+            supplierLocation: null,
+            supplierRating: null,
+            sourceLanguage: 'zh-CN',
+            images: [],
+            prices: [],
+          },
+          supplierProbe: null,
+          supplierEvaluation: {
+            status: 'approved',
+            sameProduct: true,
+            imageMatch: true,
+            titleMatch: true,
+            confidence: 0.92,
+            proceed: true,
+            reasons: ['Approved supplier match.'],
+            mismatches: [],
+            modelId: 'gpt-5.4-mini',
+            error: null,
+            evaluatedAt: '2026-04-12T07:10:00.000Z',
+          },
+          steps: [],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T07:10:00.000Z',
+          createdAt: '2026-04-12T07:09:00.000Z',
+          updatedAt: '2026-04-12T07:10:00.000Z',
+        },
+        {
+          id: 'scan-1688-heuristic-weaker',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'completed',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-heuristic-weaker',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: 'Heuristic supplier listing',
+          price: '¥11.60-12.10',
+          url: 'https://detail.1688.com/offer/555555555.html',
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: {
+            supplierName: 'Heuristic Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/heuristic-store.html',
+            supplierProductUrl: 'https://detail.1688.com/offer/555555555.html',
+            platformProductId: '555555555',
+            currency: 'CNY',
+            priceText: '¥11.60-12.10',
+            priceRangeText: '¥11.60-12.10',
+            moqText: 'MOQ 15 pcs',
+            supplierLocation: 'Zhejiang, China',
+            supplierRating: 'Gold supplier',
+            sourceLanguage: 'zh-CN',
+            images: [],
+            prices: [],
+          },
+          supplierProbe: {
+            candidateUrl: 'https://detail.1688.com/offer/555555555.html',
+            canonicalUrl: 'https://detail.1688.com/offer/555555555.html',
+            pageTitle: 'Heuristic supplier listing',
+            descriptionSnippet: null,
+            pageLanguage: 'zh-CN',
+            supplierName: 'Heuristic Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/heuristic-store.html',
+            priceText: '¥11.60-12.10',
+            currency: 'CNY',
+            heroImageUrl: null,
+            heroImageAlt: null,
+            heroImageArtifactName: null,
+            artifactKey: '1688-scan-probe-image-2',
+            imageCount: 2,
+          },
+          supplierEvaluation: null,
+          steps: [],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T07:05:00.000Z',
+          createdAt: '2026-04-12T07:04:00.000Z',
+          updatedAt: '2026-04-12T07:05:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Preferred 1688 supplier result')).toBeInTheDocument();
+    expect(screen.getByText('Rank 1 of 2')).toBeInTheDocument();
+    expect(
+      screen.getByText('Preferred over other 1688 supplier results for this product.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Compare with 1 alternative result')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Heuristic supplier listing (Rank 2 of 2)' })).toHaveAttribute(
+      'href',
+      '#product-scan-history-scan-1688-heuristic-weaker'
+    );
+    expect(screen.getByText('Weaker 1688 supplier result')).toBeInTheDocument();
+    expect(screen.getByText('Rank 2 of 2')).toBeInTheDocument();
+    expect(
+      screen.getByText('A stronger 1688 supplier result is available for this product.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Preferred result: Best approved supplier listing (Rank 1 of 2)')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open preferred: Best approved supplier listing' })).toHaveAttribute(
+      'href',
+      '#product-scan-history-scan-1688-approved-best'
+    );
+  });
+
+  it('collapses reviewed blocked 1688 scans when a newer approved supplier match exists', async () => {
+    window.localStorage.setItem(
+      'product-scan-1688-reviewed-blocked-v1',
+      JSON.stringify(['scan-1688-rejected-old'])
+    );
+
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-approved-new',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'completed',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-approved-new',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: 'Approved supplier listing',
+          price: '¥10.20',
+          url: 'https://detail.1688.com/offer/777777777.html',
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: {
+            supplierName: 'Approved Supplier Co.',
+            supplierStoreUrl: 'https://shop.1688.com/approved-store.html',
+            supplierProductUrl: 'https://detail.1688.com/offer/777777777.html',
+            platformProductId: '777777777',
+            currency: 'CNY',
+            priceText: '¥10.20',
+            priceRangeText: null,
+            moqText: 'MOQ 10 pcs',
+            supplierLocation: null,
+            supplierRating: null,
+            sourceLanguage: 'zh-CN',
+            images: [],
+            prices: [],
+          },
+          supplierProbe: null,
+          supplierEvaluation: {
+            status: 'approved',
+            sameProduct: true,
+            imageMatch: true,
+            titleMatch: true,
+            confidence: 0.92,
+            proceed: true,
+            reasons: ['Approved supplier match.'],
+            mismatches: [],
+            modelId: 'gpt-5.4-mini',
+            error: null,
+            evaluatedAt: '2026-04-12T07:10:00.000Z',
+          },
+          steps: [],
+          rawResult: null,
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T07:10:00.000Z',
+          createdAt: '2026-04-12T07:09:00.000Z',
+          updatedAt: '2026-04-12T07:10:00.000Z',
+        },
+        {
+          id: 'scan-1688-rejected-old',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'no_match',
+          productName: 'Supplier Product 1',
+          engineRunId: 'run-1688-rejected-old',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: 'Rejected stale supplier listing',
+          price: null,
+          url: 'https://detail.1688.com/offer/123456789.html',
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          amazonEvaluation: null,
+          supplierDetails: null,
+          supplierProbe: {
+            candidateUrl: 'https://detail.1688.com/offer/123456789.html',
+            canonicalUrl: 'https://detail.1688.com/offer/123456789.html',
+            pageTitle: 'Rejected stale supplier listing',
+            descriptionSnippet: null,
+            pageLanguage: 'zh-CN',
+            supplierName: 'Rejected Supplier Co.',
+            supplierStoreUrl: null,
+            priceText: null,
+            currency: null,
+            heroImageUrl: null,
+            heroImageAlt: null,
+            heroImageArtifactName: null,
+            artifactKey: '1688-scan-probe-image-1',
+            imageCount: 1,
+          },
+          supplierEvaluation: {
+            status: 'rejected',
+            sameProduct: false,
+            imageMatch: false,
+            titleMatch: false,
+            confidence: 0.41,
+            proceed: false,
+            reasons: ['Supplier candidate does not match the source product.'],
+            mismatches: ['Supplier gallery differs from the source product.'],
+            modelId: 'gpt-4.1-mini',
+            error: null,
+            evaluatedAt: '2026-04-12T06:10:00.000Z',
+          },
+          steps: [],
+          rawResult: {
+            candidateUrls: ['https://detail.1688.com/offer/123456789.html'],
+          },
+          error: 'AI evaluator rejected the 1688 supplier candidate (41%).',
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: 'AI evaluator rejected the 1688 supplier candidate (41%).',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-12T06:10:00.000Z',
+          createdAt: '2026-04-12T06:09:00.000Z',
+          updatedAt: '2026-04-12T06:10:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect((await screen.findAllByText('Approved supplier listing')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Superseded by newer approved 1688 match')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'A newer AI-approved 1688 supplier match exists for this product, so this reviewed blocked result is collapsed by default.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Current approved result: Approved supplier listing')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show reviewed blocked result' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open newer approved: Approved supplier listing' })).toHaveAttribute(
+      'href',
+      '#product-scan-history-scan-1688-approved-new'
+    );
+    expect(screen.queryByText('Rejected stale supplier listing')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show reviewed blocked result' }));
+    expect(screen.getByRole('button', { name: 'Hide reviewed blocked result' })).toBeInTheDocument();
+    expect(screen.getAllByText('Rejected stale supplier listing').length).toBeGreaterThan(0);
   });
 
   it('shows and hides persisted scan steps for a scan entry', async () => {

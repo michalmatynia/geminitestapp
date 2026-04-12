@@ -9,6 +9,27 @@ describe('product-scan-amazon-script', () => {
       'button:has-text("Accept all cookies")'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "const GOOGLE_CONSENT_CONTROL_SELECTOR ="
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "const listGoogleConsentFrames = async () => {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "const findGoogleConsentAcceptControl = async (frame) => {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'button:has-text("Zaakceptuj")'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "page.frames()"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "window.getComputedStyle(element)"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "log('amazon.scan.google_consent_accepted', {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const openGoogleLensForUpload = async ({'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
@@ -142,6 +163,21 @@ describe('product-scan-amazon-script', () => {
       'const resolveGoogleLensUploadEntryFailure = (entryState) => {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'const consentFrames = await listGoogleConsentFrames().catch(() => []);'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'consentPresent'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'consentFrameUrl'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "resultCode: 'google_consent_blocking'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      'Google consent dialog stayed open and blocked access to Google Lens upload.'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const waitForGoogleLensFileInput = async () => {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
@@ -179,6 +215,12 @@ describe('product-scan-amazon-script', () => {
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "log('amazon.scan.google_upload_entry_missing', {"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "label: 'Consent present'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "label: 'Consent frame'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "log('amazon.scan.google_upload_empty', {"

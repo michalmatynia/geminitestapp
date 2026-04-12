@@ -78,7 +78,8 @@
       "Bash(xxd:*)",
       "Bash(npm run:*)",
       "Bash(for file:*)",
-      "Bash(do echo:*)"
+      "Bash(do echo:*)",
+      "Bash(npm test:*)"
     ]
   }
 }

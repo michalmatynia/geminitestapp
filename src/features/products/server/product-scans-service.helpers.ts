@@ -699,6 +699,11 @@ export const build1688ScanRequestInput = (input: {
   productId: string;
   productName: string | null;
   imageCandidates: ProductScanRecord['imageCandidates'];
+  integrationId?: string | null;
+  connectionId?: string | null;
+  scanner1688StartUrl?: string | null;
+  scanner1688LoginMode?: 'session_required' | 'manual_login' | null;
+  scanner1688DefaultSearchMode?: 'local_image' | 'image_url_fallback' | null;
   batchIndex?: number;
   allowManualVerification: boolean;
   manualVerificationTimeoutMs: number;
@@ -714,6 +719,15 @@ export const build1688ScanRequestInput = (input: {
   productId: input.productId,
   productName: input.productName,
   imageCandidates: input.imageCandidates,
+  integrationId: readOptionalString(input.integrationId, 160),
+  connectionId: readOptionalString(input.connectionId, 160),
+  scanner1688StartUrl: readOptionalString(input.scanner1688StartUrl, PRODUCT_SCAN_URL_MAX_LENGTH),
+  scanner1688LoginMode:
+    input.scanner1688LoginMode === 'manual_login' ? 'manual_login' : 'session_required',
+  scanner1688DefaultSearchMode:
+    input.scanner1688DefaultSearchMode === 'image_url_fallback'
+      ? 'image_url_fallback'
+      : 'local_image',
   batchIndex:
     typeof input.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0
       ? Math.trunc(input.batchIndex)
@@ -784,6 +798,8 @@ export const createAmazonScanStartedRawResult = (input: {
 export const createAmazonProductScanBaseRecord = (input: {
   productId: string;
   productName: string;
+  integrationId?: string | null;
+  connectionId?: string | null;
   userId?: string | null;
   imageCandidates: ProductScanRecord['imageCandidates'];
   status: ProductScanRecord['status'];
@@ -792,6 +808,8 @@ export const createAmazonProductScanBaseRecord = (input: {
   normalizeProductScanRecord({
     id: randomUUID(),
     productId: input.productId,
+    integrationId: readOptionalString(input.integrationId, 160),
+    connectionId: readOptionalString(input.connectionId, 160),
     provider: 'amazon',
     scanType: 'google_reverse_image',
     status: input.status,
@@ -826,6 +844,8 @@ export const createAmazonProductScanBaseRecord = (input: {
 export const create1688ProductScanBaseRecord = (input: {
   productId: string;
   productName: string;
+  integrationId?: string | null;
+  connectionId?: string | null;
   userId?: string | null;
   imageCandidates: ProductScanRecord['imageCandidates'];
   status: ProductScanRecord['status'];
@@ -834,6 +854,8 @@ export const create1688ProductScanBaseRecord = (input: {
   normalizeProductScanRecord({
     id: randomUUID(),
     productId: input.productId,
+    integrationId: readOptionalString(input.integrationId, 160),
+    connectionId: readOptionalString(input.connectionId, 160),
     provider: '1688',
     scanType: 'supplier_reverse_image',
     status: input.status,

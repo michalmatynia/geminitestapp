@@ -29,10 +29,13 @@ const connectionSchema = z.object({
   name: z.string().trim().min(1),
   username: z.string().trim().optional(),
   password: z.string().trim().optional(),
+  playwrightIdentityProfile: z.enum(['default', 'search', 'marketplace']).nullable().optional(),
   playwrightHeadless: z.boolean().nullable().optional(),
   playwrightSlowMo: z.number().int().min(0).nullable().optional(),
   playwrightTimeout: z.number().int().min(1000).nullable().optional(),
   playwrightNavigationTimeout: z.number().int().min(1000).nullable().optional(),
+  playwrightLocale: z.string().trim().max(32).nullable().optional(),
+  playwrightTimezoneId: z.string().trim().max(128).nullable().optional(),
   playwrightHumanizeMouse: z.boolean().nullable().optional(),
   playwrightMouseJitter: z.number().int().min(0).nullable().optional(),
   playwrightClickDelayMin: z.number().int().min(0).nullable().optional(),
@@ -74,10 +77,13 @@ const connectionSchema = z.object({
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 const PLAYWRIGHT_OVERRIDE_RESET_VALUES = {
+  playwrightIdentityProfile: null,
   playwrightHeadless: null,
   playwrightSlowMo: null,
   playwrightTimeout: null,
   playwrightNavigationTimeout: null,
+  playwrightLocale: null,
+  playwrightTimezoneId: null,
   playwrightHumanizeMouse: null,
   playwrightMouseJitter: null,
   playwrightClickDelayMin: null,
@@ -116,10 +122,13 @@ const serializePlaywrightConnectionSettings = (
     playwrightPersonas
   );
   return {
+    playwrightIdentityProfile: settings.identityProfile,
     playwrightHeadless: settings.headless,
     playwrightSlowMo: settings.slowMo,
     playwrightTimeout: settings.timeout,
     playwrightNavigationTimeout: settings.navigationTimeout,
+    playwrightLocale: settings.locale,
+    playwrightTimezoneId: settings.timezoneId,
     playwrightHumanizeMouse: settings.humanizeMouse,
     playwrightMouseJitter: settings.mouseJitter,
     playwrightClickDelayMin: settings.clickDelayMin,
@@ -242,6 +251,12 @@ export async function PUT_handler(
     data.playwrightNavigationTimeout === null
       ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout ?? null }
       : {}),
+    ...(typeof data.playwrightLocale === 'string' || data.playwrightLocale === null
+      ? { playwrightLocale: data.playwrightLocale ?? null }
+      : {}),
+    ...(typeof data.playwrightTimezoneId === 'string' || data.playwrightTimezoneId === null
+      ? { playwrightTimezoneId: data.playwrightTimezoneId ?? null }
+      : {}),
     ...(typeof data.playwrightHumanizeMouse === 'boolean' || data.playwrightHumanizeMouse === null
       ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse ?? null }
       : {}),
@@ -285,6 +300,10 @@ export async function PUT_handler(
       : {}),
     ...(typeof data.playwrightBrowser === 'string' || data.playwrightBrowser === null
       ? { playwrightBrowser: data.playwrightBrowser ?? 'auto' }
+      : {}),
+    ...(typeof data.playwrightIdentityProfile === 'string' ||
+    data.playwrightIdentityProfile === null
+      ? { playwrightIdentityProfile: data.playwrightIdentityProfile ?? null }
       : {}),
     ...(typeof data.playwrightEmulateDevice === 'boolean' || data.playwrightEmulateDevice === null
       ? { playwrightEmulateDevice: data.playwrightEmulateDevice ?? null }

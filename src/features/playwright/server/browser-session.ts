@@ -5,6 +5,12 @@ import type { Browser, BrowserContext, Page } from 'playwright';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 import {
+  buildChromiumAntiDetectionContextOptions,
+  buildChromiumAntiDetectionLaunchOptions,
+  installChromiumAntiDetectionInitScript,
+} from '@/shared/lib/playwright/anti-detection';
+import { applyPlaywrightProxySessionAffinity } from '@/shared/lib/playwright/proxy-affinity';
+import {
   launchPlaywrightBrowser,
   type PlaywrightBrowserPreference,
 } from '@/shared/lib/playwright/browser-launch';
@@ -20,7 +26,14 @@ import type { PlaywrightEngineRunInstance } from './runtime';
 type OpenPlaywrightConnectionPageSessionLaunchSettingsOverrides = Partial<
   Pick<
     TraderaPlaywrightRuntimeSettings,
-    'slowMo' | 'proxyEnabled' | 'proxyServer' | 'proxyUsername' | 'proxyPassword'
+    | 'slowMo'
+    | 'proxyEnabled'
+    | 'proxyServer'
+    | 'proxyUsername'
+    | 'proxyPassword'
+    | 'proxySessionAffinity'
+    | 'proxySessionMode'
+    | 'proxyProviderPreset'
   >
 >;
 
@@ -160,23 +173,39 @@ export const openPlaywrightConnectionPageSession = async (
     ...runtime.settings,
     ...(input.launchSettingsOverrides ?? {}),
   };
+  const launchOptionsWithProxyAffinity = applyPlaywrightProxySessionAffinity({
+    enabled: launchSettings.proxySessionAffinity,
+    mode: launchSettings.proxySessionMode,
+    providerPreset: launchSettings.proxyProviderPreset,
+    launchOptions: buildPlaywrightConnectionLaunchOptions({
+      settings: launchSettings,
+      headless,
+    }),
+    identityProfile: runtime.settings.identityProfile,
+    connectionId: input.connection.id,
+    integrationId: input.connection.integrationId,
+    personaId: runtime.personaId,
+  }).launchOptions;
 
   const launchResult = await launchPlaywrightBrowser(
     browserPreference,
-    buildPlaywrightConnectionLaunchOptions({
-      settings: launchSettings,
-      headless,
-    })
+    buildChromiumAntiDetectionLaunchOptions(launchOptionsWithProxyAffinity)
   );
 
-  const context = await launchResult.browser.newContext(
+  const contextOptions = buildChromiumAntiDetectionContextOptions(
     buildPlaywrightConnectionContextOptions({
       runtime,
       viewport: input.viewport,
-    })
+    }),
+    runtime.settings.identityProfile
   );
+  const context = await launchResult.browser.newContext(contextOptions);
   context.setDefaultTimeout(runtime.settings.timeout);
   context.setDefaultNavigationTimeout(runtime.settings.navigationTimeout);
+  await installChromiumAntiDetectionInitScript(context, {
+    locale: contextOptions.locale,
+    userAgent: contextOptions.userAgent,
+  });
 
   const page = await context.newPage();
 

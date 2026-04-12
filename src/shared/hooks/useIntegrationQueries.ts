@@ -7,6 +7,7 @@ import type {
 import type {
   BaseDefaultConnectionPreferenceResponse,
   BaseDefaultInventoryPreferenceResponse,
+  Scanner1688DefaultConnectionPreferenceResponse,
   TraderaDefaultConnectionPreferenceResponse,
   VintedDefaultConnectionPreferenceResponse,
 } from '@/shared/contracts/integrations/preferences';
@@ -152,6 +153,29 @@ export function useDefaultVintedConnection(): SingleQuery<VintedDefaultConnectio
       queryKey,
       tags: ['integrations', 'vinted', 'connection'],
       description: 'Loads integrations default Vinted connection.',
+    },
+  });
+}
+
+export function useDefault1688Connection(): SingleQuery<Scanner1688DefaultConnectionPreferenceResponse> {
+  const queryKey = integrationKeys.selection.scanner1688DefaultConnection();
+  const queryFn = async (): Promise<Scanner1688DefaultConnectionPreferenceResponse> =>
+    api.get<Scanner1688DefaultConnectionPreferenceResponse>(
+      '/api/v2/integrations/exports/1688/default-connection'
+    );
+
+  return createSingleQueryV2({
+    id: 'default-1688-connection',
+    queryKey,
+    queryFn,
+    meta: {
+      source: 'shared.hooks.useDefault1688Connection',
+      operation: 'detail',
+      resource: 'integrations.default-1688-connection',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', '1688', 'connection'],
+      description: 'Loads integrations default 1688 connection.',
     },
   });
 }

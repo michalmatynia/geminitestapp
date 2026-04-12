@@ -10,10 +10,13 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightStorageState: z.string().nullable().optional(),
   playwrightStorageStateUpdatedAt: z.string().nullable().optional(),
   playwrightPersonaId: z.string().nullable().optional(),
+  playwrightIdentityProfile: z.enum(['default', 'search', 'marketplace']).nullable().optional(),
   playwrightHeadless: z.boolean().optional(),
   playwrightSlowMo: z.number().optional(),
   playwrightTimeout: z.number().optional(),
   playwrightNavigationTimeout: z.number().optional(),
+  playwrightLocale: z.string().nullable().optional(),
+  playwrightTimezoneId: z.string().nullable().optional(),
   playwrightHumanizeMouse: z.boolean().optional(),
   playwrightMouseJitter: z.number().optional(),
   playwrightClickDelayMin: z.number().optional(),
@@ -26,6 +29,12 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightProxyServer: z.string().nullable().optional(),
   playwrightProxyUsername: z.string().nullable().optional(),
   playwrightProxyPassword: z.string().nullable().optional(),
+  playwrightProxySessionAffinity: z.boolean().optional(),
+  playwrightProxySessionMode: z.enum(['sticky', 'rotate']).nullable().optional(),
+  playwrightProxyProviderPreset: z
+    .enum(['custom', 'brightdata', 'oxylabs', 'decodo'])
+    .nullable()
+    .optional(),
   playwrightBrowser: z.enum(['auto', 'brave', 'chrome', 'chromium']).nullable().optional(),
   playwrightEmulateDevice: z.boolean().optional(),
   playwrightDeviceName: z.string().nullable().optional(),
@@ -75,6 +84,16 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
   /** JSON-encoded key→field mapping: { sourceKey: string, targetField: string }[] */
   playwrightFieldMapperJson: z.string().nullable().optional(),
+  scanner1688StartUrl: z.string().trim().max(4_000).nullable().optional(),
+  scanner1688LoginMode: z.enum(['session_required', 'manual_login']).nullable().optional(),
+  scanner1688DefaultSearchMode: z
+    .enum(['local_image', 'image_url_fallback'])
+    .nullable()
+    .optional(),
+  scanner1688CandidateResultLimit: z.number().int().positive().nullable().optional(),
+  scanner1688MinimumCandidateScore: z.number().int().positive().nullable().optional(),
+  scanner1688MaxExtractedImages: z.number().int().positive().nullable().optional(),
+  scanner1688AllowUrlImageSearchFallback: z.boolean().nullable().optional(),
 });
 
 export type IntegrationConnection = z.infer<typeof integrationConnectionSchema>;
@@ -112,6 +131,16 @@ export type ConnectionFormState = {
   username: string;
   password: string;
   playwrightBrowser: 'auto' | 'brave' | 'chrome' | 'chromium';
+  playwrightIdentityProfile?: 'default' | 'search' | 'marketplace' | null;
+  playwrightLocale?: string | null;
+  playwrightTimezoneId?: string | null;
+  scanner1688StartUrl: string;
+  scanner1688LoginMode: 'session_required' | 'manual_login';
+  scanner1688DefaultSearchMode: 'local_image' | 'image_url_fallback';
+  scanner1688CandidateResultLimit: string;
+  scanner1688MinimumCandidateScore: string;
+  scanner1688MaxExtractedImages: string;
+  scanner1688AllowUrlImageSearchFallback: boolean;
   traderaBrowserMode: 'builtin' | 'scripted';
   traderaCategoryStrategy: 'mapper' | 'top_suggested';
   playwrightListingScript: string;

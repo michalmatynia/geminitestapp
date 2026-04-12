@@ -31,6 +31,36 @@ export type ProductScan1688ApplyPolicySummaryValue = {
   blockActions: boolean;
 };
 
+export type ProductScan1688RecommendationSignalValue = {
+  variant: 'preferred' | 'weaker' | 'default';
+  badgeLabel:
+    | 'Preferred 1688 supplier result'
+    | 'Weaker 1688 supplier result'
+    | '1688 supplier result';
+  detail:
+    | 'Preferred over other 1688 supplier results for this product.'
+    | 'A stronger 1688 supplier result is available for this product.'
+    | null;
+};
+
+export type ProductScan1688RankingSummaryValue = {
+  rank: number | null;
+  count: number;
+  isPreferred: boolean;
+  hasStrongerAlternative: boolean;
+  preferredScanId: string | null;
+  alternativeScanIds: string[];
+};
+
+export type ProductScan1688ComparisonTargetValue = {
+  id: string;
+  label: string;
+  rank: number | null;
+  labelWithRank: string;
+};
+
+type ProductScan1688PreferenceRank = 0 | 1 | 2 | 3 | null;
+
 type ProductScan1688SectionKey = 'candidate-urls' | 'match-evaluation';
 
 const formatConfidence = (value: number | null | undefined): string | null => {
@@ -276,6 +306,299 @@ export const resolveProductScan1688ApplyPolicySummary = (
   }
 
   return null;
+};
+
+export const resolveProductScan1688RecommendationSignal = ({
+  isPreferred = false,
+  hasAlternativeMeaningfulResult = false,
+  hasStrongerAlternative = false,
+}: {
+  isPreferred?: boolean;
+  hasAlternativeMeaningfulResult?: boolean;
+  hasStrongerAlternative?: boolean;
+} = {}): ProductScan1688RecommendationSignalValue => {
+  if (isPreferred) {
+    return {
+      variant: 'preferred',
+      badgeLabel: 'Preferred 1688 supplier result',
+      detail: hasAlternativeMeaningfulResult
+        ? 'Preferred over other 1688 supplier results for this product.'
+        : null,
+    };
+  }
+
+  if (hasStrongerAlternative) {
+    return {
+      variant: 'weaker',
+      badgeLabel: 'Weaker 1688 supplier result',
+      detail: 'A stronger 1688 supplier result is available for this product.',
+    };
+  }
+
+  return {
+    variant: 'default',
+    badgeLabel: '1688 supplier result',
+    detail: null,
+  };
+};
+
+const resolveProductScan1688TimestampMs = (
+  scan:
+    | Pick<ProductScanRecord, 'completedAt' | 'updatedAt' | 'createdAt'>
+    | null
+    | undefined
+): number => {
+  const candidates = [scan?.completedAt, scan?.updatedAt, scan?.createdAt];
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string' || candidate.trim().length === 0) {
+      continue;
+    }
+
+    const parsed = Date.parse(candidate);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
+};
+
+const resolveProductScan1688PreferenceRank = (
+  scan:
+    | Pick<ProductScanRecord, 'supplierDetails' | 'supplierProbe' | 'supplierEvaluation'>
+    | null
+    | undefined
+): ProductScan1688PreferenceRank => {
+  const quality = resolveProductScan1688QualitySummary(scan);
+  if (!quality) {
+    return null;
+  }
+
+  if (quality.primaryLabel === 'AI-approved supplier match') {
+    return 0;
+  }
+  if (quality.primaryLabel === 'Deterministic supplier match') {
+    return 1;
+  }
+  if (quality.primaryLabel === 'Heuristic supplier match') {
+    return 2;
+  }
+  return 3;
+};
+
+export const resolvePreferred1688SupplierScans = (
+  scans: ReadonlyArray<
+    Pick<
+      ProductScanRecord,
+      | 'id'
+      | 'provider'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'completedAt'
+      | 'supplierDetails'
+      | 'supplierProbe'
+      | 'supplierEvaluation'
+      | 'title'
+    >
+  >
+): Array<
+  Pick<
+    ProductScanRecord,
+    | 'id'
+    | 'provider'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'completedAt'
+    | 'supplierDetails'
+    | 'supplierProbe'
+    | 'supplierEvaluation'
+    | 'title'
+  >
+> => {
+  return scans
+    .filter((scan) => scan.provider === '1688')
+    .map((scan) => ({
+      scan,
+      rank: resolveProductScan1688PreferenceRank(scan),
+      timestampMs: resolveProductScan1688TimestampMs(scan),
+    }))
+    .filter(
+      (
+        entry
+      ): entry is {
+        scan: Pick<
+          ProductScanRecord,
+          | 'id'
+          | 'provider'
+          | 'createdAt'
+          | 'updatedAt'
+          | 'completedAt'
+          | 'supplierDetails'
+          | 'supplierProbe'
+          | 'supplierEvaluation'
+          | 'title'
+        >;
+        rank: Exclude<ProductScan1688PreferenceRank, null>;
+        timestampMs: number;
+      } => entry.rank != null && entry.rank < 3
+    )
+    .sort((left, right) => {
+      if (left.rank !== right.rank) {
+        return (left.rank as number) - (right.rank as number);
+      }
+      if (left.timestampMs !== right.timestampMs) {
+        return right.timestampMs - left.timestampMs;
+      }
+      return left.scan.id.localeCompare(right.scan.id, undefined, { sensitivity: 'base' });
+    })
+    .map((entry) => entry.scan);
+};
+
+export const hasNewerApproved1688Scan = (
+  scans: ReadonlyArray<
+    Pick<
+      ProductScanRecord,
+      | 'id'
+      | 'provider'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'completedAt'
+      | 'supplierDetails'
+      | 'supplierProbe'
+      | 'supplierEvaluation'
+      | 'title'
+    >
+  >,
+  scanId: string | null | undefined
+): boolean => {
+  if (typeof scanId !== 'string' || scanId.trim().length === 0) {
+    return false;
+  }
+
+  const normalizedScanId = scanId.trim();
+  const targetScan = scans.find((scan) => scan.id === normalizedScanId && scan.provider === '1688');
+  if (!targetScan) {
+    return false;
+  }
+
+  const targetTimestampMs = resolveProductScan1688TimestampMs(targetScan);
+  return resolvePreferred1688SupplierScans(scans).some(
+    (scan) =>
+      scan.id !== normalizedScanId &&
+      scan.supplierEvaluation?.status === 'approved' &&
+      resolveProductScan1688TimestampMs(scan) > targetTimestampMs
+  );
+};
+
+export const resolveProductScan1688RankingSummary = (
+  preferredScans: ReadonlyArray<Pick<ProductScanRecord, 'id'>>,
+  scanId: string | null | undefined
+): ProductScan1688RankingSummaryValue => {
+  const normalizedScanId = typeof scanId === 'string' ? scanId.trim() : '';
+  const preferredScanId = preferredScans[0]?.id ?? null;
+  const rankIndex =
+    normalizedScanId.length > 0
+      ? preferredScans.findIndex((preferredScan) => preferredScan.id === normalizedScanId)
+      : -1;
+  const rank = rankIndex >= 0 ? rankIndex + 1 : null;
+
+  return {
+    rank,
+    count: preferredScans.length,
+    isPreferred: rank === 1 && preferredScanId === normalizedScanId,
+    hasStrongerAlternative:
+      rank != null && preferredScanId != null && preferredScanId !== normalizedScanId,
+    preferredScanId,
+    alternativeScanIds:
+      rank != null
+        ? preferredScans
+            .filter((preferredScan) => preferredScan.id !== normalizedScanId)
+            .map((preferredScan) => preferredScan.id)
+        : [],
+  };
+};
+
+export const resolveProductScan1688ResultLabel = (
+  scan:
+    | Pick<ProductScanRecord, 'id' | 'title' | 'supplierDetails' | 'supplierProbe'>
+    | null
+    | undefined
+): string => {
+  return (
+    scan?.title?.trim() ||
+    scan?.supplierDetails?.supplierName?.trim() ||
+    scan?.supplierProbe?.pageTitle?.trim() ||
+    scan?.id ||
+    'Scan result'
+  );
+};
+
+export const formatProductScan1688RankLabel = (
+  rank: number | null | undefined,
+  count: number | null | undefined
+): string | null => {
+  if (typeof rank !== 'number' || !Number.isFinite(rank)) {
+    return null;
+  }
+  if (typeof count !== 'number' || !Number.isFinite(count) || count <= 1) {
+    return null;
+  }
+  return `Rank ${rank} of ${count}`;
+};
+
+export const formatProductScan1688ComparisonCountLabel = (
+  count: number | null | undefined
+): string | null => {
+  if (typeof count !== 'number' || !Number.isFinite(count) || count <= 0) {
+    return null;
+  }
+
+  return count === 1
+    ? 'Compare with 1 alternative result'
+    : `Compare with ${count} alternative results`;
+};
+
+const buildProductScan1688ComparisonTarget = (
+  scan: Pick<ProductScanRecord, 'id' | 'title' | 'supplierDetails' | 'supplierProbe'>,
+  rank: number | null,
+  count: number
+): ProductScan1688ComparisonTargetValue => {
+  const label = resolveProductScan1688ResultLabel(scan);
+  const rankLabel = formatProductScan1688RankLabel(rank, count);
+
+  return {
+    id: scan.id,
+    label,
+    rank,
+    labelWithRank: rankLabel ? `${label} (${rankLabel})` : label,
+  };
+};
+
+export const resolveProductScan1688ComparisonTargets = (
+  preferredScans: ReadonlyArray<
+    Pick<ProductScanRecord, 'id' | 'title' | 'supplierDetails' | 'supplierProbe'>
+  >,
+  currentScanId: string | null | undefined
+): {
+  preferredTarget: ProductScan1688ComparisonTargetValue | null;
+  alternativeTargets: ProductScan1688ComparisonTargetValue[];
+} => {
+  const count = preferredScans.length;
+  const preferredTarget =
+    preferredScans[0] != null ? buildProductScan1688ComparisonTarget(preferredScans[0], 1, count) : null;
+  const normalizedCurrentScanId = typeof currentScanId === 'string' ? currentScanId.trim() : '';
+
+  const alternativeTargets = preferredScans
+    .filter((scan) => scan.id !== normalizedCurrentScanId)
+    .map((scan, index) => {
+      const rank = preferredScans.findIndex((preferredScan) => preferredScan.id === scan.id) + 1;
+      return buildProductScan1688ComparisonTarget(scan, rank > 0 ? rank : index + 1, count);
+    });
+
+  return {
+    preferredTarget,
+    alternativeTargets,
+  };
 };
 
 export const buildProductScan1688SectionId = (

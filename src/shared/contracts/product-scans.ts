@@ -313,6 +313,8 @@ export type ProductScanImageCandidate = z.infer<typeof productScanImageCandidate
 export const productScanRecordSchema = z.object({
   id: trimmedString.min(1).max(160),
   productId: trimmedString.min(1).max(160),
+  integrationId: optionalTrimmedString(160),
+  connectionId: optionalTrimmedString(160),
   provider: productScanProviderSchema.default('amazon'),
   scanType: productScanTypeSchema.default('google_reverse_image'),
   status: productScanStatusSchema,
@@ -352,6 +354,7 @@ export type ProductScanListResponse = z.infer<typeof productScanListResponseSche
 
 export const productAmazonBatchScanRequestSchema = z.object({
   productIds: z.array(trimmedString.min(1).max(160)).min(1).max(100),
+  connectionId: z.string().trim().min(1).nullable().optional(),
 });
 export type ProductAmazonBatchScanRequest = z.infer<typeof productAmazonBatchScanRequestSchema>;
 export const productScanBatchRequestSchema = productAmazonBatchScanRequestSchema;

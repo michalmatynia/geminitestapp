@@ -518,12 +518,71 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
     stage: toText(input.stage) || 'amazon_extract',
   });
 
+  const resolveDirectCandidateUrl = (url) => {
+    const href = toText(url);
+    if (!href) return url;
+    try {
+      const parsed = new URL(href);
+      if (isGoogleRedirectHost(parsed.hostname.toLowerCase()) && parsed.pathname === '/url') {
+        const direct = parsed.searchParams.get('q') || parsed.searchParams.get('url');
+        if (direct && direct.startsWith('http')) return direct;
+      }
+    } catch {}
+    return url;
+  };
+
+  const dismissGoogleRedirectInterstitialIfPresent = async () => {
+    const currentUrl = page.url();
+    let host = '';
+    try { host = new URL(currentUrl).hostname.toLowerCase(); } catch {}
+    if (!isGoogleRedirectHost(host)) return false;
+
+    const continueSelectors = [
+      'a:has-text("Przejdź do witryny")',
+      'a:has-text("Przejdź mimo to")',
+      'a:has-text("Kontynuuj")',
+      'button:has-text("Kontynuuj")',
+      'a:has-text("Continue")',
+      'a:has-text("Proceed")',
+      '#proceed-link',
+      'a[id*="proceed"]',
+    ];
+
+    for (const selector of continueSelectors) {
+      const locator = page.locator(selector).first();
+      if ((await locator.count().catch(() => 0)) === 0) continue;
+      const visible = await locator.isVisible().catch(() => false);
+      if (!visible) continue;
+      const href = await locator.getAttribute('href').catch(() => null);
+      log('amazon.scan.google_interstitial_dismissed', { currentUrl, selector, targetHref: href });
+      await locator.click({ timeout: 5000 }).catch(() => undefined);
+      await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
+      await wait(500);
+      return true;
+    }
+
+    // Fallback: extract destination from current URL and navigate directly
+    try {
+      const parsed = new URL(currentUrl);
+      const destUrl = parsed.searchParams.get('q') || parsed.searchParams.get('url');
+      if (destUrl && destUrl.startsWith('http')) {
+        log('amazon.scan.google_interstitial_direct_navigate', { currentUrl, destUrl });
+        await page.goto(destUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await wait(500);
+        return true;
+      }
+    } catch {}
+
+    return false;
+  };
+
   const openAmazonCandidatePage = async ({
     candidateUrl,
     matchedImageId,
     amazonCandidateAttempt,
     candidateRank = null,
   }) => {
+    const resolvedCandidateUrl = resolveDirectCandidateUrl(candidateUrl);
     upsertScanStep({
       key: 'amazon_open',
       label: 'Open Amazon candidate',
@@ -533,15 +592,19 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
       status: 'running',
       resultCode: 'candidate_open_start',
       message: 'Opening Amazon candidate page.',
-      url: candidateUrl,
-      details: [{ label: 'Candidate URL', value: candidateUrl }],
+      url: resolvedCandidateUrl,
+      details: [
+        { label: 'Candidate URL', value: candidateUrl },
+        ...(resolvedCandidateUrl !== candidateUrl ? [{ label: 'Resolved URL', value: resolvedCandidateUrl }] : []),
+      ],
     });
 
     try {
-      await page.goto(candidateUrl, {
+      await page.goto(resolvedCandidateUrl, {
         waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
+      await dismissGoogleRedirectInterstitialIfPresent();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       upsertScanStep({

@@ -26,6 +26,8 @@ import {
 type ProductScanBaseRecordInput = {
   productId: string;
   productName: string;
+  integrationId?: string | null;
+  connectionId?: string | null;
   userId?: string | null;
   imageCandidates: ProductScanRecord['imageCandidates'];
   status: ProductScanRecord['status'];

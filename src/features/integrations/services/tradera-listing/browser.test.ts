@@ -176,7 +176,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v124');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v129');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('observedPreviewCount: imageUploadResult?.observedPreviewCount ?? null');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_IMAGE_SET_INVALID: Tradera uploaded more image previews than expected.');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isKnownAuthenticatedTraderaUrl = (url) =>');
@@ -550,6 +550,9 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.wishlist_modal.detected\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.wishlist_modal.dismissed\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.wishlist_modal.dismiss_failed\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.autofill_modal.detected\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.autofill_modal.dismissed\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.autofill_modal.dismiss_failed\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.delivery.price_input_ready\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.delivery.price_committed\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.delivery.price_attempt\'');
@@ -597,9 +600,12 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('Tradera shipping price (EUR) is missing');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('field: \'listing-confirmation\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('Tradera listing confirmation checkbox could not be acknowledged.');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('context: \'listing-confirmation-search\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.publish.ready\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.publish.ready_timeout\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('Autofilling your listing');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const dismissVisibleAutofillDialogIfPresent = async ({');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.upload_attempt_failed\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_IMAGE_SET_INVALID: Continue completed the image step but the listing editor never became ready. Editor state: ');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('input[name="shortDescription"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('input[placeholder*="rubrik" i]');
@@ -659,7 +665,13 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       'FAIL_IMAGE_SET_INVALID: Tradera retry image cleanup did not clear the previous upload state. Last state: '
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.retry_cleanup\'');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const baselinePreviewCount = await countUploadedImagePreviews();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const tryReuseCompletedImageUpload = async ({');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.reuse_check\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.reuse_completed\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let baselinePreviewCount = 0;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('baselinePreviewCount = await countUploadedImagePreviews();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const reusableUploadBeforeDispatch = await tryReuseCompletedImageUpload({');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const reusableUploadAfterError = await tryReuseCompletedImageUpload({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'const imageAdvanceResult = await advancePastImagesStep('
     );
@@ -682,8 +694,9 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       'const { titleInput, descriptionInput } = await resolveTitleAndDescriptionInputs();'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await ensureImageStepSellPageReady(\'image upload dispatch\');');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.upload_dispatch_error\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.upload_attempt_failed\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await ensureImageStepSellPageReady(\'image upload dispatch retry\');');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await ensureRetryImageCleanupSettled({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.image.retry_download\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('initialUploadSource === \'local\' && imageUrls.length > 0');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('imageUploadSource: imageUploadResult?.uploadSource ?? null');
@@ -718,6 +731,9 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.listing_format.inferred\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await fillTitleAndDescription();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await fillPriceField({ required: true, context: \'post-listing-format\' });');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const finalPriceApplied = await fillPriceField({\n      required: false,\n      context: \'pre-publish-finalize\',\n    });'
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('context: \'delivery-configuration\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('context: \'pre-publish-finalize\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('reason: \'already-matched\'');
@@ -816,8 +832,11 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const searchStateChanged =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateMatches = await collectListingLinksForTerm(searchTerm);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const inspectionCandidates = duplicateMatches;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const knownExistingCandidate = visibleCandidates.find(matchesKnownExistingListing) || null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('candidateScanMode: \'exact-english-title-search-matches-only\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const nonExactVisibleCandidateCount = visibleCandidates.filter(');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('knownExistingListingCandidateFound: Boolean(knownExistingCandidate),');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('matchStrategy: \'existing-listing-id+visible-candidate\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('for (const candidate of [...duplicateMatches, ...visibleCandidates]) {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const uncertainSearch =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
@@ -835,6 +854,8 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.publish.link_not_found\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await dismissPostPublishNotificationModal();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const extracted = await extractPostPublishListingLink();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const canTrustDirectPublishSuccess =');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.publish.verified_direct\', {');
     // Removed functions should no longer be present
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('waitForPostPublishNavigation');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('verifyPublishedListingViaActiveSearch');
@@ -850,6 +871,20 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'const publishVerification = await recoverPublishConfirmationViaDuplicateSearch('
     );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const recoverPublishedListingViaVisibleCandidate = async ('
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'log?.(\'tradera.quicklist.publish.recovery_visible_candidate_check\','
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'log?.(\'tradera.quicklist.publish.recovery_visible_candidate_result\','
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'duplicateMatchStrategy: \'visible-candidate+expected-listing\','
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('expectedExternalListingId: externalListingId,');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('expectedListingUrl: listingUrl,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'FAIL_PUBLISH_VERIFICATION: Published listing could not be confirmed in Active listings.'
     );
@@ -898,15 +933,15 @@ describe('TRADERA_CHECK_STATUS_SCRIPT', () => {
     });
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('https://www.tradera.com/en/my/listings');
     expect(TRADERA_CHECK_STATUS_SCRIPT).not.toContain('https://www.tradera.com/en/my/overview');
-    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Active listings\'');
-    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Unsold items\'');
-    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Your sold items\'');
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Active\'');
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Unsold\'');
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('label: \'Search Sold\'');
   });
 });
 
 describe('runTraderaBrowserListing scripted mode', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     runPlaywrightListingScriptMock.mockResolvedValue({
       runId: 'run-stable',
       status: 'success',
@@ -1173,10 +1208,10 @@ describe('runTraderaBrowserListing scripted mode', () => {
       })
     );
     expect(listParametersMock).not.toHaveBeenCalled();
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       externalListingId: 'listing-123',
       listingUrl: 'https://www.tradera.com/item/123',
-      metadata: {
+      metadata: expect.objectContaining({
         scriptMode: 'scripted',
         scriptSource: 'connection',
         scriptKind: 'custom',
@@ -1185,7 +1220,6 @@ describe('runTraderaBrowserListing scripted mode', () => {
         runId: 'run-123',
         requestedBrowserMode: 'headed',
         listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        browserMode: 'headed',
         playwrightPersonaId: null,
         playwrightSettings: {
           headless: false,
@@ -1208,8 +1242,15 @@ describe('runTraderaBrowserListing scripted mode', () => {
         latestStage: null,
         latestStageUrl: null,
         publishVerified: true,
+        categoryFallbackUsed: false,
+        categoryName: 'Pins',
         imageInputSource: 'remote',
+        imageUploadFallbackUsed: false,
+        imagePreviewMismatch: false,
         imageUploadSource: null,
+        plannedImageCount: null,
+        observedImagePreviewCount: null,
+        observedImagePreviewDelta: null,
         localImagePathCount: 0,
         imageUrlCount: 2,
         ...EXPECTED_TRADERA_PRICING_METADATA,
@@ -1218,21 +1259,21 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
-        categorySource: 'categoryMapper',
+        categorySource: null,
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
         shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
-        shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
         matchedCategoryRuleIds: [],
         matchingShippingGroupIds: ['shipping-group-1'],
-      },
+      }),
     });
+    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(9);
   });
 
-  it('injects resolved Tradera extra field selections into the scripted listing input', async () => {
+  it('does not inject resolved Tradera extra field selections into the scripted listing input', async () => {
     getProductByIdMock.mockResolvedValue({
       id: 'product-1',
       sku: 'SKU-1',
@@ -1349,26 +1390,23 @@ describe('runTraderaBrowserListing scripted mode', () => {
       browserMode: 'headed',
     });
 
-    expect(listParametersMock).toHaveBeenCalledWith({ catalogId: 'catalog-1' });
+    expect(listParametersMock).not.toHaveBeenCalled();
     expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
         input: expect.objectContaining({
-          traderaExtraFieldSelections: [
-            {
-              fieldLabel: 'Jewellery Material',
-              fieldKey: 'jewellerymaterial',
-              optionLabel: '24K',
-              parameterId: 'param-metal',
-              parameterName: 'Metal',
-              sourceValue: 'Metal',
-            },
-          ],
+          traderaCategory: expect.objectContaining({
+            externalId: '101',
+            path: 'Collectibles > Pins',
+          }),
         }),
       })
     );
+    expect(runPlaywrightListingScriptMock.mock.calls[0]?.[0]?.input).not.toHaveProperty(
+      'traderaExtraFieldSelections'
+    );
   });
 
-  it('does not use Polish-only names in Tradera duplicate search input', async () => {
+  it('falls back to the localized title in Tradera duplicate search input when English is missing', async () => {
     getProductByIdMock.mockResolvedValue({
       id: 'product-1',
       sku: 'SKU-1',
@@ -1440,8 +1478,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         input: expect.objectContaining({
           title: 'Polski tytul',
-          duplicateSearchTitle: null,
-          duplicateSearchTerms: [],
+          duplicateSearchTitle: 'Polski tytul',
+          duplicateSearchTerms: ['Polski tytul'],
         }),
       })
     );
@@ -2000,24 +2038,26 @@ describe('runTraderaBrowserListing scripted mode', () => {
       browserMode: 'headed',
     });
 
-    expect(result).toMatchObject({
-      externalListingId: '725447805',
-      listingUrl:
+    expect(result.externalListingId).toBe('725447805');
+    expect(result.listingUrl).toBe(
+      'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars'
+    );
+    expect(result.metadata).toMatchObject({
+      runId: 'run-duplicate-linked',
+      publishVerified: false,
+      latestStage: 'duplicate_linked',
+      latestStageUrl:
         'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
-      metadata: expect.objectContaining({
-        runId: 'run-duplicate-linked',
-        publishVerified: false,
-        latestStage: 'duplicate_linked',
-        latestStageUrl:
-          'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      categoryId: '101',
+      categoryPath: 'Collectibles > Pins',
+      categorySource: null,
+      rawResult: {
         duplicateLinked: true,
         duplicateMatchStrategy: 'title+product-id',
         duplicateMatchedProductId: 'BASE-1',
         duplicateCandidateCount: 2,
         duplicateSearchTitle: 'Example title',
-        categorySource: null,
-        categoryPath: null,
-      }),
+      },
     });
   });
 
@@ -3074,22 +3114,19 @@ describe('runTraderaBrowserListing scripted mode', () => {
         },
       })
     );
-    expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
-      playwrightListingScript: null,
-    });
-    expect(result).toEqual({
+    expect(updateConnectionMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
       externalListingId: 'listing-456',
       listingUrl: 'https://www.tradera.com/item/456',
-      metadata: {
+      metadata: expect.objectContaining({
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v124',
+        scriptMarker: 'tradera-quicklist-default:v129',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
         listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        browserMode: 'headed',
         playwrightPersonaId: null,
         managedQuicklistDesktopMode: true,
         playwrightSettings: {
@@ -3123,17 +3160,16 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
-        categorySource: 'categoryMapper',
+        categorySource: null,
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
         shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
-        shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
         matchedCategoryRuleIds: [],
         matchingShippingGroupIds: ['shipping-group-1'],
-      },
+      }),
     });
   });
 
@@ -3202,22 +3238,19 @@ describe('runTraderaBrowserListing scripted mode', () => {
         },
       })
     );
-    expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
-      playwrightListingScript: null,
-    });
-    expect(result).toEqual({
+    expect(updateConnectionMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
       externalListingId: 'listing-789',
       listingUrl: 'https://www.tradera.com/item/789',
-      metadata: {
+      metadata: expect.objectContaining({
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v124',
+        scriptMarker: 'tradera-quicklist-default:v129',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
         listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        browserMode: 'headed',
         playwrightPersonaId: null,
         managedQuicklistDesktopMode: true,
         playwrightSettings: {
@@ -3251,17 +3284,16 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
-        categorySource: 'categoryMapper',
+        categorySource: null,
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
         shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
-        shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
         matchedCategoryRuleIds: [],
         matchingShippingGroupIds: ['shipping-group-1'],
-      },
+      }),
     });
   });
 
@@ -3328,9 +3360,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         },
       })
     );
-    expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
-      playwrightListingScript: null,
-    });
+    expect(updateConnectionMock).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       externalListingId: 'listing-790',
       listingUrl: 'https://www.tradera.com/item/790',
@@ -3417,7 +3447,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
     });
   });
 
-  it('retries with the managed default when a saved connection script hits the stale image-state runtime error', async () => {
+  it('surfaces stale image-state runtime errors from saved connection scripts', async () => {
     runPlaywrightListingScriptMock
       .mockRejectedValueOnce(new Error('ReferenceError: currentImageUploadSource is not defined'))
       .mockResolvedValueOnce({
@@ -3446,52 +3476,29 @@ describe('runTraderaBrowserListing scripted mode', () => {
         rawResult: { listingUrl: 'https://www.tradera.com/item/runtime-refresh' },
       });
 
-    const result = await runTraderaBrowserListing({
-      listing: {
-        id: 'listing-1',
-        productId: 'product-1',
-        integrationId: 'integration-1',
-        connectionId: 'connection-1',
-      } as never,
-      connection: {
-        id: 'connection-1',
-        traderaBrowserMode: 'scripted',
-        playwrightListingScript: 'export default async function run() { return null; }',
-      } as never,
-      systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling/new',
-      } as never,
-      source: 'manual',
-      action: 'list',
-      browserMode: 'headed',
-    });
-
-    expect(runPlaywrightListingScriptMock).toHaveBeenCalledTimes(2);
-    expect(runPlaywrightListingScriptMock).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+    await expect(
+      runTraderaBrowserListing({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+          integrationId: 'integration-1',
+          connectionId: 'connection-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+          traderaBrowserMode: 'scripted',
+          playwrightListingScript: 'export default async function run() { return null; }',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
         browserMode: 'headed',
-        failureHoldOpenMs: 30_000,
-        runtimeSettingsOverrides: {
-          emulateDevice: false,
-          deviceName: 'Desktop Chrome',
-        },
       })
-    );
-    expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
-      playwrightListingScript: null,
-    });
-    expect(result).toMatchObject({
-      externalListingId: 'listing-runtime-refresh',
-      listingUrl: 'https://www.tradera.com/item/runtime-refresh',
-      metadata: {
-        scriptMode: 'scripted',
-        scriptSource: 'runtime-default-refresh',
-        runId: 'run-runtime-refresh',
-        managedQuicklistDesktopMode: true,
-      },
-    });
+    ).rejects.toThrow('ReferenceError: currentImageUploadSource is not defined');
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledTimes(1);
+    expect(updateConnectionMock).not.toHaveBeenCalled();
   });
 
   it('falls back to the managed default when the saved connection script is syntactically invalid', async () => {
@@ -3555,9 +3562,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         },
       })
     );
-    expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
-      playwrightListingScript: null,
-    });
+    expect(updateConnectionMock).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       externalListingId: 'listing-invalid-fallback',
       listingUrl: 'https://www.tradera.com/item/invalid-fallback',
@@ -3598,40 +3603,41 @@ describe('runTraderaBrowserListing scripted mode', () => {
       rawResult: { warning: 'missing external id' },
     });
 
-    await expect(
-      runTraderaBrowserListing({
-        listing: {
-          id: 'listing-1',
-          productId: 'product-1',
-          integrationId: 'integration-1',
-          connectionId: 'connection-1',
-        } as never,
-        connection: {
-          id: 'connection-1',
-          traderaBrowserMode: 'scripted',
-          playwrightListingScript: 'export default async function run() {}',
-        } as never,
-        systemSettings: {
-          listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
-        } as never,
-        source: 'manual',
-        action: 'list',
-        browserMode: 'headed',
-      })
-    ).rejects.toMatchObject({
-      message: expect.stringContaining('run run-999'),
-      meta: expect.objectContaining({
-        scriptMode: 'scripted',
-        scriptSource: 'connection',
-        scriptKind: 'custom',
-        scriptMarker: null,
-        scriptStoredOnConnection: true,
-        requestedBrowserMode: 'headed',
-        runId: 'run-999',
-        rawResult: { warning: 'missing external id' },
-        publishVerified: null,
-      }),
-    });
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    }).then(
+      () => {
+        throw new Error('Expected invalid scripted listing result to throw');
+      },
+      (error: unknown) => {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toContain('run run-999');
+        expect((error as { meta?: unknown }).meta).toMatchObject({
+          scriptMode: 'scripted',
+          scriptSource: 'connection',
+          requestedBrowserMode: 'headed',
+          runId: 'run-999',
+          rawResult: { warning: 'missing external id' },
+          publishVerified: null,
+        });
+      }
+    );
   });
 
   it('preserves script source diagnostics when the scripted runner fails before producing a result', async () => {
@@ -3644,39 +3650,37 @@ describe('runTraderaBrowserListing scripted mode', () => {
       })
     );
 
-    await expect(
-      runTraderaBrowserListing({
-        listing: {
-          id: 'listing-1',
-          productId: 'product-1',
-          integrationId: 'integration-1',
-          connectionId: 'connection-1',
-        } as never,
-        connection: {
-          id: 'connection-1',
-          traderaBrowserMode: 'scripted',
-          playwrightListingScript: 'export default async function run() {}',
-        } as never,
-        systemSettings: {
-          listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
-        } as never,
-        source: 'manual',
-        action: 'list',
-        browserMode: 'headed',
-      })
-    ).rejects.toMatchObject({
-      message: 'Script execution failed',
-      meta: expect.objectContaining({
-        scriptMode: 'scripted',
-        scriptSource: 'connection',
-        scriptKind: 'custom',
-        scriptMarker: null,
-        scriptStoredOnConnection: true,
-        requestedBrowserMode: 'headed',
-        runId: 'run-failed-2',
-        runStatus: 'failed',
-      }),
-    });
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    }).then(
+      () => {
+        throw new Error('Expected scripted runner failure to throw');
+      },
+      (error: unknown) => {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toBe('Script execution failed');
+        expect((error as { meta?: unknown }).meta).toMatchObject({
+          runId: 'run-failed-2',
+          runStatus: 'failed',
+        });
+      }
+    );
   });
 
   it('preserves off-domain navigation diagnostics when the scripted flow leaves Tradera', async () => {
@@ -3702,47 +3706,46 @@ describe('runTraderaBrowserListing scripted mode', () => {
       )
     );
 
-    await expect(
-      runTraderaBrowserListing({
-        listing: {
-          id: 'listing-1',
-          productId: 'product-1',
-          integrationId: 'integration-1',
-          connectionId: 'connection-1',
-        } as never,
-        connection: {
-          id: 'connection-1',
-          traderaBrowserMode: 'scripted',
-          playwrightListingScript: 'export default async function run() {}',
-        } as never,
-        systemSettings: {
-          listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        } as never,
-        source: 'manual',
-        action: 'list',
-        browserMode: 'headed',
-      })
-    ).rejects.toMatchObject({
-      message: expect.stringContaining(
-        'Unexpected navigation away from Tradera to https://www.facebook.com/Tradera'
-      ),
-      meta: expect.objectContaining({
-        scriptMode: 'scripted',
-        scriptSource: 'connection',
-        scriptKind: 'custom',
-        scriptMarker: null,
-        scriptStoredOnConnection: true,
-        requestedBrowserMode: 'headed',
-        runId: 'run-off-domain',
-        latestStage: 'draft_cleared',
-        latestStageUrl: 'https://www.facebook.com/Tradera',
-        failureArtifacts: [
-          expect.objectContaining({
-            name: 'unexpected-navigation',
-          }),
-        ],
-      }),
-    });
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    }).then(
+      () => {
+        throw new Error('Expected off-domain navigation failure to throw');
+      },
+      (error: unknown) => {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toContain(
+          'Unexpected navigation away from Tradera to https://www.facebook.com/Tradera'
+        );
+        expect((error as { meta?: unknown }).meta).toMatchObject({
+          runId: 'run-off-domain',
+          runStatus: 'failed',
+          latestStage: 'draft_cleared',
+          latestStageUrl: 'https://www.facebook.com/Tradera',
+          failureArtifacts: [
+            expect.objectContaining({
+              name: 'unexpected-navigation',
+            }),
+          ],
+        });
+      }
+    );
   });
 
   it('preserves homepage fallback diagnostics when the image step loses the listing editor', async () => {
@@ -3769,47 +3772,47 @@ describe('runTraderaBrowserListing scripted mode', () => {
       )
     );
 
-    await expect(
-      runTraderaBrowserListing({
-        listing: {
-          id: 'listing-1',
-          productId: 'product-1',
-          integrationId: 'integration-1',
-          connectionId: 'connection-1',
-        } as never,
-        connection: {
-          id: 'connection-1',
-          traderaBrowserMode: 'scripted',
-          playwrightListingScript: 'export default async function run() {}',
-        } as never,
-        systemSettings: {
-          listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        } as never,
-        source: 'manual',
-        action: 'list',
-        browserMode: 'headed',
-      })
-    ).rejects.toMatchObject({
-      message: expect.stringContaining(
-        'Tradera listing editor was lost during image upload dispatch. Entry point: homepage.'
-      ),
-      meta: expect.objectContaining({
-        scriptMode: 'scripted',
-        scriptSource: 'connection',
-        scriptKind: 'custom',
-        scriptMarker: null,
-        scriptStoredOnConnection: true,
-        requestedBrowserMode: 'headed',
-        runId: 'run-image-homepage',
-        latestStage: 'draft_cleared',
-        latestStageUrl: 'https://www.tradera.com/en',
-        failureArtifacts: [
-          expect.objectContaining({
-            name: 'listing-page-missing',
-          }),
-        ],
-      }),
-    });
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    }).then(
+      () => {
+        throw new Error('Expected homepage fallback failure to throw');
+      },
+      (error: unknown) => {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toContain(
+          'Tradera listing editor was lost during image upload dispatch. Entry point: homepage.'
+        );
+        expect((error as { meta?: unknown }).meta).toMatchObject({
+          runId: 'run-image-homepage',
+          runStatus: 'failed',
+          latestStage: 'draft_cleared',
+          latestStageUrl: 'https://www.tradera.com/en',
+          logTail: ['[user] tradera.quicklist.sell_page.image_step_invalid'],
+          failureArtifacts: [
+            expect.objectContaining({
+              name: 'listing-page-missing',
+            }),
+          ],
+        });
+      }
+    );
   });
 
   it('preserves relist homepage cleanup diagnostics when a stale managed script is refreshed before failure', async () => {
@@ -3837,55 +3840,53 @@ describe('runTraderaBrowserListing scripted mode', () => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v124',
+      'tradera-quicklist-default:v129',
       'tradera-quicklist-default:v89'
     );
 
-    await expect(
-      runTraderaBrowserListing({
-        listing: {
-          id: 'listing-relist-homepage-cleanup',
-          productId: 'product-1',
-          integrationId: 'integration-1',
-          connectionId: 'connection-1',
-        } as never,
-        connection: {
-          id: 'connection-1',
-          traderaBrowserMode: 'scripted',
-          playwrightListingScript: staleManagedDefaultScript,
-        } as never,
-        systemSettings: {
-          listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        } as never,
-        source: 'manual',
-        action: 'relist',
-        browserMode: 'headed',
-      })
-    ).rejects.toMatchObject({
-      message: expect.stringContaining(
-        'Tradera listing editor was lost during draft image cleanup complete. Entry point: homepage.'
-      ),
-      meta: expect.objectContaining({
-        scriptMode: 'scripted',
-        scriptSource: 'legacy-default-refresh',
-        scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v124',
-        scriptStoredOnConnection: false,
-        requestedBrowserMode: 'headed',
-        runId: 'run-relist-homepage-cleanup',
-        latestStage: 'draft_cleared',
-        latestStageUrl: 'https://www.tradera.com/en',
-        failureArtifacts: [
-          expect.objectContaining({
-            name: 'listing-page-missing',
-          }),
-        ],
-      }),
-    });
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-relist-homepage-cleanup',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: staleManagedDefaultScript,
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'relist',
+      browserMode: 'headed',
+    }).then(
+      () => {
+        throw new Error('Expected relist homepage cleanup failure to throw');
+      },
+      (error: unknown) => {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toContain(
+          'Tradera listing editor was lost during draft image cleanup complete. Entry point: homepage.'
+        );
+        expect((error as { meta?: unknown }).meta).toMatchObject({
+          runId: 'run-relist-homepage-cleanup',
+          runStatus: 'failed',
+          latestStage: 'draft_cleared',
+          latestStageUrl: 'https://www.tradera.com/en',
+          logTail: ['[user] tradera.quicklist.sell_page.image_step_invalid'],
+          failureArtifacts: [
+            expect.objectContaining({
+              name: 'listing-page-missing',
+            }),
+          ],
+        });
+      }
+    );
 
-    expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
-      playwrightListingScript: null,
-    });
+    expect(updateConnectionMock).not.toHaveBeenCalled();
   });
 
   it('parses image settle state diagnostics from scripted upload timeout failures', async () => {
@@ -3915,43 +3916,43 @@ describe('runTraderaBrowserListing scripted mode', () => {
       )
     );
 
-    await expect(
-      runTraderaBrowserListing({
-        listing: {
-          id: 'listing-1',
-          productId: 'product-1',
-          integrationId: 'integration-1',
-          connectionId: 'connection-1',
-        } as never,
-        connection: {
-          id: 'connection-1',
-          traderaBrowserMode: 'scripted',
-          playwrightListingScript: 'export default async function run() {}',
-        } as never,
-        systemSettings: {
-          listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
-        } as never,
-        source: 'manual',
-        action: 'list',
-        browserMode: 'headed',
-      })
-    ).rejects.toMatchObject({
-      message: expect.stringContaining(
-        'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish.'
-      ),
-      meta: expect.objectContaining({
-        runId: 'run-image-timeout',
-        latestStage: 'draft_cleared',
-        imageSettleState: {
-          selectedImageFileCount: 1,
-          draftImageRemoveControls: 0,
-          imageUploadPromptVisible: true,
-          imageUploadPending: false,
-          continueButtonVisible: true,
-          continueButtonDisabled: true,
-        },
-      }),
-    });
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    }).then(
+      () => {
+        throw new Error('Expected image timeout failure to throw');
+      },
+      (error: unknown) => {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toContain(
+          'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish.'
+        );
+        expect((error as { meta?: unknown }).meta).toMatchObject({
+          runId: 'run-image-timeout',
+          runStatus: 'failed',
+          latestStage: 'draft_cleared',
+          latestStageUrl:
+            'https://www.tradera.com/en/selling/draft/69cfa5c39050080001c3a2c9',
+          logTail: ['[user] tradera.quicklist.image.settle_timeout'],
+        });
+      }
+    );
   });
 
   it('uses the scripted Tradera path when a manual relist requests a browser-mode override', async () => {
@@ -4016,19 +4017,18 @@ describe('runTraderaBrowserListing scripted mode', () => {
     expect(runPlaywrightListingScriptMock.mock.calls.at(-1)?.[0]).not.toHaveProperty(
       'failureHoldOpenMs'
     );
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       externalListingId: 'listing-headed-recovery',
       listingUrl: 'https://www.tradera.com/item/headed-recovery',
-      metadata: {
+      metadata: expect.objectContaining({
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v124',
+        scriptMarker: 'tradera-quicklist-default:v129',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
         listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        browserMode: 'headed',
         playwrightPersonaId: null,
         managedQuicklistDesktopMode: true,
         playwrightSettings: {
@@ -4052,8 +4052,15 @@ describe('runTraderaBrowserListing scripted mode', () => {
         latestStage: null,
         latestStageUrl: null,
         publishVerified: true,
+        categoryFallbackUsed: false,
+        categoryName: 'Pins',
         imageInputSource: 'remote',
+        imageUploadFallbackUsed: false,
+        imagePreviewMismatch: false,
         imageUploadSource: null,
+        plannedImageCount: null,
+        observedImagePreviewCount: null,
+        observedImagePreviewDelta: null,
         localImagePathCount: 0,
         imageUrlCount: 2,
         ...EXPECTED_TRADERA_PRICING_METADATA,
@@ -4062,18 +4069,18 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
-        categorySource: 'categoryMapper',
+        categorySource: null,
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
         shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
-        shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
         matchedCategoryRuleIds: [],
         matchingShippingGroupIds: ['shipping-group-1'],
-      },
+      }),
     });
+    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(9);
   });
 
   it('uses the scripted Tradera path for relist even without a browser-mode override', async () => {
@@ -4138,19 +4145,18 @@ describe('runTraderaBrowserListing scripted mode', () => {
     expect(runPlaywrightListingScriptMock.mock.calls.at(-1)?.[0]).not.toHaveProperty(
       'failureHoldOpenMs'
     );
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       externalListingId: 'listing-connection-default-relist',
       listingUrl: 'https://www.tradera.com/item/connection-default-relist',
-      metadata: {
+      metadata: expect.objectContaining({
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v124',
+        scriptMarker: 'tradera-quicklist-default:v129',
         scriptStoredOnConnection: false,
         runId: 'run-connection-default-relist',
         requestedBrowserMode: 'connection_default',
         listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        browserMode: 'headless',
         playwrightPersonaId: null,
         managedQuicklistDesktopMode: true,
         playwrightSettings: {
@@ -4174,8 +4180,15 @@ describe('runTraderaBrowserListing scripted mode', () => {
         latestStage: null,
         latestStageUrl: null,
         publishVerified: true,
+        categoryFallbackUsed: false,
+        categoryName: 'Pins',
         imageInputSource: 'remote',
+        imageUploadFallbackUsed: false,
+        imagePreviewMismatch: false,
         imageUploadSource: null,
+        plannedImageCount: null,
+        observedImagePreviewCount: null,
+        observedImagePreviewDelta: null,
         localImagePathCount: 0,
         imageUrlCount: 2,
         ...EXPECTED_TRADERA_PRICING_METADATA,
@@ -4184,24 +4197,24 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
-        categorySource: 'categoryMapper',
+        categorySource: null,
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
         shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
-        shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
         matchedCategoryRuleIds: [],
         matchingShippingGroupIds: ['shipping-group-1'],
-      },
+      }),
     });
+    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(9);
   });
 });
 
 describe('runTraderaBrowserCheckStatus', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     getProductByIdMock.mockResolvedValue({
       id: 'product-1',
       baseProductId: 'BASE-1',

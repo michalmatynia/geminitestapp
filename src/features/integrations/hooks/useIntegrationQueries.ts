@@ -6,6 +6,7 @@ export {
   useDefaultExportConnection,
   useDefaultTraderaConnection,
   useDefaultVintedConnection,
+  useDefault1688Connection,
   useDefaultExportInventory,
 } from '@/shared/hooks/useIntegrationQueries';
 import { fetchSettingsCached } from '@/shared/api/settings-client';

@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
@@ -27,6 +28,10 @@ import { useDatabaseActionConfig } from './database-node/useDatabaseActionConfig
 import { useDatabaseMappingState } from './database-node/useDatabaseMappingState';
 import { useDatabaseQueryExecution } from './database-node/useDatabaseQueryExecution';
 import { extractCodeSnippets } from '../components/node-config/database/database-constructor-tab-helpers';
+
+// This hook coordinates query state, schema fetches, prompt settings, and
+// nested database-node helpers. Keep it on the plain hook runtime so the
+// Canvas database dialog remains stable in dev under React Compiler.
 
 const DEFAULT_QUERY: DbQueryConfig = {
   provider: 'auto',

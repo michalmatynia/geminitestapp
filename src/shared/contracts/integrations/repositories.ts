@@ -41,10 +41,13 @@ export type IntegrationConnectionRecord = Omit<
 };
 
 type NullablePlaywrightConnectionOverrideKey =
+  | 'playwrightIdentityProfile'
   | 'playwrightHeadless'
   | 'playwrightSlowMo'
   | 'playwrightTimeout'
   | 'playwrightNavigationTimeout'
+  | 'playwrightLocale'
+  | 'playwrightTimezoneId'
   | 'playwrightHumanizeMouse'
   | 'playwrightMouseJitter'
   | 'playwrightClickDelayMin'
@@ -57,6 +60,9 @@ type NullablePlaywrightConnectionOverrideKey =
   | 'playwrightProxyServer'
   | 'playwrightProxyUsername'
   | 'playwrightProxyPassword'
+  | 'playwrightProxySessionAffinity'
+  | 'playwrightProxySessionMode'
+  | 'playwrightProxyProviderPreset'
   | 'playwrightEmulateDevice'
   | 'playwrightDeviceName';
 

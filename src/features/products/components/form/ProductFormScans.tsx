@@ -17,7 +17,13 @@ import {
 } from '@/features/products/components/scans/ProductScanAmazonDetails';
 import {
   buildProductScan1688SectionId,
+  formatProductScan1688ComparisonCountLabel,
+  resolveProductScan1688ComparisonTargets,
+  hasNewerApproved1688Scan,
   ProductScan1688Details,
+  resolvePreferred1688SupplierScans,
+  resolveProductScan1688RankingSummary,
+  resolveProductScan1688RecommendationSignal,
   resolveProductScan1688ApplyPolicySummary,
   resolve1688ScanRecommendationReason,
 } from '@/features/products/components/scans/ProductScan1688Details';
@@ -75,6 +81,15 @@ import {
   resolveScanMessages,
 } from './ProductFormScans.helpers';
 
+const buildProductScanHistoryRowId = (scanId: string | null | undefined): string | null => {
+  if (typeof scanId !== 'string') {
+    return null;
+  }
+
+  const normalized = scanId.trim().replace(/[^a-zA-Z0-9_-]+/g, '-');
+  return normalized.length > 0 ? `product-scan-history-${normalized}` : null;
+};
+
 export default function ProductFormScans(): React.JSX.Element {
   const { product, getValues, setValue } = useProductFormCore();
   const {
@@ -98,6 +113,9 @@ export default function ProductFormScans(): React.JSX.Element {
   const [expandedScanIds, setExpandedScanIds] = useState<Set<string>>(new Set());
   const [expandedDiagnosticScanIds, setExpandedDiagnosticScanIds] = useState<Set<string>>(new Set());
   const [expandedExtractedFieldScanIds, setExpandedExtractedFieldScanIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [expandedReviewedBlockedScanIds, setExpandedReviewedBlockedScanIds] = useState<Set<string>>(
     new Set()
   );
   const {
@@ -125,6 +143,11 @@ export default function ProductFormScans(): React.JSX.Element {
     [scans]
   );
   const recommendedAmazonExtractedScanId = preferredAmazonExtractedScans[0]?.id ?? null;
+  const scansById = useMemo(() => new Map(scans.map((scan) => [scan.id, scan])), [scans]);
+  const preferred1688SupplierScans = useMemo(
+    () => resolvePreferred1688SupplierScans(scans),
+    [scans]
+  );
 
   useEffect(() => {
     invalidationSessionRef.current += 1;
@@ -133,6 +156,7 @@ export default function ProductFormScans(): React.JSX.Element {
     setExpandedScanIds(new Set());
     setExpandedDiagnosticScanIds(new Set());
     setExpandedExtractedFieldScanIds(new Set());
+    setExpandedReviewedBlockedScanIds(new Set());
   }, [productId]);
 
   const toggleScanSteps = (scanId: string): void => {
@@ -161,6 +185,18 @@ export default function ProductFormScans(): React.JSX.Element {
 
   const toggleDiagnostics = (scanId: string): void => {
     setExpandedDiagnosticScanIds((current) => {
+      const next = new Set(current);
+      if (next.has(scanId)) {
+        next.delete(scanId);
+      } else {
+        next.add(scanId);
+      }
+      return next;
+    });
+  };
+
+  const toggleReviewedBlockedScan = (scanId: string): void => {
+    setExpandedReviewedBlockedScanIds((current) => {
       const next = new Set(current);
       if (next.has(scanId)) {
         next.delete(scanId);
@@ -557,6 +593,10 @@ export default function ProductFormScans(): React.JSX.Element {
             const isBlocked1688ResultReviewed =
               supplierApplyPolicySummary?.blockActions === true &&
               isBlockedScanReviewed(scan.id);
+            const hasNewerApproved1688Result =
+              isBlocked1688ResultReviewed && hasNewerApproved1688Scan(scans, scan.id);
+            const shouldCollapseReviewedBlocked1688 =
+              hasNewerApproved1688Result && !expandedReviewedBlockedScanIds.has(scan.id);
             const blocked1688CandidateUrlsHref =
               !isAmazonScan && supplierApplyPolicySummary?.blockActions
                 ? buildProductScan1688SectionId(scan.id, 'candidate-urls')
@@ -576,6 +616,54 @@ export default function ProductFormScans(): React.JSX.Element {
               preferredAmazonExtractedScans.length > 1 &&
               recommendedAmazonExtractedScanId != null &&
               scan.id !== recommendedAmazonExtractedScanId;
+            const supplier1688RankingSummary = !isAmazonScan
+              ? resolveProductScan1688RankingSummary(preferred1688SupplierScans, scan.id)
+              : null;
+            const isPreferred1688SupplierResult = supplier1688RankingSummary?.isPreferred ?? false;
+            const hasAlternativePreferred1688SupplierResult =
+              supplier1688RankingSummary?.hasStrongerAlternative ?? false;
+            const alternativePreferred1688SupplierScans =
+              !isAmazonScan && supplier1688RankingSummary != null
+                ? preferred1688SupplierScans.filter((preferredScan) =>
+                    supplier1688RankingSummary.alternativeScanIds.includes(preferredScan.id)
+                  )
+                : [];
+            const comparisonTargetSourceScans =
+              !isAmazonScan
+                ? preferred1688SupplierScans.map(
+                    (preferredScan) => scansById.get(preferredScan.id) ?? preferredScan
+                  )
+                : [];
+            const supplier1688ComparisonTargets = !isAmazonScan
+              ? resolveProductScan1688ComparisonTargets(comparisonTargetSourceScans, scan.id)
+              : null;
+            const alternativePreferred1688SupplierResultLinks =
+              supplier1688ComparisonTargets?.alternativeTargets
+                .map((target) => {
+                  const href = buildProductScanHistoryRowId(target.id);
+                  return href ? { href, label: target.labelWithRank } : null;
+                })
+                .filter((entry): entry is { href: string; label: string } => entry != null) ?? [];
+            const preferred1688SupplierRank = supplier1688RankingSummary?.rank ?? null;
+            const preferred1688SupplierRankCount = supplier1688RankingSummary?.count ?? 0;
+            const preferred1688SupplierResultHref =
+              !isAmazonScan &&
+              supplier1688RankingSummary?.preferredScanId != null &&
+              scan.id !== supplier1688RankingSummary.preferredScanId
+                ? buildProductScanHistoryRowId(supplier1688RankingSummary.preferredScanId)
+                : null;
+            const preferred1688SupplierResultLabel =
+              supplier1688ComparisonTargets?.preferredTarget?.label ?? null;
+            const preferred1688SupplierResultLabelWithRank =
+              supplier1688ComparisonTargets?.preferredTarget?.labelWithRank ?? null;
+            const supplierRecommendationSignal =
+              !isAmazonScan && recommendationReason
+                ? resolveProductScan1688RecommendationSignal({
+                    isPreferred: isPreferred1688SupplierResult,
+                    hasAlternativeMeaningfulResult: alternativePreferred1688SupplierScans.length > 0,
+                    hasStrongerAlternative: hasAlternativePreferred1688SupplierResult,
+                  })
+                : null;
             const diagnostics = resolveProductScanDiagnostics(scan);
             const latestFailureArtifact = diagnostics?.failureArtifacts[0] ?? null;
             const hasDiagnostics = Boolean(diagnostics);
@@ -649,7 +737,12 @@ export default function ProductFormScans(): React.JSX.Element {
             return (
               <section
                 key={scan.id}
-                className='space-y-2 rounded-md border border-border/60 px-4 py-4'
+                id={buildProductScanHistoryRowId(scan.id) ?? undefined}
+                className={`space-y-2 rounded-md border px-4 py-4 ${
+                  shouldCollapseReviewedBlocked1688
+                    ? 'border-border/40 bg-muted/10'
+                    : 'border-border/60'
+                }`}
               >
                 <div className='flex flex-wrap items-center justify-between gap-2'>
                   <div className='flex flex-wrap items-center gap-2'>
@@ -661,6 +754,11 @@ export default function ProductFormScans(): React.JSX.Element {
                     >
                       {resolveStatusLabel(scan)}
                     </span>
+                    {hasNewerApproved1688Result ? (
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                        Superseded by newer approved 1688 match
+                      </span>
+                    ) : null}
                   </div>
                   <span className='text-xs text-muted-foreground'>
                     {formatTimestamp(scan.createdAt)}
@@ -963,6 +1061,10 @@ export default function ProductFormScans(): React.JSX.Element {
                     className={`space-y-1 rounded-md px-3 py-2 ${
                       isAmazonScan && isRecommendedAmazonResult
                         ? 'border border-emerald-500/20 bg-emerald-500/5'
+                        : supplierRecommendationSignal?.variant === 'preferred'
+                          ? 'border border-cyan-500/20 bg-cyan-500/5'
+                          : supplierRecommendationSignal?.variant === 'weaker'
+                            ? 'border border-amber-500/20 bg-amber-500/5'
                         : 'border border-border/50 bg-background/70'
                     }`}
                   >
@@ -971,15 +1073,28 @@ export default function ProductFormScans(): React.JSX.Element {
                         className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${
                           isAmazonScan && isRecommendedAmazonResult
                             ? 'border border-emerald-500/20 text-emerald-300'
+                            : supplierRecommendationSignal?.variant === 'preferred'
+                              ? 'border border-cyan-500/20 text-cyan-300'
+                              : supplierRecommendationSignal?.variant === 'weaker'
+                                ? 'border border-amber-500/20 text-amber-300'
                             : 'border border-border/60 text-muted-foreground'
                         }`}
                       >
                         {isAmazonScan && isRecommendedAmazonResult
                           ? 'Recommended Amazon result'
+                          : !isAmazonScan
+                            ? (supplierRecommendationSignal?.badgeLabel ?? '1688 supplier result')
                           : isAmazonScan
                             ? 'Amazon result signal'
                             : '1688 supplier result'}
                       </span>
+                      {!isAmazonScan &&
+                      preferred1688SupplierRank != null &&
+                      preferred1688SupplierRankCount > 1 ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                          Rank {preferred1688SupplierRank} of {preferred1688SupplierRankCount}
+                        </span>
+                      ) : null}
                       <span className='font-medium text-foreground'>{recommendationReason}</span>
                     </div>
                     {supplierApplyPolicySummary ? (
@@ -1039,6 +1154,43 @@ export default function ProductFormScans(): React.JSX.Element {
                       <p className='text-sm text-muted-foreground'>
                         Preferred over other extracted Amazon runs for this product.
                       </p>
+                    ) : !isAmazonScan && supplierRecommendationSignal?.detail ? (
+                      <div className='flex flex-wrap items-center gap-2 text-sm text-muted-foreground'>
+                        <p>{supplierRecommendationSignal.detail}</p>
+                        {supplierRecommendationSignal.variant === 'weaker' &&
+                        preferred1688SupplierResultHref ? (
+                          <span>
+                            Preferred result: {preferred1688SupplierResultLabelWithRank ?? preferred1688SupplierResultLabel}
+                          </span>
+                        ) : null}
+                        {supplierRecommendationSignal.variant === 'weaker' &&
+                        preferred1688SupplierResultHref ? (
+                          <a
+                            href={`#${preferred1688SupplierResultHref}`}
+                            className='text-primary underline-offset-2 hover:underline'
+                          >
+                            Open preferred: {preferred1688SupplierResultLabel}
+                          </a>
+                        ) : supplierRecommendationSignal.variant === 'preferred' &&
+                          alternativePreferred1688SupplierResultLinks.length > 0 ? (
+                          <>
+                            <span>
+                              {formatProductScan1688ComparisonCountLabel(
+                                alternativePreferred1688SupplierResultLinks.length
+                              )}
+                            </span>
+                            {alternativePreferred1688SupplierResultLinks.map((link) => (
+                              <a
+                                key={link.href}
+                                href={`#${link.href}`}
+                                className='text-primary underline-offset-2 hover:underline'
+                              >
+                                {link.label}
+                              </a>
+                            ))}
+                          </>
+                        ) : null}
+                      </div>
                     ) : null}
                     {recommendationRejectedBreakdown &&
                     recommendationRejectedBreakdown.languageRejectedCount > 0 ? (
@@ -1105,12 +1257,49 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {scan.title ? <p className='text-sm font-medium'>{scan.title}</p> : null}
-                {!isAmazonScan && supplierSummary ? (
+                {hasNewerApproved1688Result ? (
+                  <div className='space-y-2 rounded-md border border-border/40 bg-muted/10 px-3 py-2'>
+                    <p className='text-sm text-muted-foreground'>
+                      A newer AI-approved 1688 supplier match exists for this product, so this reviewed
+                      blocked result is collapsed by default.
+                    </p>
+                    {preferred1688SupplierResultHref ? (
+                      <p className='text-sm text-muted-foreground'>
+                        Current approved result: {preferred1688SupplierResultLabelWithRank ?? preferred1688SupplierResultLabel}
+                      </p>
+                    ) : null}
+                    <div className='flex flex-wrap gap-2'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => toggleReviewedBlockedScan(scan.id)}
+                        className='h-7 px-2 text-xs'
+                      >
+                        {shouldCollapseReviewedBlocked1688
+                          ? 'Show reviewed blocked result'
+                          : 'Hide reviewed blocked result'}
+                      </Button>
+                      {preferred1688SupplierResultHref ? (
+                        <a
+                          href={`#${preferred1688SupplierResultHref}`}
+                          className='inline-flex h-7 items-center text-xs text-primary underline-offset-2 hover:underline'
+                        >
+                          Open newer approved: {preferred1688SupplierResultLabel}
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {!shouldCollapseReviewedBlocked1688 && scan.title ? (
+                  <p className='text-sm font-medium'>{scan.title}</p>
+                ) : null}
+                {!shouldCollapseReviewedBlocked1688 && !isAmazonScan && supplierSummary ? (
                   <p className='text-xs text-muted-foreground'>{supplierSummary}</p>
                 ) : null}
-                {renderScanMeta(scan)}
-                {scan.url ? (
+                {!shouldCollapseReviewedBlocked1688 ? renderScanMeta(scan) : null}
+                {!shouldCollapseReviewedBlocked1688 && scan.url ? (
                   <a
                     href={scan.url}
                     target='_blank'
@@ -1121,19 +1310,25 @@ export default function ProductFormScans(): React.JSX.Element {
                     <ExternalLink className='h-3.5 w-3.5' />
                   </a>
                 ) : null}
-                {scan.description ? (
+                {!shouldCollapseReviewedBlocked1688 && scan.description ? (
                   <p className='line-clamp-3 text-sm text-muted-foreground'>{scan.description}</p>
                 ) : null}
-                {infoMessage ? <p className='text-sm text-muted-foreground'>{infoMessage}</p> : null}
-                {errorMessage ? <p className='text-sm text-destructive'>{errorMessage}</p> : null}
-                {!isAmazonScan ? <ProductScan1688Details scan={scan} scanId={scan.id} /> : null}
-                {!isAmazonScan ? (
+                {!shouldCollapseReviewedBlocked1688 && infoMessage ? (
+                  <p className='text-sm text-muted-foreground'>{infoMessage}</p>
+                ) : null}
+                {!shouldCollapseReviewedBlocked1688 && errorMessage ? (
+                  <p className='text-sm text-destructive'>{errorMessage}</p>
+                ) : null}
+                {!shouldCollapseReviewedBlocked1688 && !isAmazonScan ? (
+                  <ProductScan1688Details scan={scan} scanId={scan.id} />
+                ) : null}
+                {!shouldCollapseReviewedBlocked1688 && !isAmazonScan ? (
                   <ProductScan1688ApplyPanel
                     scan={scan}
                     formBindings={supplier1688FormBindings}
                   />
                 ) : null}
-                {isAmazonScan && extractedFieldsExpanded ? (
+                {!shouldCollapseReviewedBlocked1688 && isAmazonScan && extractedFieldsExpanded ? (
                   <div className='space-y-3'>
                     <ProductScanAmazonQualitySummary scan={scan} />
                     <ProductScanAmazonProvenanceSummary scan={scan} />
@@ -1293,8 +1488,12 @@ export default function ProductFormScans(): React.JSX.Element {
                     <ProductScanAmazonDetails scan={scan} />
                   </div>
                 ) : null}
-                {diagnosticsExpanded ? <ProductScanDiagnostics scan={scan} /> : null}
-                {isExpanded && scanSteps.length > 0 ? <ProductScanSteps steps={scanSteps} /> : null}
+                {!shouldCollapseReviewedBlocked1688 && diagnosticsExpanded ? (
+                  <ProductScanDiagnostics scan={scan} />
+                ) : null}
+                {!shouldCollapseReviewedBlocked1688 && isExpanded && scanSteps.length > 0 ? (
+                  <ProductScanSteps steps={scanSteps} />
+                ) : null}
               </section>
             );
           })}

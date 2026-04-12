@@ -36,9 +36,12 @@ export type ResolvedPlaywrightConnectionRuntime = {
 type PlaywrightConnectionSettingsOverridesInput = Pick<
   TraderaPlaywrightRuntimeSettings,
   | 'headless'
+  | 'identityProfile'
   | 'slowMo'
   | 'timeout'
   | 'navigationTimeout'
+  | 'locale'
+  | 'timezoneId'
   | 'humanizeMouse'
   | 'mouseJitter'
   | 'clickDelayMin'
@@ -51,6 +54,9 @@ type PlaywrightConnectionSettingsOverridesInput = Pick<
   | 'proxyServer'
   | 'proxyUsername'
   | 'proxyPassword'
+  | 'proxySessionAffinity'
+  | 'proxySessionMode'
+  | 'proxyProviderPreset'
   | 'emulateDevice'
   | 'deviceName'
 >;
@@ -131,6 +137,9 @@ export const buildPlaywrightConnectionLaunchOptions = (input: {
     | 'proxyServer'
     | 'proxyUsername'
     | 'proxyPassword'
+    | 'proxySessionAffinity'
+    | 'proxySessionMode'
+    | 'proxyProviderPreset'
   >;
   headless: boolean;
 }): LaunchOptions => ({
@@ -154,12 +163,16 @@ export const buildPlaywrightConnectionLaunchOptions = (input: {
 export const buildPlaywrightConnectionContextOptions = (input: {
   runtime: Pick<
     ResolvedPlaywrightConnectionRuntime,
-    'deviceContextOptions' | 'deviceProfileName' | 'storageState'
+    'deviceContextOptions' | 'deviceProfileName' | 'storageState' | 'settings'
   >;
   viewport?: NonNullable<BrowserContextOptions['viewport']>;
 }): BrowserContextOptions => ({
   ...input.runtime.deviceContextOptions,
   ...(input.runtime.storageState ? { storageState: input.runtime.storageState } : {}),
+  ...(input.runtime.settings.locale ? { locale: input.runtime.settings.locale } : {}),
+  ...(input.runtime.settings.timezoneId
+    ? { timezoneId: input.runtime.settings.timezoneId }
+    : {}),
   ...(!input.runtime.deviceProfileName && input.viewport
     ? { viewport: input.viewport }
     : {}),
@@ -168,10 +181,13 @@ export const buildPlaywrightConnectionContextOptions = (input: {
 export const buildPlaywrightConnectionSettingsOverrides = (
   settings: PlaywrightConnectionSettingsOverridesInput
 ): Record<string, unknown> => ({
+  identityProfile: settings.identityProfile,
   headless: settings.headless,
   slowMo: settings.slowMo,
   timeout: settings.timeout,
   navigationTimeout: settings.navigationTimeout,
+  locale: settings.locale,
+  timezoneId: settings.timezoneId,
   humanizeMouse: settings.humanizeMouse,
   mouseJitter: settings.mouseJitter,
   clickDelayMin: settings.clickDelayMin,
@@ -184,6 +200,9 @@ export const buildPlaywrightConnectionSettingsOverrides = (
   proxyServer: settings.proxyServer,
   proxyUsername: settings.proxyUsername,
   proxyPassword: settings.proxyPassword,
+  proxySessionAffinity: settings.proxySessionAffinity,
+  proxySessionMode: settings.proxySessionMode,
+  proxyProviderPreset: settings.proxyProviderPreset,
   emulateDevice: settings.emulateDevice,
   deviceName: settings.deviceName,
 });

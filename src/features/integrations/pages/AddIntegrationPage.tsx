@@ -56,6 +56,14 @@ const AVAILABLE_INTEGRATIONS = [
     type: 'marketplace',
     method: 'browser',
   },
+  {
+    name: '1688',
+    slug: '1688',
+    description:
+      'Browser-based 1688 supplier scanning integration with reusable Playwright session storage.',
+    type: 'marketplace',
+    method: 'browser',
+  },
 ] as const;
 
 export default function AddIntegrationPage(): React.JSX.Element {

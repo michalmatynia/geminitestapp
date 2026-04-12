@@ -5,7 +5,12 @@ import React, { ChangeEvent, ReactElement, useMemo } from 'react';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { PlaywrightSettingsContextType, PlaywrightSettingsFormProps, PlaywrightSettingsProviderProps } from '@/shared/contracts/ui/playwright';
 import { internalError } from '@/shared/errors/app-error';
-import { playwrightDeviceOptions } from '@/shared/lib/playwright/settings';
+import {
+  playwrightDeviceOptions,
+  playwrightIdentityProfileOptions,
+  playwrightProxyProviderPresetOptions,
+  playwrightProxySessionModeOptions,
+} from '@/shared/lib/playwright/settings';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { CollapsibleSection, Input } from '@/shared/ui/primitives.public';
 import { FormActions, FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
@@ -189,6 +194,78 @@ function TimeoutsSection(): ReactElement {
   );
 }
 
+function IdentitySection(): ReactElement {
+  const { settings, setSettings } = usePlaywrightSettings();
+  return (
+    <div className='space-y-4'>
+      <FormSection variant='subtle-compact' className='p-3'>
+        <FormField label='Identity profile'>
+          <SelectSimple
+            size='sm'
+            value={settings.identityProfile}
+            onValueChange={(value: string): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                identityProfile: value as PlaywrightSettings['identityProfile'],
+              }))
+            }
+            options={playwrightIdentityProfileOptions}
+            ariaLabel='Identity profile'
+            title='Identity profile'
+          />
+          <Hint variant='subtle'>
+            Applies engine-owned fallback fingerprints for hostile targets before custom overrides.
+          </Hint>
+        </FormField>
+      </FormSection>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+      <FormSection variant='subtle-compact' className='p-3'>
+        <FormField label='Locale'>
+          <Input
+            type='text'
+            className='h-9'
+            placeholder='en-US'
+            value={settings.locale ?? ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+              const value = event.target.value;
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                locale: value,
+              }));
+            }}
+            aria-label='Locale'
+            title='Locale'
+          />
+          <Hint variant='subtle'>
+            Sets navigator language and the default Accept-Language header.
+          </Hint>
+        </FormField>
+      </FormSection>
+      <FormSection variant='subtle-compact' className='p-3'>
+        <FormField label='Timezone'>
+          <Input
+            type='text'
+            className='h-9'
+            placeholder='Europe/Warsaw'
+            value={settings.timezoneId ?? ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+              const value = event.target.value;
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                timezoneId: value,
+              }));
+            }}
+            aria-label='Timezone'
+            title='Timezone'
+          />
+          <Hint variant='subtle'>Uses an IANA timezone ID for browser context time APIs.</Hint>
+        </FormField>
+      </FormSection>
+      </div>
+    </div>
+  );
+}
+
 function HumanizeSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
@@ -330,6 +407,66 @@ function ProxySection(): ReactElement {
                aria-label='Proxy password' title='Proxy password'/>
             </FormField>
           </div>
+          <ToggleRow
+            label='Proxy session tokens'
+            description='Inject engine-managed session tokens into proxy values that contain a session placeholder.'
+            checked={settings.proxySessionAffinity}
+            onCheckedChange={(checked: boolean): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                proxySessionAffinity: checked,
+              }))
+            }
+            variant='switch'
+            className='border-none bg-transparent p-0 hover:bg-transparent'
+          />
+          {settings.proxySessionAffinity ? (
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+              <FormSection variant='subtle-compact' className='p-3'>
+                <FormField label='Proxy session mode'>
+                  <SelectSimple
+                    size='sm'
+                    value={settings.proxySessionMode}
+                    onValueChange={(value: string): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        proxySessionMode: value as PlaywrightSettings['proxySessionMode'],
+                      }))
+                    }
+                    options={playwrightProxySessionModeOptions}
+                    ariaLabel='Proxy session mode'
+                    title='Proxy session mode'
+                  />
+                  <Hint variant='subtle'>
+                    Sticky keeps one session token per scope. Rotate issues a fresh token for each run.
+                  </Hint>
+                </FormField>
+              </FormSection>
+              <FormSection variant='subtle-compact' className='p-3'>
+                <FormField label='Proxy provider preset'>
+                  <SelectSimple
+                    size='sm'
+                    value={settings.proxyProviderPreset}
+                    onValueChange={(value: string): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        proxyProviderPreset: value as PlaywrightSettings['proxyProviderPreset'],
+                      }))
+                    }
+                    options={playwrightProxyProviderPresetOptions}
+                    ariaLabel='Proxy provider preset'
+                    title='Proxy provider preset'
+                  />
+                  <Hint variant='subtle'>
+                    `Custom` uses only explicit placeholders. Provider presets can inject session tokens into usernames when no placeholder is present.
+                  </Hint>
+                </FormField>
+              </FormSection>
+            </div>
+          ) : null}
+          <Hint variant='subtle'>
+            Use <code>{'{session}'}</code>, <code>{'{{session}}'}</code>, or <code>__SESSION__</code> in the proxy server, username, or password to opt into engine-managed affinity.
+          </Hint>
         </div>
       )}
     </FormSection>
@@ -372,6 +509,7 @@ export function PlaywrightSettingsFormContent(): ReactElement {
         <HeadlessModeSection />
         <EmulationSection />
         <TimeoutsSection />
+        <IdentitySection />
         <HumanizeSection />
         <AdvancedSettingsSection />
 

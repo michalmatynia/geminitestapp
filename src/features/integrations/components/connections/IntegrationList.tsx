@@ -20,6 +20,7 @@ export function IntegrationList(): React.JSX.Element {
     traderaApiDefinition,
     allegroDefinition,
     vintedDefinition,
+    scanner1688Definition,
     baselinkerDefinition,
     linkedinDefinition,
   } = useIntegrationList();
@@ -73,6 +74,14 @@ export function IntegrationList(): React.JSX.Element {
                   variant: 'warning' as const,
                   color: 'success' as const,
                   definition: vintedDefinition,
+                },
+                {
+                  slug: '1688',
+                  label: '1688',
+                  type: 'Browser',
+                  variant: 'warning' as const,
+                  color: 'warning' as const,
+                  definition: scanner1688Definition,
                 },
                 {
                   slug: 'tradera-api',

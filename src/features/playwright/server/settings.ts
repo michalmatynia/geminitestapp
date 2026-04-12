@@ -86,10 +86,13 @@ const normalizeStorageState = (state: PlaywrightStorageState): PersistedStorageS
 
 export type TraderaPlaywrightRuntimeSettings = {
   browser: 'auto' | 'brave' | 'chrome' | 'chromium';
+  identityProfile: 'default' | 'search' | 'marketplace';
   headless: boolean;
   slowMo: number;
   timeout: number;
   navigationTimeout: number;
+  locale?: string;
+  timezoneId?: string;
   humanizeMouse: boolean;
   mouseJitter: number;
   clickDelayMin: number;
@@ -102,6 +105,9 @@ export type TraderaPlaywrightRuntimeSettings = {
   proxyServer: string;
   proxyUsername: string;
   proxyPassword: string;
+  proxySessionAffinity: boolean;
+  proxySessionMode: 'sticky' | 'rotate';
+  proxyProviderPreset: 'custom' | 'brightdata' | 'oxylabs' | 'decodo';
   emulateDevice: boolean;
   deviceName: string;
 };
@@ -212,6 +218,11 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
           : browser;
       settings = {
         ...settings,
+        identityProfile:
+          personaSettings['identityProfile'] === 'search' ||
+          personaSettings['identityProfile'] === 'marketplace'
+            ? personaSettings['identityProfile']
+            : settings.identityProfile,
         headless: toBoolean(personaSettings['headless'], settings.headless),
         slowMo: toFiniteNumber(personaSettings['slowMo'], settings.slowMo, 0),
         timeout: toFiniteNumber(personaSettings['timeout'], settings.timeout, 1000),
@@ -220,6 +231,8 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
           settings.navigationTimeout,
           1000
         ),
+        locale: toTrimmedString(personaSettings['locale'], settings.locale),
+        timezoneId: toTrimmedString(personaSettings['timezoneId'], settings.timezoneId),
         humanizeMouse: toBoolean(personaSettings['humanizeMouse'], settings.humanizeMouse),
         mouseJitter: toFiniteNumber(personaSettings['mouseJitter'], settings.mouseJitter, 0),
         clickDelayMin: toFiniteNumber(
@@ -256,6 +269,20 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
         proxyServer: toTrimmedString(personaSettings['proxyServer'], settings.proxyServer),
         proxyUsername: toTrimmedString(personaSettings['proxyUsername'], settings.proxyUsername),
         proxyPassword: personaProxyPassword || settings.proxyPassword,
+        proxySessionAffinity: toBoolean(
+          personaSettings['proxySessionAffinity'],
+          settings.proxySessionAffinity
+        ),
+        proxySessionMode:
+          personaSettings['proxySessionMode'] === 'rotate'
+            ? 'rotate'
+            : settings.proxySessionMode,
+        proxyProviderPreset:
+          personaSettings['proxyProviderPreset'] === 'brightdata' ||
+          personaSettings['proxyProviderPreset'] === 'oxylabs' ||
+          personaSettings['proxyProviderPreset'] === 'decodo'
+            ? personaSettings['proxyProviderPreset']
+            : settings.proxyProviderPreset,
         emulateDevice: toBoolean(personaSettings['emulateDevice'], settings.emulateDevice),
         deviceName: toTrimmedString(personaSettings['deviceName'], settings.deviceName),
       };
@@ -277,6 +304,14 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
           defaultIntegrationConnectionPlaywrightSettings.deviceName ?? 'Desktop Chrome'
         )
       : settings.deviceName;
+  const nextLocale =
+    'locale' in connectionOverrides
+      ? toTrimmedString(connectionOverrides.locale, '')
+      : settings.locale;
+  const nextTimezoneId =
+    'timezoneId' in connectionOverrides
+      ? toTrimmedString(connectionOverrides.timezoneId, '')
+      : settings.timezoneId;
 
   return {
     hasExplicitHeadlessPreference:
@@ -293,6 +328,20 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
         typeof connectionProxyPassword === 'string'
           ? connectionProxyPassword
           : settings.proxyPassword,
+      proxySessionAffinity:
+        'proxySessionAffinity' in connectionOverrides
+          ? toBoolean(connectionOverrides.proxySessionAffinity, settings.proxySessionAffinity)
+          : settings.proxySessionAffinity,
+      proxySessionMode:
+        connectionOverrides.proxySessionMode === 'rotate' ? 'rotate' : settings.proxySessionMode,
+      proxyProviderPreset:
+        connectionOverrides.proxyProviderPreset === 'brightdata' ||
+        connectionOverrides.proxyProviderPreset === 'oxylabs' ||
+        connectionOverrides.proxyProviderPreset === 'decodo'
+          ? connectionOverrides.proxyProviderPreset
+          : settings.proxyProviderPreset,
+      locale: nextLocale,
+      timezoneId: nextTimezoneId,
       deviceName:
         nextDeviceName || defaultIntegrationConnectionPlaywrightSettings.deviceName || 'Desktop Chrome',
     },

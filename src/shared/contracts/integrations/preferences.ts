@@ -124,6 +124,22 @@ export type VintedDefaultConnectionPreferenceResponse = z.infer<
   typeof vintedDefaultConnectionPreferenceResponseSchema
 >;
 
+export const scanner1688DefaultConnectionPreferencePayloadSchema = z.object({
+  connectionId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type Scanner1688DefaultConnectionPreferencePayload = z.infer<
+  typeof scanner1688DefaultConnectionPreferencePayloadSchema
+>;
+
+export const scanner1688DefaultConnectionPreferenceResponseSchema = z.object({
+  connectionId: z.string().nullable(),
+});
+
+export type Scanner1688DefaultConnectionPreferenceResponse = z.infer<
+  typeof scanner1688DefaultConnectionPreferenceResponseSchema
+>;
+
 export const baseStockFallbackPreferencePayloadSchema = z.object({
   enabled: z.boolean(),
 });

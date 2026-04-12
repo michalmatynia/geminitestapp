@@ -14,10 +14,13 @@ import {
 describe('playwright connection settings', () => {
   it('uses the canonical integration defaults for humanized Playwright connections', () => {
     expect(defaultIntegrationConnectionPlaywrightSettings).toMatchObject({
+      identityProfile: 'default',
       headless: true,
       slowMo: 0,
       timeout: 30000,
       navigationTimeout: 30000,
+      locale: '',
+      timezoneId: '',
       humanizeMouse: true,
       mouseJitter: 5,
       clickDelayMin: 50,
@@ -27,6 +30,9 @@ describe('playwright connection settings', () => {
       actionDelayMin: 500,
       actionDelayMax: 1500,
       proxyEnabled: false,
+      proxySessionAffinity: false,
+      proxySessionMode: 'sticky',
+      proxyProviderPreset: 'custom',
       emulateDevice: false,
       deviceName: 'Desktop Chrome',
     });
@@ -35,9 +41,13 @@ describe('playwright connection settings', () => {
   it('applies partial persona or connection overrides on top of the canonical integration defaults', () => {
     expect(
       buildIntegrationConnectionPlaywrightSettings({
+        identityProfile: 'search',
+        locale: 'en-US',
         slowMo: 125,
       })
     ).toMatchObject({
+      identityProfile: 'search',
+      locale: 'en-US',
       slowMo: 125,
       humanizeMouse: true,
       actionDelayMin: 500,
@@ -46,15 +56,25 @@ describe('playwright connection settings', () => {
     expect(
       resolveIntegrationConnectionPlaywrightSettings({
         playwrightHumanizeMouse: false,
+        playwrightIdentityProfile: 'marketplace',
         playwrightClickDelayMin: 10,
         playwrightActionDelayMax: 900,
+        playwrightTimezoneId: 'Europe/Warsaw',
+        playwrightProxySessionAffinity: true,
+        playwrightProxySessionMode: 'rotate',
+        playwrightProxyProviderPreset: 'brightdata',
       })
     ).toMatchObject({
       humanizeMouse: false,
+      identityProfile: 'marketplace',
       clickDelayMin: 10,
       clickDelayMax: 150,
       actionDelayMin: 500,
       actionDelayMax: 900,
+      proxySessionAffinity: true,
+      proxySessionMode: 'rotate',
+      proxyProviderPreset: 'brightdata',
+      timezoneId: 'Europe/Warsaw',
     });
   });
 
@@ -64,6 +84,8 @@ describe('playwright connection settings', () => {
         id: 'persona-1',
         name: ' Catalog runner ',
         settings: {
+          identityProfile: 'search',
+          locale: 'en-US',
           slowMo: 125,
         },
       },
@@ -74,6 +96,8 @@ describe('playwright connection settings', () => {
         id: 'persona-1',
         name: 'Catalog runner',
         settings: expect.objectContaining({
+          identityProfile: 'search',
+          locale: 'en-US',
           slowMo: 125,
           humanizeMouse: true,
           timeout: 30000,
@@ -89,7 +113,9 @@ describe('playwright connection settings', () => {
         id: 'persona-1',
         name: 'Human runner',
         settings: {
+          identityProfile: 'marketplace',
           humanizeMouse: false,
+          timezoneId: 'Europe/Warsaw',
           slowMo: 125,
         },
       },
@@ -97,6 +123,8 @@ describe('playwright connection settings', () => {
 
     expect(resolveIntegrationPlaywrightPersonaSettings(personas, 'persona-1')).toMatchObject({
       humanizeMouse: false,
+      identityProfile: 'marketplace',
+      timezoneId: 'Europe/Warsaw',
       slowMo: 125,
       actionDelayMin: 500,
       deviceName: 'Desktop Chrome',
@@ -113,7 +141,9 @@ describe('playwright connection settings', () => {
         id: 'persona-1',
         name: 'Human runner',
         settings: {
+          identityProfile: 'search',
           humanizeMouse: false,
+          locale: 'en-US',
           slowMo: 125,
           actionDelayMin: 700,
         },
@@ -130,6 +160,8 @@ describe('playwright connection settings', () => {
         personas
       )
     ).toMatchObject({
+      locale: 'en-US',
+      identityProfile: 'search',
       slowMo: 125,
       humanizeMouse: false,
       clickDelayMin: 10,

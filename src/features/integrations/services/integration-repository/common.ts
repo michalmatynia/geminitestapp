@@ -14,6 +14,7 @@ export type { ConnectionDeleteOptions, ConnectionDependencyCounts };
 export const INTEGRATION_COLLECTION = 'integrations';
 export const INTEGRATION_CONNECTION_COLLECTION = 'integration_connections';
 export const DEFAULT_CONNECTION_SETTING_KEY = 'base_export_default_connection_id';
+export const DEFAULT_1688_CONNECTION_SETTING_KEY = 'scanner_1688_default_connection_id';
 export const PRODUCT_SYNC_PROFILE_SETTINGS_KEY = 'product_sync_profiles';
 export const ACTIVE_TEMPLATE_SETTING_KEY = 'base_export_active_template_id';
 export const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
@@ -21,10 +22,13 @@ export const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 export const CONNECTION_DEFAULTS = {
   traderaBrowserMode: 'builtin' as const,
   playwrightBrowser: DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
+  playwrightIdentityProfile: defaultIntegrationConnectionPlaywrightSettings.identityProfile,
   playwrightHeadless: defaultIntegrationConnectionPlaywrightSettings.headless,
   playwrightSlowMo: defaultIntegrationConnectionPlaywrightSettings.slowMo,
   playwrightTimeout: defaultIntegrationConnectionPlaywrightSettings.timeout,
   playwrightNavigationTimeout: defaultIntegrationConnectionPlaywrightSettings.navigationTimeout,
+  playwrightLocale: defaultIntegrationConnectionPlaywrightSettings.locale,
+  playwrightTimezoneId: defaultIntegrationConnectionPlaywrightSettings.timezoneId,
   playwrightHumanizeMouse: defaultIntegrationConnectionPlaywrightSettings.humanizeMouse,
   playwrightMouseJitter: defaultIntegrationConnectionPlaywrightSettings.mouseJitter,
   playwrightClickDelayMin: defaultIntegrationConnectionPlaywrightSettings.clickDelayMin,
@@ -36,6 +40,12 @@ export const CONNECTION_DEFAULTS = {
   playwrightProxyEnabled: defaultIntegrationConnectionPlaywrightSettings.proxyEnabled,
   playwrightProxyServer: defaultIntegrationConnectionPlaywrightSettings.proxyServer,
   playwrightProxyUsername: defaultIntegrationConnectionPlaywrightSettings.proxyUsername,
+  playwrightProxySessionAffinity:
+    defaultIntegrationConnectionPlaywrightSettings.proxySessionAffinity,
+  playwrightProxySessionMode:
+    defaultIntegrationConnectionPlaywrightSettings.proxySessionMode,
+  playwrightProxyProviderPreset:
+    defaultIntegrationConnectionPlaywrightSettings.proxyProviderPreset,
   playwrightEmulateDevice: false,
   playwrightDeviceName: defaultIntegrationConnectionPlaywrightSettings.deviceName,
   playwrightPersonaId: null,
@@ -44,6 +54,13 @@ export const CONNECTION_DEFAULTS = {
   playwrightImportBaseUrl: null,
   playwrightImportCaptureRoutesJson: null,
   playwrightFieldMapperJson: null,
+  scanner1688StartUrl: 'https://www.1688.com/',
+  scanner1688LoginMode: 'session_required' as const,
+  scanner1688DefaultSearchMode: 'local_image' as const,
+  scanner1688CandidateResultLimit: null,
+  scanner1688MinimumCandidateScore: null,
+  scanner1688MaxExtractedImages: null,
+  scanner1688AllowUrlImageSearchFallback: false,
   traderaDefaultTemplateId: '',
   traderaDefaultDurationHours: 72,
   traderaAutoRelistEnabled: true,
@@ -243,6 +260,10 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
       typeof d['playwrightNavigationTimeout'] === 'number'
         ? d['playwrightNavigationTimeout']
         : undefined,
+    playwrightLocale:
+      typeof d['playwrightLocale'] === 'string' ? d['playwrightLocale'] : undefined,
+    playwrightTimezoneId:
+      typeof d['playwrightTimezoneId'] === 'string' ? d['playwrightTimezoneId'] : undefined,
     playwrightHumanizeMouse:
       typeof d['playwrightHumanizeMouse'] === 'boolean'
         ? d['playwrightHumanizeMouse']
@@ -288,12 +309,34 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
         ? d['playwrightProxyUsername']
         : undefined,
     playwrightProxyPassword: (d['playwrightProxyPassword'] as string) ?? null,
+    playwrightProxySessionAffinity:
+      typeof d['playwrightProxySessionAffinity'] === 'boolean'
+        ? d['playwrightProxySessionAffinity']
+        : undefined,
+    playwrightProxySessionMode:
+      d['playwrightProxySessionMode'] === 'sticky' ||
+      d['playwrightProxySessionMode'] === 'rotate'
+        ? d['playwrightProxySessionMode']
+        : undefined,
+    playwrightProxyProviderPreset:
+      d['playwrightProxyProviderPreset'] === 'custom' ||
+      d['playwrightProxyProviderPreset'] === 'brightdata' ||
+      d['playwrightProxyProviderPreset'] === 'oxylabs' ||
+      d['playwrightProxyProviderPreset'] === 'decodo'
+        ? d['playwrightProxyProviderPreset']
+        : undefined,
     playwrightBrowser:
       d['playwrightBrowser'] === 'auto' ||
       d['playwrightBrowser'] === 'brave' ||
       d['playwrightBrowser'] === 'chrome' ||
       d['playwrightBrowser'] === 'chromium'
         ? d['playwrightBrowser']
+        : undefined,
+    playwrightIdentityProfile:
+      d['playwrightIdentityProfile'] === 'default' ||
+      d['playwrightIdentityProfile'] === 'search' ||
+      d['playwrightIdentityProfile'] === 'marketplace'
+        ? d['playwrightIdentityProfile']
         : undefined,
     playwrightEmulateDevice:
       typeof d['playwrightEmulateDevice'] === 'boolean'
@@ -317,6 +360,32 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     playwrightFieldMapperJson:
       (d['playwrightFieldMapperJson'] as string) ??
       CONNECTION_DEFAULTS.playwrightFieldMapperJson,
+    scanner1688StartUrl:
+      (d['scanner1688StartUrl'] as string) ?? CONNECTION_DEFAULTS.scanner1688StartUrl,
+    scanner1688LoginMode:
+      d['scanner1688LoginMode'] === 'manual_login'
+        ? 'manual_login'
+        : CONNECTION_DEFAULTS.scanner1688LoginMode,
+    scanner1688DefaultSearchMode:
+      d['scanner1688DefaultSearchMode'] === 'image_url_fallback'
+        ? 'image_url_fallback'
+        : CONNECTION_DEFAULTS.scanner1688DefaultSearchMode,
+    scanner1688CandidateResultLimit:
+      typeof d['scanner1688CandidateResultLimit'] === 'number'
+        ? (d['scanner1688CandidateResultLimit'] as number)
+        : CONNECTION_DEFAULTS.scanner1688CandidateResultLimit,
+    scanner1688MinimumCandidateScore:
+      typeof d['scanner1688MinimumCandidateScore'] === 'number'
+        ? (d['scanner1688MinimumCandidateScore'] as number)
+        : CONNECTION_DEFAULTS.scanner1688MinimumCandidateScore,
+    scanner1688MaxExtractedImages:
+      typeof d['scanner1688MaxExtractedImages'] === 'number'
+        ? (d['scanner1688MaxExtractedImages'] as number)
+        : CONNECTION_DEFAULTS.scanner1688MaxExtractedImages,
+    scanner1688AllowUrlImageSearchFallback:
+      typeof d['scanner1688AllowUrlImageSearchFallback'] === 'boolean'
+        ? (d['scanner1688AllowUrlImageSearchFallback'] as boolean)
+        : CONNECTION_DEFAULTS.scanner1688AllowUrlImageSearchFallback,
     allegroAccessToken: (d['allegroAccessToken'] as string) ?? null,
     allegroRefreshToken: (d['allegroRefreshToken'] as string) ?? null,
     allegroTokenType: (d['allegroTokenType'] as string) ?? null,

@@ -14,6 +14,7 @@ import {
 import {
   buildProductScan1688SectionId,
   ProductScan1688Details,
+  resolveProductScan1688RecommendationSignal,
   resolveProductScan1688ApplyPolicySummary,
   resolve1688ScanRecommendationReason,
 } from '@/features/products/components/scans/ProductScan1688Details';
@@ -113,7 +114,6 @@ type ProductScanModalConfig = {
   openResultLabel: string;
   preparingLabel: string;
   refreshFailureMessage: string;
-  resultSignalLabel: string;
   resultStatusLabel: string;
   resultTypeLabel: string;
 };
@@ -128,7 +128,6 @@ const PRODUCT_SCAN_MODAL_CONFIG: Record<ProductScanModalProvider, ProductScanMod
     openResultLabel: 'Open Amazon Result',
     preparingLabel: 'Preparing Amazon scans...',
     refreshFailureMessage: 'Failed to refresh Amazon scans.',
-    resultSignalLabel: 'Amazon result signal',
     resultStatusLabel: 'Amazon reverse image scan',
     resultTypeLabel: 'Amazon',
   },
@@ -141,7 +140,6 @@ const PRODUCT_SCAN_MODAL_CONFIG: Record<ProductScanModalProvider, ProductScanMod
     openResultLabel: 'Open 1688 Result',
     preparingLabel: 'Preparing 1688 supplier scans...',
     refreshFailureMessage: 'Failed to refresh 1688 supplier scans.',
-    resultSignalLabel: '1688 supplier result',
     resultStatusLabel: '1688 supplier reverse image scan',
     resultTypeLabel: '1688',
   },
@@ -1112,6 +1110,10 @@ export function ProductAmazonScanModal(
                 row.scan && !isAmazonScan
                   ? resolveProductScan1688ApplyPolicySummary(row.scan)
                   : null;
+              const supplierRecommendationSignal =
+                !isAmazonScan && recommendationReason
+                  ? resolveProductScan1688RecommendationSignal()
+                  : null;
               const isBlocked1688ResultReviewed =
                 supplierApplyPolicySummary?.blockActions === true &&
                 isBlockedScanReviewed(row.scan?.id);
@@ -1488,7 +1490,9 @@ export function ProductAmazonScanModal(
                     <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                          {modalConfig.resultSignalLabel}
+                          {isAmazonScan
+                            ? 'Amazon result signal'
+                            : (supplierRecommendationSignal?.badgeLabel ?? '1688 supplier result')}
                         </span>
                         <span className='font-medium text-foreground'>{recommendationReason}</span>
                       </div>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import {
+  is1688IntegrationSlug,
   isVintedIntegrationSlug,
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
@@ -21,6 +22,7 @@ type UseIntegrationTabsResult = {
   integrationSlug: string;
   isTradera: boolean;
   isVinted: boolean;
+  is1688: boolean;
   isAllegro: boolean;
   isLinkedIn: boolean;
   isBaselinker: boolean;
@@ -51,6 +53,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
       integrationSlug: '',
       isTradera: false,
       isVinted: false,
+      is1688: false,
       isAllegro: false,
       isLinkedIn: false,
       isBaselinker: false,
@@ -71,10 +74,11 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
   const isTradera = isTraderaIntegrationSlug(integrationSlug);
   const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);
   const isVinted = isVintedIntegrationSlug(integrationSlug);
+  const is1688 = is1688IntegrationSlug(integrationSlug);
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
-  const showPlaywright = (isTradera && !isTraderaApi) || isVinted;
+  const showPlaywright = (isTradera && !isTraderaApi) || isVinted || is1688;
   const showAllegroConsole = isAllegro;
   const showBaseConsole = isBaselinker;
   const activeConnection =
@@ -91,6 +95,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
     integrationSlug,
     isTradera,
     isVinted,
+    is1688,
     isAllegro,
     isLinkedIn,
     isBaselinker,

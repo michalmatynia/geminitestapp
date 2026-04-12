@@ -5,8 +5,10 @@ import React, { useMemo, type ReactNode } from 'react';
 import {
   isTraderaBrowserIntegrationSlug,
   isVintedIntegrationSlug,
+  is1688IntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
+  useDefault1688Connection,
   useDefaultTraderaConnection,
   useDefaultVintedConnection,
 } from '@/features/integrations/hooks/useIntegrationQueries';
@@ -61,12 +63,15 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const data = useIntegrationsDataImpl();
   const defaultTraderaConnectionQuery = useDefaultTraderaConnection();
   const defaultVintedConnectionQuery = useDefaultVintedConnection();
+  const default1688ConnectionQuery = useDefault1688Connection();
   const preferredConnectionId =
     isTraderaBrowserIntegrationSlug(data.activeIntegration?.slug)
       ? defaultTraderaConnectionQuery.data?.connectionId ?? null
       : isVintedIntegrationSlug(data.activeIntegration?.slug)
         ? defaultVintedConnectionQuery.data?.connectionId ?? null
-      : null;
+        : is1688IntegrationSlug(data.activeIntegration?.slug)
+          ? default1688ConnectionQuery.data?.connectionId ?? null
+        : null;
   const form = useIntegrationsFormImpl(
     data.connections,
     preferredConnectionId,

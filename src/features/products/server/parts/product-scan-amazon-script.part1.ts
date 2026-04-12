@@ -267,6 +267,246 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     'div[role="tab"]:has-text("Upload an image")',
     'button:has-text("upload")',
   ];
+  const GOOGLE_CONSENT_CONTROL_SELECTOR =
+    'button, [role="button"], input[type="submit"], input[type="button"]';
+  const GOOGLE_CONSENT_ACCEPT_SELECTORS = [
+    'button:has-text("Accept all cookies")',
+    'button:has-text("Accept all")',
+    'button:has-text("I agree")',
+    'button:has-text("Continue to Google")',
+    'button:has-text("Zaakceptuj")',
+    'button:has-text("Akceptuj")',
+    'button:has-text("Zgadzam")',
+    'button:has-text("Kontynuuj")',
+    'button[aria-label*="Accept"]',
+    'button[aria-label*="agree"]',
+    'form[action*="consent"] button',
+    'form[action*="save"] button',
+  ];
+  const GOOGLE_CONSENT_SURFACE_TEXT_HINTS = [
+    'before you continue',
+    'before you continue to google',
+    'google uses cookies',
+    'cookies',
+    'cookie',
+    'privacy',
+    'terms',
+    'consent',
+    'zanim przejdziesz',
+    'wykorzystuje pliki cookie',
+    'zasady prywatnosci',
+  ];
+  const GOOGLE_CONSENT_ACCEPT_TEXT_HINTS = [
+    'accept all',
+    'accept everything',
+    'i agree',
+    'agree',
+    'accept',
+    'continue to google',
+    'got it',
+    'zaakceptuj',
+    'akceptuj wszystko',
+    'zgadzam sie',
+    'przejdz do google',
+    'kontynuuj',
+  ];
+  const GOOGLE_CONSENT_REJECT_TEXT_HINTS = [
+    'reject all',
+    'reject',
+    'decline',
+    'manage options',
+    'more options',
+    'customize',
+    'settings',
+    'nie zgadzam',
+    'odrzuc',
+    'zarzadzaj',
+    'ustawienia',
+  ];
+
+  const normalizeComparableText = (value) =>
+    (toText(value) || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+  const looksLikeGoogleConsentUrl = (value) => {
+    const normalized = normalizeComparableText(value);
+    return (
+      normalized.includes('consent.google') ||
+      normalized.includes('/consent') ||
+      normalized.includes('before-you-continue')
+    );
+  };
+
+  const frameLooksLikeGoogleConsentSurface = async (frame) => {
+    const frameUrl = frame.url();
+    if (looksLikeGoogleConsentUrl(frameUrl)) {
+      return {
+        detected: true,
+        frameUrl,
+      };
+    }
+
+    const hasConsentForm =
+      (await frame
+        .locator(
+          'form[action*="consent"], form[action*="save"], form[action*="cookie"], form[action*="privacy"]'
+        )
+        .count()
+        .catch(() => 0)) > 0;
+    if (hasConsentForm) {
+      return {
+        detected: true,
+        frameUrl,
+      };
+    }
+
+    const bodyText = normalizeComparableText(
+      await frame.locator('body').first().textContent().catch(() => null)
+    );
+    const detected = GOOGLE_CONSENT_SURFACE_TEXT_HINTS.some((hint) => bodyText.includes(hint));
+
+    return {
+      detected,
+      frameUrl,
+    };
+  };
+
+  const listGoogleConsentFrames = async () => {
+    const matches = [];
+    for (const frame of page.frames()) {
+      const state = await frameLooksLikeGoogleConsentSurface(frame).catch(() => ({
+        detected: false,
+        frameUrl: frame.url(),
+      }));
+      if (state.detected) {
+        matches.push({
+          frame,
+          frameUrl: state.frameUrl,
+        });
+      }
+    }
+    return matches;
+  };
+
+  const findGoogleConsentAcceptControl = async (frame) => {
+    for (const selector of GOOGLE_CONSENT_ACCEPT_SELECTORS) {
+      const locator = frame.locator(selector).first();
+      if ((await locator.count().catch(() => 0)) === 0) {
+        continue;
+      }
+      if (!(await locator.isVisible().catch(() => false))) {
+        continue;
+      }
+      return {
+        locator,
+        label: selector,
+        frameUrl: frame.url(),
+      };
+    }
+
+    const candidateControls = await frame
+      .locator(GOOGLE_CONSENT_CONTROL_SELECTOR)
+      .evaluateAll(
+        (elements, hints) => {
+          const normalize = (value) =>
+            (typeof value === 'string' ? value : '')
+              .normalize('NFKD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .trim()
+              .toLowerCase();
+          const acceptHints = Array.isArray(hints?.accept) ? hints.accept : [];
+          const rejectHints = Array.isArray(hints?.reject) ? hints.reject : [];
+          return elements
+            .map((element, index) => {
+              if (!(element instanceof HTMLElement)) {
+                return null;
+              }
+              const text = normalize(
+                [
+                  element.innerText,
+                  element.textContent,
+                  element.getAttribute('aria-label'),
+                  element.getAttribute('title'),
+                  element.getAttribute('value'),
+                  element.getAttribute('name'),
+                  element.getAttribute('id'),
+                ]
+                  .filter(Boolean)
+                  .join(' ')
+              );
+              if (!text) {
+                return null;
+              }
+              const disabled =
+                element.matches(':disabled') || element.getAttribute('aria-disabled') === 'true';
+              if (disabled) {
+                return null;
+              }
+              const style = window.getComputedStyle(element);
+              const visible =
+                style.visibility !== 'hidden' &&
+                style.display !== 'none' &&
+                element.getBoundingClientRect().width > 0 &&
+                element.getBoundingClientRect().height > 0;
+              if (!visible) {
+                return null;
+              }
+              if (rejectHints.some((hint) => text.includes(hint))) {
+                return null;
+              }
+              let score = 0;
+              if (text.includes('accept all') || text.includes('akceptuj wszystko')) {
+                score += 8;
+              }
+              if (text.includes('i agree') || text.includes('zgadzam sie')) {
+                score += 7;
+              }
+              if (text.includes('continue to google') || text.includes('przejdz do google')) {
+                score += 6;
+              }
+              if (acceptHints.some((hint) => text.includes(hint))) {
+                score += 4;
+              }
+              const formAction = normalize(element.closest('form')?.getAttribute('action') || '');
+              if (formAction.includes('consent') || formAction.includes('save')) {
+                score += 2;
+              }
+              return score > 0
+                ? {
+                    index,
+                    label: text,
+                    score,
+                  }
+                : null;
+            })
+            .filter(Boolean)
+            .sort((left, right) => right.score - left.score);
+        },
+        {
+          accept: GOOGLE_CONSENT_ACCEPT_TEXT_HINTS,
+          reject: GOOGLE_CONSENT_REJECT_TEXT_HINTS,
+        }
+      )
+      .catch(() => []);
+
+    const bestCandidate = Array.isArray(candidateControls) ? candidateControls[0] : null;
+    if (!bestCandidate || typeof bestCandidate.index !== 'number') {
+      return null;
+    }
+
+    return {
+      locator: frame.locator(GOOGLE_CONSENT_CONTROL_SELECTOR).nth(bestCandidate.index),
+      label: toText(bestCandidate.label) || 'heuristic_accept_control',
+      frameUrl: frame.url(),
+    };
+  };
+
+  const isGoogleConsentPresent = async () => {
+    const consentFrames = await listGoogleConsentFrames();
+    return consentFrames.length > 0;
+  };
 
   const isGoogleLensUploadAdvancedUrl = (startingUrl, currentUrl) => {
     const normalizedStartingUrl = toText(startingUrl);
@@ -285,6 +525,13 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     const deadline = Date.now() + 25000;
     while (Date.now() < deadline) {
       const currentUrl = page.url();
+      if (await isGoogleConsentPresent().catch(() => false)) {
+        const consentState = await clickGoogleConsentIfPresent().catch(() => null);
+        if (consentState?.resolved) {
+          await wait(600);
+          continue;
+        }
+      }
       if (isGoogleLensUploadAdvancedUrl(startingUrl, currentUrl)) {
         return {
           advanced: true,
@@ -434,6 +681,9 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       })
     ).catch(() => false);
     const captchaState = await detectGoogleLensCaptcha();
+    const consentFrames = await listGoogleConsentFrames().catch(() => []);
+    const consentPresent = Array.isArray(consentFrames) && consentFrames.length > 0;
+    const consentFrameUrl = consentPresent ? toText(consentFrames[0]?.frameUrl) : null;
 
     return {
       currentUrl: page.url(),
@@ -442,6 +692,8 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       uploadTabSelector,
       resultHintsVisible,
       captchaDetected: captchaState.detected,
+      consentPresent,
+      consentFrameUrl,
     };
   };
 
@@ -450,6 +702,13 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       return {
         resultCode: 'captcha_required',
         message: CAPTCHA_REQUIRED_MESSAGE,
+      };
+    }
+
+    if (entryState?.consentPresent) {
+      return {
+        resultCode: 'google_consent_blocking',
+        message: 'Google consent dialog stayed open and blocked access to Google Lens upload.',
       };
     }
 
@@ -482,6 +741,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       };
     }
 
+    await clickGoogleConsentIfPresent().catch(() => undefined);
     await clickFirstVisible(GOOGLE_LENS_ENTRY_TRIGGER_SELECTORS).catch(() => undefined);
 
     if (await waitForInput(3000)) {
@@ -492,6 +752,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       };
     }
 
+    await clickGoogleConsentIfPresent().catch(() => undefined);
     await clickFirstVisible(GOOGLE_LENS_UPLOAD_TAB_SELECTORS).catch(() => undefined);
 
     const ready = await waitForInput(5000);
@@ -796,21 +1057,77 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   };
 
   const clickGoogleConsentIfPresent = async () => {
-    const selectors = [
-      'button:has-text("Accept all cookies")',
-      'button:has-text("Accept all")',
-      'button:has-text("I agree")',
-      'button[aria-label*="Accept"]',
-      'button[aria-label*="agree"]',
-    ];
-    for (const selector of selectors) {
-      const locator = page.locator(selector).first();
-      if ((await locator.count().catch(() => 0)) > 0) {
-        await locator.click().catch(() => undefined);
-        await wait(800);
-        return;
+    let clicked = false;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const consentFrames = await listGoogleConsentFrames();
+      if (consentFrames.length === 0) {
+        return {
+          present: clicked,
+          clicked,
+          resolved: true,
+          currentUrl: page.url(),
+        };
       }
+
+      for (const consentFrame of consentFrames) {
+        const acceptControl = await findGoogleConsentAcceptControl(consentFrame.frame).catch(
+          () => null
+        );
+        if (!acceptControl) {
+          continue;
+        }
+
+        await acceptControl.locator.scrollIntoViewIfNeeded().catch(() => undefined);
+        const accepted = await acceptControl.locator
+          .click({ timeout: 4000 })
+          .then(() => true)
+          .catch(async () => {
+            return await acceptControl.locator
+              .evaluate((element) => {
+                if (!(element instanceof HTMLElement)) {
+                  return false;
+                }
+                element.click();
+                return true;
+              })
+              .catch(() => false);
+          });
+
+        if (!accepted) {
+          continue;
+        }
+
+        clicked = true;
+        log('amazon.scan.google_consent_accepted', {
+          currentUrl: page.url(),
+          consentFrameUrl: acceptControl.frameUrl,
+          control: acceptControl.label,
+          attempt: attempt + 1,
+        });
+        await Promise.race([
+          page.waitForLoadState('domcontentloaded', { timeout: 4000 }),
+          page.waitForURL((url) => !looksLikeGoogleConsentUrl(String(url)), { timeout: 4000 }),
+        ]).catch(() => undefined);
+        await wait(1200);
+        if (!(await isGoogleConsentPresent().catch(() => false))) {
+          return {
+            present: true,
+            clicked: true,
+            resolved: true,
+            currentUrl: page.url(),
+          };
+        }
+      }
+
+      await wait(800);
     }
+
+    return {
+      present: true,
+      clicked,
+      resolved: !(await isGoogleConsentPresent().catch(() => true)),
+      currentUrl: page.url(),
+    };
   };
 
   const detectGoogleLensCaptcha = async () => {
@@ -1238,6 +1555,18 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
           sharedDetails,
           imageUrl ? [{ label: 'Fallback available', value: 'Image URL' }] : [],
           [
+            {
+              label: 'Consent present',
+              value:
+                fileInputState.entryState &&
+                typeof fileInputState.entryState.consentPresent === 'boolean'
+                  ? String(fileInputState.entryState.consentPresent)
+                  : null,
+            },
+            {
+              label: 'Consent frame',
+              value: fileInputState.entryState?.consentFrameUrl,
+            },
             {
               label: 'Entry trigger',
               value: fileInputState.entryState?.searchTriggerSelector,

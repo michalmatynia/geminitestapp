@@ -13,12 +13,29 @@ type ScanFailureArtifact = {
   mimeType: string | null;
 };
 
+type ScanRuntimePosture = {
+  browserLabel: string | null;
+  browserEngine: string | null;
+  headless: boolean | null;
+  identityProfile: string | null;
+  locale: string | null;
+  timezoneId: string | null;
+  proxyEnabled: boolean | null;
+  proxyProviderPreset: string | null;
+  proxySessionMode: string | null;
+  proxyReason: string | null;
+  proxyServerHost: string | null;
+  stickyStorageEnabled: boolean | null;
+  stickyStorageLoaded: boolean | null;
+};
+
 type ScanDiagnostics = {
   runId: string | null;
   runStatus: string | null;
   latestStage: string | null;
   latestStageUrl: string | null;
   failureArtifacts: ScanFailureArtifact[];
+  runtimePosture: ScanRuntimePosture | null;
   logTail: string[];
 };
 
@@ -61,6 +78,9 @@ const formatTimestamp = (value: string | null | undefined): string | null => {
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const readOptionalBoolean = (value: unknown): boolean | null =>
+  typeof value === 'boolean' ? value : null;
 
 const normalizeFailureArtifacts = (value: unknown): ScanFailureArtifact[] => {
   if (!Array.isArray(value)) {
@@ -118,6 +138,12 @@ export const buildProductScanArtifactHref = (scanId: string, artifact: ScanFailu
   return `/api/v2/products/scans/${encodeURIComponent(normalizedScanId)}/artifacts/${encodeURIComponent(fileName)}`;
 };
 
+const isRuntimePostureArtifact = (artifact: ScanFailureArtifact): boolean => {
+  const normalizedName = artifact.name.trim().toLowerCase();
+  const normalizedPath = artifact.path.trim().toLowerCase();
+  return normalizedName === 'runtime-posture' || normalizedPath.includes('runtime-posture');
+};
+
 const resolveArtifactActionLabel = (artifact: ScanFailureArtifact): string => {
   if (artifact.mimeType?.startsWith('image/')) {
     return 'View screenshot';
@@ -125,8 +151,14 @@ const resolveArtifactActionLabel = (artifact: ScanFailureArtifact): string => {
   if (artifact.mimeType === 'text/html') {
     return 'View page HTML';
   }
+  if (artifact.mimeType === 'application/json') {
+    return isRuntimePostureArtifact(artifact) ? 'View runtime posture JSON' : 'View JSON';
+  }
   return 'Open artifact';
 };
+
+const resolveArtifactDisplayName = (artifact: ScanFailureArtifact): string =>
+  isRuntimePostureArtifact(artifact) ? 'Runtime posture' : artifact.name;
 
 const resolveDiagnosticPhaseLabel = (latestStage: string | null): string => {
   if (!latestStage) {
@@ -146,6 +178,97 @@ const resolveDiagnosticPhaseLabel = (latestStage: string | null): string => {
   }
 
   return 'Product Update';
+};
+
+const normalizeRuntimePosture = (value: unknown): ScanRuntimePosture | null => {
+  const record = isObjectRecord(value) ? value : null;
+  if (!record) {
+    return null;
+  }
+
+  const browser = isObjectRecord(record['browser']) ? record['browser'] : null;
+  const antiDetection = isObjectRecord(record['antiDetection']) ? record['antiDetection'] : null;
+  const proxy = antiDetection && isObjectRecord(antiDetection['proxy']) ? antiDetection['proxy'] : null;
+  const stickyStorageState =
+    antiDetection && isObjectRecord(antiDetection['stickyStorageState'])
+      ? antiDetection['stickyStorageState']
+      : null;
+
+  const runtimePosture: ScanRuntimePosture = {
+    browserLabel: hasText(String(browser?.['label'] ?? '')) ? String(browser?.['label']).trim() : null,
+    browserEngine: hasText(String(browser?.['engine'] ?? '')) ? String(browser?.['engine']).trim() : null,
+    headless: readOptionalBoolean(browser?.['headless']),
+    identityProfile: hasText(String(antiDetection?.['identityProfile'] ?? ''))
+      ? String(antiDetection?.['identityProfile']).trim()
+      : null,
+    locale: hasText(String(antiDetection?.['locale'] ?? '')) ? String(antiDetection?.['locale']).trim() : null,
+    timezoneId: hasText(String(antiDetection?.['timezoneId'] ?? ''))
+      ? String(antiDetection?.['timezoneId']).trim()
+      : null,
+    proxyEnabled: readOptionalBoolean(proxy?.['enabled']),
+    proxyProviderPreset: hasText(String(proxy?.['providerPreset'] ?? ''))
+      ? String(proxy?.['providerPreset']).trim()
+      : null,
+    proxySessionMode: hasText(String(proxy?.['sessionMode'] ?? ''))
+      ? String(proxy?.['sessionMode']).trim()
+      : null,
+    proxyReason: hasText(String(proxy?.['reason'] ?? '')) ? String(proxy?.['reason']).trim() : null,
+    proxyServerHost: hasText(String(proxy?.['serverHost'] ?? ''))
+      ? String(proxy?.['serverHost']).trim()
+      : null,
+    stickyStorageEnabled: readOptionalBoolean(stickyStorageState?.['enabled']),
+    stickyStorageLoaded: readOptionalBoolean(stickyStorageState?.['loaded']),
+  };
+
+  return Object.values(runtimePosture).some((value) => value !== null) ? runtimePosture : null;
+};
+
+const formatRuntimePostureBrowser = (runtimePosture: ScanRuntimePosture): string | null => {
+  const parts = [
+    runtimePosture.browserLabel ?? formatLabel(runtimePosture.browserEngine) ?? null,
+    runtimePosture.headless === null ? null : runtimePosture.headless ? 'Headless' : 'Headed',
+  ].filter((value): value is string => hasText(value));
+
+  return parts.length > 0 ? parts.join(' · ') : null;
+};
+
+const formatRuntimePostureIdentity = (runtimePosture: ScanRuntimePosture): string | null => {
+  const parts = [
+    runtimePosture.identityProfile ? `${formatLabel(runtimePosture.identityProfile)} profile` : null,
+    runtimePosture.locale,
+    runtimePosture.timezoneId,
+  ].filter((value): value is string => hasText(value));
+
+  return parts.length > 0 ? parts.join(' · ') : null;
+};
+
+const formatRuntimePostureProxy = (runtimePosture: ScanRuntimePosture): string | null => {
+  if (runtimePosture.proxyEnabled === false) {
+    return 'Disabled';
+  }
+
+  const parts = [
+    formatLabel(runtimePosture.proxyProviderPreset),
+    formatLabel(runtimePosture.proxySessionMode),
+    formatLabel(runtimePosture.proxyReason),
+    runtimePosture.proxyServerHost,
+  ].filter((value): value is string => hasText(value));
+
+  if (parts.length === 0) {
+    return runtimePosture.proxyEnabled === true ? 'Enabled' : null;
+  }
+
+  return parts.join(' · ');
+};
+
+const formatRuntimePostureStorage = (runtimePosture: ScanRuntimePosture): string | null => {
+  if (runtimePosture.stickyStorageEnabled === false) {
+    return 'Disabled';
+  }
+  if (runtimePosture.stickyStorageEnabled !== true) {
+    return null;
+  }
+  return runtimePosture.stickyStorageLoaded ? 'Loaded sticky state' : 'Cold sticky state';
 };
 
 export const resolveProductScanDiagnostics = (
@@ -168,9 +291,18 @@ export const resolveProductScanDiagnostics = (
     ? String(scan.rawResult['latestStageUrl']).trim()
     : null;
   const failureArtifacts = normalizeFailureArtifacts(scan.rawResult['failureArtifacts']);
+  const runtimePosture = normalizeRuntimePosture(scan.rawResult['runtimePosture']);
   const logTail = normalizeLogTail(scan.rawResult['logTail']);
 
-  if (!runId && !runStatus && !latestStage && !latestStageUrl && failureArtifacts.length === 0 && logTail.length === 0) {
+  if (
+    !runId &&
+    !runStatus &&
+    !latestStage &&
+    !latestStageUrl &&
+    failureArtifacts.length === 0 &&
+    !runtimePosture &&
+    logTail.length === 0
+  ) {
     return null;
   }
 
@@ -180,6 +312,7 @@ export const resolveProductScanDiagnostics = (
     latestStage,
     latestStageUrl,
     failureArtifacts,
+    runtimePosture,
     logTail,
   };
 };
@@ -276,6 +409,34 @@ export function ProductScanDiagnostics(props: {
         </div>
       ) : null}
 
+      {diagnostics.runtimePosture ? (
+        <div className='space-y-2'>
+          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+            Runtime Posture
+          </p>
+          <div className='grid gap-2 sm:grid-cols-2'>
+            {[
+              { label: 'Browser', value: formatRuntimePostureBrowser(diagnostics.runtimePosture) },
+              { label: 'Identity', value: formatRuntimePostureIdentity(diagnostics.runtimePosture) },
+              { label: 'Proxy', value: formatRuntimePostureProxy(diagnostics.runtimePosture) },
+              { label: 'Sticky state', value: formatRuntimePostureStorage(diagnostics.runtimePosture) },
+            ]
+              .filter((entry): entry is { label: string; value: string } => hasText(entry.value))
+              .map((entry) => (
+                <div
+                  key={entry.label}
+                  className='space-y-1 rounded-md border border-border/40 bg-background/70 px-3 py-2'
+                >
+                  <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                    {entry.label}
+                  </p>
+                  <p className='break-words text-sm'>{entry.value}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      ) : null}
+
       {diagnostics.failureArtifacts.length > 0 ? (
         <div className='space-y-2'>
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
@@ -291,7 +452,7 @@ export function ProductScanDiagnostics(props: {
                   className='space-y-2 rounded-md border border-border/40 bg-background/70 px-3 py-2'
                 >
                   <div className='flex flex-wrap items-center gap-2'>
-                    <span className='text-sm font-medium'>{artifact.name}</span>
+                    <span className='text-sm font-medium'>{resolveArtifactDisplayName(artifact)}</span>
                     {artifact.kind ? (
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
                         {formatLabel(artifact.kind)}

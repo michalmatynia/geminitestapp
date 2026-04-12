@@ -1,6 +1,6 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-12T11:10:55.500Z",
+  "generatedAt": "2026-04-12T13:47:05.142Z",
   "phase": "classify",
   "executionMode": "executed",
   "allowWrite": false,
@@ -27,7 +27,7 @@
       ],
       "instructions": [],
       "script": "products:classify:parameter-recovery",
-      "durationMs": 3056
+      "durationMs": 2812
     },
     {
       "id": "products-parameter-source-report",
@@ -43,7 +43,7 @@
       ],
       "instructions": [],
       "script": "products:report:parameter-source-recovery",
-      "durationMs": 7277
+      "durationMs": 3149
     },
     {
       "id": "products-parameter-source-summary",
@@ -59,7 +59,7 @@
       ],
       "instructions": [],
       "script": "products:summarize:parameter-source-recovery",
-      "durationMs": 303
+      "durationMs": 377
     },
     {
       "id": "products-parameter-source-template",
@@ -75,7 +75,7 @@
       ],
       "instructions": [],
       "script": "products:generate:parameter-source-recovery-template",
-      "durationMs": 301
+      "durationMs": 344
     },
     {
       "id": "products-parameter-source-batch-split",
@@ -90,7 +90,7 @@
       ],
       "instructions": [],
       "script": "products:split:parameter-source-recovery-template",
-      "durationMs": 300
+      "durationMs": 340
     },
     {
       "id": "products-parameter-family-mapping-packs",
@@ -105,7 +105,7 @@
       ],
       "instructions": [],
       "script": "products:generate:parameter-family-mapping-pack",
-      "durationMs": 284
+      "durationMs": 316
     },
     {
       "id": "products-parameter-family-mapping-index",
@@ -120,7 +120,7 @@
       ],
       "instructions": [],
       "script": "products:build:parameter-family-mapping-index",
-      "durationMs": 284
+      "durationMs": 317
     },
     {
       "id": "products-parameter-family-mapping-checklist",
@@ -135,7 +135,7 @@
       ],
       "instructions": [],
       "script": "products:render:parameter-family-mapping-checklist",
-      "durationMs": 281
+      "durationMs": 303
     },
     {
       "id": "products-category-manual-remediation-report",
@@ -151,7 +151,7 @@
       ],
       "instructions": [],
       "script": "products:report:parameter-remediation",
-      "durationMs": 594
+      "durationMs": 682
     },
     {
       "id": "application-performance-baseline",
@@ -172,7 +172,7 @@
       ],
       "instructions": [],
       "script": "perf:ops:baseline",
-      "durationMs": 633296
+      "durationMs": 756922
     },
     {
       "id": "repo-quality-lint",
@@ -185,7 +185,7 @@
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:lint",
-      "durationMs": 215521
+      "durationMs": 245921
     },
     {
       "id": "repo-quality-typecheck",
@@ -198,7 +198,7 @@
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:typecheck",
-      "durationMs": 73534
+      "durationMs": 85668
     }
   ]
 }

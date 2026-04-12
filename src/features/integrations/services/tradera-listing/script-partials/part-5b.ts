@@ -125,7 +125,7 @@ export const PART_5B = String.raw`
     await wait(500);
 
     const finalPriceApplied = await fillPriceField({
-      required: true,
+      required: false,
       context: 'pre-publish-finalize',
     });
     if (finalPriceApplied) {
@@ -135,6 +135,10 @@ export const PART_5B = String.raw`
         context: 'pre-publish-finalize',
       });
     }
+
+    await dismissVisibleAutofillDialogIfPresent({
+      context: 'pre-publish-finalize',
+    }).catch(() => false);
 
     const listingConfirmationState = await acknowledgeListingConfirmationIfPresent();
     if (listingConfirmationState === 'checked') {
@@ -163,25 +167,65 @@ export const PART_5B = String.raw`
     let prePublishValidationMessages = publishReadiness.messages;
     let publishDisabled = publishReadiness.publishDisabled;
     if (publishDisabled || prePublishValidationMessages.length > 0) {
+      const autofillDismissed = await dismissVisibleAutofillDialogIfPresent({
+        context: 'publish-readiness-recovery',
+      }).catch(() => false);
+      const confirmationRecoveryState = await acknowledgeListingConfirmationIfPresent();
       const priceRecoveryApplied = await fillPriceField({
         required: false,
         context: 'publish-readiness-recovery',
       });
+
+      let shouldRecheckPublishReadiness = false;
+      if (autofillDismissed) {
+        await wait(500);
+        shouldRecheckPublishReadiness = true;
+      }
+      if (confirmationRecoveryState === 'checked') {
+        const confirmationDraftState = await waitForDraftSaveWithRecovery({
+          timeoutMs: 4_000,
+          minimumQuietMs: 1_000,
+          context: 'publish-readiness-recovery',
+        });
+        if (confirmationDraftState?.settled) {
+          shouldRecheckPublishReadiness = true;
+        }
+      }
       if (priceRecoveryApplied) {
         await waitForDraftSaveWithRecovery({
           timeoutMs: 4_000,
           minimumQuietMs: 1_000,
           context: 'publish-readiness-recovery',
         });
+        shouldRecheckPublishReadiness = true;
+      }
+
+      if (shouldRecheckPublishReadiness) {
         publishReadiness = await waitForPublishReadiness(publishButton, 4_000);
         prePublishValidationMessages = publishReadiness.messages;
         publishDisabled = publishReadiness.publishDisabled;
       }
     }
     if (publishDisabled || prePublishValidationMessages.length > 0) {
+      const confirmationCheckbox = await findCheckboxByLabelsWithin(
+        page,
+        LISTING_CONFIRMATION_LABELS
+      ).catch(() => null);
+      const listingConfirmationChecked = confirmationCheckbox
+        ? await isCheckboxChecked(confirmationCheckbox).catch(() => null)
+        : null;
+      const autofillDialogVisible = await findVisibleAutofillDialog().then(Boolean).catch(
+        () => false
+      );
+      const autofillPending = await firstVisible(AUTOFILL_PENDING_SELECTORS)
+        .then(Boolean)
+        .catch(() => false);
       log?.('tradera.quicklist.publish.validation', {
         publishDisabled,
         messages: prePublishValidationMessages,
+        listingConfirmationChecked,
+        autofillDialogVisible,
+        autofillPending,
       });
       throw new Error(
         (hasDeliveryValidationIssue(prePublishValidationMessages)
@@ -288,12 +332,84 @@ export const PART_5B = String.raw`
       };
     };
 
+    const recoverPublishedListingViaVisibleCandidate = async (
+      publishInteraction,
+      attempt,
+      options = {}
+    ) => {
+      const expectedExternalListingId =
+        normalizeWhitespace(
+          options?.expectedExternalListingId ||
+            extractListingId(options?.expectedListingUrl || '') ||
+            ''
+        ) || null;
+      const expectedListingUrl = normalizeWhitespace(options?.expectedListingUrl || '') || null;
+
+      if (!expectedExternalListingId && !expectedListingUrl) {
+        return null;
+      }
+
+      const activeContextReady = await ensureActiveListingsContext().catch(() => false);
+      if (!activeContextReady) {
+        return null;
+      }
+
+      const visibleCandidates = await collectVisibleListingCandidates(8).catch(() => []);
+      const matchedCandidate = visibleCandidates.find((candidate) => {
+        const candidateListingId =
+          normalizeWhitespace(
+            candidate?.listingId || extractListingId(candidate?.listingUrl || '') || ''
+          ) || null;
+        const candidateListingUrl = normalizeWhitespace(candidate?.listingUrl || '') || null;
+
+        if (expectedExternalListingId && candidateListingId === expectedExternalListingId) {
+          return true;
+        }
+
+        return Boolean(
+          expectedListingUrl && candidateListingUrl && candidateListingUrl === expectedListingUrl
+        );
+      });
+
+      log?.('tradera.quicklist.publish.recovery_visible_candidate_check', {
+        attempt,
+        reason: publishInteraction?.reason || null,
+        expectedExternalListingId,
+        expectedListingUrl,
+        visibleCandidateCount: visibleCandidates.length,
+        matchedListingId: matchedCandidate?.listingId || null,
+        matchedListingUrl: matchedCandidate?.listingUrl || null,
+      });
+
+      if (!matchedCandidate) {
+        return null;
+      }
+
+      return {
+        externalListingId:
+          matchedCandidate.listingId ||
+          extractListingId(matchedCandidate.listingUrl || '') ||
+          expectedExternalListingId,
+        listingUrl: matchedCandidate.listingUrl || expectedListingUrl,
+        duplicateMatchStrategy: 'visible-candidate+expected-listing',
+        duplicateMatchedProductId: null,
+        duplicateCandidateCount: visibleCandidates.length,
+        duplicateSearchTitle: duplicateSearchTitle || null,
+        attempt,
+      };
+    };
+
     const recoverPublishConfirmationViaDuplicateSearch = async (
       publishInteraction,
-      timeoutMs = 20_000
+      timeoutMs = 20_000,
+      options = {}
     ) => {
       const deadline = Date.now() + timeoutMs;
       let attempt = 0;
+      const expectedExternalListingId =
+        normalizeWhitespace(options?.expectedExternalListingId || publishInteraction?.externalListingId || '') || null;
+      const expectedListingUrl =
+        normalizeWhitespace(options?.expectedListingUrl || publishInteraction?.listingUrl || '') || null;
 
       while (Date.now() < deadline) {
         attempt += 1;
@@ -305,6 +421,24 @@ export const PART_5B = String.raw`
         try {
           duplicateMatch = await checkDuplicate(duplicateSearchTerms);
         } catch (error) {
+          const visibleCandidateRecovery = await recoverPublishedListingViaVisibleCandidate(
+            publishInteraction,
+            attempt,
+            {
+              expectedExternalListingId,
+              expectedListingUrl,
+            }
+          );
+          if (visibleCandidateRecovery) {
+            log?.('tradera.quicklist.publish.recovery_visible_candidate_result', {
+              attempt,
+              reason: publishInteraction?.reason || null,
+              externalListingId: visibleCandidateRecovery.externalListingId,
+              listingUrl: visibleCandidateRecovery.listingUrl,
+              duplicateMatchStrategy: visibleCandidateRecovery.duplicateMatchStrategy,
+            });
+            return visibleCandidateRecovery;
+          }
           log?.('tradera.quicklist.publish.recovery_duplicate_failed', {
             attempt,
             reason: publishInteraction?.reason || null,
@@ -328,6 +462,24 @@ export const PART_5B = String.raw`
         });
 
         if (!duplicateMatch?.duplicateFound) {
+          const visibleCandidateRecovery = await recoverPublishedListingViaVisibleCandidate(
+            publishInteraction,
+            attempt,
+            {
+              expectedExternalListingId,
+              expectedListingUrl,
+            }
+          );
+          if (visibleCandidateRecovery) {
+            log?.('tradera.quicklist.publish.recovery_visible_candidate_result', {
+              attempt,
+              reason: publishInteraction?.reason || null,
+              externalListingId: visibleCandidateRecovery.externalListingId,
+              listingUrl: visibleCandidateRecovery.listingUrl,
+              duplicateMatchStrategy: visibleCandidateRecovery.duplicateMatchStrategy,
+            });
+            return visibleCandidateRecovery;
+          }
           continue;
         }
 
@@ -489,7 +641,12 @@ export const PART_5B = String.raw`
       }
 
       const publishRecovery = await recoverPublishConfirmationViaDuplicateSearch(
-        publishInteraction
+        publishInteraction,
+        20_000,
+        {
+          expectedExternalListingId: publishInteraction?.externalListingId || null,
+          expectedListingUrl: publishInteraction?.listingUrl || null,
+        }
       );
       if (publishRecovery) {
         const recoveredResult = {
@@ -563,9 +720,61 @@ export const PART_5B = String.raw`
       });
     }
 
+    const canTrustDirectPublishSuccess =
+      listingAction === 'list' &&
+      Boolean(
+        externalListingId ||
+          listingUrl ||
+          publishInteraction.activeListingsVisible ||
+          publishInteraction.stillOnSellFlow === false
+      );
+
+    if (canTrustDirectPublishSuccess) {
+      const effectiveExternalListingId = externalListingId || existingExternalListingId || null;
+      const effectiveListingUrl =
+        listingUrl ||
+        (effectiveExternalListingId
+          ? 'https://www.tradera.com/item/' + effectiveExternalListingId
+          : null);
+      const directResult = {
+        stage: 'publish_verified',
+        currentUrl: effectiveListingUrl || page.url(),
+        externalListingId: effectiveExternalListingId,
+        listingUrl: effectiveListingUrl,
+        publishVerified: true,
+        duplicateMatchStrategy: null,
+        duplicateMatchedProductId: null,
+        duplicateCandidateCount: null,
+        duplicateSearchTitle: null,
+        publishInteractionReason: publishInteraction.reason,
+        imageCount: imageUploadResult?.imageCount ?? null,
+        observedPreviewCount: imageUploadResult?.observedPreviewCount ?? null,
+        observedPreviewDelta: imageUploadResult?.observedPreviewDelta ?? null,
+        categoryPath: selectedCategoryPath,
+        categorySource: selectedCategorySource,
+        imageUploadSource: imageUploadResult?.uploadSource ?? null,
+      };
+      log?.('tradera.quicklist.publish.verified_direct', {
+        publishInteractionReason: publishInteraction.reason,
+        externalListingId: effectiveExternalListingId,
+        listingUrl: effectiveListingUrl,
+      });
+      emitStage('publish_verified', {
+        publishInteractionReason: publishInteraction.reason,
+        externalListingId: effectiveExternalListingId,
+        listingUrl: effectiveListingUrl,
+      });
+      emit('result', directResult);
+      return directResult;
+    }
+
     const publishVerification = await recoverPublishConfirmationViaDuplicateSearch(
       publishInteraction,
-      25_000
+      25_000,
+      {
+        expectedExternalListingId: externalListingId,
+        expectedListingUrl: listingUrl,
+      }
     );
     if (!publishVerification) {
       await captureFailureArtifacts('publish-verification-missing', {

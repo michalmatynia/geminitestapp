@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 
 import {
+  is1688IntegrationSlug,
   isVintedIntegrationSlug,
   isLinkedInIntegrationSlug,
   isTraderaApiIntegrationSlug,
@@ -162,7 +163,9 @@ export function useIntegrationsActionsImpl(args: {
     const isTraderaBrowserIntegration =
       isTraderaIntegration && !isTraderaApiIntegration;
     const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
-    const isBrowserIntegration = isTraderaBrowserIntegration || isVintedIntegration;
+    const is1688Integration = is1688IntegrationSlug(args.activeIntegration.slug);
+    const isBrowserIntegration =
+      isTraderaBrowserIntegration || isVintedIntegration || is1688Integration;
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -196,6 +199,7 @@ export function useIntegrationsActionsImpl(args: {
       !isBaselinkerIntegration &&
       !isLinkedInIntegration &&
       !isVintedIntegration &&
+      !is1688Integration &&
       !normalizedUsername
     ) {
       toast('Username is required for this integration.', { variant: 'error' });
@@ -205,7 +209,13 @@ export function useIntegrationsActionsImpl(args: {
       toast('Connection id is required for update.', { variant: 'error' });
       return null;
     }
-    if (isCreateMode && !isLinkedInIntegration && !isVintedIntegration && !formData.password.trim()) {
+    if (
+      isCreateMode &&
+      !isLinkedInIntegration &&
+      !isVintedIntegration &&
+      !is1688Integration &&
+      !formData.password.trim()
+    ) {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }
@@ -216,6 +226,26 @@ export function useIntegrationsActionsImpl(args: {
         : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
       ...playwrightBrowserPayload,
+      ...(is1688Integration
+        ? {
+            scanner1688StartUrl: formData.scanner1688StartUrl.trim() || null,
+            scanner1688LoginMode: formData.scanner1688LoginMode,
+            scanner1688DefaultSearchMode: formData.scanner1688DefaultSearchMode,
+            scanner1688CandidateResultLimit:
+              formData.scanner1688CandidateResultLimit.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688CandidateResultLimit) || 1))
+                : null,
+            scanner1688MinimumCandidateScore:
+              formData.scanner1688MinimumCandidateScore.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688MinimumCandidateScore) || 1))
+                : null,
+            scanner1688MaxExtractedImages:
+              formData.scanner1688MaxExtractedImages.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688MaxExtractedImages) || 1))
+                : null,
+            scanner1688AllowUrlImageSearchFallback: formData.scanner1688AllowUrlImageSearchFallback,
+          }
+        : {}),
       ...(isTraderaIntegration
         ? {
           ...(isTraderaBrowserIntegration
@@ -441,6 +471,11 @@ export function useIntegrationsActionsImpl(args: {
     handleConnectionTest(c, 'test', 'Vinted manual login test', {
       body: { mode: 'manual', manualTimeoutMs: 240000 },
       timeoutMs: 300000,
+    });
+  const handle1688ManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', '1688 manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 300000 },
+      timeoutMs: 360000,
     });
 
   const handleSelectPlaywrightPersona = async (personaId: string | null): Promise<void> => {
@@ -728,6 +763,7 @@ export function useIntegrationsActionsImpl(args: {
     handleTestConnection,
     handleTraderaManualLogin,
     handleVintedManualLogin,
+    handle1688ManualLogin,
     handleSelectPlaywrightPersona,
     handleSavePlaywrightSettings,
     handleAllegroAuthorize,

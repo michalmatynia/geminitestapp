@@ -1,10 +1,13 @@
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 const PLAYWRIGHT_CONNECTION_SETTING_FIELDS = [
+  ['playwrightIdentityProfile', 'identityProfile'],
   ['playwrightHeadless', 'headless'],
   ['playwrightSlowMo', 'slowMo'],
   ['playwrightTimeout', 'timeout'],
   ['playwrightNavigationTimeout', 'navigationTimeout'],
+  ['playwrightLocale', 'locale'],
+  ['playwrightTimezoneId', 'timezoneId'],
   ['playwrightHumanizeMouse', 'humanizeMouse'],
   ['playwrightMouseJitter', 'mouseJitter'],
   ['playwrightClickDelayMin', 'clickDelayMin'],
@@ -16,6 +19,9 @@ const PLAYWRIGHT_CONNECTION_SETTING_FIELDS = [
   ['playwrightProxyEnabled', 'proxyEnabled'],
   ['playwrightProxyServer', 'proxyServer'],
   ['playwrightProxyUsername', 'proxyUsername'],
+  ['playwrightProxySessionAffinity', 'proxySessionAffinity'],
+  ['playwrightProxySessionMode', 'proxySessionMode'],
+  ['playwrightProxyProviderPreset', 'proxyProviderPreset'],
   ['playwrightEmulateDevice', 'emulateDevice'],
   ['playwrightDeviceName', 'deviceName'],
 ] as const satisfies ReadonlyArray<

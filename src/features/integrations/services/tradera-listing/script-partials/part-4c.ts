@@ -638,10 +638,28 @@ export const PART_4C = String.raw`
   };
 
   const acknowledgeListingConfirmationIfPresent = async () => {
-    const confirmationCheckbox = await findCheckboxByLabelsWithin(
-      page,
-      LISTING_CONFIRMATION_LABELS
-    );
+    const findListingConfirmationCheckbox = async (timeoutMs = 4_000) => {
+      const deadline = Date.now() + timeoutMs;
+
+      while (Date.now() < deadline) {
+        const confirmationCheckbox = await findCheckboxByLabelsWithin(
+          page,
+          LISTING_CONFIRMATION_LABELS
+        );
+        if (confirmationCheckbox) {
+          return confirmationCheckbox;
+        }
+
+        await dismissVisibleAutofillDialogIfPresent({
+          context: 'listing-confirmation-search',
+        }).catch(() => false);
+        await wait(250);
+      }
+
+      return findCheckboxByLabelsWithin(page, LISTING_CONFIRMATION_LABELS);
+    };
+
+    const confirmationCheckbox = await findListingConfirmationCheckbox();
     if (!confirmationCheckbox) {
       log?.('tradera.quicklist.field.skipped', {
         field: 'listing-confirmation',

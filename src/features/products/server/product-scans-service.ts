@@ -2043,38 +2043,6 @@ async function synchronize1688ProductScan(scan: ProductScanRecord): Promise<Prod
   }
 }
 
-const resolveAlreadyRunningBatchResult = async (input: {
-  productId: string;
-  provider: ProductScanProvider;
-  alreadyRunningMessage: string;
-  resultStatusLabel: string;
-}
-): Promise<ProductAmazonBatchScanItem | null> => {
-  const existingActiveScan = await findLatestActiveProductScan({
-    productId: input.productId,
-    provider: input.provider,
-  });
-  if (!existingActiveScan) {
-    return null;
-  }
-
-  const synchronized = await synchronizeProductScan(existingActiveScan);
-  if (!isProductScanActiveStatus(synchronized.status)) {
-    return null;
-  }
-
-  return {
-    productId: input.productId,
-    scanId: synchronized.id,
-    runId: resolveScanEngineRunId(synchronized),
-    status: 'already_running',
-    currentStatus: synchronized.status,
-    message:
-      synchronized.status === 'running'
-        ? `${input.resultStatusLabel} running.`
-        : input.alreadyRunningMessage,
-  };
-};
 
 export async function synchronizeProductScans(
   scans: ProductScanRecord[]
@@ -2126,6 +2094,49 @@ export async function getProductScanByIdWithSync(
   return await synchronizeProductScan(scan);
 }
 
+const resolveAlreadyRunningBatchResult = async (input: {
+  productId: string;
+  provider: ProductScanProvider;
+  alreadyRunningMessage: string;
+  resultStatusLabel: string;
+}): Promise<ProductAmazonBatchScanItem | null> => {
+  const existingActiveScan = await findLatestActiveProductScan({
+    productId: input.productId,
+    provider: input.provider,
+  });
+  if (!existingActiveScan) {
+    return null;
+  }
+
+  const synchronized = await synchronizeProductScan(existingActiveScan);
+  if (!isProductScanActiveStatus(synchronized.status)) {
+    return null;
+  }
+
+  return {
+    productId: input.productId,
+    scanId: synchronized.id,
+    runId: resolveScanEngineRunId(synchronized),
+    status: 'already_running',
+    currentStatus: synchronized.status,
+    message:
+      synchronized.status === 'running'
+        ? `${input.resultStatusLabel} running.`
+        : input.alreadyRunningMessage,
+  };
+};
+
+const createFailedBatchResult = (
+  productId: string,
+  message: string,
+  scanId?: string | null
+): ProductAmazonBatchScanItem => ({
+  productId,
+  scanId: scanId ?? null,
+  status: 'failed',
+  message,
+});
+
 type BatchQueueProviderConfig = {
   provider: ProductScanProvider;
   runtime: ProductScanProviderRuntime;
@@ -2145,7 +2156,7 @@ type BatchQueueProviderConfig = {
     allowManualVerification: boolean;
     manualVerificationTimeoutMs: number;
     amazonCandidateEvaluatorEnabled: boolean;
-    scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
+    scannerSettings: ProductScannerSettings;
   }) => Record<string, unknown>;
 };
 

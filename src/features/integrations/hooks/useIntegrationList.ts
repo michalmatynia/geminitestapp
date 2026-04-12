@@ -19,6 +19,8 @@ export function useIntegrationList() {
     integrationDefinitions.find((definition) => definition.slug === 'allegro') ?? null;
   const vintedDefinition =
     integrationDefinitions.find((definition) => definition.slug === 'vinted') ?? null;
+  const scanner1688Definition =
+    integrationDefinitions.find((definition) => definition.slug === '1688') ?? null;
   const baselinkerDefinition =
     integrationDefinitions.find((definition) => definition.slug === 'baselinker') ?? null;
   const linkedinDefinition =
@@ -33,6 +35,7 @@ export function useIntegrationList() {
     traderaApiDefinition,
     allegroDefinition,
     vintedDefinition,
+    scanner1688Definition,
     baselinkerDefinition,
     linkedinDefinition,
   };

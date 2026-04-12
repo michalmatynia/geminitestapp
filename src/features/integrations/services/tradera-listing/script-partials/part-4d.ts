@@ -35,6 +35,13 @@ export const PART_4D = String.raw`
       let lastObservedState = null;
 
       while (Date.now() < deadline) {
+        const autofillDialogDismissed = await dismissVisibleAutofillDialogIfPresent({
+          context: 'image-step-actionable',
+        }).catch(() => false);
+        if (autofillDialogDismissed) {
+          await wait(300);
+        }
+
         const listingEditorState = await readListingEditorState();
         if (listingEditorState.ready) {
           log?.('tradera.quicklist.image.editor_ready', listingEditorState);
@@ -528,6 +535,30 @@ export const PART_4D = String.raw`
     });
     const identifiersMatch = (left, right) =>
       normalizeWhitespace(left).toLowerCase() === normalizeWhitespace(right).toLowerCase();
+    const knownExistingListingId =
+      normalizeWhitespace(
+        existingExternalListingId || extractListingId(existingListingUrl || '') || ''
+      ) || null;
+    const knownExistingListingUrl = normalizeWhitespace(existingListingUrl || '') || null;
+    const matchesKnownExistingListing = (candidate) => {
+      if (!candidate || listingAction !== 'relist') {
+        return false;
+      }
+
+      const candidateListingId =
+        normalizeWhitespace(candidate.listingId || extractListingId(candidate.listingUrl || '') || '') || null;
+      const candidateListingUrl = normalizeWhitespace(candidate.listingUrl || '') || null;
+
+      if (knownExistingListingId && candidateListingId === knownExistingListingId) {
+        return true;
+      }
+
+      return Boolean(
+        knownExistingListingUrl &&
+          candidateListingUrl &&
+          candidateListingUrl === knownExistingListingUrl
+      );
+    };
 
     if (searchTerms.length === 0) {
       log?.('tradera.quicklist.duplicate.skipped', {
@@ -583,6 +614,7 @@ export const PART_4D = String.raw`
       const duplicateMatches = await collectListingLinksForTerm(searchTerm);
       const visibleCandidates = await collectVisibleListingCandidates(8);
       const inspectionCandidates = duplicateMatches;
+      const knownExistingCandidate = visibleCandidates.find(matchesKnownExistingListing) || null;
       const nonExactVisibleCandidateCount = visibleCandidates.filter(
         (candidate) => !titlesExactlyMatch(candidate?.title || '', searchTerm)
       ).length;
@@ -611,9 +643,32 @@ export const PART_4D = String.raw`
         candidateScanMode: 'exact-english-title-search-matches-only',
         searchStateChanged,
         uncertainSearch,
+        knownExistingListingCandidateFound: Boolean(knownExistingCandidate),
         listingAction,
         allowDuplicateLinking,
       });
+
+      if (knownExistingCandidate) {
+        log?.('tradera.quicklist.duplicate.result', {
+          term: searchTerm,
+          duplicateFound: true,
+          matchStrategy: 'existing-listing-id+visible-candidate',
+          candidateCount: visibleCandidates.length,
+          listingUrl: knownExistingCandidate.listingUrl || knownExistingListingUrl,
+          listingId: knownExistingCandidate.listingId || knownExistingListingId,
+          matchedProductId: baseProductId,
+        });
+
+        return {
+          duplicateFound: true,
+          listingUrl: knownExistingCandidate.listingUrl || knownExistingListingUrl,
+          listingId: knownExistingCandidate.listingId || knownExistingListingId,
+          matchStrategy: 'existing-listing-id+visible-candidate',
+          matchedProductId: baseProductId,
+          candidateCount: visibleCandidates.length,
+          searchTitle: searchTerm,
+        };
+      }
 
       if (uncertainSearch) {
         uncertainSearchAttempts.push({

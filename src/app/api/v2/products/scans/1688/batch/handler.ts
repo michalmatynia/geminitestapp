@@ -16,6 +16,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   const result = await queue1688BatchProductScans({
     productIds: body.productIds,
     userId: ctx.userId ?? null,
+    connectionId: body.connectionId ?? null,
   });
 
   return NextResponse.json(productScanBatchResponseSchema.parse(result));

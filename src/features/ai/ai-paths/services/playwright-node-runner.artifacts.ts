@@ -121,10 +121,22 @@ export const buildCompletedRunState = async (params: {
   logs: string[];
   page: Page;
   returnValue: unknown;
+  runtimePosture: Record<string, unknown> | null;
   runId: string;
   startedAt: string;
 }): Promise<PlaywrightNodeRunRecord> => {
-  const { artifacts, emittedOutputs, existingRun, inlineArtifacts, logs, page, returnValue, runId, startedAt } =
+  const {
+    artifacts,
+    emittedOutputs,
+    existingRun,
+    inlineArtifacts,
+    logs,
+    page,
+    returnValue,
+    runtimePosture,
+    runId,
+    startedAt,
+  } =
     params;
   const completedAt = nowIso();
   return {
@@ -142,6 +154,7 @@ export const buildCompletedRunState = async (params: {
       inlineArtifacts,
       finalUrl: page.url(),
       title: await page.title().catch(() => ''),
+      ...(runtimePosture ? { runtimePosture } : {}),
     },
     error: null,
     artifacts,
@@ -251,10 +264,11 @@ export const buildFailedRunState = (params: {
   errorMessage: string;
   existingRun: PlaywrightNodeRunRecord | null;
   logs: string[];
+  runtimePosture?: Record<string, unknown> | null;
   runId: string;
   startedAt: string;
 }): PlaywrightNodeRunRecord => {
-  const { artifacts, errorMessage, existingRun, logs, runId, startedAt } = params;
+  const { artifacts, errorMessage, existingRun, logs, runtimePosture = null, runId, startedAt } = params;
   const completedAt = nowIso();
   return {
     runId,
@@ -265,7 +279,7 @@ export const buildFailedRunState = (params: {
     createdAt: existingRun?.createdAt ?? startedAt,
     updatedAt: completedAt,
     instance: existingRun?.instance ?? null,
-    result: null,
+    result: runtimePosture ? { runtimePosture } : null,
     error: errorMessage,
     artifacts,
     logs,

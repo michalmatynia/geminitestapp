@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-04-12T11:30:35.642Z",
+    "generatedAt": "2026-04-12T13:28:09.273Z",
     "scannedFileCount": 2593,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
@@ -8094,7 +8094,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 722,
+      "lines": 775,
       "useClient": true,
       "imports": [
         "react",
@@ -9914,7 +9914,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 615,
+      "lines": 667,
       "useClient": true,
       "imports": [
         "react",
@@ -21649,7 +21649,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 432,
+      "lines": 438,
       "useClient": false,
       "imports": [
         "react",
@@ -48052,7 +48052,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 2546,
+      "lines": 2862,
       "useClient": false,
       "imports": [
         "react",
@@ -48075,7 +48075,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 1314,
+      "lines": 1513,
       "useClient": true,
       "imports": [
         "next/link",
@@ -48704,7 +48704,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 1664,
+      "lines": 1668,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -49576,7 +49576,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 226,
+      "lines": 501,
       "useClient": false,
       "imports": [
         "react",
@@ -49596,7 +49596,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 695,
+      "lines": 1018,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -49677,7 +49677,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 107,
+      "lines": 147,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -49696,7 +49696,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 348,
+      "lines": 509,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -55504,7 +55504,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 179,
+      "lines": 320,
       "useClient": false,
       "imports": [
         "react",
@@ -55526,7 +55526,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Form",
-      "lines": 412,
+      "lines": 550,
       "useClient": true,
       "imports": [
         "react",

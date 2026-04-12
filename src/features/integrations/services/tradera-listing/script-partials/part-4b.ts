@@ -614,6 +614,13 @@ export const PART_4B = String.raw`
     const deadline = Date.now() + timeoutMs;
     let lastObservedState = null;
     while (Date.now() < deadline) {
+      const autofillDialogDismissed = await dismissVisibleAutofillDialogIfPresent({
+        context: 'image-upload-settle',
+      }).catch(() => false);
+      if (autofillDialogDismissed) {
+        await wait(300);
+      }
+
       const [selectedImageFileCount, draftImageRemoveControls, uploadedImagePreviewCount] = await Promise.all([
         readSelectedImageFileCount(imageInput),
         countDraftImageRemoveControls(),

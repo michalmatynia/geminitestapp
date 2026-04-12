@@ -48,6 +48,8 @@ type IntegrationConnectionDocument = {
   playwrightSlowMo?: number;
   playwrightTimeout?: number;
   playwrightNavigationTimeout?: number;
+  playwrightLocale?: string;
+  playwrightTimezoneId?: string;
   playwrightHumanizeMouse?: boolean;
   playwrightMouseJitter?: number;
   playwrightClickDelayMin?: number;
@@ -60,7 +62,11 @@ type IntegrationConnectionDocument = {
   playwrightProxyServer?: string;
   playwrightProxyUsername?: string;
   playwrightProxyPassword?: string | null;
+  playwrightProxySessionAffinity?: boolean;
+  playwrightProxySessionMode?: string;
+  playwrightProxyProviderPreset?: string;
   playwrightBrowser?: string;
+  playwrightIdentityProfile?: string;
   playwrightEmulateDevice?: boolean;
   playwrightDeviceName?: string;
   playwrightPersonaId?: string | null;
@@ -69,6 +75,13 @@ type IntegrationConnectionDocument = {
   playwrightImportBaseUrl?: string | null;
   playwrightImportCaptureRoutesJson?: string | null;
   playwrightFieldMapperJson?: string | null;
+  scanner1688StartUrl?: string | null;
+  scanner1688LoginMode?: 'session_required' | 'manual_login';
+  scanner1688DefaultSearchMode?: 'local_image' | 'image_url_fallback';
+  scanner1688CandidateResultLimit?: number | null;
+  scanner1688MinimumCandidateScore?: number | null;
+  scanner1688MaxExtractedImages?: number | null;
+  scanner1688AllowUrlImageSearchFallback?: boolean | null;
   allegroAccessToken?: string | null;
   allegroRefreshToken?: string | null;
   allegroTokenType?: string | null;

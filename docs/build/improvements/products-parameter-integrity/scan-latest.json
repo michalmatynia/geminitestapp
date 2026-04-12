@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-12T11:10:55.803Z",
+  "generatedAt": "2026-04-12T13:47:05.832Z",
   "track": {
     "id": "products-parameter-integrity",
     "title": "Products parameter integrity",
@@ -235,12 +235,12 @@
     "defaultSelected": true,
     "description": "Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.",
     "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-12T11:10:55.782Z",
+    "latestGeneratedAt": "2026-04-12T13:47:05.749Z",
     "docDir": "docs/build/improvements/products-parameter-integrity",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-12T10:55:20.167Z",
+        "generatedAt": "2026-04-12T13:28:47.600Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -270,14 +270,14 @@
             ],
             "instructions": [],
             "script": "products:audit:missing-parameters",
-            "durationMs": 4438
+            "durationMs": 3334
           }
         ],
         "status": "passed"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-12T11:10:55.500Z",
+        "generatedAt": "2026-04-12T13:47:05.142Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -317,7 +317,7 @@
             ],
             "instructions": [],
             "script": "products:classify:parameter-recovery",
-            "durationMs": 3056
+            "durationMs": 2812
           },
           {
             "id": "products-parameter-source-report",
@@ -333,7 +333,7 @@
             ],
             "instructions": [],
             "script": "products:report:parameter-source-recovery",
-            "durationMs": 7277
+            "durationMs": 3149
           },
           {
             "id": "products-parameter-source-summary",
@@ -349,7 +349,7 @@
             ],
             "instructions": [],
             "script": "products:summarize:parameter-source-recovery",
-            "durationMs": 303
+            "durationMs": 377
           },
           {
             "id": "products-parameter-source-template",
@@ -365,7 +365,7 @@
             ],
             "instructions": [],
             "script": "products:generate:parameter-source-recovery-template",
-            "durationMs": 301
+            "durationMs": 344
           },
           {
             "id": "products-parameter-source-batch-split",
@@ -380,7 +380,7 @@
             ],
             "instructions": [],
             "script": "products:split:parameter-source-recovery-template",
-            "durationMs": 300
+            "durationMs": 340
           },
           {
             "id": "products-parameter-family-mapping-packs",
@@ -395,7 +395,7 @@
             ],
             "instructions": [],
             "script": "products:generate:parameter-family-mapping-pack",
-            "durationMs": 284
+            "durationMs": 316
           },
           {
             "id": "products-parameter-family-mapping-index",
@@ -410,7 +410,7 @@
             ],
             "instructions": [],
             "script": "products:build:parameter-family-mapping-index",
-            "durationMs": 284
+            "durationMs": 317
           },
           {
             "id": "products-parameter-family-mapping-checklist",
@@ -425,14 +425,14 @@
             ],
             "instructions": [],
             "script": "products:render:parameter-family-mapping-checklist",
-            "durationMs": 281
+            "durationMs": 303
           }
         ],
         "status": "passed"
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-12T11:10:55.782Z",
+        "generatedAt": "2026-04-12T13:47:05.749Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,

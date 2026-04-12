@@ -36,7 +36,36 @@ describe('ProductScanDiagnostics', () => {
                   kind: 'screenshot',
                   mimeType: 'image/png',
                 },
+                {
+                  name: 'runtime-posture',
+                  path: '/tmp/runtime-posture.json',
+                  kind: 'json',
+                  mimeType: 'application/json',
+                },
               ],
+              runtimePosture: {
+                browser: {
+                  engine: 'chromium',
+                  label: 'Chrome',
+                  headless: false,
+                },
+                antiDetection: {
+                  identityProfile: 'search',
+                  locale: 'en-US',
+                  timezoneId: 'America/New_York',
+                  stickyStorageState: {
+                    enabled: true,
+                    loaded: true,
+                  },
+                  proxy: {
+                    enabled: true,
+                    providerPreset: 'brightdata',
+                    sessionMode: 'sticky',
+                    reason: 'applied',
+                    serverHost: 'proxy.local:8080',
+                  },
+                },
+              },
               logTail: ['first log line', '', 'second log line'],
             },
           } as never
@@ -55,10 +84,21 @@ describe('ProductScanDiagnostics', () => {
       'href',
       '/api/v2/products/scans/scan-1/artifacts/amazon-scan-stage.png'
     );
+    expect(screen.getByRole('link', { name: 'View runtime posture JSON' })).toHaveAttribute(
+      'href',
+      '/api/v2/products/scans/scan-1/artifacts/runtime-posture.json'
+    );
     expect(screen.getByText('Stage Screenshot')).toBeInTheDocument();
+    expect(screen.getByText('Runtime Posture')).toBeInTheDocument();
+    expect(screen.getByText('Runtime posture')).toBeInTheDocument();
     expect(screen.getByText('Screenshot')).toBeInTheDocument();
+    expect(screen.getByText('Json')).toBeInTheDocument();
     expect(screen.getByText('image/png')).toBeInTheDocument();
     expect(screen.getByText('/tmp/amazon-scan-stage.png')).toBeInTheDocument();
+    expect(screen.getByText('Chrome · Headed')).toBeInTheDocument();
+    expect(screen.getByText('Search profile · en-US · America/New_York')).toBeInTheDocument();
+    expect(screen.getByText('Brightdata · Sticky · Applied · proxy.local:8080')).toBeInTheDocument();
+    expect(screen.getByText('Loaded sticky state')).toBeInTheDocument();
     expect(screen.getByText(/first log line/)).toBeInTheDocument();
     expect(screen.getByText(/second log line/)).toBeInTheDocument();
   });

@@ -1,3 +1,5 @@
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+
 /**
  * Server-Timing header utility for API responses.
  *
@@ -43,7 +45,13 @@ export const attachTimingHeaders = (
     } catch (error) {
       // In some environments, headers might be read-only at this point.
       // We log but don't crash the request for a timing header.
-      console.warn('[timing] Failed to attach Server-Timing headers', error);
+      void logSystemEvent({
+        level: 'warn',
+        message: '[timing] Failed to attach Server-Timing headers',
+        context: { error },
+        service: 'shared.api-timing',
+        source: 'shared.api-timing',
+      });
     }
   }
 };

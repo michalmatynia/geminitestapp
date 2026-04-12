@@ -29,7 +29,15 @@ import {
 } from './job-queue-panel-utils';
 import { RunningIndicator } from './job-queue-running-indicator';
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
-import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
+import {
+  extractPlaywrightArtifactsFromNode,
+  extractPlaywrightRuntimePostureFromNode,
+  formatPlaywrightRuntimePostureBrowser,
+  formatPlaywrightRuntimePostureIdentity,
+  formatPlaywrightRuntimePostureProxy,
+  formatPlaywrightRuntimePostureStickyState,
+  resolvePlaywrightArtifactDisplayName,
+} from './playwright-artifacts';
 import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { AiPathsPillButton } from './AiPathsPillButton';
@@ -533,6 +541,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                   <div className='mt-1 space-y-2'>
                     {nodes.map((node: AiPathRunNodeRecord) => {
                       const artifactLinks = extractPlaywrightArtifactsFromNode(node);
+                      const runtimePosture = extractPlaywrightRuntimePostureFromNode(node);
                       return (
                         <CollapsibleSection
                           key={node.id}
@@ -592,10 +601,54 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                                     className='rounded border border-sky-400/40 bg-sky-500/10 px-2 py-1 text-[11px] text-sky-100 hover:bg-sky-500/20 hover:underline'
                                     title={artifact.path}
                                   >
-                                    {artifact.name}
+                                    {resolvePlaywrightArtifactDisplayName(artifact)}
                                     {artifact.kind ? ` (${artifact.kind})` : ''}
                                   </a>
                                 ))}
+                              </div>
+                            </div>
+                          ) : null}
+                          {runtimePosture ? (
+                            <div className='mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2'>
+                              <div className='text-[10px] uppercase tracking-wide text-emerald-200'>
+                                Runtime posture
+                              </div>
+                              <div className='mt-2 grid gap-2 sm:grid-cols-2'>
+                                {[
+                                  {
+                                    label: 'Browser',
+                                    value: formatPlaywrightRuntimePostureBrowser(runtimePosture),
+                                  },
+                                  {
+                                    label: 'Identity',
+                                    value: formatPlaywrightRuntimePostureIdentity(runtimePosture),
+                                  },
+                                  {
+                                    label: 'Proxy',
+                                    value: formatPlaywrightRuntimePostureProxy(runtimePosture),
+                                  },
+                                  {
+                                    label: 'Sticky state',
+                                    value: formatPlaywrightRuntimePostureStickyState(runtimePosture),
+                                  },
+                                ]
+                                  .filter(
+                                    (entry): entry is { label: string; value: string } =>
+                                      typeof entry.value === 'string' && entry.value.trim().length > 0
+                                  )
+                                  .map((entry) => (
+                                    <div
+                                      key={entry.label}
+                                      className='rounded-md border border-emerald-500/20 bg-black/20 p-2'
+                                    >
+                                      <div className='text-[10px] uppercase tracking-wide text-emerald-200/80'>
+                                        {entry.label}
+                                      </div>
+                                      <div className='mt-1 text-[11px] text-emerald-50'>
+                                        {entry.value}
+                                      </div>
+                                    </div>
+                                  ))}
                               </div>
                             </div>
                           ) : null}

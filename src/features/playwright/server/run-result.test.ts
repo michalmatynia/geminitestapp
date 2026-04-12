@@ -40,6 +40,25 @@ describe('playwright run-result helpers', () => {
       runId: 'run-1',
       status: 'failed',
       result: {
+        runtimePosture: {
+          browser: {
+            engine: 'chromium',
+            label: 'Chrome',
+            headless: false,
+          },
+          antiDetection: {
+            identityProfile: 'search',
+            locale: 'en-US',
+            timezoneId: 'America/New_York',
+            proxy: {
+              enabled: true,
+              providerPreset: 'brightdata',
+              sessionMode: 'sticky',
+              reason: 'applied',
+              serverHost: 'proxy.local:8080',
+            },
+          },
+        },
         outputs: {
           result: {
             stage: 'publish',
@@ -88,6 +107,25 @@ describe('playwright run-result helpers', () => {
         },
       ],
       logTail: ['a', 'b', 'c'],
+      runtimePosture: {
+        browser: {
+          engine: 'chromium',
+          label: 'Chrome',
+          headless: false,
+        },
+        antiDetection: {
+          identityProfile: 'search',
+          locale: 'en-US',
+          timezoneId: 'America/New_York',
+          proxy: {
+            enabled: true,
+            providerPreset: 'brightdata',
+            sessionMode: 'sticky',
+            reason: 'applied',
+            serverHost: 'proxy.local:8080',
+          },
+        },
+      },
       rawResult: {
         stage: 'publish',
         currentUrl: 'https://example.com/current',

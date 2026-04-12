@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v124
+  // tradera-quicklist-default:v129
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -549,6 +549,31 @@ export const PART_1 = String.raw`export default async function run({
     'button[title*="Stäng" i]',
     '[data-testid*="close"]',
   ];
+  const AUTOFILL_DIALOG_TEXT_HINTS = [
+    'Autofilling your listing',
+    'Autofilling',
+    'Fyller i din annons',
+    'autofill',
+  ];
+  const AUTOFILL_DIALOG_DISMISS_LABELS = [
+    'Close',
+    'Stäng',
+    'Dismiss',
+    'Cancel',
+    'Avbryt',
+    'Not now',
+    'No thanks',
+    'Skip',
+  ];
+  const AUTOFILL_DIALOG_CLOSE_SELECTORS = [
+    'button[aria-label*="Close" i]',
+    'button[aria-label*="Stäng" i]',
+    'button[aria-label*="Dismiss" i]',
+    'button[title*="Close" i]',
+    'button[title*="Stäng" i]',
+    '[data-testid*="close"]',
+    '[data-testid*="dismiss"]',
+  ];
   const SHIPPING_DIALOG_PRICE_INPUT_SELECTORS = [
     'input[inputmode="decimal"]',
     'input[type="number"]',
@@ -559,8 +584,21 @@ export const PART_1 = String.raw`export default async function run({
     'I confirm that the content of the listing is accurate',
     'I confirm that the content is accurate',
     'I confirm the listing is accurate',
+    'content of the listing is accurate',
+    'content is accurate',
+    'listing is accurate',
     'Jag bekräftar att innehållet i annonsen är korrekt',
     'Jag bekräftar att annonsen är korrekt',
+    'innehållet i annonsen är korrekt',
+    'annonsen är korrekt',
+  ];
+  const AUTOFILL_SELECTORS = [
+    'button[aria-label*="Autofill" i]',
+    'button[aria-label*="Fyll" i]',
+    'button:has-text("Autofill")',
+    'button:has-text("Autofyll")',
+    'button:has-text("Fyll i")',
+    '[data-testid*="autofill"]',
   ];
   const AUTOFILL_PENDING_SELECTORS = [
     'text=/Autofilling your listing/i',

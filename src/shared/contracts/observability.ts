@@ -556,23 +556,50 @@ export type ContextRegistryDisplay = {
 };
 
 /**
- * Alert Evidence Display DTOs
+ * Alert Evidence Core Types
+ */
+export type AlertEvidenceContextRegistry = {
+  refs: Array<{
+    id: string;
+    kind: string;
+    providerId?: string;
+    entityType?: string;
+  }>;
+  engineVersion: string | null;
+};
+
+export type AlertEvidenceSample = {
+  logId: string;
+  createdAt: string;
+  level: string;
+  source: string | null;
+  message: string;
+  fingerprint: string | null;
+  contextRegistry: AlertEvidenceContextRegistry | null;
+};
+
+export type AlertEvidenceContext = {
+  windowStart: string | null;
+  windowEnd: string;
+  matchedCount: number;
+  sampleSize: number;
+  samples: AlertEvidenceSample[];
+  lastObservedLog?: AlertEvidenceSample | null;
+};
+
+/**
+ * Alert Evidence Display DTOs (Safe for public consumption)
  */
 export type AlertEvidenceSampleDisplay = {
-  logId: string | null;
-  createdAt: string | null;
-  level: string | null;
-  source: string | null;
-  message: string | null;
-  fingerprint: string | null;
-  contextRegistry: ContextRegistryDisplay | null;
+  [K in keyof AlertEvidenceSample]: K extends 'contextRegistry'
+    ? ContextRegistryDisplay | null
+    : AlertEvidenceSample[K] | null;
 };
 
 export type AlertEvidenceDisplay = {
-  matchedCount: number | null;
-  sampleSize: number | null;
-  windowStart: string | null;
-  windowEnd: string | null;
-  lastObservedLog: AlertEvidenceSampleDisplay | null;
-  samples: AlertEvidenceSampleDisplay[];
+  [K in keyof AlertEvidenceContext]: K extends 'samples'
+    ? AlertEvidenceSampleDisplay[]
+    : K extends 'lastObservedLog'
+      ? AlertEvidenceSampleDisplay | null
+      : AlertEvidenceContext[K] | null;
 };

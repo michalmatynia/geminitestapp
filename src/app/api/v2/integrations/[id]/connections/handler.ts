@@ -27,10 +27,13 @@ const createConnectionSchema = z
     name: z.string().trim().min(1),
     username: z.string().trim().optional(),
     password: z.string().trim().optional(),
+    playwrightIdentityProfile: z.enum(['default', 'search', 'marketplace']).nullable().optional(),
     playwrightHeadless: z.boolean().optional(),
     playwrightSlowMo: z.number().int().min(0).optional(),
     playwrightTimeout: z.number().int().min(1000).optional(),
     playwrightNavigationTimeout: z.number().int().min(1000).optional(),
+    playwrightLocale: z.string().trim().max(32).nullable().optional(),
+    playwrightTimezoneId: z.string().trim().max(128).nullable().optional(),
     playwrightHumanizeMouse: z.boolean().optional(),
     playwrightMouseJitter: z.number().int().min(0).optional(),
     playwrightClickDelayMin: z.number().int().min(0).optional(),
@@ -85,10 +88,13 @@ const serializePlaywrightConnectionSettings = (
     playwrightPersonas
   );
   return {
+    playwrightIdentityProfile: settings.identityProfile,
     playwrightHeadless: settings.headless,
     playwrightSlowMo: settings.slowMo,
     playwrightTimeout: settings.timeout,
     playwrightNavigationTimeout: settings.navigationTimeout,
+    playwrightLocale: settings.locale,
+    playwrightTimezoneId: settings.timezoneId,
     playwrightHumanizeMouse: settings.humanizeMouse,
     playwrightMouseJitter: settings.mouseJitter,
     playwrightClickDelayMin: settings.clickDelayMin,
@@ -259,6 +265,9 @@ export async function POST_handler(
     ...(typeof data.playwrightBrowser === 'string' || data.playwrightBrowser === null
       ? { playwrightBrowser: data.playwrightBrowser ?? 'auto' }
       : {}),
+    ...(typeof data.playwrightIdentityProfile === 'string' || data.playwrightIdentityProfile === null
+      ? { playwrightIdentityProfile: data.playwrightIdentityProfile ?? 'default' }
+      : {}),
     ...(typeof data.playwrightHeadless === 'boolean'
       ? { playwrightHeadless: data.playwrightHeadless }
       : {}),
@@ -270,6 +279,12 @@ export async function POST_handler(
       : {}),
     ...(typeof data.playwrightNavigationTimeout === 'number'
       ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout }
+      : {}),
+    ...(typeof data.playwrightLocale === 'string' || data.playwrightLocale === null
+      ? { playwrightLocale: data.playwrightLocale ?? null }
+      : {}),
+    ...(typeof data.playwrightTimezoneId === 'string' || data.playwrightTimezoneId === null
+      ? { playwrightTimezoneId: data.playwrightTimezoneId ?? null }
       : {}),
     ...(typeof data.playwrightHumanizeMouse === 'boolean'
       ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse }

@@ -20,6 +20,11 @@ type RenderHomeRouteOptions = {
   locale?: string | null;
 };
 
+type RequestHeaders = 
+  | Headers 
+  | { get: (key: string) => string | null }
+  | Record<string, unknown>;
+
 const localizePublicPath = (pathname: string, locale?: string): string => {
   if (!locale || pathname.startsWith('/admin')) {
     return pathname;
@@ -32,16 +37,11 @@ const resolveHomeLocale = (locale?: string | null): string | undefined =>
   typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
 
 const getFallbackHomeHost = (
-  headers:
-    | Headers
-    | { get?: (key: string) => string | null }
-    | Record<string, unknown>
-    | null
-    | undefined
+  headers: RequestHeaders | null | undefined
 ): string => {
   const forwardedHost =
-    typeof headers?.get === 'function'
-      ? (headers.get('x-forwarded-host') ?? headers.get('host'))
+    headers && typeof (headers as { get?: unknown }).get === 'function'
+      ? ((headers as { get: (key: string) => string | null }).get('x-forwarded-host') ?? (headers as { get: (key: string) => string | null }).get('host'))
       : (() => {
           if (typeof headers !== 'object' || headers === null || Array.isArray(headers)) {
             return undefined;
@@ -119,12 +119,7 @@ const getHomeSlugsForDomainCached = async ({
 };
 
 const resolveHomeDomainWithRecovery = async (
-  headers:
-    | Headers
-    | { get?: (key: string) => string | null }
-    | Record<string, unknown>
-    | null
-    | undefined
+  headers: RequestHeaders | null | undefined
 ): Promise<CmsDomain> => {
   try {
     return await resolveCmsDomainFromHeaders(headers);
@@ -160,12 +155,7 @@ export const renderHomeRoute = async ({
     redirect(localizePublicPath(getKangurPublicLaunchHref(kangurLaunchRoute ?? undefined), resolvedLocale));
   }
 
-  let hdrs:
-    | Headers
-    | { get?: (key: string) => string | null }
-    | Record<string, unknown>
-    | null
-    | undefined = null;
+  let hdrs: RequestHeaders | null | undefined = null;
 
   let content: JSX.Element;
 

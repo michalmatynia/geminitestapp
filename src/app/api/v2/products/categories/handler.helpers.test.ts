@@ -23,7 +23,7 @@ describe('product categories handler helpers', () => {
     });
     expect(querySchema.parse({ catalogId: 'catalog-1', fresh: '' })).toEqual({
       catalogId: 'catalog-1',
-      fresh: undefined,
+      fresh: false,
     });
     expect(requireProductCategoryCatalogId({ catalogId: 'catalog-1' })).toBe('catalog-1');
     expect(() => requireProductCategoryCatalogId(undefined)).toThrow(

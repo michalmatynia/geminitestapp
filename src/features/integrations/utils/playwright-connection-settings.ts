@@ -2,10 +2,13 @@ import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/p
 
 type PlaywrightConnectionSettingsSource = {
   playwrightBrowser?: 'auto' | 'brave' | 'chrome' | 'chromium' | null | undefined;
+  playwrightIdentityProfile?: 'default' | 'search' | 'marketplace' | null | undefined;
   playwrightHeadless?: boolean | null | undefined;
   playwrightSlowMo?: number | null | undefined;
   playwrightTimeout?: number | null | undefined;
   playwrightNavigationTimeout?: number | null | undefined;
+  playwrightLocale?: string | null | undefined;
+  playwrightTimezoneId?: string | null | undefined;
   playwrightHumanizeMouse?: boolean | null | undefined;
   playwrightMouseJitter?: number | null | undefined;
   playwrightClickDelayMin?: number | null | undefined;
@@ -18,6 +21,9 @@ type PlaywrightConnectionSettingsSource = {
   playwrightProxyServer?: string | null | undefined;
   playwrightProxyUsername?: string | null | undefined;
   playwrightProxyPassword?: string | null | undefined;
+  playwrightProxySessionAffinity?: boolean | null | undefined;
+  playwrightProxySessionMode?: 'sticky' | 'rotate' | null | undefined;
+  playwrightProxyProviderPreset?: 'custom' | 'brightdata' | 'oxylabs' | 'decodo' | null | undefined;
   playwrightEmulateDevice?: boolean | null | undefined;
   playwrightDeviceName?: string | null | undefined;
   playwrightPersonaId?: string | null | undefined;
@@ -42,11 +48,31 @@ const normalizeIntegrationConnectionPlaywrightBrowser = (
     : undefined;
 };
 
+const normalizeIntegrationConnectionPlaywrightIdentityProfile = (
+  value: unknown
+): PlaywrightSettings['identityProfile'] | undefined =>
+  value === 'default' || value === 'search' || value === 'marketplace' ? value : undefined;
+
+const normalizeIntegrationConnectionPlaywrightProxySessionMode = (
+  value: unknown
+): PlaywrightSettings['proxySessionMode'] | undefined =>
+  value === 'sticky' || value === 'rotate' ? value : undefined;
+
+const normalizeIntegrationConnectionPlaywrightProxyProviderPreset = (
+  value: unknown
+): PlaywrightSettings['proxyProviderPreset'] | undefined =>
+  value === 'custom' || value === 'brightdata' || value === 'oxylabs' || value === 'decodo'
+    ? value
+    : undefined;
+
 export const defaultIntegrationConnectionPlaywrightSettings: PlaywrightSettings = {
+  identityProfile: 'default',
   headless: true,
   slowMo: 0,
   timeout: 30000,
   navigationTimeout: 30000,
+  locale: '',
+  timezoneId: '',
   humanizeMouse: true,
   mouseJitter: 5,
   clickDelayMin: 50,
@@ -59,6 +85,9 @@ export const defaultIntegrationConnectionPlaywrightSettings: PlaywrightSettings 
   proxyServer: '',
   proxyUsername: '',
   proxyPassword: '',
+  proxySessionAffinity: false,
+  proxySessionMode: 'sticky',
+  proxyProviderPreset: 'custom',
   emulateDevice: false,
   deviceName: 'Desktop Chrome',
 };
@@ -73,6 +102,15 @@ export const buildIntegrationConnectionPlaywrightSettings = (
     ...defaultIntegrationConnectionPlaywrightSettings,
     ...(settings ?? {}),
   };
+  builtSettings.identityProfile =
+    normalizeIntegrationConnectionPlaywrightIdentityProfile(settings?.identityProfile) ??
+    defaultIntegrationConnectionPlaywrightSettings.identityProfile;
+  builtSettings.proxySessionMode =
+    normalizeIntegrationConnectionPlaywrightProxySessionMode(settings?.proxySessionMode) ??
+    defaultIntegrationConnectionPlaywrightSettings.proxySessionMode;
+  builtSettings.proxyProviderPreset =
+    normalizeIntegrationConnectionPlaywrightProxyProviderPreset(settings?.proxyProviderPreset) ??
+    defaultIntegrationConnectionPlaywrightSettings.proxyProviderPreset;
   if (normalizedBrowser) {
     builtSettings.browser = normalizedBrowser;
   }
@@ -114,6 +152,11 @@ export const resolveIntegrationPlaywrightPersonaBrowser = (
 export const extractIntegrationConnectionPlaywrightSettingsOverrides = (
   connection?: PlaywrightConnectionSettingsSource | null
 ): Partial<PlaywrightSettings> => ({
+  ...(connection?.playwrightIdentityProfile === 'default' ||
+  connection?.playwrightIdentityProfile === 'search' ||
+  connection?.playwrightIdentityProfile === 'marketplace'
+    ? { identityProfile: connection.playwrightIdentityProfile }
+    : {}),
   ...(typeof connection?.playwrightHeadless === 'boolean'
     ? { headless: connection.playwrightHeadless }
     : {}),
@@ -125,6 +168,12 @@ export const extractIntegrationConnectionPlaywrightSettingsOverrides = (
     : {}),
   ...(typeof connection?.playwrightNavigationTimeout === 'number'
     ? { navigationTimeout: connection.playwrightNavigationTimeout }
+    : {}),
+  ...(typeof connection?.playwrightLocale === 'string'
+    ? { locale: connection.playwrightLocale }
+    : {}),
+  ...(typeof connection?.playwrightTimezoneId === 'string'
+    ? { timezoneId: connection.playwrightTimezoneId }
     : {}),
   ...(typeof connection?.playwrightHumanizeMouse === 'boolean'
     ? { humanizeMouse: connection.playwrightHumanizeMouse }
@@ -161,6 +210,19 @@ export const extractIntegrationConnectionPlaywrightSettingsOverrides = (
     : {}),
   ...(typeof connection?.playwrightProxyPassword === 'string'
     ? { proxyPassword: connection.playwrightProxyPassword }
+    : {}),
+  ...(typeof connection?.playwrightProxySessionAffinity === 'boolean'
+    ? { proxySessionAffinity: connection.playwrightProxySessionAffinity }
+    : {}),
+  ...(connection?.playwrightProxySessionMode === 'sticky' ||
+  connection?.playwrightProxySessionMode === 'rotate'
+    ? { proxySessionMode: connection.playwrightProxySessionMode }
+    : {}),
+  ...(connection?.playwrightProxyProviderPreset === 'custom' ||
+  connection?.playwrightProxyProviderPreset === 'brightdata' ||
+  connection?.playwrightProxyProviderPreset === 'oxylabs' ||
+  connection?.playwrightProxyProviderPreset === 'decodo'
+    ? { proxyProviderPreset: connection.playwrightProxyProviderPreset }
     : {}),
   ...(typeof connection?.playwrightEmulateDevice === 'boolean'
     ? { emulateDevice: connection.playwrightEmulateDevice }

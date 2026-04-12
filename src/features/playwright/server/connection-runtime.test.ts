@@ -53,10 +53,13 @@ describe('playwright connection runtime', () => {
     });
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
       browser: 'chrome',
+      identityProfile: 'marketplace',
       headless: true,
       slowMo: 75,
       timeout: 30_000,
       navigationTimeout: 25_000,
+      locale: 'en-US',
+      timezoneId: 'Europe/Warsaw',
       humanizeMouse: true,
       mouseJitter: 5,
       clickDelayMin: 20,
@@ -69,6 +72,9 @@ describe('playwright connection runtime', () => {
       proxyServer: '',
       proxyUsername: '',
       proxyPassword: '',
+      proxySessionAffinity: false,
+      proxySessionMode: 'sticky',
+      proxyProviderPreset: 'custom',
       emulateDevice: true,
       deviceName: 'Pixel 7',
     });
@@ -114,6 +120,9 @@ describe('playwright connection runtime', () => {
         proxyServer: 'http://proxy.internal',
         proxyUsername: 'proxy-user',
         proxyPassword: 'proxy-pass',
+        proxySessionAffinity: true,
+        proxySessionMode: 'rotate',
+        proxyProviderPreset: 'brightdata',
       },
       headless: false,
     });
@@ -136,15 +145,21 @@ describe('playwright connection runtime', () => {
           cookies: [{ name: 'session', value: 'abc', domain: '.example.com', path: '/' }],
           origins: [],
         },
+        settings: {
+          locale: 'en-US',
+          timezoneId: 'Europe/Warsaw',
+        },
       },
       viewport: { width: 1280, height: 720 },
     });
 
     expect(contextOptions).toEqual({
+      locale: 'en-US',
       storageState: {
         cookies: [{ name: 'session', value: 'abc', domain: '.example.com', path: '/' }],
         origins: [],
       },
+      timezoneId: 'Europe/Warsaw',
       viewport: { width: 1280, height: 720 },
     });
   });
@@ -153,8 +168,11 @@ describe('playwright connection runtime', () => {
     const settingsOverrides = buildPlaywrightConnectionSettingsOverrides({
       headless: false,
       slowMo: 33,
+      identityProfile: 'search',
       timeout: 31_000,
       navigationTimeout: 32_000,
+      locale: 'en-US',
+      timezoneId: 'Europe/Warsaw',
       humanizeMouse: false,
       mouseJitter: 4,
       clickDelayMin: 11,
@@ -167,16 +185,25 @@ describe('playwright connection runtime', () => {
       proxyServer: '',
       proxyUsername: '',
       proxyPassword: '',
+      proxySessionAffinity: false,
+      proxySessionMode: 'sticky',
+      proxyProviderPreset: 'custom',
       emulateDevice: false,
       deviceName: 'Desktop Chrome',
     });
 
     expect(settingsOverrides).toMatchObject({
       headless: false,
+      identityProfile: 'search',
       navigationTimeout: 32_000,
+      locale: 'en-US',
+      timezoneId: 'Europe/Warsaw',
       humanizeMouse: false,
       mouseJitter: 4,
       actionDelayMax: 89,
+      proxySessionAffinity: false,
+      proxySessionMode: 'sticky',
+      proxyProviderPreset: 'custom',
       deviceName: 'Desktop Chrome',
     });
 
@@ -198,9 +225,12 @@ describe('playwright connection runtime', () => {
       },
       settings: {
         headless: false,
+        identityProfile: 'search',
         slowMo: 33,
         timeout: 31_000,
         navigationTimeout: 32_000,
+        locale: 'en-US',
+        timezoneId: 'Europe/Warsaw',
         humanizeMouse: false,
         mouseJitter: 4,
         clickDelayMin: 11,
@@ -213,6 +243,9 @@ describe('playwright connection runtime', () => {
         proxyServer: '',
         proxyUsername: '',
         proxyPassword: '',
+        proxySessionAffinity: false,
+        proxySessionMode: 'sticky',
+        proxyProviderPreset: 'custom',
         emulateDevice: false,
         deviceName: 'Desktop Chrome',
       },
@@ -229,8 +262,14 @@ describe('playwright connection runtime', () => {
       },
       settingsOverrides: expect.objectContaining({
         headless: false,
+        identityProfile: 'search',
         slowMo: 33,
         navigationTimeout: 32_000,
+        locale: 'en-US',
+        timezoneId: 'Europe/Warsaw',
+        proxySessionAffinity: false,
+        proxySessionMode: 'sticky',
+        proxyProviderPreset: 'custom',
       }),
       launchOptions: {
         channel: 'chrome',
@@ -333,6 +372,7 @@ describe('playwright connection runtime', () => {
           },
         },
         settingsOverrides: expect.objectContaining({
+          identityProfile: 'marketplace',
           headless: false,
           emulateDevice: false,
           deviceName: 'Desktop Chrome',

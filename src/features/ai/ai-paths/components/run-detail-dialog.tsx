@@ -12,7 +12,15 @@ import { JsonViewer } from '@/shared/ui/data-display.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';
-import { collectPlaywrightArtifacts } from './playwright-artifacts';
+import {
+  collectPlaywrightArtifacts,
+  collectPlaywrightRuntimePostures,
+  formatPlaywrightRuntimePostureBrowser,
+  formatPlaywrightRuntimePostureIdentity,
+  formatPlaywrightRuntimePostureProxy,
+  formatPlaywrightRuntimePostureStickyState,
+  resolvePlaywrightArtifactDisplayName,
+} from './playwright-artifacts';
 import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';
@@ -116,6 +124,10 @@ export function RunDetailDialog(): React.JSX.Element {
   const slowestRuntimeNodeSpan = runtimeTraceSummary?.slowestSpan ?? null;
 
   const playwrightArtifacts = useMemo(() => collectPlaywrightArtifacts(runNodes), [runNodes]);
+  const playwrightRuntimePostures = useMemo(
+    () => collectPlaywrightRuntimePostures(runNodes),
+    [runNodes]
+  );
 
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
   const runMeta =
@@ -503,14 +515,54 @@ export function RunDetailDialog(): React.JSX.Element {
                         className='text-sky-200 underline decoration-sky-300/60 underline-offset-2 hover:text-sky-100'
                         title={artifact.path}
                       >
-                        {artifact.name}
+                        {resolvePlaywrightArtifactDisplayName(artifact)}
                       </a>
                     ) : (
-                      <span className='text-gray-200'>{artifact.name}</span>
+                      <span className='text-gray-200'>{resolvePlaywrightArtifactDisplayName(artifact)}</span>
                     )}
                     {artifact.kind ? (
                       <span className='text-gray-500'>({artifact.kind})</span>
                     ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {playwrightRuntimePostures.length > 0 ? (
+            <div className='rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3'>
+              <div className='text-[11px] font-semibold text-emerald-100'>
+                Playwright Runtime Posture ({playwrightRuntimePostures.length})
+              </div>
+              <div className='mt-2 space-y-2'>
+                {playwrightRuntimePostures.map((runtimePosture) => (
+                  <div
+                    key={`${runtimePosture.nodeId}:${runtimePosture.browserLabel ?? runtimePosture.browserEngine ?? 'runtime'}`}
+                    className='rounded-md border border-emerald-500/20 bg-black/20 p-2'
+                  >
+                    <div className='text-[11px] text-gray-300'>
+                      {runtimePosture.nodeTitle ?? runtimePosture.nodeId}
+                      {runtimePosture.nodeType ? ` (${runtimePosture.nodeType})` : ''}
+                    </div>
+                    <div className='mt-2 grid gap-2 lg:grid-cols-2'>
+                      {[
+                        { label: 'Browser', value: formatPlaywrightRuntimePostureBrowser(runtimePosture) },
+                        { label: 'Identity', value: formatPlaywrightRuntimePostureIdentity(runtimePosture) },
+                        { label: 'Proxy', value: formatPlaywrightRuntimePostureProxy(runtimePosture) },
+                        { label: 'Sticky state', value: formatPlaywrightRuntimePostureStickyState(runtimePosture) },
+                      ]
+                        .filter(
+                          (entry): entry is { label: string; value: string } =>
+                            typeof entry.value === 'string' && entry.value.trim().length > 0
+                        )
+                        .map((entry) => (
+                          <div key={entry.label}>
+                            <div className='text-[10px] uppercase text-emerald-200/80'>
+                              {entry.label}
+                            </div>
+                            <div className='mt-1 text-[11px] text-emerald-50'>{entry.value}</div>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 ))}
               </div>

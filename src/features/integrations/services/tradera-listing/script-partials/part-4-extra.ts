@@ -494,4 +494,84 @@ export const PART_4_EXTRA = String.raw`
 
     return false;
   };
+
+  const findVisibleAutofillDialog = async () => {
+    const dialogs = page.getByRole('dialog');
+    const count = await dialogs.count().catch(() => 0);
+
+    for (let index = 0; index < count; index += 1) {
+      const candidate = dialogs.nth(index);
+      const visible = await candidate.isVisible().catch(() => false);
+      if (!visible) continue;
+
+      const textContent = await candidate.innerText().catch(() => '');
+      const normalized = normalizeWhitespace(textContent).toLowerCase();
+      const looksLikeAutofillDialog = AUTOFILL_DIALOG_TEXT_HINTS.some((label) =>
+        normalized.includes(normalizeWhitespace(label).toLowerCase())
+      );
+
+      if (looksLikeAutofillDialog) {
+        return candidate;
+      }
+    }
+
+    return null;
+  };
+
+  const dismissVisibleAutofillDialogIfPresent = async ({
+    context = 'unknown',
+    required = false,
+  } = {}) => {
+    const autofillDialog = await findVisibleAutofillDialog();
+    if (!autofillDialog) {
+      return false;
+    }
+
+    const dialogText = normalizeWhitespace(await autofillDialog.innerText().catch(() => ''));
+    log?.('tradera.quicklist.autofill_modal.detected', {
+      context,
+      text: dialogText.slice(0, 160),
+    });
+
+    const closeButton =
+      (await findButtonByLabelsWithin(autofillDialog, AUTOFILL_DIALOG_DISMISS_LABELS)) ||
+      (await firstVisibleWithin(autofillDialog, AUTOFILL_DIALOG_CLOSE_SELECTORS));
+
+    if (closeButton) {
+      await humanClick(closeButton, { pauseAfter: false }).catch(() => undefined);
+      let dialogClosed = await waitForDialogToClose(autofillDialog, 1_500);
+      if (dialogClosed) {
+        log?.('tradera.quicklist.autofill_modal.dismissed', {
+          context,
+          method: 'button',
+        });
+        return true;
+      }
+    }
+
+    await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+      () => undefined
+    );
+    const dialogClosed = await waitForDialogToClose(autofillDialog, 700);
+    if (dialogClosed) {
+      log?.('tradera.quicklist.autofill_modal.dismissed', {
+        context,
+        method: 'escape',
+      });
+      return true;
+    }
+
+    log?.('tradera.quicklist.autofill_modal.dismiss_failed', {
+      context,
+      text: dialogText.slice(0, 160),
+    });
+
+    if (required) {
+      throw new Error(
+        'FAIL_MODAL_DISMISS: Tradera autofill modal could not be dismissed (' + context + ').'
+      );
+    }
+
+    return false;
+  };
 `;

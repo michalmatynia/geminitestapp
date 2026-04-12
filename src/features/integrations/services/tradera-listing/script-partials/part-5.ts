@@ -84,6 +84,9 @@ export const PART_5 = String.raw`
       required: true,
     });
     await dismissVisibleShippingDialogIfPresent();
+    await dismissVisibleAutofillDialogIfPresent({
+      context: listingAction === 'sync' ? 'sync-editor-ready' : 'listing-editor-ready',
+    }).catch(() => false);
     if (!syncSkipImages) {
       await clearDraftImagesIfPresent();
     }
@@ -92,6 +95,13 @@ export const PART_5 = String.raw`
     const waitForImagePreviewCountToReach = async (targetCount, timeoutMs = 30_000) => {
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
+        const autofillDialogDismissed = await dismissVisibleAutofillDialogIfPresent({
+          context: 'image-preview-count-wait',
+        }).catch(() => false);
+        if (autofillDialogDismissed) {
+          await wait(300);
+        }
+
         const current = await countUploadedImagePreviews();
         if (current >= targetCount) return current;
         const pending = await isImageUploadPending();
@@ -99,6 +109,104 @@ export const PART_5 = String.raw`
         await wait(800);
       }
       return countUploadedImagePreviews();
+    };
+
+    const buildImagePreviewMismatchError = ({
+      baselinePreviewCount,
+      expectedUploadCount,
+      observedPreviewCount,
+      observedPreviewDelta,
+      retryReason,
+      imageUploadPending,
+      imageUploadErrorText,
+    }) =>
+      new Error(
+        'FAIL_IMAGE_SET_INVALID: Tradera uploaded more image previews than expected. Last state: ' +
+          JSON.stringify({
+            baselinePreviewCount,
+            expectedUploadCount,
+            observedPreviewCount,
+            observedPreviewDelta,
+            retryReason,
+            imageUploadPending,
+            imageUploadErrorText,
+          })
+      );
+
+    const tryReuseCompletedImageUpload = async ({
+      baselinePreviewCount = 0,
+      expectedUploadCount = 1,
+      uploadSource,
+      uploadAttempt,
+      retryReason = null,
+    }) => {
+      const [observedPreviewCount, imageUploadPending, imageUploadErrorText] = await Promise.all([
+        countUploadedImagePreviews().catch(() => null),
+        isImageUploadPending().catch(() => false),
+        readImageUploadErrorText().catch(() => null),
+      ]);
+      const normalizedObservedPreviewCount =
+        typeof observedPreviewCount === 'number' ? observedPreviewCount : null;
+      const observedPreviewDelta =
+        normalizedObservedPreviewCount !== null
+          ? Math.max(0, normalizedObservedPreviewCount - Math.max(0, baselinePreviewCount))
+          : null;
+
+      log?.('tradera.quicklist.image.reuse_check', {
+        uploadSource,
+        uploadAttempt,
+        baselinePreviewCount,
+        expectedUploadCount,
+        observedPreviewCount: normalizedObservedPreviewCount,
+        observedPreviewDelta,
+        imageUploadPending,
+        imageUploadErrorText,
+        retryReason,
+      });
+
+      if (
+        observedPreviewDelta !== null &&
+        observedPreviewDelta > expectedUploadCount
+      ) {
+        throw buildImagePreviewMismatchError({
+          baselinePreviewCount,
+          expectedUploadCount,
+          observedPreviewCount: normalizedObservedPreviewCount,
+          observedPreviewDelta,
+          retryReason,
+          imageUploadPending,
+          imageUploadErrorText,
+        });
+      }
+
+      const reusableUploadComplete =
+        observedPreviewDelta !== null &&
+        observedPreviewDelta === expectedUploadCount &&
+        imageUploadPending === false &&
+        !imageUploadErrorText;
+
+      if (!reusableUploadComplete) {
+        return null;
+      }
+
+      currentImageUploadSource = uploadSource;
+      log?.('tradera.quicklist.image.reuse_completed', {
+        uploadSource,
+        uploadAttempt,
+        baselinePreviewCount,
+        expectedUploadCount,
+        observedPreviewCount: normalizedObservedPreviewCount,
+        observedPreviewDelta,
+        retryReason,
+      });
+
+      return {
+        imageCount: expectedUploadCount,
+        expectedUploadCount,
+        observedPreviewCount: normalizedObservedPreviewCount,
+        observedPreviewDelta,
+        uploadSource,
+      };
     };
 
     const performImageUpload = async (uploadFiles, uploadSource) => {
@@ -198,20 +306,34 @@ export const PART_5 = String.raw`
           throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload input not found.');
         }
 
-        await ensureImageStepSellPageReady('image upload dispatch');
-        await assertAllowedTraderaPage('image upload dispatch');
-
-        const baselinePreviewCount = await countUploadedImagePreviews();
-        log?.('tradera.quicklist.image.upload_start', {
-          uploadSource,
-          uploadAttempt,
-          sequential: useSequentialUpload,
-          currentUrl: page.url(),
-          baselinePreviewCount,
-          fileCount: expectedUploadCount,
-        });
-
+        let baselinePreviewCount = 0;
         try {
+          await dismissVisibleAutofillDialogIfPresent({
+            context: 'image-upload-prepare',
+          }).catch(() => false);
+          await ensureImageStepSellPageReady('image upload dispatch');
+          await assertAllowedTraderaPage('image upload dispatch');
+
+          baselinePreviewCount = await countUploadedImagePreviews();
+          const reusableUploadBeforeDispatch = await tryReuseCompletedImageUpload({
+            baselinePreviewCount,
+            expectedUploadCount,
+            uploadSource,
+            uploadAttempt,
+            retryReason: 'pre-dispatch-check',
+          });
+          if (reusableUploadBeforeDispatch) {
+            return reusableUploadBeforeDispatch;
+          }
+          log?.('tradera.quicklist.image.upload_start', {
+            uploadSource,
+            uploadAttempt,
+            sequential: useSequentialUpload,
+            currentUrl: page.url(),
+            baselinePreviewCount,
+            fileCount: expectedUploadCount,
+          });
+
           if (useSequentialUpload) {
             // Upload images one at a time to preserve product image order.
             // Bulk setInputFiles causes Tradera to upload in parallel, and
@@ -229,6 +351,9 @@ export const PART_5 = String.raw`
                 );
               }
 
+              await dismissVisibleAutofillDialogIfPresent({
+                context: 'image-upload-sequential',
+              }).catch(() => false);
               const previewsBefore = await countUploadedImagePreviews();
               await currentInput.setInputFiles(
                 Array.isArray(singleFile) ? singleFile : [singleFile]
@@ -254,6 +379,9 @@ export const PART_5 = String.raw`
                   pendingCleared = true;
                   break;
                 }
+                await dismissVisibleAutofillDialogIfPresent({
+                  context: 'image-upload-sequential-pending',
+                }).catch(() => false);
                 await wait(500);
               }
 
@@ -272,56 +400,78 @@ export const PART_5 = String.raw`
           } else {
             await imageInput.setInputFiles(uploadFiles);
           }
+
+          if (!useSequentialUpload) {
+            const selectedImageFileCount = await waitForSelectedImageFileCount(
+              imageInput,
+              expectedUploadCount
+            );
+            if (selectedImageFileCount < Math.max(1, expectedUploadCount)) {
+              log?.('tradera.quicklist.image.selection_pending', {
+                url: page.url(),
+                uploadSource,
+                expectedUploadCount,
+                selectedImageFileCount,
+              });
+            }
+          }
+
+          await dismissVisibleAutofillDialogIfPresent({
+            context: 'image-upload-post-dispatch',
+          }).catch(() => false);
+
+          const imageAdvanceResult = await advancePastImagesStep(
+            imageInput,
+            expectedUploadCount,
+            baselinePreviewCount
+          );
+          const imageDraftState = await waitForDraftSaveSettled();
+          if (!imageDraftState?.settled) {
+            throw new Error(
+              'FAIL_IMAGE_SET_INVALID: Tradera draft save did not settle after image upload.'
+            );
+          }
+
+          return {
+            imageCount: expectedUploadCount,
+            expectedUploadCount,
+            observedPreviewCount: imageAdvanceResult?.observedPreviewCount ?? null,
+            observedPreviewDelta: imageAdvanceResult?.observedPreviewDelta ?? null,
+            uploadSource,
+          };
         } catch (error) {
-          log?.('tradera.quicklist.image.upload_dispatch_error', {
+          const retryReason = error instanceof Error ? error.message : String(error);
+          const reusableUploadAfterError = await tryReuseCompletedImageUpload({
+            baselinePreviewCount,
+            expectedUploadCount,
+            uploadSource,
+            uploadAttempt,
+            retryReason,
+          });
+          if (reusableUploadAfterError) {
+            return reusableUploadAfterError;
+          }
+          log?.('tradera.quicklist.image.upload_attempt_failed', {
             uploadSource,
             uploadAttempt,
             sequential: useSequentialUpload,
             currentUrl: page.url(),
-            error: error instanceof Error ? error.message : String(error),
+            error: retryReason,
           });
           if (uploadAttempt + 1 < 2) {
+            await dismissVisibleAutofillDialogIfPresent({
+              context: 'image-upload-retry-cleanup',
+            }).catch(() => false);
+            await ensureRetryImageCleanupSettled({
+              reason: retryReason,
+              initialUploadSource: uploadSource,
+            });
             await ensureImageStepSellPageReady('image upload dispatch retry');
             await wait(1000);
             continue;
           }
           throw error;
         }
-
-        if (!useSequentialUpload) {
-          const selectedImageFileCount = await waitForSelectedImageFileCount(
-            imageInput,
-            expectedUploadCount
-          );
-          if (selectedImageFileCount < Math.max(1, expectedUploadCount)) {
-            log?.('tradera.quicklist.image.selection_pending', {
-              url: page.url(),
-              uploadSource,
-              expectedUploadCount,
-              selectedImageFileCount,
-            });
-          }
-        }
-
-        const imageAdvanceResult = await advancePastImagesStep(
-          imageInput,
-          expectedUploadCount,
-          baselinePreviewCount
-        );
-        const imageDraftState = await waitForDraftSaveSettled();
-        if (!imageDraftState?.settled) {
-          throw new Error(
-            'FAIL_IMAGE_SET_INVALID: Tradera draft save did not settle after image upload.'
-          );
-        }
-
-        return {
-          imageCount: expectedUploadCount,
-          expectedUploadCount,
-          observedPreviewCount: imageAdvanceResult?.observedPreviewCount ?? null,
-          observedPreviewDelta: imageAdvanceResult?.observedPreviewDelta ?? null,
-          uploadSource,
-        };
       }
 
       throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload could not be dispatched.');

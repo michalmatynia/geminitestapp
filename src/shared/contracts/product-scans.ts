@@ -167,6 +167,74 @@ export type ProductScanAmazonEvaluationStatus = z.infer<
   typeof productScanAmazonEvaluationStatusSchema
 >;
 
+export const productScanAmazonAiStageSchema = z.enum([
+  'candidate_triage',
+  'probe_evaluate',
+  'extraction_evaluate',
+]);
+export type ProductScanAmazonAiStage = z.infer<typeof productScanAmazonAiStageSchema>;
+
+export const productScanAmazonRecommendedActionSchema = z.enum([
+  'accept',
+  'reject',
+  'try_next_candidate',
+  'fallback_provider',
+]);
+export type ProductScanAmazonRecommendedAction = z.infer<
+  typeof productScanAmazonRecommendedActionSchema
+>;
+
+export const productScanAmazonRejectionCategorySchema = z.enum([
+  'language',
+  'variant',
+  'wrong_product',
+  'low_confidence',
+]);
+export type ProductScanAmazonRejectionCategory = z.infer<
+  typeof productScanAmazonRejectionCategorySchema
+>;
+
+export const productScanAmazonMismatchLabelSchema = z.enum([
+  'brand',
+  'model',
+  'color',
+  'material',
+  'size',
+  'pack_count',
+  'character_theme_license',
+  'language',
+  'wrong_product',
+  'other',
+]);
+export type ProductScanAmazonMismatchLabel = z.infer<
+  typeof productScanAmazonMismatchLabelSchema
+>;
+
+export const productScanAmazonAttributeAssessmentSchema = z.enum([
+  'match',
+  'mismatch',
+  'unknown',
+]);
+export type ProductScanAmazonAttributeAssessment = z.infer<
+  typeof productScanAmazonAttributeAssessmentSchema
+>;
+
+export const productScanAmazonVariantAssessmentSchema = z
+  .object({
+    brand: productScanAmazonAttributeAssessmentSchema.default('unknown'),
+    model: productScanAmazonAttributeAssessmentSchema.default('unknown'),
+    color: productScanAmazonAttributeAssessmentSchema.default('unknown'),
+    material: productScanAmazonAttributeAssessmentSchema.default('unknown'),
+    size: productScanAmazonAttributeAssessmentSchema.default('unknown'),
+    packCount: productScanAmazonAttributeAssessmentSchema.default('unknown'),
+    characterThemeLicense: productScanAmazonAttributeAssessmentSchema.default('unknown'),
+  })
+  .nullable()
+  .default(null);
+export type ProductScanAmazonVariantAssessment = z.infer<
+  typeof productScanAmazonVariantAssessmentSchema
+>;
+
 export const productScanAmazonEvaluationEvidenceSchema = z.object({
   candidateUrl: optionalTrimmedString(4_000),
   pageTitle: optionalTrimmedString(1_000),
@@ -182,6 +250,7 @@ export type ProductScanAmazonEvaluationEvidence = z.infer<
 
 export const productScanAmazonEvaluationResultSchema = z.object({
   status: productScanAmazonEvaluationStatusSchema,
+  stage: productScanAmazonAiStageSchema.nullable().default(null),
   sameProduct: z.boolean().nullable().default(null),
   imageMatch: z.boolean().nullable().default(null),
   descriptionMatch: z.boolean().nullable().default(null),
@@ -193,9 +262,13 @@ export const productScanAmazonEvaluationResultSchema = z.object({
   confidence: z.number().min(0).max(1).nullable().default(null),
   proceed: z.boolean().default(false),
   scrapeAllowed: z.boolean().optional(),
+  recommendedAction: productScanAmazonRecommendedActionSchema.nullable().default(null),
+  rejectionCategory: productScanAmazonRejectionCategorySchema.nullable().default(null),
   threshold: z.number().min(0).max(1).nullable().default(null),
   reasons: z.array(trimmedString.max(500)).max(10).default([]),
   mismatches: z.array(trimmedString.max(500)).max(10).default([]),
+  mismatchLabels: z.array(productScanAmazonMismatchLabelSchema).max(10).default([]),
+  variantAssessment: productScanAmazonVariantAssessmentSchema,
   modelId: optionalTrimmedString(200),
   brainApplied: z.record(z.string(), z.unknown()).nullable().default(null),
   evidence: productScanAmazonEvaluationEvidenceSchema.nullable().default(null),

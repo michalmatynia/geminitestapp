@@ -1,7 +1,10 @@
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type {
+  ProductScannerAmazonImageSearchFallbackProvider,
+  ProductScannerAmazonImageSearchProvider,
   ProductScannerAmazonCandidateEvaluatorAllowedContentLanguage,
   ProductScannerAmazonCandidateEvaluatorLanguageDetectionMode,
+  ProductScannerAmazonCandidateEvaluatorSimilarityMode,
   ProductScannerAmazonCandidateEvaluator,
   ProductScannerAmazonCandidateEvaluatorMode,
   ProductScanner1688CandidateEvaluator,
@@ -24,12 +27,17 @@ export const PRODUCT_SCANNER_SETTINGS_KEY = 'product_scanner_settings_v1';
 export const PRODUCT_SCANNER_SETTINGS_HREF = '/admin/settings/scanner';
 export const DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR = 'auto_show_browser' as const;
 export const DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS = 240_000;
+export const DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER =
+  'google_images_upload' as const;
+export const DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER = null;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE = 'disabled' as const;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD = 0.7;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_ALLOWED_CONTENT_LANGUAGE =
   'en' as const;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE =
-  'deterministic_then_ai' as const;
+  'ai_only' as const;
+export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_SIMILARITY_MODE =
+  'ai_only' as const;
 export const DEFAULT_PRODUCT_SCANNER_1688_CANDIDATE_EVALUATOR_MODE = 'disabled' as const;
 export const DEFAULT_PRODUCT_SCANNER_1688_CANDIDATE_EVALUATOR_THRESHOLD = 0.75;
 export const DEFAULT_PRODUCT_SCANNER_1688_CANDIDATE_RESULT_LIMIT = 8;
@@ -44,7 +52,8 @@ export const createDefaultProductScannerAmazonCandidateEvaluator = (): ProductSc
   mode: DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE,
   modelId: null,
   threshold: DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD,
-  onlyForAmbiguousCandidates: true,
+  onlyForAmbiguousCandidates: false,
+  candidateSimilarityMode: DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_SIMILARITY_MODE,
   allowedContentLanguage: DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_ALLOWED_CONTENT_LANGUAGE,
   rejectNonEnglishContent: true,
   languageDetectionMode:
@@ -73,7 +82,10 @@ export type ProductScannerSettingsDraft = {
   playwrightBrowser: ProductScannerPlaywrightBrowser;
   captchaBehavior: ProductScannerCaptchaBehavior;
   manualVerificationTimeoutMs: number;
+  amazonImageSearchProvider: ProductScannerAmazonImageSearchProvider;
+  amazonImageSearchFallbackProvider: ProductScannerAmazonImageSearchFallbackProvider;
   amazonCandidateEvaluator: ProductScannerAmazonCandidateEvaluator;
+  amazonCandidateEvaluatorTriage: ProductScannerAmazonCandidateEvaluator;
   amazonCandidateEvaluatorProbe: ProductScannerAmazonCandidateEvaluator;
   amazonCandidateEvaluatorExtraction: ProductScannerAmazonCandidateEvaluator;
   scanner1688: ProductScanner1688Settings;
@@ -128,6 +140,15 @@ export const PRODUCT_SCANNER_CAPTCHA_BEHAVIOR_OPTIONS: ReadonlyArray<{
   { value: 'fail', label: 'Fail scan on captcha' },
 ];
 
+export const PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER_OPTIONS: ReadonlyArray<{
+  value: ProductScannerAmazonImageSearchProvider;
+  label: string;
+}> = [
+  { value: 'google_images_upload', label: 'Google Images Upload' },
+  { value: 'google_images_url', label: 'Google Images URL' },
+  { value: 'google_lens_upload', label: 'Google Lens Upload' },
+];
+
 export const PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS: ReadonlyArray<{
   value: ProductScannerAmazonCandidateEvaluatorMode;
   label: string;
@@ -148,13 +169,25 @@ export const PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_
   { value: 'ai_only', label: 'AI only' },
 ];
 
+export const PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_SIMILARITY_MODE_OPTIONS: ReadonlyArray<{
+  value: ProductScannerAmazonCandidateEvaluatorSimilarityMode;
+  label: string;
+}> = [
+  { value: 'deterministic_then_ai', label: 'Deterministic hints, then AI' },
+  { value: 'ai_only', label: 'AI only' },
+];
+
 export const createDefaultProductScannerSettings = (): ProductScannerSettings => ({
   playwrightPersonaId: null,
   playwrightBrowser: DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
   captchaBehavior: DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR,
   manualVerificationTimeoutMs: DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
+  amazonImageSearchProvider: DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER,
+  amazonImageSearchFallbackProvider:
+    DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER,
   playwrightSettingsOverrides: {},
   amazonCandidateEvaluator: createDefaultProductScannerAmazonCandidateEvaluator(),
+  amazonCandidateEvaluatorTriage: createDefaultProductScannerAmazonCandidateEvaluator(),
   amazonCandidateEvaluatorProbe: createDefaultProductScannerAmazonCandidateEvaluator(),
   amazonCandidateEvaluatorExtraction: createDefaultProductScannerAmazonCandidateEvaluator(),
   scanner1688: createDefaultProductScanner1688Settings(),
@@ -176,6 +209,22 @@ const normalizeProductScannerCaptchaBehavior = (
   value: unknown
 ): ProductScannerCaptchaBehavior =>
   value === 'fail' ? 'fail' : DEFAULT_PRODUCT_SCANNER_CAPTCHA_BEHAVIOR;
+
+const normalizeProductScannerAmazonImageSearchProvider = (
+  value: unknown
+): ProductScannerAmazonImageSearchProvider =>
+  value === 'google_images_url' || value === 'google_lens_upload'
+    ? value
+    : DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER;
+
+const normalizeProductScannerAmazonImageSearchFallbackProvider = (
+  value: unknown
+): ProductScannerAmazonImageSearchFallbackProvider =>
+  value === 'google_images_upload' ||
+  value === 'google_images_url' ||
+  value === 'google_lens_upload'
+    ? value
+    : DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER;
 
 const normalizeProductScannerManualVerificationTimeoutMs = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -223,9 +272,16 @@ const normalizeProductScannerAmazonCandidateEvaluatorAllowedContentLanguage = (
 const normalizeProductScannerAmazonCandidateEvaluatorLanguageDetectionMode = (
   value: unknown
 ): ProductScannerAmazonCandidateEvaluatorLanguageDetectionMode =>
-  value === 'ai_only'
+  value === 'deterministic_then_ai' || value === 'ai_only'
     ? value
     : DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE;
+
+const normalizeProductScannerAmazonCandidateEvaluatorSimilarityMode = (
+  value: unknown
+): ProductScannerAmazonCandidateEvaluatorSimilarityMode =>
+  value === 'deterministic_then_ai'
+    ? value
+    : DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_SIMILARITY_MODE;
 
 const normalizeProductScannerAmazonCandidateEvaluatorThreshold = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -243,12 +299,19 @@ const normalizeProductScannerAmazonCandidateEvaluator = (
   }
 
   const record = value as Record<string, unknown>;
+  const candidateSimilarityMode = normalizeProductScannerAmazonCandidateEvaluatorSimilarityMode(
+    record['candidateSimilarityMode']
+  );
 
   return {
     mode: normalizeProductScannerAmazonCandidateEvaluatorMode(record['mode']),
     modelId: normalizeNullableTrimmedString(record['modelId'], 200),
     threshold: normalizeProductScannerAmazonCandidateEvaluatorThreshold(record['threshold']),
-    onlyForAmbiguousCandidates: record['onlyForAmbiguousCandidates'] !== false,
+    onlyForAmbiguousCandidates:
+      candidateSimilarityMode === 'ai_only'
+        ? false
+        : record['onlyForAmbiguousCandidates'] !== false,
+    candidateSimilarityMode,
     allowedContentLanguage: normalizeProductScannerAmazonCandidateEvaluatorAllowedContentLanguage(
       record['allowedContentLanguage']
     ),
@@ -392,11 +455,22 @@ export const normalizeProductScannerSettings = (
     manualVerificationTimeoutMs: normalizeProductScannerManualVerificationTimeoutMs(
       record['manualVerificationTimeoutMs']
     ),
+    amazonImageSearchProvider: normalizeProductScannerAmazonImageSearchProvider(
+      record['amazonImageSearchProvider']
+    ),
+    amazonImageSearchFallbackProvider:
+      normalizeProductScannerAmazonImageSearchFallbackProvider(
+        record['amazonImageSearchFallbackProvider']
+      ),
     playwrightSettingsOverrides:
       Object.keys(normalizedOverrides).length > 0
         ? normalizedOverrides
         : normalizedLegacySettings,
     amazonCandidateEvaluator: legacyEvaluator,
+    amazonCandidateEvaluatorTriage: resolveProductScannerAmazonCandidateEvaluator(
+      record['amazonCandidateEvaluatorTriage'],
+      createDefaultProductScannerAmazonCandidateEvaluator()
+    ),
     amazonCandidateEvaluatorProbe: resolveProductScannerAmazonCandidateEvaluator(
       record['amazonCandidateEvaluatorProbe'],
       legacyEvaluator
@@ -445,8 +519,13 @@ export const buildProductScannerSettingsDraft = (
     playwrightBrowser: settings.playwrightBrowser,
     captchaBehavior: settings.captchaBehavior,
     manualVerificationTimeoutMs: settings.manualVerificationTimeoutMs,
+    amazonImageSearchProvider: settings.amazonImageSearchProvider,
+    amazonImageSearchFallbackProvider: settings.amazonImageSearchFallbackProvider ?? null,
     amazonCandidateEvaluator:
       settings.amazonCandidateEvaluator ?? createDefaultProductScannerAmazonCandidateEvaluator(),
+    amazonCandidateEvaluatorTriage:
+      settings.amazonCandidateEvaluatorTriage ??
+      createDefaultProductScannerAmazonCandidateEvaluator(),
     amazonCandidateEvaluatorProbe:
       settings.amazonCandidateEvaluatorProbe ??
       createDefaultProductScannerAmazonCandidateEvaluator(),
@@ -497,31 +576,41 @@ export const buildPersistedProductScannerSettings = (
 ): ProductScannerSettings => {
   const baseline = resolveProductScannerSettingsBaseline(personas, draft.playwrightPersonaId);
 
-    return {
-      playwrightPersonaId: normalizeIntegrationConnectionPlaywrightPersonaId(
-        draft.playwrightPersonaId
-      ),
-      playwrightBrowser: normalizeProductScannerBrowser(draft.playwrightBrowser),
+  return {
+    playwrightPersonaId: normalizeIntegrationConnectionPlaywrightPersonaId(
+      draft.playwrightPersonaId
+    ),
+    playwrightBrowser: normalizeProductScannerBrowser(draft.playwrightBrowser),
     captchaBehavior: normalizeProductScannerCaptchaBehavior(draft.captchaBehavior),
     manualVerificationTimeoutMs: normalizeProductScannerManualVerificationTimeoutMs(
       draft.manualVerificationTimeoutMs
     ),
-      playwrightSettingsOverrides: buildPlaywrightSettingsOverrides(
-        baseline,
-        buildIntegrationConnectionPlaywrightSettings(draft.playwrightSettings)
+    amazonImageSearchProvider: normalizeProductScannerAmazonImageSearchProvider(
+      draft.amazonImageSearchProvider
+    ),
+    amazonImageSearchFallbackProvider:
+      normalizeProductScannerAmazonImageSearchFallbackProvider(
+        draft.amazonImageSearchFallbackProvider
       ),
-      amazonCandidateEvaluator: normalizeProductScannerAmazonCandidateEvaluator(
-        draft.amazonCandidateEvaluator
-      ),
-      amazonCandidateEvaluatorProbe: normalizeProductScannerAmazonCandidateEvaluator(
-        draft.amazonCandidateEvaluatorProbe
-      ),
-      amazonCandidateEvaluatorExtraction: normalizeProductScannerAmazonCandidateEvaluator(
-        draft.amazonCandidateEvaluatorExtraction
-      ),
-      scanner1688: normalizeProductScanner1688Settings(draft.scanner1688),
-      scanner1688CandidateEvaluator: normalizeProductScanner1688CandidateEvaluator(
-        draft.scanner1688CandidateEvaluator
-      ),
-    };
+    playwrightSettingsOverrides: buildPlaywrightSettingsOverrides(
+      baseline,
+      buildIntegrationConnectionPlaywrightSettings(draft.playwrightSettings)
+    ),
+    amazonCandidateEvaluator: normalizeProductScannerAmazonCandidateEvaluator(
+      draft.amazonCandidateEvaluator
+    ),
+    amazonCandidateEvaluatorTriage: normalizeProductScannerAmazonCandidateEvaluator(
+      draft.amazonCandidateEvaluatorTriage
+    ),
+    amazonCandidateEvaluatorProbe: normalizeProductScannerAmazonCandidateEvaluator(
+      draft.amazonCandidateEvaluatorProbe
+    ),
+    amazonCandidateEvaluatorExtraction: normalizeProductScannerAmazonCandidateEvaluator(
+      draft.amazonCandidateEvaluatorExtraction
+    ),
+    scanner1688: normalizeProductScanner1688Settings(draft.scanner1688),
+    scanner1688CandidateEvaluator: normalizeProductScanner1688CandidateEvaluator(
+      draft.scanner1688CandidateEvaluator
+    ),
+  };
 };

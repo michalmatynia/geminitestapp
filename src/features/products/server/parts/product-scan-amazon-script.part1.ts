@@ -7,6 +7,23 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   helpers,
 }) {
   const imageCandidates = Array.isArray(input?.imageCandidates) ? input.imageCandidates : [];
+  const resolveAmazonImageSearchProvider = (value) => {
+    if (value === 'google_images_url' || value === 'google_lens_upload') {
+      return value;
+    }
+    return 'google_images_upload';
+  };
+  const imageSearchProvider = resolveAmazonImageSearchProvider(input?.imageSearchProvider);
+  const resolveAmazonImageSearchProviderLabel = (value) => {
+    if (value === 'google_images_url') {
+      return 'Google Images URL';
+    }
+    if (value === 'google_lens_upload') {
+      return 'Google Lens Upload';
+    }
+    return 'Google Images Upload';
+  };
+  const imageSearchProviderLabel = resolveAmazonImageSearchProviderLabel(imageSearchProvider);
   const allowManualVerification = input?.allowManualVerification === true;
   const manualVerificationTimeoutMs =
     typeof input?.manualVerificationTimeoutMs === 'number' &&
@@ -179,6 +196,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   const emitResult = async (payload) => {
     const payloadWithSteps = {
       ...payload,
+      imageSearchProvider,
       steps: scanSteps.map((step) => ({ ...step })),
     };
     emit('result', payloadWithSteps);
@@ -329,13 +347,20 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     'button[aria-label="Search by image"]',
     'div[aria-label="Search with an image"]',
     'button[aria-label="Search with an image"]',
+    'div[aria-label="Search with Google Lens"]',
+    'button[aria-label="Search with Google Lens"]',
+    'div[aria-label="Google Lens"]',
+    'button[aria-label="Google Lens"]',
     'div[role="button"][aria-label*="image"]',
+    'div[role="button"][aria-label*="Lens"]',
     'button[aria-label*="image"]',
+    'button[aria-label*="Lens"]',
     'div[role="button"]:has-text("Search by image")',
     'button:has-text("Search by image")',
     'div[role="button"]:has-text("Search with an image")',
     'button:has-text("Search with an image")',
     '[data-base-uri="/searchbyimage"]',
+    '[data-base-uri*="lens"]',
   ];
   const GOOGLE_LENS_UPLOAD_TAB_SELECTORS = [
     'button:has-text("Upload an image")',
@@ -345,6 +370,8 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     'div[role="tab"]:has-text("Upload")',
     'div[role="tab"]:has-text("Upload an image")',
     'div[role="tab"]:has-text("Upload a file")',
+    'a:has-text("upload a file")',
+    'span:has-text("upload a file")',
     'button:has-text("upload")',
   ];
   const GOOGLE_CONSENT_CONTROL_SELECTOR =
@@ -617,6 +644,9 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       if (host === 'lens.google.com' && pathname.startsWith('/upload')) {
         return true;
       }
+      if (host === 'lens.google.com' && (pathname === '/' || pathname === '')) {
+        return true;
+      }
       if (
         host.startsWith('www.google.') &&
         (pathname === '/imghp' || pathname === '/images')
@@ -706,11 +736,11 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         if (uploadInputStillPresent === 0) {
           inputWasReplaced = true;
           if (!isGoogleImagesUploadEntryUrl(currentUrl)) {
-            return {
-              advanced: true,
-              currentUrl,
-              reason: 'input_replaced',
-              processingState,
+      return {
+          advanced: true,
+          currentUrl,
+          reason: 'input_replaced',
+          processingState,
             };
           }
         }
@@ -771,8 +801,22 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       typeof selectedFileState.fileSize === 'number' &&
       selectedFileState.fileSize > 0;
 
+    if (selectionConfirmed) {
+      return {
+        accepted: true,
+        error: null,
+        selectedFileState,
+        transitionState: {
+          advanced: false,
+          currentUrl: page.url(),
+          reason: 'file_selected',
+          processingState: null,
+        },
+      };
+    }
+
     const transitionState = await waitForGoogleLensResultState(startingUrl, inputLocator, stepMeta);
-    if (!selectionConfirmed && !transitionState.advanced) {
+    if (!transitionState.advanced) {
       return {
         accepted: false,
         error: 'Google Lens did not receive a usable image file upload.',
@@ -780,20 +824,6 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         transitionState,
       };
     }
-    if (!transitionState.advanced) {
-      return {
-        accepted: false,
-        error:
-          transitionState.reason === 'upload_processing_timeout'
-            ? 'Google Lens accepted the image but stayed in the upload processing state without producing results.'
-            : transitionState.reason === 'lens_result_page_not_ready'
-              ? 'Google Lens closed the upload entry but did not transition into a usable result page.'
-            : 'Google Lens did not advance after receiving the image upload.',
-        selectedFileState,
-        transitionState,
-      };
-    }
-
     return {
       accepted: true,
       error: null,
@@ -977,9 +1007,22 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
               if (node.disabled || node.getAttribute('aria-disabled') === 'true') {
                 return;
               }
+              const visible = describeVisibility(node);
+              // Also consider file inputs that are technically zero-size but have
+              // an interactive parent (Google Lens often hides the raw input behind
+              // a styled label or drop zone).
+              const parentVisible = node.parentElement ? describeVisibility(node.parentElement) : false;
+              const effectivelyInteractive = visible || parentVisible;
+              // Skip completely hidden inputs that have no interactive parent —
+              // these are decorative placeholders that don't trigger uploads.
+              if (!effectivelyInteractive) {
+                return;
+              }
               let score = 0;
-              if (describeVisibility(node)) {
+              if (visible) {
                 score += 8;
+              } else if (parentVisible) {
+                score += 4;
               }
               const acceptValue = (typeof node.accept === 'string' ? node.accept : '').toLowerCase();
               if (!acceptValue || acceptValue.includes('image')) {
@@ -1317,6 +1360,19 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     }
   };
 
+  const canUseGoogleReverseImageUrl = (value) => {
+    const normalized = toText(value);
+    if (!normalized) {
+      return false;
+    }
+    try {
+      const parsed = new URL(normalized);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
   const extractAsin = (value) => {
     const text = toText(value);
     if (!text) return null;
@@ -1362,6 +1418,19 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     return score;
   };
 
+  const normalizeGoogleLensCandidateTextLines = (value) =>
+    (toText(value) || '')
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .filter(
+        (line) =>
+          !/^https?:\/\//i.test(line) &&
+          !/^www\./i.test(line) &&
+          !/^amazon\.[a-z.]+$/i.test(line)
+      )
+      .slice(0, 6);
+
   const GOOGLE_LENS_CANDIDATE_HINT_SELECTORS = [
     'a[href*="amazon."]',
     'a[href*="googleadservices.com"]',
@@ -1370,36 +1439,107 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
   ];
 
   const readGoogleLensAmazonCandidates = async () => {
-    const hrefs = await page
+    const rawCandidates = await page
       .locator('a[href]')
       .evaluateAll((links) =>
         links
-          .map((link) => {
+          .map((link, index) => {
             const anchor = link;
-            return typeof anchor.href === 'string' ? anchor.href : anchor.getAttribute('href');
+            const href =
+              typeof anchor.href === 'string' ? anchor.href : anchor.getAttribute('href');
+            const anchorText =
+              anchor.getAttribute('aria-label') ||
+              anchor.getAttribute('title') ||
+              anchor.textContent ||
+              '';
+            const contextText =
+              anchor.closest('[role="listitem"]')?.textContent ||
+              anchor.closest('[data-ved]')?.textContent ||
+              anchor.parentElement?.textContent ||
+              anchorText;
+            return {
+              href,
+              anchorText,
+              contextText,
+              index:
+                typeof index === 'number' && Number.isFinite(index) ? Math.trunc(index) : null,
+            };
           })
-          .filter(Boolean)
+          .filter((entry) => entry.href)
       )
       .catch(() => []);
 
-    return Array.from(
-      new Set(
-        hrefs
-          .map((href) => normalizeAmazonUrl(href))
-          .filter((href) => typeof href === 'string' && href.length > 0)
-      )
-    )
-      .map((candidateUrl) => ({
+    const byUrl = new Map();
+    for (const candidate of Array.isArray(rawCandidates) ? rawCandidates : []) {
+      const candidateUrl = normalizeAmazonUrl(candidate?.href);
+      if (!candidateUrl) {
+        continue;
+      }
+
+      const normalizedContextLines = normalizeGoogleLensCandidateTextLines(candidate?.contextText);
+      const normalizedAnchorLines = normalizeGoogleLensCandidateTextLines(candidate?.anchorText);
+      const textLines = Array.from(new Set([...normalizedAnchorLines, ...normalizedContextLines]));
+      const title = textLines[0] || null;
+      const snippet =
+        textLines.length > 1
+          ? textLines
+              .slice(1, 4)
+              .join(' ')
+              .trim() || null
+          : null;
+      let marketplaceDomain = null;
+      try {
+        marketplaceDomain = new URL(candidateUrl).hostname.toLowerCase();
+      } catch {}
+
+      const existing = byUrl.get(candidateUrl);
+      const nextEntry = {
         url: candidateUrl,
         score: scoreAmazonCandidateUrl(candidateUrl),
         asin: extractAsin(candidateUrl),
-      }))
+        marketplaceDomain,
+        title,
+        snippet,
+        sourceIndex:
+          typeof candidate?.index === 'number' && Number.isFinite(candidate.index)
+            ? Math.trunc(candidate.index)
+            : Number.MAX_SAFE_INTEGER,
+      };
+
+      if (!existing) {
+        byUrl.set(candidateUrl, nextEntry);
+        continue;
+      }
+
+      const existingTextLength =
+        (toText(existing.title)?.length || 0) + (toText(existing.snippet)?.length || 0);
+      const nextTextLength =
+        (toText(nextEntry.title)?.length || 0) + (toText(nextEntry.snippet)?.length || 0);
+      if (
+        nextTextLength > existingTextLength ||
+        (nextTextLength === existingTextLength && nextEntry.sourceIndex < existing.sourceIndex)
+      ) {
+        byUrl.set(candidateUrl, nextEntry);
+      }
+    }
+
+    return Array.from(byUrl.values())
       .sort(
         (left, right) =>
           right.score - left.score ||
           rankAmazonCandidateUrl(right.url) - rankAmazonCandidateUrl(left.url) ||
+          left.sourceIndex - right.sourceIndex ||
           left.url.localeCompare(right.url)
-      );
+      )
+      .map((candidate, index) => ({
+        url: candidate.url,
+        score: candidate.score,
+        asin: candidate.asin,
+        marketplaceDomain: candidate.marketplaceDomain,
+        title: candidate.title,
+        snippet: candidate.snippet,
+        rank: index + 1,
+      }));
   };
 
   const waitForGoogleLensCandidateHints = async (timeoutMs = 700) => {
@@ -1908,7 +2048,10 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         'Opening Google reverse image search for image ' + (candidateId || 'candidate') + '.',
       openedMessage: 'Google reverse image search opened.',
       fallbackContext,
-      details: [{ label: 'Source', value: 'Image URL' }],
+      details: [
+        { label: 'Source', value: 'Image URL' },
+        { label: 'Image search provider', value: imageSearchProviderLabel },
+      ],
     });
     const sharedDetails = openState.sharedDetails;
     upsertScanStep({
@@ -2037,16 +2180,23 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     fallbackContext = null
   ) => {
     let captchaEncountered = false;
+    const usesDedicatedLensUpload = imageSearchProvider === 'google_lens_upload';
     const openState = await openGoogleLensForUpload({
       candidateId,
       candidateAttempt,
       inputSource: 'file',
-      destinationUrl: 'https://lens.google.com/upload?hl=en',
-      openingMessage: 'Opening Google Lens for image ' + (candidateId || 'candidate') + '.',
-      openedMessage: 'Google Lens opened.',
+      destinationUrl: usesDedicatedLensUpload
+        ? 'https://lens.google.com/?hl=en'
+        : 'https://images.google.com/?hl=en',
+      openingMessage:
+        (usesDedicatedLensUpload ? 'Opening Google Lens for image ' : 'Opening Google Images for image ') +
+        (candidateId || 'candidate') +
+        '.',
+      openedMessage: usesDedicatedLensUpload ? 'Google Lens opened.' : 'Google Images opened.',
       fallbackContext,
       details: [
         { label: 'Source', value: 'Local file' },
+        { label: 'Image search provider', value: imageSearchProviderLabel },
         { label: 'File path', value: filePath },
       ],
     });
@@ -2253,10 +2403,48 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     }
     const inputLocator = fileInputState.inputLocator;
     const lensUploadUrl = fileInputState.currentUrl;
-    const fileAttachError = await inputLocator
-      .setInputFiles(filePath)
-      .then(() => null)
-      .catch((error) => toText(error?.message) || 'Google Lens rejected the selected image file.');
+
+    // Primary approach: use Playwright's filechooser event to set the file via
+    // a trusted interaction chain. Clicking the input triggers the native file
+    // dialog; the filechooser API fills it in. This produces trusted change
+    // and input events that Google Lens JS accepts (it ignores synthetic
+    // events dispatched by setInputFiles alone).
+    let fileAttachError = null;
+    let usedFileChooser = false;
+    try {
+      const fileChooserPromise = page.waitForEvent('filechooser', { timeout: 3000 });
+      await inputLocator.click({ force: true, timeout: 2000 }).catch(async () => {
+        // If click fails (e.g. element intercepted), try dispatching a click via JS
+        await inputLocator.evaluate((node) => {
+          if (node instanceof HTMLElement) {
+            node.click();
+          }
+        });
+      });
+      const fileChooser = await fileChooserPromise;
+      await fileChooser.setFiles(filePath);
+      usedFileChooser = true;
+    } catch (_fileChooserError) {
+      // Filechooser approach failed (e.g. input is detached, in an iframe that
+      // doesn't emit the event to the page, or Google changed their upload flow).
+      // Fall back to setInputFiles + manual event dispatch.
+      usedFileChooser = false;
+    }
+
+    if (!usedFileChooser) {
+      fileAttachError = await inputLocator
+        .setInputFiles(filePath)
+        .then(() => null)
+        .catch((error) => toText(error?.message) || 'Google Lens rejected the selected image file.');
+
+      if (!fileAttachError) {
+        // Dispatch change/input events manually since setInputFiles may not
+        // produce trusted events that Google Lens accepts.
+        await inputLocator.dispatchEvent('change').catch(() => undefined);
+        await inputLocator.dispatchEvent('input').catch(() => undefined);
+      }
+    }
+
     if (fileAttachError) {
       const artifactKey = await captureGoogleUploadArtifacts(
         'attach-failed',
@@ -2310,6 +2498,24 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         transitionReason: 'file_attach_failed',
       });
     }
+
+    // Try clicking a visible search/submit button after the file is attached —
+    // some Google Lens page variants require an explicit button click to start processing.
+    const searchButtonSelectors = [
+      'button[aria-label*="Search"]',
+      'button[aria-label*="search"]',
+      'div[aria-label*="Search"] button',
+      'form button[type="submit"]',
+    ];
+    for (const selector of searchButtonSelectors) {
+      const btn = page.locator(selector).first();
+      if ((await btn.count().catch(() => 0)) > 0 && (await btn.isVisible().catch(() => false))) {
+        await btn.click().catch(() => undefined);
+        break;
+      }
+    }
+
+    await wait(300);
     const uploadVerification = await verifyGoogleLensFileUploadAccepted(inputLocator, lensUploadUrl, {
       attempt: candidateAttempt,
       candidateId,
@@ -2433,6 +2639,61 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         transitionReason: uploadVerification.transitionState?.reason,
       });
     }
+    // If the file was confirmed on the input but Google Lens hasn't started
+    // processing yet (reason: 'file_selected', advanced: false), wait for
+    // the page to actually transition before declaring success.
+    if (uploadVerification.transitionState?.reason === 'file_selected' && !uploadVerification.transitionState?.advanced) {
+      const postDispatchState = await waitForGoogleLensResultState(lensUploadUrl, inputLocator, {
+        attempt: candidateAttempt,
+        candidateId,
+        inputSource: 'file',
+      });
+      uploadVerification.transitionState = postDispatchState;
+      if (!postDispatchState.advanced) {
+        const artifactKey = await captureGoogleUploadArtifacts(
+          'post-dispatch-timeout',
+          candidateId,
+          candidateAttempt
+        );
+        log('amazon.scan.google_upload_post_dispatch_timeout', {
+          candidateId,
+          filepath: filePath,
+          imageUrl,
+          postDispatchState,
+          artifactKey,
+        });
+        upsertScanStep({
+          key: 'google_upload',
+          label: 'Upload image to Google Lens',
+          attempt: candidateAttempt,
+          candidateId,
+          inputSource: 'file',
+          status: 'failed',
+          retryOf: toText(fallbackContext?.retryOf),
+          resultCode: 'post_dispatch_timeout',
+          message: 'Google Lens did not start processing after file events were dispatched.',
+          url: page.url(),
+          warning:
+            toText(fallbackContext?.warning) ||
+            (imageUrl ? 'Retryable local file handoff failed. URL fallback is available.' : null),
+          details: mergeStepDetails(sharedDetails, [
+            { label: 'Transition reason', value: postDispatchState.reason },
+            { label: 'Artifact key', value: artifactKey },
+          ]),
+        });
+        return buildGoogleUploadResult({
+          submitted: false,
+          advanced: false,
+          captchaRequired: false,
+          captchaEncountered,
+          error: 'Google Lens did not start processing after file events were dispatched.',
+          retryRecommended: Boolean(imageUrl),
+          inputSourceUsed: 'file',
+          failureCode: 'post_dispatch_timeout',
+          transitionReason: postDispatchState.reason,
+        });
+      }
+    }
     await page.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => undefined);
     const postUploadCaptchaState = await handleGoogleLensCaptchaIfPresent('google_upload', {
         attempt: candidateAttempt,
@@ -2515,36 +2776,78 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     const filePath = toText(candidate?.filepath);
     const imageUrl = toText(candidate?.url);
     const candidateId = toText(candidate?.id);
+    const urlEligibleForSearch = canUseGoogleReverseImageUrl(imageUrl);
 
-    if (filePath) {
-      const fileUploadResult = await uploadImageCandidateFromFile(candidateId, filePath, imageUrl, candidateAttempt);
-      if (
-        fileUploadResult.submitted ||
-        fileUploadResult.captchaRequired ||
-        !imageUrl ||
-        !fileUploadResult.retryRecommended
-      ) {
-        return fileUploadResult;
+    if (imageSearchProvider === 'google_images_url') {
+      if (imageUrl && urlEligibleForSearch) {
+        return await uploadImageCandidateByUrl(candidateId, imageUrl, candidateAttempt);
       }
 
-      log('amazon.scan.google_upload_fallback_to_url', {
+      const providerUrlError = imageUrl
+        ? 'Google Images URL search requires a public HTTP image URL.'
+        : 'Google Images URL search requires a public product image URL.';
+      upsertScanStep({
+        key: 'google_upload',
+        label: 'Upload image to Google Lens',
+        attempt: candidateAttempt,
         candidateId,
-        filepath: filePath,
-        imageUrl,
-        error: fileUploadResult.error,
+        inputSource: imageUrl ? 'url' : 'file',
+        status: 'failed',
+        resultCode: 'provider_requires_image_url',
+        message: providerUrlError,
+        url: page.url(),
+        details: [{ label: 'Image search provider', value: imageSearchProviderLabel }],
       });
-      return await uploadImageCandidateByUrl(candidateId, imageUrl, candidateAttempt, {
-        warning: 'Local file upload failed. Falling back to image URL upload.',
-        retryOf: 'Local file upload',
-        details: [
-          { label: 'Fallback from', value: 'Local file' },
-          { label: 'Fallback reason', value: fileUploadResult.error || fileUploadResult.failureCode },
-        ],
+      return buildGoogleUploadResult({
+        submitted: false,
+        advanced: false,
+        captchaRequired: false,
+        captchaEncountered: false,
+        error: providerUrlError,
+        retryRecommended: false,
+        inputSourceUsed: imageUrl ? 'url' : 'file',
+        failureCode: 'provider_requires_image_url',
+        transitionReason: null,
       });
     }
 
+    if (filePath) {
+      return await uploadImageCandidateFromFile(
+        candidateId,
+        filePath,
+        imageUrl,
+        candidateAttempt
+      );
+    }
+
     if (imageUrl) {
-      return await uploadImageCandidateByUrl(candidateId, imageUrl, candidateAttempt);
+      const providerFileError =
+        imageSearchProvider === 'google_lens_upload'
+          ? 'Google Lens upload requires a local product image file.'
+          : 'Google Images upload requires a local product image file.';
+      upsertScanStep({
+        key: 'google_upload',
+        label: 'Upload image to Google Lens',
+        attempt: candidateAttempt,
+        candidateId,
+        inputSource: 'url',
+        status: 'failed',
+        resultCode: 'provider_requires_local_file',
+        message: providerFileError,
+        url: page.url(),
+        details: [{ label: 'Image search provider', value: imageSearchProviderLabel }],
+      });
+      return buildGoogleUploadResult({
+        submitted: false,
+        advanced: false,
+        captchaRequired: false,
+        captchaEncountered: false,
+        error: providerFileError,
+        retryRecommended: false,
+        inputSourceUsed: 'url',
+        failureCode: 'provider_requires_local_file',
+        transitionReason: null,
+      });
     }
 
     upsertScanStep({
@@ -2603,6 +2906,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         });
         return {
           candidates: [],
+          candidateResults: [],
           captchaRequired: captchaState.captchaRequired,
           captchaEncountered,
           error: captchaState.message,
@@ -2651,6 +2955,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
         });
         return {
           candidates: retainedCandidates.map((candidate) => candidate.url),
+          candidateResults: retainedCandidates,
           captchaRequired: false,
           captchaEncountered,
           error: null,
@@ -2763,6 +3068,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     });
     return {
       candidates: [],
+      candidateResults: [],
       captchaRequired: false,
       captchaEncountered,
       error: timedOutOnUploadEntry ? timeoutMessage : null,

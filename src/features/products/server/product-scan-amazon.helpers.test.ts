@@ -140,6 +140,46 @@ describe('product Amazon scan helpers', () => {
     ]);
   });
 
+  it('keeps HTTP filepaths and thumbnail URLs as URL-backed scan candidates', () => {
+    const candidates = resolveProductScanImageCandidates({
+      images: [
+        {
+          imageFileId: 'image-http',
+          imageFile: {
+            id: 'file-http',
+            filepath: 'https://cdn.example.com/remote-path.jpg',
+            filename: 'remote-path.jpg',
+          },
+        },
+        {
+          imageFileId: 'image-thumb',
+          imageFile: {
+            id: 'file-thumb',
+            filepath: '',
+            thumbnailUrl: 'https://cdn.example.com/thumb.webp',
+            filename: 'thumb.webp',
+          },
+        },
+      ],
+      imageLinks: [],
+    } as never);
+
+    expect(candidates).toEqual([
+      {
+        id: 'file-http',
+        filepath: null,
+        url: 'https://cdn.example.com/remote-path.jpg',
+        filename: 'remote-path.jpg',
+      },
+      {
+        id: 'file-thumb',
+        filepath: null,
+        url: 'https://cdn.example.com/thumb.webp',
+        filename: 'thumb.webp',
+      },
+    ]);
+  });
+
   it('prioritizes file-backed candidates ahead of URL-only candidates', () => {
     const candidates = resolveProductScanImageCandidates({
       images: [

@@ -985,6 +985,13 @@ describe('processTraderaListingJob', () => {
               error:
                 'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.',
               errorCategory: 'FORM',
+              metadata: expect.objectContaining({
+                failureCode: 'image_preview_mismatch',
+                imagePreviewMismatch: true,
+                duplicateRisk: false,
+                expectedImageUploadCount: 3,
+                observedImagePreviewDelta: 4,
+              }),
             }),
           }),
         }),
@@ -1053,6 +1060,13 @@ describe('processTraderaListingJob', () => {
               error:
                 'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.',
               errorCategory: 'FORM',
+              metadata: expect.objectContaining({
+                failureCode: 'image_duplicate_risk',
+                imagePreviewMismatch: false,
+                duplicateRisk: true,
+                expectedImageUploadCount: 3,
+                observedImagePreviewDelta: 1,
+              }),
             }),
           }),
         }),
@@ -1312,9 +1326,9 @@ describe('processTraderaListingJob', () => {
         runId: 'run-relist-duplicate-linked',
         publishVerified: false,
         duplicateLinked: true,
-        duplicateMatchStrategy: 'title+product-id',
-        duplicateMatchedProductId: 'BASE-1',
-        duplicateCandidateCount: 2,
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+        duplicateMatchedProductId: null,
+        duplicateCandidateCount: 1,
         duplicateSearchTitle: 'Example title',
         browserMode: 'headed',
         requestedBrowserMode: 'headed',
@@ -1349,6 +1363,81 @@ describe('processTraderaListingJob', () => {
         expiresAt: null,
         relist: true,
         requestId: 'job-tradera-relist-duplicate-linked',
+      })
+    );
+  });
+
+  it('preserves relist timestamps when duplicate linkage is indicated only by duplicate match strategy', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-relist-duplicate-strategy-only',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        externalListingId: 'external-old',
+        listedAt: '2026-04-01T09:00:00.000Z',
+        expiresAt: '2026-04-30T09:00:00.000Z',
+        nextRelistAt: '2026-04-29T09:00:00.000Z',
+        marketplaceData: {
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-old',
+          externalListingId: 'external-old',
+          tradera: {},
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockResolvedValue({
+      externalListingId: '725447805',
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      metadata: {
+        scriptMode: 'scripted',
+        runId: 'run-relist-duplicate-strategy-only',
+        publishVerified: false,
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+        duplicateMatchedProductId: null,
+        duplicateCandidateCount: 1,
+        duplicateSearchTitle: 'Example title',
+        browserMode: 'headed',
+        requestedBrowserMode: 'headed',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-relist-duplicate-strategy-only',
+      action: 'relist',
+      source: 'manual',
+      jobId: 'job-tradera-relist-duplicate-strategy-only',
+    });
+
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-relist-duplicate-strategy-only',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: '725447805',
+        listedAt: '2026-04-01T09:00:00.000Z',
+        expiresAt: null,
+        nextRelistAt: null,
+        lastRelistedAt: expect.any(Date),
+        failureReason: null,
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-relist-duplicate-strategy-only',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: '725447805',
+        expiresAt: null,
+        relist: true,
+        requestId: 'job-tradera-relist-duplicate-strategy-only',
       })
     );
   });

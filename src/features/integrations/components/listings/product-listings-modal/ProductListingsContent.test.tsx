@@ -770,6 +770,170 @@ describe('ProductListingsContent', () => {
     expect(screen.queryByText(/^Completed:/)).toBeNull();
   });
 
+  it('renders exact-title relist copy when a Tradera duplicate was linked from one exact match', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'active',
+              externalListingId: '725447805',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              connection: {
+                id: 'conn-tradera-1',
+                name: 'Tradera Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.tradera.com/item/725447805',
+                tradera: {
+                  lastExecution: {
+                    metadata: {
+                      duplicateLinked: true,
+                      duplicateMatchStrategy: 'exact-title-single-candidate',
+                    },
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera relist matched an existing listing')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Relist linked the single exact-title Tradera match instead of creating a new listing. Open the matched Tradera item directly from here.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^Linked:/)).toBeInTheDocument();
+  });
+
+  it('renders exact-title relist copy when the synced listing only preserves duplicate strategy in rawResult', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'active',
+              externalListingId: '725447805',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              connection: {
+                id: 'conn-tradera-1',
+                name: 'Tradera Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.tradera.com/item/725447805',
+                tradera: {
+                  lastExecution: {
+                    metadata: {
+                      rawResult: {
+                        duplicateLinked: true,
+                        duplicateMatchStrategy: 'exact-title-single-candidate',
+                      },
+                    },
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera relist matched an existing listing')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Relist linked the single exact-title Tradera match instead of creating a new listing. Open the matched Tradera item directly from here.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('renders exact-title relist copy when only persisted feedback preserves duplicate strategy in rawResult', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+      metadata: {
+        rawResult: {
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'active',
+              externalListingId: '725447805',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              connection: {
+                id: 'conn-tradera-1',
+                name: 'Tradera Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.tradera.com/item/725447805',
+                tradera: {
+                  lastExecution: {
+                    metadata: {},
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera relist matched an existing listing')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Relist linked the single exact-title Tradera match instead of creating a new listing. Open the matched Tradera item directly from here.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('shows active status immediately in the modal when quick export has completed but the server row is still queued', () => {
     persistTraderaQuickListFeedback('product-1', 'completed', {
       listingId: 'listing-1',

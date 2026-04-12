@@ -173,6 +173,209 @@ describe('product-scans-service 1688 synchronization', () => {
     });
   });
 
+  it('surfaces 1688 manual verification guidance while captcha resolution is pending', async () => {
+    const scan = createScan({
+      provider: '1688',
+      scanType: 'supplier_reverse_image',
+      status: 'running',
+      asinUpdateStatus: 'not_needed',
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+      completedAt: null,
+      result: {
+        outputs: {
+          result: {
+            status: 'captcha_required',
+            message:
+              '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+            stage: '1688_upload',
+            currentUrl: 'https://s.1688.com/youyuan/index.htm',
+          },
+        },
+      },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'captcha_required',
+        message:
+          '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+        stage: '1688_upload',
+        currentUrl: 'https://s.1688.com/youyuan/index.htm',
+      },
+      finalUrl: 'https://s.1688.com/youyuan/index.htm',
+    });
+    mocks.updateProductScanMock.mockImplementation(async (_id: string, updates: any) => ({
+      ...scan,
+      ...updates,
+    }));
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'running',
+        asinUpdateStatus: 'not_needed',
+        asinUpdateMessage:
+          '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+        rawResult: expect.objectContaining({
+          status: 'captcha_required',
+          stage: '1688_upload',
+          currentUrl: 'https://s.1688.com/youyuan/index.htm',
+          manualVerificationPending: true,
+          manualVerificationMessage:
+            '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+          runStatus: 'running',
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'running',
+        asinUpdateMessage:
+          '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+      })
+    );
+  });
+
+  it('keeps 1688 manual verification pending while the run is still recovering after captcha', async () => {
+    const scan = createScan({
+      provider: '1688',
+      scanType: 'supplier_reverse_image',
+      status: 'running',
+      asinUpdateStatus: 'not_needed',
+      rawResult: {
+        runId: 'run-1',
+        manualVerificationPending: true,
+        manualVerificationMessage:
+          '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+        manualVerificationTimeoutMs: 240000,
+      },
+      asinUpdateMessage:
+        '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+      completedAt: null,
+      result: {
+        outputs: {
+          result: {
+            status: 'running',
+            message: 'Reload 1688 page after captcha.',
+            stage: '1688_upload',
+            currentUrl: 'https://s.1688.com/youyuan/index.htm',
+          },
+        },
+      },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'running',
+        message: 'Reload 1688 page after captcha.',
+        stage: '1688_upload',
+        currentUrl: 'https://s.1688.com/youyuan/index.htm',
+      },
+      finalUrl: 'https://s.1688.com/youyuan/index.htm',
+    });
+    mocks.updateProductScanMock.mockImplementation(async (_id: string, updates: any) => ({
+      ...scan,
+      ...updates,
+    }));
+
+    await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'running',
+        asinUpdateStatus: 'not_needed',
+        asinUpdateMessage:
+          '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+        rawResult: expect.objectContaining({
+          status: 'running',
+          stage: '1688_upload',
+          currentUrl: 'https://s.1688.com/youyuan/index.htm',
+          manualVerificationPending: true,
+          manualVerificationMessage:
+            '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+          manualVerificationTimeoutMs: 240000,
+        }),
+      })
+    );
+  });
+
+  it('clears 1688 manual verification guidance once the running scan continues past captcha', async () => {
+    const scan = createScan({
+      provider: '1688',
+      scanType: 'supplier_reverse_image',
+      status: 'running',
+      asinUpdateStatus: 'not_needed',
+      rawResult: {
+        runId: 'run-1',
+        manualVerificationPending: true,
+        manualVerificationMessage:
+          '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+        manualVerificationTimeoutMs: 240000,
+      },
+      asinUpdateMessage:
+        '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+      completedAt: null,
+      result: {
+        outputs: {
+          result: {
+            status: 'matched',
+            title: 'Recovered 1688 Supplier Listing',
+            url: 'https://detail.1688.com/offer/123456789.html',
+            stage: 'supplier_open',
+          },
+        },
+      },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'matched',
+        title: 'Recovered 1688 Supplier Listing',
+        url: 'https://detail.1688.com/offer/123456789.html',
+        stage: 'supplier_open',
+      },
+      finalUrl: 'https://detail.1688.com/offer/123456789.html',
+    });
+    mocks.updateProductScanMock.mockImplementation(async (_id: string, updates: any) => ({
+      ...scan,
+      ...updates,
+    }));
+
+    await synchronizeProductScan(scan);
+
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'running',
+        asinUpdateStatus: 'not_needed',
+        asinUpdateMessage: null,
+        rawResult: expect.objectContaining({
+          status: 'matched',
+          title: 'Recovered 1688 Supplier Listing',
+          url: 'https://detail.1688.com/offer/123456789.html',
+          stage: 'supplier_open',
+          manualVerificationPending: false,
+          manualVerificationMessage: null,
+          manualVerificationTimeoutMs: 240000,
+        }),
+      })
+    );
+  });
+
   it('persists a completed 1688 supplier scan result', async () => {
     const scan = createScan({
       provider: '1688',

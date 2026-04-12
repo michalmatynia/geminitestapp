@@ -2,7 +2,7 @@
 
 import { Printer } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 
 import { getLocalizedKangurLessonActivityDefinition } from '@/features/kangur/lessons/activities';
 import {
@@ -19,6 +19,34 @@ import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/Kangu
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/features/kangur/shared/contracts/kangur';
 import { KangurLessonActivityRuntime } from '../KangurLessonActivityRuntime';
+
+export type KangurLessonActivityRuntimeContextValue = {
+  onFinish: () => void;
+};
+
+export const KangurLessonActivityRuntimeContext = createContext<KangurLessonActivityRuntimeContextValue | null>(null);
+
+export function useKangurLessonActivityRuntimeContext(): KangurLessonActivityRuntimeContextValue {
+  const context = useContext(KangurLessonActivityRuntimeContext);
+  if (!context) {
+    throw new Error('useKangurLessonActivityRuntimeContext must be used within KangurLessonActivityBlock');
+  }
+  return context;
+}
+
+export function KangurLessonActivityRuntimeProvider({
+  children,
+  onFinish,
+}: {
+  children: React.ReactNode;
+  onFinish: () => void;
+}): React.JSX.Element {
+  return (
+    <KangurLessonActivityRuntimeContext.Provider value={{ onFinish }}>
+      {children}
+    </KangurLessonActivityRuntimeContext.Provider>
+  );
+}
 
 type KangurLessonActivityBlockProps = {
   block: KangurLessonActivityBlockType;
@@ -203,12 +231,10 @@ function KangurLessonActivityRuntimeState({
   activityRuntime,
   blockId,
   instanceKey,
-  onFinish,
 }: {
   activityRuntime: ReturnType<typeof getLocalizedKangurLessonActivityDefinition>['lessonActivityRuntime'];
   blockId: string;
   instanceKey: number;
-  onFinish: () => void;
 }): React.JSX.Element | null {
   if (!activityRuntime) {
     return null;
@@ -219,7 +245,6 @@ function KangurLessonActivityRuntimeState({
       <KangurLessonActivityRuntime
         key={`${blockId}-${instanceKey}`}
         runtime={activityRuntime}
-        onFinish={onFinish}
       />
     </div>
   );
@@ -316,17 +341,20 @@ export function KangurLessonActivityBlock(
           }}
         />
       ) : (
-        <>
+        <KangurLessonActivityRuntimeContext.Provider
+          value={{
+            onFinish: (): void => {
+              setIsCompleted(true);
+            },
+          }}
+        >
           <KangurLessonActivityRuntimeState
             activityRuntime={activityRuntime}
             blockId={block.id}
             instanceKey={instanceKey}
-            onFinish={(): void => {
-              setIsCompleted(true);
-            }}
           />
           <KangurLessonActivityUnavailableState activityRuntime={activityRuntime} />
-        </>
+        </KangurLessonActivityRuntimeContext.Provider>
       )}
     </KangurSurfacePanel>
   );

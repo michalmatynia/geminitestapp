@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { createContext, useContext, useCallback, useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
@@ -33,6 +33,23 @@ import {
 
 const COMPLETE_SLOT_A_LABEL = 'Grupa A';
 const COMPLETE_SLOT_B_LABEL = 'Grupa B';
+
+type CompleteEquationContextValue = {
+  checked: boolean;
+  correct: boolean;
+  isCoarsePointer: boolean;
+  onCheck: () => void;
+};
+
+const CompleteEquationContext = createContext<CompleteEquationContextValue | null>(null);
+
+function useCompleteEquation(): CompleteEquationContextValue {
+  const context = useContext(CompleteEquationContext);
+  if (!context) {
+    throw new Error('useCompleteEquation must be used within CompleteEquation');
+  }
+  return context;
+}
 
 type SetCompleteEquationState = React.Dispatch<React.SetStateAction<CompleteEquationState>>;
 
@@ -244,16 +261,13 @@ function CompleteEquationHeader({
 }
 
 function CompleteEquationResult({
-  checked,
-  correct,
   acceptedEquationPair,
   submittedEquationPair,
 }: {
-  checked: boolean;
-  correct: boolean;
   acceptedEquationPair: string;
   submittedEquationPair: string;
 }): React.JSX.Element | null {
+  const { checked, correct } = useCompleteEquation();
   if (!checked) {
     return null;
   }
@@ -270,14 +284,11 @@ function CompleteEquationResult({
 }
 
 function CompleteEquationCheckButton({
-  checked,
   hasAnswer,
-  onCheck,
 }: {
-  checked: boolean;
   hasAnswer: boolean;
-  onCheck: () => void;
 }): React.JSX.Element | null {
+  const { checked, onCheck } = useCompleteEquation();
   if (checked) {
     return null;
   }
@@ -290,8 +301,6 @@ function CompleteEquationCheckButton({
 }
 
 function CompleteEquationPool(props: {
-  checked: boolean;
-  isCoarsePointer: boolean;
   selectedBall: BallItem | null;
   state: CompleteEquationState;
   selectedBallId: string | null;
@@ -299,14 +308,13 @@ function CompleteEquationPool(props: {
   onSelectBall: (id: string) => void;
 }): React.JSX.Element {
   const {
-    checked,
-    isCoarsePointer,
     selectedBall,
     state,
     selectedBallId,
     onMoveToPool,
     onSelectBall,
   } = props;
+  const { checked, isCoarsePointer } = useCompleteEquation();
 
   return (
     <Droppable droppableId='pool' direction='horizontal'>
@@ -348,13 +356,13 @@ function CompleteEquationPool(props: {
 }
 
 function CompleteEquationSelectionControls(props: {
-  checked: boolean;
   selectedBall: BallItem | null;
   onMoveToSlotA: () => void;
   onMoveToSlotB: () => void;
   onMoveToPool: () => void;
 }): React.JSX.Element {
-  const { checked, selectedBall, onMoveToSlotA, onMoveToSlotB, onMoveToPool } = props;
+  const { selectedBall, onMoveToSlotA, onMoveToSlotB, onMoveToPool } = props;
+  const { checked } = useCompleteEquation();
 
   return (
     <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
@@ -394,39 +402,44 @@ function CompleteEquationMobile({
   const submittedEquationPair = formatSubmittedEquationPair(state.slotA.length, state.slotB.length);
 
   return (
-    <PointerDragProvider onDrop={moveBallTo} disabled={checked}>
-      <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        <CompleteEquationHeader round={round} acceptedEquationPair={acceptedEquationPair} />
+    <CompleteEquationContext.Provider
+      value={{
+        checked,
+        correct,
+        isCoarsePointer: true,
+        onCheck: () => check(onResult),
+      }}
+    >
+      <PointerDragProvider onDrop={moveBallTo} disabled={checked}>
+        <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+          <CompleteEquationHeader round={round} acceptedEquationPair={acceptedEquationPair} />
 
-        <div className='flex items-center kangur-panel-gap flex-wrap justify-center'>
-          <PointerDropZone id='slotA' items={state.slotA} label={COMPLETE_SLOT_A_LABEL} checked={checked} correct={correct} small />
-          <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>+</span>
-          <PointerDropZone id='slotB' items={state.slotB} label={COMPLETE_SLOT_B_LABEL} checked={checked} correct={correct} small />
-          <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>= {round.target}</span>
+          <div className='flex items-center kangur-panel-gap flex-wrap justify-center'>
+            <PointerDropZone id='slotA' items={state.slotA} label={COMPLETE_SLOT_A_LABEL} checked={checked} correct={correct} small />
+            <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>+</span>
+            <PointerDropZone id='slotB' items={state.slotB} label={COMPLETE_SLOT_B_LABEL} checked={checked} correct={correct} small />
+            <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>= {round.target}</span>
+          </div>
+
+          <PointerDropZone id='pool' items={state.pool} label='Pula' checked={checked} correct={false} />
+
+          <p
+            data-testid='adding-ball-complete-touch-hint'
+            className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+          >
+            Przeciągnij piłkę do Grupy A, Grupy B albo z powrotem do puli.
+          </p>
+
+          <CompleteEquationCheckButton
+            hasAnswer={state.slotA.length > 0 && state.slotB.length > 0}
+          />
+          <CompleteEquationResult
+            acceptedEquationPair={acceptedEquationPair}
+            submittedEquationPair={submittedEquationPair}
+          />
         </div>
-
-        <PointerDropZone id='pool' items={state.pool} label='Pula' checked={checked} correct={false} />
-
-        <p
-          data-testid='adding-ball-complete-touch-hint'
-          className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
-        >
-          Przeciągnij piłkę do Grupy A, Grupy B albo z powrotem do puli.
-        </p>
-
-        <CompleteEquationCheckButton
-          checked={checked}
-          hasAnswer={state.slotA.length > 0 && state.slotB.length > 0}
-          onCheck={() => check(onResult)}
-        />
-        <CompleteEquationResult
-          checked={checked}
-          correct={correct}
-          acceptedEquationPair={acceptedEquationPair}
-          submittedEquationPair={submittedEquationPair}
-        />
-      </div>
-    </PointerDragProvider>
+      </PointerDragProvider>
+    </CompleteEquationContext.Provider>
   );
 }
 
@@ -474,66 +487,68 @@ function CompleteEquationDesktop({
   );
 
   return (
-    <KangurDragDropContext onDragEnd={handleDragEnd}>
-      <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        <CompleteEquationHeader round={round} acceptedEquationPair={acceptedEquationPair} />
+    <CompleteEquationContext.Provider
+      value={{
+        checked,
+        correct,
+        isCoarsePointer,
+        onCheck: () => check(onResult),
+      }}
+    >
+      <KangurDragDropContext onDragEnd={handleDragEnd}>
+        <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+          <CompleteEquationHeader round={round} acceptedEquationPair={acceptedEquationPair} />
 
-        <div className='flex items-center kangur-panel-gap flex-wrap justify-center'>
-          <SlotZone
-            id='slotA'
-            items={state.slotA}
-            label={COMPLETE_SLOT_A_LABEL}
-            checked={checked}
-            correct={correct}
+          <div className='flex items-center kangur-panel-gap flex-wrap justify-center'>
+            <SlotZone
+              id='slotA'
+              items={state.slotA}
+              label={COMPLETE_SLOT_A_LABEL}
+              checked={checked}
+              correct={correct}
+              selectedBallId={selectedBallId}
+              onActivateZone={() => handleMoveSelectedBallTo('slotA')}
+              onSelectBall={handleSelectBall}
+            />
+            <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>+</span>
+            <SlotZone
+              id='slotB'
+              items={state.slotB}
+              label={COMPLETE_SLOT_B_LABEL}
+              checked={checked}
+              correct={correct}
+              selectedBallId={selectedBallId}
+              onActivateZone={() => handleMoveSelectedBallTo('slotB')}
+              onSelectBall={handleSelectBall}
+            />
+            <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>= {round.target}</span>
+          </div>
+
+          <CompleteEquationPool
+            selectedBall={selectedBall}
+            state={state}
             selectedBallId={selectedBallId}
-            onActivateZone={() => handleMoveSelectedBallTo('slotA')}
+            onMoveToPool={() => handleMoveSelectedBallTo('pool')}
             onSelectBall={handleSelectBall}
           />
-          <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>+</span>
-          <SlotZone
-            id='slotB'
-            items={state.slotB}
-            label={COMPLETE_SLOT_B_LABEL}
-            checked={checked}
-            correct={correct}
-            selectedBallId={selectedBallId}
-            onActivateZone={() => handleMoveSelectedBallTo('slotB')}
-            onSelectBall={handleSelectBall}
+
+          <CompleteEquationSelectionControls
+            selectedBall={selectedBall}
+            onMoveToSlotA={() => handleMoveSelectedBallTo('slotA')}
+            onMoveToSlotB={() => handleMoveSelectedBallTo('slotB')}
+            onMoveToPool={() => handleMoveSelectedBallTo('pool')}
           />
-          <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>= {round.target}</span>
+
+          <CompleteEquationCheckButton
+            hasAnswer={state.slotA.length > 0 && state.slotB.length > 0}
+          />
+          <CompleteEquationResult
+            acceptedEquationPair={acceptedEquationPair}
+            submittedEquationPair={submittedEquationPair}
+          />
         </div>
-
-        <CompleteEquationPool
-          checked={checked}
-          isCoarsePointer={isCoarsePointer}
-          selectedBall={selectedBall}
-          state={state}
-          selectedBallId={selectedBallId}
-          onMoveToPool={() => handleMoveSelectedBallTo('pool')}
-          onSelectBall={handleSelectBall}
-        />
-
-        <CompleteEquationSelectionControls
-          checked={checked}
-          selectedBall={selectedBall}
-          onMoveToSlotA={() => handleMoveSelectedBallTo('slotA')}
-          onMoveToSlotB={() => handleMoveSelectedBallTo('slotB')}
-          onMoveToPool={() => handleMoveSelectedBallTo('pool')}
-        />
-
-        <CompleteEquationCheckButton
-          checked={checked}
-          hasAnswer={state.slotA.length > 0 && state.slotB.length > 0}
-          onCheck={() => check(onResult)}
-        />
-        <CompleteEquationResult
-          checked={checked}
-          correct={correct}
-          acceptedEquationPair={acceptedEquationPair}
-          submittedEquationPair={submittedEquationPair}
-        />
-      </div>
-    </KangurDragDropContext>
+      </KangurDragDropContext>
+    </CompleteEquationContext.Provider>
   );
 }
 

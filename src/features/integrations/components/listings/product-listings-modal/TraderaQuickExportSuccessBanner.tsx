@@ -9,7 +9,10 @@ import {
 import type { PersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import {
   resolveCompletedAtFromFeedbackAndListing,
+  resolveDuplicateLinkedFromFeedback,
   resolveDuplicateLinkedFromListing,
+  resolveDuplicateMatchStrategyFromFeedback,
+  resolveDuplicateMatchStrategyFromListing,
   resolveListingUrl,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
@@ -45,18 +48,42 @@ export function TraderaQuickExportSuccessBanner({
   const isSyncing = Boolean(localListingId && syncingTraderaListing === localListingId);
   const completedAt = resolveCompletedAtFromFeedbackAndListing(feedback.completedAt, listing);
   const duplicateLinked =
-    resolveDuplicateLinkedFromListing(listing) || feedback.duplicateLinked === true;
-  const title = duplicateLinked
-    ? 'Tradera existing listing linked'
-    : 'Tradera quick export completed';
-  const description =
-    duplicateLinked
-      ? mode === 'empty'
-        ? 'The product matched an existing Tradera listing and has now been linked in this modal. Use the link below to open the live Tradera item.'
-        : 'The product is now linked to an existing Tradera listing. Open the live Tradera item directly from here.'
-      : mode === 'empty'
-        ? 'The product was listed on Tradera, but the listing row is still catching up in this modal. Use the link below to open the created Tradera item now.'
-        : 'The product is now linked to the created Tradera listing. Open the live Tradera item directly from here.';
+    resolveDuplicateLinkedFromListing(listing) || resolveDuplicateLinkedFromFeedback(feedback);
+  const duplicateMatchStrategy =
+    resolveDuplicateMatchStrategyFromListing(listing) ??
+    resolveDuplicateMatchStrategyFromFeedback(feedback);
+  const linkedCopy =
+    duplicateMatchStrategy === 'existing-linked-record'
+      ? {
+          title: 'Tradera existing linked listing reused',
+          emptyDescription:
+            'This product was already linked to a Tradera listing record. The modal reused that linked record instead of creating a new listing.',
+          contentDescription:
+            'This product was already linked to a Tradera listing record. Open the linked Tradera item directly from here.',
+        }
+      : duplicateMatchStrategy === 'exact-title-single-candidate'
+        ? {
+            title: 'Tradera relist matched an existing listing',
+            emptyDescription:
+              'Relist found one exact-title Tradera candidate and linked it instead of creating a new listing. Use the link below to open the matched Tradera item.',
+            contentDescription:
+              'Relist linked the single exact-title Tradera match instead of creating a new listing. Open the matched Tradera item directly from here.',
+          }
+        : {
+            title: 'Tradera existing listing linked',
+            emptyDescription:
+              'The product matched an existing Tradera listing and has now been linked in this modal. Use the link below to open the live Tradera item.',
+            contentDescription:
+              'The product is now linked to an existing Tradera listing. Open the live Tradera item directly from here.',
+          };
+  const title = duplicateLinked ? linkedCopy.title : 'Tradera quick export completed';
+  const description = duplicateLinked
+    ? mode === 'empty'
+      ? linkedCopy.emptyDescription
+      : linkedCopy.contentDescription
+    : mode === 'empty'
+      ? 'The product was listed on Tradera, but the listing row is still catching up in this modal. Use the link below to open the created Tradera item now.'
+      : 'The product is now linked to the created Tradera listing. Open the live Tradera item directly from here.';
   const completedLabel = duplicateLinked ? 'Linked' : 'Completed';
 
   if (variant === 'full') {

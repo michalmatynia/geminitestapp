@@ -11,6 +11,10 @@ import {
   type PlaywrightEngineRunRecord,
 } from '@/features/playwright/server';
 import type {
+  ProductScanAmazonMismatchLabel,
+  ProductScanAmazonRejectionCategory,
+  ProductScanAmazonRecommendedAction,
+  ProductScanAmazonVariantAssessment,
   ProductScanAmazonEvaluationResult,
   ProductScanRecord,
 } from '@/shared/contracts/product-scans';
@@ -23,10 +27,51 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { ProductScannerAmazonCandidateEvaluatorResolvedConfig } from './product-scanner-settings';
-import type { AmazonScanScriptResult } from './product-scans-service.helpers';
+import type {
+  AmazonScanCandidateResult,
+  AmazonScanScriptResult,
+} from './product-scans-service.helpers';
 
 const EVALUATOR_MAX_REASON_COUNT = 10;
 const SUPPORTED_IMAGE_RUNTIME_VENDORS = new Set(['openai', 'ollama']);
+const AMAZON_RECOMMENDED_ACTION_VALUES = [
+  'accept',
+  'reject',
+  'try_next_candidate',
+  'fallback_provider',
+] as const satisfies ReadonlyArray<ProductScanAmazonRecommendedAction>;
+const AMAZON_REJECTION_CATEGORY_VALUES = [
+  'language',
+  'variant',
+  'wrong_product',
+  'low_confidence',
+] as const satisfies ReadonlyArray<ProductScanAmazonRejectionCategory>;
+const AMAZON_MISMATCH_LABEL_VALUES = [
+  'brand',
+  'model',
+  'color',
+  'material',
+  'size',
+  'pack_count',
+  'character_theme_license',
+  'language',
+  'wrong_product',
+  'other',
+] as const satisfies ReadonlyArray<ProductScanAmazonMismatchLabel>;
+
+const amazonRecommendedActionSchema = z.enum(AMAZON_RECOMMENDED_ACTION_VALUES);
+const amazonRejectionCategorySchema = z.enum(AMAZON_REJECTION_CATEGORY_VALUES);
+const amazonMismatchLabelSchema = z.enum(AMAZON_MISMATCH_LABEL_VALUES);
+const amazonAttributeAssessmentSchema = z.enum(['match', 'mismatch', 'unknown']);
+const amazonVariantAssessmentResponseSchema = z.object({
+  brand: amazonAttributeAssessmentSchema.default('unknown'),
+  model: amazonAttributeAssessmentSchema.default('unknown'),
+  color: amazonAttributeAssessmentSchema.default('unknown'),
+  material: amazonAttributeAssessmentSchema.default('unknown'),
+  size: amazonAttributeAssessmentSchema.default('unknown'),
+  packCount: amazonAttributeAssessmentSchema.default('unknown'),
+  characterThemeLicense: amazonAttributeAssessmentSchema.default('unknown'),
+});
 
 const normalizeConfidenceInput = (value: unknown): number => {
   const parsed =
@@ -66,12 +111,86 @@ const amazonEvaluatorResponseSchema = z.object({
     z.number().min(0).max(1)
   ),
   proceed: z.boolean(),
+  recommendedAction: amazonRecommendedActionSchema.nullable().optional().default(null),
+  rejectionCategory: amazonRejectionCategorySchema.nullable().optional().default(null),
   reasons: z.array(z.string().trim().min(1).max(500)).max(EVALUATOR_MAX_REASON_COUNT).default([]),
   mismatches: z
     .array(z.string().trim().min(1).max(500))
     .max(EVALUATOR_MAX_REASON_COUNT)
     .default([]),
+  mismatchLabels: z.array(amazonMismatchLabelSchema).max(EVALUATOR_MAX_REASON_COUNT).default([]),
+  variantAssessment: amazonVariantAssessmentResponseSchema
+    .nullable()
+    .optional()
+    .default(null),
 });
+
+const amazonCandidateTriageCandidateSchema = z.object({
+  url: z.string().trim().url(),
+  keep: z.boolean(),
+  confidence: z.preprocess(
+    (value) => {
+      if (value == null || value === '') {
+        return null;
+      }
+      return normalizeConfidenceInput(value);
+    },
+    z.number().min(0).max(1).nullable()
+  ).optional().default(null),
+  rankAfter: z.number().int().positive().nullable().optional().default(null),
+  pageLanguage: z.string().trim().min(1).max(80).nullable().optional().default(null),
+  languageAccepted: z.boolean().nullable().optional().default(null),
+  recommendedAction: amazonRecommendedActionSchema.nullable().optional().default(null),
+  rejectionCategory: amazonRejectionCategorySchema.nullable().optional().default(null),
+  reasons: z.array(z.string().trim().min(1).max(500)).max(EVALUATOR_MAX_REASON_COUNT).default([]),
+  mismatchLabels: z.array(amazonMismatchLabelSchema).max(EVALUATOR_MAX_REASON_COUNT).default([]),
+});
+
+const amazonCandidateTriageResponseSchema = z.object({
+  recommendedAction: amazonRecommendedActionSchema.nullable().optional().default(null),
+  rejectionCategory: amazonRejectionCategorySchema.nullable().optional().default(null),
+  reasons: z.array(z.string().trim().min(1).max(500)).max(EVALUATOR_MAX_REASON_COUNT).default([]),
+  candidates: z
+    .array(amazonCandidateTriageCandidateSchema)
+    .max(20)
+    .default([]),
+});
+
+export type AmazonCandidateTriageEvaluationCandidate = {
+  url: string;
+  rankBefore: number;
+  rankAfter: number | null;
+  confidence: number | null;
+  keep: boolean;
+  asin: string | null;
+  marketplaceDomain: string | null;
+  title: string | null;
+  snippet: string | null;
+  pageLanguage: string | null;
+  languageAccepted: boolean | null;
+  recommendedAction: ProductScanAmazonRecommendedAction | null;
+  rejectionCategory: ProductScanAmazonRejectionCategory | null;
+  reasons: string[];
+  mismatchLabels: ProductScanAmazonMismatchLabel[];
+};
+
+export type AmazonCandidateTriageEvaluationResult = {
+  status: 'approved' | 'rejected' | 'skipped' | 'failed';
+  stage: 'candidate_triage';
+  confidence: number | null;
+  threshold: number | null;
+  recommendedAction: ProductScanAmazonRecommendedAction | null;
+  rejectionCategory: ProductScanAmazonRejectionCategory | null;
+  reasons: string[];
+  mismatchLabels: ProductScanAmazonMismatchLabel[];
+  modelId: string | null;
+  brainApplied: Record<string, unknown> | null;
+  candidates: AmazonCandidateTriageEvaluationCandidate[];
+  keptCandidateUrls: string[];
+  provider: string | null;
+  error: string | null;
+  evaluatedAt: string | null;
+};
 
 const readOptionalString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
@@ -220,6 +339,17 @@ const resolveDeterministicLanguageDecision = (input: {
 const normalizeIdentifier = (value: unknown): string | null =>
   readOptionalString(value)?.replace(/\s+/g, '').toUpperCase() ?? null;
 
+const extractAmazonAsinFromUrl = (value: string | null | undefined): string | null => {
+  const normalized = readOptionalString(value);
+  if (!normalized) {
+    return null;
+  }
+  const match = normalized
+    .toUpperCase()
+    .match(/(?:\/DP\/|\/GP\/PRODUCT\/|\/GP\/AW\/D\/|\/PRODUCT\/|ASIN=)([A-Z0-9]{10})(?:[/?#&]|$)/i);
+  return match?.[1] ?? null;
+};
+
 const normalizeLanguageTag = (value: unknown): string | null =>
   readOptionalString(value)?.replace(/_/g, '-').toLowerCase() ?? null;
 
@@ -272,6 +402,139 @@ type DeterministicLanguageDecision = {
   languageAccepted: boolean | null;
   confidence: number | null;
   reason: string | null;
+};
+
+const dedupeMismatchLabels = (
+  values: ReadonlyArray<ProductScanAmazonMismatchLabel | null | undefined>
+): ProductScanAmazonMismatchLabel[] => {
+  const normalized = new Set<ProductScanAmazonMismatchLabel>();
+  for (const value of values) {
+    if (
+      value &&
+      (AMAZON_MISMATCH_LABEL_VALUES as readonly string[]).includes(value)
+    ) {
+      normalized.add(value);
+    }
+  }
+  return Array.from(normalized);
+};
+
+const normalizeVariantAssessment = (
+  value: z.infer<typeof amazonVariantAssessmentResponseSchema> | null | undefined
+): ProductScanAmazonVariantAssessment =>
+  value
+    ? {
+        brand: value.brand ?? 'unknown',
+        model: value.model ?? 'unknown',
+        color: value.color ?? 'unknown',
+        material: value.material ?? 'unknown',
+        size: value.size ?? 'unknown',
+        packCount: value.packCount ?? 'unknown',
+        characterThemeLicense: value.characterThemeLicense ?? 'unknown',
+      }
+    : null;
+
+const resolveAmazonRejectionCategory = (input: {
+  approved: boolean;
+  languageAccepted: boolean | null;
+  parsedRejectionCategory: ProductScanAmazonRejectionCategory | null;
+  mismatchLabels: ProductScanAmazonMismatchLabel[];
+  sameProduct: boolean;
+  pageRepresentsSameProduct: boolean;
+  confidence: number;
+  threshold: number;
+}): ProductScanAmazonRejectionCategory | null => {
+  if (input.approved) {
+    return null;
+  }
+  if (input.parsedRejectionCategory) {
+    return input.parsedRejectionCategory;
+  }
+  if (input.languageAccepted === false) {
+    return 'language';
+  }
+  if (
+    input.mismatchLabels.some((label) =>
+      [
+        'brand',
+        'model',
+        'color',
+        'material',
+        'size',
+        'pack_count',
+        'character_theme_license',
+      ].includes(label)
+    )
+  ) {
+    return 'variant';
+  }
+  if (!input.sameProduct || !input.pageRepresentsSameProduct) {
+    return 'wrong_product';
+  }
+  if (input.confidence < input.threshold) {
+    return 'low_confidence';
+  }
+  return 'wrong_product';
+};
+
+const resolveAmazonRecommendedAction = (input: {
+  approved: boolean;
+  parsedRecommendedAction: ProductScanAmazonRecommendedAction | null;
+  rejectionCategory: ProductScanAmazonRejectionCategory | null;
+}): ProductScanAmazonRecommendedAction | null => {
+  if (input.approved) {
+    return 'accept';
+  }
+  if (input.parsedRecommendedAction && input.parsedRecommendedAction !== 'accept') {
+    return input.parsedRecommendedAction;
+  }
+  if (
+    input.rejectionCategory === 'language' ||
+    input.rejectionCategory === 'variant' ||
+    input.rejectionCategory === 'wrong_product' ||
+    input.rejectionCategory === 'low_confidence'
+  ) {
+    return 'try_next_candidate';
+  }
+  return 'reject';
+};
+
+const resolveDeterministicCandidateLanguageDecision = (
+  candidate: Pick<AmazonScanCandidateResult, 'url' | 'snippet' | 'title'>
+): DeterministicLanguageDecision => {
+  const marketplaceLanguage = resolveMarketplaceLanguageHint(readOptionalString(candidate.url));
+  const textLanguage = detectTextLanguage(
+    normalizeTextList([
+      readOptionalString(candidate.title),
+      readOptionalString(candidate.snippet),
+    ]).join('\n')
+  );
+  const pageLanguage = textLanguage.language ?? marketplaceLanguage ?? null;
+
+  if (textLanguage.language) {
+    return {
+      pageLanguage,
+      languageAccepted: isEnglishLanguageTag(textLanguage.language),
+      confidence: textLanguage.confidence,
+      reason: textLanguage.reason,
+    };
+  }
+
+  if (marketplaceLanguage) {
+    return {
+      pageLanguage,
+      languageAccepted: isEnglishLanguageTag(marketplaceLanguage) ? true : null,
+      confidence: isEnglishLanguageTag(marketplaceLanguage) ? 0.7 : 0.55,
+      reason: `Marketplace domain suggests ${resolveLanguageLabel(marketplaceLanguage)} content.`,
+    };
+  }
+
+  return {
+    pageLanguage: null,
+    languageAccepted: null,
+    confidence: null,
+    reason: null,
+  };
 };
 
 const toDataUrl = (content: Buffer, mimeType: string): string =>
@@ -463,25 +726,459 @@ const buildDeterministicMatchReasons = (
   return reasons;
 };
 
+const buildDeterministicCandidateTriageReasons = (
+  product: ProductWithImages,
+  candidate: AmazonScanCandidateResult
+): string[] => {
+  const reasons: string[] = [];
+  const productAsin = normalizeIdentifier(product.asin);
+  const candidateAsin = normalizeIdentifier(candidate.asin);
+  if (productAsin && candidateAsin && productAsin === candidateAsin) {
+    reasons.push(`Candidate URL includes matching ASIN ${candidateAsin}.`);
+  }
+  return reasons;
+};
+
+const shouldBypassAmazonSimilarityAi = (input: {
+  evaluatorConfig: Extract<
+    ProductScannerAmazonCandidateEvaluatorResolvedConfig,
+    { enabled: true }
+  >;
+  deterministicReasons: string[];
+  deterministicLanguageDecision: DeterministicLanguageDecision;
+}): boolean =>
+  input.evaluatorConfig.candidateSimilarityMode !== 'ai_only' &&
+  input.evaluatorConfig.onlyForAmbiguousCandidates &&
+  input.deterministicReasons.length > 0 &&
+  (!input.evaluatorConfig.rejectNonEnglishContent ||
+    input.deterministicLanguageDecision.languageAccepted === true);
+
 const createEvaluationResult = (
-  input: Omit<ProductScanAmazonEvaluationResult, 'evaluatedAt'> & {
+  input: Omit<Partial<ProductScanAmazonEvaluationResult>, 'evaluatedAt'> &
+    Pick<ProductScanAmazonEvaluationResult, 'status'> & {
     evaluatedAt?: string | null;
   }
 ): ProductScanAmazonEvaluationResult => ({
+  stage: input.stage ?? null,
+  sameProduct: input.sameProduct ?? null,
+  imageMatch: input.imageMatch ?? null,
+  descriptionMatch: input.descriptionMatch ?? null,
+  pageRepresentsSameProduct: input.pageRepresentsSameProduct ?? null,
+  pageLanguage: input.pageLanguage ?? null,
+  languageConfidence: input.languageConfidence ?? null,
+  languageAccepted: input.languageAccepted ?? null,
+  languageReason: input.languageReason ?? null,
+  confidence: input.confidence ?? null,
+  proceed: input.proceed ?? false,
+  scrapeAllowed: input.scrapeAllowed ?? false,
+  recommendedAction: input.recommendedAction ?? null,
+  rejectionCategory: input.rejectionCategory ?? null,
+  threshold: input.threshold ?? null,
+  reasons: input.reasons ?? [],
+  mismatches: input.mismatches ?? [],
+  mismatchLabels: input.mismatchLabels ?? [],
+  variantAssessment: input.variantAssessment ?? null,
+  modelId: input.modelId ?? null,
+  brainApplied: input.brainApplied ?? null,
+  evidence: input.evidence ?? null,
+  error: input.error ?? null,
+  status: input.status,
+  evaluatedAt: input.evaluatedAt ?? new Date().toISOString(),
+});
+
+const createCandidateTriageEvaluationResult = (
+  input: Omit<AmazonCandidateTriageEvaluationResult, 'evaluatedAt'> & {
+    evaluatedAt?: string | null;
+  }
+): AmazonCandidateTriageEvaluationResult => ({
   ...input,
   evaluatedAt: input.evaluatedAt ?? new Date().toISOString(),
 });
+
+export const triageAmazonScanCandidates = async (input: {
+  scan: ProductScanRecord;
+  product: ProductWithImages;
+  parsedResult: AmazonScanScriptResult;
+  evaluatorConfig: Extract<
+    ProductScannerAmazonCandidateEvaluatorResolvedConfig,
+    { enabled: true }
+  >;
+  provider: string | null;
+}): Promise<AmazonCandidateTriageEvaluationResult> => {
+  const candidates =
+    input.parsedResult.candidateResults.length > 0
+      ? input.parsedResult.candidateResults
+      : input.parsedResult.candidateUrls.map((url, index) => ({
+          url,
+          score: null,
+          asin: extractAmazonAsinFromUrl(url),
+          marketplaceDomain: readOptionalString(url)
+            ? (() => {
+                try {
+                  return new URL(url).hostname.toLowerCase();
+                } catch {
+                  return null;
+                }
+              })()
+            : null,
+          title: null,
+          snippet: null,
+          rank: index + 1,
+        }));
+
+  if (candidates.length === 0) {
+    return createCandidateTriageEvaluationResult({
+      status: 'rejected',
+      stage: 'candidate_triage',
+      confidence: null,
+      threshold: input.evaluatorConfig.threshold,
+      recommendedAction: 'reject',
+      rejectionCategory: 'wrong_product',
+      reasons: ['Amazon candidate triage did not receive any Google candidate results.'],
+      mismatchLabels: ['wrong_product'],
+      modelId: input.evaluatorConfig.modelId,
+      brainApplied: input.evaluatorConfig.brainApplied,
+      candidates: [],
+      keptCandidateUrls: [],
+      provider: input.provider,
+      error: null,
+    });
+  }
+
+  const deterministicCandidates = candidates.map((candidate, index) => {
+    const rankBefore =
+      typeof candidate.rank === 'number' && Number.isFinite(candidate.rank) && candidate.rank > 0
+        ? candidate.rank
+        : index + 1;
+    const deterministicReasons = buildDeterministicCandidateTriageReasons(input.product, candidate);
+    const deterministicLanguageDecision = resolveDeterministicCandidateLanguageDecision(candidate);
+    return {
+      candidate,
+      rankBefore,
+      deterministicReasons,
+      deterministicLanguageDecision,
+      candidateLanguageAccepted:
+        input.evaluatorConfig.languageDetectionMode === 'deterministic_then_ai'
+          ? deterministicLanguageDecision.languageAccepted
+          : null,
+    };
+  });
+
+  if (
+    input.evaluatorConfig.candidateSimilarityMode !== 'ai_only' &&
+    input.evaluatorConfig.onlyForAmbiguousCandidates
+  ) {
+    const deterministicKeeps = deterministicCandidates.filter(
+      (entry) =>
+        entry.deterministicReasons.length > 0 &&
+        (!input.evaluatorConfig.rejectNonEnglishContent ||
+          entry.deterministicLanguageDecision.languageAccepted !== false)
+    );
+
+    if (deterministicKeeps.length > 0) {
+      const normalizedCandidates = deterministicCandidates
+        .map((entry) => ({
+          url: entry.candidate.url,
+          rankBefore: entry.rankBefore,
+          rankAfter: deterministicKeeps.some((keep) => keep.candidate.url === entry.candidate.url)
+            ? deterministicKeeps.findIndex((keep) => keep.candidate.url === entry.candidate.url) + 1
+            : null,
+          confidence: entry.deterministicReasons.length > 0 ? 1 : null,
+          keep: deterministicKeeps.some((keep) => keep.candidate.url === entry.candidate.url),
+          asin: entry.candidate.asin,
+          marketplaceDomain: entry.candidate.marketplaceDomain,
+          title: entry.candidate.title,
+          snippet: entry.candidate.snippet,
+          pageLanguage: entry.deterministicLanguageDecision.pageLanguage,
+          languageAccepted: entry.candidateLanguageAccepted,
+          recommendedAction: deterministicKeeps.some((keep) => keep.candidate.url === entry.candidate.url)
+            ? ('accept' as const)
+            : ('reject' as const),
+          rejectionCategory:
+            entry.candidateLanguageAccepted === false
+              ? ('language' as const)
+              : entry.deterministicReasons.length > 0
+                ? null
+                : ('wrong_product' as const),
+          reasons:
+            entry.deterministicReasons.length > 0
+              ? entry.deterministicReasons
+              : entry.candidateLanguageAccepted === false
+                ? [
+                    entry.deterministicLanguageDecision.reason ??
+                      'Candidate marketplace language is outside the allowed content policy.',
+                  ]
+                : ['Candidate remained ambiguous after deterministic checks.'],
+          mismatchLabels:
+            entry.candidateLanguageAccepted === false ? (['language'] as ProductScanAmazonMismatchLabel[]) : [],
+        }))
+        .sort((left, right) => left.rankBefore - right.rankBefore);
+
+      return createCandidateTriageEvaluationResult({
+        status: 'skipped',
+        stage: 'candidate_triage',
+        confidence: 1,
+        threshold: input.evaluatorConfig.threshold,
+        recommendedAction: 'accept',
+        rejectionCategory: null,
+        reasons: deterministicKeeps.flatMap((entry) => entry.deterministicReasons).slice(0, 4),
+        mismatchLabels: [],
+        modelId: input.evaluatorConfig.modelId,
+        brainApplied: input.evaluatorConfig.brainApplied,
+        candidates: normalizedCandidates,
+        keptCandidateUrls: deterministicKeeps.map((entry) => entry.candidate.url),
+        provider: input.provider,
+        error: null,
+      });
+    }
+  }
+
+  const promptPayload = {
+    sourceProduct: {
+      name: resolveSourceProductName(input.product, input.scan),
+      description: resolveSourceProductDescription(input.product),
+      asin: readOptionalString(input.product.asin),
+      ean: readOptionalString(input.product.ean),
+      gtin: readOptionalString(input.product.gtin),
+    },
+    provider: input.provider,
+    candidates: deterministicCandidates.map((entry) => ({
+      rankBefore: entry.rankBefore,
+      url: entry.candidate.url,
+      marketplaceDomain: entry.candidate.marketplaceDomain,
+      asin: entry.candidate.asin,
+      title: entry.candidate.title,
+      snippet: entry.candidate.snippet,
+      score: entry.candidate.score,
+      deterministicMatchHints: entry.deterministicReasons,
+      deterministicLanguageHint: {
+        pageLanguage: entry.deterministicLanguageDecision.pageLanguage,
+        languageAccepted: entry.candidateLanguageAccepted,
+        reason: entry.deterministicLanguageDecision.reason,
+      },
+    })),
+    evaluatorPolicy: {
+      candidateSimilarityMode: input.evaluatorConfig.candidateSimilarityMode,
+      languageDetectionMode: input.evaluatorConfig.languageDetectionMode,
+      rejectNonEnglishContent: input.evaluatorConfig.rejectNonEnglishContent,
+      allowedContentLanguage: input.evaluatorConfig.allowedContentLanguage,
+    },
+    responseContract: {
+      recommendedAction: 'accept | reject | try_next_candidate | fallback_provider',
+      rejectionCategory: 'language | variant | wrong_product | low_confidence | null',
+      candidates: [
+        {
+          url: 'candidate url',
+          keep: 'boolean',
+          confidence: 'number between 0 and 1 | null',
+          rankAfter: 'integer rank for kept candidates | null',
+          pageLanguage: 'string | null',
+          languageAccepted: 'boolean | null',
+          recommendedAction: 'accept | reject | try_next_candidate | fallback_provider | null',
+          rejectionCategory: 'language | variant | wrong_product | low_confidence | null',
+          reasons: 'string[]',
+          mismatchLabels:
+            'brand | model | color | material | size | pack_count | character_theme_license | language | wrong_product | other',
+        },
+      ],
+    },
+  };
+
+  try {
+    const completion = await runBrainChatCompletion({
+      modelId: input.evaluatorConfig.modelId,
+      temperature: 0.1,
+      maxTokens: 700,
+      jsonMode: true,
+      messages: [
+        {
+          role: 'system',
+          content: [
+            input.evaluatorConfig.systemPrompt,
+            'Return only JSON.',
+            'Rank the strongest Amazon candidates first before any Amazon page is opened.',
+            'Discard obvious wrong products, wrong variants, or wrong-language marketplaces when the policy requires it.',
+            input.evaluatorConfig.candidateSimilarityMode === 'ai_only'
+              ? 'Deterministic hints are hints only. AI must decide whether each candidate should stay in the queue.'
+              : 'Use deterministic hints as strong signals, but still discard candidates that are clearly wrong from the result metadata.',
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        },
+        {
+          role: 'user',
+          content: JSON.stringify(promptPayload, null, 2),
+        },
+      ],
+    });
+
+    const rawJson = JSON.parse(completion.text) as unknown;
+    const parsed = amazonCandidateTriageResponseSchema.parse(rawJson);
+    const parsedByUrl = new Map(parsed.candidates.map((candidate) => [candidate.url, candidate]));
+    const normalizedCandidates = deterministicCandidates.map((entry) => {
+      const parsedCandidate = parsedByUrl.get(entry.candidate.url) ?? null;
+      const languageAccepted =
+        input.evaluatorConfig.languageDetectionMode === 'deterministic_then_ai'
+          ? parsedCandidate?.languageAccepted ?? entry.candidateLanguageAccepted
+          : parsedCandidate?.languageAccepted ?? null;
+      const mismatchLabels = dedupeMismatchLabels([
+        ...(parsedCandidate?.mismatchLabels ?? []),
+        languageAccepted === false ? 'language' : null,
+      ]);
+      const rejectionCategory = resolveAmazonRejectionCategory({
+        approved: parsedCandidate?.keep === true,
+        languageAccepted,
+        parsedRejectionCategory: parsedCandidate?.rejectionCategory ?? null,
+        mismatchLabels,
+        sameProduct: parsedCandidate?.keep === true || entry.deterministicReasons.length > 0,
+        pageRepresentsSameProduct: parsedCandidate?.keep === true || entry.deterministicReasons.length > 0,
+        confidence: parsedCandidate?.confidence ?? 0,
+        threshold: input.evaluatorConfig.threshold,
+      });
+      const keep =
+        parsedCandidate?.keep === true &&
+        (!input.evaluatorConfig.rejectNonEnglishContent || languageAccepted !== false);
+      return {
+        url: entry.candidate.url,
+        rankBefore: entry.rankBefore,
+        rankAfter: keep ? parsedCandidate?.rankAfter ?? null : null,
+        confidence: parsedCandidate?.confidence ?? null,
+        keep,
+        asin: entry.candidate.asin,
+        marketplaceDomain: entry.candidate.marketplaceDomain,
+        title: entry.candidate.title,
+        snippet: entry.candidate.snippet,
+        pageLanguage:
+          normalizeLanguageTag(parsedCandidate?.pageLanguage) ??
+          entry.deterministicLanguageDecision.pageLanguage,
+        languageAccepted,
+        recommendedAction: resolveAmazonRecommendedAction({
+          approved: keep,
+          parsedRecommendedAction: parsedCandidate?.recommendedAction ?? null,
+          rejectionCategory,
+        }),
+        rejectionCategory,
+        reasons: normalizeTextList([
+          ...(parsedCandidate?.reasons ?? []),
+          ...entry.deterministicReasons,
+          languageAccepted === false ? entry.deterministicLanguageDecision.reason : null,
+        ]),
+        mismatchLabels,
+      };
+    });
+
+    const keptCandidates = normalizedCandidates
+      .filter((candidate) => candidate.keep)
+      .sort(
+        (left, right) =>
+          (left.rankAfter ?? Number.MAX_SAFE_INTEGER) -
+            (right.rankAfter ?? Number.MAX_SAFE_INTEGER) || left.rankBefore - right.rankBefore
+      )
+      .map((candidate, index) => ({
+        ...candidate,
+        rankAfter: index + 1,
+      }));
+    const keptCandidateUrls = keptCandidates.map((candidate) => candidate.url);
+    const finalCandidates = normalizedCandidates
+      .map(
+        (candidate) =>
+          keptCandidates.find((entry) => entry.url === candidate.url) ?? candidate
+      )
+      .sort((left, right) => left.rankBefore - right.rankBefore);
+
+    const repeatedProviderIssueCount = finalCandidates.filter(
+      (candidate) =>
+        candidate.keep === false &&
+        (candidate.rejectionCategory === 'language' ||
+          candidate.rejectionCategory === 'wrong_product')
+    ).length;
+
+    const stageRecommendedAction =
+      keptCandidateUrls.length > 0
+        ? ('accept' as const)
+        : parsed.recommendedAction ??
+          (repeatedProviderIssueCount >= Math.min(2, finalCandidates.length)
+            ? ('fallback_provider' as const)
+            : ('reject' as const));
+    const stageRejectionCategory =
+      keptCandidateUrls.length > 0
+        ? null
+        : parsed.rejectionCategory ??
+          finalCandidates.find((candidate) => candidate.rejectionCategory != null)
+            ?.rejectionCategory ??
+          'wrong_product';
+
+    return createCandidateTriageEvaluationResult({
+      status: keptCandidateUrls.length > 0 ? 'approved' : 'rejected',
+      stage: 'candidate_triage',
+      confidence: keptCandidates[0]?.confidence ?? null,
+      threshold: input.evaluatorConfig.threshold,
+      recommendedAction: stageRecommendedAction,
+      rejectionCategory: stageRejectionCategory,
+      reasons:
+        parsed.reasons.length > 0
+          ? parsed.reasons
+          : finalCandidates.flatMap((candidate) => candidate.reasons).slice(0, 4),
+      mismatchLabels: dedupeMismatchLabels(
+        finalCandidates.flatMap((candidate) => candidate.mismatchLabels)
+      ),
+      modelId: completion.modelId,
+      brainApplied: input.evaluatorConfig.brainApplied,
+      candidates: finalCandidates,
+      keptCandidateUrls,
+      provider: input.provider,
+      error: null,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Amazon candidate triage failed.';
+    return createCandidateTriageEvaluationResult({
+      status: 'failed',
+      stage: 'candidate_triage',
+      confidence: null,
+      threshold: input.evaluatorConfig.threshold,
+      recommendedAction: 'reject',
+      rejectionCategory: 'low_confidence',
+      reasons: [],
+      mismatchLabels: [],
+      modelId: input.evaluatorConfig.modelId,
+      brainApplied: input.evaluatorConfig.brainApplied,
+      candidates: deterministicCandidates.map((entry) => ({
+        url: entry.candidate.url,
+        rankBefore: entry.rankBefore,
+        rankAfter: null,
+        confidence: null,
+        keep: false,
+        asin: entry.candidate.asin,
+        marketplaceDomain: entry.candidate.marketplaceDomain,
+        title: entry.candidate.title,
+        snippet: entry.candidate.snippet,
+        pageLanguage: entry.deterministicLanguageDecision.pageLanguage,
+        languageAccepted: entry.candidateLanguageAccepted,
+        recommendedAction: 'reject',
+        rejectionCategory: null,
+        reasons: [],
+        mismatchLabels: [],
+      })),
+      keptCandidateUrls: [],
+      provider: input.provider,
+      error: message,
+    });
+  }
+};
 
 export const evaluateAmazonScanCandidateMatch = async (input: {
   scan: ProductScanRecord;
   product: ProductWithImages;
   parsedResult: AmazonScanScriptResult;
   run: Pick<PlaywrightEngineRunRecord, 'runId' | 'artifacts'>;
+  stage?: 'probe_evaluate' | 'extraction_evaluate';
   evaluatorConfig: Extract<
     ProductScannerAmazonCandidateEvaluatorResolvedConfig,
     { enabled: true }
   >;
 }): Promise<ProductScanAmazonEvaluationResult> => {
+  const evaluationStage = input.stage ?? 'probe_evaluate';
   const evidenceArtifacts = resolveAmazonEvaluationArtifactFileNames(
     input.run,
     readOptionalString(input.parsedResult.amazonProbe?.artifactKey)
@@ -501,6 +1198,13 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     htmlArtifactName: evidenceArtifacts.htmlArtifactName,
     productImageSource: null as string | null,
   };
+  const evaluationBase = {
+    stage: evaluationStage,
+    threshold: input.evaluatorConfig.threshold,
+    modelId: input.evaluatorConfig.modelId,
+    brainApplied: input.evaluatorConfig.brainApplied,
+    evidence,
+  };
 
   const deterministicLanguageDecision = resolveDeterministicLanguageDecision({
     parsedResult: input.parsedResult,
@@ -515,6 +1219,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       deterministicLanguageDecision.reason ??
       'Amazon page content is not in the allowed language.';
     return createEvaluationResult({
+      ...evaluationBase,
       status: 'rejected',
       sameProduct: null,
       imageMatch: null,
@@ -527,24 +1232,26 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       confidence: deterministicLanguageDecision.confidence,
       proceed: false,
       scrapeAllowed: false,
-      threshold: input.evaluatorConfig.threshold,
+      recommendedAction: 'try_next_candidate',
+      rejectionCategory: 'language',
       reasons: [languageReason],
       mismatches: ['Amazon page content is not in English.'],
-      modelId: input.evaluatorConfig.modelId,
-      brainApplied: input.evaluatorConfig.brainApplied,
-      evidence,
+      mismatchLabels: ['language'],
+      variantAssessment: null,
       error: null,
     });
   }
 
   const deterministicReasons = buildDeterministicMatchReasons(input.product, input.parsedResult);
   if (
-    input.evaluatorConfig.onlyForAmbiguousCandidates &&
-    deterministicReasons.length > 0 &&
-    (!input.evaluatorConfig.rejectNonEnglishContent ||
-      deterministicLanguageDecision.languageAccepted === true)
+    shouldBypassAmazonSimilarityAi({
+      evaluatorConfig: input.evaluatorConfig,
+      deterministicReasons,
+      deterministicLanguageDecision,
+    })
   ) {
     return createEvaluationResult({
+      ...evaluationBase,
       status: 'skipped',
       sameProduct: true,
       imageMatch: null,
@@ -558,13 +1265,13 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       languageReason: deterministicLanguageDecision.reason,
       confidence: 1,
       proceed: true,
-      scrapeAllowed: true,
-      threshold: input.evaluatorConfig.threshold,
+      scrapeAllowed: deterministicLanguageDecision.languageAccepted !== false,
+      recommendedAction: 'accept',
+      rejectionCategory: null,
       reasons: deterministicReasons,
       mismatches: [],
-      modelId: input.evaluatorConfig.modelId,
-      brainApplied: input.evaluatorConfig.brainApplied,
-      evidence,
+      mismatchLabels: [],
+      variantAssessment: null,
       error: null,
     });
   }
@@ -576,6 +1283,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
   const screenshotArtifactName = evidenceArtifacts.screenshotArtifactName;
   if (!productImageSource) {
     return createEvaluationResult({
+      ...evaluationBase,
       status: 'failed',
       sameProduct: null,
       imageMatch: null,
@@ -583,17 +1291,16 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       pageRepresentsSameProduct: null,
       confidence: null,
       proceed: false,
-      threshold: input.evaluatorConfig.threshold,
       reasons: [],
       mismatches: [],
-      modelId: input.evaluatorConfig.modelId,
-      brainApplied: input.evaluatorConfig.brainApplied,
-      evidence,
+      mismatchLabels: [],
+      variantAssessment: null,
       error: 'Amazon candidate AI evaluation could not load a source product image.',
     });
   }
   if (!screenshotArtifactName) {
     return createEvaluationResult({
+      ...evaluationBase,
       status: 'failed',
       sameProduct: null,
       imageMatch: null,
@@ -601,12 +1308,10 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       pageRepresentsSameProduct: null,
       confidence: null,
       proceed: false,
-      threshold: input.evaluatorConfig.threshold,
       reasons: [],
       mismatches: [],
-      modelId: input.evaluatorConfig.modelId,
-      brainApplied: input.evaluatorConfig.brainApplied,
-      evidence,
+      mismatchLabels: [],
+      variantAssessment: null,
       error: 'Amazon candidate AI evaluation could not find the Amazon page screenshot artifact.',
     });
   }
@@ -622,6 +1327,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
   });
   if (!productImageDataUrl) {
     return createEvaluationResult({
+      ...evaluationBase,
       status: 'failed',
       sameProduct: null,
       imageMatch: null,
@@ -629,12 +1335,10 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       pageRepresentsSameProduct: null,
       confidence: null,
       proceed: false,
-      threshold: input.evaluatorConfig.threshold,
       reasons: [],
       mismatches: [],
-      modelId: input.evaluatorConfig.modelId,
-      brainApplied: input.evaluatorConfig.brainApplied,
-      evidence,
+      mismatchLabels: [],
+      variantAssessment: null,
       error: 'Amazon candidate AI evaluation could not load the source product image contents.',
     });
   }
@@ -676,6 +1380,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
   });
   if (!screenshotArtifact) {
     return createEvaluationResult({
+      ...evaluationBase,
       status: 'failed',
       sameProduct: null,
       imageMatch: null,
@@ -683,12 +1388,10 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       pageRepresentsSameProduct: null,
       confidence: null,
       proceed: false,
-      threshold: input.evaluatorConfig.threshold,
       reasons: [],
       mismatches: [],
-      modelId: input.evaluatorConfig.modelId,
-      brainApplied: input.evaluatorConfig.brainApplied,
-      evidence,
+      mismatchLabels: [],
+      variantAssessment: null,
       error: 'Amazon candidate AI evaluation could not read the Amazon page screenshot artifact.',
     });
   }
@@ -700,11 +1403,18 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     input.evaluatorConfig.systemPrompt,
     'Return only JSON.',
     'Approve only when the Amazon page clearly represents the same product and variant as the source product.',
-    'Reject mismatches in brand, model, color, size, pack count, or major description conflicts.',
+    'Score each variant dimension explicitly: brand, model, color, material, size, pack count, and character/theme/license.',
+    'Reject mismatches in brand, model, color, material, size, pack count, character/theme/license, or major description conflicts.',
+    input.evaluatorConfig.candidateSimilarityMode === 'ai_only'
+      ? 'Deterministic identifier matches are hints only. AI must decide whether the page represents the same product.'
+      : 'Use deterministic identifier matches as strong hints, but still reject visible product mismatches.',
     `Allowed content language for scraping: ${resolveLanguageLabel(input.evaluatorConfig.allowedContentLanguage) ?? input.evaluatorConfig.allowedContentLanguage}.`,
     input.evaluatorConfig.rejectNonEnglishContent
       ? 'If the Amazon page content is not English enough to trust scraping into English fields, set languageAccepted to false and proceed to false.'
       : 'Language does not block scraping in this run.',
+    input.evaluatorConfig.languageDetectionMode === 'ai_only'
+      ? 'You must determine the Amazon page language from the page content and images. Do not leave languageAccepted empty.'
+      : 'Deterministic language hints are provided as extra evidence.',
   ]
     .filter(Boolean)
     .join('\n');
@@ -755,11 +1465,18 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
           }))
         : [],
       probe: input.parsedResult.amazonProbe,
+      deterministicMatchHints: deterministicReasons,
       deterministicLanguageHint: {
         pageLanguage: deterministicLanguageDecision.pageLanguage,
         languageAccepted: deterministicLanguageDecision.languageAccepted,
         reason: deterministicLanguageDecision.reason,
       },
+    },
+    evaluatorPolicy: {
+      candidateSimilarityMode: input.evaluatorConfig.candidateSimilarityMode,
+      languageDetectionMode: input.evaluatorConfig.languageDetectionMode,
+      rejectNonEnglishContent: input.evaluatorConfig.rejectNonEnglishContent,
+      allowedContentLanguage: input.evaluatorConfig.allowedContentLanguage,
     },
     responseContract: {
       sameProduct: 'boolean',
@@ -772,6 +1489,19 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       languageConfidence: 'number between 0 and 1 | null',
       confidence: 'number between 0 and 1',
       proceed: 'boolean',
+      recommendedAction: 'accept | reject | try_next_candidate | fallback_provider | null',
+      rejectionCategory: 'language | variant | wrong_product | low_confidence | null',
+      mismatchLabels:
+        'brand | model | color | material | size | pack_count | character_theme_license | language | wrong_product | other',
+      variantAssessment: {
+        brand: 'match | mismatch | unknown',
+        model: 'match | mismatch | unknown',
+        color: 'match | mismatch | unknown',
+        material: 'match | mismatch | unknown',
+        size: 'match | mismatch | unknown',
+        packCount: 'match | mismatch | unknown',
+        characterThemeLicense: 'match | mismatch | unknown',
+      },
       reasons: 'string[]',
       mismatches: 'string[]',
     },
@@ -828,6 +1558,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
 
     if (!SUPPORTED_IMAGE_RUNTIME_VENDORS.has(completion.vendor)) {
       return createEvaluationResult({
+        ...evaluationBase,
         status: 'failed',
         sameProduct: null,
         imageMatch: null,
@@ -835,12 +1566,11 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
         pageRepresentsSameProduct: null,
         confidence: null,
         proceed: false,
-        threshold: input.evaluatorConfig.threshold,
         reasons: [],
         mismatches: [],
+        mismatchLabels: [],
+        variantAssessment: null,
         modelId: completion.modelId,
-        brainApplied: input.evaluatorConfig.brainApplied,
-        evidence,
         error:
           'Amazon candidate AI evaluation selected a runtime that does not support image inputs in this scanner flow.',
       });
@@ -864,16 +1594,50 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       typeof parsed.languageConfidence === 'number'
         ? parsed.languageConfidence
         : deterministicLanguageDecision.confidence;
+    const languageGatePassed = !input.evaluatorConfig.rejectNonEnglishContent
+      ? true
+      : input.evaluatorConfig.languageDetectionMode === 'ai_only'
+        ? languageAccepted === true
+        : languageAccepted !== false;
     const approved =
       parsed.proceed &&
       parsed.sameProduct &&
       parsed.pageRepresentsSameProduct &&
       parsed.imageMatch !== false &&
       parsed.descriptionMatch !== false &&
-      languageAccepted !== false &&
+      languageGatePassed &&
       parsed.confidence >= input.evaluatorConfig.threshold;
     const reasons = [...parsed.reasons];
     const mismatches = [...parsed.mismatches];
+    const variantAssessment = normalizeVariantAssessment(parsed.variantAssessment);
+    const mismatchLabels = dedupeMismatchLabels([
+      ...(parsed.mismatchLabels ?? []),
+      variantAssessment?.brand === 'mismatch' ? 'brand' : null,
+      variantAssessment?.model === 'mismatch' ? 'model' : null,
+      variantAssessment?.color === 'mismatch' ? 'color' : null,
+      variantAssessment?.material === 'mismatch' ? 'material' : null,
+      variantAssessment?.size === 'mismatch' ? 'size' : null,
+      variantAssessment?.packCount === 'mismatch' ? 'pack_count' : null,
+      variantAssessment?.characterThemeLicense === 'mismatch'
+        ? 'character_theme_license'
+        : null,
+      languageAccepted === false ? 'language' : null,
+      !parsed.sameProduct || !parsed.pageRepresentsSameProduct ? 'wrong_product' : null,
+    ]);
+    if (
+      input.evaluatorConfig.rejectNonEnglishContent &&
+      input.evaluatorConfig.languageDetectionMode === 'ai_only' &&
+      languageAccepted == null
+    ) {
+      const missingLanguageVerdictReason =
+        'AI evaluator did not return a language verdict for the Amazon page.';
+      if (!reasons.includes(missingLanguageVerdictReason)) {
+        reasons.unshift(missingLanguageVerdictReason);
+      }
+      if (!mismatches.includes('Amazon page language could not be verified.')) {
+        mismatches.push('Amazon page language could not be verified.');
+      }
+    }
     if (languageAccepted === false && languageReason && !reasons.includes(languageReason)) {
       reasons.unshift(languageReason);
     }
@@ -883,8 +1647,24 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     ) {
       mismatches.push('Amazon page content is not in English.');
     }
+    const rejectionCategory = resolveAmazonRejectionCategory({
+      approved,
+      languageAccepted,
+      parsedRejectionCategory: parsed.rejectionCategory,
+      mismatchLabels,
+      sameProduct: parsed.sameProduct,
+      pageRepresentsSameProduct: parsed.pageRepresentsSameProduct,
+      confidence: parsed.confidence,
+      threshold: input.evaluatorConfig.threshold,
+    });
+    const recommendedAction = resolveAmazonRecommendedAction({
+      approved,
+      parsedRecommendedAction: parsed.recommendedAction,
+      rejectionCategory,
+    });
 
     return createEvaluationResult({
+      ...evaluationBase,
       status: approved ? 'approved' : 'rejected',
       sameProduct: parsed.sameProduct,
       imageMatch: parsed.imageMatch,
@@ -896,19 +1676,21 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       languageReason,
       confidence: parsed.confidence,
       proceed: approved,
-      scrapeAllowed: approved,
-      threshold: input.evaluatorConfig.threshold,
+      scrapeAllowed: approved && languageAccepted !== false,
+      recommendedAction,
+      rejectionCategory,
       reasons,
       mismatches,
+      mismatchLabels,
+      variantAssessment,
       modelId: completion.modelId,
-      brainApplied: input.evaluatorConfig.brainApplied,
-      evidence,
       error: null,
     });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Amazon candidate AI evaluation failed.';
     return createEvaluationResult({
+      ...evaluationBase,
       status: 'failed',
       sameProduct: null,
       imageMatch: null,
@@ -916,12 +1698,10 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       pageRepresentsSameProduct: null,
       confidence: null,
       proceed: false,
-      threshold: input.evaluatorConfig.threshold,
       reasons: [],
       mismatches: [],
-      modelId: input.evaluatorConfig.modelId,
-      brainApplied: input.evaluatorConfig.brainApplied,
-      evidence,
+      mismatchLabels: [],
+      variantAssessment: null,
       error: message,
     });
   }

@@ -94,7 +94,7 @@ describe('installChromiumAntiDetectionInitScript', () => {
       {
         locale: 'pl-PL',
         userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
       }
     );
 
@@ -109,9 +109,9 @@ describe('installChromiumAntiDetectionInitScript', () => {
         renderer: 'ANGLE (Intel, Intel(R) UHD Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)',
       },
       brands: [
-        { brand: 'Chromium', version: '124' },
-        { brand: 'Google Chrome', version: '124' },
-        { brand: 'Not.A/Brand', version: '24' },
+        { brand: 'Chromium', version: '131' },
+        { brand: 'Google Chrome', version: '131' },
+        { brand: 'Not_A Brand', version: '24' },
       ],
     });
   });

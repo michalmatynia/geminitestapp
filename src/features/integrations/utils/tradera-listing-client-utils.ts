@@ -1,4 +1,7 @@
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
+import type {
+  PersistedQuickExportFeedback,
+  ProductListingWithDetails,
+} from '@/shared/contracts/integrations/listings';
 
 export const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value)
@@ -56,7 +59,59 @@ export const resolveDuplicateLinkedFromListing = (
   const traderaData = toRecord(toRecord(listing?.marketplaceData)['tradera']);
   const lastExecution = toRecord(traderaData['lastExecution']);
   const metadata = toRecord(lastExecution['metadata']);
-  return readBoolean(metadata['duplicateLinked']) === true;
+  const rawResult = toRecord(metadata['rawResult']);
+  const latestStage =
+    readString(metadata['latestStage']) ?? readString(rawResult['stage']);
+  const duplicateMatchStrategy =
+    readString(metadata['duplicateMatchStrategy']) ?? readString(rawResult['duplicateMatchStrategy']);
+  return (
+    readBoolean(metadata['duplicateLinked']) === true ||
+    readBoolean(rawResult['duplicateLinked']) === true ||
+    latestStage === 'duplicate_linked' ||
+    Boolean(duplicateMatchStrategy)
+  );
+};
+
+export const resolveDuplicateMatchStrategyFromListing = (
+  listing?: ProductListingWithDetails | null | undefined
+): string | null => {
+  const traderaData = toRecord(toRecord(listing?.marketplaceData)['tradera']);
+  const lastExecution = toRecord(traderaData['lastExecution']);
+  const metadata = toRecord(lastExecution['metadata']);
+  const rawResult = toRecord(metadata['rawResult']);
+  return readString(metadata['duplicateMatchStrategy']) ?? readString(rawResult['duplicateMatchStrategy']);
+};
+
+export const resolveDuplicateLinkedFromFeedback = (
+  feedback?: PersistedQuickExportFeedback | null | undefined
+): boolean => {
+  const metadata = toRecord(feedback?.metadata);
+  const rawResult = toRecord(metadata['rawResult']);
+  const latestStage =
+    readString(metadata['latestStage']) ?? readString(rawResult['stage']);
+  const duplicateMatchStrategy =
+    readString(feedback?.duplicateMatchStrategy) ??
+    readString(metadata['duplicateMatchStrategy']) ??
+    readString(rawResult['duplicateMatchStrategy']);
+  return (
+    readBoolean(feedback?.duplicateLinked) === true ||
+    readBoolean(metadata['duplicateLinked']) === true ||
+    readBoolean(rawResult['duplicateLinked']) === true ||
+    latestStage === 'duplicate_linked' ||
+    Boolean(duplicateMatchStrategy)
+  );
+};
+
+export const resolveDuplicateMatchStrategyFromFeedback = (
+  feedback?: PersistedQuickExportFeedback | null | undefined
+): string | null => {
+  const metadata = toRecord(feedback?.metadata);
+  const rawResult = toRecord(metadata['rawResult']);
+  return (
+    readString(feedback?.duplicateMatchStrategy) ??
+    readString(metadata['duplicateMatchStrategy']) ??
+    readString(rawResult['duplicateMatchStrategy'])
+  );
 };
 
 export const formatCompletedAt = (value: number | null | undefined): string | null => {

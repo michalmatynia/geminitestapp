@@ -116,6 +116,7 @@ export const PART_5 = String.raw`
       expectedUploadCount,
       observedPreviewCount,
       observedPreviewDelta,
+      observedPreviewDescriptors,
       retryReason,
       imageUploadPending,
       imageUploadErrorText,
@@ -127,6 +128,7 @@ export const PART_5 = String.raw`
             expectedUploadCount,
             observedPreviewCount,
             observedPreviewDelta,
+            observedPreviewDescriptors,
             retryReason,
             imageUploadPending,
             imageUploadErrorText,
@@ -138,6 +140,7 @@ export const PART_5 = String.raw`
       expectedUploadCount,
       observedPreviewCount,
       observedPreviewDelta,
+      observedPreviewDescriptors,
       draftImageRemoveControls,
       imageUploadPromptVisible,
       imageUploadPending,
@@ -153,6 +156,7 @@ export const PART_5 = String.raw`
             expectedUploadCount,
             observedPreviewCount,
             observedPreviewDelta,
+            observedPreviewDescriptors,
             draftImageRemoveControls,
             imageUploadPromptVisible,
             imageUploadPending,
@@ -169,12 +173,14 @@ export const PART_5 = String.raw`
     } = {}) => {
       const [
         observedPreviewCount,
+        observedPreviewDescriptors,
         draftImageRemoveControls,
         imageUploadPromptVisible,
         imageUploadPending,
         imageUploadErrorText,
       ] = await Promise.all([
         countUploadedImagePreviews().catch(() => null),
+        readUploadedImagePreviewDescriptors().catch(() => []),
         countDraftImageRemoveControls().catch(() => 0),
         isImageUploadPromptVisible().catch(() => false),
         isImageUploadPending().catch(() => false),
@@ -189,20 +195,15 @@ export const PART_5 = String.raw`
           : null;
       const uploadAccepted =
         (observedPreviewDelta !== null && observedPreviewDelta > 0) ||
+        (Array.isArray(observedPreviewDescriptors) && observedPreviewDescriptors.length > 0) ||
         draftImageRemoveControls > 0 ||
         (imageUploadPromptVisible === false && imageUploadPending === true);
-      const retryBlocked =
-        uploadAccepted &&
-        !(
-          observedPreviewDelta !== null &&
-          observedPreviewDelta === expectedUploadCount &&
-          imageUploadPending === false &&
-          !imageUploadErrorText
-        );
+      const retryBlocked = uploadAccepted;
 
       return {
         observedPreviewCount: normalizedObservedPreviewCount,
         observedPreviewDelta,
+        observedPreviewDescriptors,
         draftImageRemoveControls,
         imageUploadPromptVisible,
         imageUploadPending,
@@ -214,8 +215,12 @@ export const PART_5 = String.raw`
 
     const isRetryBlockedImageUploadError = (error) => {
       const message = error instanceof Error ? error.message : String(error || '');
-      return message.includes(
-        'Tradera image upload reached a partial state and retrying could duplicate images.'
+      return (
+        message.includes(
+          'Tradera image upload reached a partial state and retrying could duplicate images.'
+        ) ||
+        message.includes('Tradera uploaded more image previews than expected.') ||
+        message.includes('Tradera retry image cleanup did not clear the previous upload state.')
       );
     };
 
@@ -229,6 +234,7 @@ export const PART_5 = String.raw`
       const {
         observedPreviewCount: normalizedObservedPreviewCount,
         observedPreviewDelta,
+        observedPreviewDescriptors,
         draftImageRemoveControls,
         imageUploadPromptVisible,
         imageUploadPending,
@@ -245,6 +251,7 @@ export const PART_5 = String.raw`
         expectedUploadCount,
         observedPreviewCount: normalizedObservedPreviewCount,
         observedPreviewDelta,
+        observedPreviewDescriptors,
         draftImageRemoveControls,
         imageUploadPromptVisible,
         imageUploadPending,
@@ -261,6 +268,7 @@ export const PART_5 = String.raw`
           expectedUploadCount,
           observedPreviewCount: normalizedObservedPreviewCount,
           observedPreviewDelta,
+          observedPreviewDescriptors,
           retryReason,
           imageUploadPending,
           imageUploadErrorText,
@@ -293,6 +301,7 @@ export const PART_5 = String.raw`
         expectedUploadCount,
         observedPreviewCount: normalizedObservedPreviewCount,
         observedPreviewDelta,
+        observedPreviewDescriptors,
         uploadSource,
       };
     };
@@ -365,6 +374,7 @@ export const PART_5 = String.raw`
           imageCount: uploadedImagePreviewCount,
           uploadSource: 'preserved-relist',
           observedPreviewCount: uploadedImagePreviewCount,
+          observedPreviewDescriptors: [],
           expectedUploadCount,
         };
       };
@@ -525,6 +535,7 @@ export const PART_5 = String.raw`
             expectedUploadCount,
             observedPreviewCount: imageAdvanceResult?.observedPreviewCount ?? null,
             observedPreviewDelta: imageAdvanceResult?.observedPreviewDelta ?? null,
+            observedPreviewDescriptors: imageAdvanceResult?.observedPreviewDescriptors ?? [],
             uploadSource,
           };
         } catch (error) {
@@ -557,6 +568,7 @@ export const PART_5 = String.raw`
               expectedUploadCount,
               observedPreviewCount: retryState.observedPreviewCount,
               observedPreviewDelta: retryState.observedPreviewDelta,
+              observedPreviewDescriptors: retryState.observedPreviewDescriptors,
               draftImageRemoveControls: retryState.draftImageRemoveControls,
               imageUploadPromptVisible: retryState.imageUploadPromptVisible,
               imageUploadPending: retryState.imageUploadPending,
@@ -657,7 +669,11 @@ export const PART_5 = String.raw`
       // Sync with image skip — leave existing Tradera listing images in place and
       // only update text/price/category fields. This is significantly faster than
       // clearing and re-uploading all images on every sync.
-      imageUploadResult = { imageCount: 0, uploadSource: 'preserved' };
+      imageUploadResult = {
+        imageCount: 0,
+        uploadSource: 'preserved',
+        observedPreviewDescriptors: [],
+      };
       log?.('tradera.quicklist.image.skipped', { reason: 'sync-skip-images' });
       emitStage('images_preserved', { reason: 'sync-skip-images' });
     } else {

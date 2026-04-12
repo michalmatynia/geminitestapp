@@ -6,7 +6,10 @@ import {
   isTraderaIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
-import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
+import {
+  useTraderaQuickListFeedback,
+} from '@/features/integrations/hooks/useTraderaQuickListFeedback';
+import { findTrackedTraderaListing } from '@/features/integrations/hooks/useTraderaQuickExportFeedback';
 import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
 import {
   useProductListingsData,
@@ -25,9 +28,7 @@ import {
 import { isVintedGoogleSignInBlockedMessage } from '@/features/integrations/utils/vinted-browser-messages';
 import {
   persistTraderaQuickListFeedback,
-  type PersistedTraderaQuickListFeedback,
 } from '@/features/integrations/utils/traderaQuickListFeedback';
-import { resolveTraderaRequestId } from '@/features/integrations/utils/tradera-listing-client-utils';
 import {
   persistVintedQuickListFeedback,
 } from '@/features/integrations/utils/vintedQuickListFeedback';
@@ -79,32 +80,6 @@ const hasVintedAuthSignal = (value: string | null | undefined): boolean => {
     normalized.includes('session expired') ||
     isVintedGoogleSignInBlockedMessage(normalized)
   );
-};
-
-const findTrackedTraderaListing = (
-  listings: ProductListingWithDetails[],
-  feedback: PersistedTraderaQuickListFeedback
-): ProductListingWithDetails | null => {
-  if (feedback.listingId) {
-    const listingById = listings.find((listing) => listing.id === feedback.listingId);
-    if (listingById) return listingById;
-  }
-
-  if (feedback.requestId) {
-    const listingByRequestId = listings.find(
-      (listing) => resolveTraderaRequestId(listing) === feedback.requestId
-    );
-    if (listingByRequestId) return listingByRequestId;
-  }
-
-  if (feedback.externalListingId) {
-    const listingByExternalId = listings.find(
-      (listing) => listing.externalListingId === feedback.externalListingId
-    );
-    if (listingByExternalId) return listingByExternalId;
-  }
-
-  return null;
 };
 
 const findFallbackVintedRecoveryListing = (

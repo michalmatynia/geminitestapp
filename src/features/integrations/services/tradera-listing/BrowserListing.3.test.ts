@@ -354,7 +354,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v130',
+        scriptMarker: 'tradera-quicklist-default:v131',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -478,7 +478,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v130',
+        scriptMarker: 'tradera-quicklist-default:v131',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -1072,7 +1072,7 @@ beforeEach(() => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v130',
+      'tradera-quicklist-default:v131',
       'tradera-quicklist-default:v89'
     );
 
@@ -1256,7 +1256,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v130',
+        scriptMarker: 'tradera-quicklist-default:v131',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
@@ -1293,6 +1293,7 @@ beforeEach(() => {
         plannedImageCount: null,
         observedImagePreviewCount: null,
         observedImagePreviewDelta: null,
+        observedImagePreviewDescriptors: [],
         localImagePathCount: 0,
         imageUrlCount: 2,
         ...EXPECTED_TRADERA_PRICING_METADATA,
@@ -1314,3 +1315,175 @@ beforeEach(() => {
     });
     expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(9);
   });
+
+it('returns duplicate-linked relist metadata when a single exact-title candidate is linked', async () => {
+  runPlaywrightListingScriptMock.mockResolvedValue({
+    runId: 'run-relist-exact-title-single-candidate',
+    externalListingId: '725447805',
+    listingUrl:
+      'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+    publishVerified: false,
+    personaId: null,
+    executionSettings: {
+      headless: false,
+      slowMo: 85,
+      timeout: 30000,
+      navigationTimeout: 45000,
+      humanizeMouse: true,
+      mouseJitter: 12,
+      clickDelayMin: 40,
+      clickDelayMax: 140,
+      inputDelayMin: 30,
+      inputDelayMax: 110,
+      actionDelayMin: 220,
+      actionDelayMax: 800,
+      proxyEnabled: false,
+      emulateDevice: false,
+      deviceName: 'Desktop Chrome',
+    },
+    rawResult: {
+      stage: 'duplicate_linked',
+      currentUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      externalListingId: '725447805',
+      listingUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      duplicateLinked: true,
+      duplicateMatchStrategy: 'exact-title-single-candidate',
+      duplicateMatchedProductId: null,
+      duplicateCandidateCount: 1,
+      duplicateSearchTitle: 'Example title',
+      categorySource: null,
+      categoryPath: null,
+    },
+  });
+
+  const result = await runTraderaBrowserListing({
+    listing: {
+      id: 'listing-relist-exact-title-single-candidate',
+      productId: 'product-1',
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+      externalListingId: 'external-existing',
+    } as never,
+    connection: {
+      id: 'connection-1',
+      traderaBrowserMode: 'builtin',
+    } as never,
+    systemSettings: {
+      listingFormUrl: 'https://www.tradera.com/en/selling/new',
+    } as never,
+    source: 'manual',
+    action: 'relist',
+    browserMode: 'headed',
+  });
+
+  expect(result).toMatchObject({
+    externalListingId: '725447805',
+    listingUrl:
+      'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+    metadata: expect.objectContaining({
+      runId: 'run-relist-exact-title-single-candidate',
+      publishVerified: false,
+      latestStage: 'duplicate_linked',
+      latestStageUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      duplicateLinked: true,
+      duplicateMatchStrategy: 'exact-title-single-candidate',
+      duplicateMatchedProductId: null,
+      duplicateCandidateCount: 1,
+      duplicateSearchTitle: 'Example title',
+      rawResult: expect.objectContaining({
+        duplicateLinked: true,
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+        duplicateCandidateCount: 1,
+        duplicateSearchTitle: 'Example title',
+      }),
+    }),
+  });
+});
+
+it('normalizes strategy-only duplicate linkage from scripted relist results', async () => {
+  runPlaywrightListingScriptMock.mockResolvedValue({
+    runId: 'run-relist-strategy-only',
+    externalListingId: '725447805',
+    listingUrl:
+      'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+    publishVerified: false,
+    personaId: null,
+    executionSettings: {
+      headless: false,
+      slowMo: 85,
+      timeout: 30000,
+      navigationTimeout: 45000,
+      humanizeMouse: true,
+      mouseJitter: 12,
+      clickDelayMin: 40,
+      clickDelayMax: 140,
+      inputDelayMin: 30,
+      inputDelayMax: 110,
+      actionDelayMin: 220,
+      actionDelayMax: 800,
+      proxyEnabled: false,
+      emulateDevice: false,
+      deviceName: 'Desktop Chrome',
+    },
+    rawResult: {
+      stage: 'duplicate_linked',
+      currentUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      externalListingId: '725447805',
+      listingUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      duplicateMatchStrategy: 'exact-title-single-candidate',
+      duplicateMatchedProductId: null,
+      duplicateCandidateCount: 1,
+      duplicateSearchTitle: 'Example title',
+      categorySource: null,
+      categoryPath: null,
+    },
+  });
+
+  const result = await runTraderaBrowserListing({
+    listing: {
+      id: 'listing-relist-strategy-only',
+      productId: 'product-1',
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+      externalListingId: 'external-existing',
+    } as never,
+    connection: {
+      id: 'connection-1',
+      traderaBrowserMode: 'builtin',
+    } as never,
+    systemSettings: {
+      listingFormUrl: 'https://www.tradera.com/en/selling/new',
+    } as never,
+    source: 'manual',
+    action: 'relist',
+    browserMode: 'headed',
+  });
+
+  expect(result).toMatchObject({
+    externalListingId: '725447805',
+    listingUrl:
+      'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+    metadata: expect.objectContaining({
+      runId: 'run-relist-strategy-only',
+      publishVerified: false,
+      latestStage: 'duplicate_linked',
+      latestStageUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      duplicateLinked: true,
+      duplicateMatchStrategy: 'exact-title-single-candidate',
+      duplicateMatchedProductId: null,
+      duplicateCandidateCount: 1,
+      duplicateSearchTitle: 'Example title',
+      rawResult: expect.objectContaining({
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+        duplicateCandidateCount: 1,
+        duplicateSearchTitle: 'Example title',
+      }),
+    }),
+  });
+});

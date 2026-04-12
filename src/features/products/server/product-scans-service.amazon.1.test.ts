@@ -227,6 +227,7 @@ describe('product-scans-service', () => {
       playwrightBrowser: 'auto',
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 240000,
+      amazonImageSearchProvider: 'google_images_upload',
       playwrightSettingsOverrides: {
         headless: true,
       },

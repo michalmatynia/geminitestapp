@@ -227,6 +227,7 @@ describe('product-scans-service', () => {
       playwrightBrowser: 'auto',
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 240000,
+      amazonImageSearchProvider: 'google_images_upload',
       playwrightSettingsOverrides: {
         headless: true,
       },
@@ -473,6 +474,7 @@ describe('product-scans-service', () => {
       mode: 'brain_default',
       threshold: 0.85,
       onlyForAmbiguousCandidates: false,
+      candidateSimilarityMode: 'deterministic_then_ai',
       allowedContentLanguage: 'en',
       rejectNonEnglishContent: true,
       languageDetectionMode: 'deterministic_then_ai',
@@ -597,6 +599,140 @@ describe('product-scans-service', () => {
         status: 'completed',
         amazonEvaluation: expect.objectContaining({
           status: 'approved',
+        }),
+      })
+    );
+  });
+
+  it('uses the AI evaluator for language rejection when language detection is configured as AI only', async () => {
+    const scan = createScan({
+      status: 'running',
+      imageCandidates: [
+        {
+          id: 'image-1',
+          filepath: null,
+          url: 'data:image/jpeg;base64,QUJD',
+          filename: 'product-1.jpg',
+        },
+      ],
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [
+        {
+          name: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+          path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1.png',
+          mimeType: 'image/png',
+          kind: 'screenshot',
+        },
+      ],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'probe_ready',
+        asin: 'b00test123',
+        title: 'Matching Amazon title',
+        price: null,
+        url: 'https://www.amazon.de/dp/B00TEST123',
+        description: 'Matching Amazon description snippet',
+        candidateUrls: [
+          'https://www.amazon.de/dp/B00TEST123',
+          'https://www.amazon.com/dp/B00TEST456',
+        ],
+        amazonDetails: null,
+        amazonProbe: {
+          asin: 'b00test123',
+          pageTitle: 'Matching Amazon title',
+          descriptionSnippet: 'Matching Amazon description snippet',
+          pageLanguage: 'de',
+          pageLanguageSource: 'html_lang',
+          marketplaceDomain: 'amazon.de',
+          candidateUrl: 'https://www.amazon.de/dp/B00TEST123',
+          canonicalUrl: 'https://www.amazon.de/dp/B00TEST123',
+          heroImageUrl: null,
+          heroImageAlt: null,
+          heroImageArtifactName: null,
+          artifactKey: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+          bulletPoints: ['Produktbeschreibung'],
+          bulletCount: 1,
+          attributeCount: 0,
+        },
+        matchedImageId: 'image-1',
+      },
+      finalUrl: 'https://www.amazon.de/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.85,
+      onlyForAmbiguousCandidates: false,
+      candidateSimilarityMode: 'ai_only',
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'ai_only',
+      modelId: 'gpt-4o',
+      systemPrompt: 'Judge the Amazon page conservatively.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_match',
+      },
+    });
+    mocks.readPlaywrightEngineArtifactMock.mockResolvedValue({
+      artifact: {
+        name: 'amazon-scan-probe-image-1-attempt-1-rank-1',
+        path: 'run-1/amazon-scan-probe-image-1-attempt-1-rank-1.png',
+        mimeType: 'image/png',
+        kind: 'screenshot',
+      },
+      content: Buffer.from('amazon-screenshot'),
+    });
+    mocks.runBrainChatCompletionMock.mockResolvedValue({
+      vendor: 'openai',
+      modelId: 'gpt-4o',
+      text: JSON.stringify({
+        sameProduct: true,
+        imageMatch: true,
+        descriptionMatch: true,
+        pageRepresentsSameProduct: true,
+        pageLanguage: 'de',
+        languageAccepted: false,
+        languageReason: 'The visible page content is German.',
+        confidence: 0.94,
+        proceed: false,
+        reasons: ['The visible Amazon page content is German.'],
+        mismatches: ['Amazon page content is not in English.'],
+      }),
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.runBrainChatCompletionMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        url: 'https://www.amazon.com/dp/B00TEST456',
+        amazonEvaluation: expect.objectContaining({
+          status: 'rejected',
+          languageAccepted: false,
+          pageLanguage: 'de',
         }),
       })
     );
@@ -1715,6 +1851,7 @@ describe('product-scans-service', () => {
       mode: 'brain_default',
       threshold: 0.85,
       onlyForAmbiguousCandidates: true,
+      candidateSimilarityMode: 'deterministic_then_ai',
       modelId: 'gpt-4o',
       systemPrompt: 'Judge the Amazon page conservatively.',
       brainApplied: {
@@ -1755,6 +1892,116 @@ describe('product-scans-service', () => {
         status: 'completed',
         amazonEvaluation: expect.objectContaining({
           status: 'skipped',
+        }),
+      })
+    );
+  });
+
+  it('does not bypass AI when similarity decision is configured as AI only', async () => {
+    const scan = createScan({
+      imageCandidates: [
+        {
+          id: 'image-1',
+          filepath: null,
+          url: 'data:image/jpeg;base64,QUJD',
+          filename: 'product-1.jpg',
+        },
+      ],
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [
+        {
+          name: 'amazon-scan-match',
+          path: 'run-1/amazon-scan-match.png',
+          mimeType: 'image/png',
+          kind: 'screenshot',
+        },
+      ],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'matched',
+        asin: 'b00test123',
+        title: 'Amazon title',
+        price: '$19.99',
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        description: 'Amazon description',
+        amazonDetails: {
+          ean: '5901234567890',
+          gtin: '5901234567890',
+          bulletPoints: [],
+          attributes: [],
+          rankings: [],
+        },
+        matchedImageId: 'image-1',
+      },
+      finalUrl: 'https://www.amazon.com/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: 'B00TEST123',
+      ean: '5901234567890',
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.85,
+      onlyForAmbiguousCandidates: true,
+      candidateSimilarityMode: 'ai_only',
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'ai_only',
+      modelId: 'gpt-4o',
+      systemPrompt: 'Judge the Amazon page conservatively.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_match',
+      },
+    });
+    mocks.readPlaywrightEngineArtifactMock.mockResolvedValue({
+      artifact: {
+        name: 'amazon-scan-match',
+        path: 'run-1/amazon-scan-match.png',
+        mimeType: 'image/png',
+        kind: 'screenshot',
+      },
+      content: Buffer.from('amazon-screenshot'),
+    });
+    mocks.runBrainChatCompletionMock.mockResolvedValue({
+      vendor: 'openai',
+      modelId: 'gpt-4o',
+      text: JSON.stringify({
+        sameProduct: true,
+        imageMatch: true,
+        descriptionMatch: true,
+        pageRepresentsSameProduct: true,
+        pageLanguage: 'en',
+        languageAccepted: true,
+        confidence: 0.97,
+        proceed: true,
+        reasons: ['Identifiers and visuals align with the source product.'],
+        mismatches: [],
+      }),
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.runBrainChatCompletionMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'completed',
+        amazonEvaluation: expect.objectContaining({
+          status: 'approved',
+          proceed: true,
         }),
       })
     );

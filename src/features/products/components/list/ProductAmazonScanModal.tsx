@@ -570,8 +570,8 @@ export function ProductAmazonScanModal(
         return next;
       });
       const successMessage =
-        typeof response?.message === 'string' && response.message.trim().length > 0
-          ? response.message.trim()
+        typeof response?.['message'] === 'string' && response['message'].trim().length > 0
+          ? response['message'].trim()
           : `1688 session refreshed for profile ${active1688ProfileName ?? '1688 profile'}.`;
       setLatest1688SessionMessage(successMessage);
       toastRef.current(successMessage, { variant: 'success' });

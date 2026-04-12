@@ -25,6 +25,9 @@ import {
 const DEFAULT_AMAZON_CANDIDATE_EVALUATOR_SYSTEM_PROMPT =
   'Evaluate whether the Amazon page represents the same product as the source product. Compare the visible product image, title, description, and key attributes. Also judge whether the visible Amazon page content is English enough to trust scraping into English product fields. Return a conservative judgment and reject mismatches or non-English pages when required.';
 
+const DEFAULT_AMAZON_CANDIDATE_TRIAGE_SYSTEM_PROMPT =
+  'Review lightweight Amazon candidate search results before any Amazon page is opened. Rank likely matches first, discard obvious wrong products, and prefer marketplaces that fit the allowed content language. Stay conservative and keep this decision cheap.';
+
 const DEFAULT_1688_CANDIDATE_EVALUATOR_SYSTEM_PROMPT =
   'Evaluate whether the 1688 supplier product page represents the same product as the source product. Compare the source product image, the supplier page title, extracted supplier images, pricing, and supplier screenshot. Approve only when the supplier page clearly matches the same product or close variant intended for sourcing.';
 
@@ -34,6 +37,7 @@ export type ProductScannerAmazonCandidateEvaluatorResolvedConfig =
       mode: ProductScannerAmazonCandidateEvaluator['mode'];
       threshold: number;
       onlyForAmbiguousCandidates: boolean;
+      candidateSimilarityMode: ProductScannerAmazonCandidateEvaluator['candidateSimilarityMode'];
       allowedContentLanguage: ProductScannerAmazonCandidateEvaluator['allowedContentLanguage'];
       rejectNonEnglishContent: boolean;
       languageDetectionMode: ProductScannerAmazonCandidateEvaluator['languageDetectionMode'];
@@ -46,6 +50,7 @@ export type ProductScannerAmazonCandidateEvaluatorResolvedConfig =
       mode: ProductScannerAmazonCandidateEvaluator['mode'];
       threshold: number;
       onlyForAmbiguousCandidates: boolean;
+      candidateSimilarityMode: ProductScannerAmazonCandidateEvaluator['candidateSimilarityMode'];
       allowedContentLanguage: ProductScannerAmazonCandidateEvaluator['allowedContentLanguage'];
       rejectNonEnglishContent: boolean;
       languageDetectionMode: ProductScannerAmazonCandidateEvaluator['languageDetectionMode'];
@@ -133,11 +138,27 @@ export const resolveProductScannerAmazonCandidateEvaluatorConfig = async (
   );
 };
 
+export const resolveProductScannerAmazonCandidateEvaluatorTriageConfig = async (
+  settings: ProductScannerSettings
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
+  return await resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings(
+    settings.amazonCandidateEvaluatorTriage,
+    {
+      defaultSystemPrompt: DEFAULT_AMAZON_CANDIDATE_TRIAGE_SYSTEM_PROMPT,
+      runtimeKind: 'text',
+    }
+  );
+};
+
 export const resolveProductScannerAmazonCandidateEvaluatorProbeConfig = async (
   settings: ProductScannerSettings
 ): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
   return await resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings(
-    settings.amazonCandidateEvaluatorProbe ?? settings.amazonCandidateEvaluator
+    settings.amazonCandidateEvaluatorProbe ?? settings.amazonCandidateEvaluator,
+    {
+      defaultSystemPrompt: DEFAULT_AMAZON_CANDIDATE_EVALUATOR_SYSTEM_PROMPT,
+      runtimeKind: 'vision',
+    }
   );
 };
 
@@ -145,7 +166,11 @@ export const resolveProductScannerAmazonCandidateEvaluatorExtractionConfig = asy
   settings: ProductScannerSettings
 ): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
   return await resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings(
-    settings.amazonCandidateEvaluatorExtraction ?? settings.amazonCandidateEvaluator
+    settings.amazonCandidateEvaluatorExtraction ?? settings.amazonCandidateEvaluator,
+    {
+      defaultSystemPrompt: DEFAULT_AMAZON_CANDIDATE_EVALUATOR_SYSTEM_PROMPT,
+      runtimeKind: 'vision',
+    }
   );
 };
 
@@ -159,8 +184,16 @@ export const resolveProductScanner1688CandidateEvaluatorConfig = async (
 
 const resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings = async (
   evaluatorCandidate?: ProductScannerSettings['amazonCandidateEvaluatorProbe']
+    | ProductScannerSettings['amazonCandidateEvaluatorTriage']
     | ProductScannerSettings['amazonCandidateEvaluatorExtraction']
-    | ProductScannerSettings['amazonCandidateEvaluator']
+    | ProductScannerSettings['amazonCandidateEvaluator'],
+  options: {
+    defaultSystemPrompt: string;
+    runtimeKind: 'text' | 'vision';
+  } = {
+    defaultSystemPrompt: DEFAULT_AMAZON_CANDIDATE_EVALUATOR_SYSTEM_PROMPT,
+    runtimeKind: 'vision',
+  }
 ): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
   const evaluator =
     evaluatorCandidate ?? createDefaultProductScannerAmazonCandidateEvaluator();
@@ -171,6 +204,7 @@ const resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings = async (
       mode: evaluator.mode,
       threshold: evaluator.threshold,
       onlyForAmbiguousCandidates: evaluator.onlyForAmbiguousCandidates,
+      candidateSimilarityMode: evaluator.candidateSimilarityMode,
       allowedContentLanguage: evaluator.allowedContentLanguage,
       rejectNonEnglishContent: evaluator.rejectNonEnglishContent,
       languageDetectionMode: evaluator.languageDetectionMode,
@@ -181,7 +215,7 @@ const resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings = async (
   }
 
   const systemPrompt =
-    evaluator.systemPrompt?.trim() || DEFAULT_AMAZON_CANDIDATE_EVALUATOR_SYSTEM_PROMPT;
+    evaluator.systemPrompt?.trim() || options.defaultSystemPrompt;
 
   if (evaluator.mode === 'model_override') {
     const modelId = evaluator.modelId?.trim() || '';
@@ -196,6 +230,7 @@ const resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings = async (
       mode: evaluator.mode,
       threshold: evaluator.threshold,
       onlyForAmbiguousCandidates: evaluator.onlyForAmbiguousCandidates,
+      candidateSimilarityMode: evaluator.candidateSimilarityMode,
       allowedContentLanguage: evaluator.allowedContentLanguage,
       rejectNonEnglishContent: evaluator.rejectNonEnglishContent,
       languageDetectionMode: evaluator.languageDetectionMode,
@@ -211,7 +246,7 @@ const resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings = async (
       defaultTemperature: 0.1,
       defaultMaxTokens: 600,
       defaultSystemPrompt: systemPrompt,
-      runtimeKind: 'vision',
+      runtimeKind: options.runtimeKind,
     }
   );
 
@@ -220,6 +255,7 @@ const resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings = async (
     mode: evaluator.mode,
     threshold: evaluator.threshold,
     onlyForAmbiguousCandidates: evaluator.onlyForAmbiguousCandidates,
+    candidateSimilarityMode: evaluator.candidateSimilarityMode,
     allowedContentLanguage: evaluator.allowedContentLanguage,
     rejectNonEnglishContent: evaluator.rejectNonEnglishContent,
     languageDetectionMode: evaluator.languageDetectionMode,

@@ -88,16 +88,6 @@ const resolveMonitoringInteractionFilterOptions = (
     },
   ];
 
-const resolveKangurGameHomeQuestProgressAccent = (
-  status: string
-): 'emerald' | 'violet' => (status === 'completed' ? 'emerald' : 'violet');
-
-const QUEST_STATUS_ACCENTS = {
-  completed: 'emerald',
-  in_progress: 'indigo',
-  not_started: 'slate',
-} as const;
-
 function KangurParentDashboardMonitoringOverviewCards(): React.JSX.Element {
   const { averageSessionDurationLabel, interactionCounts } = useMonitoringWidgetContext();
   return (

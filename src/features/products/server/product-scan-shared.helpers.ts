@@ -3,6 +3,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 export const PRODUCT_SCAN_IMAGE_CANDIDATE_LIMIT = 3;
 const PRODUCT_SCAN_DISPLAY_NAME_MAX_LENGTH = 300;
+const HTTP_IMAGE_FILEPATH_PATTERN = /^https?:\/\//i;
 
 export const normalizeOptionalProductScanString = (value: unknown): string | null => {
   if (typeof value !== 'string') {
@@ -39,10 +40,14 @@ export const resolveProductScanImageCandidates = (
 
   for (const image of Array.isArray(product.images) ? product.images : []) {
     const imageFile = image.imageFile;
+    const rawFilepath = normalizeOptionalProductScanString(imageFile?.filepath);
     const url =
       normalizeOptionalProductScanString(imageFile?.publicUrl) ??
-      normalizeOptionalProductScanString(imageFile?.url);
-    const filepath = normalizeOptionalProductScanString(imageFile?.filepath);
+      normalizeOptionalProductScanString(imageFile?.url) ??
+      normalizeOptionalProductScanString(imageFile?.thumbnailUrl) ??
+      (rawFilepath && HTTP_IMAGE_FILEPATH_PATTERN.test(rawFilepath) ? rawFilepath : null);
+    const filepath =
+      rawFilepath && !HTTP_IMAGE_FILEPATH_PATTERN.test(rawFilepath) ? rawFilepath : null;
     const id =
       normalizeOptionalProductScanString(imageFile?.id) ??
       normalizeOptionalProductScanString(image.imageFileId);

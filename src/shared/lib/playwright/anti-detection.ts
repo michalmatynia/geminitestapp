@@ -2,9 +2,9 @@ import type { BrowserContext, BrowserContextOptions, LaunchOptions } from 'playw
 import type { PlaywrightIdentityProfile } from '@/shared/contracts/playwright';
 
 export const DEFAULT_CHROMIUM_ANTI_DETECTION_USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 export const SEARCH_CHROMIUM_ANTI_DETECTION_USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 export const MARKETPLACE_CHROMIUM_ANTI_DETECTION_USER_AGENT =
   DEFAULT_CHROMIUM_ANTI_DETECTION_USER_AGENT;
 
@@ -17,9 +17,9 @@ export const DEFAULT_CHROMIUM_ANTI_DETECTION_IGNORED_DEFAULT_ARGS = [
 ] as const;
 
 const CHROMIUM_USER_AGENT_DATA_BRANDS = [
-  { brand: 'Chromium', version: '124' },
-  { brand: 'Google Chrome', version: '124' },
-  { brand: 'Not.A/Brand', version: '24' },
+  { brand: 'Chromium', version: '131' },
+  { brand: 'Google Chrome', version: '131' },
+  { brand: 'Not_A Brand', version: '24' },
 ] as const;
 
 type ChromiumIdentityPreset = {
@@ -382,7 +382,7 @@ export const installChromiumAntiDetectionInitScript = async (
             model: '',
             platform: injectedUserAgentDataPlatform,
             platformVersion: injectedUserAgentDataPlatform === 'Windows' ? '10.0.0' : '13.0.0',
-            uaFullVersion: '124.0.0.0',
+            uaFullVersion: '131.0.0.0',
             fullVersionList: brands.map((entry) => ({ ...entry })),
             wow64: false,
           };

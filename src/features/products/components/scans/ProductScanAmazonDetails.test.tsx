@@ -146,6 +146,7 @@ describe('ProductScanAmazonDetails', () => {
                 { label: 'Model source', value: 'AI Brain default' },
                 { label: 'Threshold', value: '85%' },
                 { label: 'Evaluation scope', value: 'Every Amazon candidate' },
+                { label: 'Similarity decision', value: 'AI only' },
                 { label: 'Allowed content language', value: 'English' },
                 { label: 'Language policy', value: 'Reject non-English content' },
                 { label: 'Language detection', value: 'Deterministic first, then AI' },
@@ -243,6 +244,8 @@ describe('ProductScanAmazonDetails', () => {
     expect(screen.getByText('AI Brain default')).toBeInTheDocument();
     expect(screen.getByText('Evaluation scope')).toBeInTheDocument();
     expect(screen.getByText('Every Amazon candidate')).toBeInTheDocument();
+    expect(screen.getByText('Similarity decision')).toBeInTheDocument();
+    expect(screen.getByText('AI only')).toBeInTheDocument();
     expect(screen.getByText('Allowed content language')).toBeInTheDocument();
     expect(screen.getAllByText('English').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Language policy')).toBeInTheDocument();

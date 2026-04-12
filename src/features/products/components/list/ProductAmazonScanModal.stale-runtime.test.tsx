@@ -170,7 +170,7 @@ describe('ProductAmazonScanModal stale runtime diagnostics', () => {
               runId: 'run-stalled-1',
               runStatus: 'running',
               latestStage: 'google_upload',
-              latestStageUrl: 'https://lens.google.com/upload',
+              latestStageUrl: 'https://images.google.com/?hl=en',
               logTail: ['google lens upload pending'],
             },
             error: null,
@@ -206,7 +206,7 @@ describe('ProductAmazonScanModal stale runtime diagnostics', () => {
               runId: 'run-stalled-1',
               runStatus: 'running',
               latestStage: 'google_upload',
-              latestStageUrl: 'https://lens.google.com/upload',
+              latestStageUrl: 'https://images.google.com/?hl=en',
               logTail: ['google lens upload pending'],
               stalledReason: 'no_progress',
             },
@@ -255,7 +255,7 @@ describe('ProductAmazonScanModal stale runtime diagnostics', () => {
     expect(screen.getByText('Google Upload')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open stage URL' })).toHaveAttribute(
       'href',
-      'https://lens.google.com/upload'
+      'https://images.google.com/?hl=en'
     );
 
     await waitFor(() => {

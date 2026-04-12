@@ -253,6 +253,7 @@ describe('AdminProductScannerSettingsPage', () => {
           playwrightBrowser: 'chrome',
           captchaBehavior: 'fail',
           manualVerificationTimeoutMs: 180000,
+          amazonImageSearchProvider: 'google_images_url',
           playwrightSettingsOverrides: {
             headless: false,
           },
@@ -261,6 +262,7 @@ describe('AdminProductScannerSettingsPage', () => {
             modelId: null,
             threshold: 0.82,
             onlyForAmbiguousCandidates: false,
+            candidateSimilarityMode: 'deterministic_then_ai',
             allowedContentLanguage: 'en',
             rejectNonEnglishContent: true,
             languageDetectionMode: 'deterministic_then_ai',
@@ -295,6 +297,9 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(screen.getByRole('combobox', { name: 'Select scanner captcha handling' })).toHaveValue(
       'fail'
     );
+    expect(
+      screen.getByRole('combobox', { name: 'Select Amazon image search provider' })
+    ).toHaveValue('google_images_url');
     expect(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' })).toHaveValue(
       180000
     );
@@ -312,6 +317,11 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(
       screen.getByRole('checkbox', { name: 'Reject non-English Amazon content in probe stage' })
     ).toBeChecked();
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Select Amazon probe evaluator similarity decision mode',
+      })
+    ).toHaveValue('deterministic_then_ai');
     expect(
       screen.getByRole('combobox', {
         name: 'Select Amazon probe evaluator language detection mode',
@@ -333,6 +343,11 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(
       screen.getByRole('checkbox', { name: 'Reject non-English Amazon content in extraction stage' })
     ).toBeChecked();
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Select Amazon extraction evaluator similarity decision mode',
+      })
+    ).toHaveValue('deterministic_then_ai');
     expect(
       screen.getByRole('combobox', {
         name: 'Select Amazon extraction evaluator language detection mode',
@@ -358,7 +373,7 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(screen.getByText('Headless: false')).toBeInTheDocument();
     expect(
       screen.getAllByText(
-        'AI review runs on every Amazon candidate before extraction is trusted.'
+        'AI review runs on every Amazon candidate after deterministic identifier hints are gathered.'
       )
     ).toHaveLength(2);
     expect(screen.getAllByText('Evaluator Summary')).toHaveLength(2);
@@ -366,8 +381,14 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(screen.getAllByText('Resolved model: gpt-4.1-mini')).toHaveLength(3);
     expect(screen.getAllByText('Trust threshold: 82% confidence')).toHaveLength(2);
     expect(screen.getAllByText('Review scope: Every Amazon candidate')).toHaveLength(2);
+    expect(screen.getAllByText('Similarity decision: Deterministic hints, then AI')).toHaveLength(2);
     expect(
       screen.getAllByText('Language gate: English only, probe hints first')
+    ).toHaveLength(2);
+    expect(
+      screen.getAllByText(
+        'Deterministic identifier matches can bypass AI review when the candidate is configured as non-ambiguous.'
+      )
     ).toHaveLength(2);
     expect(
       screen.getAllByText('Continuation: Try next Amazon candidate after rejection')
@@ -419,6 +440,7 @@ describe('AdminProductScannerSettingsPage', () => {
           playwrightPersonaId: 'persona-1',
           playwrightBrowser: 'chrome',
           manualVerificationTimeoutMs: 90000,
+          amazonImageSearchProvider: 'google_lens_upload',
           playwrightSettings: {
             ...defaultIntegrationConnectionPlaywrightSettings,
             headless: false,
@@ -438,6 +460,9 @@ describe('AdminProductScannerSettingsPage', () => {
     expect(
       screen.getByRole('combobox', { name: 'Select scanner captcha handling' })
     ).toHaveValue('auto_show_browser');
+    expect(
+      screen.getByRole('combobox', { name: 'Select Amazon image search provider' })
+    ).toHaveValue('google_lens_upload');
     expect(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' })).toHaveValue(
       90000
     );
@@ -483,6 +508,12 @@ describe('AdminProductScannerSettingsPage', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Select scanner captcha handling' }), {
       target: { value: 'fail' },
     });
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Select Amazon image search provider' }),
+      {
+        target: { value: 'google_lens_upload' },
+      }
+    );
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' }), {
       target: { value: '180000' },
     });
@@ -607,6 +638,7 @@ describe('AdminProductScannerSettingsPage', () => {
           playwrightBrowser: 'brave',
           captchaBehavior: 'fail',
           manualVerificationTimeoutMs: 180000,
+          amazonImageSearchProvider: 'google_lens_upload',
           playwrightSettingsOverrides: {},
           amazonCandidateEvaluator: {
             ...defaultAmazonEvaluator,

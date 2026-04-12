@@ -7,6 +7,7 @@ import { extname, join } from 'node:path';
 import {
   DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
 } from '@/features/products/scanner-settings';
+import type { ProductScannerAmazonImageSearchProvider } from '@/shared/contracts/products/scanner-settings';
 import {
   normalizeProductScanRecord,
   productScanAmazonDetailsSchema,
@@ -44,6 +45,7 @@ export const PRODUCT_SCAN_ASIN_MAX_LENGTH = 40;
 export const PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH = 160;
 export const PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS = 2;
 export const PRODUCT_SCAN_MIN_IMAGE_BYTES = 1;
+export const PRODUCT_SCAN_MAX_REMOTE_IMAGE_BYTES = 15 * 1024 * 1024;
 export const PRODUCT_SCAN_SUPPORTED_LOCAL_IMAGE_EXTENSIONS = new Set([
   '.jpg',
   '.jpeg',
@@ -63,9 +65,17 @@ export const PRODUCT_SCAN_MANUAL_VERIFICATION_MESSAGE =
 
 const nodeFs = getFsPromises();
 const PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY = join(tmpdir(), 'geminitestapp-product-scan-images');
+const PRODUCT_SCAN_HTTP_URL_PATTERN = /^https?:\/\//i;
 
 export type AmazonScanScriptResult = {
-  status: 'matched' | 'probe_ready' | 'no_match' | 'failed' | 'captcha_required' | 'running';
+  status:
+    | 'matched'
+    | 'probe_ready'
+    | 'triage_ready'
+    | 'no_match'
+    | 'failed'
+    | 'captcha_required'
+    | 'running';
   asin: string | null;
   title: string | null;
   price: string | null;
@@ -74,6 +84,7 @@ export type AmazonScanScriptResult = {
   amazonDetails: ProductScanAmazonDetails;
   amazonProbe: ProductScanAmazonProbe;
   candidateUrls: string[];
+  candidateResults: AmazonScanCandidateResult[];
   matchedImageId: string | null;
   message: string | null;
   currentUrl: string | null;
@@ -96,6 +107,16 @@ export type SupplierScanScriptResult = {
   currentUrl: string | null;
   stage: string | null;
   steps: ProductScanStep[];
+};
+
+export type AmazonScanCandidateResult = {
+  url: string;
+  score: number | null;
+  asin: string | null;
+  marketplaceDomain: string | null;
+  title: string | null;
+  snippet: string | null;
+  rank: number | null;
 };
 
 export const toRecord = (value: unknown): Record<string, unknown> | null =>
@@ -190,6 +211,15 @@ export const resolveLocalScanImageCandidatePath = async (
     } catch {
       // Ignore path-conversion failures and fall back to the raw filepath only.
     }
+  } else if (!PRODUCT_SCAN_HTTP_URL_PATTERN.test(normalizedFilepath)) {
+    try {
+      const publicDiskPath = getDiskPathFromPublicPath(`/${normalizedFilepath}`);
+      if (publicDiskPath && !diskPathCandidates.includes(publicDiskPath)) {
+        diskPathCandidates.push(publicDiskPath);
+      }
+    } catch {
+      // Ignore path-conversion failures and fall back to the raw filepath only.
+    }
   }
 
   for (const diskPath of diskPathCandidates) {
@@ -207,7 +237,8 @@ export const resolveLocalScanImageCandidatePath = async (
 };
 
 export const sanitizeProductScanImageCandidates = async (
-  imageCandidates: ProductScanRecord['imageCandidates']
+  imageCandidates: ProductScanRecord['imageCandidates'],
+  options: { materializeUrlCandidates?: boolean; requireLocalFile?: boolean } = {}
 ): Promise<ProductScanRecord['imageCandidates']> => {
   const sanitizedCandidates = await Promise.all(
     imageCandidates.map(async (candidate) => {
@@ -222,6 +253,25 @@ export const sanitizeProductScanImageCandidates = async (
       }
 
       if (!hasUrl) {
+        return null;
+      }
+
+      if (options.materializeUrlCandidates) {
+        try {
+          const materializedCandidate = await materializeProductScanUrlCandidate(candidate);
+          if (materializedCandidate) {
+            return materializedCandidate;
+          }
+        } catch (error) {
+          void ErrorSystem.captureException(error, {
+            service: 'product-scans.service',
+            action: 'sanitizeProductScanImageCandidates.materializeUrlCandidate',
+            candidateId: candidate.id,
+          });
+        }
+      }
+
+      if (options.requireLocalFile) {
         return null;
       }
 
@@ -280,6 +330,70 @@ const resolveProductScanBase64ImageExtension = (mimeType: string): string => {
   return '.jpg';
 };
 
+const resolveProductScanUrlImageExtension = (input: {
+  contentType?: string | null;
+  filename?: string | null;
+  url?: string | null;
+}): string => {
+  if (input.contentType) {
+    return resolveProductScanBase64ImageExtension(input.contentType);
+  }
+
+  const extensionSource = readOptionalString(input.filename) ?? readOptionalString(input.url);
+  if (!extensionSource) {
+    return '.jpg';
+  }
+
+  const extension = extname(extensionSource.split('?')[0] ?? '').toLowerCase();
+  return PRODUCT_SCAN_SUPPORTED_LOCAL_IMAGE_EXTENSIONS.has(extension) ? extension : '.jpg';
+};
+
+const writeProductScanTempImageCandidate = async (input: {
+  id: string | null;
+  filename: string | null;
+  buffer: Buffer;
+  mimeType?: string | null;
+  sourceUrl?: string | null;
+  productId?: string | null;
+  slotIndex?: number | null;
+}): Promise<ProductScanRecord['imageCandidates'][number] | null> => {
+  if (
+    input.buffer.byteLength < PRODUCT_SCAN_MIN_IMAGE_BYTES ||
+    input.buffer.byteLength > PRODUCT_SCAN_MAX_REMOTE_IMAGE_BYTES
+  ) {
+    return null;
+  }
+
+  const extension = resolveProductScanUrlImageExtension({
+    contentType: input.mimeType,
+    filename: input.filename,
+    url: input.sourceUrl,
+  });
+  const safeProductId =
+    readOptionalString(input.productId)?.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60) ||
+    'product';
+  const slotLabel =
+    typeof input.slotIndex === 'number' && Number.isFinite(input.slotIndex)
+      ? `slot-${input.slotIndex + 1}`
+      : 'remote';
+  const filename =
+    readOptionalString(input.filename) ?? `${safeProductId}-scan-${slotLabel}${extension}`;
+  const filepath = join(
+    PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY,
+    `${safeProductId}-${slotLabel}-${randomUUID()}${extension}`
+  );
+
+  await nodeFs.mkdir(PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY, { recursive: true });
+  await nodeFs.writeFile(filepath, input.buffer);
+
+  return {
+    id: input.id,
+    filepath,
+    url: readOptionalString(input.sourceUrl),
+    filename,
+  };
+};
+
 const materializeProductScanBase64Candidate = async (input: {
   productId: string;
   slotIndex: number;
@@ -298,29 +412,48 @@ const materializeProductScanBase64Candidate = async (input: {
   } catch {
     return null;
   }
-  if (buffer.byteLength < PRODUCT_SCAN_MIN_IMAGE_BYTES) {
+  return await writeProductScanTempImageCandidate({
+    id: `base64-slot-${input.slotIndex + 1}`,
+    filename: null,
+    buffer,
+    mimeType,
+    sourceUrl: null,
+    productId: input.productId,
+    slotIndex: input.slotIndex,
+  });
+};
+
+const materializeProductScanUrlCandidate = async (
+  candidate: ProductScanRecord['imageCandidates'][number]
+): Promise<ProductScanRecord['imageCandidates'][number] | null> => {
+  const url = readOptionalString(candidate.url);
+  if (!url || !PRODUCT_SCAN_HTTP_URL_PATTERN.test(url)) {
     return null;
   }
 
-  const extension = resolveProductScanBase64ImageExtension(mimeType);
-  const safeProductId =
-    readOptionalString(input.productId)?.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60) ||
-    'product';
-  const filename = `${safeProductId}-scan-slot-${input.slotIndex + 1}${extension}`;
-  const filepath = join(
-    PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY,
-    `${safeProductId}-${input.slotIndex + 1}-${randomUUID()}${extension}`
-  );
+  const response = await fetch(url);
+  if (!response.ok) {
+    return null;
+  }
 
-  await nodeFs.mkdir(PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY, { recursive: true });
-  await nodeFs.writeFile(filepath, buffer);
+  const contentLength = Number(response.headers.get('content-length') ?? '');
+  if (Number.isFinite(contentLength) && contentLength > PRODUCT_SCAN_MAX_REMOTE_IMAGE_BYTES) {
+    return null;
+  }
 
-  return {
-    id: `base64-slot-${input.slotIndex + 1}`,
-    filepath,
-    url: null,
-    filename,
-  };
+  const contentType = response.headers.get('content-type');
+  if (contentType && !/^image\//i.test(contentType)) {
+    return null;
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  return await writeProductScanTempImageCandidate({
+    id: candidate.id,
+    filename: candidate.filename,
+    buffer,
+    mimeType: contentType,
+    sourceUrl: url,
+  });
 };
 
 export const hydrateProductScanImageCandidates = async (input: {
@@ -461,6 +594,42 @@ export const normalizeParsedCandidateUrls = (value: unknown): string[] => {
     }
     seen.add(next);
     normalized.push(next);
+  }
+
+  return normalized;
+};
+
+export const normalizeParsedAmazonCandidateResults = (
+  value: unknown
+): AmazonScanCandidateResult[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const normalized: AmazonScanCandidateResult[] = [];
+  for (const entry of value) {
+    const record = toRecord(entry);
+    const url = readOptionalString(record?.['url'], PRODUCT_SCAN_URL_MAX_LENGTH);
+    if (!url || seen.has(url)) {
+      continue;
+    }
+    seen.add(url);
+    normalized.push({
+      url,
+      score:
+        typeof record?.['score'] === 'number' && Number.isFinite(record['score'])
+          ? Math.trunc(record['score'])
+          : null,
+      asin: readOptionalString(record?.['asin'], PRODUCT_SCAN_ASIN_MAX_LENGTH),
+      marketplaceDomain: readOptionalString(record?.['marketplaceDomain'], 200),
+      title: readOptionalString(record?.['title'], PRODUCT_SCAN_TITLE_MAX_LENGTH),
+      snippet: readOptionalString(record?.['snippet'], PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH),
+      rank:
+        typeof record?.['rank'] === 'number' && Number.isFinite(record['rank']) && record['rank'] > 0
+          ? Math.trunc(record['rank'])
+          : null,
+    });
   }
 
   return normalized;
@@ -758,6 +927,7 @@ export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptRes
   const status =
     statusValue === 'matched' ||
     statusValue === 'probe_ready' ||
+    statusValue === 'triage_ready' ||
     statusValue === 'no_match' ||
     statusValue === 'failed' ||
     statusValue === 'captcha_required' ||
@@ -775,6 +945,7 @@ export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptRes
     amazonDetails: normalizeParsedAmazonDetails(record?.['amazonDetails']),
     amazonProbe: normalizeParsedAmazonProbe(record?.['amazonProbe']),
     candidateUrls: normalizeParsedCandidateUrls(record?.['candidateUrls']),
+    candidateResults: normalizeParsedAmazonCandidateResults(record?.['candidateResults']),
     matchedImageId: readOptionalString(
       record?.['matchedImageId'],
       PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH
@@ -825,9 +996,11 @@ export const buildAmazonScanRequestInput = (input: {
   productName: string | null;
   existingAsin: string | null | undefined;
   imageCandidates: ProductScanRecord['imageCandidates'];
+  imageSearchProvider?: ProductScannerAmazonImageSearchProvider | null;
   batchIndex?: number;
   allowManualVerification: boolean;
   manualVerificationTimeoutMs: number;
+  triageOnlyOnAmazonCandidates?: boolean;
   probeOnlyOnAmazonMatch?: boolean;
   skipAmazonProbe?: boolean;
   directAmazonCandidateUrl?: string | null;
@@ -839,12 +1012,18 @@ export const buildAmazonScanRequestInput = (input: {
   productName: input.productName,
   existingAsin: input.existingAsin ?? null,
   imageCandidates: input.imageCandidates,
+  imageSearchProvider:
+    input.imageSearchProvider === 'google_images_url' ||
+    input.imageSearchProvider === 'google_lens_upload'
+      ? input.imageSearchProvider
+      : 'google_images_upload',
   batchIndex:
     typeof input.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0
       ? Math.trunc(input.batchIndex)
       : 0,
   allowManualVerification: input.allowManualVerification,
   manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
+  triageOnlyOnAmazonCandidates: input.triageOnlyOnAmazonCandidates === true,
   probeOnlyOnAmazonMatch: input.probeOnlyOnAmazonMatch === true,
   skipAmazonProbe: input.skipAmazonProbe === true,
   directAmazonCandidateUrl: readOptionalString(input.directAmazonCandidateUrl, PRODUCT_SCAN_URL_MAX_LENGTH),
@@ -936,8 +1115,10 @@ export const build1688ScanRequestInput = (input: {
 export const createAmazonScanStartedRawResult = (input: {
   runId: string;
   status: string;
+  imageSearchProvider: ProductScannerAmazonImageSearchProvider;
   allowManualVerification: boolean;
   manualVerificationTimeoutMs: number;
+  imageSearchProviderHistory?: ProductScannerAmazonImageSearchProvider[] | null;
   previousRunId?: string | null;
   previousResult?: unknown;
   manualVerificationPending?: boolean;
@@ -945,6 +1126,29 @@ export const createAmazonScanStartedRawResult = (input: {
 }) => ({
   runId: input.runId,
   status: input.status,
+  imageSearchProvider:
+    input.imageSearchProvider === 'google_images_url' ||
+    input.imageSearchProvider === 'google_lens_upload'
+      ? input.imageSearchProvider
+      : 'google_images_upload',
+  imageSearchProviderHistory:
+    Array.isArray(input.imageSearchProviderHistory) && input.imageSearchProviderHistory.length > 0
+      ? Array.from(
+          new Set(
+            input.imageSearchProviderHistory.filter(
+              (value): value is ProductScannerAmazonImageSearchProvider =>
+                value === 'google_images_upload' ||
+                value === 'google_images_url' ||
+                value === 'google_lens_upload'
+            )
+          )
+        )
+      : [
+          input.imageSearchProvider === 'google_images_url' ||
+          input.imageSearchProvider === 'google_lens_upload'
+            ? input.imageSearchProvider
+            : 'google_images_upload',
+        ],
   allowManualVerification: input.allowManualVerification,
   manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
   ...(input.previousRunId ? { previousRunId: input.previousRunId } : {}),

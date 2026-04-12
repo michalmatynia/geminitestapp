@@ -861,6 +861,12 @@ export function ProductScanAmazonDetails(props: {
                 : null,
             },
             {
+              label: 'Similarity decision',
+              value: latestAmazonEvaluationStep
+                ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Similarity decision')
+                : null,
+            },
+            {
               label: 'Allowed content language',
               value: latestAmazonEvaluationStep
                 ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Allowed content language')

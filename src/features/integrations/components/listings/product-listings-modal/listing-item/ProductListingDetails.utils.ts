@@ -46,6 +46,27 @@ export const resolveDisplayHistoryFields = (
   fields: string[] | null | undefined
 ): string[] => (Array.isArray(fields) ? fields.filter((field) => !field.startsWith('browser_mode:')) : []);
 
+export const formatTraderaDuplicateMatchStrategy = (
+  value: string | null | undefined
+): string => {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'existing-linked-record':
+      return 'Previously linked record';
+    case 'existing-listing-id+visible-candidate':
+      return 'Existing listing ID + visible candidate';
+    case 'exact-title-single-candidate':
+      return 'Exact title single candidate';
+    case 'title+product-id':
+      return 'Exact title + product ID';
+    case 'title+description':
+      return 'Exact title + description';
+    case 'visible-candidate+expected-listing':
+      return 'Visible candidate + expected listing';
+    default:
+      return formatListValue(value);
+  }
+};
+
 export const resolveTraderaExecutionSummary = (
   marketplaceData: Record<string, unknown> | null | undefined
 ): {
@@ -97,9 +118,14 @@ export const resolveTraderaExecutionSummary = (
   imageInputSource: string | null;
   imageUploadSource: string | null;
   imageUploadFallbackUsed: boolean | null;
+  failureCode: string | null;
+  duplicateRisk: boolean | null;
+  imageRetryCleanupUnsettled: boolean | null;
   plannedImageCount: number | null;
+  expectedImageUploadCount: number | null;
   observedImagePreviewCount: number | null;
   observedImagePreviewDelta: number | null;
+  observedImagePreviewDescriptors: unknown;
   imagePreviewMismatch: boolean | null;
   localImagePathCount: number | null;
   imageUrlCount: number | null;
@@ -114,8 +140,12 @@ export const resolveTraderaExecutionSummary = (
   const lastExecution = toRecord(traderaData['lastExecution']);
   const pendingExecution = toRecord(traderaData['pendingExecution']);
   const metadata = toRecord(lastExecution['metadata']);
+  const rawResult = toRecord(metadata['rawResult']);
   const playwrightSettings = toRecord(metadata['playwrightSettings']);
   const traderaExecutionTrace = resolveTraderaExecutionStepsFromMarketplaceData(marketplaceData);
+  const duplicateMatchStrategy =
+    readString(metadata['duplicateMatchStrategy']) ??
+    readString(rawResult['duplicateMatchStrategy']);
 
   return {
     executedAt: readString(lastExecution['executedAt']),
@@ -134,10 +164,10 @@ export const resolveTraderaExecutionSummary = (
     requestId: readString(lastExecution['requestId']),
     publishVerified: readBoolean(metadata['publishVerified']),
     listingUrl: readString(marketplaceRecord['listingUrl']),
-    latestStage: readString(metadata['latestStage']) ?? readString(toRecord(metadata['rawResult'])['stage']),
+    latestStage: readString(metadata['latestStage']) ?? readString(rawResult['stage']),
     latestStageUrl:
       readString(metadata['latestStageUrl']) ??
-      readString(toRecord(metadata['rawResult'])['currentUrl']),
+      readString(rawResult['currentUrl']),
     failureArtifacts: metadata['failureArtifacts'] ?? null,
     logTail: metadata['logTail'] ?? null,
     playwrightPersonaId: readString(metadata['playwrightPersonaId']),
@@ -158,28 +188,42 @@ export const resolveTraderaExecutionSummary = (
     categoryMappingReason: readString(metadata['categoryMappingReason']),
     categoryMatchScope: readString(metadata['categoryMatchScope']),
     categoryInternalCategoryId: readString(metadata['categoryInternalCategoryId']),
-    duplicateLinked: readBoolean(metadata['duplicateLinked']),
-    duplicateMatchStrategy: readString(metadata['duplicateMatchStrategy']),
-    duplicateMatchedProductId: readString(metadata['duplicateMatchedProductId']),
-    duplicateCandidateCount: readNumber(metadata['duplicateCandidateCount']),
-    duplicateSearchTitle: readString(metadata['duplicateSearchTitle']),
+    duplicateLinked:
+      readBoolean(metadata['duplicateLinked']) ??
+      readBoolean(rawResult['duplicateLinked']) ??
+      (duplicateMatchStrategy ? true : null),
+    duplicateMatchStrategy,
+    duplicateMatchedProductId:
+      readString(metadata['duplicateMatchedProductId']) ??
+      readString(rawResult['duplicateMatchedProductId']),
+    duplicateCandidateCount:
+      readNumber(metadata['duplicateCandidateCount']) ??
+      readNumber(rawResult['duplicateCandidateCount']),
+    duplicateSearchTitle:
+      readString(metadata['duplicateSearchTitle']) ??
+      readString(rawResult['duplicateSearchTitle']),
     shippingCondition: readString(metadata['shippingCondition']),
     shippingPriceEur: readNumber(metadata['shippingPriceEur']),
     imageInputSource: readString(metadata['imageInputSource']),
     imageUploadSource:
       readString(metadata['imageUploadSource']) ??
-      readString(toRecord(metadata['rawResult'])['imageUploadSource']),
+      readString(rawResult['imageUploadSource']),
     imageUploadFallbackUsed: readBoolean(metadata['imageUploadFallbackUsed']),
+    failureCode: readString(metadata['failureCode']),
+    duplicateRisk: readBoolean(metadata['duplicateRisk']),
+    imageRetryCleanupUnsettled: readBoolean(metadata['imageRetryCleanupUnsettled']),
     plannedImageCount:
       readNumber(metadata['plannedImageCount']) ??
       readNumber(metadata['uploadedImageCount']) ??
-      readNumber(toRecord(metadata['rawResult'])['imageCount']),
+      readNumber(rawResult['imageCount']),
+    expectedImageUploadCount: readNumber(metadata['expectedImageUploadCount']),
     observedImagePreviewCount:
       readNumber(metadata['observedImagePreviewCount']) ??
-      readNumber(toRecord(metadata['rawResult'])['observedPreviewCount']),
+      readNumber(rawResult['observedPreviewCount']),
     observedImagePreviewDelta:
       readNumber(metadata['observedImagePreviewDelta']) ??
-      readNumber(toRecord(metadata['rawResult'])['observedPreviewDelta']),
+      readNumber(rawResult['observedPreviewDelta']),
+    observedImagePreviewDescriptors: metadata['observedImagePreviewDescriptors'] ?? null,
     imagePreviewMismatch: readBoolean(metadata['imagePreviewMismatch']),
     localImagePathCount: readNumber(metadata['localImagePathCount']),
     imageUrlCount: readNumber(metadata['imageUrlCount']),

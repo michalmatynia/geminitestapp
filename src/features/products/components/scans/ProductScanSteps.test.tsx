@@ -478,6 +478,7 @@ describe('ProductScanSteps', () => {
           { label: 'Model', value: 'gpt-4o-mini' },
           { label: 'Threshold', value: '82%' },
           { label: 'Evaluation scope', value: 'Ambiguous Amazon candidates only' },
+          { label: 'Similarity decision', value: 'AI only' },
           { label: 'Allowed content language', value: 'English' },
           { label: 'Language policy', value: 'Reject non-English content' },
           { label: 'Language detection', value: 'Deterministic first, then AI' },
@@ -495,6 +496,7 @@ describe('ProductScanSteps', () => {
       modelLabel: 'gpt-4o-mini',
       thresholdLabel: '82%',
       scopeLabel: 'Ambiguous Amazon candidates only',
+      similarityDecisionLabel: 'AI only',
       languageGateLabel: 'English only',
       languageDetectionLabel: 'Deterministic first, then AI',
     });
@@ -534,6 +536,7 @@ describe('ProductScanSteps', () => {
       modelLabel: 'gpt-4.1-mini',
       thresholdLabel: '80%',
       scopeLabel: 'Ambiguous 1688 candidates only',
+      similarityDecisionLabel: null,
       languageGateLabel: null,
       languageDetectionLabel: null,
     });
@@ -560,6 +563,7 @@ describe('ProductScanSteps', () => {
           { label: 'Model', value: 'gpt-4o' },
           { label: 'Threshold', value: '85%' },
           { label: 'Evaluation scope', value: 'Ambiguous Amazon candidates only' },
+          { label: 'Similarity decision', value: 'Deterministic hints, then AI' },
           { label: 'Allowed content language', value: 'English' },
           { label: 'Language policy', value: 'Reject non-English content' },
           { label: 'Language detection', value: 'Deterministic first, then AI' },
@@ -577,6 +581,7 @@ describe('ProductScanSteps', () => {
       modelLabel: 'gpt-4o',
       thresholdLabel: '85%',
       scopeLabel: 'Ambiguous Amazon candidates only',
+      similarityDecisionLabel: 'Deterministic hints, then AI',
       languageGateLabel: 'English only',
       languageDetectionLabel: 'Deterministic first, then AI',
     });
@@ -679,6 +684,7 @@ describe('ProductScanSteps', () => {
               { label: 'Model', value: 'gpt-4o-mini' },
               { label: 'Threshold', value: '82%' },
               { label: 'Evaluation scope', value: 'Ambiguous Amazon candidates only' },
+              { label: 'Similarity decision', value: 'AI only' },
               { label: 'Allowed content language', value: 'English' },
               { label: 'Language policy', value: 'Reject non-English content' },
               { label: 'Language detection', value: 'Deterministic first, then AI' },
@@ -697,6 +703,7 @@ describe('ProductScanSteps', () => {
     expect(screen.getAllByText('Scanner override').length).toBeGreaterThan(0);
     expect(screen.getAllByText('82%').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Ambiguous Amazon candidates only').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('AI only').length).toBeGreaterThan(0);
     expect(screen.getAllByText('English only').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Deterministic first, then AI').length).toBeGreaterThan(0);
   });

@@ -579,6 +579,54 @@ describe('ProductFormScans', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows the same captcha badge for 1688 scans waiting on manual verification', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1688-captcha',
+          productId: 'product-1',
+          provider: '1688',
+          scanType: 'supplier_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-1688-captcha',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          rawResult: {
+            manualVerificationPending: true,
+          },
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage:
+            '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Captcha')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('shows a scanner settings shortcut that links to the global settings page', async () => {
     mocks.apiGetMock.mockResolvedValue({
       scans: [],

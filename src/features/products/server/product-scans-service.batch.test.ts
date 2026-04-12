@@ -171,6 +171,7 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
 
 describe('product-scans-service batch operations', () => {
   beforeEach(() => {
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
     mocks.statMock.mockResolvedValue({
       isFile: () => true,
@@ -232,6 +233,12 @@ describe('product-scans-service batch operations', () => {
     mocks.get1688DefaultConnectionIdMock.mockResolvedValue('connection-1688');
     mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
     mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 240000,
+      amazonImageSearchProvider: 'google_images_upload',
+      playwrightSettingsOverrides: {},
       amazonCandidateEvaluatorProbe: { mode: 'brain_default' },
     });
     mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock.mockResolvedValue({
@@ -344,6 +351,7 @@ describe('product-scans-service batch operations', () => {
     mocks.getProductScannerSettingsMock.mockResolvedValue({
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 180000,
+      amazonImageSearchProvider: 'google_images_upload',
       playwrightPersonaId: null,
       playwrightBrowser: 'auto',
       playwrightSettingsOverrides: {
@@ -404,6 +412,7 @@ describe('product-scans-service batch operations', () => {
     mocks.getProductScannerSettingsMock.mockResolvedValue({
       captchaBehavior: 'fail',
       manualVerificationTimeoutMs: 180000,
+      amazonImageSearchProvider: 'google_images_upload',
       playwrightPersonaId: null,
       playwrightBrowser: 'brave',
       playwrightSettingsOverrides: {
@@ -538,6 +547,131 @@ describe('product-scans-service batch operations', () => {
         }),
       })
     );
+  });
+
+  it('materializes URL-only product images before launching a 1688 scan', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        headers: {
+          get: (name: string) =>
+            name.toLowerCase() === 'content-type'
+              ? 'image/jpeg'
+              : name.toLowerCase() === 'content-length'
+                ? '3'
+                : null,
+        },
+        arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+      }))
+    );
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'URL Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'remote.jpg',
+            filepath: '',
+            publicUrl: 'https://cdn.example.com/remote.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-1688-url',
+      })
+    );
+
+    const result = await queue1688BatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result.queued).toBe(1);
+    expect(mocks.writeFileMock).toHaveBeenCalledWith(
+      expect.stringContaining('geminitestapp-product-scan-images'),
+      expect.any(Buffer)
+    );
+    expect(mocks.startPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            imageCandidates: [
+              expect.objectContaining({
+                id: 'file-1',
+                filepath: expect.stringContaining('geminitestapp-product-scan-images'),
+                url: 'https://cdn.example.com/remote.jpg',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+  });
+
+  it('does not launch a 1688 scan with URL-only images when local materialization fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: false,
+        headers: {
+          get: () => null,
+        },
+        arrayBuffer: async () => new Uint8Array([]).buffer,
+      }))
+    );
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'URL Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'remote.jpg',
+            filepath: '',
+            publicUrl: 'https://cdn.example.com/remote.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-1688-url-failed',
+      })
+    );
+
+    const result = await queue1688BatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        queued: 0,
+        failed: 1,
+      })
+    );
+    expect(result.results[0]).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        message: 'No local product image file available for 1688 supplier reverse image scan.',
+      })
+    );
+    expect(mocks.startPlaywrightConnectionEngineTaskMock).not.toHaveBeenCalled();
+    expect(mocks.startPlaywrightEngineTaskMock).not.toHaveBeenCalled();
   });
 
   it('queues a new Amazon reverse-image scan from base64-backed product images', async () => {

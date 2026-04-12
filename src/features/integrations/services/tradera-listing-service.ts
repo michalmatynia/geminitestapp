@@ -40,6 +40,7 @@ import { runTraderaBrowserListing, runTraderaBrowserCheckStatus } from './trader
 import { resolveEffectiveListingSettings, buildRelistPolicy } from './tradera-listing/settings';
 import {
   classifyTraderaFailure,
+  extractTraderaFailureMetadata,
   toUserFacingTraderaFailure,
   resolveExpiry,
   resolveNextRelistAt,
@@ -299,6 +300,7 @@ export const runTraderaListing = async (
     const message = error instanceof Error ? error.message : String(error);
     const category = classifyTraderaFailure(message);
     const userMessage = toUserFacingTraderaFailure(category, message);
+    const failureMetadata = extractTraderaFailureMetadata(message);
 
     void ErrorSystem.captureException(error, {
       service: 'tradera-listing',
@@ -313,6 +315,7 @@ export const runTraderaListing = async (
       error,
       errorMessage: userMessage,
       errorCategory: category,
+      ...(Object.keys(failureMetadata).length > 0 ? { metadata: failureMetadata } : {}),
       extra: {
         expiresAt: null,
         nextRelistAt: null,
@@ -366,7 +369,19 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
     },
   });
   const historyFields = buildTraderaHistoryFields(historyBrowserMode, action);
-  const duplicateLinked = result.metadata?.['duplicateLinked'] === true;
+  const duplicateMatchStrategy =
+    typeof result.metadata?.['duplicateMatchStrategy'] === 'string' &&
+    result.metadata['duplicateMatchStrategy'].trim()
+      ? result.metadata['duplicateMatchStrategy'].trim()
+      : null;
+  const latestStage =
+    typeof result.metadata?.['latestStage'] === 'string' && result.metadata['latestStage'].trim()
+      ? result.metadata['latestStage'].trim()
+      : null;
+  const duplicateLinked =
+    result.metadata?.['duplicateLinked'] === true ||
+    duplicateMatchStrategy !== null ||
+    latestStage === 'duplicate_linked';
   const isSyncAction = action === 'sync';
   const persistedListedAt = duplicateLinked
     ? listing.listedAt ?? null

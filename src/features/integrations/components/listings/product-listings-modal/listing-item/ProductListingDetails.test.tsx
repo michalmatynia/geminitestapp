@@ -137,10 +137,20 @@ describe('ProductListingDetails', () => {
                     imageInputSource: 'local',
                     imageUploadSource: 'downloaded',
                     imageUploadFallbackUsed: true,
+                    failureCode: 'image_duplicate_risk',
+                    duplicateRisk: true,
+                    imageRetryCleanupUnsettled: false,
                     imagePreviewMismatch: true,
                     plannedImageCount: 3,
+                    expectedImageUploadCount: 3,
                     observedImagePreviewCount: 4,
                     observedImagePreviewDelta: 4,
+                    observedImagePreviewDescriptors: [
+                      {
+                        position: 1,
+                        src: 'https://cdn.example.com/preview-1.jpg',
+                      },
+                    ],
                     localImagePathCount: 2,
                     imageUrlCount: 3,
                     rawResult: {
@@ -237,8 +247,13 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('downloaded')).toBeInTheDocument();
     expect(screen.getByText('Image upload fallback used:')).toBeInTheDocument();
     expect(screen.getAllByText('Yes').length).toBeGreaterThan(0);
+    expect(screen.getByText('Failure code:')).toBeInTheDocument();
+    expect(screen.getByText('image_duplicate_risk')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate risk:')).toBeInTheDocument();
     expect(screen.getByText('Image preview mismatch:')).toBeInTheDocument();
     expect(screen.getAllByText('Yes').length).toBeGreaterThan(1);
+    expect(screen.getByText('Expected image uploads:')).toBeInTheDocument();
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0);
     expect(screen.getByText('Planned image count:')).toBeInTheDocument();
     expect(screen.getAllByText('3').length).toBeGreaterThan(0);
     expect(screen.getByText('Observed new previews:')).toBeInTheDocument();
@@ -267,6 +282,8 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('Tradera failure diagnostics')).toBeInTheDocument();
     expect(screen.getByText(/failure\.png/)).toBeInTheDocument();
     expect(screen.getByText(/\[runtime\]\[error\] FAIL_PUBLISH_VALIDATION/)).toBeInTheDocument();
+    expect(screen.getAllByText(/image_duplicate_risk/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/preview-1\.jpg/)).toBeInTheDocument();
     expect(screen.getByText(/selectedImageFileCount/)).toBeInTheDocument();
     expect(screen.getByText(/continueButtonDisabled/)).toBeInTheDocument();
   });
@@ -558,13 +575,126 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('Existing listing linked:')).toBeInTheDocument();
     expect(screen.getByText('Yes')).toBeInTheDocument();
     expect(screen.getByText('Duplicate match strategy:')).toBeInTheDocument();
-    expect(screen.getByText('title+product-id')).toBeInTheDocument();
+    expect(screen.getByText('Exact title + product ID')).toBeInTheDocument();
     expect(screen.getByText('Duplicate Product ID:')).toBeInTheDocument();
     expect(screen.getByText('BASE-1')).toBeInTheDocument();
     expect(screen.getByText('Duplicate title matches:')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('Duplicate search title:')).toBeInTheDocument();
     expect(screen.getByText('Example title')).toBeInTheDocument();
+  });
+
+  it('shows duplicate-linked Tradera metadata when it only exists in rawResult', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-duplicate-linked-raw-result',
+            status: 'active',
+            externalListingId: '725447805',
+            inventoryId: null,
+            listedAt: '2026-04-02T11:30:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              listingUrl:
+                'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T11:15:00.000Z',
+                  metadata: {
+                    scriptMode: 'scripted',
+                    scriptMarker: 'tradera-quicklist-default:v94',
+                    rawResult: {
+                      duplicateLinked: true,
+                      duplicateMatchStrategy: 'exact-title-single-candidate',
+                      duplicateCandidateCount: 1,
+                      duplicateSearchTitle: 'Example title',
+                    },
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Existing listing linked:')).toBeInTheDocument();
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate match strategy:')).toBeInTheDocument();
+    expect(screen.getByText('Exact title single candidate')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate title matches:')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate search title:')).toBeInTheDocument();
+    expect(screen.getByText('Example title')).toBeInTheDocument();
+  });
+
+  it('treats duplicate match strategy as linked state when duplicateLinked is missing', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-duplicate-linked-strategy-only',
+            status: 'active',
+            externalListingId: '725447805',
+            inventoryId: null,
+            listedAt: '2026-04-02T11:30:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              listingUrl:
+                'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T11:15:00.000Z',
+                  metadata: {
+                    scriptMode: 'scripted',
+                    scriptMarker: 'tradera-quicklist-default:v94',
+                    rawResult: {
+                      duplicateMatchStrategy: 'exact-title-single-candidate',
+                      duplicateCandidateCount: 1,
+                      duplicateSearchTitle: 'Example title',
+                    },
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Existing listing linked:')).toBeInTheDocument();
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate match strategy:')).toBeInTheDocument();
+    expect(screen.getByText('Exact title single candidate')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate title matches:')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 
   it('shows pending Tradera relist metadata while a recovery relist is queued', () => {

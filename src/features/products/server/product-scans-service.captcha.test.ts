@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   buildProductScannerEngineRequestOptionsMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorConfigMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock: vi.fn(),
+  resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock: vi.fn(),
   resolveProductScanner1688CandidateEvaluatorConfigMock: vi.fn(),
   runBrainChatCompletionMock: vi.fn(),
@@ -102,6 +103,8 @@ vi.mock('./product-scanner-settings', () => ({
     mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock(...args),
   resolveProductScannerAmazonCandidateEvaluatorProbeConfig: (...args: unknown[]) =>
     mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock(...args),
+  resolveProductScannerAmazonCandidateEvaluatorTriageConfig: (...args: unknown[]) =>
+    mocks.resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock(...args),
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfig: (...args: unknown[]) =>
     mocks.resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock(...args),
   resolveProductScanner1688CandidateEvaluatorConfig: (...args: unknown[]) =>
@@ -169,6 +172,12 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
 describe('product-scans-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock.mockResolvedValue({
+      enabled: false,
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock.mockResolvedValue({
+      enabled: false,
+    });
   });
 
   it('surfaces captcha waiting guidance while a headed scan run is still running', async () => {
@@ -331,6 +340,7 @@ describe('product-scans-service', () => {
       playwrightBrowser: 'chrome',
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 180000,
+      amazonImageSearchProvider: 'google_images_upload',
       playwrightSettingsOverrides: {
         headless: true,
         timeout: 45000,
@@ -441,6 +451,7 @@ describe('product-scans-service', () => {
       playwrightBrowser: 'chrome',
       captchaBehavior: 'auto_show_browser',
       manualVerificationTimeoutMs: 180000,
+      amazonImageSearchProvider: 'google_images_upload',
       playwrightSettingsOverrides: {
         headless: true,
       },
@@ -509,6 +520,7 @@ describe('product-scans-service', () => {
       playwrightBrowser: 'chrome',
       captchaBehavior: 'fail',
       manualVerificationTimeoutMs: 120000,
+      amazonImageSearchProvider: 'google_images_upload',
       playwrightSettingsOverrides: {
         headless: true,
       },

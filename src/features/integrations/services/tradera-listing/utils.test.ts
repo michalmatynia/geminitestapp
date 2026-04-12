@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCanonicalTraderaListingUrl,
   classifyTraderaFailure,
+  extractTraderaFailureMetadata,
   extractExternalListingId,
   toUserFacingTraderaFailure,
 } from './utils';
@@ -121,5 +122,36 @@ describe('toUserFacingTraderaFailure', () => {
     ).toBe(
       'Tradera session validation did not resolve. Refresh the saved browser session and retry.'
     );
+  });
+});
+
+describe('extractTraderaFailureMetadata', () => {
+  it('extracts duplicate-risk image upload metadata from the serialized last state', () => {
+    expect(
+      extractTraderaFailureMetadata(
+        'FAIL_IMAGE_SET_INVALID: Tradera image upload reached a partial state and retrying could duplicate images. Last state: {"expectedUploadCount":3,"observedPreviewCount":2,"observedPreviewDelta":1,"uploadSource":"local","observedPreviewDescriptors":[{"position":1,"src":"https://cdn.example.com/1.jpg"}]}'
+      )
+    ).toEqual({
+      failureCode: 'image_duplicate_risk',
+      imagePreviewMismatch: false,
+      duplicateRisk: true,
+      imageRetryCleanupUnsettled: false,
+      imageUploadLastState: {
+        expectedUploadCount: 3,
+        observedPreviewCount: 2,
+        observedPreviewDelta: 1,
+        uploadSource: 'local',
+        observedPreviewDescriptors: [{ position: 1, src: 'https://cdn.example.com/1.jpg' }],
+      },
+      expectedImageUploadCount: 3,
+      observedImagePreviewCount: 2,
+      observedImagePreviewDelta: 1,
+      observedImagePreviewDescriptors: [{ position: 1, src: 'https://cdn.example.com/1.jpg' }],
+      imageUploadSource: 'local',
+    });
+  });
+
+  it('returns empty metadata for unrelated failures', () => {
+    expect(extractTraderaFailureMetadata('FAIL_CATEGORY_SET: invalid category')).toEqual({});
   });
 });

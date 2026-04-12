@@ -4,7 +4,10 @@ import { ExternalLink } from 'lucide-react';
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
 import { CopyButton } from '@/shared/ui/copy-button';
-import { resolveProductScanFailureSourceLabel } from './ProductScanSteps';
+import {
+  resolveProductScanEvaluationPolicySummary,
+  resolveProductScanFailureSourceLabel,
+} from './ProductScanSteps';
 
 type ScanFailureArtifact = {
   name: string;
@@ -32,6 +35,7 @@ type ScanRuntimePosture = {
 type ScanDiagnostics = {
   runId: string | null;
   runStatus: string | null;
+  imageSearchProvider: string | null;
   latestStage: string | null;
   latestStageUrl: string | null;
   failureArtifacts: ScanFailureArtifact[];
@@ -120,6 +124,24 @@ const normalizeLogTail = (value: unknown): string[] => {
     .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
     .filter((entry) => entry.length > 0)
     .slice(-12);
+};
+
+const formatAmazonImageSearchProvider = (value: string | null | undefined): string | null => {
+  if (!hasText(value)) {
+    return null;
+  }
+
+  if (value === 'google_images_upload') {
+    return 'Google Images Upload';
+  }
+  if (value === 'google_images_url') {
+    return 'Google Images URL';
+  }
+  if (value === 'google_lens_upload') {
+    return 'Google Lens Upload';
+  }
+
+  return formatLabel(value);
 };
 
 const resolveArtifactFileName = (artifact: ScanFailureArtifact): string | null => {
@@ -284,6 +306,9 @@ export const resolveProductScanDiagnostics = (
   const runStatus = hasText(String(scan.rawResult['runStatus'] ?? ''))
     ? String(scan.rawResult['runStatus']).trim()
     : null;
+  const imageSearchProvider = hasText(String(scan.rawResult['imageSearchProvider'] ?? ''))
+    ? String(scan.rawResult['imageSearchProvider']).trim()
+    : null;
   const latestStage = hasText(String(scan.rawResult['latestStage'] ?? ''))
     ? String(scan.rawResult['latestStage']).trim()
     : null;
@@ -297,6 +322,7 @@ export const resolveProductScanDiagnostics = (
   if (
     !runId &&
     !runStatus &&
+    !imageSearchProvider &&
     !latestStage &&
     !latestStageUrl &&
     failureArtifacts.length === 0 &&
@@ -309,6 +335,7 @@ export const resolveProductScanDiagnostics = (
   return {
     runId,
     runStatus,
+    imageSearchProvider,
     latestStage,
     latestStageUrl,
     failureArtifacts,
@@ -349,9 +376,10 @@ export const resolveProductScanDiagnosticFailureSummary = (
 };
 
 export function ProductScanDiagnostics(props: {
-  scan: Pick<ProductScanRecord, 'id' | 'rawResult'>;
+  scan: Pick<ProductScanRecord, 'id' | 'rawResult' | 'steps'>;
 }): React.JSX.Element | null {
   const diagnostics = resolveProductScanDiagnostics(props.scan);
+  const evaluationPolicySummary = resolveProductScanEvaluationPolicySummary(props.scan.steps ?? []);
   if (!diagnostics) {
     return null;
   }
@@ -367,6 +395,11 @@ export function ProductScanDiagnostics(props: {
         {diagnostics.runStatus ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
             {formatLabel(diagnostics.runStatus)}
+          </span>
+        ) : null}
+        {diagnostics.imageSearchProvider ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+            {formatAmazonImageSearchProvider(diagnostics.imageSearchProvider)}
           </span>
         ) : null}
         {diagnostics.latestStage ? (
@@ -420,6 +453,44 @@ export function ProductScanDiagnostics(props: {
               { label: 'Identity', value: formatRuntimePostureIdentity(diagnostics.runtimePosture) },
               { label: 'Proxy', value: formatRuntimePostureProxy(diagnostics.runtimePosture) },
               { label: 'Sticky state', value: formatRuntimePostureStorage(diagnostics.runtimePosture) },
+            ]
+              .filter((entry): entry is { label: string; value: string } => hasText(entry.value))
+              .map((entry) => (
+                <div
+                  key={entry.label}
+                  className='space-y-1 rounded-md border border-border/40 bg-background/70 px-3 py-2'
+                >
+                  <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                    {entry.label}
+                  </p>
+                  <p className='break-words text-sm'>{entry.value}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      ) : null}
+
+      {evaluationPolicySummary ? (
+        <div className='space-y-2'>
+          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+            AI Evaluator Policy
+          </p>
+          <div className='grid gap-2 sm:grid-cols-2'>
+            {[
+              { label: 'Execution', value: evaluationPolicySummary.executionLabel },
+              { label: 'Model source', value: evaluationPolicySummary.modelSource },
+              { label: 'Model', value: evaluationPolicySummary.modelLabel },
+              { label: 'Threshold', value: evaluationPolicySummary.thresholdLabel },
+              { label: 'Evaluation scope', value: evaluationPolicySummary.scopeLabel },
+              {
+                label: 'Similarity decision',
+                value: evaluationPolicySummary.similarityDecisionLabel,
+              },
+              { label: 'Language gate', value: evaluationPolicySummary.languageGateLabel },
+              {
+                label: 'Language detection',
+                value: evaluationPolicySummary.languageDetectionLabel,
+              },
             ]
               .filter((entry): entry is { label: string; value: string } => hasText(entry.value))
               .map((entry) => (

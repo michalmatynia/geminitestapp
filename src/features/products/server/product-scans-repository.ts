@@ -6,6 +6,7 @@ import {
   PRODUCT_SCANS_COLLECTION,
   normalizeProductScanRecord,
   type CreateProductScanInput,
+  type ProductScanProvider,
   type ProductScanRecord,
   type ProductScanStatus,
   type UpdateProductScanInput,
@@ -131,6 +132,7 @@ const buildMongoFilter = (input: {
   productId?: string | null;
   productIds?: string[] | null;
   statuses?: ProductScanStatus[] | null;
+  provider?: ProductScanProvider | null;
 }): Filter<ProductScanDoc> => {
   const filter: Filter<ProductScanDoc> = {};
   const ids = normalizeIdList(input.ids);
@@ -149,6 +151,9 @@ const buildMongoFilter = (input: {
   if (statuses.length > 0) {
     filter['status'] = { $in: statuses };
   }
+  if (input.provider) {
+    filter['provider'] = input.provider;
+  }
 
   return filter;
 };
@@ -160,6 +165,7 @@ const matchesFilter = (
     productId?: string | null;
     productIds?: string[] | null;
     statuses?: ProductScanStatus[] | null;
+    provider?: ProductScanProvider | null;
   }
 ): boolean => {
   const ids = normalizeIdList(input.ids);
@@ -173,10 +179,13 @@ const matchesFilter = (
   if (productId && scan.productId !== productId) {
     return false;
   }
-  if (!productId && productIds.length > 0 && !productIds.includes(scan.productId)) {
+  if (productIds.length > 0 && !productIds.includes(scan.productId)) {
     return false;
   }
   if (statuses.length > 0 && !statuses.includes(scan.status)) {
+    return false;
+  }
+  if (input.provider && scan.provider !== input.provider) {
     return false;
   }
   return true;
@@ -187,6 +196,7 @@ export async function listProductScans(input: {
   productId?: string | null;
   productIds?: string[] | null;
   statuses?: ProductScanStatus[] | null;
+  provider?: ProductScanProvider | null;
   limit?: number | null;
 } = {}): Promise<ProductScanRecord[]> {
   const limit = input.limit != null ? Math.max(1, Math.trunc(input.limit)) : 100;
@@ -199,6 +209,7 @@ export async function listProductScans(input: {
           productId: input.productId,
           productIds: input.productIds,
           statuses: input.statuses,
+          provider: input.provider,
         })
       )
     ).slice(0, limit);
@@ -213,6 +224,7 @@ export async function listProductScans(input: {
         productId: input.productId,
         productIds: input.productIds,
         statuses: input.statuses,
+        provider: input.provider,
       })
     )
     .sort({ createdAt: -1 })

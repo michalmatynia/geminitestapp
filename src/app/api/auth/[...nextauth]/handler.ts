@@ -89,6 +89,10 @@ const buildUnauthSessionResponse = (
   return response;
 };
 
+const logAuthEventInBackground = (input: Parameters<typeof logAuthEvent>[0]): void => {
+  void logAuthEvent(input).catch(() => undefined);
+};
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = performance.now();
   const isSessionRequest = req.nextUrl.pathname.endsWith('/session');
@@ -121,11 +125,11 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     );
   }
 
-  await logAuthEvent({ req, action: 'auth.nextauth', stage: 'start' });
+  logAuthEventInBackground({ req, action: 'auth.nextauth', stage: 'start' });
   const handlerStart = performance.now();
   try {
     const response = await handlers.GET(req);
-    await logAuthEvent({
+    logAuthEventInBackground({
       req,
       action: 'auth.nextauth',
       stage: 'success',
@@ -148,7 +152,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         total: performance.now() - requestStart,
         handler: performance.now() - handlerStart,
       });
-      await logAuthEvent({
+      logAuthEventInBackground({
         req,
         action: 'auth.nextauth',
         stage: 'failure',
@@ -162,9 +166,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  await logAuthEvent({ req, action: 'auth.nextauth', stage: 'start' });
+  logAuthEventInBackground({ req, action: 'auth.nextauth', stage: 'start' });
   const response = await handlers.POST(req);
-  await logAuthEvent({
+  logAuthEventInBackground({
     req,
     action: 'auth.nextauth',
     stage: 'success',

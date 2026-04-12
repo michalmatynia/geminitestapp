@@ -33,7 +33,16 @@ describe('product-scan-amazon-script', () => {
       'const openGoogleLensForUpload = async ({'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "destinationUrl: 'https://lens.google.com/upload?hl=en',"
+      "const imageSearchProvider = resolveAmazonImageSearchProvider(input?.imageSearchProvider);"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "return 'google_images_upload';"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "https://images.google.com/?hl=en"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "https://lens.google.com/?hl=en"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "'https://www.google.com/searchbyimage?image_url=' +"
@@ -178,6 +187,9 @@ describe('product-scan-amazon-script', () => {
       'const verifyGoogleLensFileUploadAccepted = async (inputLocator, startingUrl, stepMeta = null) => {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "reason: 'file_selected'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "resultCode: 'upload_processing'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
@@ -259,19 +271,19 @@ describe('product-scan-amazon-script', () => {
       'const selectionConfirmed ='
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      '!selectionConfirmed && !transitionState.advanced'
+      'if (selectionConfirmed) {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'Google Lens did not receive a usable image file upload.'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'Google Lens did not advance after receiving the image upload.'
+      "reason: 'file_selected'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'Google Lens accepted the image and is still processing it.'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'Google Lens accepted the image but stayed in the upload processing state without producing results.'
+      'Google Lens accepted the image and is still processing it.'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'Google Lens accepted the image URL but stayed in the upload processing state without producing results.'
@@ -346,48 +358,39 @@ describe('product-scan-amazon-script', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("resultCode: 'url_submit_not_advanced'");
   });
 
-  it('falls back to Google Lens upload-by-URL when the file upload handoff still fails', () => {
+  it('routes into explicit provider-specific Google upload strategies', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const uploadImageCandidateByUrl = async ('
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       'const uploadImageCandidateFromFile = async ('
     );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('retryRecommended');
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "log('amazon.scan.google_upload_fallback_to_url', {"
+      "if (imageSearchProvider === 'google_images_url') {"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'return await uploadImageCandidateByUrl(candidateId, imageUrl, candidateAttempt, {'
-    );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'Fallback from'");
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'Fallback reason'");
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "'Local file upload failed. Falling back to image URL upload.'"
+      "provider_requires_image_url"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'retryRecommended:\n          !uploadTimedOutWhileProcessing &&\n          !uploadNeverReachedResults &&'
+      "provider_requires_local_file"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "{ label: 'Image search provider', value: imageSearchProviderLabel }"
     );
   });
 
-  it('prefers local Google Lens file upload before URL submission when both are available', () => {
+  it('keeps provider choice deterministic instead of silently cross-falling back between Google modes', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'const openGoogleLensForUpload = async ({'
+      'const canUseGoogleReverseImageUrl = (value) => {'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'if (filePath) {'
+      "if (imageSearchProvider === 'google_images_url') {"
     );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'const fileUploadResult = await uploadImageCandidateFromFile(candidateId, filePath, imageUrl, candidateAttempt);'
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).not.toContain(
+      "log('amazon.scan.google_upload_fallback_to_file', {"
     );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).not.toContain(
       "log('amazon.scan.google_upload_fallback_to_url', {"
-    );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      'return await uploadImageCandidateByUrl(candidateId, imageUrl, candidateAttempt, {'
-    );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "'Local file upload failed. Falling back to image URL upload.'"
     );
   });
 
@@ -652,6 +655,12 @@ describe('product-scan-amazon-script', () => {
   it('captures dedicated Amazon probe artifacts before detailed extraction', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
       "key: 'amazon_probe'"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "await page.evaluate(() => document.documentElement?.lang || null).catch(() => null)"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
+      "return new URL(canonicalUrl || currentUrl).hostname.toLowerCase();"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'amazon-scan-probe'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("const heroArtifactKey = artifactKey + '-hero';");

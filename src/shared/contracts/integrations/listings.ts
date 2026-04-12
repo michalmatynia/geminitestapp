@@ -639,6 +639,7 @@ export type QuickExportFeedbackOptionsDto = {
   externalListingId?: string | null | undefined;
   completedAt?: number | null | undefined;
   duplicateLinked?: boolean | null | undefined;
+  duplicateMatchStrategy?: string | null | undefined;
   metadata?: Record<string, unknown> | undefined;
 };
 

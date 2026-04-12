@@ -378,6 +378,9 @@ const buildSuccessMetadata = ({
     typeof result.rawResult['observedPreviewDelta'] === 'number'
       ? result.rawResult['observedPreviewDelta']
       : null;
+  const observedImagePreviewDescriptors = Array.isArray(result.rawResult['observedPreviewDescriptors'])
+    ? result.rawResult['observedPreviewDescriptors']
+    : [];
 
   return buildPlaywrightScriptListingMetadata({
     result,
@@ -424,6 +427,7 @@ const buildSuccessMetadata = ({
       plannedImageCount,
       observedImagePreviewCount,
       observedImagePreviewDelta,
+      observedImagePreviewDescriptors,
       imagePreviewMismatch:
         plannedImageCount !== null &&
         observedImagePreviewDelta !== null &&

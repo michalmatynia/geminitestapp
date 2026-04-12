@@ -9,6 +9,31 @@ export interface MarketplaceFeedbackConfig {
   eventName: string;
 }
 
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+const readString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const readBoolean = (value: unknown): boolean | null =>
+  typeof value === 'boolean' ? value : null;
+
+const resolveDuplicateMatchStrategyValue = (
+  value: Record<string, unknown>
+): string | null =>
+  readString(value['duplicateMatchStrategy']) ??
+  readString(toRecord(value['metadata'])['duplicateMatchStrategy']) ??
+  readString(toRecord(toRecord(value['metadata'])['rawResult'])['duplicateMatchStrategy']) ??
+  null;
+
+const resolveDuplicateLinkedValue = (value: Record<string, unknown>): boolean | null =>
+  readBoolean(value['duplicateLinked']) ??
+  readBoolean(toRecord(value['metadata'])['duplicateLinked']) ??
+  readBoolean(toRecord(toRecord(value['metadata'])['rawResult'])['duplicateLinked']) ??
+  (resolveDuplicateMatchStrategyValue(value) ? true : null);
+
 const PROCESSING_FEEDBACK_TTL_MS = 2 * 60 * 1000;
 const QUEUED_FEEDBACK_TTL_MS = 120 * 1000;
 const COMPLETED_FEEDBACK_TTL_MS = 5 * 60 * 1000;
@@ -91,6 +116,8 @@ const readPersistedFeedbackMap = (
         productId,
         status,
         expiresAt,
+        duplicateLinked: resolveDuplicateLinkedValue(record),
+        duplicateMatchStrategy: resolveDuplicateMatchStrategyValue(record),
       } as PersistedQuickExportFeedback;
     });
 
@@ -136,6 +163,7 @@ export const persistMarketplaceFeedback = (
   if (!productId.trim()) return;
 
   const nextMap = readPersistedFeedbackMap(config);
+  const optionsRecord = toRecord(options);
   nextMap[productId] = {
     productId,
     status,
@@ -149,7 +177,8 @@ export const persistMarketplaceFeedback = (
     listingUrl: options?.listingUrl ?? null,
     externalListingId: options?.externalListingId ?? null,
     completedAt: options?.completedAt ?? null,
-    duplicateLinked: options?.duplicateLinked ?? null,
+    duplicateLinked: resolveDuplicateLinkedValue(optionsRecord),
+    duplicateMatchStrategy: resolveDuplicateMatchStrategyValue(optionsRecord),
     metadata: options?.metadata,
   };
   writePersistedFeedbackMap(config, nextMap);

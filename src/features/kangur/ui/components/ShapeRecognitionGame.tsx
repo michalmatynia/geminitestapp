@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState, useCallback } from 'react';
 import { useMessages } from 'next-intl';
 
 import {
@@ -28,6 +28,27 @@ type ShapeRecognitionGameProps = {
   finishLabel?: string;
   onFinish?: () => void;
 };
+
+type ShapeRecognitionGameContextValue = {
+  finishLabel: string;
+  isCoarsePointer: boolean;
+  onFinish?: () => void;
+  onRestart: () => void;
+  score: number;
+  totalRounds: number;
+  translate: ReturnType<typeof createGeometryShapeRecognitionLessonTranslate>;
+  shapeLabels: Record<ShapeId, string>;
+};
+
+const ShapeRecognitionGameContext = createContext<ShapeRecognitionGameContextValue | null>(null);
+
+function useShapeRecognitionGame(): ShapeRecognitionGameContextValue {
+  const context = useContext(ShapeRecognitionGameContext);
+  if (!context) {
+    throw new Error('useShapeRecognitionGame must be used within ShapeRecognitionGame');
+  }
+  return context;
+}
 
 const resolveShapeRecognitionLessonMessages = (
   messages: Record<string, unknown>
@@ -98,11 +119,8 @@ function useShapeRecognitionGameContent(): {
   };
 }
 
-function ShapeRecognitionEmptyState({
-  translate,
-}: {
-  translate: ReturnType<typeof createGeometryShapeRecognitionLessonTranslate>;
-}): React.JSX.Element {
+function ShapeRecognitionEmptyState(): React.JSX.Element {
+  const { translate } = useShapeRecognitionGame();
   return (
     <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
       <div className='text-sm text-slate-500'>{translate('practice.emptyRounds')}</div>
@@ -110,23 +128,8 @@ function ShapeRecognitionEmptyState({
   );
 }
 
-function ShapeRecognitionFinishedView({
-  finishLabel,
-  isCoarsePointer,
-  onFinish,
-  onRestart,
-  score,
-  totalRounds,
-  translate,
-}: {
-  finishLabel: string;
-  isCoarsePointer: boolean;
-  onFinish?: () => void;
-  onRestart: () => void;
-  score: number;
-  totalRounds: number;
-  translate: ReturnType<typeof createGeometryShapeRecognitionLessonTranslate>;
-}): React.JSX.Element {
+function ShapeRecognitionFinishedView(): React.JSX.Element {
+  const { finishLabel, isCoarsePointer, onFinish, onRestart, score, totalRounds, translate } = useShapeRecognitionGame();
   return (
     <KangurGlassPanel className='w-full text-center' padding='lg' surface='playField'>
       <KangurStatusChip accent='emerald' size='sm'>
@@ -171,33 +174,24 @@ function ShapeRecognitionFinishedView({
 
 function ShapeRecognitionRoundView({
   correctLabel,
-  isCoarsePointer,
   isCorrect,
   onNext,
   onSelect,
   round,
   roundIndex,
-  score,
   selected,
   shape,
-  shapeLabels,
-  totalRounds,
-  translate,
 }: {
   correctLabel: string;
-  isCoarsePointer: boolean;
   isCorrect: boolean;
   onNext: () => void;
   onSelect: (option: ShapeId) => void;
   round: (typeof SHAPE_ROUNDS)[number];
   roundIndex: number;
-  score: number;
   selected: ShapeId | null;
   shape: ReturnType<typeof buildGeometryShapeDefinitions>[number];
-  shapeLabels: Record<ShapeId, string>;
-  totalRounds: number;
-  translate: ReturnType<typeof createGeometryShapeRecognitionLessonTranslate>;
 }): React.JSX.Element {
+  const { isCoarsePointer, score, shapeLabels, totalRounds, translate } = useShapeRecognitionGame();
   return (
     <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
       <div className='flex items-center justify-between gap-3'>
@@ -269,8 +263,42 @@ export default function ShapeRecognitionGame({
   const [score, setScore] = useState(0);
   const resolvedFinishLabel = finishLabel ?? translate('draw.finishLabel');
 
+  const handleRestart = useCallback((): void => {
+    setSelected(null);
+    setRoundIndex(0);
+    setScore(0);
+  }, []);
+
+  const handleNext = useCallback((): void => {
+    setSelected(null);
+    setRoundIndex((prev) => prev + 1);
+  }, []);
+
+  const handleSelect = useCallback((option: ShapeId, correct: ShapeId): void => {
+    if (selected) return;
+    setSelected(option);
+    if (option === correct) {
+      setScore((prev) => prev + 1);
+    }
+  }, [selected]);
+
+  const contextValue: ShapeRecognitionGameContextValue = useMemo(() => ({
+    finishLabel: resolvedFinishLabel,
+    isCoarsePointer,
+    onFinish,
+    onRestart: handleRestart,
+    score,
+    totalRounds: SHAPE_ROUNDS.length,
+    translate,
+    shapeLabels,
+  }), [resolvedFinishLabel, isCoarsePointer, onFinish, handleRestart, score, translate, shapeLabels]);
+
   if (SHAPE_ROUNDS.length === 0) {
-    return <ShapeRecognitionEmptyState translate={translate} />;
+    return (
+      <ShapeRecognitionGameContext.Provider value={contextValue}>
+        <ShapeRecognitionEmptyState />
+      </ShapeRecognitionGameContext.Provider>
+    );
   }
 
   const isFinished = roundIndex >= SHAPE_ROUNDS.length;
@@ -280,54 +308,26 @@ export default function ShapeRecognitionGame({
   const isCorrect = selected === round.correct;
   const correctLabel = shapeLabels[round.correct] ?? round.correct;
 
-  const handleSelect = (option: ShapeId): void => {
-    if (selected) return;
-    setSelected(option);
-    if (option === round.correct) {
-      setScore((prev) => prev + 1);
-    }
-  };
-
-  const handleNext = (): void => {
-    setSelected(null);
-    setRoundIndex((prev) => prev + 1);
-  };
-
-  const handleRestart = (): void => {
-    setSelected(null);
-    setRoundIndex(0);
-    setScore(0);
-  };
-
   if (isFinished) {
     return (
-      <ShapeRecognitionFinishedView
-        finishLabel={resolvedFinishLabel}
-        isCoarsePointer={isCoarsePointer}
-        onFinish={onFinish}
-        onRestart={handleRestart}
-        score={score}
-        totalRounds={SHAPE_ROUNDS.length}
-        translate={translate}
-      />
+      <ShapeRecognitionGameContext.Provider value={contextValue}>
+        <ShapeRecognitionFinishedView />
+      </ShapeRecognitionGameContext.Provider>
     );
   }
 
   return (
-    <ShapeRecognitionRoundView
-      correctLabel={correctLabel}
-      isCoarsePointer={isCoarsePointer}
-      isCorrect={isCorrect}
-      onNext={handleNext}
-      onSelect={handleSelect}
-      round={round}
-      roundIndex={roundIndex}
-      score={score}
-      selected={selected}
-      shape={shape}
-      shapeLabels={shapeLabels}
-      totalRounds={SHAPE_ROUNDS.length}
-      translate={translate}
-    />
+    <ShapeRecognitionGameContext.Provider value={contextValue}>
+      <ShapeRecognitionRoundView
+        correctLabel={correctLabel}
+        isCorrect={isCorrect}
+        onNext={handleNext}
+        onSelect={(option) => handleSelect(option, round.correct)}
+        round={round}
+        roundIndex={roundIndex}
+        selected={selected}
+        shape={shape}
+      />
+    </ShapeRecognitionGameContext.Provider>
   );
 }

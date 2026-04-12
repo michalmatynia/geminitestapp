@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v130
+  // tradera-quicklist-default:v131
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -212,20 +212,36 @@ export const PART_1 = String.raw`export default async function run({
     'img[alt^="photo " i]',
     'img[alt^="bild " i]',
     'img[alt^="foto " i]',
+    '[data-testid*="image" i] img',
+    '[data-testid*="photo" i] img',
+    '[data-testid*="preview" i] img',
+    '[data-testid*="image-preview" i] img',
+    '[data-testid*="photo-preview" i] img',
+    '[class*="image-preview" i] img',
+    '[class*="imagepreview" i] img',
+    '[class*="photo-preview" i] img',
+    '[class*="photopreview" i] img',
+    '[class*="preview" i] img',
   ];
   const DRAFT_IMAGE_REMOVE_SELECTORS = [
     'button[aria-label*="Remove image" i]',
     'button[aria-label*="Delete image" i]',
     'button[aria-label*="Remove photo" i]',
     'button[aria-label*="Delete photo" i]',
+    'button[aria-label="Remove" i]',
+    'button[aria-label="Delete" i]',
     'button[aria-label*="Ta bort" i]',
     'button[aria-label*="Radera" i]',
     '[data-testid*="remove-image"]',
     '[data-testid*="delete-image"]',
     '[data-testid*="remove-photo"]',
     '[data-testid*="delete-photo"]',
+    '[data-testid*="remove"]',
+    '[data-testid*="delete"]',
     'button:has-text("Remove image")',
     'button:has-text("Delete image")',
+    'button:has-text("Remove")',
+    'button:has-text("Delete")',
     'button:has-text("Ta bort")',
     'button:has-text("Radera")',
   ];
@@ -234,6 +250,8 @@ export const PART_1 = String.raw`export default async function run({
     'delete image',
     'remove photo',
     'delete photo',
+    'remove',
+    'delete',
     'ta bort',
     'radera',
   ];

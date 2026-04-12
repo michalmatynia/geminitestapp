@@ -26,6 +26,7 @@ import type { ProductListingWithDetailsProps } from './types';
 import {
   formatTimestamp,
   formatListValue,
+  formatTraderaDuplicateMatchStrategy,
   normalizeIntegrationSlug,
   resolveHistoryBrowserMode,
   resolveDisplayHistoryFields,
@@ -382,7 +383,7 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
           {isTraderaListing && traderaExecution.duplicateMatchStrategy ? (
             <MetadataItem
               label='Duplicate match strategy'
-              value={traderaExecution.duplicateMatchStrategy}
+              value={formatTraderaDuplicateMatchStrategy(traderaExecution.duplicateMatchStrategy)}
               variant='minimal'
             />
           ) : null}
@@ -444,11 +445,42 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.failureCode ? (
+            <MetadataItem
+              label='Failure code'
+              value={traderaExecution.failureCode}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.duplicateRisk ? (
+            <MetadataItem
+              label='Duplicate risk'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.imageRetryCleanupUnsettled ? (
+            <MetadataItem
+              label='Retry cleanup unsettled'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.imagePreviewMismatch ? (
             <MetadataItem
               label='Image preview mismatch'
               value='Yes'
               valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.expectedImageUploadCount !== null ? (
+            <MetadataItem
+              label='Expected image uploads'
+              value={String(traderaExecution.expectedImageUploadCount)}
               variant='minimal'
             />
           ) : null}
@@ -714,6 +746,11 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               failureArtifacts: traderaExecution.failureArtifacts,
               logTail: traderaExecution.logTail,
               imageSettleState: traderaExecution.imageSettleState,
+              failureCode: traderaExecution.failureCode,
+              duplicateRisk: traderaExecution.duplicateRisk,
+              imageRetryCleanupUnsettled: traderaExecution.imageRetryCleanupUnsettled,
+              expectedImageUploadCount: traderaExecution.expectedImageUploadCount,
+              observedImagePreviewDescriptors: traderaExecution.observedImagePreviewDescriptors,
             }}
             maxHeight={220}
             className='bg-white/5'

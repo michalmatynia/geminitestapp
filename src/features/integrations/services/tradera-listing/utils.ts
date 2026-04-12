@@ -95,6 +95,106 @@ export const toUserFacingTraderaFailure = (
   return message;
 };
 
+const parseTraderaFailureLastState = (message: string): Record<string, unknown> | null => {
+  const match = message.match(/Last state:\s*(\{[\s\S]*\})\s*$/);
+  if (!match?.[1]) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(match[1]);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const toNullableNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+export const extractTraderaFailureMetadata = (message: string): Record<string, unknown> => {
+  const normalized = message.trim().toLowerCase();
+  const lastState = parseTraderaFailureLastState(message);
+  const isImagePreviewMismatch = normalized.includes(
+    'uploaded more image previews than expected'
+  );
+  const isDuplicateRisk = normalized.includes('retrying could duplicate images');
+  const isRetryCleanupUnsettled = normalized.includes(
+    'retry image cleanup did not clear the previous upload state'
+  );
+
+  const failureCode = isImagePreviewMismatch
+    ? 'image_preview_mismatch'
+    : isDuplicateRisk
+      ? 'image_duplicate_risk'
+      : isRetryCleanupUnsettled
+        ? 'image_retry_cleanup_unsettled'
+        : null;
+
+  const metadata: Record<string, unknown> = {};
+
+  if (failureCode) {
+    metadata['failureCode'] = failureCode;
+    metadata['imagePreviewMismatch'] = isImagePreviewMismatch;
+    metadata['duplicateRisk'] = isDuplicateRisk;
+    metadata['imageRetryCleanupUnsettled'] = isRetryCleanupUnsettled;
+  }
+
+  if (!lastState) {
+    return metadata;
+  }
+
+  metadata['imageUploadLastState'] = lastState;
+
+  const expectedUploadCount = toNullableNumber(lastState['expectedUploadCount']);
+  if (expectedUploadCount !== null) {
+    metadata['expectedImageUploadCount'] = expectedUploadCount;
+  }
+
+  const observedPreviewCount = toNullableNumber(lastState['observedPreviewCount']);
+  if (observedPreviewCount !== null) {
+    metadata['observedImagePreviewCount'] = observedPreviewCount;
+  }
+
+  const observedPreviewDelta = toNullableNumber(lastState['observedPreviewDelta']);
+  if (observedPreviewDelta !== null) {
+    metadata['observedImagePreviewDelta'] = observedPreviewDelta;
+  }
+
+  if (Array.isArray(lastState['observedPreviewDescriptors'])) {
+    metadata['observedImagePreviewDescriptors'] = lastState['observedPreviewDescriptors'];
+  }
+
+  const imageUploadPending =
+    typeof lastState['imageUploadPending'] === 'boolean'
+      ? lastState['imageUploadPending']
+      : null;
+  if (imageUploadPending !== null) {
+    metadata['imageUploadPending'] = imageUploadPending;
+  }
+
+  const imageUploadErrorText =
+    typeof lastState['imageUploadErrorText'] === 'string' &&
+    lastState['imageUploadErrorText'].trim()
+      ? lastState['imageUploadErrorText'].trim()
+      : null;
+  if (imageUploadErrorText) {
+    metadata['imageUploadErrorText'] = imageUploadErrorText;
+  }
+
+  const imageUploadSource =
+    typeof lastState['uploadSource'] === 'string' && lastState['uploadSource'].trim()
+      ? lastState['uploadSource'].trim()
+      : null;
+  if (imageUploadSource) {
+    metadata['imageUploadSource'] = imageUploadSource;
+  }
+
+  return metadata;
+};
+
 export const toPositiveInt = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
     return Math.floor(value);

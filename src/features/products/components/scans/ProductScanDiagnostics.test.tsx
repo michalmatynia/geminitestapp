@@ -24,9 +24,40 @@ describe('ProductScanDiagnostics', () => {
         scan={
           {
             id: 'scan-1',
+            steps: [
+              {
+                key: 'amazon_ai_evaluate',
+                label: 'Evaluate Amazon candidate match',
+                group: 'amazon',
+                attempt: 1,
+                candidateId: 'image-1',
+                candidateRank: 1,
+                inputSource: null,
+                retryOf: null,
+                resultCode: 'candidate_rejected',
+                status: 'failed',
+                message: 'AI evaluator rejected the Amazon candidate.',
+                warning: null,
+                details: [
+                  { label: 'Model source', value: 'AI Brain default' },
+                  { label: 'Model', value: 'gpt-4.1-mini' },
+                  { label: 'Threshold', value: '85%' },
+                  { label: 'Evaluation scope', value: 'Every Amazon candidate' },
+                  { label: 'Similarity decision', value: 'AI only' },
+                  { label: 'Allowed content language', value: 'English' },
+                  { label: 'Language policy', value: 'Reject non-English content' },
+                  { label: 'Language detection', value: 'AI only' },
+                ],
+                url: 'https://www.amazon.com/dp/B00TEST123',
+                startedAt: '2026-04-11T10:00:05.000Z',
+                completedAt: '2026-04-11T10:00:08.000Z',
+                durationMs: 3000,
+              },
+            ],
             rawResult: {
               runId: 'run-123',
               runStatus: 'failed',
+              imageSearchProvider: 'google_images_url',
               latestStage: 'google_upload',
               latestStageUrl: 'https://lens.google.com/search',
               failureArtifacts: [
@@ -75,6 +106,7 @@ describe('ProductScanDiagnostics', () => {
 
     expect(screen.getByText('Run run-123')).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
+    expect(screen.getByText('Google Images URL')).toBeInTheDocument();
     expect(screen.getByText('Stage: Google Upload')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open URL' })).toHaveAttribute(
       'href',
@@ -99,6 +131,15 @@ describe('ProductScanDiagnostics', () => {
     expect(screen.getByText('Search profile · en-US · America/New_York')).toBeInTheDocument();
     expect(screen.getByText('Brightdata · Sticky · Applied · proxy.local:8080')).toBeInTheDocument();
     expect(screen.getByText('Loaded sticky state')).toBeInTheDocument();
+    expect(screen.getByText('AI Evaluator Policy')).toBeInTheDocument();
+    expect(screen.getByText('Execution')).toBeInTheDocument();
+    expect(screen.getByText('Reviewed by AI')).toBeInTheDocument();
+    expect(screen.getAllByText('AI Brain default').length).toBeGreaterThan(0);
+    expect(screen.getByText('gpt-4.1-mini')).toBeInTheDocument();
+    expect(screen.getAllByText('85%').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Every Amazon candidate').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('AI only').length).toBeGreaterThan(0);
+    expect(screen.getByText('English only')).toBeInTheDocument();
     expect(screen.getByText(/first log line/)).toBeInTheDocument();
     expect(screen.getByText(/second log line/)).toBeInTheDocument();
   });

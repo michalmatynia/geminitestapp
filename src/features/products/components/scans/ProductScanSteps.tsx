@@ -100,6 +100,7 @@ export type ProductScanEvaluationPolicySummary = {
   modelLabel: string | null;
   thresholdLabel: string | null;
   scopeLabel: string | null;
+  similarityDecisionLabel: string | null;
   languageGateLabel: string | null;
   languageDetectionLabel: string | null;
 };
@@ -379,6 +380,7 @@ const resolveProductScanEvaluationPolicySummaryFromStep = (
   const modelLabel = resolveStepDetailValue(step, 'Model');
   const thresholdLabel = resolveStepDetailValue(step, 'Threshold');
   const scopeLabel = resolveStepDetailValue(step, 'Evaluation scope');
+  const similarityDecisionLabel = resolveStepDetailValue(step, 'Similarity decision');
   const allowedContentLanguage = resolveStepDetailValue(step, 'Allowed content language');
   const languagePolicy = resolveStepDetailValue(step, 'Language policy');
   const languageDetectionLabel = resolveStepDetailValue(step, 'Language detection');
@@ -399,6 +401,7 @@ const resolveProductScanEvaluationPolicySummaryFromStep = (
     !modelLabel &&
     !thresholdLabel &&
     !scopeLabel &&
+    !similarityDecisionLabel &&
     !languageGateLabel &&
     !languageDetectionLabel
   ) {
@@ -411,6 +414,7 @@ const resolveProductScanEvaluationPolicySummaryFromStep = (
     modelLabel,
     thresholdLabel,
     scopeLabel,
+    similarityDecisionLabel,
     languageGateLabel,
     languageDetectionLabel,
   };
@@ -741,6 +745,11 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                         {evaluationPolicySummary.scopeLabel ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {evaluationPolicySummary.scopeLabel}
+                          </span>
+                        ) : null}
+                        {evaluationPolicySummary.similarityDecisionLabel ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
+                            {evaluationPolicySummary.similarityDecisionLabel}
                           </span>
                         ) : null}
                         {evaluationPolicySummary.languageGateLabel ? (

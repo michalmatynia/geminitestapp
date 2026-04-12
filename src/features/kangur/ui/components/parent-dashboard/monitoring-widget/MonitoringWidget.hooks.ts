@@ -220,7 +220,7 @@ export function useMonitoringWidgetState() {
           return {
             id: entry.id,
             kind: 'opened_task' as const,
-            label: translations('widgets.monitoring.interaction.openedTaskLabel' as never, {
+            label: (translations as any)('widgets.monitoring.interaction.openedTaskLabel' as never, {
               kind: kindLabel.toLowerCase(),
             }),
             description: title,
@@ -330,7 +330,7 @@ export function useMonitoringWidgetState() {
                   const title =
                     panel.title?.trim() ||
                     (panelIndex !== Number.MAX_SAFE_INTEGER
-                      ? translations('widgets.monitoring.lessonPanelTime.panelNumber' as never, {
+                      ? (translations as any)('widgets.monitoring.lessonPanelTime.panelNumber' as never, {
                           number: panelIndex,
                         })
                       : translations('widgets.monitoring.lessonPanelTime.panelDefault' as never));

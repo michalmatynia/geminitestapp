@@ -22,6 +22,23 @@ export type ProductScannerCaptchaBehavior = z.infer<
   typeof productScannerCaptchaBehaviorSchema
 >;
 
+export const productScannerAmazonImageSearchProviderSchema = z.enum([
+  'google_images_upload',
+  'google_images_url',
+  'google_lens_upload',
+]);
+
+export type ProductScannerAmazonImageSearchProvider = z.infer<
+  typeof productScannerAmazonImageSearchProviderSchema
+>;
+
+export const productScannerAmazonImageSearchFallbackProviderSchema =
+  productScannerAmazonImageSearchProviderSchema.nullable();
+
+export type ProductScannerAmazonImageSearchFallbackProvider = z.infer<
+  typeof productScannerAmazonImageSearchFallbackProviderSchema
+>;
+
 export const productScannerAmazonCandidateEvaluatorModeSchema = z.enum([
   'disabled',
   'brain_default',
@@ -39,6 +56,15 @@ export const productScannerAmazonCandidateEvaluatorLanguageDetectionModeSchema =
 
 export type ProductScannerAmazonCandidateEvaluatorLanguageDetectionMode = z.infer<
   typeof productScannerAmazonCandidateEvaluatorLanguageDetectionModeSchema
+>;
+
+export const productScannerAmazonCandidateEvaluatorSimilarityModeSchema = z.enum([
+  'deterministic_then_ai',
+  'ai_only',
+]);
+
+export type ProductScannerAmazonCandidateEvaluatorSimilarityMode = z.infer<
+  typeof productScannerAmazonCandidateEvaluatorSimilarityModeSchema
 >;
 
 export const productScannerAmazonCandidateEvaluatorAllowedContentLanguageSchema = z
@@ -59,6 +85,7 @@ export const productScannerAmazonCandidateEvaluatorSchema = z.object({
   modelId: z.string().trim().min(1).max(200).nullable(),
   threshold: z.number().min(0).max(1),
   onlyForAmbiguousCandidates: z.boolean(),
+  candidateSimilarityMode: productScannerAmazonCandidateEvaluatorSimilarityModeSchema,
   allowedContentLanguage: productScannerAmazonCandidateEvaluatorAllowedContentLanguageSchema,
   rejectNonEnglishContent: z.boolean(),
   languageDetectionMode: productScannerAmazonCandidateEvaluatorLanguageDetectionModeSchema,
@@ -95,8 +122,11 @@ export const productScannerSettingsSchema = z.object({
   playwrightBrowser: productScannerPlaywrightBrowserSchema,
   captchaBehavior: productScannerCaptchaBehaviorSchema,
   manualVerificationTimeoutMs: z.number().int().positive().max(900_000),
+  amazonImageSearchProvider: productScannerAmazonImageSearchProviderSchema,
+  amazonImageSearchFallbackProvider: productScannerAmazonImageSearchFallbackProviderSchema,
   playwrightSettingsOverrides: playwrightSettingsSchema.partial(),
   amazonCandidateEvaluator: productScannerAmazonCandidateEvaluatorSchema.optional(),
+  amazonCandidateEvaluatorTriage: productScannerAmazonCandidateEvaluatorSchema.optional(),
   amazonCandidateEvaluatorProbe: productScannerAmazonCandidateEvaluatorSchema.optional(),
   amazonCandidateEvaluatorExtraction: productScannerAmazonCandidateEvaluatorSchema.optional(),
   scanner1688: productScanner1688SettingsSchema.optional(),

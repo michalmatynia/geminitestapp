@@ -172,7 +172,12 @@ describe('product-scans-service', () => {
     mocks.collectPlaywrightEngineRunFailureMessagesMock.mockReturnValue([]);
     mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({});
     mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
       captchaBehavior: 'fail',
+      manualVerificationTimeoutMs: 240000,
+      amazonImageSearchProvider: 'google_images_upload',
+      playwrightSettingsOverrides: {},
       scanner1688: {},
     });
     mocks.resolveProductScannerHeadlessMock.mockResolvedValue(true);
@@ -486,31 +491,31 @@ describe('product-scans-service', () => {
       resultValue: {
         status: 'running',
         stage: 'google_upload',
-        currentUrl: 'https://lens.google.com/upload',
+        currentUrl: 'https://images.google.com/?hl=en',
         steps: [
           {
             key: 'google_upload',
             label: 'Upload image to Google Lens',
             status: 'running',
             message: 'Uploading image to Google Lens.',
-            url: 'https://lens.google.com/upload',
+            url: 'https://images.google.com/?hl=en',
             startedAt: new Date(now - 10_000).toISOString(),
             completedAt: null,
           },
         ],
       },
-      finalUrl: 'https://lens.google.com/upload',
+      finalUrl: 'https://images.google.com/?hl=en',
     });
     mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({
       runId: 'run-1',
       runStatus: 'running',
       latestStage: 'google_upload',
-      latestStageUrl: 'https://lens.google.com/upload',
+      latestStageUrl: 'https://images.google.com/?hl=en',
       failureArtifacts: [],
       logTail: ['google lens upload pending'],
       rawResult: {
         stage: 'google_upload',
-        currentUrl: 'https://lens.google.com/upload',
+        currentUrl: 'https://images.google.com/?hl=en',
       },
     });
 
@@ -526,7 +531,7 @@ describe('product-scans-service', () => {
           runId: 'run-1',
           runStatus: 'running',
           latestStage: 'google_upload',
-          latestStageUrl: 'https://lens.google.com/upload',
+          latestStageUrl: 'https://images.google.com/?hl=en',
           logTail: ['google lens upload pending'],
           manualVerificationPending: false,
         }),
@@ -561,31 +566,31 @@ describe('product-scans-service', () => {
       resultValue: {
         status: 'running',
         stage: 'google_upload',
-        currentUrl: 'https://lens.google.com/upload',
+        currentUrl: 'https://images.google.com/?hl=en',
         steps: [
           {
             key: 'google_upload',
             label: 'Upload image to Google Lens',
             status: 'running',
             message: 'Uploading image to Google Lens.',
-            url: 'https://lens.google.com/upload',
+            url: 'https://images.google.com/?hl=en',
             startedAt: new Date(now - 200_000).toISOString(),
             completedAt: null,
           },
         ],
       },
-      finalUrl: 'https://lens.google.com/upload',
+      finalUrl: 'https://images.google.com/?hl=en',
     });
     mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({
       runId: 'run-1',
       runStatus: 'running',
       latestStage: 'google_upload',
-      latestStageUrl: 'https://lens.google.com/upload',
+      latestStageUrl: 'https://images.google.com/?hl=en',
       failureArtifacts: [],
       logTail: ['google lens upload pending'],
       rawResult: {
         stage: 'google_upload',
-        currentUrl: 'https://lens.google.com/upload',
+        currentUrl: 'https://images.google.com/?hl=en',
       },
     });
 
@@ -601,7 +606,7 @@ describe('product-scans-service', () => {
         asinUpdateMessage: 'Amazon reverse image scan stalled at Google Upload.',
         rawResult: expect.objectContaining({
           latestStage: 'google_upload',
-          latestStageUrl: 'https://lens.google.com/upload',
+          latestStageUrl: 'https://images.google.com/?hl=en',
           logTail: ['google lens upload pending'],
           stalledReason: 'no_progress',
         }),
@@ -624,6 +629,7 @@ describe('product-scans-service', () => {
         manualVerificationPending: true,
         manualVerificationMessage: 'Waiting for Google Lens manual verification.',
         manualVerificationTimeoutMs: 300_000,
+        imageSearchProvider: 'google_images_upload',
       },
     });
 
@@ -639,7 +645,7 @@ describe('product-scans-service', () => {
       resultValue: {
         status: 'captcha_required',
         stage: 'google_upload',
-        currentUrl: 'https://lens.google.com/upload',
+        currentUrl: 'https://images.google.com/?hl=en',
         message: 'Waiting for Google Lens manual verification.',
         steps: [
           {
@@ -647,23 +653,23 @@ describe('product-scans-service', () => {
             label: 'Upload image to Google Lens',
             status: 'running',
             message: 'Waiting for Google Lens manual verification.',
-            url: 'https://lens.google.com/upload',
+            url: 'https://images.google.com/?hl=en',
             startedAt: new Date(now - 360_000).toISOString(),
             completedAt: null,
           },
         ],
       },
-      finalUrl: 'https://lens.google.com/upload',
+      finalUrl: 'https://images.google.com/?hl=en',
     });
     mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({
       runId: 'run-1',
       runStatus: 'running',
       latestStage: 'google_upload',
-      latestStageUrl: 'https://lens.google.com/upload',
+      latestStageUrl: 'https://images.google.com/?hl=en',
       logTail: ['waiting for manual verification'],
       rawResult: {
         stage: 'google_upload',
-        currentUrl: 'https://lens.google.com/upload',
+        currentUrl: 'https://images.google.com/?hl=en',
       },
     });
 
@@ -679,7 +685,7 @@ describe('product-scans-service', () => {
         asinUpdateMessage: 'Google Lens manual verification expired at Google Upload.',
         rawResult: expect.objectContaining({
           latestStage: 'google_upload',
-          latestStageUrl: 'https://lens.google.com/upload',
+          latestStageUrl: 'https://images.google.com/?hl=en',
           logTail: ['waiting for manual verification'],
           manualVerificationPending: false,
           manualVerificationExpired: true,

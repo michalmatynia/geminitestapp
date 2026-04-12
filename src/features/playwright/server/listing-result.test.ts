@@ -76,8 +76,45 @@ describe('playwright listing result helpers', () => {
       },
       latestStage: 'publish',
       latestStageUrl: 'https://example.com/item/1',
+      duplicateLinked: null,
+      duplicateMatchStrategy: null,
+      duplicateMatchedProductId: null,
+      duplicateCandidateCount: null,
+      duplicateSearchTitle: null,
       publishVerified: true,
       source: 'programmable',
     });
+  });
+
+  it('promotes duplicate-link metadata from rawResult into top-level scripted listing metadata', () => {
+    expect(
+      buildPlaywrightScriptListingMetadata({
+        result: {
+          runId: 'run-duplicate',
+          effectiveBrowserMode: 'headed',
+          rawResult: {
+            stage: 'duplicate_linked',
+            currentUrl: 'https://www.tradera.com/item/1',
+            duplicateMatchStrategy: 'exact-title-single-candidate',
+            duplicateMatchedProductId: 'BASE-1',
+            duplicateCandidateCount: 1,
+            duplicateSearchTitle: 'Example title',
+          },
+          publishVerified: false,
+        } as never,
+        requestedBrowserMode: 'headed',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        latestStage: 'duplicate_linked',
+        latestStageUrl: 'https://www.tradera.com/item/1',
+        duplicateLinked: true,
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+        duplicateMatchedProductId: 'BASE-1',
+        duplicateCandidateCount: 1,
+        duplicateSearchTitle: 'Example title',
+        publishVerified: false,
+      })
+    );
   });
 });

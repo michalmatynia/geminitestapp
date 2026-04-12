@@ -149,6 +149,12 @@ export const PART_4D = String.raw`
       observedPreviewCount !== null
         ? Math.max(0, observedPreviewCount - Math.max(0, baselinePreviewCount))
         : null;
+    const observedPreviewDescriptors =
+      imageSettleState &&
+      typeof imageSettleState === 'object' &&
+      Array.isArray(imageSettleState.uploadedImagePreviewDescriptors)
+        ? imageSettleState.uploadedImagePreviewDescriptors
+        : [];
 
     if (observedPreviewDelta !== null && observedPreviewDelta > expectedUploadCount) {
       log?.('tradera.quicklist.image.preview_count_mismatch', {
@@ -174,6 +180,7 @@ export const PART_4D = String.raw`
       return {
         observedPreviewCount,
         observedPreviewDelta,
+        observedPreviewDescriptors,
       };
     }
 
@@ -193,6 +200,7 @@ export const PART_4D = String.raw`
         return {
           observedPreviewCount,
           observedPreviewDelta,
+          observedPreviewDescriptors,
         };
       }
 
@@ -729,6 +737,12 @@ export const PART_4D = String.raw`
       const fallbackMatches = duplicateCandidateSet.fallbackTitleMatches;
       const inspectionCandidates = duplicateCandidateSet.inspectionCandidates;
       const candidateScanMode = duplicateCandidateSet.candidateScanMode;
+      const exactTitleSingleCandidate =
+        listingAction === 'relist' &&
+        duplicateMatches.length === 1 &&
+        inspectionCandidates.length === 1
+          ? inspectionCandidates[0]
+          : null;
       const knownExistingCandidate = visibleCandidates.find(matchesKnownExistingListing) || null;
       const nonExactVisibleCandidateCount = visibleCandidates.filter(
         (candidate) => !titlesExactlyMatch(candidate?.title || '', searchTerm)
@@ -876,6 +890,37 @@ export const PART_4D = String.raw`
             searchTitle: searchTerm,
           };
         }
+      }
+
+      if (exactTitleSingleCandidate) {
+        const exactTitleListingUrl =
+          exactTitleSingleCandidate.listingUrl || knownExistingListingUrl || null;
+        const exactTitleListingId =
+          exactTitleSingleCandidate.listingId ||
+          extractListingId(exactTitleSingleCandidate.listingUrl || '') ||
+          knownExistingListingId ||
+          null;
+
+        log?.('tradera.quicklist.duplicate.result', {
+          term: searchTerm,
+          duplicateFound: true,
+          matchStrategy: 'exact-title-single-candidate',
+          candidateCount: inspectionCandidates.length,
+          listingUrl: exactTitleListingUrl,
+          listingId: exactTitleListingId,
+          matchedProductId: null,
+          listingAction,
+        });
+
+        return {
+          duplicateFound: true,
+          listingUrl: exactTitleListingUrl,
+          listingId: exactTitleListingId,
+          matchStrategy: 'exact-title-single-candidate',
+          matchedProductId: null,
+          candidateCount: inspectionCandidates.length,
+          searchTitle: searchTerm,
+        };
       }
     }
 

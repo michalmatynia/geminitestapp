@@ -66,6 +66,50 @@ describe('tradera-execution-steps', () => {
     });
   });
 
+  it('describes exact-title relinked duplicates distinctly in the quicklist timeline', () => {
+    const steps = buildTraderaQuicklistExecutionSteps({
+      action: 'relist',
+      rawResult: {
+        stage: 'duplicate_linked',
+        duplicateLinked: true,
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      },
+      logs: [
+        '[user] tradera.quicklist.start {"listingAction":"relist"}',
+        '[user] tradera.quicklist.auth.final {"loggedIn":true}',
+        '[user] tradera.quicklist.duplicate.linked {"listingUrl":"https://www.tradera.com/item/1"}',
+      ],
+    });
+
+    expect(steps.find((step) => step.id === 'duplicate')).toMatchObject({
+      status: 'success',
+      message:
+        'Relist linked the single exact-title Tradera candidate instead of creating a new listing.',
+    });
+  });
+
+  it('treats duplicate match strategy as linked state even when duplicateLinked is missing', () => {
+    const steps = buildTraderaQuicklistExecutionSteps({
+      action: 'relist',
+      rawResult: {
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      },
+      logs: [
+        '[user] tradera.quicklist.start {"listingAction":"relist"}',
+        '[user] tradera.quicklist.auth.final {"loggedIn":true}',
+      ],
+    });
+
+    expect(steps.find((step) => step.id === 'duplicate')).toMatchObject({
+      status: 'success',
+      message:
+        'Relist linked the single exact-title Tradera candidate instead of creating a new listing.',
+    });
+    expect(steps.find((step) => step.id === 'editor')).toMatchObject({
+      status: 'skipped',
+    });
+  });
+
   it('reads persisted execution steps from marketplace metadata safely', () => {
     const execution = resolveTraderaExecutionStepsFromMarketplaceData({
       tradera: {

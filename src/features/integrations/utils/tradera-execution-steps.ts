@@ -305,13 +305,22 @@ export const buildTraderaQuicklistExecutionSteps = ({
   errorMessage?: string | null;
 }): TraderaExecutionStep[] => {
   const steps = quicklistStepTemplates(action);
-  const stage = readString(toRecord(rawResult)['stage']);
+  const rawResultRecord = toRecord(rawResult);
+  const stage = readString(rawResultRecord['stage']);
+  const duplicateMatchStrategy = readString(rawResultRecord['duplicateMatchStrategy']);
   const duplicateLinked =
-    toRecord(rawResult)['duplicateLinked'] === true ||
+    rawResultRecord['duplicateLinked'] === true ||
+    Boolean(duplicateMatchStrategy) ||
     stage === 'duplicate_linked' ||
     hasEvent(logs, 'tradera.quicklist.duplicate.linked');
   const publishVerified =
-    toRecord(rawResult)['publishVerified'] === true || stage === 'publish_verified';
+    rawResultRecord['publishVerified'] === true || stage === 'publish_verified';
+  const duplicateLinkedMessage =
+    duplicateMatchStrategy === 'existing-linked-record'
+      ? 'A previously linked Tradera listing record was reused instead of creating a duplicate.'
+      : duplicateMatchStrategy === 'exact-title-single-candidate'
+        ? 'Relist linked the single exact-title Tradera candidate instead of creating a new listing.'
+        : 'An existing linked Tradera listing was reused instead of creating a duplicate.';
 
   const completedStepIds = resolveQuicklistCompletedStepIds(action, stage);
   for (const stepId of completedStepIds) {
@@ -357,9 +366,7 @@ export const buildTraderaQuicklistExecutionSteps = ({
         steps.find((step) => step.id === 'duplicate')?.status === 'success' || duplicateLinked
           ? 'success'
           : 'running',
-      message: duplicateLinked
-        ? 'An existing linked Tradera listing was reused instead of creating a duplicate.'
-        : 'Duplicate listing guard completed.',
+      message: duplicateLinked ? duplicateLinkedMessage : 'Duplicate listing guard completed.',
     });
   }
   if (hasEvent(logs, 'tradera.quicklist.duplicate.skipped')) {
@@ -371,7 +378,7 @@ export const buildTraderaQuicklistExecutionSteps = ({
   if (duplicateLinked) {
     markStep(steps, 'duplicate', {
       status: 'success',
-      message: 'An existing linked Tradera listing was reused instead of creating a duplicate.',
+      message: duplicateLinkedMessage,
     });
     markPendingStepsAfter(
       steps,

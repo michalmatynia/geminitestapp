@@ -10,10 +10,17 @@ import {
 } from '@/features/integrations/utils/traderaQuickListFeedback';
 import {
   resolveCompletedAtFromListing,
+  resolveDuplicateLinkedFromFeedback,
   resolveDuplicateLinkedFromListing,
+  resolveDuplicateMatchStrategyFromFeedback,
+  resolveDuplicateMatchStrategyFromListing,
   resolveListingUrlFromListing,
   resolveTraderaRequestId,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
+import {
+  SUCCESS_STATUSES,
+  normalizeMarketplaceStatus,
+} from '@/features/integrations/utils/marketplace-status';
 import type {
   ProductListingWithDetails,
   QuickExportFeedbackOptions as TraderaFeedbackOptions,
@@ -55,17 +62,37 @@ export const findTrackedTraderaListing = (
 export const buildTrackedTraderaFeedbackOptions = (
   listing: ProductListingWithDetails,
   feedback: PersistedTraderaQuickListFeedback
-): TraderaFeedbackOptions => ({
-  completedAt: resolveCompletedAtFromListing(listing),
-  duplicateLinked: resolveDuplicateLinkedFromListing(listing),
-  runId: feedback.runId ?? null,
-  requestId: feedback.requestId ?? resolveTraderaRequestId(listing),
-  integrationId: listing.integrationId ?? feedback.integrationId ?? null,
-  connectionId: listing.connectionId ?? feedback.connectionId ?? null,
-  listingId: listing.id,
-  listingUrl: resolveListingUrlFromListing(listing),
-  externalListingId: listing.externalListingId ?? feedback.externalListingId ?? null,
-});
+): TraderaFeedbackOptions => {
+  const duplicateMatchStrategy =
+    resolveDuplicateMatchStrategyFromListing(listing) ??
+    resolveDuplicateMatchStrategyFromFeedback(feedback);
+
+  return {
+    completedAt: resolveCompletedAtFromListing(listing),
+    duplicateLinked:
+      resolveDuplicateLinkedFromListing(listing) || resolveDuplicateLinkedFromFeedback(feedback),
+    duplicateMatchStrategy,
+    runId: feedback.runId ?? null,
+    requestId: feedback.requestId ?? resolveTraderaRequestId(listing),
+    integrationId: listing.integrationId ?? feedback.integrationId ?? null,
+    connectionId: listing.connectionId ?? feedback.connectionId ?? null,
+    listingId: listing.id,
+    listingUrl: resolveListingUrlFromListing(listing),
+    externalListingId: listing.externalListingId ?? feedback.externalListingId ?? null,
+    metadata: {
+      ...(feedback.metadata ?? {}),
+      ...(duplicateMatchStrategy ? { duplicateMatchStrategy } : {}),
+    },
+  };
+};
+
+export const isTrackedTraderaListingSuccess = (
+  listing: ProductListingWithDetails,
+  feedback: PersistedTraderaQuickListFeedback
+): boolean =>
+  SUCCESS_STATUSES.has(normalizeMarketplaceStatus(listing.status ?? '')) ||
+  resolveDuplicateLinkedFromListing(listing) ||
+  resolveDuplicateLinkedFromFeedback(feedback);
 
 export type UseTraderaQuickExportFeedbackResult = {
   localFeedback: PersistedTraderaQuickListFeedback | null;
@@ -91,6 +118,8 @@ export function useTraderaQuickExportFeedback(
       clearFeedback: clearPersistedTraderaQuickListFeedback,
       findTrackedListing: findTrackedTraderaListing as MarketplaceQuickExportFeedbackActions['findTrackedListing'],
       buildFeedbackOptions: buildTrackedTraderaFeedbackOptions as MarketplaceQuickExportFeedbackActions['buildFeedbackOptions'],
+      isTrackedListingSuccess:
+        isTrackedTraderaListingSuccess as MarketplaceQuickExportFeedbackActions['isTrackedListingSuccess'],
     }),
     []
   );

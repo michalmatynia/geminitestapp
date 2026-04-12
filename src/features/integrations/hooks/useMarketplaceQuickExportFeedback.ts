@@ -41,6 +41,10 @@ export interface MarketplaceQuickExportFeedbackActions {
     listing: ProductListingWithDetails,
     feedback: PersistedQuickExportFeedback
   ) => QuickExportFeedbackOptions;
+  isTrackedListingSuccess?: (
+    listing: ProductListingWithDetails,
+    feedback: PersistedQuickExportFeedback
+  ) => boolean;
 }
 
 export function useMarketplaceQuickExportFeedback(
@@ -139,8 +143,10 @@ export function useMarketplaceQuickExportFeedback(
       const trackedListing = actions.findTrackedListing(listings, localFeedback);
       if (!trackedListing) return false;
 
-      const normalizedListingStatus = normalizeMarketplaceStatus(trackedListing.status ?? '');
-      if (!SUCCESS_STATUSES.has(normalizedListingStatus)) {
+      const isTrackedListingSuccess = actions.isTrackedListingSuccess
+        ? actions.isTrackedListingSuccess(trackedListing, localFeedback)
+        : SUCCESS_STATUSES.has(normalizeMarketplaceStatus(trackedListing.status ?? ''));
+      if (!isTrackedListingSuccess) {
         return false;
       }
 

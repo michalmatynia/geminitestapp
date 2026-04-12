@@ -468,6 +468,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         plannedImageCount: null,
         observedImagePreviewCount: null,
         observedImagePreviewDelta: null,
+        observedImagePreviewDescriptors: [],
         localImagePathCount: 0,
         imageUrlCount: 2,
         ...EXPECTED_TRADERA_PRICING_METADATA,
@@ -1265,6 +1266,11 @@ describe('runTraderaBrowserListing scripted mode', () => {
       latestStage: 'duplicate_linked',
       latestStageUrl:
         'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      duplicateLinked: true,
+      duplicateMatchStrategy: 'title+product-id',
+      duplicateMatchedProductId: 'BASE-1',
+      duplicateCandidateCount: 2,
+      duplicateSearchTitle: 'Example title',
       categoryId: '101',
       categoryPath: 'Collectibles > Pins',
       categorySource: null,
@@ -1276,7 +1282,5 @@ describe('runTraderaBrowserListing scripted mode', () => {
         duplicateSearchTitle: 'Example title',
       },
     });
-  });
-
   });
 });

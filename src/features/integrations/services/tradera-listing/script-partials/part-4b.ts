@@ -443,25 +443,8 @@ export const PART_4B = String.raw`
   };
 
   const countUploadedImagePreviews = async () => {
-    let count = 0;
-
-    for (const selector of UPLOADED_IMAGE_PREVIEW_SELECTORS) {
-      const locator = page.locator(selector);
-      const candidateCount = await locator.count().catch(() => 0);
-      if (!candidateCount) continue;
-
-      for (let index = 0; index < candidateCount; index += 1) {
-        const candidate = locator.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (!visible) continue;
-
-        const box = await candidate.boundingBox().catch(() => null);
-        if (!box || box.width < 24 || box.height < 24) continue;
-        count += 1;
-      }
-    }
-
-    return count;
+    const descriptors = await readUploadedImagePreviewDescriptors(48).catch(() => []);
+    return Array.isArray(descriptors) ? descriptors.length : 0;
   };
 
   const summarizeUploadFileNames = (uploadFiles, limit = 12) => {
@@ -524,6 +507,10 @@ export const PART_4B = String.raw`
 
         const descriptor = await candidate
           .evaluate((element) => {
+            const previewImage =
+              element instanceof HTMLImageElement
+                ? element
+                : element.querySelector('img');
             const container =
               element.closest(
                 'article, li, figure, [data-testid*="image"], [data-testid*="photo"], [data-testid*="preview"], [class*="image"], [class*="Image"], [class*="photo"], [class*="Photo"]'
@@ -531,13 +518,18 @@ export const PART_4B = String.raw`
               element.parentElement ||
               element;
 
-            const src =
-              element instanceof HTMLImageElement
-                ? element.currentSrc || element.src || element.getAttribute('src') || ''
-                : element.getAttribute('src') || '';
+            const src = previewImage
+              ? previewImage.currentSrc || previewImage.src || previewImage.getAttribute('src') || ''
+              : element.getAttribute('src') ||
+                container.getAttribute('data-src') ||
+                container.getAttribute('data-image') ||
+                '';
 
             return {
-              alt: element.getAttribute('alt') || '',
+              alt:
+                (previewImage && previewImage.getAttribute('alt')) ||
+                element.getAttribute('alt') ||
+                '',
               src,
               ariaLabel:
                 element.getAttribute('aria-label') ||
@@ -584,15 +576,17 @@ export const PART_4B = String.raw`
 
   const readDraftImageCleanupState = async () => {
     const currentUrl = page.url();
-    const [draftImageRemoveControls, uploadedImagePreviewCount] = await Promise.all([
+    const [draftImageRemoveControls, uploadedImagePreviewCount, uploadedImagePreviewDescriptors] = await Promise.all([
       countDraftImageRemoveControls().catch(() => 0),
       countUploadedImagePreviews().catch(() => 0),
+      readUploadedImagePreviewDescriptors().catch(() => []),
     ]);
 
     return {
       currentUrl,
       draftImageRemoveControls,
       uploadedImagePreviewCount,
+      uploadedImagePreviewDescriptors,
       onHomepage: isTraderaHomepage(currentUrl),
       onSellingRoute: isTraderaSellingRoute(currentUrl),
     };
@@ -650,10 +644,16 @@ export const PART_4B = String.raw`
         await wait(300);
       }
 
-      const [selectedImageFileCount, draftImageRemoveControls, uploadedImagePreviewCount] = await Promise.all([
+      const [
+        selectedImageFileCount,
+        draftImageRemoveControls,
+        uploadedImagePreviewCount,
+        uploadedImagePreviewDescriptors,
+      ] = await Promise.all([
         readSelectedImageFileCount(imageInput),
         countDraftImageRemoveControls(),
         countUploadedImagePreviews(),
+        readUploadedImagePreviewDescriptors().catch(() => []),
       ]);
       const [imageUploadPromptVisible, imageUploadPending, imageUploadErrorText] = await Promise.all([
         isImageUploadPromptVisible(),
@@ -665,6 +665,7 @@ export const PART_4B = String.raw`
           selectedImageFileCount,
           draftImageRemoveControls,
           uploadedImagePreviewCount,
+          uploadedImagePreviewDescriptors,
           baselinePreviewCount,
           imageUploadPromptVisible,
           imageUploadPending,
@@ -706,6 +707,7 @@ export const PART_4B = String.raw`
         selectedImageFileCount,
         draftImageRemoveControls,
         uploadedImagePreviewCount,
+        uploadedImagePreviewDescriptors,
         baselinePreviewCount,
         ...summarizeImageUploadProgressState({
           selectedImageFileCount,
@@ -732,6 +734,7 @@ export const PART_4B = String.raw`
           selectedImageFileCount,
           draftImageRemoveControls,
           uploadedImagePreviewCount,
+          uploadedImagePreviewDescriptors,
           baselinePreviewCount,
           imageUploadPromptVisible,
           imageUploadPending,

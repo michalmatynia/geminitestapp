@@ -17,7 +17,9 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 import {
   buildPersistedProductScannerSettings,
   PRODUCT_SCANNER_1688_CANDIDATE_EVALUATOR_MODE_OPTIONS,
+  PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER_OPTIONS,
   PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_LANGUAGE_DETECTION_MODE_OPTIONS,
+  PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_SIMILARITY_MODE_OPTIONS,
   buildProductScannerSettingsDraft,
   PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE_OPTIONS,
   PRODUCT_SCANNER_BROWSER_OPTIONS,
@@ -50,11 +52,20 @@ const formatConfidenceThresholdLabel = (value: number): string =>
 
 type AmazonCandidateEvaluator = Pick<
   ProductScannerSettingsDraft,
-  'amazonCandidateEvaluatorProbe' | 'amazonCandidateEvaluatorExtraction'
+  | 'amazonCandidateEvaluatorTriage'
+  | 'amazonCandidateEvaluatorProbe'
+  | 'amazonCandidateEvaluatorExtraction'
 >[keyof Pick<
   ProductScannerSettingsDraft,
-  'amazonCandidateEvaluatorProbe' | 'amazonCandidateEvaluatorExtraction'
+  | 'amazonCandidateEvaluatorTriage'
+  | 'amazonCandidateEvaluatorProbe'
+  | 'amazonCandidateEvaluatorExtraction'
 >];
+
+const AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER_OPTIONS = [
+  { value: '', label: 'Disabled' },
+  ...PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER_OPTIONS,
+];
 
 const resolveAmazonEvaluatorPolicyLines = (
   evaluator: AmazonCandidateEvaluator
@@ -66,9 +77,14 @@ const resolveAmazonEvaluatorPolicyLines = (
   }
 
   return [
-    evaluator.onlyForAmbiguousCandidates
-      ? 'AI review runs only when the Amazon candidate remains ambiguous after deterministic identifier checks.'
-      : 'AI review runs on every Amazon candidate before extraction is trusted.',
+    evaluator.candidateSimilarityMode === 'ai_only'
+      ? 'AI review runs on every Amazon candidate and decides product similarity itself.'
+      : evaluator.onlyForAmbiguousCandidates
+        ? 'AI review runs only when the Amazon candidate remains ambiguous after deterministic identifier checks.'
+        : 'AI review runs on every Amazon candidate after deterministic identifier hints are gathered.',
+    evaluator.candidateSimilarityMode === 'ai_only'
+      ? 'Deterministic identifier matches are passed to the model as hints and cannot bypass AI review.'
+      : 'Deterministic identifier matches can bypass AI review when the candidate is configured as non-ambiguous.',
     evaluator.rejectNonEnglishContent
       ? 'Only English Amazon page content is trusted for scraping into English product fields.'
       : 'Language does not block extraction in the current evaluator policy.',
@@ -103,7 +119,18 @@ const resolveAmazonEvaluatorSummaryLines = (
     `Model source: ${evaluator.mode === 'brain_default' ? 'AI Brain default' : 'Scanner override'}`,
     `Resolved model: ${effectiveModelLabel}`,
     `Trust threshold: ${formatConfidenceThresholdLabel(evaluator.threshold)}`,
-    `Review scope: ${evaluator.onlyForAmbiguousCandidates ? 'Ambiguous candidates only' : 'Every Amazon candidate'}`,
+    `Similarity decision: ${
+      evaluator.candidateSimilarityMode === 'ai_only'
+        ? 'AI only'
+        : 'Deterministic hints, then AI'
+    }`,
+    `Review scope: ${
+      evaluator.candidateSimilarityMode === 'ai_only'
+        ? 'Every Amazon candidate'
+        : evaluator.onlyForAmbiguousCandidates
+          ? 'Ambiguous candidates only'
+          : 'Every Amazon candidate'
+    }`,
     `Language gate: ${
       evaluator.rejectNonEnglishContent
         ? evaluator.languageDetectionMode === 'ai_only'
@@ -238,6 +265,10 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
     draft.amazonCandidateEvaluatorProbe,
     brainModelOptions.effectiveModelId
   );
+  const effectiveAmazonCandidateEvaluatorTriageModel = resolveAmazonEvaluatorModelLabel(
+    draft.amazonCandidateEvaluatorTriage,
+    brainModelOptions.effectiveModelId
+  );
   const effectiveAmazonCandidateEvaluatorExtractionModel = resolveAmazonEvaluatorModelLabel(
     draft.amazonCandidateEvaluatorExtraction,
     brainModelOptions.effectiveModelId
@@ -252,9 +283,21 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
     () => resolveAmazonEvaluatorPolicyLines(draft.amazonCandidateEvaluatorProbe),
     [draft]
   );
+  const amazonTriageEvaluatorPolicyLines = useMemo(
+    () => resolveAmazonEvaluatorPolicyLines(draft.amazonCandidateEvaluatorTriage),
+    [draft]
+  );
   const amazonExtractionEvaluatorPolicyLines = useMemo(
     () => resolveAmazonEvaluatorPolicyLines(draft.amazonCandidateEvaluatorExtraction),
     [draft]
+  );
+  const amazonTriageEvaluatorSummaryLines = useMemo(
+    () =>
+      resolveAmazonEvaluatorSummaryLines(
+        draft.amazonCandidateEvaluatorTriage,
+        effectiveAmazonCandidateEvaluatorTriageModel
+      ),
+    [draft, effectiveAmazonCandidateEvaluatorTriageModel]
   );
   const amazonProbeEvaluatorSummaryLines = useMemo(
     () =>
@@ -396,6 +439,53 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 placeholder='Select captcha handling'
                 ariaLabel='Select scanner captcha handling'
                 title='Select scanner captcha handling'
+              />
+            </FormField>
+            <FormField
+              label='Amazon Image Search Provider'
+              description='Choose which Google entry flow Amazon reverse-image scans should use.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonImageSearchProvider}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonImageSearchProvider:
+                      value === 'google_images_url' || value === 'google_lens_upload'
+                        ? value
+                        : 'google_images_upload',
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER_OPTIONS]}
+                placeholder='Select Amazon image search provider'
+                ariaLabel='Select Amazon image search provider'
+                title='Select Amazon image search provider'
+              />
+            </FormField>
+            <FormField
+              label='Fallback Search Provider'
+              description='Optional backup Google entry flow when AI triage recommends switching providers.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonImageSearchFallbackProvider ?? ''}
+                onValueChange={(value: string): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonImageSearchFallbackProvider: value.trim()
+                      ? value === 'google_images_upload' ||
+                        value === 'google_images_url' ||
+                        value === 'google_lens_upload'
+                        ? value
+                        : null
+                      : null,
+                  }));
+                }}
+                options={[...AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER_OPTIONS]}
+                placeholder='Select fallback search provider'
+                ariaLabel='Select Amazon image search fallback provider'
+                title='Select Amazon image search fallback provider'
               />
             </FormField>
             <FormField
@@ -545,6 +635,36 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
               />
             </FormField>
             <FormField
+              label='Similarity Decision'
+              description='Choose whether deterministic identifier matches can bypass AI review.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluatorProbe.candidateSimilarityMode}
+                onValueChange={(value: string): void => {
+                  const nextMode =
+                    value === 'deterministic_then_ai'
+                      ? 'deterministic_then_ai'
+                      : 'ai_only';
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorProbe: {
+                      ...prev.amazonCandidateEvaluatorProbe,
+                      candidateSimilarityMode: nextMode,
+                      onlyForAmbiguousCandidates:
+                        nextMode === 'ai_only'
+                          ? false
+                          : prev.amazonCandidateEvaluatorProbe.onlyForAmbiguousCandidates,
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_SIMILARITY_MODE_OPTIONS]}
+                placeholder='Select similarity decision mode'
+                ariaLabel='Select Amazon probe evaluator similarity decision mode'
+                title='Select Amazon probe evaluator similarity decision mode'
+              />
+            </FormField>
+            <FormField
               label='Evaluation Scope'
               description='Run the evaluator only when Amazon candidates are ambiguous.'
             >
@@ -552,6 +672,7 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 <input
                   type='checkbox'
                   checked={draft.amazonCandidateEvaluatorProbe.onlyForAmbiguousCandidates}
+                  disabled={draft.amazonCandidateEvaluatorProbe.candidateSimilarityMode === 'ai_only'}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                     setDraft((prev) => ({
                       ...prev,
@@ -566,6 +687,9 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 />
                 Only evaluate ambiguous candidates
               </label>
+              {draft.amazonCandidateEvaluatorProbe.candidateSimilarityMode === 'ai_only' ? (
+                <Hint>AI-only similarity review always evaluates every Amazon candidate.</Hint>
+              ) : null}
             </FormField>
             <FormField
               label='Allowed Content Language'
@@ -740,6 +864,36 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
               />
             </FormField>
             <FormField
+              label='Similarity Decision'
+              description='Choose whether deterministic identifier matches can bypass AI review.'
+            >
+              <SelectSimple
+                size='sm'
+                value={draft.amazonCandidateEvaluatorExtraction.candidateSimilarityMode}
+                onValueChange={(value: string): void => {
+                  const nextMode =
+                    value === 'deterministic_then_ai'
+                      ? 'deterministic_then_ai'
+                      : 'ai_only';
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonCandidateEvaluatorExtraction: {
+                      ...prev.amazonCandidateEvaluatorExtraction,
+                      candidateSimilarityMode: nextMode,
+                      onlyForAmbiguousCandidates:
+                        nextMode === 'ai_only'
+                          ? false
+                          : prev.amazonCandidateEvaluatorExtraction.onlyForAmbiguousCandidates,
+                    },
+                  }));
+                }}
+                options={[...PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_SIMILARITY_MODE_OPTIONS]}
+                placeholder='Select similarity decision mode'
+                ariaLabel='Select Amazon extraction evaluator similarity decision mode'
+                title='Select Amazon extraction evaluator similarity decision mode'
+              />
+            </FormField>
+            <FormField
               label='Evaluation Scope'
               description='Run the evaluator only when Amazon candidates are ambiguous.'
             >
@@ -747,6 +901,7 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 <input
                   type='checkbox'
                   checked={draft.amazonCandidateEvaluatorExtraction.onlyForAmbiguousCandidates}
+                  disabled={draft.amazonCandidateEvaluatorExtraction.candidateSimilarityMode === 'ai_only'}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                     setDraft((prev) => ({
                       ...prev,
@@ -761,6 +916,9 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 />
                 Only evaluate ambiguous candidates
               </label>
+              {draft.amazonCandidateEvaluatorExtraction.candidateSimilarityMode === 'ai_only' ? (
+                <Hint>AI-only similarity review always evaluates every Amazon candidate.</Hint>
+              ) : null}
             </FormField>
             <FormField
               label='Allowed Content Language'

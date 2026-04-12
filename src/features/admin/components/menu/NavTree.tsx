@@ -48,13 +48,6 @@ function useNavTree(): NavTreeContextValue {
   return context;
 }
 
-type NavTreeItemProps = {
-  item: NavItem;
-  depth: number;
-  active: boolean;
-  isOpen: boolean;
-};
-
 type NavTreeNodeProps = {
   item: NavItem;
   depth: number;

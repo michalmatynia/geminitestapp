@@ -487,6 +487,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
     status:
       input.status === 'matched' ||
       input.status === 'probe_ready' ||
+      input.status === 'triage_ready' ||
       input.status === 'no_match' ||
       input.status === 'failed'
         ? input.status
@@ -504,6 +505,27 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
       ? input.candidateUrls
           .map((value) => toText(value))
           .filter(Boolean)
+      : [],
+    candidateResults: Array.isArray(input.candidateResults)
+      ? input.candidateResults
+          .map((candidate, index) => ({
+            url: toText(candidate?.url),
+            score:
+              typeof candidate?.score === 'number' && Number.isFinite(candidate.score)
+                ? Math.trunc(candidate.score)
+                : null,
+            asin: toText(candidate?.asin),
+            marketplaceDomain: toText(candidate?.marketplaceDomain),
+            title: toText(candidate?.title),
+            snippet: toText(candidate?.snippet),
+            rank:
+              typeof candidate?.rank === 'number' && Number.isFinite(candidate.rank)
+                ? Math.trunc(candidate.rank)
+                : typeof index === 'number'
+                  ? index + 1
+                  : null,
+          }))
+          .filter((candidate) => candidate.url)
       : [],
     matchedImageId: toText(input.matchedImageId),
     currentUrl: toText(input.currentUrl) || page.url(),
@@ -958,6 +980,16 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         await page.locator('link[rel="canonical"]').first().getAttribute('href').catch(() => null)
       );
       const canonicalUrl = toAbsoluteUrl(canonicalHref, currentUrl) || currentUrl;
+      const pageLanguage = toText(
+        await page.evaluate(() => document.documentElement?.lang || null).catch(() => null)
+      );
+      const marketplaceDomain = (() => {
+        try {
+          return new URL(canonicalUrl || currentUrl).hostname.toLowerCase();
+        } catch {
+          return null;
+        }
+      })();
       const asin =
         extractAsin(currentUrl) ||
         extractAsin(canonicalUrl) ||
@@ -1492,10 +1524,33 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         return;
       }
       const amazonCandidates = amazonCandidateResult.candidates;
+      const amazonCandidateResults = Array.isArray(amazonCandidateResult.candidateResults)
+        ? amazonCandidateResult.candidateResults
+        : [];
       log('amazon.scan.google_candidates', { candidateId, candidateCount: amazonCandidates.length });
 
       if (amazonCandidates.length === 0) {
         continue;
+      }
+
+      if (input?.triageOnlyOnAmazonCandidates === true) {
+        await emitResult({
+          status: 'triage_ready',
+          asin: null,
+          title: null,
+          price: null,
+          url: amazonCandidates[0] || page.url(),
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          candidateUrls: amazonCandidates,
+          candidateResults: amazonCandidateResults,
+          matchedImageId: candidateId,
+          currentUrl: page.url(),
+          message: 'Collected Amazon candidates for AI triage before opening Amazon.',
+          stage: 'google_candidates',
+        });
+        return;
       }
 
       for (const [candidateRankIndex, amazonCandidateUrl] of amazonCandidates.slice(0, 3).entries()) {

@@ -398,6 +398,80 @@ describe('ProductListingsEmpty', () => {
     );
   });
 
+  it('renders exact-title relist success copy when persisted feedback records the duplicate strategy', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+      metadata: {
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera relist matched an existing listing')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Relist found one exact-title Tradera candidate and linked it instead of creating a new listing. Use the link below to open the matched Tradera item.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/725447805'
+    );
+  });
+
+  it('renders exact-title relist success copy when persisted feedback only preserves duplicate strategy in rawResult', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+      metadata: {
+        rawResult: {
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera relist matched an existing listing')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Relist found one exact-title Tradera candidate and linked it instead of creating a new listing. Use the link below to open the matched Tradera item.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/725447805'
+    );
+  });
+
   it('renders a Vinted quick-export success banner when the row has not synced yet', () => {
     persistVintedQuickListFeedback('product-1', 'completed', {
       listingId: 'listing-vinted-1',

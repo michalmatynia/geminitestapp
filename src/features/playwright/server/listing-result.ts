@@ -7,6 +7,12 @@ import type {
 
 import type { PlaywrightListingResult } from './programmable';
 
+const toOptionalString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const toOptionalNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
 export type BuildPlaywrightListingResultInput<
   TMetadata extends Record<string, unknown> = Record<string, unknown>,
 > = {
@@ -51,25 +57,32 @@ export const buildPlaywrightScriptListingMetadata = <
   >;
   requestedBrowserMode: PlaywrightRelistBrowserMode;
   additional?: TAdditional;
-}): Record<string, unknown> => ({
-  runId: result.runId,
-  requestedBrowserMode,
-  browserMode: result.effectiveBrowserMode,
-  ...(result.personaId !== undefined
-    ? {
-        playwrightPersonaId: result.personaId,
-      }
-    : {}),
-  ...(result.executionSettings
-    ? {
-        playwrightSettings: result.executionSettings,
-      }
-    : {}),
-  rawResult: result.rawResult,
-  latestStage:
-    typeof result.rawResult['stage'] === 'string' ? result.rawResult['stage'] : null,
-  latestStageUrl:
-    typeof result.rawResult['currentUrl'] === 'string' ? result.rawResult['currentUrl'] : null,
-  publishVerified: result.publishVerified,
-  ...(additional ?? {}),
-});
+}): Record<string, unknown> => {
+  const duplicateMatchStrategy = toOptionalString(result.rawResult['duplicateMatchStrategy']);
+  return {
+    runId: result.runId,
+    requestedBrowserMode,
+    browserMode: result.effectiveBrowserMode,
+    ...(result.personaId !== undefined
+      ? {
+          playwrightPersonaId: result.personaId,
+        }
+      : {}),
+    ...(result.executionSettings
+      ? {
+          playwrightSettings: result.executionSettings,
+        }
+      : {}),
+    rawResult: result.rawResult,
+    latestStage: toOptionalString(result.rawResult['stage']),
+    latestStageUrl: toOptionalString(result.rawResult['currentUrl']),
+    duplicateLinked:
+      result.rawResult['duplicateLinked'] === true || (duplicateMatchStrategy ? true : null),
+    duplicateMatchStrategy,
+    duplicateMatchedProductId: toOptionalString(result.rawResult['duplicateMatchedProductId']),
+    duplicateCandidateCount: toOptionalNumber(result.rawResult['duplicateCandidateCount']),
+    duplicateSearchTitle: toOptionalString(result.rawResult['duplicateSearchTitle']),
+    publishVerified: result.publishVerified,
+    ...(additional ?? {}),
+  };
+};

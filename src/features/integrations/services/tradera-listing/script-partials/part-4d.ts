@@ -545,59 +545,6 @@ export const PART_4D = String.raw`
     return deduped;
   };
 
-  const isLikelyDuplicateMatchByText = (candidate, normalizedSearchTerm) => {
-    if (!normalizedSearchTerm) {
-      return false;
-    }
-
-    const normalizedCandidateTitle = normalizeListingMatchValue(candidate?.title || '');
-    const normalizedCandidateText = normalizeListingMatchValue(
-      [candidate?.text || '', candidate?.title || ''].filter(Boolean).join(' ')
-    );
-    const candidateTitle = normalizedCandidateTitle;
-    const candidateText = normalizedCandidateText;
-
-    if (!candidateTitle && !candidateText) {
-      return false;
-    }
-
-    if (
-      candidateTitle === normalizedSearchTerm ||
-      candidateText === normalizedSearchTerm ||
-      candidateTitle.includes(normalizedSearchTerm) ||
-      candidateText.includes(normalizedSearchTerm)
-    ) {
-      return true;
-    }
-
-    if (normalizedSearchTerm.includes(candidateTitle) && candidateTitle.length >= 12) {
-      return true;
-    }
-
-    const searchTokens = normalizedSearchTerm
-      .split(' ')
-      .map((token) => token.trim())
-      .filter((token) => token.length >= 3);
-    if (searchTokens.length < 2) {
-      return false;
-    }
-
-    const candidateTokens = new Set(
-      normalizeWhitespace([candidateTitle, candidateText].filter(Boolean).join(' '))
-        .split(' ')
-        .map((token) => token.trim())
-        .filter((token) => token.length >= 3)
-    );
-    let matchCount = 0;
-    for (const token of searchTokens) {
-      if (candidateTokens.has(token)) {
-        matchCount += 1;
-      }
-    }
-
-    return matchCount >= Math.min(2, Math.ceil(searchTokens.length / 2));
-  };
-
   const collectDuplicateCandidates = async (searchTerm, visibleCandidates = []) => {
     const normalizedSearchTerm = normalizeListingMatchValue(searchTerm);
     if (!normalizedSearchTerm) {
@@ -627,22 +574,18 @@ export const PART_4D = String.raw`
       };
     }
 
-    const fallbackTitleMatches = [];
-
-    for (const candidate of sourceCandidates) {
-      if (fallbackTitleMatches.length >= FALLBACK_DUPLICATE_SEARCH_CANDIDATE_LIMIT) {
-        break;
-      }
-      if (isLikelyDuplicateMatchByText(candidate, normalizedSearchTerm)) {
-        fallbackTitleMatches.push(candidate);
-      }
-    }
+    const fallbackTitleMatches = sourceCandidates
+      .filter((candidate) => !titlesExactlyMatch(candidate?.title || '', searchTerm))
+      .slice(0, FALLBACK_DUPLICATE_SEARCH_CANDIDATE_LIMIT);
 
     return {
       exactTitleMatches,
       fallbackTitleMatches,
-      inspectionCandidates: dedupeCandidatesByListing([...exactTitleMatches, ...fallbackTitleMatches]),
-      candidateScanMode: fallbackTitleMatches.length > 0 ? 'exact-title-fallback-text-match' : 'no-title-match-found',
+      inspectionCandidates: [],
+      candidateScanMode:
+        fallbackTitleMatches.length > 0
+          ? 'non-exact-title-visible-results'
+          : 'no-title-match-found',
     };
   };
 
@@ -661,6 +604,8 @@ export const PART_4D = String.raw`
       matchedProductId: null,
       candidateCount: 0,
       searchTitle: searchTerms[0] || null,
+      ignoredNonExactCandidateCount: 0,
+      ignoredCandidateTitles: [],
     });
     const identifiersMatch = (left, right) =>
       normalizeWhitespace(left).toLowerCase() === normalizeWhitespace(right).toLowerCase();
@@ -702,6 +647,8 @@ export const PART_4D = String.raw`
 
     let hadTrustedNoDuplicateSignal = false;
     const uncertainSearchAttempts = [];
+    let ignoredNonExactCandidateCount = 0;
+    const ignoredCandidateTitles = [];
 
     for (const searchTerm of searchTerms) {
       const activeContextReady = await ensureActiveListingsContext();
@@ -749,16 +696,6 @@ export const PART_4D = String.raw`
       const fallbackMatches = duplicateCandidateSet.fallbackTitleMatches;
       const inspectionCandidates = duplicateCandidateSet.inspectionCandidates;
       const candidateScanMode = duplicateCandidateSet.candidateScanMode;
-      const singleVisibleFallbackCandidate =
-        listingAction === 'relist' &&
-        inspectionCandidates.length === 0 &&
-        visibleCandidates.length === 1 &&
-        isLikelyDuplicateMatchByText(visibleCandidates[0], normalizedSearchTerm)
-          ? visibleCandidates[0]
-          : null;
-      const effectiveInspectionCandidates = singleVisibleFallbackCandidate
-        ? [singleVisibleFallbackCandidate]
-        : inspectionCandidates;
       const exactTitleSingleCandidate =
         listingAction === 'relist' &&
         duplicateMatches.length === 1
@@ -778,7 +715,8 @@ export const PART_4D = String.raw`
         normalizeWhitespace(searchInputValue).toLowerCase() ===
           normalizeWhitespace(searchTerm).toLowerCase() &&
         !searchStateChanged &&
-        effectiveInspectionCandidates.length === 0 &&
+        duplicateMatches.length > 0 &&
+        inspectionCandidates.length === 0 &&
         hadVisibleCandidates;
 
       log?.('tradera.quicklist.duplicate.search', {
@@ -789,17 +727,33 @@ export const PART_4D = String.raw`
         candidateCount: duplicateMatches.length,
         visibleCandidateCount: visibleCandidates.length,
         exactTitleCandidateCount: duplicateMatches.length,
-        inspectionCandidateCount: effectiveInspectionCandidates.length,
+        inspectionCandidateCount: inspectionCandidates.length,
         nonExactVisibleCandidateCount,
         fallbackCandidateCount,
         candidateScanMode,
-        singleVisibleFallbackCandidateFound: Boolean(singleVisibleFallbackCandidate),
         searchStateChanged,
         uncertainSearch,
         knownExistingListingCandidateFound: Boolean(knownExistingCandidate),
         listingAction,
         allowDuplicateLinking,
       });
+
+      if (duplicateMatches.length === 0 && fallbackCandidateCount > 0) {
+        ignoredNonExactCandidateCount += fallbackCandidateCount;
+        for (const title of fallbackMatches
+          .map((candidate) => normalizeWhitespace(candidate?.title || ''))
+          .filter(Boolean)
+          .slice(0, 5)) {
+          if (!ignoredCandidateTitles.includes(title)) {
+            ignoredCandidateTitles.push(title);
+          }
+        }
+        log?.('tradera.quicklist.duplicate.non_exact_ignored', {
+          term: searchTerm,
+          fallbackCandidateCount,
+          ignoredCandidateTitles: ignoredCandidateTitles.slice(0, 5),
+        });
+      }
 
       if (knownExistingCandidate) {
         log?.('tradera.quicklist.duplicate.result', {
@@ -838,7 +792,7 @@ export const PART_4D = String.raw`
         hadTrustedNoDuplicateSignal = true;
       }
 
-      for (const candidate of effectiveInspectionCandidates) {
+      for (const candidate of inspectionCandidates) {
         let inspectedCandidate = null;
         try {
           inspectedCandidate = await inspectDuplicateCandidateListing(candidate);
@@ -874,7 +828,7 @@ export const PART_4D = String.raw`
             term: searchTerm,
             duplicateFound: true,
             matchStrategy: 'title+description',
-            candidateCount: effectiveInspectionCandidates.length,
+            candidateCount: inspectionCandidates.length,
             listingUrl: resolvedListingUrl,
             listingId: resolvedListingId,
             matchedProductId: inspectedCandidate?.matchedProductId || null,
@@ -886,7 +840,7 @@ export const PART_4D = String.raw`
             listingId: resolvedListingId,
             matchStrategy: 'title+description',
             matchedProductId: inspectedCandidate?.matchedProductId || null,
-            candidateCount: effectiveInspectionCandidates.length,
+            candidateCount: inspectionCandidates.length,
             searchTitle: searchTerm,
           };
         }
@@ -896,7 +850,7 @@ export const PART_4D = String.raw`
             term: searchTerm,
             duplicateFound: true,
             matchStrategy: 'title+product-id',
-            candidateCount: effectiveInspectionCandidates.length,
+            candidateCount: inspectionCandidates.length,
             listingUrl: resolvedListingUrl,
             listingId: resolvedListingId,
             matchedProductId: inspectedCandidate?.matchedProductId || null,
@@ -908,7 +862,7 @@ export const PART_4D = String.raw`
             listingId: resolvedListingId,
             matchStrategy: 'title+product-id',
             matchedProductId: inspectedCandidate?.matchedProductId || null,
-            candidateCount: effectiveInspectionCandidates.length,
+            candidateCount: inspectionCandidates.length,
             searchTitle: searchTerm,
           };
         }
@@ -927,7 +881,7 @@ export const PART_4D = String.raw`
           term: searchTerm,
           duplicateFound: true,
           matchStrategy: 'exact-title-single-candidate',
-          candidateCount: effectiveInspectionCandidates.length,
+          candidateCount: inspectionCandidates.length,
           listingUrl: exactTitleListingUrl,
           listingId: exactTitleListingId,
           matchedProductId: null,
@@ -940,7 +894,7 @@ export const PART_4D = String.raw`
           listingId: exactTitleListingId,
           matchStrategy: 'exact-title-single-candidate',
           matchedProductId: null,
-          candidateCount: effectiveInspectionCandidates.length,
+          candidateCount: inspectionCandidates.length,
           searchTitle: searchTerm,
         };
       }
@@ -962,11 +916,17 @@ export const PART_4D = String.raw`
       duplicateFound: false,
       matchStrategy: null,
       candidateCount: 0,
+      ignoredNonExactCandidateCount,
+      ignoredCandidateTitles: ignoredCandidateTitles.slice(0, 5),
       expectedProductId: baseProductId,
       listingUrl: null,
       listingId: null,
     });
 
-    return createDefaultDuplicateResult();
+    return {
+      ...createDefaultDuplicateResult(),
+      ignoredNonExactCandidateCount,
+      ignoredCandidateTitles: ignoredCandidateTitles.slice(0, 5),
+    };
   };
 `;

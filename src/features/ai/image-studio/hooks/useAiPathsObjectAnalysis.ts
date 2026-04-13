@@ -198,15 +198,23 @@ export function useAiPathsObjectAnalysis(
   }, []);
 
   const applyResults = useCallback(
-    (
-      bounds: ExtractedObjectBounds | null,
-      confidence: number | null,
-      rawResult: Record<string, unknown> | null,
-      runId: string,
-      cfg: AiPathsObjectAnalysisConfig,
-      slotId: string,
-      imageUrl: string
-    ) => {
+    ({
+      bounds,
+      confidence,
+      rawResult,
+      runId,
+      cfg,
+      slotId,
+      imageUrl,
+    }: {
+      bounds: ExtractedObjectBounds | null;
+      confidence: number | null;
+      rawResult: Record<string, unknown> | null;
+      runId: string;
+      cfg: AiPathsObjectAnalysisConfig;
+      slotId: string;
+      imageUrl: string;
+    }) => {
       const pid = activeProjectIdRef.current;
       let appliedPreviewOffset = false;
 
@@ -445,7 +453,15 @@ export function useAiPathsObjectAnalysis(
             return;
           }
 
-          applyResults(bounds, confidence, rawResult, runId, config, slotId, imageUrl);
+          applyResults({
+            bounds,
+            confidence,
+            rawResult,
+            runId,
+            cfg: config,
+            slotId,
+            imageUrl,
+          });
           setStatus('completed');
           toast('AI object analysis complete. Canvas repositioned.', { variant: 'success' });
         };

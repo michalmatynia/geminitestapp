@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-04-13T10:17:50.281Z",
+    "generatedAt": "2026-04-13T20:41:09.460Z",
     "scannedFileCount": 2599,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1903
+        "count": 1904
       },
       {
         "family": "Page",
@@ -19,7 +19,7 @@
       },
       {
         "family": "Section",
-        "count": 144
+        "count": 143
       },
       {
         "family": "Panel",
@@ -20769,7 +20769,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Sidebar",
-      "lines": 532,
+      "lines": 533,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21173,27 +21173,6 @@
       "uiPrimitiveImports": 2,
       "tokenSet": {},
       "propsSignature": null,
-      "thinReExportWrapper": false
-    },
-    {
-      "path": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-      "basename": "LaunchSchedulingSection.tsx",
-      "domain": "feature",
-      "scope": "feature:filemaker",
-      "family": "Section",
-      "lines": 136,
-      "useClient": true,
-      "imports": [
-        "@/shared/ui/primitives.public",
-        "@/shared/ui/forms-and-actions.public",
-        "../AdminFilemakerCampaignEditPage.utils",
-        "../../types",
-        "@/shared/contracts/filemaker"
-      ],
-      "templateImports": 0,
-      "uiPrimitiveImports": 2,
-      "tokenSet": {},
-      "propsSignature": "isRecurring|launchMode|recurringDayOfMonth|recurringDayOfWeek|recurringFrequency|recurringHour|recurringMinute|scheduledAt|setIsRecurring|setLaunchMode|setRecurringDayOfMonth|setRecurringDayOfWeek|setRecurringFrequency|setRecurringHour|setRecurringMinute|setScheduledAt",
       "thinReExportWrapper": false
     },
     {
@@ -22987,12 +22966,32 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/integrations/components/listings/TraderaExecutionSteps.test.tsx",
+      "basename": "TraderaExecutionSteps.test.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
+      "lines": 74,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./TraderaExecutionSteps"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/integrations/components/listings/TraderaExecutionSteps.tsx",
       "basename": "TraderaExecutionSteps.tsx",
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 80,
+      "lines": 101,
       "useClient": false,
       "imports": [
         "react",
@@ -23031,11 +23030,12 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 252,
+      "lines": 272,
       "useClient": true,
       "imports": [
         "lucide-react",
         "@/features/integrations/constants/slugs",
+        "@/features/integrations/hooks/useTraderaLiveExecution",
         "@/features/integrations/utils/tradera-browser-session",
         "@/features/integrations/utils/tradera-execution-steps",
         "@/shared/ui/button",
@@ -23055,7 +23055,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 667,
+      "lines": 795,
       "useClient": false,
       "imports": [
         "react",
@@ -23481,7 +23481,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 1219,
+      "lines": 1308,
       "useClient": false,
       "imports": [
         "react",
@@ -23504,13 +23504,14 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 402,
+      "lines": 468,
       "useClient": true,
       "imports": [
         "react",
         "@/features/integrations/constants/slugs",
         "@/features/integrations/hooks/useTraderaQuickListFeedback",
         "@/features/integrations/hooks/useTraderaQuickExportFeedback",
+        "@/features/integrations/hooks/useTraderaLiveExecution",
         "@/features/integrations/hooks/useVintedQuickListFeedback",
         "@/features/integrations/context/ProductListingsContext",
         "@/features/integrations/utils/product-listings-recovery",
@@ -23527,7 +23528,8 @@
         "./VintedQuickExportRecoveryBanner",
         "./VintedQuickExportSuccessBanner",
         "@/features/integrations/utils/marketplace-status",
-        "@/features/integrations/hooks/useVintedQuickExportFeedback"
+        "@/features/integrations/hooks/useVintedQuickExportFeedback",
+        "@/features/integrations/utils/tradera-listing-client-utils"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23993,7 +23995,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 547,
+      "lines": 718,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -24012,14 +24014,16 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 494,
+      "lines": 541,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/features/integrations/components/listings/useImageRetryPresets",
+        "@/features/integrations/hooks/useTraderaLiveExecution",
         "@/features/integrations/constants/slugs",
         "@/features/integrations/context/ProductListingsContext",
+        "@/features/integrations/utils/tradera-status-check",
         "@/features/integrations/utils/tradera-listing-client-utils",
         "@/shared/contracts/integrations/base",
         "@/shared/ui/primitives.public",
@@ -24038,7 +24042,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 1041,
+      "lines": 1598,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -24057,13 +24061,14 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 911,
+      "lines": 976,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/features/integrations/constants/slugs",
         "@/features/integrations/context/ProductListingsContext",
+        "@/features/integrations/hooks/useTraderaLiveExecution",
         "@/shared/contracts/integrations/listings",
         "@/shared/ui/data-display.public",
         "@/shared/ui/primitives.public",
@@ -43824,12 +43829,13 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 58,
+      "lines": 60,
       "useClient": true,
       "imports": [
         "react",
         "./KangurGameOperationSelectorWidget.types",
-        "./KangurGameOperationSelectorWidget.copy"
+        "./KangurGameOperationSelectorWidget.copy",
+        "@/features/kangur/ui/services/game-setup-recommendations"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -45654,7 +45660,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 974,
+      "lines": 991,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -49471,7 +49477,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 910,
+      "lines": 942,
       "useClient": false,
       "imports": [
         "react",
@@ -49496,7 +49502,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 344,
+      "lines": 345,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -49526,7 +49532,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 98,
+      "lines": 131,
       "useClient": false,
       "imports": [
         "react",
@@ -49546,7 +49552,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 65,
+      "lines": 73,
       "useClient": true,
       "imports": [
         "react",
@@ -49568,7 +49574,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 391,
+      "lines": 428,
       "useClient": false,
       "imports": [
         "react",
@@ -49594,7 +49600,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 343,
+      "lines": 344,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -49624,7 +49630,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 98,
+      "lines": 126,
       "useClient": false,
       "imports": [
         "react",
@@ -49644,7 +49650,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 70,
+      "lines": 73,
       "useClient": true,
       "imports": [
         "react",

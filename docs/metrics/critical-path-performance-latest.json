@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-12T15:28:42.442Z",
+  "generatedAt": "2026-04-13T20:43:11.150Z",
   "strictMode": false,
   "summary": {
     "total": 10,
@@ -383,88 +383,108 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-12T15:28:42.430Z",
+    "generatedAt": "2026-04-13T20:43:11.143Z",
     "hotspots": {
       "topFilesByLines": [
         {
-          "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-          "lines": 4661
+          "path": "src/features/products/server/product-scans-service.ts",
+          "lines": 4478
         },
         {
           "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
-          "lines": 3831
-        },
-        {
-          "path": "src/features/products/components/form/ProductFormScans.test.tsx",
-          "lines": 2977
-        },
-        {
-          "path": "src/features/products/server/product-scans-service.test.ts",
-          "lines": 2869
-        },
-        {
-          "path": "src/features/products/server/product-scans-service.ts",
-          "lines": 2675
+          "lines": 4175
         },
         {
           "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
-          "lines": 2587
+          "lines": 3221
+        },
+        {
+          "path": "src/features/products/components/form/ProductFormScans.test.tsx",
+          "lines": 3065
+        },
+        {
+          "path": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
+          "lines": 2194
         },
         {
           "path": "src/features/products/server/product-scans-service.amazon.test.ts",
-          "lines": 1919
+          "lines": 2166
         },
         {
           "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
-          "lines": 1790
+          "lines": 2130
         },
         {
           "path": "src/features/products/components/ProductModals.test.tsx",
           "lines": 1730
         },
         {
+          "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
+          "lines": 1719
+        },
+        {
+          "path": "src/features/products/server/product-scan-amazon-evaluator.ts",
+          "lines": 1709
+        },
+        {
+          "path": "src/features/integrations/services/tradera-listing-service.test.ts",
+          "lines": 1676
+        },
+        {
           "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
           "lines": 1599
         },
         {
+          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx",
+          "lines": 1598
+        },
+        {
           "path": "src/features/products/components/form/ProductFormScans.tsx",
-          "lines": 1542
+          "lines": 1582
         },
         {
-          "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
-          "lines": 1538
+          "path": "src/features/products/pages/AdminProductScannerSettingsPage.tsx",
+          "lines": 1540
         },
         {
-          "path": "src/features/product-sync/services/product-sync-service.ts",
-          "lines": 1502
+          "path": "src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts",
+          "lines": 1498
         },
         {
-          "path": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
-          "lines": 1416
+          "path": "src/features/integrations/services/tradera-listing/BrowserListing.1.test.ts",
+          "lines": 1442
+        },
+        {
+          "path": "src/features/products/server/product-scans-service.helpers.ts",
+          "lines": 1441
+        },
+        {
+          "path": "src/features/integrations/services/tradera-listing/script-partials/part-5.ts",
+          "lines": 1417
+        },
+        {
+          "path": "src/features/product-sync/services/product-sync-processor.ts",
+          "lines": 1324
+        },
+        {
+          "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
+          "lines": 1308
         },
         {
           "path": "src/features/products/components/list/ProductColumns.test.tsx",
           "lines": 1302
         },
         {
-          "path": "src/features/integrations/services/tradera-listing-service.test.ts",
-          "lines": 1288
+          "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+          "lines": 1256
         },
         {
           "path": "src/features/ai/ai-paths/services/__tests__/playwright-node-runner.test.ts",
           "lines": 1253
         },
         {
-          "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
-          "lines": 1250
-        },
-        {
-          "path": "src/features/products/server/product-scans-service.helpers.ts",
-          "lines": 1159
-        },
-        {
-          "path": "src/features/products/pages/AdminProductScannerSettingsPage.tsx",
-          "lines": 1153
+          "path": "src/features/integrations/services/tradera-listing/BrowserListing.2.test.ts",
+          "lines": 1154
         },
         {
           "path": "src/features/product-sync/components/ProductSyncSettings.tsx",
@@ -475,36 +495,16 @@
           "lines": 1095
         },
         {
+          "path": "src/features/integrations/utils/tradera-execution-steps.ts",
+          "lines": 1080
+        },
+        {
+          "path": "src/features/integrations/context/useProductListingsActionsImpl.test.tsx",
+          "lines": 1059
+        },
+        {
           "path": "src/features/ai/ai-paths/services/path-run-executor/callbacks.ts",
           "lines": 1056
-        },
-        {
-          "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
-          "lines": 1055
-        },
-        {
-          "path": "src/shared/lib/products/services/productService.test.ts",
-          "lines": 1048
-        },
-        {
-          "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
-          "lines": 1037
-        },
-        {
-          "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx",
-          "lines": 1035
-        },
-        {
-          "path": "src/features/products/components/scans/ProductScan1688Details.tsx",
-          "lines": 1035
-        },
-        {
-          "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
-          "lines": 1018
-        },
-        {
-          "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
-          "lines": 1014
         }
       ]
     },
@@ -520,7 +520,7 @@
         },
         {
           "path": "src/app/api/v2/products/[[...path]]/route.ts",
-          "lines": 120
+          "lines": 121
         },
         {
           "path": "src/app/api/ai-paths/[[...path]]/route.ts",

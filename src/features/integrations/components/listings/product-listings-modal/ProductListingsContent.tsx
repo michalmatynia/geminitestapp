@@ -10,6 +10,7 @@ import {
   useTraderaQuickListFeedback,
 } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import { findTrackedTraderaListing } from '@/features/integrations/hooks/useTraderaQuickExportFeedback';
+import { useTraderaLiveExecution } from '@/features/integrations/hooks/useTraderaLiveExecution';
 import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
 import {
   useProductListingsData,
@@ -20,6 +21,7 @@ import {
   createTraderaRecoveryContext,
   createVintedRecoveryContext,
   findTraderaRecoveryListing,
+  isTraderaQuickExportRecoveryContext,
   isVintedQuickExportRecoveryContext,
   mergeProductListingsRecoveryContext,
   resolveTraderaRecoveryMetadata,
@@ -48,6 +50,7 @@ import {
   normalizeMarketplaceStatus,
 } from '@/features/integrations/utils/marketplace-status';
 import { findTrackedVintedListing } from '@/features/integrations/hooks/useVintedQuickExportFeedback';
+import { resolveDuplicateLinkedFromRunResult } from '@/features/integrations/utils/tradera-listing-client-utils';
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -141,6 +144,17 @@ export function ProductListingsContent(): React.JSX.Element {
   const fallbackRecoveryListing = shouldUseTraderaRecovery
     ? findTraderaRecoveryListing(filteredListings, recoveryRequestId, recoveryRunId)
     : null;
+  const fallbackRecoveryLiveExecution = useTraderaLiveExecution(
+    shouldUseTraderaRecovery ? fallbackRecoveryListing : null
+  );
+  const liveRecoveredTraderaListing =
+    shouldUseTraderaRecovery &&
+    resolveDuplicateLinkedFromRunResult(
+      fallbackRecoveryLiveExecution?.rawResult,
+      fallbackRecoveryLiveExecution?.latestStage
+    );
+  const effectiveShouldUseTraderaRecovery =
+    shouldUseTraderaRecovery && !liveRecoveredTraderaListing;
   const fallbackRecoveryMetadata = fallbackRecoveryListing
     ? resolveTraderaRecoveryMetadata(fallbackRecoveryListing)
     : null;
@@ -203,6 +217,16 @@ export function ProductListingsContent(): React.JSX.Element {
                 }
               : listing
           )
+        : liveRecoveredTraderaListing && fallbackRecoveryListing
+          ? filteredListings.map((listing) =>
+              listing.id === fallbackRecoveryListing.id &&
+              !SUCCESS_STATUSES.has(normalizeMarketplaceStatus(listing.status ?? ''))
+                ? {
+                    ...listing,
+                    status: 'active',
+                  }
+                : listing
+            )
         : filteredListings;
   const displayScopedStatus =
     persistedQuickListFeedback?.status === 'completed' &&
@@ -211,9 +235,11 @@ export function ProductListingsContent(): React.JSX.Element {
       : persistedVintedQuickListFeedback?.status === 'completed' &&
           filterIntegrationSlug === 'vinted'
         ? 'active'
+        : liveRecoveredTraderaListing && isTraderaIntegrationSlug(filterIntegrationSlug)
+          ? 'active'
         : displayListings[0]?.status ?? 'Unknown';
   const shouldShowQuickListSuccessBanner = Boolean(
-    !shouldUseTraderaRecovery &&
+    !effectiveShouldUseTraderaRecovery &&
       persistedQuickListFeedback?.status === 'completed' &&
       (isTraderaIntegrationSlug(filterIntegrationSlug) || trackedSuccessListing)
   );
@@ -223,7 +249,7 @@ export function ProductListingsContent(): React.JSX.Element {
       (filterIntegrationSlug === 'vinted' || trackedVintedSuccessListing)
   );
   const recoveryNeedsManualLogin =
-    shouldUseTraderaRecovery &&
+    effectiveShouldUseTraderaRecovery &&
     ((recoveryContext?.status ?? '').trim().toLowerCase() === 'auth_required' ||
       (recoveryContext?.status ?? '').trim().toLowerCase() === 'needs_login' ||
       (fallbackRecoveryListing?.status ?? '').trim().toLowerCase() === 'auth_required' ||
@@ -247,7 +273,47 @@ export function ProductListingsContent(): React.JSX.Element {
   );
 
   React.useEffect(() => {
-    if (!shouldUseTraderaRecovery || !fallbackRecoveryListing) return;
+    if (!shouldUseTraderaRecovery || !liveRecoveredTraderaListing) return;
+
+    setRecoveryContext((current) => {
+      if (!isTraderaQuickExportRecoveryContext(current)) {
+        return current;
+      }
+
+      if (current.requestId && recoveryRequestId) {
+        return current.requestId === recoveryRequestId ? null : current;
+      }
+
+      if (current.runId && recoveryRunId) {
+        return current.runId === recoveryRunId ? null : current;
+      }
+
+      if (
+        current.integrationId &&
+        recoveryIntegrationId &&
+        current.connectionId &&
+        recoveryConnectionId
+      ) {
+        return current.integrationId === recoveryIntegrationId &&
+          current.connectionId === recoveryConnectionId
+          ? null
+          : current;
+      }
+
+      return null;
+    });
+  }, [
+    liveRecoveredTraderaListing,
+    recoveryConnectionId,
+    recoveryIntegrationId,
+    recoveryRequestId,
+    recoveryRunId,
+    setRecoveryContext,
+    shouldUseTraderaRecovery,
+  ]);
+
+  React.useEffect(() => {
+    if (!effectiveShouldUseTraderaRecovery || !fallbackRecoveryListing) return;
 
     const nextRecoveryContext: Extract<ProductListingsRecoveryContext, { integrationSlug: 'tradera' }> =
       createTraderaRecoveryContext({
@@ -286,7 +352,7 @@ export function ProductListingsContent(): React.JSX.Element {
     fallbackRecoveryListing,
     fallbackRecoveryMetadata?.requestId,
     fallbackRecoveryMetadata?.runId,
-    shouldUseTraderaRecovery,
+    effectiveShouldUseTraderaRecovery,
     product.id,
     recoveryContext?.source,
     recoveryContext?.status,
@@ -359,7 +425,7 @@ export function ProductListingsContent(): React.JSX.Element {
           listing={trackedVintedSuccessListing}
         />
       ) : null}
-      {shouldUseTraderaRecovery && (
+      {effectiveShouldUseTraderaRecovery && (
         <TraderaQuickExportRecoveryBanner
           mode='content'
           status={recoveryContext?.status}

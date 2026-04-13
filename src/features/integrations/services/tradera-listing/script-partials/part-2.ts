@@ -2,18 +2,103 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     );
   };
 
-  const acceptCookiesIfPresent = async () => {
-    for (const selector of COOKIE_ACCEPT_SELECTORS) {
-      const locator = page.locator(selector).first();
+  const acceptCookiesIfPresent = async ({ context = 'unknown', attempts = 2 } = {}) => {
+    let acceptedAny = false;
+    const roleNamePatterns = [
+      /accept all cookies/i,
+      /allow all cookies/i,
+      /allow all/i,
+      /accept all/i,
+      /^accept$/i,
+      /acceptera alla cookies/i,
+      /acceptera alla kakor/i,
+      /acceptera alla/i,
+      /^acceptera$/i,
+      /godkänn alla cookies/i,
+      /godkänn alla/i,
+      /^godkänn$/i,
+      /tillåt alla cookies/i,
+      /tillåt alla/i,
+    ];
+
+    const directClick = async (locator) => {
+      await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+      try {
+        await locator.click({ timeout: 2_000 });
+        return true;
+      } catch {
+        return locator
+          .evaluate((element) => {
+            if (element instanceof HTMLElement) {
+              element.click();
+              return true;
+            }
+            return false;
+          })
+          .catch(() => false);
+      }
+    };
+
+    const tryVisibleCandidates = async (locator, selector) => {
       const count = await locator.count().catch(() => 0);
-      if (!count) continue;
-      const visible = await locator.isVisible().catch(() => false);
-      if (!visible) continue;
-      await humanClick(locator).catch(() => undefined);
-      await wait(600);
-      return true;
+      const candidateCount = Math.min(count, 8);
+      for (let index = 0; index < candidateCount; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+        const clicked = await directClick(candidate);
+        if (!clicked) continue;
+        return String(selector) + '[' + String(index) + ']';
+      }
+      return null;
+    };
+
+    for (let attempt = 0; attempt < Math.max(1, attempts); attempt += 1) {
+      let acceptedInAttempt = false;
+
+      for (const selector of COOKIE_ACCEPT_SELECTORS) {
+        const matchedSelector = await tryVisibleCandidates(page.locator(selector), selector);
+        if (!matchedSelector) continue;
+
+        acceptedAny = true;
+        acceptedInAttempt = true;
+        log?.('tradera.quicklist.cookie.accepted', {
+          context,
+          attempt,
+          selector: matchedSelector,
+          currentUrl: page.url(),
+        });
+        await page.waitForTimeout(700);
+        break;
+      }
+
+      if (!acceptedInAttempt) {
+        for (const roleNamePattern of roleNamePatterns) {
+          const matchedSelector = await tryVisibleCandidates(
+            page.getByRole('button', { name: roleNamePattern }),
+            'role=button:' + String(roleNamePattern)
+          );
+          if (!matchedSelector) continue;
+
+          acceptedAny = true;
+          acceptedInAttempt = true;
+          log?.('tradera.quicklist.cookie.accepted', {
+            context,
+            attempt,
+            selector: matchedSelector,
+            currentUrl: page.url(),
+          });
+          await page.waitForTimeout(700);
+          break;
+        }
+      }
+
+      if (!acceptedInAttempt) {
+        break;
+      }
     }
-    return false;
+
+    return acceptedAny;
   };
 
   async function collectAuthState(extra = {}) {
@@ -373,14 +458,23 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       };
     };
 
+    updateStep('cookie_accept', 'running');
     await acceptCookiesIfPresent();
+    updateStep('cookie_accept', 'completed');
+
+    updateStep('auth_check', 'running');
     const initialAuthState = await readAuthState();
     log?.('tradera.quicklist.auth.initial', initialAuthState);
     if (initialAuthState.loggedIn) {
+      updateStep('auth_check', 'completed', { method: 'session' });
+      skipStep('auth_login', 'already authenticated');
+      skipStep('auth_manual', 'already authenticated');
       return;
     }
 
     if (!username || !password) {
+      updateStep('auth_check', 'completed', { method: 'none', loggedIn: false });
+      updateStep('auth_manual', 'running');
       await captureFailureArtifacts('auth-required', {
         phase: 'credentials-missing',
         authState: initialAuthState,
@@ -388,12 +482,15 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       throw new Error('AUTH_REQUIRED: Tradera login requires manual verification.');
     }
 
+    updateStep('auth_check', 'completed', { method: 'credentials', loggedIn: false });
+    skipStep('auth_manual', 'automated login will be attempted');
+
     if (!initialAuthState.currentUrl.includes('/login')) {
       await page.goto('https://www.tradera.com/en/login', {
         waitUntil: 'domcontentloaded',
         timeout: 30_000,
       });
-      await acceptCookiesIfPresent();
+      await acceptCookiesIfPresent({ context: 'login-navigation' });
     }
 
     const usernameInput = await firstVisible(USERNAME_SELECTORS);
@@ -401,6 +498,7 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     const loginButton = await firstVisible(LOGIN_BUTTON_SELECTORS);
 
     if (!usernameInput || !passwordInput || !loginButton) {
+      updateStep('auth_login', 'failed', { reason: 'login-controls-missing' });
       await captureFailureArtifacts('auth-required', {
         phase: 'login-controls-missing',
         authState: await readAuthState(),
@@ -408,6 +506,7 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       throw new Error('AUTH_REQUIRED: Tradera login requires manual verification.');
     }
 
+    updateStep('auth_login', 'running');
     await humanFill(usernameInput, username);
     await humanFill(passwordInput, password);
     await Promise.allSettled([
@@ -415,18 +514,21 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       humanClick(loginButton, { pauseAfter: false }),
     ]);
     await wait(1500);
-    await acceptCookiesIfPresent();
+    await acceptCookiesIfPresent({ context: 'post-login' });
 
     const finalAuthState = await readAuthState();
     log?.('tradera.quicklist.auth.final', finalAuthState);
 
     if (!finalAuthState.loggedIn) {
+      updateStep('auth_login', 'failed', { reason: 'post-login-not-authenticated' });
       await captureFailureArtifacts('auth-required', {
         phase: 'post-login-not-authenticated',
         authState: finalAuthState,
       });
       throw new Error('AUTH_REQUIRED: Tradera login requires manual verification.');
     }
+
+    updateStep('auth_login', 'completed', { method: 'automated' });
   };
 
   const isCreateListingPage = async () => {
@@ -688,7 +790,7 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         log?.('tradera.quicklist.sell_page.trying', { candidate, attempt });
         await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-        await acceptCookiesIfPresent();
+        await acceptCookiesIfPresent({ context: 'sell-page-navigation' });
 
         let entryPoint = await waitForSellEntryPoint();
         if (entryPoint === 'trigger') {
@@ -728,6 +830,9 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
   };
 
   const ensureCreateListingPageReady = async (context, recover = false) => {
+    await acceptCookiesIfPresent({ context: 'ensure-create-listing-page-ready' }).catch(
+      () => false
+    );
     if (await isCreateListingPage()) {
       return true;
     }

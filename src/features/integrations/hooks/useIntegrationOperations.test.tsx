@@ -18,6 +18,7 @@ vi.mock('@/shared/lib/query-invalidation', () => ({
 }));
 
 import {
+  resolveEffectiveListingBadgesPayload,
   resolveListingBadgeRefetchInterval,
   useIntegrationListingBadges,
   useIntegrationModalOperations,
@@ -35,6 +36,7 @@ const createQueryClient = (): QueryClient =>
 describe('useIntegrationOperations listing badges query', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
     apiGetMock.mockResolvedValue({});
   });
 
@@ -135,6 +137,64 @@ describe('useIntegrationOperations listing badges query', () => {
     expect(result.current.traderaBadgeStatuses.get('product-1')).toBe('queued');
   });
 
+  it('prefers completed persisted Tradera feedback over a stale server auth_required badge', async () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      })
+    );
+    apiGetMock.mockResolvedValue({
+      'product-1': {
+        tradera: 'auth_required',
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useIntegrationListingBadges(['product-1']), {
+      wrapper,
+    });
+
+    await waitFor(() => {
+      expect(result.current.traderaBadgeStatuses.get('product-1')).toBe('active');
+    });
+    expect(result.current.traderaBadgeIds.has('product-1')).toBe(true);
+  });
+
+  it('normalizes stale recovery badge payloads against persisted quick-export feedback', () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    expect(
+      resolveEffectiveListingBadgesPayload({
+        'product-1': {
+          tradera: 'auth_required',
+        },
+      })
+    ).toEqual({
+      'product-1': {
+        tradera: 'active',
+      },
+    });
+  });
+
   it('does not keep polling when no marketplace badges are present', () => {
     expect(resolveListingBadgeRefetchInterval({})).toBe(false);
   });
@@ -157,6 +217,29 @@ describe('useIntegrationOperations listing badges query', () => {
         },
       })
     ).toBe(30_000);
+  });
+
+  it('does not keep reconciliation polling once persisted feedback normalizes a stale Tradera recovery badge to active', () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    expect(
+      resolveListingBadgeRefetchInterval(
+        resolveEffectiveListingBadgesPayload({
+          'product-1': {
+            tradera: 'auth_required',
+          },
+        })
+      )
+    ).toBe(false);
   });
 
   it('keeps the faster poll for in-flight marketplace badges', () => {

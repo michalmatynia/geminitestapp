@@ -277,6 +277,9 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'headed',
+      }),
+      expect.objectContaining({
+        onRunStarted: expect.any(Function),
       })
     );
     expect(appendExportHistoryMock).toHaveBeenCalledWith(
@@ -344,6 +347,9 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'headed',
+      }),
+      expect.objectContaining({
+        onRunStarted: expect.any(Function),
       })
     );
   });
@@ -396,6 +402,9 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'headed',
+      }),
+      expect.objectContaining({
+        onRunStarted: expect.any(Function),
       })
     );
 
@@ -444,6 +453,93 @@ describe('processTraderaListingJob', () => {
         externalListingId: 'external-1',
         fields: ['browser_mode:headed'],
         requestId: 'job-tradera-1',
+      })
+    );
+  });
+
+  it('persists the active Tradera run id into pending execution while the listing run is live', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-live-run',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: {
+          tradera: {
+            pendingExecution: {
+              action: 'relist',
+              requestedBrowserMode: 'headed',
+              requestId: 'job-live-run',
+              queuedAt: '2026-04-13T10:00:00.000Z',
+            },
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockImplementation(
+      async (_input: unknown, options?: { onRunStarted?: (runId: string) => Promise<void> | void }) => {
+        await options?.onRunStarted?.('run-live-123');
+        return {
+          externalListingId: 'external-live-1',
+          listingUrl: 'https://www.tradera.com/item/999',
+          metadata: {
+            scriptMode: 'scripted',
+            browserMode: 'headed',
+            requestedBrowserMode: 'headed',
+            runId: 'run-live-123',
+            publishVerified: true,
+          },
+        };
+      }
+    );
+
+    await processTraderaListingJob({
+      listingId: 'listing-live-run',
+      action: 'relist',
+      source: 'manual',
+      jobId: 'job-live-run',
+      browserMode: 'headed',
+    });
+
+    expect(updateListingMock).toHaveBeenNthCalledWith(
+      1,
+      'listing-live-run',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              action: 'relist',
+              requestId: 'job-live-run',
+              requestedBrowserMode: 'headed',
+              runId: 'run-live-123',
+            }),
+          }),
+        }),
+      })
+    );
+    expect(updateListingMock).toHaveBeenNthCalledWith(
+      2,
+      'listing-live-run',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              metadata: expect.objectContaining({
+                runId: 'run-live-123',
+              }),
+            }),
+          }),
+        }),
       })
     );
   });
@@ -567,23 +663,46 @@ describe('processTraderaListingJob', () => {
         appendExportHistory: appendExportHistoryMock,
       },
     });
+    getConnectionByIdMock.mockResolvedValue({
+      id: 'connection-1',
+      integrationId: 'integration-1',
+      traderaBrowserMode: 'scripted',
+      playwrightHeadless: false,
+    });
+    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
+      connectionHeadless: false,
+      connectionBrowserPreference: undefined,
+      profile: {
+        hasExplicitHeadlessPreference: true,
+        hasExplicitBrowserPreference: false,
+        settings: {
+          headless: false,
+        },
+      },
+    });
     runTraderaBrowserCheckStatusMock.mockResolvedValue({
       externalListingId: 'external-1',
       listingUrl: 'https://www.tradera.com/item/1',
       metadata: {
         checkedStatus: 'ended',
-        requestedBrowserMode: 'headless',
+        requestedBrowserMode: 'headed',
         runId: 'run-check-status',
         executionSteps: [
           {
-            id: 'open_overview',
-            label: 'Open Active listings',
+            id: 'auth_check',
+            label: 'Validate Tradera session',
             status: 'success',
-            message: 'Tradera Active listings opened successfully.',
+            message: 'Stored Tradera session could access the seller overview.',
+          },
+          {
+            id: 'overview_open',
+            label: 'Open seller overview',
+            status: 'success',
+            message: 'Tradera seller overview opened successfully.',
           },
           {
             id: 'resolve_status',
-            label: 'Resolve final Tradera status',
+            label: 'Resolve Status',
             status: 'success',
             message: 'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
           },
@@ -600,7 +719,10 @@ describe('processTraderaListingJob', () => {
 
     expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        browserMode: 'headless',
+        browserMode: 'headed',
+      }),
+      expect.objectContaining({
+        onRunStarted: expect.any(Function),
       })
     );
     expect(runTraderaBrowserListingMock).not.toHaveBeenCalled();
@@ -626,7 +748,11 @@ describe('processTraderaListingJob', () => {
                 runId: 'run-check-status',
                 executionSteps: [
                   expect.objectContaining({
-                    id: 'open_overview',
+                    id: 'auth_check',
+                    status: 'success',
+                  }),
+                  expect.objectContaining({
+                    id: 'overview_open',
                     status: 'success',
                   }),
                   expect.objectContaining({
@@ -680,6 +806,9 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'headed',
+      }),
+      expect.objectContaining({
+        onRunStarted: expect.any(Function),
       })
     );
     expect(updateListingMock).toHaveBeenCalledWith(
@@ -1083,6 +1212,81 @@ describe('processTraderaListingJob', () => {
     );
   });
 
+  it('persists stale-draft image failures as form failures with a user-facing retry message', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-image-stale-draft',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockRejectedValue(
+      internalError(
+        'FAIL_IMAGE_SET_INVALID: Tradera draft already contained images before upload. Last state: {"baselinePreviewCount":2,"uploadSource":"local","uploadAttempt":0}'
+      )
+    );
+
+    await expect(
+      processTraderaListingJob({
+        listingId: 'listing-image-stale-draft',
+        action: 'list',
+        source: 'manual',
+        jobId: 'job-tradera-image-stale-draft',
+      })
+    ).rejects.toThrow(
+      'Tradera still had draft images before upload. Review the listing images in Tradera and retry.'
+    );
+
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-image-stale-draft',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'Tradera still had draft images before upload. Review the listing images in Tradera and retry.',
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastErrorCategory: 'FORM',
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-image-stale-draft',
+              ok: false,
+              error:
+                'Tradera still had draft images before upload. Review the listing images in Tradera and retry.',
+              errorCategory: 'FORM',
+              metadata: expect.objectContaining({
+                failureCode: 'image_stale_draft_state',
+                staleDraftImages: true,
+                imagePreviewMismatch: false,
+                duplicateRisk: false,
+                imageUploadSource: 'local',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-image-stale-draft',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'Tradera still had draft images before upload. Review the listing images in Tradera and retry.',
+        requestId: 'job-tradera-image-stale-draft',
+      })
+    );
+  });
+
   it('keeps scheduler-driven scripted Tradera runs on the connection default browser mode', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();
@@ -1126,6 +1330,9 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'connection_default',
+      }),
+      expect.objectContaining({
+        onRunStarted: expect.any(Function),
       })
     );
   });
@@ -1163,6 +1370,8 @@ describe('processTraderaListingJob', () => {
         publishVerified: true,
         latestStage: 'publish_verified',
         latestStageUrl: 'https://www.tradera.com/en/my/listings?tab=active',
+        duplicateIgnoredNonExactCandidateCount: 2,
+        duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
       },
     });
 
@@ -1190,6 +1399,8 @@ describe('processTraderaListingJob', () => {
                 publishVerified: true,
                 latestStage: 'publish_verified',
                 latestStageUrl: 'https://www.tradera.com/en/my/listings?tab=active',
+                duplicateIgnoredNonExactCandidateCount: 2,
+                duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
               }),
             }),
           }),
@@ -1239,6 +1450,8 @@ describe('processTraderaListingJob', () => {
         duplicateMatchedProductId: 'BASE-1',
         duplicateCandidateCount: 2,
         duplicateSearchTitle: 'Example title',
+        duplicateIgnoredNonExactCandidateCount: 3,
+        duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword', 'Wooden Katana'],
         browserMode: 'headed',
         requestedBrowserMode: 'headed',
       },
@@ -1275,6 +1488,12 @@ describe('processTraderaListingJob', () => {
                 duplicateMatchedProductId: 'BASE-1',
                 duplicateCandidateCount: 2,
                 duplicateSearchTitle: 'Example title',
+                duplicateIgnoredNonExactCandidateCount: 3,
+                duplicateIgnoredCandidateTitles: [
+                  'Katanas',
+                  'Katana Sword',
+                  'Wooden Katana',
+                ],
                 publishVerified: false,
               }),
             }),
@@ -1330,6 +1549,8 @@ describe('processTraderaListingJob', () => {
         duplicateMatchedProductId: null,
         duplicateCandidateCount: 1,
         duplicateSearchTitle: 'Example title',
+        duplicateIgnoredNonExactCandidateCount: 2,
+        duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
         browserMode: 'headed',
         requestedBrowserMode: 'headed',
       },
@@ -1353,6 +1574,16 @@ describe('processTraderaListingJob', () => {
         nextRelistAt: null,
         lastRelistedAt: expect.any(Date),
         failureReason: null,
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastExecution: expect.objectContaining({
+              metadata: expect.objectContaining({
+                duplicateIgnoredNonExactCandidateCount: 2,
+                duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
+              }),
+            }),
+          }),
+        }),
       })
     );
     expect(appendExportHistoryMock).toHaveBeenCalledWith(

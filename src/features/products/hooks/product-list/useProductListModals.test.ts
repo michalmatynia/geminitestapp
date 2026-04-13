@@ -201,6 +201,43 @@ describe('useProductListModals', () => {
     });
   });
 
+  it('suppresses stale Tradera recovery context when persisted quick-export feedback is already completed', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      runId: 'run-tradera-1',
+      requestId: 'job-tradera-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+      duplicateMatchStrategy: 'exact-title-single-candidate',
+    });
+
+    const recoveryContext: ProductListingsRecoveryContext = {
+      source: 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: 'failed',
+      runId: null,
+      requestId: null,
+      integrationId: undefined,
+      connectionId: undefined,
+    };
+
+    const { result } = renderHook(() =>
+      useProductListModals({
+        handleOpenCreateModal: vi.fn(),
+        prefetchIntegrationSelectionData: vi.fn(),
+        prefetchProductListingsData: vi.fn(),
+        refreshProductListingsData: vi.fn(),
+        rowSelection: {},
+        toast: vi.fn(),
+      })
+    );
+
+    act(() => {
+      result.current.handleOpenIntegrationsModal(createProduct(), recoveryContext, 'tradera');
+    });
+
+    expect(result.current.integrationsRecoveryContext).toBeNull();
+  });
+
   it('forces a fresh listings refresh when opening the Tradera modal', () => {
     const prefetchProductListingsData = vi.fn();
     const refreshProductListingsData = vi.fn();

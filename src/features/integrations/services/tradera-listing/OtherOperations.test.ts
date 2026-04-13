@@ -356,7 +356,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v134',
+        scriptMarker: 'tradera-quicklist-default:v143',
         scriptStoredOnConnection: false,
         runId: 'run-connection-default-relist',
         requestedBrowserMode: 'connection_default',
@@ -413,7 +413,7 @@ beforeEach(() => {
         matchingShippingGroupIds: ['shipping-group-1'],
       }),
     });
-    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(9);
+    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(21);
   });
 
 describe('runTraderaBrowserCheckStatus', () => {
@@ -459,14 +459,20 @@ describe('runTraderaBrowserCheckStatus', () => {
           verificationCandidateCount: 1,
           executionSteps: [
             {
-              id: 'open_overview',
-              label: 'Open Active listings',
+              id: 'auth_check',
+              label: 'Validate Tradera session',
               status: 'success',
-              message: 'Tradera Active listings opened successfully.',
+              message: 'Stored Tradera session could access the seller overview.',
+            },
+            {
+              id: 'overview_open',
+              label: 'Open seller overview',
+              status: 'success',
+              message: 'Tradera seller overview opened successfully.',
             },
             {
               id: 'resolve_status',
-              label: 'Resolve final Tradera status',
+              label: 'Resolve Status',
               status: 'success',
               message:
                 'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
@@ -486,14 +492,20 @@ describe('runTraderaBrowserCheckStatus', () => {
         verificationCandidateCount: 1,
         executionSteps: [
           {
-            id: 'open_overview',
-            label: 'Open Active listings',
+            id: 'auth_check',
+            label: 'Validate Tradera session',
             status: 'success',
-            message: 'Tradera Active listings opened successfully.',
+            message: 'Stored Tradera session could access the seller overview.',
+          },
+          {
+            id: 'overview_open',
+            label: 'Open seller overview',
+            status: 'success',
+            message: 'Tradera seller overview opened successfully.',
           },
           {
             id: 'resolve_status',
-            label: 'Resolve final Tradera status',
+            label: 'Resolve Status',
             status: 'success',
             message: 'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
           },
@@ -520,14 +532,20 @@ describe('runTraderaBrowserCheckStatus', () => {
               verificationCandidateCount: 1,
               executionSteps: [
                 {
-                  id: 'open_overview',
-                  label: 'Open Active listings',
+                  id: 'auth_check',
+                  label: 'Validate Tradera session',
                   status: 'success',
-                  message: 'Tradera Active listings opened successfully.',
+                  message: 'Stored Tradera session could access the seller overview.',
+                },
+                {
+                  id: 'overview_open',
+                  label: 'Open seller overview',
+                  status: 'success',
+                  message: 'Tradera seller overview opened successfully.',
                 },
                 {
                   id: 'resolve_status',
-                  label: 'Resolve final Tradera status',
+                  label: 'Resolve Status',
                   status: 'success',
                   message:
                     'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
@@ -571,6 +589,7 @@ describe('runTraderaBrowserCheckStatus', () => {
         input: expect.objectContaining({
           listingUrl: 'https://www.tradera.com/item/123',
           externalListingId: 'listing-123',
+          searchTitle: 'Example title',
           duplicateSearchTitle: 'Example title',
           duplicateSearchTerms: ['Example title'],
           rawDescriptionEn: 'Example description',
@@ -600,14 +619,20 @@ describe('runTraderaBrowserCheckStatus', () => {
         verificationCandidateCount: 1,
         executionSteps: [
           {
-            id: 'open_overview',
-            label: 'Open Active listings',
+            id: 'auth_check',
+            label: 'Validate Tradera session',
             status: 'success',
-            message: 'Tradera Active listings opened successfully.',
+            message: 'Stored Tradera session could access the seller overview.',
+          },
+          {
+            id: 'overview_open',
+            label: 'Open seller overview',
+            status: 'success',
+            message: 'Tradera seller overview opened successfully.',
           },
           {
             id: 'resolve_status',
-            label: 'Resolve final Tradera status',
+            label: 'Resolve Status',
             status: 'success',
             message: 'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
           },

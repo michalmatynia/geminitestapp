@@ -109,8 +109,15 @@ export function useMarketplaceQuickExportFeedback(
       (normalizedStatus === 'not_started' ||
         SUCCESS_STATUSES.has(normalizedStatus) ||
         isServerInFlight);
+    const keepCompletedRecoveryBridge =
+      !showBadge && currentStatus === 'completed' && isServerRecoveryStatus;
 
-    if (keepQueuedSuccessBridge || keepCompletedSuccessContext || keepFailureRecoveryContext) {
+    if (
+      keepQueuedSuccessBridge ||
+      keepCompletedSuccessContext ||
+      keepCompletedRecoveryBridge ||
+      keepFailureRecoveryContext
+    ) {
       setLocalFeedback(actions.readFeedback(productId));
       return;
     }

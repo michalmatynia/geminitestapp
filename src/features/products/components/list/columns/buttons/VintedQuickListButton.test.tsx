@@ -192,6 +192,43 @@ describe('VintedQuickListButton', () => {
     expect(button.className).not.toContain('border-amber-400/70');
   });
 
+  it('prefers completed local Vinted feedback over a stale server auth_required status', async () => {
+    const onOpenIntegrations = vi.fn();
+    window.sessionStorage.setItem(
+      'vinted-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+          runId: 'run-vinted-1',
+          requestId: 'job-vinted-1',
+        },
+      })
+    );
+
+    renderButton({
+      onOpenIntegrations,
+      showVintedBadge: false,
+      vintedStatus: 'auth_required',
+    });
+
+    const button = screen.getByRole('button', {
+      name: 'One-click export to Vinted.pl',
+    });
+    expect(button.className).toContain('border-emerald-400/70');
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      });
+    });
+    expect(onOpenIntegrations).not.toHaveBeenCalled();
+  });
+
   it('shows queued feedback after the listing is queued and invalidates listing badges', async () => {
     const prefetchListings = vi.fn();
     renderButton({ prefetchListings });

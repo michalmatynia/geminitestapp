@@ -354,7 +354,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v134',
+        scriptMarker: 'tradera-quicklist-default:v143',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -478,7 +478,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v134',
+        scriptMarker: 'tradera-quicklist-default:v143',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -556,10 +556,12 @@ beforeEach(() => {
       rawResult: { listingUrl: 'https://www.tradera.com/item/790' },
     });
 
-    const staleMarkedManagedScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'let currentImageUploadSource = null;\n\n  try {',
-      'try {\n    emitStage(\'draft_cleared\');\n\n    let currentImageUploadSource = null;'
-    );
+    const staleMarkedManagedScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT
+      .replace('tradera-quicklist-default:v143', 'tradera-quicklist-default:v142')
+      .replace(
+        'let currentImageUploadSource = null;\n\n  try {',
+        'try {\n    emitStage(\'draft_cleared\');\n\n    let currentImageUploadSource = null;'
+      );
 
     const result = await runTraderaBrowserListing({
       listing: {
@@ -1072,7 +1074,7 @@ beforeEach(() => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v134',
+      'tradera-quicklist-default:v143',
       'tradera-quicklist-default:v89'
     );
 
@@ -1256,7 +1258,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v134',
+        scriptMarker: 'tradera-quicklist-default:v143',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
@@ -1313,7 +1315,7 @@ beforeEach(() => {
         matchingShippingGroupIds: ['shipping-group-1'],
       }),
     });
-    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(9);
+    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(21);
   });
 
 it('returns duplicate-linked relist metadata when a single exact-title candidate is linked', async () => {
@@ -1353,6 +1355,8 @@ it('returns duplicate-linked relist metadata when a single exact-title candidate
       duplicateMatchedProductId: null,
       duplicateCandidateCount: 1,
       duplicateSearchTitle: 'Example title',
+      duplicateIgnoredNonExactCandidateCount: 2,
+      duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
       categorySource: null,
       categoryPath: null,
     },
@@ -1393,11 +1397,15 @@ it('returns duplicate-linked relist metadata when a single exact-title candidate
       duplicateMatchedProductId: null,
       duplicateCandidateCount: 1,
       duplicateSearchTitle: 'Example title',
+      duplicateIgnoredNonExactCandidateCount: 2,
+      duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
       rawResult: expect.objectContaining({
         duplicateLinked: true,
         duplicateMatchStrategy: 'exact-title-single-candidate',
         duplicateCandidateCount: 1,
         duplicateSearchTitle: 'Example title',
+        duplicateIgnoredNonExactCandidateCount: 2,
+        duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
       }),
     }),
   });

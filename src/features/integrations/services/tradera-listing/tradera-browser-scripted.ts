@@ -111,6 +111,8 @@ const TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES: Partial<PlaywrightSetting
   actionDelayMax: 0,
 };
 
+type TraderaPlaywrightRunStartedCallback = ((runId: string) => Promise<void> | void) | undefined;
+
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
@@ -356,6 +358,8 @@ const buildSuccessMetadata = ({
     toTrimmedString(traderaCategory['path']) ||
     null;
   const categorySource = toTrimmedString(result.rawResult['categorySource']) || null;
+  const categoryFallbackReason =
+    toTrimmedString(result.rawResult['categoryFallbackReason']) || null;
   const categoryMappingReason = toTrimmedString(traderaCategoryMapping['reason']) || null;
   const categoryMatchScope = toTrimmedString(traderaCategoryMapping['matchScope']) || null;
   const categoryInternalCategoryId =
@@ -408,6 +412,7 @@ const buildSuccessMetadata = ({
       categoryName,
       categoryPath,
       categorySource,
+      categoryFallbackReason,
       categoryMappingReason,
       categoryMatchScope,
       categoryInternalCategoryId,
@@ -453,6 +458,7 @@ const runTraderaScriptedListingForProduct = async ({
   action,
   browserMode,
   syncSkipImages,
+  onRunStarted,
 }: {
   product: ProductWithImages;
   listing: ProductListing;
@@ -461,6 +467,7 @@ const runTraderaScriptedListingForProduct = async ({
   action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
   syncSkipImages?: boolean;
+  onRunStarted?: TraderaPlaywrightRunStartedCallback;
 }): Promise<BrowserListingResultDto> => {
   const scriptInput = await buildTraderaScriptInput({
     product,
@@ -488,6 +495,7 @@ const runTraderaScriptedListingForProduct = async ({
       ? { failureHoldOpenMs: TRADERA_HEADED_FAILURE_HOLD_OPEN_MS }
       : {}),
     runtimeSettingsOverrides,
+    ...(onRunStarted ? { onRunStarted } : {}),
   });
 
   const externalListingId =
@@ -567,6 +575,8 @@ export const runTraderaBrowserListingScripted = async ({
   action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
   syncSkipImages?: boolean;
+}, options?: {
+  onRunStarted?: TraderaPlaywrightRunStartedCallback;
 }): Promise<BrowserListingResultDto> => {
   const productRepository = await getProductRepository();
   const product = await productRepository.getProductById(listing.productId);
@@ -582,6 +592,7 @@ export const runTraderaBrowserListingScripted = async ({
     action,
     browserMode,
     syncSkipImages,
+    onRunStarted: options?.onRunStarted,
   });
 };
 
@@ -593,6 +604,8 @@ export const runTraderaBrowserCheckStatus = async ({
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
   browserMode: PlaywrightRelistBrowserMode;
+}, options?: {
+  onRunStarted?: TraderaPlaywrightRunStartedCallback;
 }): Promise<BrowserListingResultDto> => {
   const resolvedListingUrl = resolveExistingListingUrl(listing);
   let verificationSearchTerms: string[] = [];
@@ -628,6 +641,7 @@ export const runTraderaBrowserCheckStatus = async ({
     input: {
       listingUrl: resolvedListingUrl,
       externalListingId: listing.externalListingId ?? null,
+      searchTitle: verificationSearchTerms[0] ?? null,
       duplicateSearchTitle: verificationSearchTerms[0] ?? null,
       duplicateSearchTerms: verificationSearchTerms,
       rawDescriptionEn: verificationDescriptionEn,
@@ -642,6 +656,7 @@ export const runTraderaBrowserCheckStatus = async ({
     timeoutMs: TRADERA_CHECK_STATUS_TIMEOUT_MS,
     browserMode,
     runtimeSettingsOverrides: TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES,
+    ...(options?.onRunStarted ? { onRunStarted: options.onRunStarted } : {}),
   });
 
   if (result.run.status === 'failed') {

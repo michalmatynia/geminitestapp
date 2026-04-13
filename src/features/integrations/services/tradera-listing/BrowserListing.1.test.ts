@@ -492,7 +492,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         matchingShippingGroupIds: ['shipping-group-1'],
       }),
     });
-    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(9);
+    expect((result.metadata as { executionSteps?: unknown[] }).executionSteps).toHaveLength(21);
   });
 
   it('does not inject resolved Tradera extra field selections into the scripted listing input', async () => {
@@ -1380,6 +1380,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
         duplicateMatchedProductId: 'BASE-1',
         duplicateCandidateCount: 2,
         duplicateSearchTitle: 'Example title',
+        duplicateIgnoredNonExactCandidateCount: 3,
+        duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
         categorySource: null,
         categoryPath: null,
       },
@@ -1420,6 +1422,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
       duplicateMatchedProductId: 'BASE-1',
       duplicateCandidateCount: 2,
       duplicateSearchTitle: 'Example title',
+      duplicateIgnoredNonExactCandidateCount: 3,
+      duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
       categoryId: '101',
       categoryPath: 'Collectibles > Pins',
       categorySource: null,
@@ -1429,6 +1433,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
         duplicateMatchedProductId: 'BASE-1',
         duplicateCandidateCount: 2,
         duplicateSearchTitle: 'Example title',
+        duplicateIgnoredNonExactCandidateCount: 3,
+        duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
       },
     });
   });

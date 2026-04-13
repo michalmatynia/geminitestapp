@@ -129,16 +129,7 @@ export const resolveBaseExporterTemplateMappings = (
     if (!targetField) continue;
     const parameterSource = parseParameterSourceKey(mapping.sourceKey);
 
-    const sourceValue = getProductValue(
-      product,
-      mapping.sourceKey,
-      options?.imageBaseUrl,
-      options?.diagnostics,
-      options?.producerNameById,
-      options?.producerExternalIdByInternalId,
-      options?.tagNameById,
-      options?.tagExternalIdByInternalId
-    );
+    const sourceValue = getProductValue(product, mapping.sourceKey, options);
 
     const producerTargetValue = resolveProducerTargetValue(targetField, sourceValue, options);
     if (producerTargetValue !== undefined) {

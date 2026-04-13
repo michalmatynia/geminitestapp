@@ -7,6 +7,7 @@ const {
   toastMock,
   ensureVintedBrowserSessionMock,
   exportToBaseMutateAsyncMock,
+  checkTraderaStatusMutateAsyncMock,
   preflightTraderaQuickListSessionMock,
   refreshTraderaBrowserSessionMock,
   relistTraderaMutateAsyncMock,
@@ -15,6 +16,7 @@ const {
   toastMock: vi.fn(),
   ensureVintedBrowserSessionMock: vi.fn(),
   exportToBaseMutateAsyncMock: vi.fn(),
+  checkTraderaStatusMutateAsyncMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
   refreshTraderaBrowserSessionMock: vi.fn(),
   relistTraderaMutateAsyncMock: vi.fn(),
@@ -31,6 +33,9 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
   usePurgeListingMutation: () => ({ mutateAsync: vi.fn() }),
   useRelistTraderaMutation: () => ({
     mutateAsync: relistTraderaMutateAsyncMock,
+  }),
+  useCheckTraderaStatusMutation: () => ({
+    mutateAsync: checkTraderaStatusMutateAsyncMock,
   }),
   useSyncTraderaMutation: () => ({
     mutateAsync: syncTraderaMutateAsyncMock,
@@ -103,6 +108,7 @@ const buildBaseParams = (overrides?: {
   setPurgingListing: vi.fn(),
   setRelistingListing: vi.fn(),
   setSavingInventoryId: vi.fn(),
+  setCheckingTraderaStatusListing: vi.fn(),
   setSyncingImages: vi.fn(),
   setSyncingTraderaListing: vi.fn(),
 });
@@ -129,6 +135,9 @@ describe('useProductListingsActionsImpl', () => {
     });
     relistTraderaMutateAsyncMock.mockResolvedValue({
       queue: { jobId: 'job-tradera-relist-1' },
+    });
+    checkTraderaStatusMutateAsyncMock.mockResolvedValue({
+      queue: { jobId: 'job-tradera-check-status-1' },
     });
     syncTraderaMutateAsyncMock.mockResolvedValue({
       queue: { jobId: 'job-tradera-sync-1' },
@@ -316,6 +325,43 @@ describe('useProductListingsActionsImpl', () => {
     expect(syncTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
   });
 
+  it('runs fast Tradera quicklist preflight before queueing a Tradera status check', async () => {
+    const setCheckingTraderaStatusListing = vi.fn();
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams({
+          listings: [
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'connection-tradera-1',
+              integration: { slug: 'tradera' },
+            },
+          ],
+        }),
+        setCheckingTraderaStatusListing,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleCheckTraderaStatus('listing-1');
+    });
+
+    expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'connection-tradera-1',
+      productId: 'product-1',
+    });
+    expect(checkTraderaStatusMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
+    expect(setCheckingTraderaStatusListing).toHaveBeenNthCalledWith(1, 'listing-1');
+    expect(setCheckingTraderaStatusListing).toHaveBeenLastCalledWith(null);
+    expect(toastMock).toHaveBeenCalledWith(
+      'Tradera status check queued (job job-tradera-check-status-1).',
+      { variant: 'success' }
+    );
+  });
+
   it('shows a toast and opens Tradera recovery for auth-required sync preflight failures', async () => {
     const setError = vi.fn();
     const setRecoveryContext = vi.fn();
@@ -444,6 +490,86 @@ describe('useProductListingsActionsImpl', () => {
     expect(success).toBe(true);
     expect(refetchListingsQuery).toHaveBeenCalled();
     expect(onListingsUpdated).toHaveBeenCalled();
+  });
+
+  it('consolidates Tradera login recovery and relist resume into one action', async () => {
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        buildBaseParams({
+          listings: [
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'connection-tradera-1',
+              integration: { slug: 'tradera' },
+            },
+          ],
+        })
+      )
+    );
+
+    let success = false;
+    await act(async () => {
+      success = await result.current.handleRecoverTraderaListing({
+        listingId: 'listing-1',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        action: 'relist',
+        browserMode: 'headed',
+      });
+    });
+
+    expect(success).toBe(true);
+    expect(refreshTraderaBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'connection-tradera-1',
+    });
+    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
+    expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      browserMode: 'headed',
+    });
+  });
+
+  it('can resume Tradera sync after login recovery through the same consolidated action', async () => {
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        buildBaseParams({
+          listings: [
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'connection-tradera-1',
+              integration: { slug: 'tradera' },
+            },
+          ],
+        })
+      )
+    );
+
+    let success = false;
+    await act(async () => {
+      success = await result.current.handleRecoverTraderaListing({
+        listingId: 'listing-1',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        action: 'sync',
+        browserMode: 'headed',
+      });
+    });
+
+    expect(success).toBe(true);
+    expect(refreshTraderaBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'connection-tradera-1',
+    });
+    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
+    expect(syncTraderaMutateAsyncMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      browserMode: 'headed',
+    });
   });
 
   it('shows a toast for Tradera auth-required relist quick preflight failures', async () => {

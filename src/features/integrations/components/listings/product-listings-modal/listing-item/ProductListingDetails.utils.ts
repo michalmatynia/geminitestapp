@@ -1,6 +1,10 @@
 import {
   resolveTraderaExecutionStepsFromMarketplaceData,
 } from '@/features/integrations/utils/tradera-execution-steps';
+import {
+  resolveDuplicateLinkedFromRunResult,
+  resolveDuplicateMatchStrategyFromRunResult,
+} from '@/features/integrations/utils/tradera-listing-client-utils';
 import type {
   TraderaExecutionStep,
 } from '@/shared/contracts/integrations/listings';
@@ -97,6 +101,7 @@ export const resolveTraderaExecutionSummary = (
   scriptKind: string | null;
   scriptMarker: string | null;
   listingFormUrl: string | null;
+  pendingAction: string | null;
   pendingBrowserMode: string | null;
   pendingRequestId: string | null;
   pendingQueuedAt: string | null;
@@ -134,12 +139,15 @@ export const resolveTraderaExecutionSummary = (
   duplicateMatchedProductId: string | null;
   duplicateCandidateCount: number | null;
   duplicateSearchTitle: string | null;
+  duplicateIgnoredNonExactCandidateCount: number | null;
+  duplicateIgnoredCandidateTitles: string[];
   shippingCondition: string | null;
   shippingPriceEur: number | null;
   imageInputSource: string | null;
   imageUploadSource: string | null;
   imageUploadFallbackUsed: boolean | null;
   failureCode: string | null;
+  staleDraftImages: boolean | null;
   duplicateRisk: boolean | null;
   imageRetryCleanupUnsettled: boolean | null;
   plannedImageCount: number | null;
@@ -179,10 +187,11 @@ export const resolveTraderaExecutionSummary = (
     scriptKind: readString(metadata['scriptKind']),
     scriptMarker: readString(metadata['scriptMarker']),
     listingFormUrl: readString(metadata['listingFormUrl']) ?? readString(metadata['startUrl']),
+    pendingAction: readString(pendingExecution['action']),
     pendingBrowserMode: readString(pendingExecution['requestedBrowserMode']),
     pendingRequestId: readString(pendingExecution['requestId']),
     pendingQueuedAt: readString(pendingExecution['queuedAt']),
-    runId: readString(metadata['runId']),
+    runId: readString(metadata['runId']) ?? readString(pendingExecution['runId']),
     errorCategory: readString(lastExecution['errorCategory']) ?? readString(traderaData['lastErrorCategory']),
     requestId: readString(lastExecution['requestId']),
     publishVerified: readBoolean(metadata['publishVerified']),
@@ -230,6 +239,20 @@ export const resolveTraderaExecutionSummary = (
     duplicateSearchTitle:
       readString(metadata['duplicateSearchTitle']) ??
       readString(rawResult['duplicateSearchTitle']),
+    duplicateIgnoredNonExactCandidateCount:
+      readNumber(metadata['duplicateIgnoredNonExactCandidateCount']) ??
+      readNumber(rawResult['duplicateIgnoredNonExactCandidateCount']),
+    duplicateIgnoredCandidateTitles: Array.isArray(
+      metadata['duplicateIgnoredCandidateTitles']
+    )
+      ? metadata['duplicateIgnoredCandidateTitles']
+          .filter((value): value is string => typeof value === 'string')
+          .slice(0, 5)
+      : Array.isArray(rawResult['duplicateIgnoredCandidateTitles'])
+        ? rawResult['duplicateIgnoredCandidateTitles']
+            .filter((value): value is string => typeof value === 'string')
+            .slice(0, 5)
+        : [],
     shippingCondition: readString(metadata['shippingCondition']),
     shippingPriceEur: readNumber(metadata['shippingPriceEur']),
     imageInputSource: readString(metadata['imageInputSource']),
@@ -238,6 +261,7 @@ export const resolveTraderaExecutionSummary = (
       readString(rawResult['imageUploadSource']),
     imageUploadFallbackUsed: readBoolean(metadata['imageUploadFallbackUsed']),
     failureCode: readString(metadata['failureCode']),
+    staleDraftImages: readBoolean(metadata['staleDraftImages']),
     duplicateRisk: readBoolean(metadata['duplicateRisk']),
     imageRetryCleanupUnsettled: readBoolean(metadata['imageRetryCleanupUnsettled']),
     plannedImageCount:
@@ -260,6 +284,57 @@ export const resolveTraderaExecutionSummary = (
     lastSyncedAt: readString(traderaData['lastSyncedAt']),
     lastAction: traderaExecutionTrace.action,
     executionSteps: traderaExecutionTrace.steps,
+  };
+};
+
+export const resolveDisplayedTraderaDuplicateSummary = ({
+  persisted,
+  liveRawResult,
+  liveLatestStage,
+}: {
+  persisted: Pick<
+    ReturnType<typeof resolveTraderaExecutionSummary>,
+    | 'duplicateLinked'
+    | 'duplicateMatchStrategy'
+    | 'duplicateMatchedProductId'
+    | 'duplicateCandidateCount'
+    | 'duplicateSearchTitle'
+    | 'duplicateIgnoredNonExactCandidateCount'
+    | 'duplicateIgnoredCandidateTitles'
+  >;
+  liveRawResult: unknown;
+  liveLatestStage: string | null | undefined;
+}): {
+  duplicateLinked: boolean | null;
+  duplicateMatchStrategy: string | null;
+  duplicateMatchedProductId: string | null;
+  duplicateCandidateCount: number | null;
+  duplicateSearchTitle: string | null;
+  duplicateIgnoredNonExactCandidateCount: number | null;
+  duplicateIgnoredCandidateTitles: string[];
+} => {
+  const liveResult = toRecord(liveRawResult);
+  const liveMatchStrategy = resolveDuplicateMatchStrategyFromRunResult(liveResult);
+
+  return {
+    duplicateLinked: resolveDuplicateLinkedFromRunResult(liveResult, liveLatestStage)
+      ? true
+      : persisted.duplicateLinked,
+    duplicateMatchStrategy: liveMatchStrategy ?? persisted.duplicateMatchStrategy,
+    duplicateMatchedProductId:
+      readString(liveResult['duplicateMatchedProductId']) ?? persisted.duplicateMatchedProductId,
+    duplicateCandidateCount:
+      readNumber(liveResult['duplicateCandidateCount']) ?? persisted.duplicateCandidateCount,
+    duplicateSearchTitle:
+      readString(liveResult['duplicateSearchTitle']) ?? persisted.duplicateSearchTitle,
+    duplicateIgnoredNonExactCandidateCount:
+      readNumber(liveResult['duplicateIgnoredNonExactCandidateCount']) ??
+      persisted.duplicateIgnoredNonExactCandidateCount,
+    duplicateIgnoredCandidateTitles: Array.isArray(liveResult['duplicateIgnoredCandidateTitles'])
+      ? liveResult['duplicateIgnoredCandidateTitles'].filter(
+          (value): value is string => typeof value === 'string'
+        )
+      : persisted.duplicateIgnoredCandidateTitles,
   };
 };
 

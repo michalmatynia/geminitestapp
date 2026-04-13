@@ -178,7 +178,23 @@ export const createTraderaBrowserTestUtils = (input: {
       );
       if (!visible) continue;
       try {
-        await humanizedClick(locator);
+        await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+        try {
+          await locator.click({ timeout: 2_000 });
+        } catch {
+          const clicked = await locator
+            .evaluate((element) => {
+              if (element instanceof HTMLElement) {
+                element.click();
+                return true;
+              }
+              return false;
+            })
+            .catch(() => false);
+          if (!clicked) {
+            await humanizedClick(locator);
+          }
+        }
         await input.page.waitForTimeout(600);
         return true;
       } catch (error) {

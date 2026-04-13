@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v134
+  // tradera-quicklist-default:v143
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -438,11 +438,28 @@ export const PART_1 = String.raw`export default async function run({
     '#onetrust-accept-btn-handler',
     'button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',
     'button:has-text("Accept all cookies")',
+    'button:has-text("Allow all cookies")',
+    'button:has-text("Allow all")',
+    'button:has-text("Accept")',
     'button:has-text("Accept all")',
     'button:has-text("Acceptera alla cookies")',
     'button:has-text("Acceptera alla kakor")',
+    'button:has-text("Acceptera alla")',
+    'button:has-text("Acceptera")',
     'button:has-text("Godkänn alla cookies")',
+    'button:has-text("Godkänn alla")',
+    'button:has-text("Godkänn")',
     'button:has-text("Tillåt alla cookies")',
+    'button:has-text("Tillåt alla")',
+    '[role="dialog"] button:has-text("Godkänn")',
+    '[role="dialog"] button:has-text("Acceptera")',
+    '[role="dialog"] button:has-text("Accept")',
+    '[aria-modal="true"] button:has-text("Godkänn")',
+    '[aria-modal="true"] button:has-text("Acceptera")',
+    'dialog button:has-text("Godkänn")',
+    'dialog button:has-text("Acceptera")',
+    '[data-testid*="cookie"] button',
+    '[id*="cookie"] button',
   ];
   const CREATE_LISTING_TRIGGER_SELECTORS = [
     'a[href*="/selling/new"]',
@@ -753,8 +770,95 @@ export const PART_1 = String.raw`export default async function run({
     : [];
   let selectedCategoryPath = null;
   let selectedCategorySource = null;
+  let selectedCategoryFallbackReason = null;
   const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);
   const configuredDeliveryPriceEur = toNumber(input?.traderaShipping?.shippingPriceEur);
   const configuredShippingGroupName = toText(input?.traderaShipping?.shippingGroupName);
   const requiresConfiguredDeliveryOption = Boolean(configuredDeliveryOptionLabel);
+
+  // --- Execution step tracking ---
+  // Each step has: id, label, status ('pending'|'running'|'success'|'skipped'|'error'), info (null or object)
+  const executionSteps = (() => {
+    const steps = [
+      { id: 'browser_preparation', label: 'Browser preparation', status: 'pending', info: null },
+      { id: 'browser_open',        label: 'Open browser',        status: 'pending', info: null },
+      { id: 'cookie_accept',       label: 'Accept cookies',      status: 'pending', info: null },
+      { id: 'auth_check',          label: 'Validate Tradera session', status: 'pending', info: null },
+      { id: 'auth_login',          label: 'Automated login',     status: 'pending', info: null },
+      { id: 'auth_manual',         label: 'Complete manual Tradera login', status: 'pending', info: null },
+    ];
+    if (listingAction === 'sync') {
+      steps.push({ id: 'sync_check', label: 'Load sync target listing', status: 'pending', info: null });
+    } else {
+      steps.push(
+        { id: 'duplicate_check',      label: 'Search for duplicate listings', status: 'pending', info: null },
+        { id: 'deep_duplicate_check', label: 'Inspect duplicate candidates', status: 'pending', info: null },
+        { id: 'sell_page_open',       label: 'Open listing editor',  status: 'pending', info: null },
+        { id: 'image_cleanup',        label: 'Clear draft images',   status: 'pending', info: null }
+      );
+    }
+    steps.push(
+      { id: 'image_upload',          label: 'Upload listing images', status: 'pending', info: null },
+      { id: 'title_fill',            label: 'Enter title',           status: 'pending', info: null },
+      { id: 'description_fill',      label: 'Enter description',     status: 'pending', info: null },
+      { id: 'listing_format_select', label: 'Choose listing format', status: 'pending', info: null },
+      { id: 'price_set',             label: 'Set price',             status: 'pending', info: null },
+      { id: 'category_select',       label: 'Select category',       status: 'pending', info: null },
+      { id: 'attribute_select',      label: 'Apply listing attributes', status: 'pending', info: null },
+      { id: 'shipping_set',          label: 'Configure delivery',    status: 'pending', info: null },
+      {
+        id: 'publish',
+        label:
+          listingAction === 'sync'
+            ? 'Save listing changes'
+            : listingAction === 'relist'
+              ? 'Relist'
+              : 'Publish listing',
+        status: 'pending',
+        info: null,
+      },
+      {
+        id: 'publish_verify',
+        label: listingAction === 'sync' ? 'Verify saved listing' : 'Verify published listing',
+        status: 'pending',
+        info: null,
+      },
+      { id: 'browser_close', label: 'Close browser', status: 'pending', info: null }
+    );
+    return steps;
+  })();
+
+  const normalizeStepStatus = (status) => {
+    if (status === 'completed') return 'success';
+    if (status === 'failed') return 'error';
+    return status;
+  };
+
+  const updateStep = (id, status, info) => {
+    const step = executionSteps.find((s) => s.id === id);
+    if (!step) return;
+    step.status = normalizeStepStatus(status);
+    if (info !== undefined && info !== null) {
+      step.info = typeof info === 'object' ? info : { message: String(info) };
+    }
+    if (typeof emit === 'function') {
+      try { emit('steps', executionSteps); } catch {}
+    }
+  };
+
+  const skipStep = (id, reason) => {
+    updateStep(id, 'skipped', reason !== undefined ? { reason: String(reason) } : null);
+  };
+
+  const failCurrentStep = (errorMessage) => {
+    const active = executionSteps.find((s) => s.status === 'running');
+    if (!active) return;
+    active.status = 'error';
+    if (errorMessage) {
+      active.info = { ...(active.info || {}), error: String(errorMessage).slice(0, 400) };
+    }
+    if (typeof emit === 'function') {
+      try { emit('steps', executionSteps); } catch {}
+    }
+  };
 `;

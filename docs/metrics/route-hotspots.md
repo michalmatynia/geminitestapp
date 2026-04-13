@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-12'
+last_reviewed: '2026-04-13'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-04-12T19:22:09.498Z
+Generated at: 2026-04-13T20:43:07.649Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 

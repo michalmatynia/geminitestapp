@@ -99,7 +99,7 @@ export const buildQueuedTraderaStatusCheckMarketplaceData = ({
   existingMarketplaceData,
   requestId,
   queuedAt,
-  requestedBrowserMode = 'headless',
+  requestedBrowserMode = 'connection_default',
 }: {
   existingMarketplaceData: unknown;
   requestId: string;

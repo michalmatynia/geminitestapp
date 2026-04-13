@@ -60,14 +60,12 @@ export const resolveDuplicateLinkedFromListing = (
   const lastExecution = toRecord(traderaData['lastExecution']);
   const metadata = toRecord(lastExecution['metadata']);
   const rawResult = toRecord(metadata['rawResult']);
-  const latestStage =
-    readString(metadata['latestStage']) ?? readString(rawResult['stage']);
+  const latestStage = readString(metadata['latestStage']);
   const duplicateMatchStrategy =
-    readString(metadata['duplicateMatchStrategy']) ?? readString(rawResult['duplicateMatchStrategy']);
+    readString(metadata['duplicateMatchStrategy']) ?? resolveDuplicateMatchStrategyFromRunResult(rawResult);
   return (
     readBoolean(metadata['duplicateLinked']) === true ||
-    readBoolean(rawResult['duplicateLinked']) === true ||
-    latestStage === 'duplicate_linked' ||
+    resolveDuplicateLinkedFromRunResult(rawResult, latestStage) ||
     Boolean(duplicateMatchStrategy)
   );
 };
@@ -79,7 +77,27 @@ export const resolveDuplicateMatchStrategyFromListing = (
   const lastExecution = toRecord(traderaData['lastExecution']);
   const metadata = toRecord(lastExecution['metadata']);
   const rawResult = toRecord(metadata['rawResult']);
-  return readString(metadata['duplicateMatchStrategy']) ?? readString(rawResult['duplicateMatchStrategy']);
+  return readString(metadata['duplicateMatchStrategy']) ?? resolveDuplicateMatchStrategyFromRunResult(rawResult);
+};
+
+export const resolveDuplicateMatchStrategyFromRunResult = (
+  rawResult?: unknown
+): string | null => {
+  const result = toRecord(rawResult);
+  return readString(result['duplicateMatchStrategy']);
+};
+
+export const resolveDuplicateLinkedFromRunResult = (
+  rawResult?: unknown,
+  latestStage?: string | null | undefined
+): boolean => {
+  const result = toRecord(rawResult);
+  const resolvedLatestStage = latestStage ?? readString(result['stage']);
+  return (
+    readBoolean(result['duplicateLinked']) === true ||
+    resolvedLatestStage === 'duplicate_linked' ||
+    Boolean(resolveDuplicateMatchStrategyFromRunResult(result))
+  );
 };
 
 export const resolveDuplicateLinkedFromFeedback = (
@@ -87,17 +105,15 @@ export const resolveDuplicateLinkedFromFeedback = (
 ): boolean => {
   const metadata = toRecord(feedback?.metadata);
   const rawResult = toRecord(metadata['rawResult']);
-  const latestStage =
-    readString(metadata['latestStage']) ?? readString(rawResult['stage']);
+  const latestStage = readString(metadata['latestStage']);
   const duplicateMatchStrategy =
     readString(feedback?.duplicateMatchStrategy) ??
     readString(metadata['duplicateMatchStrategy']) ??
-    readString(rawResult['duplicateMatchStrategy']);
+    resolveDuplicateMatchStrategyFromRunResult(rawResult);
   return (
     readBoolean(feedback?.duplicateLinked) === true ||
     readBoolean(metadata['duplicateLinked']) === true ||
-    readBoolean(rawResult['duplicateLinked']) === true ||
-    latestStage === 'duplicate_linked' ||
+    resolveDuplicateLinkedFromRunResult(rawResult, latestStage) ||
     Boolean(duplicateMatchStrategy)
   );
 };

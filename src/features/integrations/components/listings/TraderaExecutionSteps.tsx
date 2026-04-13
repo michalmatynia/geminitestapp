@@ -23,12 +23,15 @@ type TraderaExecutionStepsProps = {
   title?: string;
   steps: TraderaExecutionStep[];
   compact?: boolean;
+  live?: boolean;
+  liveStatus?: 'queued' | 'running' | null;
 };
 
 export function TraderaExecutionSteps(
   props: TraderaExecutionStepsProps
 ): React.JSX.Element | null {
-  const { title = 'Execution steps', steps, compact = false } = props;
+  const { title = 'Execution steps', steps, compact = false, live = false, liveStatus = null } =
+    props;
 
   if (!Array.isArray(steps) || steps.length === 0) {
     return null;
@@ -36,8 +39,17 @@ export function TraderaExecutionSteps(
 
   return (
     <div className='rounded-lg border border-white/10 bg-white/5 p-3'>
-      <div className='mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400'>
-        {title}
+      <div className='mb-3 flex flex-wrap items-center gap-2'>
+        <div className='text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400'>
+          {title}
+        </div>
+        {live ? (
+          <StatusBadge
+            status={liveStatus === 'queued' ? 'pending' : 'running'}
+            label={liveStatus === 'queued' ? 'Live queued' : 'Live'}
+            size='sm'
+          />
+        ) : null}
       </div>
       <div className='space-y-2'>
         {steps.map((step: TraderaExecutionStep, index: number) => (
@@ -50,6 +62,15 @@ export function TraderaExecutionSteps(
             </div>
             <div className='min-w-0 flex-1'>
               <div className='flex flex-wrap items-center gap-2'>
+                <span
+                  className={
+                    compact
+                      ? 'rounded border border-white/10 bg-black/20 px-1.5 py-0.5 font-mono text-[10px] text-gray-400'
+                      : 'rounded border border-white/10 bg-black/20 px-1.5 py-0.5 font-mono text-[11px] text-gray-400'
+                  }
+                >
+                  {step.id}
+                </span>
                 <span className={compact ? 'text-xs text-white' : 'text-sm text-white'}>
                   {step.label}
                 </span>

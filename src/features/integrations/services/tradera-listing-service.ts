@@ -66,18 +66,15 @@ import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integration
 const resolveRequestedTraderaBrowserMode = ({
   requestedBrowserMode,
   source,
-  action,
   browserMode,
   playwrightHeadless,
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   source: 'manual' | 'scheduler' | 'api';
-  action: 'list' | 'relist' | 'sync' | 'check_status';
   browserMode: 'builtin' | 'scripted' | null | undefined;
   playwrightHeadless: boolean | null | undefined;
 }): PlaywrightRelistBrowserMode => {
   if (requestedBrowserMode) return requestedBrowserMode;
-  if (action === 'check_status') return 'headless';
   // Respect the connection's explicit headed/headless preference
   if (playwrightHeadless === false) return 'headed';
   if (playwrightHeadless === true) return 'headless';
@@ -93,6 +90,47 @@ const buildTraderaHistoryFields = (
     browserMode,
     extraFields: action === 'sync' ? ['action:sync'] : undefined,
   });
+
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+const buildPendingTraderaRunMarketplaceData = ({
+  existingMarketplaceData,
+  action,
+  requestedBrowserMode,
+  requestId,
+  runId,
+}: {
+  existingMarketplaceData: unknown;
+  action: 'list' | 'relist' | 'sync' | 'check_status';
+  requestedBrowserMode: PlaywrightRelistBrowserMode;
+  requestId: string | null;
+  runId: string;
+}): Record<string, unknown> => {
+  const marketplaceData = toRecord(existingMarketplaceData);
+  const traderaData = toRecord(marketplaceData['tradera']);
+  const pendingExecution = toRecord(traderaData['pendingExecution']);
+
+  return {
+    ...marketplaceData,
+    marketplace: 'tradera',
+    tradera: {
+      ...traderaData,
+      pendingExecution: {
+        action,
+        requestedBrowserMode,
+        requestId,
+        queuedAt:
+          typeof pendingExecution['queuedAt'] === 'string' && pendingExecution['queuedAt'].trim().length > 0
+            ? pendingExecution['queuedAt']
+            : new Date().toISOString(),
+        runId,
+      },
+    },
+  };
+};
 
 const resolveExistingLinkedTraderaListingCandidate = async ({
   listingId,
@@ -169,7 +207,7 @@ export const runTraderaListing = async (
       });
     }
 
-    const { listing, connection, integration } = runContext;
+    const { listing, connection, integration, repository } = runContext;
 
     const systemSettings = await loadTraderaSystemSettings();
     const integrationSlug = integration.slug;
@@ -206,10 +244,33 @@ export const runTraderaListing = async (
     const requestedBrowserMode = resolveRequestedTraderaBrowserMode({
       requestedBrowserMode: input.browserMode,
       source,
-      action,
       browserMode: connection.traderaBrowserMode,
       playwrightHeadless: connectionHeadless,
     });
+    const persistPendingRunId = async (runId: string): Promise<void> => {
+      try {
+        const nextMarketplaceData = buildPendingTraderaRunMarketplaceData({
+          existingMarketplaceData: listing.marketplaceData,
+          action,
+          requestedBrowserMode,
+          requestId: input.jobId ?? null,
+          runId,
+        });
+        listing.marketplaceData = nextMarketplaceData as typeof listing.marketplaceData;
+        await repository.updateListing(listing.id, {
+          marketplaceData: nextMarketplaceData,
+        });
+      } catch (error) {
+        void ErrorSystem.captureException(error, {
+          service: 'tradera-listing',
+          listingId: listing.id,
+          action,
+          source,
+          runId,
+          phase: 'persist-pending-run-id',
+        });
+      }
+    };
 
     // check_status: lightweight browser status read — no listing action, no API path
     if (action === 'check_status') {
@@ -217,6 +278,8 @@ export const runTraderaListing = async (
         listing,
         connection,
         browserMode: requestedBrowserMode,
+      }, {
+        onRunStarted: persistPendingRunId,
       });
       return buildPlaywrightServiceListingSuccess({
         externalListingId: checkResult.externalListingId ?? null,
@@ -272,7 +335,9 @@ export const runTraderaListing = async (
       browserMode: requestedBrowserMode,
       syncSkipImages: input.syncSkipImages ?? false,
     };
-    const result = await runTraderaBrowserListing(browserListingInput);
+    const result = await runTraderaBrowserListing(browserListingInput, {
+      onRunStarted: persistPendingRunId,
+    });
 
     const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
     const expiresAt = resolveExpiry(settings.durationHours);

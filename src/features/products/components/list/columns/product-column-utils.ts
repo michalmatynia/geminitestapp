@@ -228,6 +228,46 @@ export {
   normalizeMarketplaceStatus,
 };
 
+export const resolveMarketplaceStatusWithLocalFeedback = ({
+  serverStatus,
+  localFeedbackStatus,
+  submitting = false,
+}: {
+  serverStatus: string;
+  localFeedbackStatus: string | null;
+  submitting?: boolean;
+}): string => {
+  const normalizedServerStatus = normalizeMarketplaceStatus(serverStatus);
+  const normalizedLocalFeedbackStatus = normalizeMarketplaceStatus(localFeedbackStatus ?? '');
+  const hasServerStatus =
+    normalizedServerStatus.length > 0 && normalizedServerStatus !== 'not_started';
+
+  if (submitting) {
+    return 'processing';
+  }
+
+  if (
+    normalizedLocalFeedbackStatus === 'completed' &&
+    !SUCCESS_STATUSES.has(normalizedServerStatus)
+  ) {
+    return 'active';
+  }
+
+  if (
+    (normalizedLocalFeedbackStatus === 'processing' ||
+      normalizedLocalFeedbackStatus === 'queued') &&
+    FAILURE_STATUSES.has(normalizedServerStatus)
+  ) {
+    return normalizedLocalFeedbackStatus;
+  }
+
+  if (hasServerStatus) {
+    return normalizedServerStatus;
+  }
+
+  return normalizedLocalFeedbackStatus || 'not_started';
+};
+
 export const getStatusToneClass = (value: string): string => {
   const normalized = normalizeMarketplaceStatus(value);
   if (SUCCESS_STATUSES.has(normalized)) {

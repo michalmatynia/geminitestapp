@@ -8,15 +8,15 @@ canonical: true
 ---
 # UI consolidation Improvement Track
 
-Generated at: 2026-04-13T10:50:50.325Z
+Generated at: 2026-04-13T20:42:08.911Z
 
 ## Snapshot
 
 - Track id: `ui-consolidation`
 - Category: `ui`
 - Included in default read-only bundle: yes
-- Overall status: `attention`
-- Latest report timestamp: 2026-04-12T15:40:31.397Z
+- Overall status: `passed`
+- Latest report timestamp: 2026-04-13T20:41:47.098Z
 
 ## Purpose
 
@@ -38,8 +38,8 @@ Runs the shared UI consolidation guardrail so broad improvement sweeps account f
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `not-configured` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `passed` | 1 | 1 | 0 | 0 | 0 |
+| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
@@ -48,6 +48,7 @@ Runs the shared UI consolidation guardrail so broad improvement sweeps account f
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `audit` | `passed` | `automatic` | `ui-consolidation-guardrail` | `check:ui-consolidation` |
 | `plan` | `manual` | `manual` | `ui-consolidation-plan` | manual |
 
 ## Related Docs

@@ -161,7 +161,7 @@ function KangurAssignmentManagerCatalogActions({
 
 function KangurAssignmentManagerSuggestedCard(): React.JSX.Element {
   const { translations } = useKangurAssignmentManagerContext();
-  const item = useKangurAssignmentItem() as AssignmentManagerState['recommendedCatalog'][number];
+  const item = useKangurAssignmentItem();
 
   return (
     <KangurAssignmentManagerItemCard
@@ -182,7 +182,7 @@ function KangurAssignmentManagerSuggestedCard(): React.JSX.Element {
 
 function KangurAssignmentManagerCatalogCard(): React.JSX.Element {
   const { translations } = useKangurAssignmentManagerContext();
-  const item = useKangurAssignmentItem() as AssignmentManagerState['filteredCatalog'][number];
+  const item = useKangurAssignmentItem();
 
   return (
     <KangurAssignmentManagerItemCard testId={`assignment-manager-catalog-card-${item.id}`}>

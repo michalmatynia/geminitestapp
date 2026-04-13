@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-12'
+last_reviewed: '2026-04-13'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Flow Regression Report
 
-Generated at: 2026-04-12T15:29:09.285Z
+Generated at: 2026-04-13T20:43:37.016Z
 
 ## Summary
 
@@ -25,7 +25,7 @@ Generated at: 2026-04-12T15:29:09.285Z
 | Image Studio Generate + Preview | Generation completion under timeout budget | PASS | 1.7s | 0 | `src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts` |
 | AI Paths Run Execution | Run completion without fallback/error path | PASS | 3.9s | 0 | `__tests__/features/ai/ai-paths/services/path-run-executor.test.ts` |
 | Case Resolver OCR + Capture Mapping | Queue-to-review completion without manual recovery | PASS | 2.6s | 0 | `src/features/case-resolver/__tests__/workspace-persistence.test.ts` |
-| Products Trigger Button Queue Integration | Trigger enqueue updates queue state without invalid run-id regressions | PASS | 13.1s | 0 | `src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx`, `src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts`, `src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts`, `src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts`, `src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts`, `src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts`, `src/features/products/hooks/useProductAiPathsRunSync.test.tsx`, `src/features/products/state/queued-product-ops.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts` |
+| Products Trigger Button Queue Integration | Trigger enqueue updates queue state without invalid run-id regressions | PASS | 12.4s | 0 | `src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx`, `src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts`, `src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts`, `src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts`, `src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts`, `src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts`, `src/features/products/hooks/useProductAiPathsRunSync.test.tsx`, `src/features/products/state/queued-product-ops.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts` |
 
 ## Notes
 

@@ -8,6 +8,10 @@ const { apiGetMock, apiPostMock, toastMock } = vi.hoisted(() => ({
   toastMock: vi.fn(),
 }));
 
+const { useTraderaLiveExecutionMock } = vi.hoisted(() => ({
+  useTraderaLiveExecutionMock: vi.fn(),
+}));
+
 const { invalidateQueriesMock } = vi.hoisted(() => ({
   invalidateQueriesMock: vi.fn(),
 }));
@@ -72,6 +76,10 @@ vi.mock('@/shared/ui/toast', () => ({
   }),
 }));
 
+vi.mock('@/features/integrations/hooks/useTraderaLiveExecution', () => ({
+  useTraderaLiveExecution: (...args: unknown[]) => useTraderaLiveExecutionMock(...args),
+}));
+
 import { TraderaStatusCheckModal } from './TraderaStatusCheckModal';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -116,6 +124,7 @@ describe('TraderaStatusCheckModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     invalidateQueriesMock.mockResolvedValue(undefined);
+    useTraderaLiveExecutionMock.mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -504,14 +513,20 @@ describe('TraderaStatusCheckModal', () => {
                 metadata: {
                   executionSteps: [
                     {
-                      id: 'open_overview',
-                      label: 'Open Active listings',
+                      id: 'auth_check',
+                      label: 'Validate Tradera session',
                       status: 'success',
-                      message: 'Tradera Active listings opened successfully.',
+                      message: 'Stored Tradera session could access the seller overview.',
+                    },
+                    {
+                      id: 'overview_open',
+                      label: 'Open seller overview',
+                      status: 'success',
+                      message: 'Tradera seller overview opened successfully.',
                     },
                     {
                       id: 'resolve_status',
-                      label: 'Resolve final Tradera status',
+                      label: 'Resolve Status',
                       status: 'success',
                       message: 'Resolved Tradera status as ended from Unsold items with raw tag "ended".',
                     },
@@ -577,8 +592,9 @@ describe('TraderaStatusCheckModal', () => {
     });
     expect(screen.getByText('Ended')).toBeInTheDocument();
     expect(screen.getByText('Latest check steps')).toBeInTheDocument();
-    expect(screen.getByText('Open Active listings')).toBeInTheDocument();
-    expect(screen.getByText('Resolve final Tradera status')).toBeInTheDocument();
+    expect(screen.getByText('Validate Tradera session')).toBeInTheDocument();
+    expect(screen.getByText('Open seller overview')).toBeInTheDocument();
+    expect(screen.getByText('Resolve Status')).toBeInTheDocument();
   });
 
   it('updates the modal as soon as polling sees the completed status check', async () => {
@@ -662,5 +678,117 @@ describe('TraderaStatusCheckModal', () => {
       { timeout: 5_000 }
     );
     expect(screen.getByText('Ended')).toBeInTheDocument();
+  });
+
+  it('renders live check steps while the Tradera status-check run is still active', async () => {
+    apiGetMock.mockResolvedValue([
+      makeListing({
+        id: 'listing-browser-1',
+        productId: 'product-1',
+        marketplaceData: {
+          tradera: {
+            pendingExecution: {
+              action: 'check_status',
+              runId: 'run-check-live-1',
+            },
+          },
+        },
+      }),
+    ]);
+
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-check-live-1',
+      action: 'check_status',
+      status: 'running',
+      latestStage: 'status_lookup',
+      latestStageUrl: 'https://www.tradera.com/en/my/unsold',
+      executionSteps: [
+        {
+          id: 'status_lookup',
+          label: 'Locate Tradera listing',
+          status: 'running',
+          message: 'Searching Unsold listings for the current Tradera item.',
+        },
+      ],
+      rawResult: {
+        stage: 'status_lookup',
+      },
+      logTail: ['[user] tradera.status.lookup.start'],
+      error: null,
+    });
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+
+    expect(screen.getByText('Latest check steps')).toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByText('status_lookup')).toBeInTheDocument();
+    expect(screen.getByText('Locate Tradera listing')).toBeInTheDocument();
+    expect(
+      screen.getByText('Searching Unsold listings for the current Tradera item.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows linked status and suppresses stale failure UI when a live Tradera run has already duplicate-linked the listing', async () => {
+    apiGetMock.mockResolvedValue([
+      makeListing({
+        id: 'listing-browser-linked',
+        productId: 'product-1',
+        status: 'failed',
+        failureReason: 'Old failed state that should no longer be shown.',
+      }),
+    ]);
+
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-live-linked-1',
+      action: 'relist',
+      status: 'running',
+      latestStage: 'duplicate_linked',
+      latestStageUrl: 'https://www.tradera.com/item/721891408',
+      executionSteps: [
+        {
+          id: 'duplicate_check',
+          label: 'Search for duplicate listings',
+          status: 'success',
+          message:
+            'Relist linked the single exact-title Tradera candidate instead of creating a new listing.',
+        },
+      ],
+      rawResult: {
+        stage: 'duplicate_linked',
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      },
+      logTail: [
+        '[user] tradera.quicklist.start {"listingAction":"relist"}',
+        '[user] tradera.quicklist.duplicate.linked {"listingUrl":"https://www.tradera.com/item/721891408"}',
+      ],
+      error: null,
+    });
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+
+    expect(screen.getByText('linked')).toBeInTheDocument();
+    expect(screen.queryByText(/^Failed$/i)).toBeNull();
+    expect(
+      screen.queryByText('Old failed state that should no longer be shown.')
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Relist' })).toBeNull();
   });
 });

@@ -8,7 +8,7 @@ canonical: true
 ---
 # Improvement Operations Portfolio
 
-Generated at: 2026-04-13T10:50:50.325Z
+Generated at: 2026-04-13T20:42:08.911Z
 
 ## Snapshot
 
@@ -40,12 +40,12 @@ Generated at: 2026-04-13T10:50:50.325Z
 
 | Track | Category | Default | Overall | Latest Report | README | Scan |
 | --- | --- | --- | --- | --- | --- | --- |
-| `products-parameter-integrity` | `data` | yes | `passed` | 2026-04-02T09:59:31.245Z | [README](./products-parameter-integrity/README.md) | [scan](./products-parameter-integrity/scan-latest.md) |
-| `products-category-schema-normalization` | `data` | yes | `failed` | 2026-04-02T09:59:31.245Z | [README](./products-category-schema-normalization/README.md) | [scan](./products-category-schema-normalization/scan-latest.md) |
-| `ui-consolidation` | `ui` | yes | `attention` | 2026-04-12T15:40:31.397Z | [README](./ui-consolidation/README.md) | [scan](./ui-consolidation/scan-latest.md) |
-| `application-performance` | `performance` | yes | `passed` | 2026-04-12T15:40:31.397Z | [README](./application-performance/README.md) | [scan](./application-performance/scan-latest.md) |
-| `testing-quality-baseline` | `testing` | no | `passed` | 2026-04-12T15:40:31.397Z | [README](./testing-quality-baseline/README.md) | [scan](./testing-quality-baseline/scan-latest.md) |
-| `repo-quality-baseline` | `quality` | yes | `failed` | 2026-04-13T10:50:50.323Z | [README](./repo-quality-baseline/README.md) | [scan](./repo-quality-baseline/scan-latest.md) |
+| `products-parameter-integrity` | `data` | yes | `failed` | 2026-04-13T20:41:47.098Z | [README](./products-parameter-integrity/README.md) | [scan](./products-parameter-integrity/scan-latest.md) |
+| `products-category-schema-normalization` | `data` | yes | `failed` | 2026-04-13T20:41:47.098Z | [README](./products-category-schema-normalization/README.md) | [scan](./products-category-schema-normalization/scan-latest.md) |
+| `ui-consolidation` | `ui` | yes | `passed` | 2026-04-13T20:41:47.098Z | [README](./ui-consolidation/README.md) | [scan](./ui-consolidation/scan-latest.md) |
+| `application-performance` | `performance` | yes | `passed` | 2026-04-13T20:41:47.098Z | [README](./application-performance/README.md) | [scan](./application-performance/scan-latest.md) |
+| `testing-quality-baseline` | `testing` | no | `attention` | 2026-04-12T15:40:31.397Z | [README](./testing-quality-baseline/README.md) | [scan](./testing-quality-baseline/scan-latest.md) |
+| `repo-quality-baseline` | `quality` | yes | `passed` | 2026-04-13T20:41:47.098Z | [README](./repo-quality-baseline/README.md) | [scan](./repo-quality-baseline/scan-latest.md) |
 
 ## Notes
 

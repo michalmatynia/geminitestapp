@@ -9,7 +9,10 @@ import {
 import { runTraderaBrowserListingStandard } from './tradera-browser-standard';
 
 export type { BrowserListingResultDto as TraderaBrowserListingResult };
-export const runTraderaBrowserCheckStatus = runTraderaBrowserCheckStatusScripted;
+
+type TraderaBrowserRunOptions = {
+  onRunStarted?: ((runId: string) => Promise<void> | void) | undefined;
+};
 
 export const runTraderaBrowserListing = async ({
   listing,
@@ -27,7 +30,7 @@ export const runTraderaBrowserListing = async ({
   action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
   syncSkipImages?: boolean;
-}): Promise<BrowserListingResultDto> => {
+}, options?: TraderaBrowserRunOptions): Promise<BrowserListingResultDto> => {
   // Relist relies on the managed quicklist flow for duplicate detection before creating a new listing.
   if (
     action === 'relist' ||
@@ -43,7 +46,7 @@ export const runTraderaBrowserListing = async ({
       action,
       browserMode,
       syncSkipImages,
-    });
+    }, options);
   }
 
   return runTraderaBrowserListingStandard({
@@ -54,3 +57,21 @@ export const runTraderaBrowserListing = async ({
     action,
   });
 };
+
+export const runTraderaBrowserCheckStatus = async ({
+  listing,
+  connection,
+  browserMode,
+}: {
+  listing: ProductListing;
+  connection: IntegrationConnectionRecord;
+  browserMode: PlaywrightRelistBrowserMode;
+}, options?: TraderaBrowserRunOptions): Promise<BrowserListingResultDto> =>
+  runTraderaBrowserCheckStatusScripted(
+    {
+      listing,
+      connection,
+      browserMode,
+    },
+    options
+  );

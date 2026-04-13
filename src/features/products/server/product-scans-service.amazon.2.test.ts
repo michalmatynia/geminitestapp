@@ -26,9 +26,11 @@ const mocks = vi.hoisted(() => ({
   resolveProductScannerHeadlessMock: vi.fn(),
   buildProductScannerEngineRequestOptionsMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorConfigMock: vi.fn(),
-  resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock: vi.fn(),
+  resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock: vi.fn().mockResolvedValue({ enabled: true }),
+  resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock: vi.fn().mockResolvedValue({ enabled: true }),
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock: vi.fn(),
   resolveProductScanner1688CandidateEvaluatorConfigMock: vi.fn(),
+  resolveBrainExecutionConfigForCapabilityMock: vi.fn(),
   runBrainChatCompletionMock: vi.fn(),
   evaluate1688SupplierCandidateMatchMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -102,6 +104,8 @@ vi.mock('./product-scanner-settings', () => ({
     mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock(...args),
   resolveProductScannerAmazonCandidateEvaluatorProbeConfig: (...args: unknown[]) =>
     mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock(...args),
+  resolveProductScannerAmazonCandidateEvaluatorTriageConfig: (...args: unknown[]) =>
+    mocks.resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock(...args),
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfig: (...args: unknown[]) =>
     mocks.resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock(...args),
   resolveProductScanner1688CandidateEvaluatorConfig: (...args: unknown[]) =>
@@ -115,6 +119,11 @@ vi.mock('./product-scan-1688-evaluator', () => ({
 
 vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: (...args: unknown[]) => mocks.runBrainChatCompletionMock(...args),
+}));
+
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  resolveBrainExecutionConfigForCapability: (...args: unknown[]) =>
+    mocks.resolveBrainExecutionConfigForCapabilityMock(...args),
 }));
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';

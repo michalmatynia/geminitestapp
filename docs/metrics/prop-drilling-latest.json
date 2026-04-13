@@ -1,22 +1,22 @@
 {
   "summary": {
-    "generatedAt": "2026-04-13T10:17:50.795Z",
-    "scannedSourceFiles": 7300,
-    "scannedJsxFiles": 2538,
-    "componentCount": 4459,
+    "generatedAt": "2026-04-13T20:42:41.464Z",
+    "scannedSourceFiles": 7306,
+    "scannedJsxFiles": 2537,
+    "componentCount": 4458,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 241,
-    "resolvedTransitionCount": 798,
-    "depth2CandidateChainCount": 798,
+    "componentsWithAnyForwarding": 236,
+    "resolvedTransitionCount": 732,
+    "depth2CandidateChainCount": 732,
     "candidateChainCount": 10,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 13,
-    "highPropCountComponentCount": 39,
-    "passThroughHotspotCount": 53,
+    "highPropCountComponentCount": 38,
+    "passThroughHotspotCount": 50,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 178
+        "count": 177
       },
       {
         "scope": "feature:integrations",
@@ -35,10 +35,6 @@
         "count": 7
       },
       {
-        "scope": "feature:filemaker",
-        "count": 6
-      },
-      {
         "scope": "feature:cms",
         "count": 4
       },
@@ -53,6 +49,10 @@
       {
         "scope": "feature:admin",
         "count": 3
+      },
+      {
+        "scope": "feature:filemaker",
+        "count": 2
       },
       {
         "scope": "feature:playwright",
@@ -435,734 +435,6 @@
     }
   ],
   "transitionBacklog": [
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "closeAriaLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "closeAriaLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "contentId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "contentId",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "currentChoiceLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "currentChoiceLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "defaultChoiceLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "defaultChoiceLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "doneAriaLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "doneAriaLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "doneLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "doneLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "groupAriaLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "groupAriaLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "header",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "onOpenChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "onOpenChange",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "open"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "open",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "options"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "options",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "subjectDialog",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 735
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-          "sourceProp": "subjectDialog",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 744
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
-      ],
-      "propPath": [
-        "subjectDialog",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-          "sourceProp": "subjectDialog",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 744
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "closeAriaLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "closeAriaLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "contentId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "contentId",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "currentChoiceLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "currentChoiceLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "defaultChoiceLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "defaultChoiceLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "doneAriaLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "doneAriaLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "doneLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "doneLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "groupAriaLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "groupAriaLabel",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "header",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "onOpenChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "onOpenChange",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "open"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "open",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "options"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "options",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurChoiceDialog",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 756
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 765
-        }
-      ]
-    },
-    {
-      "score": 182,
-      "depth": 2,
-      "rootFanout": 14,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-      "componentPath": [
-        "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-        "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
-      ],
-      "propPath": [
-        "ageGroupDialog",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-          "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-          "sourceProp": "ageGroupDialog",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-          "line": 765
-        }
-      ]
-    },
     {
       "score": 132,
       "depth": 2,
@@ -2823,7 +2095,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -2849,7 +2121,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -2875,7 +2147,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -2901,7 +2173,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 373
+          "line": 374
         }
       ]
     },
@@ -2927,7 +2199,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 373
+          "line": 374
         }
       ]
     },
@@ -2953,7 +2225,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 373
+          "line": 374
         }
       ]
     },
@@ -2979,7 +2251,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "value",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 440
+          "line": 441
         }
       ]
     },
@@ -3005,7 +2277,7 @@
           "sourceProp": "recentMailboxFilter",
           "targetProp": "onValueChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 440
+          "line": 441
         }
       ]
     },
@@ -3031,7 +2303,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "value",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 453
+          "line": 454
         }
       ]
     },
@@ -3057,7 +2329,7 @@
           "sourceProp": "recentQuery",
           "targetProp": "onChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 453
+          "line": 454
         }
       ]
     },
@@ -3083,7 +2355,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "checked",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 470
+          "line": 471
         }
       ]
     },
@@ -3109,111 +2381,7 @@
           "sourceProp": "recentUnreadOnly",
           "targetProp": "onCheckedChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 470
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "selectedAccount",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "selectedAccount",
-          "targetProp": "disabled",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 48
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "selectedAccount",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "selectedAccount",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 48
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/form-section.tsx#FormSection",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/form-section.tsx#FormSection"
-      ],
-      "propPath": [
-        "selectedAccount",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/form-section.tsx#FormSection",
-          "sourceProp": "selectedAccount",
-          "targetProp": "title",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 84
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "selectedAccount",
-        "placeholder"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "selectedAccount",
-          "targetProp": "placeholder",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 133
+          "line": 471
         }
       ]
     },
@@ -5475,7 +4643,7 @@
           "sourceProp": "onNewMailbox",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -5501,7 +4669,7 @@
           "sourceProp": "selectedAccountId",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -5527,7 +4695,7 @@
           "sourceProp": "selectedMailboxPath",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -5553,7 +4721,7 @@
           "sourceProp": "originPanel",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -5579,7 +4747,7 @@
           "sourceProp": "searchQuery",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -5605,7 +4773,7 @@
           "sourceProp": "onRecentMailboxFilterChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -5631,7 +4799,7 @@
           "sourceProp": "onRecentQueryChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -5657,7 +4825,7 @@
           "sourceProp": "onRecentUnreadOnlyChange",
           "targetProp": "header",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 344
+          "line": 345
         }
       ]
     },
@@ -5683,7 +4851,7 @@
           "sourceProp": "onNewMailbox",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 357
+          "line": 358
         }
       ]
     },
@@ -5709,7 +4877,7 @@
           "sourceProp": "selectedAccountId",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 373
+          "line": 374
         }
       ]
     },
@@ -5735,7 +4903,7 @@
           "sourceProp": "selectedMailboxPath",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 373
+          "line": 374
         }
       ]
     },
@@ -5761,7 +4929,7 @@
           "sourceProp": "originPanel",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 373
+          "line": 374
         }
       ]
     },
@@ -5787,7 +4955,7 @@
           "sourceProp": "searchQuery",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 373
+          "line": 374
         }
       ]
     },
@@ -5813,7 +4981,7 @@
           "sourceProp": "onRecentMailboxFilterChange",
           "targetProp": "onValueChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 440
+          "line": 441
         }
       ]
     },
@@ -5839,7 +5007,7 @@
           "sourceProp": "onRecentQueryChange",
           "targetProp": "onChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 453
+          "line": 454
         }
       ]
     },
@@ -5865,163 +5033,7 @@
           "sourceProp": "onRecentUnreadOnlyChange",
           "targetProp": "onCheckedChange",
           "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 470
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "draft",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "draft",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 86
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setDraft",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setDraft",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 86
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "draft",
-        "checked"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "draft",
-          "targetProp": "checked",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 241
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "setDraft",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "setDraft",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 241
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "deepSearchQuery",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "deepSearchQuery",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx",
-          "line": 58
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "deepSearchQuery",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "deepSearchQuery",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx",
-          "line": 96
+          "line": 471
         }
       ]
     },
@@ -9020,422 +8032,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "launchMode",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "launchMode",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 54
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "setLaunchMode",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "setLaunchMode",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 54
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "scheduledAt",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "scheduledAt",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 63
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setScheduledAt",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setScheduledAt",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 63
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "isRecurring",
-        "checked"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "isRecurring",
-          "targetProp": "checked",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 73
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "setIsRecurring",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "setIsRecurring",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 73
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "recurringFrequency",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "recurringFrequency",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 81
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "setRecurringFrequency",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "setRecurringFrequency",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 81
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "recurringDayOfWeek",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "recurringDayOfWeek",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 92
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "setRecurringDayOfWeek",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "setRecurringDayOfWeek",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 92
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "recurringDayOfMonth",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "recurringDayOfMonth",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 102
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setRecurringDayOfMonth",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setRecurringDayOfMonth",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 102
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "recurringHour",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "recurringHour",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 113
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setRecurringHour",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setRecurringHour",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 113
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "recurringMinute",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "recurringMinute",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 122
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setRecurringMinute",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setRecurringMinute",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-          "line": 122
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/filemaker/pages/campaign-run-sections/RunDeliveryLogSection.tsx#RunDeliveryLogSection",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
@@ -9480,318 +8076,6 @@
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/pages/campaign-run-sections/RunDeliveryLogSection.tsx",
           "line": 87
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "syncingAccountId",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "syncingAccountId",
-          "targetProp": "disabled",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 48
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "handleSyncAccount",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "handleSyncAccount",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 48
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "folderAllowlistValue",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "folderAllowlistValue",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 204
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setFolderAllowlistValue",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setFolderAllowlistValue",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 204
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "handleSaveAccount",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "handleSaveAccount",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 265
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "isSavingAccount",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "isSavingAccount",
-          "targetProp": "disabled",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 265
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onComposeFromAccount",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onComposeFromAccount",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 281
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "onDeepSearchQueryChange",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "onDeepSearchQueryChange",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx",
-          "line": 58
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onClearSearch",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onClearSearch",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx",
-          "line": 68
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onOpenThread",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onOpenThread",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx",
-          "line": 96
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "selectedAccountId",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "selectedAccountId",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx",
-          "line": 96
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/pages/mail-page-sections/MailboxesAttentionSection.tsx#MailboxesAttentionSection",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/pages/mail-page-sections/MailboxesAttentionSection.tsx#MailboxesAttentionSection",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onSelectSelection",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/pages/mail-page-sections/MailboxesAttentionSection.tsx#MailboxesAttentionSection",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onSelectSelection",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/pages/mail-page-sections/MailboxesAttentionSection.tsx",
-          "line": 72
         }
       ]
     },
@@ -10103,7 +8387,7 @@
           "sourceProp": "onRelist",
           "targetProp": "onClick",
           "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-          "line": 173
+          "line": 193
         }
       ]
     },
@@ -10129,7 +8413,7 @@
           "sourceProp": "isRefreshingSession",
           "targetProp": "disabled",
           "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-          "line": 199
+          "line": 219
         }
       ]
     },
@@ -10155,7 +8439,7 @@
           "sourceProp": "onLiveCheck",
           "targetProp": "onClick",
           "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-          "line": 199
+          "line": 219
         }
       ]
     },
@@ -10181,7 +8465,7 @@
           "sourceProp": "onRefreshSession",
           "targetProp": "onClick",
           "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-          "line": 223
+          "line": 243
         }
       ]
     },
@@ -21186,15 +19470,6 @@
   ],
   "componentBacklog": [
     {
-      "componentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "name": "LaunchSchedulingSection",
-      "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-      "feature": "feature:filemaker",
-      "forwardedPropCount": 16,
-      "outgoingTransitionCount": 16,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
       "name": "FilemakerMailSidebar",
       "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
@@ -21209,15 +19484,6 @@
       "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
       "feature": "feature:integrations",
       "forwardedPropCount": 11,
-      "outgoingTransitionCount": 15,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "name": "MailAccountSettingsSection",
-      "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-      "feature": "feature:filemaker",
-      "forwardedPropCount": 10,
       "outgoingTransitionCount": 15,
       "hasUnknownSpreadForwarding": false
     },
@@ -21363,15 +19629,6 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 5,
       "outgoingTransitionCount": 7,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-      "name": "MailSearchSection",
-      "relativePath": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx",
-      "feature": "feature:filemaker",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -21885,15 +20142,6 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "name": "KangurPrimaryNavigationChoiceDialogs",
-      "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 28,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -22264,18 +20512,45 @@
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
       "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx#LearnerStatusField",
+      "name": "LearnerStatusField",
+      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/design/primitives/KangurSectionHeading.tsx#KangurSectionHeadingOptionalDescription",
+      "name": "KangurSectionHeadingOptionalDescription",
+      "relativePath": "src/features/kangur/ui/design/primitives/KangurSectionHeading.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/pages/lessons/LessonsDeferredEnhancements.tsx#LessonsDeferredEnhancements",
+      "name": "LessonsDeferredEnhancements",
+      "relativePath": "src/features/kangur/ui/pages/lessons/LessonsDeferredEnhancements.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
+      "name": "TextBlock",
+      "relativePath": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
     }
   ],
   "forwardingComponentBacklog": [
-    {
-      "componentId": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx#LaunchSchedulingSection",
-      "name": "LaunchSchedulingSection",
-      "relativePath": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
-      "feature": "feature:filemaker",
-      "forwardedPropCount": 16,
-      "outgoingTransitionCount": 16,
-      "hasUnknownSpreadForwarding": false
-    },
     {
       "componentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
       "name": "FilemakerMailSidebar",
@@ -22291,15 +20566,6 @@
       "relativePath": "src/features/integrations/components/listings/IntegrationSelectorFields.tsx",
       "feature": "feature:integrations",
       "forwardedPropCount": 11,
-      "outgoingTransitionCount": 15,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
-      "name": "MailAccountSettingsSection",
-      "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-      "feature": "feature:filemaker",
-      "forwardedPropCount": 10,
       "outgoingTransitionCount": 15,
       "hasUnknownSpreadForwarding": false
     },
@@ -22445,15 +20711,6 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 5,
       "outgoingTransitionCount": 7,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx#MailSearchSection",
-      "name": "MailSearchSection",
-      "relativePath": "src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx",
-      "feature": "feature:filemaker",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -22967,15 +21224,6 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigationChoiceDialogs",
-      "name": "KangurPrimaryNavigationChoiceDialogs",
-      "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 28,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -23622,15 +21870,6 @@
       "name": "AttachSlugModal",
       "relativePath": "src/features/cms/components/slugs/AttachSlugModal.tsx",
       "feature": "feature:cms",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 1,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/filemaker/pages/mail-page-sections/MailboxesAttentionSection.tsx#MailboxesAttentionSection",
-      "name": "MailboxesAttentionSection",
-      "relativePath": "src/features/filemaker/pages/mail-page-sections/MailboxesAttentionSection.tsx",
-      "feature": "feature:filemaker",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false

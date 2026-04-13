@@ -1,8 +1,81 @@
 export const PART_5 = String.raw`
 
   let currentImageUploadSource = null;
+  let duplicateSearchSummary = {
+    duplicateCandidateCount: null,
+    duplicateSearchTitle: duplicateSearchTitle || null,
+    ignoredNonExactCandidateCount: null,
+    ignoredCandidateTitles: [],
+  };
+
+  const ensureInitialImageCleanupSettled = async () => {
+    let totalRemovedCount = 0;
+    let cleanupPasses = 0;
+    let stableZeroChecks = 0;
+    let lastCleanupState = null;
+    const deadline = Date.now() + 15_000;
+
+    const runCleanupPass = async () => {
+      const removedCount = await clearDraftImagesIfPresent().catch(() => null);
+      cleanupPasses += 1;
+      if (typeof removedCount === 'number' && removedCount > 0) {
+        totalRemovedCount += removedCount;
+      }
+    };
+
+    await runCleanupPass();
+
+    while (Date.now() < deadline) {
+      const [cleanupState, imageUploadPending] = await Promise.all([
+        readDraftImageCleanupState().catch(() => ({
+          currentUrl: page.url(),
+          draftImageRemoveControls: null,
+          uploadedImagePreviewCount: null,
+          uploadedImagePreviewDescriptors: [],
+          onHomepage: false,
+          onSellingRoute: true,
+        })),
+        isImageUploadPending().catch(() => false),
+      ]);
+
+      lastCleanupState = {
+        ...cleanupState,
+        imageUploadPending,
+        totalRemovedCount,
+        cleanupPasses,
+      };
+
+      const zeroStateReached =
+        !imageUploadPending &&
+        cleanupState.draftImageRemoveControls === 0 &&
+        cleanupState.uploadedImagePreviewCount === 0;
+
+      if (zeroStateReached) {
+        stableZeroChecks += 1;
+        if (stableZeroChecks >= 3) {
+          log?.('tradera.quicklist.image.initial_cleanup', lastCleanupState);
+          return lastCleanupState;
+        }
+      } else {
+        stableZeroChecks = 0;
+        if (!imageUploadPending && (cleanupState.draftImageRemoveControls ?? 0) > 0) {
+          await runCleanupPass();
+        }
+      }
+
+      await wait(400);
+    }
+
+    throw new Error(
+      'FAIL_IMAGE_SET_INVALID: Tradera draft image cleanup did not reach a clean zero state before upload. Last state: ' +
+        JSON.stringify(lastCleanupState)
+    );
+  };
 
   try {
+    updateStep('browser_preparation', 'running');
+    updateStep('browser_preparation', 'completed');
+    updateStep('browser_open', 'running');
     log?.('tradera.quicklist.start', {
       listingAction,
       duplicateSearchTitle,
@@ -22,6 +95,7 @@ export const PART_5 = String.raw`
     });
     log?.('tradera.quicklist.runtime', await readRuntimeEnvironment());
     emitStage('started');
+    updateStep('browser_open', 'completed', { action: listingAction });
 
     const initialStartUrl =
       listingAction === 'sync'
@@ -35,9 +109,28 @@ export const PART_5 = String.raw`
     emitStage(listingAction === 'sync' ? 'sync_target_loaded' : 'active_loaded');
 
     if (listingAction === 'sync') {
+      skipStep('duplicate_check', 'sync action');
+      skipStep('deep_duplicate_check', 'sync action');
+      skipStep('sell_page_open', 'sync action');
+      updateStep('sync_check', 'running');
       await openExistingListingEditorForSync();
+      updateStep('sync_check', 'completed', { listingUrl: existingListingUrl || null });
     } else {
+      skipStep('sync_check', 'not a sync action');
+      updateStep('duplicate_check', 'running');
       const duplicateMatch = await checkDuplicate(duplicateSearchTerms);
+      duplicateSearchSummary = {
+        duplicateCandidateCount:
+          typeof duplicateMatch.candidateCount === 'number' ? duplicateMatch.candidateCount : null,
+        duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
+        ignoredNonExactCandidateCount:
+          typeof duplicateMatch.ignoredNonExactCandidateCount === 'number'
+            ? duplicateMatch.ignoredNonExactCandidateCount
+            : null,
+        ignoredCandidateTitles: Array.isArray(duplicateMatch.ignoredCandidateTitles)
+          ? duplicateMatch.ignoredCandidateTitles.filter((value) => typeof value === 'string').slice(0, 5)
+          : [],
+      };
       if (duplicateMatch.duplicateFound) {
         const duplicateResult = {
           stage: 'duplicate_linked',
@@ -57,6 +150,18 @@ export const PART_5 = String.raw`
           categorySource: null,
           imageUploadSource: null,
         };
+        updateStep('duplicate_check', 'completed', { duplicateFound: true, listingId: duplicateResult.externalListingId });
+        skipStep('deep_duplicate_check', 'duplicate linked');
+        skipStep('sell_page_open', 'duplicate linked');
+        skipStep('image_cleanup', 'duplicate linked');
+        skipStep('image_upload', 'duplicate linked');
+        skipStep('title_fill', 'duplicate linked');
+        skipStep('description_fill', 'duplicate linked');
+        skipStep('price_set', 'duplicate linked');
+        skipStep('category_select', 'duplicate linked');
+        skipStep('shipping_set', 'duplicate linked');
+        skipStep('publish', 'duplicate linked');
+        updateStep('browser_close', 'completed');
         log?.('tradera.quicklist.duplicate.linked', duplicateResult);
         emitStage('duplicate_linked', {
           duplicateMatchStrategy: duplicateResult.duplicateMatchStrategy,
@@ -68,9 +173,18 @@ export const PART_5 = String.raw`
         emit('result', duplicateResult);
         return duplicateResult;
       }
-      emitStage('duplicate_checked');
+      updateStep('duplicate_check', 'completed', { duplicateFound: false });
+      skipStep('deep_duplicate_check', 'no pre-listing deep check required');
+      emitStage('duplicate_checked', {
+        duplicateCandidateCount: duplicateSearchSummary.duplicateCandidateCount,
+        duplicateSearchTitle: duplicateSearchSummary.duplicateSearchTitle,
+        ignoredNonExactCandidateCount: duplicateSearchSummary.ignoredNonExactCandidateCount,
+        ignoredCandidateTitles: duplicateSearchSummary.ignoredCandidateTitles,
+      });
 
+      updateStep('sell_page_open', 'running');
       await gotoSellPage();
+      updateStep('sell_page_open', 'completed', { url: page.url() });
     }
     // Wait for SPA to fully render the listing form
     await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
@@ -87,8 +201,14 @@ export const PART_5 = String.raw`
     await dismissVisibleAutofillDialogIfPresent({
       context: listingAction === 'sync' ? 'sync-editor-ready' : 'listing-editor-ready',
     }).catch(() => false);
+    if (listingAction !== 'sync') {
+      updateStep('image_cleanup', 'running');
+    }
     if (!syncSkipImages) {
-      await clearDraftImagesIfPresent();
+      await ensureInitialImageCleanupSettled();
+    }
+    if (listingAction !== 'sync') {
+      updateStep('image_cleanup', 'completed');
     }
     emitStage('draft_cleared');
 
@@ -167,6 +287,40 @@ export const PART_5 = String.raw`
           })
       );
 
+    const buildPostDispatchRetryBlockedError = ({
+      baselinePreviewCount,
+      expectedUploadCount,
+      observedPreviewCount,
+      observedPreviewDelta,
+      observedPreviewDescriptors,
+      draftImageRemoveControls,
+      imageUploadPromptVisible,
+      imageUploadPending,
+      imageUploadErrorText,
+      retryReason,
+      uploadSource,
+      uploadAttempt,
+      sequential,
+    }) =>
+      new Error(
+        'FAIL_IMAGE_SET_INVALID: Tradera image upload was already dispatched once, and retrying could duplicate images. Last state: ' +
+          JSON.stringify({
+            baselinePreviewCount,
+            expectedUploadCount,
+            observedPreviewCount,
+            observedPreviewDelta,
+            observedPreviewDescriptors,
+            draftImageRemoveControls,
+            imageUploadPromptVisible,
+            imageUploadPending,
+            imageUploadErrorText,
+            retryReason,
+            uploadSource,
+            uploadAttempt,
+            sequential,
+          })
+      );
+
     const readImageUploadRetryState = async ({
       baselinePreviewCount = 0,
       expectedUploadCount = 1,
@@ -213,12 +367,77 @@ export const PART_5 = String.raw`
       };
     };
 
+    const waitForStableFinalImagePreviewState = async ({
+      baselinePreviewCount = 0,
+      expectedUploadCount = 1,
+      uploadSource,
+      uploadAttempt,
+      timeoutMs = 12_000,
+      minimumQuietMs = 3_000,
+    } = {}) => {
+      const deadline = Date.now() + timeoutMs;
+      let stableSince = null;
+      let lastStablePreviewCount = null;
+      let lastObservedState = null;
+
+      while (Date.now() < deadline) {
+        const retryState = await readImageUploadRetryState({
+          baselinePreviewCount,
+          expectedUploadCount,
+        });
+        lastObservedState = {
+          baselinePreviewCount,
+          expectedUploadCount,
+          uploadSource,
+          uploadAttempt,
+          ...retryState,
+        };
+
+        if (
+          retryState.observedPreviewDelta !== null &&
+          retryState.observedPreviewDelta > expectedUploadCount
+        ) {
+          throw buildImagePreviewMismatchError({
+            baselinePreviewCount,
+            expectedUploadCount,
+            observedPreviewCount: retryState.observedPreviewCount,
+            observedPreviewDelta: retryState.observedPreviewDelta,
+            observedPreviewDescriptors: retryState.observedPreviewDescriptors,
+            retryReason: 'post-upload-stabilization',
+            imageUploadPending: retryState.imageUploadPending,
+            imageUploadErrorText: retryState.imageUploadErrorText,
+          });
+        }
+
+        const stablePreviewStateReached =
+          retryState.observedPreviewDelta === expectedUploadCount &&
+          retryState.imageUploadPending === false &&
+          !retryState.imageUploadErrorText;
+
+        if (stablePreviewStateReached) {
+          if (lastStablePreviewCount !== retryState.observedPreviewCount) {
+            stableSince = Date.now();
+            lastStablePreviewCount = retryState.observedPreviewCount;
+          } else if (stableSince !== null && Date.now() - stableSince >= minimumQuietMs) {
+            log?.('tradera.quicklist.image.final_state_stable', lastObservedState);
+            return retryState;
+          }
+        } else {
+          stableSince = null;
+          lastStablePreviewCount = null;
+        }
+
+        await wait(500);
+      }
+
+      log?.('tradera.quicklist.image.final_state_timeout', lastObservedState);
+      return lastObservedState;
+    };
+
     const isRetryBlockedImageUploadError = (error) => {
       const message = error instanceof Error ? error.message : String(error || '');
       return (
-        message.includes(
-          'Tradera image upload reached a partial state and retrying could duplicate images.'
-        ) ||
+        message.includes('retrying could duplicate images') ||
         message.includes('Tradera uploaded more image previews than expected.') ||
         message.includes('Tradera retry image cleanup did not clear the previous upload state.')
       );
@@ -405,6 +624,7 @@ export const PART_5 = String.raw`
         }
 
         let baselinePreviewCount = 0;
+        let uploadDispatched = false;
         try {
           await dismissVisibleAutofillDialogIfPresent({
             context: 'image-upload-prepare',
@@ -413,6 +633,19 @@ export const PART_5 = String.raw`
           await assertAllowedTraderaPage('image upload dispatch');
 
           baselinePreviewCount = await countUploadedImagePreviews();
+          if (baselinePreviewCount > 0) {
+            throw new Error(
+              'FAIL_IMAGE_SET_INVALID: Tradera draft already contained images before upload. Last state: ' +
+                JSON.stringify({
+                  baselinePreviewCount,
+                  uploadSource,
+                  uploadAttempt,
+                  observedPreviewDescriptors: await readUploadedImagePreviewDescriptors().catch(
+                    () => []
+                  ),
+                })
+            );
+          }
           const reusableUploadBeforeDispatch = await tryReuseCompletedImageUpload({
             baselinePreviewCount,
             expectedUploadCount,
@@ -453,6 +686,7 @@ export const PART_5 = String.raw`
                 context: 'image-upload-sequential',
               }).catch(() => false);
               const previewsBefore = await countUploadedImagePreviews();
+              uploadDispatched = true;
               await currentInput.setInputFiles(
                 Array.isArray(singleFile) ? singleFile : [singleFile]
               );
@@ -496,6 +730,7 @@ export const PART_5 = String.raw`
               }
             }
           } else {
+            uploadDispatched = true;
             await imageInput.setInputFiles(uploadFiles);
           }
 
@@ -529,13 +764,39 @@ export const PART_5 = String.raw`
               'FAIL_IMAGE_SET_INVALID: Tradera draft save did not settle after image upload.'
             );
           }
+          const finalImagePreviewState = await waitForStableFinalImagePreviewState({
+            baselinePreviewCount,
+            expectedUploadCount,
+            uploadSource,
+            uploadAttempt,
+          });
+          if (
+            !finalImagePreviewState ||
+            finalImagePreviewState.observedPreviewDelta !== expectedUploadCount ||
+            finalImagePreviewState.imageUploadPending !== false ||
+            Boolean(finalImagePreviewState.imageUploadErrorText)
+          ) {
+            throw new Error(
+              'FAIL_IMAGE_SET_INVALID: Tradera final image preview state did not stabilize after upload. Last state: ' +
+                JSON.stringify(finalImagePreviewState)
+            );
+          }
 
           return {
             imageCount: expectedUploadCount,
             expectedUploadCount,
-            observedPreviewCount: imageAdvanceResult?.observedPreviewCount ?? null,
-            observedPreviewDelta: imageAdvanceResult?.observedPreviewDelta ?? null,
-            observedPreviewDescriptors: imageAdvanceResult?.observedPreviewDescriptors ?? [],
+            observedPreviewCount:
+              finalImagePreviewState?.observedPreviewCount ??
+              imageAdvanceResult?.observedPreviewCount ??
+              null,
+            observedPreviewDelta:
+              finalImagePreviewState?.observedPreviewDelta ??
+              imageAdvanceResult?.observedPreviewDelta ??
+              null,
+            observedPreviewDescriptors:
+              finalImagePreviewState?.observedPreviewDescriptors ??
+              imageAdvanceResult?.observedPreviewDescriptors ??
+              [],
             uploadSource,
           };
         } catch (error) {
@@ -576,6 +837,31 @@ export const PART_5 = String.raw`
               retryReason,
               uploadSource,
               uploadAttempt,
+            });
+          }
+          if (uploadDispatched) {
+            log?.('tradera.quicklist.image.retry_post_dispatch_blocked', {
+              uploadSource,
+              uploadAttempt,
+              sequential: useSequentialUpload,
+              currentUrl: page.url(),
+              error: retryReason,
+              ...retryState,
+            });
+            throw buildPostDispatchRetryBlockedError({
+              baselinePreviewCount,
+              expectedUploadCount,
+              observedPreviewCount: retryState.observedPreviewCount,
+              observedPreviewDelta: retryState.observedPreviewDelta,
+              observedPreviewDescriptors: retryState.observedPreviewDescriptors,
+              draftImageRemoveControls: retryState.draftImageRemoveControls,
+              imageUploadPromptVisible: retryState.imageUploadPromptVisible,
+              imageUploadPending: retryState.imageUploadPending,
+              imageUploadErrorText: retryState.imageUploadErrorText,
+              retryReason,
+              uploadSource,
+              uploadAttempt,
+              sequential: useSequentialUpload,
             });
           }
           log?.('tradera.quicklist.image.upload_attempt_failed', {
@@ -685,9 +971,11 @@ export const PART_5 = String.raw`
         uploadSource: 'preserved',
         observedPreviewDescriptors: [],
       };
+      skipStep('image_upload', 'sync-skip-images');
       log?.('tradera.quicklist.image.skipped', { reason: 'sync-skip-images' });
       emitStage('images_preserved', { reason: 'sync-skip-images' });
     } else {
+      updateStep('image_upload', 'running', { imageCount: imageUrls.length });
       const initialUploadFiles = await resolveUploadFiles();
       const initialUploadSource =
         Array.isArray(initialUploadFiles) &&
@@ -741,6 +1029,7 @@ export const PART_5 = String.raw`
       }
 
       if (imageUploadResult?.uploadSource === 'preserved-relist') {
+        updateStep('image_upload', 'completed', { imageCount: imageUploadResult?.imageCount ?? 0, uploadSource: 'preserved-relist' });
         emitStage('images_preserved', {
           reason: 'relist-editor-ready',
           imageCount: imageUploadResult?.imageCount ?? null,
@@ -748,6 +1037,7 @@ export const PART_5 = String.raw`
           expectedUploadCount: imageUploadResult?.expectedUploadCount ?? null,
         });
       } else {
+        updateStep('image_upload', 'completed', { imageCount: imageUploadResult?.imageCount ?? 0, uploadSource: imageUploadResult?.uploadSource ?? null });
         emitStage('images_uploaded', {
           imageCount: imageUploadResult?.imageCount ?? null,
           uploadSource: imageUploadResult?.uploadSource ?? null,

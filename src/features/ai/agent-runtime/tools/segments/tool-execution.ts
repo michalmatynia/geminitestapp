@@ -351,7 +351,7 @@ export async function runAgentTool(
       throw new Error('Extraction failed to produce a result.');
     }
 
-    const snapshot = await captureSnapshot(page, runId, _runDir, 'auto', log, activeStepId);
+    const snapshot = await captureSnapshot(page, _runDir, { runId, label: 'auto', log, activeStepId });
 
     return {
       ok: extractionResult ? extractionResult.ok : true,
@@ -374,7 +374,7 @@ export async function runAgentTool(
     let snapshotId: string | null = null;
     if (page) {
       const errorSnapshot = await (
-        captureSnapshot(page, runId, _runDir, 'error', log, activeStepId) as Promise<{
+        captureSnapshot(page, _runDir, { runId, label: 'error', log, activeStepId }) as Promise<{
           id: string;
         } | null>
       ).catch(() => null);

@@ -81,6 +81,8 @@ describe('playwright listing result helpers', () => {
       duplicateMatchedProductId: null,
       duplicateCandidateCount: null,
       duplicateSearchTitle: null,
+      duplicateIgnoredNonExactCandidateCount: null,
+      duplicateIgnoredCandidateTitles: [],
       publishVerified: true,
       source: 'programmable',
     });
@@ -99,6 +101,8 @@ describe('playwright listing result helpers', () => {
             duplicateMatchedProductId: 'BASE-1',
             duplicateCandidateCount: 1,
             duplicateSearchTitle: 'Example title',
+            duplicateIgnoredNonExactCandidateCount: 3,
+            duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
           },
           publishVerified: false,
         } as never,
@@ -113,6 +117,8 @@ describe('playwright listing result helpers', () => {
         duplicateMatchedProductId: 'BASE-1',
         duplicateCandidateCount: 1,
         duplicateSearchTitle: 'Example title',
+        duplicateIgnoredNonExactCandidateCount: 3,
+        duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
         publishVerified: false,
       })
     );

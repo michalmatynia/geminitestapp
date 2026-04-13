@@ -7,6 +7,7 @@ import {
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
+  useCheckTraderaStatusMutation,
   useDeleteFromBaseMutation,
   useExportToBaseMutation,
   usePurgeListingMutation,
@@ -82,6 +83,7 @@ export const useProductListingsActionsImpl = ({
   setPurgingListing,
   setRelistingListing,
   setSavingInventoryId,
+  setCheckingTraderaStatusListing,
   setSyncingImages,
   setSyncingTraderaListing,
 }: {
@@ -109,6 +111,7 @@ export const useProductListingsActionsImpl = ({
   setPurgingListing: Dispatch<SetStateAction<string | null>>;
   setRelistingListing: Dispatch<SetStateAction<string | null>>;
   setSavingInventoryId: Dispatch<SetStateAction<string | null>>;
+  setCheckingTraderaStatusListing: Dispatch<SetStateAction<string | null>>;
   setSyncingImages: Dispatch<SetStateAction<string | null>>;
   setSyncingTraderaListing: Dispatch<SetStateAction<string | null>>;
 }): ProductListingsActions => {
@@ -120,6 +123,7 @@ export const useProductListingsActionsImpl = ({
   const exportToBaseMutation = useExportToBaseMutation(productId);
   const relistTraderaMutation = useRelistTraderaMutation(productId);
   const syncTraderaMutation = useSyncTraderaMutation(productId);
+  const checkTraderaStatusMutation = useCheckTraderaStatusMutation(productId);
   const syncBaseImagesMutation = useSyncBaseImagesMutation(productId);
 
   const handleDeleteFromBase = useCallback(
@@ -453,6 +457,114 @@ export const useProductListingsActionsImpl = ({
     ]
   );
 
+  const handleCheckTraderaStatus = useCallback(
+    async (
+      listingId: string,
+      options?: {
+        skipSessionPreflight?: boolean;
+        browserMode?: PlaywrightRelistBrowserMode;
+      }
+    ) => {
+      const listing = listings.find((item) => item.id === listingId);
+
+      try {
+        setCheckingTraderaStatusListing(listingId);
+        setError(null);
+
+        if (
+          !options?.skipSessionPreflight &&
+          listing &&
+          isTraderaBrowserIntegrationSlug(listing.integration.slug) &&
+          listing.integrationId &&
+          listing.connectionId
+        ) {
+          await preflightTraderaQuickListSession({
+            integrationId: listing.integrationId,
+            connectionId: listing.connectionId,
+            productId:
+              typeof listing.productId === 'string' && listing.productId.trim()
+                ? listing.productId.trim()
+                : productId,
+          });
+        }
+
+        const response = await checkTraderaStatusMutation.mutateAsync({
+          listingId,
+          ...(options?.browserMode ? { browserMode: options.browserMode } : {}),
+        });
+        const queueJobId = response.queue?.jobId;
+        toast(
+          queueJobId
+            ? `Tradera status check queued (job ${queueJobId}).`
+            : 'Tradera status check queued.',
+          { variant: 'success' }
+        );
+        setRecoveryContext((current) =>
+          current?.integrationSlug === 'tradera' ? null : current
+        );
+        onListingsUpdated?.();
+      } catch (err: unknown) {
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'checkTraderaStatus',
+          listingId,
+          productId,
+        });
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to queue Tradera status check';
+        if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+          if (
+            listing &&
+            isTraderaBrowserIntegrationSlug(listing.integration.slug) &&
+            listing.integrationId &&
+            listing.connectionId
+          ) {
+            setRecoveryContext(
+              createTraderaRecoveryContext({
+                status: 'auth_required',
+                runId: null,
+                failureReason: errorMessage,
+                integrationId: listing.integrationId,
+                connectionId: listing.connectionId,
+              })
+            );
+          }
+          toast(errorMessage, { variant: 'error' });
+          return;
+        }
+        if (
+          listing &&
+          isTraderaBrowserIntegrationSlug(listing.integration.slug) &&
+          listing.integrationId &&
+          listing.connectionId
+        ) {
+          setRecoveryContext(
+            createTraderaRecoveryContext({
+              status: 'failed',
+              runId: null,
+              failureReason: errorMessage,
+              integrationId: listing.integrationId,
+              connectionId: listing.connectionId,
+            })
+          );
+        }
+        setError(errorMessage);
+      } finally {
+        setCheckingTraderaStatusListing(null);
+      }
+    },
+    [
+      checkTraderaStatusMutation,
+      listings,
+      onListingsUpdated,
+      productId,
+      setCheckingTraderaStatusListing,
+      setError,
+      setRecoveryContext,
+      toast,
+    ]
+  );
+
   const handleOpenTraderaLogin = useCallback(
     async (listingId: string, integrationId: string, connectionId: string): Promise<boolean> => {
       try {
@@ -503,6 +615,60 @@ export const useProductListingsActionsImpl = ({
       setOpeningTraderaLogin,
       setRecoveryContext,
       toast,
+    ]
+  );
+
+  const handleRecoverTraderaListing = useCallback(
+    async ({
+      listingId,
+      integrationId,
+      connectionId,
+      action,
+      browserMode = 'headed',
+      skipImages = false,
+    }: {
+      listingId: string;
+      integrationId: string;
+      connectionId: string;
+      action: 'relist' | 'sync' | 'check_status';
+      browserMode?: PlaywrightRelistBrowserMode;
+      skipImages?: boolean;
+    }): Promise<boolean> => {
+      const recovered = await handleOpenTraderaLogin(listingId, integrationId, connectionId);
+      if (!recovered) {
+        return false;
+      }
+
+      if (action === 'sync') {
+        await handleSyncTradera(listingId, {
+          skipSessionPreflight: true,
+          integrationId,
+          connectionId,
+          browserMode,
+          ...(skipImages ? { skipImages: true } : {}),
+        });
+        return true;
+      }
+
+      if (action === 'check_status') {
+        await handleCheckTraderaStatus(listingId, {
+          skipSessionPreflight: true,
+          browserMode,
+        });
+        return true;
+      }
+
+      await handleRelistTradera(listingId, {
+        skipSessionPreflight: true,
+        browserMode,
+      });
+      return true;
+    },
+    [
+      handleCheckTraderaStatus,
+      handleOpenTraderaLogin,
+      handleRelistTradera,
+      handleSyncTradera,
     ]
   );
 
@@ -754,8 +920,10 @@ export const useProductListingsActionsImpl = ({
     handleSaveInventoryId,
     handleSyncBaseImages,
     handleSyncTradera,
+    handleCheckTraderaStatus,
     handleRelistTradera,
     handleOpenTraderaLogin,
+    handleRecoverTraderaListing,
     handleOpenVintedLogin,
     handleExportAgain,
     handleExportImagesOnly,

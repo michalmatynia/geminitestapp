@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 import React from 'react';
 
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
+import { useTraderaLiveExecution } from '@/features/integrations/hooks/useTraderaLiveExecution';
 import {
   PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
@@ -14,7 +15,11 @@ import {
   useProductListingsModals,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import { resolveDuplicateLinkedFromListing } from '@/features/integrations/utils/tradera-listing-client-utils';
+import { isTraderaStatusCheckPending } from '@/features/integrations/utils/tradera-status-check';
+import {
+  resolveDuplicateLinkedFromListing,
+  resolveDuplicateLinkedFromRunResult,
+} from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { Button, DropdownMenuItem, Label, Input } from '@/shared/ui/primitives.public';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
@@ -54,6 +59,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     deletingFromBase,
     purgingListing,
     syncingTraderaListing,
+    checkingTraderaStatusListing,
     relistingListing,
     relistingBrowserMode,
     openingTraderaLogin,
@@ -64,8 +70,9 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     handleExportImagesOnly,
     handleSaveInventoryId,
     handleSyncTradera,
+    handleCheckTraderaStatus,
     handleRelistTradera,
-    handleOpenTraderaLogin,
+    handleRecoverTraderaListing,
   } = useProductListingsActions();
 
   const { setListingToDelete, setListingToPurge } = useProductListingsModals();
@@ -80,6 +87,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const isTraderaBrowserListing = isTraderaBrowserIntegrationSlug(listing.integration.slug);
   const isPlaywrightListing =
     normalizeIntegrationSlug(listing.integration.slug) === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG;
+  const liveTraderaExecution = useTraderaLiveExecution(isTraderaListing ? listing : null);
 
   const normalizedListingStatus = (listing.status ?? '').trim().toLowerCase();
   const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(
@@ -107,16 +115,29 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const traderaLastExecutionAction = (readString(traderaLastExecution['action']) ?? '').trim().toLowerCase();
   const traderaExecutionError = readString(traderaLastExecution['error']);
   const traderaFailureReason = (listing.failureReason ?? '').trim().toLowerCase();
-  const isTraderaDuplicateLinked = isTraderaListing && resolveDuplicateLinkedFromListing(listing);
+  const isLiveTraderaRunActive =
+    liveTraderaExecution?.status === 'queued' || liveTraderaExecution?.status === 'running';
+  const liveTraderaAction = liveTraderaExecution?.action ?? null;
+  const isTraderaDuplicateLinked =
+    isTraderaListing &&
+    (resolveDuplicateLinkedFromListing(listing) ||
+      resolveDuplicateLinkedFromRunResult(
+        liveTraderaExecution?.rawResult,
+        liveTraderaExecution?.latestStage
+      ));
+  const effectiveTraderaAction = liveTraderaAction ?? traderaLastExecutionAction;
+  const checkStatusRetryPreferred = effectiveTraderaAction === 'check_status';
   const traderaNeedsManualLogin =
     isTraderaBrowserListing &&
     !isTraderaDuplicateLinked &&
-    ['failed', 'needs_login', 'auth_required'].includes(normalizedListingStatus) &&
+    (['failed', 'needs_login', 'auth_required'].includes(normalizedListingStatus) ||
+      checkStatusRetryPreferred) &&
     (traderaErrorCategory === 'auth' ||
       hasTraderaAuthSignal(traderaFailureReason) ||
       hasTraderaAuthSignal(traderaExecutionError));
   const isRelistingCurrentListing = relistingListing === listing.id;
   const isSyncingCurrentListing = syncingTraderaListing === listing.id;
+  const isCheckingCurrentListing = checkingTraderaStatusListing === listing.id;
   const isRelistingPlaywrightHeadless =
     isRelistingCurrentListing && relistingBrowserMode === 'headless';
   const isRelistingPlaywrightHeaded =
@@ -130,6 +151,8 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   );
   const persistedTraderaPendingSkipImages = traderaPendingExecution['skipImages'] === true;
   const persistedTraderaPendingAction = (readString(traderaPendingExecution['action']) ?? '').trim().toLowerCase();
+  const isQueuedTraderaStatusCheck =
+    isTraderaBrowserListing && isTraderaStatusCheckPending(listing);
   const isPersistedTraderaQueueState =
     isTraderaBrowserListing &&
     ['queued', 'queued_relist', 'running', 'processing', 'pending', 'in_progress'].includes(
@@ -281,34 +304,25 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
               variant='warning'
               size='sm'
               onClick={(): void => {
-                void (async (): Promise<void> => {
-                  const recovered = await handleOpenTraderaLogin(
-                    listing.id,
-                    listing.integrationId,
-                    listing.connectionId
-                  );
-                  if (recovered) {
-                    if (syncRetryPreferred) {
-                      await handleSyncTradera(listing.id, {
-                        skipSessionPreflight: true,
-                        integrationId: listing.integrationId,
-                        connectionId: listing.connectionId,
-                        browserMode: 'headed',
-                      });
-                    } else {
-                      await handleRelistTradera(listing.id, {
-                        skipSessionPreflight: true,
-                        browserMode: 'headed',
-                      });
-                    }
-                  }
-                })();
+                void handleRecoverTraderaListing({
+                  listingId: listing.id,
+                  integrationId: listing.integrationId,
+                  connectionId: listing.connectionId,
+                  action: checkStatusRetryPreferred
+                    ? 'check_status'
+                    : syncRetryPreferred
+                      ? 'sync'
+                      : 'relist',
+                  browserMode: 'headed',
+                });
               }}
               disabled={openingTraderaLogin === listing.id}
             >
               {openingTraderaLogin === listing.id
                 ? 'Waiting for manual login...'
-                : syncRetryPreferred
+                : checkStatusRetryPreferred
+                  ? 'Login and retry status check'
+                  : syncRetryPreferred
                   ? 'Login and retry sync'
                   : 'Login and retry relist'}
             </Button>
@@ -343,7 +357,13 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
               }
               variant='outline'
               size='sm'
-              disabled={isSyncingCurrentListing || isPersistedTraderaQueueState}
+              disabled={
+                isSyncingCurrentListing ||
+                isLiveTraderaRunActive ||
+                isPersistedTraderaQueueState ||
+                isCheckingCurrentListing ||
+                isQueuedTraderaStatusCheck
+              }
               triggerClassName='px-3 py-1.5 h-auto w-auto'
               align='start'
             >
@@ -410,6 +430,30 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
               </DropdownMenuItem>
             </ActionMenu>
           )}
+          {isTraderaBrowserListing && (
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                void handleCheckTraderaStatus(listing.id);
+              }}
+              disabled={
+                isCheckingCurrentListing ||
+                isLiveTraderaRunActive ||
+                isQueuedTraderaStatusCheck ||
+                isPersistedTraderaQueueState ||
+                isSyncingCurrentListing ||
+                isRelistingCurrentListing
+              }
+            >
+              {isQueuedTraderaStatusCheck
+                ? 'Checking status...'
+                : isCheckingCurrentListing
+                  ? 'Queuing status check...'
+                  : 'Check Status'}
+            </Button>
+          )}
           <Button
             type='button'
             variant='success'
@@ -419,8 +463,11 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
             }}
             disabled={
               relistingListing === listing.id ||
+              isLiveTraderaRunActive ||
               isPersistedTraderaQueueState ||
-              isSyncingCurrentListing
+              isSyncingCurrentListing ||
+              isCheckingCurrentListing ||
+              isQueuedTraderaStatusCheck
             }
           >
             {isRelistingTraderaHeaded

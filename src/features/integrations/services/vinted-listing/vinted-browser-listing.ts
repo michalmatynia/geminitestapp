@@ -38,6 +38,7 @@ import { resolveVintedProductImageUploadPlan } from './vinted-browser-images';
 import type { BrowserListingResultDto } from '@/shared/contracts/integrations/listings';
 import { readVintedAuthState } from './vinted-browser-auth';
 import { resolveVintedProductMapping } from './vinted-product-mapping';
+import { StepTracker, type ActionSequenceKey } from '@/shared/lib/browser-execution';
 
 /** Extract Vinted numeric item ID from a URL, e.g. /items/1234567890-item-name → "1234567890" */
 const extractVintedItemId = (url: string): string | null => {
@@ -329,6 +330,10 @@ export const runVintedBrowserListing = async ({
   browserMode: PlaywrightRelistBrowserMode;
   browserPreference: PlaywrightBrowserPreference;
 }): Promise<BrowserListingResultDto> => {
+  const actionKey: ActionSequenceKey =
+    action === 'sync' ? 'vinted_sync' : action === 'relist' ? 'vinted_relist' : 'vinted_list';
+  const tracker = StepTracker.forAction(actionKey);
+
   return runPlaywrightConnectionNativeTask({
     connection,
     instance: createVintedBrowserListingPlaywrightInstance({
@@ -350,7 +355,12 @@ export const runVintedBrowserListing = async ({
         fail: async (step, detail) => { throw internalError(`${step}: ${detail}`); },
       });
 
+      // browser_preparation is a Tradera-only concept; skip it for Vinted native tasks
+      tracker.skip('browser_preparation', 'No separate browser preparation phase for Vinted.');
+      tracker.succeed('browser_open', 'Vinted browser context was opened.');
+
       // 2. Navigate to listing form and verify auth
+      tracker.start('cookie_accept');
       try {
         await page.goto(VINTED_LISTING_FORM_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
       } catch (navError) {
@@ -363,11 +373,17 @@ export const runVintedBrowserListing = async ({
         }
       }
       await acceptCookieConsent();
+      tracker.succeed('cookie_accept', 'Cookie consent was handled.');
 
+      tracker.start('auth_check');
       const authState = await readVintedAuthState(page);
       if (!authState.loggedIn) {
         throw internalError('AUTH_REQUIRED: Vinted session expired. Please refresh the session.');
       }
+      tracker.succeed('auth_check', 'Vinted session is active.');
+      // Vinted uses persistent browser sessions — there is no automated or manual login flow
+      tracker.skip('auth_login', 'Vinted does not support automated login; session must be pre-authenticated.');
+      tracker.skip('auth_manual', 'Vinted does not support manual login via this action.');
 
       // 3. Load product data
       const productRepository = await getProductRepository();
@@ -412,6 +428,7 @@ export const runVintedBrowserListing = async ({
       }
 
       // 4. Upload images
+      tracker.start('image_upload');
       const imageUploadPlan = await resolveVintedProductImageUploadPlan(product);
       if (imageUploadPlan.localImagePaths.length > 0) {
         const fileInput = page.locator(VINTED_IMAGE_UPLOAD_SELECTORS[0]!).first();
@@ -419,6 +436,9 @@ export const runVintedBrowserListing = async ({
           await fileInput.setInputFiles(imageUploadPlan.localImagePaths);
           await page.waitForTimeout(3000); // Wait for uploads to begin
         }
+        tracker.succeed('image_upload', `${imageUploadPlan.localImagePaths.length} image(s) uploaded.`);
+      } else {
+        tracker.skip('image_upload', 'No images to upload for this product.');
       }
 
       const title = resolvedMapping.title;
@@ -426,19 +446,31 @@ export const runVintedBrowserListing = async ({
       const price = resolvedMapping.price;
 
       // 5. Fill required fields
+      tracker.start('title_fill');
       await fillField(page, VINTED_TITLE_SELECTORS, title, 'Title', true);
+      tracker.succeed('title_fill', 'Title was entered.');
+
+      tracker.start('description_fill');
       await fillField(page, VINTED_DESCRIPTION_SELECTORS, description, 'Description', true);
+      tracker.succeed('description_fill', 'Description was entered.');
 
       // 6. Fill mapped marketplace fields.
+      tracker.start('category_select');
       const selectedCategoryPath = await selectCategoryPath(page, resolvedMapping.category.pathSegments);
+      tracker.succeed('category_select', `Category selected: ${selectedCategoryPath.join(' > ')}.`);
 
       let selectedBrand: string | null = null;
       if (resolvedMapping.brand) {
+        tracker.start('brand_fill');
         selectedBrand = await fillBrandAutocomplete(page, resolvedMapping.brand.label);
+        tracker.succeed('brand_fill', `Brand set to "${selectedBrand}".`);
+      } else {
+        tracker.skip('brand_fill', 'No brand mapping configured for this product.');
       }
 
       await page.waitForTimeout(500);
 
+      tracker.start('condition_set');
       const selectedCondition = await selectDropdownOptionByLabel({
         page,
         triggerSelectors: VINTED_CONDITION_SELECTORS,
@@ -450,9 +482,11 @@ export const runVintedBrowserListing = async ({
           sourceName: resolvedMapping.condition.sourceName,
         },
       });
+      tracker.succeed('condition_set', `Condition set to "${selectedCondition}".`);
 
       let selectedSize: string | null = null;
       if (resolvedMapping.size) {
+        tracker.start('size_set');
         selectedSize = await selectDropdownOptionByLabel({
           page,
           triggerSelectors: VINTED_SIZE_SELECTORS,
@@ -464,12 +498,18 @@ export const runVintedBrowserListing = async ({
             sourceName: resolvedMapping.size.sourceName,
           },
         });
+        tracker.succeed('size_set', `Size set to "${selectedSize}".`);
+      } else {
+        tracker.skip('size_set', 'No size mapping configured for this product.');
       }
 
       // 7. Fill price (after optional fields to avoid Vinted re-rendering clearing it)
+      tracker.start('price_set');
       await fillField(page, VINTED_PRICE_SELECTORS, price, 'Price', true);
+      tracker.succeed('price_set', 'Price was set.');
 
       // 8. Submit the listing
+      tracker.start('publish');
       const submitButton = await findFirstVisible(page, VINTED_SUBMIT_SELECTORS);
       if (!submitButton) {
         throw internalError('Submit button not found on Vinted listing form.');
@@ -493,8 +533,10 @@ export const runVintedBrowserListing = async ({
       }
 
       await submitButton.click();
+      tracker.succeed('publish', 'Publish action was submitted.');
 
       // 9. Wait for the real listing page. Do not fabricate success from a stale draft URL.
+      tracker.start('publish_verify');
       await page
         .waitForURL(
           (url) => VINTED_ITEM_URL_PATTERN.test(`${url.pathname}${url.search}${url.hash}`),
@@ -532,6 +574,8 @@ export const runVintedBrowserListing = async ({
           }
         );
       }
+      tracker.succeed('publish_verify', 'Listing URL confirmed after publish.');
+
       const completedAt = new Date().toISOString();
       const externalListingId = itemId;
       const listingUrl = finalUrl;
@@ -544,6 +588,7 @@ export const runVintedBrowserListing = async ({
         updatedAt: completedAt,
         repo: await getIntegrationRepository(),
       });
+      tracker.succeed('browser_close', 'Browser session state was persisted.');
 
       return buildPlaywrightNativeTaskResult({
         session: connectionRuntime,
@@ -556,6 +601,7 @@ export const runVintedBrowserListing = async ({
           currentUrl: finalUrl,
           itemIdExtracted: true,
           publishVerified: true,
+          executionSteps: tracker.getSteps(),
           rawResult: {
             finalUrl,
             itemId,
@@ -582,6 +628,7 @@ export const runVintedBrowserListing = async ({
       source,
       action,
       currentUrl: session.page.url().trim() || null,
+      executionSteps: tracker.failActive('Unexpected error during Vinted listing.').getSteps(),
     }),
     getErrorMessage: (error) =>
       error instanceof Error ? error.message : 'Vinted browser listing failed',

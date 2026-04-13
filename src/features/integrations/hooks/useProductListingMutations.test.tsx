@@ -38,7 +38,10 @@ vi.mock('@/shared/lib/api-client', () => ({
   ApiError: class ApiError extends Error {},
 }));
 
-import { useRelistTraderaMutation } from './useProductListingMutations';
+import {
+  useCheckTraderaStatusMutation,
+  useRelistTraderaMutation,
+} from './useProductListingMutations';
 
 describe('useProductListingMutations', () => {
   beforeEach(() => {
@@ -242,6 +245,92 @@ describe('useProductListingMutations', () => {
           pendingExecution: {
             requestedBrowserMode: 'headed',
             requestId: 'job-tradera-1',
+            queuedAt: '2026-04-02T20:00:00.000Z',
+          },
+        },
+      },
+    });
+  });
+
+  it('patches queued Tradera status checks with connection-default browser mode when no override is provided', async () => {
+    const listingsQueryKey = QUERY_KEYS.integrations.listings('product-1');
+    let cachedListings = [
+      {
+        id: 'listing-1',
+        status: 'active',
+        failureReason: null,
+        integration: {
+          slug: 'tradera',
+        },
+        marketplaceData: {
+          tradera: {},
+        },
+      },
+    ];
+
+    queryClientMock.getQueryData.mockImplementation((queryKey: readonly unknown[]) => {
+      if (JSON.stringify(queryKey) === JSON.stringify(listingsQueryKey)) {
+        return cachedListings;
+      }
+      return undefined;
+    });
+    queryClientMock.setQueryData.mockImplementation(
+      (queryKey: readonly unknown[], value: unknown) => {
+        if (JSON.stringify(queryKey) !== JSON.stringify(listingsQueryKey)) return;
+        cachedListings =
+          typeof value === 'function'
+            ? (value as (current: typeof cachedListings) => typeof cachedListings)(cachedListings)
+            : (value as typeof cachedListings);
+      }
+    );
+    apiPostMock.mockResolvedValue({
+      queued: true,
+      listingId: 'listing-1',
+      queue: {
+        name: 'tradera-listings',
+        jobId: 'job-tradera-check-status-1',
+        enqueuedAt: '2026-04-02T20:00:00.000Z',
+      },
+    });
+
+    renderHook(() => useCheckTraderaStatusMutation('product-1'));
+    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+
+    await config.onMutate({ listingId: 'listing-1' });
+
+    expect(cachedListings[0]).toMatchObject({
+      marketplaceData: {
+        marketplace: 'tradera',
+        tradera: {
+          pendingExecution: {
+            action: 'check_status',
+            requestedBrowserMode: 'connection_default',
+          },
+        },
+      },
+    });
+
+    await config.invalidate(
+      queryClientMock,
+      {
+        queued: true,
+        listingId: 'listing-1',
+        queue: {
+          name: 'tradera-listings',
+          jobId: 'job-tradera-check-status-1',
+          enqueuedAt: '2026-04-02T20:00:00.000Z',
+        },
+      },
+      { listingId: 'listing-1' }
+    );
+
+    expect(cachedListings[0]).toMatchObject({
+      marketplaceData: {
+        tradera: {
+          pendingExecution: {
+            action: 'check_status',
+            requestedBrowserMode: 'connection_default',
+            requestId: 'job-tradera-check-status-1',
             queuedAt: '2026-04-02T20:00:00.000Z',
           },
         },

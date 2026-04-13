@@ -11,6 +11,8 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { readPersistedVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
 
 
 const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
@@ -170,6 +172,64 @@ const hasReconciliationCandidateStatus = (payload: ListingBadgesPayload): boolea
     )
   );
 
+const normalizeMarketplaceBadgeStatus = (value: unknown): string =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const resolveEffectiveMarketplaceBadgeStatus = (
+  serverStatus: string,
+  localFeedbackStatus: string
+): string => {
+  if (!serverStatus) return '';
+  if (!LISTING_BADGE_RECONCILIATION_STATUSES.has(serverStatus)) {
+    return serverStatus;
+  }
+  if (localFeedbackStatus === 'processing' || localFeedbackStatus === 'queued') {
+    return localFeedbackStatus;
+  }
+  if (localFeedbackStatus === 'completed') {
+    return 'active';
+  }
+  return serverStatus;
+};
+
+export const resolveEffectiveListingBadgesPayload = (
+  payload: ListingBadgesPayload
+): ListingBadgesPayload => {
+  const nextPayload: ListingBadgesPayload = {};
+
+  for (const [productId, rawMarketplaces] of Object.entries(payload)) {
+    const marketplaces = toMarketplaceEntry(rawMarketplaces);
+    const traderaFeedbackStatus = normalizeMarketplaceBadgeStatus(
+      readPersistedTraderaQuickListFeedback(productId)?.status
+    );
+    const vintedFeedbackStatus = normalizeMarketplaceBadgeStatus(
+      readPersistedVintedQuickListFeedback(productId)?.status
+    );
+
+    nextPayload[productId] = {
+      ...marketplaces,
+      ...(marketplaces.tradera
+        ? {
+            tradera: resolveEffectiveMarketplaceBadgeStatus(
+              normalizeMarketplaceBadgeStatus(marketplaces.tradera),
+              traderaFeedbackStatus
+            ),
+          }
+        : {}),
+      ...(marketplaces.vinted
+        ? {
+            vinted: resolveEffectiveMarketplaceBadgeStatus(
+              normalizeMarketplaceBadgeStatus(marketplaces.vinted),
+              vintedFeedbackStatus
+            ),
+          }
+        : {}),
+    };
+  }
+
+  return nextPayload;
+};
+
 export const resolveListingBadgeRefetchInterval = (
   payload: ListingBadgesPayload | undefined
 ): number | false => {
@@ -231,7 +291,12 @@ export function useIntegrationListingBadges(
     },
     enabled: enabled && scopedProductIds.length > 0,
     retry: 1,
-    refetchInterval: (query) => resolveListingBadgeRefetchInterval(query.state.data),
+    refetchInterval: (query) =>
+      resolveListingBadgeRefetchInterval(
+        query.state.data
+          ? resolveEffectiveListingBadgesPayload(query.state.data)
+          : query.state.data
+      ),
     refetchIntervalInBackground: false,
     meta: {
       source: 'integrations.hooks.useIntegrationListingBadges',
@@ -245,7 +310,9 @@ export function useIntegrationListingBadges(
 
   return useMemo(() => {
     const nextState = buildIntegrationListingBadgeState(
-      listingsBadgeQuery.data ?? EMPTY_LISTING_BADGES_PAYLOAD
+      resolveEffectiveListingBadgesPayload(
+        listingsBadgeQuery.data ?? EMPTY_LISTING_BADGES_PAYLOAD
+      )
     );
     if (areIntegrationListingBadgeStatesEqual(badgeStateRef.current, nextState)) {
       return badgeStateRef.current;

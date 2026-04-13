@@ -35,6 +35,15 @@ const enrichRecoveryContext = (
     : readPersistedVintedQuickListFeedback(productId);
   if (!persistedFeedback) return recoveryContext;
 
+  const normalizedFeedbackStatus = (persistedFeedback.status ?? '').trim().toLowerCase();
+  if (
+    normalizedFeedbackStatus === 'processing' ||
+    normalizedFeedbackStatus === 'queued' ||
+    normalizedFeedbackStatus === 'completed'
+  ) {
+    return null;
+  }
+
   return {
     ...recoveryContext,
     runId: recoveryContext.runId ?? persistedFeedback.runId ?? null,

@@ -12,6 +12,7 @@ import {
   useProductListingsData,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
+import { useTraderaLiveExecution } from '@/features/integrations/hooks/useTraderaLiveExecution';
 import type {
   ProductListingExportEvent,
 } from '@/shared/contracts/integrations/listings';
@@ -28,6 +29,7 @@ import {
   formatListValue,
   formatTraderaDuplicateMatchStrategy,
   normalizeIntegrationSlug,
+  resolveDisplayedTraderaDuplicateSummary,
   resolveTraderaStatusBadge,
   resolveHistoryBrowserMode,
   resolveDisplayHistoryFields,
@@ -53,14 +55,47 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
   const isPlaywrightListing =
     normalizeIntegrationSlug(listing.integration.slug) === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG;
   const traderaExecution = resolveTraderaExecutionSummary(listing.marketplaceData);
+  const liveTraderaExecution = useTraderaLiveExecution(isTraderaListing ? listing : null);
   const vintedExecution = resolveVintedExecutionSummary(listing.marketplaceData);
   const playwrightExecution = resolvePlaywrightExecutionSummary(listing.marketplaceData);
   const traderaUsesCustomConnectionScript =
     isTraderaListing &&
     traderaExecution.scriptSource === 'connection' &&
     traderaExecution.scriptKind === 'custom';
+  const traderaPendingLabel =
+    traderaExecution.pendingAction === 'check_status'
+      ? 'Pending status check'
+      : traderaExecution.pendingAction === 'sync'
+        ? 'Pending sync'
+        : traderaExecution.pendingAction === 'list'
+          ? 'Pending listing'
+        : 'Pending relist';
+  const displayedTraderaRunId = liveTraderaExecution?.runId ?? traderaExecution.runId;
+  const displayedTraderaLatestStage =
+    liveTraderaExecution?.latestStage ?? traderaExecution.latestStage;
+  const displayedTraderaLatestStageUrl =
+    liveTraderaExecution?.latestStageUrl ?? traderaExecution.latestStageUrl;
+  const displayedTraderaExecutionSteps =
+    liveTraderaExecution && liveTraderaExecution.executionSteps.length > 0
+      ? liveTraderaExecution.executionSteps
+      : traderaExecution.executionSteps;
+  const displayedTraderaRawResult =
+    liveTraderaExecution?.rawResult ?? traderaExecution.rawResult;
+  const displayedTraderaLogTail =
+    liveTraderaExecution?.logTail.length ? liveTraderaExecution.logTail : traderaExecution.logTail;
+  const displayedTraderaLastAction =
+    liveTraderaExecution?.action ?? traderaExecution.lastAction;
+  const displayedTraderaLiveStatus =
+    liveTraderaExecution?.status === 'queued' || liveTraderaExecution?.status === 'running'
+      ? liveTraderaExecution.status
+      : null;
+  const displayedTraderaDuplicateSummary = resolveDisplayedTraderaDuplicateSummary({
+    persisted: traderaExecution,
+    liveRawResult: liveTraderaExecution?.rawResult,
+    liveLatestStage: liveTraderaExecution?.latestStage,
+  });
   const traderaStatusBadge = isTraderaListing
-    ? resolveTraderaStatusBadge(listing.status, traderaExecution.duplicateLinked)
+    ? resolveTraderaStatusBadge(listing.status, displayedTraderaDuplicateSummary.duplicateLinked)
     : null;
 
   const getExportFieldsLabel = (): string => {
@@ -145,7 +180,7 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
           ) : null}
           {isTraderaListing && traderaExecution.pendingQueuedAt ? (
             <MetadataItem
-              label='Pending relist'
+              label={traderaPendingLabel}
               value={formatTimestamp(traderaExecution.pendingQueuedAt)}
               variant='minimal'
             />
@@ -228,10 +263,10 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.runId ? (
+          {isTraderaListing && displayedTraderaRunId ? (
             <MetadataItem
               label='Run ID'
-              value={traderaExecution.runId}
+              value={displayedTraderaRunId}
               mono
               variant='minimal'
             />
@@ -313,18 +348,18 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.latestStage ? (
+          {isTraderaListing && displayedTraderaLatestStage ? (
             <MetadataItem
               label='Last stage'
-              value={traderaExecution.latestStage}
+              value={displayedTraderaLatestStage}
               mono
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.latestStageUrl ? (
+          {isTraderaListing && displayedTraderaLatestStageUrl ? (
             <MetadataItem
               label='Stage URL'
-              value={traderaExecution.latestStageUrl}
+              value={displayedTraderaLatestStageUrl}
               variant='minimal'
             />
           ) : null}
@@ -396,39 +431,58 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateLinked ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateLinked ? (
             <MetadataItem
               label='Existing listing linked'
               value='Yes'
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateMatchStrategy ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateMatchStrategy ? (
             <MetadataItem
               label='Duplicate match strategy'
-              value={formatTraderaDuplicateMatchStrategy(traderaExecution.duplicateMatchStrategy)}
+              value={formatTraderaDuplicateMatchStrategy(
+                displayedTraderaDuplicateSummary.duplicateMatchStrategy
+              )}
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateMatchedProductId ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateMatchedProductId ? (
             <MetadataItem
               label='Duplicate Product ID'
-              value={traderaExecution.duplicateMatchedProductId}
+              value={displayedTraderaDuplicateSummary.duplicateMatchedProductId}
               mono
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateCandidateCount !== null ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateCandidateCount !== null ? (
             <MetadataItem
               label='Duplicate title matches'
-              value={String(traderaExecution.duplicateCandidateCount)}
+              value={String(displayedTraderaDuplicateSummary.duplicateCandidateCount)}
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateSearchTitle ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateSearchTitle ? (
             <MetadataItem
               label='Duplicate search title'
-              value={traderaExecution.duplicateSearchTitle}
+              value={displayedTraderaDuplicateSummary.duplicateSearchTitle}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          displayedTraderaDuplicateSummary.duplicateIgnoredNonExactCandidateCount !== null &&
+          displayedTraderaDuplicateSummary.duplicateIgnoredNonExactCandidateCount > 0 ? (
+            <MetadataItem
+              label='Ignored non-exact duplicate matches'
+              value={String(displayedTraderaDuplicateSummary.duplicateIgnoredNonExactCandidateCount)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateIgnoredCandidateTitles.length > 0 ? (
+            <MetadataItem
+              label='Ignored duplicate titles'
+              value={displayedTraderaDuplicateSummary.duplicateIgnoredCandidateTitles.join(', ')}
+              wrap
               variant='minimal'
             />
           ) : null}
@@ -473,6 +527,14 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               label='Failure code'
               value={traderaExecution.failureCode}
               mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.staleDraftImages ? (
+            <MetadataItem
+              label='Stale draft images'
+              value='Yes'
+              valueClassName='text-amber-300'
               variant='minimal'
             />
           ) : null}
@@ -735,24 +797,26 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
         </div>
       </div>
 
-      {isTraderaListing && traderaExecution.executionSteps.length > 0 ? (
+      {isTraderaListing && displayedTraderaExecutionSteps.length > 0 ? (
         <div className='mt-4'>
           <TraderaExecutionSteps
             title={
-              traderaExecution.lastAction === 'check_status'
+              displayedTraderaLastAction === 'check_status'
                 ? 'Status check steps'
                 : 'Execution steps'
             }
-            steps={traderaExecution.executionSteps}
+            steps={displayedTraderaExecutionSteps}
+            live={displayedTraderaLiveStatus !== null}
+            liveStatus={displayedTraderaLiveStatus}
           />
         </div>
       ) : null}
 
-      {isTraderaListing && traderaExecution.rawResult ? (
+      {isTraderaListing && displayedTraderaRawResult ? (
         <div className='mt-4'>
           <JsonViewer
             title='Tradera run result'
-            data={traderaExecution.rawResult}
+            data={displayedTraderaRawResult}
             maxHeight={220}
             className='bg-white/5'
           />
@@ -760,16 +824,17 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
       ) : null}
       {isTraderaListing &&
       (traderaExecution.failureArtifacts ||
-        traderaExecution.logTail ||
+        displayedTraderaLogTail ||
         traderaExecution.imageSettleState) ? (
         <div className='mt-4'>
           <JsonViewer
             title='Tradera failure diagnostics'
             data={{
               failureArtifacts: traderaExecution.failureArtifacts,
-              logTail: traderaExecution.logTail,
+              logTail: displayedTraderaLogTail,
               imageSettleState: traderaExecution.imageSettleState,
               failureCode: traderaExecution.failureCode,
+              staleDraftImages: traderaExecution.staleDraftImages,
               duplicateRisk: traderaExecution.duplicateRisk,
               imageRetryCleanupUnsettled: traderaExecution.imageRetryCleanupUnsettled,
               expectedImageUploadCount: traderaExecution.expectedImageUploadCount,

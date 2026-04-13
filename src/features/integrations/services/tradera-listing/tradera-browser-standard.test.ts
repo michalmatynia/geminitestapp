@@ -234,6 +234,24 @@ describe('runTraderaBrowserListingStandard', () => {
         matchedTargetPriceGroupIds: ['price-group-eur'],
       }),
     });
+    expect((result.metadata as { executionSteps?: Array<{ id: string; status: string }> }).executionSteps)
+      .toEqual([
+        expect.objectContaining({ id: 'browser_preparation', status: 'success' }),
+        expect.objectContaining({ id: 'browser_open', status: 'success' }),
+        expect.objectContaining({ id: 'cookie_accept', status: 'success' }),
+        expect.objectContaining({ id: 'auth_check', status: 'success' }),
+        expect.objectContaining({ id: 'auth_login', status: 'skipped' }),
+        expect.objectContaining({ id: 'auth_manual', status: 'skipped' }),
+        expect.objectContaining({ id: 'sell_page_open', status: 'success' }),
+        expect.objectContaining({ id: 'load_product', status: 'success' }),
+        expect.objectContaining({ id: 'resolve_price', status: 'success' }),
+        expect.objectContaining({ id: 'title_fill', status: 'success' }),
+        expect.objectContaining({ id: 'description_fill', status: 'success' }),
+        expect.objectContaining({ id: 'price_set', status: 'success' }),
+        expect.objectContaining({ id: 'publish', status: 'success' }),
+        expect.objectContaining({ id: 'publish_verify', status: 'success' }),
+        expect.objectContaining({ id: 'browser_close', status: 'success' }),
+      ]);
     expect(contextCloseMock).toHaveBeenCalled();
     expect(browserCloseMock).toHaveBeenCalled();
   });

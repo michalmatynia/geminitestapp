@@ -83,6 +83,15 @@ export const toUserFacingTraderaFailure = (
   if (normalized.includes('uploaded more image previews than expected')) {
     return 'Tradera image upload produced more previews than expected. Review the listing images in Tradera and retry.';
   }
+  if (normalized.includes('final image preview state did not stabilize after upload')) {
+    return 'Tradera image previews changed after upload instead of stabilizing. Review the listing images in Tradera and retry.';
+  }
+  if (
+    normalized.includes('draft image cleanup did not reach a clean zero state before upload') ||
+    normalized.includes('draft already contained images before upload')
+  ) {
+    return 'Tradera still had draft images before upload. Review the listing images in Tradera and retry.';
+  }
   if (normalized.includes('retrying could duplicate images')) {
     return 'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.';
   }
@@ -102,7 +111,7 @@ const parseTraderaFailureLastState = (message: string): Record<string, unknown> 
   }
 
   try {
-    const parsed = JSON.parse(match[1]);
+    const parsed: unknown = JSON.parse(match[1]);
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
       ? (parsed as Record<string, unknown>)
       : null;
@@ -117,27 +126,39 @@ const toNullableNumber = (value: unknown): number | null =>
 export const extractTraderaFailureMetadata = (message: string): Record<string, unknown> => {
   const normalized = message.trim().toLowerCase();
   const lastState = parseTraderaFailureLastState(message);
+  const isStaleDraftImageState =
+    normalized.includes('draft image cleanup did not reach a clean zero state before upload') ||
+    normalized.includes('draft already contained images before upload');
   const isImagePreviewMismatch = normalized.includes(
     'uploaded more image previews than expected'
+  );
+  const isImagePreviewNotStable = normalized.includes(
+    'final image preview state did not stabilize after upload'
   );
   const isDuplicateRisk = normalized.includes('retrying could duplicate images');
   const isRetryCleanupUnsettled = normalized.includes(
     'retry image cleanup did not clear the previous upload state'
   );
 
-  const failureCode = isImagePreviewMismatch
-    ? 'image_preview_mismatch'
-    : isDuplicateRisk
-      ? 'image_duplicate_risk'
-      : isRetryCleanupUnsettled
-        ? 'image_retry_cleanup_unsettled'
-        : null;
+  const failureCode = isStaleDraftImageState
+    ? 'image_stale_draft_state'
+    : isImagePreviewMismatch
+      ? 'image_preview_mismatch'
+      : isImagePreviewNotStable
+        ? 'image_preview_not_stable'
+      : isDuplicateRisk
+        ? 'image_duplicate_risk'
+        : isRetryCleanupUnsettled
+          ? 'image_retry_cleanup_unsettled'
+          : null;
 
   const metadata: Record<string, unknown> = {};
 
   if (failureCode) {
     metadata['failureCode'] = failureCode;
+    metadata['staleDraftImages'] = isStaleDraftImageState;
     metadata['imagePreviewMismatch'] = isImagePreviewMismatch;
+    metadata['imagePreviewNotStable'] = isImagePreviewNotStable;
     metadata['duplicateRisk'] = isDuplicateRisk;
     metadata['imageRetryCleanupUnsettled'] = isRetryCleanupUnsettled;
   }

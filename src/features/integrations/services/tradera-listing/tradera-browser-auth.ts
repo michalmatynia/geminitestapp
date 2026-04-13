@@ -84,24 +84,42 @@ const waitOnPage = async (page: Page, timeoutMs: number): Promise<void> => {
 };
 
 export const acceptTraderaCookies = async (page: Page): Promise<void> => {
-  for (const selector of TRADERA_COOKIE_ACCEPT_SELECTORS) {
-    const locator = page.locator(selector).first();
-    const visible = await isLocatorVisible(locator);
-    if (!visible) continue;
-    await locator.click?.().catch(() => undefined);
-    await waitOnPage(page, 500);
-    return;
+  await clickTraderaCookiesIfVisible(page);
+};
+
+const clickTraderaCookieLocator = async (locator: Locator): Promise<boolean> => {
+  await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+  try {
+    await locator.click({ timeout: 2_000 });
+    return true;
+  } catch {
+    return locator
+      .evaluate((element) => {
+        if (element instanceof HTMLElement) {
+          element.click();
+          return true;
+        }
+        return false;
+      })
+      .catch(() => false);
   }
 };
 
 const clickTraderaCookiesIfVisible = async (page: Page): Promise<boolean> => {
-  for (const selector of TRADERA_COOKIE_ACCEPT_SELECTORS) {
-    const locator = page.locator(selector).first();
-    const visible = await isLocatorVisible(locator);
-    if (!visible) continue;
-    await locator.click?.().catch(() => undefined);
-    await waitOnPage(page, 500);
-    return true;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (const selector of TRADERA_COOKIE_ACCEPT_SELECTORS) {
+      const locator = page.locator(selector).first();
+      const visible = await isLocatorVisible(locator);
+      if (!visible) continue;
+      const clicked = await clickTraderaCookieLocator(locator);
+      if (!clicked) continue;
+      await waitOnPage(page, 500);
+      return true;
+    }
+
+    if (attempt === 0) {
+      await waitOnPage(page, 250);
+    }
   }
 
   return false;

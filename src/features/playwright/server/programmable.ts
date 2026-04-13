@@ -15,10 +15,15 @@ import {
   buildPlaywrightExecutionSettingsSummary,
   type PlaywrightExecutionSettingsSummary,
 } from './execution-settings';
+import { startPlaywrightConnectionEngineTask } from './connection-runtime';
 import { runPlaywrightImportTask } from './import-task';
 import { runPlaywrightListingTask } from './listing-task';
-import { buildPlaywrightEngineRunFailureMeta } from './run-result';
+import {
+  buildPlaywrightEngineRunFailureMeta,
+  resolvePlaywrightEngineRunOutputs,
+} from './run-result';
 import type { PlaywrightEngineRunInstance } from './runtime';
+import { readPlaywrightEngineRun } from './runtime';
 import { runPlaywrightConnectionScriptTask } from './script-task';
 
 const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selling/new';
@@ -119,6 +124,48 @@ const resolveListingRunStartUrl = (input: Record<string, unknown>): string | und
   return undefined;
 };
 
+const sleep = async (ms: number): Promise<void> =>
+  await new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForPlaywrightRunToFinish = async ({
+  runId,
+  initialStatus,
+  timeoutMs,
+}: {
+  runId: string;
+  initialStatus: string;
+  timeoutMs: number;
+}) => {
+  const deadline = Date.now() + Math.max(timeoutMs, 60_000) + 30_000;
+  let status = initialStatus;
+  let currentRun = await readPlaywrightEngineRun(runId);
+
+  while ((status === 'queued' || status === 'running') && Date.now() < deadline) {
+    await sleep(1_000);
+    const nextRun = await readPlaywrightEngineRun(runId);
+    if (nextRun) {
+      currentRun = nextRun;
+      status = nextRun.status;
+    }
+  }
+
+  if (!currentRun) {
+    throw internalError(`Playwright listing run ${runId} could not be read after startup.`, {
+      runId,
+      runStatus: status,
+    });
+  }
+
+  if (currentRun.status === 'queued' || currentRun.status === 'running') {
+    throw internalError(`Playwright listing run ${runId} did not finish before the timeout window.`, {
+      runId,
+      runStatus: currentRun.status,
+    });
+  }
+
+  return currentRun;
+};
+
 export const runPlaywrightListingScript = async ({
   script,
   input,
@@ -130,6 +177,7 @@ export const runPlaywrightListingScript = async ({
   disableStartUrlBootstrap = false,
   failureHoldOpenMs,
   runtimeSettingsOverrides,
+  onRunStarted,
 }: {
   script: string;
   input: Record<string, unknown>;
@@ -141,51 +189,69 @@ export const runPlaywrightListingScript = async ({
   disableStartUrlBootstrap?: boolean;
   failureHoldOpenMs?: number;
   runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
+  onRunStarted?: ((runId: string) => Promise<void> | void) | undefined;
 }): Promise<PlaywrightListingResult> => {
   const startUrl = disableStartUrlBootstrap ? undefined : resolveListingRunStartUrl(input);
   const listingId = extractTrimmedString(input['listingId']);
+  const sharedTaskInput = {
+    connection,
+    request: {
+      script,
+      input,
+      timeoutMs,
+      preventNewPages: true,
+      ...(typeof failureHoldOpenMs === 'number' ? { failureHoldOpenMs } : {}),
+      browserEngine: 'chromium' as const,
+      ...(startUrl ? { startUrl } : {}),
+      ...(contextRegistry ? { contextRegistry } : {}),
+    },
+    instance:
+      instance ??
+      createProgrammableListingPlaywrightInstance({
+        connectionId: connection.id,
+        integrationId: connection.integrationId,
+        listingId,
+      }),
+    resolveEngineRequestConfig: (runtime) => {
+      const runtimeSettings = {
+        ...runtime.settings,
+        ...(runtimeSettingsOverrides ?? {}),
+      };
+      const effectiveHeadless =
+        browserMode === 'headless'
+          ? true
+          : browserMode === 'headed'
+            ? false
+            : runtimeSettings.headless;
 
-  const { run, runtime, settings: effectiveSettings, resultValue } =
-    await runPlaywrightConnectionScriptTask({
-      connection,
-      request: {
-        script,
-        input,
-        timeoutMs,
-        preventNewPages: true,
-        ...(typeof failureHoldOpenMs === 'number' ? { failureHoldOpenMs } : {}),
-        browserEngine: 'chromium',
-        ...(startUrl ? { startUrl } : {}),
-        ...(contextRegistry ? { contextRegistry } : {}),
-      },
-      instance:
-        instance ??
-        createProgrammableListingPlaywrightInstance({
-          connectionId: connection.id,
-          integrationId: connection.integrationId,
-          listingId,
-        }),
-      resolveEngineRequestConfig: (runtime) => {
-        const runtimeSettings = {
-          ...runtime.settings,
-          ...(runtimeSettingsOverrides ?? {}),
-        };
-        const effectiveHeadless =
-          browserMode === 'headless'
-            ? true
-            : browserMode === 'headed'
-              ? false
-              : runtimeSettings.headless;
+      return {
+        settings: {
+          ...runtimeSettings,
+          headless: effectiveHeadless,
+        },
+        browserPreference: runtimeSettings.browser,
+      };
+    },
+  };
 
+  const { run, runtime, settings: effectiveSettings, resultValue } = onRunStarted
+    ? await (async () => {
+        const startedTask = await startPlaywrightConnectionEngineTask(sharedTaskInput);
+        await Promise.resolve(onRunStarted(startedTask.run.runId));
+        const run = await waitForPlaywrightRunToFinish({
+          runId: startedTask.run.runId,
+          initialStatus: startedTask.run.status,
+          timeoutMs,
+        });
+        const { resultValue } = resolvePlaywrightEngineRunOutputs(run.result);
         return {
-          settings: {
-            ...runtimeSettings,
-            headless: effectiveHeadless,
-          },
-          browserPreference: runtimeSettings.browser,
+          run,
+          runtime: startedTask.runtime,
+          settings: startedTask.settings,
+          resultValue,
         };
-      },
-    });
+      })()
+    : await runPlaywrightConnectionScriptTask(sharedTaskInput);
 
   if (run.status === 'failed') {
     throw internalError(run.error ?? 'Playwright listing script failed.', {

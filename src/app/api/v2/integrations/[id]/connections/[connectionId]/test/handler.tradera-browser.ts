@@ -177,6 +177,7 @@ export async function handleTraderaBrowserTest(
       const deadline = Date.now() + timeoutMs;
 
       while (Date.now() < deadline) {
+        await acceptCookies();
         if (await isUserLoggedIn()) {
           return true;
         }

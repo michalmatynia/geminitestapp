@@ -1,7 +1,47 @@
 export const STATUS_CHECK_CORE_LOGIC = String.raw`
+  const inferListingTitleFromUrl = (value) => {
+    if (typeof value !== 'string' || !value.trim()) {
+      return '';
+    }
+
+    try {
+      const pathname = new URL(value, 'https://www.tradera.com').pathname || '';
+      const segments = pathname
+        .split('/')
+        .map((segment) => {
+          try {
+            return decodeURIComponent(segment);
+          } catch {
+            return segment;
+          }
+        })
+        .filter((segment) => typeof segment === 'string' && segment.trim().length > 0);
+      const lastSegment = segments[segments.length - 1] || '';
+      if (!lastSegment || /^\d{6,}$/.test(lastSegment)) {
+        return '';
+      }
+
+      return normalizeWhitespace(
+        lastSegment
+          .replace(/\.[a-z0-9]{2,5}$/i, '')
+          .replace(/[-_]+/g, ' ')
+      );
+    } catch {
+      return '';
+    }
+  };
+
+  const normalizeListingMatchValue = (value) =>
+    normalizeWhitespace(value)
+      .toLowerCase()
+      .replace(/[\u0060'’"]/g, '')
+      .replace(/[^0-9a-z\u00c0-\u024f]+/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
   const titlesExactlyMatch = (left, right) => {
-    const normalizedLeft = normalizeWhitespace(left).toLowerCase();
-    const normalizedRight = normalizeWhitespace(right).toLowerCase();
+    const normalizedLeft = normalizeListingMatchValue(left);
+    const normalizedRight = normalizeListingMatchValue(right);
     return Boolean(normalizedLeft) && normalizedLeft === normalizedRight;
   };
 
@@ -378,6 +418,7 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
         resolvedListingUrl = new URL(candidateInfo.href, page.url()).toString();
       } catch {}
 
+      const inferredTitleFromUrl = inferListingTitleFromUrl(resolvedListingUrl);
       const listingId = extractListingId(resolvedListingUrl);
       const dedupeKey = listingId || resolvedListingUrl;
       if (!dedupeKey || seen.has(dedupeKey)) continue;
@@ -386,7 +427,7 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
       collected.push({
         listingUrl: resolvedListingUrl,
         listingId,
-        title: normalizeWhitespace(candidateInfo.titleText || ''),
+        title: normalizeWhitespace(candidateInfo.titleText || '') || inferredTitleFromUrl,
         text: normalizeWhitespace(candidateInfo.containerText || candidateInfo.text || ''),
         statusBadgeText: normalizeWhitespace(candidateInfo.statusBadgeText || ''),
         statusContextText: normalizeWhitespace(candidateInfo.statusContextText || ''),
@@ -397,19 +438,19 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
   };
 
   const collectListingLinksForTerm = async (term, maxMatches = null) => {
-    const normalizedTerm = normalizeWhitespace(term).toLowerCase();
+    const normalizedTerm = normalizeListingMatchValue(term);
     if (!normalizedTerm) return [];
 
     const matchLimit =
       typeof maxMatches === 'number' && Number.isFinite(maxMatches) && maxMatches > 0
-        ? Math.max(1, Math.floor(limit))
+        ? Math.max(1, Math.floor(maxMatches))
         : null;
     const candidates = await collectVisibleListingCandidates();
     const matches = [];
 
     for (const candidate of candidates) {
-      const normalizedCandidateTitle = normalizeWhitespace(candidate.title || '').toLowerCase();
-      if (!normalizedCandidateTitle || !titlesExactlyMatch(normalizedCandidateTitle, normalizedTerm)) {
+      const normalizedCandidateTitle = normalizeListingMatchValue(candidate.title || '');
+      if (!normalizedCandidateTitle || normalizedCandidateTitle !== normalizedTerm) {
         continue;
       }
       matches.push(candidate);
@@ -419,6 +460,73 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     }
 
     return matches;
+  };
+
+  const dedupeCandidatesByListing = (candidates) => {
+    const deduped = [];
+    const seen = new Set();
+
+    for (const candidate of Array.isArray(candidates) ? candidates : []) {
+      const dedupeKey = candidate?.listingId || candidate?.listingUrl || null;
+      if (!dedupeKey || seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      deduped.push(candidate);
+    }
+
+    return deduped;
+  };
+
+  const isLikelyDuplicateMatchByText = (candidate, normalizedSearchTerm) => {
+    if (!normalizedSearchTerm) {
+      return false;
+    }
+
+    const normalizedCandidateTitle = normalizeListingMatchValue(candidate?.title || '');
+    const normalizedCandidateText = normalizeListingMatchValue(
+      [candidate?.text || '', candidate?.title || ''].filter(Boolean).join(' ')
+    );
+    const candidateTitle = normalizedCandidateTitle;
+    const candidateText = normalizedCandidateText;
+
+    if (!candidateTitle && !candidateText) {
+      return false;
+    }
+
+    if (
+      candidateTitle === normalizedSearchTerm ||
+      candidateText === normalizedSearchTerm ||
+      candidateTitle.includes(normalizedSearchTerm) ||
+      candidateText.includes(normalizedSearchTerm)
+    ) {
+      return true;
+    }
+
+    if (candidateTitle && normalizedSearchTerm.includes(candidateTitle) && candidateTitle.length >= 12) {
+      return true;
+    }
+
+    const searchTokens = normalizedSearchTerm
+      .split(' ')
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 3);
+    if (searchTokens.length < 2) {
+      return false;
+    }
+
+    const candidateTokens = new Set(
+      normalizeWhitespace([candidateTitle, candidateText].filter(Boolean).join(' '))
+        .split(' ')
+        .map((token) => token.trim())
+        .filter((token) => token.length >= 3)
+    );
+    let matchCount = 0;
+    for (const token of searchTokens) {
+      if (candidateTokens.has(token)) {
+        matchCount += 1;
+      }
+    }
+
+    return matchCount >= Math.min(2, Math.ceil(searchTokens.length / 2));
   };
 
   const readDuplicateCandidateListingText = async () => {
@@ -577,27 +685,42 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
       throw new Error('FAIL_STATUS_SEARCH_UNAVAILABLE: Search input not found in ' + section.label + '.');
     }
 
-    const preparedSearchValue = await prepareSearchInput(searchInput, searchTitle || '');
+    const preparedSearchValue = await prepareSearchInput(searchInput, resolvedSearchTitle || '');
     const searchTrigger = await triggerSearchSubmit();
 
-    const exactTitleCandidates = await collectListingLinksForTerm(searchTitle || '');
+    const visibleCandidates = await collectVisibleListingCandidates(8);
+    const normalizedSearchTerm = normalizeListingMatchValue(resolvedSearchTitle || '');
+    const exactTitleCandidates = await collectListingLinksForTerm(resolvedSearchTitle || '');
+    const fallbackCandidates =
+      exactTitleCandidates.length === 0
+        ? visibleCandidates.filter((candidate) =>
+            isLikelyDuplicateMatchByText(candidate, normalizedSearchTerm)
+          )
+        : [];
+    const inspectionCandidates = dedupeCandidatesByListing([
+      ...exactTitleCandidates,
+      ...fallbackCandidates,
+    ]);
     updateStep(
       section.searchStepId,
       'success',
-      exactTitleCandidates.length > 0
+      inspectionCandidates.length > 0
         ? 'Found ' +
-            exactTitleCandidates.length +
-            ' exact-title candidate(s) in ' +
+            inspectionCandidates.length +
+            ' candidate(s) in ' +
             section.label +
             ' using "' +
             preparedSearchValue +
             '" (' +
             searchTrigger +
-            ').'
+            ')' +
+            (exactTitleCandidates.length > 0
+              ? '.'
+              : ' via fallback candidate recovery from visible listing text.')
         : 'No exact-title candidates were found in ' + section.label + ' for "' + preparedSearchValue + '".'
     );
 
-    if (exactTitleCandidates.length === 0) {
+    if (inspectionCandidates.length === 0) {
       updateStep(
         section.inspectStepId,
         'success',
@@ -609,10 +732,10 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     updateStep(
       section.inspectStepId,
       'running',
-      'Inspecting ' + exactTitleCandidates.length + ' candidate(s) from ' + section.label + ' by description and Product ID.'
+      'Inspecting ' + inspectionCandidates.length + ' candidate(s) from ' + section.label + ' by description and Product ID.'
     );
 
-    for (const candidate of exactTitleCandidates) {
+    for (const candidate of inspectionCandidates) {
       const matchedCandidate = await inspectMatchingCandidate(section, candidate);
       if (!matchedCandidate) {
         continue;
@@ -632,7 +755,7 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
 
       return {
         ...matchedCandidate,
-        candidateCount: exactTitleCandidates.length,
+        candidateCount: inspectionCandidates.length,
       };
     }
 

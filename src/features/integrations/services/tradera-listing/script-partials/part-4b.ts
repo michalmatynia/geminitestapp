@@ -546,7 +546,15 @@ export const PART_4B = String.raw`
         const normalizedSrc = normalizeWhitespace(descriptor.src);
         const normalizedAriaLabel = normalizeWhitespace(descriptor.ariaLabel);
         const normalizedContainerText = normalizeWhitespace(descriptor.containerText);
+        const normalizedBoxKey = [
+          Math.round(box.x),
+          Math.round(box.y),
+          Math.round(box.width),
+          Math.round(box.height),
+        ].join('x');
         const dedupeKey =
+          normalizedBoxKey +
+          '|' +
           normalizedSrc.replace(/\?.*$/, '') +
           '|' +
           normalizedAlt +

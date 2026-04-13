@@ -8,15 +8,15 @@ canonical: true
 ---
 # Repository quality baseline Improvement Track
 
-Generated at: 2026-04-13T10:50:50.325Z
+Generated at: 2026-04-13T20:42:08.911Z
 
 ## Snapshot
 
 - Track id: `repo-quality-baseline`
 - Category: `quality`
 - Included in default read-only bundle: yes
-- Overall status: `failed`
-- Latest report timestamp: 2026-04-13T10:50:50.323Z
+- Overall status: `passed`
+- Latest report timestamp: 2026-04-13T20:41:47.098Z
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Runs the core read-only quality checks that establish the current repository bas
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `audit` | `passed` | 2 | 2 | 0 | 0 | 0 |
-| `classify` | `failed` | 2 | 2 | 0 | 1 | 0 |
+| `classify` | `passed` | 2 | 2 | 0 | 0 | 0 |
 | `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `passed` | 2 | 2 | 0 | 0 | 0 |
 | `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
@@ -50,7 +50,7 @@ Runs the core read-only quality checks that establish the current repository bas
 | `audit` | `passed` | `automatic` | `repo-quality-api-error-sources` | `check:api-error-sources` |
 | `audit` | `passed` | `automatic` | `repo-quality-canonical-sitewide` | `canonical:check:sitewide` |
 | `classify` | `passed` | `automatic` | `repo-quality-lint` | `quality:baseline:lint` |
-| `classify` | `failed` | `automatic` | `repo-quality-typecheck` | `quality:baseline:typecheck` |
+| `classify` | `passed` | `automatic` | `repo-quality-typecheck` | `quality:baseline:typecheck` |
 | `plan` | `manual` | `manual` | `repo-quality-baseline-plan` | manual |
 | `dry-run` | `passed` | `automatic` | `repo-quality-api-error-sources` | `check:api-error-sources` |
 | `dry-run` | `passed` | `automatic` | `repo-quality-canonical-sitewide` | `canonical:check:sitewide` |

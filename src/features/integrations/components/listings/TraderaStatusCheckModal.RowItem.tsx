@@ -5,6 +5,7 @@ import { Activity, ExternalLink, Loader2, RefreshCw, RotateCcw, TriangleAlert } 
 import {
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
+import { useTraderaLiveExecution } from '@/features/integrations/hooks/useTraderaLiveExecution';
 import {
   isTraderaBrowserAuthRequiredMessage,
 } from '@/features/integrations/utils/tradera-browser-session';
@@ -20,8 +21,7 @@ import {
   RELIST_ELIGIBLE_STATUSES,
   resolveDisplayedTraderaFailureReason,
   resolveListingUrl,
-  statusLabel,
-  statusVariant,
+  resolveTraderaRowStatusPresentation,
 } from './TraderaStatusCheckModal.utils';
 
 function StalenessWarning({ lastStatusCheckAt }: { lastStatusCheckAt: string | null | undefined }) {
@@ -59,18 +59,36 @@ export function ListingRowView({
   isRefreshingSession: boolean;
 }) {
   const { productId, productName, listing, error, relistState, relistError, liveCheckState, liveCheckError } = row;
-  const status = listing?.status ?? '';
-  const canRelist = RELIST_ELIGIBLE_STATUSES.has(status.toLowerCase());
-  const isAlreadyQueued = ALREADY_QUEUED_STATUSES.has(status.toLowerCase()) || relistState === 'queued';
   const listingUrl = listing ? resolveListingUrl(listing) : null;
   const hasListingId = !!listing?.id;
   const supportsLiveCheck =
     hasListingId && !!listing && isTraderaBrowserIntegrationSlug(listing.integration?.slug);
   const isLiveCheckRunning = liveCheckState === 'queued' || liveCheckState === 'polling';
+  const liveTraderaExecution = useTraderaLiveExecution(supportsLiveCheck ? listing : null);
+  const displayedStatus = resolveTraderaRowStatusPresentation({
+    listing,
+    liveRawResult: liveTraderaExecution?.rawResult,
+    liveLatestStage: liveTraderaExecution?.latestStage,
+  });
+  const status = displayedStatus.status;
+  const canRelist = RELIST_ELIGIBLE_STATUSES.has(status.toLowerCase());
+  const isAlreadyQueued = ALREADY_QUEUED_STATUSES.has(status.toLowerCase()) || relistState === 'queued';
   const traderaExecution = listing
     ? resolveTraderaExecutionStepsFromMarketplaceData(listing.marketplaceData)
     : { action: null, steps: [], ok: null, error: null };
-  const displayedFailureReason = resolveDisplayedTraderaFailureReason(listing);
+  const displayedTraderaAction = liveTraderaExecution?.action ?? traderaExecution.action;
+  const displayedTraderaSteps =
+    liveTraderaExecution && liveTraderaExecution.executionSteps.length > 0
+      ? liveTraderaExecution.executionSteps
+      : traderaExecution.steps;
+  const displayedTraderaLiveStatus =
+    liveTraderaExecution?.status === 'queued' || liveTraderaExecution?.status === 'running'
+      ? liveTraderaExecution.status
+      : null;
+  const displayedFailureReason = resolveDisplayedTraderaFailureReason(listing, {
+    liveRawResult: liveTraderaExecution?.rawResult,
+    liveLatestStage: liveTraderaExecution?.latestStage,
+  });
   const requiresSessionRefresh =
     supportsLiveCheck &&
     (isTraderaBrowserAuthRequiredMessage(liveCheckError ?? displayedFailureReason) ||
@@ -91,8 +109,8 @@ export function ListingRowView({
           {listing ? (
             <StatusBadge
               status={status}
-              label={statusLabel(status)}
-              variant={statusVariant(status)}
+              label={displayedStatus.label}
+              variant={displayedStatus.variant}
               size='sm'
             />
           ) : error ? (
@@ -159,11 +177,13 @@ export function ListingRowView({
             )}
           </div>
 
-          {traderaExecution.action === 'check_status' && traderaExecution.steps.length > 0 ? (
+          {displayedTraderaAction === 'check_status' && displayedTraderaSteps.length > 0 ? (
             <TraderaExecutionSteps
               title='Latest check steps'
-              steps={traderaExecution.steps}
+              steps={displayedTraderaSteps}
               compact
+              live={displayedTraderaLiveStatus !== null}
+              liveStatus={displayedTraderaLiveStatus}
             />
           ) : null}
 

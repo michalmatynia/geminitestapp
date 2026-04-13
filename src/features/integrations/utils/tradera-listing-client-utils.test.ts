@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  resolveDuplicateLinkedFromRunResult,
   resolveDuplicateLinkedFromFeedback,
   resolveDuplicateLinkedFromListing,
+  resolveDuplicateMatchStrategyFromRunResult,
   resolveDuplicateMatchStrategyFromFeedback,
   resolveDuplicateMatchStrategyFromListing,
 } from './tradera-listing-client-utils';
@@ -174,5 +176,26 @@ describe('tradera-listing-client-utils', () => {
     expect(resolveDuplicateMatchStrategyFromFeedback(feedback)).toBe(
       'existing-linked-record'
     );
+  });
+
+  it('reads duplicate-linked state directly from a live Tradera run result', () => {
+    expect(
+      resolveDuplicateLinkedFromRunResult(
+        {
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+        'duplicate_linked'
+      )
+    ).toBe(true);
+    expect(
+      resolveDuplicateMatchStrategyFromRunResult({
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      })
+    ).toBe('exact-title-single-candidate');
+  });
+
+  it('treats duplicate-linked live stage as linked even without explicit run-result flags', () => {
+    expect(resolveDuplicateLinkedFromRunResult({}, 'duplicate_linked')).toBe(true);
+    expect(resolveDuplicateMatchStrategyFromRunResult({})).toBeNull();
   });
 });

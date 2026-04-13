@@ -30,6 +30,7 @@ import {
   FAILURE_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
+  resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
 
 import {
@@ -262,11 +263,11 @@ export function TraderaQuickListButton(props: {
     return null;
   }
 
-  const resolvedButtonStatus = submitting
-    ? 'processing'
-    : hasServerStatus
-      ? normalizedTraderaStatus
-      : (localFeedbackStatus ?? 'not_started');
+  const resolvedButtonStatus = resolveMarketplaceStatusWithLocalFeedback({
+    serverStatus: normalizedTraderaStatus,
+    localFeedbackStatus,
+    submitting,
+  });
   const shouldUseFilledMarketplaceTone =
     hasServerStatus || localFeedbackStatus !== null;
   const isFailureState = FAILURE_STATUSES.has(

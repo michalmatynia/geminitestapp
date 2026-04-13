@@ -7,6 +7,7 @@ import {
   TRADERA_INTEGRATION_SLUGS,
   normalizeIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
+import { buildQueuedTraderaStatusCheckMarketplaceData } from '@/features/integrations/utils/tradera-status-check';
 import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingSyncResponse, ProductListingSyncVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
 import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type { ExportToBaseVariables, ExportResponse } from '@/shared/contracts/integrations/base-com';
@@ -128,6 +129,23 @@ const patchQueuedTraderaRelist = (
     },
   };
 };
+
+const patchQueuedTraderaStatusCheck = (
+  listing: ProductListingWithDetails,
+  options: {
+    browserMode?: ListingQueueBrowserMode;
+    requestId?: string | null;
+    queuedAt?: string | null;
+  }
+): ProductListingWithDetails => ({
+  ...listing,
+  marketplaceData: buildQueuedTraderaStatusCheckMarketplaceData({
+    existingMarketplaceData: listing.marketplaceData,
+    requestId: options.requestId ?? `pending-check-status-${listing.id}`,
+    queuedAt: options.queuedAt ?? new Date().toISOString(),
+    ...(options.browserMode ? { requestedBrowserMode: options.browserMode } : {}),
+  }),
+});
 
 const getListingBadgesSnapshot = (
   queryClient: ReturnType<typeof useQueryClient>
@@ -743,6 +761,86 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
             ) ?? current
         );
         setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
+      }
+      await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProducts(queryClient);
+    },
+  });
+}
+
+export function useCheckTraderaStatusMutation(productId: string): UpdateMutation<
+  ProductListingSyncResponse,
+  ProductListingRelistVariables
+> {
+  const queryClient = useQueryClient();
+  const listingQueryKey = getProductListingsQueryKey(productId);
+
+  return createCreateMutationV2({
+    mutationFn: ({ listingId, browserMode }: ProductListingRelistVariables) =>
+      api.post<ProductListingSyncResponse>(
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/check-status`,
+        {
+          ...(browserMode ? { browserMode } : {}),
+        }
+      ),
+    mutationKey: listingQueryKey,
+    meta: {
+      source: 'integrations.hooks.useCheckTraderaStatusMutation',
+      operation: 'create',
+      resource: 'integrations.listings.tradera-check-status',
+      domain: 'integrations',
+      mutationKey: listingQueryKey,
+      tags: ['integrations', 'listings', 'tradera', 'check-status'],
+      description: 'Creates integrations listings tradera check status.',
+    },
+    onMutate: async (vars): Promise<ProductListingAndJobsContext> => {
+      await cancelProductListingsAndJobs(queryClient, productId);
+
+      const previousListings =
+        queryClient.getQueryData<ProductListingWithDetails[]>(listingQueryKey);
+      const previousIntegrationJobs =
+        queryClient.getQueryData<ProductJob[]>(integrationJobsQueryKey);
+
+      if (previousListings) {
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          previousListings.map((listing) =>
+            listing.id === vars.listingId
+              ? patchQueuedTraderaStatusCheck(listing, {
+                  browserMode: vars.browserMode,
+                })
+              : listing
+          )
+        );
+      }
+
+      return { previousListings, previousIntegrationJobs };
+    },
+    onError: (_error, _vars, context: ProductListingAndJobsContext | undefined): void => {
+      if (context?.previousListings) {
+        queryClient.setQueryData(listingQueryKey, context.previousListings);
+      }
+      if (context?.previousIntegrationJobs) {
+        queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
+      }
+    },
+    invalidate: async (queryClient, data, vars) => {
+      if (data.queue?.name === 'tradera-listings') {
+        const queuedAt = data.queue.enqueuedAt ?? null;
+        const requestId = data.queue.jobId ?? null;
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          (current) =>
+            current?.map((listing) =>
+              listing.id === vars.listingId
+                ? patchQueuedTraderaStatusCheck(listing, {
+                    browserMode: vars.browserMode,
+                    requestId,
+                    queuedAt,
+                  })
+                : listing
+            ) ?? current
+        );
       }
       await invalidateProductListingsAndBadges(queryClient, productId);
       await invalidateProducts(queryClient);

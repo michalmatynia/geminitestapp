@@ -21,6 +21,7 @@ const {
     handlePurgeListing: vi.fn(),
     handleSaveInventoryId: vi.fn(),
     handleSyncBaseImages: vi.fn(),
+    handleCheckTraderaStatus: vi.fn(),
     handleRelistTradera: vi.fn(),
     handleOpenTraderaLogin: vi.fn(),
     handleOpenVintedLogin: vi.fn(),
@@ -285,6 +286,43 @@ describe('ProductListingsProvider', () => {
     expect(screen.getByTestId('run-id')).toHaveTextContent('run-tradera-feedback');
   });
 
+  it('does not hydrate Tradera recovery context from duplicate-linked feedback that still carries stale failed status', () => {
+    act(() => {
+      persistTraderaQuickListFeedback('product-1', 'failed', {
+        runId: 'run-tradera-feedback',
+        requestId: 'job-tradera-feedback',
+        integrationId: 'integration-tradera-feedback',
+        connectionId: 'conn-tradera-feedback',
+        failureReason: 'Old failed state.',
+        metadata: {
+          rawResult: {
+            duplicateMatchStrategy: 'exact-title-single-candidate',
+          },
+        },
+      });
+    });
+
+    render(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+      >
+        <RecoveryContextSummary />
+      </ProductListingsProvider>
+    );
+
+    expect(screen.getByTestId('filter-integration-slug')).toHaveTextContent('none');
+    expect(screen.getByTestId('integration-id')).toHaveTextContent('none');
+    expect(screen.getByTestId('connection-id')).toHaveTextContent('none');
+    expect(screen.getByTestId('run-id')).toHaveTextContent('none');
+  });
+
   it('updates the recovery banner state when Vinted quicklist feedback fails in the same tab', () => {
     render(
       <ProductListingsProvider
@@ -349,6 +387,47 @@ describe('ProductListingsProvider', () => {
     );
 
     expect(screen.getByTestId('filter-integration-slug')).toHaveTextContent('tradera');
+    expect(screen.getByTestId('integration-id')).toHaveTextContent('none');
+    expect(screen.getByTestId('connection-id')).toHaveTextContent('none');
+    expect(screen.getByTestId('run-id')).toHaveTextContent('none');
+  });
+
+  it('suppresses stale incoming Tradera recovery context on mount when persisted feedback already normalized it to completed', () => {
+    act(() => {
+      persistTraderaQuickListFeedback('product-1', 'completed', {
+        runId: 'run-tradera-feedback',
+        requestId: 'job-tradera-feedback',
+        integrationId: 'integration-tradera-feedback',
+        connectionId: 'conn-tradera-feedback',
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      });
+    });
+
+    render(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+        recoveryContext={{
+          source: 'tradera_quick_export_failed',
+          integrationSlug: 'tradera',
+          status: 'failed',
+          runId: 'run-tradera-feedback',
+          requestId: 'job-tradera-feedback',
+          integrationId: 'integration-tradera-feedback',
+          connectionId: 'conn-tradera-feedback',
+        }}
+      >
+        <RecoveryContextSummary />
+      </ProductListingsProvider>
+    );
+
+    expect(screen.getByTestId('filter-integration-slug')).toHaveTextContent('none');
     expect(screen.getByTestId('integration-id')).toHaveTextContent('none');
     expect(screen.getByTestId('connection-id')).toHaveTextContent('none');
     expect(screen.getByTestId('run-id')).toHaveTextContent('none');

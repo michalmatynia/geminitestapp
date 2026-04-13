@@ -165,4 +165,61 @@ describe('traderaQuickListFeedback', () => {
       },
     });
   });
+
+  it('normalizes stale failed duplicate-linked feedback to completed on read', () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'failed',
+          failureReason: 'Old failure that should not survive duplicate-linked success.',
+          expiresAt: Date.now() + 60_000,
+          metadata: {
+            rawResult: {
+              duplicateMatchStrategy: 'exact-title-single-candidate',
+            },
+          },
+        },
+      })
+    );
+
+    expect(readPersistedTraderaQuickListFeedback('product-1')).toMatchObject({
+      productId: 'product-1',
+      status: 'completed',
+      failureReason: null,
+      duplicateLinked: true,
+      duplicateMatchStrategy: 'exact-title-single-candidate',
+    });
+
+    expect(
+      JSON.parse(window.sessionStorage.getItem('tradera-quick-list-feedback') ?? '{}')
+    ).toMatchObject({
+      'product-1': {
+        status: 'completed',
+        failureReason: null,
+        duplicateLinked: true,
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      },
+    });
+  });
+
+  it('normalizes failed duplicate-linked feedback to completed on write', () => {
+    persistTraderaQuickListFeedback('product-1', 'failed', {
+      failureReason: 'Stale failure',
+      metadata: {
+        rawResult: {
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      },
+    });
+
+    expect(readPersistedTraderaQuickListFeedback('product-1')).toMatchObject({
+      productId: 'product-1',
+      status: 'completed',
+      failureReason: null,
+      duplicateLinked: true,
+      duplicateMatchStrategy: 'exact-title-single-candidate',
+    });
+  });
 });

@@ -1,7 +1,7 @@
 trackId,title,category,defaultSelected,overallStatus,latestGeneratedAt,auditStatus,classifyStatus,planStatus,dryRunStatus,applyStatus
-products-parameter-integrity,Products parameter integrity,data,true,passed,2026-04-02T09:59:31.245Z,not-selected,not-selected,not-selected,passed,manual
-products-category-schema-normalization,Products category and schema normalization,data,true,failed,2026-04-02T09:59:31.245Z,not-selected,not-selected,not-selected,passed,failed
-ui-consolidation,UI consolidation,ui,true,attention,2026-04-12T15:40:31.397Z,not-selected,not-configured,manual,not-selected,not-selected
-application-performance,Application performance,performance,true,passed,2026-04-12T15:40:31.397Z,not-selected,passed,manual,not-selected,not-selected
-testing-quality-baseline,Testing quality baseline,testing,false,passed,2026-04-12T15:40:31.397Z,not-selected,passed,manual,not-selected,not-selected
-repo-quality-baseline,Repository quality baseline,quality,true,failed,2026-04-13T10:50:50.323Z,passed,failed,manual,passed,manual
+products-parameter-integrity,Products parameter integrity,data,true,failed,2026-04-13T20:41:47.098Z,failed,not-selected,not-selected,passed,manual
+products-category-schema-normalization,Products category and schema normalization,data,true,failed,2026-04-13T20:41:47.098Z,not-configured,not-selected,not-selected,passed,failed
+ui-consolidation,UI consolidation,ui,true,passed,2026-04-13T20:41:47.098Z,passed,not-selected,manual,not-selected,not-selected
+application-performance,Application performance,performance,true,passed,2026-04-13T20:41:47.098Z,passed,not-selected,manual,not-selected,not-selected
+testing-quality-baseline,Testing quality baseline,testing,false,attention,2026-04-12T15:40:31.397Z,not-selected,not-selected,manual,not-selected,not-selected
+repo-quality-baseline,Repository quality baseline,quality,true,passed,2026-04-13T20:41:47.098Z,passed,passed,manual,passed,manual

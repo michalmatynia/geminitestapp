@@ -15,6 +15,7 @@ import {
   FAILURE_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
+  resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
 
 export function VintedStatusButton(props: {
@@ -25,13 +26,15 @@ export function VintedStatusButton(props: {
 }): React.JSX.Element {
   const { productId, status, prefetchListings, onOpenListings } = props;
   const normalizedStatus = normalizeMarketplaceStatus(status);
-  const isFailureState = FAILURE_STATUSES.has(normalizedStatus);
-  const persistedFeedback = isFailureState
-    ? readPersistedVintedQuickListFeedback(productId)
-    : null;
-  const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
+  const persistedFeedback = readPersistedVintedQuickListFeedback(productId);
+  const effectiveStatus = resolveMarketplaceStatusWithLocalFeedback({
+    serverStatus: normalizedStatus,
+    localFeedbackStatus: persistedFeedback?.status ?? null,
+  });
+  const isEffectiveFailureState = FAILURE_STATUSES.has(effectiveStatus);
+  const recoveryContext: ProductListingsRecoveryContext | undefined = isEffectiveFailureState
     ? createVintedRecoveryContext({
-        status: normalizedStatus,
+        status: effectiveStatus,
         runId: persistedFeedback?.runId ?? null,
         failureReason: persistedFeedback?.failureReason ?? null,
         requestId: persistedFeedback?.requestId ?? null,
@@ -39,9 +42,9 @@ export function VintedStatusButton(props: {
         connectionId: persistedFeedback?.connectionId ?? null,
       })
     : undefined;
-  const label = isFailureState
-    ? `Open Vinted recovery options (${status}).`
-    : `Manage Vinted listing (${status}).`;
+  const label = isEffectiveFailureState
+    ? `Open Vinted recovery options (${effectiveStatus}).`
+    : `Manage Vinted listing (${effectiveStatus}).`;
 
   return (
     <Button
@@ -55,7 +58,7 @@ export function VintedStatusButton(props: {
       title={label}
       className={cn(
         'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        getMarketplaceButtonClass(status, true, 'vinted')
+        getMarketplaceButtonClass(effectiveStatus, true, 'vinted')
       )}
     >
       <span

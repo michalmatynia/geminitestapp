@@ -2,44 +2,31 @@
 
 import React from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { useIntegrationSelectorProps } from './hooks/useIntegrationSelectorProps';
 
-type IntegrationSelectorFieldsProps = {
-  marketplaceLabel: string;
-  marketplacePlaceholder: string;
-  selectedIntegrationId: string | null | undefined;
-  onIntegrationChange: (value: string) => void;
-  integrationOptions: Array<LabeledOptionDto<string>>;
-  showAccountField: boolean;
-  accountLabel: string;
-  accountPlaceholder: string;
-  selectedConnectionId: string | null | undefined;
-  onConnectionChange: (value: string) => void;
-  connectionOptions: Array<LabeledOptionDto<string>>;
-  accountDescription?: string | null | undefined;
-};
+export function IntegrationSelectorFields(): React.JSX.Element {
+  const {
+    marketplaceLabel,
+    marketplacePlaceholder,
+    selectedIntegrationId,
+    setSelectedIntegrationId,
+    integrationOptions,
+    showAccountField,
+    accountLabel,
+    accountPlaceholder,
+    selectedConnectionId,
+    setSelectedConnectionId,
+    connectionOptions,
+    accountDescription,
+  } = useIntegrationSelectorProps();
 
-export function IntegrationSelectorFields({
-  marketplaceLabel,
-  marketplacePlaceholder,
-  selectedIntegrationId,
-  onIntegrationChange,
-  integrationOptions,
-  showAccountField,
-  accountLabel,
-  accountPlaceholder,
-  selectedConnectionId,
-  onConnectionChange,
-  connectionOptions,
-  accountDescription,
-}: IntegrationSelectorFieldsProps): React.JSX.Element {
   return (
     <>
       <FormField label={marketplaceLabel}>
         <SelectSimple
           value={selectedIntegrationId ?? undefined}
-          onValueChange={onIntegrationChange}
+          onValueChange={setSelectedIntegrationId}
           options={integrationOptions}
           placeholder={marketplacePlaceholder}
           ariaLabel={marketplacePlaceholder}
@@ -51,7 +38,7 @@ export function IntegrationSelectorFields({
         <FormField label={accountLabel} description={accountDescription ?? undefined}>
           <SelectSimple
             value={selectedConnectionId ?? undefined}
-            onValueChange={onConnectionChange}
+            onValueChange={setSelectedConnectionId}
             options={connectionOptions}
             placeholder={accountPlaceholder}
             ariaLabel={accountPlaceholder}

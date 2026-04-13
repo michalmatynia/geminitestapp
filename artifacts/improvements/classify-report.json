@@ -1,51 +1,14 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-12T15:40:30.860Z",
+  "generatedAt": "2026-04-13T11:22:43.048Z",
   "phase": "classify",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
-    "ui-consolidation",
-    "application-performance",
-    "testing-quality-baseline",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/classify-report.json",
   "steps": [
-    {
-      "id": "application-performance-baseline",
-      "title": "Run the performance baseline pass",
-      "trackId": "application-performance",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "docs/metrics/critical-path-performance-latest.md",
-        "docs/metrics/critical-path-performance-latest.json",
-        "docs/metrics/critical-flow-tests-latest.md",
-        "docs/metrics/critical-flow-tests-latest.json",
-        "docs/metrics/unit-domain-timings-latest.md",
-        "docs/metrics/unit-domain-timings-latest.json",
-        "docs/metrics/route-hotspots.md"
-      ],
-      "instructions": [],
-      "script": "perf:ops:baseline",
-      "durationMs": 624177
-    },
-    {
-      "id": "testing-quality-snapshot",
-      "title": "Collect the testing quality snapshot",
-      "trackId": "testing-quality-baseline",
-      "phase": "classify",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [],
-      "instructions": [],
-      "script": "check:test-quality",
-      "durationMs": 1041
-    },
     {
       "id": "repo-quality-lint",
       "title": "Run source lint baseline",
@@ -57,7 +20,7 @@
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:lint",
-      "durationMs": 19067
+      "durationMs": 4194
     },
     {
       "id": "repo-quality-typecheck",
@@ -66,11 +29,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "failed",
+      "status": "passed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:typecheck",
-      "durationMs": 74225
+      "durationMs": 70603
     }
   ]
 }

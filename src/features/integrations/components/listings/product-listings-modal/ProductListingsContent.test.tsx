@@ -11,6 +11,7 @@ const {
   handleSyncTraderaMock,
   onStartListingMock,
   setRecoveryContextMock,
+  useTraderaLiveExecutionMock,
   useProductListingsDataMock,
   useProductListingsModalsMock,
   useProductListingsActionsMock,
@@ -21,6 +22,7 @@ const {
   handleSyncTraderaMock: vi.fn(),
   onStartListingMock: vi.fn(),
   setRecoveryContextMock: vi.fn(),
+  useTraderaLiveExecutionMock: vi.fn(),
   useProductListingsDataMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
   useProductListingsActionsMock: vi.fn(),
@@ -32,6 +34,10 @@ vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
   useProductListingsModals: () => useProductListingsModalsMock(),
   useProductListingsActions: () => useProductListingsActionsMock(),
   useProductListingsUIState: () => useProductListingsUIStateMock(),
+}));
+
+vi.mock('@/features/integrations/hooks/useTraderaLiveExecution', () => ({
+  useTraderaLiveExecution: () => useTraderaLiveExecutionMock(),
 }));
 
 vi.mock('./ProductListingItem', () => ({
@@ -76,6 +82,7 @@ describe('ProductListingsContent', () => {
     handleOpenTraderaLoginMock.mockResolvedValue(true);
     handleOpenVintedLoginMock.mockResolvedValue(true);
     handleSyncTraderaMock.mockResolvedValue(undefined);
+    useTraderaLiveExecutionMock.mockReturnValue(null);
     useProductListingsDataMock.mockReturnValue({
       product: { id: 'product-1' },
     });
@@ -973,6 +980,88 @@ describe('ProductListingsContent', () => {
 
     expect(screen.getByText('Tradera status: active')).toBeInTheDocument();
     expect(screen.getByTestId('listing-listing-1')).toHaveTextContent('active');
+  });
+
+  it('suppresses stale Tradera recovery UI when the live run has already duplicate-linked the listing', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'tradera_quick_export_auth_required',
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        runId: 'run-tradera-live',
+        requestId: 'job-tradera-live',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-tradera-live',
+      action: 'relist',
+      status: 'running',
+      latestStage: 'duplicate_linked',
+      latestStageUrl: null,
+      executionSteps: [],
+      rawResult: {
+        stage: 'duplicate_linked',
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      },
+      logTail: [],
+      error: null,
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'auth_required',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'conn-tradera-1',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              marketplaceData: {
+                tradera: {
+                  pendingExecution: {
+                    runId: 'run-tradera-live',
+                    action: 'relist',
+                  },
+                  lastExecution: {
+                    requestId: 'job-tradera-live',
+                    metadata: {
+                      runId: 'run-tradera-live',
+                    },
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.queryByText(/Tradera quick export requires recovery/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
+    expect(screen.getByText('Tradera status: active')).toBeInTheDocument();
+    expect(screen.getByTestId('listing-listing-1')).toHaveTextContent('active');
+    expect(setRecoveryContextMock).toHaveBeenCalled();
+    const updater = setRecoveryContextMock.mock.calls.at(-1)?.[0];
+    expect(typeof updater).toBe('function');
+    expect(
+      updater({
+        source: 'tradera_quick_export_auth_required',
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        runId: 'run-tradera-live',
+        requestId: 'job-tradera-live',
+      })
+    ).toBeNull();
   });
 
   it('renders a Vinted quick-export success banner when a completed Vinted listing is tracked', () => {

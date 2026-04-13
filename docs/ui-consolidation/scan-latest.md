@@ -8,7 +8,7 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-04-13T10:17:50.281Z
+Generated at: 2026-04-13T20:41:09.460Z
 
 ## Snapshot
 
@@ -33,9 +33,9 @@ Generated at: 2026-04-13T10:17:50.281Z
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 1903 |
+| `Unknown` | 1904 |
 | `Page` | 174 |
-| `Section` | 144 |
+| `Section` | 143 |
 | `Panel` | 104 |
 | `Modal` | 70 |
 | `Tab` | 44 |

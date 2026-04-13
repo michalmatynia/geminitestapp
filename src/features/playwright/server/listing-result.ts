@@ -82,6 +82,14 @@ export const buildPlaywrightScriptListingMetadata = <
     duplicateMatchedProductId: toOptionalString(result.rawResult['duplicateMatchedProductId']),
     duplicateCandidateCount: toOptionalNumber(result.rawResult['duplicateCandidateCount']),
     duplicateSearchTitle: toOptionalString(result.rawResult['duplicateSearchTitle']),
+    duplicateIgnoredNonExactCandidateCount: toOptionalNumber(
+      result.rawResult['duplicateIgnoredNonExactCandidateCount']
+    ),
+    duplicateIgnoredCandidateTitles: Array.isArray(result.rawResult['duplicateIgnoredCandidateTitles'])
+      ? result.rawResult['duplicateIgnoredCandidateTitles']
+          .filter((value): value is string => typeof value === 'string')
+          .slice(0, 5)
+      : [],
     publishVerified: result.publishVerified,
     ...(additional ?? {}),
   };

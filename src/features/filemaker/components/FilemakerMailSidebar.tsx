@@ -36,6 +36,7 @@ import {
 
 import type {
   FilemakerMailAccount,
+  FilemakerMailFolderRole,
 } from '../types';
 import { useFilemakerMailData } from './FilemakerMailSidebar.hooks';
 import {
@@ -138,7 +139,7 @@ export function FilemakerMailSidebar({
 
   const recentMailboxOptions = useMemo(
     () => {
-      const rolesByMailboxPath = new Map<string, string>();
+      const rolesByMailboxPath = new Map<string, FilemakerMailFolderRole>();
       recentThreads.forEach((thread) => {
         if (!rolesByMailboxPath.has(thread.mailboxPath)) {
           rolesByMailboxPath.set(thread.mailboxPath, thread.mailboxRole);
@@ -149,7 +150,7 @@ export function FilemakerMailSidebar({
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([mailboxPath, mailboxRole]) => ({
           value: mailboxPath,
-          label: formatFilemakerMailFolderLabel(mailboxPath, mailboxRole as any),
+          label: formatFilemakerMailFolderLabel(mailboxPath, mailboxRole),
         }));
     },
     [recentThreads]

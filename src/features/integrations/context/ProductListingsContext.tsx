@@ -13,6 +13,8 @@ import {
   areProductListingsRecoveryContextsEqual,
   createTraderaRecoveryContext,
   createVintedRecoveryContext,
+  isTraderaQuickExportRecoveryContext,
+  isVintedQuickExportRecoveryContext,
   mergeProductListingsRecoveryContext,
   normalizeProductListingsIntegrationScope,
   resolveProductListingsIntegrationScope,
@@ -31,6 +33,47 @@ import {
   doesTraderaRecoveryContextMatchFeedback,
   doesVintedRecoveryContextMatchFeedback,
 } from './ProductListingsContext.utils';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { readPersistedVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
+
+const resolveIncomingRecoveryContext = (
+  productId: string,
+  recoveryContext: ProductListingsRecoveryContext | null | undefined
+): ProductListingsRecoveryContext | null => {
+  if (!recoveryContext) {
+    return null;
+  }
+
+  if (isTraderaQuickExportRecoveryContext(recoveryContext)) {
+    const feedback = readPersistedTraderaQuickListFeedback(productId);
+    const feedbackStatus = (feedback?.status ?? '').trim().toLowerCase();
+    if (
+      feedback &&
+      (feedbackStatus === 'processing' ||
+        feedbackStatus === 'queued' ||
+        feedbackStatus === 'completed') &&
+      doesTraderaRecoveryContextMatchFeedback(recoveryContext, feedback)
+    ) {
+      return null;
+    }
+  }
+
+  if (isVintedQuickExportRecoveryContext(recoveryContext)) {
+    const feedback = readPersistedVintedQuickListFeedback(productId);
+    const feedbackStatus = (feedback?.status ?? '').trim().toLowerCase();
+    if (
+      feedback &&
+      (feedbackStatus === 'processing' ||
+        feedbackStatus === 'queued' ||
+        feedbackStatus === 'completed') &&
+      doesVintedRecoveryContextMatchFeedback(recoveryContext, feedback)
+    ) {
+      return null;
+    }
+  }
+
+  return recoveryContext;
+};
 
 // --- Granular Contexts ---
 
@@ -54,6 +97,7 @@ export interface ProductListingsUIState {
   savingInventoryId: string | null;
   syncingImages: string | null;
   syncingTraderaListing: string | null;
+  checkingTraderaStatusListing: string | null;
   relistingListing: string | null;
   relistingBrowserMode: PlaywrightRelistBrowserMode | null;
   openingTraderaLogin: string | null;
@@ -121,6 +165,13 @@ export interface ProductListingsActions {
       skipImages?: boolean;
     }
   ) => Promise<void>;
+  handleCheckTraderaStatus: (
+    listingId: string,
+    options?: {
+      skipSessionPreflight?: boolean;
+      browserMode?: PlaywrightRelistBrowserMode;
+    }
+  ) => Promise<void>;
   handleRelistTradera: (
     listingId: string,
     options?: {
@@ -133,6 +184,14 @@ export interface ProductListingsActions {
     integrationId: string,
     connectionId: string
   ) => Promise<boolean>;
+  handleRecoverTraderaListing: (options: {
+    listingId: string;
+    integrationId: string;
+    connectionId: string;
+    action: 'relist' | 'sync' | 'check_status';
+    browserMode?: PlaywrightRelistBrowserMode;
+    skipImages?: boolean;
+  }) => Promise<boolean>;
   handleOpenVintedLogin: (
     listingId: string,
     integrationId: string,
@@ -184,6 +243,8 @@ export function ProductListingsProvider({
   const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
   const [syncingImages, setSyncingImages] = useState<string | null>(null);
   const [syncingTraderaListing, setSyncingTraderaListing] = useState<string | null>(null);
+  const [checkingTraderaStatusListing, setCheckingTraderaStatusListing] =
+    useState<string | null>(null);
   const [relistingListing, setRelistingListing] = useState<string | null>(null);
   const [relistingBrowserMode, setRelistingBrowserMode] =
     useState<PlaywrightRelistBrowserMode | null>(null);
@@ -193,7 +254,9 @@ export function ProductListingsProvider({
   const [listingToPurge, setListingToPurge] = useState<string | null>(null);
   const [isSyncImagesConfirmOpen, setIsSyncImagesConfirmOpen] = useState(false);
   const [resolvedRecoveryContext, setResolvedRecoveryContext] =
-    useState<ProductListingsRecoveryContext | null>(recoveryContext ?? null);
+    useState<ProductListingsRecoveryContext | null>(() =>
+      resolveIncomingRecoveryContext(product.id, recoveryContext ?? null)
+    );
   const {
     feedback: traderaQuickListFeedback,
     setFeedbackStatus: setTraderaQuickListFeedbackStatus,
@@ -205,12 +268,15 @@ export function ProductListingsProvider({
 
   useEffect(() => {
     setResolvedRecoveryContext((current) => {
-      const nextRecoveryContext = mergeProductListingsRecoveryContext(recoveryContext ?? null, current);
+      const nextRecoveryContext = mergeProductListingsRecoveryContext(
+        resolveIncomingRecoveryContext(product.id, recoveryContext ?? null),
+        current
+      );
       return areProductListingsRecoveryContextsEqual(current, nextRecoveryContext)
         ? current
         : nextRecoveryContext;
     });
-  }, [recoveryContext]);
+  }, [product.id, recoveryContext]);
 
   const resolvedFilterIntegrationSlug = useMemo(
     () =>
@@ -390,6 +456,7 @@ export function ProductListingsProvider({
     setPurgingListing,
     setRelistingListing,
     setSavingInventoryId,
+    setCheckingTraderaStatusListing,
     setSyncingImages,
     setSyncingTraderaListing,
   });
@@ -413,6 +480,7 @@ export function ProductListingsProvider({
       savingInventoryId,
       syncingImages,
       syncingTraderaListing,
+      checkingTraderaStatusListing,
       relistingListing,
       relistingBrowserMode,
       openingTraderaLogin,
@@ -429,6 +497,7 @@ export function ProductListingsProvider({
       savingInventoryId,
       syncingImages,
       syncingTraderaListing,
+      checkingTraderaStatusListing,
       relistingListing,
       relistingBrowserMode,
       openingTraderaLogin,

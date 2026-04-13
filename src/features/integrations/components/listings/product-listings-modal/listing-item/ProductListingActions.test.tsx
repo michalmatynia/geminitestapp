@@ -10,11 +10,13 @@ const {
   useProductListingsActionsMock,
   useProductListingsModalsMock,
   useImageRetryPresetsMock,
+  useTraderaLiveExecutionMock,
 } = vi.hoisted(() => ({
   useProductListingsUIStateMock: vi.fn(),
   useProductListingsActionsMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
   useImageRetryPresetsMock: vi.fn(),
+  useTraderaLiveExecutionMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
@@ -25,6 +27,10 @@ vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
 
 vi.mock('@/features/integrations/components/listings/useImageRetryPresets', () => ({
   useImageRetryPresets: () => useImageRetryPresetsMock(),
+}));
+
+vi.mock('@/features/integrations/hooks/useTraderaLiveExecution', () => ({
+  useTraderaLiveExecution: () => useTraderaLiveExecutionMock(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
@@ -43,9 +49,9 @@ vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
   const actual = await importOriginal<any>();
   return {
     ...actual,
-    ActionMenu: ({ children, trigger, ariaLabel }: any) => (
+    ActionMenu: ({ children, trigger, ariaLabel, disabled }: any) => (
       <div data-testid='mock-action-menu'>
-        <button type='button' aria-label={ariaLabel}>
+        <button type='button' aria-label={ariaLabel} disabled={disabled}>
           {trigger}
         </button>
         <div>{children}</div>
@@ -58,17 +64,20 @@ import { ProductListingActions } from './ProductListingActions';
 
 describe('ProductListingActions', () => {
   const handleExportAgain = vi.fn();
-  const handleOpenTraderaLogin = vi.fn();
+  const handleCheckTraderaStatus = vi.fn();
+  const handleRecoverTraderaListing = vi.fn();
   const handleRelistTradera = vi.fn();
   const handleSyncTradera = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     handleExportAgain.mockResolvedValue(undefined);
-    handleOpenTraderaLogin.mockResolvedValue(true);
+    handleCheckTraderaStatus.mockResolvedValue(undefined);
+    handleRecoverTraderaListing.mockResolvedValue(true);
     handleRelistTradera.mockResolvedValue(undefined);
     handleSyncTradera.mockResolvedValue(undefined);
     useImageRetryPresetsMock.mockReturnValue([]);
+    useTraderaLiveExecutionMock.mockReturnValue(null);
     useProductListingsUIStateMock.mockReturnValue({
       exportingListing: null,
       inventoryOverrides: {},
@@ -77,6 +86,7 @@ describe('ProductListingActions', () => {
       deletingFromBase: null,
       purgingListing: null,
       syncingTraderaListing: null,
+      checkingTraderaStatusListing: null,
       relistingListing: null,
       relistingBrowserMode: null,
       openingTraderaLogin: null,
@@ -86,8 +96,10 @@ describe('ProductListingActions', () => {
       handleExportImagesOnly: vi.fn(),
       handleSaveInventoryId: vi.fn(),
       handleSyncTradera,
+      handleCheckTraderaStatus,
       handleRelistTradera,
-      handleOpenTraderaLogin,
+      handleOpenTraderaLogin: vi.fn(),
+      handleRecoverTraderaListing,
     });
     useProductListingsModalsMock.mockReturnValue({
       setListingToDelete: vi.fn(),
@@ -124,19 +136,18 @@ describe('ProductListingActions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Login and retry relist' }));
 
     await Promise.resolve();
-    expect(handleOpenTraderaLogin).toHaveBeenCalledWith(
-      'listing-1',
-      'integration-1',
-      'connection-1'
-    );
-    expect(handleRelistTradera).toHaveBeenCalledWith('listing-1', {
+    expect(handleRecoverTraderaListing).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+      action: 'relist',
       browserMode: 'headed',
-      skipSessionPreflight: true,
     });
+    expect(handleRelistTradera).not.toHaveBeenCalled();
   });
 
   it('does not queue relist when manual login recovery fails', async () => {
-    handleOpenTraderaLogin.mockResolvedValue(false);
+    handleRecoverTraderaListing.mockResolvedValue(false);
 
     render(
       <ProductListingActions
@@ -166,11 +177,13 @@ describe('ProductListingActions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Login and retry relist' }));
     await Promise.resolve();
 
-    expect(handleOpenTraderaLogin).toHaveBeenCalledWith(
-      'listing-1',
-      'integration-1',
-      'connection-1'
-    );
+    expect(handleRecoverTraderaListing).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+      action: 'relist',
+      browserMode: 'headed',
+    });
     expect(handleRelistTradera).not.toHaveBeenCalled();
   });
 
@@ -202,6 +215,7 @@ describe('ProductListingActions', () => {
 
     expect(screen.queryByRole('button', { name: 'Open login window' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Sync with Tradera' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check Status' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Relist now' })).toBeInTheDocument();
   });
 
@@ -234,6 +248,31 @@ describe('ProductListingActions', () => {
     });
   });
 
+  it('queues a Tradera status check from the listing actions', async () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: null,
+          } as never
+        }
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check Status' }));
+    await Promise.resolve();
+
+    expect(handleCheckTraderaStatus).toHaveBeenCalledWith('listing-1');
+  });
+
   it('retries sync after manual login when the last Tradera execution action was sync', async () => {
     render(
       <ProductListingActions
@@ -264,17 +303,55 @@ describe('ProductListingActions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Login and retry sync' }));
 
     await Promise.resolve();
-    expect(handleOpenTraderaLogin).toHaveBeenCalledWith(
-      'listing-1',
-      'integration-1',
-      'connection-1'
-    );
-    expect(handleSyncTradera).toHaveBeenCalledWith('listing-1', {
-      skipSessionPreflight: true,
+    expect(handleRecoverTraderaListing).toHaveBeenCalledWith({
+      listingId: 'listing-1',
       integrationId: 'integration-1',
       connectionId: 'connection-1',
+      action: 'sync',
       browserMode: 'headed',
     });
+    expect(handleSyncTradera).not.toHaveBeenCalled();
+    expect(handleRelistTradera).not.toHaveBeenCalled();
+  });
+
+  it('retries status check after manual login when the last Tradera execution action was check_status', async () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            failureReason: 'Listing failed.',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  action: 'check_status',
+                  errorCategory: 'AUTH',
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Login and retry status check' }));
+
+    await Promise.resolve();
+    expect(handleRecoverTraderaListing).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+      action: 'check_status',
+      browserMode: 'headed',
+    });
+    expect(handleSyncTradera).not.toHaveBeenCalled();
     expect(handleRelistTradera).not.toHaveBeenCalled();
   });
 
@@ -361,7 +438,97 @@ describe('ProductListingActions', () => {
 
     expect(screen.queryByRole('button', { name: 'Login and retry relist' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Sync with Tradera' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check Status' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Relist now' })).toBeInTheDocument();
+  });
+
+  it('does not show manual-login recovery when a live Tradera run has already duplicate-linked the listing', () => {
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-1',
+      action: 'relist',
+      status: 'running',
+      latestStage: 'duplicate_linked',
+      latestStageUrl: null,
+      executionSteps: [],
+      rawResult: {
+        stage: 'duplicate_linked',
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      },
+      logTail: [],
+      error: null,
+    });
+
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'failed',
+            failureReason: 'Listing failed.',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  errorCategory: 'AUTH',
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Login and retry relist' })).toBeNull();
+  });
+
+  it('disables Tradera row actions while a live Tradera run is active', () => {
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-1',
+      action: 'sync',
+      status: 'running',
+      latestStage: 'fields_filled',
+      latestStageUrl: null,
+      executionSteps: [],
+      rawResult: {
+        stage: 'fields_filled',
+      },
+      logTail: [],
+      error: null,
+    });
+
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  runId: 'run-1',
+                  action: 'sync',
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Sync with Tradera' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Check Status' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Relist now' })).toBeDisabled();
   });
 
   it('keeps the persisted queued Tradera relist mode visible after the local spinner clears', () => {
@@ -431,6 +598,8 @@ describe('ProductListingActions', () => {
       savingInventoryId: null,
       deletingFromBase: null,
       purgingListing: null,
+      syncingTraderaListing: null,
+      checkingTraderaStatusListing: null,
       relistingListing: 'listing-1',
       relistingBrowserMode: 'headed',
       openingTraderaLogin: null,
@@ -519,6 +688,8 @@ describe('ProductListingActions', () => {
       savingInventoryId: null,
       deletingFromBase: null,
       purgingListing: null,
+      syncingTraderaListing: null,
+      checkingTraderaStatusListing: null,
       relistingListing: null,
       relistingBrowserMode: null,
       openingTraderaLogin: null,

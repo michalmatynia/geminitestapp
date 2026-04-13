@@ -98,4 +98,45 @@ describe('useMarketplaceQuickExportFeedback', () => {
       requestId: 'request-1',
     });
   });
+
+  it('keeps completed local feedback when a quick-export button sees a stale server recovery status', async () => {
+    let feedback: PersistedQuickExportFeedback | null = {
+      productId: 'product-1',
+      status: 'completed',
+      expiresAt: Date.now() + 60_000,
+      requestId: 'request-1',
+    };
+
+    const actions: MarketplaceQuickExportFeedbackActions = {
+      readFeedback: vi.fn(() => feedback),
+      persistFeedback: vi.fn(),
+      clearFeedback: vi.fn(() => {
+        feedback = null;
+      }),
+      findTrackedListing: vi.fn(() => null),
+      buildFeedbackOptions: vi.fn(() => ({})),
+    };
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(
+      () =>
+        useMarketplaceQuickExportFeedback(
+          'product-1',
+          'auth_required',
+          false,
+          actions,
+          'Tradera'
+        ),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(result.current.localFeedbackStatus).toBe('completed');
+    });
+    expect(actions.clearFeedback).not.toHaveBeenCalled();
+  });
 });

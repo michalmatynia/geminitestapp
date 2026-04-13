@@ -792,6 +792,38 @@ describe('TraderaQuickListButton', () => {
     });
   });
 
+  it('prefers completed local Tradera feedback over a stale server auth_required status', () => {
+    const onOpenIntegrations = vi.fn();
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+          runId: 'run-tradera-1',
+          requestId: 'job-tradera-1',
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      })
+    );
+
+    renderButton({
+      onOpenIntegrations,
+      showTraderaBadge: false,
+      traderaStatus: 'auth_required',
+    });
+
+    const button = screen.getByRole('button', {
+      name: 'One-click export to Tradera',
+    });
+    expect(button.className).toContain('border-emerald-400/70');
+
+    fireEvent.click(button);
+
+    expect(onOpenIntegrations).not.toHaveBeenCalled();
+  });
+
   it('opens recovery options instead of retrying when local quick-list feedback is failed', () => {
     const onOpenIntegrations = vi.fn();
     window.sessionStorage.setItem(

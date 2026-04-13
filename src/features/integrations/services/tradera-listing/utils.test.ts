@@ -113,6 +113,28 @@ describe('toUserFacingTraderaFailure', () => {
     );
   });
 
+  it('maps stale-draft image upload failures to a user-facing retry message', () => {
+    expect(
+      toUserFacingTraderaFailure(
+        'FORM',
+        'FAIL_IMAGE_SET_INVALID: Tradera draft image cleanup did not reach a clean zero state before upload. Last state: {"uploadedImagePreviewCount":2}'
+      )
+    ).toBe(
+      'Tradera still had draft images before upload. Review the listing images in Tradera and retry.'
+    );
+  });
+
+  it('maps post-dispatch duplicate-risk retry blocks to the same user-facing retry message', () => {
+    expect(
+      toUserFacingTraderaFailure(
+        'FORM',
+        'FAIL_IMAGE_SET_INVALID: Tradera image upload was already dispatched once, and retrying could duplicate images. Last state: {"expectedUploadCount":3,"observedPreviewDelta":1}'
+      )
+    ).toBe(
+      'Tradera image upload may have partially succeeded, and retrying could duplicate images. Review the listing images in Tradera and retry.'
+    );
+  });
+
   it('maps auth-state timeout failures to a session-refresh message', () => {
     expect(
       toUserFacingTraderaFailure(
@@ -133,7 +155,9 @@ describe('extractTraderaFailureMetadata', () => {
       )
     ).toEqual({
       failureCode: 'image_duplicate_risk',
+      staleDraftImages: false,
       imagePreviewMismatch: false,
+      imagePreviewNotStable: false,
       duplicateRisk: true,
       imageRetryCleanupUnsettled: false,
       imageUploadLastState: {
@@ -147,6 +171,55 @@ describe('extractTraderaFailureMetadata', () => {
       observedImagePreviewCount: 2,
       observedImagePreviewDelta: 1,
       observedImagePreviewDescriptors: [{ position: 1, src: 'https://cdn.example.com/1.jpg' }],
+      imageUploadSource: 'local',
+    });
+  });
+
+  it('treats post-dispatch retry blocks as duplicate-risk image failures', () => {
+    expect(
+      extractTraderaFailureMetadata(
+        'FAIL_IMAGE_SET_INVALID: Tradera image upload was already dispatched once, and retrying could duplicate images. Last state: {"expectedUploadCount":3,"observedPreviewCount":2,"observedPreviewDelta":1,"uploadSource":"local","uploadAttempt":0}'
+      )
+    ).toEqual({
+      failureCode: 'image_duplicate_risk',
+      staleDraftImages: false,
+      imagePreviewMismatch: false,
+      imagePreviewNotStable: false,
+      duplicateRisk: true,
+      imageRetryCleanupUnsettled: false,
+      imageUploadLastState: {
+        expectedUploadCount: 3,
+        observedPreviewCount: 2,
+        observedPreviewDelta: 1,
+        uploadSource: 'local',
+        uploadAttempt: 0,
+      },
+      expectedImageUploadCount: 3,
+      observedImagePreviewCount: 2,
+      observedImagePreviewDelta: 1,
+      imageUploadSource: 'local',
+    });
+  });
+
+  it('extracts stale-draft image metadata from the serialized last state', () => {
+    expect(
+      extractTraderaFailureMetadata(
+        'FAIL_IMAGE_SET_INVALID: Tradera draft already contained images before upload. Last state: {"baselinePreviewCount":2,"uploadSource":"local","uploadAttempt":0,"observedPreviewDescriptors":[{"position":1,"src":"https://cdn.example.com/old-1.jpg"}]}'
+      )
+    ).toEqual({
+      failureCode: 'image_stale_draft_state',
+      staleDraftImages: true,
+      imagePreviewMismatch: false,
+      imagePreviewNotStable: false,
+      duplicateRisk: false,
+      imageRetryCleanupUnsettled: false,
+      imageUploadLastState: {
+        baselinePreviewCount: 2,
+        uploadSource: 'local',
+        uploadAttempt: 0,
+        observedPreviewDescriptors: [{ position: 1, src: 'https://cdn.example.com/old-1.jpg' }],
+      },
+      observedImagePreviewDescriptors: [{ position: 1, src: 'https://cdn.example.com/old-1.jpg' }],
       imageUploadSource: 'local',
     });
   });

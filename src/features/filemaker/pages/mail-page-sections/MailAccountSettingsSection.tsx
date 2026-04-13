@@ -1,38 +1,28 @@
 import { MailPlus, RefreshCcw } from 'lucide-react';
-import React from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { startTransition } from 'react';
 
 import { Button, Checkbox, Input } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 
-import type { FilemakerMailAccount, FilemakerMailAccountDraft } from '../../types';
+import { useMailPageContext } from '../FilemakerMail.context';
+import { buildFilemakerMailComposeHref as buildComposeHref } from '../../components/FilemakerMailSidebar.helpers';
 
-export interface MailAccountSettingsSectionProps {
-  selectedAccountLabel: string;
-  selectedAccount: FilemakerMailAccount | null;
-  syncingAccountId: string | null;
-  handleSyncAccount: (accountId: string) => void | Promise<void>;
-  draft: FilemakerMailAccountDraft;
-  setDraft: React.Dispatch<React.SetStateAction<FilemakerMailAccountDraft>>;
-  folderAllowlistValue: string;
-  setFolderAllowlistValue: React.Dispatch<React.SetStateAction<string>>;
-  handleSaveAccount: () => void | Promise<void>;
-  isSavingAccount: boolean;
-  onComposeFromAccount: (accountId: string) => void;
-}
+export function MailAccountSettingsSection(): React.JSX.Element {
+  const {
+    selectedAccountLabel,
+    selectedAccount,
+    syncingAccountId,
+    handleSyncAccount,
+    draft,
+    setDraft,
+    folderAllowlistValue,
+    setFolderAllowlistValue,
+    handleSaveAccount,
+    isSavingAccount,
+    router,
+  } = useMailPageContext();
 
-export function MailAccountSettingsSection({
-  selectedAccountLabel,
-  selectedAccount,
-  syncingAccountId,
-  handleSyncAccount,
-  draft,
-  setDraft,
-  folderAllowlistValue,
-  setFolderAllowlistValue,
-  handleSaveAccount,
-  isSavingAccount,
-  onComposeFromAccount,
-}: MailAccountSettingsSectionProps): React.JSX.Element {
   return (
     <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -281,7 +271,11 @@ export function MailAccountSettingsSection({
             <Button
               type='button'
               variant='outline'
-              onClick={() => onComposeFromAccount(selectedAccount.id)}
+              onClick={() => {
+                startTransition(() => {
+                  router.push(buildComposeHref({ accountId: selectedAccount.id }));
+                });
+              }}
             >
               <MailPlus className='mr-2 size-4' />
               Compose from Account

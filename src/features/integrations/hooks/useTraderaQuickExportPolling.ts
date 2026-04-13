@@ -32,6 +32,7 @@ import type { TraderaFeedbackOptions } from './useTraderaQuickExportFeedback';
 import {
   buildTrackedTraderaFeedbackOptions,
   findTrackedTraderaListing,
+  isTrackedTraderaListingSuccess,
 } from './useTraderaQuickExportFeedback';
 
 const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
@@ -128,8 +129,12 @@ export function useTraderaQuickExportPolling(
           trackedListing,
           localFeedback
         );
+        const trackedListingSuccess = isTrackedTraderaListingSuccess(
+          trackedListing,
+          localFeedback
+        );
 
-        if (SUCCESS_STATUSES.has(normalizedListingStatus)) {
+        if (trackedListingSuccess || SUCCESS_STATUSES.has(normalizedListingStatus)) {
           setFeedbackStatus('completed', feedbackOptions);
           setTraderaBadgeStatus(queryClient, productId, 'active');
           void invalidateProductListingsAndBadges(queryClient, productId);

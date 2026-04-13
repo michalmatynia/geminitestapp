@@ -6,6 +6,10 @@ import {
   isTraderaStatusCheckPending,
   selectPreferredTraderaListingForStatusCheck,
 } from '@/features/integrations/utils/tradera-status-check';
+import {
+  resolveDuplicateLinkedFromListing,
+  resolveDuplicateLinkedFromRunResult,
+} from '@/features/integrations/utils/tradera-listing-client-utils';
 import { resolveTraderaExecutionStepsFromMarketplaceData } from '@/features/integrations/utils/tradera-execution-steps';
 import type {
   ProductListingWithDetails,
@@ -52,6 +56,21 @@ export type ListingRow = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+const isDuplicateLinkedSignal = ({
+  listing,
+  liveRawResult,
+  liveLatestStage,
+}: {
+  listing: ProductListingWithDetails | null | undefined;
+  liveRawResult?: unknown;
+  liveLatestStage?: string | null | undefined;
+}): boolean => {
+  return (
+    resolveDuplicateLinkedFromListing(listing) ||
+    resolveDuplicateLinkedFromRunResult(liveRawResult, liveLatestStage)
+  );
+};
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   try {
@@ -90,9 +109,23 @@ export function resolveListingUrl(listing: ProductListingWithDetails): string | 
 }
 
 export function resolveDisplayedTraderaFailureReason(
-  listing: ProductListingWithDetails | null | undefined
+  listing: ProductListingWithDetails | null | undefined,
+  options?: {
+    liveRawResult?: unknown;
+    liveLatestStage?: string | null | undefined;
+  }
 ): string | null {
   if (!listing) {
+    return null;
+  }
+
+  if (
+    isDuplicateLinkedSignal({
+      listing,
+      liveRawResult: options?.liveRawResult,
+      liveLatestStage: options?.liveLatestStage,
+    })
+  ) {
     return null;
   }
 
@@ -106,6 +139,43 @@ export function resolveDisplayedTraderaFailureReason(
   return typeof listing.failureReason === 'string' && listing.failureReason.trim().length > 0
     ? listing.failureReason.trim()
     : null;
+}
+
+export function resolveTraderaRowStatusPresentation({
+  listing,
+  liveRawResult,
+  liveLatestStage,
+}: {
+  listing: ProductListingWithDetails | null | undefined;
+  liveRawResult?: unknown;
+  liveLatestStage?: string | null | undefined;
+}): {
+  status: string;
+  label: string;
+  variant: 'active' | 'neutral' | 'error' | 'pending' | 'removed' | 'processing' | undefined;
+} {
+  const rawStatus = typeof listing?.status === 'string' ? listing.status : 'unknown';
+
+  if (
+    listing &&
+    isDuplicateLinkedSignal({
+      listing,
+      liveRawResult,
+      liveLatestStage,
+    })
+  ) {
+    return {
+      status: 'active',
+      label: 'linked',
+      variant: 'active',
+    };
+  }
+
+  return {
+    status: rawStatus,
+    label: statusLabel(rawStatus),
+    variant: statusVariant(rawStatus),
+  };
 }
 
 export function resolveTraderaSessionTarget(

@@ -1,37 +1,30 @@
 import { FilterX, Search } from 'lucide-react';
-import React from 'react';
+import React, { startTransition } from 'react';
 
 import { Badge, Button, Input } from '@/shared/ui/primitives.public';
 
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../../components/FilemakerMailSidebar.helpers';
 
-import type {
-  FilemakerMailAccount,
-  FilemakerMailSearchResponse,
-  FilemakerMailSearchResultGroup,
-} from '../../types';
+import { useMailPageContext } from '../FilemakerMail.context';
+import type { FilemakerMailSearchResultGroup } from '../../types';
 
-export interface MailSearchSectionProps {
-  selectedAccount: FilemakerMailAccount | null;
-  selectedAccountId: string | null;
-  deepSearchQuery: string;
-  onDeepSearchQueryChange: (query: string) => void;
-  deepSearchResults: FilemakerMailSearchResponse | null;
-  isSearching: boolean;
-  onClearSearch: () => void;
-  onOpenThread: (href: string) => void;
-}
+export function MailSearchSection(): React.JSX.Element {
+  const {
+    selectedAccount,
+    selectedAccountId,
+    deepSearchQuery,
+    setDeepSearchQuery,
+    deepSearchResults,
+    setDeepSearchResults,
+    isSearching,
+    router,
+  } = useMailPageContext();
 
-export function MailSearchSection({
-  selectedAccount,
-  selectedAccountId,
-  deepSearchQuery,
-  onDeepSearchQueryChange,
-  deepSearchResults,
-  isSearching,
-  onClearSearch,
-  onOpenThread,
-}: MailSearchSectionProps): React.JSX.Element {
+  const onClearSearch = (): void => {
+    setDeepSearchQuery('');
+    setDeepSearchResults(null);
+  };
+
   return (
     <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -58,7 +51,7 @@ export function MailSearchSection({
         <Input
           value={deepSearchQuery}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            onDeepSearchQueryChange(event.target.value)
+            setDeepSearchQuery(event.target.value)
           }
           placeholder='Search message bodies, subjects, senders...'
           aria-label='Deep message search'
@@ -97,18 +90,19 @@ export function MailSearchSection({
                     type='button'
                     size='sm'
                     variant='outline'
-                    onClick={() =>
-                      onOpenThread(
-                        buildThreadHref({
-                          threadId: group.threadId,
-                          accountId: group.accountId,
-                          mailboxPath: group.mailboxPath,
-                          originPanel: 'search',
-                          searchAccountId: selectedAccountId ? null : 'all',
-                          searchQuery: deepSearchQuery,
-                        })
-                      )
-                    }
+                    onClick={() => {
+                      const href = buildThreadHref({
+                        threadId: group.threadId,
+                        accountId: group.accountId,
+                        mailboxPath: group.mailboxPath,
+                        originPanel: 'search',
+                        searchAccountId: selectedAccountId ? null : 'all',
+                        searchQuery: deepSearchQuery,
+                      });
+                      startTransition(() => {
+                        router.push(href);
+                      });
+                    }}
                   >
                     Open Thread
                   </Button>

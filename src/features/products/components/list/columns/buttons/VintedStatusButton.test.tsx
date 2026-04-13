@@ -78,6 +78,34 @@ describe('VintedStatusButton', () => {
     });
   });
 
+  it('prefers completed persisted feedback over a stale auth_required status', () => {
+    window.sessionStorage.setItem(
+      'vinted-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    const onOpenListings = vi.fn();
+
+    render(
+      <VintedStatusButton
+        productId='product-1'
+        status='auth_required'
+        prefetchListings={vi.fn()}
+        onOpenListings={onOpenListings}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Manage Vinted listing (active).' }));
+
+    expect(onOpenListings).toHaveBeenCalledWith(undefined);
+  });
+
   it('opens the normal listing flow without recovery context for active statuses', () => {
     const onOpenListings = vi.fn();
 

@@ -517,6 +517,7 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
         listingUrl: 'https://www.tradera.com/item/fallback-stale-mapping',
         categoryPath: 'Other > Other',
         categorySource: 'fallback',
+        categoryFallbackReason: 'fallback_requested',
       },
     });
 
@@ -561,6 +562,7 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
         categoryMappingReason: 'stale_external_category',
         categoryPath: 'Other > Other',
         categorySource: 'fallback',
+        categoryFallbackReason: 'fallback_requested',
       },
     });
   });
@@ -1144,11 +1146,8 @@ const EXPECTED_TRADERA_PRICING_METADATA = {
       | Record<string, unknown>
       | undefined;
     expect(input).toBeDefined();
-    expect((input?.['localImagePaths'] as string[])?.map((value) => new URL(`file://${value}`).pathname.split('/').pop())).toEqual([
+  expect((input?.['localImagePaths'] as string[])?.map((value) => new URL(`file://${value}`).pathname.split('/').pop())).toEqual([
       'BASE-1_01.png',
       'BASE-1_02.png',
     ]);
   });
-
-  });
-});

@@ -5,14 +5,24 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useProductListingsDataMock, useProductListingsUIStateMock } = vi.hoisted(() => ({
+const {
+  useProductListingsDataMock,
+  useProductListingsUIStateMock,
+  useTraderaLiveExecutionMock,
+} = vi.hoisted(() => ({
   useProductListingsDataMock: vi.fn(),
   useProductListingsUIStateMock: vi.fn(),
+  useTraderaLiveExecutionMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
   useProductListingsData: () => useProductListingsDataMock(),
   useProductListingsUIState: () => useProductListingsUIStateMock(),
+}));
+
+vi.mock('@/features/integrations/hooks/useTraderaLiveExecution', () => ({
+  useTraderaLiveExecution: (...args: unknown[]) =>
+    useTraderaLiveExecutionMock(...args),
 }));
 
 import { ProductListingDetails } from './ProductListingDetails';
@@ -35,6 +45,7 @@ describe('ProductListingDetails', () => {
       historyOpenByListing: {},
       setHistoryOpenByListing: vi.fn(),
     });
+    useTraderaLiveExecutionMock.mockReturnValue(null);
   });
 
   it('shows Tradera last execution metadata when available', () => {
@@ -140,6 +151,7 @@ describe('ProductListingDetails', () => {
                     imageUploadSource: 'downloaded',
                     imageUploadFallbackUsed: true,
                     failureCode: 'image_duplicate_risk',
+                    staleDraftImages: true,
                     duplicateRisk: true,
                     imageRetryCleanupUnsettled: false,
                     imagePreviewMismatch: true,
@@ -161,14 +173,14 @@ describe('ProductListingDetails', () => {
                     },
                     executionSteps: [
                       {
-                        id: 'auth',
+                        id: 'auth_check',
                         label: 'Validate Tradera session',
                         status: 'success',
                         message: 'Stored Tradera session was accepted.',
                       },
                       {
-                        id: 'publish',
-                        label: 'Publish and verify listing',
+                        id: 'publish_verify',
+                        label: 'Verify published listing',
                         status: 'error',
                         message: 'FAIL_PUBLISH_VALIDATION: Publish action is disabled.',
                       },
@@ -254,6 +266,7 @@ describe('ProductListingDetails', () => {
     expect(screen.getAllByText('Yes').length).toBeGreaterThan(0);
     expect(screen.getByText('Failure code:')).toBeInTheDocument();
     expect(screen.getByText('image_duplicate_risk')).toBeInTheDocument();
+    expect(screen.getByText('Stale draft images:')).toBeInTheDocument();
     expect(screen.getByText('Duplicate risk:')).toBeInTheDocument();
     expect(screen.getByText('Image preview mismatch:')).toBeInTheDocument();
     expect(screen.getAllByText('Yes').length).toBeGreaterThan(1);
@@ -277,8 +290,10 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('Error category:')).toBeInTheDocument();
     expect(screen.getByText('AUTH')).toBeInTheDocument();
     expect(screen.getByText('Execution steps')).toBeInTheDocument();
+    expect(screen.getByText('auth_check')).toBeInTheDocument();
     expect(screen.getByText('Validate Tradera session')).toBeInTheDocument();
-    expect(screen.getByText('Publish and verify listing')).toBeInTheDocument();
+    expect(screen.getByText('publish_verify')).toBeInTheDocument();
+    expect(screen.getByText('Verify published listing')).toBeInTheDocument();
     expect(
       screen.getByText('FAIL_PUBLISH_VALIDATION: Publish action is disabled.')
     ).toBeInTheDocument();
@@ -291,6 +306,352 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText(/preview-1\.jpg/)).toBeInTheDocument();
     expect(screen.getByText(/selectedImageFileCount/)).toBeInTheDocument();
     expect(screen.getByText(/continueButtonDisabled/)).toBeInTheDocument();
+  });
+
+  it('reconstructs Tradera execution steps from failure metadata when persisted steps are missing', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-tradera-derived-steps',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: '123',
+            inventoryId: null,
+            status: 'failed',
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: 'Tradera scripted listing failed.',
+            exportHistory: null,
+            createdAt: '2026-04-13T09:00:00.000Z',
+            updatedAt: '2026-04-13T09:05:00.000Z',
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Main Tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  action: 'list',
+                  executedAt: '2026-04-13T09:05:00.000Z',
+                  ok: false,
+                  error: 'FAIL_CATEGORY_SET: Tradera category could not be selected.',
+                  metadata: {
+                    scriptMode: 'scripted',
+                    rawResult: {
+                      stage: 'draft_cleared',
+                    },
+                    logTail: [
+                      '[user] tradera.quicklist.start {"listingAction":"list"}',
+                      '[user] tradera.quicklist.auth.initial {"loggedIn":true}',
+                      '[user] tradera.quicklist.duplicate.result {"duplicateFound":false}',
+                      '[user] tradera.quicklist.image.initial_cleanup {"draftImageRemoveControls":0}',
+                    ],
+                  },
+                },
+              },
+            } as never,
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Execution steps')).toBeInTheDocument();
+    expect(screen.getByText('auth_check')).toBeInTheDocument();
+    expect(screen.getByText('duplicate_check')).toBeInTheDocument();
+    expect(screen.getByText('image_cleanup')).toBeInTheDocument();
+    expect(screen.getByText('category_select')).toBeInTheDocument();
+    expect(
+      screen.getByText('FAIL_CATEGORY_SET: Tradera category could not be selected.')
+    ).toBeInTheDocument();
+  });
+
+  it('reconstructs the exact-title-only duplicate rationale from persisted Tradera run data', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-tradera-duplicate-rationale',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: '123',
+            inventoryId: null,
+            status: 'active',
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: null,
+            exportHistory: null,
+            createdAt: '2026-04-13T09:00:00.000Z',
+            updatedAt: '2026-04-13T09:05:00.000Z',
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Main Tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  action: 'list',
+                  executedAt: '2026-04-13T09:05:00.000Z',
+                  ok: true,
+                  metadata: {
+                    scriptMode: 'scripted',
+                    rawResult: {
+                      stage: 'duplicate_checked',
+                      duplicateIgnoredNonExactCandidateCount: 2,
+                      duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
+                    },
+                    logTail: [
+                      '[user] tradera.quicklist.start {"listingAction":"list"}',
+                      '[user] tradera.quicklist.auth.initial {"loggedIn":true}',
+                      '[user] tradera.quicklist.duplicate.result {"duplicateFound":false}',
+                    ],
+                  },
+                },
+              },
+            } as never,
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Execution steps')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Duplicate search ignored 2 non-exact title match(es); deep inspection only runs on exact title matches. Ignored titles: Katanas, Katana Sword.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Skipped because only non-exact title matches were found.')
+    ).toBeInTheDocument();
+  });
+
+  it('renders live Tradera execution steps from the active Playwright run while pending', () => {
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-live-123',
+      action: 'relist',
+      status: 'running',
+      latestStage: 'image_upload',
+      latestStageUrl: 'https://www.tradera.com/en/selling/draft/live',
+      executionSteps: [
+        {
+          id: 'image_upload',
+          label: 'Upload listing images',
+          status: 'running',
+          message: 'Uploading listing images.',
+        },
+      ],
+      rawResult: {
+        stage: 'image_upload',
+      },
+      logTail: ['[user] tradera.quicklist.image.upload.start'],
+      error: null,
+    });
+
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-live-1',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: null,
+            inventoryId: null,
+            status: 'queued_relist',
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: null,
+            exportHistory: null,
+            createdAt: '2026-04-13T10:00:00.000Z',
+            updatedAt: '2026-04-13T10:00:01.000Z',
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Main Tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  action: 'relist',
+                  requestId: 'job-live-1',
+                  queuedAt: '2026-04-13T10:00:00.000Z',
+                  requestedBrowserMode: 'headed',
+                  runId: 'run-live-123',
+                },
+              },
+            } as never,
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Run ID:')).toBeInTheDocument();
+    expect(screen.getByText('run-live-123')).toBeInTheDocument();
+    expect(screen.getByText('Last stage:')).toBeInTheDocument();
+    expect(screen.getAllByText('image_upload').length).toBeGreaterThan(0);
+    expect(screen.getByText('Execution steps')).toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByText('Upload listing images')).toBeInTheDocument();
+    expect(screen.getByText('Uploading listing images.')).toBeInTheDocument();
+    expect(screen.getByText('Tradera run result')).toBeInTheDocument();
+    expect(screen.getAllByText(/image_upload/).length).toBeGreaterThan(0);
+  });
+
+  it('prefers live Tradera duplicate-ignore steps over persisted step history while the run is active', () => {
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-live-duplicate-1',
+      action: 'list',
+      status: 'running',
+      latestStage: 'duplicate_checked',
+      latestStageUrl: 'https://www.tradera.com/en/my/active',
+      executionSteps: [
+        {
+          id: 'duplicate_check',
+          label: 'Search for duplicate listings',
+          status: 'success',
+          message:
+            'Duplicate search ignored 5 non-exact title match(es); deep inspection only runs on exact title matches. Ignored titles: Katanas, Katana Sword, Japanese Blades, +2 more.',
+        },
+        {
+          id: 'deep_duplicate_check',
+          label: 'Inspect duplicate candidates',
+          status: 'skipped',
+          message: 'Skipped because only non-exact title matches were found.',
+        },
+      ],
+      rawResult: {
+        stage: 'duplicate_checked',
+        duplicateIgnoredNonExactCandidateCount: 5,
+        duplicateIgnoredCandidateTitles: [
+          'Katanas',
+          'Katana Sword',
+          'Japanese Blades',
+          'Wooden Katana',
+          'Samurai Replica',
+        ],
+      },
+      logTail: [
+        '[user] tradera.quicklist.start {"listingAction":"list"}',
+        '[user] tradera.quicklist.auth.initial {"loggedIn":true}',
+        '[user] tradera.quicklist.duplicate.result {"duplicateFound":false}',
+      ],
+      error: null,
+    });
+
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-live-duplicate-1',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: null,
+            inventoryId: null,
+            status: 'queued',
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: null,
+            exportHistory: null,
+            createdAt: '2026-04-13T10:00:00.000Z',
+            updatedAt: '2026-04-13T10:00:01.000Z',
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Main Tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  action: 'list',
+                  requestId: 'job-live-duplicate-1',
+                  queuedAt: '2026-04-13T10:00:00.000Z',
+                  requestedBrowserMode: 'headed',
+                  runId: 'run-live-duplicate-1',
+                },
+                lastExecution: {
+                  action: 'list',
+                  executedAt: '2026-04-13T09:59:00.000Z',
+                  metadata: {
+                    duplicateIgnoredNonExactCandidateCount: 1,
+                    duplicateIgnoredCandidateTitles: ['Old persisted title'],
+                    executionSteps: [
+                      {
+                        id: 'duplicate_check',
+                        label: 'Search for duplicate listings',
+                        status: 'success',
+                        message: 'Old persisted duplicate step.',
+                      },
+                    ],
+                  },
+                },
+              },
+            } as never,
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Execution steps')).toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Duplicate search ignored 5 non-exact title match(es); deep inspection only runs on exact title matches. Ignored titles: Katanas, Katana Sword, Japanese Blades, +2 more.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Skipped because only non-exact title matches were found.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Ignored non-exact duplicate matches:')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getByText('Ignored duplicate titles:')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Katanas, Katana Sword, Japanese Blades, Wooden Katana, Samurai Replica'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Old persisted title')).not.toBeInTheDocument();
+    expect(screen.queryByText('Old persisted duplicate step.')).not.toBeInTheDocument();
   });
 
   it('normalizes the listing integration header to Vinted.pl for Vinted listings', () => {
@@ -568,6 +929,8 @@ describe('ProductListingDetails', () => {
                     duplicateMatchedProductId: 'BASE-1',
                     duplicateCandidateCount: 2,
                     duplicateSearchTitle: 'Example title',
+                    duplicateIgnoredNonExactCandidateCount: 3,
+                    duplicateIgnoredCandidateTitles: ['Katanas', 'Katana Sword'],
                   },
                 },
               },
@@ -587,6 +950,75 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('Duplicate search title:')).toBeInTheDocument();
     expect(screen.getByText('Example title')).toBeInTheDocument();
+    expect(screen.getByText('Ignored non-exact duplicate matches:')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('Ignored duplicate titles:')).toBeInTheDocument();
+    expect(screen.getByText('Katanas, Katana Sword')).toBeInTheDocument();
+  });
+
+  it('shows truncated ignored duplicate titles in Tradera execution steps when many were skipped', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-duplicate-truncated-steps',
+            status: 'active',
+            externalListingId: '725447805',
+            inventoryId: null,
+            listedAt: '2026-04-02T11:30:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              listingUrl: 'https://www.tradera.com/item/725447805',
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T11:15:00.000Z',
+                  action: 'list',
+                  metadata: {
+                    scriptMode: 'scripted',
+                    scriptMarker: 'tradera-quicklist-default:v143',
+                    rawResult: {
+                      stage: 'duplicate_checked',
+                      duplicateIgnoredNonExactCandidateCount: 5,
+                      duplicateIgnoredCandidateTitles: [
+                        'Katanas',
+                        'Katana Sword',
+                        'Japanese Blades',
+                        'Wooden Katana',
+                        'Samurai Replica',
+                      ],
+                    },
+                    logTail: [
+                      '[user] tradera.quicklist.start {"listingAction":"list"}',
+                      '[user] tradera.quicklist.auth.initial {"loggedIn":true}',
+                      '[user] tradera.quicklist.duplicate.result {"duplicateFound":false}',
+                    ],
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(
+      screen.getByText(
+        'Duplicate search ignored 5 non-exact title match(es); deep inspection only runs on exact title matches. Ignored titles: Katanas, Katana Sword, Japanese Blades, +2 more.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows duplicate-linked Tradera metadata when it only exists in rawResult', () => {
@@ -745,6 +1177,84 @@ describe('ProductListingDetails', () => {
     expect(screen.queryByText(/^failed$/i)).toBeNull();
   });
 
+  it('shows a linked status badge from the live Tradera run when persisted status is stale', () => {
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-live-linked-1',
+      action: 'relist',
+      status: 'running',
+      latestStage: 'duplicate_linked',
+      latestStageUrl: 'https://www.tradera.com/item/725447805',
+      executionSteps: [
+        {
+          id: 'duplicate_check',
+          label: 'Search for duplicate listings',
+          status: 'success',
+          message:
+            'Relist linked the single exact-title Tradera candidate instead of creating a new listing.',
+        },
+      ],
+      rawResult: {
+        stage: 'duplicate_linked',
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+        duplicateCandidateCount: 1,
+        duplicateSearchTitle: 'Example title',
+      },
+      logTail: [
+        '[user] tradera.quicklist.start {"listingAction":"relist"}',
+        '[user] tradera.quicklist.duplicate.linked {"listingUrl":"https://www.tradera.com/item/725447805"}',
+      ],
+      error: null,
+    });
+
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-live-duplicate-linked-stale-status',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            status: 'failed',
+            externalListingId: '725447805',
+            inventoryId: null,
+            listedAt: '2026-04-02T11:30:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Main Tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  action: 'relist',
+                  requestId: 'job-live-linked-1',
+                  queuedAt: '2026-04-13T10:00:00.000Z',
+                  requestedBrowserMode: 'headed',
+                  runId: 'run-live-linked-1',
+                },
+              },
+            } as never,
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('linked')).toBeInTheDocument();
+    expect(screen.queryByText(/^failed$/i)).toBeNull();
+    expect(screen.getByText('Duplicate match strategy:')).toBeInTheDocument();
+    expect(screen.getByText('Exact title single candidate')).toBeInTheDocument();
+  });
+
   it('shows pending Tradera relist metadata while a recovery relist is queued', () => {
     render(
       <ProductListingDetails
@@ -772,6 +1282,7 @@ describe('ProductListingDetails', () => {
             marketplaceData: {
               tradera: {
                 pendingExecution: {
+                  action: 'relist',
                   requestedBrowserMode: 'headed',
                   requestId: 'job-tradera-queued-1',
                   queuedAt: '2026-04-02T11:30:00.000Z',
@@ -789,6 +1300,52 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('headed')).toBeInTheDocument();
     expect(screen.getByText('Pending queue job:')).toBeInTheDocument();
     expect(screen.getByText('job-tradera-queued-1')).toBeInTheDocument();
+  });
+
+  it('shows pending Tradera status checks with the correct action label', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-tradera-status-check',
+            status: 'active',
+            externalListingId: null,
+            inventoryId: null,
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  action: 'check_status',
+                  requestedBrowserMode: 'connection_default',
+                  requestId: 'job-tradera-status-check-1',
+                  queuedAt: '2026-04-02T11:45:00.000Z',
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Pending status check:')).toBeInTheDocument();
+    expect(screen.getByText('Pending browser mode:')).toBeInTheDocument();
+    expect(screen.getByText('connection_default')).toBeInTheDocument();
+    expect(screen.getByText('Pending queue job:')).toBeInTheDocument();
+    expect(screen.getByText('job-tradera-status-check-1')).toBeInTheDocument();
   });
 
   it('shows Playwright execution metadata including browser mode for troubleshooting relists', () => {

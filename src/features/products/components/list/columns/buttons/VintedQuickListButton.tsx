@@ -30,6 +30,7 @@ import {
   FAILURE_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
+  resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
 
 import {
@@ -260,11 +261,11 @@ export function VintedQuickListButton(props: {
     return null;
   }
 
-  const resolvedButtonStatus = submitting
-    ? 'processing'
-    : hasServerStatus
-      ? normalizedVintedStatus
-      : (localFeedbackStatus ?? 'not_started');
+  const resolvedButtonStatus = resolveMarketplaceStatusWithLocalFeedback({
+    serverStatus: normalizedVintedStatus,
+    localFeedbackStatus,
+    submitting,
+  });
   const shouldUseFilledMarketplaceTone =
     hasServerStatus || localFeedbackStatus !== null;
   const isFailureState = FAILURE_STATUSES.has(

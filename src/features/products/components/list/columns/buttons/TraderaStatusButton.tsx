@@ -11,7 +11,12 @@ import { Button } from '@/shared/ui/button';
 
 import { cn } from '@/shared/utils/ui-utils';
 
-import { FAILURE_STATUSES, getMarketplaceButtonClass, normalizeMarketplaceStatus } from '../product-column-utils';
+import {
+  FAILURE_STATUSES,
+  getMarketplaceButtonClass,
+  normalizeMarketplaceStatus,
+  resolveMarketplaceStatusWithLocalFeedback,
+} from '../product-column-utils';
 
 export function TraderaStatusButton(props: {
   productId: string;
@@ -22,21 +27,24 @@ export function TraderaStatusButton(props: {
   const { productId, status, prefetchListings, onOpenListings } = props;
   const normalizedStatus = normalizeMarketplaceStatus(status);
   const isFailureState = FAILURE_STATUSES.has(normalizedStatus);
-  const persistedFeedback = isFailureState
-    ? readPersistedTraderaQuickListFeedback(productId)
-    : null;
-  const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
+  const persistedFeedback = readPersistedTraderaQuickListFeedback(productId);
+  const effectiveStatus = resolveMarketplaceStatusWithLocalFeedback({
+    serverStatus: normalizedStatus,
+    localFeedbackStatus: persistedFeedback?.status ?? null,
+  });
+  const isEffectiveFailureState = FAILURE_STATUSES.has(effectiveStatus);
+  const recoveryContext: ProductListingsRecoveryContext | undefined = isEffectiveFailureState
     ? createTraderaRecoveryContext({
-      status: normalizedStatus,
-      runId: persistedFeedback?.runId ?? null,
-      requestId: persistedFeedback?.requestId ?? null,
-      integrationId: persistedFeedback?.integrationId ?? null,
-      connectionId: persistedFeedback?.connectionId ?? null,
-    })
+        status: effectiveStatus,
+        runId: persistedFeedback?.runId ?? null,
+        requestId: persistedFeedback?.requestId ?? null,
+        integrationId: persistedFeedback?.integrationId ?? null,
+        connectionId: persistedFeedback?.connectionId ?? null,
+      })
     : undefined;
-  const label = isFailureState
-    ? `Open Tradera recovery options (${status}).`
-    : `Manage Tradera listing (${status}).`;
+  const label = isEffectiveFailureState
+    ? `Open Tradera recovery options (${effectiveStatus}).`
+    : `Manage Tradera listing (${effectiveStatus}).`;
 
   return (
     <Button
@@ -50,7 +58,7 @@ export function TraderaStatusButton(props: {
       title={label}
       className={cn(
         'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        getMarketplaceButtonClass(status, true, 'tradera')
+        getMarketplaceButtonClass(effectiveStatus, true, 'tradera')
       )}
     >
       <span

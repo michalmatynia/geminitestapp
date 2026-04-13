@@ -26,13 +26,18 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     listingUrl = null,
     externalListingId = null,
     searchTitle = null,
+    duplicateSearchTitle = null,
     rawDescriptionEn = null,
     baseProductId = null,
   } = input || {};
+  const resolvedSearchTitle = searchTitle || duplicateSearchTitle || null;
 
   const executionSteps = [
-    { id: 'open_overview', label: 'Open Overview', status: 'pending' },
-    { id: 'accept_cookies', label: 'Accept Cookies', status: 'pending' },
+    { id: 'browser_preparation', label: 'Browser preparation', status: 'pending' },
+    { id: 'browser_open', label: 'Open browser', status: 'pending' },
+    { id: 'cookie_accept', label: 'Accept cookies', status: 'pending' },
+    { id: 'auth_check', label: 'Validate Tradera session', status: 'pending' },
+    { id: 'overview_open', label: 'Open seller overview', status: 'pending' },
     { id: 'search_active', label: 'Search Active', status: 'pending' },
     { id: 'inspect_active', label: 'Inspect Active', status: 'pending' },
     { id: 'search_unsold', label: 'Search Unsold', status: 'pending' },
@@ -40,6 +45,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     { id: 'search_sold', label: 'Search Sold', status: 'pending' },
     { id: 'inspect_sold', label: 'Inspect Sold', status: 'pending' },
     { id: 'resolve_status', label: 'Resolve Status', status: 'pending' },
+    { id: 'browser_close', label: 'Close browser', status: 'pending' },
   ];
 
   const updateStep = (id, status, message = null) => {
@@ -77,9 +83,9 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
   const acceptCookies = async () => {
     const accepted = await dismissCookiesIfPresent();
     if (accepted) {
-      updateStep('accept_cookies', 'success', 'Cookies accepted.');
-    } else if (executionSteps.find((s) => s.id === 'accept_cookies').status === 'pending') {
-      updateStep('accept_cookies', 'success', 'No cookie banner detected.');
+      updateStep('cookie_accept', 'success', 'Cookies accepted.');
+    } else if (executionSteps.find((s) => s.id === 'cookie_accept').status === 'pending') {
+      updateStep('cookie_accept', 'success', 'No cookie banner detected.');
     }
   };
 
@@ -89,9 +95,13 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     return match ? match[1] : null;
   };
 
-  if (!searchTitle) {
-    updateStep('open_overview', 'error', 'No English title was available for Tradera section search.');
-    skipStep('accept_cookies', 'Skipped because no searchable English title was available.');
+  updateStep('browser_preparation', 'success', 'Browser settings were prepared.');
+  updateStep('browser_open', 'success', 'Browser was opened successfully.');
+
+  if (!resolvedSearchTitle) {
+    skipStep('auth_check', 'Skipped because no searchable English title was available.');
+    updateStep('overview_open', 'error', 'No English title was available for Tradera section search.');
+    skipStep('cookie_accept', 'Skipped because no searchable English title was available.');
     skipStep('search_active', 'Skipped because no searchable English title was available.');
     skipStep('inspect_active', 'Skipped because no searchable English title was available.');
     skipStep('search_unsold', 'Skipped because no searchable English title was available.');
@@ -99,6 +109,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     skipStep('search_sold', 'Skipped because no searchable English title was available.');
     skipStep('inspect_sold', 'Skipped because no searchable English title was available.');
     skipStep('resolve_status', 'Skipped because no searchable English title was available.');
+    updateStep('browser_close', 'success', 'Browser was closed.');
     emit('result', {
       publishVerified: false,
       listingUrl,
@@ -115,17 +126,42 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
       log('tradera.check_status.start', {
         listingUrl,
         externalListingId,
-        searchTitle,
+        searchTitle: resolvedSearchTitle,
         baseProductId,
       });
     }
 
-    updateStep('open_overview', 'running', 'Opening Tradera Active listings.');
+    updateStep('auth_check', 'running', 'Checking whether the stored Tradera session is still valid.');
+    updateStep('overview_open', 'running', 'Opening Tradera seller overview.');
     await page.goto(INITIAL_SECTION_URL, {
       waitUntil: 'domcontentloaded',
       timeout: 30_000,
     });
-    updateStep('open_overview', 'success', 'Tradera Active listings opened successfully.');
+    await acceptCookies();
+    const normalizedUrl = page.url().trim().toLowerCase();
+    if (normalizedUrl.includes('/login')) {
+      updateStep('auth_check', 'error', 'Stored Tradera session redirected to the Tradera login page.');
+      skipStep('overview_open', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('search_active', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('inspect_active', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('search_unsold', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('inspect_unsold', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('search_sold', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('inspect_sold', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('resolve_status', 'Skipped because Tradera seller overview could not be accessed.');
+      updateStep('browser_close', 'success', 'Browser was closed.');
+      emit('result', {
+        publishVerified: false,
+        listingUrl,
+        externalListingId,
+        status: 'unknown',
+        error: 'Stored Tradera session redirected to login before seller overview could be accessed.',
+        executionSteps,
+      });
+      return;
+    }
+    updateStep('auth_check', 'success', 'Stored Tradera session could access the seller overview.');
+    updateStep('overview_open', 'success', 'Tradera seller overview opened successfully.');
 
     let matchedResult = null;
     for (const section of SECTIONS) {
@@ -164,6 +200,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
         });
       }
 
+      updateStep('browser_close', 'success', 'Browser was closed.');
       emit('result', {
         publishVerified: false,
         listingUrl: matchedResult.listingUrl || listingUrl,
@@ -173,7 +210,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
         verificationMatchStrategy: matchedResult.matchStrategy,
         verificationRawStatusTag: matchedResult.rawStatusTag,
         verificationMatchedProductId: matchedResult.matchedProductId,
-        verificationSearchTitle: searchTitle,
+        verificationSearchTitle: resolvedSearchTitle,
         verificationCandidateCount: matchedResult.candidateCount,
         executionSteps,
       });
@@ -196,6 +233,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
       });
     }
 
+    updateStep('browser_close', 'success', 'Browser was closed.');
     emit('result', {
       publishVerified: false,
       listingUrl,
@@ -205,7 +243,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
       verificationMatchStrategy: null,
       verificationRawStatusTag: 'removed',
       verificationMatchedProductId: null,
-      verificationSearchTitle: searchTitle,
+      verificationSearchTitle: resolvedSearchTitle,
       verificationCandidateCount: 0,
       executionSteps,
     });
@@ -216,6 +254,7 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
       log('tradera.check_status.failed', { error: msg });
       log('error', '[check-status] error: ' + msg);
     }
+    updateStep('browser_close', 'success', 'Browser was closed.');
     emit('result', {
       publishVerified: false,
       listingUrl,

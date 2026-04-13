@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-12'
+last_reviewed: '2026-04-13'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-12T15:28:42.442Z
+Generated at: 2026-04-13T20:43:11.150Z
 
 ## Summary
 
@@ -86,16 +86,16 @@ Generated at: 2026-04-12T15:28:42.442Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/integrations/services/tradera-listing/browser.test.ts` | 4661 |
-| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 3831 |
-| `src/features/products/components/form/ProductFormScans.test.tsx` | 2977 |
-| `src/features/products/server/product-scans-service.test.ts` | 2869 |
-| `src/features/products/server/product-scans-service.ts` | 2675 |
-| `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 2587 |
-| `src/features/products/server/product-scans-service.amazon.test.ts` | 1919 |
-| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 1790 |
+| `src/features/products/server/product-scans-service.ts` | 4478 |
+| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 4175 |
+| `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 3221 |
+| `src/features/products/components/form/ProductFormScans.test.tsx` | 3065 |
+| `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 2194 |
+| `src/features/products/server/product-scans-service.amazon.test.ts` | 2166 |
+| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 2130 |
 | `src/features/products/components/ProductModals.test.tsx` | 1730 |
-| `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 1599 |
+| `src/features/products/server/parts/product-scan-amazon-script.part2.ts` | 1719 |
+| `src/features/products/server/product-scan-amazon-evaluator.ts` | 1709 |
 
 ## Top API Route Hotspots (Reference)
 
@@ -103,7 +103,7 @@ Generated at: 2026-04-12T15:28:42.442Z
 | --- | ---: |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 144 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 120 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 121 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 116 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
 | `src/app/api/databases/[[...path]]/route.ts` | 100 |

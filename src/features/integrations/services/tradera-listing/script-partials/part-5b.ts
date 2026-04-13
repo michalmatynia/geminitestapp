@@ -50,29 +50,46 @@ export const PART_5B = String.raw`
     // Overwrite autofilled title/description immediately after images. Resolve Buy
     // now before setting price so the fixed-price field is mounted before we type
     // into it. Category autofill may be preserved later when no mapping exists.
+    updateStep('title_fill', 'running');
+    updateStep('description_fill', 'running');
     await fillTitleAndDescription();
     await fillEanField({ required: false, context: 'post-title-description' });
     await fillBrandField({ required: false, context: 'post-ean' });
     await fillWeightAndDimensions({ required: false, context: 'post-brand' });
+    updateStep('title_fill', 'completed');
+    updateStep('description_fill', 'completed');
     emitStage('fields_filled');
 
+    updateStep('listing_format_select', 'running');
     await chooseBuyNowListingFormat();
+    updateStep('listing_format_select', 'completed');
+    updateStep('price_set', 'running');
     await fillPriceField({ required: true, context: 'post-listing-format' });
     await fillQuantityField({ required: false, context: 'post-price' });
+    updateStep('price_set', 'completed', { price });
     emitStage('listing_format_selected', {
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
+      categoryFallbackReason: selectedCategoryFallbackReason,
     });
 
+    updateStep('category_select', 'running');
     await applyCategorySelection();
+    updateStep('category_select', 'completed', {
+      categoryPath: selectedCategoryPath,
+      categorySource: selectedCategorySource,
+    });
+    emitStage('category_selected', {
+      categoryPath: selectedCategoryPath,
+      categorySource: selectedCategorySource,
+      categoryFallbackReason: selectedCategoryFallbackReason,
+    });
+
+    updateStep('attribute_select', 'running');
     if (categoryStrategy === 'top_suggested' && selectedCategorySource !== 'preserved') {
       await fillCategoryExtraDropdowns();
     }
     await applyConfiguredExtraFieldSelections();
-    emitStage('category_selected', {
-      categoryPath: selectedCategoryPath,
-      categorySource: selectedCategorySource,
-    });
     await trySelectOptionalFieldValue({
       fieldLabels: CONDITION_FIELD_LABELS,
       optionLabels: CONDITION_OPTION_LABELS,
@@ -83,9 +100,14 @@ export const PART_5B = String.raw`
       optionLabels: DEPARTMENT_OPTION_LABELS,
       fieldKey: 'department',
     });
+    updateStep('attribute_select', 'completed', {
+      categoryPath: selectedCategoryPath,
+      categorySource: selectedCategorySource,
+    });
     emitStage('listing_attributes_selected', {
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
+      categoryFallbackReason: selectedCategoryFallbackReason,
     });
     const selectionDraftState = await waitForDraftSaveWithRecovery({
       timeoutMs: 8_000,
@@ -110,15 +132,18 @@ export const PART_5B = String.raw`
         );
       }
     }
+    updateStep('shipping_set', 'running');
     await applyDeliverySelection();
     await waitForDraftSaveWithRecovery({
       timeoutMs: 6_000,
       minimumQuietMs: 1_200,
       context: 'delivery-configuration',
     });
+    updateStep('shipping_set', 'completed', { shippingCondition: configuredDeliveryOptionLabel || null, shippingPriceEur: configuredDeliveryPriceEur ?? null });
     emitStage('delivery_configured', {
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
+      categoryFallbackReason: selectedCategoryFallbackReason,
       shippingCondition: configuredDeliveryOptionLabel,
       shippingPriceEur: configuredDeliveryPriceEur,
     });
@@ -399,7 +424,7 @@ export const PART_5B = String.raw`
       };
     };
 
-    const recoverPublishConfirmationViaDuplicateSearch = async (
+    const recoverPublishConfirmationViaVisibleCandidates = async (
       publishInteraction,
       timeoutMs = 20_000,
       options = {}
@@ -417,96 +442,32 @@ export const PART_5B = String.raw`
           await wait(2_500);
         }
 
-        let duplicateMatch = null;
-        try {
-          duplicateMatch = await checkDuplicate(duplicateSearchTerms);
-        } catch (error) {
-          const visibleCandidateRecovery = await recoverPublishedListingViaVisibleCandidate(
-            publishInteraction,
-            attempt,
-            {
-              expectedExternalListingId,
-              expectedListingUrl,
-            }
-          );
-          if (visibleCandidateRecovery) {
-            log?.('tradera.quicklist.publish.recovery_visible_candidate_result', {
-              attempt,
-              reason: publishInteraction?.reason || null,
-              externalListingId: visibleCandidateRecovery.externalListingId,
-              listingUrl: visibleCandidateRecovery.listingUrl,
-              duplicateMatchStrategy: visibleCandidateRecovery.duplicateMatchStrategy,
-            });
-            return visibleCandidateRecovery;
+        const visibleCandidateRecovery = await recoverPublishedListingViaVisibleCandidate(
+          publishInteraction,
+          attempt,
+          {
+            expectedExternalListingId,
+            expectedListingUrl,
           }
-          log?.('tradera.quicklist.publish.recovery_duplicate_failed', {
+        );
+        if (visibleCandidateRecovery) {
+          log?.('tradera.quicklist.publish.recovery_visible_candidate_result', {
             attempt,
             reason: publishInteraction?.reason || null,
-            currentUrl: typeof page?.url === 'function' ? page.url() : null,
-            error: error instanceof Error ? error.message : String(error),
+            externalListingId: visibleCandidateRecovery.externalListingId,
+            listingUrl: visibleCandidateRecovery.listingUrl,
+            duplicateMatchStrategy: visibleCandidateRecovery.duplicateMatchStrategy,
           });
-          return null;
+          return visibleCandidateRecovery;
         }
 
-        log?.('tradera.quicklist.publish.recovery_duplicate_result', {
+        log?.('tradera.quicklist.publish.recovery_visible_candidate_pending', {
           attempt,
           reason: publishInteraction?.reason || null,
-          duplicateFound: duplicateMatch?.duplicateFound === true,
-          listingId: duplicateMatch?.listingId || null,
-          listingUrl: duplicateMatch?.listingUrl || null,
-          matchStrategy: duplicateMatch?.matchStrategy || null,
-          candidateCount:
-            typeof duplicateMatch?.candidateCount === 'number'
-              ? duplicateMatch.candidateCount
-              : 0,
+          expectedExternalListingId,
+          expectedListingUrl,
+          currentUrl: typeof page?.url === 'function' ? page.url() : null,
         });
-
-        if (!duplicateMatch?.duplicateFound) {
-          const visibleCandidateRecovery = await recoverPublishedListingViaVisibleCandidate(
-            publishInteraction,
-            attempt,
-            {
-              expectedExternalListingId,
-              expectedListingUrl,
-            }
-          );
-          if (visibleCandidateRecovery) {
-            log?.('tradera.quicklist.publish.recovery_visible_candidate_result', {
-              attempt,
-              reason: publishInteraction?.reason || null,
-              externalListingId: visibleCandidateRecovery.externalListingId,
-              listingUrl: visibleCandidateRecovery.listingUrl,
-              duplicateMatchStrategy: visibleCandidateRecovery.duplicateMatchStrategy,
-            });
-            return visibleCandidateRecovery;
-          }
-          continue;
-        }
-
-        const externalListingId =
-          duplicateMatch.listingId ||
-          extractListingId(duplicateMatch.listingUrl || '') ||
-          null;
-        const listingUrl =
-          duplicateMatch.listingUrl ||
-          (externalListingId ? 'https://www.tradera.com/item/' + externalListingId : null);
-
-        if (!externalListingId && !listingUrl) {
-          continue;
-        }
-
-        return {
-          externalListingId,
-          listingUrl,
-          duplicateMatchStrategy: duplicateMatch.matchStrategy || null,
-          duplicateMatchedProductId: duplicateMatch.matchedProductId || null,
-          duplicateCandidateCount:
-            typeof duplicateMatch.candidateCount === 'number'
-              ? duplicateMatch.candidateCount
-              : null,
-          duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
-          attempt,
-        };
       }
 
       return null;
@@ -608,6 +569,7 @@ export const PART_5B = String.raw`
       return null;
     };
 
+    updateStep('publish', 'running');
     const prePublishUrl = page.url();
     const publishTargetMetadata = await readClickTargetMetadata(publishButton);
     await logClickTarget('publish', publishButton);
@@ -640,12 +602,13 @@ export const PART_5B = String.raw`
         }
       }
 
-      const publishRecovery = await recoverPublishConfirmationViaDuplicateSearch(
+      const publishRecovery = await recoverPublishConfirmationViaVisibleCandidates(
         publishInteraction,
         20_000,
         {
-          expectedExternalListingId: publishInteraction?.externalListingId || null,
-          expectedListingUrl: publishInteraction?.listingUrl || null,
+          expectedExternalListingId:
+            publishInteraction?.externalListingId || existingExternalListingId || null,
+          expectedListingUrl: publishInteraction?.listingUrl || existingListingUrl || null,
         }
       );
       if (publishRecovery) {
@@ -659,6 +622,9 @@ export const PART_5B = String.raw`
           duplicateMatchedProductId: publishRecovery.duplicateMatchedProductId,
           duplicateCandidateCount: publishRecovery.duplicateCandidateCount,
           duplicateSearchTitle: publishRecovery.duplicateSearchTitle,
+          duplicateIgnoredNonExactCandidateCount:
+            duplicateSearchSummary.ignoredNonExactCandidateCount,
+          duplicateIgnoredCandidateTitles: duplicateSearchSummary.ignoredCandidateTitles,
           imageCount: imageUploadResult?.imageCount ?? null,
           observedPreviewCount: imageUploadResult?.observedPreviewCount ?? null,
           observedPreviewDelta: imageUploadResult?.observedPreviewDelta ?? null,
@@ -666,6 +632,7 @@ export const PART_5B = String.raw`
           imageUploadSource: imageUploadResult?.uploadSource ?? null,
           categoryPath: selectedCategoryPath,
           categorySource: selectedCategorySource,
+          categoryFallbackReason: selectedCategoryFallbackReason,
         };
         log?.('tradera.quicklist.publish.recovered_via_active_listings', {
           reason: publishInteraction.reason,
@@ -674,6 +641,17 @@ export const PART_5B = String.raw`
           listingUrl: publishRecovery.listingUrl,
           duplicateMatchStrategy: publishRecovery.duplicateMatchStrategy,
         });
+        updateStep('publish', 'completed', {
+          externalListingId: publishRecovery.externalListingId,
+          listingUrl: publishRecovery.listingUrl,
+          recoveryMethod: 'active-listings',
+        });
+        updateStep('publish_verify', 'completed', {
+          externalListingId: publishRecovery.externalListingId,
+          listingUrl: publishRecovery.listingUrl,
+          recoveryMethod: 'active-listings',
+        });
+        updateStep('browser_close', 'completed');
         emitStage('publish_verified', {
           publishInteractionReason: 'active-listings-recovery',
           externalListingId: publishRecovery.externalListingId,
@@ -696,6 +674,12 @@ export const PART_5B = String.raw`
     }
 
     emitStage('publish_clicked', {
+      publishInteractionReason: publishInteraction.reason,
+    });
+    updateStep('publish', 'completed', {
+      publishInteractionReason: publishInteraction.reason,
+    });
+    updateStep('publish_verify', 'running', {
       publishInteractionReason: publishInteraction.reason,
     });
 
@@ -746,7 +730,10 @@ export const PART_5B = String.raw`
         duplicateMatchStrategy: null,
         duplicateMatchedProductId: null,
         duplicateCandidateCount: null,
-        duplicateSearchTitle: null,
+        duplicateSearchTitle: duplicateSearchSummary.duplicateSearchTitle,
+        duplicateIgnoredNonExactCandidateCount:
+          duplicateSearchSummary.ignoredNonExactCandidateCount,
+        duplicateIgnoredCandidateTitles: duplicateSearchSummary.ignoredCandidateTitles,
         publishInteractionReason: publishInteraction.reason,
         imageCount: imageUploadResult?.imageCount ?? null,
         observedPreviewCount: imageUploadResult?.observedPreviewCount ?? null,
@@ -754,6 +741,7 @@ export const PART_5B = String.raw`
         observedPreviewDescriptors: imageUploadResult?.observedPreviewDescriptors ?? [],
         categoryPath: selectedCategoryPath,
         categorySource: selectedCategorySource,
+        categoryFallbackReason: selectedCategoryFallbackReason,
         imageUploadSource: imageUploadResult?.uploadSource ?? null,
       };
       log?.('tradera.quicklist.publish.verified_direct', {
@@ -761,6 +749,15 @@ export const PART_5B = String.raw`
         externalListingId: effectiveExternalListingId,
         listingUrl: effectiveListingUrl,
       });
+      updateStep('publish', 'completed', {
+        externalListingId: effectiveExternalListingId,
+        listingUrl: effectiveListingUrl,
+      });
+      updateStep('publish_verify', 'completed', {
+        externalListingId: effectiveExternalListingId,
+        listingUrl: effectiveListingUrl,
+      });
+      updateStep('browser_close', 'completed');
       emitStage('publish_verified', {
         publishInteractionReason: publishInteraction.reason,
         externalListingId: effectiveExternalListingId,
@@ -770,12 +767,12 @@ export const PART_5B = String.raw`
       return directResult;
     }
 
-    const publishVerification = await recoverPublishConfirmationViaDuplicateSearch(
+    const publishVerification = await recoverPublishConfirmationViaVisibleCandidates(
       publishInteraction,
       25_000,
       {
-        expectedExternalListingId: externalListingId,
-        expectedListingUrl: listingUrl,
+        expectedExternalListingId: externalListingId || existingExternalListingId || null,
+        expectedListingUrl: listingUrl || existingListingUrl || null,
       }
     );
     if (!publishVerification) {
@@ -811,6 +808,9 @@ export const PART_5B = String.raw`
       duplicateMatchedProductId: publishVerification.duplicateMatchedProductId,
       duplicateCandidateCount: publishVerification.duplicateCandidateCount,
       duplicateSearchTitle: publishVerification.duplicateSearchTitle,
+      duplicateIgnoredNonExactCandidateCount:
+        duplicateSearchSummary.ignoredNonExactCandidateCount,
+      duplicateIgnoredCandidateTitles: duplicateSearchSummary.ignoredCandidateTitles,
       publishInteractionReason: 'active-listings-verification',
       imageCount: imageUploadResult?.imageCount ?? null,
       observedPreviewCount: imageUploadResult?.observedPreviewCount ?? null,
@@ -818,8 +818,18 @@ export const PART_5B = String.raw`
       observedPreviewDescriptors: imageUploadResult?.observedPreviewDescriptors ?? [],
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
+      categoryFallbackReason: selectedCategoryFallbackReason,
       imageUploadSource: imageUploadResult?.uploadSource ?? null,
     };
+    updateStep('publish', 'completed', {
+      externalListingId: effectiveExternalListingId,
+      listingUrl: effectiveListingUrl,
+    });
+    updateStep('publish_verify', 'completed', {
+      externalListingId: effectiveExternalListingId,
+      listingUrl: effectiveListingUrl,
+    });
+    updateStep('browser_close', 'completed');
     emitStage('publish_verified', {
       publishInteractionReason: 'active-listings-verification',
       externalListingId: effectiveExternalListingId,
@@ -828,6 +838,7 @@ export const PART_5B = String.raw`
     emit('result', result);
     return result;
   } catch (error) {
+    failCurrentStep(error instanceof Error ? error.message : String(error));
     emitStage('failed', {
       error: error instanceof Error ? error.message : String(error),
       imageUploadSource: currentImageUploadSource,

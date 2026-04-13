@@ -14,38 +14,13 @@ import { MailPageProvider, useMailPageContext } from './FilemakerMail.context';
 
 function AdminFilemakerMailPageContent(): React.JSX.Element {
   const {
-    setAccounts,
-    attentionAccounts,
-    selectedAccount,
     selectedAccountId,
-    selectedFolder,
     selectedMailboxPath,
     selectedPanel,
-    isSavingAccount,
-    syncingAccountId,
-    draft,
-    setDraft,
-    deepSearchQuery,
-    setDeepSearchQuery,
-    deepSearchResults,
-    setDeepSearchResults,
-    isSearching,
-    folderAllowlistValue,
-    setFolderAllowlistValue,
-    query,
-    setQuery,
-    recentMailboxFilter,
-    setRecentMailboxFilter,
-    recentUnreadOnly,
-    setRecentUnreadOnly,
-    selectedAccountLabel,
+    selectedFolder,
     isAttentionPanel,
     isSearchPanel,
     isRecentPanel,
-    handleSaveAccount,
-    handleSyncAccount,
-    setSelection,
-    router,
   } = useMailPageContext();
 
   return (
@@ -55,76 +30,16 @@ function AdminFilemakerMailPageContent(): React.JSX.Element {
         selectedMailboxPath={selectedMailboxPath}
         selectedPanel={selectedPanel}
         originPanel={isRecentPanel ? 'recent' : isSearchPanel ? 'search' : null}
-        recentMailboxFilter={recentMailboxFilter}
-        recentUnreadOnly={recentUnreadOnly}
-        recentQuery={query}
-        searchContextAccountId={isSearchPanel ? selectedAccountId : null}
-        searchQuery={isSearchPanel ? deepSearchQuery : null}
-        onRecentMailboxFilterChange={(value) => setRecentMailboxFilter(value)}
-        onRecentQueryChange={(value) => setQuery(value)}
-        onRecentUnreadOnlyChange={(value) => setRecentUnreadOnly(value)}
-        onSelectAttention={() => {
-          setSelection({ accountId: null, mailboxPath: null, panel: 'attention' });
-        }}
-        onSelectSearch={() => {
-          setSelection({ accountId: selectedAccountId, mailboxPath: null, panel: 'search' });
-        }}
-        onNewMailbox={() => {
-          setSelection({ accountId: null, mailboxPath: null, panel: null });
-        }}
-        onSelectAccount={(accountId) => {
-          setSelection({ accountId, mailboxPath: null, panel: 'account' });
-        }}
-        onSelectAccountSettings={(accountId) => {
-          setSelection({ accountId, mailboxPath: null, panel: 'settings' });
-        }}
-        onSelectFolder={({ accountId, mailboxPath }) => {
-          setSelection({ accountId, mailboxPath, panel: null });
-        }}
-        onAccountUpdated={(account) => {
-          setAccounts((current) =>
-            current.map((entry) => (entry.id === account.id ? account : entry))
-          );
-        }}
       />
 
       {isAttentionPanel ? (
-        <MailboxesAttentionSection
-          attentionAccounts={attentionAccounts}
-          onSelectSelection={setSelection}
-        />
+        <MailboxesAttentionSection />
       ) : isSearchPanel ? (
-        <MailSearchSection
-          selectedAccount={selectedAccount}
-          selectedAccountId={selectedAccountId}
-          deepSearchQuery={deepSearchQuery}
-          onDeepSearchQueryChange={setDeepSearchQuery}
-          deepSearchResults={deepSearchResults}
-          isSearching={isSearching}
-          onClearSearch={() => {
-            setDeepSearchQuery('');
-            setDeepSearchResults(null);
-          }}
-          onOpenThread={(href) => startTransition(() => { router.push(href); })}
-        />
+        <MailSearchSection />
       ) : selectedFolder || isRecentPanel ? (
         <MailThreadsSection />
       ) : (
-        <MailAccountSettingsSection
-          selectedAccountLabel={selectedAccountLabel}
-          selectedAccount={selectedAccount}
-          syncingAccountId={syncingAccountId}
-          handleSyncAccount={handleSyncAccount}
-          draft={draft}
-          setDraft={setDraft}
-          folderAllowlistValue={folderAllowlistValue}
-          setFolderAllowlistValue={setFolderAllowlistValue}
-          handleSaveAccount={handleSaveAccount}
-          isSavingAccount={isSavingAccount}
-          onComposeFromAccount={(accountId) => {
-            startTransition(() => { router.push(buildComposeHref({ accountId })); });
-          }}
-        />
+        <MailAccountSettingsSection />
       )}
     </div>
   );

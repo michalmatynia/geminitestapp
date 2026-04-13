@@ -722,13 +722,52 @@ function KangurPrimaryNavigationMobileMenuOverlay({
   );
 }
 
-function KangurPrimaryNavigationChoiceDialogs({
-  ageGroupDialog,
-  subjectDialog,
-}: {
-  ageGroupDialog: KangurChoiceDialogConfig;
-  subjectDialog: KangurChoiceDialogConfig;
-}): React.ReactNode {
+function KangurPrimaryNavigationChoiceDialogs(): React.ReactNode {
+  const {
+    ageGroup,
+    isAgeGroupModalOpen,
+    isSubjectModalOpen,
+    navTranslations,
+    setIsAgeGroupModalOpen,
+    setIsSubjectModalOpen,
+    derived,
+  } = useKangurPrimaryNavigationContext();
+
+  const {
+    ageGroupChoiceLabel,
+    ageGroupOptions,
+    ageGroupVisual,
+    defaultAgeGroupLabel,
+    defaultSubjectLabel,
+    isSixYearOld,
+    subjectChoiceLabel,
+    subjectOptions,
+    subjectVisual,
+  } = derived;
+
+  const subjectDialog = buildKangurPrimaryNavigationSubjectDialog({
+    ageGroup: ageGroup,
+    defaultSubjectLabel,
+    isSixYearOld,
+    navTranslations,
+    onOpenChange: setIsSubjectModalOpen,
+    open: isSubjectModalOpen,
+    options: subjectOptions,
+    subjectChoiceLabel,
+    subjectVisual,
+  });
+
+  const ageGroupDialog = buildKangurPrimaryNavigationAgeGroupDialog({
+    ageGroupChoiceLabel,
+    ageGroupVisual,
+    defaultAgeGroupLabel,
+    isSixYearOld,
+    navTranslations,
+    onOpenChange: setIsAgeGroupModalOpen,
+    open: isAgeGroupModalOpen,
+    options: ageGroupOptions,
+  });
+
   return (
     <Suspense fallback={null}>
       {subjectDialog.open ? (
@@ -935,29 +974,7 @@ function KangurPrimaryNavigationContent(): React.JSX.Element {
         toneBackground={kangurAppearance.tone.background}
         utilityActions={mobileUtilityActions}
       />
-      <KangurPrimaryNavigationChoiceDialogs
-        ageGroupDialog={buildKangurPrimaryNavigationAgeGroupDialog({
-          ageGroupChoiceLabel,
-          ageGroupVisual,
-          defaultAgeGroupLabel,
-          isSixYearOld,
-          navTranslations,
-          onOpenChange: setIsAgeGroupModalOpen,
-          open: isAgeGroupModalOpen,
-          options: ageGroupOptions,
-        })}
-        subjectDialog={buildKangurPrimaryNavigationSubjectDialog({
-          ageGroup: ageGroup,
-          defaultSubjectLabel,
-          isSixYearOld,
-          navTranslations,
-          onOpenChange: setIsSubjectModalOpen,
-          open: isSubjectModalOpen,
-          options: subjectOptions,
-          subjectChoiceLabel,
-          subjectVisual,
-        })}
-      />
+      <KangurPrimaryNavigationChoiceDialogs />
     </>
   );
 }

@@ -5,8 +5,10 @@ import type {
   KangurGameOperationSelectorTranslations,
   KangurOperationSelectorRecommendation,
   KangurGameOperationSelectorRuntime,
+  KangurGameOperationSelectorAssignment,
 } from './KangurGameOperationSelectorWidget.types';
 import type { getOperationSelectorFallbackCopy } from './KangurGameOperationSelectorWidget.copy';
+import type { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
 
 export type KangurGameOperationSelectorContextValue = {
   basePath: string;
@@ -14,8 +16,8 @@ export type KangurGameOperationSelectorContextValue = {
   gamePageTranslations: KangurGameOperationSelectorTranslations;
   isSixYearOld: boolean;
   locale: string;
-  mixedPracticeAssignment: any; // Using any for brevity if type is complex
-  normalizedProgress: any;
+  mixedPracticeAssignment: KangurGameOperationSelectorAssignment;
+  normalizedProgress: KangurGameOperationSelectorRuntime['progress'];
   quickPracticeDescription: string;
   quickPracticeGameChipLabel: string;
   quickPracticeTitle: string;
@@ -23,13 +25,13 @@ export type KangurGameOperationSelectorContextValue = {
   recommendedLessonQuizScreen: string | null;
   setScreen: KangurGameOperationSelectorRuntime['setScreen'];
   showMathSections: boolean;
-  suggestedTraining: any;
+  suggestedTraining: ReturnType<typeof getRecommendedTrainingSetup>;
   trainingSetupTitle: string;
   trainingWordmarkLabel: string;
   handleHome: () => void;
-  handleStartTraining: any;
-  handleSelectOperation: any;
-  practiceAssignmentsByOperation: any;
+  handleStartTraining: KangurGameOperationSelectorRuntime['handleStartTraining'];
+  handleSelectOperation: KangurGameOperationSelectorRuntime['handleSelectOperation'];
+  practiceAssignmentsByOperation: KangurGameOperationSelectorRuntime['practiceAssignmentsByOperation'];
 };
 
 const KangurGameOperationSelectorContext = createContext<KangurGameOperationSelectorContextValue | null>(null);

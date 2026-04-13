@@ -210,17 +210,20 @@ export const PART_1B = String.raw`
   };
 
   const wait = async (ms) => {
+    await acceptCookiesIfPresent({ context: 'before-wait', attempts: 1 }).catch(() => false);
     await assertAllowedTraderaPage('wait');
     if (helpers && typeof helpers.sleep === 'function') {
       await helpers.sleep(ms);
     } else {
       await page.waitForTimeout(ms);
     }
+    await acceptCookiesIfPresent({ context: 'after-wait', attempts: 1 }).catch(() => false);
     await assertAllowedTraderaPage('wait');
   };
 
   const humanClick = async (target, options) => {
     if (!target) return;
+    await acceptCookiesIfPresent({ context: 'before-click' }).catch(() => false);
     await assertAllowedTraderaPage('before click');
     const targetMetadata = await readClickTargetMetadata(target);
     const externalClickTargetUrl = resolveExternalClickTargetUrl(targetMetadata);
@@ -241,12 +244,32 @@ export const PART_1B = String.raw`
       );
     }
     if (helpers && typeof helpers.click === 'function') {
-      await helpers.click(target, options);
+      try {
+        await helpers.click(target, options);
+      } catch (error) {
+        const cookieAccepted = await acceptCookiesIfPresent({
+          context: 'click-retry',
+        }).catch(() => false);
+        if (!cookieAccepted) {
+          throw error;
+        }
+        await helpers.click(target, options);
+      }
     } else {
       if (options?.scroll !== false && typeof target.scrollIntoViewIfNeeded === 'function') {
         await target.scrollIntoViewIfNeeded().catch(() => undefined);
       }
-      await target.click(options?.clickOptions);
+      try {
+        await target.click(options?.clickOptions);
+      } catch (error) {
+        const cookieAccepted = await acceptCookiesIfPresent({
+          context: 'click-retry',
+        }).catch(() => false);
+        if (!cookieAccepted) {
+          throw error;
+        }
+        await target.click(options?.clickOptions);
+      }
     }
     await assertAllowedTraderaPage('after click');
   };
@@ -266,31 +289,75 @@ export const PART_1B = String.raw`
 
   const humanFill = async (target, value, options) => {
     if (!target) return;
+    await acceptCookiesIfPresent({ context: 'before-fill' }).catch(() => false);
     await assertAllowedTraderaPage('before fill');
     if (helpers && typeof helpers.fill === 'function') {
-      await helpers.fill(target, value, options);
+      try {
+        await helpers.fill(target, value, options);
+      } catch (error) {
+        const cookieAccepted = await acceptCookiesIfPresent({
+          context: 'fill-retry',
+        }).catch(() => false);
+        if (!cookieAccepted) {
+          throw error;
+        }
+        await helpers.fill(target, value, options);
+      }
     } else {
-      await target.fill(value);
+      try {
+        await target.fill(value);
+      } catch (error) {
+        const cookieAccepted = await acceptCookiesIfPresent({
+          context: 'fill-retry',
+        }).catch(() => false);
+        if (!cookieAccepted) {
+          throw error;
+        }
+        await target.fill(value);
+      }
     }
     await assertAllowedTraderaPage('after fill');
   };
 
   const humanType = async (value, options) => {
+    await acceptCookiesIfPresent({ context: 'before-type' }).catch(() => false);
     await assertAllowedTraderaPage('before type');
     if (helpers && typeof helpers.type === 'function') {
       await helpers.type(value, options);
     } else {
       await page.keyboard.type(value);
     }
+    await acceptCookiesIfPresent({ context: 'after-type', attempts: 1 }).catch(() => false);
     await assertAllowedTraderaPage('after type');
   };
 
   const humanPress = async (key, options) => {
+    await acceptCookiesIfPresent({ context: 'before-press' }).catch(() => false);
     await assertAllowedTraderaPage('before press');
     if (helpers && typeof helpers.press === 'function') {
-      await helpers.press(key, options);
+      try {
+        await helpers.press(key, options);
+      } catch (error) {
+        const cookieAccepted = await acceptCookiesIfPresent({
+          context: 'press-retry',
+        }).catch(() => false);
+        if (!cookieAccepted) {
+          throw error;
+        }
+        await helpers.press(key, options);
+      }
     } else {
-      await page.keyboard.press(key);
+      try {
+        await page.keyboard.press(key);
+      } catch (error) {
+        const cookieAccepted = await acceptCookiesIfPresent({
+          context: 'press-retry',
+        }).catch(() => false);
+        if (!cookieAccepted) {
+          throw error;
+        }
+        await page.keyboard.press(key);
+      }
     }
     await assertAllowedTraderaPage('after press');
   };

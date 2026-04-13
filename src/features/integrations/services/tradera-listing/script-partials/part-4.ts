@@ -32,9 +32,11 @@ export const PART_4 = String.raw`
         ? FALLBACK_CATEGORY_PATH_SEGMENTS.slice(0, selectedDepth).join(' > ')
         : null;
     selectedCategorySource = selectedCategoryPath ? 'fallback' : null;
+    selectedCategoryFallbackReason ||= 'fallback_requested';
     log?.('tradera.quicklist.category.fallback', {
       requestedPath: FALLBACK_CATEGORY_PATH,
       selectedPath: selectedCategoryPath,
+      fallbackReason: selectedCategoryFallbackReason,
     });
   };
 
@@ -132,6 +134,7 @@ export const PART_4 = String.raw`
     if (pickerState.selectedPath && pickerState.selectedPath.length > 0) {
       selectedCategoryPath = pickerState.selectedPath.join(' > ');
       selectedCategorySource = 'autofill';
+      selectedCategoryFallbackReason = null;
       log?.('tradera.quicklist.category.autofill_preserved', {
         selectedPath: selectedCategoryPath,
       });
@@ -265,6 +268,7 @@ export const PART_4 = String.raw`
     if (categoryPathMatches(currentSelectedPath, segments)) {
       selectedCategoryPath = segments.join(' > ');
       selectedCategorySource = 'categoryMapper';
+      selectedCategoryFallbackReason = null;
       log?.('tradera.quicklist.category.mapped_already_selected', {
         mappedPath: selectedCategoryPath,
       });
@@ -279,6 +283,7 @@ export const PART_4 = String.raw`
     if (searchSelected) {
       selectedCategoryPath = segments.join(' > ');
       selectedCategorySource = 'categoryMapper';
+      selectedCategoryFallbackReason = null;
       return true;
     }
 
@@ -358,6 +363,7 @@ export const PART_4 = String.raw`
 
     selectedCategoryPath = segments.join(' > ');
     selectedCategorySource = 'categoryMapper';
+    selectedCategoryFallbackReason = null;
     return true;
   };
 
@@ -368,19 +374,32 @@ export const PART_4 = String.raw`
         return;
       }
 
-      throw new Error(
-        'FAIL_CATEGORY_SET: Tradera mapped category "' +
-          mappedCategorySegments.join(' > ') +
-          '" could not be selected in the listing form. Refresh Tradera categories in Category Mapper or remove the mapping to allow fallback to "' +
-          FALLBACK_CATEGORY_PATH +
-          '".'
-      );
+      const preservedCategoryPath = await readCurrentSelectedCategoryPath();
+      if (preservedCategoryPath) {
+        selectedCategoryPath = preservedCategoryPath;
+        selectedCategorySource = 'preserved';
+        selectedCategoryFallbackReason = 'mapped_selection_failed_preserved_existing';
+        log?.('tradera.quicklist.category.mapped_failed_preserving_selected', {
+          mappedPath: mappedCategorySegments.join(' > '),
+          preservedPath: selectedCategoryPath,
+        });
+        return;
+      }
+
+      log?.('tradera.quicklist.category.mapped_failed_falling_back', {
+        mappedPath: mappedCategorySegments.join(' > '),
+        fallbackPath: FALLBACK_CATEGORY_PATH,
+      });
+      selectedCategoryFallbackReason = 'mapped_selection_failed';
+      await chooseFallbackCategory();
+      return;
     }
 
     const currentSelectedPath = await readCurrentSelectedCategoryPath();
     if (currentSelectedPath) {
       selectedCategoryPath = currentSelectedPath;
       selectedCategorySource = 'autofill';
+      selectedCategoryFallbackReason = null;
       log?.('tradera.quicklist.category.autofill_preserved', {
         selectedPath: selectedCategoryPath,
       });

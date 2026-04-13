@@ -6,7 +6,6 @@ import { Badge, Checkbox, Switch } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 import {
   KANGUR_SOCIAL_CAPTURE_PAGE_SECTIONS,
-  type KangurSocialCapturePageSection,
 } from '@/features/kangur/social/shared/social-capture-content-config';
 
 import { useSocialCaptureBrowser } from './SocialCaptureBrowserContext';

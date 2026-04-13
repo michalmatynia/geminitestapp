@@ -1,10 +1,6 @@
 import type { useTranslations } from 'next-intl';
 import type {
-  KangurDrawingEngineCatalogEntry,
   KangurGameEngineCatalogEntry,
-  KangurGameEngineCatalogImplementationGroup,
-  KangurGameLibraryPageData,
-  KangurGamesLibraryCohortGroup,
   KangurGamesLibraryVariantGroup,
 } from '@/features/kangur/games';
 import {
@@ -36,9 +32,6 @@ import {
   resolveImplementationOwnershipAccent,
   resolveVariantGroupAccent,
 } from '../GamesLibrary.utils';
-import type { GamesLibraryFilterState } from '../GamesLibrary.filters';
-
-type GamesLibraryTranslations = ReturnType<typeof useTranslations>;
 
 import { useGamesLibraryContext } from '../GamesLibrary.context';
 

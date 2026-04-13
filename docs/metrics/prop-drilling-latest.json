@@ -1,22 +1,22 @@
 {
   "summary": {
-    "generatedAt": "2026-04-13T22:30:53.677Z",
+    "generatedAt": "2026-04-13T22:43:58.093Z",
     "scannedSourceFiles": 7311,
     "scannedJsxFiles": 2541,
     "componentCount": 4464,
-    "componentsWithForwarding": 108,
-    "componentsWithAnyForwarding": 206,
-    "resolvedTransitionCount": 439,
-    "depth2CandidateChainCount": 439,
+    "componentsWithForwarding": 102,
+    "componentsWithAnyForwarding": 202,
+    "resolvedTransitionCount": 417,
+    "depth2CandidateChainCount": 417,
     "candidateChainCount": 10,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 13,
-    "highPropCountComponentCount": 32,
-    "passThroughHotspotCount": 19,
+    "highPropCountComponentCount": 31,
+    "passThroughHotspotCount": 13,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 152
+        "count": 149
       },
       {
         "scope": "feature:integrations",
@@ -24,7 +24,7 @@
       },
       {
         "scope": "shared-ui",
-        "count": 10
+        "count": 9
       },
       {
         "scope": "feature:products",
@@ -3733,7 +3733,7 @@
           "sourceProp": "translations",
           "targetProp": "description",
           "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 245
+          "line": 249
         }
       ]
     },
@@ -3759,7 +3759,7 @@
           "sourceProp": "translations",
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 245
+          "line": 249
         }
       ]
     },
@@ -5033,7 +5033,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-          "line": 281
+          "line": 285
         }
       ]
     },
@@ -5059,7 +5059,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-          "line": 283
+          "line": 287
         }
       ]
     },
@@ -5527,85 +5527,7 @@
           "sourceProp": "bin",
           "targetProp": "isCorrect",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-          "line": 334
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "allCorrect",
-        "variant"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "allCorrect",
-          "targetProp": "variant",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-          "line": 435
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "allPlaced",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "allPlaced",
-          "targetProp": "disabled",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-          "line": 435
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "onCheck",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "onCheck",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-          "line": 435
+          "line": 338
         }
       ]
     },
@@ -5881,17 +5803,17 @@
         "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone"
       ],
       "propPath": [
-        "currentTiles",
-        "tiles"
+        "side",
+        "droppableId"
       ],
       "transitions": [
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
           "toComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
-          "sourceProp": "currentTiles",
-          "targetProp": "tiles",
+          "sourceProp": "side",
+          "targetProp": "droppableId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 491
+          "line": 480
         }
       ]
     },
@@ -6255,7 +6177,7 @@
           "sourceProp": "setMinuteSnapMode",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 304
+          "line": 305
         }
       ]
     },
@@ -6281,7 +6203,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 304
+          "line": 305
         }
       ]
     },
@@ -6307,111 +6229,7 @@
           "sourceProp": "minuteSnapMode",
           "targetProp": "variant",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 304
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "hourHandX",
-        "x"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "hourHandX",
-          "targetProp": "x",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 578
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "hourHandY",
-        "y"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "hourHandY",
-          "targetProp": "y",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 578
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "minuteHandX",
-        "x"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "minuteHandX",
-          "targetProp": "x",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 587
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "sinkComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-        "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand"
-      ],
-      "propPath": [
-        "minuteHandY",
-        "y"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-          "toComponentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockHand",
-          "sourceProp": "minuteHandY",
-          "targetProp": "y",
-          "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 587
+          "line": 305
         }
       ]
     },
@@ -6437,7 +6255,7 @@
           "sourceProp": "submitLocked",
           "targetProp": "disabled",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 666
+          "line": 660
         }
       ]
     },
@@ -6463,7 +6281,7 @@
           "sourceProp": "onSubmitClick",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 666
+          "line": 660
         }
       ]
     },
@@ -6489,7 +6307,7 @@
           "sourceProp": "submitFeedback",
           "targetProp": "style",
           "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-          "line": 666
+          "line": 660
         }
       ]
     },
@@ -7122,32 +6940,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-        "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill"
-      ],
-      "propPath": [
-        "secretLessonPill",
-        "onOpen"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-          "toComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill",
-          "sourceProp": "secretLessonPill",
-          "targetProp": "onOpen",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx",
-          "line": 250
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx#MusicPianoRollFreePlayGame",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
       "componentPath": [
@@ -7399,7 +7191,7 @@
           "sourceProp": "showWordmark",
           "targetProp": "visualTitle",
           "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 206
+          "line": 210
         }
       ]
     },
@@ -7425,7 +7217,7 @@
           "sourceProp": "ageGroupLabel",
           "targetProp": "description",
           "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 245
+          "line": 249
         }
       ]
     },
@@ -8777,7 +8569,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-          "line": 431
+          "line": 427
         }
       ]
     },
@@ -9982,84 +9774,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-      "sinkComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone"
-      ],
-      "propPath": [
-        "ariaLabel",
-        "ariaLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-          "toComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
-          "sourceProp": "ariaLabel",
-          "targetProp": "ariaLabel",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 491
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-      "sinkComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone"
-      ],
-      "propPath": [
-        "dataTestId",
-        "dataTestId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-          "toComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
-          "sourceProp": "dataTestId",
-          "targetProp": "dataTestId",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 491
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-      "sinkComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone"
-      ],
-      "propPath": [
-        "droppableId",
-        "droppableId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-          "toComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
-          "sourceProp": "droppableId",
-          "targetProp": "droppableId",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 491
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/SubtractingGame.tsx#SubtractingGameSummaryView",
       "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
       "componentPath": [
@@ -10710,84 +10424,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-        "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill"
-      ],
-      "propPath": [
-        "isCoarsePointer",
-        "isCoarsePointer"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-          "toComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill",
-          "sourceProp": "isCoarsePointer",
-          "targetProp": "isCoarsePointer",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx",
-          "line": 250
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-        "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill"
-      ],
-      "propPath": [
-        "openSecretPanelLabel",
-        "openSecretPanelLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-          "toComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill",
-          "sourceProp": "openSecretPanelLabel",
-          "targetProp": "openSecretPanelLabel",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx",
-          "line": 250
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-        "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill"
-      ],
-      "propPath": [
-        "secretPanelTitle",
-        "secretPanelTitle"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-          "toComponentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellSecretPill",
-          "sourceProp": "secretPanelTitle",
-          "targetProp": "secretPanelTitle",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx",
-          "line": 250
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx#MusicMelodyRepeatGame",
       "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
       "componentPath": [
@@ -10806,110 +10442,6 @@
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx",
           "line": 541
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-        "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField"
-      ],
-      "propPath": [
-        "id",
-        "id"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField",
-          "sourceProp": "id",
-          "targetProp": "id",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-        "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField"
-      ],
-      "propPath": [
-        "value",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField",
-          "sourceProp": "value",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-        "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField"
-      ],
-      "propPath": [
-        "onChange",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField",
-          "sourceProp": "onChange",
-          "targetProp": "onChange",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-        "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField"
-      ],
-      "propPath": [
-        "disabled",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurSelectField",
-          "sourceProp": "disabled",
-          "targetProp": "disabled",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
-          "line": 127
         }
       ]
     },
@@ -11091,7 +10623,7 @@
           "sourceProp": "className",
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
-          "line": 170
+          "line": 177
         }
       ]
     },
@@ -11117,7 +10649,7 @@
           "sourceProp": "caption",
           "targetProp": "caption",
           "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
-          "line": 231
+          "line": 243
         }
       ]
     },
@@ -11143,7 +10675,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
-          "line": 238
+          "line": 250
         }
       ]
     },
@@ -11169,7 +10701,7 @@
           "sourceProp": "supportingClassName",
           "targetProp": "supportingClassName",
           "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
-          "line": 238
+          "line": 250
         }
       ]
     },
@@ -11195,7 +10727,7 @@
           "sourceProp": "supportingContent",
           "targetProp": "supportingContent",
           "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
-          "line": 238
+          "line": 250
         }
       ]
     },
@@ -11744,110 +11276,6 @@
           "line": 17
         }
       ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-      "sinkComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup",
-      "componentPath": [
-        "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-        "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup"
-      ],
-      "propPath": [
-        "handleOptionKeyDown",
-        "handleOptionKeyDown"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-          "toComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup",
-          "sourceProp": "handleOptionKeyDown",
-          "targetProp": "handleOptionKeyDown",
-          "relativePath": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx",
-          "line": 207
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-      "sinkComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup",
-      "componentPath": [
-        "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-        "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup"
-      ],
-      "propPath": [
-        "handleSelect",
-        "handleSelect"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-          "toComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup",
-          "sourceProp": "handleSelect",
-          "targetProp": "handleSelect",
-          "relativePath": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx",
-          "line": 207
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-      "sinkComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup",
-      "componentPath": [
-        "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-        "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup"
-      ],
-      "propPath": [
-        "selectedKey",
-        "selectedKey"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-          "toComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup",
-          "sourceProp": "selectedKey",
-          "targetProp": "selectedKey",
-          "relativePath": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx",
-          "line": 207
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-      "sinkComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup",
-      "componentPath": [
-        "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-        "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup"
-      ],
-      "propPath": [
-        "setOptionRef",
-        "setOptionRef"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-          "toComponentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownGroup",
-          "sourceProp": "setOptionRef",
-          "targetProp": "setOptionRef",
-          "relativePath": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx",
-          "line": 207
-        }
-      ]
     }
   ],
   "componentBacklog": [
@@ -11879,54 +11307,9 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-      "name": "AgenticSortActionsPanel",
-      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
       "name": "KangurLaunchableGameInstanceRuntime",
       "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-      "name": "NumberBalanceRushBoardSide",
-      "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "name": "DraggableClockFace",
-      "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-      "name": "LessonActivityShellPillsRow",
-      "relativePath": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-      "name": "AiTutorSelectFieldRow",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -11937,15 +11320,6 @@
       "name": "KangurLessonVisual",
       "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
       "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-      "name": "GenericPickerDropdownMenu",
-      "relativePath": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx",
-      "feature": "shared-ui",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
@@ -12853,54 +12227,9 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-      "name": "AgenticSortActionsPanel",
-      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
       "name": "KangurLaunchableGameInstanceRuntime",
       "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
-      "name": "NumberBalanceRushBoardSide",
-      "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx#DraggableClockFace",
-      "name": "DraggableClockFace",
-      "relativePath": "src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx#LessonActivityShellPillsRow",
-      "name": "LessonActivityShellPillsRow",
-      "relativePath": "src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
-      "name": "AiTutorSelectFieldRow",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -12911,15 +12240,6 @@
       "name": "KangurLessonVisual",
       "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
       "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx#GenericPickerDropdownMenu",
-      "name": "GenericPickerDropdownMenu",
-      "relativePath": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx",
-      "feature": "shared-ui",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
@@ -13933,6 +13253,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
+      "name": "AgenticSortActionsPanel",
+      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx#AgenticDocsHierarchyGame",
       "name": "AgenticDocsHierarchyGame",
       "relativePath": "src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx",
@@ -14178,6 +13507,15 @@
     {
       "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
       "name": "NumberBalanceRushSummaryView",
+      "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
+      "name": "NumberBalanceRushBoardSide",
       "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 1,

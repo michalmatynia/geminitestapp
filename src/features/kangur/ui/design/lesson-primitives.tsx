@@ -37,10 +37,17 @@ const kangurLessonCalloutVariants = cva(
 type KangurLessonCalloutProps = React.HTMLAttributes<HTMLDivElement> &
   VariantProps<typeof kangurLessonCalloutVariants>;
 
+type KangurLessonVisualLayout = {
+  center?: boolean;
+  maxWidthClassName?: string;
+  visualClassName?: string;
+};
+
 type KangurLessonVisualProps = Omit<KangurLessonCalloutProps, 'children'> & {
   caption?: React.ReactNode;
   captionClassName?: string;
   center?: boolean;
+  layout?: KangurLessonVisualLayout;
   maxWidthClassName?: string;
   supportingContent?: React.ReactNode;
   supportingClassName?: string;
@@ -203,15 +210,20 @@ export function KangurLessonVisual({
   accent,
   caption,
   captionClassName,
-  center = true,
+  center: propsCenter,
+  layout,
   className,
-  maxWidthClassName = 'max-w-full',
+  maxWidthClassName: propsMaxWidth,
   supportingContent,
   supportingClassName,
-  visualClassName,
+  visualClassName: propsVisualClassName,
   children,
   ...props
 }: KangurLessonVisualProps): React.JSX.Element {
+  const center = layout?.center ?? propsCenter ?? true;
+  const maxWidthClassName = layout?.maxWidthClassName ?? propsMaxWidth ?? 'max-w-full';
+  const visualClassName = layout?.visualClassName ?? propsVisualClassName;
+
   const resolvedCaptionClassName = captionClassName ?? 'mt-2 kangur-lesson-visual-caption';
   const hasSupportingContent = Boolean(supportingContent);
 

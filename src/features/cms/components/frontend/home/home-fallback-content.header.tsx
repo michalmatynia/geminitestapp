@@ -6,6 +6,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import { Link as LocaleLink } from '@/i18n/navigation';
+import { useHomeFallback } from './home-fallback-content';
 import {
   CmsStorefrontAppearanceButtons,
   type CmsAppearanceTone,
@@ -36,11 +37,8 @@ function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export function HomeFallbackHeader({
-  appearanceTone,
-}: {
-  appearanceTone?: CmsAppearanceTone;
-}): React.JSX.Element {
+export function HomeFallbackHeader(): React.JSX.Element {
+  const { appearanceTone } = useHomeFallback();
   const translations = useTranslations('FallbackHome.Header');
   const appearanceToneValue = appearanceTone;
   const headerStyle: React.CSSProperties = {

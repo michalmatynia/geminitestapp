@@ -346,13 +346,8 @@ function NumberBalanceRushSummaryView({
   );
 }
 
-function NumberBalanceRushLeaderboard({
-  entries,
-  translations,
-}: {
-  entries: NumberBalanceRushState['leaderboardEntries'];
-  translations: NumberBalanceRushTranslations;
-}): React.JSX.Element | null {
+function NumberBalanceRushLeaderboard(): React.JSX.Element | null {
+  const { leaderboardEntries: entries, translations } = useNumberBalanceRushGame();
   if (entries.length <= 1) {
     return null;
   }
@@ -385,13 +380,8 @@ function NumberBalanceRushLeaderboard({
   );
 }
 
-function NumberBalanceRushTouchHint({
-  isCoarsePointer,
-  touchHint,
-}: {
-  isCoarsePointer: boolean;
-  touchHint: string;
-}): React.JSX.Element | null {
+function NumberBalanceRushTouchHint(): React.JSX.Element | null {
+  const { isCoarsePointer, touchHint } = useNumberBalanceRushGame();
   if (!isCoarsePointer) {
     return null;
   }
@@ -465,23 +455,22 @@ function NumberBalanceRushTileZone({
 }
 
 function NumberBalanceRushBoardSide({
-  ariaLabel,
-  currentTiles,
-  dataTestId,
-  droppableId,
-  sum,
-  target,
-  totalSlots,
+  side,
 }: {
-  ariaLabel: string;
-  currentTiles: NumberBalanceTile[];
-  dataTestId: string;
-  droppableId: 'left' | 'right';
-  sum: number;
-  target: number;
-  totalSlots: number;
+  side: 'left' | 'right';
 }): React.JSX.Element {
-  const { translations } = useNumberBalanceRushGame();
+  const { translations, leftTiles, rightTiles, puzzle } = useNumberBalanceRushGame();
+
+  if (!puzzle) return <></>;
+
+  const currentTiles = side === 'left' ? leftTiles : rightTiles;
+  const target = side === 'left' ? puzzle.targets.left : puzzle.targets.right;
+  const totalSlots = side === 'left' ? puzzle.slots.left : puzzle.slots.right;
+  const ariaLabel = side === 'left' 
+    ? translations('numberBalance.inRound.aria.leftSide')
+    : translations('numberBalance.inRound.aria.rightSide');
+  const dataTestId = side === 'left' ? 'number-balance-left-zone' : 'number-balance-right-zone';
+  const sum = currentTiles.reduce((s, t) => s + t.value, 0);
 
   return (
     <div className='flex w-full max-w-xs flex-col items-center kangur-panel-gap'>
@@ -491,7 +480,7 @@ function NumberBalanceRushBoardSide({
       <NumberBalanceRushTileZone
         ariaLabel={ariaLabel}
         dataTestId={dataTestId}
-        droppableId={droppableId}
+        droppableId={side}
         snapshotClassName={NUMBER_BALANCE_DROP_ZONE_CLASSNAME}
         tiles={currentTiles}
       />
@@ -531,25 +520,18 @@ function NumberBalanceRushActiveRound({
 }): React.JSX.Element {
   const {
     translations,
-    isCoarsePointer,
     puzzle,
-    leftTiles,
-    rightTiles,
     score,
     celebrating,
     timeLeftMs,
     countdownLeftMs,
     phase,
     opponentLabel,
-    leaderboardEntries,
     handleDragEnd,
-    touchHint,
     match,
   } = useNumberBalanceRushGame();
   const matchDurationMs = match?.roundDurationMs ?? durationMs;
   const timePercent = Math.max(0, Math.min(1, timeLeftMs / matchDurationMs));
-  const leftSum = leftTiles.reduce((sum, tile) => sum + tile.value, 0);
-  const rightSum = rightTiles.reduce((sum, tile) => sum + tile.value, 0);
 
   if (!puzzle) {
     return <></>;
@@ -575,11 +557,8 @@ function NumberBalanceRushActiveRound({
           />
         </div>
 
-        <NumberBalanceRushLeaderboard entries={leaderboardEntries} translations={translations} />
-        <NumberBalanceRushTouchHint
-          isCoarsePointer={isCoarsePointer}
-          touchHint={touchHint}
-        />
+        <NumberBalanceRushLeaderboard />
+        <NumberBalanceRushTouchHint />
 
         <KangurGlassPanel
           className={cn(
@@ -590,25 +569,9 @@ function NumberBalanceRushActiveRound({
         >
           <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full`}>
             <div className='flex flex-col items-center justify-center gap-6 md:flex-row md:items-end'>
-              <NumberBalanceRushBoardSide
-                ariaLabel={translations('numberBalance.inRound.aria.leftSide')}
-                currentTiles={leftTiles}
-                dataTestId='number-balance-left-zone'
-                droppableId='left'
-                sum={leftSum}
-                target={puzzle.targets.left}
-                totalSlots={puzzle.slots.left}
-              />
+              <NumberBalanceRushBoardSide side='left' />
               <div className='hidden h-1 w-12 rounded-full bg-amber-200/80 md:block' aria-hidden='true' />
-              <NumberBalanceRushBoardSide
-                ariaLabel={translations('numberBalance.inRound.aria.rightSide')}
-                currentTiles={rightTiles}
-                dataTestId='number-balance-right-zone'
-                droppableId='right'
-                sum={rightSum}
-                target={puzzle.targets.right}
-                totalSlots={puzzle.slots.right}
-              />
+              <NumberBalanceRushBoardSide side='right' />
             </div>
             <NumberBalanceRushTray />
           </div>

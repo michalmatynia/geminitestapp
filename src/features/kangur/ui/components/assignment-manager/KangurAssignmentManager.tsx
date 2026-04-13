@@ -31,8 +31,6 @@ import {
 } from './KangurAssignmentManager.cards';
 import {
   FILTER_OPTION_VALUES,
-  TIME_LIMIT_MINUTES_MAX,
-  TIME_LIMIT_MINUTES_MIN,
 } from './KangurAssignmentManager.helpers';
 import { KangurAssignmentManagerProvider, useKangurAssignmentManagerContext } from './KangurAssignmentManager.context';
 import { KangurAssignmentItemProvider, useKangurAssignmentItem } from './KangurAssignmentItemContext';

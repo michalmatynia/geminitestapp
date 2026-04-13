@@ -264,7 +264,7 @@ export default function ShapeRecognitionGame({
   finishLabel,
   onFinish,
 }: ShapeRecognitionGameProps): React.JSX.Element {
-  const { shapeLabels, shapes, translate } = useShapeRecognitionGameContent();
+  const { shapeLabels, translate } = useShapeRecognitionGameContent();
   const isCoarsePointer = useKangurCoarsePointer();
   const [roundIndex, setRoundIndex] = useState(0);
   const [selected, setSelected] = useState<ShapeId | null>(null);

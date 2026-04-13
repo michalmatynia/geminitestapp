@@ -61,9 +61,6 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
     handleCreateDraft,
     handleDeletePost,
     handleUnpublishPost,
-    handleSaveSettings,
-    isSettingsDirty,
-    isSavingSettings,
   } = useSocialPostContext();
   const breadcrumbs = [
     { label: 'Admin', href: '/admin' },

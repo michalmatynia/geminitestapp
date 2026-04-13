@@ -99,15 +99,7 @@ export function TutorToggleField({
   );
 }
 
-export function AiTutorSelectFieldRow({
-  children,
-  description,
-  disabled = false,
-  id,
-  label,
-  onChange,
-  value,
-}: {
+type AiTutorSelectFieldConfig = {
   children: React.ReactNode;
   description: string;
   disabled?: boolean;
@@ -115,7 +107,15 @@ export function AiTutorSelectFieldRow({
   label: string;
   onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   value: string;
+};
+
+export function AiTutorSelectFieldRow({
+  config,
+}: {
+  config: AiTutorSelectFieldConfig;
 }): React.JSX.Element {
+  const { children, description, disabled = false, id, label, onChange, value } = config;
+
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
       <label
@@ -343,51 +343,66 @@ export function AiTutorGuardrailsSection(): React.JSX.Element {
         onChange={formBindings.setAllowGames}
       />
       <AiTutorSelectFieldRow
-        id={testAccessModeFieldId}
-        value={formBindings.formState.testAccessMode}
-        onChange={(event) =>
-          formBindings.setTestAccessMode(event.target.value as KangurAiTutorTestAccessMode)}
-        label={parentDashboardContent.selects.testAccessModeLabel}
-        description={parentDashboardContent.selects.testAccessModeDescription}
-        disabled={controlsDisabled}
-      >
-        <option value='disabled'>{parentDashboardContent.selects.testAccessModeDisabled}</option>
-        <option value='guided'>{parentDashboardContent.selects.testAccessModeGuided}</option>
-        <option value='review_after_answer'>
-          {parentDashboardContent.selects.testAccessModeReview}
-        </option>
-      </AiTutorSelectFieldRow>
+        config={{
+          id: testAccessModeFieldId,
+          value: formBindings.formState.testAccessMode,
+          onChange: (event) =>
+            formBindings.setTestAccessMode(event.target.value as KangurAiTutorTestAccessMode),
+          label: parentDashboardContent.selects.testAccessModeLabel,
+          description: parentDashboardContent.selects.testAccessModeDescription,
+          disabled: controlsDisabled,
+          children: (
+            <>
+              <option value='disabled'>{parentDashboardContent.selects.testAccessModeDisabled}</option>
+              <option value='guided'>{parentDashboardContent.selects.testAccessModeGuided}</option>
+              <option value='review_after_answer'>
+                {parentDashboardContent.selects.testAccessModeReview}
+              </option>
+            </>
+          ),
+        }}
+      />
       <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
         <AiTutorSelectFieldRow
-          id={hintDepthFieldId}
-          value={formBindings.formState.hintDepth}
-          onChange={(event) =>
-            formBindings.setHintDepth(event.target.value as KangurAiTutorHintDepth)}
-          label={parentDashboardContent.selects.hintDepthLabel}
-          description={parentDashboardContent.selects.hintDepthDescription}
-          disabled={controlsDisabled}
-        >
-          <option value='brief'>{parentDashboardContent.selects.hintDepthBrief}</option>
-          <option value='guided'>{parentDashboardContent.selects.hintDepthGuided}</option>
-          <option value='step_by_step'>
-            {parentDashboardContent.selects.hintDepthStepByStep}
-          </option>
-        </AiTutorSelectFieldRow>
+          config={{
+            id: hintDepthFieldId,
+            value: formBindings.formState.hintDepth,
+            onChange: (event) =>
+              formBindings.setHintDepth(event.target.value as KangurAiTutorHintDepth),
+            label: parentDashboardContent.selects.hintDepthLabel,
+            description: parentDashboardContent.selects.hintDepthDescription,
+            disabled: controlsDisabled,
+            children: (
+              <>
+                <option value='brief'>{parentDashboardContent.selects.hintDepthBrief}</option>
+                <option value='guided'>{parentDashboardContent.selects.hintDepthGuided}</option>
+                <option value='step_by_step'>
+                  {parentDashboardContent.selects.hintDepthStepByStep}
+                </option>
+              </>
+            ),
+          }}
+        />
         <AiTutorSelectFieldRow
-          id={proactiveNudgesFieldId}
-          value={formBindings.formState.proactiveNudges}
-          onChange={(event) =>
-            formBindings.setProactiveNudges(
-              event.target.value as KangurAiTutorProactiveNudges
-            )}
-          label={parentDashboardContent.selects.proactiveNudgesLabel}
-          description={parentDashboardContent.selects.proactiveNudgesDescription}
-          disabled={controlsDisabled}
-        >
-          <option value='off'>{parentDashboardContent.selects.proactiveNudgesOff}</option>
-          <option value='gentle'>{parentDashboardContent.selects.proactiveNudgesGentle}</option>
-          <option value='coach'>{parentDashboardContent.selects.proactiveNudgesCoach}</option>
-        </AiTutorSelectFieldRow>
+          config={{
+            id: proactiveNudgesFieldId,
+            value: formBindings.formState.proactiveNudges,
+            onChange: (event) =>
+              formBindings.setProactiveNudges(
+                event.target.value as KangurAiTutorProactiveNudges
+              ),
+            label: parentDashboardContent.selects.proactiveNudgesLabel,
+            description: parentDashboardContent.selects.proactiveNudgesDescription,
+            disabled: controlsDisabled,
+            children: (
+              <>
+                <option value='off'>{parentDashboardContent.selects.proactiveNudgesOff}</option>
+                <option value='gentle'>{parentDashboardContent.selects.proactiveNudgesGentle}</option>
+                <option value='coach'>{parentDashboardContent.selects.proactiveNudgesCoach}</option>
+              </>
+            ),
+          }}
+        />
       </div>
       <TutorToggleField
         checked={formBindings.formState.showSources}
@@ -432,18 +447,23 @@ export function AiTutorUiModeSection(): React.JSX.Element {
 
   return (
     <AiTutorSelectFieldRow
-      id={uiModeFieldId}
-      value={formBindings.formState.uiMode}
-      onChange={(event) =>
-        formBindings.setUiMode(event.target.value as KangurAiTutorUiMode)}
-      label={parentDashboardContent.selects.uiModeLabel}
-      description={parentDashboardContent.selects.uiModeDescription}
-      disabled={controlsDisabled}
-    >
-      <option value='anchored'>{parentDashboardContent.selects.uiModeAnchored}</option>
-      <option value='freeform'>{parentDashboardContent.selects.uiModeFreeform}</option>
-      <option value='static'>{parentDashboardContent.selects.uiModeStatic}</option>
-    </AiTutorSelectFieldRow>
+      config={{
+        id: uiModeFieldId,
+        value: formBindings.formState.uiMode,
+        onChange: (event) =>
+          formBindings.setUiMode(event.target.value as KangurAiTutorUiMode),
+        label: parentDashboardContent.selects.uiModeLabel,
+        description: parentDashboardContent.selects.uiModeDescription,
+        disabled: controlsDisabled,
+        children: (
+          <>
+            <option value='anchored'>{parentDashboardContent.selects.uiModeAnchored}</option>
+            <option value='freeform'>{parentDashboardContent.selects.uiModeFreeform}</option>
+            <option value='static'>{parentDashboardContent.selects.uiModeStatic}</option>
+          </>
+        ),
+      }}
+    />
   );
 }
 

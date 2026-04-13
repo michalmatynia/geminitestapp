@@ -35,8 +35,6 @@ import { useCalendarInteractiveGameState } from './CalendarInteractiveGame.hooks
 import { CalendarInteractiveProvider, useCalendarInteractiveContext } from './CalendarInteractive.context';
 import type {
   CalendarInteractiveGameProps,
-  CalendarInteractiveSectionContent,
-  Task,
 } from './CalendarInteractiveGame.types';
 import {
   getCalendarInteractiveSeasonLabel,

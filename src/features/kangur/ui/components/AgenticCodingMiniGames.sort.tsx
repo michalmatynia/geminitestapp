@@ -19,11 +19,15 @@ import { createAgenticCodingMiniGameComponent } from './AgenticCodingMiniGames.f
 import type { SortGameConfig, SortGameItem } from './AgenticCodingMiniGames.types';
 
 type AgenticSortGameContextValue = {
+  allCorrect: boolean;
+  allPlaced: boolean;
   checked: boolean;
   draggingId: string | null;
   isCoarsePointer: boolean;
   selectedItemId: string | null;
+  successMessage: string;
   onActivateBin: (binId: string | null) => void;
+  onCheck: () => void;
   onDropToBin: (binId: string, event: React.DragEvent<HTMLDivElement>) => void;
   onSelectItem: (id: string | null) => void;
   onStartDragging: (id: string | null) => void;
@@ -144,11 +148,15 @@ function renderAgenticSortGame(
   return (
     <AgenticSortGameContext.Provider
       value={{
+        allCorrect,
+        allPlaced,
         checked,
         draggingId,
         isCoarsePointer,
         selectedItemId,
+        successMessage: config.success,
         onActivateBin: handleBinActivate,
+        onCheck: () => setChecked(true),
         onDropToBin: handleDrop,
         onSelectItem: setSelectedItemId,
         onStartDragging: setDraggingId,
@@ -175,10 +183,6 @@ function renderAgenticSortGame(
           <AgenticSortPool poolItems={poolItems} />
           <AgenticSortActionsPanel
             accent={accent}
-            allCorrect={allCorrect}
-            allPlaced={allPlaced}
-            onCheck={() => setChecked(true)}
-            successMessage={config.success}
           />
         </div>
       </KangurLessonStack>
@@ -413,18 +417,10 @@ function AgenticSortPool({
 
 function AgenticSortActionsPanel({
   accent,
-  allCorrect,
-  allPlaced,
-  onCheck,
-  successMessage,
 }: {
   accent: KangurAccent;
-  allCorrect: boolean;
-  allPlaced: boolean;
-  onCheck: () => void;
-  successMessage: string;
 }): React.JSX.Element {
-  const { checked, isCoarsePointer } = useAgenticSortGame();
+  const { allCorrect, allPlaced, checked, isCoarsePointer, onCheck, successMessage } = useAgenticSortGame();
   const result = resolveAgenticSortResultMessage({ checked, allCorrect, successMessage });
 
   return (

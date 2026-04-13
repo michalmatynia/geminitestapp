@@ -93,6 +93,8 @@ type ScoreHistoryContextValue = {
   insights: ScoreHistoryInsights;
   translations: ScoreHistoryTranslations;
   actionClassName: string;
+  normalizedLocale: string;
+  translateOperationLabel: ScoreHistoryTranslateOperationLabel;
 };
 
 const ScoreHistoryContext = createContext<ScoreHistoryContextValue | null>(null);
@@ -306,38 +308,38 @@ function ScoreHistoryOperationPerformanceCard(props: {
   );
 }
 
-function ScoreHistoryRecentSessionEntry(props: {
-  fallbackCopy: ScoreHistoryFallbackCopy;
-  normalizedLocale: string;
+function ScoreHistoryRecentSessionEntry({
+  score,
+}: {
   score: ScoreHistoryRecentScoreEntry;
-  translateOperationLabel: ScoreHistoryTranslateOperationLabel;
 }): React.JSX.Element {
-  const totalQuestions = Math.max(1, props.score.total_questions || 1);
-  const accuracyPercent = Math.round((props.score.correct_answers / totalQuestions) * 100);
-  const operationInfo = resolveKangurScoreOperationInfo(props.score.operation, {
-    locale: props.normalizedLocale,
-    translateOperationLabel: props.translateOperationLabel,
+  const { fallbackCopy, normalizedLocale, translateOperationLabel } = useScoreHistoryContext();
+  const totalQuestions = Math.max(1, score.total_questions || 1);
+  const accuracyPercent = Math.round((score.correct_answers / totalQuestions) * 100);
+  const operationInfo = resolveKangurScoreOperationInfo(score.operation, {
+    locale: normalizedLocale,
+    translateOperationLabel: translateOperationLabel,
   });
 
   return (
     <KangurSessionHistoryRow
-      accent={resolveOperationAccent(props.score.operation)}
-      dataTestId={`score-history-recent-row-${props.score.id}`}
+      accent={resolveOperationAccent(score.operation)}
+      dataTestId={`score-history-recent-row-${score.id}`}
       durationClassName='text-slate-400'
-      durationText={formatRecentSessionDuration(props.score.time_taken)}
+      durationText={formatRecentSessionDuration(score.time_taken)}
       icon={operationInfo.emoji}
       scoreAccent={resolveAccuracyAccent(accuracyPercent)}
-      scoreTestId={`score-history-recent-score-${props.score.id}`}
-      scoreText={`${props.score.score}/${totalQuestions}`}
+      scoreTestId={`score-history-recent-score-${score.id}`}
+      scoreText={`${score.score}/${totalQuestions}`}
       subtitle={formatRecentSessionDate(
-        props.score.created_date,
-        props.normalizedLocale,
-        props.fallbackCopy.relative.noActivity
+        score.created_date,
+        normalizedLocale,
+        fallbackCopy.relative.noActivity
       )}
       titleClassName='text-slate-700'
       title={operationInfo.label}
-      xpTestId={`score-history-recent-xp-${props.score.id}`}
-      xpText={resolveScoreHistoryXpText(props.score.xp_earned ?? null)}
+      xpTestId={`score-history-recent-xp-${score.id}`}
+      xpText={resolveScoreHistoryXpText(score.xp_earned ?? null)}
     />
   );
 }
@@ -399,6 +401,8 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
         insights,
         translations,
         actionClassName: weakestLessonActionClassName,
+        normalizedLocale,
+        translateOperationLabel,
       }}
     >
       <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -493,10 +497,7 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
             {subjectScores.slice(0, 10).map((score) => (
               <ScoreHistoryRecentSessionEntry
                 key={score.id}
-                fallbackCopy={fallbackCopy}
-                normalizedLocale={normalizedLocale}
                 score={score}
-                translateOperationLabel={translateOperationLabel}
               />
             ))}
           </div>

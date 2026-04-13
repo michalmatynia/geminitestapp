@@ -411,9 +411,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
   const locale = useLocale();
   const translations = useKangurAssignmentsListTranslations();
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
-  const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
-  const { onItemActionClick } = useKangurAssignmentsListActions();
   const { showTimeCountdown } = useKangurAssignmentsListLayout();
   const { now } = useKangurAssignmentsListRuntime();
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown, {
@@ -498,19 +496,13 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const locale = useLocale();
   const translations = useKangurAssignmentsListTranslations();
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
-  const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
-  const { onItemActionClick } = useKangurAssignmentsListActions();
-  const { onArchive, onTimeLimitClick, onReassign, reassigningId } =
-    useKangurAssignmentsListArchive();
   const { showTimeCountdown } = useKangurAssignmentsListLayout();
   const { now } = useKangurAssignmentsListRuntime();
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown, {
     locale,
     translate: runtimeTranslations,
   });
-  const canReassign = Boolean(onReassign && item.status === 'completed');
-  const isReassigning = Boolean(reassigningId && reassigningId === item.id);
   const subjectLabel = getLocalizedKangurSubjectLabel(item.subject, locale, item.subjectLabel);
 
   return (

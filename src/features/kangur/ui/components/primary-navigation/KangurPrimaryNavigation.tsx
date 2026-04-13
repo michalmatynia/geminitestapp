@@ -876,17 +876,12 @@ function KangurPrimaryNavigationTopBarContent({
 
 function KangurPrimaryNavigationContent(): React.JSX.Element {
   const {
-    ageGroup,
     closeMobileMenu,
-    isAgeGroupModalOpen,
     isMobileMenuOpen,
     isMobileViewport,
-    isSubjectModalOpen,
     kangurAppearance,
     navTranslations,
     navigationLabel,
-    setIsAgeGroupModalOpen,
-    setIsSubjectModalOpen,
     mobileMenuRef,
     props,
     derived,
@@ -894,15 +889,6 @@ function KangurPrimaryNavigationContent(): React.JSX.Element {
 
   const { className, contentClassName, rightAccessory } = props;
   const {
-    ageGroupChoiceLabel,
-    ageGroupOptions,
-    ageGroupVisual,
-    defaultAgeGroupLabel,
-    defaultSubjectLabel,
-    isSixYearOld,
-    subjectChoiceLabel,
-    subjectOptions,
-    subjectVisual,
     appearanceControlsInline,
     basePath,
     shouldRenderLanguageSwitcher,

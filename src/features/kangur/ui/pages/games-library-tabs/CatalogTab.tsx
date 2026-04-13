@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type {
   KangurGameCatalogEntry,
-  KangurGamesLibrarySubjectGroup,
 } from '@/features/kangur/games';
 import {
   getLocalizedKangurAgeGroupLabel,
@@ -33,10 +32,6 @@ import {
   resolveAgeGroupAccent,
   resolveStatusAccent,
 } from '../GamesLibrary.utils';
-import type { GamesLibraryFilterState } from '../GamesLibrary.filters';
-
-type GamesLibraryTranslations = ReturnType<typeof useTranslations>;
-type GamesLibrarySelectedGame = KangurGameCatalogEntry['game'];
 
 import { useGamesLibraryContext } from '../GamesLibrary.context';
 

@@ -86,9 +86,10 @@ export class StepTracker {
     const fromIdx = this.steps.findIndex((s) => s.id === fromId);
     if (fromIdx === -1) return this;
     for (let i = fromIdx; i < this.steps.length; i++) {
-      if (this.steps[i].status === 'pending') {
-        this.steps[i].status = 'skipped';
-        this.steps[i].message = reason;
+      const step = this.steps[i];
+      if (step && step.status === 'pending') {
+        step.status = 'skipped';
+        step.message = reason;
       }
     }
     this.onUpdate?.(this.getSteps());
@@ -104,9 +105,10 @@ export class StepTracker {
     if (!pivotId) return this;
     const pivotIdx = this.steps.findIndex((s) => s.id === pivotId);
     for (let i = pivotIdx + 1; i < this.steps.length; i++) {
-      if (this.steps[i].status === 'pending') {
-        this.steps[i].status = 'skipped';
-        this.steps[i].message = reason;
+      const step = this.steps[i];
+      if (step && step.status === 'pending') {
+        step.status = 'skipped';
+        step.message = reason;
       }
     }
     this.onUpdate?.(this.getSteps());

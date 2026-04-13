@@ -1,52 +1,40 @@
 'use client';
 
+import React, { createContext, useContext, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
 
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes';
-import { buildCaptureRouteUrl } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
-import { Button, Input } from '@/shared/ui/primitives.public';
-import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
-import { cn } from '@/shared/utils/ui-utils';
 
-const createRouteId = (): string => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `route-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+type PlaywrightCaptureRoutesEditorContextValue = {
+  baseUrl: string;
+  onUpdateRoute: (index: number, patch: RoutePatch) => void;
+  onDeleteRoute: (index: number) => void;
 };
 
-const createEmptyRoute = (): PlaywrightConfigCaptureRoute => ({
-  id: createRouteId(),
-  title: '',
-  path: '/',
-  description: '',
-  selector: null,
-  waitForMs: null,
-  waitForSelectorMs: 15_000,
-});
+const PlaywrightCaptureRoutesEditorContext = createContext<PlaywrightCaptureRoutesEditorContextValue | null>(null);
 
-const APPEARANCE_MODE_OPTIONS = [
-  { value: '', label: 'Default (no override)' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'light', label: 'Light' },
-];
-
-type RoutePatch = Partial<PlaywrightConfigCaptureRoute>;
+function usePlaywrightCaptureRoutesEditor() {
+  const context = useContext(PlaywrightCaptureRoutesEditorContext);
+  if (!context) {
+    throw new Error('PlaywrightCaptureRoutesEditor sub-components must be used within its Provider');
+  }
+  return context;
+}
 
 type RouteRowProps = {
   route: PlaywrightConfigCaptureRoute;
-  baseUrl: string;
-  onUpdate: (patch: RoutePatch) => void;
-  onDelete: () => void;
+  index: number;
 };
 
-function RouteRow({ route, baseUrl, onUpdate, onDelete }: RouteRowProps): React.JSX.Element {
+function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
+  const { baseUrl, onUpdateRoute, onDeleteRoute } = usePlaywrightCaptureRoutesEditor();
   const [expanded, setExpanded] = useState(false);
 
   const resolvedUrl = buildCaptureRouteUrl(baseUrl, route.path);
   const hasIssue = !resolvedUrl;
 
+  const onUpdate = (patch: RoutePatch) => onUpdateRoute(index, patch);
+  const onDelete = () => onDeleteRoute(index);
   return (
     <div className='rounded-lg border border-border/50 bg-background/40'>
       {/* Header row */}
@@ -204,7 +192,14 @@ export function PlaywrightCaptureRoutesEditor({
   };
 
   return (
-    <div className='space-y-3'>
+    <PlaywrightCaptureRoutesEditorContext.Provider
+      value={{
+        baseUrl,
+        onUpdateRoute: updateRoute,
+        onDeleteRoute: deleteRoute,
+      }}
+    >
+      <div className='space-y-3'>
       <FormField
         label='Base URL'
         description='Relative paths are resolved against this URL.'
@@ -263,14 +258,13 @@ export function PlaywrightCaptureRoutesEditor({
               <RouteRow
                 key={route.id}
                 route={route}
-                baseUrl={baseUrl}
-                onUpdate={(patch) => updateRoute(index, patch)}
-                onDelete={() => deleteRoute(index)}
+                index={index}
               />
             ))}
           </div>
         )}
       </div>
     </div>
-  );
+  </PlaywrightCaptureRoutesEditorContext.Provider>
+);
 }

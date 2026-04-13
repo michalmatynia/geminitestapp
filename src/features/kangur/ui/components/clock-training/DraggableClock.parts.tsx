@@ -40,6 +40,7 @@ export type DraggableClockContextValue = {
   showChallengeRing: boolean;
   showHourHand: boolean;
   showMinuteHand: boolean;
+  svgRef: React.RefObject<SVGSVGElement | null>;
   translations: DraggableClockTranslations;
 };
 
@@ -532,25 +533,18 @@ function DraggableClockHand({
   );
 }
 
-export function DraggableClockFace({
-  hourHandX,
-  hourHandY,
-  minuteHandX,
-  minuteHandY,
-  showChallengeRing,
-  showHourHand,
-  showMinuteHand,
-  svgRef,
-}: {
-  hourHandX: number;
-  hourHandY: number;
-  minuteHandX: number;
-  minuteHandY: number;
-  showChallengeRing: boolean;
-  showHourHand: boolean;
-  showMinuteHand: boolean;
-  svgRef: React.RefObject<SVGSVGElement | null>;
-}): React.JSX.Element {
+export function DraggableClockFace(): React.JSX.Element {
+  const {
+    hourHandX,
+    hourHandY,
+    minuteHandX,
+    minuteHandY,
+    showChallengeRing,
+    showHourHand,
+    showMinuteHand,
+    svgRef,
+  } = useDraggableClock();
+
   return (
     <svg
       ref={svgRef}

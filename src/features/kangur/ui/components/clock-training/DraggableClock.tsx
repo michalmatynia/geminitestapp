@@ -413,6 +413,7 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
       showChallengeRing,
       showHourHand,
       showMinuteHand,
+      svgRef,
       translations,
     }),
     [
@@ -431,6 +432,7 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
       showChallengeRing,
       showHourHand,
       showMinuteHand,
+      svgRef,
       translations,
     ]
   );
@@ -459,16 +461,7 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
           submitNextStep={submitNextStep}
           translations={translations}
         />
-        <DraggableClockFace
-          hourHandX={hourHandX}
-          hourHandY={hourHandY}
-          minuteHandX={minuteHandX}
-          minuteHandY={minuteHandY}
-          showChallengeRing={showChallengeRing}
-          showHourHand={showHourHand}
-          showMinuteHand={showMinuteHand}
-          svgRef={svgRef}
-        />
+        <DraggableClockFace />
         <DraggableClockLegend
           showHourHand={showHourHand}
           showMinuteHand={showMinuteHand}

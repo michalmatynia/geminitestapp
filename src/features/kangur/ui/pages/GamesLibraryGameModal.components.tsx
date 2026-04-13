@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import React from 'react';
-import type { useTranslations } from 'next-intl';
 
 import { cn } from '@/features/kangur/shared/utils';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
@@ -12,55 +11,14 @@ import {
   KangurButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
-import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 
+import { useGamesLibraryGameModalContext } from './GamesLibraryGameModal.context';
 import type { SegmentedFilterOption } from './GamesLibraryGameModal.types';
 import {
   GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME,
   GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME,
   GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME,
 } from './GamesLibraryGameModal.utils';
-
-export function GamesLibraryGameDialog({
-  children,
-  description,
-  onOpenChange,
-  open,
-  title,
-}: {
-  children: React.ReactNode;
-  description?: React.ReactNode;
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-  title: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <KangurDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      overlayVariant='solid'
-      contentVariant='panel'
-      contentSize='lg'
-      overlayProps={{
-        'data-testid': 'games-library-game-modal-overlay',
-        onClick: () => onOpenChange(false),
-      }}
-      contentProps={{
-        id: 'games-library-game-modal',
-        'data-testid': 'games-library-game-modal',
-        className: 'max-h-[calc(100dvh-1rem)] overflow-hidden',
-      }}
-    >
-      <KangurDialogMeta title={title} description={description} />
-      <div className='flex max-h-[calc(100dvh-1rem)] min-h-0 flex-col bg-[var(--kangur-page-background,#f8fafc)]'>
-        {children}
-      </div>
-    </KangurDialog>
-  );
-}
-
-import { useGamesLibraryGameModalContext } from './GamesLibraryGameModal.context';
 
 export function GamesLibraryGameDialog({
   children,

@@ -65,6 +65,8 @@ const resolveSurfaceAuditLabel = (
     ? translations('surfaces.lesson')
     : translations(`variantSurfaces.${surfaceId}`);
 
+export interface RuntimeTabProps {}
+
 export const RuntimeTab = () => {
   const {
     serializationAudit,

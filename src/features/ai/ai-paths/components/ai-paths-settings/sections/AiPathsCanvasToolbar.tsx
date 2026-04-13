@@ -22,19 +22,7 @@ import {
 
 import { AiPathsRuntimeKernelSettings } from './AiPathsRuntimeKernelSettings';
 
-type AiPathsCanvasToolbarProps = {
-  isInspectorVisible: boolean;
-  isPathTreeVisible: boolean;
-  onToggleInspector: () => void;
-  onTogglePathTree: () => void;
-};
-
-export function AiPathsCanvasToolbar({
-  isInspectorVisible,
-  isPathTreeVisible,
-  onToggleInspector,
-  onTogglePathTree,
-}: AiPathsCanvasToolbarProps): React.JSX.Element | null {
+export function AiPathsCanvasToolbar(): React.JSX.Element | null {
   const router = useRouter();
   const [runtimeKernelDrawerOpen, setRuntimeKernelDrawerOpen] = React.useState(false);
   const {
@@ -48,7 +36,16 @@ export function AiPathsCanvasToolbar({
     isPathActive,
     handleTogglePathActive,
   } = useAiPathsSettingsPagePathActionsContext();
-  const { handleDeleteSelectedNode } = useAiPathsSettingsPageCanvasInteractionsContext();
+  const {
+    handleDeleteSelectedNode,
+    isInspectorVisible,
+    setIsInspectorVisible,
+    isPathTreeVisible,
+    setIsPathTreeVisible,
+  } = useAiPathsSettingsPageCanvasInteractionsContext();
+
+  const onToggleInspector = () => setIsInspectorVisible((current) => !current);
+  const onTogglePathTree = () => setIsPathTreeVisible((current) => !current);
   const {
     savePathConfig,
     saving,

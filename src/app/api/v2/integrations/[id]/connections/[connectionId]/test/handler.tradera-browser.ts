@@ -41,19 +41,28 @@ type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: stri
 type Fail = (step: string, detail: string, status?: number) => Promise<never>;
 type ConnectionUpdateRepository = Pick<IntegrationRepository, 'updateConnection'>;
 
+import { type ConnectionTestContext } from './handler.vinted-browser';
+
 export async function handleTraderaBrowserTest(
-  connection: IntegrationConnectionRecord,
-  repo: ConnectionUpdateRepository,
-  mode: 'manual' | 'manual_session_refresh' | 'quicklist_preflight' | 'auto',
-  manualLoginTimeoutMs: number,
-  productId: string | null,
-  steps: TestLogEntry[],
-  pushStep: PushStep,
-  fail: Fail
+  ctx: ConnectionTestContext
 ): Promise<Response> {
-  const manualMode = mode === 'manual';
-  const manualSessionRefreshMode = mode === 'manual_session_refresh';
-  const quicklistPreflightMode = mode === 'quicklist_preflight';
+  const {
+    connection,
+    repo,
+    manualMode,
+    manualSessionRefreshMode,
+    quicklistPreflightMode,
+    manualLoginTimeoutMs,
+    productId,
+    steps,
+    pushStep,
+    fail,
+  } = {
+    ...ctx,
+    manualMode: ctx.manualMode || ctx.mode === 'manual',
+    manualSessionRefreshMode: ctx.manualSessionRefreshMode || ctx.mode === 'manual_session_refresh',
+    quicklistPreflightMode: ctx.quicklistPreflightMode || ctx.mode === 'quicklist_preflight',
+  };
 
   // In quicklist preflight mode, validate the product config before launching the browser.
   if (quicklistPreflightMode && productId) {

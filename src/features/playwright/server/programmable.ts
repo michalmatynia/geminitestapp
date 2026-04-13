@@ -15,7 +15,11 @@ import {
   buildPlaywrightExecutionSettingsSummary,
   type PlaywrightExecutionSettingsSummary,
 } from './execution-settings';
-import { startPlaywrightConnectionEngineTask } from './connection-runtime';
+import {
+  runPlaywrightConnectionEngineTask,
+  startPlaywrightConnectionEngineTask,
+  type PlaywrightConnectionEngineTaskResult,
+} from './connection-runtime';
 import { runPlaywrightImportTask } from './import-task';
 import { runPlaywrightListingTask } from './listing-task';
 import {
@@ -233,16 +237,6 @@ export const runPlaywrightListingScript = async ({
       };
     },
   };
-
-import {
-  PlaywrightConnectionEngineTaskInput,
-  PlaywrightConnectionEngineTaskResult,
-  runPlaywrightConnectionEngineTask,
-  startPlaywrightConnectionEngineTask,
-} from './connection-runtime';
-
-// ... (rest of the file content)
-
   const { run, runtime, settings: effectiveSettings, resultValue } = onRunStarted
     ? await (async (): Promise<PlaywrightConnectionEngineTaskResult & { resultValue: unknown }> => {
         const startedTask = await startPlaywrightConnectionEngineTask(sharedTaskInput);

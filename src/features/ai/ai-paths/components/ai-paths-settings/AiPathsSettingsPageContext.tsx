@@ -79,6 +79,8 @@ export type AiPathsSettingsPageCanvasInteractionsContextValue = Pick<
   | 'palette'
   | 'isPathTreeVisible'
   | 'setIsPathTreeVisible'
+  | 'isInspectorVisible'
+  | 'setIsInspectorVisible'
   | 'confirmNodeSwitch'
   | 'handleDeleteSelectedNode'
 >;
@@ -280,6 +282,8 @@ export function AiPathsSettingsPageProvider({
       palette: value.palette,
       isPathTreeVisible: value.isPathTreeVisible,
       setIsPathTreeVisible: value.setIsPathTreeVisible,
+      isInspectorVisible: value.isInspectorVisible,
+      setIsInspectorVisible: value.setIsInspectorVisible,
       confirmNodeSwitch: value.confirmNodeSwitch,
       handleDeleteSelectedNode: value.handleDeleteSelectedNode,
     }),
@@ -287,9 +291,11 @@ export function AiPathsSettingsPageProvider({
       value.confirmNodeSwitch,
       value.edges,
       value.handleDeleteSelectedNode,
+      value.isInspectorVisible,
       value.isPathTreeVisible,
       value.nodes,
       value.palette,
+      value.setIsInspectorVisible,
       value.setIsPathTreeVisible,
     ]
   );

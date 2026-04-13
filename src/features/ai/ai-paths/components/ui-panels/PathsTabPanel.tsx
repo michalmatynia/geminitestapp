@@ -191,13 +191,15 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
       <div className='space-y-4'>
         <AiPathsMasterTreePanel
           activePathId={activePathId}
-          handleCreatePath={handleCreatePath}
-          handleDeletePath={handleDeletePath}
-          handleDuplicatePath={handleDuplicatePath}
-          handleMoveFolder={handleMoveFolder}
-          handleMovePathToFolder={handleMovePathToFolder}
-          handleRenameFolder={handleRenameFolder}
-          handleSwitchPath={handleSwitchPath}
+          adapter={{
+            handleCreatePath,
+            handleDeletePath,
+            handleDuplicatePath,
+            handleMoveFolder,
+            handleMovePathToFolder,
+            handleRenameFolder,
+            handleSwitchPath,
+          }}
           headerDescription='Browse, group, and reorganize AI paths with nested folders.'
           headerTitle='Paths'
           emptyLabel='No AI paths yet. Create a path, folder, or template here.'

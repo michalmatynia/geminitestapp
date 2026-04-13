@@ -239,7 +239,7 @@ const renderKangurUnifiedLessonGameShell = <SectionId extends string>({
           gameId={gameConfig.launchableInstance.gameId}
           instanceId={gameConfig.launchableInstance.instanceId}
           onFinish={gameHelpers.onFinish}
-          preferLessonActivityRuntime
+          preferLessonActivityRuntime={true}
         />
       ) : (
         <KangurLessonActivityInstanceRuntime

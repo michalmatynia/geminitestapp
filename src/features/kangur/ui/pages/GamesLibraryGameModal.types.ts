@@ -13,6 +13,7 @@ import type {
 } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type React from 'react';
 import type { useLocale, useTranslations } from 'next-intl';
 import type { useKangurGameInstances } from '@/features/kangur/ui/hooks/useKangurGameInstances';
 import type { useKangurLessonGameSections } from '@/features/kangur/ui/hooks/useKangurLessonGameSections';
@@ -29,7 +30,7 @@ export type GamesLibraryGameModalState = {
   translations: ReturnType<typeof useTranslations>;
   locale: ReturnType<typeof useLocale>;
   settingsOpen: boolean;
-  setSettingsOpen: (open: boolean) => void;
+  setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleCloseModal: () => void;
   game: KangurGameDefinition | null;
   supportsPreviewSettings: boolean;
@@ -37,7 +38,8 @@ export type GamesLibraryGameModalState = {
   gameInstancesQuery: ReturnType<typeof useKangurGameInstances>;
 };
 
-export interface GamesLibraryGameModalContextValue extends GamesLibraryGameModalState {
+export interface GamesLibraryGameModalContextValue extends Omit<GamesLibraryGameModalState, 'game'> {
+  game: KangurGameDefinition;
   resolvedAgeGroupLabel: string;
   subjectLabel: string;
   linkedLessonCount: number;

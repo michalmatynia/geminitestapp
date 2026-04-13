@@ -185,21 +185,29 @@ const resolveClockHourHandStrokeWidth = (highlightHour: boolean): number =>
 const resolveClockMinuteHandStrokeWidth = (highlightMinute: boolean): number =>
   highlightMinute ? 6 : 4;
 
-function ClockHands({
-  highlightHour,
-  highlightMinute,
-  hourAngle,
-  minuteAngle,
-  showHourHand,
-  showMinuteHand,
-}: {
+type ClockHandsConfig = {
   highlightHour: boolean;
   highlightMinute: boolean;
   hourAngle: number;
   minuteAngle: number;
   showHourHand: boolean;
   showMinuteHand: boolean;
+};
+
+function ClockHands({
+  config,
+}: {
+  config: ClockHandsConfig;
 }): React.JSX.Element[] {
+  const {
+    highlightHour,
+    highlightMinute,
+    hourAngle,
+    minuteAngle,
+    showHourHand,
+    showMinuteHand,
+  } = config;
+
   return [
     showHourHand ? (
       <ClockHand
@@ -252,12 +260,14 @@ export function AnalogClock(props: AnalogClockProps): React.JSX.Element {
         <ClockMinuteMarks />
         <ClockNumbers />
         <ClockHands
-          highlightHour={highlightHour}
-          highlightMinute={highlightMinute}
-          hourAngle={hourAngle}
-          minuteAngle={minuteAngle}
-          showHourHand={showHourHand}
-          showMinuteHand={showMinuteHand}
+          config={{
+            highlightHour,
+            highlightMinute,
+            hourAngle,
+            minuteAngle,
+            showHourHand,
+            showMinuteHand,
+          }}
         />
         <circle cx='100' cy='100' r='6' fill={KANGUR_CLOCK_THEME_COLORS.center} />
       </svg>

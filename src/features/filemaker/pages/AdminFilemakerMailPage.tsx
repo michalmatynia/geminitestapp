@@ -14,23 +14,15 @@ import { MailPageProvider, useMailPageContext } from './FilemakerMail.context';
 
 function AdminFilemakerMailPageContent(): React.JSX.Element {
   const {
-    selectedAccountId,
-    selectedMailboxPath,
-    selectedPanel,
-    selectedFolder,
     isAttentionPanel,
     isSearchPanel,
     isRecentPanel,
+    selectedFolder,
   } = useMailPageContext();
 
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
-      <FilemakerMailSidebar
-        selectedAccountId={selectedAccountId}
-        selectedMailboxPath={selectedMailboxPath}
-        selectedPanel={selectedPanel}
-        originPanel={isRecentPanel ? 'recent' : isSearchPanel ? 'search' : null}
-      />
+      <FilemakerMailSidebar />
 
       {isAttentionPanel ? (
         <MailboxesAttentionSection />

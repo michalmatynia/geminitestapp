@@ -45,18 +45,25 @@ import {
 } from './FilemakerMailSidebarContext';
 import { FilemakerMailSidebarNode } from './FilemakerMailSidebarNode';
 
-type FilemakerMailSidebarProps = {
-  selectedAccountId?: string | null;
-  selectedMailboxPath?: string | null;
-  selectedThreadId?: string | null;
-  selectedPanel?: 'account' | 'attention' | 'compose' | 'recent' | 'search' | 'settings' | null;
-  originPanel?: 'recent' | 'search' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-  searchContextAccountId?: string | null;
-  searchQuery?: string | null;
-  refreshKey?: number;
+import { MailPageContext } from '../pages/FilemakerMail.context';
+
+export type FilemakerMailSidebarSelection = {
+  accountId: string | null;
+  mailboxPath: string | null;
+  threadId: string | null;
+  panel: 'account' | 'attention' | 'compose' | 'recent' | 'search' | 'settings' | null;
+  originPanel: 'recent' | 'search' | null;
+};
+
+export type FilemakerMailSidebarFilters = {
+  recentMailboxFilter: string | null;
+  recentUnreadOnly: boolean;
+  recentQuery: string | null;
+  searchContextAccountId: string | null;
+  searchQuery: string | null;
+};
+
+export type FilemakerMailSidebarActions = {
   onRecentMailboxFilterChange?: (value: string) => void;
   onRecentQueryChange?: (value: string) => void;
   onRecentUnreadOnlyChange?: (value: boolean) => void;
@@ -69,29 +76,53 @@ type FilemakerMailSidebarProps = {
   onNewMailbox?: () => void;
 };
 
+type FilemakerMailSidebarProps = {
+  selection?: Partial<FilemakerMailSidebarSelection>;
+  filters?: Partial<FilemakerMailSidebarFilters>;
+  actions?: FilemakerMailSidebarActions;
+  refreshKey?: number;
+};
+
 export function FilemakerMailSidebar({
-  selectedAccountId = null,
-  selectedMailboxPath = null,
-  selectedThreadId = null,
-  selectedPanel = null,
-  originPanel = null,
-  recentMailboxFilter = null,
-  recentUnreadOnly = false,
-  recentQuery = null,
-  searchContextAccountId = null,
-  searchQuery = null,
+  selection: propsSelection,
+  filters: propsFilters,
+  actions: propsActions,
   refreshKey = 0,
-  onRecentMailboxFilterChange,
-  onRecentQueryChange,
-  onRecentUnreadOnlyChange,
-  onSelectAttention,
-  onSelectSearch,
-  onSelectAccount,
-  onSelectAccountSettings,
-  onSelectFolder,
-  onAccountUpdated,
-  onNewMailbox,
 }: FilemakerMailSidebarProps): React.JSX.Element {
+  const pageContext = React.useContext(MailPageContext);
+
+  const selection = useMemo((): FilemakerMailSidebarSelection => ({
+    accountId: propsSelection?.accountId ?? pageContext?.selectedAccountId ?? null,
+    mailboxPath: propsSelection?.mailboxPath ?? pageContext?.selectedMailboxPath ?? null,
+    threadId: propsSelection?.threadId ?? null,
+    panel: propsSelection?.panel ?? pageContext?.selectedPanel ?? null,
+    originPanel: propsSelection?.originPanel ?? (pageContext?.isRecentPanel ? 'recent' : pageContext?.isSearchPanel ? 'search' : null),
+  }), [propsSelection, pageContext]);
+
+  const filters = useMemo((): FilemakerMailSidebarFilters => ({
+    recentMailboxFilter: propsFilters?.recentMailboxFilter ?? pageContext?.recentMailboxFilter ?? null,
+    recentUnreadOnly: propsFilters?.recentUnreadOnly ?? pageContext?.recentUnreadOnly ?? false,
+    recentQuery: propsFilters?.recentQuery ?? pageContext?.query ?? null,
+    searchContextAccountId: propsFilters?.searchContextAccountId ?? (pageContext?.isSearchPanel ? pageContext.selectedAccountId : null),
+    searchQuery: propsFilters?.searchQuery ?? pageContext?.deepSearchQuery ?? null,
+  }), [propsFilters, pageContext]);
+
+  const {
+    selectedAccountId,
+    selectedMailboxPath,
+    selectedThreadId,
+    selectedPanel,
+    originPanel,
+  } = selection;
+
+  const {
+    recentMailboxFilter,
+    recentUnreadOnly,
+    recentQuery,
+    searchContextAccountId,
+    searchQuery,
+  } = filters;
+
   const router = useRouter();
   const {
     accounts,
@@ -287,6 +318,17 @@ export function FilemakerMailSidebar({
     },
     [recentMailboxFilter, recentQuery, recentUnreadOnly, router, selectedAccountId]
   );
+
+  const onNewMailbox = propsActions?.onNewMailbox ?? pageContext?.onNewMailbox;
+  const onSelectSearch = propsActions?.onSelectSearch;
+  const onSelectAttention = propsActions?.onSelectAttention;
+  const onSelectAccountSettings = propsActions?.onSelectAccountSettings;
+  const onSelectFolder = propsActions?.onSelectFolder;
+  const onAccountUpdated = propsActions?.onAccountUpdated;
+  const onSelectAccount = propsActions?.onSelectAccount;
+  const onRecentMailboxFilterChange = propsActions?.onRecentMailboxFilterChange;
+  const onRecentQueryChange = propsActions?.onRecentQueryChange;
+  const onRecentUnreadOnlyChange = propsActions?.onRecentUnreadOnlyChange;
 
   const contextValue = useMemo<FilemakerMailSidebarContextValue>(
     () => ({

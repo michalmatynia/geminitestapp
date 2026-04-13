@@ -4,13 +4,10 @@ import {
   KANGUR_LESSON_LIBRARY,
 } from '@/features/kangur/lessons/lesson-catalog';
 import {
-  getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurLessonDescription,
   getLocalizedKangurLessonTitle,
-  getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import { buildKangurGameLaunchHref } from '@/features/kangur/ui/services/game-launch';
 
 import { useGamesLibraryGameModalState } from './GamesLibraryGameModal.hooks';
 import {
@@ -549,6 +546,7 @@ function GamesLibraryGameModalContent(): React.JSX.Element {
             </div>
           </div>
         </div>
+      </div>
     </>
   );
 }

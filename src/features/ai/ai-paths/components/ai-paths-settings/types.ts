@@ -115,6 +115,8 @@ export interface UseAiPathsSettingsStateReturn {
   expandedPaletteGroups: Set<string>;
   isPathTreeVisible: boolean;
   setIsPathTreeVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  isInspectorVisible: boolean;
+  setIsInspectorVisible: React.Dispatch<React.SetStateAction<boolean>>;
   togglePaletteGroup: (group: string) => void;
   handleDragStart: (e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
   selectedNode: AiNode | null;

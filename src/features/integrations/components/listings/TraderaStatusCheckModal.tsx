@@ -37,6 +37,7 @@ import {
   resolveTraderaSessionTarget,
 } from './TraderaStatusCheckModal.utils';
 import { ListingRowView } from './TraderaStatusCheckModal.RowItem';
+import { TraderaStatusCheckProvider } from './TraderaStatusCheckModalContext';
 
 interface TraderaStatusCheckModalProps {
   isOpen: boolean;
@@ -642,21 +643,23 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
           <span className='text-sm'>Fetching listing statuses…</span>
         </div>
       ) : (
-        <div className='space-y-3'>
-          {rows.map((row) => (
-            <ListingRowView
-              key={row.productId}
-              row={row}
-              onRelist={(pid, lid) => void handleRelist(pid, lid)}
-              onLiveCheck={(pid, lid) => void handleLiveCheck(pid, lid)}
-              onRefreshSession={(productId) => void handleRefreshSession(productId)}
-              isRefreshingSession={refreshingSessionProductId === row.productId}
-            />
-          ))}
-          {rows.length === 0 && !loading && (
-            <p className='py-8 text-center text-sm text-muted-foreground'>No results.</p>
-          )}
-        </div>
+        <TraderaStatusCheckProvider
+          value={{
+            onRelist: (pid, lid) => void handleRelist(pid, lid),
+            onLiveCheck: (pid, lid) => void handleLiveCheck(pid, lid),
+            onRefreshSession: (productId) => void handleRefreshSession(productId),
+            refreshingSessionProductId,
+          }}
+        >
+          <div className='space-y-3'>
+            {rows.map((row) => (
+              <ListingRowView key={row.productId} row={row} />
+            ))}
+            {rows.length === 0 && !loading && (
+              <p className='py-8 text-center text-sm text-muted-foreground'>No results.</p>
+            )}
+          </div>
+        </TraderaStatusCheckProvider>
       )}
     </AppModal>
   );

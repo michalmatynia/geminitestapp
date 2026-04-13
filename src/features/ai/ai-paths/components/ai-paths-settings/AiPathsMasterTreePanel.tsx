@@ -442,10 +442,12 @@ function AiPathsTreeNode(props: FolderTreeViewportRenderNodeInput): React.JSX.El
   );
 }
 
-export type AiPathsMasterTreePanelProps = {
-  activePathId: string | null;
-  bodyClassName?: string | undefined;
-  emptyLabel?: string | undefined;
+import {
+  useAiPathsSettingsPagePathActionsContext,
+  useAiPathsSettingsPageWorkspaceContext,
+} from './AiPathsSettingsPageContext';
+
+export type AiPathsMasterTreeAdapter = {
   handleCreatePath: (options?: PathCreateFolderOptions) => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
   handleDuplicatePath: (pathId?: string, options?: PathCreateFolderOptions) => void;
@@ -453,46 +455,75 @@ export type AiPathsMasterTreePanelProps = {
   handleMovePathToFolder: (pathId: string, folderPath?: string | null) => Promise<void>;
   handleRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
   handleSwitchPath: (pathId: string) => void;
+};
+
+export type AiPathsMasterTreePanelProps = {
+  activePathId?: string | null;
+  adapter?: AiPathsMasterTreeAdapter;
+  bodyClassName?: string | undefined;
+  emptyLabel?: string | undefined;
   headerDescription?: string | undefined;
   headerTitle?: string | undefined;
   onCopyPathJson?: ((pathId: string) => void) | undefined;
   onPathOpen?: ((pathId: string) => void) | undefined;
   panelClassName?: string | undefined;
   pathClickBehavior?: PathClickBehavior | undefined;
-  paths: PathMeta[];
+  paths?: PathMeta[];
   renderHeaderActions?: ((input: { selectedFolderPath: string }) => React.ReactNode) | undefined;
   searchAriaLabel?: string | undefined;
   searchPlaceholder?: string | undefined;
   showPathHoverActions?: boolean | undefined;
-  toast: TreeNodeToast;
+  toast?: TreeNodeToast;
   viewportClassName?: string | undefined;
 };
 
-export function AiPathsMasterTreePanel({
-  activePathId,
-  bodyClassName,
-  emptyLabel = 'No AI paths yet. Create a path or group here.',
-  handleCreatePath,
-  handleDeletePath,
-  handleDuplicatePath,
-  handleMoveFolder,
-  handleMovePathToFolder,
-  handleRenameFolder,
-  handleSwitchPath,
-  headerDescription = 'Group and switch AI paths from the canvas.',
-  headerTitle = 'Path Groups',
-  onCopyPathJson,
-  onPathOpen,
-  panelClassName,
-  pathClickBehavior = 'open',
-  paths,
-  renderHeaderActions,
-  searchAriaLabel = 'Search path groups',
-  searchPlaceholder = 'Search groups or paths',
-  showPathHoverActions = false,
-  toast,
-  viewportClassName,
-}: AiPathsMasterTreePanelProps): React.JSX.Element {
+export function AiPathsMasterTreePanel(props: AiPathsMasterTreePanelProps): React.JSX.Element {
+  const actionsContext = useAiPathsSettingsPagePathActionsContext();
+  const workspaceContext = useAiPathsSettingsPageWorkspaceContext();
+
+  const activePathId = props.activePathId ?? actionsContext?.activePathId ?? null;
+  const paths = props.paths ?? actionsContext?.paths ?? [];
+  const toast = props.toast ?? workspaceContext?.toast;
+
+  const adapter = useMemo((): AiPathsMasterTreeAdapter => {
+    if (props.adapter) return props.adapter;
+    return {
+      handleCreatePath: actionsContext.handleCreatePath,
+      handleDeletePath: actionsContext.handleDeletePath,
+      handleDuplicatePath: actionsContext.handleDuplicatePath,
+      handleMoveFolder: actionsContext.handleMoveFolder,
+      handleMovePathToFolder: actionsContext.handleMovePathToFolder,
+      handleRenameFolder: actionsContext.handleRenameFolder,
+      handleSwitchPath: actionsContext.handleSwitchPath,
+    };
+  }, [props.adapter, actionsContext]);
+
+  const {
+    bodyClassName,
+    emptyLabel = 'No AI paths yet. Create a path or group here.',
+    headerDescription = 'Group and switch AI paths from the canvas.',
+    headerTitle = 'Path Groups',
+    onCopyPathJson,
+    onPathOpen,
+    panelClassName,
+    pathClickBehavior = 'open',
+    renderHeaderActions,
+    searchAriaLabel = 'Search path groups',
+    searchPlaceholder = 'Search groups or paths',
+    showPathHoverActions = false,
+    viewportClassName,
+  } = props;
+
+  const {
+    handleCreatePath,
+    handleDeletePath,
+    handleDuplicatePath,
+    handleMoveFolder,
+    handleMovePathToFolder,
+    handleRenameFolder,
+    handleSwitchPath,
+  } = adapter;
+
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedTreeNodeId, setSelectedTreeNodeId] = React.useState<string | null>(
     activePathId ? toAiPathNodeId(activePathId) : null

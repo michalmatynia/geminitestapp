@@ -55,6 +55,8 @@ const formatVariantGroupMetric = (group: KangurGamesLibraryVariantGroup): number
 const formatEngineGroupMetric = (group: KangurGameEngineCatalogEntry): number =>
   new Set(group.entries.map((entry) => entry.game.id)).size;
 
+export interface StructureTabProps {}
+
 export const StructureTab = () => {
   const {
     filters,

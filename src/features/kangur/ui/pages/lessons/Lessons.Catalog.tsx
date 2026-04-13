@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
@@ -190,19 +191,12 @@ function renderLessonsCatalogIntroDescription({
 
 function LessonsCatalogIntroCardWithPageContent({
   children,
-  isSixYearOld,
-  locale,
   showWordmark,
-  subject,
-  translations,
 }: {
   children?: ReactNode;
-  isSixYearOld: boolean;
-  locale: string;
   showWordmark: boolean;
-  subject: LessonsViewState['subject'];
-  translations: LessonsTranslation;
 }): React.JSX.Element {
+  const { isSixYearOld, locale, subject, translations } = useLessonsCatalogContext();
   const { entry: lessonListIntroContent } = useKangurPageContentEntry('lessons-list-intro');
   const title = lessonListIntroContent?.title ?? translations('pageTitle');
   const descriptionLabel =
@@ -220,14 +214,16 @@ function LessonsCatalogIntroCardWithPageContent({
       showBackButton={false}
       testId='lessons-list-intro-card'
       title={title}
-      visualTitle={showWordmark ? (
-        <LazyKangurLessonsWordmark
-          className='mx-auto'
-          data-testid='kangur-lessons-heading-art'
-          label={title}
-          locale={locale}
-        />
-      ) : undefined}
+      visualTitle={
+        showWordmark ? (
+          <LazyKangurLessonsWordmark
+            className='mx-auto'
+            data-testid='kangur-lessons-heading-art'
+            label={title}
+            locale={locale}
+          />
+        ) : undefined
+      }
     >
       {children}
     </KangurResolvedPageIntroCard>
@@ -718,11 +714,7 @@ export function LessonsCatalog() {
         <div id='kangur-lessons-intro' className='w-full'>
           {isPageContentReady ? (
             <LessonsCatalogIntroCardWithPageContent
-              isSixYearOld={isSixYearOld}
-              locale={locale}
               showWordmark={true}
-              subject={subject}
-              translations={translations}
             >
               {shouldShowIntroLoadingState ? (
                 <div className='w-full' data-testid='lessons-intro-loading-state'>

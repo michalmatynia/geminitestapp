@@ -45,6 +45,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     confirmNodeSwitch,
     isPathTreeVisible,
     setIsPathTreeVisible,
+    isInspectorVisible,
+    setIsInspectorVisible,
     palette,
   } = useAiPathsSettingsPageCanvasInteractionsContext();
   const {
@@ -62,11 +64,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const focusDataContractNode = setDataContractInspectorNodeId ?? (() => undefined);
 
   const [secondaryPanelsReady, setSecondaryPanelsReady] = React.useState(false);
-  const [isInspectorVisible, setIsInspectorVisible] = React.useState(true);
   const pathTreeVisible = isPathTreeVisible !== false;
-  const setPathTreeVisible =
-    setIsPathTreeVisible ??
-    ((_: React.SetStateAction<boolean>): void => undefined);
 
   React.useEffect(() => {
     if (activeTab !== 'canvas') {
@@ -106,16 +104,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         ? createPortal(
           renderActions(
             <div className='flex w-full items-start'>
-              <AiPathsCanvasToolbar
-                isInspectorVisible={isInspectorVisible}
-                isPathTreeVisible={pathTreeVisible}
-                onToggleInspector={() => {
-                  setIsInspectorVisible((current) => !current);
-                }}
-                onTogglePathTree={() => {
-                  setPathTreeVisible((current) => !current);
-                }}
-              />
+              <AiPathsCanvasToolbar />
             </div>
           ),
           document.getElementById('ai-paths-actions') ?? document.body

@@ -18,7 +18,7 @@ import {
 } from '@/features/kangur/social/shared/social-capture-content-config';
 import { PlaywrightEngineLogoButton } from '@/features/playwright/public';
 import { PlaywrightEngineSettingsModal } from '@/features/playwright/public';
-import type { SocialCaptureBrowserState } from './hooks/useSocialCaptureBrowserState';
+import { useSocialCaptureBrowser } from './SocialCaptureBrowserContext';
 
 type SlideStatusDotProps = {
   active: boolean;
@@ -41,11 +41,8 @@ function SlideStatusDot({ active, disabled }: SlideStatusDotProps): React.JSX.El
   );
 }
 
-type Props = {
-  state: SocialCaptureBrowserState;
-};
-
-export function SocialCaptureBrowserTreePanel({ state }: Props): React.JSX.Element {
+export function SocialCaptureBrowserTreePanel(): React.JSX.Element {
+  const state = useSocialCaptureBrowser();
   const { shell, search, searchQuery, setSearchQuery, slideMap } = state;
   const [engineModalOpen, setEngineModalOpen] = React.useState(false);
 

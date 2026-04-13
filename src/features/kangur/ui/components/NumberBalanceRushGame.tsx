@@ -223,21 +223,18 @@ function NumberBalanceRushTimer({
   );
 }
 
-function NumberBalanceRushWaitingView({
-  copyStatus,
-  handleCopyMatchId,
-  matchId,
-  opponentLabel,
-  score,
-  translations,
-}: {
-  copyStatus: NumberBalanceRushState['copyStatus'];
-  handleCopyMatchId: NumberBalanceRushState['handleCopyMatchId'];
-  matchId: string;
-  opponentLabel: string;
-  score: number;
-  translations: NumberBalanceRushTranslations;
-}): React.JSX.Element {
+function NumberBalanceRushWaitingView(): React.JSX.Element {
+  const {
+    copyStatus,
+    handleCopyMatchId,
+    match,
+    opponentLabel,
+    score,
+    translations,
+  } = useNumberBalanceRushGame();
+
+  if (!match) return <></>;
+
   return (
     <KangurPracticeGameShell className='w-full max-w-xl'>
       <KangurGlassPanel className='w-full rounded-[28px] p-6 text-center' surface='playField'>
@@ -245,7 +242,7 @@ function NumberBalanceRushWaitingView({
           {translations('numberBalance.inRound.waiting.title')}
         </div>
         <div className='mt-2 text-xs font-semibold text-amber-900/80'>
-          {translations('numberBalance.inRound.waiting.matchCode', { matchId })}
+          {translations('numberBalance.inRound.waiting.matchCode', { matchId: match.matchId })}
         </div>
         <div className='mt-3 flex flex-wrap justify-center gap-2'>
           <KangurButton size='sm' variant='ghost' onClick={() => void handleCopyMatchId()}>
@@ -265,15 +262,13 @@ function NumberBalanceRushWaitingView({
   );
 }
 
-function NumberBalanceRushLoadingView({
-  error,
-  handleRetryMatch,
-  translations,
-}: {
-  error: string | null;
-  handleRetryMatch: NumberBalanceRushState['handleRetryMatch'];
-  translations: NumberBalanceRushTranslations;
-}): React.JSX.Element {
+function NumberBalanceRushLoadingView(): React.JSX.Element {
+  const {
+    error,
+    handleRetryMatch,
+    translations,
+  } = useNumberBalanceRushGame();
+
   return (
     <KangurPracticeGameShell className='w-full max-w-xl'>
       <KangurGlassPanel className='w-full rounded-[28px] p-6 text-center' surface='playField'>
@@ -296,28 +291,22 @@ function NumberBalanceRushLoadingView({
 }
 
 function NumberBalanceRushSummaryView({
-  avgSolve,
-  handleRetryMatch,
-  hasOpponent,
-  leaderboardEntriesLength,
   onFinish,
-  opponentScore,
-  playerRank,
-  score,
-  solves,
-  translations,
 }: {
-  avgSolve: number | null;
-  handleRetryMatch: NumberBalanceRushState['handleRetryMatch'];
-  hasOpponent: boolean;
-  leaderboardEntriesLength: number;
   onFinish: (() => void) | undefined;
-  opponentScore: number | null;
-  playerRank: number | null;
-  score: number;
-  solves: number;
-  translations: NumberBalanceRushTranslations;
 }): React.JSX.Element {
+  const {
+    avgSolve,
+    handleRetryMatch,
+    hasOpponent,
+    leaderboardEntries,
+    opponentScore,
+    playerRank,
+    score,
+    solves,
+    translations,
+  } = useNumberBalanceRushGame();
+
   const outcomeLabel = resolveNumberBalanceSummaryOutcomeLabel({
     hasOpponent,
     opponentScore,
@@ -339,7 +328,7 @@ function NumberBalanceRushSummaryView({
         {resolveNumberBalanceSummaryMessage({
           avgSolve,
           hasOpponent,
-          leaderboardEntriesLength,
+          leaderboardEntriesLength: leaderboardEntries.length,
           opponentScore,
           outcomeLabel,
           playerRank,
@@ -537,10 +526,8 @@ function NumberBalanceRushTray(): React.JSX.Element {
 
 function NumberBalanceRushActiveRound({
   durationMs,
-  state,
 }: {
   durationMs: number;
-  state: NumberBalanceRushState;
 }): React.JSX.Element {
   const {
     translations,
@@ -558,7 +545,7 @@ function NumberBalanceRushActiveRound({
     handleDragEnd,
     touchHint,
     match,
-  } = state;
+  } = useNumberBalanceRushGame();
   const matchDurationMs = match?.roundDurationMs ?? durationMs;
   const timePercent = Math.max(0, Math.min(1, timeLeftMs / matchDurationMs));
   const leftSum = leftTiles.reduce((sum, tile) => sum + tile.value, 0);
@@ -659,30 +646,15 @@ const resolveNumberBalanceRushViewKind = ({
 
 function renderNumberBalanceRushPhaseView({
   props,
-  state,
 }: {
   props: NumberBalanceRushGameProps;
-  state: NumberBalanceRushState;
 }): React.JSX.Element {
   const {
-    translations,
     match,
     player,
     puzzle,
-    score,
-    solves,
-    error,
-    copyStatus,
     phase,
-    opponentLabel,
-    opponentScore,
-    hasOpponent,
-    playerRank,
-    leaderboardEntries,
-    avgSolve,
-    handleRetryMatch,
-    handleCopyMatchId,
-  } = state;
+  } = useNumberBalanceRushGame();
   const viewKind = resolveNumberBalanceRushViewKind({
     match,
     phase,
@@ -691,54 +663,29 @@ function renderNumberBalanceRushPhaseView({
   });
 
   if (viewKind === 'waiting') {
-    return match && player ? (
-      <NumberBalanceRushWaitingView
-        copyStatus={copyStatus}
-        handleCopyMatchId={handleCopyMatchId}
-        matchId={match.matchId}
-        opponentLabel={opponentLabel}
-        score={score}
-        translations={translations}
-      />
-    ) : (
-      <></>
+    return (
+      <NumberBalanceRushWaitingView />
     );
   }
 
   if (viewKind === 'loading') {
     return (
-      <NumberBalanceRushLoadingView
-        error={error}
-        handleRetryMatch={handleRetryMatch}
-        translations={translations}
-      />
+      <NumberBalanceRushLoadingView />
     );
   }
 
   if (viewKind === 'finished') {
     return (
       <NumberBalanceRushSummaryView
-        avgSolve={avgSolve}
-        handleRetryMatch={handleRetryMatch}
-        hasOpponent={hasOpponent}
-        leaderboardEntriesLength={leaderboardEntries.length}
         onFinish={props.onFinish}
-        opponentScore={opponentScore}
-        playerRank={playerRank}
-        score={score}
-        solves={solves}
-        translations={translations}
       />
     );
   }
 
-  return puzzle ? (
+  return (
     <NumberBalanceRushActiveRound
       durationMs={props.durationMs ?? 15_000}
-      state={state}
     />
-  ) : (
-    <></>
   );
 }
 
@@ -748,7 +695,7 @@ export default function NumberBalanceRushGame(
   const state = useNumberBalanceRushGameState(props);
   return (
     <NumberBalanceRushGameProvider state={state}>
-      {renderNumberBalanceRushPhaseView({ props, state })}
+      {renderNumberBalanceRushPhaseView({ props })}
     </NumberBalanceRushGameProvider>
   );
 }

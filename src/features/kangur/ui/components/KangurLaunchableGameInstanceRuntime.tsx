@@ -246,17 +246,20 @@ const shouldPreferKangurLessonActivityRuntime = ({
   );
 };
 
-const KangurResolvedLaunchableGameInstanceRuntime = ({
-  engineOverrides,
-  gameId,
-  instanceId,
-  onFinish,
-}: {
+export type KangurLaunchableGameRuntimeConfig = {
   engineOverrides?: KangurGameRuntimeRendererProps;
   gameId: KangurGameId;
   instanceId: KangurGameInstanceId;
   onFinish: () => void;
+  preferLessonActivityRuntime?: boolean;
+};
+
+const KangurResolvedLaunchableGameInstanceRuntime = ({
+  config,
+}: {
+  config: Omit<KangurLaunchableGameRuntimeConfig, 'preferLessonActivityRuntime'>;
 }): React.JSX.Element => {
+  const { engineOverrides, gameId, instanceId, onFinish } = config;
   const gameInstanceQuery = useKangurGameInstances({
     enabledOnly: true,
     gameId,
@@ -388,19 +391,10 @@ const KangurResolvedLaunchableGameInstanceRuntime = ({
   });
 };
 
-export function KangurLaunchableGameInstanceRuntime({
-  engineOverrides,
-  gameId,
-  instanceId,
-  onFinish,
-  preferLessonActivityRuntime = false,
-}: {
-  engineOverrides?: KangurGameRuntimeRendererProps;
-  gameId: KangurGameId;
-  instanceId: KangurGameInstanceId;
-  onFinish: () => void;
-  preferLessonActivityRuntime?: boolean;
-}): React.JSX.Element {
+export function KangurLaunchableGameInstanceRuntime(
+  config: KangurLaunchableGameRuntimeConfig
+): React.JSX.Element {
+  const { gameId, preferLessonActivityRuntime = false } = config;
   const shouldUseLessonActivityRuntime = useMemo(
     () =>
       shouldPreferKangurLessonActivityRuntime({
@@ -413,20 +407,17 @@ export function KangurLaunchableGameInstanceRuntime({
   if (shouldUseLessonActivityRuntime) {
     return (
       <KangurLessonActivityInstanceRuntime
-        engineOverrides={engineOverrides}
-        gameId={gameId}
-        instanceId={instanceId}
-        onFinish={onFinish}
+        engineOverrides={config.engineOverrides}
+        gameId={config.gameId}
+        instanceId={config.instanceId}
+        onFinish={config.onFinish}
       />
     );
   }
 
   return (
     <KangurResolvedLaunchableGameInstanceRuntime
-      engineOverrides={engineOverrides}
-      gameId={gameId}
-      instanceId={instanceId}
-      onFinish={onFinish}
+      config={config}
     />
   );
 }

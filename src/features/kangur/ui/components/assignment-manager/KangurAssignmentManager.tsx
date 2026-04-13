@@ -39,7 +39,7 @@ import { KangurAssignmentItemProvider, useKangurAssignmentItem } from './KangurA
 import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
 import type { KangurAssignmentManagerProps } from './KangurAssignmentManager.types';
 
-type AssignmentManagerState = ReturnType<typeof useKangurAssignmentManagerState>;
+type AssignmentManagerState = ReturnType<typeof useKangurAssignmentManagerContext>;
 
 const resolveSegmentedButtonClassName = (isCoarsePointer: boolean): string =>
   isCoarsePointer

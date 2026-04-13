@@ -2,6 +2,7 @@
 
 import { Activity, ExternalLink, Loader2, RefreshCw, RotateCcw, TriangleAlert } from 'lucide-react';
 
+import { useTraderaStatusCheck } from './TraderaStatusCheckModalContext';
 import {
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -47,17 +48,11 @@ function StalenessWarning({ lastStatusCheckAt }: { lastStatusCheckAt: string | n
 
 export function ListingRowView({
   row,
-  onRelist,
-  onLiveCheck,
-  onRefreshSession,
-  isRefreshingSession,
 }: {
   row: ListingRow;
-  onRelist: (productId: string, listingId: string) => void;
-  onLiveCheck: (productId: string, listingId: string) => void;
-  onRefreshSession: (productId: string) => void;
-  isRefreshingSession: boolean;
 }) {
+  const { onRelist, onLiveCheck, onRefreshSession, refreshingSessionProductId } = useTraderaStatusCheck();
+  const isRefreshingSession = refreshingSessionProductId === row.productId;
   const { productId, productName, listing, error, relistState, relistError, liveCheckState, liveCheckError } = row;
   const listingUrl = listing ? resolveListingUrl(listing) : null;
   const hasListingId = !!listing?.id;

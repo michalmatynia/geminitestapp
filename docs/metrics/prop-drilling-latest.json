@@ -1,38 +1,38 @@
 {
   "summary": {
-    "generatedAt": "2026-04-13T21:21:30.857Z",
-    "scannedSourceFiles": 7309,
-    "scannedJsxFiles": 2539,
-    "componentCount": 4462,
-    "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 219,
-    "resolvedTransitionCount": 559,
-    "depth2CandidateChainCount": 559,
+    "generatedAt": "2026-04-13T22:30:53.677Z",
+    "scannedSourceFiles": 7311,
+    "scannedJsxFiles": 2541,
+    "componentCount": 4464,
+    "componentsWithForwarding": 108,
+    "componentsWithAnyForwarding": 206,
+    "resolvedTransitionCount": 439,
+    "depth2CandidateChainCount": 439,
     "candidateChainCount": 10,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 13,
-    "highPropCountComponentCount": 34,
-    "passThroughHotspotCount": 31,
+    "highPropCountComponentCount": 32,
+    "passThroughHotspotCount": 19,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 161
+        "count": 152
       },
       {
         "scope": "feature:integrations",
-        "count": 12
+        "count": 11
       },
       {
         "scope": "shared-ui",
         "count": 10
       },
       {
-        "scope": "feature:ai",
+        "scope": "feature:products",
         "count": 7
       },
       {
-        "scope": "feature:products",
-        "count": 7
+        "scope": "feature:ai",
+        "count": 5
       },
       {
         "scope": "feature:cms",
@@ -51,16 +51,16 @@
         "count": 3
       },
       {
-        "scope": "feature:filemaker",
-        "count": 2
-      },
-      {
         "scope": "feature:playwright",
         "count": 2
       },
       {
         "scope": "app",
         "count": 2
+      },
+      {
+        "scope": "feature:filemaker",
+        "count": 1
       },
       {
         "scope": "feature:notesapp",
@@ -74,9 +74,9 @@
   },
   "backlog": [
     {
-      "score": 93,
+      "score": 83,
       "depth": 3,
-      "rootFanout": 2,
+      "rootFanout": 1,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
       "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider",
@@ -97,7 +97,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 415
+          "line": 409
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
@@ -1610,318 +1610,6 @@
       "depth": 2,
       "rootFanout": 4,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "recentMailboxFilter",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "recentMailboxFilter",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "recentUnreadOnly",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "recentUnreadOnly",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "recentQuery",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "recentQuery",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "recentMailboxFilter",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "recentMailboxFilter",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 374
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "recentUnreadOnly",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "recentUnreadOnly",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 374
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "recentQuery",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "recentQuery",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 374
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "recentMailboxFilter",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "recentMailboxFilter",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 441
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "recentMailboxFilter",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "recentMailboxFilter",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 441
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "recentQuery",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "recentQuery",
-          "targetProp": "value",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 454
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "recentQuery",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "recentQuery",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 454
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "recentUnreadOnly",
-        "checked"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "recentUnreadOnly",
-          "targetProp": "checked",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 471
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "recentUnreadOnly",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "recentUnreadOnly",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 471
-        }
-      ]
-    },
-    {
-      "score": 88,
-      "depth": 2,
-      "rootFanout": 4,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
@@ -2676,84 +2364,6 @@
       "depth": 2,
       "rootFanout": 3,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryTitle",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryTitle"
-      ],
-      "propPath": [
-        "translations",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryTitle",
-          "sourceProp": "translations",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 334
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
-      ],
-      "propPath": [
-        "translations",
-        "finishLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
-          "sourceProp": "translations",
-          "targetProp": "finishLabel",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 350
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
-      ],
-      "propPath": [
-        "translations",
-        "restartLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
-          "sourceProp": "translations",
-          "targetProp": "restartLabel",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 350
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/PlayerProgressCard.tsx#PlayerProgressGuidedMomentumSection",
       "sinkComponentId": "src/features/kangur/ui/components/summary-cards/KangurProgressHighlightCardContent.tsx#KangurProgressHighlightHeader",
       "componentPath": [
@@ -3118,214 +2728,6 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "searchPlaceholder",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "searchPlaceholder",
-          "targetProp": "header",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 644
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "searchAriaLabel",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "searchAriaLabel",
-          "targetProp": "header",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 644
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "handleCreatePath",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "handleCreatePath",
-          "targetProp": "header",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 644
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "searchPlaceholder",
-        "placeholder"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "searchPlaceholder",
-          "targetProp": "placeholder",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 659
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "searchAriaLabel",
-        "aria-label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "searchAriaLabel",
-          "targetProp": "aria-label",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 659
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "handleCreatePath",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "handleCreatePath",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 670
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "isPathTreeVisible",
-        "aria-pressed"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "isPathTreeVisible",
-          "targetProp": "aria-pressed",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
-          "line": 199
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "isPathTreeVisible",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "isPathTreeVisible",
-          "targetProp": "title",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
-          "line": 199
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/ai/ai-paths/components/canvas-sidebar-primitives.tsx#CanvasRunControlNotice",
       "sinkComponentId": "src/shared/ui/card.tsx#Card",
       "componentPath": [
@@ -3422,526 +2824,6 @@
           "targetProp": "aria-label",
           "relativePath": "src/features/case-resolver/components/CaseResolverTreeHeader.tsx",
           "line": 230
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "onNewMailbox",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "onNewMailbox",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "selectedAccountId",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "selectedAccountId",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "selectedMailboxPath",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "selectedMailboxPath",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "originPanel",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "originPanel",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "searchQuery",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "searchQuery",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "onRecentMailboxFilterChange",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "onRecentMailboxFilterChange",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "onRecentQueryChange",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "onRecentQueryChange",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "onRecentUnreadOnlyChange",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "onRecentUnreadOnlyChange",
-          "targetProp": "header",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 345
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onNewMailbox",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onNewMailbox",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 358
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "selectedAccountId",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "selectedAccountId",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 374
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "selectedMailboxPath",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "selectedMailboxPath",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 374
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "originPanel",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "originPanel",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 374
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "searchQuery",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "searchQuery",
-          "targetProp": "onClick",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 374
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "onRecentMailboxFilterChange",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "onRecentMailboxFilterChange",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 441
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "onRecentQueryChange",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "onRecentQueryChange",
-          "targetProp": "onChange",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 454
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "onRecentUnreadOnlyChange",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "onRecentUnreadOnlyChange",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-          "line": 471
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-      "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
-      "componentPath": [
-        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-        "src/shared/ui/badge.tsx#Badge"
-      ],
-      "propPath": [
-        "disabled",
-        "variant"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-          "toComponentId": "src/shared/ui/badge.tsx#Badge",
-          "sourceProp": "disabled",
-          "targetProp": "variant",
-          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 39
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-      "sinkComponentId": "src/shared/ui/switch.tsx#Switch",
-      "componentPath": [
-        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-        "src/shared/ui/switch.tsx#Switch"
-      ],
-      "propPath": [
-        "disabled",
-        "checked"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-          "toComponentId": "src/shared/ui/switch.tsx#Switch",
-          "sourceProp": "disabled",
-          "targetProp": "checked",
-          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 55
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-      "sinkComponentId": "src/shared/ui/switch.tsx#Switch",
-      "componentPath": [
-        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-        "src/shared/ui/switch.tsx#Switch"
-      ],
-      "propPath": [
-        "isSaving",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-          "toComponentId": "src/shared/ui/switch.tsx#Switch",
-          "sourceProp": "isSaving",
-          "targetProp": "disabled",
-          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 55
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "isSaving",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "isSaving",
-          "targetProp": "disabled",
-          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 76
         }
       ]
     },
@@ -4072,58 +2954,6 @@
           "targetProp": "data-activity-kind",
           "relativePath": "src/features/products/components/list/ProductListActivityPill.tsx",
           "line": 40
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "isImportPending",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "isImportPending",
-          "targetProp": "disabled",
-          "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
-          "line": 43
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "isImportPending",
-        "loading"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "isImportPending",
-          "targetProp": "loading",
-          "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
-          "line": 43
         }
       ]
     },
@@ -4314,110 +3144,6 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-      "sinkComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand"
-      ],
-      "propPath": [
-        "highlightHour",
-        "stroke"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-          "toComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-          "sourceProp": "highlightHour",
-          "targetProp": "stroke",
-          "relativePath": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
-          "line": 205
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-      "sinkComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand"
-      ],
-      "propPath": [
-        "highlightHour",
-        "strokeWidth"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-          "toComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-          "sourceProp": "highlightHour",
-          "targetProp": "strokeWidth",
-          "relativePath": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
-          "line": 205
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-      "sinkComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand"
-      ],
-      "propPath": [
-        "highlightMinute",
-        "stroke"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-          "toComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-          "sourceProp": "highlightMinute",
-          "targetProp": "stroke",
-          "relativePath": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
-          "line": 215
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-      "sinkComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand"
-      ],
-      "propPath": [
-        "highlightMinute",
-        "strokeWidth"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-          "toComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-          "sourceProp": "highlightMinute",
-          "targetProp": "strokeWidth",
-          "relativePath": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
-          "line": 215
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/ColorHarmonyGame.tsx#ColorHarmonyGame",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
       "componentPath": [
@@ -4540,58 +3266,6 @@
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/MultiplicationArrayGame.tsx",
           "line": 403
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryEmoji",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryEmoji"
-      ],
-      "propPath": [
-        "score",
-        "emoji"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryEmoji",
-          "sourceProp": "score",
-          "targetProp": "emoji",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 330
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryTitle",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryTitle"
-      ],
-      "propPath": [
-        "score",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryTitle",
-          "sourceProp": "score",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 334
         }
       ]
     },
@@ -4756,32 +3430,6 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "onOpenChange",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "onOpenChange",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 67
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/game-runtime/KangurGameResultWidget.tsx#KangurGameResultAssignmentBanner",
       "sinkComponentId": "src/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner.tsx#KangurPracticeAssignmentBanner",
       "componentPath": [
@@ -4938,58 +3586,6 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-      "sinkComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-      "componentPath": [
-        "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-        "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary"
-      ],
-      "propPath": [
-        "tutorContent",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-          "toComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-          "sourceProp": "tutorContent",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx",
-          "line": 124
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-      "sinkComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-      "componentPath": [
-        "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-        "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary"
-      ],
-      "propPath": [
-        "tutorContent",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-          "toComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-          "sourceProp": "tutorContent",
-          "targetProp": "label",
-          "relativePath": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx",
-          "line": 124
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileOverviewWidget.tsx#KangurLearnerProfileOverviewDailyQuestMetric",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurMetricCard.tsx#KangurMetricCard",
       "componentPath": [
@@ -5042,292 +3638,6 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "printPanelLabel",
-        "aria-label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "printPanelLabel",
-          "targetProp": "aria-label",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 153
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "printPanelLabel",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "printPanelLabel",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 153
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "parentWordmarkLabel",
-        "visualTitle"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "parentWordmarkLabel",
-          "targetProp": "visualTitle",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 209
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "locale",
-        "visualTitle"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "locale",
-          "targetProp": "visualTitle",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 209
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-      "sinkComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark"
-      ],
-      "propPath": [
-        "parentWordmarkLabel",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-          "toComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-          "sourceProp": "parentWordmarkLabel",
-          "targetProp": "label",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 219
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "parentWordmarkLabel",
-        "visualTitle"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "parentWordmarkLabel",
-          "targetProp": "visualTitle",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 248
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "locale",
-        "visualTitle"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "locale",
-          "targetProp": "visualTitle",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 248
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark"
-      ],
-      "propPath": [
-        "parentWordmarkLabel",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-          "toComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-          "sourceProp": "parentWordmarkLabel",
-          "targetProp": "label",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 258
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "parentWordmarkLabel",
-        "visualTitle"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "parentWordmarkLabel",
-          "targetProp": "visualTitle",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 531
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "locale",
-        "visualTitle"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "locale",
-          "targetProp": "visualTitle",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 531
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark"
-      ],
-      "propPath": [
-        "parentWordmarkLabel",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-          "toComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-          "sourceProp": "parentWordmarkLabel",
-          "targetProp": "label",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 550
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx#GamesLibraryGameDialog",
       "sinkComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
       "componentPath": [
@@ -5345,7 +3655,7 @@
           "sourceProp": "onOpenChange",
           "targetProp": "overlayProps",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx",
-          "line": 79
+          "line": 37
         }
       ]
     },
@@ -5371,7 +3681,7 @@
           "sourceProp": "setSelectedGame",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/pages/games-library-tabs/CatalogTab.tsx",
-          "line": 199
+          "line": 201
         }
       ]
     },
@@ -5397,33 +3707,7 @@
           "sourceProp": "setSelectedGame",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/pages/games-library-tabs/CatalogTab.tsx",
-          "line": 282
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-        "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard"
-      ],
-      "propPath": [
-        "locale",
-        "visualTitle"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard",
-          "sourceProp": "locale",
-          "targetProp": "visualTitle",
-          "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 212
+          "line": 284
         }
       ]
     },
@@ -5449,7 +3733,7 @@
           "sourceProp": "translations",
           "targetProp": "description",
           "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 249
+          "line": 245
         }
       ]
     },
@@ -5475,7 +3759,7 @@
           "sourceProp": "translations",
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 249
+          "line": 245
         }
       ]
     },
@@ -5632,188 +3916,6 @@
           "targetProp": "onClose",
           "relativePath": "src/features/playwright/components/PlaywrightEngineSettingsModal.tsx",
           "line": 25
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "panelClassName",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "panelClassName",
-          "targetProp": "className",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 644
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "headerTitle",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "headerTitle",
-          "targetProp": "header",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 644
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "headerDescription",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "headerDescription",
-          "targetProp": "header",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 644
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "renderHeaderActions",
-        "header"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "renderHeaderActions",
-          "targetProp": "header",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 644
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onTogglePathTree",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onTogglePathTree",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
-          "line": 199
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "onToggleInspector",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "onToggleInspector",
-          "targetProp": "onClick",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
-          "line": 328
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-      "sinkComponentId": "src/shared/ui/status-badge.tsx#StatusBadge",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-        "src/shared/ui/status-badge.tsx#StatusBadge"
-      ],
-      "propPath": [
-        "isInspectorVisible",
-        "status"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-          "toComponentId": "src/shared/ui/status-badge.tsx#StatusBadge",
-          "sourceProp": "isInspectorVisible",
-          "targetProp": "status",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
-          "line": 388
         }
       ]
     },
@@ -6048,110 +4150,6 @@
           "targetProp": "disabled",
           "relativePath": "src/features/integrations/components/connections/integration-modal/IntegrationSettingsContent.tsx",
           "line": 154
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onRelist",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onRelist",
-          "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-          "line": 193
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "isRefreshingSession",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "isRefreshingSession",
-          "targetProp": "disabled",
-          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-          "line": 219
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onLiveCheck",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onLiveCheck",
-          "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-          "line": 219
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "onRefreshSession",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "onRefreshSession",
-          "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-          "line": 243
         }
       ]
     },
@@ -6498,58 +4496,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-      "sinkComponentId": "src/shared/ui/switch.tsx#Switch",
-      "componentPath": [
-        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-        "src/shared/ui/switch.tsx#Switch"
-      ],
-      "propPath": [
-        "onToggleDisabled",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-          "toComponentId": "src/shared/ui/switch.tsx#Switch",
-          "sourceProp": "onToggleDisabled",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 55
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-      "componentPath": [
-        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-        "src/shared/ui/checkbox.tsx#Checkbox"
-      ],
-      "propPath": [
-        "onToggleSection",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
-          "sourceProp": "onToggleSection",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-          "line": 76
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/features/kangur/social/admin/workspace/SocialJobStatusPill.tsx#SocialJobStatusPill",
       "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
       "componentPath": [
@@ -6775,7 +4721,7 @@
           "sourceProp": "onImport",
           "targetProp": "onClick",
           "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
-          "line": 43
+          "line": 42
         }
       ]
     },
@@ -6801,59 +4747,7 @@
           "sourceProp": "order",
           "targetProp": "onClick",
           "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
-          "line": 43
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "isQuickImportPending",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "isQuickImportPending",
-          "targetProp": "disabled",
-          "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
-          "line": 43
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "isPreviewStale",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "isPreviewStale",
-          "targetProp": "disabled",
-          "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
-          "line": 43
+          "line": 42
         }
       ]
     },
@@ -7200,214 +5094,6 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime"
-      ],
-      "propPath": [
-        "engineOverrides",
-        "engineOverrides"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
-          "sourceProp": "engineOverrides",
-          "targetProp": "engineOverrides",
-          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 415
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime"
-      ],
-      "propPath": [
-        "gameId",
-        "gameId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
-          "sourceProp": "gameId",
-          "targetProp": "gameId",
-          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 415
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime"
-      ],
-      "propPath": [
-        "instanceId",
-        "instanceId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
-          "sourceProp": "instanceId",
-          "targetProp": "instanceId",
-          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 415
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime"
-      ],
-      "propPath": [
-        "onFinish",
-        "onFinish"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
-          "sourceProp": "onFinish",
-          "targetProp": "onFinish",
-          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 415
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime"
-      ],
-      "propPath": [
-        "engineOverrides",
-        "engineOverrides"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-          "toComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime",
-          "sourceProp": "engineOverrides",
-          "targetProp": "engineOverrides",
-          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 425
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime"
-      ],
-      "propPath": [
-        "gameId",
-        "gameId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-          "toComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime",
-          "sourceProp": "gameId",
-          "targetProp": "gameId",
-          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 425
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime"
-      ],
-      "propPath": [
-        "instanceId",
-        "instanceId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-          "toComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime",
-          "sourceProp": "instanceId",
-          "targetProp": "instanceId",
-          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 425
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime"
-      ],
-      "propPath": [
-        "onFinish",
-        "onFinish"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-          "toComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurResolvedLaunchableGameInstanceRuntime",
-          "sourceProp": "onFinish",
-          "targetProp": "onFinish",
-          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 425
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/LogicalReasoningIfThenGame.tsx#LogicalReasoningIfThenGame",
       "sinkComponentId": "src/features/kangur/ui/components/LogicalReasoningIfThenGame.tsx#DraggableCase",
       "componentPath": [
@@ -7426,110 +5112,6 @@
           "targetProp": "copy",
           "relativePath": "src/features/kangur/ui/components/LogicalReasoningIfThenGame.tsx",
           "line": 461
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog"
-      ],
-      "propPath": [
-        "onOpenChange",
-        "onOpenChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
-          "sourceProp": "onOpenChange",
-          "targetProp": "onOpenChange",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 39
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-      "sinkComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark"
-      ],
-      "propPath": [
-        "locale",
-        "locale"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-          "toComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-          "sourceProp": "locale",
-          "targetProp": "locale",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 219
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark"
-      ],
-      "propPath": [
-        "locale",
-        "locale"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-          "toComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-          "sourceProp": "locale",
-          "targetProp": "locale",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 258
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark"
-      ],
-      "propPath": [
-        "locale",
-        "locale"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-          "toComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardHeroWordmark",
-          "sourceProp": "locale",
-          "targetProp": "locale",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 550
         }
       ]
     },
@@ -7607,7 +5189,7 @@
           "sourceProp": "onOpenChange",
           "targetProp": "onOpenChange",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx",
-          "line": 79
+          "line": 37
         }
       ]
     },
@@ -7660,32 +5242,6 @@
           "targetProp": "docsTooltipsEnabled",
           "relativePath": "src/features/kangur/ui/pages/ParentDashboard.tsx",
           "line": 788
-        }
-      ]
-    },
-    {
-      "score": 54,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-      "sinkComponentId": "src/features/kangur/ui/components/wordmarks/LazyKangurLessonsWordmark.tsx#LazyKangurLessonsWordmark",
-      "componentPath": [
-        "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-        "src/features/kangur/ui/components/wordmarks/LazyKangurLessonsWordmark.tsx#LazyKangurLessonsWordmark"
-      ],
-      "propPath": [
-        "locale",
-        "locale"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-          "toComponentId": "src/features/kangur/ui/components/wordmarks/LazyKangurLessonsWordmark.tsx#LazyKangurLessonsWordmark",
-          "sourceProp": "locale",
-          "targetProp": "locale",
-          "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 224
         }
       ]
     },
@@ -8058,58 +5614,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-      "sinkComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand"
-      ],
-      "propPath": [
-        "hourAngle",
-        "angleDegrees"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-          "toComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-          "sourceProp": "hourAngle",
-          "targetProp": "angleDegrees",
-          "relativePath": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
-          "line": 205
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-      "sinkComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-      "componentPath": [
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-        "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand"
-      ],
-      "propPath": [
-        "minuteAngle",
-        "angleDegrees"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-          "toComponentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHand",
-          "sourceProp": "minuteAngle",
-          "targetProp": "angleDegrees",
-          "relativePath": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
-          "line": 215
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
       "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
       "componentPath": [
@@ -8370,84 +5874,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushWaitingView",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushWaitingView",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "handleCopyMatchId",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushWaitingView",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "handleCopyMatchId",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 251
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushLoadingView",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushLoadingView",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "handleRetryMatch",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushLoadingView",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "handleRetryMatch",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 287
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
-      "componentPath": [
-        "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
-      ],
-      "propPath": [
-        "handleRetryMatch",
-        "onRestart"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
-          "sourceProp": "handleRetryMatch",
-          "targetProp": "onRestart",
-          "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 350
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushBoardSide",
       "sinkComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
       "componentPath": [
@@ -8465,7 +5891,7 @@
           "sourceProp": "currentTiles",
           "targetProp": "tiles",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 502
+          "line": 491
         }
       ]
     },
@@ -8648,162 +6074,6 @@
           "targetProp": "data-testid",
           "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.cards.tsx",
           "line": 64
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog"
-      ],
-      "propPath": [
-        "isOpen",
-        "open"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
-          "sourceProp": "isOpen",
-          "targetProp": "open",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 39
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
-      ],
-      "propPath": [
-        "preview",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-          "sourceProp": "preview",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 45
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurTextField",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurTextField"
-      ],
-      "propPath": [
-        "draftValue",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurTextField",
-          "sourceProp": "draftValue",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 53
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurTextField",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurTextField"
-      ],
-      "propPath": [
-        "onDraftChange",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurTextField.tsx#KangurTextField",
-          "sourceProp": "onDraftChange",
-          "targetProp": "onChange",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 53
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "onSave",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "onSave",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 70
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "isDisabled",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "isDisabled",
-          "targetProp": "disabled",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 70
         }
       ]
     },
@@ -9540,84 +6810,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-      "sinkComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-      "componentPath": [
-        "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-        "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary"
-      ],
-      "propPath": [
-        "baselineLabel",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-          "toComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-          "sourceProp": "baselineLabel",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx",
-          "line": 124
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-      "sinkComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-      "componentPath": [
-        "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-        "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary"
-      ],
-      "propPath": [
-        "confidenceLabel",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-          "toComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-          "sourceProp": "confidenceLabel",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx",
-          "line": 131
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-      "sinkComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-      "componentPath": [
-        "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-        "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary"
-      ],
-      "propPath": [
-        "updatedLabel",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-          "toComponentId": "src/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary.tsx#KangurLabeledValueSummary",
-          "sourceProp": "updatedLabel",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx",
-          "line": 138
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileHeroWidget.tsx#KangurLearnerProfileHeroAuthActions",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
       "componentPath": [
@@ -9791,85 +6983,7 @@
           "sourceProp": "definitionLabel",
           "targetProp": "label",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 119
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "isCoarsePointer",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "isCoarsePointer",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 153
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "lessonPrint",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "lessonPrint",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 153
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "printPanelId",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "printPanelId",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 153
+          "line": 136
         }
       ]
     },
@@ -9895,7 +7009,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 217
+          "line": 225
         }
       ]
     },
@@ -9921,7 +7035,7 @@
           "sourceProp": "onRestart",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 217
+          "line": 225
         }
       ]
     },
@@ -9947,7 +7061,7 @@
           "sourceProp": "blockId",
           "targetProp": "key",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 245
+          "line": 253
         }
       ]
     },
@@ -9973,7 +7087,7 @@
           "sourceProp": "instanceKey",
           "targetProp": "key",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 245
+          "line": 253
         }
       ]
     },
@@ -9999,7 +7113,7 @@
           "sourceProp": "activityRuntime",
           "targetProp": "runtime",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 245
+          "line": 253
         }
       ]
     },
@@ -10112,32 +7226,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "heroContent",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "heroContent",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 209
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
       "componentPath": [
@@ -10155,33 +7243,7 @@
           "sourceProp": "onGoToProfile",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 261
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "heroContent",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "heroContent",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 531
+          "line": 249
         }
       ]
     },
@@ -10327,58 +7389,6 @@
         "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard"
       ],
       "propPath": [
-        "isSixYearOld",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard",
-          "sourceProp": "isSixYearOld",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 212
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-        "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard"
-      ],
-      "propPath": [
-        "subject",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard",
-          "sourceProp": "subject",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 212
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-        "src/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard.tsx#KangurResolvedPageIntroCard"
-      ],
-      "propPath": [
         "showWordmark",
         "visualTitle"
       ],
@@ -10389,7 +7399,7 @@
           "sourceProp": "showWordmark",
           "targetProp": "visualTitle",
           "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 212
+          "line": 206
         }
       ]
     },
@@ -10415,7 +7425,7 @@
           "sourceProp": "ageGroupLabel",
           "targetProp": "description",
           "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
-          "line": 249
+          "line": 245
         }
       ]
     },
@@ -10624,58 +7634,6 @@
           "targetProp": "canReadAdminSettings",
           "relativePath": "src/features/admin/layout/AdminLayout.tsx",
           "line": 430
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel"
-      ],
-      "propPath": [
-        "bodyClassName",
-        "bodyClassName"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/ui/FolderTreePanel.tsx#FolderTreePanel",
-          "sourceProp": "bodyClassName",
-          "targetProp": "bodyClassName",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 644
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "sinkComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
-      "componentPath": [
-        "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-        "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
-      ],
-      "propPath": [
-        "emptyLabel",
-        "emptyLabel"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-          "toComponentId": "src/shared/lib/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
-          "sourceProp": "emptyLabel",
-          "targetProp": "emptyLabel",
-          "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-          "line": 696
         }
       ]
     },
@@ -12504,6 +9462,110 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime"
+      ],
+      "propPath": [
+        "engineOverrides",
+        "engineOverrides"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "sourceProp": "engineOverrides",
+          "targetProp": "engineOverrides",
+          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
+          "line": 409
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime"
+      ],
+      "propPath": [
+        "gameId",
+        "gameId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "sourceProp": "gameId",
+          "targetProp": "gameId",
+          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
+          "line": 409
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime"
+      ],
+      "propPath": [
+        "instanceId",
+        "instanceId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "sourceProp": "instanceId",
+          "targetProp": "instanceId",
+          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
+          "line": 409
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
+          "line": 409
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
       "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
       "componentPath": [
@@ -12911,7 +9973,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 350
+          "line": 339
         }
       ]
     },
@@ -12937,7 +9999,7 @@
           "sourceProp": "ariaLabel",
           "targetProp": "ariaLabel",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 502
+          "line": 491
         }
       ]
     },
@@ -12963,7 +10025,7 @@
           "sourceProp": "dataTestId",
           "targetProp": "dataTestId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 502
+          "line": 491
         }
       ]
     },
@@ -12989,7 +10051,7 @@
           "sourceProp": "droppableId",
           "targetProp": "droppableId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 502
+          "line": 491
         }
       ]
     },
@@ -13336,32 +10398,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-      "componentPath": [
-        "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-        "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
-      ],
-      "propPath": [
-        "title",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-          "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
-          "sourceProp": "title",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-          "line": 45
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/assignments/KangurAssignmentSpotlight.tsx#KangurAssignmentSpotlight",
       "sinkComponentId": "src/features/kangur/ui/components/assignments/KangurAssignmentSpotlight.tsx#KangurAssignmentSpotlightContent",
       "componentPath": [
@@ -13639,7 +10675,7 @@
           "sourceProp": "description",
           "targetProp": "description",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 119
+          "line": 136
         }
       ]
     },
@@ -13665,7 +10701,7 @@
           "sourceProp": "title",
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 119
+          "line": 136
         }
       ]
     },
@@ -13900,84 +10936,6 @@
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
           "line": 154
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "onBack",
-        "onBack"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "onBack",
-          "targetProp": "onBack",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 209
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "onBack",
-        "onBack"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "onBack",
-          "targetProp": "onBack",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 248
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-      "sinkComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-      "componentPath": [
-        "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-        "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard"
-      ],
-      "propPath": [
-        "onBack",
-        "onBack"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-          "toComponentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
-          "sourceProp": "onBack",
-          "targetProp": "onBack",
-          "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-          "line": 531
         }
       ]
     },
@@ -14429,84 +11387,6 @@
       "rootFanout": 1,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-      "sinkComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupPasswordField",
-      "componentPath": [
-        "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-        "src/features/kangur/ui/login-page/signup-forms.tsx#SignupPasswordField"
-      ],
-      "propPath": [
-        "isLoading",
-        "isLoading"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-          "toComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupPasswordField",
-          "sourceProp": "isLoading",
-          "targetProp": "isLoading",
-          "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
-          "line": 246
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-      "sinkComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupCaptchaSection",
-      "componentPath": [
-        "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-        "src/features/kangur/ui/login-page/signup-forms.tsx#SignupCaptchaSection"
-      ],
-      "propPath": [
-        "captchaError",
-        "captchaError"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-          "toComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupCaptchaSection",
-          "sourceProp": "captchaError",
-          "targetProp": "captchaError",
-          "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
-          "line": 255
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-      "sinkComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupCaptchaSection",
-      "componentPath": [
-        "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-        "src/features/kangur/ui/login-page/signup-forms.tsx#SignupCaptchaSection"
-      ],
-      "propPath": [
-        "isCaptchaRequired",
-        "isCaptchaRequired"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-          "toComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupCaptchaSection",
-          "sourceProp": "isCaptchaRequired",
-          "targetProp": "isCaptchaRequired",
-          "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
-          "line": 255
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
       "sinkComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupFormFeedback",
       "componentPath": [
         "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
@@ -14523,7 +11403,7 @@
           "sourceProp": "error",
           "targetProp": "error",
           "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
-          "line": 262
+          "line": 272
         }
       ]
     },
@@ -14549,7 +11429,7 @@
           "sourceProp": "notice",
           "targetProp": "notice",
           "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
-          "line": 262
+          "line": 272
         }
       ]
     },
@@ -14575,7 +11455,7 @@
           "sourceProp": "debugUrl",
           "targetProp": "debugUrl",
           "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
-          "line": 327
+          "line": 346
         }
       ]
     },
@@ -14627,7 +11507,7 @@
           "sourceProp": "open",
           "targetProp": "open",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx",
-          "line": 79
+          "line": 37
         }
       ]
     },
@@ -14653,7 +11533,7 @@
           "sourceProp": "title",
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx",
-          "line": 95
+          "line": 53
         }
       ]
     },
@@ -14679,7 +11559,7 @@
           "sourceProp": "description",
           "targetProp": "description",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx",
-          "line": 95
+          "line": 53
         }
       ]
     },
@@ -14705,7 +11585,7 @@
           "sourceProp": "basePath",
           "targetProp": "basePath",
           "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
-          "line": 129
+          "line": 126
         }
       ]
     },
@@ -14972,114 +11852,6 @@
   ],
   "componentBacklog": [
     {
-      "componentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "name": "FilemakerMailSidebar",
-      "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-      "feature": "feature:filemaker",
-      "forwardedPropCount": 11,
-      "outgoingTransitionCount": 28,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "name": "AiPathsMasterTreePanel",
-      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 9,
-      "outgoingTransitionCount": 12,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "name": "KangurAssignmentManagerTimeLimitModal",
-      "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 8,
-      "outgoingTransitionCount": 9,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-      "name": "OrderDetails",
-      "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
-      "feature": "feature:products",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-      "name": "SignupForm",
-      "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "name": "KangurLaunchableGameInstanceRuntime",
-      "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 8,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-      "name": "NumberBalanceRushSummaryView",
-      "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 7,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-      "name": "SocialCaptureSectionSelector",
-      "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-      "name": "ClockHands",
-      "relativePath": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-      "name": "KangurParentDashboardGuestCard",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-      "name": "KangurParentDashboardRestrictedCard",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-      "name": "KangurParentDashboardManagedCard",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
       "name": "StructuredProductNameField",
       "relativePath": "src/features/products/components/form/StructuredProductNameField.tsx",
@@ -15089,45 +11861,9 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-      "name": "AiPathsCanvasToolbar",
-      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-      "name": "KangurLearnerProfileAiTutorMoodStats",
-      "relativePath": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-      "name": "KangurLessonActivityPrintButton",
-      "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx#GamesLibraryGameDialog",
       "name": "GamesLibraryGameDialog",
       "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-      "name": "LessonsCatalogIntroCardWithPageContent",
-      "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 5,
@@ -15143,18 +11879,18 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-      "name": "ListingRowView",
-      "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-      "feature": "feature:integrations",
+      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
+      "name": "AgenticSortActionsPanel",
+      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
+      "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-      "name": "AgenticSortActionsPanel",
-      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
+      "componentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+      "name": "KangurLaunchableGameInstanceRuntime",
+      "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -15872,6 +12608,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+      "name": "SignupForm",
+      "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/pages/lessons/LessonsDeferredEnhancements.tsx#LessonsDeferredEnhancements",
       "name": "LessonsDeferredEnhancements",
       "relativePath": "src/features/kangur/ui/pages/lessons/LessonsDeferredEnhancements.tsx",
@@ -15884,6 +12629,15 @@
       "componentId": "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
       "name": "TextBlock",
       "relativePath": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
+      "name": "OrderDetails",
+      "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
       "feature": "feature:products",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
@@ -16050,117 +12804,27 @@
       "forwardedPropCount": 0,
       "outgoingTransitionCount": 0,
       "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx#KangurPageIntroCard",
+      "name": "KangurPageIntroCard",
+      "relativePath": "src/features/kangur/ui/components/lesson-library/KangurPageIntroCard.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 0,
+      "outgoingTransitionCount": 0,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx#KangurPrimaryNavigation",
+      "name": "KangurPrimaryNavigation",
+      "relativePath": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 0,
+      "outgoingTransitionCount": 0,
+      "hasUnknownSpreadForwarding": true
     }
   ],
   "forwardingComponentBacklog": [
-    {
-      "componentId": "src/features/filemaker/components/FilemakerMailSidebar.tsx#FilemakerMailSidebar",
-      "name": "FilemakerMailSidebar",
-      "relativePath": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-      "feature": "feature:filemaker",
-      "forwardedPropCount": 11,
-      "outgoingTransitionCount": 28,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx#AiPathsMasterTreePanel",
-      "name": "AiPathsMasterTreePanel",
-      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/AiPathsMasterTreePanel.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 9,
-      "outgoingTransitionCount": 12,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx#KangurAssignmentManagerTimeLimitModal",
-      "name": "KangurAssignmentManagerTimeLimitModal",
-      "relativePath": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 8,
-      "outgoingTransitionCount": 9,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
-      "name": "OrderDetails",
-      "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
-      "feature": "feature:products",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
-      "name": "SignupForm",
-      "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
-      "name": "KangurLaunchableGameInstanceRuntime",
-      "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 8,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
-      "name": "NumberBalanceRushSummaryView",
-      "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 7,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
-      "name": "SocialCaptureSectionSelector",
-      "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/ClockLesson.visuals.tsx#ClockHands",
-      "name": "ClockHands",
-      "relativePath": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardGuestCard",
-      "name": "KangurParentDashboardGuestCard",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
-      "name": "KangurParentDashboardRestrictedCard",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardManagedCard",
-      "name": "KangurParentDashboardManagedCard",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
     {
       "componentId": "src/features/products/components/form/StructuredProductNameField.tsx#StructuredProductNameField",
       "name": "StructuredProductNameField",
@@ -16171,45 +12835,9 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx#AiPathsCanvasToolbar",
-      "name": "AiPathsCanvasToolbar",
-      "relativePath": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasToolbar.tsx",
-      "feature": "feature:ai",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx#KangurLearnerProfileAiTutorMoodStats",
-      "name": "KangurLearnerProfileAiTutorMoodStats",
-      "relativePath": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityPrintButton",
-      "name": "KangurLessonActivityPrintButton",
-      "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx#GamesLibraryGameDialog",
       "name": "GamesLibraryGameDialog",
       "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
-      "name": "LessonsCatalogIntroCardWithPageContent",
-      "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 5,
@@ -16225,18 +12853,18 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx#ListingRowView",
-      "name": "ListingRowView",
-      "relativePath": "src/features/integrations/components/listings/TraderaStatusCheckModal.RowItem.tsx",
-      "feature": "feature:integrations",
+      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
+      "name": "AgenticSortActionsPanel",
+      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
+      "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx#AgenticSortActionsPanel",
-      "name": "AgenticSortActionsPanel",
-      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
+      "componentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+      "name": "KangurLaunchableGameInstanceRuntime",
+      "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -16954,6 +13582,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+      "name": "SignupForm",
+      "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/pages/lessons/LessonsDeferredEnhancements.tsx#LessonsDeferredEnhancements",
       "name": "LessonsDeferredEnhancements",
       "relativePath": "src/features/kangur/ui/pages/lessons/LessonsDeferredEnhancements.tsx",
@@ -16966,6 +13603,15 @@
       "componentId": "src/features/products/components/scans/ProductScanAmazonDetails.tsx#TextBlock",
       "name": "TextBlock",
       "relativePath": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx#OrderDetails",
+      "name": "OrderDetails",
+      "relativePath": "src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx",
       "feature": "feature:products",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
@@ -17530,17 +14176,8 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushWaitingView",
-      "name": "NumberBalanceRushWaitingView",
-      "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 1,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushLoadingView",
-      "name": "NumberBalanceRushLoadingView",
+      "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushSummaryView",
+      "name": "NumberBalanceRushSummaryView",
       "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 1,
@@ -17737,6 +14374,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx#KangurParentDashboardRestrictedCard",
+      "name": "KangurParentDashboardRestrictedCard",
+      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx#LearnerCardStatusChip",
       "name": "LearnerCardStatusChip",
       "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx",
@@ -17803,6 +14449,15 @@
       "componentId": "src/features/kangur/ui/pages/ParentDashboard.tsx#ParentDashboardAuthLoadingState",
       "name": "ParentDashboardAuthLoadingState",
       "relativePath": "src/features/kangur/ui/pages/ParentDashboard.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx#LessonsCatalogIntroCardWithPageContent",
+      "name": "LessonsCatalogIntroCardWithPageContent",
+      "relativePath": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
@@ -18027,9 +14682,9 @@
   ],
   "chains": [
     {
-      "score": 93,
+      "score": 83,
       "depth": 3,
-      "rootFanout": 2,
+      "rootFanout": 1,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
       "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider",
@@ -18050,7 +14705,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
-          "line": 415
+          "line": 409
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",

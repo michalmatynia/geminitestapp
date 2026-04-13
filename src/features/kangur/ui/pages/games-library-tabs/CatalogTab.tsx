@@ -40,11 +40,13 @@ type GamesLibrarySelectedGame = KangurGameCatalogEntry['game'];
 
 import { useGamesLibraryContext } from '../GamesLibrary.context';
 
+export interface CatalogTabProps {
+  setSelectedGame: (game: KangurGameCatalogEntry['game'], trigger?: HTMLElement | null) => void;
+}
+
 export const CatalogTab = ({
   setSelectedGame,
-}: {
-  setSelectedGame: (game: KangurGameCatalogEntry['game'], trigger?: HTMLElement | null) => void;
-}) => {
+}: CatalogTabProps) => {
   const {
     filters,
     hasActiveFilters,

@@ -282,15 +282,19 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
       <FilemakerMailSidebar
-        selectedAccountId={accountId}
-        selectedMailboxPath={mailboxPath}
-        selectedThreadId={threadId}
-        originPanel={originPanel}
-        recentMailboxFilter={recentMailboxFilter}
-        recentUnreadOnly={recentUnreadOnly}
-        recentQuery={recentQuery}
-        searchContextAccountId={searchContextAccountId}
-        searchQuery={searchQuery}
+        selection={{
+          accountId,
+          mailboxPath,
+          threadId,
+          originPanel,
+        }}
+        filters={{
+          recentMailboxFilter,
+          recentUnreadOnly,
+          recentQuery,
+          searchContextAccountId,
+          searchQuery,
+        }}
         refreshKey={sidebarRefreshKey}
       />
 

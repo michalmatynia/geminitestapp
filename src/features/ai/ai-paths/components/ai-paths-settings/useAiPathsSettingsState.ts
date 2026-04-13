@@ -75,6 +75,7 @@ export function useAiPathsSettingsState({
   const { lastRunAt, lastError } = useRuntimeStatusState();
   const [triggerButtonsReady, setTriggerButtonsReady] = useState(false);
   const [isPathTreeVisible, setIsPathTreeVisible] = useState(true);
+  const [isInspectorVisible, setIsInspectorVisible] = useState(true);
 
   useEffect(() => {
     if (activeTab !== 'canvas') {
@@ -619,6 +620,8 @@ export function useAiPathsSettingsState({
     expandedPaletteGroups,
     isPathTreeVisible,
     setIsPathTreeVisible,
+    isInspectorVisible,
+    setIsInspectorVisible,
     togglePaletteGroup,
     // Presets
     clusterPresets,

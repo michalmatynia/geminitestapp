@@ -9,23 +9,18 @@ import {
   type KangurSocialCapturePageSection,
 } from '@/features/kangur/social/shared/social-capture-content-config';
 
-type Props = {
-  slideKey: string | null;
-  selectedSections: KangurSocialCapturePageSection[];
-  disabled: boolean;
-  isSaving: boolean;
-  onToggleSection: (section: KangurSocialCapturePageSection) => void;
-  onToggleDisabled: () => void;
-};
+import { useSocialCaptureBrowser } from './SocialCaptureBrowserContext';
 
-export function SocialCaptureSectionSelector({
-  slideKey,
-  selectedSections,
-  disabled,
-  isSaving,
-  onToggleSection,
-  onToggleDisabled,
-}: Props): React.JSX.Element {
+export function SocialCaptureSectionSelector(): React.JSX.Element {
+  const {
+    selectedSlideKey: slideKey,
+    selectedSlideSections: selectedSections,
+    selectedSlideDisabled: disabled,
+    isSaving,
+    toggleSection: onToggleSection,
+    toggleSlideDisabled: onToggleDisabled,
+  } = useSocialCaptureBrowser();
+
   const hasSlide = Boolean(slideKey);
   const selectedSet = new Set(selectedSections);
 

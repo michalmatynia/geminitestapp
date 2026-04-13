@@ -271,19 +271,25 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
       <FilemakerMailSidebar
-        selectedAccountId={accountId || accountIdFromRoute}
-        selectedMailboxPath={mailboxPathFromRoute}
-        selectedPanel='compose'
-        originPanel={originPanel}
-        recentMailboxFilter={recentMailboxFilter}
-        recentUnreadOnly={recentUnreadOnly}
-        recentQuery={recentQuery}
-        searchContextAccountId={searchContextAccountId}
-        searchQuery={searchQuery}
-        onAccountUpdated={(account) => {
-          setAccounts((current) =>
-            current.map((entry) => (entry.id === account.id ? account : entry))
-          );
+        selection={{
+          accountId: accountId || accountIdFromRoute,
+          mailboxPath: mailboxPathFromRoute,
+          panel: 'compose',
+          originPanel,
+        }}
+        filters={{
+          recentMailboxFilter,
+          recentUnreadOnly,
+          recentQuery,
+          searchContextAccountId,
+          searchQuery,
+        }}
+        actions={{
+          onAccountUpdated: (account) => {
+            setAccounts((current) =>
+              current.map((entry) => (entry.id === account.id ? account : entry))
+            );
+          },
         }}
       />
 

@@ -1,14 +1,14 @@
 {
   "summary": {
-    "generatedAt": "2026-04-12T19:54:47.872Z",
+    "generatedAt": "2026-04-13T10:17:50.795Z",
     "scannedSourceFiles": 7300,
     "scannedJsxFiles": 2538,
-    "componentCount": 4457,
+    "componentCount": 4459,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 239,
-    "resolvedTransitionCount": 795,
-    "depth2CandidateChainCount": 795,
-    "candidateChainCount": 0,
+    "componentsWithAnyForwarding": 241,
+    "resolvedTransitionCount": 798,
+    "depth2CandidateChainCount": 798,
+    "candidateChainCount": 10,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 13,
     "highPropCountComponentCount": 39,
@@ -16,7 +16,7 @@
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 176
+        "count": 178
       },
       {
         "scope": "feature:integrations",
@@ -72,7 +72,368 @@
       }
     ]
   },
-  "backlog": [],
+  "backlog": [
+    {
+      "score": 93,
+      "depth": 3,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+      "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+        "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
+          "line": 415
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 254
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "calendarSection"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "calendarSection",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "hideModeSwitch"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "hideModeSwitch",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "initialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "initialMode",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "section"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "section",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "showHourHand"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "showHourHand",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "showMinuteHand"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "showMinuteHand",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "showTaskTitle"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "showTaskTitle",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "showTimeDisplay"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "showTimeDisplay",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "rendererProps"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 98
+        }
+      ]
+    }
+  ],
   "transitionBacklog": [
     {
       "score": 182,
@@ -4750,7 +5111,7 @@
           "sourceProp": "item",
           "targetProp": "aria-controls",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 289
+          "line": 282
         }
       ]
     },
@@ -4776,7 +5137,7 @@
           "sourceProp": "item",
           "targetProp": "content",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 332
+          "line": 325
         }
       ]
     },
@@ -7506,7 +7867,7 @@
           "sourceProp": "printPanelLabel",
           "targetProp": "aria-label",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 139
+          "line": 153
         }
       ]
     },
@@ -7532,7 +7893,7 @@
           "sourceProp": "printPanelLabel",
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 139
+          "line": 153
         }
       ]
     },
@@ -14916,7 +15277,7 @@
           "sourceProp": "definitionLabel",
           "targetProp": "label",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 105
+          "line": 119
         }
       ]
     },
@@ -14942,7 +15303,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 139
+          "line": 153
         }
       ]
     },
@@ -14968,7 +15329,7 @@
           "sourceProp": "lessonPrint",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 139
+          "line": 153
         }
       ]
     },
@@ -14994,7 +15355,7 @@
           "sourceProp": "printPanelId",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 139
+          "line": 153
         }
       ]
     },
@@ -15020,7 +15381,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 203
+          "line": 217
         }
       ]
     },
@@ -15046,7 +15407,7 @@
           "sourceProp": "onRestart",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 203
+          "line": 217
         }
       ]
     },
@@ -15072,7 +15433,7 @@
           "sourceProp": "blockId",
           "targetProp": "key",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 231
+          "line": 245
         }
       ]
     },
@@ -15098,7 +15459,7 @@
           "sourceProp": "instanceKey",
           "targetProp": "key",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 231
+          "line": 245
         }
       ]
     },
@@ -15124,7 +15485,7 @@
           "sourceProp": "activityRuntime",
           "targetProp": "runtime",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 231
+          "line": 245
         }
       ]
     },
@@ -16892,7 +17253,7 @@
           "sourceProp": "depth",
           "targetProp": "depth",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 345
+          "line": 338
         }
       ]
     },
@@ -16918,7 +17279,7 @@
           "sourceProp": "depth",
           "targetProp": "depth",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 424
+          "line": 417
         }
       ]
     },
@@ -18305,6 +18666,84 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime"
+      ],
+      "propPath": [
+        "runtime",
+        "runtime"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "runtime",
+          "targetProp": "runtime",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+      "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+        "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 254
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavActionLink",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
       "componentPath": [
@@ -19440,7 +19879,7 @@
           "sourceProp": "description",
           "targetProp": "description",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 105
+          "line": 119
         }
       ]
     },
@@ -19466,7 +19905,7 @@
           "sourceProp": "title",
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx",
-          "line": 105
+          "line": 119
         }
       ]
     },
@@ -21701,6 +22140,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "name": "KangurLessonActivityInstanceRuntimeView",
+      "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavActionButton",
       "name": "KangurNavActionButton",
       "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
@@ -21811,15 +22259,6 @@
     {
       "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx#LearnerPasswordField",
       "name": "LearnerPasswordField",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 2,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx#LearnerStatusField",
-      "name": "LearnerStatusField",
       "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 2,
@@ -22783,6 +23222,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "name": "KangurLessonActivityInstanceRuntimeView",
+      "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavActionButton",
       "name": "KangurNavActionButton",
       "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
@@ -23422,6 +23870,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+      "name": "KangurLessonActivityInstanceRuntime",
+      "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavActionLink",
       "name": "KangurNavActionLink",
       "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
@@ -23980,5 +24437,366 @@
       "hasUnknownSpreadForwarding": true
     }
   ],
-  "chains": []
+  "chains": [
+    {
+      "score": 93,
+      "depth": 3,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+      "sinkComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+        "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx#KangurLaunchableGameInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx",
+          "line": 415
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntime",
+          "toComponentId": "src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx#KangurLessonActivityRuntimeProvider",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 254
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "calendarSection"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "calendarSection",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "hideModeSwitch"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "hideModeSwitch",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "initialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "initialMode",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "section"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "section",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "showHourHand"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "showHourHand",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "showMinuteHand"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "showMinuteHand",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "showTaskTitle"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "showTaskTitle",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "showTimeDisplay"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "showTimeDisplay",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+      "sinkComponentId": "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+        "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+        "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame"
+      ],
+      "propPath": [
+        "rendererProps",
+        "rendererProps",
+        "rendererProps"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx#KangurLessonActivityInstanceRuntimeView",
+          "toComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityInstanceRuntime.tsx",
+          "line": 169
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx#KangurLessonActivityRuntime",
+          "toComponentId": "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame",
+          "sourceProp": "rendererProps",
+          "targetProp": "rendererProps",
+          "relativePath": "src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx",
+          "line": 98
+        }
+      ]
+    }
+  ]
 }

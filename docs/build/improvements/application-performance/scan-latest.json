@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-12T15:40:31.457Z",
+  "generatedAt": "2026-04-13T10:50:50.325Z",
   "track": {
     "id": "application-performance",
     "title": "Application performance",
@@ -119,34 +119,20 @@
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-12T15:28:32.010Z",
+        "generatedAt": "2026-04-13T10:50:50.323Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 1,
+        "stepCount": 0,
+        "automaticStepCount": 0,
         "manualStepCount": 0,
-        "passedStepCount": 1,
+        "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "application-performance-fast-gate",
-            "title": "Run the fast performance operations gate",
-            "trackId": "application-performance",
-            "phase": "audit",
-            "mode": "automatic",
-            "writes": false,
-            "status": "passed",
-            "outputs": [],
-            "instructions": [],
-            "script": "perf:ops:fast",
-            "durationMs": 29949
-          }
-        ],
-        "status": "passed"
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "classify",

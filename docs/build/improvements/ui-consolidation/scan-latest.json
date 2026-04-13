@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-12T15:40:31.457Z",
+  "generatedAt": "2026-04-13T10:50:50.325Z",
   "track": {
     "id": "ui-consolidation",
     "title": "UI consolidation",
@@ -100,48 +100,26 @@
     "category": "ui",
     "defaultSelected": true,
     "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
-    "overallStatus": "failed",
+    "overallStatus": "attention",
     "latestGeneratedAt": "2026-04-12T15:40:31.397Z",
     "docDir": "docs/build/improvements/ui-consolidation",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-12T15:28:32.010Z",
+        "generatedAt": "2026-04-13T10:50:50.323Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 1,
+        "stepCount": 0,
+        "automaticStepCount": 0,
         "manualStepCount": 0,
         "passedStepCount": 0,
-        "failedStepCount": 1,
+        "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [
-          "docs/ui-consolidation/scan-latest.md",
-          "docs/ui-consolidation/scan-latest.json",
-          "docs/ui-consolidation/inventory-latest.csv"
-        ],
-        "steps": [
-          {
-            "id": "ui-consolidation-guardrail",
-            "title": "Run UI consolidation guardrail",
-            "trackId": "ui-consolidation",
-            "phase": "audit",
-            "mode": "automatic",
-            "writes": false,
-            "status": "failed",
-            "outputs": [
-              "docs/ui-consolidation/scan-latest.md",
-              "docs/ui-consolidation/scan-latest.json",
-              "docs/ui-consolidation/inventory-latest.csv"
-            ],
-            "instructions": [],
-            "script": "check:ui-consolidation",
-            "durationMs": 4536
-          }
-        ],
-        "status": "failed"
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "classify",

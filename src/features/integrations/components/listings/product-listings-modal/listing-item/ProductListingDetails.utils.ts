@@ -127,6 +127,8 @@ export const resolveTraderaExecutionSummary = (
   categoryMappingReason: string | null;
   categoryMatchScope: string | null;
   categoryInternalCategoryId: string | null;
+  categoryMappingRecoveredFromAnotherConnection: boolean | null;
+  categoryMappingSourceConnectionId: string | null;
   duplicateLinked: boolean | null;
   duplicateMatchStrategy: string | null;
   duplicateMatchedProductId: string | null;
@@ -209,6 +211,10 @@ export const resolveTraderaExecutionSummary = (
     categoryMappingReason: readString(metadata['categoryMappingReason']),
     categoryMatchScope: readString(metadata['categoryMatchScope']),
     categoryInternalCategoryId: readString(metadata['categoryInternalCategoryId']),
+    categoryMappingRecoveredFromAnotherConnection: readBoolean(
+      metadata['categoryMappingRecoveredFromAnotherConnection']
+    ),
+    categoryMappingSourceConnectionId: readString(metadata['categoryMappingSourceConnectionId']),
     duplicateLinked:
       readBoolean(metadata['duplicateLinked']) ??
       readBoolean(rawResult['duplicateLinked']) ??

@@ -165,6 +165,7 @@ const resolveRowStatusLabel = (row: ScanModalRow): string =>
     ? STATUS_LABELS[row.status]
     : resolveProductScanRunFeedbackPresentation(row.status, {
         manualVerificationPending: isManualVerificationPending(row.scan),
+        manualVerificationMessage: row.scan?.asinUpdateMessage ?? null,
         amazonEvaluationStatus: row.scan?.amazonEvaluation?.status ?? null,
         amazonEvaluationLanguageAccepted: row.scan?.amazonEvaluation?.languageAccepted ?? null,
         supplierEvaluationStatus: row.scan?.supplierEvaluation?.status ?? null,
@@ -175,6 +176,7 @@ const resolveRowStatusClassName = (row: ScanModalRow): string =>
     ? STATUS_CLASSES[row.status]
     : resolveProductScanRunFeedbackPresentation(row.status, {
         manualVerificationPending: isManualVerificationPending(row.scan),
+        manualVerificationMessage: row.scan?.asinUpdateMessage ?? null,
         amazonEvaluationStatus: row.scan?.amazonEvaluation?.status ?? null,
         amazonEvaluationLanguageAccepted: row.scan?.amazonEvaluation?.languageAccepted ?? null,
         supplierEvaluationStatus: row.scan?.supplierEvaluation?.status ?? null,

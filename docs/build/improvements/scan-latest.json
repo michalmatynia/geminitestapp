@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-12T15:40:31.457Z",
+  "generatedAt": "2026-04-13T10:50:50.325Z",
   "defaultTrackIds": [
     "products-parameter-integrity",
     "products-category-schema-normalization",
@@ -51,7 +51,7 @@
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-12T15:28:32.010Z",
+          "generatedAt": "2026-04-13T10:50:50.323Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -219,7 +219,7 @@
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-12T15:28:32.010Z",
+          "generatedAt": "2026-04-13T10:50:50.323Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -410,48 +410,26 @@
       "category": "ui",
       "defaultSelected": true,
       "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
-      "overallStatus": "failed",
+      "overallStatus": "attention",
       "latestGeneratedAt": "2026-04-12T15:40:31.397Z",
       "docDir": "docs/build/improvements/ui-consolidation",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-12T15:28:32.010Z",
+          "generatedAt": "2026-04-13T10:50:50.323Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
-          "stepCount": 1,
-          "automaticStepCount": 1,
+          "stepCount": 0,
+          "automaticStepCount": 0,
           "manualStepCount": 0,
           "passedStepCount": 0,
-          "failedStepCount": 1,
+          "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
-          "outputs": [
-            "docs/ui-consolidation/scan-latest.md",
-            "docs/ui-consolidation/scan-latest.json",
-            "docs/ui-consolidation/inventory-latest.csv"
-          ],
-          "steps": [
-            {
-              "id": "ui-consolidation-guardrail",
-              "title": "Run UI consolidation guardrail",
-              "trackId": "ui-consolidation",
-              "phase": "audit",
-              "mode": "automatic",
-              "writes": false,
-              "status": "failed",
-              "outputs": [
-                "docs/ui-consolidation/scan-latest.md",
-                "docs/ui-consolidation/scan-latest.json",
-                "docs/ui-consolidation/inventory-latest.csv"
-              ],
-              "instructions": [],
-              "script": "check:ui-consolidation",
-              "durationMs": 4536
-            }
-          ],
-          "status": "failed"
+          "outputs": [],
+          "steps": [],
+          "status": "not-selected"
         },
         {
           "phase": "classify",
@@ -551,34 +529,20 @@
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-12T15:28:32.010Z",
+          "generatedAt": "2026-04-13T10:50:50.323Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
-          "stepCount": 1,
-          "automaticStepCount": 1,
+          "stepCount": 0,
+          "automaticStepCount": 0,
           "manualStepCount": 0,
-          "passedStepCount": 1,
+          "passedStepCount": 0,
           "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
           "outputs": [],
-          "steps": [
-            {
-              "id": "application-performance-fast-gate",
-              "title": "Run the fast performance operations gate",
-              "trackId": "application-performance",
-              "phase": "audit",
-              "mode": "automatic",
-              "writes": false,
-              "status": "passed",
-              "outputs": [],
-              "instructions": [],
-              "script": "perf:ops:fast",
-              "durationMs": 29949
-            }
-          ],
-          "status": "passed"
+          "steps": [],
+          "status": "not-selected"
         },
         {
           "phase": "classify",
@@ -708,40 +672,20 @@
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-12T15:28:32.010Z",
+          "generatedAt": "2026-04-13T10:50:50.323Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
-          "stepCount": 1,
-          "automaticStepCount": 1,
+          "stepCount": 0,
+          "automaticStepCount": 0,
           "manualStepCount": 0,
-          "passedStepCount": 1,
+          "passedStepCount": 0,
           "failedStepCount": 0,
           "blockedStepCount": 0,
           "plannedStepCount": 0,
-          "outputs": [
-            "docs/metrics/testing-suite-inventory-latest.md",
-            "docs/metrics/testing-suite-inventory-latest.json"
-          ],
-          "steps": [
-            {
-              "id": "testing-quality-suite-inventory",
-              "title": "Refresh the testing suite inventory",
-              "trackId": "testing-quality-baseline",
-              "phase": "audit",
-              "mode": "automatic",
-              "writes": false,
-              "status": "passed",
-              "outputs": [
-                "docs/metrics/testing-suite-inventory-latest.md",
-                "docs/metrics/testing-suite-inventory-latest.json"
-              ],
-              "instructions": [],
-              "script": "metrics:test-suite-inventory",
-              "durationMs": 254
-            }
-          ],
-          "status": "passed"
+          "outputs": [],
+          "steps": [],
+          "status": "not-selected"
         },
         {
           "phase": "classify",
@@ -850,12 +794,12 @@
       "defaultSelected": true,
       "description": "Runs the core read-only quality checks that establish the current repository baseline.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-12T15:40:31.397Z",
+      "latestGeneratedAt": "2026-04-13T10:50:50.323Z",
       "docDir": "docs/build/improvements/repo-quality-baseline",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-12T15:28:32.010Z",
+          "generatedAt": "2026-04-13T10:50:50.323Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -885,7 +829,7 @@
               ],
               "instructions": [],
               "script": "check:api-error-sources",
-              "durationMs": 258
+              "durationMs": 268
             },
             {
               "id": "repo-quality-canonical-sitewide",
@@ -898,7 +842,7 @@
               "outputs": [],
               "instructions": [],
               "script": "canonical:check:sitewide",
-              "durationMs": 1771
+              "durationMs": 1792
             }
           ],
           "status": "passed"

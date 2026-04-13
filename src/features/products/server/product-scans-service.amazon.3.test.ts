@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   resolveProductScannerHeadlessMock: vi.fn(),
   buildProductScannerEngineRequestOptionsMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorConfigMock: vi.fn(),
+  resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock: vi.fn(),
   resolveProductScanner1688CandidateEvaluatorConfigMock: vi.fn(),
@@ -100,6 +101,8 @@ vi.mock('./product-scanner-settings', () => ({
     mocks.buildProductScannerEngineRequestOptionsMock(...args),
   resolveProductScannerAmazonCandidateEvaluatorConfig: (...args: unknown[]) =>
     mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock(...args),
+  resolveProductScannerAmazonCandidateEvaluatorTriageConfig: (...args: unknown[]) =>
+    mocks.resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock(...args),
   resolveProductScannerAmazonCandidateEvaluatorProbeConfig: (...args: unknown[]) =>
     mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock(...args),
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfig: (...args: unknown[]) =>
@@ -169,6 +172,44 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
 describe('product-scans-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 240000,
+      amazonImageSearchProvider: 'google_images_upload',
+      amazonImageSearchFallbackProvider: 'google_lens_upload',
+      playwrightSettingsOverrides: {
+        headless: true,
+      },
+    });
+    mocks.resolveProductScannerHeadlessMock.mockResolvedValue(true);
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
+    const defaultAmazonEvaluationConfig = {
+      enabled: false,
+      mode: 'disabled',
+      threshold: 0.7,
+      onlyForAmbiguousCandidates: false,
+      candidateSimilarityMode: 'ai_only',
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'ai_only',
+      modelId: null,
+      systemPrompt: null,
+      brainApplied: null,
+    };
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue(
+      defaultAmazonEvaluationConfig
+    );
+    mocks.resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock.mockImplementation(
+      async () => defaultAmazonEvaluationConfig
+    );
+    mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock.mockImplementation(
+      async () => defaultAmazonEvaluationConfig
+    );
+    mocks.resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock.mockImplementation(
+      async () => defaultAmazonEvaluationConfig
+    );
   });
 
   it('skips the AI evaluator for non-ambiguous matches when configured to do so', async () => {
@@ -241,30 +282,22 @@ describe('product-scans-service', () => {
         status: 'completed',
         asin: 'B00TEST123',
         asinUpdateStatus: 'unchanged',
-        amazonEvaluation: expect.objectContaining({
-          status: 'skipped',
-          proceed: true,
-        }),
-        steps: expect.arrayContaining([
-          expect.objectContaining({
-            key: 'amazon_ai_evaluate',
-            status: 'skipped',
-            resultCode: 'evaluation_skipped',
-          }),
+        amazonEvaluation: null,
+        steps: [
           expect.objectContaining({
             key: 'product_asin_update',
             status: 'completed',
             resultCode: 'asin_unchanged',
           }),
-        ]),
+        ],
       })
     );
     expect(result).toEqual(
       expect.objectContaining({
         status: 'completed',
-        amazonEvaluation: expect.objectContaining({
-          status: 'skipped',
-        }),
+        asin: 'B00TEST123',
+        asinUpdateStatus: 'unchanged',
+        amazonEvaluation: null,
       })
     );
   });
@@ -421,6 +454,454 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         status: 'conflict',
         asinUpdateStatus: 'conflict',
+      })
+    );
+  });
+
+  it('reranks and filters Amazon candidates before continuing with the top AI-triaged result', async () => {
+    const scan = createScan({
+      status: 'running',
+      imageCandidates: [
+        {
+          id: 'image-1',
+          filepath: null,
+          url: 'data:image/jpeg;base64,QUJD',
+          filename: 'product-1.jpg',
+        },
+      ],
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'triage_ready',
+        matchedImageId: 'image-1',
+        candidateUrls: [
+          'https://www.amazon.de/dp/B00TEST123',
+          'https://www.amazon.com/dp/B00TEST456',
+          'https://www.amazon.com/dp/B00TEST789',
+        ],
+        candidateResults: [
+          {
+            url: 'https://www.amazon.de/dp/B00TEST123',
+            score: 0.93,
+            asin: 'B00TEST123',
+            marketplaceDomain: 'amazon.de',
+            title: 'German listing',
+            snippet: 'Nicht englische Marketplace-Seite',
+            rank: 1,
+          },
+          {
+            url: 'https://www.amazon.com/dp/B00TEST456',
+            score: 0.88,
+            asin: 'B00TEST456',
+            marketplaceDomain: 'amazon.com',
+            title: 'English listing',
+            snippet: 'Best product candidate',
+            rank: 2,
+          },
+          {
+            url: 'https://www.amazon.com/dp/B00TEST789',
+            score: 0.74,
+            asin: 'B00TEST789',
+            marketplaceDomain: 'amazon.com',
+            title: 'Backup English listing',
+            snippet: 'Fallback candidate',
+            rank: 3,
+          },
+        ],
+        steps: [
+          {
+            key: 'google_candidates',
+            label: 'Collect Amazon candidates',
+            group: 'google',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'candidates_ready',
+            status: 'completed',
+            message: 'Collected Amazon candidates.',
+            warning: null,
+            details: [],
+            url: 'https://images.google.com/search',
+            startedAt: '2026-04-11T04:04:00.000Z',
+            completedAt: '2026-04-11T04:04:03.000Z',
+            durationMs: 3000,
+          },
+        ],
+      },
+      finalUrl: 'https://images.google.com/search',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 240000,
+      amazonImageSearchProvider: 'google_images_upload',
+      amazonImageSearchFallbackProvider: 'google_lens_upload',
+      playwrightSettingsOverrides: {
+        headless: true,
+      },
+    });
+    mocks.resolveProductScannerHeadlessMock.mockResolvedValue(true);
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
+    mocks.resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.7,
+      onlyForAmbiguousCandidates: false,
+      candidateSimilarityMode: 'ai_only',
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'ai_only',
+      modelId: 'gpt-4.1-mini',
+      systemPrompt: 'Triage Amazon candidates conservatively.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_triage',
+      },
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.85,
+      onlyForAmbiguousCandidates: false,
+      candidateSimilarityMode: 'ai_only',
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'ai_only',
+      modelId: 'gpt-4o',
+      systemPrompt: 'Approve only strong Amazon matches.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_match',
+      },
+    });
+    mocks.runBrainChatCompletionMock.mockResolvedValue({
+      vendor: 'openai',
+      modelId: 'gpt-4.1-mini',
+      text: JSON.stringify({
+        recommendedAction: 'accept',
+        rejectionCategory: null,
+        reasons: ['Prefer the English marketplace candidates.'],
+        candidates: [
+          {
+            url: 'https://www.amazon.de/dp/B00TEST123',
+            keep: false,
+            pageLanguage: 'de',
+            languageAccepted: false,
+            recommendedAction: 'try_next_candidate',
+            rejectionCategory: 'language',
+            reasons: ['Wrong-language marketplace.'],
+            mismatchLabels: ['language'],
+          },
+          {
+            url: 'https://www.amazon.com/dp/B00TEST456',
+            keep: true,
+            confidence: 0.96,
+            rankAfter: 1,
+            pageLanguage: 'en',
+            languageAccepted: true,
+            recommendedAction: 'accept',
+            rejectionCategory: null,
+            reasons: ['Best candidate after marketplace normalization.'],
+            mismatchLabels: [],
+          },
+          {
+            url: 'https://www.amazon.com/dp/B00TEST789',
+            keep: true,
+            confidence: 0.82,
+            rankAfter: 2,
+            pageLanguage: 'en',
+            languageAccepted: true,
+            recommendedAction: 'accept',
+            rejectionCategory: null,
+            reasons: ['Valid fallback candidate.'],
+            mismatchLabels: [],
+          },
+        ],
+      }),
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.runBrainChatCompletionMock).toHaveBeenCalledTimes(1);
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            directAmazonCandidateUrl: 'https://www.amazon.com/dp/B00TEST456',
+            directAmazonCandidateUrls: [
+              'https://www.amazon.com/dp/B00TEST456',
+              'https://www.amazon.com/dp/B00TEST789',
+            ],
+            directAmazonCandidateRank: 1,
+            imageSearchProvider: 'google_images_upload',
+          }),
+        }),
+      })
+    );
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        url: 'https://www.amazon.com/dp/B00TEST456',
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'amazon_ai_triage',
+            status: 'completed',
+            resultCode: 'candidates_triaged',
+          }),
+          expect.objectContaining({
+            key: 'queue_scan',
+            status: 'completed',
+            message: 'Queued the top-ranked Amazon candidate after AI triage.',
+          }),
+        ]),
+        rawResult: expect.objectContaining({
+          candidateTriageSelectedUrls: [
+            'https://www.amazon.com/dp/B00TEST456',
+            'https://www.amazon.com/dp/B00TEST789',
+          ],
+          amazonAiEvidence: expect.objectContaining({
+            stages: expect.arrayContaining([
+              expect.objectContaining({
+                stage: 'candidate_triage',
+                recommendedAction: 'accept',
+                provider: 'google_images_upload',
+                topReasons: ['Prefer the English marketplace candidates.'],
+              }),
+            ]),
+          }),
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        url: 'https://www.amazon.com/dp/B00TEST456',
+      })
+    );
+  });
+
+  it('falls back to the configured image-search provider when triage recommends it', async () => {
+    const scan = createScan({
+      status: 'running',
+      imageCandidates: [
+        {
+          id: 'image-1',
+          filepath: null,
+          url: 'data:image/jpeg;base64,QUJD',
+          filename: 'product-1.jpg',
+        },
+      ],
+      rawResult: {
+        imageSearchProvider: 'google_images_upload',
+        imageSearchProviderHistory: ['google_images_upload'],
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'triage_ready',
+        matchedImageId: 'image-1',
+        candidateUrls: [
+          'https://www.amazon.de/dp/B00TEST123',
+          'https://www.amazon.fr/dp/B00TEST456',
+        ],
+        candidateResults: [
+          {
+            url: 'https://www.amazon.de/dp/B00TEST123',
+            score: 0.92,
+            asin: 'B00TEST123',
+            marketplaceDomain: 'amazon.de',
+            title: 'German listing',
+            snippet: 'German marketplace result',
+            rank: 1,
+          },
+          {
+            url: 'https://www.amazon.fr/dp/B00TEST456',
+            score: 0.86,
+            asin: 'B00TEST456',
+            marketplaceDomain: 'amazon.fr',
+            title: 'French listing',
+            snippet: 'French marketplace result',
+            rank: 2,
+          },
+        ],
+      },
+      finalUrl: 'https://images.google.com/search',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 240000,
+      amazonImageSearchProvider: 'google_images_upload',
+      amazonImageSearchFallbackProvider: 'google_lens_upload',
+      playwrightSettingsOverrides: {
+        headless: true,
+      },
+    });
+    mocks.resolveProductScannerHeadlessMock.mockResolvedValue(true);
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
+    mocks.resolveProductScannerAmazonCandidateEvaluatorTriageConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.7,
+      onlyForAmbiguousCandidates: false,
+      candidateSimilarityMode: 'ai_only',
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'ai_only',
+      modelId: 'gpt-4.1-mini',
+      systemPrompt: 'Escalate to fallback provider when all candidates are wrong-language.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_triage',
+      },
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.85,
+      onlyForAmbiguousCandidates: false,
+      candidateSimilarityMode: 'ai_only',
+      allowedContentLanguage: 'en',
+      rejectNonEnglishContent: true,
+      languageDetectionMode: 'ai_only',
+      modelId: 'gpt-4o',
+      systemPrompt: 'Approve only strong Amazon matches.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_match',
+      },
+    });
+    mocks.runBrainChatCompletionMock.mockResolvedValue({
+      vendor: 'openai',
+      modelId: 'gpt-4.1-mini',
+      text: JSON.stringify({
+        recommendedAction: 'fallback_provider',
+        rejectionCategory: 'language',
+        reasons: ['Google Images candidates were dominated by non-English marketplaces.'],
+        candidates: [
+          {
+            url: 'https://www.amazon.de/dp/B00TEST123',
+            keep: false,
+            pageLanguage: 'de',
+            languageAccepted: false,
+            recommendedAction: 'fallback_provider',
+            rejectionCategory: 'language',
+            reasons: ['German marketplace.'],
+            mismatchLabels: ['language'],
+          },
+          {
+            url: 'https://www.amazon.fr/dp/B00TEST456',
+            keep: false,
+            pageLanguage: 'fr',
+            languageAccepted: false,
+            recommendedAction: 'fallback_provider',
+            rejectionCategory: 'language',
+            reasons: ['French marketplace.'],
+            mismatchLabels: ['language'],
+          },
+        ],
+      }),
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            imageSearchProvider: 'google_lens_upload',
+            triageOnlyOnAmazonCandidates: true,
+          }),
+        }),
+      })
+    );
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        rawResult: expect.objectContaining({
+          imageSearchProvider: 'google_lens_upload',
+          imageSearchProviderHistory: ['google_images_upload', 'google_lens_upload'],
+          providerFallback: true,
+          fallbackFromImageSearchProvider: 'google_images_upload',
+          fallbackToImageSearchProvider: 'google_lens_upload',
+          amazonAiEvidence: expect.objectContaining({
+            stages: expect.arrayContaining([
+              expect.objectContaining({
+                stage: 'candidate_triage',
+                recommendedAction: 'fallback_provider',
+                rejectionCategory: 'language',
+                provider: 'google_images_upload',
+              }),
+            ]),
+          }),
+        }),
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'amazon_ai_triage',
+            status: 'failed',
+            resultCode: 'provider_fallback_requested',
+          }),
+          expect.objectContaining({
+            key: 'queue_scan',
+            status: 'completed',
+            label: 'Retry with fallback image-search provider',
+          }),
+        ]),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
       })
     );
   });

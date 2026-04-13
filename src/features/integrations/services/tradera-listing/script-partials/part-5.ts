@@ -609,6 +609,16 @@ export const PART_5 = String.raw`
       initialUploadSource,
     }) => {
       const removedCount = await clearDraftImagesIfPresent().catch(() => null);
+      // Wait for any in-flight uploads from the previous attempt to materialise
+      // before checking for stable-zero state.  Without this delay, the loop
+      // below can see 0 previews / 0 remove-controls / no pending and pass
+      // immediately while server-side processing of the previous upload is
+      // still in progress — leading to duplicate images once both the old and
+      // new uploads finish.
+      await wait(3000);
+      // Re-clear after the stabilisation wait in case any late previews
+      // appeared from the previous upload attempt.
+      const lateRemovedCount = await clearDraftImagesIfPresent().catch(() => null);
       const deadline = Date.now() + 15_000;
       let lastCleanupState = null;
       let stableZeroChecks = 0;
@@ -629,6 +639,7 @@ export const PART_5 = String.raw`
           ...cleanupState,
           imageUploadPending,
           removedCount,
+          lateRemovedCount,
         };
 
         if (
@@ -706,6 +717,25 @@ export const PART_5 = String.raw`
           reason: error instanceof Error ? error.message : String(error),
           initialUploadSource,
         });
+        // Final safety check: verify no lingering previews before retrying.
+        // This catches the case where in-flight uploads from the first attempt
+        // materialised after the cleanup stabilisation wait finished.
+        const postCleanupPreviewCount = await countUploadedImagePreviews().catch(() => 0);
+        if (postCleanupPreviewCount > 0) {
+          log?.('tradera.quicklist.image.retry_download_blocked', {
+            reason: 'post-cleanup previews detected',
+            postCleanupPreviewCount,
+            initialUploadSource,
+          });
+          throw new Error(
+            'FAIL_IMAGE_SET_INVALID: Tradera image upload reached a partial state and retrying could duplicate images. Last state: ' +
+              JSON.stringify({
+                postCleanupPreviewCount,
+                initialUploadSource,
+                reason: error instanceof Error ? error.message : String(error),
+              })
+          );
+        }
         const fallbackUploadFiles = await downloadImages();
         imageUploadResult = await performImageUpload(fallbackUploadFiles, 'downloaded');
       }

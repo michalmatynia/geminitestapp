@@ -130,6 +130,8 @@ describe('ProductListingDetails', () => {
                     categoryMappingReason: 'mapped',
                     categoryMatchScope: 'catalog_match',
                     categoryInternalCategoryId: 'internal-category-1',
+                    categoryMappingRecoveredFromAnotherConnection: true,
+                    categoryMappingSourceConnectionId: 'legacy-connection-1',
                     categoryId: '101',
                     categoryPath: 'Collectibles > Pins',
                     shippingCondition: 'Buyer pays shipping',
@@ -233,6 +235,9 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('catalog_match')).toBeInTheDocument();
     expect(screen.getByText('Internal category:')).toBeInTheDocument();
     expect(screen.getByText('internal-category-1')).toBeInTheDocument();
+    expect(screen.getByText('Recovered category mapping:')).toBeInTheDocument();
+    expect(screen.getByText('Category mapping source connection:')).toBeInTheDocument();
+    expect(screen.getByText('legacy-connection-1')).toBeInTheDocument();
     expect(screen.getByText('Category ID:')).toBeInTheDocument();
     expect(screen.getByText('101')).toBeInTheDocument();
     expect(screen.getByText('Category path:')).toBeInTheDocument();

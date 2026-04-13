@@ -527,6 +527,12 @@ describe('product-scans-service batch operations', () => {
         resolveEngineRequestConfig: expect.any(Function),
       })
     );
+    expect(mocks.createCustomPlaywrightInstanceMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'connection-1688',
+        integrationId: 'integration-1688',
+      })
+    );
     expect(mocks.startPlaywrightEngineTaskMock).not.toHaveBeenCalled();
     const resolver =
       mocks.startPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0]
@@ -547,7 +553,7 @@ describe('product-scans-service batch operations', () => {
           locale: 'zh-CN',
           timezoneId: 'Asia/Shanghai',
           humanizeMouse: true,
-          mouseJitter: true,
+          mouseJitter: 5,
           slowMo: 140,
           clickDelayMin: 80,
           clickDelayMax: 220,

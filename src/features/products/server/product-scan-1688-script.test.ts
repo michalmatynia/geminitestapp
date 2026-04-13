@@ -20,6 +20,24 @@ describe('SCAN_1688_REVERSE_IMAGE_SCRIPT', () => {
       '1688 image search navigation timed out; continuing with the partially loaded page.'
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "const DEFAULT_1688_HOME_START_URL = 'https://www.1688.com/';"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'isChromeNavigationErrorUrl(page.url())'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      '1688 image search page could not be opened in the browser runtime.'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const recoverPageFromContext = async () => {'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const isPageAlive = () => {'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'if (!isPageAlive())'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       'const detect1688ReadyState = async (stage) => {'
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
@@ -50,6 +68,19 @@ describe('SCAN_1688_REVERSE_IMAGE_SCRIPT', () => {
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       "'captcha interception'"
     );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain("'unusual traffic'");
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'const resolveBarrierKind = () => {'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "'1688 requested login before the scan could continue. Log in using the opened browser window.'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'barrierKind'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      'if (textSuggestsBarrier && candidateUrls.length === 0) {'
+    );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       'const hardBlockingSelectors = ['
     );
@@ -60,7 +91,13 @@ describe('SCAN_1688_REVERSE_IMAGE_SCRIPT', () => {
       'if (visibleSoftBlockingSelector && !hasStrongReadySignal) {'
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
-      'const attempt1688PostCaptchaRecovery = async (stage) => {'
+      'const attempt1688PostCaptchaRecovery = async (stage, recoveryUrl = null) => {'
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "'Reopen 1688 supplier page after captcha.'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "'Reopen 1688 image search after captcha.'"
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       "'post_captcha_reupload_required'"

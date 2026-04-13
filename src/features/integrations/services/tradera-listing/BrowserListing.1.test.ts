@@ -12,6 +12,7 @@ const {
   statMock,
   getCategoryByIdMock,
   listCategoryMappingsMock,
+  listCategoryMappingsByInternalCategoryMock,
   listCategoriesMock,
   resolveTraderaShippingGroupResolutionForProductMock,
   resolveTraderaListingPriceForProductMock,
@@ -36,6 +37,7 @@ const {
   statMock: vi.fn(),
   getCategoryByIdMock: vi.fn(),
   listCategoryMappingsMock: vi.fn(),
+  listCategoryMappingsByInternalCategoryMock: vi.fn(),
   listCategoriesMock: vi.fn(),
   resolveTraderaShippingGroupResolutionForProductMock: vi.fn(),
   resolveTraderaListingPriceForProductMock: vi.fn(),
@@ -81,6 +83,7 @@ vi.mock('../integration-repository', () => ({
 vi.mock('../category-mapping-repository', () => ({
   getCategoryMappingRepository: () => ({
     listByConnection: listCategoryMappingsMock,
+    listByInternalCategory: listCategoryMappingsByInternalCategoryMock,
   }),
 }));
 
@@ -177,6 +180,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
     });
     getCategoryByIdMock.mockResolvedValue(null);
     listCategoriesMock.mockResolvedValue([]);
+    listCategoryMappingsByInternalCategoryMock.mockResolvedValue([]);
     getProductByIdMock.mockResolvedValue({
       id: 'product-1',
       sku: 'SKU-1',
@@ -385,7 +389,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
             internalCategoryId: 'internal-category-1',
             catalogId: 'catalog-1',
           },
-          traderaCategoryMapping: {
+          traderaCategoryMapping: expect.objectContaining({
             reason: 'mapped',
             matchScope: 'catalog_match',
             internalCategoryId: 'internal-category-1',
@@ -393,7 +397,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
             matchingMappingCount: 1,
             validMappingCount: 1,
             catalogMatchedMappingCount: 1,
-          },
+          }),
           traderaPricing: {
             listingPrice: 55,
             listingCurrencyCode: 'EUR',
@@ -1129,6 +1133,151 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categoryPath: 'Collectibles > Pins & Needles',
         categorySource: 'categoryMapper',
       },
+    });
+  });
+
+  it('injects a recovered Tradera mapped category when only another connection carries the mapping', async () => {
+    listCategoryMappingsMock.mockResolvedValue([]);
+    listCategoryMappingsByInternalCategoryMock.mockResolvedValue([
+      {
+        id: 'legacy-mapping-1',
+        connectionId: 'legacy-connection-1',
+        externalCategoryId: '3343738',
+        internalCategoryId: 'internal-category-1',
+        catalogId: 'catalog-1',
+        isActive: true,
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-10T10:00:00.000Z',
+        externalCategory: {
+          id: 'legacy-external-category-1',
+          connectionId: 'legacy-connection-1',
+          externalId: '3343738',
+          name: 'Gaming Wallets',
+          parentExternalId: '3343737',
+          path: 'Gadget Accessories > Wallets > Gaming Wallets',
+          depth: 2,
+          isLeaf: true,
+          metadata: null,
+          fetchedAt: '2026-04-10T10:00:00.000Z',
+          createdAt: '2026-04-10T10:00:00.000Z',
+          updatedAt: '2026-04-10T10:00:00.000Z',
+        },
+        internalCategory: {
+          id: 'internal-category-1',
+          name: 'Wallets',
+          description: null,
+          color: null,
+          parentId: null,
+          catalogId: 'catalog-1',
+          createdAt: '2026-04-02T10:00:00.000Z',
+          updatedAt: '2026-04-02T10:00:00.000Z',
+        },
+      },
+    ]);
+    getCategoryByIdMock.mockResolvedValue({
+      id: 'internal-category-1',
+      name: 'Wallets',
+      description: null,
+      color: null,
+      parentId: null,
+      catalogId: 'catalog-1',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T10:00:00.000Z',
+    });
+    listCategoriesMock.mockResolvedValue([
+      {
+        id: 'internal-category-1',
+        name: 'Wallets',
+        description: null,
+        color: null,
+        parentId: null,
+        catalogId: 'catalog-1',
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T10:00:00.000Z',
+      },
+    ]);
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-recovered-category',
+      externalListingId: 'listing-recovered-category',
+      listingUrl: 'https://www.tradera.com/item/recovered-category',
+      publishVerified: true,
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        listingUrl: 'https://www.tradera.com/item/recovered-category',
+        categoryPath: 'Gadget Accessories > Wallets > Gaming Wallets',
+        categorySource: 'categoryMapper',
+      },
+    });
+
+    const result = await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-recovered-category',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    expect(listCategoryMappingsByInternalCategoryMock).toHaveBeenCalledWith(
+      'internal-category-1',
+      'catalog-1'
+    );
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          traderaCategory: {
+            externalId: '3343738',
+            name: 'Gaming Wallets',
+            path: 'Gadget Accessories > Wallets > Gaming Wallets',
+            segments: ['Gadget Accessories', 'Wallets', 'Gaming Wallets'],
+            internalCategoryId: 'internal-category-1',
+            catalogId: 'catalog-1',
+          },
+          traderaCategoryMapping: expect.objectContaining({
+            reason: 'mapped',
+            recoveredFromDifferentConnection: true,
+            sourceConnectionId: 'legacy-connection-1',
+          }),
+        }),
+      })
+    );
+    expect(result).toMatchObject({
+      metadata: expect.objectContaining({
+        categoryId: '3343738',
+        categoryPath: 'Gadget Accessories > Wallets > Gaming Wallets',
+        categorySource: 'categoryMapper',
+        categoryMappingReason: 'mapped',
+        categoryMappingRecoveredFromAnotherConnection: true,
+        categoryMappingSourceConnectionId: 'legacy-connection-1',
+      }),
     });
   });
 

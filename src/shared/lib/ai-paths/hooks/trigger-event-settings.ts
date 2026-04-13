@@ -11,7 +11,7 @@ import {
   normalizeLoadedPathMetas,
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
-import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
+import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
@@ -62,7 +62,13 @@ export const loadTriggerPathConfigCached = (args: {
   if (cached) {
     return cached;
   }
-  const config = loadCanonicalStoredPathConfig(args);
+  const config = materializeStoredTriggerPathConfig({
+    pathId: args.pathId,
+    rawConfig: args.rawConfig,
+    fallbackName: args.pathId,
+    applyStarterWorkflowUpgrade: true,
+    allowStaticRecoveryFallback: true,
+  }).config;
   writeTriggerPathConfigCache(args.pathId, args.rawConfig, config);
   return config;
 };

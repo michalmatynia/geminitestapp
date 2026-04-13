@@ -319,11 +319,11 @@ describe('loadPathConfigsFromSettings', () => {
     ];
 
     await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /invalid ai path config payload/i
+      /invalid ai path trigger node payload/i
     );
   });
 
-  it('does not recover seeded BLWo starter defaults when the stored config payload is broken', async () => {
+  it('recovers seeded BLWo starter defaults when the stored config payload is broken', async () => {
     const pathId = 'path_base_export_blwo_v1';
     const data: Array<{ key: string; value: string }> = [
       { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: 'Base Export Workflow (BLWo)' }]) },
@@ -338,12 +338,18 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /invalid ai path config payload/i
+    const loaded = await loadPathConfigsFromSettings(data);
+
+    expect(loaded.settingsPathOrder).toEqual([pathId]);
+    expect(loaded.configs[pathId]?.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(loaded.configs[pathId]?.extensions?.['aiPathsStarter']).toEqual(
+      expect.objectContaining({
+        templateId: 'starter_base_export_blwo',
+      })
     );
   });
 
-  it('rejects stale Normalize starter configs even when they preserve an explicit model selection', async () => {
+  it('repairs stale Normalize starter configs while preserving an explicit model selection', async () => {
     const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
     if (!template) {
       throw new Error('Expected starter_product_name_normalize template');
@@ -384,12 +390,13 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values/i
-    );
+    const loaded = await loadPathConfigsFromSettings(data);
+    const modelNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'model');
+
+    expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
   });
 
-  it('rejects stale Normalize starter configs even when they preserve edited model settings', async () => {
+  it('repairs stale Normalize starter configs while preserving edited model settings', async () => {
     const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
     if (!template) {
       throw new Error('Expected starter_product_name_normalize template');
@@ -433,12 +440,20 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values/i
+    const loaded = await loadPathConfigsFromSettings(data);
+    const modelNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'model');
+
+    expect(modelNode?.config?.model).toEqual(
+      expect.objectContaining({
+        temperature: 0.35,
+        maxTokens: 1337,
+        systemPrompt: 'Only return normalized output.',
+        waitForResult: false,
+      })
     );
   });
 
-  it('rejects partial stored configs instead of filling defaults during trigger load', async () => {
+  it('repairs partial stored configs by filling trigger-safe defaults during trigger load', async () => {
     const pathId = 'path-partial-stored-trigger';
     const data: Array<{ key: string; value: string }> = [
       { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: 'Partial Trigger Path' }]) },
@@ -471,12 +486,24 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
+    const loaded = await loadPathConfigsFromSettings(data);
+
+    expect(loaded.configs[pathId]).toEqual(
+      expect.objectContaining({
+        id: pathId,
+        name: 'Partial Trigger Path',
+        parserSamples: {},
+        updaterSamples: {},
+        runtimeState: { inputs: {}, outputs: {} },
+        uiState: {
+          selectedNodeId: null,
+          configOpen: false,
+        },
+      })
     );
   });
 
-  it('rejects removed legacy trigger context modes in stored settings payloads', async () => {
+  it('repairs removed legacy trigger context modes in stored settings payloads', async () => {
     const config = createDefaultPathConfig('path-legacy-trigger-context');
     const seedNode = config.nodes[0] as AiNode | undefined;
     if (!seedNode) {
@@ -504,12 +531,13 @@ describe('loadPathConfigsFromSettings', () => {
       { key: `${PATH_CONFIG_PREFIX}${config.id}`, value: JSON.stringify(config) },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
-    );
+    const loaded = await loadPathConfigsFromSettings(data);
+    const triggerNode = loaded.configs[config.id]?.nodes.find((node) => node.type === 'trigger');
+
+    expect(triggerNode?.config?.trigger?.contextMode).toBe('trigger_only');
   });
 
-  it('rejects stale seeded starter workflow configs when trigger settings load them', async () => {
+  it('repairs stale seeded starter workflow configs when trigger settings load them', async () => {
     const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
     if (!entry?.seedPolicy?.defaultPathId) {
       throw new Error('Missing seeded default path id for starter_parameter_inference.');
@@ -553,12 +581,19 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
+    const loaded = await loadPathConfigsFromSettings(data);
+    const loadedParserNode = loaded.configs[config.id]?.nodes.find(
+      (node) => node.title === 'JSON Parser'
+    );
+
+    expect(loadedParserNode?.config?.parser?.mappings).toEqual(
+      expect.objectContaining({
+        title: '$.name_en',
+      })
     );
   });
 
-  it('rejects legacy mapping-mode updates until explicitly repaired during trigger preflight', async () => {
+  it('repairs legacy mapping-mode updates during trigger load', async () => {
     const pathId = 'path-live-parameter-inference-broken';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -571,12 +606,14 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
-    );
+    const loaded = await loadPathConfigsFromSettings(data);
+    const databaseNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'database');
+
+    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"parameters": {{value}}');
   });
 
-  it('rejects legacy database provider aliases before trigger preflight validation', async () => {
+  it('repairs legacy database provider aliases before trigger preflight validation', async () => {
     const pathId = 'path-legacy-trigger-provider-aliases';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -660,12 +697,19 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
+    const loaded = await loadPathConfigsFromSettings(data);
+    const queryNode = loaded.configs[pathId]?.nodes.find(
+      (node) => node.type === 'database' && node.title === 'Database Query'
     );
+    const schemaNode = loaded.configs[pathId]?.nodes.find(
+      (node) => node.type === 'db_schema' && node.title === 'Database Schema'
+    );
+
+    expect(queryNode?.config?.database?.query?.provider).toBe('auto');
+    expect(schemaNode?.config?.db_schema?.provider).toBe('auto');
   });
 
-  it('rejects configs when both the stored config and index name are empty', async () => {
+  it('falls back to the path id when both the stored config and index name are empty', async () => {
     const data: Array<{ key: string; value: string }> = [
       {
         key: PATH_INDEX_KEY,
@@ -673,12 +717,13 @@ describe('loadPathConfigsFromSettings', () => {
       },
       { key: `${PATH_CONFIG_PREFIX}path-1`, value: makeConfig('path-1', '') },
     ];
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values|path config name is required/i
-    );
+
+    const loaded = await loadPathConfigsFromSettings(data);
+
+    expect(loaded.configs['path-1']?.name).toBe('path-1');
   });
 
-  it('rejects malformed persisted runtimeState strings instead of healing them during trigger load', async () => {
+  it('heals malformed persisted runtimeState strings during trigger load', async () => {
     const parserDefinition = palette.find(
       (definition) => definition.type === 'parser' && definition.title === 'JSON Parser'
     );
@@ -720,9 +765,12 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
 
-    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
-      /non-canonical persisted values|invalid ai path config payload|unsupported node identities/i
-    );
+    const loaded = await loadPathConfigsFromSettings(data);
+
+    expect(loaded.configs[pathId]?.runtimeState).toEqual({
+      inputs: {},
+      outputs: {},
+    });
   });
 
   it('still drops missing index entries without writing repairs during trigger load', async () => {

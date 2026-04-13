@@ -145,7 +145,7 @@ export const resolveProductScannerAmazonCandidateEvaluatorTriageConfig = async (
     settings.amazonCandidateEvaluatorTriage,
     {
       defaultSystemPrompt: DEFAULT_AMAZON_CANDIDATE_TRIAGE_SYSTEM_PROMPT,
-      runtimeKind: 'text',
+      runtimeKind: 'chat',
     }
   );
 };
@@ -189,7 +189,7 @@ const resolveProductScannerAmazonCandidateEvaluatorConfigFromSettings = async (
     | ProductScannerSettings['amazonCandidateEvaluator'],
   options: {
     defaultSystemPrompt: string;
-    runtimeKind: 'text' | 'vision';
+    runtimeKind: 'chat' | 'vision';
   } = {
     defaultSystemPrompt: DEFAULT_AMAZON_CANDIDATE_EVALUATOR_SYSTEM_PROMPT,
     runtimeKind: 'vision',

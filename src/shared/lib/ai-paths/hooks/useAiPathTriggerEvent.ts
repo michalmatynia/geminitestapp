@@ -461,6 +461,8 @@ export function useAiPathTriggerEvent(): {
           {
             pathId: selectedConfig.id,
             pathName: selectedConfig.name,
+            nodes: selectedConfig.nodes,
+            edges: selectedConfig.edges,
             triggerEvent: triggerEventId,
             triggerNodeId: triggerNode.id,
             triggerContext,

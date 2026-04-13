@@ -9,6 +9,7 @@ import {
   startPlaywrightConnectionEngineTask,
   startPlaywrightEngineTask,
 } from '@/features/playwright/server';
+import { type PlaywrightConnectionSettingsOverridesInput } from '@/features/playwright/server/connection-runtime';
 import {
   get1688DefaultConnectionId,
   getIntegrationRepository,
@@ -121,9 +122,13 @@ const resolve1688ManualVerificationMessage = (
     readOptionalString(value) ??
     readOptionalString(fallback) ??
     SCANNER_1688_MANUAL_VERIFICATION_MESSAGE;
-  return /continue automatically/i.test(normalized)
-    ? normalized
-    : SCANNER_1688_MANUAL_VERIFICATION_MESSAGE;
+  if (/continue automatically/i.test(normalized)) {
+    return normalized;
+  }
+  if (/requested login/i.test(normalized)) {
+    return normalized;
+  }
+  return SCANNER_1688_MANUAL_VERIFICATION_MESSAGE;
 };
 
 const normalize1688ScanFailureMessage = (value: unknown, fallback: string): string => {
@@ -136,8 +141,9 @@ const normalize1688ScanFailureMessage = (value: unknown, fallback: string): stri
 const resolve1688ConnectionEngineSettings = (
   settings: Record<string, unknown>,
   options: { forceVisible: boolean }
-): Record<string, unknown> => {
+): PlaywrightConnectionSettingsOverridesInput => {
   const slowMo = settings['slowMo'];
+  const mouseJitter = settings['mouseJitter'];
   return {
     ...settings,
     ...(options.forceVisible ? { headless: false } : {}),
@@ -147,7 +153,9 @@ const resolve1688ConnectionEngineSettings = (
     humanizeMouse:
       typeof settings['humanizeMouse'] === 'boolean' ? settings['humanizeMouse'] : true,
     mouseJitter:
-      typeof settings['mouseJitter'] === 'boolean' ? settings['mouseJitter'] : true,
+      typeof mouseJitter === 'number' && Number.isFinite(mouseJitter) && mouseJitter >= 0
+        ? mouseJitter
+        : 5,
     slowMo:
       typeof slowMo === 'number' && Number.isFinite(slowMo) && slowMo > 0
         ? slowMo
@@ -164,7 +172,7 @@ const resolve1688ConnectionEngineSettings = (
       typeof settings['actionDelayMin'] === 'number' ? settings['actionDelayMin'] : 250,
     actionDelayMax:
       typeof settings['actionDelayMax'] === 'number' ? settings['actionDelayMax'] : 900,
-  };
+  } as PlaywrightConnectionSettingsOverridesInput;
 };
 
 const resolveAmazonImageSearchProvider = (
@@ -4004,6 +4012,14 @@ const queueProviderBatchProductScans = async (input: {
           const instance = createCustomPlaywrightInstance({
             family: 'scrape',
             label: input.config.instanceLabel,
+            connectionId:
+              input.config.provider === '1688'
+                ? supplierConnectionContext?.connection?.id ?? input.connectionId ?? null
+                : null,
+            integrationId:
+              input.config.provider === '1688'
+                ? supplierConnectionContext?.integrationId ?? null
+                : null,
             tags: input.config.instanceTags,
           });
           const run =
@@ -4019,7 +4035,7 @@ const queueProviderBatchProductScans = async (input: {
                         screenshot: true,
                         html: true,
                       },
-                      preventNewPages: true,
+                      preventNewPages: !allowManualVerification,
                     },
                     ownerUserId: input.userId?.trim() || null,
                     instance,

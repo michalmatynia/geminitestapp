@@ -269,7 +269,6 @@ const buildTraderaScriptInput = async ({
     description,
     price: priceResolution.listingPrice,
     imageUrls,
-    images: imageUrls,
     localImagePaths,
     traderaImageOrder: {
       strategy: shouldSkipImages ? 'none' : imageUploadPlan.imageOrderStrategy,
@@ -298,6 +297,8 @@ const buildTraderaScriptInput = async ({
       reason: categoryMapping.reason,
       matchScope: categoryMapping.matchScope,
       internalCategoryId: categoryMapping.internalCategoryId,
+      recoveredFromDifferentConnection: categoryMapping.resolvedFromDifferentConnection === true,
+      sourceConnectionId: categoryMapping.resolvedMappingConnectionId ?? null,
       productCatalogIds: categoryMapping.productCatalogIds,
       matchingMappingCount: categoryMapping.matchingMappingCount,
       validMappingCount: categoryMapping.validMappingCount,
@@ -359,6 +360,10 @@ const buildSuccessMetadata = ({
   const categoryMatchScope = toTrimmedString(traderaCategoryMapping['matchScope']) || null;
   const categoryInternalCategoryId =
     toTrimmedString(traderaCategoryMapping['internalCategoryId']) || null;
+  const categoryMappingRecoveredFromAnotherConnection =
+    traderaCategoryMapping['recoveredFromDifferentConnection'] === true;
+  const categoryMappingSourceConnectionId =
+    toTrimmedString(traderaCategoryMapping['sourceConnectionId']) || null;
   const shippingCondition = toTrimmedString(traderaShipping['shippingCondition']) || null;
   const shippingGroupId = toTrimmedString(traderaShipping['shippingGroupId']) || null;
   const shippingGroupName = toTrimmedString(traderaShipping['shippingGroupName']) || null;
@@ -406,6 +411,8 @@ const buildSuccessMetadata = ({
       categoryMappingReason,
       categoryMatchScope,
       categoryInternalCategoryId,
+      categoryMappingRecoveredFromAnotherConnection,
+      categoryMappingSourceConnectionId,
       shippingGroupId,
       shippingGroupName,
       shippingGroupSource,

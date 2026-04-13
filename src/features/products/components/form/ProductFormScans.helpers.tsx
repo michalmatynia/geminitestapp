@@ -37,6 +37,7 @@ export const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawRe
 export const resolveStatusLabel = (scan: ProductScanRecord): string =>
   resolveProductScanRunFeedbackPresentation(scan.status, {
     manualVerificationPending: isManualVerificationPending(scan),
+    manualVerificationMessage: scan.asinUpdateMessage ?? null,
     amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
     amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
     supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,
@@ -45,6 +46,7 @@ export const resolveStatusLabel = (scan: ProductScanRecord): string =>
 export const resolveStatusClassName = (scan: ProductScanRecord): string =>
   resolveProductScanRunFeedbackPresentation(scan.status, {
     manualVerificationPending: isManualVerificationPending(scan),
+    manualVerificationMessage: scan.asinUpdateMessage ?? null,
     amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
     amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
     supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,

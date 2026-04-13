@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getCategoryByIdMock, listCategoriesMock, listByConnectionMock } = vi.hoisted(() => ({
+const { getCategoryByIdMock, listCategoriesMock, listByConnectionMock, listByInternalCategoryMock } = vi.hoisted(() => ({
   getCategoryByIdMock: vi.fn(),
   listCategoriesMock: vi.fn(),
   listByConnectionMock: vi.fn(),
+  listByInternalCategoryMock: vi.fn(),
 }));
 
 const { captureExceptionMock } = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ vi.mock('@/shared/lib/products/services/category-repository', () => ({
 vi.mock('../category-mapping-repository', () => ({
   getCategoryMappingRepository: () => ({
     listByConnection: listByConnectionMock,
+    listByInternalCategory: listByInternalCategoryMock,
   }),
 }));
 
@@ -114,6 +116,7 @@ beforeEach(() => {
   getCategoryByIdMock.mockResolvedValue(null);
   listCategoriesMock.mockResolvedValue([]);
   listByConnectionMock.mockResolvedValue([]);
+  listByInternalCategoryMock.mockResolvedValue([]);
   captureExceptionMock.mockResolvedValue(undefined);
 });
 
@@ -561,5 +564,144 @@ describe('selectPreferredTraderaCategoryMapping', () => {
         resolvedCategoryCatalogId: 'catalog-jewellery',
       })
     );
+  });
+
+  it('recovers a direct Tradera mapping from another connection when the current connection has none', async () => {
+    listByConnectionMock.mockResolvedValue([]);
+    listByInternalCategoryMock.mockResolvedValue([
+      createMapping({
+        id: 'legacy-mapping-1',
+        connectionId: 'legacy-connection-1',
+        externalCategoryId: '3343738',
+        externalCategory: {
+          ...createMapping().externalCategory,
+          id: 'legacy-external-category-1',
+          connectionId: 'legacy-connection-1',
+          externalId: '3343738',
+          name: 'Gaming Wallets',
+          path: 'Gadget Accessories > Wallets > Gaming Wallets',
+        },
+      }),
+    ]);
+    getCategoryByIdMock.mockResolvedValue({
+      id: 'internal-category-1',
+      name: 'Wallets',
+      parentId: null,
+      color: null,
+      catalogId: 'catalog-primary',
+      createdAt: '',
+      updatedAt: '',
+    });
+    listCategoriesMock.mockResolvedValue([
+      {
+        id: 'internal-category-1',
+        name: 'Wallets',
+        parentId: null,
+        color: null,
+        catalogId: 'catalog-primary',
+        createdAt: '',
+        updatedAt: '',
+      },
+    ]);
+
+    const result = await resolveTraderaCategoryMappingResolutionForProduct({
+      connectionId: 'connection-1',
+      product: createProduct(),
+    });
+
+    expect(listByInternalCategoryMock).toHaveBeenCalledWith(
+      'internal-category-1',
+      'catalog-primary'
+    );
+    expect(result.resolvedFromDifferentConnection).toBe(true);
+    expect(result.resolvedMappingConnectionId).toBe('legacy-connection-1');
+    expect(result).toEqual({
+      mapping: {
+        externalCategoryId: '3343738',
+        externalCategoryName: 'Gaming Wallets',
+        externalCategoryPath: 'Gadget Accessories > Wallets > Gaming Wallets',
+        internalCategoryId: 'internal-category-1',
+        catalogId: 'catalog-primary',
+        pathSegments: ['Gadget Accessories', 'Wallets', 'Gaming Wallets'],
+      },
+      reason: 'mapped',
+      matchScope: 'catalog_match',
+      internalCategoryId: 'internal-category-1',
+      productCatalogIds: ['catalog-primary'],
+      matchingMappingCount: 1,
+      validMappingCount: 1,
+      catalogMatchedMappingCount: 1,
+    });
+  });
+
+  it('dedupes identical cross-connection Tradera mappings by path before resolving fallback', async () => {
+    listByConnectionMock.mockResolvedValue([]);
+    listByInternalCategoryMock.mockResolvedValue([
+      createMapping({
+        id: 'legacy-mapping-1',
+        connectionId: 'legacy-connection-1',
+        externalCategoryId: '3343738',
+        updatedAt: '2026-04-10T10:00:00.000Z',
+        externalCategory: {
+          ...createMapping().externalCategory,
+          id: 'legacy-external-category-1',
+          connectionId: 'legacy-connection-1',
+          externalId: '3343738',
+          name: 'Gaming Wallets',
+          path: 'Gadget Accessories > Wallets > Gaming Wallets',
+        },
+      }),
+      createMapping({
+        id: 'legacy-mapping-2',
+        connectionId: 'legacy-connection-2',
+        externalCategoryId: '778899',
+        updatedAt: '2026-04-11T10:00:00.000Z',
+        externalCategory: {
+          ...createMapping().externalCategory,
+          id: 'legacy-external-category-2',
+          connectionId: 'legacy-connection-2',
+          externalId: '778899',
+          name: 'Gaming Wallets',
+          path: 'Gadget Accessories > Wallets > Gaming Wallets',
+        },
+      }),
+    ]);
+    getCategoryByIdMock.mockResolvedValue({
+      id: 'internal-category-1',
+      name: 'Wallets',
+      parentId: null,
+      color: null,
+      catalogId: 'catalog-primary',
+      createdAt: '',
+      updatedAt: '',
+    });
+    listCategoriesMock.mockResolvedValue([
+      {
+        id: 'internal-category-1',
+        name: 'Wallets',
+        parentId: null,
+        color: null,
+        catalogId: 'catalog-primary',
+        createdAt: '',
+        updatedAt: '',
+      },
+    ]);
+
+    const result = await resolveTraderaCategoryMappingResolutionForProduct({
+      connectionId: 'connection-1',
+      product: createProduct(),
+    });
+
+    expect(result.reason).toBe('mapped');
+    expect(result.resolvedFromDifferentConnection).toBe(true);
+    expect(result.resolvedMappingConnectionId).toBe('legacy-connection-2');
+    expect(result.mapping).toEqual({
+      externalCategoryId: '778899',
+      externalCategoryName: 'Gaming Wallets',
+      externalCategoryPath: 'Gadget Accessories > Wallets > Gaming Wallets',
+      internalCategoryId: 'internal-category-1',
+      catalogId: 'catalog-primary',
+      pathSegments: ['Gadget Accessories', 'Wallets', 'Gaming Wallets'],
+    });
   });
 });

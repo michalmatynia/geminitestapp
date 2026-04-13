@@ -60,10 +60,27 @@ const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>)
   return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
 };
 
+const getManualVerificationMessage = (
+  scan: Pick<ProductScanRecord, 'rawResult' | 'asinUpdateMessage'> | null | undefined
+): string | null => {
+  if (!scan) {
+    return null;
+  }
+  const rawResult = scan.rawResult;
+  if (rawResult && typeof rawResult === 'object' && !Array.isArray(rawResult)) {
+    const msg = (rawResult as Record<string, unknown>)['manualVerificationMessage'];
+    if (typeof msg === 'string' && msg.trim().length > 0) {
+      return msg;
+    }
+  }
+  return typeof scan.asinUpdateMessage === 'string' ? scan.asinUpdateMessage : null;
+};
+
 export const resolveProductScanRunFeedbackPresentation = (
   status: ProductScanStatus,
   options?: {
     manualVerificationPending?: boolean | null;
+    manualVerificationMessage?: string | null;
     amazonEvaluationStatus?: ProductScanAmazonEvaluationStatus | null;
     amazonEvaluationLanguageAccepted?: boolean | null;
     supplierEvaluationStatus?: ProductScanSupplierEvaluationStatus | null;
@@ -71,7 +88,7 @@ export const resolveProductScanRunFeedbackPresentation = (
 ): TriggerButtonRunFeedbackPresentation =>
   status === 'running' && options?.manualVerificationPending
     ? {
-        label: 'Captcha',
+        label: /requested login/i.test(options?.manualVerificationMessage ?? '') ? 'Login' : 'Captcha',
         variant: 'warning',
         badgeClassName:
           'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
@@ -122,6 +139,7 @@ export const buildProductScanRunFeedbackFromRecord = (
   updatedAt: scan.updatedAt ?? scan.completedAt ?? scan.createdAt ?? null,
   ...resolveProductScanRunFeedbackPresentation(scan.status, {
     manualVerificationPending: isManualVerificationPending(scan),
+    manualVerificationMessage: getManualVerificationMessage(scan),
     amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
     amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
     supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,

@@ -125,6 +125,10 @@ export type CategoryMappingRepository = {
   update: (id: string, input: CategoryMappingUpdateInput) => Promise<CategoryMapping>;
   delete: (id: string) => Promise<void>;
   getById: (id: string) => Promise<CategoryMapping | null>;
+  listByInternalCategory: (
+    internalCategoryId: string,
+    catalogId?: string
+  ) => Promise<CategoryMappingWithDetails[]>;
   listByConnection: (
     connectionId: string,
     catalogId?: string

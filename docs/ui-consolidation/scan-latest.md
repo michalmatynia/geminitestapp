@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-12'
+last_reviewed: '2026-04-13'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,11 +8,11 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-04-12T19:05:52.666Z
+Generated at: 2026-04-13T10:17:50.281Z
 
 ## Snapshot
 
-- Scanned UI files: 2598
+- Scanned UI files: 2599
 - Duplicate-name clusters: 0
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
@@ -24,7 +24,7 @@ Generated at: 2026-04-12T19:05:52.666Z
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 2015 |
+| `feature` | 2016 |
 | `app` | 344 |
 | `shared-ui` | 183 |
 | `shared` | 56 |
@@ -33,7 +33,7 @@ Generated at: 2026-04-12T19:05:52.666Z
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 1902 |
+| `Unknown` | 1903 |
 | `Page` | 174 |
 | `Section` | 144 |
 | `Panel` | 104 |

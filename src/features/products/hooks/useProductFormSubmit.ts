@@ -246,6 +246,7 @@ export function useProductFormSubmit(
   // The finally block guarantees this resets even if onSuccess hangs.
   const [isSubmitting, setIsSubmitting] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const submitInFlightRef = useRef(false);
 
   const createMutation = useCreateProductMutation();
   const updateMutation = useUpdateProductMutation();
@@ -280,6 +281,11 @@ export function useProductFormSubmit(
       });
 
       const performSubmit = async () => {
+        if (submitInFlightRef.current) {
+          return;
+        }
+
+        submitInFlightRef.current = true;
         setIsSubmitting(true);
         setUploadError(null);
         setUploadSuccess(false);
@@ -362,6 +368,7 @@ export function useProductFormSubmit(
             setUploadError('An unknown error occurred');
           }
         } finally {
+          submitInFlightRef.current = false;
           setIsSubmitting(false);
         }
       };

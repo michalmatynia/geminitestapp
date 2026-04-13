@@ -39,6 +39,8 @@ export type TraderaCategoryMappingResolution = {
   matchingMappingCount: number;
   validMappingCount: number;
   catalogMatchedMappingCount: number;
+  resolvedFromDifferentConnection?: boolean;
+  resolvedMappingConnectionId?: string | null;
 };
 
 const toTrimmedString = (value: unknown): string =>
@@ -46,6 +48,113 @@ const toTrimmedString = (value: unknown): string =>
 
 const isMissingExternalCategory = (name: string): boolean =>
   name.startsWith('[Missing external category:');
+
+const normalizeCrossConnectionMappingKey = (mapping: CategoryMappingWithDetails): string => {
+  const categoryPath =
+    toTrimmedString(mapping.externalCategory?.path) || toTrimmedString(mapping.externalCategory?.name);
+  const normalizedCategoryPath = categoryPath.toLowerCase().replace(/\s+/g, ' ').trim();
+  const normalizedInternalCategoryId = toTrimmedString(mapping.internalCategoryId).toLowerCase();
+  const normalizedCatalogId = toTrimmedString(mapping.catalogId).toLowerCase();
+  return `${normalizedCatalogId}::${normalizedInternalCategoryId}::${normalizedCategoryPath}`;
+};
+
+const dedupeCrossConnectionMappings = (
+  mappings: CategoryMappingWithDetails[]
+): CategoryMappingWithDetails[] => {
+  const deduped = new Map<string, CategoryMappingWithDetails>();
+
+  for (const mapping of mappings) {
+    const key = normalizeCrossConnectionMappingKey(mapping);
+    const existing = deduped.get(key);
+    if (!existing) {
+      deduped.set(key, mapping);
+      continue;
+    }
+
+    const existingUpdatedAt = new Date(existing.updatedAt ?? 0).getTime();
+    const candidateUpdatedAt = new Date(mapping.updatedAt ?? 0).getTime();
+    if (candidateUpdatedAt >= existingUpdatedAt) {
+      deduped.set(key, mapping);
+    }
+  }
+
+  return Array.from(deduped.values());
+};
+
+const resolveRecoveredMappingConnectionId = ({
+  mappings,
+  resolvedMapping,
+}: {
+  mappings: CategoryMappingWithDetails[];
+  resolvedMapping: ResolvedTraderaCategoryMapping | null;
+}): string | null => {
+  if (!resolvedMapping) {
+    return null;
+  }
+
+  const matchingMappings = mappings.filter((mapping) => {
+    const mappingPath =
+      toTrimmedString(mapping.externalCategory?.path) ||
+      toTrimmedString(mapping.externalCategory?.name);
+    return (
+      toTrimmedString(mapping.catalogId) === toTrimmedString(resolvedMapping.catalogId) &&
+      toTrimmedString(mapping.internalCategoryId) ===
+        toTrimmedString(resolvedMapping.internalCategoryId) &&
+      toTrimmedString(mapping.externalCategoryId) ===
+        toTrimmedString(resolvedMapping.externalCategoryId) &&
+      mappingPath ===
+        (toTrimmedString(resolvedMapping.externalCategoryPath) ||
+          toTrimmedString(resolvedMapping.externalCategoryName))
+    );
+  });
+
+  if (matchingMappings.length === 0) {
+    return null;
+  }
+
+  const selected =
+    [...matchingMappings].sort(
+      (left, right) =>
+        new Date(right.updatedAt ?? 0).getTime() - new Date(left.updatedAt ?? 0).getTime()
+    )[0] ?? null;
+  return selected ? toTrimmedString(selected.connectionId) || null : null;
+};
+
+const withRecoveredMappingMeta = ({
+  resolution,
+  recoveredMappings,
+  connectionId,
+}: {
+  resolution: TraderaCategoryMappingResolution;
+  recoveredMappings: CategoryMappingWithDetails[];
+  connectionId: string;
+}): TraderaCategoryMappingResolution => {
+  const resolvedMappingConnectionId = resolveRecoveredMappingConnectionId({
+    mappings: recoveredMappings,
+    resolvedMapping: resolution.mapping,
+  });
+  const recoveredFromDifferentConnection =
+    Boolean(resolution.mapping) &&
+    Boolean(resolvedMappingConnectionId) &&
+    resolvedMappingConnectionId !== connectionId;
+
+  Object.defineProperties(resolution, {
+    resolvedFromDifferentConnection: {
+      value: recoveredFromDifferentConnection,
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    },
+    resolvedMappingConnectionId: {
+      value: resolvedMappingConnectionId,
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    },
+  });
+
+  return resolution;
+};
 
 export const resolveProductCatalogIds = (product: ProductWithImages): string[] => {
   const catalogIds = new Set<string>();
@@ -294,15 +403,10 @@ export const resolveTraderaCategoryMappingResolutionForProduct = async ({
   const categoryMappingRepository = getCategoryMappingRepository();
   const mappings = await categoryMappingRepository.listByConnection(connectionId);
 
-  // First try without parent walk for the fast path
-  const directResult = selectPreferredTraderaCategoryMappingResolution({ mappings, product });
-  if (directResult.reason !== 'no_active_mapping') {
-    return directResult;
-  }
-
   // No direct mapping — load product categories for parent-chain inheritance
   const catalogId = toTrimmedString(product.catalogId);
   let resolvedCategoryCatalogId: string | null = null;
+  let internalCategories: ProductCategory[] | undefined;
 
   try {
     const { getCategoryRepository } = await import(
@@ -322,17 +426,56 @@ export const resolveTraderaCategoryMappingResolutionForProduct = async ({
     resolvedCategoryCatalogId = categoryCatalogId || null;
 
     if (!categoryCatalogId) {
-      return directResult;
+      const currentResult = selectPreferredTraderaCategoryMappingResolution({
+        mappings,
+        product,
+      });
+      if (currentResult.reason !== 'no_active_mapping') {
+        return currentResult;
+      }
+      return currentResult;
     }
 
-    const internalCategories = await categoryRepository.listCategories({
+    internalCategories = await categoryRepository.listCategories({
       catalogId: categoryCatalogId,
     });
-    return selectPreferredTraderaCategoryMappingResolution({
+    const currentResult = selectPreferredTraderaCategoryMappingResolution({
       mappings,
       product,
       internalCategories,
     });
+    if (currentResult.reason !== 'no_active_mapping') {
+      return currentResult;
+    }
+
+    const requestedInternalCategoryId = toTrimmedString(product.categoryId);
+    if (!requestedInternalCategoryId) {
+      return currentResult;
+    }
+
+    const crossConnectionMappings =
+      typeof categoryMappingRepository.listByInternalCategory === 'function'
+        ? await categoryMappingRepository.listByInternalCategory(
+            requestedInternalCategoryId,
+            categoryCatalogId || undefined
+          )
+        : [];
+    if (crossConnectionMappings.length === 0) {
+      return currentResult;
+    }
+
+    const recoveredResult = selectPreferredTraderaCategoryMappingResolution({
+      mappings: dedupeCrossConnectionMappings(crossConnectionMappings),
+      product,
+      internalCategories,
+    });
+    return recoveredResult.mapping
+      ? withRecoveredMappingMeta({
+          resolution: recoveredResult,
+          recoveredMappings: crossConnectionMappings,
+          connectionId,
+        })
+      : currentResult;
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'tradera-category-mapping',
@@ -344,7 +487,47 @@ export const resolveTraderaCategoryMappingResolutionForProduct = async ({
       requestedCatalogId: catalogId || null,
       resolvedCategoryCatalogId,
     });
-    return directResult;
+    const fallbackResult = selectPreferredTraderaCategoryMappingResolution({
+      mappings,
+      product,
+      internalCategories,
+    });
+    if (fallbackResult.reason !== 'no_active_mapping') {
+      return fallbackResult;
+    }
+
+    const internalCategoryId = toTrimmedString(product.categoryId);
+    if (!internalCategoryId) {
+      return fallbackResult;
+    }
+
+    try {
+      const crossConnectionMappings =
+        typeof categoryMappingRepository.listByInternalCategory === 'function'
+          ? await categoryMappingRepository.listByInternalCategory(
+              internalCategoryId,
+              resolvedCategoryCatalogId || catalogId || undefined
+            )
+          : [];
+      if (crossConnectionMappings.length === 0) {
+        return fallbackResult;
+      }
+
+      const recoveredResult = selectPreferredTraderaCategoryMappingResolution({
+        mappings: dedupeCrossConnectionMappings(crossConnectionMappings),
+        product,
+        internalCategories,
+      });
+      return recoveredResult.mapping
+        ? withRecoveredMappingMeta({
+            resolution: recoveredResult,
+            recoveredMappings: crossConnectionMappings,
+            connectionId,
+          })
+        : fallbackResult;
+    } catch {
+      return fallbackResult;
+    }
   }
 };
 

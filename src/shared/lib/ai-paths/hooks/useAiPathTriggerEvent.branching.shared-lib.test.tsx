@@ -486,6 +486,65 @@ describe('useAiPathTriggerEvent branching shared-lib coverage', () => {
     expect(onFinished).toHaveBeenCalledTimes(1);
   });
 
+  it('forwards the selected graph when enqueuing a trigger run', async () => {
+    const starter = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!starter) throw new Error('Missing starter_parameter_inference template');
+
+    const selectedConfig = materializeStarterWorkflowPathConfig(starter, {
+      pathId: 'path_forward_selected_graph',
+      seededDefault: false,
+    });
+    selectedConfig.nodes = selectedConfig.nodes.map((node) =>
+      node.type === 'trigger'
+        ? {
+            ...node,
+            config: {
+              ...node.config,
+              trigger: {
+                ...node.config?.trigger,
+                event: baseArgs.triggerEventId,
+              },
+            },
+          }
+        : node
+    );
+
+    resolveTriggerSelectionMock.mockResolvedValue({
+      triggerCandidates: [selectedConfig],
+      activeTriggerCandidates: [selectedConfig],
+      selectedConfig,
+      uiState: null,
+      missingPreferredPathId: null,
+    });
+    enqueueAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        runId: 'run-forward-selected-graph',
+      },
+    });
+    resolveAiPathRunFromEnqueueResponseDataMock.mockReturnValue({
+      runId: 'run-forward-selected-graph',
+      runRecord: null,
+    });
+
+    const { result } = renderHook(() => useAiPathTriggerEvent(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.fireAiPathTriggerEvent(baseArgs);
+    });
+
+    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathId: selectedConfig.id,
+        nodes: selectedConfig.nodes,
+        edges: selectedConfig.edges,
+      }),
+      { timeoutMs: 90_000 }
+    );
+  });
+
   it('warns product trigger surfaces when the saved path still relies on the AI Brain default model', async () => {
     const starter = getStarterWorkflowTemplateById('starter_product_name_normalize');
     if (!starter) throw new Error('Missing starter_product_name_normalize template');

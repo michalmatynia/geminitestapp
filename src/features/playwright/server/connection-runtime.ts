@@ -33,7 +33,7 @@ export type ResolvedPlaywrightConnectionRuntime = {
   deviceContextOptions: BrowserContextOptions;
 };
 
-type PlaywrightConnectionSettingsOverridesInput = Pick<
+export type PlaywrightConnectionSettingsOverridesInput = Pick<
   TraderaPlaywrightRuntimeSettings,
   | 'headless'
   | 'identityProfile'

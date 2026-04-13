@@ -365,6 +365,22 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.categoryMappingRecoveredFromAnotherConnection ? (
+            <MetadataItem
+              label='Recovered category mapping'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categoryMappingSourceConnectionId ? (
+            <MetadataItem
+              label='Category mapping source connection'
+              value={traderaExecution.categoryMappingSourceConnectionId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.categoryId ? (
             <MetadataItem
               label='Category ID'

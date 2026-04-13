@@ -271,15 +271,7 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
         confirmDisabled={isUnpublishConfirmBlocked}
       />
       {isSettingsModalOpen ? (
-        <AdminKangurSocialSettingsModal
-          open={true}
-          onClose={() => setIsSettingsModalOpen(false)}
-          onSave={() => {
-            void handleSaveSettings();
-          }}
-          isSaving={isSavingSettings}
-          hasUnsavedChanges={isSettingsDirty}
-        />
+        <AdminKangurSocialSettingsModal />
       ) : null}
     </KangurAdminContentShell>
   );

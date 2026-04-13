@@ -2,32 +2,23 @@
 
 import React from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import { IntegrationSelectionLoadingState } from './IntegrationSelectionLoadingState';
 import { IntegrationSelectorFields } from './IntegrationSelectorFields';
+import {
+  IntegrationSelectorCopyStrategy,
+  useIntegrationSelectorProps,
+} from './hooks/useIntegrationSelectorProps';
 
 type ConnectedIntegrationFieldsSectionProps = {
   title: string;
   variant?: 'default' | 'compact' | 'subtle' | 'subtle-compact' | 'glass';
   className?: string;
-  loading: boolean;
-  loadingVariant: 'inline-text' | 'loading-state';
+  strategy?: IntegrationSelectorCopyStrategy;
+  loadingVariant?: 'inline-text' | 'loading-state';
   loadingClassName?: string;
   loadingSize?: 'xs' | 'sm' | 'md' | 'lg';
-  marketplaceLabel: string;
-  marketplacePlaceholder: string;
-  selectedIntegrationId: string | null | undefined;
-  onIntegrationChange: (value: string) => void;
-  integrationOptions: Array<LabeledOptionDto<string>>;
-  showAccountField: boolean;
-  accountLabel: string;
-  accountPlaceholder: string;
-  selectedConnectionId: string | null | undefined;
-  onConnectionChange: (value: string) => void;
-  connectionOptions: Array<LabeledOptionDto<string>>;
-  accountDescription?: string | null | undefined;
   footer?: React.ReactNode;
 };
 
@@ -38,24 +29,14 @@ export function ConnectedIntegrationFieldsSection(
     title,
     variant,
     className,
-    loading,
-    loadingVariant,
+    strategy = 'list',
+    loadingVariant = 'inline-text',
     loadingClassName,
     loadingSize,
-    marketplaceLabel,
-    marketplacePlaceholder,
-    selectedIntegrationId,
-    onIntegrationChange,
-    integrationOptions,
-    showAccountField,
-    accountLabel,
-    accountPlaceholder,
-    selectedConnectionId,
-    onConnectionChange,
-    connectionOptions,
-    accountDescription,
     footer,
   } = props;
+
+  const { loading } = useIntegrationSelectorProps(strategy);
 
   return (
     <FormSection title={title} variant={variant} className={className}>
@@ -67,20 +48,7 @@ export function ConnectedIntegrationFieldsSection(
         />
       ) : (
         <>
-          <IntegrationSelectorFields
-            marketplaceLabel={marketplaceLabel}
-            marketplacePlaceholder={marketplacePlaceholder}
-            selectedIntegrationId={selectedIntegrationId}
-            onIntegrationChange={onIntegrationChange}
-            integrationOptions={integrationOptions}
-            showAccountField={showAccountField}
-            accountLabel={accountLabel}
-            accountPlaceholder={accountPlaceholder}
-            selectedConnectionId={selectedConnectionId}
-            onConnectionChange={onConnectionChange}
-            connectionOptions={connectionOptions}
-            accountDescription={accountDescription}
-          />
+          <IntegrationSelectorFields strategy={strategy} />
           {footer ?? null}
         </>
       )}

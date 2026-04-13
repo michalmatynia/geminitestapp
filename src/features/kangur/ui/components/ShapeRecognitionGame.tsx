@@ -38,6 +38,11 @@ type ShapeRecognitionGameContextValue = {
   totalRounds: number;
   translate: ReturnType<typeof createGeometryShapeRecognitionLessonTranslate>;
   shapeLabels: Record<ShapeId, string>;
+  round?: (typeof SHAPE_ROUNDS)[number];
+  roundIndex: number;
+  selected: ShapeId | null;
+  onNext: () => void;
+  onSelect: (option: ShapeId) => void;
 };
 
 const ShapeRecognitionGameContext = createContext<ShapeRecognitionGameContextValue | null>(null);
@@ -172,26 +177,29 @@ function ShapeRecognitionFinishedView(): React.JSX.Element {
   );
 }
 
-function ShapeRecognitionRoundView({
-  correctLabel,
-  isCorrect,
-  onNext,
-  onSelect,
-  round,
-  roundIndex,
-  selected,
-  shape,
-}: {
-  correctLabel: string;
-  isCorrect: boolean;
-  onNext: () => void;
-  onSelect: (option: ShapeId) => void;
-  round: (typeof SHAPE_ROUNDS)[number];
-  roundIndex: number;
-  selected: ShapeId | null;
-  shape: ReturnType<typeof buildGeometryShapeDefinitions>[number];
-}): React.JSX.Element {
-  const { isCoarsePointer, score, shapeLabels, totalRounds, translate } = useShapeRecognitionGame();
+function ShapeRecognitionRoundView(): React.JSX.Element {
+  const {
+    isCoarsePointer,
+    score,
+    shapeLabels,
+    totalRounds,
+    translate,
+    round,
+    roundIndex,
+    selected,
+    onNext,
+    onSelect,
+  } = useShapeRecognitionGame();
+
+  if (!round) {
+    return <></>;
+  }
+
+  const { shapes } = useShapeRecognitionGameContent();
+  const shape = shapes.find((item) => item.id === round.shape) ?? shapes[0]!;
+  const isCorrect = selected === round.correct;
+  const correctLabel = shapeLabels[round.correct] ?? round.correct;
+
   return (
     <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
       <div className='flex items-center justify-between gap-3'>
@@ -274,13 +282,16 @@ export default function ShapeRecognitionGame({
     setRoundIndex((prev) => prev + 1);
   }, []);
 
-  const handleSelect = useCallback((option: ShapeId, correct: ShapeId): void => {
-    if (selected) return;
+  const safeIndex = Math.min(roundIndex, SHAPE_ROUNDS.length - 1);
+  const round = SHAPE_ROUNDS[safeIndex];
+
+  const handleSelect = useCallback((option: ShapeId): void => {
+    if (selected || !round) return;
     setSelected(option);
-    if (option === correct) {
+    if (option === round.correct) {
       setScore((prev) => prev + 1);
     }
-  }, [selected]);
+  }, [selected, round]);
 
   const contextValue: ShapeRecognitionGameContextValue = useMemo(() => ({
     finishLabel: resolvedFinishLabel,
@@ -291,7 +302,12 @@ export default function ShapeRecognitionGame({
     totalRounds: SHAPE_ROUNDS.length,
     translate,
     shapeLabels,
-  }), [resolvedFinishLabel, isCoarsePointer, onFinish, handleRestart, score, translate, shapeLabels]);
+    round,
+    roundIndex,
+    selected,
+    onNext: handleNext,
+    onSelect: handleSelect,
+  }), [resolvedFinishLabel, isCoarsePointer, onFinish, handleRestart, score, translate, shapeLabels, round, roundIndex, selected, handleNext, handleSelect]);
 
   if (SHAPE_ROUNDS.length === 0) {
     return (
@@ -302,11 +318,6 @@ export default function ShapeRecognitionGame({
   }
 
   const isFinished = roundIndex >= SHAPE_ROUNDS.length;
-  const safeIndex = Math.min(roundIndex, SHAPE_ROUNDS.length - 1);
-  const round = SHAPE_ROUNDS[safeIndex]!;
-  const shape = shapes.find((item) => item.id === round.shape) ?? shapes[0]!;
-  const isCorrect = selected === round.correct;
-  const correctLabel = shapeLabels[round.correct] ?? round.correct;
 
   if (isFinished) {
     return (
@@ -318,16 +329,7 @@ export default function ShapeRecognitionGame({
 
   return (
     <ShapeRecognitionGameContext.Provider value={contextValue}>
-      <ShapeRecognitionRoundView
-        correctLabel={correctLabel}
-        isCorrect={isCorrect}
-        onNext={handleNext}
-        onSelect={(option) => handleSelect(option, round.correct)}
-        round={round}
-        roundIndex={roundIndex}
-        selected={selected}
-        shape={shape}
-      />
+      <ShapeRecognitionRoundView />
     </ShapeRecognitionGameContext.Provider>
   );
 }

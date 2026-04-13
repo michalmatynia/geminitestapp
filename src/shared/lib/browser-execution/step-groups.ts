@@ -7,14 +7,15 @@ export const STEP_GROUPS = {
   // Fields shared across Tradera quicklist and Vinted
   LISTING_FIELDS:  ['image_upload', 'title_fill', 'description_fill', 'price_set'] satisfies StepId[],
 
-  // Full Tradera listing form (fields + category + format + attributes + shipping)
+  // Full Tradera listing form — matches the actual form fill order:
+  // images → title → description → format → price → category → attributes → shipping
   TRADERA_FORM:    [
     'image_upload',
     'title_fill',
     'description_fill',
+    'listing_format_select',
     'price_set',
     'category_select',
-    'listing_format_select',
     'attribute_select',
     'shipping_set',
   ] satisfies StepId[],

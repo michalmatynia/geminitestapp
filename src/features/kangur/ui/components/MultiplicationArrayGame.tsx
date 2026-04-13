@@ -291,21 +291,21 @@ function MultiplicationArraySummaryView({
   finishLabel,
   onFinish,
   onRestart,
-  percent,
-  score,
-  translations,
-  xpBreakdown,
-  xpEarned,
+  results,
 }: {
   finishLabel: string;
   onFinish: () => void;
   onRestart: () => void;
-  percent: number;
-  score: number;
-  translations: ReturnType<typeof useTranslations>;
-  xpBreakdown: KangurRewardBreakdownEntry[];
-  xpEarned: number;
+  results: {
+    percent: number;
+    score: number;
+    xpBreakdown: KangurRewardBreakdownEntry[];
+    xpEarned: number;
+  };
 }): React.JSX.Element {
+  const { translations } = useMultiplicationArrayGame();
+  const { percent, score, xpBreakdown, xpEarned } = results;
+
   return (
     <KangurPracticeGameSummary
       dataTestId='multiplication-array-summary-shell'
@@ -643,34 +643,37 @@ export default function MultiplicationArrayGame({
     setCollected((previous) => new Set([...previous, groupIndex]));
   };
 
+  const contextValue = {
+    a,
+    b,
+    celebrating,
+    collected,
+    isCoarsePointer,
+    onTapGroup: handleTapGroup,
+    translations,
+  };
+
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <MultiplicationArraySummaryView
-        finishLabel={resolvedFinishLabel}
-        onFinish={handleFinishGame}
-        onRestart={handleRestart}
-        percent={percent}
-        score={score}
-        translations={translations}
-        xpBreakdown={xpBreakdown}
-        xpEarned={xpEarned}
-      />
+      <MultiplicationArrayGameContext.Provider value={contextValue}>
+        <MultiplicationArraySummaryView
+          finishLabel={resolvedFinishLabel}
+          onFinish={handleFinishGame}
+          onRestart={handleRestart}
+          results={{
+            percent,
+            score,
+            xpBreakdown,
+            xpEarned,
+          }}
+        />
+      </MultiplicationArrayGameContext.Provider>
     );
   }
 
   return (
-    <MultiplicationArrayGameContext.Provider
-      value={{
-        a,
-        b,
-        celebrating,
-        collected,
-        isCoarsePointer,
-        onTapGroup: handleTapGroup,
-        translations,
-      }}
-    >
+    <MultiplicationArrayGameContext.Provider value={contextValue}>
       <MultiplicationArrayRoundView
         roundIndex={roundIndex}
         roundMotionProps={roundMotionProps}

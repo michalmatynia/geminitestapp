@@ -367,22 +367,28 @@ const renderKangurLearnerAssignmentsUnavailableState = ({
 function KangurLearnerAssignmentsMetrics({
   activeAssignmentsCount,
   completedAssignmentsCount,
-  completionRate,
+  metrics,
   fallbackCopy,
-  highPriorityActiveCount,
-  latestCompletedTitle,
-  sectionSummary,
-  sectionTitle,
 }: {
   activeAssignmentsCount: number;
   completedAssignmentsCount: number;
-  completionRate: number;
+  metrics: {
+    completionRate: number;
+    highPriorityActiveCount: number;
+    latestCompletedTitle: string;
+    sectionSummary: string;
+    sectionTitle: string;
+  };
   fallbackCopy: LearnerAssignmentsFallbackCopy;
-  highPriorityActiveCount: number;
-  latestCompletedTitle: string;
-  sectionSummary: string;
-  sectionTitle: string;
 }): React.JSX.Element {
+  const {
+    completionRate,
+    highPriorityActiveCount,
+    latestCompletedTitle,
+    sectionSummary,
+    sectionTitle,
+  } = metrics;
+
   return (
     <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
       <KangurPanelIntro description={sectionSummary} eyebrow={sectionTitle} />
@@ -461,13 +467,7 @@ export function KangurLearnerAssignmentsPanel({
     },
     [setSubject, subject]
   );
-  const {
-    completionRate,
-    highPriorityActiveCount,
-    latestCompletedTitle,
-    sectionSummary,
-    sectionTitle,
-  } = resolveKangurLearnerAssignmentsSummary({
+  const metrics = resolveKangurLearnerAssignmentsSummary({
     activeAssignments,
     assignmentsContent,
     completedAssignments,
@@ -490,12 +490,8 @@ export function KangurLearnerAssignmentsPanel({
       <KangurLearnerAssignmentsMetrics
         activeAssignmentsCount={activeAssignments.length}
         completedAssignmentsCount={completedAssignments.length}
-        completionRate={completionRate}
+        metrics={metrics}
         fallbackCopy={fallbackCopy}
-        highPriorityActiveCount={highPriorityActiveCount}
-        latestCompletedTitle={latestCompletedTitle}
-        sectionSummary={sectionSummary}
-        sectionTitle={sectionTitle}
       />
 
       <KangurAssignmentsList

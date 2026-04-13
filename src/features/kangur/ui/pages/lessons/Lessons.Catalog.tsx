@@ -62,21 +62,8 @@ type LessonGroup = {
 
 type LessonsViewState = ReturnType<typeof useLessons>;
 type LessonsTranslation = ReturnType<typeof useTranslations>;
-type LessonsCatalogResolvedContentProps = Pick<
-  LessonsViewState,
-  | 'activeLessonId'
-  | 'completedLessonAssignmentsByComponent'
-  | 'ensureLessonsCatalogLoaded'
-  | 'handleSelectLesson'
-  | 'isLessonsCatalogLoading'
-  | 'lessonAssignmentsByComponent'
-  | 'lessonDocuments'
-  | 'lessonSections'
-  | 'lessonTemplateMap'
-  | 'orderedLessons'
-  | 'progress'
-  | 'subject'
-> & {
+
+interface LessonsCatalogContextValue extends LessonsViewState {
   isCardStatusReady: boolean;
   isSixYearOld: boolean;
   locale: string;
@@ -84,7 +71,17 @@ type LessonsCatalogResolvedContentProps = Pick<
   libraryCardTranslations: LessonsTranslation;
   subjectVisual: ReturnType<typeof getKangurSixYearOldSubjectVisual>;
   translations: LessonsTranslation;
-};
+}
+
+const LessonsCatalogContext = React.createContext<LessonsCatalogContextValue | null>(null);
+
+function useLessonsCatalogContext(): LessonsCatalogContextValue {
+  const context = React.useContext(LessonsCatalogContext);
+  if (!context) {
+    throw new Error('useLessonsCatalogContext must be used within LessonsCatalog');
+  }
+  return context;
+}
 
 const LESSONS_SKELETON_SECTION_COUNT = 3;
 const LESSONS_SKELETON_CARD_COUNT = 2;
@@ -260,27 +257,29 @@ function LessonsCatalogEmptyStateWithPageContent({
   );
 }
 
-function LessonsCatalogResolvedContent({
-  activeLessonId,
-  completedLessonAssignmentsByComponent,
-  ensureLessonsCatalogLoaded,
-  handleSelectLesson,
-  isCardStatusReady,
-  isSixYearOld,
-  isLessonsCatalogLoading,
-  lessonAssignmentsByComponent,
-  lessonDocuments,
-  lessonTemplateMap,
-  libraryCardTranslations,
-  lessonSections,
-  locale,
-  masteryTranslations,
-  orderedLessons,
-  progress,
-  subject,
-  subjectVisual,
-  translations,
-}: LessonsCatalogResolvedContentProps) {
+function LessonsCatalogResolvedContent() {
+  const {
+    activeLessonId,
+    completedLessonAssignmentsByComponent,
+    ensureLessonsCatalogLoaded,
+    handleSelectLesson,
+    isCardStatusReady,
+    isSixYearOld,
+    isLessonsCatalogLoading,
+    lessonAssignmentsByComponent,
+    lessonDocuments,
+    lessonTemplateMap,
+    libraryCardTranslations,
+    lessonSections,
+    locale,
+    masteryTranslations,
+    orderedLessons,
+    progress,
+    subject,
+    subjectVisual,
+    translations,
+  } = useLessonsCatalogContext();
+
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
   const [expandedLessonSubsectionIdsByGroup, setExpandedLessonSubsectionIdsByGroup] = useState<
     Record<string, string[]>
@@ -649,23 +648,15 @@ export function LessonsCatalog() {
   const translations = useTranslations('KangurLessonsPage');
   const masteryTranslations = useTranslations('KangurLessonsWidgets.mastery');
   const libraryCardTranslations = useTranslations('KangurLessonsWidgets.libraryCard');
+  const lessonsState = useLessons();
   const {
     subject,
     ageGroup,
     lessonSections,
     orderedLessons,
-    ensureLessonsCatalogLoaded,
-    handleSelectLesson,
-    progress,
-    lessonAssignmentsByComponent,
-    completedLessonAssignmentsByComponent,
-    lessonDocuments,
-    lessonTemplateMap,
-    activeLessonId,
-    isLessonsCatalogLoading,
     isLessonSectionsLoading,
     shouldShowLessonsCatalogSkeleton,
-  } = useLessons();
+  } = lessonsState;
   const [isPageContentReady, setIsPageContentReady] = useState(true);
 
   useEffect(() => {
@@ -710,164 +701,157 @@ export function LessonsCatalog() {
     shouldShowLessonsCatalogSkeleton || isLessonSectionsLoading;
   const shouldShowEmptyState = lessonSections.length === 0 && orderedLessons.length === 0;
 
+  const contextValue: LessonsCatalogContextValue = {
+    ...lessonsState,
+    isCardStatusReady: isPageContentReady,
+    isSixYearOld,
+    locale,
+    masteryTranslations,
+    libraryCardTranslations,
+    subjectVisual,
+    translations,
+  };
+
   return (
-    <div className={LESSONS_LIBRARY_LAYOUT_CLASSNAME} data-testid='lessons-shell-transition'>
-      <div id='kangur-lessons-intro' className='w-full'>
-        {isPageContentReady ? (
-          <LessonsCatalogIntroCardWithPageContent
-            isSixYearOld={isSixYearOld}
-            locale={locale}
-            showWordmark={true}
-            subject={subject}
-            translations={translations}
-          >
-            {shouldShowIntroLoadingState ? (
-              <div className='w-full' data-testid='lessons-intro-loading-state'>
-                <KangurInfoCard
-                  accent='indigo'
-                  aria-live='polite'
-                  className='mx-auto w-full max-w-2xl text-left'
-                  data-testid='lessons-intro-loading-card'
-                  padding='md'
-                  role='status'
-                  tone='accent'
-                >
-                  <div className='flex items-start gap-3 sm:items-center'>
-                    <div
-                      aria-hidden='true'
-                      className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-indigo-500 sm:mt-0'
-                    >
-                      <span className='size-3 rounded-full bg-current animate-pulse' />
-                    </div>
-                    <div className='min-w-0 flex-1'>
-                      <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
-                        {isSixYearOld ? (
-                          <KangurVisualCueContent
-                            icon='⏳'
-                            iconClassName='text-base'
-                            iconTestId='lessons-intro-loading-icon'
-                            label={loadingStatusLabel}
-                          />
-                        ) : (
-                          loadingStatusLabel
-                        )}
-                      </KangurStatusChip>
-                      <p className='mt-2 text-sm leading-6 text-current/90'>
-                        {loadingStatusDescription}
-                      </p>
-                    </div>
-                  </div>
-                </KangurInfoCard>
-              </div>
-            ) : null}
-          </LessonsCatalogIntroCardWithPageContent>
-        ) : (
-          <KangurResolvedPageIntroCard
-            description={renderLessonsCatalogIntroDescription({
-              isSixYearOld,
-              label: translations('introDescription'),
-              subject,
-            })}
-            headingAs='h1'
-            headingTestId='kangur-lessons-list-heading'
-            showBackButton={false}
-            testId='lessons-list-intro-card'
-            title={translations('pageTitle')}
-            visualTitle={isPageContentReady ? (
-              <LazyKangurLessonsWordmark
-                className='mx-auto'
-                data-testid='kangur-lessons-heading-art'
-                label={translations('pageTitle')}
-                locale={locale}
-              />
-            ) : undefined}
-          >
-            {shouldShowIntroLoadingState ? (
-              <div className='w-full' data-testid='lessons-intro-loading-state'>
-                <KangurInfoCard
-                  accent='indigo'
-                  aria-live='polite'
-                  className='mx-auto w-full max-w-2xl text-left'
-                  data-testid='lessons-intro-loading-card'
-                  padding='md'
-                  role='status'
-                  tone='accent'
-                >
-                  <div className='flex items-start gap-3 sm:items-center'>
-                    <div
-                      aria-hidden='true'
-                      className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-indigo-500 sm:mt-0'
-                    >
-                      <span className='size-3 rounded-full bg-current animate-pulse' />
-                    </div>
-                    <div className='min-w-0 flex-1'>
-                      <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
-                        {isSixYearOld ? (
-                          <KangurVisualCueContent
-                            icon='⏳'
-                            iconClassName='text-base'
-                            iconTestId='lessons-intro-loading-icon'
-                            label={loadingStatusLabel}
-                          />
-                        ) : (
-                          loadingStatusLabel
-                        )}
-                      </KangurStatusChip>
-                      <p className='mt-2 text-sm leading-6 text-current/90'>
-                        {loadingStatusDescription}
-                      </p>
-                    </div>
-                  </div>
-                </KangurInfoCard>
-              </div>
-            ) : null}
-          </KangurResolvedPageIntroCard>
-        )}
-      </div>
-      <div
-        aria-busy={shouldShowLessonsCatalogSkeleton}
-        className={LESSONS_LIBRARY_LIST_CLASSNAME}
-        data-testid='lessons-list-transition'
-      >
-        {shouldShowLessonsCatalogSkeleton ? (
-          <LessonsCatalogSkeleton />
-        ) : shouldShowEmptyState ? (
-          isPageContentReady ? (
-            <LessonsCatalogEmptyStateWithPageContent
-              ageGroupLabel={ageGroupLabel}
+    <LessonsCatalogContext.Provider value={contextValue}>
+      <div className={LESSONS_LIBRARY_LAYOUT_CLASSNAME} data-testid='lessons-shell-transition'>
+        <div id='kangur-lessons-intro' className='w-full'>
+          {isPageContentReady ? (
+            <LessonsCatalogIntroCardWithPageContent
+              isSixYearOld={isSixYearOld}
+              locale={locale}
+              showWordmark={true}
+              subject={subject}
               translations={translations}
-            />
+            >
+              {shouldShowIntroLoadingState ? (
+                <div className='w-full' data-testid='lessons-intro-loading-state'>
+                  <KangurInfoCard
+                    accent='indigo'
+                    aria-live='polite'
+                    className='mx-auto w-full max-w-2xl text-left'
+                    data-testid='lessons-intro-loading-card'
+                    padding='md'
+                    role='status'
+                    tone='accent'
+                  >
+                    <div className='flex items-start gap-3 sm:items-center'>
+                      <div
+                        aria-hidden='true'
+                        className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-indigo-500 sm:mt-0'
+                      >
+                        <span className='size-3 rounded-full bg-current animate-pulse' />
+                      </div>
+                      <div className='min-w-0 flex-1'>
+                        <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
+                          {isSixYearOld ? (
+                            <KangurVisualCueContent
+                              icon='⏳'
+                              iconClassName='text-base'
+                              iconTestId='lessons-intro-loading-icon'
+                              label={loadingStatusLabel}
+                            />
+                          ) : (
+                            loadingStatusLabel
+                          )}
+                        </KangurStatusChip>
+                        <p className='mt-2 text-sm leading-6 text-current/90'>
+                          {loadingStatusDescription}
+                        </p>
+                      </div>
+                    </div>
+                  </KangurInfoCard>
+                </div>
+              ) : null}
+            </LessonsCatalogIntroCardWithPageContent>
           ) : (
-            <KangurEmptyState
-              accent='indigo'
-              description={translations('emptyDescription', { ageGroup: ageGroupLabel })}
-              title={translations('emptyTitle')}
-            />
-          )
-        ) : (
-          <LessonsCatalogResolvedContent
-            activeLessonId={activeLessonId}
-            completedLessonAssignmentsByComponent={completedLessonAssignmentsByComponent}
-            ensureLessonsCatalogLoaded={ensureLessonsCatalogLoaded}
-            handleSelectLesson={handleSelectLesson}
-            isCardStatusReady={isPageContentReady}
-            isSixYearOld={isSixYearOld}
-            isLessonsCatalogLoading={isLessonsCatalogLoading}
-            lessonAssignmentsByComponent={lessonAssignmentsByComponent}
-            lessonDocuments={lessonDocuments}
-            libraryCardTranslations={libraryCardTranslations}
-            lessonSections={lessonSections}
-            lessonTemplateMap={lessonTemplateMap}
-            locale={locale}
-            masteryTranslations={masteryTranslations}
-            orderedLessons={orderedLessons}
-            progress={progress}
-            subject={subject}
-            subjectVisual={subjectVisual}
-            translations={translations}
-          />
-        )}
+            <KangurResolvedPageIntroCard
+              description={renderLessonsCatalogIntroDescription({
+                isSixYearOld,
+                label: translations('introDescription'),
+                subject,
+              })}
+              headingAs='h1'
+              headingTestId='kangur-lessons-list-heading'
+              showBackButton={false}
+              testId='lessons-list-intro-card'
+              title={translations('pageTitle')}
+              visualTitle={isPageContentReady ? (
+                <LazyKangurLessonsWordmark
+                  className='mx-auto'
+                  data-testid='kangur-lessons-heading-art'
+                  label={translations('pageTitle')}
+                  locale={locale}
+                />
+              ) : undefined}
+            >
+              {shouldShowIntroLoadingState ? (
+                <div className='w-full' data-testid='lessons-intro-loading-state'>
+                  <KangurInfoCard
+                    accent='indigo'
+                    aria-live='polite'
+                    className='mx-auto w-full max-w-2xl text-left'
+                    data-testid='lessons-intro-loading-card'
+                    padding='md'
+                    role='status'
+                    tone='accent'
+                  >
+                    <div className='flex items-start gap-3 sm:items-center'>
+                      <div
+                        aria-hidden='true'
+                        className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-indigo-500 sm:mt-0'
+                      >
+                        <span className='size-3 rounded-full bg-current animate-pulse' />
+                      </div>
+                      <div className='min-w-0 flex-1'>
+                        <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
+                          {isSixYearOld ? (
+                            <KangurVisualCueContent
+                              icon='⏳'
+                              iconClassName='text-base'
+                              iconTestId='lessons-intro-loading-icon'
+                              label={loadingStatusLabel}
+                            />
+                          ) : (
+                            loadingStatusLabel
+                          )}
+                        </KangurStatusChip>
+                        <p className='mt-2 text-sm leading-6 text-current/90'>
+                          {loadingStatusDescription}
+                        </p>
+                      </div>
+                    </div>
+                  </KangurInfoCard>
+                </div>
+              ) : null}
+            </KangurResolvedPageIntroCard>
+          )}
+        </div>
+        <div
+          aria-busy={shouldShowLessonsCatalogSkeleton}
+          className={LESSONS_LIBRARY_LIST_CLASSNAME}
+          data-testid='lessons-list-transition'
+        >
+          {shouldShowLessonsCatalogSkeleton ? (
+            <LessonsCatalogSkeleton />
+          ) : shouldShowEmptyState ? (
+            isPageContentReady ? (
+              <LessonsCatalogEmptyStateWithPageContent
+                ageGroupLabel={ageGroupLabel}
+                translations={translations}
+              />
+            ) : (
+              <KangurEmptyState
+                accent='indigo'
+                description={translations('emptyDescription', { ageGroup: ageGroupLabel })}
+                title={translations('emptyTitle')}
+              />
+            )
+          ) : (
+            <LessonsCatalogResolvedContent />
+          )}
+        </div>
       </div>
-    </div>
+    </LessonsCatalogContext.Provider>
   );
 }

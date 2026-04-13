@@ -68,18 +68,12 @@ type KangurAssignmentsListRuntimeContextValue = {
 };
 
 type KangurAssignmentsListPrimaryActionProps = {
-  isCoarsePointer: boolean;
-  item: KangurAssignmentListItem;
-  onItemActionClick?: (item: KangurAssignmentListItem) => void;
   transitionSourceId: string;
   variant: 'surface' | KangurAssignmentListItem['actionVariant'];
 };
 
 type KangurAssignmentsListProgressMetaProps = {
   countdownLabel: string | null;
-  lastActivityLabel: string | null | undefined;
-  lastActivityPrefix: string;
-  timeLimitLabel: string | null | undefined;
 };
 
 type KangurAssignmentsListShellProps = {
@@ -212,12 +206,13 @@ const shouldTickAssignmentsCountdown = (
   items.some((item) => Boolean(item.timeLimitMinutes) && item.status !== 'completed');
 
 function KangurAssignmentsListPrimaryAction({
-  isCoarsePointer,
-  item,
-  onItemActionClick,
   transitionSourceId,
   variant,
 }: KangurAssignmentsListPrimaryActionProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const item = useKangurAssignmentsListItem();
+  const { onItemActionClick } = useKangurAssignmentsListActions();
+
   return (
     <KangurButton
       asChild
@@ -252,10 +247,13 @@ function KangurAssignmentsListTimeMeta({ label }: { label: string }): React.JSX.
 
 function KangurAssignmentsListProgressMeta({
   countdownLabel,
-  lastActivityLabel,
-  lastActivityPrefix,
-  timeLimitLabel,
 }: KangurAssignmentsListProgressMetaProps): React.JSX.Element | null {
+  const item = useKangurAssignmentsListItem();
+  const translations = useKangurAssignmentsListTranslations();
+  const lastActivityLabel = item.lastActivityLabel;
+  const lastActivityPrefix = translations('lastActivityPrefix');
+  const timeLimitLabel = item.timeLimitLabel;
+
   if (!countdownLabel && !timeLimitLabel && !lastActivityLabel) {
     return null;
   }
@@ -273,17 +271,13 @@ function KangurAssignmentsListProgressMeta({
   );
 }
 
-function KangurAssignmentsListTimeLimitAction({
-  isCoarsePointer,
-  itemId,
-  label,
-  onTimeLimitClick,
-}: {
-  isCoarsePointer: boolean;
-  itemId: string;
-  label: string;
-  onTimeLimitClick?: (assignmentId: string) => void;
-}): React.JSX.Element | null {
+function KangurAssignmentsListTimeLimitAction(): React.JSX.Element | null {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const item = useKangurAssignmentsListItem();
+  const translations = useKangurAssignmentsListTranslations();
+  const { onTimeLimitClick } = useKangurAssignmentsListArchive();
+  const label = translations('timeLimitButtonLabel');
+
   if (!onTimeLimitClick) {
     return null;
   }
@@ -294,7 +288,7 @@ function KangurAssignmentsListTimeLimitAction({
       title={label}
       className={resolveAssignmentsIconButtonClassName(isCoarsePointer)}
       type='button'
-      onClick={() => onTimeLimitClick(itemId)}
+      onClick={() => onTimeLimitClick(item.id)}
       size='sm'
       variant='ghost'
     >
@@ -303,30 +297,26 @@ function KangurAssignmentsListTimeLimitAction({
   );
 }
 
-function KangurAssignmentsListReassignAction({
-  isCoarsePointer,
-  itemId,
-  isReassigning,
-  label,
-  onReassign,
-  reassigningLabel,
-}: {
-  isCoarsePointer: boolean;
-  itemId: string;
-  isReassigning: boolean;
-  label: string;
-  onReassign?: (assignmentId: string) => void;
-  reassigningLabel: string;
-}): React.JSX.Element | null {
-  if (!onReassign) {
+function KangurAssignmentsListReassignAction(): React.JSX.Element | null {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const item = useKangurAssignmentsListItem();
+  const translations = useKangurAssignmentsListTranslations();
+  const { onReassign, reassigningId } = useKangurAssignmentsListArchive();
+
+  const canReassign = Boolean(onReassign && item.status === 'completed');
+  if (!onReassign || !canReassign) {
     return null;
   }
+
+  const isReassigning = Boolean(reassigningId && reassigningId === item.id);
+  const label = translations('reassign');
+  const reassigningLabel = translations('reassigning');
 
   return (
     <KangurButton
       className={resolveAssignmentsActionButtonClassName(isCoarsePointer)}
       type='button'
-      onClick={() => onReassign(itemId)}
+      onClick={() => onReassign(item.id)}
       size='sm'
       variant='ghost'
       disabled={isReassigning}
@@ -336,17 +326,13 @@ function KangurAssignmentsListReassignAction({
   );
 }
 
-function KangurAssignmentsListArchiveAction({
-  isCoarsePointer,
-  itemId,
-  label,
-  onArchive,
-}: {
-  isCoarsePointer: boolean;
-  itemId: string;
-  label: string;
-  onArchive?: (assignmentId: string) => void;
-}): React.JSX.Element | null {
+function KangurAssignmentsListArchiveAction(): React.JSX.Element | null {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const item = useKangurAssignmentsListItem();
+  const translations = useKangurAssignmentsListTranslations();
+  const { onArchive } = useKangurAssignmentsListArchive();
+  const label = translations('archive');
+
   if (!onArchive) {
     return null;
   }
@@ -355,7 +341,7 @@ function KangurAssignmentsListArchiveAction({
     <KangurButton
       className={resolveAssignmentsActionButtonClassName(isCoarsePointer)}
       type='button'
-      onClick={() => onArchive(itemId)}
+      onClick={() => onArchive(item.id)}
       size='sm'
       variant='ghost'
     >
@@ -488,9 +474,6 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
             {item.progressSummary}
           </KangurCardDescription>
           <KangurAssignmentsListPrimaryAction
-            isCoarsePointer={isCoarsePointer}
-            item={item}
-            onItemActionClick={onItemActionClick}
             transitionSourceId={`assignments-list:compact:${item.id}`}
             variant={item.actionVariant}
           />
@@ -578,40 +561,17 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         />
         <KangurAssignmentsListProgressMeta
           countdownLabel={countdownLabel}
-          lastActivityLabel={item.lastActivityLabel}
-          lastActivityPrefix={translations('lastActivityPrefix')}
-          timeLimitLabel={item.timeLimitLabel}
         />
       </KangurSummaryPanel>
 
       <div className={`mt-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:flex-wrap sm:items-center`}>
         <KangurAssignmentsListPrimaryAction
-          isCoarsePointer={isCoarsePointer}
-          item={item}
-          onItemActionClick={onItemActionClick}
           transitionSourceId={`assignments-list:standard:${item.id}`}
           variant='surface'
         />
-        <KangurAssignmentsListTimeLimitAction
-          isCoarsePointer={isCoarsePointer}
-          itemId={item.id}
-          label={translations('timeLimitButtonLabel')}
-          onTimeLimitClick={onTimeLimitClick}
-        />
-        <KangurAssignmentsListReassignAction
-          isCoarsePointer={isCoarsePointer}
-          itemId={item.id}
-          isReassigning={isReassigning}
-          label={translations('reassign')}
-          onReassign={canReassign ? onReassign : undefined}
-          reassigningLabel={translations('reassigning')}
-        />
-        <KangurAssignmentsListArchiveAction
-          isCoarsePointer={isCoarsePointer}
-          itemId={item.id}
-          label={translations('archive')}
-          onArchive={onArchive}
-        />
+        <KangurAssignmentsListTimeLimitAction />
+        <KangurAssignmentsListReassignAction />
+        <KangurAssignmentsListArchiveAction />
       </div>
     </KangurInfoCard>
   );

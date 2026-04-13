@@ -1,3 +1,4 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
 audit,application-performance-fast-gate,Run the fast performance operations gate,passed,automatic,false,perf:ops:fast,,2026-04-13T20:41:47.098Z,artifacts/improvements/audit-report.json
+classify,application-performance-baseline,Run the performance baseline pass,passed,automatic,false,perf:ops:baseline,docs/metrics/critical-path-performance-latest.md|docs/metrics/critical-path-performance-latest.json|docs/metrics/critical-flow-tests-latest.md|docs/metrics/critical-flow-tests-latest.json|docs/metrics/unit-domain-timings-latest.md|docs/metrics/unit-domain-timings-latest.json|docs/metrics/route-hotspots.md,2026-04-13T20:59:29.994Z,artifacts/improvements/classify-report.json
 plan,application-performance-plan,Review the latest performance baseline outputs before optimization work,manual,manual,false,,,2026-04-12T15:40:31.397Z,artifacts/improvements/plan-report.json

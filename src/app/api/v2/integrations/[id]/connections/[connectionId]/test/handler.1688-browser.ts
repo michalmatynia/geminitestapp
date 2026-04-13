@@ -81,18 +81,23 @@ const waitFor1688ManualLogin = async (
   return false;
 };
 
+import { type ConnectionTestContext } from './handler.vinted-browser';
+
 export const handle1688BrowserTest = async (
-  connection: IntegrationConnectionRecord,
-  repo: ConnectionUpdateRepository,
-  manualMode: boolean,
-  manualSessionRefreshMode: boolean,
-  quicklistPreflightMode: boolean,
-  manualLoginTimeoutMs: number,
-  steps: TestLogEntry[],
-  pushStep: PushStep,
-  fail: Fail
+  ctx: ConnectionTestContext
 ): Promise<Response> => {
-  const interactiveManualMode = manualMode || manualSessionRefreshMode;
+  const {
+    connection,
+    repo,
+    manualMode,
+    manualSessionRefreshMode,
+    quicklistPreflightMode,
+    manualLoginTimeoutMs,
+    steps,
+    pushStep,
+    fail,
+  } = ctx;
+  const interactiveManualMode = manualMode || (manualSessionRefreshMode ?? false);
 
   if (interactiveManualMode) {
     pushStep(

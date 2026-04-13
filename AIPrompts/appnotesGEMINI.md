@@ -91,6 +91,11 @@ INVESTIGATION AN PLANNING
 -Scan the application and tell me if there are any modules or application that I could you to improve the app
 
 run application cleanup
+
+reduce Cyclomatic complexity
+
+file segmentation operation
+component loading segmentation
 ---
 
   path is importing the oversized features/integrations/public barrel in

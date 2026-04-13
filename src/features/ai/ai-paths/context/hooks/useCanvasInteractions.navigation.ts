@@ -35,11 +35,13 @@ export interface UseCanvasInteractionsNavigationValue {
     deltaY: number,
     clientX: number,
     clientY: number,
-    deltaMode?: number,
-    ctrlKey?: boolean,
-    metaKey?: boolean,
-    deltaX?: number,
-    options?: { immediate?: boolean }
+    options?: {
+      deltaMode?: number;
+      ctrlKey?: boolean;
+      metaKey?: boolean;
+      deltaX?: number;
+      immediate?: boolean;
+    }
   ) => void;
   wheelZoomRafRef: React.MutableRefObject<number | null>;
   viewAnimationRafRef: React.MutableRefObject<number | null>;
@@ -426,13 +428,20 @@ export function useCanvasInteractionsNavigation({
       deltaY: number,
       clientX: number,
       clientY: number,
-      deltaMode = 0,
-      ctrlKey = false,
-      metaKey = false,
-      deltaX = 0,
-      options?: { immediate?: boolean }
+      options?: {
+        deltaMode?: number;
+        ctrlKey?: boolean;
+        metaKey?: boolean;
+        deltaX?: number;
+        immediate?: boolean;
+      }
     ): void => {
       stopProgrammaticViewAnimation();
+      const deltaMode = options?.deltaMode ?? 0;
+      const ctrlKey = options?.ctrlKey ?? false;
+      const metaKey = options?.metaKey ?? false;
+      const deltaX = options?.deltaX ?? 0;
+
       // Some macOS trackpad pinch streams report minimal deltaY and meaningful deltaX.
       const normalizedDeltaYRaw = Number.isFinite(deltaY) ? deltaY : 0;
       const normalizedDeltaXRaw = Number.isFinite(deltaX) ? deltaX : 0;

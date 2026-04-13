@@ -89,16 +89,13 @@ export function useCanvasEventHandlers(args: {
         ? { x: event.clientX, y: event.clientY }
         : resolveViewportCenter();
       if (!anchorClient) return;
-      nav.applyWheelZoom(
-        event.deltaY,
-        anchorClient.x,
-        anchorClient.y,
-        event.deltaMode,
-        event.ctrlKey,
-        event.metaKey,
-        event.deltaX,
-        options
-      );
+      nav.applyWheelZoom(event.deltaY, anchorClient.x, anchorClient.y, {
+        deltaMode: event.deltaMode,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        deltaX: event.deltaX,
+        ...options,
+      });
     },
     [nav, resolveViewportCenter]
   );

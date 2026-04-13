@@ -76,60 +76,51 @@ function useAgenticTrimGameModel(config: TrimGameConfig) {
   };
 }
 
+type AgenticTrimGameContextValue = {
+  accent: KangurAccent;
+  config: TrimGameConfig;
+  model: AgenticTrimGameModel;
+};
+
+const AgenticTrimGameContext =
+  createContext<AgenticTrimGameContextValue | null>(null);
+
+function useAgenticTrimGameContext(): AgenticTrimGameContextValue {
+  const context = useContext(AgenticTrimGameContext);
+  if (!context) {
+    throw new Error(
+      'useAgenticTrimGameContext must be used within an AgenticTrimGame'
+    );
+  }
+  return context;
+}
+
 function renderAgenticTrimGame(
   { accent, config }: AgenticTrimGameProps,
   model: AgenticTrimGameModel
 ): React.JSX.Element {
-  const {
-    allCorrect,
-    checked,
-    isRemoved,
-    isCoarsePointer,
-    preview,
-    progress,
-    removableCount,
-    removedCount,
-    reset,
-    setChecked,
-    toggleToken,
-  } = model;
+  const { preview } = model;
 
   return (
-    <KangurLessonStack align='start' className='w-full'>
-      <KangurLessonVisual
-        accent={accent}
-        caption={config.svgLabel}
-        maxWidthClassName='max-w-full'
-      >
-        <TrimGameSvg />
-      </KangurLessonVisual>
-      <AgenticTrimGameCallout
-        accent={accent}
-        config={config}
-        isCoarsePointer={isCoarsePointer}
-        removedCount={removedCount}
-        removableCount={removableCount}
-      />
-      <AgenticTrimTokenPanel
-        checked={checked}
-        config={config}
-        isRemoved={isRemoved}
-        progress={progress}
-        toggleToken={toggleToken}
-      />
-      <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} lg:grid-cols-[1.2fr_0.8fr]`}>
-        <AgenticTrimPreviewPanel accent={accent} preview={preview} />
-        <AgenticTrimActionsPanel
+    <AgenticTrimGameContext.Provider value={{ accent, config, model }}>
+      <KangurLessonStack align='start' className='w-full'>
+        <KangurLessonVisual
           accent={accent}
-          allCorrect={allCorrect}
-          checked={checked}
-          config={config}
-          isCoarsePointer={isCoarsePointer}
-          onCheck={() => setChecked(true)}
-          onReset={reset}
-        />
-      </div>
-    </KangurLessonStack>
+          caption={config.svgLabel}
+          maxWidthClassName='max-w-full'
+        >
+          <TrimGameSvg />
+        </KangurLessonVisual>
+        <AgenticTrimGameCallout />
+        <AgenticTrimTokenPanel />
+        <div
+          className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} lg:grid-cols-[1.2fr_0.8fr]`}
+        >
+          <AgenticTrimPreviewPanel preview={preview} />
+          <AgenticTrimActionsPanel />
+        </div>
+      </KangurLessonStack>
+    </AgenticTrimGameContext.Provider>
   );
 }
 
@@ -139,19 +130,10 @@ export const AgenticTrimGame = createAgenticCodingMiniGameComponent({
   useModel: useAgenticTrimGameModel,
 });
 
-function AgenticTrimGameCallout({
-  accent,
-  config,
-  isCoarsePointer,
-  removedCount,
-  removableCount,
-}: {
-  accent: KangurAccent;
-  config: TrimGameConfig;
-  isCoarsePointer: boolean;
-  removedCount: number;
-  removableCount: number;
-}): React.JSX.Element {
+function AgenticTrimGameCallout(): React.JSX.Element {
+  const { accent, config, model } = useAgenticTrimGameContext();
+  const { isCoarsePointer, removedCount, removableCount } = model;
+
   return (
     <KangurLessonCallout accent={accent} padding='sm' className='text-left'>
       <div className='flex flex-wrap items-center gap-2'>
@@ -160,29 +142,26 @@ function AgenticTrimGameCallout({
           Removed {removedCount}/{removableCount}
         </span>
       </div>
-      <KangurLessonCaption className='mt-2 text-left'>{config.prompt}</KangurLessonCaption>
+      <KangurLessonCaption className='mt-2 text-left'>
+        {config.prompt}
+      </KangurLessonCaption>
       {isCoarsePointer ? (
-        <KangurLessonCaption className='mt-2 text-left' data-testid='agentic-trim-touch-hint'>
-          Dotykaj zbędnych słów, aby je wykreślić. Ponowne dotknięcie przywraca wyraz.
+        <KangurLessonCaption
+          className='mt-2 text-left'
+          data-testid='agentic-trim-touch-hint'
+        >
+          Dotykaj zbędnych słów, aby je wykreślić. Ponowne dotknięcie przywraca
+          wyraz.
         </KangurLessonCaption>
       ) : null}
     </KangurLessonCallout>
   );
 }
 
-function AgenticTrimTokenPanel({
-  checked,
-  config,
-  isRemoved,
-  progress,
-  toggleToken,
-}: {
-  checked: boolean;
-  config: TrimGameConfig;
-  isRemoved: (id: string) => boolean;
-  progress: number;
-  toggleToken: (id: string) => void;
-}): React.JSX.Element {
+function AgenticTrimTokenPanel(): React.JSX.Element {
+  const { config, model } = useAgenticTrimGameContext();
+  const { checked, isRemoved, progress, toggleToken } = model;
+
   return (
     <div className='soft-card border border-slate-200/80 bg-white px-4 py-4'>
       <div className='flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500'>
@@ -211,12 +190,12 @@ function AgenticTrimTokenPanel({
 }
 
 function AgenticTrimPreviewPanel({
-  accent,
   preview,
 }: {
-  accent: KangurAccent;
   preview: string;
 }): React.JSX.Element {
+  const { accent } = useAgenticTrimGameContext();
+
   return (
     <KangurLessonInset accent={accent} className='flex flex-col gap-2'>
       <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>
@@ -248,23 +227,10 @@ function resolveAgenticTrimFeedback({
   return null;
 }
 
-function AgenticTrimActionsPanel({
-  accent,
-  allCorrect,
-  checked,
-  config,
-  isCoarsePointer,
-  onCheck,
-  onReset,
-}: {
-  accent: KangurAccent;
-  allCorrect: boolean;
-  checked: boolean;
-  config: TrimGameConfig;
-  isCoarsePointer: boolean;
-  onCheck: () => void;
-  onReset: () => void;
-}): React.JSX.Element {
+function AgenticTrimActionsPanel(): React.JSX.Element {
+  const { accent, config, model } = useAgenticTrimGameContext();
+  const { allCorrect, checked, isCoarsePointer, setChecked, reset } = model;
+
   const feedback = resolveAgenticTrimFeedback({
     checked,
     allCorrect,
@@ -279,15 +245,23 @@ function AgenticTrimActionsPanel({
       <div className='flex flex-wrap items-center gap-2'>
         <KangurButton
           variant={checked && allCorrect ? 'success' : 'surface'}
-          onClick={onCheck}
-          className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
+          onClick={() => setChecked(true)}
+          className={
+            isCoarsePointer
+              ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]'
+              : undefined
+          }
         >
           {checked && allCorrect ? 'Perfect' : 'Check'}
         </KangurButton>
         <KangurButton
           variant='surface'
-          onClick={onReset}
-          className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
+          onClick={reset}
+          className={
+            isCoarsePointer
+              ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]'
+              : undefined
+          }
         >
           Reset
         </KangurButton>

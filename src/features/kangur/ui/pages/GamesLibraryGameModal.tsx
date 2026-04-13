@@ -14,6 +14,10 @@ import { buildKangurGameLaunchHref } from '@/features/kangur/ui/services/game-la
 
 import { useGamesLibraryGameModalState } from './GamesLibraryGameModal.hooks';
 import {
+  GamesLibraryGameModalProvider,
+  useGamesLibraryGameModalContext,
+} from './GamesLibraryGameModal.context';
+import {
   GameHeader,
   GameModalEmptyState,
   GameModalSection,
@@ -23,17 +27,26 @@ import {
 import type { GamesLibraryGameModalProps } from './GamesLibraryGameModal.types';
 import {
   GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME,
-  resolveModalAgeGroupAccent,
   resolveModalStatusAccent,
   resolvePreviewSettingsFromPersistedSection,
 } from './GamesLibraryGameModal.utils';
-import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 
 const sortBySortOrder = <T extends { sortOrder: number }>(items: readonly T[]): T[] =>
   [...items].sort((left, right) => left.sortOrder - right.sortOrder);
 
 const resolveVariantRuntimeDetails = (
-  variant: KangurGameDefinition['variants'][number],
+  variant: {
+    id: string;
+    title: string;
+    description: string;
+    status: string;
+    surface: string;
+    sortOrder: number;
+    launchableRuntimeId?: string | null;
+    lessonActivityRuntimeId?: string | null;
+    legacyActivityId?: string | null;
+    legacyScreenId?: string | null;
+  },
   labels: {
     launchableRuntime: string;
     lessonRuntime: string;
@@ -99,30 +112,40 @@ function ModalBooleanField(props: {
 }
 
 export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.JSX.Element | null {
-  const { basePath, game, open, onOpenChange } = props;
+  const { game, open, onOpenChange } = props;
   const state = useGamesLibraryGameModalState(props);
-  const {
-    translations,
-    locale,
-    settingsOpen,
-    setSettingsOpen,
-    handleCloseModal,
-    supportsPreviewSettings,
-    lessonGameSectionsQuery,
-    gameInstancesQuery,
-  } = state;
 
   if (!game) {
     return null;
   }
 
-  const resolvedAgeGroupLabel = game.ageGroup
-    ? getLocalizedKangurAgeGroupLabel(game.ageGroup, locale)
-    : translations('labels.allAgeGroups');
-  const subjectLabel = getLocalizedKangurSubjectLabel(game.subject, locale, game.subject);
-  const linkedLessonCount = game.lessonComponentIds.length;
-  const isPending = lessonGameSectionsQuery.isPending || gameInstancesQuery.isPending;
-  const gameHref = buildKangurGameLaunchHref(basePath, game) ?? null;
+  return (
+    <GamesLibraryGameDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={game.title}
+      description={game.description}
+    >
+      <GamesLibraryGameModalProvider state={state} basePath={props.basePath}>
+        <GamesLibraryGameModalContent />
+      </GamesLibraryGameModalProvider>
+    </GamesLibraryGameDialog>
+  );
+}
+
+function GamesLibraryGameModalContent(): React.JSX.Element {
+  const {
+    game,
+    translations,
+    locale,
+    settingsOpen,
+    supportsPreviewSettings,
+    lessonGameSectionsQuery,
+    gameInstancesQuery,
+  } = useGamesLibraryGameModalContext();
+
+  if (!game) return <></>;
+
   const savedInstances = sortBySortOrder(gameInstancesQuery.data ?? []);
   const savedSections = sortBySortOrder(lessonGameSectionsQuery.data ?? []);
   const previewSettings = supportsPreviewSettings
@@ -165,37 +188,12 @@ export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.
   });
 
   return (
-    <GamesLibraryGameDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={game.title}
-      description={game.description}
-    >
-      <GameHeader
-        game={game}
-        translations={translations}
-        settingsOpen={settingsOpen}
-        setSettingsOpen={setSettingsOpen}
-        handleCloseModal={handleCloseModal}
-        supportsPreviewSettings={supportsPreviewSettings}
-        isPending={isPending}
-        gameHref={gameHref}
-        subjectLabel={subjectLabel}
-        resolvedAgeGroupLabel={resolvedAgeGroupLabel}
-        resolveModalAgeGroupAccent={resolveModalAgeGroupAccent}
-        resolveModalStatusAccent={resolveModalStatusAccent}
-      />
+    <>
+      <GameHeader />
 
       <div className='min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-5 sm:px-6 sm:pb-6'>
         <div className='space-y-5'>
-          <GameStats
-            game={game}
-            translations={translations}
-            resolvedAgeGroupLabel={resolvedAgeGroupLabel}
-            linkedLessonCount={linkedLessonCount}
-            resolveModalAgeGroupAccent={resolveModalAgeGroupAccent}
-            resolveModalStatusAccent={resolveModalStatusAccent}
-          />
+          <GameStats />
 
           <div className={`${GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME} px-4 py-3`}>
             <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
@@ -551,7 +549,6 @@ export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.
             </div>
           </div>
         </div>
-      </div>
-    </GamesLibraryGameDialog>
+    </>
   );
 }

@@ -38,33 +38,26 @@ import type { GamesLibraryFilterState } from '../GamesLibrary.filters';
 type GamesLibraryTranslations = ReturnType<typeof useTranslations>;
 type GamesLibrarySelectedGame = KangurGameCatalogEntry['game'];
 
-export interface CatalogTabProps {
-  filters: GamesLibraryFilterState;
-  hasActiveFilters: boolean;
-  applyFilters: (filters: GamesLibraryFilterState, sourceId: string) => void;
-  translations: GamesLibraryTranslations;
-  visibleGameCount: number;
-  totalGameCount: number;
-  groupedGames: KangurGamesLibrarySubjectGroup[];
-  locale: string;
-  basePath: string;
-  selectedGame: GamesLibrarySelectedGame | null;
-  setSelectedGame: (game: GamesLibrarySelectedGame, trigger?: HTMLElement | null) => void;
-}
+import { useGamesLibraryContext } from '../GamesLibrary.context';
 
 export const CatalogTab = ({
-  filters,
-  hasActiveFilters,
-  applyFilters,
-  translations,
-  visibleGameCount,
-  totalGameCount,
-  groupedGames,
-  locale,
-  basePath,
-  selectedGame,
   setSelectedGame,
-}: CatalogTabProps) => {
+}: {
+  setSelectedGame: (game: KangurGameCatalogEntry['game'], trigger?: HTMLElement | null) => void;
+}) => {
+  const {
+    filters,
+    hasActiveFilters,
+    applyFilters,
+    translations,
+    visibleGameCount,
+    totalGameCount,
+    groupedGames,
+    locale,
+    basePath,
+    selectedGame,
+  } = useGamesLibraryContext();
+
   const catalogPanelEyebrow =
     filters.gameId === 'all' ? translations('tabs.catalog') : translations('focus.gameTitle');
   const catalogSummaryText = hasActiveFilters

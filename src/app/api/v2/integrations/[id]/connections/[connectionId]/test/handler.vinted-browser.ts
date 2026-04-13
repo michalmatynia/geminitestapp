@@ -33,16 +33,31 @@ const VINTED_GOOGLE_SIGN_IN_BLOCKED_MESSAGE =
   'AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.';
 const MANUAL_VINTED_DEVICE_NAME = 'Desktop Chrome';
 
+export type ConnectionTestContext = {
+  connection: IntegrationConnectionRecord;
+  repo: ConnectionUpdateRepository;
+  manualMode: boolean;
+  quicklistPreflightMode?: boolean;
+  manualLoginTimeoutMs: number;
+  steps: TestLogEntry[];
+  pushStep: PushStep;
+  fail: Fail;
+  productId?: string | null;
+};
+
 export const handleVintedBrowserTest = async (
-  connection: IntegrationConnectionRecord,
-  repo: ConnectionUpdateRepository,
-  manualMode: boolean,
-  quicklistPreflightMode: boolean,
-  manualLoginTimeoutMs: number,
-  steps: TestLogEntry[],
-  pushStep: PushStep,
-  fail: Fail
+  ctx: ConnectionTestContext
 ): Promise<Response> => {
+  const {
+    connection,
+    repo,
+    manualMode,
+    quicklistPreflightMode,
+    manualLoginTimeoutMs,
+    steps,
+    pushStep,
+    fail,
+  } = ctx;
   if (manualMode) {
     pushStep('Manual mode', 'ok', `Manual login enabled (timeout ${manualLoginTimeoutMs}ms).`);
   }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-13T20:42:08.911Z",
+  "generatedAt": "2026-04-13T20:59:29.998Z",
   "track": {
     "id": "products-parameter-integrity",
     "title": "Products parameter integrity",
@@ -277,7 +277,7 @@
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-13T11:22:43.048Z",
+        "generatedAt": "2026-04-13T20:59:29.994Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,

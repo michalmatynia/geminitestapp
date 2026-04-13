@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-13T20:42:08.911Z",
+  "generatedAt": "2026-04-13T20:59:29.998Z",
   "track": {
     "id": "repo-quality-baseline",
     "title": "Repository quality baseline",
@@ -141,8 +141,8 @@
     "category": "quality",
     "defaultSelected": true,
     "description": "Runs the core read-only quality checks that establish the current repository baseline.",
-    "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-13T20:41:47.098Z",
+    "overallStatus": "failed",
+    "latestGeneratedAt": "2026-04-13T20:59:29.994Z",
     "docDir": "docs/build/improvements/repo-quality-baseline",
     "phases": [
       {
@@ -197,15 +197,15 @@
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-13T11:22:43.048Z",
+        "generatedAt": "2026-04-13T20:59:29.994Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
         "stepCount": 2,
         "automaticStepCount": 2,
         "manualStepCount": 0,
-        "passedStepCount": 2,
-        "failedStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 2,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
@@ -217,11 +217,11 @@
             "phase": "classify",
             "mode": "automatic",
             "writes": false,
-            "status": "passed",
+            "status": "failed",
             "outputs": [],
             "instructions": [],
             "script": "quality:baseline:lint",
-            "durationMs": 4194
+            "durationMs": 305535
           },
           {
             "id": "repo-quality-typecheck",
@@ -230,14 +230,14 @@
             "phase": "classify",
             "mode": "automatic",
             "writes": false,
-            "status": "passed",
+            "status": "failed",
             "outputs": [],
             "instructions": [],
             "script": "quality:baseline:typecheck",
-            "durationMs": 70603
+            "durationMs": 9653
           }
         ],
-        "status": "passed"
+        "status": "failed"
       },
       {
         "phase": "plan",

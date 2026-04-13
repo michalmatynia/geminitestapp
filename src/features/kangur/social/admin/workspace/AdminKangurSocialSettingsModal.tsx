@@ -139,25 +139,21 @@ function AdminKangurSocialSettingsModalContent(): React.JSX.Element {
   );
 }
 
-export function AdminKangurSocialSettingsModal({
-  open,
-  onClose,
-  onSave,
-  isSaving,
-  hasUnsavedChanges,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSave: () => void;
-  isSaving: boolean;
-  hasUnsavedChanges: boolean;
-}): React.JSX.Element {
+export function AdminKangurSocialSettingsModal(): React.JSX.Element {
   const context = useSocialPostContext();
   const {
     currentGenerationJob,
     currentPipelineJob,
     currentVisualAnalysisJob,
+    isSettingsModalOpen: open,
+    setIsSettingsModalOpen,
+    isSavingSettings: isSaving,
+    isSettingsDirty: hasUnsavedChanges,
+    handleSaveSettings: onSave,
   } = context;
+
+  const onClose = () => setIsSettingsModalOpen(false);
+
   const hasBlockingRuntimeJob =
     isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
     isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
@@ -175,7 +171,7 @@ export function AdminKangurSocialSettingsModal({
       onClose={onClose}
       title='Social Settings'
       subtitle='Choose StudiQ Social models from the AI Brain catalog and manage project references.'
-      onSave={onSave}
+      onSave={() => void onSave()}
       isSaving={isSaving}
       disableCloseWhileSaving
       isSaveDisabled={!hasUnsavedChanges || isSaving || hasBlockingRuntimeJob}

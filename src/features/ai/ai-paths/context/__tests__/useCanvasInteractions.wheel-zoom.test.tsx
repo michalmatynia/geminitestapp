@@ -58,7 +58,12 @@ const runWheelZoomScenario = (options?: {
   );
 
   act(() => {
-    result.current.applyWheelZoom(deltaY, 120, 90, 0, ctrlKey, metaKey, deltaX);
+    result.current.applyWheelZoom(deltaY, 120, 90, {
+      deltaMode: 0,
+      ctrlKey,
+      metaKey,
+      deltaX,
+    });
   });
 
   act(() => {
@@ -129,7 +134,13 @@ describe('useCanvasInteractionsNavigation wheel zoom', () => {
     );
 
     act(() => {
-      result.current.applyWheelZoom(0.4, 300, 220, 0, false, false, 0, { immediate: true });
+      result.current.applyWheelZoom(0.4, 300, 220, {
+        deltaMode: 0,
+        ctrlKey: false,
+        metaKey: false,
+        deltaX: 0,
+        immediate: true,
+      });
     });
 
     expect(latestViewRef.current.scale).not.toBe(1);

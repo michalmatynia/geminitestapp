@@ -406,21 +406,21 @@ function SubtractingGameSummaryView({
   finishLabel,
   onFinish,
   onRestart,
-  percent,
-  score,
-  translations,
-  xpBreakdown,
-  xpEarned,
+  results,
 }: {
   finishLabel: string;
   onFinish: () => void;
   onRestart: () => void;
-  percent: number;
-  score: number;
-  translations: ReturnType<typeof useTranslations>;
-  xpBreakdown: KangurRewardBreakdownEntry[];
-  xpEarned: number;
+  results: {
+    percent: number;
+    score: number;
+    xpBreakdown: KangurRewardBreakdownEntry[];
+    xpEarned: number;
+  };
 }): React.JSX.Element {
+  const { translations } = useSubtractingGame();
+  const { percent, score, xpBreakdown, xpEarned } = results;
+
   return (
     <KangurPracticeGameSummary
       dataTestId='subtracting-game-summary-shell'
@@ -635,34 +635,6 @@ export default function SubtractingGame({
     });
   };
 
-  if (done) {
-    const percent = Math.round((score / TOTAL) * 100);
-    return (
-      <SubtractingGameSummaryView
-        finishLabel={finishLabel}
-        onFinish={handleFinishGame}
-        onRestart={() =>
-          resetSubtractingGameSession({
-            sessionStartedAtRef,
-            setConfirmed,
-            setDone,
-            setQuestion,
-            setRoundIndex,
-            setScore,
-            setSelected,
-            setXpBreakdown,
-            setXpEarned,
-          })
-        }
-        percent={percent}
-        score={score}
-        translations={translations}
-        xpBreakdown={xpBreakdown}
-        xpEarned={xpEarned}
-      />
-    );
-  }
-
   const contextValue = {
     confirmed,
     isCoarsePointer,
@@ -673,6 +645,37 @@ export default function SubtractingGame({
     selected,
     translations,
   };
+
+  if (done) {
+    const percent = Math.round((score / TOTAL) * 100);
+    return (
+      <SubtractingGameContext.Provider value={contextValue}>
+        <SubtractingGameSummaryView
+          finishLabel={finishLabel}
+          onFinish={handleFinishGame}
+          onRestart={() =>
+            resetSubtractingGameSession({
+              sessionStartedAtRef,
+              setConfirmed,
+              setDone,
+              setQuestion,
+              setRoundIndex,
+              setScore,
+              setSelected,
+              setXpBreakdown,
+              setXpEarned,
+            })
+          }
+          results={{
+            percent,
+            score,
+            xpBreakdown,
+            xpEarned,
+          }}
+        />
+      </SubtractingGameContext.Provider>
+    );
+  }
 
   return (
     <SubtractingGameContext.Provider value={contextValue}>

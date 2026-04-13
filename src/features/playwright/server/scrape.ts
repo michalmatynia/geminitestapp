@@ -7,7 +7,9 @@ import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 import {
   startPlaywrightConnectionEngineTask,
+  runPlaywrightConnectionEngineTask,
   type PlaywrightConnectionBaseEngineRunRequest,
+  type PlaywrightConnectionEngineTaskResult,
 } from './connection-runtime';
 import {
   buildPlaywrightExecutionSettingsSummary,
@@ -145,7 +147,13 @@ export const runPlaywrightScrapeScript = async ({
   };
 
   const { run, runtime, settings: effectiveSettings, outputs, resultValue, finalUrl } = onRunStarted
-    ? await (async () => {
+    ? await (async (): Promise<
+        PlaywrightConnectionEngineTaskResult & {
+          outputs: Record<string, unknown>;
+          resultValue: unknown;
+          finalUrl: string | null;
+        }
+      > => {
         const startedTask = await startPlaywrightConnectionEngineTask(sharedTaskInput);
         await Promise.resolve(onRunStarted(startedTask.run.runId));
         const run = await waitForPlaywrightRunToFinish({
@@ -158,12 +166,30 @@ export const runPlaywrightScrapeScript = async ({
           run,
           runtime: startedTask.runtime,
           settings: startedTask.settings,
+          browserPreference: startedTask.browserPreference,
           outputs,
           resultValue,
           finalUrl,
         };
       })()
-    : await runPlaywrightConnectionScriptTask(sharedTaskInput);
+    : await (async (): Promise<
+        PlaywrightConnectionEngineTaskResult & {
+          outputs: Record<string, unknown>;
+          resultValue: unknown;
+          finalUrl: string | null;
+        }
+      > => {
+        const result = await runPlaywrightConnectionEngineTask(sharedTaskInput);
+        const { outputs, resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(
+          result.run.result
+        );
+        return {
+          ...result,
+          outputs,
+          resultValue,
+          finalUrl,
+        };
+      })();
 
   return {
     runId: run.runId,

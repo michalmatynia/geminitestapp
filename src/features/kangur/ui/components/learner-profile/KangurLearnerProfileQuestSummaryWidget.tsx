@@ -61,14 +61,18 @@ const resolveDailyQuestTitle = ({
   </>
 );
 
-function DailyQuestCard(props: {
+function DailyQuestCard({
+  dailyQuest,
+}: {
   dailyQuest: DailyQuestSnapshot;
-  basePath: string;
-  actionClassName: string;
-  activeLearnerName: string | null | undefined;
-  defaultQuestLabel: string;
 }): React.JSX.Element {
-  const dailyQuestAccent = resolveDailyQuestAccent(props.dailyQuest);
+  const translations = useTranslations('KangurLearnerProfileWidgets.questSummary');
+  const { basePath, user } = useKangurLearnerProfileRuntime();
+  const isCoarsePointer = useKangurCoarsePointer();
+
+  const activeLearner = user?.activeLearner ?? null;
+  const actionClassName = resolveQuestActionClassName(isCoarsePointer);
+  const dailyQuestAccent = resolveDailyQuestAccent(dailyQuest);
 
   return (
     <div
@@ -77,52 +81,51 @@ function DailyQuestCard(props: {
     >
       <KangurDailyQuestHighlightCardContent
         action={
-          <KangurButton asChild className={props.actionClassName} size='sm' variant='surface'>
+          <KangurButton asChild className={actionClassName} size='sm' variant='surface'>
             <Link
-              href={buildAssignmentHref(props.basePath, props.dailyQuest.assignment.action)}
-              targetPageKey={props.dailyQuest.assignment.action.page}
+              href={buildAssignmentHref(basePath, dailyQuest.assignment.action)}
+              targetPageKey={dailyQuest.assignment.action.page}
               transitionAcknowledgeMs={PROFILE_ROUTE_ACKNOWLEDGE_MS}
               transitionSourceId='learner-profile-daily-quest'
             >
-              {props.dailyQuest.assignment.action.label}
+              {dailyQuest.assignment.action.label}
             </Link>
           </KangurButton>
         }
-        description={props.dailyQuest.progress.summary}
+        description={dailyQuest.progress.summary}
         progressAccent={dailyQuestAccent}
-        progressLabel={`${props.dailyQuest.progress.percent}%`}
-        questLabel={props.dailyQuest.assignment.questLabel ?? props.defaultQuestLabel}
+        progressLabel={`${dailyQuest.progress.percent}%`}
+        questLabel={dailyQuest.assignment.questLabel ?? translations('defaultQuestLabel')}
         rewardAccent={
-          props.dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent
+          dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent
         }
-        rewardLabel={props.dailyQuest.reward.label}
+        rewardLabel={dailyQuest.reward.label}
         title={resolveDailyQuestTitle({
-          activeLearnerName: props.activeLearnerName,
-          assignmentTitle: props.dailyQuest.assignment.title,
+          activeLearnerName: activeLearner?.displayName,
+          assignmentTitle: dailyQuest.assignment.title,
         })}
       />
     </div>
   );
 }
 
-function QuestTrackSummary(props: {
-  heading: string;
-  progress: ReturnType<typeof useKangurLearnerProfileRuntime>['progress'];
-}): React.JSX.Element {
+function QuestTrackSummary({ heading }: { heading: string }): React.JSX.Element {
+  const { progress } = useKangurLearnerProfileRuntime();
+
   return (
     <div className='text-left' data-testid='kangur-learner-profile-track-summary'>
       <KangurSectionEyebrow as='p' className='mb-2 tracking-[0.18em]'>
-        {props.heading}
+        {heading}
       </KangurSectionEyebrow>
       <KangurHeroMilestoneSummary
         className='mb-3'
         dataTestIdPrefix='kangur-learner-profile-progress-milestone'
-        progress={props.progress}
+        progress={progress}
       />
       <KangurBadgeTrackHighlights
         dataTestIdPrefix='kangur-learner-profile-track'
         limit={3}
-        progress={props.progress}
+        progress={progress}
       />
     </div>
   );
@@ -131,10 +134,9 @@ function QuestTrackSummary(props: {
 export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.questSummary');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const { basePath, progress, user } = useKangurLearnerProfileRuntime();
-  const isCoarsePointer = useKangurCoarsePointer();
+  const { progress } = useKangurLearnerProfileRuntime();
   const { subject, subjectKey } = useKangurSubjectFocus();
-  const activeLearner = user?.activeLearner ?? null;
+
   const dailyQuest = useMemo(
     () =>
       getCurrentKangurDailyQuest(progress, {
@@ -144,20 +146,13 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
       }),
     [progress, runtimeTranslations, subject, subjectKey]
   );
-  const actionClassName = resolveQuestActionClassName(isCoarsePointer);
 
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {dailyQuest ? (
-        <DailyQuestCard
-          dailyQuest={dailyQuest}
-          basePath={basePath}
-          actionClassName={actionClassName}
-          activeLearnerName={activeLearner?.displayName}
-          defaultQuestLabel={translations('defaultQuestLabel')}
-        />
+        <DailyQuestCard dailyQuest={dailyQuest} />
       ) : null}
-      <QuestTrackSummary heading={translations('tracksHeading')} progress={progress} />
+      <QuestTrackSummary heading={translations('tracksHeading')} />
     </section>
   );
 }

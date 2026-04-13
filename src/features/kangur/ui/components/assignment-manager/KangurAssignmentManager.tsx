@@ -34,10 +34,9 @@ import {
   TIME_LIMIT_MINUTES_MAX,
   TIME_LIMIT_MINUTES_MIN,
 } from './KangurAssignmentManager.helpers';
-import { useKangurAssignmentManagerState } from './KangurAssignmentManager.hooks';
 import { KangurAssignmentManagerProvider, useKangurAssignmentManagerContext } from './KangurAssignmentManager.context';
 import { KangurAssignmentItemProvider, useKangurAssignmentItem } from './KangurAssignmentItemContext';
-import { renderKangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
+import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
 import type { KangurAssignmentManagerProps } from './KangurAssignmentManager.types';
 
 type AssignmentManagerState = ReturnType<typeof useKangurAssignmentManagerState>;
@@ -487,29 +486,9 @@ function KangurAssignmentManagerListsSection(): React.JSX.Element | null {
 }
 
 function KangurAssignmentManagerContent(): React.JSX.Element {
-  const state = useKangurAssignmentManagerContext();
-
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      {renderKangurAssignmentManagerTimeLimitModal({
-        isOpen: state.isTimeLimitModalOpen,
-        onClose: state.handleCloseTimeLimitModal,
-        onSave: () => void state.handleSaveTimeLimit(),
-        timeLimitDraft: state.timeLimitDraft,
-        onTimeLimitDraftChange: state.setTimeLimitDraft,
-        timeLimitTarget: state.timeLimitTarget
-          ? {
-              title: state.timeLimitTarget.title,
-              description: state.timeLimitTarget.description ?? null,
-            }
-          : null,
-        timeLimitPreview: state.timeLimitPreview,
-        timeLimitParsedError: state.timeLimitParsedError,
-        isSaveDisabled: state.isTimeLimitSaveDisabled,
-        saveLabel: state.timeLimitSaveLabel,
-        minMinutes: TIME_LIMIT_MINUTES_MIN,
-        maxMinutes: TIME_LIMIT_MINUTES_MAX,
-      })}
+      <KangurAssignmentManagerTimeLimitModal />
 
       <KangurAssignmentManagerCatalogSection />
 

@@ -60,33 +60,62 @@ export function GamesLibraryGameDialog({
   );
 }
 
-export function GameHeader({
-  game,
-  translations,
-  settingsOpen,
-  setSettingsOpen,
-  handleCloseModal,
-  supportsPreviewSettings,
-  isPending,
-  gameHref,
-  subjectLabel,
-  resolvedAgeGroupLabel,
-  resolveModalAgeGroupAccent,
-  resolveModalStatusAccent,
+import { useGamesLibraryGameModalContext } from './GamesLibraryGameModal.context';
+
+export function GamesLibraryGameDialog({
+  children,
+  description,
+  onOpenChange,
+  open,
+  title,
 }: {
-  game: KangurGameDefinition;
-  translations: ReturnType<typeof useTranslations<'KangurGamesLibraryPage'>>;
-  settingsOpen: boolean;
-  setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  handleCloseModal: () => void;
-  supportsPreviewSettings: boolean;
-  isPending: boolean;
-  gameHref: string | null;
-  subjectLabel: string;
-  resolvedAgeGroupLabel: string;
-  resolveModalAgeGroupAccent: (ageGroup: KangurGameDefinition['ageGroup']) => KangurAccent;
-  resolveModalStatusAccent: (status: KangurGameDefinition['status']) => KangurAccent;
-}) {
+  children: React.ReactNode;
+  description?: React.ReactNode;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  title: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <KangurDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      overlayVariant='solid'
+      contentVariant='panel'
+      contentSize='lg'
+      overlayProps={{
+        'data-testid': 'games-library-game-modal-overlay',
+        onClick: () => onOpenChange(false),
+      }}
+      contentProps={{
+        id: 'games-library-game-modal',
+        'data-testid': 'games-library-game-modal',
+        className: 'max-h-[calc(100dvh-1rem)] overflow-hidden',
+      }}
+    >
+      <KangurDialogMeta title={title} description={description} />
+      <div className='flex max-h-[calc(100dvh-1rem)] min-h-0 flex-col bg-[var(--kangur-page-background,#f8fafc)]'>
+        {children}
+      </div>
+    </KangurDialog>
+  );
+}
+
+export function GameHeader() {
+  const {
+    game,
+    translations,
+    settingsOpen,
+    setSettingsOpen,
+    handleCloseModal,
+    supportsPreviewSettings,
+    isPending,
+    gameHref,
+    subjectLabel,
+    resolvedAgeGroupLabel,
+    resolveModalAgeGroupAccent,
+    resolveModalStatusAccent,
+  } = useGamesLibraryGameModalContext();
+
   return (
     <div className='relative border-b border-[color:var(--kangur-page-border)] bg-[var(--kangur-soft-card-background,#ffffff)] px-5 py-5 sm:px-6 sm:py-6'>
       <KangurPanelCloseButton
@@ -181,21 +210,16 @@ export function GameHeader({
   );
 }
 
-export function GameStats({
-  game,
-  translations,
-  resolvedAgeGroupLabel,
-  linkedLessonCount,
-  resolveModalAgeGroupAccent,
-  resolveModalStatusAccent,
-}: {
-  game: KangurGameDefinition;
-  translations: ReturnType<typeof useTranslations<'KangurGamesLibraryPage'>>;
-  resolvedAgeGroupLabel: string;
-  linkedLessonCount: number;
-  resolveModalAgeGroupAccent: (ageGroup: KangurGameDefinition['ageGroup']) => KangurAccent;
-  resolveModalStatusAccent: (status: KangurGameDefinition['status']) => KangurAccent;
-}) {
+export function GameStats() {
+  const {
+    game,
+    translations,
+    resolvedAgeGroupLabel,
+    linkedLessonCount,
+    resolveModalAgeGroupAccent,
+    resolveModalStatusAccent,
+  } = useGamesLibraryGameModalContext();
+
   return (
     <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
       <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>

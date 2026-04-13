@@ -33,19 +33,19 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
   const resolvedSearchTitle = searchTitle || duplicateSearchTitle || null;
 
   const executionSteps = [
-    { id: 'browser_preparation', label: 'Browser preparation', status: 'pending' },
-    { id: 'browser_open', label: 'Open browser', status: 'pending' },
-    { id: 'cookie_accept', label: 'Accept cookies', status: 'pending' },
-    { id: 'auth_check', label: 'Validate Tradera session', status: 'pending' },
-    { id: 'overview_open', label: 'Open seller overview', status: 'pending' },
-    { id: 'search_active', label: 'Search Active', status: 'pending' },
-    { id: 'inspect_active', label: 'Inspect Active', status: 'pending' },
-    { id: 'search_unsold', label: 'Search Unsold', status: 'pending' },
-    { id: 'inspect_unsold', label: 'Inspect Unsold', status: 'pending' },
-    { id: 'search_sold', label: 'Search Sold', status: 'pending' },
-    { id: 'inspect_sold', label: 'Inspect Sold', status: 'pending' },
-    { id: 'resolve_status', label: 'Resolve Status', status: 'pending' },
-    { id: 'browser_close', label: 'Close browser', status: 'pending' },
+    { id: 'browser_preparation', label: 'Browser preparation',       status: 'pending' },
+    { id: 'browser_open',        label: 'Open browser',              status: 'pending' },
+    { id: 'cookie_accept',       label: 'Accept cookies',            status: 'pending' },
+    { id: 'auth_check',          label: 'Validate Tradera session',  status: 'pending' },
+    { id: 'overview_open',       label: 'Open Tradera overview',     status: 'pending' },
+    { id: 'search_active',       label: 'Search active listings',    status: 'pending' },
+    { id: 'inspect_active',      label: 'Inspect active candidate',  status: 'pending' },
+    { id: 'search_unsold',       label: 'Search unsold items',       status: 'pending' },
+    { id: 'inspect_unsold',      label: 'Inspect unsold candidate',  status: 'pending' },
+    { id: 'search_sold',         label: 'Search sold items',         status: 'pending' },
+    { id: 'inspect_sold',        label: 'Inspect sold candidate',    status: 'pending' },
+    { id: 'resolve_status',      label: 'Resolve listing status',    status: 'pending' },
+    { id: 'browser_close',       label: 'Close browser',             status: 'pending' },
   ];
 
   const updateStep = (id, status, message = null) => {

@@ -459,21 +459,21 @@ function DivisionGameSummaryView({
   finishLabel,
   onFinish,
   onRestart,
-  percent,
-  score,
-  translations,
-  xpBreakdown,
-  xpEarned,
+  results,
 }: {
   finishLabel: string;
   onFinish: () => void;
   onRestart: () => void;
-  percent: number;
-  score: number;
-  translations: ReturnType<typeof useTranslations>;
-  xpBreakdown: KangurRewardBreakdownEntry[];
-  xpEarned: number;
+  results: {
+    percent: number;
+    score: number;
+    xpBreakdown: KangurRewardBreakdownEntry[];
+    xpEarned: number;
+  };
 }): React.JSX.Element {
+  const { translations } = useDivisionGame();
+  const { percent, score, xpBreakdown, xpEarned } = results;
+
   return (
     <KangurPracticeGameSummary
       dataTestId='division-game-summary-shell'
@@ -699,34 +699,6 @@ export default function DivisionGame({
     });
   };
 
-  if (done) {
-    const percent = Math.round((score / TOTAL) * 100);
-    return (
-      <DivisionGameSummaryView
-        finishLabel={finishLabel}
-        onFinish={handleFinishGame}
-        onRestart={() =>
-          resetDivisionGameSession({
-            sessionStartedAtRef,
-            setConfirmed,
-            setDone,
-            setQuestion,
-            setRoundIndex,
-            setScore,
-            setSelected,
-            setXpBreakdown,
-            setXpEarned,
-          })
-        }
-        percent={percent}
-        score={score}
-        translations={translations}
-        xpBreakdown={xpBreakdown}
-        xpEarned={xpEarned}
-      />
-    );
-  }
-
   const contextValue = {
     confirmed,
     isCoarsePointer,
@@ -737,6 +709,37 @@ export default function DivisionGame({
     selected,
     translations,
   };
+
+  if (done) {
+    const percent = Math.round((score / TOTAL) * 100);
+    return (
+      <DivisionGameContext.Provider value={contextValue}>
+        <DivisionGameSummaryView
+          finishLabel={finishLabel}
+          onFinish={handleFinishGame}
+          onRestart={() =>
+            resetDivisionGameSession({
+              sessionStartedAtRef,
+              setConfirmed,
+              setDone,
+              setQuestion,
+              setRoundIndex,
+              setScore,
+              setSelected,
+              setXpBreakdown,
+              setXpEarned,
+            })
+          }
+          results={{
+            percent,
+            score,
+            xpBreakdown,
+            xpEarned,
+          }}
+        />
+      </DivisionGameContext.Provider>
+    );
+  }
 
   return (
     <DivisionGameContext.Provider value={contextValue}>

@@ -25,12 +25,7 @@ import {
 
 type GamesLibraryTranslations = ReturnType<typeof useTranslations>;
 
-export interface RuntimeTabProps {
-  serializationAudit: KangurGameRuntimeSerializationAudit;
-  translations: GamesLibraryTranslations;
-  serializationAuditVisible: boolean;
-  currentGamesLibraryHref: string;
-}
+import { useGamesLibraryContext } from '../GamesLibrary.context';
 
 const STRUCTURE_SECTION_CLASSNAME = cn(
   GAMES_LIBRARY_PANEL_INSET_SURFACE_CLASSNAME,
@@ -70,12 +65,14 @@ const resolveSurfaceAuditLabel = (
     ? translations('surfaces.lesson')
     : translations(`variantSurfaces.${surfaceId}`);
 
-export const RuntimeTab = ({
-  serializationAudit,
-  translations,
-  serializationAuditVisible,
-  currentGamesLibraryHref,
-}: RuntimeTabProps) => {
+export const RuntimeTab = () => {
+  const {
+    serializationAudit,
+    translations,
+    serializationAuditVisible,
+    currentGamesLibraryHref,
+  } = useGamesLibraryContext();
+
   if (!serializationAuditVisible) {
     return null;
   }

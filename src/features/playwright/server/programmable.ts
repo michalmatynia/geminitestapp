@@ -234,8 +234,17 @@ export const runPlaywrightListingScript = async ({
     },
   };
 
+import {
+  PlaywrightConnectionEngineTaskInput,
+  PlaywrightConnectionEngineTaskResult,
+  runPlaywrightConnectionEngineTask,
+  startPlaywrightConnectionEngineTask,
+} from './connection-runtime';
+
+// ... (rest of the file content)
+
   const { run, runtime, settings: effectiveSettings, resultValue } = onRunStarted
-    ? await (async () => {
+    ? await (async (): Promise<PlaywrightConnectionEngineTaskResult & { resultValue: unknown }> => {
         const startedTask = await startPlaywrightConnectionEngineTask(sharedTaskInput);
         await Promise.resolve(onRunStarted(startedTask.run.runId));
         const run = await waitForPlaywrightRunToFinish({
@@ -248,10 +257,18 @@ export const runPlaywrightListingScript = async ({
           run,
           runtime: startedTask.runtime,
           settings: startedTask.settings,
+          browserPreference: startedTask.browserPreference,
           resultValue,
         };
       })()
-    : await runPlaywrightConnectionScriptTask(sharedTaskInput);
+    : await (async (): Promise<PlaywrightConnectionEngineTaskResult & { resultValue: unknown }> => {
+        const result = await runPlaywrightConnectionEngineTask(sharedTaskInput);
+        const { resultValue } = resolvePlaywrightEngineRunOutputs(result.run.result);
+        return {
+          ...result,
+          resultValue,
+        };
+      })();
 
   if (run.status === 'failed') {
     throw internalError(run.error ?? 'Playwright listing script failed.', {

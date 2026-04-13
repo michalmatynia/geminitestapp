@@ -3,9 +3,16 @@
 import React from 'react';
 
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
-import { useIntegrationSelectorProps } from './hooks/useIntegrationSelectorProps';
+import {
+  IntegrationSelectorCopyStrategy,
+  useIntegrationSelectorProps,
+} from './hooks/useIntegrationSelectorProps';
 
-export function IntegrationSelectorFields(): React.JSX.Element {
+export function IntegrationSelectorFields({
+  strategy = 'list',
+}: {
+  strategy?: IntegrationSelectorCopyStrategy;
+}): React.JSX.Element {
   const {
     marketplaceLabel,
     marketplacePlaceholder,
@@ -19,7 +26,7 @@ export function IntegrationSelectorFields(): React.JSX.Element {
     setSelectedConnectionId,
     connectionOptions,
     accountDescription,
-  } = useIntegrationSelectorProps();
+  } = useIntegrationSelectorProps(strategy);
 
   return (
     <>

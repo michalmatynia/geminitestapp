@@ -1,14 +1,37 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-13T11:22:43.048Z",
+  "generatedAt": "2026-04-13T20:59:29.994Z",
   "phase": "classify",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
+    "ui-consolidation",
+    "application-performance",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/classify-report.json",
   "steps": [
+    {
+      "id": "application-performance-baseline",
+      "title": "Run the performance baseline pass",
+      "trackId": "application-performance",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "docs/metrics/critical-path-performance-latest.md",
+        "docs/metrics/critical-path-performance-latest.json",
+        "docs/metrics/critical-flow-tests-latest.md",
+        "docs/metrics/critical-flow-tests-latest.json",
+        "docs/metrics/unit-domain-timings-latest.md",
+        "docs/metrics/unit-domain-timings-latest.json",
+        "docs/metrics/route-hotspots.md"
+      ],
+      "instructions": [],
+      "script": "perf:ops:baseline",
+      "durationMs": 673130
+    },
     {
       "id": "repo-quality-lint",
       "title": "Run source lint baseline",
@@ -16,11 +39,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:lint",
-      "durationMs": 4194
+      "durationMs": 305535
     },
     {
       "id": "repo-quality-typecheck",
@@ -29,11 +52,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:typecheck",
-      "durationMs": 70603
+      "durationMs": 9653
     }
   ]
 }

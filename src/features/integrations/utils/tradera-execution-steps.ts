@@ -1,4 +1,5 @@
 import type { TraderaExecutionStep } from '@/shared/contracts/integrations/listings';
+import { buildActionSteps, type ActionSequenceKey } from '@/shared/lib/browser-execution';
 
 type TraderaListingAction = 'list' | 'relist' | 'sync';
 
@@ -48,16 +49,6 @@ const readExecutionStepMessage = (record: Record<string, unknown>): string | nul
   return readString(info['message']) ?? readString(info['reason']) ?? readString(info['error']);
 };
 
-const createStep = (
-  id: string,
-  label: string,
-  message: string | null = null
-): TraderaExecutionStep => ({
-  id,
-  label,
-  status: 'pending',
-  message,
-});
 
 const parseUserLogEvent = (
   entry: string
@@ -165,41 +156,49 @@ const getStepStatus = (
 ): TraderaExecutionStep['status'] | null =>
   steps.find((step) => step.id === stepId)?.status ?? null;
 
-const quicklistStepTemplates = (
-  action: TraderaListingAction
-): TraderaExecutionStep[] => [
-  createStep('browser_preparation', 'Browser preparation'),
-  createStep('browser_open', 'Open browser'),
-  createStep('cookie_accept', 'Accept cookies'),
-  createStep('auth_check', 'Validate Tradera session'),
-  createStep('auth_login', 'Automated login'),
-  createStep('auth_manual', 'Complete manual Tradera login'),
-  ...(action === 'sync'
-    ? [createStep('sync_check', 'Load sync target listing')]
-    : [
-        createStep('duplicate_check', 'Search for duplicate listings'),
-        createStep('deep_duplicate_check', 'Inspect duplicate candidates'),
-        createStep('sell_page_open', 'Open listing editor'),
-        createStep('image_cleanup', 'Clear draft images'),
-      ]),
-  createStep('image_upload', 'Upload listing images'),
-  createStep('title_fill', 'Enter title'),
-  createStep('description_fill', 'Enter description'),
-  createStep('listing_format_select', 'Choose listing format'),
-  createStep('price_set', 'Set price'),
-  createStep('category_select', 'Select category'),
-  createStep('attribute_select', 'Apply listing attributes'),
-  createStep('shipping_set', 'Configure delivery'),
-  createStep(
-    'publish',
-    action === 'sync' ? 'Save listing changes' : action === 'relist' ? 'Relist' : 'Publish listing'
-  ),
-  createStep(
-    'publish_verify',
-    action === 'sync' ? 'Verify saved listing' : 'Verify published listing'
-  ),
-  createStep('browser_close', 'Close browser'),
-];
+// Registry labels are intentionally short and generic (shared with Vinted).
+// Tradera quicklist uses more descriptive labels that match the in-browser script
+// and the text users see during live execution.
+const TRADERA_QUICKLIST_LABEL_OVERRIDES: Readonly<Record<string, string>> = {
+  auth_check:           'Validate Tradera session',
+  auth_manual:          'Complete manual Tradera login',
+  sync_check:           'Load sync target listing',
+  duplicate_check:      'Search for duplicate listings',
+  deep_duplicate_check: 'Inspect duplicate candidates',
+  image_upload:         'Upload listing images',
+  listing_format_select:'Choose listing format',
+  attribute_select:     'Apply listing attributes',
+};
+
+const QUICKLIST_ACTION_SEQUENCE_KEYS: Record<TraderaListingAction, ActionSequenceKey> = {
+  list:   'tradera_quicklist_list',
+  relist: 'tradera_quicklist_relist',
+  sync:   'tradera_quicklist_sync',
+};
+
+const QUICKLIST_PUBLISH_LABELS: Record<
+  TraderaListingAction,
+  { publish: string; publish_verify: string }
+> = {
+  sync:   { publish: 'Save listing changes',  publish_verify: 'Verify saved listing' },
+  relist: { publish: 'Relist',                publish_verify: 'Verify published listing' },
+  list:   { publish: 'Publish listing',       publish_verify: 'Verify published listing' },
+};
+
+const quicklistStepTemplates = (action: TraderaListingAction): TraderaExecutionStep[] => {
+  const key = QUICKLIST_ACTION_SEQUENCE_KEYS[action];
+  const steps = buildActionSteps(key);
+  const publishLabels = QUICKLIST_PUBLISH_LABELS[action];
+
+  for (const step of steps) {
+    const labelOverride = TRADERA_QUICKLIST_LABEL_OVERRIDES[step.id];
+    if (labelOverride !== undefined) step.label = labelOverride;
+    if (step.id === 'publish') step.label = publishLabels.publish;
+    if (step.id === 'publish_verify') step.label = publishLabels.publish_verify;
+  }
+
+  return steps;
+};
 
 const QUICKLIST_SUCCESS_MESSAGES: Record<string, string> = {
   browser_preparation: 'Browser settings were prepared.',

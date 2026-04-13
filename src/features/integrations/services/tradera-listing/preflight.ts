@@ -56,31 +56,6 @@ export const assertTraderaCategoryMappingReady = ({
     return;
   }
 
-  // When the connection uses the 'mapper' strategy and a mapping exists for
-  // this category but the external category is stale or invalid, treat it as
-  // an error instead of silently falling back.  The user explicitly configured
-  // a category mapping that should work — falling back without notice is
-  // confusing and looks like categories "are not being mapped".
-  const isMapperStrategy = connection.traderaCategoryStrategy !== 'top_suggested';
-  const hasBrokenMapping =
-    categoryMapping.matchingMappingCount > 0 &&
-    (categoryMapping.reason === 'stale_external_category' ||
-      categoryMapping.reason === 'invalid_external_category');
-
-  if (isMapperStrategy && hasBrokenMapping) {
-    throw badRequestError(buildMissingTraderaCategoryMappingMessage({ categoryMapping }), {
-      productId: product.id,
-      productCategoryId: toTrimmedString(product.categoryId) || null,
-      connectionId: connection.id,
-      categoryMappingReason: categoryMapping.reason,
-      categoryMatchScope: categoryMapping.matchScope,
-      productCatalogIds: categoryMapping.productCatalogIds,
-      matchingMappingCount: categoryMapping.matchingMappingCount,
-      validMappingCount: categoryMapping.validMappingCount,
-      catalogMatchedMappingCount: categoryMapping.catalogMatchedMappingCount,
-    });
-  }
-
   if (canUseFallbackTraderaCategory({ categoryMapping })) {
     return;
   }

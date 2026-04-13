@@ -20,14 +20,12 @@ const toPositiveInt = (value: unknown): number | null => {
   return null;
 };
 
+import { type ConnectionTestContext } from './handler.vinted-browser';
+
 export const handleTraderaApiTest = async (
-  connection: IntegrationConnectionRecord,
-  repo: ConnectionUpdateRepository,
-  manualMode: boolean,
-  steps: TestLogEntry[],
-  pushStep: PushStep,
-  fail: Fail
+  ctx: ConnectionTestContext
 ): Promise<Response> => {
+  const { connection, repo, manualMode, steps, pushStep, fail } = ctx;
   if (manualMode) {
     pushStep('Manual mode', 'ok', 'Manual login mode does not apply to Tradera API connections.');
   }

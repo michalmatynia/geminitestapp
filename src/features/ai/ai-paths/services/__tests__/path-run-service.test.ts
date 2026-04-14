@@ -152,7 +152,7 @@ describe('path-run-service enqueuePathRun', () => {
   });
 
   it.each(['simulation_required', 'simulation_preferred'] as const)(
-    'remediates removed legacy trigger context mode %s during enqueue',
+    'rejects removed legacy trigger context mode %s during enqueue',
     async (contextMode) => {
       const config = createDefaultPathConfig(`path_removed_trigger_context_${contextMode}`);
       const seedNode = config.nodes[0];
@@ -174,14 +174,7 @@ describe('path-run-service enqueuePathRun', () => {
         },
       ];
 
-      const createRunMock = vi.fn().mockResolvedValue({
-        id: `run-${contextMode}`,
-        pathId: config.id,
-        status: 'queued',
-        startedAt: null,
-        meta: null,
-      });
-      const createRunNodesMock = vi.fn().mockResolvedValue(undefined);
+      const createRunMock = vi.fn();
       resolvePathRunRepositoryMock.mockResolvedValue({
         provider: 'mongodb',
         routeMode: 'explicit',
@@ -189,36 +182,20 @@ describe('path-run-service enqueuePathRun', () => {
         repo: {
           listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
           createRun: createRunMock,
-          createRunNodes: createRunNodesMock,
-          createRunEvent: vi.fn().mockResolvedValue(undefined),
-          updateRunIfStatus: vi.fn().mockResolvedValue(null),
         },
       });
-      enqueuePathRunJobMock.mockResolvedValue(undefined);
-      recordRuntimeRunQueuedMock.mockResolvedValue(undefined);
 
       const { enqueuePathRun } = await loadModule();
 
-      const run = await enqueuePathRun({
-        pathId: config.id,
-        pathName: config.name,
-        nodes,
-        edges: [],
-      });
-      expect(run.id).toBe(`run-${contextMode}`);
-      expect(createRunMock).toHaveBeenCalledTimes(1);
-      expect(createRunNodesMock).toHaveBeenCalledWith(
-        `run-${contextMode}`,
-        expect.arrayContaining([
-          expect.objectContaining({
-            config: expect.objectContaining({
-              trigger: expect.objectContaining({
-                contextMode: 'trigger_only',
-              }),
-            }),
-          }),
-        ])
-      );
+      await expect(
+        enqueuePathRun({
+          pathId: config.id,
+          pathName: config.name,
+          nodes,
+          edges: [],
+        })
+      ).rejects.toThrow(/removed legacy Trigger context modes/i);
+      expect(createRunMock).not.toHaveBeenCalled();
     }
   );
 

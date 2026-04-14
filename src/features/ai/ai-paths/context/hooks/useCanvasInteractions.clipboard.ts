@@ -3,8 +3,12 @@
 import { useCallback } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui/base';
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, createNodeInstanceId, palette, resolveNodeTypeId, sanitizeEdges } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
+import { createNodeInstanceId, sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
+import { resolveNodeTypeId } from '@/shared/lib/ai-paths/core/utils';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 
 import {
   SUBGRAPH_CLIPBOARD_STORAGE_KEY,

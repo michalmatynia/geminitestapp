@@ -1,6 +1,6 @@
 'use client';
 
-import type { RuntimeHistoryEntry, RuntimePortValues } from '@/shared/lib/ai-paths';
+import type { RuntimeHistoryEntry, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   useRuntimeActions,

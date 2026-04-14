@@ -3,8 +3,13 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui/base';
-import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, createNodeInstanceId, getDefaultConfigForType, palette, resolveNodeTypeId } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, NodeDefinition } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
+import { createNodeInstanceId } from '@/shared/lib/ai-paths/core/utils/graph';
+import { getDefaultConfigForType } from '@/shared/lib/ai-paths/core/normalization';
+import { resolveNodeTypeId } from '@/shared/lib/ai-paths/core/utils';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 
 import { computeNodeSelectionDeleteResult } from './canvas/delete-selection-command';

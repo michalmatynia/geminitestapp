@@ -3,8 +3,8 @@
 import { useCallback, useMemo } from 'react';
 
 import { parseLocalRuns } from '@/shared/lib/ai-paths/local-runs';
-import { AI_PATHS_LOCAL_RUNS_KEY } from '@/shared/lib/ai-paths';
-import type { AiPathLocalRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathLocalRunRecord } from '@/shared/contracts/ai-paths';
+import { AI_PATHS_LOCAL_RUNS_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
   useAiPathsSettingsQuery,
   useUpdateAiPathsSettingMutation,

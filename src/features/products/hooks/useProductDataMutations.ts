@@ -153,7 +153,6 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
     },
     queuedMessage: 'Product creation queued in runtime queue.',
     processedMessage: 'Queued product creation completed.',
-    errorMessage: 'Failed to create product',
   });
 }
 
@@ -387,6 +386,37 @@ export function useUpdateProductMutation(): UseMutationResult<
   );
 }
 
+export function useDuplicateProductMutation(): UseMutationResult<
+  ProductWithImages | null,
+  Error,
+  { id: string; sku: string },
+  unknown
+> {
+  return useOfflineMutation(
+    async ({ id, sku }: { id: string; sku: string }): Promise<ProductWithImages> =>
+      await api.post<ProductWithImages>(`/api/v2/products/${id}/duplicate`, { sku }),
+    {
+      queryKey: productsAllQueryKey,
+      meta: {
+        source: 'products.hooks.useDuplicateProductMutation',
+        operation: 'create',
+        resource: 'products.duplicate',
+        domain: 'products',
+        tags: ['products', 'duplicate'],
+      },
+      extraInvalidateKeys: [productsCountsQueryKey],
+      invalidate: async (queryClient) => {
+        await Promise.all([
+          invalidateProductsAndCounts(queryClient),
+          invalidateProductTitleTerms(queryClient),
+        ]);
+      },
+      queuedMessage: 'Product duplication queued in runtime queue.',
+      processedMessage: 'Queued product duplication completed.',
+    }
+  );
+}
+
 export function useBulkDeleteProductsMutation(): UseMutationResult<
   { success: boolean } | null,
   Error,
@@ -413,13 +443,19 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<
       extraInvalidateKeys: [productsCountsQueryKey],
       queuedMessage: 'Product deletion queued in runtime queue.',
       processedMessage: 'Queued product deletion completed.',
-      errorMessage: 'Failed to delete some products',
-      onQueued: (ids: string[]) =>
-        ids.forEach((id: string) => addQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
-      onProcessed: (ids: string[]) =>
-        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
-      onFailed: (ids: string[]) =>
-        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
+      onQueued: (ids: string[]) => {
+        ids.forEach((id: string) => addQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE));
+      },
+      onProcessed: (ids: string[], { queryClient }) => {
+        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE));
+        void Promise.all([
+          invalidateProductsAndCounts(queryClient),
+          invalidateProductTitleTerms(queryClient),
+        ]);
+      },
+      onFailed: (ids: string[]) => {
+        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE));
+      },
     }
   );
 }

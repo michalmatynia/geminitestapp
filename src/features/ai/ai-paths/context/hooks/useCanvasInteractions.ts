@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import type { Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import {

@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import type { NodeHandler } from '@/shared/contracts/ai-paths-runtime';
 import {
   createNodeCodeObjectV3ContractResolver,
-  createNodeCodeObjectV3LegacyBridgeResolver,
   resolveNodeCodeObjectV3ContractByCodeObjectId,
 } from '@/shared/lib/ai-paths/core/runtime/node-code-object-v3-legacy-bridge';
 
@@ -34,33 +33,13 @@ describe('node-code-object-v3 legacy bridge', () => {
     ).toBeNull();
   });
 
-  it('bridges v3 code object resolution to legacy handlers using contract mapping', () => {
-    const constantHandler = buildHandler('constant');
-    const resolveLegacyHandler = vi.fn((nodeType: string) =>
-      nodeType === 'constant' ? constantHandler : null
-    );
-    const resolver = createNodeCodeObjectV3LegacyBridgeResolver({
-      resolveLegacyHandler,
-    });
-
-    const resolved = resolver({
-      nodeType: 'constant',
-      codeObjectId: 'ai-paths.node-code-object.constant.v3',
-    });
-
-    expect(resolved).toBe(constantHandler);
-    expect(resolveLegacyHandler).toHaveBeenCalledWith('constant');
-  });
-
-  it('prefers native registry handlers when contract execution adapter is native_handler_registry', () => {
+  it('resolves v3 code object via native handler registry', () => {
     const nativeConstantHandler = buildHandler('native-constant');
-    const resolveLegacyHandler = vi.fn(() => buildHandler('legacy-unused'));
     const resolveNativeCodeObjectHandler = vi.fn(({ codeObjectId }: { codeObjectId: string }) =>
       codeObjectId === 'ai-paths.node-code-object.constant.v3' ? nativeConstantHandler : null
     );
 
     const resolver = createNodeCodeObjectV3ContractResolver({
-      resolveLegacyHandler,
       resolveNativeCodeObjectHandler,
     });
 
@@ -74,18 +53,12 @@ describe('node-code-object-v3 legacy bridge', () => {
       nodeType: 'constant',
       codeObjectId: 'ai-paths.node-code-object.constant.v3',
     });
-    expect(resolveLegacyHandler).not.toHaveBeenCalled();
   });
 
   it('fails closed when native handler is unavailable for a contract-backed node', () => {
-    const legacyConstantHandler = buildHandler('legacy-constant');
-    const resolveLegacyHandler = vi.fn((nodeType: string) =>
-      nodeType === 'constant' ? legacyConstantHandler : null
-    );
     const resolveNativeCodeObjectHandler = vi.fn(() => null);
 
     const resolver = createNodeCodeObjectV3ContractResolver({
-      resolveLegacyHandler,
       resolveNativeCodeObjectHandler,
     });
 
@@ -99,18 +72,15 @@ describe('node-code-object-v3 legacy bridge', () => {
       nodeType: 'constant',
       codeObjectId: 'ai-paths.node-code-object.constant.v3',
     });
-    expect(resolveLegacyHandler).not.toHaveBeenCalled();
   });
 
-  it('routes promoted model contract entries through native registry first', () => {
+  it('routes model contract entries through native registry', () => {
     const nativeModelHandler = buildHandler('native-model');
-    const resolveLegacyHandler = vi.fn(() => buildHandler('legacy-unused'));
     const resolveNativeCodeObjectHandler = vi.fn(({ codeObjectId }: { codeObjectId: string }) =>
       codeObjectId === 'ai-paths.node-code-object.model.v3' ? nativeModelHandler : null
     );
 
     const resolver = createNodeCodeObjectV3ContractResolver({
-      resolveLegacyHandler,
       resolveNativeCodeObjectHandler,
     });
 
@@ -124,13 +94,13 @@ describe('node-code-object-v3 legacy bridge', () => {
       nodeType: 'model',
       codeObjectId: 'ai-paths.node-code-object.model.v3',
     });
-    expect(resolveLegacyHandler).not.toHaveBeenCalled();
   });
 
-  it('does not bridge when node type and code object id contract do not match', () => {
-    const resolveLegacyHandler = vi.fn(() => buildHandler('unused'));
-    const resolver = createNodeCodeObjectV3LegacyBridgeResolver({
-      resolveLegacyHandler,
+  it('returns null when node type and code object id contract do not match', () => {
+    const resolveNativeCodeObjectHandler = vi.fn(() => buildHandler('unused'));
+
+    const resolver = createNodeCodeObjectV3ContractResolver({
+      resolveNativeCodeObjectHandler,
     });
 
     const resolved = resolver({
@@ -139,6 +109,6 @@ describe('node-code-object-v3 legacy bridge', () => {
     });
 
     expect(resolved).toBeNull();
-    expect(resolveLegacyHandler).not.toHaveBeenCalled();
+    expect(resolveNativeCodeObjectHandler).not.toHaveBeenCalled();
   });
 });

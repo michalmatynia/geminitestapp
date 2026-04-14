@@ -351,7 +351,7 @@ export const handleAgent: NodeHandler = async ({
   } catch (error) {
     logClientError(error);
     reportAiPathsError(error, { action: 'agentRun', nodeId: node.id }, 'Agent run failed:');
-    toast('Agent run failed.', { variant: 'error' });
+    toast(errorMessage, { variant: 'error' });
     executed.ai.add(node.id);
     return {
       result: '',

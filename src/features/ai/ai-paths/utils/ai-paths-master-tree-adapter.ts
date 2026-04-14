@@ -1,7 +1,7 @@
 import { createMasterFolderTreeAdapterV3 } from '@/shared/lib/foldertree/public';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { normalizeTreePath } from '@/shared/utils/tree-operations';
-import { canMoveAiPathFolder } from '@/shared/lib/ai-paths';
+import { canMoveAiPathFolder } from '@/shared/lib/ai-paths/core/utils/path-folders';
 
 import {
   decodeAiPathMasterNodeId,

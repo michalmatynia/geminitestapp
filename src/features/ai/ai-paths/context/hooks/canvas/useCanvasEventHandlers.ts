@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-import { clampScale } from '@/shared/lib/ai-paths';
+import { clampScale } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import { type UseCanvasInteractionsNavigationValue } from '../useCanvasInteractions.navigation';
 

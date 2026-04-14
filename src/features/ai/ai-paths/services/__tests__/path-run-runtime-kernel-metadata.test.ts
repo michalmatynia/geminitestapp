@@ -22,7 +22,7 @@ import {
 } from '@/features/ai/ai-paths/services/path-run-runtime-kernel-metadata';
 
 describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
-  it('normalizes legacy runtime-kernel config aliases into canonical fields', () => {
+  it('prunes legacy runtime-kernel config aliases instead of translating them', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeKernelConfig: {
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: ` ${DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS} `,
@@ -40,12 +40,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
       AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigCodeObjectResolverIds,
       AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigStrictNativeRegistry,
     ]);
-    expect(result.meta).toEqual({
-      runtimeKernelConfig: {
-        nodeTypes: ['template_node', 'parser'],
-        codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
-      },
-    });
+    expect(result.meta).toEqual({});
   });
 
   it('prunes deprecated runtime-kernel telemetry aliases and typed values', () => {
@@ -73,8 +68,6 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
     ]);
     expect(result.meta).toEqual({
       runtimeKernel: {
-        runtimeKernelNodeTypes: ['constant', 'template'],
-        runtimeKernelNodeTypesSource: 'path',
         runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
       },
     });

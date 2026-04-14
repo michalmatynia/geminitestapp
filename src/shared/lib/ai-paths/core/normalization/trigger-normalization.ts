@@ -20,7 +20,8 @@ import {
 import { findPathConfigCollectionAliasIssues } from '../utils/collection-names';
 import { sanitizeEdges } from '../utils/graph.edges';
 import {
-  normalizeRemovedTriggerContextModesInPathConfig,
+  findRemovedLegacyTriggerContextModesInPathConfig,
+  formatRemovedLegacyTriggerContextModesMessage,
 } from '../utils/legacy-trigger-context-mode';
 import { validateCanonicalPathNodeIdentities } from '../utils/node-identity';
 import { normalizeAiPathFolderPath } from '../utils/path-folders';
@@ -223,18 +224,32 @@ const assertNoUnsupportedTriggerDataGraph = (nodes: AiNode[], edges: Edge[]): vo
 };
 
 export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
-  const remediatedConfig = normalizeRemovedTriggerContextModesInPathConfig(config).value;
-  const collectionAliasIssues = findPathConfigCollectionAliasIssues(remediatedConfig);
+  const removedTriggerContextModes = findRemovedLegacyTriggerContextModesInPathConfig(config);
+  if (removedTriggerContextModes.length > 0) {
+    throw validationError(
+      formatRemovedLegacyTriggerContextModesMessage(removedTriggerContextModes, {
+        surface: 'trigger payload',
+      }),
+      {
+        source: 'ai_paths.trigger_payload',
+        reason: 'removed_trigger_context_mode',
+        pathId: config.id,
+        removedModes: removedTriggerContextModes,
+      }
+    );
+  }
+
+  const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
   if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains unsupported collection aliases.', {
       source: 'ai_paths.trigger_payload',
       reason: 'unsupported_collection_aliases',
-      pathId: remediatedConfig.id,
+      pathId: config.id,
       issues: collectionAliasIssues,
     });
   }
 
-  const contractBackfilledConfig = backfillPathConfigNodeContracts(remediatedConfig).config;
+  const contractBackfilledConfig = backfillPathConfigNodeContracts(config).config;
   const graphNodes = (
     Array.isArray(contractBackfilledConfig.nodes) ? contractBackfilledConfig.nodes : []
   ).map((node: AiNode, index: number): AiNode => {

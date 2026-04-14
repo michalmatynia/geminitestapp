@@ -1,6 +1,7 @@
 
-import type { AiNode, AiPathsValidationConfig, Edge, NodeConfig, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, PathMeta, PathRunMode } from '@/shared/lib/ai-paths';
-import { AI_PATHS_HISTORY_RETENTION_DEFAULT, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT, DEFAULT_AI_PATHS_VALIDATION_CONFIG } from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathsValidationConfig, Edge, NodeConfig, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, PathMeta, PathRunMode } from '@/shared/contracts/ai-paths';
+import { AI_PATHS_HISTORY_RETENTION_DEFAULT, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT } from '@/shared/lib/ai-paths/core/constants';
+import { DEFAULT_AI_PATHS_VALIDATION_CONFIG } from '@/shared/lib/ai-paths/core/validation-engine';
 
 import type { ReactNode } from 'react';
 

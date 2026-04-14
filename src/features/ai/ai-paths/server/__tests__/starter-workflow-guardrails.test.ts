@@ -136,9 +136,9 @@ describe('starter workflow guardrails', () => {
         'segments',
         'upgrade.ts'
       ),
-      'utf8'
+        'utf8'
     );
-    const legacyRepairSource = readFileSync(
+    const templatesSource = readFileSync(
       join(
         workspaceRoot,
         'src',
@@ -148,7 +148,7 @@ describe('starter workflow guardrails', () => {
         'core',
         'starter-workflows',
         'segments',
-        'legacy-repair.ts'
+        'templates.ts'
       ),
       'utf8'
     );
@@ -163,6 +163,7 @@ describe('starter workflow guardrails', () => {
       expect(upgradeSource.includes(`starterLineage.starterKey === ${starterKeyLiteral}`)).toBe(false);
     });
 
-    expect(legacyRepairSource.includes('switch (entry.starterLineage.starterKey)')).toBe(false);
+    expect(upgradeSource.includes('legacy_alias')).toBe(false);
+    expect(templatesSource.includes('legacyRepairMatcher')).toBe(false);
   });
 });

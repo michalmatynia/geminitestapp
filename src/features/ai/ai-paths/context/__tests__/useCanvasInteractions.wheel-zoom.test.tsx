@@ -2,7 +2,7 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 import { useCanvasInteractionsNavigation } from '../hooks/useCanvasInteractions.navigation';
 

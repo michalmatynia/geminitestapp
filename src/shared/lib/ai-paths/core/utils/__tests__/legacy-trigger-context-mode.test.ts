@@ -6,8 +6,6 @@ import { createDefaultPathConfig, type PathConfig } from '@/shared/lib/ai-paths'
 import {
   findRemovedLegacyTriggerContextModesInDocument,
   formatRemovedLegacyTriggerContextModesMessage,
-  normalizeRemovedTriggerContextModesInDocument,
-  normalizeRemovedTriggerContextModesInPathConfig,
 } from '../legacy-trigger-context-mode';
 
 const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
@@ -68,26 +66,11 @@ describe('legacy-trigger-context-mode', () => {
     ).toMatch(/removed legacy Trigger context modes/i);
   });
 
-  it('remediates removed legacy trigger context modes in plain path config payloads', () => {
-    const legacyConfig = buildLegacyTriggerConfig('path_remains_legacy');
-    const remediated = normalizeRemovedTriggerContextModesInPathConfig(legacyConfig);
+  it('keeps removed legacy trigger context modes detectable in portable payloads', () => {
+    const portablePayload = buildPortablePathPackage(buildLegacyTriggerConfig('path_portable'), {
+      exporterVersion: 'test.legacy-trigger',
+    });
 
-    expect(remediated.changed).toBe(true);
-    expect(remediated.value?.nodes?.[0]?.config?.trigger?.contextMode).toBe('trigger_only');
-    expect(findRemovedLegacyTriggerContextModesInDocument(remediated.value)).toHaveLength(0);
-    expect(legacyConfig.nodes[0]?.config?.trigger?.contextMode).toBe('simulation_preferred');
-  });
-
-  it('remediates removed legacy trigger context modes in portable payloads', () => {
-    const portablePayload = buildPortablePathPackage(
-      buildLegacyTriggerConfig('path_portable_still_legacy'),
-      {
-        exporterVersion: 'test.legacy-trigger',
-      }
-    );
-    const remediated = normalizeRemovedTriggerContextModesInDocument(portablePayload);
-
-    expect(remediated.changed).toBe(true);
-    expect(findRemovedLegacyTriggerContextModesInDocument(remediated.value)).toHaveLength(0);
+    expect(findRemovedLegacyTriggerContextModesInDocument(portablePayload)).toHaveLength(1);
   });
 });

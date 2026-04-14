@@ -299,7 +299,7 @@ export function StructuredProductNameField({
   const {
     locale = 'en',
     label = fieldName === 'name_pl' ? 'Polish Name' : 'English Name',
-    description = 'Format: <name> | <size> | <material> | <category> | <lore or theme>',
+    description = 'REQUIRED FORMAT: <name> | <size> | <material> | <category> | <lore or theme>',
     placeholder = locale === 'pl'
       ? 'Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan'
       : 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',

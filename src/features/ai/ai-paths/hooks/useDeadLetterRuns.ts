@@ -8,7 +8,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
-import { getAiPathRun, listAiPathRuns, requeueAiPathDeadLetterRuns, resumeAiPathRun, retryAiPathRunNode } from '@/shared/lib/ai-paths';
+import { getAiPathRun, listAiPathRuns, requeueAiPathDeadLetterRuns, resumeAiPathRun, retryAiPathRunNode } from '@/shared/lib/ai-paths/api';
 import { createMutationV2, createPaginatedListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui/primitives.public';

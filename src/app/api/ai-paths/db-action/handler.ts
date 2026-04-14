@@ -61,32 +61,9 @@ const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[
 };
 
 const AUTO_UPDATED_AT_COLLECTIONS = new Set<string>(['products', 'product_drafts']);
-const CANONICAL_ID_FALLBACK_COLLECTIONS = new Set<string>(['products', 'product_drafts']);
 
 const shouldAutoStampUpdatedAt = (collection: string): boolean =>
   AUTO_UPDATED_AT_COLLECTIONS.has(collection.trim().toLowerCase());
-
-const normalizeCanonicalIdFallbackFilter = (
-  collection: string,
-  query: Record<string, unknown>
-): Record<string, unknown> => {
-  if (!CANONICAL_ID_FALLBACK_COLLECTIONS.has(collection.trim().toLowerCase())) {
-    return query;
-  }
-  const keys = Object.keys(query);
-  if (keys.length !== 1 || keys[0] !== 'id') {
-    return query;
-  }
-  const normalizedId = typeof query['id'] === 'string' ? query['id'].trim() : '';
-  if (!normalizedId) {
-    return query;
-  }
-  const conditions: Array<Record<string, unknown>> = [{ id: normalizedId }, { _id: normalizedId }];
-  if (looksLikeObjectId(normalizedId)) {
-    conditions.push({ _id: new ObjectId(normalizedId) });
-  }
-  return { $or: conditions };
-};
 
 const applyUpdatedAtToUpdateDoc = (
   update: Record<string, unknown> | unknown[],
@@ -239,10 +216,7 @@ export async function postAiPathsDbActionHandler(
     const mongo = await getMongoDb();
     const collectionRef = mongo.collection(resolvedCollection);
     const where = coerceQuery(filter);
-    const normalizedFilter = normalizeCanonicalIdFallbackFilter(
-      resolvedCollection,
-      normalizeObjectId(coerceQuery(filter), idType)
-    );
+    const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);
     const hasFilter = Object.keys(where).length > 0;
     const now = new Date();
 

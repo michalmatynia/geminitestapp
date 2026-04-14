@@ -20,9 +20,9 @@ export {
 
 export { StepTracker } from './step-tracker';
 
-export { PlaywrightSequencer, type PlaywrightSequencerContext } from './PlaywrightSequencer';
-export { TraderaSequencer } from './TraderaSequencer';
-export { VintedSequencer } from './VintedSequencer';
+export { PlaywrightSequencer, type PlaywrightSequencerContext } from './sequencers/PlaywrightSequencer';
+export { TraderaSequencer } from './sequencers/TraderaSequencer';
+export { VintedSequencer } from './sequencers/VintedSequencer';
 
 export {
   TRADERA_QUICKLIST_LABEL_OVERRIDES,

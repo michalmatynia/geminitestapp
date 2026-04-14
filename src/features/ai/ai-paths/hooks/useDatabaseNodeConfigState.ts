@@ -7,8 +7,10 @@ import type { SchemaData } from '@/shared/contracts/database';
 import type { AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import type { DatabaseConfig, DbQueryConfig, DbQueryPreset, DatabaseActionCategory } from '@/shared/lib/ai-paths';
-import { createPresetId, extractJsonPathEntries, dbApi } from '@/shared/lib/ai-paths';
+import type { DatabaseConfig, DbQueryConfig, DbQueryPreset, DatabaseActionCategory } from '@/shared/contracts/ai-paths';
+import { extractJsonPathEntries } from '@/shared/lib/ai-paths/core/utils';
+import { createPresetId } from '@/shared/lib/ai-paths/core/utils';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 import { resolveDbActionProvider } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {

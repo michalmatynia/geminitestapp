@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 const logClientErrorMock = vi.hoisted(() => vi.fn());
 

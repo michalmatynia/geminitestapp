@@ -10,7 +10,7 @@ import {
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { type AutoSaveStatus } from '@/shared/contracts/ui/base';
 

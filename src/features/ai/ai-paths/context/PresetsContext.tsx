@@ -10,8 +10,9 @@ import {
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { ClusterPreset, DbQueryPreset, DbNodePreset, DatabaseConfig } from '@/shared/lib/ai-paths';
-import { createPresetId, databaseConfigSchema } from '@/shared/lib/ai-paths';
+import type { ClusterPreset, DbQueryPreset, DbNodePreset, DatabaseConfig } from '@/shared/contracts/ai-paths';
+import { databaseConfigSchema } from '@/shared/contracts/ai-paths';
+import { createPresetId } from '@/shared/lib/ai-paths/core/utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 // ---------------------------------------------------------------------------

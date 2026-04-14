@@ -2,8 +2,9 @@
 
 import { useCallback, useMemo, useRef } from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, clampScale, VIEW_MARGIN, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, VIEW_MARGIN } from '@/shared/lib/ai-paths/core/constants';
+import { clampScale } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import {
   ZOOM_ANIMATION_DURATION_MS,

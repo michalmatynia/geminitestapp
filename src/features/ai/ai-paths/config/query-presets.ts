@@ -2,7 +2,7 @@ import type {
   IdLabeledOption,
   LabelValueOption,
 } from '@/shared/contracts/base';
-import type { DbQueryConfig } from '@/shared/lib/ai-paths';
+import type { DbQueryConfig } from '@/shared/contracts/ai-paths';
 
 export type DatabasePresetOption = IdLabeledOption;
 export type DatabaseTemplateSnippet = LabelValueOption;

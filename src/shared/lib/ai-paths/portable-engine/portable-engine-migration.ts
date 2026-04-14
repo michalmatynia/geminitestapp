@@ -7,7 +7,8 @@ import {
   formatRemovedLegacyAiPathNodesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
 import {
-  normalizeRemovedTriggerContextModesInDocument,
+  findRemovedLegacyTriggerContextModesInDocument,
+  formatRemovedLegacyTriggerContextModesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 
 import { aiPathPortablePackageVersionedSchema } from './portable-engine-contract';
@@ -141,18 +142,18 @@ export const migratePortablePathInput = (
       }),
     };
   }
-  const triggerContextModeRemediation = normalizeRemovedTriggerContextModesInDocument(input);
-  const migrationWarnings: PortablePathMigrationWarning[] =
-    triggerContextModeRemediation.changed
-      ? [
-        {
-          code: 'removed_trigger_context_modes_normalized',
-          message:
-              'Portable payload normalized removed Trigger.contextMode values to trigger_only.',
-        },
-      ]
-      : [];
-  const migratedInput = normalizeLegacyWriteOutcomePolicy(triggerContextModeRemediation.value);
+  const removedTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(input);
+  if (removedTriggerContextModes.length > 0) {
+    return {
+      ok: false,
+      error: formatRemovedLegacyTriggerContextModesMessage(removedTriggerContextModes, {
+        surface: 'portable payload',
+      }),
+    };
+  }
+
+  const migrationWarnings: PortablePathMigrationWarning[] = [];
+  const migratedInput = normalizeLegacyWriteOutcomePolicy(input);
 
   const packageParsed = aiPathPortablePackageVersionedSchema.safeParse(migratedInput);
   if (packageParsed.success) {

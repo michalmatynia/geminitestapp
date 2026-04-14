@@ -171,7 +171,7 @@ describe('starter workflow registry', () => {
     expectSuccessfulStrictRunPreflight(report);
   });
 
-  it('fully replaces legacy normalize graphs with random node ids and no starter provenance', () => {
+  it('fully replaces default-path normalize graphs with random node ids even without starter provenance', () => {
     const canonical = materializeStarterWorkflowPathConfig(
       getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
       {
@@ -220,23 +220,14 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(legacyRandomIdConfig);
-    const promptNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-prompt-name-normalize'
-    );
     const databaseNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-update-name-normalize'
+      (node) => node.type === 'database'
     );
-    const promptTemplate =
-      typeof promptNode?.config?.prompt?.template === 'string'
-        ? promptNode.config.prompt.template
-        : '';
 
-    expect(upgraded.resolution?.matchedBy).toBe('legacy_alias');
+    expect(upgraded.resolution?.matchedBy).toBe('default_path');
     expect(upgraded.changed).toBe(true);
     expect(hasNodeId(upgraded.config, 'node-prompt-name-normalize')).toBe(true);
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
-    expect(promptTemplate).toContain('live product_categories context fetched during this workflow run');
-    expect(promptTemplate).toContain('bundle.categoryContext.allowedLeafLabels');
   });
 
   it('fully replaces partially-upgraded default normalize graphs whose provenance is current but node ids never migrated', () => {
@@ -461,7 +452,7 @@ describe('starter workflow registry', () => {
     );
   });
 
-  it('preserves an explicit Normalize model selection while fully replacing legacy random-id graphs', () => {
+  it('preserves explicit Normalize model selections while replacing default-path random-id graphs without provenance', () => {
     const canonical = materializeStarterWorkflowPathConfig(
       getStarterWorkflowTemplateByIdOrThrow('starter_product_name_normalize'),
       {
@@ -506,13 +497,12 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(legacyRandomIdConfig);
-    const modelNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-model-name-normalize'
-    );
+    const modelNode = (upgraded.config.nodes ?? []).find((node) => node.type === 'model');
 
     expect(upgraded.changed).toBe(true);
-    expect(upgraded.resolution?.matchedBy).toBe('legacy_alias');
+    expect(upgraded.resolution?.matchedBy).toBe('default_path');
     expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
+    expect(hasNodeId(upgraded.config, 'node-model-name-normalize')).toBe(true);
   });
 
   it('upgrades stale normalize prompts to require the most specific terminal leaf category', () => {
@@ -844,22 +834,16 @@ describe('starter workflow registry', () => {
     );
   });
 
-  it('upgrades stale parameter inference v2 configs with blank product_core parser mappings', () => {
+  it('does not upgrade stale parameter inference v2 configs without provenance or canonical hash', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(buildStaleLiveParameterInferencePathConfig());
     const parserNode = (upgraded.config.nodes ?? []).find((node) => node.type === 'parser');
     const parserMappings = parserNode?.config?.parser?.mappings;
-    const report = evaluateStrictRunPreflight(upgraded.config);
 
-    expect(upgraded.resolution?.matchedBy).toBe('legacy_alias');
-    expect(upgraded.changed).toBe(true);
-    expect(upgraded.config.extensions?.['aiPathsStarter']).toEqual(
-      expect.objectContaining({
-        starterKey: 'parameter_inference',
-      })
-    );
-    expect(parserMappings?.['title']).toBe('$.name_en');
-    expect(parserMappings?.['content_en']).toBe('$.description_en');
-    expectSuccessfulStrictRunPreflight(report);
+    expect(upgraded.resolution).toBeNull();
+    expect(upgraded.changed).toBe(false);
+    expect(upgraded.config.extensions?.['aiPathsStarter']).toBeUndefined();
+    expect(parserMappings?.['title']).toBe('');
+    expect(parserMappings?.['content_en']).toBe('');
   });
 
   it('upgrades stale parameter inference starter provenance on non-default path ids', () => {

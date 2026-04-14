@@ -9,7 +9,6 @@ import {
 } from './runtime-kernel-legacy-aliases';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 export type RuntimeKernelConfigNormalizedField =
   | 'mode'
   | 'nodeTypes'
@@ -17,10 +16,6 @@ export type RuntimeKernelConfigNormalizedField =
   | 'strictNativeRegistry';
 
 export type RuntimeKernelValueSource = 'env' | 'path' | 'settings' | 'default';
-
-export type NormalizeRuntimeKernelConfigRecordOptions = {
-  translateLegacyAliases?: boolean;
-};
 
 export type NormalizeRuntimeKernelConfigRecordResult = {
   changed: boolean;
@@ -71,7 +66,7 @@ export const parseRuntimeKernelListValue = ({
       }
     } catch (error) {
       logClientError(error);
-    
+
       // Fall through to tokenized parsing.
     }
   }
@@ -125,14 +120,9 @@ const normalizeRuntimeKernelListField = (args: {
     RuntimeKernelConfigNormalizedField,
     'nodeTypes' | 'codeObjectResolverIds'
   >;
-  translateLegacyAliases: boolean;
   parseValue: (value: unknown) => string[] | undefined;
 }): void => {
-  const nextValue = args.parseValue(
-    args.translateLegacyAliases
-      ? (args.sourceValue[args.canonicalField] ?? args.sourceValue[args.legacyField])
-      : args.sourceValue[args.canonicalField]
-  );
+  const nextValue = args.parseValue(args.sourceValue[args.canonicalField]);
 
   if (nextValue) {
     if (!matchesStringArray(args.sourceValue[args.canonicalField], nextValue)) {
@@ -170,12 +160,10 @@ export const parseRuntimeKernelCodeObjectResolverIds = (value: unknown): string[
   });
 
 export const normalizeRuntimeKernelConfigRecordDetailed = (
-  value: unknown,
-  options?: NormalizeRuntimeKernelConfigRecordOptions
+  value: unknown
 ): NormalizeRuntimeKernelConfigRecordResult | null => {
   if (!isObjectRecord(value)) return null;
 
-  const translateLegacyAliases = options?.translateLegacyAliases ?? false;
   const normalized: Record<string, unknown> = { ...value };
   const changedFields: RuntimeKernelConfigNormalizedField[] = [];
 
@@ -192,7 +180,6 @@ export const normalizeRuntimeKernelConfigRecordDetailed = (
     canonicalField: 'nodeTypes',
     legacyField: DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
     changedField: 'nodeTypes',
-    translateLegacyAliases,
     parseValue: parseRuntimeKernelNodeTypes,
     changedFields,
   });
@@ -203,7 +190,6 @@ export const normalizeRuntimeKernelConfigRecordDetailed = (
     canonicalField: 'codeObjectResolverIds',
     legacyField: DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
     changedField: 'codeObjectResolverIds',
-    translateLegacyAliases,
     parseValue: parseRuntimeKernelCodeObjectResolverIds,
     changedFields,
   });
@@ -229,9 +215,8 @@ export const normalizeRuntimeKernelConfigRecordDetailed = (
 };
 
 export const normalizeRuntimeKernelConfigRecord = (
-  value: unknown,
-  options?: NormalizeRuntimeKernelConfigRecordOptions
+  value: unknown
 ): Record<string, unknown> | null => {
-  const normalized = normalizeRuntimeKernelConfigRecordDetailed(value, options);
+  const normalized = normalizeRuntimeKernelConfigRecordDetailed(value);
   return normalized?.value ?? null;
 };

@@ -160,7 +160,7 @@ const optionalMarketplaceContentOverridesFromFormSchema = z.preprocess(
 );
 
 const STRUCTURED_PRODUCT_NAME_FORMAT_MESSAGE =
-  'English name must use format: <name> | <size> | <material> | <category> | <lore or theme>';
+  'Name must follow the REQUIRED structured format: <name> | <size> | <material> | <category> | <lore or theme>';
 
 const productInputFieldsSchema = z.object({
   id: z.string().nullable().optional(),

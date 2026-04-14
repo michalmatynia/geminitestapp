@@ -268,11 +268,31 @@ export function useOfflineMutation<
         await options.invalidate(queryClient, data, variables, context);
       }
     },
-    onError: (error: Error): void => {
-      let message = options.errorMessage || 'An error occurred';
-      if (error instanceof Error) {
-        message = options.errorMessage || error.message;
+    onError: (error: unknown): void => {
+      let message = 'An error occurred'; // Default fallback message
+
+      if (error instanceof ApiError) {
+        // Check for specific duplicate SKU error codes/messages from the API.
+        if (error.status === 409 && error.message.toLowerCase().includes('duplicate sku')) {
+          message = 'SKU already exists. Please enter a unique SKU.';
+        } else if (error.status === 400 && error.message.toLowerCase().includes('duplicate entry')) {
+          // Handle potential duplicate entry from DB if not caught as 409
+          message = 'SKU already exists. Please enter a unique SKU.';
+        } else if (error.message && error.message !== options.errorMessage && error.message !== 'An error occurred') {
+          // Use specific API error message if it's more informative than the generic ones.
+          message = error.message;
+        } else if (options.errorMessage) {
+          // Use the mutation-specific error message if provided and no better message is found.
+          message = options.errorMessage;
+        }
+      } else if (error instanceof Error) {
+        // Fallback for generic Error instances.
+        message = error.message || options.errorMessage || message;
+      } else if (options.errorMessage) {
+        // Fallback to option's error message if it's provided and error is not an Error instance
+        message = options.errorMessage;
       }
+
       toast(message, { variant: 'error' });
     },
   });

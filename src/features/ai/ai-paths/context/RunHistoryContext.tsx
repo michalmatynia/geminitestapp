@@ -10,7 +10,7 @@ import {
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { AiPathRunRecord, AiPathRunEventRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord, AiPathRunEventRecord } from '@/shared/contracts/ai-paths';
 
 import {
   refreshRunDetailErrorSummary,

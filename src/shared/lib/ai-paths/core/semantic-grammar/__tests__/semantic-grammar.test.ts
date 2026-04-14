@@ -49,7 +49,7 @@ describe('semantic grammar canvas serialization', () => {
     }
   });
 
-  it('remediates removed legacy trigger context modes in semantic canvas payloads', () => {
+  it('rejects removed legacy trigger context modes in semantic canvas payloads', () => {
     const config = createDefaultPathConfig('path_semantic_removed_trigger_context');
     const seedNode = config.nodes[0];
     expect(seedNode).toBeDefined();
@@ -73,9 +73,9 @@ describe('semantic grammar canvas serialization', () => {
     const semantic = serializePathConfigToSemanticCanvas(config);
 
     const parsed = parseAndDeserializeSemanticCanvas(semantic);
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) return;
-    expect(parsed.value.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) return;
+    expect(parsed.error).toMatch(/removed legacy Trigger context modes/i);
   });
 
   it('does not upgrade alias-only edge fields during semantic serialization', () => {

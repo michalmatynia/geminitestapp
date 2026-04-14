@@ -115,7 +115,7 @@ describe('portable AI-path engine scaffold', () => {
   );
 
   it.each(['simulation_required', 'simulation_preferred'] as const)(
-    'remediates removed legacy trigger context mode %s from raw path payloads',
+    'rejects removed legacy trigger context mode %s from raw path payloads',
     (contextMode) => {
       const pathConfig = createDefaultPathConfig(`path_removed_trigger_context_${contextMode}`);
       const seedNode = pathConfig.nodes[0];
@@ -139,14 +139,9 @@ describe('portable AI-path engine scaffold', () => {
       pathConfig.edges = [];
 
       const parsed = resolvePortablePathInput(pathConfig);
-      expect(parsed.ok).toBe(true);
-      if (!parsed.ok) return;
-      expect(parsed.value.pathConfig.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
-      expect(
-        parsed.value.migrationWarnings.some(
-          (warning) => warning.code === 'removed_trigger_context_modes_normalized'
-        )
-      ).toBe(true);
+      expect(parsed.ok).toBe(false);
+      if (parsed.ok) return;
+      expect(parsed.error).toMatch(/removed legacy Trigger context modes/i);
     }
   );
 

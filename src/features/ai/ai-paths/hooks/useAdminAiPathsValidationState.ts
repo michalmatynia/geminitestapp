@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { AiPathsValidationConfig, AiPathsValidationRule, AiPathsValidationStage, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type { AiPathsValidationConfig, AiPathsValidationRule, AiPathsValidationStage, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
   AI_PATHS_NODE_DOCS as NODE_DOCS_LIST,

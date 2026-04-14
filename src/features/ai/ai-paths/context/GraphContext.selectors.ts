@@ -1,4 +1,4 @@
-import type { AiNode, Edge, PathConfig } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 
 import { useGraphDataState, usePathMetadataState } from './GraphContext';
 

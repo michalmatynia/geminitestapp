@@ -1,6 +1,6 @@
 import { parseAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 
 import { type ParsedPathMeta, type ParsedPathConfig } from './settings-store.constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

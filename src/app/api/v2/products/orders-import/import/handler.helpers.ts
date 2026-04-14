@@ -17,8 +17,6 @@ export const resolveBaseOrderImportIntegrationId = (integrations: BaseIntegratio
     throw badRequestError('Base.com integration is not configured.');
   }
   return integration.id;
-};
-
 export const assertBaseOrderImportConnectionExists = async (
   connectionId: string,
   integrationRepository: {
@@ -37,7 +35,15 @@ export const assertBaseOrderImportConnectionExists = async (
     integrationId
   );
   if (!connection) {
-    throw badRequestError('Selected Base.com connection was not found.');
+    throw badRequestError('Selected Base.com connection was not found.', {
+      connectionId,
+      integrationId,
+    });
+  }
+};
+      connectionId,
+      integrationId,
+    });
   }
 };
 

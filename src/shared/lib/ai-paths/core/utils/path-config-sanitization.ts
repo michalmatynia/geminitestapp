@@ -19,7 +19,10 @@ import {
   findRemovedLegacyAiPathNodesInPathConfig,
   formatRemovedLegacyAiPathNodesMessage,
 } from './legacy-node-removal';
-import { normalizeRemovedTriggerContextModesInPathConfig } from './legacy-trigger-context-mode';
+import {
+  findRemovedLegacyTriggerContextModesInPathConfig,
+  formatRemovedLegacyTriggerContextModesMessage,
+} from './legacy-trigger-context-mode';
 import { validateCanonicalPathNodeIdentities } from './node-identity';
 import { cloneJsonSafe, stableStringify } from './runtime';
 import { parseRuntimeState } from './runtime-state';
@@ -195,24 +198,38 @@ export const buildPersistedRuntimeState = (state: RuntimeState, graphNodes: AiNo
 };
 
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
-  const remediatedConfig = normalizeRemovedTriggerContextModesInPathConfig(config).value;
-  const collectionAliasIssues = findPathConfigCollectionAliasIssues(remediatedConfig);
+  const removedTriggerContextModes = findRemovedLegacyTriggerContextModesInPathConfig(config);
+  if (removedTriggerContextModes.length > 0) {
+    throw validationError(
+      formatRemovedLegacyTriggerContextModesMessage(removedTriggerContextModes, {
+        surface: 'path config',
+      }),
+      {
+        source: 'ai_paths.path_config',
+        reason: 'removed_trigger_context_mode',
+        pathId: config.id,
+        removedModes: removedTriggerContextModes,
+      }
+    );
+  }
+
+  const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
   if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains unsupported collection aliases.', {
       source: 'ai_paths.path_config',
       reason: 'unsupported_collection_aliases',
-      pathId: remediatedConfig.id,
+      pathId: config.id,
       issues: collectionAliasIssues,
     });
   }
 
-  const contractBackfilled = backfillPathConfigNodeContracts(remediatedConfig).config;
+  const contractBackfilled = backfillPathConfigNodeContracts(config).config;
   const removedLegacyNodes = findRemovedLegacyAiPathNodesInPathConfig(contractBackfilled);
   if (removedLegacyNodes.length > 0) {
     throw validationError(formatRemovedLegacyAiPathNodesMessage(removedLegacyNodes), {
       source: 'ai_paths.path_config',
       reason: 'removed_legacy_node_type',
-      pathId: remediatedConfig.id,
+      pathId: config.id,
       removedNodes: removedLegacyNodes,
     });
   }

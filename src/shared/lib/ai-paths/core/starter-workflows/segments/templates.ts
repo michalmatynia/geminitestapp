@@ -15,12 +15,7 @@ import marketplaceCopyDebrandAsset from '../assets/marketplace-copy-debrand.canv
 import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
 import productNameNormalizeAsset from '../assets/product-name-normalize.canvas.json';
 import translationEnPlAsset from '../assets/translation-en-pl.canvas.json';
-import {
-  hasParameterInferencePromptStructure,
-  matchesLegacyNormalizeProductNameRepairSignature,
-  matchesLegacyParameterInferenceRepairSignature,
-  matchesLegacyTranslationRepairSignature,
-} from './legacy-repair';
+import { hasParameterInferencePromptStructure } from './structural-matchers';
 import {
   buildTriggerDisplay,
   computeStarterWorkflowGraphHash,
@@ -68,7 +63,6 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       versionedOverlayScope: 'any_provenance_path',
       lowOverlapReplacementMode: 'any_resolved',
       lowOverlapStructuralMatcher: hasParameterInferencePromptStructure,
-      legacyRepairMatcher: matchesLegacyParameterInferenceRepairSignature,
     },
   },
   {
@@ -104,9 +98,8 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
     upgradePolicy: {
       versionedOverlayScope: 'any_provenance_path',
-      lowOverlapReplacementMode: 'seeded_default_or_legacy_alias',
+      lowOverlapReplacementMode: 'seeded_default_only',
       allowCurrentVersionSeededDefaultZeroOverlap: true,
-      legacyRepairMatcher: matchesLegacyNormalizeProductNameRepairSignature,
     },
   },
   {
@@ -230,7 +223,6 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
     upgradePolicy: {
       versionedOverlayScope: 'any_provenance_path',
-      legacyRepairMatcher: matchesLegacyTranslationRepairSignature,
     },
   },
   {

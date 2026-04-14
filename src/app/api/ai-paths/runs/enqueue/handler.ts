@@ -25,7 +25,8 @@ import { badRequestError, internalError, serviceUnavailableError } from '@/share
 import { compileGraph, evaluateAiPathsValidationPreflight, normalizeNodes, normalizeAiPathsValidationConfig, PATH_CONFIG_PREFIX, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
-  remediateRemovedLegacyTriggerContextModes,
+  findRemovedLegacyTriggerContextModes,
+  formatRemovedLegacyTriggerContextModesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -166,9 +167,16 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
-  const normalizedNodes = normalizeNodes(
-    remediateRemovedLegacyTriggerContextModes(resolvedNodesInput).value as AiNode[]
-  );
+  const removedTriggerContextModes = findRemovedLegacyTriggerContextModes(resolvedNodesInput);
+  if (removedTriggerContextModes.length > 0) {
+    throw badRequestError(
+      formatRemovedLegacyTriggerContextModesMessage(removedTriggerContextModes, {
+        surface: 'run graph',
+      })
+    );
+  }
+
+  const normalizedNodes = normalizeNodes(resolvedNodesInput);
   const validationConfig: PathConfig = {
     id: rest.pathId,
     version: 1,

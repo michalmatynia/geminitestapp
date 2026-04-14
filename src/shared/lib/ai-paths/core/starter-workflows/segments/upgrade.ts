@@ -1,6 +1,5 @@
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
-import { matchesLegacyStarterWorkflowRepairSignature } from './legacy-repair';
 import {
   computeStarterWorkflowGraphHash,
   hasCanonicalGraphHash,
@@ -337,11 +336,7 @@ const shouldReplaceLowOverlapStarterGraph = (args: {
     return true;
   }
 
-  if (mode === 'seeded_default_or_legacy_alias') {
-    if (args.matchedBy === 'legacy_alias') {
-      return true;
-    }
-
+  if (mode === 'seeded_default_only') {
     const seededDefaultPath = isSeededDefaultPath(args.entry, args.config);
     const matchingStarter = hasMatchingStarterProvenance(args.provenance, args.entry);
     const sameVersionSeededDefaultZeroOverlap =
@@ -386,11 +381,11 @@ export const resolveStarterWorkflowForPathConfig = (
   if (entryByCanonicalHash) {
     return { entry: entryByCanonicalHash, matchedBy: 'canonical_hash' };
   }
-  const entryByLegacyAlias = STARTER_WORKFLOW_REGISTRY.find((entry) =>
-    matchesLegacyStarterWorkflowRepairSignature(entry, config)
+  const entryByDefaultPathId = STARTER_WORKFLOW_REGISTRY.find(
+    (entry) => entry.seedPolicy?.defaultPathId === config.id
   );
-  if (entryByLegacyAlias) {
-    return { entry: entryByLegacyAlias, matchedBy: 'legacy_alias' };
+  if (entryByDefaultPathId) {
+    return { entry: entryByDefaultPathId, matchedBy: 'default_path' };
   }
   return null;
 };
@@ -417,7 +412,7 @@ export const upgradeStarterWorkflowPathConfig = (
 
   const shouldRefreshCanonicalGraph =
     currentMatchesCanonicalHash ||
-    resolution.matchedBy === 'legacy_alias' ||
+    resolution.matchedBy === 'default_path' ||
     hasOutdatedStarterProvenance(provenance, resolution.entry, config);
   const latestNodeCount = (latest.nodes ?? []).length;
   const nodeIdOverlap = countNodeIdOverlap(config, latest);

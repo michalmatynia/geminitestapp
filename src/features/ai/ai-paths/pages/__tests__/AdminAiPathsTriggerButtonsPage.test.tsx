@@ -22,7 +22,6 @@ const mockState = vi.hoisted(() => ({
   routerPush: vi.fn(),
   apiPatch: vi.fn(),
   logClientError: vi.fn(), logClientCatch: vi.fn(),
-  persistLegacyRepair: vi.fn(),
   triggerButtonsApi: {
     create: vi.fn(),
     update: vi.fn(),
@@ -126,11 +125,6 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
 
 vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
   useAiPathsSettingsQuery: () => mockState.aiPathsSettingsQuery,
-}));
-
-vi.mock('@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence', () => ({
-  persistLegacyTriggerContextModeRepair: (...args: unknown[]) =>
-    mockState.persistLegacyRepair(...args),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -445,7 +439,6 @@ beforeEach(() => {
   mockState.apiPatch.mockReset();
   mockState.apiPatch.mockResolvedValue({});
   mockState.logClientError.mockReset();
-  mockState.persistLegacyRepair.mockReset();
 
   mockState.triggerButtonsApi.create.mockReset();
   mockState.triggerButtonsApi.update.mockReset();
@@ -535,7 +528,6 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Alpha Path')).toBeInTheDocument();
     });
-    expect(mockState.persistLegacyRepair).not.toHaveBeenCalled();
     expect(screen.getByText('Alpha Path')).toBeInTheDocument();
     expect(screen.getByText('Beta Path')).toBeInTheDocument();
 

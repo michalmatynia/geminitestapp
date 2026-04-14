@@ -2,7 +2,7 @@
 
 import { useCallback, type MouseEvent, type MutableRefObject } from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type {

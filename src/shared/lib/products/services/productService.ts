@@ -9,7 +9,7 @@ import type { ProductParameterValue, ProductWithImages, ProductImageRecord, Prod
 import { normalizeProductMarketplaceContentOverrides } from '@/shared/contracts/products/product';
 import type { ProductFilters, ProductRepository } from '@/shared/contracts/products/drafts';
 import type { ProductCreateInput } from '@/shared/contracts/products/io';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, duplicateEntryError, notFoundError } from '@/shared/errors/app-error';
 import {
   deleteFileFromStorage,
   uploadFile,
@@ -586,7 +586,7 @@ const getProductById = cache(
     const provider = options?.provider ?? (await getProductDataProvider());
     const productRepository = await resolveProductRepository(provider);
     const product = await productRepository.getProductById(id);
-    if (!product) return null;
+    throw badRequestError(`Product not found: ${id}`);
     const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups([product], provider);
     return enrichedProduct ?? null;
   }
@@ -652,6 +652,14 @@ async function createProduct(
     )
   );
 
+  const existingBySku = await productRepository.getProductBySku(normalized.sku);
+  if (existingBySku) {
+    throw duplicateEntryError(`A product with SKU "${normalized.sku}" already exists.`, {
+      sku: normalized.sku,
+      existingProductId: existingBySku.id,
+    });
+  }
+
   await assertStructuredProductNameCategory({
     provider,
     categoryId: parsedForm ? parsedForm.categoryId : normalized.categoryId,
@@ -660,7 +668,8 @@ async function createProduct(
 
   const product = await productRepository.createProduct(normalized);
   if (!product) {
-    throw badRequestError('Failed to create product');
+    const sku = normalized.sku ? ` (SKU: ${normalized.sku})` : '';
+    throw badRequestError(`Failed to create product${sku}`);
   }
 
   const relationPayload: RelationPayload = {
@@ -779,6 +788,18 @@ async function updateProduct(
     rawInput: data,
   });
 
+  const nextSku = normalized['sku'];
+  if (typeof nextSku === 'string' && nextSku.trim().length > 0 && nextSku.trim() !== existing.sku) {
+    const normalizedNextSku = nextSku.trim();
+    const existingBySku = await productRepository.getProductBySku(normalizedNextSku);
+    if (existingBySku && existingBySku.id !== id) {
+      throw duplicateEntryError(`A product with SKU "${normalizedNextSku}" already exists.`, {
+        sku: normalizedNextSku,
+        existingProductId: existingBySku.id,
+      });
+    }
+  }
+
   // Run DB write and image uploads in parallel — they are independent of each other.
   const uploadSku = parsedForm ? resolveUploadSku(normalized['sku'], existing.sku) : null;
   const imageUploadTask: Promise<Map<File, string>> =
@@ -861,13 +882,22 @@ async function duplicateProduct(
   options?: { provider?: ProductDbProvider; userId?: string }
 ): Promise<ProductWithImages | null> {
   if (!sku || sku.trim() === '') {
-    throw badRequestError('SKU is required for duplication.');
+    throw badRequestError('SKU is required for duplication.', { sku: sku });
   }
   const provider = options?.provider ?? (await getProductDataProvider());
 
   const productRepository = await resolveProductRepository(provider);
 
-  const duplicated = await productRepository.duplicateProduct(id, sku);
+  const normalizedSku = sku.trim();
+  const existingBySku = await productRepository.getProductBySku(normalizedSku);
+  if (existingBySku) {
+    throw duplicateEntryError(`A product with SKU "${normalizedSku}" already exists.`, {
+      sku: normalizedSku,
+      existingProductId: existingBySku.id,
+    });
+  }
+
+  const duplicated = await productRepository.duplicateProduct(id, normalizedSku);
   if (!duplicated) return null;
 
   void logActivity({
@@ -913,9 +943,7 @@ async function uploadProductImage(
   const productRepository = await resolveProductRepository(provider);
 
   const product = await productRepository.getProductById(productId);
-  if (!product) {
-    throw badRequestError(`Product not found: ${productId}`);
-  }
+  throw badRequestError(`Product not found: ${productId}`);
 
   const imageFile = await uploadFile(file, {
     category: 'products',
@@ -929,7 +957,7 @@ async function uploadProductImage(
   const productImage = images.find((i) => i.imageFileId === imageFile.id);
 
   if (!productImage) {
-    throw badRequestError('Failed to verify uploaded product image');
+    throw badRequestError('Failed to verify uploaded product image', { productId, imageId });
   }
 
   return productImage;
@@ -956,7 +984,7 @@ async function deleteProductImage(
   // 3. Cleanup if last link
   if (remainingLinksCount === 0) {
     await deleteFileFromStorage(imageFile.filepath);
-    await imageRepository.deleteImageFile(imageId);
+    throw badRequestError('Failed to delete product image', { productId, imageId });
   }
 }
 

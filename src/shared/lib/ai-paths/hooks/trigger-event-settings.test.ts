@@ -503,7 +503,7 @@ describe('loadPathConfigsFromSettings', () => {
     );
   });
 
-  it('repairs removed legacy trigger context modes in stored settings payloads', async () => {
+  it('rejects removed legacy trigger context modes in stored settings payloads', async () => {
     const config = createDefaultPathConfig('path-legacy-trigger-context');
     const seedNode = config.nodes[0] as AiNode | undefined;
     if (!seedNode) {
@@ -531,10 +531,9 @@ describe('loadPathConfigsFromSettings', () => {
       { key: `${PATH_CONFIG_PREFIX}${config.id}`, value: JSON.stringify(config) },
     ];
 
-    const loaded = await loadPathConfigsFromSettings(data);
-    const triggerNode = loaded.configs[config.id]?.nodes.find((node) => node.type === 'trigger');
-
-    expect(triggerNode?.config?.trigger?.contextMode).toBe('trigger_only');
+    await expect(loadPathConfigsFromSettings(data)).rejects.toThrow(
+      /removed legacy Trigger context modes/i
+    );
   });
 
   it('repairs stale seeded starter workflow configs when trigger settings load them', async () => {
@@ -613,7 +612,7 @@ describe('loadPathConfigsFromSettings', () => {
     expect(databaseNode?.config?.database?.updateTemplate).toContain('"parameters": {{value}}');
   });
 
-  it('repairs legacy database provider aliases before trigger preflight validation', async () => {
+  it('keeps query providers canonical while normalizing db_schema provider defaults before trigger preflight validation', async () => {
     const pathId = 'path-legacy-trigger-provider-aliases';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -705,7 +704,7 @@ describe('loadPathConfigsFromSettings', () => {
       (node) => node.type === 'db_schema' && node.title === 'Database Schema'
     );
 
-    expect(queryNode?.config?.database?.query?.provider).toBe('auto');
+    expect(queryNode?.config?.database?.query?.provider).toBe('mongodb');
     expect(schemaNode?.config?.db_schema?.provider).toBe('auto');
   });
 

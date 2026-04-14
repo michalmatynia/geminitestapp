@@ -33,7 +33,6 @@ export default async function run({
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
-  const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];
   const configuredSellUrl =
     typeof input?.traderaConfig?.listingFormUrl === 'string' &&
     input.traderaConfig.listingFormUrl.trim()
@@ -49,32 +48,14 @@ export default async function run({
     )
   );
 
-  const TITLE_SELECTORS = [
-    'input[name="shortDescription"]',
-    '#shortDescription',
-    'input[name="title"]',
-    '#title',
-    '[data-testid*="title"] input',
-    'input[placeholder*="headline" i]',
-    'input[placeholder*="rubrik" i]',
-    'input[aria-label*="title" i]',
-    'input[aria-label*="titel" i]',
-    'input[aria-label*="rubrik" i]',
-  ];
-  const DESCRIPTION_SELECTORS = [
-    '#tip-tap-editor',
-    '[aria-label="Description"][contenteditable="true"]',
-    '[aria-label="Beskrivning"][contenteditable="true"]',
-    '[aria-label*="description" i][contenteditable="true"]',
-    '[aria-label*="beskriv" i][contenteditable="true"]',
-    'textarea[name="description"]',
-    '#description',
-    'textarea[placeholder*="description" i]',
-    'textarea[placeholder*="beskriv" i]',
-    '[data-testid*="description"] textarea',
-    '[contenteditable="true"]',
-    '[role="textbox"][contenteditable="true"]',
-  ];
+  const titleSelectors = ${JSON.stringify(TITLE_SELECTORS)};
+  const descriptionSelectors = ${JSON.stringify(DESCRIPTION_SELECTORS)};
+  const priceSelectors = ${JSON.stringify(PRICE_SELECTORS)};
+  const quantitySelectors = ${JSON.stringify(QUANTITY_SELECTORS)};
+  const eanSelectors = ${JSON.stringify(EAN_SELECTORS)};
+  const brandSelectors = ${JSON.stringify(BRAND_SELECTORS)};
+  const weightSelectors = ${JSON.stringify(WEIGHT_SELECTORS)};
+
   const DUPLICATE_DESCRIPTION_TEXT_SELECTORS = [
     '[data-testid*="description"]',
     '[id*="description" i]',
@@ -82,67 +63,6 @@ export default async function run({
     '[class*="Description"]',
     'article',
     'main',
-  ];
-  const PRICE_SELECTORS = [
-    'input[name="price_fixedPrice"]',
-    '#price_fixedPrice',
-    'input[name="price"]',
-    '#price',
-    'input[data-testid*="price"]',
-    'input[inputmode="decimal"]',
-    'input[placeholder*="price" i]',
-    'input[placeholder*="pris" i]',
-    'input[aria-label*="price" i]',
-    'input[aria-label*="pris" i]',
-  ];
-  const QUANTITY_SELECTORS = [
-    'input[name="quantity"]',
-    '#quantity',
-    'input[name="itemCount"]',
-    '#itemCount',
-    '[data-testid*="quantity"] input',
-    '[data-testid*="item-count"] input',
-    'input[placeholder*="quantity" i]',
-    'input[placeholder*="antal" i]',
-    'input[aria-label*="quantity" i]',
-    'input[aria-label*="antal" i]',
-  ];
-  const EAN_SELECTORS = [
-    'input[name="ean"]',
-    '#ean',
-    'input[name="gtin"]',
-    '#gtin',
-    '[data-testid*="ean"] input',
-    '[data-testid*="gtin"] input',
-    'input[placeholder*="EAN" i]',
-    'input[placeholder*="GTIN" i]',
-    'input[placeholder*="barcode" i]',
-    'input[aria-label*="EAN" i]',
-    'input[aria-label*="GTIN" i]',
-    'input[aria-label*="barcode" i]',
-  ];
-  const BRAND_SELECTORS = [
-    'input[name="brand"]',
-    '#brand',
-    'input[name="producer"]',
-    '#producer',
-    '[data-testid*="brand"] input',
-    '[data-testid*="producer"] input',
-    'input[placeholder*="brand" i]',
-    'input[placeholder*="märke" i]',
-    'input[aria-label*="brand" i]',
-    'input[aria-label*="märke" i]',
-  ];
-  const WEIGHT_SELECTORS = [
-    'input[name="weight"]',
-    '#weight',
-    'input[name="vikt"]',
-    '#vikt',
-    '[data-testid*="weight"] input',
-    'input[placeholder*="weight" i]',
-    'input[placeholder*="vikt" i]',
-    'input[aria-label*="weight" i]',
-    'input[aria-label*="vikt" i]',
   ];
   const WIDTH_SELECTORS = [
     'input[name="width"]',
@@ -168,40 +88,8 @@ export default async function run({
     'input[placeholder*="height" i]',
     'input[placeholder*="höjd" i]',
   ];
-  const IMAGE_INPUT_SELECTORS = [
-    'input[type="file"][accept*="image"]',
-    '[data-testid*="image"] input[type="file"]',
-    '[data-testid*="photo"] input[type="file"]',
-    '[data-testid*="upload"] input[type="file"]',
-    'input[type="file"][name*="image" i]',
-    'input[type="file"][name*="photo" i]',
-    'input[type="file"]',
-  ];
-  const IMAGE_UPLOAD_TRIGGER_SELECTORS = [
-    'button[aria-label*="Add images" i]',
-    'button[aria-label*="Add image" i]',
-    'button[aria-label*="Upload images" i]',
-    'button[aria-label*="Upload image" i]',
-    'button[aria-label*="Lägg till bilder" i]',
-    'button[aria-label*="Lägg till bild" i]',
-    'button[aria-label*="Lägg till foton" i]',
-    'button:has-text("Add images")',
-    'button:has-text("Add image")',
-    'button:has-text("Upload images")',
-    'button:has-text("Upload image")',
-    'button:has-text("Lägg till bilder")',
-    'button:has-text("Lägg till bild")',
-    'button:has-text("Lägg till foton")',
-    'a:has-text("Add images")',
-    'a:has-text("Lägg till bilder")',
-    '[data-testid*="add-image"]',
-    '[data-testid*="add-photo"]',
-    '[data-testid*="upload-image"]',
-    '[data-testid*="upload-photo"]',
-    '[data-testid*="image-upload"]',
-    '[data-testid*="photo-upload"]',
-    '[data-testid*="image-picker"]',
-  ];
+  const imageInputSelectors = ${JSON.stringify(IMAGE_INPUT_SELECTORS)};
+  const imageUploadTriggerSelectors = ${JSON.stringify(IMAGE_UPLOAD_TRIGGER_SELECTORS)};
   const IMAGE_REQUIRED_HINT_SELECTORS = [
     'text=/Add your images first/i',
     'text=/Add images first/i',
@@ -246,28 +134,7 @@ export default async function run({
     '[class*="photopreview" i] img',
     '[class*="preview" i] img',
   ];
-  const DRAFT_IMAGE_REMOVE_SELECTORS = [
-    'button[aria-label*="Remove image" i]',
-    'button[aria-label*="Delete image" i]',
-    'button[aria-label*="Remove photo" i]',
-    'button[aria-label*="Delete photo" i]',
-    'button[aria-label="Remove" i]',
-    'button[aria-label="Delete" i]',
-    'button[aria-label*="Ta bort" i]',
-    'button[aria-label*="Radera" i]',
-    '[data-testid*="remove-image"]',
-    '[data-testid*="delete-image"]',
-    '[data-testid*="remove-photo"]',
-    '[data-testid*="delete-photo"]',
-    '[data-testid*="remove"]',
-    '[data-testid*="delete"]',
-    'button:has-text("Remove image")',
-    'button:has-text("Delete image")',
-    'button:has-text("Remove")',
-    'button:has-text("Delete")',
-    'button:has-text("Ta bort")',
-    'button:has-text("Radera")',
-  ];
+  const draftImageRemoveSelectors = ${JSON.stringify(DRAFT_IMAGE_REMOVE_SELECTORS)};
   const DRAFT_IMAGE_REMOVE_ACTION_HINTS = [
     'remove image',
     'delete image',
@@ -524,16 +391,8 @@ export default async function run({
     'Börja sälja',
     'Sälj',
   ];
-  const CATEGORY_FIELD_LABELS = ['Category', 'Kategori'];
-  const CATEGORY_PLACEHOLDER_LABELS = [
-    'Choose category',
-    'Select category',
-    'Choose a category',
-    'Select a category',
-    'Välj kategori',
-    'Välj en kategori',
-    'Välj kategori först',
-  ];
+  const categoryFieldLabels = ${JSON.stringify(CATEGORY_FIELD_LABELS)};
+  const categoryPlaceholderLabels = ${JSON.stringify(CATEGORY_PLACEHOLDER_LABELS)};
   const FALLBACK_CATEGORY_OPTION_LABELS = ['Other', 'Övrigt'];
   const FALLBACK_CATEGORY_PATH_SEGMENTS = ['Other', 'Other'];
   const FALLBACK_CATEGORY_PATH = FALLBACK_CATEGORY_PATH_SEGMENTS.join(' > ');

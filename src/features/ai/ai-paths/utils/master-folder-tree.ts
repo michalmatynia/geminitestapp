@@ -1,7 +1,7 @@
 import type { PathMeta } from '@/shared/contracts/ai-paths';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { normalizeTreePath } from '@/shared/utils/tree-operations';
-import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 
 const FOLDER_NODE_PREFIX = 'ai-path-folder:';
 const PATH_NODE_PREFIX = 'ai-path:';

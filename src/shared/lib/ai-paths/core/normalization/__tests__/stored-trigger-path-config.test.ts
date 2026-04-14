@@ -112,7 +112,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.config.uiState?.selectedNodeId).toBeNull();
   });
 
-  it('repairs legacy database mapping updates that still use custom payload mode without an update template', async () => {
+  it('does not auto-repair legacy database mapping updates without starter refresh criteria', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')
     >('@/shared/lib/ai-paths/portable-engine');
@@ -156,13 +156,11 @@ describe('materializeStoredTriggerPathConfig', () => {
     const databaseNode = resolved.config.nodes.find(
       (node) => node.type === 'database' && node.title === 'Database Query'
     );
-    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
-    expect(databaseNode?.config?.database?.updateTemplate).toContain('"name_en": "{{result}}"');
-    expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
-    expect(resolved.changed).toBe(true);
+    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('mapping');
+    expect(databaseNode?.config?.database?.updateTemplate).toBe('');
   });
 
-  it('repairs legacy generated custom update templates that still use unquoted string tokens', async () => {
+  it('does not auto-repair legacy generated custom update templates with invalid scalar token quoting', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')
     >('@/shared/lib/ai-paths/portable-engine');
@@ -208,12 +206,10 @@ describe('materializeStoredTriggerPathConfig', () => {
       (node) => node.type === 'database' && node.title === 'Database Query'
     );
     expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
-    expect(databaseNode?.config?.database?.updateTemplate).toContain('"name_en": "{{result}}"');
-    expect(databaseNode?.config?.database?.updateTemplate).toContain('"__noop__": ""');
-    expect(resolved.changed).toBe(true);
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"name_en": {{result}}');
   });
 
-  it('repairs translation mapping update nodes with the semantic value-scoped description token', async () => {
+  it('does not auto-repair translation mapping update nodes without starter refresh criteria', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')
     >('@/shared/lib/ai-paths/portable-engine');
@@ -257,13 +253,8 @@ describe('materializeStoredTriggerPathConfig', () => {
     const databaseNode = resolved.config.nodes.find(
       (node) => node.type === 'database' && node.title === 'Database Update'
     );
-    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
-    expect(databaseNode?.config?.database?.updateTemplate).toContain(
-      '"description_pl": "{{value.description_pl}}"'
-    );
-    expect(databaseNode?.config?.database?.updateTemplate).toContain(
-      '"parameters": {{result.parameters}}'
-    );
+    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('mapping');
+    expect(databaseNode?.config?.database?.updateTemplate).toBe('');
     expect(databaseNode?.config?.database?.skipEmpty).toBe(true);
     expect(databaseNode?.config?.database?.trimStrings).toBe(true);
     expect(databaseNode?.config?.database?.localizedParameterMerge).toEqual(
@@ -274,7 +265,6 @@ describe('materializeStoredTriggerPathConfig', () => {
         requireFullCoverage: false,
       })
     );
-    expect(resolved.changed).toBe(true);
   });
 
   it('preserves an explicit Normalize model selection while materializing stale starter configs', async () => {
@@ -545,7 +535,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.changed).toBe(true);
   });
 
-  it('fully replaces legacy normalize starter graphs with random node ids and no starter provenance', async () => {
+  it('canonically rewrites default-path normalize starter graphs with random node ids even without starter provenance', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')
     >('@/shared/lib/ai-paths/portable-engine');
@@ -605,9 +595,7 @@ describe('materializeStoredTriggerPathConfig', () => {
 
     const promptNode = resolved.config.nodes.find((node) => node.type === 'prompt');
     const databaseNode = resolved.config.nodes.find((node) => node.type === 'database');
-    expect(promptNode?.config?.prompt?.template).toContain(
-      'choose the terminal leaf'
-    );
+    expect(promptNode?.config?.prompt?.template).toContain('choose the terminal leaf');
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expect(resolved.changed).toBe(true);
   });

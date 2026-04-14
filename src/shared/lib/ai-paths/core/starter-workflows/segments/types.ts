@@ -36,14 +36,13 @@ export type StarterWorkflowVersionedOverlayScope = 'seeded_default_only' | 'any_
 export type StarterWorkflowLowOverlapReplacementMode =
   | 'never'
   | 'any_resolved'
-  | 'seeded_default_or_legacy_alias';
+  | 'seeded_default_only';
 
 export type StarterWorkflowUpgradePolicy = {
   versionedOverlayScope?: StarterWorkflowVersionedOverlayScope;
   lowOverlapReplacementMode?: StarterWorkflowLowOverlapReplacementMode;
   allowCurrentVersionSeededDefaultZeroOverlap?: boolean;
   lowOverlapStructuralMatcher?: (config: PathConfig) => boolean;
-  legacyRepairMatcher?: (config: PathConfig) => boolean;
 };
 
 export type AiPathTemplateRegistryEntry = {
@@ -66,7 +65,7 @@ export type AiPathsStarterProvenance = {
 
 export type StarterWorkflowResolution = {
   entry: AiPathTemplateRegistryEntry;
-  matchedBy: 'provenance' | 'canonical_hash' | 'legacy_alias';
+  matchedBy: 'provenance' | 'canonical_hash' | 'default_path';
 };
 
 export type StarterWorkflowUpgradeResult = {

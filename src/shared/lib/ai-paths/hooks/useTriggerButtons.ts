@@ -137,27 +137,6 @@ const resolveTriggerEntityId = (
   );
 };
 
-const resolveFeedbackAliasButtonIds = (
-  button: AiTriggerButtonRecord,
-  allButtons: AiTriggerButtonRecord[]
-): string[] => {
-  const buttonId = normalizeOptionalEntityId(button.id);
-  if (!buttonId) return [];
-
-  const pathId = normalizeOptionalEntityId(button.pathId);
-  if (!pathId) return [buttonId];
-
-  const aliases = new Set<string>();
-  allButtons.forEach((candidate: AiTriggerButtonRecord) => {
-    const candidateId = normalizeOptionalEntityId(candidate.id);
-    if (!candidateId) return;
-    if (normalizeOptionalEntityId(candidate.pathId) !== pathId) return;
-    aliases.add(candidateId);
-  });
-  aliases.add(buttonId);
-  return Array.from(aliases);
-};
-
 interface UseTriggerButtonsOptions {
   location: AiTriggerButtonLocation;
   entityType: 'product' | 'note' | 'custom';
@@ -227,15 +206,6 @@ export function useTriggerButtons({
       });
   }, [allButtons, location]);
 
-  const feedbackAliasButtonIdsById = useMemo(() => {
-    const next = new Map<string, string[]>();
-    buttons.forEach((button: AiTriggerButtonRecord) => {
-      if (!button.id) return;
-      next.set(button.id, resolveFeedbackAliasButtonIds(button, allButtons));
-    });
-    return next;
-  }, [allButtons, buttons]);
-
   const stopRunSubscription = useCallback((buttonId: string): void => {
     const unsubscribe = runSubscriptionsRef.current.get(buttonId);
     if (!unsubscribe) return;
@@ -251,7 +221,6 @@ export function useTriggerButtons({
         entityId: string | null;
         entityType: 'product' | 'note' | 'custom';
         pathId?: string | null | undefined;
-        legacyButtonIds?: readonly string[] | undefined;
         initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined;
       }
     ): void => {
@@ -274,7 +243,6 @@ export function useTriggerButtons({
           persistTriggerButtonRunFeedback({
             buttonId,
             pathId: options.pathId,
-            legacyButtonIds: options.legacyButtonIds,
             location,
             entityId: options.entityId ?? snapshot.entityId ?? null,
             entityType: options.entityType,
@@ -310,11 +278,9 @@ export function useTriggerButtons({
     const restoredRuns: Record<string, TriggerButtonLastRun> = {};
     buttons.forEach((button: AiTriggerButtonRecord) => {
       if (!button.id) return;
-      const feedbackAliasButtonIds = feedbackAliasButtonIdsById.get(button.id) ?? [button.id];
       const restoredRun = readTriggerButtonRunFeedback({
         buttonId: button.id,
         pathId: button.pathId ?? null,
-        legacyButtonIds: feedbackAliasButtonIds,
         entityType,
         entityId: feedbackEntityId,
       });
@@ -332,7 +298,6 @@ export function useTriggerButtons({
           entityId: feedbackEntityId,
           entityType,
           pathId: button.pathId ?? null,
-          legacyButtonIds: feedbackAliasButtonIds,
           ...(initialSnapshot ? { initialSnapshot } : {}),
         });
       }
@@ -357,7 +322,6 @@ export function useTriggerButtons({
   }, [
     buttons,
     entityType,
-    feedbackAliasButtonIdsById,
     feedbackEntityId,
     feedbackScopeKey,
     startRunSubscription,
@@ -396,7 +360,6 @@ export function useTriggerButtons({
         [button.id]: { status: 'running', progress: 0 },
       }));
       const resolvedEntityId = resolveTriggerEntityId(entityId, getEntityJson);
-      const feedbackAliasButtonIds = feedbackAliasButtonIdsById.get(button.id) ?? [button.id];
       let customExtras: Record<string, unknown> | null = null;
 
       // Guard: if the caller signals an entity context (via explicit entityId prop or getEntityJson)
@@ -457,7 +420,6 @@ export function useTriggerButtons({
         clearTriggerButtonRunFeedback({
           buttonId: button.id,
           pathId: button.pathId ?? null,
-          legacyButtonIds: feedbackAliasButtonIds,
           location,
           entityId: resolvedEntityId,
           entityType,
@@ -488,7 +450,6 @@ export function useTriggerButtons({
             persistTriggerButtonRunFeedback({
               buttonId: button.id,
               pathId: button.pathId ?? null,
-              legacyButtonIds: feedbackAliasButtonIds,
               location,
               entityId: resolvedEntityId,
               entityType,
@@ -506,7 +467,6 @@ export function useTriggerButtons({
               entityId: resolvedEntityId,
               entityType,
               pathId: button.pathId ?? null,
-              legacyButtonIds: feedbackAliasButtonIds,
               ...(initialSnapshot ? { initialSnapshot } : {}),
             });
             onRunQueued?.({
@@ -594,7 +554,6 @@ export function useTriggerButtons({
       entityId,
       entityType,
       fireAiPathTriggerEvent,
-      feedbackAliasButtonIdsById,
       getEntityJson,
       getTriggerExtras,
       location,

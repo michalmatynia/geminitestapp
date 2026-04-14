@@ -451,7 +451,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
     });
   });
 
-  it('repairs non-canonical active path payloads during hydration instead of failing the canvas load', async () => {
+  it('fails non-canonical active path payloads during hydration instead of rewriting them', async () => {
     const activePathId = 'path_active_noncanonical';
     const activeConfig = createDefaultPathConfig(activePathId);
     activeConfig.uiState = {
@@ -519,17 +519,17 @@ describe('useAiPathsPersistence idle prefetch', () => {
     renderHook(() => useAiPathsPersistence(args));
 
     await waitFor(() => {
-      expect(setActivePathIdGraphMock).toHaveBeenCalledWith(activePathId);
+      expect(reportAiPathsError).toHaveBeenCalled();
     });
-
-    expect(reportAiPathsError).not.toHaveBeenCalled();
-    expect(toast).not.toHaveBeenCalledWith(
+    expect(setActivePathIdGraphMock).not.toHaveBeenCalledWith(activePathId);
+    expect(setPathConfigsGraphMock).not.toHaveBeenCalled();
+    expect(mockedUpdateAiPathsSettingsBulk).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
       expect.stringContaining('Failed to load AI Paths settings'),
-      expect.anything()
+      {
+        variant: 'error',
+      }
     );
-    const repairEntry = mockedUpdateAiPathsSettingsBulk.mock.calls[0]?.[0]?.[0];
-    expect(repairEntry?.key).toBe(`${PATH_CONFIG_PREFIX}${activePathId}`);
-    expect(JSON.parse(repairEntry?.value ?? 'null')).toEqual(sanitizePathConfig(activeConfig));
   });
 
   it('prefetches non-active path configs after initial hydration', async () => {

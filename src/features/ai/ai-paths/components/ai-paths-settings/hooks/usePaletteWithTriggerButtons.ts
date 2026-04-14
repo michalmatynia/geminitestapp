@@ -5,10 +5,10 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import type { NodeDefinition } from '@/shared/contracts/ai-paths';
+import type { NodeDefinition } from '@/shared/contracts/ai-paths-core/nodes';
 import { TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS } from '@/shared/lib/ai-paths/core/constants';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
-import { derivePaletteNodeTypeId } from '@/shared/lib/ai-paths/core/utils';
+import { derivePaletteNodeTypeId } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

@@ -50,24 +50,11 @@ const mockState = vi.hoisted(() => ({
   shouldExposePathSaveRawMessage: vi.fn(() => false),
   stripNodeConfig: vi.fn((nodes: unknown) => nodes),
   logClientError: vi.fn(), logClientCatch: vi.fn(),
-  repairPathNodeIdentities: vi.fn((config: Record<string, unknown>) => ({
-    config,
-    changed: false,
-    warnings: [],
-  })),
 }));
 
 vi.mock('@/shared/lib/ai-paths/core/utils/path-config-sanitization', () => ({
   buildPersistedRuntimeState: (...args: unknown[]) => mockState.buildPersistedRuntimeState(...args),
   sanitizePathConfig: (...args: unknown[]) => mockState.sanitizePathConfig(...args),
-}));
-
-vi.mock('@/shared/lib/ai-paths/core/definitions', () => ({
-  palette: [],
-}));
-
-vi.mock('@/shared/lib/ai-paths/core/utils/node-identity', () => ({
-  repairPathNodeIdentities: (...args: unknown[]) => mockState.repairPathNodeIdentities(...args),
 }));
 
 vi.mock('@/shared/lib/ai-paths/core/utils/runtime-state', () => ({
@@ -245,11 +232,6 @@ describe('usePathPersistence', () => {
     mockState.shouldExposePathSaveRawMessage.mockReset().mockReturnValue(false);
     mockState.stripNodeConfig.mockReset().mockImplementation((nodes: unknown) => nodes);
     mockState.logClientError.mockReset();
-    mockState.repairPathNodeIdentities.mockReset().mockImplementation((config: Record<string, unknown>) => ({
-      config,
-      changed: false,
-      warnings: [],
-    }));
   });
 
   afterEach(() => {
@@ -446,7 +428,7 @@ describe('usePathPersistence', () => {
     expect(result.current.lastSavedSnapshotRef.current).toContain('"activePathId":"path-1"');
   });
 
-  it('repairs legacy node identities before sanitizing and persisting', async () => {
+  it('persists node identities as provided without repair-time remapping', async () => {
     const args = createArgs({
       selectedNodeId: 'legacy-node-1',
       nodes: [
@@ -462,76 +444,6 @@ describe('usePathPersistence', () => {
       },
     });
     const core = createCore();
-    const repairedConfig = {
-      id: 'path-1',
-      version: 9,
-      name: 'Primary Path',
-      description: 'Main path',
-      trigger: 'Product Modal - Context Filter',
-      executionMode: 'server',
-      flowIntensity: 'medium',
-      runMode: 'manual',
-      strictFlowMode: true,
-      blockedRunPolicy: 'fail_run',
-      aiPathsValidation: { enabled: true },
-      nodes: [
-        {
-          id: 'node-111111111111111111111111',
-          instanceId: 'node-111111111111111111111111',
-          nodeTypeId: 'nt-111111111111111111111111',
-          title: 'Node 1',
-          type: 'viewer',
-          position: { x: 0, y: 0 },
-        },
-        {
-          id: 'node-222222222222222222222222',
-          instanceId: 'node-222222222222222222222222',
-          nodeTypeId: 'nt-222222222222222222222222',
-          title: 'Node 2',
-          type: 'viewer',
-          position: { x: 1, y: 1 },
-        },
-      ],
-      edges: [
-        {
-          id: 'edge-a',
-          source: 'node-111111111111111111111111',
-          target: 'node-222222222222222222222222',
-        },
-        {
-          id: 'edge-b',
-          source: 'node-222222222222222222222222',
-          target: 'node-111111111111111111111111',
-        },
-      ],
-      updatedAt: '2026-03-19T15:00:00.000Z',
-      isLocked: false,
-      isActive: true,
-      parserSamples: {
-        'node-111111111111111111111111': { json: '{"ok":true}' },
-      },
-      updaterSamples: {
-        'node-222222222222222222222222': { json: '{"ok":false}' },
-      },
-      runtimeState: {
-        status: 'idle',
-        inputs: { 'node-111111111111111111111111': { value: 1 } },
-        outputs: { 'node-222222222222222222222222': { value: 2 } },
-      },
-      lastRunAt: '2026-03-19T10:00:00.000Z',
-      runCount: 4,
-      uiState: {
-        selectedNodeId: 'node-111111111111111111111111',
-      },
-    };
-    mockState.repairPathNodeIdentities.mockImplementation((config: Record<string, unknown>) => ({
-      config: {
-        ...config,
-        ...repairedConfig,
-      },
-      changed: true,
-      warnings: [],
-    }));
 
     const { result } = renderHook(() => usePathPersistence(args, core));
 
@@ -540,38 +452,40 @@ describe('usePathPersistence', () => {
     expect(saved).toBe(true);
     expect(mockState.sanitizePathConfig).toHaveBeenCalledWith(
       expect.objectContaining({
-        nodes: repairedConfig.nodes,
-        parserSamples: repairedConfig.parserSamples,
-        updaterSamples: repairedConfig.updaterSamples,
-        uiState: repairedConfig.uiState,
+        nodes: args.nodes,
+        parserSamples: args.parserSamples,
+        updaterSamples: args.updaterSamples,
+        uiState: {
+          selectedNodeId: 'legacy-node-1',
+        },
       })
     );
     expect(mockState.updateAiPathsSettingsBulk).toHaveBeenCalledWith([
       expect.objectContaining({ key: 'path-index' }),
       expect.objectContaining({
         key: 'path-config:path-1',
-        value: expect.stringContaining('node-111111111111111111111111'),
+        value: expect.stringContaining('legacy-node-1'),
       }),
     ]);
-    expect(mockState.graphActions.setNodes).toHaveBeenCalledWith(repairedConfig.nodes);
+    expect(mockState.graphActions.setNodes).toHaveBeenCalledWith(args.nodes);
     expect(mockState.runtimeActions.setParserSamples).toHaveBeenCalledWith(
-      repairedConfig.parserSamples
+      args.parserSamples
     );
     expect(mockState.runtimeActions.setUpdaterSamples).toHaveBeenCalledWith(
-      repairedConfig.updaterSamples
+      args.updaterSamples
     );
     expect(mockState.runtimeActions.setRuntimeState).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'idle',
-        inputs: repairedConfig.runtimeState.inputs,
-        outputs: repairedConfig.runtimeState.outputs,
+        inputs: args.runtimeState.inputs,
+        outputs: args.runtimeState.outputs,
       })
     );
     expect(mockState.runtimeActions.setLastRunAt).toHaveBeenCalledWith(
-      repairedConfig.lastRunAt
+      args.lastRunAt
     );
     expect(mockState.selectionActions.selectNode).toHaveBeenCalledWith(
-      'node-111111111111111111111111'
+      'legacy-node-1'
     );
   });
 });

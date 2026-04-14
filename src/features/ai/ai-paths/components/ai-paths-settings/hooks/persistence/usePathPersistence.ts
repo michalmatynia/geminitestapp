@@ -6,8 +6,6 @@ import {
   buildPersistedRuntimeState,
   sanitizePathConfig,
 } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
-import { palette } from '@/shared/lib/ai-paths/core/definitions';
-import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import {
   normalizeParserSamples,
   normalizeUpdaterSamples,
@@ -192,11 +190,6 @@ const buildNextPathsForSave = (
     path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
   );
 
-const preparePathConfigForPersistence = (config: PathConfig): PathConfig => {
-  const repaired = repairPathNodeIdentities(config, { palette });
-  return repaired.changed ? repaired.config : config;
-};
-
 const verifyPersistedNodeOverride = ({
   activePathId,
   args,
@@ -218,7 +211,7 @@ const verifyPersistedNodeOverride = ({
 
   const mismatch = resolvePersistedNodeConfigMismatch({
     expectedNode: nodeOverride,
-    expectedConfig: sanitizePathConfig(preparePathConfigForPersistence(config)),
+    expectedConfig: sanitizePathConfig(config),
     persistedConfig: finalConfig,
   });
   if (!mismatch) {
@@ -344,7 +337,7 @@ export function usePathPersistence(
       configId: string,
       config: PathConfig
     ): Promise<PathConfig | null> => {
-      const sanitizedConfig = sanitizePathConfig(preparePathConfigForPersistence(config));
+      const sanitizedConfig = sanitizePathConfig(config);
       const payloadKey = stableStringify({
         index: nextPaths,
         configId,

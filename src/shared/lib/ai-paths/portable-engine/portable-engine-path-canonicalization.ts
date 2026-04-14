@@ -1,10 +1,6 @@
 import { type Edge, type PathConfig } from '@/shared/contracts/ai-paths';
-import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { serializePathConfigToSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
-import {
-  type PathIdentityRepairWarning,
-  repairPathNodeIdentities,
-} from '@/shared/lib/ai-paths/core/utils/node-identity';
+import type { PathIdentityRepairWarning } from '@/shared/lib/ai-paths/core/utils/node-identity';
 
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -133,19 +129,16 @@ export const finalizeResolvedPath = ({
 }): ResolvePortablePathInputResult => {
   const limits = resolvePayloadLimits(options?.limits);
   const normalizedPath = normalizePathConfigEdges(pathConfig);
-  const repaired =
-    options?.repairIdentities === false
-      ? { config: normalizedPath, changed: false, warnings: [] as PathIdentityRepairWarning[] }
-      : repairPathNodeIdentities(normalizedPath, { palette });
+  const identityWarnings: PathIdentityRepairWarning[] = [];
 
   if (options?.enforcePayloadLimits !== false) {
-    const limitError = enforceResolvedGraphLimits(repaired.config, limits);
+    const limitError = enforceResolvedGraphLimits(normalizedPath, limits);
     if (limitError) {
       return { ok: false, error: limitError };
     }
   }
 
-  const semanticDocument = serializePathConfigToSemanticCanvas(repaired.config, {
+  const semanticDocument = serializePathConfigToSemanticCanvas(normalizedPath, {
     includeConnections: options?.includeConnections !== false,
   });
 
@@ -153,7 +146,7 @@ export const finalizeResolvedPath = ({
     ok: true,
     value: {
       source,
-      pathConfig: repaired.config,
+      pathConfig: normalizedPath,
       semanticDocument,
       portablePackage:
         source === 'portable_package' || source === 'portable_envelope' ? portablePackage : null,
@@ -161,11 +154,11 @@ export const finalizeResolvedPath = ({
       canonicalPackage: {
         ...portablePackage,
         document: semanticDocument,
-        pathId: repaired.config.id,
-        name: repaired.config.name,
+        pathId: normalizedPath.id,
+        name: normalizedPath.name,
       },
-      identityRepaired: repaired.changed,
-      identityWarnings: repaired.warnings,
+      identityRepaired: false,
+      identityWarnings,
       migrationWarnings,
       payloadByteSize,
     },

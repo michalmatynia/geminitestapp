@@ -4,10 +4,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { spawnSync } from 'node:child_process';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
 
 const MODELS = (
   process.env.MODEL_CHAIN ||
@@ -31,17 +27,25 @@ if (MODELS.length === 0) {
 const KEEP_TRY_MAX = toNumber(process.env.KEEP_TRY_MAX, 3);
 const TRY_AGAIN_MIN_INTERVAL_MS = toNumber(process.env.TRY_AGAIN_MIN_INTERVAL_MS, 2500);
 const CAPACITY_RETRY_MS = toNumber(process.env.CAPACITY_RETRY_MS, 4000);
+const MAX_CAPACITY_RETRY_MS = toNumber(process.env.MAX_CAPACITY_RETRY_MS, 30000);
 const CAPACITY_RECENT_MS = toNumber(process.env.CAPACITY_RECENT_MS, 15000);
+const CAPACITY_EVENT_RESET_MS = toNumber(process.env.CAPACITY_EVENT_RESET_MS, 20000);
+const AUTO_CONTINUE_MAX_PER_EVENT = toNumber(process.env.AUTO_CONTINUE_MAX_PER_EVENT, 6);
+const AUTO_RESTART_MAX_PER_WINDOW = toNumber(process.env.AUTO_RESTART_MAX_PER_WINDOW, 4);
+const AUTO_RESTART_WINDOW_MS = toNumber(process.env.AUTO_RESTART_WINDOW_MS, 120000);
+const MANUAL_OVERRIDE_MS = toNumber(process.env.MANUAL_OVERRIDE_MS, 20000);
+const AUTOMATION_COOLDOWN_MS = toNumber(process.env.AUTOMATION_COOLDOWN_MS, 60000);
+const FORCE_KILL_AFTER_MS = toNumber(process.env.FORCE_KILL_AFTER_MS, 1200);
 const RAW_TAIL_MAX = toNumber(process.env.RAW_TAIL_MAX, 24000);
 const NORMALIZED_TAIL_MAX = toNumber(process.env.NORMALIZED_TAIL_MAX, 12000);
+
 const AUTO_CONTINUE_ON_CAPACITY = isEnabled(process.env.AUTO_CONTINUE_ON_CAPACITY, true);
+const AUTO_DISABLE_ON_USAGE_LIMIT = isEnabled(process.env.AUTO_DISABLE_ON_USAGE_LIMIT, true);
 const NEVER_SWITCH = isEnabled(process.env.NEVER_SWITCH, false);
 const RAW_OUTPUT = isEnabled(process.env.RAW_OUTPUT, false);
 const DEBUG_AUTOMATION = isEnabled(process.env.DEBUG_AUTOMATION, false);
 const DEBUG_LAUNCH = isEnabled(process.env.DEBUG_LAUNCH, false);
 const SET_HOME_TO_ISO = isEnabled(process.env.PTY_SET_HOME_TO_ISO, false);
-const AUTO_CHMOD_SPAWN_HELPER = isEnabled(process.env.AUTO_CHMOD_SPAWN_HELPER, true);
-const AUTO_SIGN_HINT = isEnabled(process.env.AUTO_SIGN_HINT, true);
 
 const KEEP_OPTION_TEXT = process.env.KEEP_OPTION_TEXT || '1';
 const SWITCH_OPTION_TEXT = process.env.SWITCH_OPTION_TEXT || '2';
@@ -50,29 +54,45 @@ const CONTINUE_COMMAND = process.env.CONTINUE_COMMAND || 'continue';
 const GEMINI_WRAPPER_ENV = process.env.GEMINI_WRAPPER || 'gemini-nightly-iso';
 const GEMINI_WRAPPER_ARGS = parseJsonArrayEnv(process.env.GEMINI_WRAPPER_ARGS_JSON);
 const ISO_HOME = process.env.GEMINI_ISO_HOME || path.join(os.homedir(), '.gemini-nightly-home');
+const SHELL_PATH = resolveExecutable(process.env.PTY_SHELL || process.env.SHELL || '/bin/zsh');
+const WRAPPER_LAUNCH_MODE = ((process.env.WRAPPER_LAUNCH_MODE && process.env.WRAPPER_LAUNCH_MODE.trim()) || (process.env.PTY_FORCE_SHELL === '1' ? 'shell' : 'auto')).toLowerCase();
 
+const HOTKEY_PREFIX_BYTE = 0x1d; // Ctrl-]
+const HOTKEY_PREFIX_LABEL = 'Ctrl-]';
+const AUTOMATION_DEFAULT_ENABLED = isEnabled(process.env.AUTOMATION_ENABLED, true);
+
+let loadedPty = null;
 let resumeEnabledThisRun = isEnabled(process.env.RESUME_LATEST, true);
 let modelIndex = 0;
 let activeRunId = 0;
 let activePty = null;
 let activePtyModuleName = null;
-let activePtyModuleRoot = null;
 let activeDisposables = [];
 let continueTimer = null;
 let restartTimer = null;
+let forceKillTimer = null;
 let stdinBound = false;
 let resizeBound = false;
 let shuttingDown = false;
+let lastLaunchPlan = null;
+
+let automationEnabled = AUTOMATION_DEFAULT_ENABLED;
+let automationDisabledReason = automationEnabled ? '' : 'manual';
+let automationPausedUntil = 0;
+let hotkeyAwaitingCommand = false;
+let plannedAction = null;
 
 let demandHits = 0;
 let switching = false;
 let lastDemandTs = 0;
 let sawCapacityAt = 0;
+let autoContinueAttempts = 0;
+let autoRestartHistory = [];
 let sawNoResumeSession = false;
+let usageLimitLatched = false;
 let lastMenuFingerprint = '';
 let rawTail = '';
 let normalizedTail = '';
-let lastLaunchContext = null;
 
 main().catch((error) => {
   failWithCleanup(error instanceof Error ? error : new Error(String(error)));
@@ -81,11 +101,9 @@ main().catch((error) => {
 async function main() {
   fs.mkdirSync(ISO_HOME, { recursive: true });
 
-  const { pty, moduleName, moduleRoot } = await loadPtyModule();
+  const { pty, moduleName } = await loadPtyModule();
+  loadedPty = pty;
   activePtyModuleName = moduleName;
-  activePtyModuleRoot = moduleRoot;
-
-  maybeFixSpawnHelper(moduleName, moduleRoot);
 
   bindUserInput();
   bindResizeHandling();
@@ -97,7 +115,7 @@ async function main() {
 async function loadPtyModule() {
   const errors = [];
 
-  for (const moduleName of ['@lydell/node-pty', 'node-pty']) {
+  for (const moduleName of ['node-pty', '@lydell/node-pty']) {
     try {
       const imported = await import(moduleName);
       const candidate = imported?.spawn
@@ -110,12 +128,7 @@ async function loadPtyModule() {
         throw new Error(`Module ${moduleName} loaded, but no spawn() export was found.`);
       }
 
-      const packageJsonPath = require.resolve(`${moduleName}/package.json`);
-      return {
-        pty: candidate,
-        moduleName,
-        moduleRoot: path.dirname(packageJsonPath),
-      };
+      return { pty: candidate, moduleName };
     } catch (error) {
       errors.push(`${moduleName}: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -125,118 +138,72 @@ async function loadPtyModule() {
     [
       'Could not load a PTY library.',
       'Install one of these in your project:',
-      '  npm i @lydell/node-pty',
       '  npm i node-pty',
+      '  npm i @lydell/node-pty',
       '',
       errors.join('\n'),
     ].join('\n')
   );
 }
 
-function maybeFixSpawnHelper(moduleName, moduleRoot) {
-  if (!AUTO_CHMOD_SPAWN_HELPER || process.platform !== 'darwin') return;
-
-  for (const helperPath of findSpawnHelpers(moduleRoot)) {
-    try {
-      const stat = fs.statSync(helperPath);
-      if ((stat.mode & 0o111) !== 0) continue;
-      fs.chmodSync(helperPath, 0o755);
-      console.error(`[gemini-nightly-pty] Fixed execute bit on ${moduleName} spawn-helper: ${helperPath}`);
-    } catch {
-      // Ignore helper permission issues here; launch diagnostics will mention them if relevant.
-    }
-  }
-}
-
-function findSpawnHelpers(moduleRoot) {
-  if (!moduleRoot) return [];
-  const out = [];
-
-  for (const relative of [
-    'prebuilds/darwin-arm64/spawn-helper',
-    'prebuilds/darwin-x64/spawn-helper',
-    'build/Release/spawn-helper',
-  ]) {
-    const candidate = path.join(moduleRoot, relative);
-    if (fs.existsSync(candidate)) out.push(candidate);
-  }
-
-  return out;
-}
-
 function spawnGemini(pty) {
   clearContinueTimer();
   clearRestartTimer();
+  clearForceKillTimer();
   disposeActiveListeners();
   activePty = null;
+  plannedAction = null;
+
+  if (automationDisabledReason === 'usage_limit') {
+    automationEnabled = AUTOMATION_DEFAULT_ENABLED;
+    automationDisabledReason = automationEnabled ? '' : 'manual';
+  }
 
   activeRunId += 1;
   const runId = activeRunId;
 
-  demandHits = 0;
-  switching = false;
-  lastDemandTs = 0;
-  sawCapacityAt = 0;
-  sawNoResumeSession = false;
-  lastMenuFingerprint = '';
+  resetCapacityEventState();
   rawTail = '';
   normalizedTail = '';
-  lastLaunchContext = null;
+  sawNoResumeSession = false;
+  usageLimitLatched = false;
 
   const model = currentModel();
   const { args, canResume } = buildGeminiArgs(model);
   const env = buildChildEnv();
-  const userArgs = [...GEMINI_WRAPPER_ARGS, ...args];
-  const targetSpec = inspectTarget(GEMINI_WRAPPER_ENV);
-  const strategies = buildLaunchStrategies(targetSpec, userArgs, env);
+  const launchArgs = [...GEMINI_WRAPPER_ARGS, ...args];
+  const wrapperInfo = inspectCommandTarget(GEMINI_WRAPPER_ENV, env.PATH || process.env.PATH || '');
+  const launchPlan = buildLaunchPlan(wrapperInfo, launchArgs);
+  lastLaunchPlan = launchPlan;
 
-  console.error(
-    `\n[gemini-nightly-pty] Launching model: ${model}` +
-      `${canResume ? ' (resuming latest)' : ' (fresh)'}` +
-      `${RAW_OUTPUT ? ' [raw-output]' : ''}\n` +
-      `[gemini-nightly-pty] Wrapper: ${targetSpec.resolvedCommand}\n` +
-      `[gemini-nightly-pty] PTY backend: ${activePtyModuleName}\n`
-  );
+  logLaunchBanner({ model, canResume, wrapperInfo, launchPlan });
 
-  let lastError = null;
-  for (const strategy of strategies) {
-    try {
-      if (DEBUG_LAUNCH) {
-        console.error(`[gemini-nightly-pty][launch] strategy=${strategy.kind} file=${strategy.file} args=${JSON.stringify(strategy.args)}`);
-      }
-
-      const ptyProcess = pty.spawn(strategy.file, strategy.args, {
-        name: process.env.TERM || 'xterm-256color',
-        cols: getTerminalColumns(),
-        rows: getTerminalRows(),
-        cwd: process.cwd(),
-        env: strategy.env,
-      });
-
-      lastLaunchContext = {
-        runId,
-        model,
-        strategy,
-        targetSpec,
-      };
-
-      attachPty(runId, pty, ptyProcess);
-      return;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      if (!isSpawnLaunchFailure(lastError)) {
-        throw lastError;
-      }
-      if (DEBUG_LAUNCH) {
-        console.error(`[gemini-nightly-pty][launch] ${strategy.kind} failed: ${lastError.message}`);
-      }
+  let ptyProcess;
+  try {
+    ptyProcess = pty.spawn(launchPlan.file, launchPlan.args, {
+      name: process.env.TERM || 'xterm-256color',
+      cols: getTerminalColumns(),
+      rows: getTerminalRows(),
+      cwd: process.cwd(),
+      env,
+    });
+  } catch (error) {
+    const maybeFallback = maybeBuildFallbackLaunchPlan(error, wrapperInfo, launchArgs, launchPlan);
+    if (!maybeFallback) {
+      throw wrapSpawnError(error, wrapperInfo, launchPlan);
     }
+
+    lastLaunchPlan = maybeFallback;
+    console.error(`[gemini-nightly-pty] Direct spawn failed, retrying via shell exec: ${error instanceof Error ? error.message : String(error)}`);
+    ptyProcess = pty.spawn(maybeFallback.file, maybeFallback.args, {
+      name: process.env.TERM || 'xterm-256color',
+      cols: getTerminalColumns(),
+      rows: getTerminalRows(),
+      cwd: process.cwd(),
+      env,
+    });
   }
 
-  throw new Error(buildLaunchFailureMessage(targetSpec, strategies, lastError));
-}
-
-function attachPty(runId, pty, ptyProcess) {
   activePty = ptyProcess;
 
   activeDisposables.push(
@@ -252,239 +219,213 @@ function attachPty(runId, pty, ptyProcess) {
       if (runId !== activeRunId || shuttingDown) return;
       activePty = null;
       clearContinueTimer();
+      clearForceKillTimer();
       disposeActiveListeners();
       handleChildExit(pty, { exitCode, signal, runId });
     })
   );
 }
 
-function inspectTarget(command) {
-  const resolvedCommand = resolveExecutable(command);
-  const isPathLike = command.includes(path.sep) || resolvedCommand.includes(path.sep);
-  const stat = safeStat(resolvedCommand);
-  const firstLine = stat?.isFile() ? safeReadFirstLine(resolvedCommand) : null;
-  const shebang = parseShebang(firstLine);
-  const extension = path.extname(resolvedCommand).toLowerCase();
-  const isExecutableFile = Boolean(stat?.isFile() && ((stat.mode & 0o111) !== 0));
+function logLaunchBanner({ model, canResume, wrapperInfo, launchPlan }) {
+  const lines = [
+    `\n[gemini-nightly-pty] Launching model: ${model}${canResume ? ' (resuming latest)' : ' (fresh)'}${RAW_OUTPUT ? ' [raw-output]' : ''}`,
+    `[gemini-nightly-pty] Wrapper request: ${GEMINI_WRAPPER_ENV}`,
+    `[gemini-nightly-pty] Wrapper resolved: ${wrapperInfo.resolvedPath || '(not found on PATH yet)'}${wrapperInfo.exists ? '' : ' [missing]'}`,
+    `[gemini-nightly-pty] Wrapper kind: ${wrapperInfo.kind}`,
+    `[gemini-nightly-pty] Launch mode: ${launchPlan.mode}`,
+    `[gemini-nightly-pty] PTY backend: ${activePtyModuleName}`,
+    `[gemini-nightly-pty] Local controls: ${HOTKEY_PREFIX_LABEL}h help, ${HOTKEY_PREFIX_LABEL}a toggle auto, ${HOTKEY_PREFIX_LABEL}s switch model, ${HOTKEY_PREFIX_LABEL}q quit`,
+  ];
 
-  return {
-    originalCommand: command,
-    resolvedCommand,
-    exists: Boolean(stat),
-    isPathLike,
-    stat,
-    firstLine,
-    shebang,
-    extension,
-    isExecutableFile,
-  };
-}
-
-function buildLaunchStrategies(targetSpec, userArgs, env) {
-  const strategies = [];
-  const pushStrategy = (strategy) => {
-    if (!strategy?.file) return;
-    const key = JSON.stringify([strategy.kind, strategy.file, strategy.args, strategy.env?.HOME, strategy.env?.GEMINI_ISO_HOME]);
-    if (strategies.some((existing) => existing._key === key)) return;
-    strategy._key = key;
-    strategies.push(strategy);
-  };
-
-  const explicit = explicitInterpreterStrategy(targetSpec, userArgs, env);
-  const direct = directStrategy(targetSpec, userArgs, env);
-  const shell = shellStrategy(targetSpec, userArgs, env);
-
-  if (explicit?.preferFirst) {
-    pushStrategy(explicit);
-    pushStrategy(direct);
-    pushStrategy(shell);
-  } else {
-    pushStrategy(direct);
-    pushStrategy(explicit);
-    pushStrategy(shell);
+  if (wrapperInfo.kind === 'script' && wrapperInfo.shebang) {
+    lines.push(`[gemini-nightly-pty] Script shebang: ${wrapperInfo.shebang}${wrapperInfo.hasCRLFShebang ? ' [CRLF detected]' : ''}`);
   }
 
-  return strategies;
-}
-
-function directStrategy(targetSpec, userArgs, env) {
-  return {
-    kind: 'direct',
-    file: targetSpec.resolvedCommand,
-    args: userArgs,
-    env,
-  };
-}
-
-function explicitInterpreterStrategy(targetSpec, userArgs, env) {
-  const { resolvedCommand, shebang, extension } = targetSpec;
-
-  if (shebang?.program) {
-    const programBase = path.basename(shebang.program);
-    const envWithShebang = {
-      ...env,
-      ...shebang.envAssignments,
-    };
-
-    if (programBase === 'node' || programBase === 'nodejs') {
-      return {
-        kind: shebang.usesEnvSplit ? 'shebang-node-env-split' : 'shebang-node',
-        file: process.execPath,
-        args: [...shebang.programArgs, resolvedCommand, ...userArgs],
-        env: envWithShebang,
-        preferFirst: true,
-      };
-    }
-
-    if (['bash', 'zsh', 'sh', 'ksh'].includes(programBase)) {
-      return {
-        kind: shebang.usesEnvSplit ? 'shebang-shell-env-split' : 'shebang-shell',
-        file: resolveExecutable(shebang.program),
-        args: [...shebang.programArgs, resolvedCommand, ...userArgs],
-        env: envWithShebang,
-        preferFirst: true,
-      };
-    }
-
-    if (programBase === 'env' && shebang.envProgram) {
-      const envProgramBase = path.basename(shebang.envProgram);
-      if (envProgramBase === 'node' || envProgramBase === 'nodejs') {
-        return {
-          kind: 'env-node',
-          file: process.execPath,
-          args: [...shebang.envProgramArgs, resolvedCommand, ...userArgs],
-          env: envWithShebang,
-          preferFirst: true,
-        };
-      }
-    }
+  if (DEBUG_LAUNCH) {
+    lines.push(`[gemini-nightly-pty] Launch file: ${launchPlan.file}`);
+    lines.push(`[gemini-nightly-pty] Launch args: ${JSON.stringify(launchPlan.args)}`);
   }
 
-  if (['.js', '.mjs', '.cjs'].includes(extension)) {
-    return {
-      kind: 'node-extension',
-      file: process.execPath,
-      args: [resolvedCommand, ...userArgs],
-      env,
-      preferFirst: true,
-    };
+  console.error(lines.join('\n') + '\n');
+}
+
+function maybeBuildFallbackLaunchPlan(error, wrapperInfo, launchArgs, currentPlan) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (currentPlan.mode === 'shell') return null;
+
+  if (/posix_spawnp failed/i.test(message) || /ENOENT/i.test(message) || /EACCES/i.test(message)) {
+    return makeShellLaunchPlan(wrapperInfo, launchArgs);
   }
 
   return null;
 }
 
-function shellStrategy(targetSpec, userArgs, env) {
-  const shell = resolveExecutable(process.env.PTY_SHELL || process.env.SHELL || '/bin/bash');
-  const wantsInteractive = isEnabled(process.env.PTY_SHELL_INTERACTIVE, false);
-  const wantsLogin = isEnabled(process.env.PTY_SHELL_LOGIN, false);
-  const flag = `-${wantsInteractive ? 'i' : ''}${wantsLogin ? 'l' : ''}c`;
+function wrapSpawnError(error, wrapperInfo, launchPlan) {
+  const details = [
+    error instanceof Error ? error.stack || error.message : String(error),
+    '',
+    `Launch mode: ${launchPlan.mode}`,
+    `Launch file: ${launchPlan.file}`,
+    `Launch args: ${JSON.stringify(launchPlan.args)}`,
+    `Requested wrapper: ${GEMINI_WRAPPER_ENV}`,
+    `Resolved wrapper: ${wrapperInfo.resolvedPath || '(not found)'}`,
+    `Exists: ${wrapperInfo.exists}`,
+    `Executable: ${wrapperInfo.isExecutable}`,
+    `Kind: ${wrapperInfo.kind}`,
+  ];
 
+  if (wrapperInfo.readError) {
+    details.push(`Inspect error: ${wrapperInfo.readError}`);
+  }
+  if (wrapperInfo.shebang) {
+    details.push(`Shebang: ${wrapperInfo.shebang}${wrapperInfo.hasCRLFShebang ? ' [CRLF detected]' : ''}`);
+  }
+
+  if (!wrapperInfo.exists) {
+    details.push('Hint: the wrapper path could not be found. Check GEMINI_WRAPPER and PATH.');
+  } else if (!wrapperInfo.isExecutable) {
+    details.push('Hint: the wrapper exists but is not executable. Try: chmod +x <wrapper>.');
+  } else if (wrapperInfo.hasCRLFShebang) {
+    details.push('Hint: the wrapper appears to have CRLF line endings in the shebang. Run: perl -pi -e "s/\r$//" <wrapper>');
+  } else if (wrapperInfo.kind === 'script') {
+    details.push('Hint: this looks like a shell script wrapper. Shell exec mode is usually more reliable on macOS PTYs.');
+  }
+
+  return new Error(details.join('\n'));
+}
+
+function buildLaunchPlan(wrapperInfo, launchArgs) {
+  if (WRAPPER_LAUNCH_MODE === 'shell') {
+    return makeShellLaunchPlan(wrapperInfo, launchArgs);
+  }
+
+  if (WRAPPER_LAUNCH_MODE === 'direct') {
+    return makeDirectLaunchPlan(wrapperInfo, launchArgs);
+  }
+
+  if (wrapperInfo.kind === 'script' || wrapperInfo.hasCRLFShebang) {
+    return makeShellLaunchPlan(wrapperInfo, launchArgs);
+  }
+
+  return makeDirectLaunchPlan(wrapperInfo, launchArgs);
+}
+
+function makeDirectLaunchPlan(wrapperInfo, launchArgs) {
   return {
-    kind: 'shell-exec',
-    file: shell,
-    args: [flag, 'exec "$@"', 'gemini-pty-shell', targetSpec.resolvedCommand, ...userArgs],
-    env,
+    mode: 'direct',
+    file: wrapperInfo.execPath,
+    args: launchArgs,
   };
 }
 
-function parseShebang(line) {
-  if (!line?.startsWith('#!')) return null;
+function makeShellLaunchPlan(wrapperInfo, launchArgs) {
+  const executable = wrapperInfo.execPath || GEMINI_WRAPPER_ENV;
+  const command = ['exec', shQuote(executable), ...launchArgs.map(shQuote)].join(' ');
+  return {
+    mode: 'shell',
+    file: SHELL_PATH,
+    args: ['-lc', command],
+  };
+}
 
-  const raw = line.slice(2).trim().replace(/\r$/, '');
-  const tokens = shellSplit(raw);
-  if (tokens.length === 0) return null;
-
-  const out = {
-    raw,
-    program: tokens[0],
-    programArgs: tokens.slice(1),
-    envProgram: null,
-    envProgramArgs: [],
-    envAssignments: {},
-    usesEnvSplit: false,
+function inspectCommandTarget(command, pathEnv) {
+  const result = {
+    requested: command,
+    resolvedPath: null,
+    execPath: command,
+    exists: false,
+    isExecutable: false,
+    kind: 'unknown',
+    shebang: '',
+    hasCRLFShebang: false,
+    readError: '',
   };
 
-  const base = path.basename(tokens[0]);
-  if (base !== 'env') return out;
+  const resolved = resolveExecutableDetailed(command, pathEnv);
+  result.resolvedPath = resolved.resolvedPath;
+  result.execPath = resolved.resolvedPath || command;
+  result.exists = resolved.exists;
+  result.isExecutable = resolved.isExecutable;
 
-  let cursor = 1;
-  let envTokens = tokens.slice(1);
-
-  if (envTokens[0] === '-S') {
-    out.usesEnvSplit = true;
-    envTokens = envTokens.slice(1);
-    cursor = 0;
+  if (!resolved.exists || !resolved.resolvedPath) {
+    return result;
   }
 
-  while (cursor < envTokens.length && isEnvAssignment(envTokens[cursor])) {
-    const token = envTokens[cursor];
-    const eqIndex = token.indexOf('=');
-    out.envAssignments[token.slice(0, eqIndex)] = token.slice(eqIndex + 1);
-    cursor += 1;
+  try {
+    const stat = fs.statSync(resolved.resolvedPath);
+    if (stat.isDirectory()) {
+      result.kind = 'directory';
+      return result;
+    }
+
+    const sample = fs.readFileSync(resolved.resolvedPath, { encoding: 'utf8', flag: 'r' }).slice(0, 512);
+    const firstLine = sample.split('\n', 1)[0] || '';
+    const ext = path.extname(resolved.resolvedPath).toLowerCase();
+
+    if (firstLine.startsWith('#!')) {
+      result.kind = 'script';
+      result.shebang = firstLine.replace(/\r$/, '');
+      result.hasCRLFShebang = /\r$/.test(firstLine);
+      return result;
+    }
+
+    if (['.sh', '.bash', '.zsh', '.command'].includes(ext)) {
+      result.kind = 'script';
+      return result;
+    }
+
+    if (/^[\x00-\x7F]*$/.test(sample)) {
+      result.kind = 'text';
+    } else {
+      result.kind = 'binary';
+    }
+  } catch (error) {
+    result.readError = error instanceof Error ? error.message : String(error);
+    result.kind = 'unknown';
   }
 
-  if (cursor < envTokens.length) {
-    out.envProgram = envTokens[cursor];
-    out.envProgramArgs = envTokens.slice(cursor + 1);
-    out.program = out.envProgram;
-    out.programArgs = out.envProgramArgs;
-  }
-
-  return out;
+  return result;
 }
 
-function shellSplit(input) {
-  const tokens = [];
-  let current = '';
-  let quote = null;
-  let escaping = false;
+function resolveExecutableDetailed(cmd, pathEnv) {
+  const result = {
+    resolvedPath: null,
+    exists: false,
+    isExecutable: false,
+  };
 
-  for (let index = 0; index < input.length; index += 1) {
-    const char = input[index];
+  if (!cmd) return result;
 
-    if (escaping) {
-      current += char;
-      escaping = false;
-      continue;
-    }
-
-    if (char === '\\' && quote !== "'") {
-      escaping = true;
-      continue;
-    }
-
-    if (quote) {
-      if (char === quote) {
-        quote = null;
-      } else {
-        current += char;
+  if (cmd.includes(path.sep)) {
+    result.resolvedPath = cmd;
+    result.exists = fs.existsSync(cmd);
+    if (result.exists) {
+      try {
+        fs.accessSync(cmd, fs.constants.X_OK);
+        result.isExecutable = true;
+      } catch {
+        result.isExecutable = false;
       }
-      continue;
     }
-
-    if (char === '"' || char === "'") {
-      quote = char;
-      continue;
-    }
-
-    if (/\s/.test(char)) {
-      if (current.length > 0) {
-        tokens.push(current);
-        current = '';
-      }
-      continue;
-    }
-
-    current += char;
+    return result;
   }
 
-  if (escaping) current += '\\';
-  if (current.length > 0) tokens.push(current);
-  return tokens;
-}
+  for (const dir of (pathEnv || '').split(path.delimiter)) {
+    if (!dir) continue;
+    const candidate = path.join(dir, cmd);
+    if (!fs.existsSync(candidate)) continue;
+    result.resolvedPath = candidate;
+    result.exists = true;
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      result.isExecutable = true;
+    } catch {
+      result.isExecutable = false;
+    }
+    return result;
+  }
 
-function isEnvAssignment(token) {
-  return /^[A-Za-z_][A-Za-z0-9_]*=.*/.test(token);
+  return result;
 }
 
 function handleTerminalData(runId, chunk) {
@@ -506,10 +447,24 @@ function handleTerminalData(runId, chunk) {
 }
 
 function maybeAutomate(runId) {
-  const state = detectAutomationState(normalizedTail);
-  if (!state.hasCapacity) return;
+  if (!isAutomationActive()) return;
 
-  sawCapacityAt = Date.now();
+  const state = detectAutomationState(normalizedTail);
+
+  if (state.hasUsageLimit) {
+    handleUsageLimit(state);
+    return;
+  }
+
+  if (!state.hasCapacity) {
+    return;
+  }
+
+  const now = Date.now();
+  if (sawCapacityAt > 0 && now - sawCapacityAt > CAPACITY_EVENT_RESET_MS) {
+    resetCapacityEventState();
+  }
+  sawCapacityAt = now;
 
   if (state.hasKeepMenu) {
     clearContinueTimer();
@@ -518,26 +473,30 @@ function maybeAutomate(runId) {
       return;
     }
 
-    const now = Date.now();
     if (now - lastDemandTs < TRY_AGAIN_MIN_INTERVAL_MS) {
       return;
     }
 
     lastDemandTs = now;
     lastMenuFingerprint = state.fingerprint;
+    demandHits += 1;
 
     if (NEVER_SWITCH) {
-      sendLine(KEEP_OPTION_TEXT, 'keep-trying', runId);
+      if (demandHits > KEEP_TRY_MAX) {
+        pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, 'keep-trying loop limit reached');
+        return;
+      }
+      sendLine(KEEP_OPTION_TEXT, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`, runId);
       return;
     }
 
-    demandHits += 1;
     if (demandHits <= KEEP_TRY_MAX) {
       sendLine(KEEP_OPTION_TEXT, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`, runId);
       return;
     }
 
     switching = true;
+    clearContinueTimer();
     console.error(`\n[gemini-nightly-pty] Capacity busy on ${currentModel()} — switching model...\n`);
     sendLine(SWITCH_OPTION_TEXT, 'switch-model', runId);
     return;
@@ -546,16 +505,39 @@ function maybeAutomate(runId) {
   scheduleContinueRetry(state.reason, runId);
 }
 
+function handleUsageLimit(state) {
+  if (usageLimitLatched) return;
+  usageLimitLatched = true;
+  switching = false;
+  clearContinueTimer();
+  clearRestartTimer();
+  sawCapacityAt = 0;
+  autoContinueAttempts = 0;
+  lastMenuFingerprint = '';
+
+  if (AUTO_DISABLE_ON_USAGE_LIMIT) {
+    setAutomationEnabled(false, 'usage_limit');
+    console.error(`\n[gemini-nightly-pty] Usage limit detected (${state.reason}) — automation paused. ${hotkeySummary()}\n`);
+  }
+}
+
 function scheduleContinueRetry(reason, runId) {
   if (!AUTO_CONTINUE_ON_CAPACITY) return;
   if (continueTimer) return;
 
-  console.error(`\n[gemini-nightly-pty] ${reason} — retrying in ${CAPACITY_RETRY_MS}ms (sending: ${CONTINUE_COMMAND})\n`);
+  if (autoContinueAttempts >= AUTO_CONTINUE_MAX_PER_EVENT) {
+    pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `too many auto-continues for ${reason}`);
+    return;
+  }
+
+  const delay = Math.min(CAPACITY_RETRY_MS * 2 ** autoContinueAttempts, MAX_CAPACITY_RETRY_MS);
+  console.error(`\n[gemini-nightly-pty] ${reason} — retrying in ${delay}ms (sending: ${CONTINUE_COMMAND}) [${autoContinueAttempts + 1}/${AUTO_CONTINUE_MAX_PER_EVENT}]\n`);
   continueTimer = setTimeout(() => {
     continueTimer = null;
-    if (runId !== activeRunId || !activePty) return;
+    if (runId !== activeRunId || !activePty || !isAutomationActive()) return;
+    autoContinueAttempts += 1;
     sendLine(CONTINUE_COMMAND, reason, runId);
-  }, CAPACITY_RETRY_MS);
+  }, delay);
 }
 
 function clearContinueTimer() {
@@ -569,6 +551,13 @@ function clearRestartTimer() {
   if (restartTimer) {
     clearTimeout(restartTimer);
     restartTimer = null;
+  }
+}
+
+function clearForceKillTimer() {
+  if (forceKillTimer) {
+    clearTimeout(forceKillTimer);
+    forceKillTimer = null;
   }
 }
 
@@ -587,8 +576,43 @@ function sendLine(text, reason, runId) {
   }
 }
 
+function sendRaw(text, reason = 'raw') {
+  if (!activePty) return false;
+  try {
+    if (DEBUG_AUTOMATION) {
+      console.error(`[gemini-nightly-pty][raw] send ${JSON.stringify(text)} (${reason})`);
+    }
+    activePty.write(text);
+    return true;
+  } catch (error) {
+    console.error(`[warn] Failed to send raw input (${reason}): ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
+}
+
 function handleChildExit(pty, { exitCode, signal, runId }) {
   console.error(`\n[child] exited: code=${exitCode} signal=${signal}\n`);
+
+  if (plannedAction) {
+    const action = plannedAction;
+    plannedAction = null;
+
+    if (action.kind === 'switch') {
+      modelIndex += 1;
+      spawnGemini(pty);
+      return;
+    }
+
+    if (action.kind === 'restart') {
+      spawnGemini(pty);
+      return;
+    }
+
+    if (action.kind === 'exit') {
+      cleanupAndExit(action.code ?? 0);
+      return;
+    }
+  }
 
   const noResumeSession = resumeEnabledThisRun && (exitCode === 42 || sawNoResumeSession);
   if (noResumeSession) {
@@ -604,7 +628,19 @@ function handleChildExit(pty, { exitCode, signal, runId }) {
     return;
   }
 
-  if (sawCapacityAt > 0 && Date.now() - sawCapacityAt <= CAPACITY_RECENT_MS) {
+  const canAutoRestart =
+    automationEnabled &&
+    automationDisabledReason !== 'usage_limit' &&
+    sawCapacityAt > 0 &&
+    Date.now() - sawCapacityAt <= CAPACITY_RECENT_MS;
+
+  if (canAutoRestart) {
+    if (!recordAutoRestart()) {
+      console.error(`\n[gemini-nightly-pty] Too many auto-restarts in a short window — stopping the loop. ${hotkeySummary()}\n`);
+      cleanupAndExit(typeof exitCode === 'number' ? exitCode : 1);
+      return;
+    }
+
     console.error(`[gemini-nightly-pty] Exited during/after capacity event — restarting in ${CAPACITY_RETRY_MS}ms...\n`);
     restartTimer = setTimeout(() => {
       restartTimer = null;
@@ -615,6 +651,16 @@ function handleChildExit(pty, { exitCode, signal, runId }) {
   }
 
   cleanupAndExit(typeof exitCode === 'number' ? exitCode : 0);
+}
+
+function recordAutoRestart() {
+  const now = Date.now();
+  autoRestartHistory = autoRestartHistory.filter((ts) => now - ts <= AUTO_RESTART_WINDOW_MS);
+  if (autoRestartHistory.length >= AUTO_RESTART_MAX_PER_WINDOW) {
+    return false;
+  }
+  autoRestartHistory.push(now);
+  return true;
 }
 
 function currentModel() {
@@ -637,11 +683,14 @@ function buildGeminiArgs(model) {
 }
 
 function buildChildEnv() {
-  const env = {
-    ...process.env,
-    GEMINI_ISO_HOME: ISO_HOME,
-  };
+  const env = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (typeof value === 'string') {
+      env[key] = value;
+    }
+  }
 
+  env.GEMINI_ISO_HOME = ISO_HOME;
   if (SET_HOME_TO_ISO) {
     env.HOME = ISO_HOME;
   }
@@ -664,20 +713,17 @@ function isoHomeLooksInitialized() {
 
 function resolveExecutable(cmd) {
   if (!cmd) return cmd;
-
-  if (cmd.includes(path.sep) && fs.existsSync(cmd)) {
-    return cmd;
-  }
+  if (cmd.includes(path.sep) && fs.existsSync(cmd)) return cmd;
 
   const pathEnv = process.env.PATH || '';
   for (const dir of pathEnv.split(path.delimiter)) {
     if (!dir) continue;
     const candidate = path.join(dir, cmd);
     try {
-      fs.accessSync(candidate, fs.constants.F_OK);
+      fs.accessSync(candidate, fs.constants.X_OK);
       return candidate;
     } catch {
-      // Continue searching.
+      // Continue.
     }
   }
 
@@ -707,6 +753,27 @@ function normalizeTerminalText(input) {
 function detectAutomationState(text) {
   const tail = text.slice(-NORMALIZED_TAIL_MAX);
 
+  const usageRules = [
+    [/you(?:'ve| have)\s+(?:reached|hit)\s+(?:your\s+)?(?:usage|request|quota|rate)\s+limit/i, 'usage limit reached'],
+    [/(?:daily|monthly)\s+(?:usage|quota|request)\s+limit/i, 'plan limit reached'],
+    [/rate\s+limit\s+exceeded/i, 'rate limit exceeded'],
+    [/quota\s+(?:reached|exceeded|used\s+up)/i, 'quota exceeded'],
+    [/usage\s+(?:limit|quota)\s+(?:reached|exceeded|used\s+up)/i, 'usage limit reached'],
+    [/try\s+again\s+(?:later|tomorrow)\b/i, 'retry later'],
+    [/come\s+back\s+(?:later|tomorrow)\b/i, 'retry later'],
+  ];
+
+  const matchedUsage = usageRules.find(([pattern]) => pattern.test(tail));
+  if (matchedUsage) {
+    return {
+      hasUsageLimit: true,
+      hasCapacity: false,
+      hasKeepMenu: false,
+      reason: matchedUsage[1],
+      fingerprint: '',
+    };
+  }
+
   const capacityRules = [
     [/we\s+are\s+currently\s+experiencing\s+high\s+demand/i, 'high demand'],
     [/no\s+capacity\s+available/i, 'no capacity'],
@@ -717,7 +784,7 @@ function detectAutomationState(text) {
 
   const matchedCapacity = capacityRules.find(([pattern]) => pattern.test(tail));
   if (!matchedCapacity) {
-    return { hasCapacity: false, hasKeepMenu: false, reason: 'capacity', fingerprint: '' };
+    return { hasUsageLimit: false, hasCapacity: false, hasKeepMenu: false, reason: 'capacity', fingerprint: '' };
   }
 
   const keepMatch =
@@ -734,6 +801,7 @@ function detectAutomationState(text) {
     : '';
 
   return {
+    hasUsageLimit: false,
     hasCapacity: true,
     hasKeepMenu,
     reason: matchedCapacity[1],
@@ -777,11 +845,95 @@ function unbindUserInput() {
 }
 
 function onUserInput(chunk) {
-  if (!activePty) return;
-  try {
-    activePty.write(Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk));
-  } catch {
-    // Ignore best-effort input forwarding failures.
+  const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk), 'utf8');
+  if (buffer.length === 0) return;
+
+  const forwardBytes = [];
+
+  for (const byte of buffer.values()) {
+    if (hotkeyAwaitingCommand) {
+      hotkeyAwaitingCommand = false;
+      handleHotkeyCommand(byte);
+      continue;
+    }
+
+    if (byte === HOTKEY_PREFIX_BYTE) {
+      hotkeyAwaitingCommand = true;
+      process.stderr.write(`\n[local] ${hotkeySummary()}\n`);
+      continue;
+    }
+
+    noteManualInput();
+    forwardBytes.push(byte);
+  }
+
+  if (forwardBytes.length > 0 && activePty) {
+    try {
+      activePty.write(Buffer.from(forwardBytes).toString('utf8'));
+    } catch {
+      // Ignore best-effort input forwarding failures.
+    }
+  }
+}
+
+function handleHotkeyCommand(byte) {
+  const command = String.fromCharCode(byte).toLowerCase();
+
+  if (command === 'h' || command === '?') {
+    printLocalHelp();
+    return;
+  }
+
+  if (command === 'a') {
+    if (automationEnabled) {
+      setAutomationEnabled(false, 'manual');
+      console.error(`\n[local] Automation disabled. ${HOTKEY_PREFIX_LABEL}a to re-enable.\n`);
+    } else {
+      automationPausedUntil = 0;
+      setAutomationEnabled(true);
+      console.error(`\n[local] Automation enabled.\n`);
+    }
+    return;
+  }
+
+  if (command === 'p') {
+    pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, 'manual pause');
+    return;
+  }
+
+  if (command === 's') {
+    requestLauncherAction('switch');
+    return;
+  }
+
+  if (command === 'r') {
+    requestLauncherAction('restart');
+    return;
+  }
+
+  if (command === 'c') {
+    pauseAutomationTemporarily(MANUAL_OVERRIDE_MS, 'manual Ctrl-C', true);
+    sendRaw('\x03', 'manual-ctrl-c');
+    console.error(`\n[local] Sent Ctrl-C to Gemini and paused automation for ${Math.round(MANUAL_OVERRIDE_MS / 1000)}s.\n`);
+    return;
+  }
+
+  if (command === 'q') {
+    requestLauncherAction('exit');
+    return;
+  }
+
+  console.error(`\n[local] Unknown command ${JSON.stringify(String.fromCharCode(byte))}. ${hotkeySummary()}\n`);
+}
+
+function noteManualInput() {
+  clearContinueTimer();
+
+  if (!automationEnabled) return;
+
+  const nextPauseUntil = Date.now() + MANUAL_OVERRIDE_MS;
+  if (nextPauseUntil > automationPausedUntil) {
+    automationPausedUntil = nextPauseUntil;
   }
 }
 
@@ -842,12 +994,116 @@ function disposeActiveListeners() {
   }
 }
 
+function requestLauncherAction(kind) {
+  clearContinueTimer();
+  clearRestartTimer();
+  clearForceKillTimer();
+  switching = false;
+  sawCapacityAt = 0;
+  plannedAction = { kind, code: 0 };
+
+  if (!activePty) {
+    fulfillPlannedAction();
+    return;
+  }
+
+  const label =
+    kind === 'switch'
+      ? 'Switching model'
+      : kind === 'restart'
+        ? 'Restarting current model'
+        : 'Quitting launcher';
+
+  console.error(`\n[local] ${label}...\n`);
+  sendRaw('\x03', `local-${kind}`);
+  forceKillTimer = setTimeout(() => {
+    if (!plannedAction || plannedAction.kind !== kind || !activePty) return;
+    try {
+      activePty.kill();
+    } catch {
+      // Ignore racey kill failures.
+    }
+  }, FORCE_KILL_AFTER_MS);
+}
+
+function fulfillPlannedAction() {
+  if (!plannedAction) return;
+  const action = plannedAction;
+  plannedAction = null;
+
+  if (action.kind === 'switch') {
+    modelIndex += 1;
+    if (loadedPty) spawnGemini(loadedPty);
+    return;
+  }
+
+  if (action.kind === 'restart') {
+    if (loadedPty) spawnGemini(loadedPty);
+    return;
+  }
+
+  cleanupAndExit(action.code ?? 0);
+}
+
+function hotkeySummary() {
+  return `${HOTKEY_PREFIX_LABEL}h help | ${HOTKEY_PREFIX_LABEL}a auto on/off | ${HOTKEY_PREFIX_LABEL}p pause auto | ${HOTKEY_PREFIX_LABEL}s switch | ${HOTKEY_PREFIX_LABEL}r restart | ${HOTKEY_PREFIX_LABEL}c Ctrl-C | ${HOTKEY_PREFIX_LABEL}q quit`;
+}
+
+function printLocalHelp() {
+  const pauseSec = Math.round(MANUAL_OVERRIDE_MS / 1000);
+  console.error(
+    [
+      '',
+      `[local] ${hotkeySummary()}`,
+      `[local] Manual typing pauses automation for ${pauseSec}s.` + (automationEnabled ? '' : ' Automation is currently disabled.'),
+      `[local] Current model: ${currentModel()}`,
+      '',
+    ].join('\n')
+  );
+}
+
+function setAutomationEnabled(enabled, reason = 'manual') {
+  automationEnabled = enabled;
+  automationDisabledReason = enabled ? '' : reason;
+  if (!enabled) {
+    automationPausedUntil = 0;
+    clearContinueTimer();
+    clearRestartTimer();
+  }
+}
+
+function pauseAutomationTemporarily(ms, reason, silent = false) {
+  if (!automationEnabled) return;
+  clearContinueTimer();
+  const until = Date.now() + ms;
+  if (until > automationPausedUntil) {
+    automationPausedUntil = until;
+  }
+  if (!silent) {
+    console.error(`\n[gemini-nightly-pty] Automation paused for ${Math.round(ms / 1000)}s (${reason}). ${hotkeySummary()}\n`);
+  }
+}
+
+function isAutomationActive() {
+  return automationEnabled && Date.now() >= automationPausedUntil && !shuttingDown;
+}
+
+function resetCapacityEventState() {
+  demandHits = 0;
+  switching = false;
+  lastDemandTs = 0;
+  sawCapacityAt = 0;
+  autoContinueAttempts = 0;
+  lastMenuFingerprint = '';
+}
+
 function cleanupAndExit(code) {
   if (shuttingDown) return;
   shuttingDown = true;
 
   clearContinueTimer();
   clearRestartTimer();
+  clearForceKillTimer();
   disposeActiveListeners();
 
   try {
@@ -898,99 +1154,7 @@ function parseJsonArrayEnv(value) {
   }
 }
 
-function safeStat(filePath) {
-  try {
-    return fs.statSync(filePath);
-  } catch {
-    return null;
-  }
-}
-
-function safeReadFirstLine(filePath) {
-  try {
-    const fd = fs.openSync(filePath, 'r');
-    try {
-      const buffer = Buffer.alloc(512);
-      const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, 0);
-      const snippet = buffer.subarray(0, bytesRead).toString('utf8');
-      return snippet.split(/\n/, 1)[0] || '';
-    } finally {
-      fs.closeSync(fd);
-    }
-  } catch {
-    return null;
-  }
-}
-
-function isSpawnLaunchFailure(error) {
-  const message = error?.message || '';
-  return /posix_spawnp failed|spawn-helper|ENOENT|EACCES|Unknown system error/i.test(message);
-}
-
-function buildLaunchFailureMessage(targetSpec, strategies, lastError) {
-  const lines = [];
-  lines.push('All PTY launch strategies failed.');
-  lines.push(`Target: ${targetSpec.resolvedCommand}`);
-  lines.push(`Original wrapper: ${targetSpec.originalCommand}`);
-  lines.push(`Exists: ${targetSpec.exists ? 'yes' : 'no'}`);
-
-  if (targetSpec.stat) {
-    lines.push(`Mode: ${formatMode(targetSpec.stat.mode)}`);
-    lines.push(`Executable: ${targetSpec.isExecutableFile ? 'yes' : 'no'}`);
-  }
-
-  if (targetSpec.firstLine) {
-    lines.push(`First line: ${targetSpec.firstLine}`);
-  }
-
-  if (targetSpec.shebang?.usesEnvSplit) {
-    lines.push('Detected /usr/bin/env -S shebang. That form is not portable on macOS BSD env when executing scripts directly.');
-  }
-
-  if (activePtyModuleRoot) {
-    for (const helperPath of findSpawnHelpers(activePtyModuleRoot)) {
-      const helperStat = safeStat(helperPath);
-      if (helperStat) {
-        lines.push(`spawn-helper: ${helperPath} mode=${formatMode(helperStat.mode)}`);
-      }
-    }
-  }
-
-  lines.push(`Tried strategies: ${strategies.map((strategy) => strategy.kind).join(', ')}`);
-  if (lastError) {
-    lines.push(`Last error: ${lastError.message}`);
-  }
-
-  const fileInfo = runCommandCapture('file', ['-b', targetSpec.resolvedCommand]);
-  if (fileInfo) {
-    lines.push(`file(1): ${fileInfo}`);
-  }
-
-  if (AUTO_SIGN_HINT && process.platform === 'darwin') {
-    lines.push('macOS checks worth trying:');
-    lines.push('  chmod +x node_modules/node-pty/prebuilds/darwin-*/spawn-helper');
-    lines.push('  xattr -dr com.apple.quarantine node_modules/node-pty');
-    lines.push('  codesign --force --sign - node_modules/node-pty/prebuilds/darwin-*/spawn-helper');
-  }
-
-  lines.push('If your wrapper is a shell script, force shell launch with: PTY_SHELL=/bin/bash PTY_SHELL_LOGIN=0');
-  lines.push('If your wrapper is a Node script, bypass the wrapper and point GEMINI_WRAPPER at node plus GEMINI_WRAPPER_ARGS_JSON for the script path.');
-
-  return lines.join('\n');
-}
-
-function formatMode(mode) {
-  return `0${(mode & 0o777).toString(8)}`;
-}
-
-function runCommandCapture(command, args) {
-  try {
-    const result = spawnSync(command, args, { encoding: 'utf8' });
-    if (result.status === 0) {
-      return (result.stdout || '').trim();
-    }
-  } catch {
-    // Ignore diagnostic command failures.
-  }
-  return null;
+function shQuote(value) {
+  const s = String(value);
+  return `'${s.replace(/'/g, `'\\''`)}'`;
 }

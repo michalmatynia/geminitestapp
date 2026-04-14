@@ -22,7 +22,7 @@ import {
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
-import { loadRepairableStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
   normalizeParserSamples,
   normalizeUpdaterSamples,
@@ -111,42 +111,6 @@ export function useAiPathsSettingsPathActions(
   const { selectNode, setConfigOpen } = useSelectionActions();
   const { setIsPathSwitching } = usePersistenceActions();
   const switchRequestSeqRef = React.useRef(0);
-
-  const parseLoadedPathConfigPayload = useCallback(
-    (
-      payload: string,
-      pathId: string
-    ): ReturnType<typeof loadRepairableStoredPathConfig> => {
-      return loadRepairableStoredPathConfig({
-        pathId,
-        rawConfig: payload,
-      });
-    },
-    []
-  );
-
-  const persistCanonicalPathRepair = useCallback(
-    async (pathId: string, config: PathConfig): Promise<void> => {
-      try {
-        await persistSettingsBulk([
-          {
-            key: `${PATH_CONFIG_PREFIX}${pathId}`,
-            value: JSON.stringify(config),
-          },
-        ]);
-      } catch (error) {
-        logClientError(error, {
-          context: {
-            source: 'useAiPathsSettingsPathActions',
-            action: 'persistCanonicalPathRepair',
-            pathId,
-            level: 'warn',
-          },
-        });
-      }
-    },
-    [persistSettingsBulk]
-  );
 
   const resolveDuplicatePathName = useCallback(
     (sourceName: string): string => {
@@ -647,11 +611,10 @@ export function useAiPathsSettingsPathActions(
           }
           let config: PathConfig;
           try {
-            const loadedConfig = parseLoadedPathConfigPayload(configItem.value, value);
-            config = loadedConfig.config;
-            if (loadedConfig.changed) {
-              void persistCanonicalPathRepair(value, config);
-            }
+            config = loadCanonicalStoredPathConfig({
+              pathId: value,
+              rawConfig: configItem.value,
+            });
           } catch (error) {
             logClientError(error);
             reportAiPathsError(
@@ -680,11 +643,10 @@ export function useAiPathsSettingsPathActions(
             if (configItem?.value) {
               let recoveredConfig: PathConfig;
               try {
-                const loadedConfig = parseLoadedPathConfigPayload(configItem.value, value);
-                recoveredConfig = loadedConfig.config;
-                if (loadedConfig.changed) {
-                  void persistCanonicalPathRepair(value, recoveredConfig);
-                }
+                recoveredConfig = loadCanonicalStoredPathConfig({
+                  pathId: value,
+                  rawConfig: configItem.value,
+                });
               } catch (parseError) {
                 logClientError(parseError);
                 reportAiPathsError(
@@ -735,9 +697,7 @@ export function useAiPathsSettingsPathActions(
       applyPathConfigState,
       pathConfigs,
       persistActivePathPreference,
-      persistCanonicalPathRepair,
       reportAiPathsError,
-      parseLoadedPathConfigPayload,
       setActivePathId,
       setIsPathSwitching,
       setPathConfigs,

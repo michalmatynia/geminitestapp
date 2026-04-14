@@ -53,7 +53,6 @@ export const DEFAULT_PORTABLE_PAYLOAD_LIMITS: PortablePayloadLimits = {
 export type ResolvePortablePathInputOptions = {
   signingPolicyProfile?: PortablePathSigningPolicyProfile;
   signingPolicyTelemetrySurface?: PortablePathSigningPolicySurface;
-  repairIdentities?: boolean;
   includeConnections?: boolean;
   enforcePayloadLimits?: boolean;
   limits?: Partial<PortablePayloadLimits>;

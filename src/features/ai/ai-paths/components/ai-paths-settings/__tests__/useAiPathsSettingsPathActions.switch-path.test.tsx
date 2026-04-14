@@ -243,6 +243,45 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     expect(setRunModeGraphMock).toHaveBeenCalledWith('manual');
   });
 
+  it('fails non-canonical stored path payloads instead of rewriting them during path switch', async () => {
+    const { input, mocks } = buildInput();
+    const nextPathId = 'path_noncanonical_switch';
+    const fetchedConfig = createDefaultPathConfig(nextPathId);
+
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(fetchedConfig),
+      },
+    ]);
+    mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(fetchedConfig),
+      },
+    ]);
+
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+
+    act(() => {
+      result.current.handleSwitchPath(nextPathId);
+    });
+
+    await waitFor(() => {
+      expect(mocks.setActivePathId).toHaveBeenCalledWith(input.activePathId);
+    });
+    expect(mocks.setPathConfigs).not.toHaveBeenCalled();
+    expect(mocks.persistSettingsBulk).not.toHaveBeenCalled();
+    expect(mocks.persistActivePathPreference).not.toHaveBeenCalledWith(nextPathId);
+    expect(mocks.reportAiPathsError).toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'Failed to load selected path. Try again in a moment.',
+      {
+        variant: 'error',
+      }
+    );
+  });
+
   it('does not replace target path with default config when fetch fails', async () => {
     const { input, mocks } = buildInput();
     const oldPathId = input.activePathId as string;

@@ -121,11 +121,6 @@ const loadStoredPathConfig = (args: {
   };
 };
 
-export const loadRepairableStoredPathConfig = (args: {
-  pathId: string;
-  rawConfig: string;
-}): LoadedStoredPathConfig => loadStoredPathConfig(args);
-
 export const loadCanonicalStoredPathConfig = (args: {
   pathId: string;
   rawConfig: string;

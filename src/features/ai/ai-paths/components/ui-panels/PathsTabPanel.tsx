@@ -115,7 +115,6 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
     setImporting(true);
     try {
       const resolved = resolvePortablePathInput(payload, {
-        repairIdentities: true,
         includeConnections: false,
         signingPolicyTelemetrySurface: 'canvas',
         nodeCodeObjectHashVerificationMode: 'strict',

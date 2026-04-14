@@ -270,6 +270,35 @@ describe('portable AI-path engine scaffold', () => {
     expect(parsed.value.pathConfig.edges.length).toBe(pathConfig.edges.length);
   });
 
+  it('preserves raw node identities instead of auto-repairing them during resolution', () => {
+    const pathConfig = createDefaultPathConfig('path_portable_identity_passthrough');
+    const remappedNodeIds = new Map<string, string>();
+    pathConfig.nodes = pathConfig.nodes.map((node, index) => {
+      const nextId = `legacy-node-${index + 1}`;
+      remappedNodeIds.set(node.id, nextId);
+      return {
+        ...node,
+        id: nextId,
+      };
+    });
+    pathConfig.edges = pathConfig.edges.map((edge) => ({
+      ...edge,
+      from: remappedNodeIds.get(edge.from) ?? edge.from,
+      to: remappedNodeIds.get(edge.to) ?? edge.to,
+    }));
+
+    const parsed = resolvePortablePathInput(pathConfig);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.value.identityRepaired).toBe(false);
+    expect(parsed.value.identityWarnings).toEqual([]);
+    expect(parsed.value.pathConfig.nodes.map((node) => node.id)).toEqual(
+      pathConfig.nodes.map((node) => node.id)
+    );
+    expect(parsed.value.pathConfig.edges).toEqual(pathConfig.edges);
+  });
+
   it('rejects alias-only path-config edge fields when resolving raw payloads', () => {
     const pathConfig = createDefaultPathConfig('path_portable_alias_edges');
     const fromNode = pathConfig.nodes[0]!;

@@ -7,7 +7,7 @@ import {
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
-} from '@/shared/lib/ai-paths/core/constants';
+} from '@/shared/lib/ai-paths/core/constants/segments/storage';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils';
 import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 

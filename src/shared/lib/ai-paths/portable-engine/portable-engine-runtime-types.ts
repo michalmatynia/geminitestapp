@@ -82,7 +82,6 @@ export type PortablePathRunOptions = Omit<EvaluateGraphOptions, 'reportAiPathsEr
   runtimeValidationConfig?: AiPathsValidationConfig | null;
   signingPolicyProfile?: PortablePathSigningPolicyProfile;
   signingPolicyTelemetrySurface?: PortablePathSigningPolicySurface;
-  repairIdentities?: boolean;
   enforcePayloadLimits?: boolean;
   limits?: Partial<PortablePayloadLimits>;
   fingerprintVerificationMode?: PortablePathFingerprintVerificationMode;

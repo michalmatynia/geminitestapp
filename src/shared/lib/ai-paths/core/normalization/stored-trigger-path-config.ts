@@ -187,7 +187,6 @@ const normalizeResolvedTriggerConfig = (args: {
     selectedNodeIdOverride,
   });
   const resolvedConfig = resolvePortablePathInput(preSanitizedConfig, {
-    repairIdentities: true,
     includeConnections: false,
     signingPolicyTelemetrySurface: 'product',
     nodeCodeObjectHashVerificationMode: 'warn',
@@ -285,7 +284,6 @@ export const materializeStoredTriggerPathConfig = (args: {
     const configForResolution = rawStarterUpgrade?.config ?? parsedConfig;
 
     const resolvedConfig = resolvePortablePathInput(configForResolution, {
-      repairIdentities: true,
       includeConnections: false,
       signingPolicyTelemetrySurface: 'product',
       nodeCodeObjectHashVerificationMode: 'warn',

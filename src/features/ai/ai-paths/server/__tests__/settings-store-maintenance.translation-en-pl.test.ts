@@ -400,7 +400,7 @@ describe('AI Paths maintenance forward-only action ids', () => {
     ).toBe(true);
   });
 
-  it('refreshes outdated starter-derived translation configs through the generic overlay path', () => {
+  it('refreshes outdated starter-derived translation configs through canonical graph replacement', () => {
     const result = runMaintenanceAction({
       actionId: 'refresh_starter_workflow_configs',
       records: buildStarterRefreshRecords(),
@@ -458,9 +458,9 @@ describe('AI Paths maintenance forward-only action ids', () => {
         ]),
       })
     );
-    expect(report.shouldBlock).toBe(true);
-    expect(report.blockReason).toBe('compile');
-    expect(report.compileReport.errors).toBeGreaterThan(0);
+    expect(report.shouldBlock).toBe(false);
+    expect(report.blockReason).toBeNull();
+    expect(report.compileReport.errors).toBe(0);
   });
 
   it('repairs broken seeded BLWo starter configs through the generic refresh action', () => {

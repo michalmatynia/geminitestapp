@@ -486,4 +486,49 @@ describe('ProductFormParameterProvider', () => {
       },
     ]);
   });
+
+  it('falls back to the English linked term when the Polish translation is missing', () => {
+    useParametersMock.mockReturnValue({
+      data: [
+        {
+          id: 'param-material',
+          name_en: 'Material',
+          selectorType: 'text',
+          linkedTitleTermType: 'material',
+        },
+      ] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+    useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({
+      data:
+        type === 'material'
+          ? [
+              {
+                id: 'term-metal',
+                catalogId: 'catalog-1',
+                type: 'material',
+                name_en: 'Metal',
+                name_pl: null,
+              },
+            ]
+          : [],
+      isLoading: false,
+    }));
+
+    const wrapper = createWrapper({
+      defaultNameEn: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+    });
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-material',
+        value: 'Metal',
+        valuesByLanguage: {
+          en: 'Metal',
+          pl: 'Metal',
+        },
+      },
+    ]);
+  });
 });

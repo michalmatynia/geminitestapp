@@ -1,8 +1,13 @@
-import { generateTraderaQuicklistBrowserStepsInit } from '@/shared/lib/browser-execution';
+import { 
+  generateTraderaQuicklistBrowserStepsInit, 
+  StepTracker, 
+  TraderaSequencer 
+} from '@/shared/lib/browser-execution';
 
 const TRADERA_QUICKLIST_STEPS_INIT = generateTraderaQuicklistBrowserStepsInit();
 
-export const PART_1 = String.raw`export default async function run({
+export const PART_1 = String.raw`
+export default async function run({
   page,
   input,
   emit,
@@ -10,6 +15,20 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
+  const steps = ${TRADERA_QUICKLIST_STEPS_INIT};
+  const tracker = StepTracker.fromSteps(steps, (s) => emit('steps', s));
+  const sequencer = new TraderaSequencer({ 
+    page, 
+    tracker, 
+    actionKey: 'tradera_quicklist_list', 
+    emit, 
+    artifacts, 
+    log, 
+    helpers 
+  });
+  
+  await sequencer.run();
+
   // tradera-quicklist-default:v143
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';

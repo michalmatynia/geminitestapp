@@ -26,7 +26,18 @@ interface ProductImagePreviewContextType {
   hidePreview: () => void;
 }
 
-const ProductImagePreviewContext = createContext<ProductImagePreviewContextType | null>(null);
+const getProductImagePreviewContext = () => {
+  const registryKey = '__PRODUCT_IMAGE_PREVIEW_CONTEXT';
+  const globalObj = (typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : (global as unknown as Record<string, unknown>));
+  
+  if (!globalObj[registryKey]) {
+    globalObj[registryKey] = createContext<ProductImagePreviewContextType | null>(null);
+  }
+  
+  return globalObj[registryKey] as React.Context<ProductImagePreviewContextType | null>;
+};
+
+const ProductImagePreviewContext = getProductImagePreviewContext();
 
 export const ProductImagePreviewProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<PreviewState>({

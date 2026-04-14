@@ -8,15 +8,15 @@ canonical: true
 ---
 # Products parameter integrity Improvement Track
 
-Generated at: 2026-04-14T11:08:59.784Z
+Generated at: 2026-04-14T12:38:14.583Z
 
 ## Snapshot
 
 - Track id: `products-parameter-integrity`
 - Category: `data`
 - Included in default read-only bundle: yes
-- Overall status: `failed`
-- Latest report timestamp: 2026-04-14T11:08:59.781Z
+- Overall status: `passed`
+- Latest report timestamp: 2026-04-02T09:59:31.245Z
 
 ## Purpose
 
@@ -39,7 +39,7 @@ Audits missing product parameters, refreshes recovery classification, and rebuil
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `failed` | 1 | 1 | 0 | 1 | 0 |
+| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `passed` | 3 | 3 | 0 | 0 | 0 |
@@ -49,7 +49,6 @@ Audits missing product parameters, refreshes recovery classification, and rebuil
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
-| `audit` | `failed` | `automatic` | `products-parameter-audit` | `products:audit:missing-parameters` |
 | `dry-run` | `passed` | `automatic` | `products-parameter-recovery-classification` | `products:classify:parameter-recovery` |
 | `dry-run` | `passed` | `automatic` | `products-parameter-source-report` | `products:report:parameter-source-recovery` |
 | `dry-run` | `passed` | `automatic` | `products-parameter-source-summary` | `products:summarize:parameter-source-recovery` |

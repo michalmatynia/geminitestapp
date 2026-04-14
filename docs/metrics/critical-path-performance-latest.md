@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-14T11:08:31.589Z
+Generated at: 2026-04-14T12:37:41.093Z
 
 ## Summary
 
@@ -90,7 +90,7 @@ Generated at: 2026-04-14T11:08:31.589Z
 | `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 4175 |
 | `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 3221 |
 | `src/features/products/components/form/ProductFormScans.test.tsx` | 3065 |
-| `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 2194 |
+| `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 2205 |
 | `src/features/products/server/product-scans-service.amazon.test.ts` | 2166 |
 | `src/features/products/components/list/ProductAmazonScanModal.tsx` | 2130 |
 | `src/features/products/components/ProductModals.test.tsx` | 1920 |
@@ -103,7 +103,7 @@ Generated at: 2026-04-14T11:08:31.589Z
 | --- | ---: |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 144 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 121 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 120 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 116 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
 | `src/app/api/databases/[[...path]]/route.ts` | 100 |

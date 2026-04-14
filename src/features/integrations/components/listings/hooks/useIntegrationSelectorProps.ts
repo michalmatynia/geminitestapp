@@ -41,7 +41,7 @@ export function useIntegrationSelectorProps(
     selectedIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useListingSelection() as ListingSelection;
+  } = useListingSelection();
 
   const { integrationOptions, connectionOptions } = useConnectedIntegrationSelectorOptions(
     integrations,

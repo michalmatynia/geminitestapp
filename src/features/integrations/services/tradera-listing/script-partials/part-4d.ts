@@ -559,7 +559,7 @@ export const PART_4D = String.raw`
     const sourceCandidates =
       Array.isArray(visibleCandidates) && visibleCandidates.length > 0
         ? visibleCandidates
-        : await collectVisibleListingCandidates(8);
+        : await collectVisibleListingCandidates();
     const exactTitleMatches = await collectListingLinksForTerm(
       searchTerm,
       null,
@@ -575,8 +575,7 @@ export const PART_4D = String.raw`
     }
 
     const fallbackTitleMatches = sourceCandidates
-      .filter((candidate) => !titlesExactlyMatch(candidate?.title || '', searchTerm))
-      .slice(0, FALLBACK_DUPLICATE_SEARCH_CANDIDATE_LIMIT);
+      .filter((candidate) => !titlesExactlyMatch(candidate?.title || '', searchTerm));
 
     return {
       exactTitleMatches,
@@ -687,7 +686,7 @@ export const PART_4D = String.raw`
         currentUrl: page.url(),
       });
 
-      const visibleCandidates = await collectVisibleListingCandidates(8);
+      const visibleCandidates = await collectVisibleListingCandidates();
       const duplicateCandidateSet = await collectDuplicateCandidates(
         searchTerm,
         visibleCandidates

@@ -20,6 +20,10 @@ export {
 
 export { StepTracker } from './step-tracker';
 
+export { PlaywrightSequencer, type PlaywrightSequencerContext } from './PlaywrightSequencer';
+export { TraderaSequencer } from './TraderaSequencer';
+export { VintedSequencer } from './VintedSequencer';
+
 export {
   TRADERA_QUICKLIST_LABEL_OVERRIDES,
   TRADERA_QUICKLIST_PUBLISH_LABELS,

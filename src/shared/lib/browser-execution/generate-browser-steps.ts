@@ -86,9 +86,9 @@ export const generateTraderaQuicklistBrowserStepsInit = (): string => {
     TRADERA_QUICKLIST_PUBLISH_LABELS;
 
   const lines: string[] = [
-    `// --- Execution step tracking ---`,
-    `// Each step has: id, label, status ('pending'|'running'|'success'|'skipped'|'error'), info (null or object)`,
-    `const executionSteps = (() => {`,
+    '// --- Execution step tracking ---',
+    '// Each step has: id, label, status (\'pending\'|\'running\'|\'success\'|\'skipped\'|\'error\'), info (null or object)',
+    'const executionSteps = (() => {',
     `${i1}const steps = [`,
     ...prefixIds.map((id) => `${i2}${stepEntry(id)},`),
     `${i1}];`,
@@ -126,7 +126,7 @@ export const generateTraderaQuicklistBrowserStepsInit = (): string => {
     }),
     `${i1});`,
     `${i1}return steps;`,
-    `})();`,
+    '})();',
   ];
 
   return lines.join('\n');

@@ -31,7 +31,7 @@ export const PART_5B = String.raw`
     };
 
     const waitForDraftSaveWithRecovery = async ({
-      timeoutMs = 6_000,
+      timeoutMs,
       minimumQuietMs = 1_200,
       context = 'unknown',
     } = {}) => {
@@ -110,7 +110,6 @@ export const PART_5B = String.raw`
       categoryFallbackReason: selectedCategoryFallbackReason,
     });
     const selectionDraftState = await waitForDraftSaveWithRecovery({
-      timeoutMs: 8_000,
       minimumQuietMs: 1_200,
       context: 'category-and-details',
     });
@@ -135,7 +134,6 @@ export const PART_5B = String.raw`
     updateStep('shipping_set', 'running');
     await applyDeliverySelection();
     await waitForDraftSaveWithRecovery({
-      timeoutMs: 6_000,
       minimumQuietMs: 1_200,
       context: 'delivery-configuration',
     });
@@ -155,7 +153,6 @@ export const PART_5B = String.raw`
     });
     if (finalPriceApplied) {
       await waitForDraftSaveWithRecovery({
-        timeoutMs: 4_000,
         minimumQuietMs: 1_000,
         context: 'pre-publish-finalize',
       });
@@ -379,8 +376,7 @@ export const PART_5B = String.raw`
         return null;
       }
 
-      const visibleCandidates = await collectVisibleListingCandidates(8).catch(() => []);
-      const matchedCandidate = visibleCandidates.find((candidate) => {
+      const visibleCandidates = await collectVisibleListingCandidates().catch(() => []);      const matchedCandidate = visibleCandidates.find((candidate) => {
         const candidateListingId =
           normalizeWhitespace(
             candidate?.listingId || extractListingId(candidate?.listingUrl || '') || ''

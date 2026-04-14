@@ -52,13 +52,28 @@ type ProductListProviderProps = {
   children: React.ReactNode;
 };
 
-const createProductListStrictContext = <T,>(hookName: string, displayName: string) =>
-  createStrictContext<T>({
+const createProductListStrictContext = <T,>(hookName: string, displayName: string) => {
+  // Use a global registry to ensure that even if this module is executed multiple times
+  // (e.g., due to dynamic imports in some bundlers like Turbopack), the context objects
+  // remain stable. This prevents \"must be used within a Provider\" errors caused by
+  // context object identity mismatches.
+  const registryKey = `__PRODUCT_LIST_CONTEXT_${hookName}`;
+  const globalObj = (typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : (global as unknown as Record<string, unknown>));
+  
+  if (globalObj[registryKey]) {
+    return globalObj[registryKey] as ReturnType<typeof createStrictContext<T>>;
+  }
+
+  const result = createStrictContext<T>({
     hookName,
     providerName: 'a ProductListProvider',
     displayName,
     errorFactory: internalError,
   });
+
+  globalObj[registryKey] = result;
+  return result;
+};
 
 export const {
   Context: ProductListFiltersContext,

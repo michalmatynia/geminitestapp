@@ -158,7 +158,7 @@ export const runStructuredCommandCheck = async ({
   };
 };
 
-export const runCommandCheckAttempt = ({ command, commandArgs, timeoutMs, cwd, maxOutputBytes = DEFAULT_maxOutputBytes }) =>
+export const runCommandCheckAttempt = ({ command, commandArgs, timeoutMs, cwd, maxOutputBytes = DEFAULT_MAX_OUTPUT_BYTES }) =>
   new Promise((resolve) => {
     const startedAt = Date.now();
     const child = spawn(command, commandArgs, {
@@ -229,7 +229,7 @@ export const runCommandCheck = async ({
   disabledOutput = 'Skipped by configuration.',
   confirmFailureRetries = 0,
   cwd,
-  maxOutputBytes = DEFAULT_maxOutputBytes,
+  maxOutputBytes = DEFAULT_MAX_OUTPUT_BYTES,
 }) => {
   if (!enabled) {
     return {

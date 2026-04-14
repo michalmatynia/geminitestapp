@@ -253,7 +253,7 @@ export const runPlaywrightListingScript = async ({
           runtime: startedTask.runtime,
           settings: startedTask.settings,
           browserPreference: startedTask.browserPreference,
-          resultValue: (resultValue ?? {}) as Record<string, unknown>,
+          resultValue: (resultValue ?? {}),
         };
       })()
     : await (async (): Promise<PlaywrightConnectionEngineTaskResult & { resultValue: Record<string, unknown> }> => {
@@ -261,7 +261,7 @@ export const runPlaywrightListingScript = async ({
         const { resultValue } = resolvePlaywrightEngineRunOutputs(result.run.result);
         return {
           ...result,
-          resultValue: (resultValue ?? {}) as Record<string, unknown>,
+          resultValue: (resultValue ?? {}),
         };
       })();
 

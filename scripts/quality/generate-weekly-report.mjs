@@ -3,8 +3,6 @@ import path from 'node:path';
 import {
   preflightBuildLock,
 } from './lib/weekly-report-build-preflight.mjs';
-import { execFile as execFileCallback } from 'node:child_process';
-import { promisify } from 'node:util';
 
 import { runStabilizationGates } from '../canonical/lib/stabilization-gate-runner.mjs';
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
@@ -14,22 +12,15 @@ import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 import {
   createWeeklyCheckResult,
   runCommandCheck,
-  runCommandCheckAttempt,
   runStructuredCommandCheck,
-  truncateWeeklyCheckOutput,
 } from './lib/weekly-report-checks.mjs';
 import { applyWeeklyCheckSelection, parseWeeklyCheckSelectionArgs } from './lib/weekly-report-selection.mjs';
 import { summarizeWeeklyChecks } from './lib/weekly-report-aggregation.mjs';
 import {
   toMarkdown,
   formatDuration,
-  formatDelta,
-  buildKangurAiTutorBridgeSnapshotLines,
-  buildKangurKnowledgeGraphStatusLines,
 } from './lib/weekly-report-markdown.mjs';
 import { buildWeeklyReportSummaryJsonDetails } from './lib/weekly-report-summary.mjs';
-
-const execFile = promisify(execFileCallback);
 
 const argv = process.argv.slice(2);
 const args = new Set(argv);

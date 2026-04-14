@@ -64,4 +64,60 @@ describe('handleExecutionCompletion', () => {
       })
     );
   });
+
+  it('fails when callback-waiting node outputs remain after execution stops', async () => {
+    const updateRunSnapshot = vi.fn().mockResolvedValue(true);
+
+    const status = await handleExecutionCompletion({
+      run: {
+        id: 'run-2',
+      } as never,
+      nodes: [
+        {
+          id: 'node-prompt',
+          type: 'prompt',
+          title: 'Prompt: Description EN->PL',
+        },
+      ] as never,
+      accOutputs: {
+        'node-prompt': {
+          status: 'waiting_callback',
+          message: 'Upstream waiting diagnostics: Upstream status for bundle: JSON Parser (waiting_callback)',
+          waitingOnPorts: ['bundle'],
+        },
+      },
+      runtimeHaltReason: null,
+      nodeValidationEnabled: true,
+      blockedRunPolicy: 'fail_run',
+      requiredProcessingNodeIds: [],
+      runMetaWithRuntimeContext: {},
+      runStartedAt: '2026-04-09T15:29:17.699Z',
+      traceId: 'trace-2',
+      profileSnapshot: {
+        traceId: 'trace-2',
+        recordedAt: '2026-04-09T15:29:20.165Z',
+        eventCount: 0,
+        sampledEventCount: 0,
+        droppedEventCount: 0,
+        summary: null,
+        highlights: [],
+        nodeSpans: [],
+      },
+      stateManager: {
+        buildCurrentRuntimeStateSnapshot: vi.fn().mockResolvedValue({
+          history: [],
+        }),
+      } as never,
+      updateRunSnapshot,
+    });
+
+    expect(status).toBe('failed');
+    expect(updateRunSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'failed',
+        errorMessage:
+          'Run failed while waiting at Prompt: Description EN->PL (waiting on: bundle). Upstream waiting diagnostics: Upstream status for bundle: JSON Parser (waiting_callback)',
+      })
+    );
+  });
 });

@@ -73,7 +73,7 @@ vi.mock('@/features/products/components/settings/ShippingGroupsSettings', () => 
   ShippingGroupsSettings: () => <div data-testid='shipping-groups-settings' />,
 }));
 
-vi.mock('@/features/products/components/constructor/ParametersSettings', () => ({
+vi.mock('@/features/products/components/settings/parameters/ParametersSettings', () => ({
   ParametersSettings: () => <div data-testid='parameters-settings' />,
 }));
 

@@ -8,6 +8,7 @@ import { cn } from '@/shared/utils/ui-utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
 import { AppIntlProvider } from '@/shared/providers/AppIntlProvider';
+import { AccessibilityProvider } from '@/shared/providers/AccessibilityProvider';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 
 import type { Metadata, Viewport } from 'next';
@@ -73,10 +74,12 @@ export default async function RootLayout({
           />
         ) : null}
         <AppIntlProvider locale={locale} messages={messages}>
-          <SkipToContentLink>{skipToMainContentLabel}</SkipToContentLink>
-          <Suspense fallback={<main id='kangur-main-content' className='min-h-screen' />}>
-            <RootClientShell>{children}</RootClientShell>
-          </Suspense>
+          <AccessibilityProvider>
+            <SkipToContentLink>{skipToMainContentLabel}</SkipToContentLink>
+            <Suspense fallback={<main id='kangur-main-content' className='min-h-screen' />}>
+              <RootClientShell>{children}</RootClientShell>
+            </Suspense>
+          </AccessibilityProvider>
         </AppIntlProvider>
       </body>
     </html>

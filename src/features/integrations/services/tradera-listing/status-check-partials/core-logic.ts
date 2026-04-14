@@ -688,7 +688,7 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     const preparedSearchValue = await prepareSearchInput(searchInput, resolvedSearchTitle || '');
     const searchTrigger = await triggerSearchSubmit();
 
-    const visibleCandidates = await collectVisibleListingCandidates(8);
+    const visibleCandidates = await collectVisibleListingCandidates();
     const normalizedSearchTerm = normalizeListingMatchValue(resolvedSearchTitle || '');
     const exactTitleCandidates = await collectListingLinksForTerm(resolvedSearchTitle || '');
     const fallbackCandidates =

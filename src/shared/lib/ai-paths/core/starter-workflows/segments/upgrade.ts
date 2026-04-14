@@ -1,11 +1,9 @@
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
-import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine/portable-engine-resolvers';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { matchesLegacyStarterWorkflowRepairSignature } from './legacy-repair';
 import {
   computeStarterWorkflowGraphHash,
   hasCanonicalGraphHash,
-  isDatabaseOperation,
   normalizeText,
   readStarterProvenance,
   toRecord,
@@ -24,77 +22,6 @@ import type {
 export { computeStarterWorkflowGraphHash } from './utils';
 
 // Force cache bust: 2026-04-07T12:00:00Z
-
-const edgeSignature = (edge: unknown): string => {
-  const record = toRecord(edge) ?? {};
-  return [
-    normalizeText(record['from']),
-    normalizeText(record['to']),
-    normalizeText(record['fromPort']),
-  ].join('|');
-};
-
-const renderTemplateToken = (sourcePort: string, sourcePath: string): string => {
-  const normalizedPort = normalizeText(sourcePort) || 'value';
-  const normalizedPath = normalizeText(sourcePath);
-  return normalizedPath ? `{{${normalizedPort}.${normalizedPath}}}` : `{{${normalizedPort}}}`;
-};
-
-const shouldEmitUnquotedTemplateToken = (targetPath: string, sourcePath: string): boolean => {
-  const normalizedTargetPath = normalizeText(targetPath).toLowerCase();
-  const normalizedSourcePath = normalizeText(sourcePath).toLowerCase();
-  return normalizedTargetPath === 'parameters' || normalizedSourcePath === 'parameters';
-};
-
-const deriveCustomUpdateTemplateFromMappings = (value: unknown): string | null => {
-  if (!Array.isArray(value)) return null;
-  const assignments = value
-    .map((entry: unknown) => toRecord(entry))
-    .filter((entry): entry is Record<string, unknown> => Boolean(entry))
-    .reduce<Array<{ targetPath: string; sourcePath: string; token: string }>>((acc, entry) => {
-      const targetPath = normalizeText(entry['targetPath']);
-      if (!targetPath) return acc;
-      const sourcePath = normalizeText(entry['sourcePath']);
-      acc.push({
-        targetPath,
-        sourcePath,
-        token: renderTemplateToken(
-          normalizeText(entry['sourcePort']) || 'value',
-          sourcePath
-        ),
-      });
-      return acc;
-    }, []);
-
-  if (assignments.length === 0) return null;
-  const lines = assignments.map(
-    ({ targetPath, sourcePath, token }) =>
-      `    "${targetPath}": ${
-        shouldEmitUnquotedTemplateToken(targetPath, sourcePath)
-          ? token
-          : JSON.stringify(token)
-      }`
-  );
-  return (
-    '{\n' +
-    `  "$set": {\n${lines.join(',\n')}\n  },\n` +
-    '  "$unset": {\n    "__noop__": ""\n  }\n' +
-    '}'
-  );
-};
-
-const buildIncomingPortMap = (config: PathConfig): Map<string, Set<string>> => {
-  const map = new Map<string, Set<string>>();
-  (config.edges ?? []).forEach((edge) => {
-    const toNodeId = normalizeText(edge.to);
-    if (!toNodeId) return;
-    const ports = map.get(toNodeId) ?? new Set<string>();
-    const port = normalizeText(edge.toPort);
-    if (port) ports.add(port);
-    map.set(toNodeId, ports);
-  });
-  return map;
-};
 
 type ExplicitModelSelection = {
   modelId: string;
@@ -331,188 +258,6 @@ const preserveExplicitModelSelections = (current: PathConfig, next: PathConfig):
     : next;
 };
 
-const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): PathConfig => {
-  const latestNodesById = new Map((latest.nodes ?? []).map((node) => [node.id, node] as const));
-  const latestEdgesById = new Map((latest.edges ?? []).map((edge) => [edge.id, edge] as const));
-  const latestEdgesBySignature = new Map(
-    (latest.edges ?? []).map((edge) => [edgeSignature(edge), edge] as const)
-  );
-  const currentIncomingPorts = buildIncomingPortMap(current);
-  const promotedIncomingPorts = new Map(
-    Array.from(currentIncomingPorts.entries()).map(
-      ([nodeId, ports]) => [nodeId, new Set(ports)] as const
-    )
-  );
-  (current.edges ?? []).forEach((edge) => {
-    const latestEdge =
-      latestEdgesById.get(edge.id) ?? latestEdgesBySignature.get(edgeSignature(edge));
-    if (!latestEdge) return;
-    const toNodeId = normalizeText(latestEdge.to);
-    const toPort = normalizeText(latestEdge.toPort);
-    if (!toNodeId || !toPort) return;
-    const ports = promotedIncomingPorts.get(toNodeId) ?? new Set<string>();
-    ports.add(toPort);
-    promotedIncomingPorts.set(toNodeId, ports);
-  });
-
-  let nodeChanged = false;
-  const currentNodeIds = new Set((current.nodes ?? []).map((node) => node.id));
-  const overlayNodes = (current.nodes ?? []).map((node) => {
-    const latestNode = latestNodesById.get(node.id);
-    if (latestNode?.type !== node.type) return node;
-    const currentConfig = toRecord(node.config);
-    const latestConfig = toRecord(latestNode.config);
-    const currentDatabaseConfig = toRecord(currentConfig?.['database']);
-    const latestDatabaseConfig = toRecord(latestConfig?.['database']);
-    let nextLatestNode = latestNode;
-    if (currentDatabaseConfig && latestDatabaseConfig) {
-      const incomingPorts = promotedIncomingPorts.get(node.id) ?? new Set<string>();
-      const latestTemplate = normalizeText(latestDatabaseConfig['updateTemplate']);
-      const needsResultPort = latestTemplate.includes('{{result.');
-      const downgradeResultPort = needsResultPort && !incomingPorts.has('result');
-      const latestMappings = Array.isArray(latestDatabaseConfig['mappings'])
-        ? (latestDatabaseConfig['mappings'] as Array<Record<string, unknown>>)
-        : null;
-      const adaptedMappings =
-        latestMappings?.reduce<
-          Array<{ targetPath: string; sourcePort: string; sourcePath?: string }>
-        >((acc, mapping) => {
-          const targetPath = normalizeText(mapping['targetPath']);
-          const sourcePort = normalizeText(mapping['sourcePort']);
-          if (!targetPath || !sourcePort) return acc;
-          const nextSourcePort =
-            sourcePort === 'result' && downgradeResultPort ? 'value' : sourcePort;
-          const sourcePath = normalizeText(mapping['sourcePath']);
-          acc.push({
-            targetPath,
-            sourcePort: nextSourcePort,
-            ...(sourcePath ? { sourcePath } : {}),
-          });
-          return acc;
-        }, []) ?? undefined;
-      const mappingsChanged =
-        latestMappings !== null &&
-        JSON.stringify(adaptedMappings) !== JSON.stringify(latestDatabaseConfig['mappings']);
-      const baseLatestDatabaseConfig = {
-        ...latestDatabaseConfig,
-        operation: isDatabaseOperation(latestDatabaseConfig['operation'])
-          ? latestDatabaseConfig['operation']
-          : 'update',
-        ...(downgradeResultPort
-          ? {
-            updateTemplate: latestTemplate.replaceAll('{{result.', '{{value.'),
-          }
-          : {}),
-        ...(latestMappings !== null ? { mappings: adaptedMappings } : {}),
-      };
-      const derivedTemplate =
-        !incomingPorts.has('result') || needsResultPort === false
-          ? ((needsResultPort ? latestTemplate.replaceAll('{{result.', '{{value.') : null) ??
-            deriveCustomUpdateTemplateFromMappings(currentDatabaseConfig['mappings']))
-          : null;
-      if (
-        normalizeText(currentDatabaseConfig['updatePayloadMode']).toLowerCase() === 'mapping' &&
-        normalizeText(latestDatabaseConfig['updatePayloadMode']).toLowerCase() === 'custom' &&
-        derivedTemplate
-      ) {
-        nextLatestNode = {
-          ...latestNode,
-          config: {
-            ...latestConfig,
-            database: {
-              ...baseLatestDatabaseConfig,
-              updateTemplate: derivedTemplate,
-            },
-          },
-        };
-      } else if (downgradeResultPort || mappingsChanged) {
-        nextLatestNode = {
-          ...latestNode,
-          config: {
-            ...latestConfig,
-            database: baseLatestDatabaseConfig,
-          },
-        };
-      }
-    }
-    const nextNode = {
-      ...nextLatestNode,
-      position: node.position ?? nextLatestNode.position,
-      createdAt: node.createdAt ?? nextLatestNode.createdAt,
-      updatedAt: node.updatedAt ?? nextLatestNode.updatedAt,
-      data: node.data ?? nextLatestNode.data,
-    };
-    if (JSON.stringify(nextNode) !== JSON.stringify(node)) nodeChanged = true;
-    return nextNode;
-  });
-  const appendedNodes = (latest.nodes ?? []).filter((node) => !currentNodeIds.has(node.id));
-  if (appendedNodes.length > 0) {
-    nodeChanged = true;
-  }
-  const nextNodes = [...overlayNodes, ...appendedNodes];
-
-  let edgeChanged = false;
-  const currentEdgeIds = new Set((current.edges ?? []).map((edge) => edge.id));
-  const currentEdgeSignatures = new Set((current.edges ?? []).map((edge) => edgeSignature(edge)));
-  const overlayEdges = (current.edges ?? []).map((edge) => {
-    const latestEdge =
-      latestEdgesById.get(edge.id) ?? latestEdgesBySignature.get(edgeSignature(edge));
-    if (!latestEdge) return edge;
-    const nextEdge = {
-      ...latestEdge,
-      createdAt: edge.createdAt ?? latestEdge.createdAt,
-      updatedAt: edge.updatedAt ?? latestEdge.updatedAt,
-      data: edge.data ?? latestEdge.data,
-    };
-    if (JSON.stringify(nextEdge) !== JSON.stringify(edge)) edgeChanged = true;
-    return nextEdge;
-  });
-  const appendedEdges = (latest.edges ?? []).filter((edge) => {
-    if (currentEdgeIds.has(edge.id)) return false;
-    return !currentEdgeSignatures.has(edgeSignature(edge));
-  });
-  if (appendedEdges.length > 0) {
-    edgeChanged = true;
-  }
-  const nextEdges = [...overlayEdges, ...appendedEdges];
-
-  const currentExtensions = toRecord(current.extensions);
-  const latestExtensions = toRecord(latest.extensions);
-  const nextConfig = {
-    ...current,
-    version: Math.max(current.version ?? 0, latest.version ?? 0),
-    name: normalizeText(current.name) || latest.name,
-    description: normalizeText(current.description) || latest.description,
-    trigger: normalizeText(current.trigger) || latest.trigger,
-    executionMode: latest.executionMode ?? current.executionMode,
-    flowIntensity: latest.flowIntensity ?? current.flowIntensity,
-    runMode: latest.runMode ?? current.runMode,
-    strictFlowMode: latest.strictFlowMode ?? current.strictFlowMode,
-    blockedRunPolicy: latest.blockedRunPolicy ?? current.blockedRunPolicy,
-    aiPathsValidation: latest.aiPathsValidation ?? current.aiPathsValidation,
-    isActive: current.isActive ?? latest.isActive,
-    isLocked: current.isLocked ?? latest.isLocked,
-    updatedAt: current.updatedAt ?? latest.updatedAt,
-    nodes: nextNodes,
-    edges: nextEdges,
-    ...(currentExtensions || latestExtensions
-      ? {
-        extensions: {
-          ...(currentExtensions ?? {}),
-          ...(latestExtensions ?? {}),
-        },
-      }
-      : {}),
-  } as PathConfig;
-
-  const preservedConfig = preserveExplicitModelSelections(current, nextConfig);
-
-  if (!nodeChanged && !edgeChanged && JSON.stringify(preservedConfig) === JSON.stringify(current)) {
-    return current;
-  }
-  return preservedConfig;
-};
-
 const buildStarterGraphReplacement = (current: PathConfig, latest: PathConfig): PathConfig => {
   const currentExtensions = toRecord(current.extensions);
   const latestExtensions = toRecord(latest.extensions);
@@ -616,25 +361,6 @@ const shouldReplaceLowOverlapStarterGraph = (args: {
   return false;
 };
 
-const selectStarterOverlaySource = (current: PathConfig, latest: PathConfig): PathConfig => {
-  const variants: PathConfig[] = [latest];
-  const resolvedLatest = resolvePortablePathInput(latest, {
-    repairIdentities: true,
-    includeConnections: false,
-    signingPolicyTelemetrySurface: 'api',
-    nodeCodeObjectHashVerificationMode: 'warn',
-  });
-  if (resolvedLatest.ok) {
-    variants.push(resolvedLatest.value.pathConfig);
-  }
-
-  return variants.reduce<PathConfig>((best, candidate) => {
-    const bestScore = countNodeIdOverlap(current, best);
-    const candidateScore = countNodeIdOverlap(current, candidate);
-    return candidateScore > bestScore ? candidate : best;
-  }, variants[0]!);
-};
-
 export const resolveStarterWorkflowForPathConfig = (
   config: PathConfig
 ): StarterWorkflowResolution | null => {
@@ -689,14 +415,12 @@ export const upgradeStarterWorkflowPathConfig = (
       resolution.entry.seedPolicy?.autoSeed === true,
   });
 
-  const safeToOverlay =
+  const shouldRefreshCanonicalGraph =
     currentMatchesCanonicalHash ||
     resolution.matchedBy === 'legacy_alias' ||
     hasOutdatedStarterProvenance(provenance, resolution.entry, config);
-
-  const overlaySource = selectStarterOverlaySource(config, latest);
-  const latestNodeCount = (overlaySource.nodes ?? []).length;
-  const nodeIdOverlap = countNodeIdOverlap(config, overlaySource);
+  const latestNodeCount = (latest.nodes ?? []).length;
+  const nodeIdOverlap = countNodeIdOverlap(config, latest);
   const shouldReplaceGraphCompletely = shouldReplaceLowOverlapStarterGraph({
     config,
     entry: resolution.entry,
@@ -706,13 +430,11 @@ export const upgradeStarterWorkflowPathConfig = (
     provenance,
   });
 
-  if (!safeToOverlay && !shouldReplaceGraphCompletely) {
+  if (!shouldRefreshCanonicalGraph && !shouldReplaceGraphCompletely) {
     return { config, changed: false, resolution };
   }
 
-  const next = shouldReplaceGraphCompletely
-    ? buildStarterGraphReplacement(config, latest)
-    : buildStarterAssetOverlay(config, overlaySource);
+  const next = buildStarterGraphReplacement(config, latest);
   const nextWithPreservedModelConfig = currentMatchesCanonicalHash
     ? next
     : preserveNonCanonicalStarterNodeConfigById(config, next);

@@ -49,7 +49,7 @@ export function GamesLibraryGameModalProvider({
 
     return {
       ...state,
-      game: game as KangurGameDefinition,
+      game: game,
       resolvedAgeGroupLabel,
       subjectLabel,
       linkedLessonCount,

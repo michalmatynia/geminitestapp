@@ -10,8 +10,10 @@ import type {
 import {
   buildBlockedRunFailureMessage,
   buildFailedRunFailureMessage,
+  buildWaitingNodeFailureMessage,
   collectBlockedNodeDiagnostics,
   collectFailedNodeDiagnostics,
+  collectWaitingNodeDiagnostics,
   shouldFailBlockedRun,
 } from '../path-run-executor.diagnostics';
 import { summarizeRuntimeKernelParityFromHistory } from '../path-run-executor.runtime-kernel';
@@ -58,6 +60,7 @@ export const handleExecutionCompletion = async (
   let finalStatus: AiPathRunStatus = 'completed';
   let finalError = null;
   const failedNodeDiagnostics = collectFailedNodeDiagnostics(nodes, accOutputs);
+  const waitingNodeDiagnostics = collectWaitingNodeDiagnostics(nodes, accOutputs);
 
   if (runtimeHaltReason === 'failed') {
     finalStatus = 'failed';
@@ -81,6 +84,9 @@ export const handleExecutionCompletion = async (
       finalStatus = 'failed';
       finalError = buildBlockedRunFailureMessage(blockedDiagnostics);
     }
+  } else if (waitingNodeDiagnostics.length > 0) {
+    finalStatus = 'failed';
+    finalError = buildWaitingNodeFailureMessage(waitingNodeDiagnostics);
   } else if (runtimeHaltReason === 'blocked') {
     finalStatus = 'completed';
   }

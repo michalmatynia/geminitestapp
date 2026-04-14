@@ -662,7 +662,7 @@ describe('starter workflow registry', () => {
     expect(upgraded.changed).toBe(false);
   });
 
-  it('overlays stale provenance translation configs preserving diverged nodes while fixing the database node', () => {
+  it('fully replaces stale provenance translation configs and prunes stale edge wiring', () => {
     const legacy = buildLegacyTranslationPathConfig({
       includeParamsRegex: true,
       paramsEdgeToPort: 'value',
@@ -682,16 +682,22 @@ describe('starter workflow registry', () => {
     const dbNode = (upgraded.config.nodes ?? []).find(
       (node) => node.id === 'node-db-update-translate-en-pl'
     );
-    const extraRegexNode = (upgraded.config.nodes ?? []).find(
+    const paramsRegexNode = (upgraded.config.nodes ?? []).find(
       (node) => node.id === 'node-regex-params-translate-en-pl'
+    );
+    const extraParamsEdge = (upgraded.config.edges ?? []).find(
+      (edge) => edge.id === 'edge-params'
+    );
+    const canonicalParamsEdge = (upgraded.config.edges ?? []).find(
+      (edge) => edge.id === 'edge-params-update-translate-en-pl'
     );
 
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
-    // Database node gets writeOutcomePolicy fix from latest canvas
     expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
-    // Extra user node is preserved (not removed by overlay)
-    expect(extraRegexNode).toBeDefined();
+    expect(paramsRegexNode).toBeDefined();
+    expect(extraParamsEdge).toBeUndefined();
+    expect(canonicalParamsEdge?.toPort).toBe('result');
   });
 
   it('overlays stale provenance marketplace copy debrand configs and upgrades the database node targeting', () => {

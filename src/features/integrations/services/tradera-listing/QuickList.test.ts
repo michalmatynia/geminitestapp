@@ -875,7 +875,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera.quicklist.publish.id_not_extracted');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateMatch = await checkDuplicate(duplicateSearchTerms);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const matchLimit =');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const visibleCandidates = await collectVisibleListingCandidates(8);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const visibleCandidates = await collectVisibleListingCandidates();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const candidatePreviewBeforeSearch = await collectVisibleListingCandidatePreview();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const preparedSearchValue = await prepareActiveListingsSearchInput(searchInput, searchTerm);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const searchInputValue = await readActiveSearchInputValue(searchInput);');
@@ -883,6 +883,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const searchStateChanged =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateCandidateSet = await collectDuplicateCandidates(');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const sourceCandidates =');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(': await collectVisibleListingCandidates();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const exactTitleMatches = await collectListingLinksForTerm(');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('sourceCandidates');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizedTerm = normalizeListingMatchValue(term);');
@@ -906,6 +907,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('matchStrategy: \'existing-listing-id+visible-candidate\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('matchStrategy: \'exact-title-single-candidate\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('for (const candidate of [...duplicateMatches, ...visibleCandidates]) {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const visibleCandidates = await collectVisibleListingCandidates();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const uncertainSearch =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('duplicateMatches.length > 0 &&');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(

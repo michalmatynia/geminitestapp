@@ -115,7 +115,7 @@ const resolveLinkedParameterValue = (
   value: term.name_en,
   valuesByLanguage: {
     en: term.name_en,
-    ...(term.name_pl ? { pl: term.name_pl } : {}),
+    pl: term.name_pl || term.name_en,
   },
 });
 

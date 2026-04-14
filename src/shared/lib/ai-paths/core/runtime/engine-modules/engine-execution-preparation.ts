@@ -26,18 +26,18 @@ export const prepareGraphForExecution = (args: {
 }): GraphPreparationResult => {
   const { nodes, edges, triggerNodeId, seedHashes = {} } = args;
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
-  const incomingEdgesByNode = new Map<string, Edge[]>();
-  const outgoingEdgesByNode = new Map<string, Edge[]>();
+  const incomingEdgesByNodeAll = new Map<string, Edge[]>();
+  const outgoingEdgesByNodeAll = new Map<string, Edge[]>();
 
   const sanitizedEdges = sanitizeEdges(nodes, edges);
   sanitizedEdges.forEach((edge) => {
     const fromNodeId = resolveEdgeFromNodeId(edge);
     const toNodeId = resolveEdgeToNodeId(edge);
     if (!fromNodeId || !toNodeId) return;
-    if (!incomingEdgesByNode.has(toNodeId)) incomingEdgesByNode.set(toNodeId, []);
-    incomingEdgesByNode.get(toNodeId)!.push(edge);
-    if (!outgoingEdgesByNode.has(fromNodeId)) outgoingEdgesByNode.set(fromNodeId, []);
-    outgoingEdgesByNode.get(fromNodeId)!.push(edge);
+    if (!incomingEdgesByNodeAll.has(toNodeId)) incomingEdgesByNodeAll.set(toNodeId, []);
+    incomingEdgesByNodeAll.get(toNodeId)!.push(edge);
+    if (!outgoingEdgesByNodeAll.has(fromNodeId)) outgoingEdgesByNodeAll.set(fromNodeId, []);
+    outgoingEdgesByNodeAll.get(fromNodeId)!.push(edge);
   });
 
   const orderedNodes = orderNodesByDependencies(nodes, sanitizedEdges);
@@ -49,9 +49,22 @@ export const prepareGraphForExecution = (args: {
     nodes,
     triggerNodeId: triggerNodeId ?? undefined,
     nodeById,
-    outgoingEdgesByNode,
-    incomingEdgesByNode,
+    outgoingEdgesByNode: outgoingEdgesByNodeAll,
+    incomingEdgesByNode: incomingEdgesByNodeAll,
     seedHashes,
+  });
+
+  const incomingEdgesByNode = new Map<string, Edge[]>();
+  const outgoingEdgesByNode = new Map<string, Edge[]>();
+  sanitizedEdges.forEach((edge) => {
+    const fromNodeId = resolveEdgeFromNodeId(edge);
+    const toNodeId = resolveEdgeToNodeId(edge);
+    if (!fromNodeId || !toNodeId) return;
+    if (!scopedNodeIds.has(fromNodeId) || !scopedNodeIds.has(toNodeId)) return;
+    if (!incomingEdgesByNode.has(toNodeId)) incomingEdgesByNode.set(toNodeId, []);
+    incomingEdgesByNode.get(toNodeId)!.push(edge);
+    if (!outgoingEdgesByNode.has(fromNodeId)) outgoingEdgesByNode.set(fromNodeId, []);
+    outgoingEdgesByNode.get(fromNodeId)!.push(edge);
   });
 
   return {

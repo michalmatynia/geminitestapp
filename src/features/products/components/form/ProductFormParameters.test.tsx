@@ -452,4 +452,44 @@ describe('ProductFormParameters', () => {
     expect(screen.getByPlaceholderText('Value (English)')).toBeDisabled();
     expect(screen.getByLabelText('Remove parameter')).toBeDisabled();
   });
+
+  it('shows the English synced value on the Polish tab when no Polish term translation exists', async () => {
+    const user = userEvent.setup();
+    const linkedMaterialParameter = {
+      id: 'material',
+      name_en: 'Material',
+      name_pl: 'Materiał',
+      selectorType: 'text',
+      linkedTitleTermType: 'material',
+    } as Partial<ProductParameter> as ProductParameter;
+
+    useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({
+      data:
+        type === 'material'
+          ? [
+              {
+                id: 'term-metal',
+                catalogId: 'catalog-1',
+                type: 'material',
+                name_en: 'Metal',
+                name_pl: null,
+              },
+            ]
+          : [],
+      isLoading: false,
+    }));
+
+    renderParameters({
+      parameters: [],
+      parameterDefinitions: [linkedMaterialParameter],
+      nameEn: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+    });
+
+    expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Metal');
+
+    await user.click(screen.getByRole('tab', { name: 'Polish' }));
+
+    expect(screen.getByPlaceholderText('Value (Polish)')).toHaveValue('Metal');
+    expect(screen.getByPlaceholderText('Value (Polish)')).toBeDisabled();
+  });
 });

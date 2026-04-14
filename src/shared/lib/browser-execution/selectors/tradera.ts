@@ -168,6 +168,22 @@ export const IMAGE_INPUT_SELECTORS = [
   'input[type="file"]',
 ];
 
+export const IMAGE_UPLOAD_TRIGGER_SELECTORS = [
+  'button:has-text("Add images")',
+  'button:has-text("Add image")',
+  'button:has-text("Lägg till bilder")',
+  'button:has-text("Lägg till bild")',
+  '[data-testid*="image-picker"]',
+  '[data-testid*="image-upload"]',
+  '[data-testid*="photo-upload"]',
+  '[data-testid*="upload-image"]',
+  '[data-testid*="upload-photo"]',
+  '[aria-label*="Add images" i]',
+  '[aria-label*="Add image" i]',
+  '[aria-label*="Lägg till bilder" i]',
+  '[aria-label*="Lägg till bild" i]',
+];
+
 
 export const PUBLISH_SELECTORS = [
   'button[type="submit"]',
@@ -192,6 +208,5 @@ export const CATEGORY_PLACEHOLDER_LABELS = [
   'Välj en kategori',
   'Välj kategori först',
 ];
-
 
 

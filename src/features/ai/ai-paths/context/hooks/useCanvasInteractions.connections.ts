@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Toast } from '@/shared/contracts/ui/base';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
-import { NODE_WIDTH, getNodeInputPortCardinality, getPortOffsetY, sanitizeEdges, validateConnection } from '@/shared/lib/ai-paths/core/utils/graph';
+import { NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
+import { getNodeInputPortCardinality, getPortOffsetY, sanitizeEdges, validateConnection } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import type { GraphMutationMeta } from '../GraphContext';
 

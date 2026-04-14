@@ -1,8 +1,18 @@
-import { 
-  generateTraderaQuicklistBrowserStepsInit, 
-  StepTracker, 
-  TraderaSequencer 
-} from '@/shared/lib/browser-execution';
+import {
+  BRAND_SELECTORS,
+  CATEGORY_FIELD_LABELS,
+  CATEGORY_PLACEHOLDER_LABELS,
+  DESCRIPTION_SELECTORS,
+  DRAFT_IMAGE_REMOVE_SELECTORS,
+  EAN_SELECTORS,
+  IMAGE_INPUT_SELECTORS,
+  IMAGE_UPLOAD_TRIGGER_SELECTORS,
+  PRICE_SELECTORS,
+  QUANTITY_SELECTORS,
+  TITLE_SELECTORS,
+  WEIGHT_SELECTORS,
+} from '@/shared/lib/browser-execution/selectors/tradera';
+import { generateTraderaQuicklistBrowserStepsInit } from '@/shared/lib/browser-execution';
 
 const TRADERA_QUICKLIST_STEPS_INIT = generateTraderaQuicklistBrowserStepsInit();
 
@@ -15,20 +25,6 @@ export default async function run({
   log,
   helpers,
 }) {
-  const steps = ${TRADERA_QUICKLIST_STEPS_INIT};
-  const tracker = StepTracker.fromSteps(steps, (s) => emit('steps', s));
-  const sequencer = new TraderaSequencer({ 
-    page, 
-    tracker, 
-    actionKey: 'tradera_quicklist_list', 
-    emit, 
-    artifacts, 
-    log, 
-    helpers 
-  });
-  
-  await sequencer.run();
-
   // tradera-quicklist-default:v143
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
@@ -48,13 +44,13 @@ export default async function run({
     )
   );
 
-  const titleSelectors = ${JSON.stringify(TITLE_SELECTORS)};
-  const descriptionSelectors = ${JSON.stringify(DESCRIPTION_SELECTORS)};
-  const priceSelectors = ${JSON.stringify(PRICE_SELECTORS)};
-  const quantitySelectors = ${JSON.stringify(QUANTITY_SELECTORS)};
-  const eanSelectors = ${JSON.stringify(EAN_SELECTORS)};
-  const brandSelectors = ${JSON.stringify(BRAND_SELECTORS)};
-  const weightSelectors = ${JSON.stringify(WEIGHT_SELECTORS)};
+  const TITLE_SELECTORS = ${JSON.stringify(TITLE_SELECTORS)};
+  const DESCRIPTION_SELECTORS = ${JSON.stringify(DESCRIPTION_SELECTORS)};
+  const PRICE_SELECTORS = ${JSON.stringify(PRICE_SELECTORS)};
+  const QUANTITY_SELECTORS = ${JSON.stringify(QUANTITY_SELECTORS)};
+  const EAN_SELECTORS = ${JSON.stringify(EAN_SELECTORS)};
+  const BRAND_SELECTORS = ${JSON.stringify(BRAND_SELECTORS)};
+  const WEIGHT_SELECTORS = ${JSON.stringify(WEIGHT_SELECTORS)};
 
   const DUPLICATE_DESCRIPTION_TEXT_SELECTORS = [
     '[data-testid*="description"]',
@@ -88,8 +84,8 @@ export default async function run({
     'input[placeholder*="height" i]',
     'input[placeholder*="höjd" i]',
   ];
-  const imageInputSelectors = ${JSON.stringify(IMAGE_INPUT_SELECTORS)};
-  const imageUploadTriggerSelectors = ${JSON.stringify(IMAGE_UPLOAD_TRIGGER_SELECTORS)};
+  const IMAGE_INPUT_SELECTORS = ${JSON.stringify(IMAGE_INPUT_SELECTORS)};
+  const IMAGE_UPLOAD_TRIGGER_SELECTORS = ${JSON.stringify(IMAGE_UPLOAD_TRIGGER_SELECTORS)};
   const IMAGE_REQUIRED_HINT_SELECTORS = [
     'text=/Add your images first/i',
     'text=/Add images first/i',
@@ -134,7 +130,7 @@ export default async function run({
     '[class*="photopreview" i] img',
     '[class*="preview" i] img',
   ];
-  const draftImageRemoveSelectors = ${JSON.stringify(DRAFT_IMAGE_REMOVE_SELECTORS)};
+  const DRAFT_IMAGE_REMOVE_SELECTORS = ${JSON.stringify(DRAFT_IMAGE_REMOVE_SELECTORS)};
   const DRAFT_IMAGE_REMOVE_ACTION_HINTS = [
     'remove image',
     'delete image',
@@ -391,8 +387,8 @@ export default async function run({
     'Börja sälja',
     'Sälj',
   ];
-  const categoryFieldLabels = ${JSON.stringify(CATEGORY_FIELD_LABELS)};
-  const categoryPlaceholderLabels = ${JSON.stringify(CATEGORY_PLACEHOLDER_LABELS)};
+  const CATEGORY_FIELD_LABELS = ${JSON.stringify(CATEGORY_FIELD_LABELS)};
+  const CATEGORY_PLACEHOLDER_LABELS = ${JSON.stringify(CATEGORY_PLACEHOLDER_LABELS)};
   const FALLBACK_CATEGORY_OPTION_LABELS = ['Other', 'Övrigt'];
   const FALLBACK_CATEGORY_PATH_SEGMENTS = ['Other', 'Other'];
   const FALLBACK_CATEGORY_PATH = FALLBACK_CATEGORY_PATH_SEGMENTS.join(' > ');

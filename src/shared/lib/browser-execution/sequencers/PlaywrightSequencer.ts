@@ -130,4 +130,9 @@ export abstract class PlaywrightSequencer {
       return false;
     }
   }
+
+  protected async waitForNavigation(urlPart: string, timeout = 10000): Promise<void> {
+    const { page } = this.context;
+    await page.waitForURL((url) => url.toString().includes(urlPart), { timeout });
+  }
 }

@@ -19,7 +19,8 @@ import { useMemo, useRef } from 'react';
 
 import type { Point2d } from '@/shared/contracts/geometry';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import { NODE_WIDTH, getPortOffsetY } from '@/shared/lib/ai-paths/core/utils/graph';
+import { NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
+import { getPortOffsetY } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import { useGraphDataState } from '../GraphContext';
 
